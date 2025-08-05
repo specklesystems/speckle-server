@@ -52,7 +52,20 @@ import {
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import type { SectionBoxData } from '@speckle/shared/viewer/state'
+import {
+  isSerializedViewerState,
+  type SectionBoxData,
+  type SerializedViewerState
+} from '@speckle/shared/viewer/state'
+import { graphql } from '~/lib/common/generated/gql'
+import {
+  StateApplyMode,
+  useApplySerializedState
+} from '~/lib/viewer/composables/serialization'
+import { useViewerRealtimeActivityTracker } from '~/lib/viewer/composables/activity'
+import { resourceBuilder } from '@speckle/shared/viewer/route'
+import { useEventBus } from '~/lib/core/composables/eventBus'
+import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -435,8 +448,8 @@ function useViewerCameraIntegration() {
   useViewerCameraTracker(
     () => {
       loadCameraDataFromViewer()
-    }
-    // { debounceWait: 100 }
+    },
+    { throttleWait: 100 }
   )
 
   useOnViewerLoadComplete(({ isInitial }) => {
@@ -900,9 +913,115 @@ function useDisableZoomOnEmbed() {
   )
 }
 
+graphql(`
+  fragment UseViewerSavedViewSetup_SavedView on SavedView {
+    id
+    viewerState
+  }
+`)
+
+const useViewerSavedViewSetup = () => {
+  const {
+    savedViewId,
+    resources: {
+      request: { resourceIdString },
+      response: { savedView, resolvedResourceIdString }
+    },
+    urlHashState: { savedViewId: urlHashSavedViewId }
+  } = useInjectedViewerState()
+  const applyState = useApplySerializedState()
+  const { serializedStateId } = useViewerRealtimeActivityTracker()
+  const { on } = useEventBus()
+
+  // Saved View ID will be unset, once the user does anything to the viewer that
+  // changes it from the saved view
+  const savedViewStateId = ref<string>()
+
+  const validState = (state: unknown) => (isSerializedViewerState(state) ? state : null)
+
+  const apply = async (state: SerializedViewerState) => {
+    // Combine resolved w/ old, resolved taking precedence - we dont want to unload
+    // other federated resources that are not a part of the saved view
+    const combinedIdString = resourceBuilder()
+      .addResources(resolvedResourceIdString.value)
+      .addNew(resourceIdString.value)
+      .toString()
+
+    await resourceIdString.update(combinedIdString)
+    await applyState(state, StateApplyMode.SavedView)
+    savedViewStateId.value = serializedStateId.value
+  }
+
+  const update = (params: { viewId?: string }) => {
+    // If passing in viewId and it differs, apply and wait for that to finish
+    if (params.viewId && params.viewId !== savedViewId.value) {
+      savedViewId.value = params.viewId
+      return
+    }
+
+    // Re-apply current state
+    const state = validState(savedView.value?.viewerState)
+    if (!state) return
+    apply(state)
+  }
+
+  // Allow force update
+  on(ViewerEventBusKeys.UpdateSavedView, (params) => {
+    update(params)
+  })
+
+  // Apply saved view state on initial load
+  useOnViewerLoadComplete(async ({ isInitial }) => {
+    const state = validState(savedView.value?.viewerState)
+
+    if (isInitial && state) {
+      await apply(state)
+    }
+  })
+
+  // Saved view changed, apply
+  watch(savedView, (newVal, oldVal) => {
+    if (!newVal || newVal.id === oldVal?.id) return
+
+    const state = validState(newVal.viewerState)
+    if (!state) return
+
+    // If the saved view has changed, apply it
+    apply(state)
+  })
+
+  // If the URL hash saved view ID has changed, update the saved view ID
+  watch(
+    urlHashSavedViewId,
+    async (newVal, oldVal) => {
+      if (newVal === oldVal) return
+
+      savedViewId.value = newVal
+    },
+    { immediate: true }
+  )
+
+  // Did state change after applying saved view? Undo view
+  watch(
+    serializedStateId,
+    (newVal, oldVal) => {
+      if (newVal === oldVal) return
+
+      // If the saved view state ID is different from the current serialized state ID, reset the saved view
+      if (savedViewStateId.value && newVal !== savedViewStateId.value) {
+        savedViewId.value = null
+        void urlHashSavedViewId.update(null)
+        savedViewStateId.value = undefined
+      }
+    },
+    { immediate: true }
+  )
+}
+
 export function useViewerPostSetup() {
   if (import.meta.server) return
   useViewerObjectAutoLoading()
+  useViewerSavedViewSetup()
   useViewerReceiveTracking()
   useViewerSelectionEventHandler()
   useViewerLoadCompleteEventHandler()

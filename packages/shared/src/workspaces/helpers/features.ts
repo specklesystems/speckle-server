@@ -7,6 +7,7 @@ import {
   WorkspacePlans
 } from './plans.js'
 import type { MaybeNullOrUndefined } from '../../core/helpers/utilityTypes.js'
+import { FeatureFlags } from '../../environment/index.js'
 
 /**
  * WORKSPACE FEATURES
@@ -23,7 +24,8 @@ export const WorkspacePlanFeatures = <const>{
   HideSpeckleBranding: 'hideSpeckleBranding',
   ExclusiveMembership: 'exclusiveMembership',
   EmbedPrivateProjects: 'embedPrivateProjects',
-  AccIntegration: 'accIntegration'
+  AccIntegration: 'accIntegration',
+  SavedViews: 'savedViews'
 }
 
 export type WorkspacePlanFeatures =
@@ -67,6 +69,10 @@ export const WorkspacePlanFeaturesMetadata = (<const>{
   [WorkspacePlanFeatures.AccIntegration]: {
     displayName: 'ACC connector',
     description: 'Configure automatic import of ACC assets into workspace projects'
+  },
+  [WorkspacePlanFeatures.SavedViews]: {
+    displayName: 'Saved views',
+    description: 'Create and share saved views of your models'
   }
 }) satisfies Record<
   WorkspacePlanFeatures,
@@ -105,9 +111,11 @@ const baseFeatures = [
   WorkspacePlanFeatures.EmbedPrivateProjects
 ] as const
 
-export const WorkspacePaidPlanConfigs: {
+export const WorkspacePaidPlanConfigs: (params: {
+  featureFlags: Partial<FeatureFlags> | undefined
+}) => {
   [plan in PaidWorkspacePlans]: WorkspacePlanConfig<plan>
-} = {
+} = (params) => ({
   [PaidWorkspacePlans.Team]: {
     plan: PaidWorkspacePlans.Team,
     features: [...baseFeatures],
@@ -135,7 +143,10 @@ export const WorkspacePaidPlanConfigs: {
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.HideSpeckleBranding
+      WorkspacePlanFeatures.HideSpeckleBranding,
+      ...(params.featureFlags?.FF_SAVED_VIEWS_ENABLED
+        ? [WorkspacePlanFeatures.SavedViews]
+        : [])
     ],
     limits: {
       projectCount: 10,
@@ -151,7 +162,10 @@ export const WorkspacePaidPlanConfigs: {
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.HideSpeckleBranding
+      WorkspacePlanFeatures.HideSpeckleBranding,
+      ...(params.featureFlags?.FF_SAVED_VIEWS_ENABLED
+        ? [WorkspacePlanFeatures.SavedViews]
+        : [])
     ],
     limits: {
       projectCount: null,
@@ -160,11 +174,13 @@ export const WorkspacePaidPlanConfigs: {
       commentHistory: null
     }
   }
-}
+})
 
-export const WorkspaceUnpaidPlanConfigs: {
+export const WorkspaceUnpaidPlanConfigs: (params: {
+  featureFlags: Partial<FeatureFlags> | undefined
+}) => {
   [plan in UnpaidWorkspacePlans]: WorkspacePlanConfig<plan>
-} = {
+} = (params) => ({
   [UnpaidWorkspacePlans.Enterprise]: {
     plan: UnpaidWorkspacePlans.Enterprise,
     features: [
@@ -174,7 +190,12 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.CustomDataRegion,
       WorkspacePlanFeatures.HideSpeckleBranding,
       WorkspacePlanFeatures.ExclusiveMembership,
-      WorkspacePlanFeatures.AccIntegration
+      ...(params.featureFlags?.FF_ACC_INTEGRATION_ENABLED
+        ? [WorkspacePlanFeatures.AccIntegration]
+        : []),
+      ...(params.featureFlags?.FF_SAVED_VIEWS_ENABLED
+        ? [WorkspacePlanFeatures.SavedViews]
+        : [])
     ],
     limits: unlimited
   },
@@ -187,7 +208,12 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.CustomDataRegion,
       WorkspacePlanFeatures.HideSpeckleBranding,
       WorkspacePlanFeatures.ExclusiveMembership,
-      WorkspacePlanFeatures.AccIntegration
+      ...(params.featureFlags?.FF_ACC_INTEGRATION_ENABLED
+        ? [WorkspacePlanFeatures.AccIntegration]
+        : []),
+      ...(params.featureFlags?.FF_SAVED_VIEWS_ENABLED
+        ? [WorkspacePlanFeatures.SavedViews]
+        : [])
     ],
     limits: unlimited
   },
@@ -198,16 +224,19 @@ export const WorkspaceUnpaidPlanConfigs: {
       WorkspacePlanFeatures.DomainSecurity,
       WorkspacePlanFeatures.SSO,
       WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.HideSpeckleBranding
+      WorkspacePlanFeatures.HideSpeckleBranding,
+      ...(params.featureFlags?.FF_SAVED_VIEWS_ENABLED
+        ? [WorkspacePlanFeatures.SavedViews]
+        : [])
     ],
     limits: unlimited
   },
   [UnpaidWorkspacePlans.TeamUnlimitedInvoiced]: {
-    ...WorkspacePaidPlanConfigs.teamUnlimited,
+    ...WorkspacePaidPlanConfigs(params).teamUnlimited,
     plan: UnpaidWorkspacePlans.TeamUnlimitedInvoiced
   },
   [UnpaidWorkspacePlans.ProUnlimitedInvoiced]: {
-    ...WorkspacePaidPlanConfigs.proUnlimited,
+    ...WorkspacePaidPlanConfigs(params).proUnlimited,
     plan: UnpaidWorkspacePlans.ProUnlimitedInvoiced
   },
   [UnpaidWorkspacePlans.Free]: {
@@ -220,24 +249,28 @@ export const WorkspaceUnpaidPlanConfigs: {
       commentHistory: { value: 7, unit: 'day' }
     }
   }
-}
+})
 
-export const WorkspacePlanConfigs = {
-  ...WorkspacePaidPlanConfigs,
-  ...WorkspaceUnpaidPlanConfigs
-}
+export const WorkspacePlanConfigs = (params: {
+  featureFlags: Partial<FeatureFlags> | undefined
+}) => ({
+  ...WorkspacePaidPlanConfigs(params),
+  ...WorkspaceUnpaidPlanConfigs(params)
+})
 
 /**
  * Checks if a workspace exceeds its plan limits for projects and models
  */
-export const workspaceExceedsPlanLimit = (
-  plan: MaybeNullOrUndefined<WorkspacePlans>,
-  projectCount: MaybeNullOrUndefined<number>,
+export const workspaceExceedsPlanLimit = (params: {
+  plan: MaybeNullOrUndefined<WorkspacePlans>
+  projectCount: MaybeNullOrUndefined<number>
   modelCount: MaybeNullOrUndefined<number>
-): boolean => {
+  featureFlags: Partial<FeatureFlags> | undefined
+}): boolean => {
+  const { plan, projectCount, modelCount, featureFlags } = params
   if (!plan) return false
 
-  const planConfig = WorkspacePlanConfigs[plan]
+  const planConfig = WorkspacePlanConfigs({ featureFlags })[plan]
   if (!planConfig) return false
 
   const limits = planConfig.limits
@@ -250,14 +283,16 @@ export const workspaceExceedsPlanLimit = (
 /**
  * Checks if a workspace reached its plan limits for projects and models
  */
-export const workspaceReachedPlanLimit = (
-  plan: MaybeNullOrUndefined<WorkspacePlans>,
-  projectCount: MaybeNullOrUndefined<number>,
+export const workspaceReachedPlanLimit = (params: {
+  plan: MaybeNullOrUndefined<WorkspacePlans>
+  projectCount: MaybeNullOrUndefined<number>
   modelCount: MaybeNullOrUndefined<number>
-): boolean => {
+  featureFlags: Partial<FeatureFlags> | undefined
+}): boolean => {
+  const { plan, projectCount, modelCount, featureFlags } = params
   if (!plan) return false
 
-  const planConfig = WorkspacePlanConfigs[plan]
+  const planConfig = WorkspacePlanConfigs({ featureFlags })[plan]
   if (!planConfig) return false
 
   const limits = planConfig.limits
@@ -268,12 +303,14 @@ export const workspaceReachedPlanLimit = (
 
 export const workspacePlanHasAccessToFeature = ({
   plan,
-  feature
+  feature,
+  featureFlags
 }: {
   plan: WorkspacePlans
   feature: WorkspacePlanFeatures
+  featureFlags: Partial<FeatureFlags> | undefined
 }): boolean => {
-  const planConfig = WorkspacePlanConfigs[plan]
+  const planConfig = WorkspacePlanConfigs({ featureFlags })[plan]
   const hasAccess = planConfig.features.includes(feature)
   return hasAccess
 }

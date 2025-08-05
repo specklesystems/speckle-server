@@ -79,7 +79,10 @@ export const canReadAccIntegrationSettingsPolicy: AuthPolicy<
     if (!workspacePlan) return err(new WorkspacePlanNoFeatureAccessError())
     const canUseFeature = workspacePlanHasAccessToFeature({
       plan: workspacePlan.name,
-      feature: WorkspacePlanFeatures.AccIntegration
+      feature: WorkspacePlanFeatures.AccIntegration,
+      featureFlags: {
+        FF_ACC_INTEGRATION_ENABLED: true
+      }
     })
     if (!canUseFeature) return err(new WorkspacePlanNoFeatureAccessError())
 

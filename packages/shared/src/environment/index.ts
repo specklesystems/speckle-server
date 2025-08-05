@@ -140,6 +140,11 @@ export const parseFeatureFlags = (
       description:
         'Enables the integration with ACC. This synchronizes models with specified ACC assets.',
       defaults: { _: false }
+    },
+    FF_SAVED_VIEWS_ENABLED: {
+      schema: z.boolean(),
+      description: 'Enables the saved views feature for project models',
+      defaults: { _: false }
     }
   })
 
@@ -179,6 +184,7 @@ export type FeatureFlags = {
   FF_LEGACY_IFC_IMPORTER_ENABLED: boolean
   FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED: boolean
   FF_ACC_INTEGRATION_ENABLED: boolean
+  FF_SAVED_VIEWS_ENABLED: boolean
 }
 
 export function getFeatureFlags(): FeatureFlags {

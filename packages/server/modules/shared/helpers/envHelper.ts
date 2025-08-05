@@ -543,3 +543,6 @@ export function getAutodeskIntegrationClientId() {
 export function getAutodeskIntegrationClientSecret() {
   return getStringFromEnv('AUTODESK_INTEGRATION_CLIENT_SECRET')
 }
+
+export const areSavedViewsEnabled = (): boolean =>
+  getFeatureFlags().FF_SAVED_VIEWS_ENABLED

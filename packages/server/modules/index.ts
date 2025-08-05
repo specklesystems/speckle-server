@@ -111,7 +111,8 @@ const getEnabledModuleNames = () => {
     'webhooks',
     'workspacesCore',
     'gatekeeperCore',
-    'multiregion'
+    'multiregion',
+    'viewer'
   ]
 
   // TODO: add acc with feature flag?
