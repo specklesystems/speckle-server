@@ -186,6 +186,9 @@ const config: CodegenConfig = {
             '@/modules/core/helpers/graphTypes#RootPermissionChecksGraphQLReturn',
           WorkspacePermissionChecks:
             '@/modules/workspacesCore/helpers/graphTypes#WorkspacePermissionChecksGraphQLReturn',
+          AccSyncItem: '@/modules/acc/helpers/graphTypes#AccSyncItemGraphQLReturn',
+          AccSyncItemMutations:
+            '@/modules/acc/helpers/graphTypes#AccSyncItemMutationsGraphQLReturn',
           SavedViewMutations:
             '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
           SavedView: '@/modules/viewer/helpers/graphTypes#SavedViewGraphQLReturn',

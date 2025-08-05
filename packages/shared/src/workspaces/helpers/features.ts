@@ -24,6 +24,7 @@ export const WorkspacePlanFeatures = <const>{
   HideSpeckleBranding: 'hideSpeckleBranding',
   ExclusiveMembership: 'exclusiveMembership',
   EmbedPrivateProjects: 'embedPrivateProjects',
+  AccIntegration: 'accIntegration',
   SavedViews: 'savedViews'
 }
 
@@ -64,6 +65,10 @@ export const WorkspacePlanFeaturesMetadata = (<const>{
   [WorkspacePlanFeatures.EmbedPrivateProjects]: {
     displayName: 'Embed private projects',
     description: 'Embed projects with visibility set to private or workspace'
+  },
+  [WorkspacePlanFeatures.AccIntegration]: {
+    displayName: 'ACC connector',
+    description: 'Configure automatic import of ACC assets into workspace projects'
   },
   [WorkspacePlanFeatures.SavedViews]: {
     displayName: 'Saved views',
@@ -185,6 +190,9 @@ export const WorkspaceUnpaidPlanConfigs: (params: {
       WorkspacePlanFeatures.CustomDataRegion,
       WorkspacePlanFeatures.HideSpeckleBranding,
       WorkspacePlanFeatures.ExclusiveMembership,
+      ...(params.featureFlags?.FF_ACC_INTEGRATION_ENABLED
+        ? [WorkspacePlanFeatures.AccIntegration]
+        : []),
       ...(params.featureFlags?.FF_SAVED_VIEWS_ENABLED
         ? [WorkspacePlanFeatures.SavedViews]
         : [])
@@ -200,6 +208,9 @@ export const WorkspaceUnpaidPlanConfigs: (params: {
       WorkspacePlanFeatures.CustomDataRegion,
       WorkspacePlanFeatures.HideSpeckleBranding,
       WorkspacePlanFeatures.ExclusiveMembership,
+      ...(params.featureFlags?.FF_ACC_INTEGRATION_ENABLED
+        ? [WorkspacePlanFeatures.AccIntegration]
+        : []),
       ...(params.featureFlags?.FF_SAVED_VIEWS_ENABLED
         ? [WorkspacePlanFeatures.SavedViews]
         : [])
