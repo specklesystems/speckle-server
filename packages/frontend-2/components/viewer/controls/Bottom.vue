@@ -144,9 +144,25 @@ const toggleActivePanel = (panel: ActivePanel) => {
 }
 
 const toggleMeasurements = () => {
+  if (activePanel.value === ActivePanel.sectionBox) {
+    toggleSectionBox()
+  }
+
   const isMeasurementsActive = activePanel.value === ActivePanel.measurements
   enableMeasurements(!isMeasurementsActive)
   activePanel.value = isMeasurementsActive ? ActivePanel.none : ActivePanel.measurements
+}
+
+const toggleSectionBoxPanel = () => {
+  if (activePanel.value === ActivePanel.measurements) {
+    enableMeasurements(false)
+  }
+
+  activePanel.value =
+    activePanel.value === ActivePanel.sectionBox
+      ? ActivePanel.none
+      : ActivePanel.sectionBox
+  toggleSectionBox()
 }
 
 const onActivePanelClose = () => {
@@ -170,7 +186,7 @@ const onReset = () => {
 
 registerShortcuts({
   ToggleMeasurements: () => toggleMeasurements(),
-  ToggleSectionBox: () => toggleSectionBox()
+  ToggleSectionBox: () => toggleSectionBoxPanel()
 })
 
 const forceClosePanels = () => {
