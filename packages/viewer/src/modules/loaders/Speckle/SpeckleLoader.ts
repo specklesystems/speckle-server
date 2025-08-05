@@ -7,7 +7,8 @@ import {
   getFeatureFlag,
   ObjectLoader2Flags,
   ObjectLoader2,
-  ObjectLoader2Factory
+  ObjectLoader2Factory,
+  PropertyInfo
 } from '@speckle/objectloader2'
 import { TIME_MS } from '@speckle/shared'
 
@@ -51,6 +52,10 @@ export class SpeckleLoader extends Loader {
     }
 
     this.converter = new SpeckleConverter(this.loader, this.tree)
+  }
+
+  public get properties(): PropertyInfo[] {
+    return this.loader.propertyManager.getProperties()
   }
 
   protected initObjectLoader(
@@ -110,7 +115,7 @@ export class SpeckleLoader extends Loader {
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.isCancelled) {
         this.emit(LoaderEvent.LoadCancelled, this.resource)
-        return Promise.resolve(false)
+        return false
       }
       if (first) {
         firstObjectPromise = this.converter.traverse(
@@ -136,12 +141,6 @@ export class SpeckleLoader extends Loader {
       await firstObjectPromise
     }
 
-    Logger.warn(
-      `Finished converting object ${this.resource} in ${
-        (performance.now() - start) / TIME_MS.second
-      } seconds. Node count: ${this.tree.nodeCount}`
-    )
-
     if (traversals === 0) {
       Logger.warn(`Viewer: no 3d objects found in object ${this.resource}`)
       this.emit(LoaderEvent.LoadWarning, {
@@ -149,7 +148,7 @@ export class SpeckleLoader extends Loader {
       })
     }
     if (this.isCancelled) {
-      return Promise.resolve(false)
+      return false
     }
 
     await this.converter.convertInstances()
@@ -161,7 +160,7 @@ export class SpeckleLoader extends Loader {
     const geometryConverter = new SpeckleGeometryConverter()
 
     const renderTree = this.tree.getRenderTree(this.resource)
-    if (!renderTree) return Promise.resolve(false)
+    if (!renderTree) return false
     const p = renderTree.buildRenderTree(geometryConverter, (count: number) => {
       this.emit(LoaderEvent.Converted, {
         count
@@ -169,7 +168,9 @@ export class SpeckleLoader extends Loader {
     })
 
     Logger.warn(
-      `Finished rendering object . Node count: ${this.tree.nodeCount} Total: ${total}`
+      `Finished converting objects ${this.resource} in ${
+        (performance.now() - start) / TIME_MS.second
+      } seconds. Node count: ${this.tree.nodeCount} Total: ${total}`
     )
 
     void p.then(() => {
@@ -188,7 +189,9 @@ export class SpeckleLoader extends Loader {
       this.isFinished = true
     })
 
-    return p
+    await p
+
+    return true
   }
 
   private progressListen(): void {
