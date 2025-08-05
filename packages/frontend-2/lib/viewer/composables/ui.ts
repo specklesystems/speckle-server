@@ -84,12 +84,18 @@ export function useSectionBoxUtilities() {
     }
   }
 
+  const resetSectionBoxCompletely = () => {
+    sectionBox.value = null
+    visible.value = false
+  }
+
   return {
     isSectionBoxEnabled,
     isSectionBoxVisible,
     isSectionBoxEdited,
     toggleSectionBox,
     resetSectionBox,
+    resetSectionBoxCompletely,
     sectionBox,
     closeSectionBox
   }

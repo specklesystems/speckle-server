@@ -72,7 +72,7 @@ const emit = defineEmits<{
 const { getShortcutDisplayText, shortcuts, registerShortcuts } = useViewerShortcuts()
 const {
   toggleSectionBox,
-  resetSectionBox,
+  resetSectionBoxCompletely,
   closeSectionBox,
   isSectionBoxEnabled,
   isSectionBoxVisible
@@ -188,7 +188,7 @@ const onReset = () => {
     resetExplode()
   }
   if (activePanel.value === ActivePanel.sectionBox) {
-    resetSectionBox()
+    resetSectionBoxCompletely()
   }
 }
 
