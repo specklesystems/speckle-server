@@ -57,7 +57,8 @@ export const rhinoImporterSupportedFileExtensions = new Set([
   'gdf'
 ])
 
-export const acceptedFileExtensions = new Set([
+// For comments attachments, could be moved back to frontend-2
+export const acceptedFileExtensions = [
   'pdf',
   'zip',
   '7z',
@@ -88,9 +89,8 @@ export const acceptedFileExtensions = new Set([
   'eps',
   'gwb',
   'skp',
-  'pbix',
-  ...rhinoImporterSupportedFileExtensions
-])
+  'pbix'
+]
 
 export const BlobUploadStatus = <const>{
   Pending: 0,
