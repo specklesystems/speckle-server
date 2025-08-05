@@ -9,7 +9,6 @@
       :project="project"
       :show-actions="showActions"
       :show-versions="showVersions"
-      :small-view="smallView"
       height="h-32 sm:h-64"
       :disable-default-link="disableDefaultLinks"
       :style="`z-index: ${items.length - i};`"
@@ -34,7 +33,6 @@ const props = withDefaults(
     project: Optional<ProjectPageModelsCardProjectFragment>
     items: Array<ProjectPageLatestItemsModelItemFragment | PendingFileUploadFragment>
     projectId: string
-    smallView?: boolean
     vertical?: boolean
     showActions?: boolean
     showVersions?: boolean
@@ -51,8 +49,6 @@ const classes = computed(() => {
 
   if (props.vertical) {
     classParts.push('grid-cols-1')
-  } else if (props.smallView) {
-    classParts.push('grid-cols-1 sm:grid-cols-2')
   } else {
     classParts.push('grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4')
   }
