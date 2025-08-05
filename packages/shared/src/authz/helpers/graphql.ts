@@ -6,7 +6,7 @@ export type GraphqlPermissionCheckResult = {
   authorized: boolean
   code: string
   message: string
-  payload: unknown
+  payload: Record<string, unknown> | null
 }
 
 export const toGraphqlResult = (
@@ -25,7 +25,7 @@ export const toGraphqlResult = (
       authorized: false,
       code: error.code,
       message: error.message,
-      payload: error.payload || null
+      payload: (error.payload || null) as Record<string, unknown> | null
     }
   }
 }

@@ -6,7 +6,7 @@
   "name": "root",
   "private": true,
   "engines": {
-    "node": "^22.6.0"
+    "node": "^22.17.1"
   },
   "scripts": {
     "build": "yarn workspaces foreach --parallel --topological --verbose --worktree run build",

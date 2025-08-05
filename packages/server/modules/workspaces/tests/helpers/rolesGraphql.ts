@@ -10,6 +10,7 @@ export const fullPermissionCheckResultFragment = gql(`
     code
     message
     payload
+    errorMessage
   }
 `)
 

@@ -193,10 +193,10 @@ export async function createTestStreams(
 /**
  * Create basic stream for testing and update streamObj in-place, via reference, to have a real ID
  */
-export async function createTestStream(
-  streamObj: Partial<BasicTestStream>,
+export async function createTestStream<S extends Partial<BasicTestStream>>(
+  streamObj: S,
   owner: BasicTestUser
-) {
+): Promise<S> {
   let id: string
 
   const visibility = streamObj.isPublic

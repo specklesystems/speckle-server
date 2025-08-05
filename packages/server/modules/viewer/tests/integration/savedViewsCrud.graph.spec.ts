@@ -1,0 +1,1294 @@
+import type {
+  BasicSavedViewFragment,
+  BasicSavedViewGroupFragment,
+  CreateSavedViewGroupMutationVariables,
+  CreateSavedViewMutationVariables,
+  GetProjectSavedViewGroupQueryVariables,
+  GetProjectSavedViewGroupsQueryVariables,
+  GetProjectSavedViewQueryVariables,
+  GetProjectUngroupedViewGroupQueryVariables
+} from '@/modules/core/graph/generated/graphql'
+import {
+  CreateSavedViewDocument,
+  CreateSavedViewGroupDocument,
+  GetProjectSavedViewDocument,
+  GetProjectSavedViewGroupDocument,
+  GetProjectSavedViewGroupsDocument,
+  GetProjectUngroupedViewGroupDocument
+} from '@/modules/core/graph/generated/graphql'
+import {
+  buildBasicTestModel,
+  buildBasicTestProject
+} from '@/modules/core/tests/helpers/creation'
+import { ForbiddenError, NotFoundError } from '@/modules/shared/errors'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
+import {
+  SavedViewCreationValidationError,
+  SavedViewGroupCreationValidationError,
+  SavedViewInvalidResourceTargetError
+} from '@/modules/viewer/errors/savedViews'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
+import {
+  assignToWorkspace,
+  buildBasicTestWorkspace,
+  createTestWorkspace
+} from '@/modules/workspaces/tests/helpers/creation'
+import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
+import { itEach } from '@/test/assertionHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { buildBasicTestUser, createTestUser } from '@/test/authHelper'
+import type { ExecuteOperationOptions, TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
+import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { addToStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { Roles, WorkspacePlans } from '@speckle/shared'
+import * as ViewerRoute from '@speckle/shared/viewer/route'
+import * as ViewerState from '@speckle/shared/viewer/state'
+import { expect } from 'chai'
+import cryptoRandomString from 'crypto-random-string'
+import dayjs from 'dayjs'
+import { intersection, merge, times } from 'lodash-es'
+import type { PartialDeep } from 'type-fest'
+
+const { FF_WORKSPACES_MODULE_ENABLED, FF_SAVED_VIEWS_ENABLED } = getFeatureFlags()
+
+const fakeScreenshot =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PiQ2YQAAAABJRU5ErkJggg=='
+
+const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerState>) =>
+  merge(
+    {},
+    ViewerState.formatSerializedViewerState({
+      projectId: 'fake-project-id',
+      resources: {
+        request: {
+          resourceIdString: 'a,b,c'
+        }
+      },
+      ui: {
+        camera: {
+          position: [0, 0, 0],
+          target: [0, 0, 0]
+        }
+      }
+    }),
+    overrides || {}
+  )
+
+/**
+ * TODO:
+ * - Test that default group can be resolved even if view has more specific resourceIds w/ versions
+ * - Test that default group shows up or doesn't depending if there are views in it, regardless of
+ * whether there's filtering
+ */
+
+;(FF_SAVED_VIEWS_ENABLED ? describe : describe.skip)('Saved Views GraphQL CRUD', () => {
+  let apollo: TestApolloServer
+  let me: BasicTestUser
+  let guest: BasicTestUser
+  let myProject: BasicTestStream
+  let myProjectWorkspace: BasicTestWorkspace
+  let myLackingProjectWorkspace: BasicTestWorkspace
+  let myLackingProject: BasicTestStream
+  let myModel1: BasicTestBranch
+  let myModel2: BasicTestBranch
+  let testGroup1: BasicSavedViewGroupFragment
+
+  const buildCreateInput = (params: {
+    resourceIdString: string
+    projectId?: string
+    viewerState?: ViewerState.SerializedViewerState
+    overrides?: PartialDeep<CreateSavedViewMutationVariables['input']>
+  }): CreateSavedViewMutationVariables => ({
+    input: merge(
+      {},
+      {
+        projectId: params.projectId || myProject.id,
+        resourceIdString: params.resourceIdString,
+        screenshot: fakeScreenshot,
+        viewerState:
+          params.viewerState ||
+          fakeViewerState({
+            projectId: params.projectId || myProject.id,
+            resources: {
+              request: {
+                resourceIdString: params.resourceIdString
+              }
+            }
+          })
+      },
+      params.overrides || {}
+    )
+  })
+
+  const createSavedView = (
+    input: CreateSavedViewMutationVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(CreateSavedViewDocument, input, options)
+
+  const createSavedViewGroup = (
+    input: CreateSavedViewGroupMutationVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(CreateSavedViewGroupDocument, input, options)
+
+  const getGroup = (
+    input: GetProjectSavedViewGroupQueryVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(GetProjectSavedViewGroupDocument, input, options)
+
+  const getView = (
+    input: GetProjectSavedViewQueryVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(GetProjectSavedViewDocument, input, options)
+
+  const getProjectUngroupedViewGroup = (
+    input: GetProjectUngroupedViewGroupQueryVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(GetProjectUngroupedViewGroupDocument, input, options)
+
+  const model1ResourceIds = () => ViewerRoute.resourceBuilder().addModel(myModel1.id)
+
+  const model2ResourceIds = () => ViewerRoute.resourceBuilder().addModel(myModel2.id)
+
+  before(async () => {
+    me = await createTestUser(buildBasicTestUser({ name: 'me' }))
+    guest = await createTestUser(buildBasicTestUser({ name: 'guest' }))
+
+    myLackingProjectWorkspace = await createTestWorkspace(
+      buildBasicTestWorkspace(),
+      me,
+      {
+        addPlan: WorkspacePlans.Free
+      }
+    )
+    myLackingProject = await createTestStream(
+      buildBasicTestProject({
+        workspaceId: myLackingProjectWorkspace.id
+      }),
+      me
+    )
+
+    myProjectWorkspace = await createTestWorkspace(buildBasicTestWorkspace(), me, {
+      addPlan: WorkspacePlans.Pro
+    })
+    myProject = await createTestStream(
+      buildBasicTestProject({
+        workspaceId: myProjectWorkspace.id
+      }),
+      me
+    )
+    myModel1 = await createTestBranch({
+      branch: buildBasicTestModel(),
+      stream: myProject,
+      owner: me
+    })
+    myModel2 = await createTestBranch({
+      branch: buildBasicTestModel({ name: 'model-2' }),
+      stream: myProject,
+      owner: me
+    })
+    apollo = await testApolloServer({ authUserId: me.id })
+
+    // We only run a small subset of tests if the module is disabled, and we dont need this stuff:
+    if (FF_WORKSPACES_MODULE_ENABLED) {
+      testGroup1 = (
+        await createSavedViewGroup(
+          {
+            input: {
+              projectId: myProject.id,
+              resourceIdString: model1ResourceIds().toString(),
+              groupName: 'Test Group 1'
+            }
+          },
+          { assertNoErrors: true }
+        )
+      )?.data?.projectMutations.savedViewMutations.createGroup!
+    }
+  })
+
+  if (FF_WORKSPACES_MODULE_ENABLED) {
+    describe('creation', () => {
+      describe('canCreateSavedViewPolicy - forbidden error branches', () => {
+        it('should fail with ForbiddenError if user is not logged in', async () => {
+          const res = await createSavedView(
+            buildCreateInput({ projectId: myProject.id, resourceIdString: 'abc' }),
+            { authUserId: null }
+          )
+          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
+          expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+        })
+
+        it('should fail with ForbiddenError if user is not a project member', async () => {
+          const res = await createSavedView(
+            buildCreateInput({ projectId: myProject.id, resourceIdString: 'abc' }),
+            { authUserId: guest.id }
+          )
+          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
+          expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+        })
+
+        it('should fail with ForbiddenError if user is a member but lacks write access', async () => {
+          const newUser = await createTestUser(buildBasicTestUser({ name: 'new-user' }))
+          await addToStream(myProject, newUser, Roles.Stream.Reviewer)
+
+          const res = await createSavedView(
+            buildCreateInput({ projectId: myProject.id, resourceIdString: 'abc' }),
+            { authUserId: newUser.id }
+          )
+          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
+          expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+        })
+
+        it('should fail with ForbiddenError if workspace plan does not include SavedViews', async () => {
+          const res = await createSavedView(
+            buildCreateInput({
+              projectId: myLackingProject.id,
+              resourceIdString: 'abc'
+            })
+          )
+          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
+          expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+        })
+
+        it('should fail with ForbiddenError to create a saved view group if user lacks access (free plan)', async () => {
+          const resourceIds = ViewerRoute.resourceBuilder().addModel(
+            myLackingProject.id
+          )
+          const resourceIdString = resourceIds.toString()
+
+          const res = await createSavedViewGroup({
+            input: {
+              projectId: myLackingProject.id,
+              resourceIdString,
+              groupName: 'Should Not Work'
+            }
+          })
+
+          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
+          expect(res.data?.projectMutations.savedViewMutations.createGroup).to.not.be.ok
+        })
+
+        it('should fail with ForbiddenError to create a saved view if user lacks access (free plan)', async () => {
+          const resourceIds = ViewerRoute.resourceBuilder().addModel(
+            myLackingProject.id
+          )
+          const resourceIdString = resourceIds.toString()
+          const viewerState = fakeViewerState({
+            projectId: myLackingProject.id,
+            resources: {
+              request: {
+                resourceIdString
+              }
+            }
+          })
+
+          const res = await createSavedView(
+            buildCreateInput({
+              projectId: myLackingProject.id,
+              resourceIdString,
+              viewerState
+            })
+          )
+
+          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
+          expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+        })
+      })
+
+      it('should successfully create a saved view group', async () => {
+        const resourceIds = model1ResourceIds()
+        const resourceIdString = resourceIds.toString()
+
+        const res = await createSavedViewGroup({
+          input: {
+            projectId: myProject.id,
+            resourceIdString,
+            groupName: 'Test Group'
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const group = res.data?.projectMutations.savedViewMutations.createGroup
+        expect(group).to.be.ok
+        expect(group!.id).to.be.ok
+        expect(group!.projectId).to.equal(myProject.id)
+        expect(group!.resourceIds).to.deep.equal(
+          resourceIds.toResources().map((r) => r.toString())
+        )
+        expect(group!.title).to.equal('Test Group')
+        expect(group!.isUngroupedViewsGroup).to.be.false
+      })
+
+      itEach(
+        [
+          { val: '', title: 'too short' },
+          { val: cryptoRandomString({ length: 300 }), title: 'too long' }
+        ],
+        ({ title }) => `should fail to create group w/ invalid name: ${title}`,
+        async ({ val }) => {
+          const resourceIds = model1ResourceIds()
+          const resourceIdString = resourceIds.toString()
+
+          const res = await createSavedViewGroup({
+            input: {
+              projectId: myProject.id,
+              resourceIdString,
+              groupName: val // invalid name
+            }
+          })
+
+          expect(res).to.haveGraphQLErrors({
+            code: SavedViewGroupCreationValidationError.code
+          })
+          expect(res.data?.projectMutations.savedViewMutations.createGroup).to.not.be.ok
+        }
+      )
+
+      it('should fail to create group w/ invalid resourceIdString', async () => {
+        const res = await createSavedViewGroup({
+          input: {
+            projectId: myProject.id,
+            resourceIdString: 'invalid',
+            groupName: 'Test Group'
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewInvalidResourceTargetError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.createGroup).to.not.be.ok
+      })
+
+      it('should successfully create a saved view', async () => {
+        const resourceIds = model1ResourceIds()
+        const resourceIdString = resourceIds.toString()
+        const viewerState = fakeViewerState({
+          projectId: myProject.id,
+          resources: {
+            request: {
+              resourceIdString
+            }
+          }
+        })
+
+        const res = await createSavedView(
+          buildCreateInput({ resourceIdString, viewerState })
+        )
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const view = res.data?.projectMutations.savedViewMutations.createView
+        expect(view).to.be.ok
+        expect(view!.id).to.be.ok
+        expect(view!.name).to.contain('Scene - ') // auto-generated name
+        expect(view!.description).to.be.null
+        expect(view!.author?.id).to.equal(me.id)
+        expect(view!.groupId).to.be.null
+        expect(view!.createdAt).to.be.ok
+        expect(view!.updatedAt).to.be.ok
+        expect(view!.resourceIdString).to.equal(resourceIdString)
+        expect(view!.resourceIds).to.deep.equal(
+          resourceIds.toResources().map((r) => r.toString())
+        )
+        expect(view!.isHomeView).to.be.false
+        expect(view!.visibility).to.equal('public') // default
+        expect(view!.viewerState).to.deep.equalInAnyOrder(viewerState)
+        expect(view!.screenshot).to.equal(fakeScreenshot)
+        expect(view!.position).to.equal(0) // default position
+      })
+
+      it('should successfully create a saved view w/ non-default input values', async () => {
+        const groupId = testGroup1.id
+        const name = 'heyooo brodie'
+        const description = 'this is a description'
+        const isHomeView = true
+        const visibility = SavedViewVisibility.authorOnly
+
+        const resourceIds = model1ResourceIds()
+        const resourceIdString = resourceIds.toString()
+        const viewerState = fakeViewerState({
+          projectId: myProject.id,
+          resources: {
+            request: {
+              resourceIdString
+            }
+          }
+        })
+
+        const res = await createSavedView(
+          buildCreateInput({
+            resourceIdString,
+            viewerState,
+            overrides: {
+              groupId,
+              name,
+              description,
+              isHomeView,
+              visibility
+            }
+          })
+        )
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const view = res.data?.projectMutations.savedViewMutations.createView
+        expect(view).to.be.ok
+        expect(view!.id).to.be.ok
+        expect(view!.name).to.equal(name)
+        expect(view!.description).to.equal(description)
+        expect(view!.groupId).to.equal(groupId)
+        expect(view!.isHomeView).to.equal(isHomeView)
+        expect(view!.visibility).to.equal(visibility)
+      })
+
+      it('should fail to create view if no access', async () => {
+        const resourceIdString = model1ResourceIds().toString()
+        const res = await createSavedView(buildCreateInput({ resourceIdString }), {
+          authUserId: guest.id
+        })
+
+        expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
+        expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+      })
+
+      it('should fail to create view if invalid groupId', async () => {
+        const resourceIdString = model1ResourceIds().toString()
+        const res = await createSavedView(
+          buildCreateInput({
+            resourceIdString,
+            overrides: { groupId: 'invalid-group-id' }
+          }),
+          {
+            authUserId: me.id
+          }
+        )
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewCreationValidationError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+      })
+
+      it('should recalculate group resourceIds on view assignment', async () => {
+        const testGroup1 = (
+          await createSavedViewGroup(
+            {
+              input: {
+                projectId: myProject.id,
+                resourceIdString: model1ResourceIds().toString(),
+                groupName: 'Test Recalculation Group'
+              }
+            },
+            { assertNoErrors: true }
+          )
+        )?.data?.projectMutations.savedViewMutations.createGroup!
+
+        const getCurrentGroup = async () =>
+          await getGroup(
+            { groupId: testGroup1.id, projectId: myProject.id },
+            { assertNoErrors: true }
+          )
+
+        const groupInitial = await getCurrentGroup()
+        const initialResourceIds =
+          groupInitial.data?.project.savedViewGroup?.resourceIds || []
+        expect(initialResourceIds.find((r) => r === myModel1.id)).to.be.ok // initial empty group string only
+        expect(initialResourceIds.find((r) => r === myModel2.id)).to.not.be.ok
+
+        await createSavedView(
+          buildCreateInput({
+            resourceIdString: model2ResourceIds().toString(),
+            overrides: { groupId: testGroup1.id }
+          }),
+          { assertNoErrors: true }
+        )
+
+        const groupAfter = await getCurrentGroup()
+        const updatedResourceIds =
+          groupAfter.data?.project.savedViewGroup?.resourceIds || []
+
+        expect(updatedResourceIds.find((r) => r === myModel1.id)).to.not.be.ok // gone, no such views in there
+        expect(updatedResourceIds.find((r) => r === myModel2.id)).to.be.ok // this is now added
+      })
+
+      it('should fail to create view w/ invalid resourceIdString', async () => {
+        const res = await createSavedView(
+          buildCreateInput({
+            resourceIdString:
+              'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+          })
+        )
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewInvalidResourceTargetError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+      })
+
+      it('should fail to create view w/ invalid screenshot', async () => {
+        const resourceIdString = model1ResourceIds().toString()
+        const res = await createSavedView(
+          buildCreateInput({
+            resourceIdString,
+            overrides: { screenshot: 'invalid-screenshot' }
+          }),
+          {
+            authUserId: me.id
+          }
+        )
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewCreationValidationError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+      })
+
+      it('should fail to create view w/ invalid viewerState resourceIdString', async () => {
+        const resourceIdString = model1ResourceIds().toString()
+        const res = await createSavedView(
+          buildCreateInput({
+            resourceIdString,
+            overrides: {
+              viewerState: fakeViewerState({
+                projectId: myProject.id,
+                resources: {
+                  request: {
+                    resourceIdString: 'invalid-resource-id'
+                  }
+                }
+              })
+            }
+          }),
+          {
+            authUserId: me.id
+          }
+        )
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewCreationValidationError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+      })
+
+      it('should fail to create view w/ invalid viewerState projectId', async () => {
+        const resourceIdString = model1ResourceIds().toString()
+        const res = await createSavedView(
+          buildCreateInput({
+            resourceIdString,
+            overrides: {
+              viewerState: fakeViewerState({
+                projectId: 'invalid-project-id',
+                resources: {
+                  request: {
+                    resourceIdString
+                  }
+                }
+              })
+            }
+          }),
+          {
+            authUserId: me.id
+          }
+        )
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewCreationValidationError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+      })
+
+      it('should fail to create view w/ invalid viewerState', async () => {
+        const resourceIdString = model1ResourceIds().toString()
+        const res = await createSavedView(
+          buildCreateInput({
+            resourceIdString,
+            viewerState: { a: 1 } as unknown as ViewerState.SerializedViewerState // invalid state
+          }),
+          {
+            authUserId: me.id
+          }
+        )
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewCreationValidationError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+      })
+
+      it('should not fail to create view w/ duplicate name', async () => {
+        const resourceIdString = model1ResourceIds().toString()
+        const name = 'test1'
+
+        await createSavedView(
+          buildCreateInput({
+            resourceIdString,
+            overrides: {
+              name,
+              groupId: null
+            }
+          }),
+          {
+            assertNoErrors: true
+          }
+        )
+
+        await createSavedView(
+          buildCreateInput({
+            resourceIdString,
+            overrides: {
+              name,
+              groupId: null
+            }
+          }),
+          { assertNoErrors: true }
+        )
+      })
+    })
+
+    describe('reading groups', () => {
+      const NAMED_GROUP_COUNT = 15
+      const GROUP_COUNT = NAMED_GROUP_COUNT + 1 // + ungrouped group
+
+      const PAGE_COUNT = 3
+
+      const SEARCH_STRING = 'bababooey'
+      const SEARCH_STRING_ITEM_COUNT = GROUP_COUNT / 2
+
+      const OTHER_AUTHOR_ITEM_COUNT = GROUP_COUNT / 4
+      // const OTHER_AUTHOR_PRIVATE_ITEM_COUNT = OTHER_AUTHOR_ITEM_COUNT / 2
+
+      const modelIds: string[] = []
+      let readTestProject: BasicTestStream
+      let otherReader: BasicTestUser
+
+      const getAllReadModelResourceIds = () =>
+        ViewerRoute.resourceBuilder().addResources(
+          modelIds.map((id) => new ViewerRoute.ViewerModelResource(id))
+        )
+
+      const getProjectViewGroups = (
+        input: GetProjectSavedViewGroupsQueryVariables,
+        options?: ExecuteOperationOptions
+      ) => apollo.execute(GetProjectSavedViewGroupsDocument, input, options)
+
+      before(async () => {
+        otherReader = await createTestUser(buildBasicTestUser({ name: 'other-reader' }))
+        await assignToWorkspace(
+          myProjectWorkspace,
+          otherReader,
+          Roles.Workspace.Member,
+          WorkspaceSeatType.Editor
+        )
+
+        readTestProject = await createTestStream(
+          buildBasicTestProject({
+            name: 'read-test-project',
+            workspaceId: myProjectWorkspace.id
+          }),
+          me
+        )
+
+        await addToStream(readTestProject, otherReader, Roles.Stream.Contributor, {
+          owner: me
+        })
+
+        // Create a bunch of groups (views w/ groupNames), each w/ a different model
+        let includedSearchString = 0
+        const createGroupView = async (groupName: string | null, idx: number) => {
+          const useDifferentAuthor = idx % 4 === 0
+          const shouldBePrivate = useDifferentAuthor && idx % (2 * 4) === 0
+          const includeSearchString =
+            !shouldBePrivate && includedSearchString++ < SEARCH_STRING_ITEM_COUNT
+
+          const model = await createTestBranch({
+            branch: buildBasicTestModel({
+              name: `model-${groupName || 'ungrouped'}`
+            }),
+            stream: readTestProject,
+            owner: me
+          })
+          modelIds.push(model.id)
+
+          const resourceIdString = ViewerRoute.resourceBuilder()
+            .addModel(model.id)
+            .toString()
+
+          let groupId: string | null = null
+          if (groupName) {
+            const group = await createSavedViewGroup(
+              {
+                input: {
+                  projectId: readTestProject.id,
+                  resourceIdString,
+                  groupName
+                }
+              },
+              {
+                assertNoErrors: true,
+                authUserId: useDifferentAuthor ? otherReader.id : me.id
+              }
+            )
+            groupId =
+              group.data?.projectMutations.savedViewMutations.createGroup?.id || null
+          }
+
+          const viewInput = buildCreateInput({
+            resourceIdString,
+            projectId: readTestProject.id,
+            overrides: {
+              groupId,
+              visibility: shouldBePrivate
+                ? SavedViewVisibility.authorOnly
+                : SavedViewVisibility.public,
+              name: `View ${idx} ${includeSearchString ? SEARCH_STRING : ''}`
+            }
+          })
+          return await createSavedView(viewInput, {
+            assertNoErrors: true,
+            authUserId: useDifferentAuthor ? otherReader.id : me.id
+          })
+        }
+
+        // one view without a group at the end
+        const groupNames = [...times(NAMED_GROUP_COUNT, (i) => `group-${i + 1}`), null]
+        await Promise.all(
+          groupNames.map((groupName, idx) => createGroupView(groupName, idx))
+        )
+      })
+
+      it('should get NotFoundError if trying to get nonexistant group', async () => {
+        const res = await getGroup({
+          groupId: 'zabababababababa',
+          projectId: readTestProject.id
+        })
+
+        expect(res).to.haveGraphQLErrors({ code: NotFoundError.code })
+        expect(res.data?.project.savedViewGroup).to.not.be.ok
+      })
+
+      it('returns no groups, not even default one, if no views exist', async () => {
+        const res = await getProjectViewGroups({
+          projectId: readTestProject.id,
+          input: {
+            limit: GROUP_COUNT, // all in 1 page
+            resourceIdString: 'zabababababababa'
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const data = res.data?.project.savedViewGroups
+        expect(data).to.be.ok
+        expect(data!.totalCount).to.equal(0)
+        expect(data!.items.length).to.equal(0)
+        expect(data!.cursor).to.be.null
+      })
+
+      it('should successfully read a projects view groups w/ pagination', async () => {
+        let cursor: string | null = null
+        let pagesLoaded = 0
+        let groupsFound = 0
+        let defaultGroupsFound = 0
+        const allReadModelResourceIds = getAllReadModelResourceIds()
+        const PAGE_SIZE = Math.ceil(GROUP_COUNT / PAGE_COUNT)
+
+        const loadPage = async () => {
+          const res = await getProjectViewGroups({
+            projectId: readTestProject.id,
+            input: {
+              limit: PAGE_SIZE,
+              cursor,
+              resourceIdString: allReadModelResourceIds.toString()
+            }
+          })
+
+          expect(res).to.not.haveGraphQLErrors()
+
+          const data = res.data?.project.savedViewGroups
+          expect(data).to.be.ok
+          expect(data!.totalCount).to.equal(GROUP_COUNT)
+
+          if (data?.cursor) {
+            expect(data!.items.length).to.be.lessThanOrEqual(PAGE_SIZE)
+          } else {
+            expect(data!.items.length).to.eq(0)
+          }
+
+          const defaultGroupsInResult = data?.items.filter(
+            (group) => group.isUngroupedViewsGroup
+          )
+          defaultGroupsFound += defaultGroupsInResult?.length || 0
+
+          const allResourceIds = allReadModelResourceIds
+            .toResources()
+            .map((r) => r.toString())
+          for (const group of data!.items) {
+            expect(group.projectId).to.equal(readTestProject.id)
+            expect(
+              intersection(group.resourceIds, allResourceIds).length
+            ).to.be.greaterThan(0)
+            groupsFound++
+          }
+
+          if (!data?.cursor) {
+            expect(data?.items.length).to.be.lessThanOrEqual(PAGE_SIZE)
+          }
+
+          cursor = data?.cursor || null
+          pagesLoaded++
+        }
+
+        do {
+          if (pagesLoaded > PAGE_COUNT) {
+            throw new Error(
+              'Too many pages loaded, something is wrong with pagination logic'
+            )
+          }
+
+          await loadPage()
+        } while (cursor)
+
+        expect(pagesLoaded).to.equal(PAGE_COUNT + 1) // +1 for last,empty page
+        expect(groupsFound).to.equal(GROUP_COUNT)
+        expect(defaultGroupsFound).to.equal(1) // only 1 default group
+      })
+
+      // it('should return different groups in same project, if resource string differs', async () => {
+      //   const res = await getProjectViewGroups({
+      //     projectId: readTestProject.id,
+      //     input: {
+      //       limit: GROUP_COUNT, // all in 1 page
+      //       resourceIdString: 'ayy'
+      //     }
+      //   })
+
+      //   expect(res).to.not.haveGraphQLErrors()
+      //   const data = res.data?.project.savedViewGroups
+      //   expect(data).to.be.ok
+      //   expect(data!.totalCount).to.equal(1) // only default group returned
+      //   expect(data!.items.length).to.equal(1)
+      //   expect(data!.cursor).to.not.be.null
+      // })
+
+      it('should respect search filter and filter out groups w/ views that dont have the search string in their name', async () => {
+        const res = await getProjectViewGroups({
+          projectId: readTestProject.id,
+          input: {
+            limit: GROUP_COUNT, // all in 1 page
+            resourceIdString: getAllReadModelResourceIds().toString(),
+            search: SEARCH_STRING
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        const data = res.data?.project.savedViewGroups
+
+        expect(data).to.be.ok
+        expect(data!.totalCount).to.equal(SEARCH_STRING_ITEM_COUNT)
+        expect(data!.items.length).to.equal(SEARCH_STRING_ITEM_COUNT)
+      })
+
+      it('should respect onlyAuthored flag', async () => {
+        const res = await getProjectViewGroups({
+          projectId: readTestProject.id,
+          input: {
+            limit: GROUP_COUNT, // all in 1 page
+            resourceIdString: getAllReadModelResourceIds().toString(),
+            onlyAuthored: true
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const data = res.data?.project.savedViewGroups
+        expect(data).to.be.ok
+        expect(data!.totalCount).to.equal(GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT)
+        expect(data!.items.length).to.equal(GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT)
+      })
+
+      it('can retrieve default group both by id and also ungroupedViewGroup query', async () => {
+        const allGroupsRes = await getProjectViewGroups(
+          {
+            projectId: readTestProject.id,
+            input: {
+              limit: GROUP_COUNT, // all in 1 page
+              resourceIdString: getAllReadModelResourceIds().toString()
+            }
+          },
+          { assertNoErrors: true }
+        )
+
+        const defaultGroup = allGroupsRes.data?.project.savedViewGroups.items.find(
+          (g) => g.isUngroupedViewsGroup
+        )
+        expect(defaultGroup).to.be.ok
+        expect(defaultGroup!.views.items.length).to.equal(1) // 1 view in there
+
+        const defaultGroupViewId = defaultGroup!.views.items[0].id
+        expect(defaultGroupViewId).to.be.ok
+
+        const groupById = await getGroup(
+          {
+            projectId: readTestProject.id,
+            groupId: defaultGroup!.id
+          },
+          { assertNoErrors: true }
+        )
+        const groupByIdData = groupById.data?.project.savedViewGroup
+        expect(groupByIdData).to.be.ok
+        expect(groupByIdData!.id).to.equal(defaultGroup!.id)
+        expect(groupByIdData!.isUngroupedViewsGroup).to.be.true
+        expect(groupByIdData!.views.items.length).to.equal(1) // 1 view in there
+        expect(groupByIdData!.views.items[0].id).to.equal(defaultGroupViewId)
+
+        const ungroupedGroup = await getProjectUngroupedViewGroup(
+          {
+            projectId: readTestProject.id,
+            input: { resourceIdString: getAllReadModelResourceIds().toString() }
+          },
+          { assertNoErrors: true }
+        )
+        const ungroupedGroupData = ungroupedGroup.data?.project.ungroupedViewGroup
+        expect(ungroupedGroupData).to.be.ok
+        expect(ungroupedGroupData!.id).to.equal(defaultGroup!.id)
+        expect(ungroupedGroupData!.isUngroupedViewsGroup).to.be.true
+        expect(ungroupedGroupData!.views.items.length).to.equal(1) // 1 view in there
+        expect(ungroupedGroupData!.views.items[0].id).to.equal(defaultGroupViewId)
+      })
+
+      describe('views', () => {
+        let myFirstGroup: BasicSavedViewGroupFragment
+        const myFirstGroupViews: BasicSavedViewFragment[] = []
+
+        const VIEW_COUNT = GROUP_COUNT
+        const OTHER_USER_VIEW_COUNT = VIEW_COUNT / 2
+        const OTHER_USER_PRIVATE_VIEW_COUNT = OTHER_USER_VIEW_COUNT / 2
+        const PUBLIC_VIEW_COUNT = VIEW_COUNT - OTHER_USER_PRIVATE_VIEW_COUNT
+
+        const SEARCH_STRING = 'babab123'
+        const SEARCHABLE_VIEW_COUNT = PUBLIC_VIEW_COUNT / 3
+
+        /**
+         * Similar to 'reading groups' - create a test group and a bunch of views in it, based on const params,
+         * and then do various tests there
+         */
+
+        before(async () => {
+          // Create new group
+          const group = await createSavedViewGroup(
+            {
+              input: {
+                projectId: readTestProject.id,
+                resourceIdString: ViewerRoute.resourceBuilder()
+                  .addModel(modelIds[0])
+                  .toString(),
+                groupName: 'My First Views Test Group'
+              }
+            },
+            {
+              assertNoErrors: true
+            }
+          )
+          myFirstGroup = group.data?.projectMutations.savedViewMutations.createGroup!
+
+          // Create a bunch of views, one for each modelId
+          // Serial creation for ordered dates
+          for (let i = 0; i < modelIds.length; i++) {
+            const modelId = modelIds[i]
+            const idx = i + 1 // 1-based index for naming
+
+            const shouldBeOtherUser = i % 2 === 0
+            const shouldBePrivate = shouldBeOtherUser && i % 4 === 0
+            const shouldAddSearchString = !shouldBePrivate && i % 3 === 0
+
+            const res = await createSavedView(
+              buildCreateInput({
+                resourceIdString: ViewerRoute.resourceBuilder()
+                  .addModel(modelId)
+                  .toString(),
+                projectId: readTestProject.id,
+                overrides: {
+                  groupId: myFirstGroup.id,
+                  name: `Grouped View ${shouldAddSearchString ? SEARCH_STRING : ''} #${
+                    idx + 1
+                  }`,
+                  visibility: shouldBePrivate
+                    ? SavedViewVisibility.authorOnly
+                    : SavedViewVisibility.public
+                }
+              }),
+              {
+                assertNoErrors: true,
+                authUserId: shouldBeOtherUser ? otherReader.id : me.id
+              }
+            )
+            const view = res.data?.projectMutations.savedViewMutations.createView
+            myFirstGroupViews.push(view!)
+          }
+        })
+
+        it('should successfully read specific view', async () => {
+          const view = myFirstGroupViews[0]
+          const res = await getView(
+            {
+              projectId: readTestProject.id,
+              viewId: view.id
+            },
+            { assertNoErrors: true }
+          )
+
+          const data = res.data?.project.savedView
+          expect(data).to.be.ok
+          expect(data!.id).to.equal(view.id)
+          expect(data!.name).to.equal(view.name)
+          expect(data!.description).to.equal(view.description)
+          expect(data!.author?.id).to.equal(view.author?.id)
+          expect(data!.groupId).to.equal(view.groupId)
+          expect(data!.createdAt.toISOString()).to.equal(view.createdAt.toISOString())
+          expect(data!.group.id).to.equal(myFirstGroup.id)
+        })
+
+        it('should get NotFoundError if trying to get nonexistant view', async () => {
+          const res = await getView({
+            projectId: readTestProject.id,
+            viewId: 'zabababababababa'
+          })
+
+          expect(res).to.haveGraphQLErrors({ code: NotFoundError.code })
+          expect(res.data?.project.savedView).to.not.be.ok
+        })
+
+        it('should successfully read a group with its views', async () => {
+          const res = await getGroup(
+            {
+              projectId: readTestProject.id,
+              groupId: myFirstGroup.id,
+              viewsInput: {
+                limit: 100 // all in 1 page
+              }
+            },
+            { assertNoErrors: true }
+          )
+
+          const data = res.data?.project.savedViewGroup
+          expect(data).to.be.ok
+          expect(data!.id).to.equal(myFirstGroup.id)
+          expect(data!.title).to.equal(myFirstGroup.title)
+          expect(data!.resourceIds).to.deep.equalInAnyOrder(
+            getAllReadModelResourceIds().map((r) => r.toString())
+          )
+
+          const views = data!.views
+          expect(views).to.be.ok
+          expect(views.totalCount).to.equal(PUBLIC_VIEW_COUNT)
+          expect(views.items.length).to.equal(PUBLIC_VIEW_COUNT)
+
+          for (const view of views.items) {
+            expect(view.groupId).to.equal(myFirstGroup.id)
+            expect(view.projectId).to.equal(readTestProject.id)
+            expect(view.resourceIds.length).to.equal(1)
+
+            const resourceId = view.resourceIds[0]
+            expect(modelIds.includes(resourceId)).to.be.true
+          }
+        })
+
+        it('should handle pagination', async () => {
+          let cursor: string | null = null
+          let pagesLoaded = 0
+          let viewsFound = 0
+          const allReadModelResourceIds = getAllReadModelResourceIds()
+          const PAGE_SIZE = Math.ceil(PUBLIC_VIEW_COUNT / PAGE_COUNT)
+
+          const loadPage = async () => {
+            const res = await getGroup(
+              {
+                projectId: readTestProject.id,
+                groupId: myFirstGroup.id,
+                viewsInput: {
+                  limit: PAGE_SIZE,
+                  cursor
+                }
+              },
+              { assertNoErrors: true }
+            )
+
+            expect(res).to.not.haveGraphQLErrors()
+
+            const data = res.data?.project.savedViewGroup.views
+            expect(data).to.be.ok
+            expect(data!.totalCount).to.equal(PUBLIC_VIEW_COUNT)
+
+            if (data?.cursor) {
+              expect(data!.items.length).to.be.lessThanOrEqual(PAGE_SIZE)
+            } else {
+              expect(data!.items.length).to.eq(0)
+            }
+
+            const allResourceIds = allReadModelResourceIds
+              .toResources()
+              .map((r) => r.toString())
+            for (const view of data!.items) {
+              expect(view.projectId).to.equal(readTestProject.id)
+              expect(
+                intersection(view.resourceIds, allResourceIds).length
+              ).to.be.greaterThan(0)
+              viewsFound++
+            }
+
+            if (!data?.cursor) {
+              expect(data?.items.length).to.be.lessThanOrEqual(PAGE_SIZE)
+            }
+
+            cursor = data?.cursor || null
+            pagesLoaded++
+          }
+
+          do {
+            if (pagesLoaded > PAGE_COUNT) {
+              throw new Error(
+                'Too many pages loaded, something is wrong with pagination logic'
+              )
+            }
+
+            await loadPage()
+          } while (cursor)
+
+          expect(pagesLoaded).to.equal(PAGE_COUNT + 1) // +1 for last,empty page
+          expect(viewsFound).to.equal(PUBLIC_VIEW_COUNT)
+        })
+
+        it('should respect onlyAuthored flag', async () => {
+          const res = await getGroup(
+            {
+              projectId: readTestProject.id,
+              groupId: myFirstGroup.id,
+              viewsInput: {
+                limit: 100, // all in 1 page
+                onlyAuthored: true
+              }
+            },
+            { assertNoErrors: true, authUserId: otherReader.id }
+          )
+
+          const data = res.data?.project.savedViewGroup.views
+          expect(data).to.be.ok
+          expect(data!.totalCount).to.equal(OTHER_USER_VIEW_COUNT)
+          expect(data!.items.length).to.equal(OTHER_USER_VIEW_COUNT)
+          expect(data!.items.every((v) => v.author?.id === otherReader.id)).to.be.true
+        })
+
+        it('should respect search filter', async () => {
+          const res = await getGroup(
+            {
+              projectId: readTestProject.id,
+              groupId: myFirstGroup.id,
+              viewsInput: {
+                limit: 100, // all in 1 page
+                search: SEARCH_STRING
+              }
+            },
+            { assertNoErrors: true }
+          )
+
+          const data = res.data?.project.savedViewGroup.views
+          expect(data).to.be.ok
+          expect(data!.totalCount).to.equal(SEARCHABLE_VIEW_COUNT)
+          expect(data!.items.length).to.equal(SEARCHABLE_VIEW_COUNT)
+
+          for (const view of data!.items) {
+            expect(view.name.includes(SEARCH_STRING)).to.be.true
+          }
+        })
+
+        it('should allow sorting by name asc', async () => {
+          const res = await getGroup(
+            {
+              projectId: readTestProject.id,
+              groupId: myFirstGroup.id,
+              viewsInput: {
+                limit: 100, // all in 1 page
+                sortBy: 'name',
+                sortDirection: 'ASC'
+              }
+            },
+            { assertNoErrors: true }
+          )
+
+          const data = res.data?.project.savedViewGroup.views
+          expect(data).to.be.ok
+          expect(data!.items.length).to.equal(PUBLIC_VIEW_COUNT)
+
+          const names = data!.items.map((v) => v.name)
+          const sortedNames = [...names].sort()
+          expect(names).to.deep.equal(sortedNames)
+        })
+
+        it('should allow sorting by createdAt desc', async () => {
+          const res = await getGroup(
+            {
+              projectId: readTestProject.id,
+              groupId: myFirstGroup.id,
+              viewsInput: {
+                limit: 100, // all in 1 page
+                sortBy: 'createdAt',
+                sortDirection: 'DESC'
+              }
+            },
+            { assertNoErrors: true }
+          )
+
+          const data = res.data?.project.savedViewGroup.views
+          expect(data).to.be.ok
+          expect(data!.items.length).to.equal(PUBLIC_VIEW_COUNT)
+
+          const createdAt = data!.items.map((v) => dayjs(v.createdAt))
+          const sortedCreatedAt = [...createdAt].sort((a, b) => (b.isAfter(a) ? 1 : -1))
+          expect(createdAt).to.deep.equal(sortedCreatedAt)
+        })
+      })
+    })
+  } else {
+    it('should not allowing creating a group if workspaces are disabled', async () => {
+      const resourceIds = model1ResourceIds()
+      const resourceIdString = resourceIds.toString()
+
+      const res = await createSavedViewGroup({
+        input: {
+          projectId: myProject.id,
+          resourceIdString,
+          groupName: 'Test Group'
+        }
+      })
+
+      expect(res).to.haveGraphQLErrors({
+        code: ForbiddenError.code
+      })
+      expect(res.data?.projectMutations.savedViewMutations.createGroup).to.not.be.ok
+    })
+
+    it('should not allowing creating a view if workspaces are disabled', async () => {
+      const resourceIds = model1ResourceIds()
+      const resourceIdString = resourceIds.toString()
+
+      const res = await createSavedView({
+        input: {
+          projectId: myProject.id,
+          resourceIdString,
+          name: 'Test View',
+          screenshot: fakeScreenshot,
+          viewerState: fakeViewerState()
+        }
+      })
+
+      expect(res).to.haveGraphQLErrors({
+        code: ForbiddenError.code
+      })
+      expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+    })
+  }
+})

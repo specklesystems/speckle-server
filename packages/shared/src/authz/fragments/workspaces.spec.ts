@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   ensureWorkspaceRoleAndSessionFragment,
   ensureWorkspacesEnabledFragment,
-  ensureUserIsWorkspaceAdminFragment
+  ensureUserIsWorkspaceAdminFragment,
+  ensureCanUseWorkspacePlanFeatureFragment
 } from './workspaces.js'
 import cryptoRandomString from 'crypto-random-string'
 import {
@@ -11,13 +12,24 @@ import {
   ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
   WorkspaceNotEnoughPermissionsError,
+  WorkspacePlanNoFeatureAccessError,
+  WorkspaceReadOnlyError,
   WorkspacesNotEnabledError,
   WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
 import { OverridesOf } from '../../tests/helpers/types.js'
 import { parseFeatureFlags } from '../../environment/index.js'
 import { Roles } from '../../core/constants.js'
-import { getWorkspaceFake } from '../../tests/fakes.js'
+import {
+  getEnvFake,
+  getWorkspaceFake,
+  getWorkspacePlanFake
+} from '../../tests/fakes.js'
+import {
+  PaidWorkspacePlans,
+  PaidWorkspacePlanStatuses,
+  WorkspacePlanFeatures
+} from '../../workspaces/index.js'
 
 describe('ensureWorkspaceRoleAndSessionFragment', () => {
   it('hides non existing workspaces behind a WorkspaceNoAccessError', async () => {
@@ -319,5 +331,101 @@ describe('ensureUserIsWorkspaceAdminFragment', () => {
     const result = await policy(getPolicyArgs())
 
     expect(result).toBeAuthOKResult()
+  })
+})
+
+describe('ensureCanUseWorkspacePlanFeatureFragment', () => {
+  const buildSUT = (
+    overrides?: OverridesOf<typeof ensureCanUseWorkspacePlanFeatureFragment>
+  ) =>
+    ensureCanUseWorkspacePlanFeatureFragment({
+      getEnv: getEnvFake({
+        FF_WORKSPACES_MODULE_ENABLED: true,
+        FF_SAVED_VIEWS_ENABLED: true
+      }),
+      getWorkspacePlan: getWorkspacePlanFake({
+        name: PaidWorkspacePlans.Pro,
+        status: PaidWorkspacePlanStatuses.Valid
+      }),
+      ...overrides
+    })
+
+  it('succeeds w/ valid workspace w/ feature access', async () => {
+    const sut = buildSUT()
+
+    const result = await sut({
+      workspaceId: cryptoRandomString({ length: 10 }),
+      feature: WorkspacePlanFeatures.SavedViews
+    })
+
+    expect(result).toBeOKResult()
+  })
+
+  it('fails if workspaces disabled', async () => {
+    const sut = buildSUT({
+      getEnv: getEnvFake({
+        FF_WORKSPACES_MODULE_ENABLED: false
+      })
+    })
+
+    const result = await sut({
+      workspaceId: cryptoRandomString({ length: 10 }),
+      feature: WorkspacePlanFeatures.SavedViews
+    })
+
+    expect(result).toBeAuthErrorResult({
+      code: WorkspacesNotEnabledError.code
+    })
+  })
+
+  it('fails if workspace plan readonly', async () => {
+    const sut = buildSUT({
+      getWorkspacePlan: getWorkspacePlanFake({
+        name: PaidWorkspacePlans.Pro,
+        status: PaidWorkspacePlanStatuses.Canceled
+      })
+    })
+
+    const result = await sut({
+      workspaceId: cryptoRandomString({ length: 10 }),
+      feature: WorkspacePlanFeatures.SavedViews
+    })
+
+    expect(result).toBeAuthErrorResult({
+      code: WorkspaceReadOnlyError.code
+    })
+  })
+
+  it('fails w/o plan', async () => {
+    const sut = buildSUT({
+      getWorkspacePlan: async () => null
+    })
+
+    const result = await sut({
+      workspaceId: cryptoRandomString({ length: 10 }),
+      feature: WorkspacePlanFeatures.SavedViews
+    })
+
+    expect(result).toBeAuthErrorResult({
+      code: WorkspaceNoAccessError.code
+    })
+  })
+
+  it('it fails if plan doesnt have access to feature', async () => {
+    const sut = buildSUT({
+      getWorkspacePlan: getWorkspacePlanFake({
+        name: PaidWorkspacePlans.Team,
+        status: PaidWorkspacePlanStatuses.Valid
+      })
+    })
+
+    const result = await sut({
+      workspaceId: cryptoRandomString({ length: 10 }),
+      feature: WorkspacePlanFeatures.SavedViews
+    })
+
+    expect(result).toBeAuthErrorResult({
+      code: WorkspacePlanNoFeatureAccessError.code
+    })
   })
 })

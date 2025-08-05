@@ -14,6 +14,10 @@ export default defineNuxtPlugin(() => {
           key: T,
           handler: (event: EventBusKeyPayloadMap[T]) => void
         ) => emitter.on(key, handler),
+        off: <T extends EventBusKeys>(
+          key: T,
+          handler?: (event: EventBusKeyPayloadMap[T]) => void
+        ) => emitter.off(key, handler),
         emit: <T extends EventBusKeys>(key: T, payload: EventBusKeyPayloadMap[T]) =>
           emitter.emit(key, payload)
       }

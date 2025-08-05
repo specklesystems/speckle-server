@@ -68,6 +68,7 @@ import {
   BillingInterval,
   WorkspacePlanStatuses
 } from '~/lib/common/generated/gql/graphql'
+import { useFeatureFlags } from '~/lib/common/composables/env'
 
 graphql(`
   fragment WorkspaceBillingPage_Workspace on Workspace {
@@ -91,6 +92,8 @@ graphql(`
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
 const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
+const featureFlags = useFeatureFlags()
+
 const { isFreePlan } = useWorkspacePlan(slug.value)
 const { result: workspaceResult } = useQuery(
   settingsWorkspaceBillingQuery,
@@ -110,11 +113,12 @@ const showBillingAlert = computed(
     workspace.value?.plan?.status === WorkspacePlanStatuses.CancelationScheduled
 )
 const reachedPlanLimit = computed(() =>
-  workspaceReachedPlanLimit(
-    workspace.value?.plan?.name,
-    workspace.value?.plan?.usage?.projectCount,
-    workspace.value?.plan?.usage?.modelCount
-  )
+  workspaceReachedPlanLimit({
+    plan: workspace.value?.plan?.name,
+    projectCount: workspace.value?.plan?.usage?.projectCount,
+    modelCount: workspace.value?.plan?.usage?.modelCount,
+    featureFlags
+  })
 )
 const showPricingInfo = computed(() => {
   if (!workspace.value?.plan?.name) return false

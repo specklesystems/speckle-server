@@ -6,5 +6,6 @@ export const permissionCheckResultFragment = graphql(`
     code
     message
     payload
+    errorMessage
   }
 `)

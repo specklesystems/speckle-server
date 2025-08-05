@@ -535,3 +535,6 @@ export const getPreviewServiceMaxQueueBackpressure = (): number => {
 export const emailVerificationTimeoutMinutes = (): number => {
   return getIntFromEnv('EMAIL_VERIFICATION_TIMEOUT_MINUTES', '5')
 }
+
+export const areSavedViewsEnabled = (): boolean =>
+  getFeatureFlags().FF_SAVED_VIEWS_ENABLED

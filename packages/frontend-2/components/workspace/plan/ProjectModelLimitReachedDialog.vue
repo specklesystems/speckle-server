@@ -24,6 +24,7 @@ import type { LayoutDialogButton } from '@speckle/ui-components'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import { formatName } from '~/lib/billing/helpers/plan'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { useFeatureFlags } from '~/lib/common/composables/env'
 
 const props = defineProps<{
   workspaceSlug: string
@@ -39,10 +40,11 @@ const dialogOpen = defineModel<boolean>('open', {
 })
 
 const mixpanel = useMixpanel()
+const featureFlags = useFeatureFlags()
 
 const planConfig = computed(() => {
   if (!props.plan) return null
-  return WorkspacePlanConfigs[props.plan]
+  return WorkspacePlanConfigs({ featureFlags })[props.plan]
 })
 
 const explorePlansButton: LayoutDialogButton = {

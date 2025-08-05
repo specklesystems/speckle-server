@@ -259,7 +259,8 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
           canRegenerateToken: () => ({
             authorized: faker.datatype.boolean(),
             code: faker.string.alphanumeric(10),
-            message: faker.lorem.words(10)
+            message: faker.lorem.words(10),
+            payload: null
           })
         },
         AutomateFunctionRelease: {

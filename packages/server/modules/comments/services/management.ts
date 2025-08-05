@@ -20,7 +20,6 @@ import type {
   CreateCommentThreadAndNotify,
   EditCommentAndNotify,
   GetComment,
-  GetViewerResourceItemsUngrouped,
   GetViewerResourcesForComment,
   InsertCommentLinks,
   InsertCommentPayload,
@@ -33,6 +32,7 @@ import type {
 import type { GetStream } from '@/modules/core/domain/streams/operations'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { CommentEvents } from '@/modules/comments/domain/events'
+import type { GetViewerResourceItemsUngrouped } from '@/modules/viewer/domain/operations/resources'
 
 export const createCommentThreadAndNotifyFactory =
   (deps: {

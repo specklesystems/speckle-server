@@ -45,3 +45,14 @@ export const mapDbToGqlProjectVisibility = (
       throwUncoveredError(visibility)
   }
 }
+
+export const mapGqlToDbSortDirection = (direction: 'ASC' | 'DESC'): 'asc' | 'desc' => {
+  switch (direction) {
+    case 'ASC':
+      return 'asc'
+    case 'DESC':
+      return 'desc'
+    default:
+      throwUncoveredError(direction)
+  }
+}

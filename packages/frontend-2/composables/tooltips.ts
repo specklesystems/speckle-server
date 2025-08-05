@@ -1,6 +1,4 @@
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import { useBreakpoints } from '@vueuse/core'
-import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 /**
  * Smart tooltip delay composable
@@ -9,13 +7,9 @@ import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
  * - First tooltip shows after a configurable delay (default 1 second)
  * - Subsequent tooltips show instantly once user has shown intent
  * - State resets after a period of inactivity (default 3 seconds)
- * - Only shows tooltips on non-mobile devices
  */
 
 export function useSmartTooltipDelay() {
-  const breakpoints = useBreakpoints(TailwindBreakpoints)
-  const isMobile = breakpoints.smaller('sm')
-
   const initialDelay = 350
   const resetAfter = 2000
 
@@ -28,15 +22,6 @@ export function useSmartTooltipDelay() {
     >,
     additionalProps: Record<string, unknown> = {}
   ) => {
-    // Don't show tooltips on mobile devices
-    if (isMobile.value) {
-      return {
-        content: null,
-        disabled: true,
-        ...additionalProps
-      }
-    }
-
     // If content is already a tooltip configuration object, merge it with our base props
     if (typeof content === 'object' && content !== null) {
       return {

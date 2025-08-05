@@ -100,9 +100,9 @@ import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import type { ConcreteComponent } from 'vue'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 
-const emit = defineEmits<{
-  forceClosePanels: []
-}>()
+// const emit = defineEmits<{
+//   forceClosePanels: []
+// }>()
 
 enum ActionTypes {
   OpenInNewTab = 'open-in-new-tab'
@@ -123,7 +123,7 @@ const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isGreaterThanSm = breakpoints.greater('sm')
-const isMobile = breakpoints.smaller('sm')
+// const isMobile = breakpoints.smaller('sm')
 const menuId = useId()
 const mp = useMixpanel()
 const { getTooltipProps } = useSmartTooltipDelay()
@@ -271,40 +271,30 @@ onKeyStroke('Escape', () => {
 })
 
 watch(
-  () => objects.value.length,
-  (newLength) => {
-    // Dont open sidebar if a comment is open
-    if (newLength !== 0 && !focusedThreadId.value) {
-      sidebarOpen.value = true
-      // Emit event when sidebar opens on mobile
-      if (isMobile.value) {
-        emit('forceClosePanels')
-      }
-    } else if (newLength === 0) {
+  [
+    () => objects.value.length,
+    () => focusedThreadId.value,
+    () => threads.openThread.newThreadEditor.value,
+    () => isSmallerOrEqualSm.value
+  ],
+  ([objLen, threadId, isNewThreadEditorOpen, isSmSm]) => {
+    // Close sidebar if a thread is focused
+    if (threadId) {
       sidebarOpen.value = false
+      return
     }
-  }
-)
 
-// Close sidebar when a new thread is being added and screen is smaller than md breakpoint
-watch(
-  () => threads.openThread.newThreadEditor.value,
-  (isNewThreadEditorOpen) => {
-    if (isNewThreadEditorOpen && isSmallerOrEqualSm.value) {
+    // Close sidebar if new thread editor is open and screen is small
+    if (isNewThreadEditorOpen && isSmSm) {
       sidebarOpen.value = false
+      return
     }
-  }
-)
 
-watch(
-  () => focusedThreadId.value,
-  (newThreadId) => {
-    if (newThreadId) {
-      // If a thread is focused, close the sidebar
-      sidebarOpen.value = false
-    } else if (objects.value.length > 0) {
-      // If no thread is focused and we have objects selected, open the sidebar
+    // Open sidebar if objects are selected and no thread is focused
+    if (objLen !== 0 && !threadId) {
       sidebarOpen.value = true
+    } else if (objLen === 0) {
+      sidebarOpen.value = false
     }
   }
 )
