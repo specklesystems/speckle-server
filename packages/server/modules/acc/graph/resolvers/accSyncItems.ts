@@ -61,6 +61,7 @@ import {
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { AccModuleDisabledError, SyncItemNotFoundError } from '@/modules/acc/errors/acc'
 import { getFeatureFlags } from '@speckle/shared/environment'
+import type { AccRegion } from '@/modules/acc/domain/constants'
 
 const { FF_ACC_INTEGRATION_ENABLED, FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -133,7 +134,10 @@ const resolvers: Resolvers = {
         }),
         eventEmit: getEventBus().emit
       })({
-        syncItem: input,
+        syncItem: {
+          ...input,
+          accRegion: input.accRegion as AccRegion
+        },
         creatorUserId: ctx.userId!
       })
     },

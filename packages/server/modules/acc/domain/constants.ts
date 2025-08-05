@@ -1,3 +1,6 @@
+import type { StringEnumValues } from '@speckle/shared'
+import { StringEnum } from '@speckle/shared'
+
 export const ImporterAutomateFunctions = {
   svf2: {
     functionId: '2909d29a9d',
@@ -5,26 +8,25 @@ export const ImporterAutomateFunctions = {
   }
 }
 
-export const AccSyncItemStatuses = {
+export const AccSyncItemStatuses = StringEnum([
   // A new file version had been detected, and we are awaiting a processable file.
-  pending: 'pending',
+  'pending',
   // We are actively processing the new file version. (The Automate function has been triggered.)
-  syncing: 'syncing',
-  failed: 'failed',
-  paused: 'paused',
-  succeeded: 'succeeded'
-} as const
-export type AccSyncItemStatus =
-  (typeof AccSyncItemStatuses)[keyof typeof AccSyncItemStatuses]
+  'syncing',
+  'failed',
+  'paused',
+  'succeeded'
+])
+export type AccSyncItemStatus = StringEnumValues<typeof AccSyncItemStatuses>
 
-export const AccRegions = {
-  US: 'US',
-  EMEA: 'EMEA',
-  AUS: 'AUS',
-  CAN: 'CAN',
-  DEU: 'DEU',
-  IND: 'IND',
-  JPN: 'JPN',
-  GBR: 'GBR'
-}
-export type AccRegion = (typeof AccRegions)[keyof typeof AccRegions]
+export const AccRegions = StringEnum([
+  'US',
+  'EMEA',
+  'AUS',
+  'CAN',
+  'DEU',
+  'IND',
+  'JPN',
+  'GBR'
+])
+export type AccRegion = StringEnumValues<typeof AccRegions>
