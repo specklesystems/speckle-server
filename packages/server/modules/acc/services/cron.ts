@@ -81,7 +81,7 @@ export const schedulePendingSyncItemsCheck = (deps: {
   }
 
   return deps.scheduleExecution(
-    '*/5 * * * *',
+    '*/1 * * * *',
     'pendingAccSyncItemsCheck',
     callback,
     15 * TIME_MS.minute
