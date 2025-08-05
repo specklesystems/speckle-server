@@ -6,7 +6,8 @@ import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
 export enum ViewerHashStateKeys {
   FocusedThreadId = 'threadId',
   Diff = 'diff',
-  EmbedOptions = 'embed'
+  EmbedOptions = 'embed',
+  SavedViewId = 'savedViewId'
 }
 
 export function setupUrlHashState(): InjectableViewerState['urlHashState'] {
@@ -40,8 +41,21 @@ export function setupUrlHashState(): InjectableViewerState['urlHashState'] {
     asyncRead: false
   })
 
+  const savedViewId = writableAsyncComputed({
+    get: () => hashState.value[ViewerHashStateKeys.SavedViewId] || null,
+    set: async (newVal) => {
+      await hashState.update({
+        ...hashState.value,
+        [ViewerHashStateKeys.SavedViewId]: newVal
+      })
+    },
+    initialState: null,
+    asyncRead: false
+  })
+
   return {
     focusedThreadId,
-    diff
+    diff,
+    savedViewId
   }
 }

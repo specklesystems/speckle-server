@@ -131,6 +131,7 @@
     "[json]": {
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
+
     "vue.complete.casing.props": "kebab",
     "vue.inlayHints.missingProps": true,
     "circleci.persistedProjectSelection": ["gh/specklesystems/speckle-server"]
