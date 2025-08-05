@@ -74,7 +74,6 @@
           <NuxtLink
             :to="!defaultLinkDisabled ? modelRoute(projectId, model.id) : undefined"
             class="relative z-20 bg-foundation-page w-full rounded-xl border border-outline-2"
-            :class="smallView ? 'h-24' : 'h-48'"
           >
             <PreviewImage :preview-url="previewUrl" />
           </NuxtLink>
@@ -195,12 +194,10 @@ const props = withDefaults(
     showVersions?: boolean
     showActions?: boolean
     disableDefaultLink?: boolean
-    smallView?: boolean
   }>(),
   {
     showVersions: true,
-    showActions: true,
-    smallView: false
+    showActions: true
   }
 )
 
