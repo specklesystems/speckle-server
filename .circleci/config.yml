@@ -6,7 +6,7 @@ orbs:
 aliases:
   - &docker-node-image
     docker:
-      - image: cimg/node:22.6.0
+      - image: cimg/node:22.17.1
 
   - &yarn
     run:

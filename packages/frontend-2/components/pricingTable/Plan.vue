@@ -98,6 +98,7 @@ import {
 import { useWorkspacePlanPrices } from '~/lib/billing/composables/prices'
 import { formatPrice, formatName } from '~/lib/billing/helpers/plan'
 import type { SetupContext } from 'vue'
+import { useFeatureFlags } from '~/lib/common/composables/env'
 
 const emit = defineEmits<{
   (e: 'onUpgradeClick'): void
@@ -120,9 +121,15 @@ const isYearlyIntervalSelected = defineModel<boolean>('isYearlyIntervalSelected'
 
 const slots: SetupContext['slots'] = useSlots()
 const { prices } = useWorkspacePlanPrices()
+const featureFlags = useFeatureFlags()
 
-const planLimits = computed(() => WorkspacePlanConfigs[props.plan].limits)
-const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
+const planLimits = computed(
+  () => WorkspacePlanConfigs({ featureFlags })[props.plan].limits
+)
+const planFeatures = computed(
+  () => WorkspacePlanConfigs({ featureFlags })[props.plan].features
+)
+
 const commonFeatures = shallowRef([
   {
     displayName: 'Unlimited members and guests',

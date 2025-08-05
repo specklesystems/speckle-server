@@ -44,6 +44,7 @@ if ((isTestEnv() || isDevEnv()) && startDebugger) {
   }
 }
 
+// Load dotenv
 dotenv.config({ path: `${packageRoot}/.env` })
 
 // knex is a singleton controlled by module so can't wait til app init

@@ -134,6 +134,11 @@ export const parseFeatureFlags = (
       description:
         'Enables the IFC file importer based on IFCOpenShell (as of July 2025). Even if enabled, the previous webIFC & .Net importer can be accessed by appending `.dotnetimporter.ifc` to the uploaded file name.',
       defaults: { _: false }
+    },
+    FF_SAVED_VIEWS_ENABLED: {
+      schema: z.boolean(),
+      description: 'Enables the saved views feature for project models',
+      defaults: { _: false }
     }
   })
 
@@ -172,6 +177,7 @@ export type FeatureFlags = {
   FF_LEGACY_FILE_IMPORTS_ENABLED: boolean
   FF_LEGACY_IFC_IMPORTER_ENABLED: boolean
   FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED: boolean
+  FF_SAVED_VIEWS_ENABLED: boolean
 }
 
 export function getFeatureFlags(): FeatureFlags {

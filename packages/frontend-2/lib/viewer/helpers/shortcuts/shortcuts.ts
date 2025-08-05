@@ -22,6 +22,13 @@ export const PanelShortcuts = {
     modifiers: [ModifierKeys.Shift],
     key: 'D',
     action: 'ToggleDiscussions'
+  },
+  ToggleSavedViews: {
+    name: 'Saved Views',
+    description: 'Toggle saved views panel',
+    modifiers: [ModifierKeys.Shift],
+    key: 'V',
+    action: 'ToggleSavedViews'
   }
 } as const
 
