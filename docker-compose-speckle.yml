@@ -83,6 +83,7 @@ services:
       REDIS_URL: 'redis://redis'
       PREVIEW_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL: 'true'
       PREVIEW_SERVICE_REDIS_URL: 'redis://redis'
+      FILEIMPORT_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL: 'true'
       FILEIMPORT_SERVICE_REDIS_URL: 'redis://redis'
 
       S3_ENDPOINT: 'http://minio:9000'
@@ -97,12 +98,6 @@ services:
 
       FRONTEND_ORIGIN: 'http://127.0.0.1'
       ONBOARDING_STREAM_URL: 'https://latest.speckle.systems/projects/843d07eb10'
-
-      FILEIMPORT_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL: 'false'
-      FILEIMPORT_QUEUE_POSTGRES_URL: 'postgres://speckle:speckle@postgres/speckle'
-      FF_NEXT_GEN_FILE_IMPORTER_ENABLED: 'true'
-      FF_RHINO_FILE_IMPORTER_ENABLED: 'true'
-      FF_BACKGROUND_JOBS_ENABLED: 'true'
 
     depends_on:
       []
