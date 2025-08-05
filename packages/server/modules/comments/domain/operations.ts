@@ -1,8 +1,6 @@
 import type {
   ExtendedComment,
-  ResourceIdentifier,
-  ViewerResourceGroup,
-  ViewerResourceItem
+  ResourceIdentifier
 } from '@/modules/comments/domain/types'
 import type {
   CommentLinkRecord,
@@ -14,8 +12,7 @@ import type {
   CreateCommentInput,
   CreateCommentReplyInput,
   EditCommentInput,
-  LegacyCommentViewerData,
-  ViewerUpdateTrackingTarget
+  LegacyCommentViewerData
 } from '@/modules/core/graph/generated/graphql'
 import type { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import type { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
@@ -26,6 +23,7 @@ import type {
 import type { MaybeNullOrUndefined, SpeckleViewer } from '@speckle/shared'
 import type { Knex } from 'knex'
 import type { Merge } from 'type-fest'
+import type { ViewerResourceItem } from '@/modules/viewer/domain/types/resources'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 
@@ -227,14 +225,6 @@ export type GetViewerResourcesForComment = (
 export type GetViewerResourcesFromLegacyIdentifiers = (
   projectId: string,
   resources: Array<ResourceIdentifier>
-) => Promise<ViewerResourceItem[]>
-
-export type GetViewerResourceGroups = (
-  target: ViewerUpdateTrackingTarget
-) => Promise<ViewerResourceGroup[]>
-
-export type GetViewerResourceItemsUngrouped = (
-  target: ViewerUpdateTrackingTarget
 ) => Promise<ViewerResourceItem[]>
 
 export type ConvertLegacyDataToState = (

@@ -18,25 +18,30 @@ import { activeUserWorkspaceExistenceCheckQuery } from '~/lib/auth/graphql/queri
 import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineNuxtRouteMiddleware(async (to, from) => {
   const isAuthPage = to.path.startsWith('/authn/')
   const isSSOPath = to.path.includes('/sso/')
   if (isAuthPage || isSSOPath) return
 
   const client = useApolloClientFromNuxt()
 
-  // Fetch required data
-  const { data: serverInfoData } = await client
-    .query({
-      query: mainServerInfoDataQuery
-    })
-    .catch(convertThrowIntoFetchResult)
+  const isInPlaceNavigation = checkIfIsInPlaceNavigation(to, from)
 
-  const { data: userData } = await client
-    .query({
-      query: activeUserQuery
-    })
-    .catch(convertThrowIntoFetchResult)
+  // Fetch required data
+  const [{ data: serverInfoData }, { data: userData }] = await Promise.all([
+    client
+      .query({
+        query: mainServerInfoDataQuery,
+        fetchPolicy: isInPlaceNavigation ? 'cache-first' : undefined
+      })
+      .catch(convertThrowIntoFetchResult),
+    client
+      .query({
+        query: activeUserQuery,
+        fetchPolicy: isInPlaceNavigation ? 'cache-first' : undefined
+      })
+      .catch(convertThrowIntoFetchResult)
+  ])
 
   // If user is not logged in, skip all checks
   if (!userData?.activeUser?.id) return

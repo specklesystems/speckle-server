@@ -49,6 +49,17 @@
         :icon="'IconViewerDiscussions'"
         @click="toggleActivePanel('discussions')"
       />
+
+      <!-- Saved views -->
+      <ViewerControlsButtonToggle
+        v-if="isSavedViewsEnabled"
+        v-tippy="getShortcutDisplayText(shortcuts.ToggleSavedViews)"
+        :active="activePanel === 'savedViews'"
+        @click="toggleActivePanel('savedViews')"
+      >
+        <Camera class="h-4 w-4 md:h-5 md:w-5" />
+      </ViewerControlsButtonToggle>
+
       <ViewerControlsButtonToggle
         v-if="allAutomationRuns.length !== 0"
         v-tippy="{
@@ -132,6 +143,10 @@
         :summary="summary"
       />
       <ViewerDataviewerPanel v-if="activePanel === 'devMode'" />
+      <ViewerSavedViewsPanel
+        v-if="isSavedViewsEnabled && activePanel === 'savedViews'"
+        @close="activePanel = 'none'"
+      />
     </div>
   </aside>
 </template>
@@ -146,6 +161,8 @@ import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setu
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { useIntercomEnabled } from '~~/lib/intercom/composables/enabled'
 import { viewerDocsRoute } from '~~/lib/common/helpers/route'
+import { useAreSavedViewsEnabled } from '~/lib/viewer/composables/savedViews/general'
+import { Camera } from 'lucide-vue-next'
 
 type ActivePanel =
   | 'none'
@@ -155,6 +172,7 @@ type ActivePanel =
   | 'automate'
   | 'filters'
   | 'devMode'
+  | 'savedViews'
 
 const emit = defineEmits<{
   forceClosePanels: []
@@ -210,6 +228,7 @@ const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 const isMobile = breakpoints.smaller('sm')
 const isTablet = breakpoints.smaller('lg')
 const { getTooltipProps } = useSmartTooltipDelay()
+const isSavedViewsEnabled = useAreSavedViewsEnabled()
 
 const activePanel = ref<ActivePanel>('none')
 
@@ -246,7 +265,8 @@ registerShortcuts({
   ToggleModels: () => toggleActivePanel('models'),
   ToggleFilters: () => toggleActivePanel('filters'),
   ToggleDiscussions: () => toggleActivePanel('discussions'),
-  ToggleDevMode: () => toggleActivePanel('devMode')
+  ToggleDevMode: () => toggleActivePanel('devMode'),
+  ToggleSavedViews: () => isSavedViewsEnabled && toggleActivePanel('savedViews')
 })
 
 const toggleActivePanel = (panel: ActivePanel) => {

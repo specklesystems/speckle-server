@@ -110,7 +110,8 @@ const getEnabledModuleNames = () => {
     'webhooks',
     'workspacesCore',
     'gatekeeperCore',
-    'multiregion'
+    'multiregion',
+    'viewer'
   ]
 
   if (FF_AUTOMATE_MODULE_ENABLED) moduleNames.push('automate')
