@@ -82,11 +82,7 @@
             enter-from-class="opacity-0"
             enter-active-class="transition duration-1000"
           >
-            <ViewerSelectionSidebar
-              ref="selectionSidebar"
-              class="z-20"
-              @force-close-panels="() => closeAllPanels('selection')"
-            />
+            <ViewerSelectionSidebar ref="selectionSidebar" class="z-20" />
           </Transition>
           <div
             class="absolute z-10 w-screen px-8 grid grid-cols-1 sm:grid-cols-3 gap-2 top-[3.75rem]"
@@ -313,18 +309,17 @@ watch(
   { immediate: true }
 )
 
-const closeAllPanels = (except?: 'left' | 'bottom' | 'selection' | 'threads') => {
+const closeAllPanels = (except?: 'left' | 'bottom' | 'threads') => {
   if (except !== 'left' && leftControls.value?.forceClosePanels) {
     leftControls.value.forceClosePanels()
   }
   if (except !== 'bottom' && bottomControls.value?.forceClosePanels) {
     bottomControls.value.forceClosePanels()
   }
-  if (except !== 'selection' && selectionSidebar.value?.forceClose) {
-    selectionSidebar.value.forceClose()
-  }
   if (except !== 'threads' && anchoredPoints.value?.forceCloseThreads) {
     anchoredPoints.value.forceCloseThreads()
   }
+
+  selectionSidebar.value.forceClose()
 }
 </script>

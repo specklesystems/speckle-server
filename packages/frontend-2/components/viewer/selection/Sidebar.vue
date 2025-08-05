@@ -100,10 +100,6 @@ import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import type { ConcreteComponent } from 'vue'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 
-// const emit = defineEmits<{
-//   forceClosePanels: []
-// }>()
-
 enum ActionTypes {
   OpenInNewTab = 'open-in-new-tab'
 }
@@ -123,7 +119,6 @@ const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isGreaterThanSm = breakpoints.greater('sm')
-// const isMobile = breakpoints.smaller('sm')
 const menuId = useId()
 const mp = useMixpanel()
 const { getTooltipProps } = useSmartTooltipDelay()
