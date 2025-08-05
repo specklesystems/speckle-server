@@ -25,6 +25,16 @@ export const parseFeatureFlags = (
 ): FeatureFlags => {
   const { forceInputs = true } = options || {}
 
+  // Clean up input: unset empty values
+  for (const key of Object.keys(input)) {
+    const typedKey = key as keyof FeatureFlags
+    const typedVal = input[typedKey] as unknown
+
+    if (typedVal === undefined || typedVal === '') {
+      delete input[typedKey]
+    }
+  }
+
   //INFO
   // As a convention all feature flags should be prefixed with a FF_
   const res = parseEnv(input, {
