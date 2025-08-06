@@ -13,6 +13,7 @@ import {
 import { Roles } from '../../../../core/constants.js'
 import {
   ProjectNotEnoughPermissionsError,
+  ServerNoAccessError,
   WorkspaceNoAccessError,
   WorkspacePlanNoFeatureAccessError,
   WorkspacesNotEnabledError
@@ -145,6 +146,23 @@ describe('canUpdateSavedViewPolicy', () => {
 
       expect(result).toBeAuthErrorResult({
         code: ProjectNotEnoughPermissionsError.code
+      })
+    })
+
+    it('fails if logged out', async () => {
+      const sut = buildWorkspacedSUT({
+        getWorkspaceRole: async () => null,
+        getServerRole: async () => null,
+        getProjectRole: async () => null
+      })
+
+      const result = await sut({
+        userId: 'aaa',
+        projectId: 'project-id',
+        savedViewId: 'saved-view-id'
+      })
+      expect(result).toBeAuthErrorResult({
+        code: ServerNoAccessError.code
       })
     })
 

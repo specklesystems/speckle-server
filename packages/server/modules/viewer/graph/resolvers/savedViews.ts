@@ -17,6 +17,7 @@ import { LogicError, NotFoundError, NotImplementedError } from '@/modules/shared
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { buildDefaultGroupId } from '@/modules/viewer/helpers/savedViews'
 import {
+  deleteSavedViewRecordFactory,
   getGroupSavedViewsPageItemsFactory,
   getGroupSavedViewsTotalCountFactory,
   getProjectSavedViewGroupsPageItemsFactory,
@@ -31,6 +32,7 @@ import {
 import {
   createSavedViewFactory,
   createSavedViewGroupFactory,
+  deleteSavedViewFactory,
   getGroupSavedViewsFactory,
   getProjectSavedViewGroupsFactory
 } from '@/modules/viewer/services/savedViewsManagement'
@@ -226,13 +228,32 @@ const resolvers: Resolvers = {
     },
     deleteView: async (_parent, args, ctx) => {
       const projectId = args.input.projectId
+      const projectDb = await getProjectDbClient({ projectId })
+
       throwIfResourceAccessNotAllowed({
         resourceId: projectId,
         resourceType: TokenResourceIdentifierType.Project,
         resourceAccessRules: ctx.resourceAccessRules
       })
 
-      throw new NotImplementedError()
+      const canUpdate = await ctx.authPolicies.project.savedViews.canUpdate({
+        userId: ctx.userId,
+        projectId,
+        savedViewId: args.input.id
+      })
+      throwIfAuthNotOk(canUpdate)
+
+      await deleteSavedViewFactory({
+        deleteSavedViewRecord: deleteSavedViewRecordFactory({
+          db: projectDb
+        })
+      })({
+        id: args.input.id,
+        projectId,
+        userId: ctx.userId!
+      })
+
+      return true
     },
     createGroup: async (_parent, args, ctx) => {
       const projectId = args.input.projectId

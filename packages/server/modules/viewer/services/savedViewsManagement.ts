@@ -1,6 +1,8 @@
 import type {
   CreateSavedView,
   CreateSavedViewGroup,
+  DeleteSavedView,
+  DeleteSavedViewRecord,
   GetGroupSavedViews,
   GetGroupSavedViewsPageItems,
   GetGroupSavedViewsTotalCount,
@@ -287,4 +289,11 @@ export const getGroupSavedViewsFactory =
       totalCount,
       ...pageItems
     }
+  }
+
+export const deleteSavedViewFactory =
+  (deps: { deleteSavedViewRecord: DeleteSavedViewRecord }): DeleteSavedView =>
+  async (params) => {
+    const { id } = params
+    await deps.deleteSavedViewRecord({ savedViewId: id })
   }
