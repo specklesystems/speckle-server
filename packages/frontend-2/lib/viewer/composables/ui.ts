@@ -231,7 +231,6 @@ export function useFilterUtilities(
     filters.isolatedObjectIds.value = []
     filters.propertyFilter.filter.value = null
     filters.propertyFilter.isApplied.value = false
-    explodeFactor.value = 0
     // filters.selectedObjects.value = []
   }
 
