@@ -5,7 +5,7 @@ import {
   type PropertyInfo,
   ViewMode
 } from '@speckle/viewer'
-import { MeasurementsExtension, ViewModes } from '@speckle/viewer'
+import { MeasurementsExtension, ViewModes, MeasurementEvent } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { useActiveElement } from '@vueuse/core'
 import { difference, isString, uniq } from 'lodash-es'
@@ -454,7 +454,7 @@ export function useMeasurementUtilities() {
     updateCount()
 
     // Listen for changes
-    extension.on('measurement-count-changed', updateCount)
+    extension.on(MeasurementEvent.CountChanged, updateCount)
   }
 
   if (state.viewer.instance) {

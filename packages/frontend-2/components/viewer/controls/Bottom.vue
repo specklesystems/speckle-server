@@ -58,8 +58,11 @@ import {
   useSectionBoxUtilities,
   useMeasurementUtilities,
   useViewerShortcuts,
-  useFilterUtilities
+  useFilterUtilities,
+  useViewModeUtilities
 } from '~~/lib/viewer/composables/ui'
+import { ViewMode } from '@speckle/viewer'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { onKeyStroke, useBreakpoints } from '@vueuse/core'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
@@ -89,7 +92,14 @@ const {
 const { getActiveMeasurement, removeMeasurement, enableMeasurements, hasMeasurements } =
   useMeasurementUtilities()
 const { resetExplode } = useFilterUtilities()
+const { currentViewMode } = useViewModeUtilities()
+const {
+  ui: { explodeFactor }
+} = useInjectedViewerState()
 const { getTooltipProps } = useSmartTooltipDelay()
+
+const hasExplode = computed(() => explodeFactor.value > 0)
+const hasNonDefaultViewMode = computed(() => currentViewMode.value !== ViewMode.DEFAULT)
 const { isEnabled: isEmbedEnabled } = useEmbed()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('sm')
@@ -150,6 +160,10 @@ const shouldShowDot = (panelId: ActivePanel) => {
       return hasMeasurements.value
     case ActivePanel.sectionBox:
       return isSectionBoxEnabled.value
+    case ActivePanel.explode:
+      return hasExplode.value
+    case ActivePanel.viewModes:
+      return hasNonDefaultViewMode.value
     default:
       return false
   }
