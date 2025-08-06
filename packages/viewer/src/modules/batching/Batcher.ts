@@ -471,6 +471,9 @@ export default class Batcher {
         return this.getStencil()
       case ObjectVisibility.DEPTH:
         return this.getDepth()
+      case ObjectVisibility.CUSTOM:
+        Logger.error('Custom visibility requires visibility function')
+        return {}
     }
   }
 
