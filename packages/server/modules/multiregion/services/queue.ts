@@ -257,7 +257,7 @@ export const startQueue = async () => {
           // Wait for replication from regional db
           await waitForRegionProjectFactory({
             getProject: getProjectFactory({ db }),
-            deleteProject: deleteProjectFactory({ db })
+            deleteProject: deleteProjectFactory({ db: targetDb })
           })({
             projectId: project.id,
             regionKey,
