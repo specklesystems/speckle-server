@@ -214,14 +214,15 @@ onKeyStroke('Escape', () => {
 
   if (isActiveMeasurement) {
     removeMeasurement()
-  } else {
-    if (activePanel.value === ActivePanel.measurements) {
-      toggleMeasurements()
-    } else if (activePanel.value === ActivePanel.sectionBox) {
-      closeSectionBox()
-    }
-    activePanel.value = ActivePanel.none
+    return
   }
+  // Only close panels if there's no active measurement
+  if (activePanel.value === ActivePanel.measurements) {
+    toggleMeasurements()
+  } else if (activePanel.value === ActivePanel.sectionBox) {
+    closeSectionBox()
+  }
+  activePanel.value = ActivePanel.none
 })
 
 watch(activePanel, (newVal) => {
