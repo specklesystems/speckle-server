@@ -506,6 +506,7 @@ export function useViewModeUtilities() {
   const { viewMode } = useInjectedViewerInterfaceState()
   const { isLightTheme } = useTheme()
   const mp = useMixpanel()
+  const logger = useLogger()
 
   const edgesEnabled = ref(true)
   const edgesWeight = ref(1)
@@ -582,15 +583,45 @@ export function useViewModeUtilities() {
     })
   }
 
-  onBeforeUnmount(() => {
-    // Reset edges settings
-    edgesEnabled.value = true
-    edgesWeight.value = 1
-    outlineOpacity.value = 0.75
-    edgesColor.value = defaultColor.value
+  const initializeFromViewerState = () => {
+    try {
+      const renderer = instance.getRenderer()
+      const currentPipeline = renderer?.pipeline
 
-    // Note: Don't reset view mode here as it should persist when panel closes
-    updateViewMode()
+      if (currentPipeline && currentPipeline.options) {
+        const currentOptions = currentPipeline.options as Record<string, unknown>
+
+        if (typeof currentOptions.edges === 'boolean') {
+          edgesEnabled.value = currentOptions.edges
+        }
+
+        const edgesPasses = currentPipeline.getPass('EDGES')
+
+        if (edgesPasses.length > 0) {
+          const edgesPass = edgesPasses[0] as unknown as Record<string, unknown>
+          const edgesPassOptions = edgesPass._options as Record<string, unknown>
+
+          if (
+            edgesPassOptions &&
+            typeof edgesPassOptions.outlineThickness === 'number'
+          ) {
+            edgesWeight.value = edgesPassOptions.outlineThickness
+          }
+          if (edgesPassOptions && typeof edgesPassOptions.outlineOpacity === 'number') {
+            outlineOpacity.value = edgesPassOptions.outlineOpacity
+          }
+          if (edgesPassOptions && typeof edgesPassOptions.outlineColor === 'number') {
+            edgesColor.value = edgesPassOptions.outlineColor
+          }
+        }
+      }
+    } catch {
+      logger.error('Could not initialize from viewer state, using defaults')
+    }
+  }
+
+  onMounted(() => {
+    initializeFromViewerState()
   })
 
   return {
