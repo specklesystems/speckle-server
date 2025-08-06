@@ -279,6 +279,8 @@ export const startQueue = async () => {
             }))
           })
         }
+
+        return
       }
       case 'delete-project-region-data':
       default:
