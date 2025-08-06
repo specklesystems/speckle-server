@@ -52,6 +52,7 @@
 <script setup lang="ts">
 import { StringEnum, throwUncoveredError, type StringEnumValues } from '@speckle/shared'
 import type { LayoutMenuItem } from '@speckle/ui-components'
+import { useMutationLoading } from '@vue/apollo-composable'
 import { Ellipsis } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ViewerSavedViewsPanelView_SavedViewFragment } from '~/lib/common/generated/gql/graphql'
@@ -88,6 +89,7 @@ const props = defineProps<{
 
 const eventBus = useEventBus()
 const deleteView = useDeleteSavedView()
+const isLoading = useMutationLoading()
 
 const showMenu = ref(false)
 const menuId = useId()
@@ -98,7 +100,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
     {
       id: Menuitems.Delete,
       title: 'Delete',
-      disabled: !canUpdate.value,
+      disabled: !canUpdate.value || isLoading.value,
       disabledTooltip: canUpdate.value.errorMessage
     }
   ]

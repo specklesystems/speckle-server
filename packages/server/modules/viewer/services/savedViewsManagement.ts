@@ -179,7 +179,7 @@ export const createSavedViewFactory =
     let name = input.name?.trim()
     if (!name?.length) {
       const viewCount = await deps.getStoredViewCount({ projectId })
-      name = `Scene - ${String(viewCount + 1).padStart(3, '0')}`
+      name = `View - ${String(viewCount + 1).padStart(3, '0')}`
     }
 
     const concreteResourceIds = resourceIds.toResources().map((r) => r.toString())
