@@ -10,6 +10,7 @@
         :key="panel.id"
         v-tippy="getTooltipProps(panel.tooltip)"
         :active="activePanel === panel.id"
+        :dot="shouldShowDot(panel.id)"
         :icon="panel.icon"
         :class="panel.extraClasses"
         @click="toggleActivePanel(panel.id)"
@@ -28,10 +29,18 @@
         </p>
       </span>
       <div class="flex items-center gap-1">
-        <FormButton v-if="showResetButton" size="sm" color="subtle" @click="onReset">
+        <FormButton
+          v-if="showResetButton"
+          tabindex="-1"
+          size="sm"
+          color="subtle"
+          @click="onReset"
+        >
           Reset
         </FormButton>
-        <FormButton size="sm" @click="onActivePanelClose">Done</FormButton>
+        <FormButton tabindex="-1" size="sm" @click="onActivePanelClose">
+          Done
+        </FormButton>
       </div>
 
       <div class="absolute left-1/2 -translate-x-1/2 bottom-9 w-80">
@@ -49,8 +58,11 @@ import {
   useSectionBoxUtilities,
   useMeasurementUtilities,
   useViewerShortcuts,
-  useFilterUtilities
+  useFilterUtilities,
+  useViewModeUtilities
 } from '~~/lib/viewer/composables/ui'
+import { ViewMode } from '@speckle/viewer'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { onKeyStroke, useBreakpoints } from '@vueuse/core'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
@@ -77,10 +89,17 @@ const {
   isSectionBoxEnabled,
   isSectionBoxVisible
 } = useSectionBoxUtilities()
-const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
+const { getActiveMeasurement, removeMeasurement, enableMeasurements, hasMeasurements } =
   useMeasurementUtilities()
 const { resetExplode } = useFilterUtilities()
+const { currentViewMode } = useViewModeUtilities()
+const {
+  ui: { explodeFactor }
+} = useInjectedViewerState()
 const { getTooltipProps } = useSmartTooltipDelay()
+
+const hasExplode = computed(() => explodeFactor.value > 0)
+const hasNonDefaultViewMode = computed(() => currentViewMode.value !== ViewMode.DEFAULT)
 const { isEnabled: isEmbedEnabled } = useEmbed()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('sm')
@@ -134,6 +153,21 @@ const showResetButton = computed(() => {
     activePanel.value === ActivePanel.sectionBox
   )
 })
+
+const shouldShowDot = (panelId: ActivePanel) => {
+  switch (panelId) {
+    case ActivePanel.measurements:
+      return hasMeasurements.value
+    case ActivePanel.sectionBox:
+      return isSectionBoxEnabled.value
+    case ActivePanel.explode:
+      return hasExplode.value
+    case ActivePanel.viewModes:
+      return hasNonDefaultViewMode.value
+    default:
+      return false
+  }
+}
 
 const toggleActivePanel = (panel: ActivePanel) => {
   activePanel.value = activePanel.value === panel ? ActivePanel.none : panel
@@ -206,14 +240,15 @@ onKeyStroke('Escape', () => {
 
   if (isActiveMeasurement) {
     removeMeasurement()
-  } else {
-    if (activePanel.value === ActivePanel.measurements) {
-      toggleMeasurements()
-    } else if (activePanel.value === ActivePanel.sectionBox) {
-      closeSectionBox()
-    }
-    activePanel.value = ActivePanel.none
+    return
   }
+  // Only close panels if there's no active measurement
+  if (activePanel.value === ActivePanel.measurements) {
+    toggleMeasurements()
+  } else if (activePanel.value === ActivePanel.sectionBox) {
+    closeSectionBox()
+  }
+  activePanel.value = ActivePanel.none
 })
 
 watch(activePanel, (newVal) => {

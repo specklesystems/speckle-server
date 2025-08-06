@@ -536,5 +536,13 @@ export const emailVerificationTimeoutMinutes = (): number => {
   return getIntFromEnv('EMAIL_VERIFICATION_TIMEOUT_MINUTES', '5')
 }
 
+export function getAutodeskIntegrationClientId() {
+  return getStringFromEnv('AUTODESK_INTEGRATION_CLIENT_ID')
+}
+
+export function getAutodeskIntegrationClientSecret() {
+  return getStringFromEnv('AUTODESK_INTEGRATION_CLIENT_SECRET')
+}
+
 export const areSavedViewsEnabled = (): boolean =>
   getFeatureFlags().FF_SAVED_VIEWS_ENABLED

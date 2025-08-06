@@ -104,6 +104,9 @@ graphql(`
       canReadSettings {
         ...FullPermissionCheckResult
       }
+      canReadAccIntegrationSettings {
+        ...FullPermissionCheckResult
+      }
       canUpdate {
         ...FullPermissionCheckResult
       }
@@ -179,6 +182,9 @@ const modelCount = computed(() => project.value?.modelCount.totalCount)
 const commentCount = computed(() => project.value?.commentThreadCount.totalCount)
 
 const canReadSettings = computed(() => project.value?.permissions.canReadSettings)
+const canReadAccIntegrationSettings = computed(
+  () => project.value?.permissions.canReadAccIntegrationSettings
+)
 const canUpdate = computed(() => project.value?.permissions.canUpdate)
 const hasRole = computed(() => project.value?.role)
 const teamUsers = computed(() => project.value?.team.map((t) => t.user) || [])
@@ -227,6 +233,7 @@ const onInviteAccepted = async (params: { accepted: boolean }) => {
 const isOwner = computed(() => project.value?.role === Roles.Stream.Owner)
 const isAutomateEnabled = useIsAutomateModuleEnabled()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const isAccEnabled = useIsAccModuleEnabled()
 
 const pageTabItems = computed((): LayoutPageTabItem[] => {
   const items: LayoutPageTabItem[] = [
@@ -250,6 +257,13 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
     items.push({
       title: 'Automations',
       id: 'automations'
+    })
+  }
+
+  if (isAccEnabled.value && canReadAccIntegrationSettings.value?.authorized) {
+    items.push({
+      title: 'ACC',
+      id: 'acc'
     })
   }
 
@@ -284,6 +298,7 @@ const activePageTab = computed({
     const path = router.currentRoute.value.path
     if (/\/discussions\/?$/i.test(path)) return findTabById('discussions')
     if (/\/automations\/?.*$/i.test(path)) return findTabById('automations')
+    if (/\/acc\/?.*$/i.test(path)) return findTabById('acc')
     if (/\/collaborators\/?/i.test(path) && canReadSettings.value?.authorized)
       return findTabById('collaborators')
     if (/\/settings\/?/i.test(path) && canReadSettings.value?.authorized)
@@ -298,6 +313,9 @@ const activePageTab = computed({
         break
       case 'discussions':
         router.push({ path: projectRoute(projectId.value, 'discussions') })
+        break
+      case 'acc':
+        router.push({ path: projectRoute(projectId.value, 'acc') })
         break
       case 'automations':
         router.push({ path: projectRoute(projectId.value, 'automations') })

@@ -6,7 +6,7 @@
       v-slot="{ isDraggingFiles }"
       :size-limit="maxSizeInBytes"
       :accept="acceptValue"
-      :disabled="disabled"
+      :disabled="disabled || disableDropZone"
       multiple
       @files-selected="onFilesSelected"
     >
@@ -14,7 +14,7 @@
         v-model="doc"
         :class="[
           'rounded-t-lg py-2.5 px-3 border-b border-outline-2 text-body-2xs min-h-[40px] flex',
-          isDraggingFiles && 'border-dashed'
+          isDraggingFiles && !disableDropZone && 'border-dashed'
         ]"
         :autofocus="autofocus"
         :placeholder="prompt || 'Add comment'"
@@ -58,6 +58,7 @@ const props = defineProps<{
   disabled?: boolean
   autofocus?: boolean
   prompt?: string
+  disableDropZone?: boolean
 }>()
 
 const {
@@ -124,6 +125,7 @@ watch(
 )
 
 defineExpose({
-  openFilePicker
+  openFilePicker,
+  onFilesSelected
 })
 </script>

@@ -121,7 +121,7 @@ export const saveUploadFileFactory =
       branchName,
       userId,
       fileName,
-      fileType,
+      fileType: fileType.toLowerCase(),
       fileSize,
       uploadComplete: true,
       modelId
@@ -149,7 +149,7 @@ export const saveUploadFileFactoryV2 =
       userId,
       modelId,
       fileName,
-      fileType,
+      fileType: fileType.toLowerCase(),
       fileSize,
       uploadComplete: true
     }

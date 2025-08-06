@@ -1,0 +1,101 @@
+extend type Project {
+  accSyncItems(cursor: String, limit: Int): AccSyncItemCollection!
+  accSyncItem(id: String!): AccSyncItem!
+}
+
+type AccSyncItemCollection {
+  items: [AccSyncItem!]!
+  totalCount: Int!
+  cursor: String
+}
+
+type AccSyncItem {
+  id: ID!
+  projectId: String!
+  modelId: String!
+  accRegion: String!
+  accHubId: String!
+  accProjectId: String!
+  accRootProjectFolderUrn: String!
+  accFileLineageUrn: String!
+  accFileName: String!
+  accFileExtension: String!
+  accFileVersionIndex: Int!
+  accFileVersionUrn: String!
+  accFileViewName: String
+  accWebhookId: String
+  status: AccSyncItemStatus!
+  author: LimitedUser
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum AccSyncItemStatus {
+  pending
+  syncing
+  failed
+  succeeded
+  paused
+}
+
+input DeleteAccSyncItemInput {
+  id: ID!
+  projectId: String!
+}
+
+input UpdateAccSyncItemInput {
+  id: ID!
+  projectId: String!
+  status: AccSyncItemStatus!
+}
+
+input CreateAccSyncItemInput {
+  projectId: String!
+  modelId: String!
+  accRegion: String!
+  accHubId: String!
+  accProjectId: String!
+  accRootProjectFolderUrn: String!
+  accFileLineageUrn: String!
+  accFileName: String!
+  accFileExtension: String!
+  accFileVersionIndex: Int!
+  accFileVersionUrn: String!
+  accFileViewName: String
+}
+
+type AccSyncItemMutations {
+  create(input: CreateAccSyncItemInput!): AccSyncItem!
+  delete(input: DeleteAccSyncItemInput!): Boolean!
+  update(input: UpdateAccSyncItemInput!): AccSyncItem!
+}
+
+extend type Mutation {
+  accSyncItemMutations: AccSyncItemMutations!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:write")
+}
+
+enum ProjectAccSyncItemsUpdatedMessageType {
+  CREATED
+  UPDATED
+  DELETED
+}
+
+type ProjectAccSyncItemsUpdatedMessage {
+  type: ProjectAccSyncItemsUpdatedMessageType!
+  id: String!
+  accSyncItem: AccSyncItem
+}
+
+extend type Subscription {
+  """
+  Subscribe to changes to a project's sync items. Optionally specify lineage urns to subscribe to.
+  """
+  projectAccSyncItemsUpdated(
+    id: String!
+    itemIds: [String!]
+  ): ProjectAccSyncItemsUpdatedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:read")
+}

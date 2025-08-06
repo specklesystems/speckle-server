@@ -196,6 +196,11 @@ export const AutomateFunctionNotCreatorError = defineAuthError({
   message: 'You are not the function creator and cannot make changes to it.'
 })
 
+export const AccIntegrationNotEnabledError = defineAuthError({
+  code: 'AccIntegrationNotEnabled',
+  message: 'The ACC Integration is not enabled on this server or project'
+})
+
 // Resolve all exported error types
 export type AllAuthErrors = ValueOf<{
   [key in keyof typeof import('./authErrors.js')]: typeof import('./authErrors.js')[key] extends new (

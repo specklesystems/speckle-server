@@ -5,8 +5,9 @@ import {
   type PropertyInfo,
   ViewMode
 } from '@speckle/viewer'
-import { MeasurementsExtension, ViewModes } from '@speckle/viewer'
+import { MeasurementsExtension, ViewModes, MeasurementEvent } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
+import { useActiveElement } from '@vueuse/core'
 import { difference, isString, uniq } from 'lodash-es'
 import { useEmbedState, useEmbed } from '~/lib/viewer/composables/setup/embed'
 import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
@@ -24,7 +25,6 @@ import type {
   ViewerShortcut,
   ViewerShortcutAction
 } from '~/lib/viewer/helpers/shortcuts/types'
-import { useActiveElement } from '@vueuse/core'
 import { useTheme } from '~/lib/core/composables/theme'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
@@ -231,7 +231,6 @@ export function useFilterUtilities(
     filters.isolatedObjectIds.value = []
     filters.propertyFilter.filter.value = null
     filters.propertyFilter.isApplied.value = false
-    explodeFactor.value = 0
     // filters.selectedObjects.value = []
   }
 
@@ -409,6 +408,8 @@ export function useThreadUtilities() {
 export function useMeasurementUtilities() {
   const state = useInjectedViewerState()
 
+  const measurementCount = ref(0)
+
   const measurementOptions = computed(() => state.ui.measurement.options.value)
 
   const enableMeasurements = (enabled: boolean) => {
@@ -436,13 +437,37 @@ export function useMeasurementUtilities() {
     return activeMeasurement && activeMeasurement.state === 2
   }
 
+  const hasMeasurements = computed(() => measurementCount.value > 0)
+
+  const setupMeasurementListener = () => {
+    const extension = state.viewer.instance?.getExtension(MeasurementsExtension)
+    if (!extension) return
+
+    const updateCount = () => {
+      measurementCount.value = (
+        extension as unknown as { measurementCount: number }
+      ).measurementCount
+    }
+
+    // Set initial count
+    updateCount()
+
+    // Listen for changes
+    extension.on(MeasurementEvent.CountChanged, updateCount)
+  }
+
+  if (state.viewer.instance) {
+    setupMeasurementListener()
+  }
+
   return {
     measurementOptions,
     enableMeasurements,
     setMeasurementOptions,
     removeMeasurement,
     clearMeasurements,
-    getActiveMeasurement
+    getActiveMeasurement,
+    hasMeasurements
   }
 }
 
@@ -506,6 +531,7 @@ export function useViewModeUtilities() {
   const { viewMode } = useInjectedViewerInterfaceState()
   const { isLightTheme } = useTheme()
   const mp = useMixpanel()
+  const logger = useLogger()
 
   const edgesEnabled = ref(true)
   const edgesWeight = ref(1)
@@ -582,15 +608,45 @@ export function useViewModeUtilities() {
     })
   }
 
-  onBeforeUnmount(() => {
-    // Reset edges settings
-    edgesEnabled.value = true
-    edgesWeight.value = 1
-    outlineOpacity.value = 0.75
-    edgesColor.value = defaultColor.value
+  const initializeFromViewerState = () => {
+    try {
+      const renderer = instance.getRenderer()
+      const currentPipeline = renderer?.pipeline
 
-    // Note: Don't reset view mode here as it should persist when panel closes
-    updateViewMode()
+      if (currentPipeline && currentPipeline.options) {
+        const currentOptions = currentPipeline.options as Record<string, unknown>
+
+        if (typeof currentOptions.edges === 'boolean') {
+          edgesEnabled.value = currentOptions.edges
+        }
+
+        const edgesPasses = currentPipeline.getPass('EDGES')
+
+        if (edgesPasses.length > 0) {
+          const edgesPass = edgesPasses[0] as unknown as Record<string, unknown>
+          const edgesPassOptions = edgesPass._options as Record<string, unknown>
+
+          if (
+            edgesPassOptions &&
+            typeof edgesPassOptions.outlineThickness === 'number'
+          ) {
+            edgesWeight.value = edgesPassOptions.outlineThickness
+          }
+          if (edgesPassOptions && typeof edgesPassOptions.outlineOpacity === 'number') {
+            outlineOpacity.value = edgesPassOptions.outlineOpacity
+          }
+          if (edgesPassOptions && typeof edgesPassOptions.outlineColor === 'number') {
+            edgesColor.value = edgesPassOptions.outlineColor
+          }
+        }
+      }
+    } catch {
+      logger.error('Could not initialize from viewer state, using defaults')
+    }
+  }
+
+  onMounted(() => {
+    initializeFromViewerState()
   })
 
   return {

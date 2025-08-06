@@ -154,6 +154,7 @@ extend type Project {
 }
 
 enum WorkspaceFeatureName {
+  accIntegration
   domainBasedSecurityPolicies
   oidcSso
   hideSpeckleBranding

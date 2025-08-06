@@ -28,6 +28,7 @@ import {
   storeBackgroundJobFactory
 } from '@/modules/backgroundjobs/repositories'
 import { BackgroundJobStatus, BackgroundJobType } from '@/modules/backgroundjobs/domain'
+import { rhinoImporterSupportedFileExtensions } from '@speckle/shared/blobs'
 
 const FILEIMPORT_SERVICE_RHINO_QUEUE_NAME = getFileImportServiceRhinoQueueName()
 const FILEIMPORT_SERVICE_IFC_QUEUE_NAME = getFileImportServiceIFCQueueName()
@@ -187,7 +188,7 @@ export const initializeRhinoQueueFactory =
       label: 'rhino',
       queueName: FILEIMPORT_SERVICE_RHINO_QUEUE_NAME,
       redisUrl: rhinoImportServiceRedisUrl ? rhinoImportServiceRedisUrl : getRedisUrl(),
-      supportedFileTypes: ['obj', 'stl', 'skp']
+      supportedFileTypes: [...rhinoImporterSupportedFileExtensions]
     })
   }
 

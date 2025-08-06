@@ -9,12 +9,15 @@ import {
   WebGLRenderTarget
 } from 'three'
 import { ObjectLayers } from '../../../IViewer.js'
+import { BatchUpdateRange } from '../../batching/Batch.js'
+import SpeckleRenderer from '../../SpeckleRenderer.js'
 
 export enum ObjectVisibility {
   OPAQUE = 'opaque',
   TRANSPARENT = 'transparent',
   DEPTH = 'depth',
-  STENCIL = 'stencil'
+  STENCIL = 'stencil',
+  CUSTOM = 'custom'
 }
 
 export enum ClearFlags {
@@ -39,6 +42,9 @@ export interface GPass {
   get clearColor(): number | undefined
   get clearAlpha(): number | undefined
   get clearFlags(): number | undefined
+  get visibilityFunction():
+    | ((renderer: SpeckleRenderer) => Record<string, BatchUpdateRange>)
+    | undefined
 
   setSize?(width: number, height: number): void
   onBeforeRender?: () => void
@@ -53,7 +59,10 @@ export interface GPass {
   setClearFlags(flags: number): void
   setClippingPlanes?(planes: Plane[]): void
   setLayers?(layers: ObjectLayers[]): void
-  setVisibility?(objectVisibility: ObjectVisibility): void
+  setVisibility?(
+    objectVisibility: ObjectVisibility,
+    visibilityFunction?: (renderer: SpeckleRenderer) => Record<string, BatchUpdateRange>
+  ): void
   setJitter(value: boolean): void
 }
 
@@ -72,6 +81,11 @@ export abstract class BaseGPass implements GPass {
 
   public onBeforeRender: (() => void) | undefined = undefined
   public onAfterRender: (() => void) | undefined = undefined
+  protected _visibilityFunction:
+    | ((renderer: SpeckleRenderer) => Record<string, BatchUpdateRange>)
+    | undefined = () => {
+    throw new Error('Undefined visibility function')
+  }
 
   public get enabledLayers(): ObjectLayers[] {
     return this._enabledLayers
@@ -128,6 +142,10 @@ export abstract class BaseGPass implements GPass {
     return this._clearFlags
   }
 
+  public get visibilityFunction() {
+    return this._visibilityFunction
+  }
+
   public setClearColor(color: number, alpha: number) {
     this._clearColor = color
     this._clearAlpha = alpha
@@ -150,8 +168,13 @@ export abstract class BaseGPass implements GPass {
     }
   }
 
-  public setVisibility(objectVisibility: ObjectVisibility | null) {
+  public setVisibility(
+    objectVisibility: ObjectVisibility | null,
+    visibilityFunction?: (renderer: SpeckleRenderer) => Record<string, BatchUpdateRange>
+  ) {
     this._objectVisibility = objectVisibility
+    if (objectVisibility === ObjectVisibility.CUSTOM)
+      this._visibilityFunction = visibilityFunction
   }
 
   public setJitter(value: boolean) {

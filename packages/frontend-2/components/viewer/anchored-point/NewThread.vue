@@ -30,18 +30,30 @@
             <PlusIcon class="w-5 h-5 text-foreground-2 rotate-45" />
           </button>
         </div>
-        <div
+        <FormFileUploadZone
           v-if="modelValue.isExpanded && canPostComment"
-          ref="threadContainer"
-          class="sm:absolute w-full sm:w-[260px] bg-foundation dark:bg-foundation-2 border border-outline-2 sm:rounded-xl shadow-md"
+          ref="uploadZone"
+          v-slot="{ isDraggingFiles }"
+          :size-limit="maxSizeInBytes"
+          :accept="acceptValue"
+          :disabled="isPostingNewThread"
+          multiple
+          @files-selected="onFilesSelected"
         >
-          <div class="relative">
+          <div
+            ref="threadContainer"
+            class="sm:absolute w-full sm:w-[260px] bg-foundation dark:bg-foundation-2 border sm:rounded-xl shadow-md"
+            :class="
+              isDraggingFiles ? 'border-dashed border-primary' : 'border-outline-2'
+            "
+          >
             <ViewerCommentsEditor
               ref="editor"
               v-model="commentValue"
               prompt="Add comment"
               max-height="300px"
               autofocus
+              disable-drop-zone
               :disabled="isPostingNewThread"
               @submit="() => onSubmit()"
               @keydown="onKeyDownHandler"
@@ -63,7 +75,7 @@
               />
             </div>
           </div>
-        </div>
+        </FormFileUploadZone>
       </ViewerCommentsPortalOrDiv>
     </div>
   </div>
@@ -84,6 +96,10 @@ import {
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useThreadUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { useServerFileUploadLimit } from '~~/lib/common/composables/serverInfo'
+import { UniqueFileTypeSpecifier } from '~~/lib/core/helpers/file'
+import { acceptedFileExtensions } from '@speckle/shared/blobs'
+import type { UploadableFileItem } from '@speckle/ui-components'
 
 const { isEnabled: isEmbedEnabled } = useEmbed()
 
@@ -101,11 +117,28 @@ const props = defineProps<{
 const { onKeyDownHandler, updateIsTyping, pauseAutomaticUpdates } =
   useIsTypingUpdateEmitter()
 const { closeAllThreads, open } = useThreadUtilities()
+const { maxSizeInBytes } = useServerFileUploadLimit()
 
-const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
+const editor = ref(
+  null as Nullable<{
+    openFilePicker: () => void
+    onFilesSelected: (payload: { files: UploadableFileItem[] }) => void
+  }>
+)
+const uploadZone = ref(null as Nullable<{ triggerPicker: () => void }>)
 const commentValue = ref<CommentEditorValue>({ doc: undefined, attachments: undefined })
 const threadContainer = ref(null as Nullable<HTMLElement>)
 const isPostingNewThread = ref(false)
+
+const acceptValue = [
+  UniqueFileTypeSpecifier.AnyImage,
+  UniqueFileTypeSpecifier.AnyVideo,
+  ...acceptedFileExtensions.map((fileExtension) => `.${fileExtension}`)
+].join(',')
+
+const onFilesSelected = (payload: { files: UploadableFileItem[] }) => {
+  editor.value?.onFilesSelected(payload)
+}
 
 // const { style } = useExpandedThreadResponsiveLocation({
 //   threadContainer,
@@ -174,7 +207,7 @@ const onSubmit = (comment?: CommentEditorValue) => {
 }
 
 const trackAttachAndOpenFilePicker = () => {
-  editor.value?.openFilePicker()
+  uploadZone.value?.triggerPicker()
   mp.track('Comment Action', { type: 'action', name: 'attach' })
 }
 
