@@ -57,7 +57,12 @@
         </ViewerButtonGroup>
 
         <div class="flex gap-1.5">
-          <FormButton size="sm" color="outline" @click="clearMeasurements">
+          <FormButton
+            size="sm"
+            color="outline"
+            tabindex="-1"
+            @click="clearMeasurements"
+          >
             Delete all
           </FormButton>
           <button

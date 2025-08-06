@@ -7,6 +7,7 @@
           v-if="title !== 'Object Type'"
           size="sm"
           color="subtle"
+          tabindex="-1"
           @click="
             ;(showAllFilters = false),
               removePropertyFilter(),

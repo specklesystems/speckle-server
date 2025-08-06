@@ -28,10 +28,18 @@
         </p>
       </span>
       <div class="flex items-center gap-1">
-        <FormButton v-if="showResetButton" size="sm" color="subtle" @click="onReset">
+        <FormButton
+          v-if="showResetButton"
+          tabindex="-1"
+          size="sm"
+          color="subtle"
+          @click="onReset"
+        >
           Reset
         </FormButton>
-        <FormButton size="sm" @click="onActivePanelClose">Done</FormButton>
+        <FormButton tabindex="-1" size="sm" @click="onActivePanelClose">
+          Done
+        </FormButton>
       </div>
 
       <div class="absolute left-1/2 -translate-x-1/2 bottom-9 w-80">
