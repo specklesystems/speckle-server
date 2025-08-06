@@ -67,7 +67,6 @@
         <ViewerButtonGroupButton
           v-for="shortcut in viewModeShortcuts"
           :key="shortcut.name"
-          v-tippy="getTooltipProps(getShortcutDisplayText(shortcut))"
           :is-active="isActiveMode(shortcut.viewMode)"
           @click="handleViewModeChange(shortcut.viewMode)"
         >
@@ -110,9 +109,8 @@ const {
   setEdgesColor,
   edgesColor
 } = useViewModeUtilities()
-const { registerShortcuts, getShortcutDisplayText } = useViewerShortcuts()
+const { registerShortcuts } = useViewerShortcuts()
 const { isLightTheme } = useTheme()
-const { getTooltipProps } = useSmartTooltipDelay()
 
 const showSettings = ref(false)
 
