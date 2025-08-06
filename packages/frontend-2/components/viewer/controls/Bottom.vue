@@ -5,7 +5,7 @@
       v-show="activePanel === 'none'"
       class="absolute left-1/2 -translate-x-1/2 z-50"
       :class="isEmbedEnabled ? 'bottom-[4rem]' : 'bottom-4'"
-      :style="!isEmbedEnabled ? { paddingBottom: 'env(safe-area-inset-bottom)' } : {}"
+      :style="!isEmbedEnabled ? { marginBottom: 'env(safe-area-inset-bottom)' } : {}"
     >
       <ViewerControlsButtonToggle
         v-for="panel in panels"
@@ -23,7 +23,7 @@
       v-if="activePanel !== 'none'"
       class="absolute left-1/2 -translate-x-1/2 z-50 flex p-1 items-center justify-between w-80"
       :class="isEmbedEnabled ? 'bottom-[4rem]' : 'bottom-4'"
-      :style="!isEmbedEnabled ? { paddingBottom: 'env(safe-area-inset-bottom)' } : {}"
+      :style="!isEmbedEnabled ? { marginBottom: 'env(safe-area-inset-bottom)' } : {}"
     >
       <span class="flex items-center">
         <component :is="panels[activePanel].icon" class="h-4 w-4 ml-1 mr-1.5" />
