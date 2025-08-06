@@ -10,7 +10,7 @@
         :key="panel.id"
         v-tippy="getTooltipProps(panel.tooltip)"
         :active="activePanel === panel.id"
-        :dot="panel.id === 'measurements' && hasMeasurements"
+        :dot="shouldShowDot(panel.id)"
         :icon="panel.icon"
         :class="panel.extraClasses"
         @click="toggleActivePanel(panel.id)"
@@ -143,6 +143,17 @@ const showResetButton = computed(() => {
     activePanel.value === ActivePanel.sectionBox
   )
 })
+
+const shouldShowDot = (panelId: ActivePanel) => {
+  switch (panelId) {
+    case ActivePanel.measurements:
+      return hasMeasurements.value
+    case ActivePanel.sectionBox:
+      return isSectionBoxEnabled.value
+    default:
+      return false
+  }
+}
 
 const toggleActivePanel = (panel: ActivePanel) => {
   activePanel.value = activePanel.value === panel ? ActivePanel.none : panel
