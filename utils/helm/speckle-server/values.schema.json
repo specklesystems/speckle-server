@@ -130,6 +130,11 @@
           "description": "Enables the ability to run background jobs (such as the IFC importer) in Speckle",
           "default": false
         },
+        "accIntegrationEnabled": {
+          "type": "boolean",
+          "description": "Enables the ability to import data from ACC",
+          "default": false
+        },
         "rhinoFileImporterEnabled": {
           "type": "boolean",
           "description": "Enables the dedicated Rhino based file importer. This is not part of the deployment.",
