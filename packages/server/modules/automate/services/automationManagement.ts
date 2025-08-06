@@ -19,7 +19,6 @@ import {
 import { AuthCodePayloadAction } from '@/modules/automate/services/authCode'
 import type {
   ProjectAutomationCreateInput,
-  ProjectAutomationRevisionCreateInput,
   ProjectAutomationUpdateInput
 } from '@/modules/core/graph/generated/graphql'
 import type { ContextResourceAccessRules } from '@/modules/core/helpers/token'
@@ -51,7 +50,8 @@ import type {
   StoreAutomation,
   StoreAutomationRevision,
   StoreAutomationToken,
-  UpdateAutomation
+  UpdateAutomation,
+  CreateAutomationRevision
 } from '@/modules/automate/domain/operations'
 import type { GetBranchesByIds } from '@/modules/core/domain/branches/operations'
 import type { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
@@ -368,14 +368,14 @@ export type CreateAutomationRevisionDeps = {
   ValidateNewRevisionFunctionsDeps
 
 export const createAutomationRevisionFactory =
-  (deps: CreateAutomationRevisionDeps) =>
-  async (params: {
-    input: ProjectAutomationRevisionCreateInput
-    userId: string
-    userResourceAccessRules?: ContextResourceAccessRules
-    projectId?: string
+  (deps: CreateAutomationRevisionDeps): CreateAutomationRevision =>
+  async ({
+    input,
+    userId,
+    userResourceAccessRules,
+    projectId,
+    skipInputValidation
   }) => {
-    const { input, userId, userResourceAccessRules, projectId } = params
     const {
       storeAutomationRevision,
       getAutomation,
@@ -465,7 +465,9 @@ export const createAutomationRevisionFactory =
             )
           }
 
-          validateInputAgainstFunctionSchema(schema, decryptedParams)
+          if (!skipInputValidation) {
+            validateInputAgainstFunctionSchema(schema, decryptedParams)
+          }
 
           // Didn't throw, let's continue
           const fn: InsertableAutomationRevisionFunction = {

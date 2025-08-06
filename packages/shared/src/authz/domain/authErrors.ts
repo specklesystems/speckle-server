@@ -196,6 +196,11 @@ export const AutomateFunctionNotCreatorError = defineAuthError({
   message: 'You are not the function creator and cannot make changes to it.'
 })
 
+export const AccIntegrationNotEnabledError = defineAuthError({
+  code: 'AccIntegrationNotEnabled',
+  message: 'The ACC Integration is not enabled on this server or project'
+})
+
 export const SavedViewNotFoundError = defineAuthError({
   code: 'SavedViewNotFound',
   message: 'Saved view not found'
