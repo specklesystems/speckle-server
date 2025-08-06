@@ -20,7 +20,10 @@ import type {
   InsertableAutomationRun
 } from '@/modules/automate/repositories/automations'
 import type { AuthCodePayload } from '@/modules/automate/services/authCode'
-import type { ProjectAutomationCreateInput } from '@/modules/core/graph/generated/graphql'
+import type {
+  ProjectAutomationCreateInput,
+  ProjectAutomationRevisionCreateInput
+} from '@/modules/core/graph/generated/graphql'
 import type { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import type {
   BranchRecord,
@@ -195,6 +198,14 @@ export type CreateAutomation = (params: {
   userId: string
   userResourceAccessRules?: ContextResourceAccessRules
 }) => Promise<{ automation: AutomationRecord; token: AutomationTokenRecord }>
+
+export type CreateAutomationRevision = (params: {
+  input: ProjectAutomationRevisionCreateInput
+  userId: string
+  userResourceAccessRules?: ContextResourceAccessRules
+  projectId?: string
+  skipInputValidation?: boolean
+}) => Promise<AutomationRevisionWithTriggersFunctions>
 
 type KeyPair = {
   publicKey: string
