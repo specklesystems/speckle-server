@@ -682,7 +682,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         )
       })
 
-      it('allow deleting a view', async () => {
+      const createTestView = async () => {
         const createRes = await createSavedView(
           buildCreateInput({
             projectId: deletablesProject.id,
@@ -694,18 +694,21 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         const view = createRes.data?.projectMutations.savedViewMutations.createView!
         expect(view).to.be.ok
 
-        const findView = async () => {
-          const foundView = await getView(
-            {
-              projectId: deletablesProject.id,
-              viewId: view.id
-            },
-            { assertNoErrors: true }
-          )
-          return foundView.data?.project.savedView
-        }
+        return view
+      }
 
-        const foundView = await findView()
+      const findView = async (viewId: string) => {
+        const foundView = await getView({
+          projectId: deletablesProject.id,
+          viewId
+        })
+        return foundView.data?.project.savedView
+      }
+
+      it('allow deleting a view', async () => {
+        const view = await createTestView()
+
+        const foundView = await findView(view.id)
         expect(foundView).to.be.ok
 
         const deleteRes = await deleteView(
@@ -720,8 +723,20 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(deleteRes.data?.projectMutations.savedViewMutations.deleteView).to.be
           .true
 
-        const deletedView = await findView()
+        const deletedView = await findView(view.id)
         expect(deletedView).to.not.be.ok
+      })
+
+      it('should fail to delete a view if not found', async () => {
+        const res = await deleteView({
+          input: {
+            id: 'non-existent-view-id',
+            projectId: deletablesProject.id
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors({ code: NotFoundError.code })
+        expect(res.data?.projectMutations.savedViewMutations.deleteView).to.not.be.ok
       })
     })
 

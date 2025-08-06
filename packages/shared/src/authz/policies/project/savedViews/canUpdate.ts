@@ -77,7 +77,7 @@ export const canUpdateSavedViewPolicy: AuthPolicy<
         return err(
           new ProjectNotEnoughPermissionsError({
             message:
-              "Your role on this project doesn't give you permission to update saved views."
+              "Your role on this project doesn't give you permission to update saved views. You need to be the author of the view or the Project owner."
           })
         )
       return err(ensuredWriteAccess.error)
