@@ -21,6 +21,14 @@ export enum MeasurementType {
   POINT
 }
 
+export enum MeasurementEvent {
+  CountChanged = 'measurement-count-changed'
+}
+
+export interface MeasurementEventPayload {
+  [MeasurementEvent.CountChanged]: number
+}
+
 export interface MeasurementOptions {
   visible: boolean
   type?: MeasurementType
@@ -104,7 +112,7 @@ export class MeasurementsExtension extends Extension {
   }
 
   private emitMeasurementCountChanged() {
-    this.emit('measurement-count-changed', this.measurements.length)
+    this.emit(MeasurementEvent.CountChanged, this.measurements.length)
   }
 
   public constructor(viewer: IViewer, protected cameraProvider: CameraController) {
@@ -116,6 +124,13 @@ export class MeasurementsExtension extends Extension {
     this.renderer.input.on(InputEvent.PointerMove, this.onPointerMove.bind(this))
     this.renderer.input.on(InputEvent.Click, this.onPointerClick.bind(this))
     this.renderer.input.on(InputEvent.DoubleClick, this.onPointerDoubleClick.bind(this))
+  }
+
+  public on<T extends MeasurementEvent>(
+    eventType: T,
+    listener: (arg: MeasurementEventPayload[T]) => void
+  ): void {
+    super.on(eventType, listener)
   }
 
   public onLateUpdate() {
