@@ -34,6 +34,7 @@ import { canUseWorkspacePlanFeature } from './workspace/canUseWorkspacePlanFeatu
 import { canEditFunctionPolicy } from './automate/function/canEditFunction.js'
 import { canUpdateEmbedTokensPolicy } from './project/canUpdateEmbedTokens.js'
 import { canCreateSavedViewPolicy } from './project/savedViews/canCreate.js'
+import { canUpdateSavedViewPolicy } from './project/savedViews/canUpdate.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   automate: {
@@ -65,7 +66,8 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
       canRequestRender: canRequestProjectVersionRenderPolicy(loaders)
     },
     savedViews: {
-      canCreate: canCreateSavedViewPolicy(loaders)
+      canCreate: canCreateSavedViewPolicy(loaders),
+      canUpdate: canUpdateSavedViewPolicy(loaders)
     },
     canBroadcastActivity: canBroadcastProjectActivityPolicy(loaders),
     canRead: canReadProjectPolicy(loaders),

@@ -108,7 +108,7 @@ const resolvers: Resolvers = {
       const projectDb = await getProjectDbClient({ projectId: parent.id })
       const view = await ctx.loaders
         .forRegion({ db: projectDb })
-        .savedViews.getSavedViews.load({
+        .savedViews.getSavedView.load({
           viewId: args.id,
           projectId: parent.id
         })
@@ -224,6 +224,16 @@ const resolvers: Resolvers = {
       })
       return await createSavedView({ input: args.input, authorId: ctx.userId! })
     },
+    deleteView: async (_parent, args, ctx) => {
+      const projectId = args.input.projectId
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: ctx.resourceAccessRules
+      })
+
+      throw new NotImplementedError()
+    },
     createGroup: async (_parent, args, ctx) => {
       const projectId = args.input.projectId
       throwIfResourceAccessNotAllowed({
@@ -280,16 +290,6 @@ const disabledResolvers: Resolvers = {
   ProjectMutations: {
     savedViewMutations: () => {
       throw new NotImplementedError(disabledMessage)
-    }
-  },
-  ProjectPermissionChecks: {
-    canCreateSavedView: () => {
-      return {
-        authorized: false,
-        message: disabledMessage,
-        code: 'SAVED_VIEWS_DISABLED',
-        payload: null
-      }
     }
   }
 }

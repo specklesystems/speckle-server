@@ -133,3 +133,13 @@ export const getProjectSavedViewQuery = gql`
   }
   ${basicSavedViewFragment}
 `
+
+export const deleteSavedViewMutation = gql`
+  mutation DeleteSavedView($input: DeleteSavedViewInput!) {
+    projectMutations {
+      savedViewMutations {
+        deleteView(input: $input)
+      }
+    }
+  }
+`

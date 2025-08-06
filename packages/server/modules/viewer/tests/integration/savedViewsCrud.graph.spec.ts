@@ -3,6 +3,7 @@ import type {
   BasicSavedViewGroupFragment,
   CreateSavedViewGroupMutationVariables,
   CreateSavedViewMutationVariables,
+  DeleteSavedViewMutationVariables,
   GetProjectSavedViewGroupQueryVariables,
   GetProjectSavedViewGroupsQueryVariables,
   GetProjectSavedViewQueryVariables,
@@ -11,6 +12,7 @@ import type {
 import {
   CreateSavedViewDocument,
   CreateSavedViewGroupDocument,
+  DeleteSavedViewDocument,
   GetProjectSavedViewDocument,
   GetProjectSavedViewGroupDocument,
   GetProjectSavedViewGroupsDocument,
@@ -143,6 +145,11 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     input: GetProjectSavedViewQueryVariables,
     options?: ExecuteOperationOptions
   ) => apollo.execute(GetProjectSavedViewDocument, input, options)
+
+  const deleteView = (
+    input: DeleteSavedViewMutationVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(DeleteSavedViewDocument, input, options)
 
   const getProjectUngroupedViewGroup = (
     input: GetProjectUngroupedViewGroupQueryVariables,
@@ -646,6 +653,75 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           }),
           { assertNoErrors: true }
         )
+      })
+    })
+
+    describe('deletions', () => {
+      let deletablesProject: BasicTestStream
+      let models: BasicTestBranch[]
+
+      before(async () => {
+        deletablesProject = await createTestStream(
+          buildBasicTestProject({
+            name: 'deletables-project',
+            workspaceId: myProjectWorkspace.id
+          }),
+          me
+        )
+
+        models = await Promise.all(
+          times(3, async (i) => {
+            return await createTestBranch({
+              branch: buildBasicTestModel({
+                name: `Model #${i}`
+              }),
+              stream: deletablesProject,
+              owner: me
+            })
+          })
+        )
+      })
+
+      it('allow deleting a view', async () => {
+        const createRes = await createSavedView(
+          buildCreateInput({
+            projectId: deletablesProject.id,
+            resourceIdString: models[0].id,
+            overrides: { name: 'View to delete' }
+          }),
+          { assertNoErrors: true }
+        )
+        const view = createRes.data?.projectMutations.savedViewMutations.createView!
+        expect(view).to.be.ok
+
+        const findView = async () => {
+          const foundView = await getView(
+            {
+              projectId: deletablesProject.id,
+              viewId: view.id
+            },
+            { assertNoErrors: true }
+          )
+          return foundView.data?.project.savedView
+        }
+
+        const foundView = await findView()
+        expect(foundView).to.be.ok
+
+        const deleteRes = await deleteView(
+          {
+            input: {
+              id: view.id,
+              projectId: deletablesProject.id
+            }
+          },
+          { assertNoErrors: true }
+        )
+        expect(deleteRes.data?.projectMutations.savedViewMutations.deleteView).to.be
+          .true
+
+        const deletedView = await findView()
+        expect(deletedView).to.not.be.ok
       })
     })
 
