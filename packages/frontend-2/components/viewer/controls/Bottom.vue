@@ -10,6 +10,7 @@
         :key="panel.id"
         v-tippy="getTooltipProps(panel.tooltip)"
         :active="activePanel === panel.id"
+        :dot="panel.id === 'measurements' && hasMeasurements"
         :icon="panel.icon"
         :class="panel.extraClasses"
         @click="toggleActivePanel(panel.id)"
@@ -85,7 +86,7 @@ const {
   isSectionBoxEnabled,
   isSectionBoxVisible
 } = useSectionBoxUtilities()
-const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
+const { getActiveMeasurement, removeMeasurement, enableMeasurements, hasMeasurements } =
   useMeasurementUtilities()
 const { resetExplode } = useFilterUtilities()
 const { getTooltipProps } = useSmartTooltipDelay()

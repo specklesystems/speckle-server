@@ -7,6 +7,7 @@ import {
 } from '@speckle/viewer'
 import { MeasurementsExtension, ViewModes } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
+import { useActiveElement } from '@vueuse/core'
 import { difference, isString, uniq } from 'lodash-es'
 import { useEmbedState, useEmbed } from '~/lib/viewer/composables/setup/embed'
 import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
@@ -24,7 +25,6 @@ import type {
   ViewerShortcut,
   ViewerShortcutAction
 } from '~/lib/viewer/helpers/shortcuts/types'
-import { useActiveElement } from '@vueuse/core'
 import { useTheme } from '~/lib/core/composables/theme'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
@@ -409,6 +409,8 @@ export function useThreadUtilities() {
 export function useMeasurementUtilities() {
   const state = useInjectedViewerState()
 
+  const measurementCount = ref(0)
+
   const measurementOptions = computed(() => state.ui.measurement.options.value)
 
   const enableMeasurements = (enabled: boolean) => {
@@ -436,13 +438,37 @@ export function useMeasurementUtilities() {
     return activeMeasurement && activeMeasurement.state === 2
   }
 
+  const hasMeasurements = computed(() => measurementCount.value > 0)
+
+  const setupMeasurementListener = () => {
+    const extension = state.viewer.instance?.getExtension(MeasurementsExtension)
+    if (!extension) return
+
+    const updateCount = () => {
+      measurementCount.value = (
+        extension as unknown as { measurementCount: number }
+      ).measurementCount
+    }
+
+    // Set initial count
+    updateCount()
+
+    // Listen for changes
+    extension.on('measurement-count-changed', updateCount)
+  }
+
+  if (state.viewer.instance) {
+    setupMeasurementListener()
+  }
+
   return {
     measurementOptions,
     enableMeasurements,
     setMeasurementOptions,
     removeMeasurement,
     clearMeasurements,
-    getActiveMeasurement
+    getActiveMeasurement,
+    hasMeasurements
   }
 }
 
