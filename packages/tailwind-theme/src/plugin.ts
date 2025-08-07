@@ -1,12 +1,13 @@
 import buildPlugin from 'tailwindcss/plugin.js'
 import { config as preset } from './preset.js'
+import { primitives } from './primitives.js'
 
 export const lightThemeVariables = {
   /* used only as the page background */
-  '--foundation-page': '#FAFAFA',
+  '--foundation-page': primitives.neutral[99],
   /* used as the background for any elements that sit on the page */
-  '--foundation': '#FFFFFF',
-  '--foundation-2': '#F5F5F5',
+  '--foundation': primitives.white,
+  '--foundation-2': primitives.neutral[97],
   '--foundation-3': '#fcfcfc',
   '--foundation-4': '#fcfcfc',
   '--foundation-5': '#fcfcfc',
@@ -16,64 +17,64 @@ export const lightThemeVariables = {
   '--foundation-disabled': '#e5e5e5',
 
   /* default foreground color */
-  '--foreground': '#1A1A1A',
+  '--foreground': primitives.neutral[10],
   /* dimmer foreground color, e.g. caption text */
-  '--foreground-2': '#626263',
-  '--foreground-3': '#7C7C7D',
+  '--foreground-2': primitives.neutral[25],
+  '--foreground-3': primitives.neutral[40],
   /* foreground color when put on top of a primary colored background */
-  '--foreground-on-primary': '#fff',
+  '--foreground-on-primary': primitives.white,
   '--foreground-disabled': '#1A1A1A50',
 
   /* primary color */
-  '--primary': '#136CFF',
+  '--primary': primitives.blue[50],
   /* focused primary color */
-  '--primary-focus': '#0057E5',
+  '--primary-focus': primitives.blue[40],
   /* muted primary color */
-  '--primary-muted': '#EDEDED',
+  '--primary-muted': primitives.neutral[92],
 
   /* outline variations */
-  '--outline-1': '#276FE5',
-  '--outline-2': '#DFDFDF',
-  '--outline-3': '#E2E8F0',
-  '--outline-4': '#4B40C9',
-  '--outline-5': '#C4C4C4',
+  '--outline-1': primitives.blue[55],
+  '--outline-2': primitives.neutral[85],
+  '--outline-3': primitives.neutral[95],
+  '--outline-4': primitives.blue[50],
+  '--outline-5': primitives.neutral[85],
 
   /* highlight variations */
-  '--highlight-1': '#F4F4F4',
-  '--highlight-2': '#F2F2F2',
-  '--highlight-3': '#EDEDED',
+  '--highlight-1': primitives.neutralAlpha[97],
+  '--highlight-2': primitives.neutralAlpha[95],
+  '--highlight-3': primitives.neutralAlpha[92],
 
   /* success variations */
-  '--success': '#34D399',
-  '--success-lighter': '#53EDB5',
-  '--success-lightest': '#EEFEF8',
-  '--success-darker': '#1CBA80',
+  '--success': primitives.green[65],
+  '--success-lighter': primitives.green[85],
+  '--success-lightest': primitives.green[95],
+  '--success-darker': primitives.green[55],
 
   /* warning variations */
-  '--warning': '#FBBF24',
-  '--warning-lighter': '#FFD770',
-  '--warning-lightest': '#FEF9EE',
-  '--warning-darker': '#E0AB20',
+  '--warning': primitives.yellow[65],
+  '--warning-lighter': primitives.yellow[85],
+  '--warning-lightest': primitives.yellow[97],
+  '--warning-darker': primitives.yellow[55],
 
   /* info variations */
-  '--info': '#B8C0CC',
-  '--info-lighter': '#E0ECFF',
-  '--info-lightest': '#EEEEFE',
-  '--info-darker': '#6B7D99',
+  '--info': primitives.blue[55],
+  '--info-lighter': primitives.blue[90],
+  '--info-lightest': primitives.blue[95],
+  '--info-darker': primitives.blue[30],
 
   /* danger variations */
-  '--danger': '#C45959',
-  '--danger-lighter': '#F78888',
-  '--danger-lightest': '#FEEEEE',
-  '--danger-darker': '#913333'
+  '--danger': primitives.red[50],
+  '--danger-lighter': primitives.red[75],
+  '--danger-lightest': primitives.red[95],
+  '--danger-darker': primitives.red[40]
 }
 
 export const darkThemeVariables = {
   /* used only as the page background */
-  '--foundation-page': '#101012',
+  '--foundation-page': primitives.darkNeutral[5],
   /* used as the background for any elements that sit on the page */
-  '--foundation': '#15161C',
-  '--foundation-2': '#191A22',
+  '--foundation': primitives.darkNeutral[10],
+  '--foundation-2': primitives.darkNeutral[15],
   '--foundation-3': '#52525b',
   '--foundation-4': '#71717a',
   '--foundation-5': '#a1a1aa',
@@ -83,55 +84,55 @@ export const darkThemeVariables = {
   '--foundation-disabled': '#3c3c3d',
 
   /* default foreground color */
-  '--foreground': '#FFFFFF',
+  '--foreground': primitives.darkNeutral[99],
   /* dimmer foreground color, e.g. caption text */
-  '--foreground-2': '#B0B1B5',
-  '--foreground-3': '#7E7F82',
+  '--foreground-2': primitives.darkNeutral[75],
+  '--foreground-3': primitives.darkNeutral[50],
   '--foreground-on-primary': '#FFFFFF',
   '--foreground-disabled': '#FFFFFF50',
 
   /* primary color */
-  '--primary': '#136CFF',
+  '--primary': primitives.blue[50],
   /* focused primary color */
-  '--primary-focus': '#0057E5',
+  '--primary-focus': primitives.blue[55],
   /* muted primary color */
-  '--primary-muted': '#292B39',
+  '--primary-muted': primitives.darkNeutral[20],
 
   /* outline variations */
-  '--outline-1': '#276FE5',
-  '--outline-2': '#2E313F',
-  '--outline-3': '#282833',
-  '--outline-4': '#4B40C9',
-  '--outline-5': '#434559',
+  '--outline-1': primitives.blue[40],
+  '--outline-2': primitives.darkNeutral[20],
+  '--outline-3': primitives.darkNeutral[25],
+  '--outline-4': primitives.blue[50],
+  '--outline-5': primitives.darkNeutral[30],
 
   /* highlight variations */
-  '--highlight-1': '#22242E',
-  '--highlight-2': '#292B39',
-  '--highlight-3': '#323445',
+  '--highlight-1': primitives.darkNeutralAlpha[15],
+  '--highlight-2': primitives.darkNeutralAlpha[20],
+  '--highlight-3': primitives.darkNeutralAlpha[25],
 
   /* success variations */
-  '--success': '#34D399',
-  '--success-lighter': '#53EDB5',
-  '--success-lightest': '#072C1F',
-  '--success-darker': '#1CBA80',
+  '--success': primitives.green[55],
+  '--success-lighter': primitives.green[30],
+  '--success-lightest': primitives.green[15],
+  '--success-darker': primitives.green[65],
 
   /* warning variations */
-  '--warning': '#FBBF24',
-  '--warning-lighter': '#FFD770',
-  '--warning-lightest': '#302303',
-  '--warning-darker': '#E0AB20',
+  '--warning': primitives.yellow[75],
+  '--warning-lighter': primitives.yellow[30],
+  '--warning-lightest': primitives.yellow[15],
+  '--warning-darker': primitives.yellow[65],
 
   /* info variations */
-  '--info': '#B8C0CC',
-  '--info-lighter': '#0043B2',
-  '--info-lightest': '#0043B2',
-  '--info-darker': '#6B7D99',
+  '--info': primitives.blue[35],
+  '--info-lighter': primitives.blue[15],
+  '--info-lightest': primitives.blue[10],
+  '--info-darker': primitives.blue[65],
 
   /* danger variations */
-  '--danger': '#F87171',
-  '--danger-lighter': '#FF8F8F',
-  '--danger-lightest': '#300303',
-  '--danger-darker': '#AB3E3E'
+  '--danger': primitives.red[40],
+  '--danger-lighter': primitives.red[25],
+  '--danger-lightest': primitives.red[15],
+  '--danger-darker': primitives.red[50]
 }
 
 const plugin = buildPlugin(({ addComponents, addBase }) => {
