@@ -9,7 +9,8 @@ import type {
   GetProjectSavedViewGroupQueryVariables,
   GetProjectSavedViewGroupsQueryVariables,
   GetProjectSavedViewQueryVariables,
-  GetProjectUngroupedViewGroupQueryVariables
+  GetProjectUngroupedViewGroupQueryVariables,
+  UpdateSavedViewMutationVariables
 } from '@/modules/core/graph/generated/graphql'
 import {
   CanCreateSavedViewDocument,
@@ -20,7 +21,8 @@ import {
   GetProjectSavedViewDocument,
   GetProjectSavedViewGroupDocument,
   GetProjectSavedViewGroupsDocument,
-  GetProjectUngroupedViewGroupDocument
+  GetProjectUngroupedViewGroupDocument,
+  UpdateSavedViewDocument
 } from '@/modules/core/graph/generated/graphql'
 import {
   buildBasicTestModel,
@@ -173,6 +175,11 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     input: CanUpdateSavedViewQueryVariables,
     options?: ExecuteOperationOptions
   ) => apollo.execute(CanUpdateSavedViewDocument, input, options)
+
+  const updateView = (
+    input: UpdateSavedViewMutationVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(UpdateSavedViewDocument, input, options)
 
   const model1ResourceIds = () => ViewerRoute.resourceBuilder().addModel(myModel1.id)
 
@@ -683,6 +690,77 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           }),
           { assertNoErrors: true }
         )
+      })
+    })
+
+    describe('updates', () => {
+      let updatablesProject: BasicTestStream
+      let models: BasicTestBranch[]
+      let testView: BasicSavedViewFragment
+
+      before(async () => {
+        updatablesProject = await createTestStream(
+          buildBasicTestProject({
+            name: 'updatables-project',
+            workspaceId: myProjectWorkspace.id
+          }),
+          me
+        )
+
+        models = await Promise.all(
+          times(3, async (i) => {
+            return await createTestBranch({
+              branch: buildBasicTestModel({
+                name: `Model #${i}`
+              }),
+              stream: updatablesProject,
+              owner: me
+            })
+          })
+        )
+      })
+
+      beforeEach(async () => {
+        const createRes = await createSavedView(
+          buildCreateInput({
+            projectId: updatablesProject.id,
+            resourceIdString: models[0].id,
+            overrides: { name: 'View to update' }
+          }),
+          { assertNoErrors: true }
+        )
+        testView = createRes.data?.projectMutations.savedViewMutations.createView!
+        expect(testView).to.be.ok
+      })
+
+      afterEach(async () => {
+        await deleteView(
+          {
+            input: {
+              id: testView.id,
+              projectId: updatablesProject.id
+            }
+          },
+          { assertNoErrors: true }
+        )
+      })
+
+      it('successfully updates a saved view', async () => {
+        const newName = 'Updated View Name'
+
+        const res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            name: newName
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        const updatedView = res.data?.projectMutations.savedViewMutations.updateView
+        expect(updatedView).to.be.ok
+        expect(updatedView!.id).to.equal(testView.id)
+        expect(updatedView!.name).to.equal(newName)
       })
     })
 
