@@ -47,7 +47,6 @@ import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 
 // TODO: Should we switch to resolvedResourceIdString everywhere?
 // TODO: If search for 'Ungrouped' (ungrouped title), then return the ungrouped group too
-// TODO: Clicking on visibility triggfers submit??
 
 graphql(`
   fragment ViewerSavedViewsPanelViewEditDialog_SavedView on SavedView {

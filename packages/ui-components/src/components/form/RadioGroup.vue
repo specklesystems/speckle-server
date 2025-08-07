@@ -18,6 +18,7 @@
               : 'hover:border-outline-1'
           ]"
           :disabled="disabled || option.disabled"
+          type="button"
           @click="selectItem(option.value)"
         >
           <div
