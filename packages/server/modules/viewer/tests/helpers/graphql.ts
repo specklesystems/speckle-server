@@ -143,3 +143,38 @@ export const deleteSavedViewMutation = gql`
     }
   }
 `
+
+export const canCreateSavedViewQuery = gql`
+  query CanCreateSavedView($projectId: String!) {
+    project(id: $projectId) {
+      id
+      permissions {
+        canCreateSavedView {
+          authorized
+          code
+          message
+          payload
+        }
+      }
+    }
+  }
+`
+
+export const canUpdateSavedViewQuery = gql`
+  query CanUpdateSavedView($projectId: String!, $viewId: ID!) {
+    project(id: $projectId) {
+      id
+      savedView(id: $viewId) {
+        id
+        permissions {
+          canUpdate {
+            authorized
+            code
+            message
+            payload
+          }
+        }
+      }
+    }
+  }
+`

@@ -1,6 +1,8 @@
 import type {
   BasicSavedViewFragment,
   BasicSavedViewGroupFragment,
+  CanCreateSavedViewQueryVariables,
+  CanUpdateSavedViewQueryVariables,
   CreateSavedViewGroupMutationVariables,
   CreateSavedViewMutationVariables,
   DeleteSavedViewMutationVariables,
@@ -10,6 +12,8 @@ import type {
   GetProjectUngroupedViewGroupQueryVariables
 } from '@/modules/core/graph/generated/graphql'
 import {
+  CanCreateSavedViewDocument,
+  CanUpdateSavedViewDocument,
   CreateSavedViewDocument,
   CreateSavedViewGroupDocument,
   DeleteSavedViewDocument,
@@ -47,6 +51,10 @@ import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { addToStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { Roles, WorkspacePlans } from '@speckle/shared'
+import {
+  ProjectNotEnoughPermissionsError,
+  WorkspacePlanNoFeatureAccessError
+} from '@speckle/shared/authz'
 import * as ViewerRoute from '@speckle/shared/viewer/route'
 import * as ViewerState from '@speckle/shared/viewer/state'
 import { expect } from 'chai'
@@ -156,6 +164,16 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     options?: ExecuteOperationOptions
   ) => apollo.execute(GetProjectUngroupedViewGroupDocument, input, options)
 
+  const canCreateSavedView = (
+    input: CanCreateSavedViewQueryVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(CanCreateSavedViewDocument, input, options)
+
+  const canUpdateSavedView = (
+    input: CanUpdateSavedViewQueryVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(CanUpdateSavedViewDocument, input, options)
+
   const model1ResourceIds = () => ViewerRoute.resourceBuilder().addModel(myModel1.id)
 
   const model2ResourceIds = () => ViewerRoute.resourceBuilder().addModel(myModel2.id)
@@ -218,7 +236,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
   if (FF_WORKSPACES_MODULE_ENABLED) {
     describe('creation', () => {
-      describe('canCreateSavedViewPolicy - forbidden error branches', () => {
+      describe('auth policy checks', () => {
         it('should fail with ForbiddenError if user is not logged in', async () => {
           const res = await createSavedView(
             buildCreateInput({ projectId: myProject.id, resourceIdString: 'abc' }),
@@ -302,6 +320,18 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
           expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
           expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+        })
+
+        it('should support dedicated auth policy check', async () => {
+          const res = await canCreateSavedView({
+            projectId: myLackingProject.id
+          })
+
+          expect(res).to.not.haveGraphQLErrors()
+
+          const data = res.data?.project.permissions.canCreateSavedView
+          expect(data?.authorized).to.be.false
+          expect(data?.code).to.equal(WorkspacePlanNoFeatureAccessError.code)
         })
       })
 
@@ -680,6 +710,11 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
             })
           })
         )
+
+        // add guest as reviewer
+        await addToStream(deletablesProject, guest, Roles.Stream.Reviewer, {
+          owner: me
+        })
       })
 
       const createTestView = async () => {
@@ -737,6 +772,26 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
         expect(res).to.haveGraphQLErrors({ code: NotFoundError.code })
         expect(res.data?.projectMutations.savedViewMutations.deleteView).to.not.be.ok
+      })
+
+      it('should support dedicated auth policy check', async () => {
+        const view = await createTestView()
+
+        const res = await canUpdateSavedView(
+          {
+            projectId: deletablesProject.id,
+            viewId: view.id
+          },
+          {
+            authUserId: guest.id
+          }
+        )
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const data = res.data?.project.savedView.permissions.canUpdate
+        expect(data?.authorized).to.be.false
+        expect(data?.code).to.equal(ProjectNotEnoughPermissionsError.code)
       })
     })
 
