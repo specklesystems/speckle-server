@@ -16058,7 +16058,7 @@ __metadata:
     js-cookie: "npm:^3.0.1"
     jsdom: "npm:^22.1.0"
     lodash-es: "npm:^4.17.21"
-    lucide-vue-next: "npm:^0.535.0"
+    lucide-vue-next: "npm:^0.537.0"
     marked: "npm:^5.1.0"
     marked-plaintext: "npm:^0.0.2"
     mitt: "npm:^3.0.0"
@@ -36295,12 +36295,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lucide-vue-next@npm:^0.535.0":
-  version: 0.535.0
-  resolution: "lucide-vue-next@npm:0.535.0"
+"lucide-vue-next@npm:^0.537.0":
+  version: 0.537.0
+  resolution: "lucide-vue-next@npm:0.537.0"
   peerDependencies:
     vue: ">=3.0.1"
-  checksum: 10/f42eaf1e39959d0ff400d1a5e2759a533373362c281ef50555b6d32b8eea034817e3f9b872d0d890718002d9db252101cc40fe183864871da24a67c52ad39ffa
+  checksum: 10/e7595545efc9f57379c66c1c48e696b06c10cb7ca0344a1fc3985fda45e24d2d9e0caa12b5ae4fb41341444c38062ec231992e323ef024a4eb2410a4b23f1a5b
   languageName: node
   linkType: hard
 
