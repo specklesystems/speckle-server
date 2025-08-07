@@ -624,6 +624,9 @@ const getStream = () => {
 
     // Text with color proxy
     // 'https://app.speckle.systems/projects/ebf93a561b/models/0a07bc3231'
+
+    // Sum building
+    // 'https://app.speckle.systems/projects/a2b933a867/models/5b6b6e9360'
   )
 }
 
