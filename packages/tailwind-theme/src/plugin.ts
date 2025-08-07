@@ -126,13 +126,13 @@ export const darkThemeVariables = {
   '--info': primitives.blue[35],
   '--info-lighter': primitives.blue[15],
   '--info-lightest': primitives.blue[10],
-  '--info-darker': primitives.blue[65],
+  '--info-darker': primitives.blue[55],
 
   /* danger variations */
-  '--danger': primitives.red[40],
+  '--danger': primitives.red[50],
   '--danger-lighter': primitives.red[25],
   '--danger-lightest': primitives.red[15],
-  '--danger-darker': primitives.red[50]
+  '--danger-darker': primitives.red[55]
 }
 
 const plugin = buildPlugin(({ addComponents, addBase }) => {
