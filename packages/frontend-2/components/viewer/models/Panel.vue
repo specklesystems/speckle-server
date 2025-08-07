@@ -26,42 +26,77 @@
 
       <div class="flex flex-col h-full">
         <template v-if="resourceItems.length">
-          <div class="flex-1 simple-scrollbar" v-bind="containerProps">
-            <div v-bind="wrapperProps">
+          <div ref="containerRef" class="flex-1 simple-scrollbar overflow-auto">
+            <div
+              :style="{
+                height: `${totalSize}px`,
+                width: '100%',
+                position: 'relative'
+              }"
+            >
               <div
-                v-for="{ data: item } in virtualList"
-                :key="item.id"
-                :data-item-id="item.id"
-                class="group"
+                v-for="virtualItem in virtualList"
+                :key="virtualItem.index"
+                :style="{
+                  position: isActiveSticky(virtualItem.index) ? 'sticky' : 'absolute',
+                  transform: isActiveSticky(virtualItem.index)
+                    ? undefined
+                    : `translateY(${virtualItem.start}px)`,
+                  height: `${virtualItem.size}px`,
+                  zIndex: isActiveSticky(virtualItem.index) ? 10 : 1
+                }"
+                class="group top-0 left-0 w-full"
               >
-                <!-- Model Header -->
-                <template v-if="item.type === 'model-header'">
-                  <div class="sticky top-0 z-20 bg-foundation">
-                    <ViewerModelsCard
-                      :model="getModelFromItem(item)"
-                      :version-id="getVersionIdFromItem(item)"
-                      :last="false"
-                      :first="item.isFirstModel"
-                      :expand-level="expandLevel"
-                      :manual-expand-level="manualExpandLevel"
-                      :root-nodes="[]"
-                      :is-expanded="expandedModels.has(item.modelId)"
-                      @toggle-expansion="toggleModelExpansion(item.modelId)"
-                      @remove="(id: string) => removeModel(id)"
-                      @expanded="(e: number) => (manualExpandLevel < e ? (manualExpandLevel = e) : '')"
-                      @show-versions="handleShowVersions"
-                      @show-diff="handleShowDiff"
-                    />
-                  </div>
-                </template>
+                <template v-if="unifiedVirtualItems[virtualItem.index]">
+                  <!-- Model Header -->
+                  <template
+                    v-if="
+                      unifiedVirtualItems[virtualItem.index].type === 'model-header'
+                    "
+                  >
+                    <div class="bg-foundation">
+                      <ViewerModelsCard
+                        :model="
+                          getModelFromItem(unifiedVirtualItems[virtualItem.index])
+                        "
+                        :version-id="
+                          getVersionIdFromItem(unifiedVirtualItems[virtualItem.index])
+                        "
+                        :last="false"
+                        :first="unifiedVirtualItems[virtualItem.index].isFirstModel"
+                        :expand-level="expandLevel"
+                        :manual-expand-level="manualExpandLevel"
+                        :root-nodes="[]"
+                        :is-expanded="
+                          expandedModels.has(
+                            unifiedVirtualItems[virtualItem.index].modelId
+                          )
+                        "
+                        @toggle-expansion="
+                          toggleModelExpansion(
+                            unifiedVirtualItems[virtualItem.index].modelId
+                          )
+                        "
+                        @remove="(id: string) => removeModel(id)"
+                        @expanded="(e: number) => (manualExpandLevel < e ? (manualExpandLevel = e) : '')"
+                        @show-versions="handleShowVersions"
+                        @show-diff="handleShowDiff"
+                      />
+                    </div>
+                  </template>
 
-                <!-- Tree Item -->
-                <template v-else-if="item.type === 'tree-item'">
-                  <ViewerModelsVirtualTreeItem
-                    :item="item"
-                    @toggle-expansion="toggleTreeItemExpansion"
-                    @item-click="handleItemClick"
-                  />
+                  <!-- Tree Item -->
+                  <template
+                    v-else-if="
+                      unifiedVirtualItems[virtualItem.index].type === 'tree-item'
+                    "
+                  >
+                    <ViewerModelsVirtualTreeItem
+                      :item="unifiedVirtualItems[virtualItem.index]"
+                      @toggle-expansion="toggleTreeItemExpansion"
+                      @item-click="handleItemClick"
+                    />
+                  </template>
                 </template>
               </div>
             </div>
@@ -104,7 +139,8 @@ import {
   useTreeManagement,
   type UnifiedVirtualItem
 } from '~~/lib/viewer/composables/tree'
-import { useVirtualList, useDebounceFn } from '@vueuse/core'
+import { useDebounceFn } from '@vueuse/core'
+import { useVirtualizer } from '@tanstack/vue-virtual'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
@@ -119,6 +155,43 @@ const expandedNodes = ref<Set<string>>(new Set())
 const expandedModels = ref<Set<string>>(new Set())
 const disableScrollOnNextSelection = ref(false)
 const refhack = ref(1)
+const containerRef = ref<HTMLElement>()
+
+// Sticky header implementation following TanStack Virtual docs
+const activeStickyIndexRef = ref(0)
+
+// Get all model header indexes
+const stickyIndexes = computed(() => {
+  const indexes: number[] = []
+  unifiedVirtualItems.value.forEach((item, index) => {
+    if (item?.type === 'model-header') {
+      indexes.push(index)
+    }
+  })
+  return indexes
+})
+
+const isActiveSticky = (index: number) => activeStickyIndexRef.value === index
+
+// Custom range extractor that includes active sticky header
+const stickyRangeExtractor = (range: {
+  startIndex: number
+  endIndex: number
+}): number[] => {
+  // Find the active sticky header (last header before or at startIndex)
+  activeStickyIndexRef.value =
+    [...stickyIndexes.value].reverse().find((index) => range.startIndex >= index) ?? 0
+
+  // Include default range + active sticky header
+  const defaultRange: number[] = []
+  for (let i = range.startIndex; i <= range.endIndex; i++) {
+    defaultRange.push(i)
+  }
+
+  const next = new Set([activeStickyIndexRef.value, ...defaultRange])
+
+  return [...next].sort((a, b) => a - b)
+}
 
 const { resourceItems, modelsAndVersionIds, objects } =
   useInjectedViewerLoadedResources()
@@ -196,17 +269,21 @@ const unifiedVirtualItems = computed(() => {
   return result
 })
 
-const {
-  list: virtualList,
-  containerProps,
-  wrapperProps
-} = useVirtualList(unifiedVirtualItems, {
-  itemHeight: (index) => {
-    const item = unifiedVirtualItems.value[index]
-    return item?.type === 'model-header' ? 80 : 40
+const virtualizer = useVirtualizer({
+  get count() {
+    return unifiedVirtualItems.value.length
   },
-  overscan: 10
+  getScrollElement: () => containerRef.value || null,
+  estimateSize: (index: number) => {
+    const item = unifiedVirtualItems.value[index]
+    return item?.type === 'model-header' ? 73 : 40
+  },
+  overscan: 10,
+  rangeExtractor: stickyRangeExtractor
 })
+
+const virtualList = computed(() => virtualizer.value.getVirtualItems())
+const totalSize = computed(() => virtualizer.value.getTotalSize())
 
 const handleShowVersions = (modelId: string) => {
   expandedModelId.value = modelId
@@ -322,18 +399,7 @@ const scrollToSelectedItem = (objectId: string) => {
         item.type === 'tree-item' && (item.data as ExplorerNode).raw?.id === objectId
     )
     if (itemIndex !== -1) {
-      const container = containerProps.ref.value
-      if (container) {
-        const containerHeight = container.clientHeight
-        const itemHeight = 40
-        const totalOffset = itemIndex * itemHeight
-        const centerOffset = containerHeight / 2 - itemHeight / 2
-        const scrollPosition = Math.max(0, totalOffset - centerOffset)
-
-        container.scrollTo({
-          top: scrollPosition
-        })
-      }
+      virtualizer.value.scrollToIndex(itemIndex, { align: 'center' })
     }
   })
 }
