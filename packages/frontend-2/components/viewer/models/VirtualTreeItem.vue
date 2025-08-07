@@ -1,15 +1,8 @@
 <template>
-  <div
-    class="px-1"
-    :class="{
-      'pt-1': item.isFirstChildOfModel,
-      'pb-1': item.isLastChildOfModel,
-      'border-b border-outline-3': item.isLastChildOfModel
-    }"
-  >
+  <div class="px-1">
     <button
       type="button"
-      class="flex items-center justify-between w-full p-1 cursor-pointer text-left h-10"
+      class="group flex items-center w-full p-1 pr-2 cursor-pointer text-left justify-between"
       :class="[getItemBackgroundClass(), getItemOpacityClass()]"
       @click="handleItemClick($event)"
       @mouseenter="handleItemMouseEnter()"
@@ -33,7 +26,7 @@
 
         <!-- Item content -->
         <div
-          class="flex flex-col min-w-0"
+          class="flex min-w-0 flex-col"
           :class="[getItemTextColorClass(), getItemOpacityClass()]"
         >
           <div class="truncate text-body-2xs">
@@ -45,7 +38,6 @@
         </div>
       </div>
 
-      <!-- Action buttons -->
       <div
         class="flex items-center group-hover:w-auto overflow-hidden shrink-0"
         :class="isTreeItemHidden || isTreeItemIsolated ? 'w-auto' : 'sm:w-0'"
