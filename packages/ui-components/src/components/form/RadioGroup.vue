@@ -89,31 +89,37 @@
 
 <script setup lang="ts" generic="Value extends string">
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
-import { type ConcreteComponent } from 'vue'
+import { useField } from 'vee-validate'
+import { computed } from 'vue'
+import type { FormRadioGroupItem } from '~~/src/helpers/common/components'
 
-type OptionType = {
-  value: Value
-  title: string
-  subtitle?: string
-  introduction?: string
-  icon?: ConcreteComponent
-  help?: string
-  disabled?: boolean
-}
+defineEmits<{
+  (e: 'update:modelValue', v: Value): void
+}>()
 
 const props = withDefaults(
   defineProps<{
-    options: OptionType[]
+    name?: string
+    modelValue?: Value
+    options: FormRadioGroupItem<Value>[]
     disabled?: boolean
     isStacked?: boolean
     size?: 'sm' | 'base'
   }>(),
   {
-    size: 'base'
+    size: 'base',
+    name: 'formRadioGroup'
   }
 )
 
-const selected = defineModel<Value>()
+const { value } = useField<Value>(props.name, [], {
+  initialValue: props.modelValue as Value
+})
+
+const selected = computed({
+  get: () => value.value,
+  set: (newVal: Value) => (value.value = newVal)
+})
 
 const selectItem = (value: Value) => {
   selected.value = value

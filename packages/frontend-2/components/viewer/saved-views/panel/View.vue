@@ -20,23 +20,37 @@
         <div class="text-body-2xs text-foreground-3 truncate">
           {{ view.author?.name }}
         </div>
-        <LayoutMenu
-          v-model:open="showMenu"
-          :items="menuItems"
-          :menu-id="menuId"
-          mount-menu-on-body
-          @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
-        >
-          <FormButton
-            size="sm"
-            color="subtle"
-            :icon-left="Ellipsis"
-            hide-text
-            name="viewActions"
-            class="shrink-0 opacity-0 group-hover:opacity-100"
-            @click="showMenu = !showMenu"
-          />
-        </LayoutMenu>
+        <div class="flex items-center">
+          <LayoutMenu
+            v-model:open="showMenu"
+            :items="menuItems"
+            :menu-id="menuId"
+            mount-menu-on-body
+            @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
+          >
+            <FormButton
+              size="sm"
+              color="subtle"
+              :icon-left="Ellipsis"
+              hide-text
+              name="viewActions"
+              class="shrink-0 opacity-0 group-hover:opacity-100"
+              @click="showMenu = !showMenu"
+            />
+          </LayoutMenu>
+          <div v-tippy="canUpdate?.errorMessage">
+            <FormButton
+              size="sm"
+              color="subtle"
+              :icon-left="SquarePen"
+              hide-text
+              name="editView"
+              class="shrink-0 opacity-0 group-hover:opacity-100"
+              :disabled="!canUpdate?.authorized || isLoading"
+              @click="showEditDialog = !showEditDialog"
+            />
+          </div>
+        </div>
       </div>
       <div class="w-full flex">
         <div
@@ -47,13 +61,14 @@
         </div>
       </div>
     </div>
+    <ViewerSavedViewsPanelViewEditDialog v-model:open="showEditDialog" :view="view" />
   </div>
 </template>
 <script setup lang="ts">
 import { StringEnum, throwUncoveredError, type StringEnumValues } from '@speckle/shared'
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
-import { Ellipsis } from 'lucide-vue-next'
+import { Ellipsis, SquarePen } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ViewerSavedViewsPanelView_SavedViewFragment } from '~/lib/common/generated/gql/graphql'
 import { useEventBus } from '~/lib/core/composables/eventBus'
@@ -80,6 +95,7 @@ graphql(`
       }
     }
     ...UseDeleteSavedView_SavedView
+    ...ViewerSavedViewsPanelViewEditDialog_SavedView
   }
 `)
 
@@ -91,6 +107,7 @@ const eventBus = useEventBus()
 const deleteView = useDeleteSavedView()
 const isLoading = useMutationLoading()
 
+const showEditDialog = ref(false)
 const showMenu = ref(false)
 const menuId = useId()
 
