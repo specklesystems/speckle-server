@@ -111,7 +111,7 @@ const validateViewerStateFactory =
 
     // Validate state match
     if (state.state.resources.request.resourceIdString !== resourceIds.toString()) {
-      throw new SavedViewCreationValidationError(
+      throw new SavedViewInvalidResourceTargetError(
         'Viewer state does not match the provided resourceIdString.',
         {
           info: errorMetadata
@@ -119,7 +119,7 @@ const validateViewerStateFactory =
       )
     }
     if (state.state.projectId !== projectId) {
-      throw new SavedViewCreationValidationError(
+      throw new SavedViewInvalidResourceTargetError(
         'Viewer state projectId does not match the provided projectId.',
         {
           info: errorMetadata
@@ -464,11 +464,7 @@ export const updateSavedViewFactory =
       )
     }
 
-    const finalChanges = omit(changes, [
-      'resourceIdString',
-      'viewerState',
-      'screenshot'
-    ])
+    const finalChanges = omit(changes, ['resourceIdString', 'viewerState'])
     const updatedView = await deps.updateSavedViewRecord({
       id,
       projectId,
