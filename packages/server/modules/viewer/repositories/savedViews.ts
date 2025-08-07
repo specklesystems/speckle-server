@@ -14,7 +14,8 @@ import type {
   RecalculateGroupResourceIds,
   StoreSavedView,
   StoreSavedViewGroup,
-  GetSavedViews
+  GetSavedViews,
+  DeleteSavedViewRecord
 } from '@/modules/viewer/domain/operations/savedViews'
 import {
   SavedViewVisibility,
@@ -482,4 +483,24 @@ export const getSavedViewsFactory =
       viewsMap[view.id] = view
     }
     return viewsMap
+  }
+
+export const deleteSavedViewRecordFactory =
+  (deps: { db: Knex }): DeleteSavedViewRecord =>
+  async (params) => {
+    const { savedViewId } = params
+    const q = tables.savedViews(deps.db).where({
+      [SavedViews.col.id]: savedViewId
+    })
+
+    // Delete the saved view
+    const result = await q.delete()
+
+    // If no rows were deleted, return false
+    if (result === 0) {
+      return false
+    }
+
+    // Otherwise, return true
+    return true
   }

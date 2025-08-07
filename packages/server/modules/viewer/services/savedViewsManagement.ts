@@ -1,6 +1,8 @@
 import type {
   CreateSavedView,
   CreateSavedViewGroup,
+  DeleteSavedView,
+  DeleteSavedViewRecord,
   GetGroupSavedViews,
   GetGroupSavedViewsPageItems,
   GetGroupSavedViewsTotalCount,
@@ -177,7 +179,7 @@ export const createSavedViewFactory =
     let name = input.name?.trim()
     if (!name?.length) {
       const viewCount = await deps.getStoredViewCount({ projectId })
-      name = `Scene - ${String(viewCount + 1).padStart(3, '0')}`
+      name = `View - ${String(viewCount + 1).padStart(3, '0')}`
     }
 
     const concreteResourceIds = resourceIds.toResources().map((r) => r.toString())
@@ -287,4 +289,11 @@ export const getGroupSavedViewsFactory =
       totalCount,
       ...pageItems
     }
+  }
+
+export const deleteSavedViewFactory =
+  (deps: { deleteSavedViewRecord: DeleteSavedViewRecord }): DeleteSavedView =>
+  async (params) => {
+    const { id } = params
+    await deps.deleteSavedViewRecord({ savedViewId: id })
   }
