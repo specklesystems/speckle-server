@@ -19,7 +19,7 @@
             v-for="item in group"
             v-slot="{ active, disabled }"
             :key="item.id"
-            :disabled="item.disabled"
+            :disabled="item.disabled || undefined"
             :color="item.color"
           >
             <span v-tippy="item.disabled && item.disabledTooltip">
@@ -42,7 +42,7 @@
   </HeadlessMenu>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="MenuIds extends string = string">
 import { directive as vTippy } from 'vue-tippy'
 import { Menu as HeadlessMenu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import type { Nullable } from '@speckle/shared'
@@ -57,8 +57,7 @@ import { useBodyMountedMenuPositioning } from '~~/src/composables/layout/menu'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (e: 'chosen', val: { event: MouseEvent; item: LayoutMenuItem<any> }): void
+  (e: 'chosen', val: { event: MouseEvent; item: LayoutMenuItem<MenuIds> }): void
 }>()
 
 const props = defineProps<{
@@ -66,7 +65,7 @@ const props = defineProps<{
   /**
    * 2D array so that items can be grouped with dividers between them
    */
-  items: LayoutMenuItem[][]
+  items: LayoutMenuItem<MenuIds>[][]
   size?: 'base' | 'lg'
   menuId?: string
   /**
@@ -188,7 +187,7 @@ const buildButtonClassses = (params: {
   return classParts.join(' ')
 }
 
-const chooseItem = (item: LayoutMenuItem, event: MouseEvent) => {
+const chooseItem = (item: LayoutMenuItem<MenuIds>, event: MouseEvent) => {
   emit('chosen', { item, event })
 }
 

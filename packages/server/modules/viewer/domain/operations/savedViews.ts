@@ -8,7 +8,9 @@ import type { MaybeNullOrUndefined, NullableKeysToOptional } from '@speckle/shar
 import type { SerializedViewerState } from '@speckle/shared/viewer/state'
 import type { Exact, SetOptional } from 'type-fest'
 
+/////////////////////
 // REPO OPERATIONS:
+/////////////////////
 
 export type StoreSavedView = <
   View extends Exact<
@@ -120,7 +122,13 @@ export type GetSavedViews = (params: {
   [viewId: string]: SavedView | undefined
 }>
 
+export type DeleteSavedViewRecord = (params: {
+  savedViewId: string
+}) => Promise<boolean>
+
+/////////////////////
 // SERVICE OPERATIONS:
+/////////////////////
 
 export type CreateSavedViewParams = {
   input: {
@@ -166,3 +174,9 @@ export type GetProjectSavedViewGroups = (
 export type GetGroupSavedViews = (
   params: GetGroupSavedViewsPageParams
 ) => Promise<Collection<SavedView>>
+
+export type DeleteSavedView = (params: {
+  id: string
+  projectId: string
+  userId: string
+}) => Promise<void>

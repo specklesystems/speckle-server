@@ -191,7 +191,7 @@ export default {
       if (savedViewId) {
         const savedView = await ctx.loaders
           .forRegion({ db: projectDB })
-          .savedViews.getSavedViews.load({ viewId: savedViewId, projectId: parent.id })
+          .savedViews.getSavedView.load({ viewId: savedViewId, projectId: parent.id })
         if (!savedView) {
           throw new NotFoundError(
             `Saved view with ID ${savedViewId} not found in project ${parent.id}`

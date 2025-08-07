@@ -221,9 +221,8 @@ export default defineNuxtConfig({
         statusCode: 301
       }
     },
-    // CSR only viewer, we cant preload much because of the url hash state which is CSR only
     '/projects/:id/models/:modelId': {
-      ssr: false
+      ssr: true // TODO: Should experiment w/ false, but this breaks SSR script injection like for RUM
     }
   },
 

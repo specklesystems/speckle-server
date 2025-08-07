@@ -1,6 +1,10 @@
 import { useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
-import type { CreateSavedViewInput } from '~/lib/common/generated/gql/graphql'
+import type {
+  CreateSavedViewInput,
+  UseDeleteSavedView_SavedViewFragment
+} from '~/lib/common/generated/gql/graphql'
+import { parseObjectReference } from '~/lib/common/helpers/graphql'
 import { useStateSerialization } from '~/lib/viewer/composables/serialization'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 
@@ -104,6 +108,116 @@ export const useCreateSavedView = () => {
       const err = getFirstGqlErrorMessage(result?.errors)
       triggerNotification({
         title: "Couldn't create saved view",
+        description: err,
+        type: ToastNotificationType.Danger
+      })
+    }
+
+    return res
+  }
+}
+
+const deleteSavedViewMutation = graphql(`
+  mutation DeleteSavedView($input: DeleteSavedViewInput!) {
+    projectMutations {
+      savedViewMutations {
+        deleteView(input: $input)
+      }
+    }
+  }
+`)
+
+graphql(`
+  fragment UseDeleteSavedView_SavedView on SavedView {
+    id
+    projectId
+    group {
+      id
+    }
+  }
+`)
+
+export const useDeleteSavedView = () => {
+  const { mutate } = useMutation(deleteSavedViewMutation)
+  const { triggerNotification } = useGlobalToast()
+
+  return async (params: { view: UseDeleteSavedView_SavedViewFragment }) => {
+    const { id, projectId } = params.view
+    const groupId = params.view.group.id
+
+    if (!id || !projectId) {
+      return
+    }
+
+    const result = await mutate(
+      {
+        input: {
+          projectId,
+          id
+        }
+      },
+      {
+        update: (cache) => {
+          // Remove the view from the cache
+          cache.evict({ id: getCacheId('SavedView', id) })
+
+          // Check if default/ungrouped group
+          const isDefaultGroup = groupId.startsWith('default-')
+
+          // If default group and its now empty - remove it as it doesn't exist otherwise
+          let shouldEvict
+          if (isDefaultGroup) {
+            let viewsRemain = false
+            modifyObjectField(
+              cache,
+              getCacheId('SavedViewGroup', groupId),
+              'views',
+              ({ value }) => {
+                const otherItems = value?.items?.filter(
+                  (item) => item.__ref !== getCacheId('SavedView', id)
+                )
+
+                if (otherItems?.length) {
+                  viewsRemain = true
+                }
+              }
+            )
+
+            if (!viewsRemain) {
+              shouldEvict = true
+            }
+          }
+
+          // Remove default group, if its empty
+          if (shouldEvict) {
+            cache.evict({ id: getCacheId('SavedViewGroup', groupId) })
+          } else {
+            // Remove view from view lists (in groups)
+            // SavedViewGroup.views
+            modifyObjectField(
+              cache,
+              getCacheId('SavedViewGroup', groupId),
+              'views',
+              ({ helpers: { createUpdatedValue } }) => {
+                return createUpdatedValue(({ update }) => {
+                  update('totalCount', (count) => count - 1)
+                  update('items', (items) =>
+                    items.filter((item) => parseObjectReference(item).id !== id)
+                  )
+                })
+              },
+              { autoEvictFiltered: true }
+            )
+          }
+        }
+      }
+    ).catch(convertThrowIntoFetchResult)
+
+    const res = result?.data?.projectMutations.savedViewMutations.deleteView
+    if (!res) {
+      const err = getFirstGqlErrorMessage(result?.errors)
+      triggerNotification({
+        title: "Couldn't delete saved view",
         description: err,
         type: ToastNotificationType.Danger
       })

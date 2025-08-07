@@ -321,6 +321,12 @@ function createCache(): InMemoryCache {
       CommentThreadActivityMessage: {
         merge: true
       },
+      SavedViewPermissionChecks: {
+        merge: true
+      },
+      ProjectPermissionChecks: {
+        merge: true
+      },
       AutomateFunction: {
         fields: {
           releases: {

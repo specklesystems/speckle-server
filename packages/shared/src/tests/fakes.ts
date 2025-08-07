@@ -4,11 +4,16 @@ import { Comment } from '../authz/domain/comments/types.js'
 import { nanoid } from 'nanoid'
 import { Model } from '../authz/domain/models/types.js'
 import { Version } from '../authz/domain/versions/types.js'
-import { Workspace } from '../authz/domain/workspaces/types.js'
+import {
+  Workspace,
+  WorkspaceSsoProvider,
+  WorkspaceSsoSession
+} from '../authz/domain/workspaces/types.js'
 import { FeatureFlags, parseFeatureFlags } from '../environment/index.js'
 import { mapValues } from 'lodash'
 import { WorkspacePlan } from '../workspaces/index.js'
 import { TIME_MS } from '../core/index.js'
+import { SavedView } from '../authz/domain/savedViews/types.js'
 
 export const fakeGetFactory =
   <T extends Record<string, unknown>>(defaults: () => T) =>
@@ -42,6 +47,16 @@ export const getWorkspacePlanFake = fakeGetFactory<WorkspacePlan>(() => ({
   updatedAt: new Date(Date.now() - TIME_MS.day)
 }))
 
+export const getWorkspaceSsoProviderFake = fakeGetFactory<WorkspaceSsoProvider>(() => ({
+  providerId: nanoid(10)
+}))
+
+export const getWorkspaceSsoSessionFake = fakeGetFactory<WorkspaceSsoSession>(() => ({
+  userId: nanoid(10),
+  providerId: nanoid(10),
+  validUntil: new Date(Date.now() + TIME_MS.day)
+}))
+
 export const getCommentFake = fakeGetFactory<Comment>(() => ({
   id: nanoid(10),
   authorId: nanoid(10),
@@ -59,6 +74,14 @@ export const getVersionFake = fakeGetFactory<Version>(() => ({
   id: nanoid(10),
   projectId: nanoid(10),
   authorId: nanoid(10)
+}))
+
+export const getSavedViewFake = fakeGetFactory<SavedView>(() => ({
+  id: nanoid(10),
+  name: nanoid(10),
+  authorId: nanoid(10),
+  projectId: nanoid(10),
+  groupId: null
 }))
 
 // eslint-disable-next-line @typescript-eslint/require-await

@@ -17,6 +17,7 @@ import { LogicError, NotFoundError, NotImplementedError } from '@/modules/shared
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { buildDefaultGroupId } from '@/modules/viewer/helpers/savedViews'
 import {
+  deleteSavedViewRecordFactory,
   getGroupSavedViewsPageItemsFactory,
   getGroupSavedViewsTotalCountFactory,
   getProjectSavedViewGroupsPageItemsFactory,
@@ -31,6 +32,7 @@ import {
 import {
   createSavedViewFactory,
   createSavedViewGroupFactory,
+  deleteSavedViewFactory,
   getGroupSavedViewsFactory,
   getProjectSavedViewGroupsFactory
 } from '@/modules/viewer/services/savedViewsManagement'
@@ -108,7 +110,7 @@ const resolvers: Resolvers = {
       const projectDb = await getProjectDbClient({ projectId: parent.id })
       const view = await ctx.loaders
         .forRegion({ db: projectDb })
-        .savedViews.getSavedViews.load({
+        .savedViews.getSavedView.load({
           viewId: args.id,
           projectId: parent.id
         })
@@ -224,6 +226,35 @@ const resolvers: Resolvers = {
       })
       return await createSavedView({ input: args.input, authorId: ctx.userId! })
     },
+    deleteView: async (_parent, args, ctx) => {
+      const projectId = args.input.projectId
+      const projectDb = await getProjectDbClient({ projectId })
+
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: ctx.resourceAccessRules
+      })
+
+      const canUpdate = await ctx.authPolicies.project.savedViews.canUpdate({
+        userId: ctx.userId,
+        projectId,
+        savedViewId: args.input.id
+      })
+      throwIfAuthNotOk(canUpdate)
+
+      await deleteSavedViewFactory({
+        deleteSavedViewRecord: deleteSavedViewRecordFactory({
+          db: projectDb
+        })
+      })({
+        id: args.input.id,
+        projectId,
+        userId: ctx.userId!
+      })
+
+      return true
+    },
     createGroup: async (_parent, args, ctx) => {
       const projectId = args.input.projectId
       throwIfResourceAccessNotAllowed({
@@ -280,16 +311,6 @@ const disabledResolvers: Resolvers = {
   ProjectMutations: {
     savedViewMutations: () => {
       throw new NotImplementedError(disabledMessage)
-    }
-  },
-  ProjectPermissionChecks: {
-    canCreateSavedView: () => {
-      return {
-        authorized: false,
-        message: disabledMessage,
-        code: 'SAVED_VIEWS_DISABLED',
-        payload: null
-      }
     }
   }
 }

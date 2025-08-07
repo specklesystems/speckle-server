@@ -1,16 +1,22 @@
 import type {
   BasicSavedViewFragment,
   BasicSavedViewGroupFragment,
+  CanCreateSavedViewQueryVariables,
+  CanUpdateSavedViewQueryVariables,
   CreateSavedViewGroupMutationVariables,
   CreateSavedViewMutationVariables,
+  DeleteSavedViewMutationVariables,
   GetProjectSavedViewGroupQueryVariables,
   GetProjectSavedViewGroupsQueryVariables,
   GetProjectSavedViewQueryVariables,
   GetProjectUngroupedViewGroupQueryVariables
 } from '@/modules/core/graph/generated/graphql'
 import {
+  CanCreateSavedViewDocument,
+  CanUpdateSavedViewDocument,
   CreateSavedViewDocument,
   CreateSavedViewGroupDocument,
+  DeleteSavedViewDocument,
   GetProjectSavedViewDocument,
   GetProjectSavedViewGroupDocument,
   GetProjectSavedViewGroupsDocument,
@@ -45,6 +51,10 @@ import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { addToStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { Roles, WorkspacePlans } from '@speckle/shared'
+import {
+  ProjectNotEnoughPermissionsError,
+  WorkspacePlanNoFeatureAccessError
+} from '@speckle/shared/authz'
 import * as ViewerRoute from '@speckle/shared/viewer/route'
 import * as ViewerState from '@speckle/shared/viewer/state'
 import { expect } from 'chai'
@@ -144,10 +154,25 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     options?: ExecuteOperationOptions
   ) => apollo.execute(GetProjectSavedViewDocument, input, options)
 
+  const deleteView = (
+    input: DeleteSavedViewMutationVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(DeleteSavedViewDocument, input, options)
+
   const getProjectUngroupedViewGroup = (
     input: GetProjectUngroupedViewGroupQueryVariables,
     options?: ExecuteOperationOptions
   ) => apollo.execute(GetProjectUngroupedViewGroupDocument, input, options)
+
+  const canCreateSavedView = (
+    input: CanCreateSavedViewQueryVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(CanCreateSavedViewDocument, input, options)
+
+  const canUpdateSavedView = (
+    input: CanUpdateSavedViewQueryVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(CanUpdateSavedViewDocument, input, options)
 
   const model1ResourceIds = () => ViewerRoute.resourceBuilder().addModel(myModel1.id)
 
@@ -211,7 +236,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
   if (FF_WORKSPACES_MODULE_ENABLED) {
     describe('creation', () => {
-      describe('canCreateSavedViewPolicy - forbidden error branches', () => {
+      describe('auth policy checks', () => {
         it('should fail with ForbiddenError if user is not logged in', async () => {
           const res = await createSavedView(
             buildCreateInput({ projectId: myProject.id, resourceIdString: 'abc' }),
@@ -295,6 +320,18 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
           expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
           expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+        })
+
+        it('should support dedicated auth policy check', async () => {
+          const res = await canCreateSavedView({
+            projectId: myLackingProject.id
+          })
+
+          expect(res).to.not.haveGraphQLErrors()
+
+          const data = res.data?.project.permissions.canCreateSavedView
+          expect(data?.authorized).to.be.false
+          expect(data?.code).to.equal(WorkspacePlanNoFeatureAccessError.code)
         })
       })
 
@@ -384,7 +421,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         const view = res.data?.projectMutations.savedViewMutations.createView
         expect(view).to.be.ok
         expect(view!.id).to.be.ok
-        expect(view!.name).to.contain('Scene - ') // auto-generated name
+        expect(view!.name).to.contain('View - ') // auto-generated name
         expect(view!.description).to.be.null
         expect(view!.author?.id).to.equal(me.id)
         expect(view!.groupId).to.be.null
@@ -646,6 +683,115 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           }),
           { assertNoErrors: true }
         )
+      })
+    })
+
+    describe('deletions', () => {
+      let deletablesProject: BasicTestStream
+      let models: BasicTestBranch[]
+
+      before(async () => {
+        deletablesProject = await createTestStream(
+          buildBasicTestProject({
+            name: 'deletables-project',
+            workspaceId: myProjectWorkspace.id
+          }),
+          me
+        )
+
+        models = await Promise.all(
+          times(3, async (i) => {
+            return await createTestBranch({
+              branch: buildBasicTestModel({
+                name: `Model #${i}`
+              }),
+              stream: deletablesProject,
+              owner: me
+            })
+          })
+        )
+
+        // add guest as reviewer
+        await addToStream(deletablesProject, guest, Roles.Stream.Reviewer, {
+          owner: me
+        })
+      })
+
+      const createTestView = async () => {
+        const createRes = await createSavedView(
+          buildCreateInput({
+            projectId: deletablesProject.id,
+            resourceIdString: models[0].id,
+            overrides: { name: 'View to delete' }
+          }),
+          { assertNoErrors: true }
+        )
+        const view = createRes.data?.projectMutations.savedViewMutations.createView!
+        expect(view).to.be.ok
+
+        return view
+      }
+
+      const findView = async (viewId: string) => {
+        const foundView = await getView({
+          projectId: deletablesProject.id,
+          viewId
+        })
+        return foundView.data?.project.savedView
+      }
+
+      it('allow deleting a view', async () => {
+        const view = await createTestView()
+
+        const foundView = await findView(view.id)
+        expect(foundView).to.be.ok
+
+        const deleteRes = await deleteView(
+          {
+            input: {
+              id: view.id,
+              projectId: deletablesProject.id
+            }
+          },
+          { assertNoErrors: true }
+        )
+        expect(deleteRes.data?.projectMutations.savedViewMutations.deleteView).to.be
+          .true
+
+        const deletedView = await findView(view.id)
+        expect(deletedView).to.not.be.ok
+      })
+
+      it('should fail to delete a view if not found', async () => {
+        const res = await deleteView({
+          input: {
+            id: 'non-existent-view-id',
+            projectId: deletablesProject.id
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors({ code: NotFoundError.code })
+        expect(res.data?.projectMutations.savedViewMutations.deleteView).to.not.be.ok
+      })
+
+      it('should support dedicated auth policy check', async () => {
+        const view = await createTestView()
+
+        const res = await canUpdateSavedView(
+          {
+            projectId: deletablesProject.id,
+            viewId: view.id
+          },
+          {
+            authUserId: guest.id
+          }
+        )
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const data = res.data?.project.savedView.permissions.canUpdate
+        expect(data?.authorized).to.be.false
+        expect(data?.code).to.equal(ProjectNotEnoughPermissionsError.code)
       })
     })
 

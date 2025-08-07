@@ -38,9 +38,9 @@ const dataLoadersDefinition = defineRequestDataloaders(
           }
         ),
         /**
-         * Get saved views by their IDs
+         * Get saved view by its ID
          */
-        getSavedViews: createLoader<
+        getSavedView: createLoader<
           { viewId: string; projectId: string },
           Nullable<SavedView>,
           string
