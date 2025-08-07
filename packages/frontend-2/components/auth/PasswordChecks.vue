@@ -4,32 +4,71 @@
       class="grid grid-cols-2 text-body-2xs text-foreground-2 justify-between gap-y-1"
     >
       <div class="flex items-center space-x-2">
-        <CheckIcon v-if="ruleFits(passwordLongEnough)" class="w-4 h-4 text-success" />
-        <XMarkIcon v-else class="w-4 h-4 text-foreground-2" />
+        <Check
+          v-if="ruleFits(passwordLongEnough)"
+          :size="16"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          class="text-success"
+        />
+        <X
+          v-else
+          :size="16"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          class="text-foreground-2"
+        />
         <div>8+ characters long</div>
       </div>
       <div class="flex items-center space-x-2">
-        <CheckIcon
+        <Check
           v-if="ruleFits(passwordHasAtLeastOneNumber)"
-          class="w-4 h-4 text-success"
+          :size="16"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          class="text-success"
         />
-        <XMarkIcon v-else class="w-4 h-4 text-foreground-2" />
+        <X
+          v-else
+          :size="16"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          class="text-foreground-2"
+        />
         <div>One number</div>
       </div>
       <div class="flex items-center space-x-2">
-        <CheckIcon
+        <Check
           v-if="ruleFits(passwordHasAtLeastOneLowercaseLetter)"
-          class="w-4 h-4 text-success"
+          :size="16"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          class="text-success"
         />
-        <XMarkIcon v-else class="w-4 h-4 text-foreground-2" />
+        <X
+          v-else
+          :size="16"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          class="text-foreground-2"
+        />
         <div>One lowercase letter</div>
       </div>
       <div class="flex items-center space-x-2">
-        <CheckIcon
+        <Check
           v-if="ruleFits(passwordHasAtLeastOneUppercaseLetter)"
-          class="w-4 h-4 text-success"
+          :size="16"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          class="text-success"
         />
-        <XMarkIcon v-else class="w-4 h-4 text-foreground-2" />
+        <X
+          v-else
+          :size="16"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          class="text-foreground-2"
+        />
         <div>One uppercase letter</div>
       </div>
     </div>
@@ -44,7 +83,7 @@ import {
   passwordHasAtLeastOneUppercaseLetter
 } from '~~/lib/auth/helpers/validation'
 
-import { CheckIcon, XMarkIcon } from '@heroicons/vue/24/solid'
+import { Check, X } from 'lucide-vue-next'
 
 const props = defineProps<{
   password: string
