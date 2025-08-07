@@ -100,7 +100,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
     {
       id: Menuitems.Delete,
       title: 'Delete',
-      disabled: !canUpdate.value || isLoading.value,
+      disabled: !canUpdate.value?.authorized || isLoading.value,
       disabledTooltip: canUpdate.value.errorMessage
     }
   ]
