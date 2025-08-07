@@ -5,7 +5,7 @@ import type {
 import type { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
 import type { GetCommit } from '@/modules/core/domain/commits/operations'
 import type { LegacyGetUser } from '@/modules/core/domain/users/operations'
-import { CommitNotFoundError } from '@/modules/core/errors/commit'
+import { logger } from '@/observability/logging'
 import { throwUncoveredError } from '@speckle/shared'
 
 export type AutomateTrackingDeps = {
@@ -28,7 +28,16 @@ export const getUserEmailFromAutomationRunFactory =
         const version = await deps.getCommit(trigger.triggeringId, {
           streamId: projectId
         })
-        if (!version) throw new CommitNotFoundError("Version doesn't exist any more")
+        // TODO: This is an error when ACC is using the correct trigger types
+        if (!version) {
+          logger.warn(
+            {
+              versionId: trigger.triggeringId
+            },
+            'Version {versionId} not found for automation run.'
+          )
+          return userEmail
+        }
         const userId = version.author
         if (userId) {
           const user = await deps.getUser(userId)
