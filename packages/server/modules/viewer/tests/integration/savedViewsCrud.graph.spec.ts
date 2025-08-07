@@ -391,7 +391,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         const view = res.data?.projectMutations.savedViewMutations.createView
         expect(view).to.be.ok
         expect(view!.id).to.be.ok
-        expect(view!.name).to.contain('Scene - ') // auto-generated name
+        expect(view!.name).to.contain('View - ') // auto-generated name
         expect(view!.description).to.be.null
         expect(view!.author?.id).to.equal(me.id)
         expect(view!.groupId).to.be.null
