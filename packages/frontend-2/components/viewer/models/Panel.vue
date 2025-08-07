@@ -1,6 +1,3 @@
-<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
-<!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
-<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div class="select-none h-full">
     <div v-show="showVersions">
@@ -26,6 +23,44 @@
 
       <div class="flex flex-col h-full">
         <template v-if="resourceItems.length">
+          <!-- Breadcrumb Headers (outside scroll area) -->
+          <div
+            v-if="activeStickyStackRef?.length"
+            class="relative z-20 shrink-0 shadow"
+          >
+            <template v-for="stickyIndex in activeStickyStackRef" :key="stickyIndex">
+              <!-- Model Header Breadcrumb -->
+              <template
+                v-if="unifiedVirtualItems[stickyIndex]?.type === 'model-header'"
+              >
+                <ViewerModelsCard
+                  :model="getModelFromItem(unifiedVirtualItems[stickyIndex])"
+                  :version-id="getVersionIdFromItem(unifiedVirtualItems[stickyIndex])"
+                  :is-expanded="
+                    expandedModels.has(unifiedVirtualItems[stickyIndex].modelId)
+                  "
+                  @toggle-expansion="
+                    toggleModelExpansion(unifiedVirtualItems[stickyIndex].modelId)
+                  "
+                  @remove="(id: string) => removeModel(id)"
+                  @show-versions="handleShowVersions"
+                  @show-diff="handleShowDiff"
+                />
+              </template>
+
+              <!-- Tree Item Breadcrumb -->
+              <template
+                v-else-if="unifiedVirtualItems[stickyIndex]?.type === 'tree-item'"
+              >
+                <ViewerModelsVirtualTreeItem
+                  :item="unifiedVirtualItems[stickyIndex]"
+                  @toggle-expansion="toggleTreeItemExpansion"
+                  @item-click="handleItemClick"
+                />
+              </template>
+            </template>
+          </div>
+
           <div ref="containerRef" class="flex-1 simple-scrollbar overflow-auto">
             <div
               :style="{
@@ -38,14 +73,13 @@
                 v-for="virtualItem in virtualList"
                 :key="virtualItem.index"
                 :style="{
-                  position: isActiveSticky(virtualItem.index) ? 'sticky' : 'absolute',
-                  transform: isActiveSticky(virtualItem.index)
-                    ? undefined
-                    : `translateY(${virtualItem.start}px)`,
+                  position: 'absolute',
+                  transform: `translateY(${virtualItem.start}px)`,
                   height: `${virtualItem.size}px`,
-                  zIndex: isActiveSticky(virtualItem.index) ? 10 : 1
+                  top: 0,
+                  zIndex: 1
                 }"
-                class="group top-0 left-0 w-full"
+                class="group left-0 w-full"
               >
                 <template v-if="unifiedVirtualItems[virtualItem.index]">
                   <!-- Model Header -->
@@ -54,7 +88,12 @@
                       unifiedVirtualItems[virtualItem.index].type === 'model-header'
                     "
                   >
-                    <div class="bg-foundation">
+                    <div
+                      :class="{
+                        'border-t border-outline-3':
+                          unifiedVirtualItems[virtualItem.index].needsTopBorder
+                      }"
+                    >
                       <ViewerModelsCard
                         :model="
                           getModelFromItem(unifiedVirtualItems[virtualItem.index])
@@ -62,11 +101,6 @@
                         :version-id="
                           getVersionIdFromItem(unifiedVirtualItems[virtualItem.index])
                         "
-                        :last="false"
-                        :first="unifiedVirtualItems[virtualItem.index].isFirstModel"
-                        :expand-level="expandLevel"
-                        :manual-expand-level="manualExpandLevel"
-                        :root-nodes="[]"
                         :is-expanded="
                           expandedModels.has(
                             unifiedVirtualItems[virtualItem.index].modelId
@@ -78,7 +112,6 @@
                           )
                         "
                         @remove="(id: string) => removeModel(id)"
-                        @expanded="(e: number) => (manualExpandLevel < e ? (manualExpandLevel = e) : '')"
                         @show-versions="handleShowVersions"
                         @show-diff="handleShowDiff"
                       />
@@ -91,10 +124,18 @@
                       unifiedVirtualItems[virtualItem.index].type === 'tree-item'
                     "
                   >
+                    <div
+                      v-if="unifiedVirtualItems[virtualItem.index].isFirstChildOfModel"
+                      class="h-1 w-full"
+                    />
                     <ViewerModelsVirtualTreeItem
                       :item="unifiedVirtualItems[virtualItem.index]"
                       @toggle-expansion="toggleTreeItemExpansion"
                       @item-click="handleItemClick"
+                    />
+                    <div
+                      v-if="unifiedVirtualItems[virtualItem.index].isLastChildOfModel"
+                      class="h-1 w-full"
                     />
                   </template>
                 </template>
@@ -128,8 +169,7 @@ import {
 } from '~~/lib/viewer/composables/setup'
 import { SpeckleViewer } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { ViewerEvent } from '@speckle/viewer'
-import { useViewerEventListener } from '~~/lib/viewer/composables/viewer'
+
 import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
 import type { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import type { Get } from 'type-fest'
@@ -137,10 +177,10 @@ import type { Get } from 'type-fest'
 import { useDiffUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import {
   useTreeManagement,
+  useVirtualTreeList,
   type UnifiedVirtualItem
 } from '~~/lib/viewer/composables/tree'
-import { useDebounceFn } from '@vueuse/core'
-import { useVirtualizer } from '@tanstack/vue-virtual'
+import { useDebounceFn, useScroll } from '@vueuse/core'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
@@ -149,49 +189,18 @@ defineEmits(['close'])
 const showVersions = ref(false)
 const showAddModel = ref(false)
 const expandedModelId = ref<string | null>(null)
-const expandLevel = ref(2)
 const manualExpandLevel = ref(-1)
 const expandedNodes = ref<Set<string>>(new Set())
 const expandedModels = ref<Set<string>>(new Set())
 const disableScrollOnNextSelection = ref(false)
-const refhack = ref(1)
 const containerRef = ref<HTMLElement>()
 
-// Sticky header implementation following TanStack Virtual docs
-const activeStickyIndexRef = ref(0)
+// Use scroll detection to know when we're at the bottom
+const { arrivedState } = useScroll(containerRef)
 
-// Get all model header indexes
-const stickyIndexes = computed(() => {
-  const indexes: number[] = []
-  unifiedVirtualItems.value.forEach((item, index) => {
-    if (item?.type === 'model-header') {
-      indexes.push(index)
-    }
-  })
-  return indexes
-})
-
-const isActiveSticky = (index: number) => activeStickyIndexRef.value === index
-
-// Custom range extractor that includes active sticky header
-const stickyRangeExtractor = (range: {
-  startIndex: number
-  endIndex: number
-}): number[] => {
-  // Find the active sticky header (last header before or at startIndex)
-  activeStickyIndexRef.value =
-    [...stickyIndexes.value].reverse().find((index) => range.startIndex >= index) ?? 0
-
-  // Include default range + active sticky header
-  const defaultRange: number[] = []
-  for (let i = range.startIndex; i <= range.endIndex; i++) {
-    defaultRange.push(i)
-  }
-
-  const next = new Set([activeStickyIndexRef.value, ...defaultRange])
-
-  return [...next].sort((a, b) => a - b)
-}
+// Use the new virtual tree list composable
+const { activeStickyStackRef, createVirtualizer, scrollToSelectedItem } =
+  useVirtualTreeList()
 
 const { resourceItems, modelsAndVersionIds, objects } =
   useInjectedViewerLoadedResources()
@@ -225,14 +234,25 @@ const hasObjects = computed(() => objects.value.length > 0)
 const unifiedVirtualItems = computed(() => {
   const result: UnifiedVirtualItem[] = []
 
-  for (const { model, versionId } of modelsAndVersionIds.value) {
-    result.push({
+  modelsAndVersionIds.value.forEach(({ model, versionId }, modelIndex) => {
+    const previousModelWasExpanded =
+      modelIndex > 0 &&
+      result.some(
+        (item) =>
+          item.type === 'tree-item' &&
+          item.modelId === modelsAndVersionIds.value[modelIndex - 1]?.model.id
+      )
+
+    const modelHeader: UnifiedVirtualItem = {
       type: 'model-header',
       id: `model-${model.id}`,
       modelId: model.id,
       data: { model, versionId },
-      isFirstModel: result.length === 0
-    })
+      isFirstModel: modelIndex === 0,
+      needsTopBorder: previousModelWasExpanded
+    }
+
+    result.push(modelHeader)
 
     if (expandedModels.value.has(model.id)) {
       const modelRootNodes = getRootNodesForModel(
@@ -242,14 +262,7 @@ const unifiedVirtualItems = computed(() => {
         modelsAndVersionIds.value
       )
 
-      // Skip the root nodes (which duplicate model card info) and flatten their children directly
-      const childNodes: ExplorerNode[] = []
-      for (const rootNode of modelRootNodes) {
-        if (rootNode.children && rootNode.children.length > 0) {
-          childNodes.push(...rootNode.children)
-        }
-      }
-
+      const childNodes = modelRootNodes.flatMap((rootNode) => rootNode.children || [])
       const treeItems = flattenModelTree(
         childNodes,
         model.id,
@@ -257,30 +270,20 @@ const unifiedVirtualItems = computed(() => {
         selectedObjects.value
       )
 
-      if (treeItems.length > 0) {
-        treeItems[0].isFirstChildOfModel = true
-        treeItems[treeItems.length - 1].isLastChildOfModel = true
-      }
+      // Mark first and last children
+      treeItems.forEach((item, index) => {
+        if (index === 0) item.isFirstChildOfModel = true
+        if (index === treeItems.length - 1) item.isLastChildOfModel = true
+      })
 
       result.push(...treeItems)
     }
-  }
+  })
 
   return result
 })
 
-const virtualizer = useVirtualizer({
-  get count() {
-    return unifiedVirtualItems.value.length
-  },
-  getScrollElement: () => containerRef.value || null,
-  estimateSize: (index: number) => {
-    const item = unifiedVirtualItems.value[index]
-    return item?.type === 'model-header' ? 73 : 40
-  },
-  overscan: 10,
-  rangeExtractor: stickyRangeExtractor
-})
+const virtualizer = createVirtualizer(unifiedVirtualItems, containerRef, arrivedState)
 
 const virtualList = computed(() => virtualizer.value.getVirtualItems())
 const totalSize = computed(() => virtualizer.value.getTotalSize())
@@ -387,23 +390,6 @@ const getVersionIdFromItem = (item: UnifiedVirtualItem): string => {
   return ''
 }
 
-useViewerEventListener(ViewerEvent.LoadComplete, () => {
-  void refhack.value++
-})
-
-// Scroll to selected item in virtual list (centered)
-const scrollToSelectedItem = (objectId: string) => {
-  nextTick(() => {
-    const itemIndex = unifiedVirtualItems.value.findIndex(
-      (item) =>
-        item.type === 'tree-item' && (item.data as ExplorerNode).raw?.id === objectId
-    )
-    if (itemIndex !== -1) {
-      virtualizer.value.scrollToIndex(itemIndex, { align: 'center' })
-    }
-  })
-}
-
 const handleSelectionChange = useDebounceFn(
   (newSelection: typeof selectedObjects.value, shouldScroll: boolean) => {
     if (newSelection.length > 0) {
@@ -432,7 +418,7 @@ const handleSelectionChange = useDebounceFn(
             }
 
             if (shouldScroll) {
-              scrollToSelectedItem(selectedObj.id)
+              scrollToSelectedItem(virtualizer, unifiedVirtualItems, selectedObj.id)
             }
           }
         }

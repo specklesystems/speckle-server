@@ -78,7 +78,6 @@
 import dayjs from 'dayjs'
 import type { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import type { Get } from 'type-fest'
-import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import {
   useHighlightedObjectsUtilities,
@@ -96,7 +95,6 @@ type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.ite
 
 const emit = defineEmits<{
   (e: 'remove', val: string): void
-  (e: 'expanded', depth: number): void
   (e: 'show-versions', modelId: string): void
   (e: 'show-diff', modelId: string, versionA: string, versionB: string): void
   (e: 'toggle-expansion'): void
@@ -105,11 +103,6 @@ const emit = defineEmits<{
 const props = defineProps<{
   model: ModelItem
   versionId: string
-  last: boolean
-  first?: boolean
-  expandLevel: number
-  manualExpandLevel: number
-  rootNodes: ExplorerNode[]
   isExpanded?: boolean
 }>()
 
@@ -240,26 +233,8 @@ const stateHasIsolatedObjectsInGeneral = computed(() => {
 const modelContainsIsolatedObjects = computed(() => {
   if (!isolatedObjects.value || isolatedObjects.value.length === 0) return false
 
-  const getAllDescendantIds = (nodes: ExplorerNode[]): string[] => {
-    const ids: string[] = []
-    for (const node of nodes) {
-      if (node.raw?.id) {
-        ids.push(node.raw.id)
-      }
-      if (node.children && node.children.length > 0) {
-        ids.push(...getAllDescendantIds(node.children))
-      }
-    }
-    return ids
-  }
-
-  const allModelObjectIds = [
-    ...modelObjectIds.value,
-    ...getAllDescendantIds(props.rootNodes)
-  ]
-
   return isolatedObjects.value.some((isolatedId) =>
-    allModelObjectIds.includes(isolatedId)
+    modelObjectIds.value.includes(isolatedId)
   )
 })
 
