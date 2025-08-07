@@ -811,3 +811,10 @@ export const errorsToAuthResult = (params: {
     payload: firstError.extensions || null
   }
 }
+
+export const parseObjectReference = <Type extends keyof AllObjectTypes>(
+  ref: CacheObjectReference<Type>
+): { type: Type; id: string } => {
+  const [type, id] = ref.__ref.split(':')
+  return { type: type as Type, id }
+}

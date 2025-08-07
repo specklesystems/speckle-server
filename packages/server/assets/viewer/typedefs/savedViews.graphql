@@ -165,15 +165,17 @@ input CreateSavedViewGroupInput {
   groupName: String!
 }
 
+input DeleteSavedViewInput {
+  id: ID!
+  projectId: ID!
+}
+
 type SavedViewMutations {
   createGroup(input: CreateSavedViewGroupInput!): SavedViewGroup!
   createView(input: CreateSavedViewInput!): SavedView!
+  deleteView(input: DeleteSavedViewInput!): Boolean!
 }
 
 extend type ProjectMutations {
   savedViewMutations: SavedViewMutations!
-}
-
-extend type ProjectPermissionChecks {
-  canCreateSavedView: PermissionCheckResult!
 }

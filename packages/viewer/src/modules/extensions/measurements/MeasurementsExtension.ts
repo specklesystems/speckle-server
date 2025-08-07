@@ -241,6 +241,12 @@ export class MeasurementsExtension extends Extension {
       return
     }
 
+    /** This will not work for iOS < 13 (pre-2019) (allegedly) */
+    /** Because there is no hovering with touch input, we simulate a hover when tapping  */
+    if (data.event.pointerType === 'touch') {
+      this.onPointerMove(data)
+    }
+
     if (!this._activeMeasurement) return
 
     if (!this._sceneHit) return
