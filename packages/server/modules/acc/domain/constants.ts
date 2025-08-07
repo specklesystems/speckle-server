@@ -4,7 +4,7 @@ import { StringEnum } from '@speckle/shared'
 export const ImporterAutomateFunctions = {
   svf2: {
     functionId: '2909d29a9d',
-    functionReleaseId: '1a38975d96'
+    functionReleaseId: 'e96676a36b'
   }
 }
 
