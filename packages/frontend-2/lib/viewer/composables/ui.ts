@@ -607,41 +607,51 @@ export function useViewModeUtilities() {
       color: color.toString(16).padStart(6, '0')
     })
   }
-
+  // Get the current view mode from the extension and sync the UI state
   const initializeFromViewerState = () => {
     try {
-      const renderer = instance.getRenderer()
-      const currentPipeline = renderer?.pipeline
-
-      if (currentPipeline && currentPipeline.options) {
-        const currentOptions = currentPipeline.options as Record<string, unknown>
-
-        if (typeof currentOptions.edges === 'boolean') {
-          edgesEnabled.value = currentOptions.edges
+      const viewModesExt = instance.getExtension(ViewModes)
+      if (viewModesExt) {
+        const extensionViewMode = viewModesExt.viewMode
+        if (extensionViewMode !== undefined) {
+          viewMode.value = extensionViewMode
         }
 
-        const edgesPasses = currentPipeline.getPass('EDGES')
+        const renderer = instance.getRenderer()
+        const currentPipeline = renderer?.pipeline
 
-        if (edgesPasses.length > 0) {
-          const edgesPass = edgesPasses[0] as unknown as Record<string, unknown>
-          const edgesPassOptions = edgesPass._options as Record<string, unknown>
+        if (currentPipeline && currentPipeline.options) {
+          const currentOptions = currentPipeline.options as Record<string, unknown>
 
-          if (
-            edgesPassOptions &&
-            typeof edgesPassOptions.outlineThickness === 'number'
-          ) {
-            edgesWeight.value = edgesPassOptions.outlineThickness
+          if (typeof currentOptions.edges === 'boolean') {
+            edgesEnabled.value = currentOptions.edges
           }
-          if (edgesPassOptions && typeof edgesPassOptions.outlineOpacity === 'number') {
-            outlineOpacity.value = edgesPassOptions.outlineOpacity
-          }
-          if (edgesPassOptions && typeof edgesPassOptions.outlineColor === 'number') {
-            edgesColor.value = edgesPassOptions.outlineColor
+
+          const edgesPasses = currentPipeline.getPass('EDGES')
+          if (edgesPasses.length > 0) {
+            const edgesPass = edgesPasses[0] as unknown as Record<string, unknown>
+            const edgesPassOptions = edgesPass._options as Record<string, unknown>
+
+            if (
+              edgesPassOptions &&
+              typeof edgesPassOptions.outlineThickness === 'number'
+            ) {
+              edgesWeight.value = edgesPassOptions.outlineThickness
+            }
+            if (
+              edgesPassOptions &&
+              typeof edgesPassOptions.outlineOpacity === 'number'
+            ) {
+              outlineOpacity.value = edgesPassOptions.outlineOpacity
+            }
+            if (edgesPassOptions && typeof edgesPassOptions.outlineColor === 'number') {
+              edgesColor.value = edgesPassOptions.outlineColor
+            }
           }
         }
       }
-    } catch {
-      logger.error('Could not initialize from viewer state, using defaults')
+    } catch (error) {
+      logger.warn('Could not initialize from viewer state, using defaults:', error)
     }
   }
 
