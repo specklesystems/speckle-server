@@ -102,6 +102,7 @@
             </FormButton>
           </div>
           <div
+            v-else-if="followers.length > 0"
             v-tippy="{ placement: 'bottom' }"
             :content="followers.map((u) => u.name).join(', ')"
           >

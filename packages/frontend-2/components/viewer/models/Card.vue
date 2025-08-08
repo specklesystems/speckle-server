@@ -39,7 +39,7 @@
             {{ createdAtFormatted.relative }}
           </div>
         </div>
-        <div class="flex items-center ml-auto mr-2">
+        <div class="flex items-center ml-auto mr-2 w-0 group-hover:w-auto">
           <LayoutMenu
             v-model:open="showActionsMenu"
             :items="actionsItems"
