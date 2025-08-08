@@ -85,12 +85,15 @@
         </div>
       </div>
     </div>
+    <div v-if="errorMessage" class="text-danger text-body-2xs mt-2">
+      {{ errorMessage }}
+    </div>
   </div>
 </template>
 
 <script setup lang="ts" generic="Value extends string">
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
-import { useField } from 'vee-validate'
+import { useField, type RuleExpression } from 'vee-validate'
 import { computed } from 'vue'
 import type { FormRadioGroupItem } from '~~/src/helpers/common/components'
 
@@ -106,6 +109,7 @@ const props = withDefaults(
     disabled?: boolean
     isStacked?: boolean
     size?: 'sm' | 'base'
+    rules?: RuleExpression<Value>
   }>(),
   {
     size: 'base',
@@ -113,7 +117,7 @@ const props = withDefaults(
   }
 )
 
-const { value } = useField<Value>(props.name, [], {
+const { value, errorMessage } = useField<Value>(props.name, props.rules, {
   initialValue: props.modelValue as Value
 })
 

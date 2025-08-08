@@ -11,6 +11,7 @@
     :disabled="disabled"
     :clearable="clearable"
     :get-search-results="getSearchResults"
+    :allow-unset="allowUnset"
     search
   >
     <template #nothing-selected>Select a group</template>
@@ -66,17 +67,24 @@ const emit = defineEmits<{
   (e: 'update:modelValue', v: ValueType): void
 }>()
 
-const props = defineProps<{
-  projectId: string
-  resourceIdString: string
-  modelValue?: ValueType
-  fullyControlValue?: boolean
-  label?: string
-  disabled?: boolean
-  showLabel?: boolean
-  clearable?: boolean
-  name?: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    projectId: string
+    resourceIdString: string
+    modelValue?: ValueType
+    fullyControlValue?: boolean
+    label?: string
+    disabled?: boolean
+    showLabel?: boolean
+    clearable?: boolean
+    allowUnset?: boolean
+    name?: string
+  }>(),
+  {
+    clearable: false,
+    allowUnset: false
+  }
+)
 
 const apollo = useApolloClient().client
 const labelId = useId()
