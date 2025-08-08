@@ -38,7 +38,6 @@
     "@speckle/ui-components-nuxt": "workspace:^",
     "@speckle/viewer": "workspace:^",
     "@survicate/survicate-web-surveys-wrapper": "^1.3.0",
-    "@tanstack/vue-virtual": "^3.13.12",
     "@tiptap/core": "2.10.3",
     "@tiptap/extension-bold": "2.10.3",
     "@tiptap/extension-document": "2.10.3",

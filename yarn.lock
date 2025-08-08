@@ -16007,7 +16007,6 @@ __metadata:
     "@tailwindcss/forms": "npm:^0.5.3"
     "@tailwindcss/line-clamp": "npm:^0.4.2"
     "@tailwindcss/typography": "npm:^0.5.12"
-    "@tanstack/vue-virtual": "npm:^3.13.12"
     "@testing-library/vue": "npm:^6.6.1"
     "@tiptap/core": "npm:2.10.3"
     "@tiptap/extension-bold": "npm:2.10.3"
@@ -18214,13 +18213,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/virtual-core@npm:3.13.12":
-  version: 3.13.12
-  resolution: "@tanstack/virtual-core@npm:3.13.12"
-  checksum: 10/5cd2e8689c3f3e911747ef6719f161027f4e9eb0cd572eeaf58452a09c3f23458d2ec0930e328ed5c7955c2fd08b69d71f327f0f7bf25438c98d914779ad4998
-  languageName: node
-  linkType: hard
-
 "@tanstack/virtual-core@npm:3.13.6":
   version: 3.13.6
   resolution: "@tanstack/virtual-core@npm:3.13.6"
@@ -18236,17 +18228,6 @@ __metadata:
   peerDependencies:
     vue: ^2.7.0 || ^3.0.0
   checksum: 10/18ac49b450a7bbcff84ea6003fdb27cd129e5ef0d1c536ca70009d95b3008d8f9488bc2932178514dfd5378fff5c56f8f8f35c140b2bcf238de3a207d2747cbd
-  languageName: node
-  linkType: hard
-
-"@tanstack/vue-virtual@npm:^3.13.12":
-  version: 3.13.12
-  resolution: "@tanstack/vue-virtual@npm:3.13.12"
-  dependencies:
-    "@tanstack/virtual-core": "npm:3.13.12"
-  peerDependencies:
-    vue: ^2.7.0 || ^3.0.0
-  checksum: 10/bbaa26c8e21051832ea84124afe2b683ef4a3cb9a245425940ddb5fc99895d0f4bc59b6c8faecce9c48c7284a5c686c2ec7a1e585366c007d09662e2ea450b83
   languageName: node
   linkType: hard
 
