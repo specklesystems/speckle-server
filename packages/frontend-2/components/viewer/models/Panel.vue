@@ -24,10 +24,7 @@
       <div class="flex flex-col h-full">
         <template v-if="resourceItems.length">
           <!-- Breadcrumb Headers (outside scroll area) -->
-          <div
-            v-if="activeStickyStackRef?.length"
-            class="relative z-20 shrink-0 shadow"
-          >
+          <div v-if="activeStickyStackRef?.length" class="relative z-20 shrink-0">
             <template v-for="stickyIndex in activeStickyStackRef" :key="stickyIndex">
               <!-- Model Header Breadcrumb -->
               <template
