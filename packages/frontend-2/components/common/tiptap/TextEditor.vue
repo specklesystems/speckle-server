@@ -1,9 +1,7 @@
-<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
-<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
     :class="[
-      'text-editor flex flex-col relative',
+      'text-editor flex flex-col relative text-foreground',
       !!readonly ? 'text-editor--read-only' : ''
     ]"
   >
@@ -29,7 +27,6 @@ import type {
   TiptapEditorSchemaOptions
 } from '~~/lib/common/helpers/tiptap'
 import type { Nullable } from '@speckle/shared'
-// import { userProfileRoute } from '~~/lib/common/helpers/route'
 import { onKeyDown } from '@vueuse/core'
 import { noop } from 'lodash-es'
 
@@ -97,18 +94,6 @@ const onEditorContentClick = (e: MouseEvent) => {
   e.stopPropagation()
 }
 
-// TODO: No profile page to link to in FE2 yet
-// const onMentionClick = (userId: string, e: MouseEvent) => {
-//   if (!props.readonly) return
-
-//   const path = userProfileRoute(userId)
-//   const isMetaKey = e.metaKey || e.ctrlKey
-//   if (isMetaKey) {
-//     window.open(path, '_blank')
-//   } else {
-//     window.location.href = path
-//   }
-// }
 const onMentionClick = noop
 
 onKeyDown(
@@ -179,7 +164,7 @@ onBeforeUnmount(() => {
 
   & .editor-mention {
     box-decoration-break: clone;
-    @apply text-foreground text-body-2xs font-semibold;
+    @apply text-primary dark:text-blue-400 text-body-2xs;
   }
 
   & a {

@@ -8,20 +8,17 @@
   >
     <div class="mb-1 flex items-center">
       <button
-        class="flex h-full w-full pl-1 pr-2 py-0.5 items-center gap-1 rounded bg-foundation-2 hover:sm:bg-primary-muted hover:text-primary"
-        :class="unfold && 'text-primary'"
+        class="flex h-full w-full pl-1 pr-2 py-1 items-center gap-1 rounded-[2px] bg-foundation-2"
         @click="unfold = !unfold"
         @mouseenter="highlightObject"
         @focusin="highlightObject"
         @mouseleave="unhighlightObject"
         @focusout="unhighlightObject"
       >
-        <ChevronDownIcon
-          :class="`h-3 w-3 transition ${headerClasses} ${
-            !unfold ? '-rotate-90' : 'rotate-0'
-          }`"
+        <IconTriangle
+          :class="`h-3 w-3 shrink-0 ${headerClasses} ${unfold ? 'rotate-90' : ''}`"
         />
-        <div :class="`truncate text-body-2xs font-medium ${headerClasses}`">
+        <div :class="`truncate text-body-3xs font-medium ${headerClasses}`">
           {{ title || headerAndSubheader.header }}
           <span
             v-if="(props.root || props.modifiedSibling) && isModifiedQuery.modified"
@@ -31,7 +28,7 @@
         </div>
       </button>
     </div>
-    <div v-if="unfold" class="space-y-1 px-0 py-1">
+    <div v-if="unfold" class="space-y-1 pl-0 py-1 pr-2">
       <!-- key value pair display -->
       <div
         v-for="(kvp, index) in [
@@ -47,13 +44,13 @@
           }`"
         >
           <div
-            class="col-span-1 truncate text-body-3xs mr-2 font-medium"
+            class="col-span-1 truncate text-body-3xs mr-2 font-medium text-foreground-2"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
           </div>
           <div
-            class="group col-span-2 pl-1 truncate text-body-3xs flex gap-1 items-center"
+            class="group col-span-2 pl-1 truncate text-body-3xs flex gap-1 items-center text-foreground"
             :title="(kvp.value as string)"
           >
             <div class="flex gap-1 items-center w-full">
@@ -119,7 +116,9 @@
           >
             {{ kvp.key }}
           </div>
-          <div class="col-span-2 flex w-full min-w-0 truncate text-xs pl-1">
+          <div
+            class="col-span-2 flex w-full min-w-0 truncate text-xs pl-1 text-foreground"
+          >
             <div class="flex-grow truncate">{{ kvp.innerType }} array</div>
             <div class="text-foreground-2">({{ kvp.arrayLength }})</div>
           </div>
@@ -128,13 +127,13 @@
       <div v-for="(kvp, index) in categorisedValuePairs.primitiveArrays" :key="index">
         <div class="grid grid-cols-3">
           <div
-            class="col-span-1 truncate text-xs font-medium pl-2"
+            class="col-span-1 truncate text-xs font-medium pl-2 text-foreground-2"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
           </div>
           <div
-            class="col-span-2 flex w-full min-w-0 truncate text-xs"
+            class="col-span-2 flex w-full min-w-0 truncate text-xs text-foreground"
             :title="(kvp.value as string)"
           >
             <div class="flex-grow truncate">{{ kvp.arrayPreview }}</div>
@@ -149,7 +148,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChevronDownIcon } from '@heroicons/vue/24/solid'
 import { ClipboardDocumentIcon } from '@heroicons/vue/24/outline'
 import type { SpeckleObject } from '~~/lib/viewer/helpers/sceneExplorer'
 import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
@@ -233,13 +231,9 @@ const headerClasses = computed(() => {
   if (!props.root) return ''
   if (!diffEnabled.value) return ''
   if (!Object.keys(props.object).includes('applicationId')) return ''
-
   if (isAdded.value) return 'text-green-500'
-
   if (isRemoved.value) return 'text-red-500'
-
-  if (isUnchanged.value) return 'text-foreground'
-
+  if (isUnchanged.value) return 'text-foreground-2'
   return 'text-amber-500'
 })
 

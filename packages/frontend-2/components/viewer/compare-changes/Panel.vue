@@ -1,12 +1,24 @@
 <template>
-  <ViewerLayoutPanel @close="$emit('close')">
-    <template #actions>
-      <FormButton size="sm" text :icon-left="ChevronLeftIcon" @click="clearDiff">
-        Back
-      </FormButton>
+  <ViewerLayoutSidePanel>
+    <template #title>
+      <div class="flex items-center gap-x-1">
+        <FormButton
+          :icon-left="ChevronLeftIcon"
+          color="subtle"
+          class="-ml-3"
+          hide-text
+          size="sm"
+          @click="handleBack"
+        >
+          Go back
+        </FormButton>
+        Version changes
+      </div>
     </template>
-    <div class="flex flex-col space-y-2 text-sm p-2">
-      <div class="text-body-2xs bg-foundation-2 text-foreground p-1 rounded">
+    <div class="flex flex-col text-sm p-2">
+      <div
+        class="text-body-2xs bg-foundation-2 text-foreground p-1 rounded mb-2 text-center"
+      >
         This is an experimental feature.
       </div>
       <div class="flex space-x-2">
@@ -27,40 +39,36 @@
           />
         </div>
       </div>
-      <div class="grow flex items-center space-x-2 py-2">
-        <label for="diffTime" class="sr-only">Diff time</label>
-        <input
-          id="diffTime"
+      <div class="border-y border-outline-3 py-3 mt-4">
+        <FormRange
           v-model="localDiffTime"
-          class="h-2 w-full"
-          type="range"
+          label="Diff time"
+          hide-header
+          :min="0"
+          :max="1"
+          :step="0.01"
           name="diffTime"
-          min="0"
-          max="1"
-          step="0.01"
         />
       </div>
-      <div class="flex items-center justify-between w-full px-1">
-        <span class="text-body-xs text-left">Color objects by status</span>
-        <FormButton
-          size="sm"
-          :color="
-            diffState.mode.value !== VisualDiffMode.COLORED ? 'outline' : undefined
-          "
-          @click="swapDiffMode()"
-        >
-          {{ diffState.mode.value === VisualDiffMode.COLORED ? 'ON' : 'OFF' }}
-        </FormButton>
+      <div
+        class="flex items-center justify-between w-full px-1 border-b border-outline-3 py-3 mb-4"
+      >
+        <span class="text-body-2xs text-left">Color objects by status</span>
+        <FormSwitch
+          :model-value="isColoredModeEnabled"
+          :show-label="false"
+          name="color-objects-by-status"
+          @update:model-value="swapDiffMode"
+        />
       </div>
-      <!-- <div class="ml-1">Change summary:</div> -->
-      <div class="grid grid-cols-2 gap-2">
+      <div class="flex flex-col gap-2">
         <ViewerCompareChangesObjectGroup name="unchanged" :object-ids="unchangedIds" />
         <ViewerCompareChangesObjectGroup name="modified" :object-ids="modifiedIds" />
         <ViewerCompareChangesObjectGroup name="added" :object-ids="addedIds" />
         <ViewerCompareChangesObjectGroup name="removed" :object-ids="removedIds" />
       </div>
     </div>
-  </ViewerLayoutPanel>
+  </ViewerLayoutSidePanel>
 </template>
 <script setup lang="ts">
 import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
@@ -70,8 +78,18 @@ import { uniqBy, debounce } from 'lodash-es'
 import type { SpeckleObject } from '~~/lib/viewer/helpers/sceneExplorer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { TIME_MS } from '@speckle/shared'
+import { FormSwitch } from '@speckle/ui-components'
 
-defineEmits<{
+const props = withDefaults(
+  defineProps<{
+    clearOnBack?: boolean
+  }>(),
+  {
+    clearOnBack: true
+  }
+)
+
+const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
@@ -81,6 +99,10 @@ const {
 } = useInjectedViewerState()
 
 const localDiffTime = ref(diffState.time.value)
+
+const isColoredModeEnabled = computed(() => {
+  return diffState.mode.value === VisualDiffMode.COLORED
+})
 
 watch(
   localDiffTime,
@@ -172,12 +194,17 @@ const modifiedIds = computed(() => {
 })
 
 const mp = useMixpanel()
-const clearDiff = async () => {
-  mp.track('Viewer Action', {
-    type: 'action',
-    name: 'diffs',
-    action: 'disable'
-  })
-  await diff.update(null)
+
+const handleBack = async () => {
+  if (props.clearOnBack) {
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'diffs',
+      action: 'disable'
+    })
+    await diff.update(null)
+  } else {
+    emit('close')
+  }
 }
 </script>

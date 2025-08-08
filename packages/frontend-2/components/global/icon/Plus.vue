@@ -6,6 +6,19 @@
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
   >
-    <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="1.5" />
+    <path
+      d="M3.33325 8H12.6666"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M8 3.33334V12.6667"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
   </svg>
 </template>

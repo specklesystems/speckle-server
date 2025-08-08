@@ -11,9 +11,7 @@
     <div class="relative">
       <button
         v-tippy="!modelValue.isExpanded ? 'New comment' : 'Close'"
-        :class="`bg-foundation-2 ${
-          modelValue.isExpanded ? 'outline outline-2 outline-primary' : ''
-        } rounded-tr-full rounded-tl-full rounded-br-full w-8 h-8 -top-10 absolute flex justify-center items-center hover:shadow-md`"
+        class="bg-foundation-2 outline outline-2 outline-primary rounded-tr-full rounded-tl-full rounded-br-full w-8 h-8 -top-10 absolute flex justify-center items-center hover:shadow-md"
         @click="onThreadClick"
       >
         <PlusIcon
@@ -32,30 +30,41 @@
             <PlusIcon class="w-5 h-5 text-foreground-2 rotate-45" />
           </button>
         </div>
-        <div
+        <FormFileUploadZone
           v-if="modelValue.isExpanded && canPostComment"
-          ref="threadContainer"
-          class="sm:absolute w-full sm:w-[260px] bg-foundation dark:bg-foundation-page border border-outline-2 sm:rounded-lg shadow-md"
+          ref="uploadZone"
+          v-slot="{ isDraggingFiles }"
+          :size-limit="maxSizeInBytes"
+          :accept="acceptValue"
+          :disabled="isPostingNewThread"
+          multiple
+          @files-selected="onFilesSelected"
         >
-          <div class="relative p-3 px-2 pr-1 sm:p-3 sm:pr-2">
+          <div
+            ref="threadContainer"
+            class="sm:absolute w-full sm:w-[260px] bg-foundation dark:bg-foundation-2 border sm:rounded-xl shadow-md"
+            :class="
+              isDraggingFiles ? 'border-dashed border-primary' : 'border-outline-2'
+            "
+          >
             <ViewerCommentsEditor
               ref="editor"
               v-model="commentValue"
-              prompt="Press enter to comment"
+              prompt="Add comment"
               max-height="300px"
               autofocus
+              disable-drop-zone
               :disabled="isPostingNewThread"
               @submit="() => onSubmit()"
               @keydown="onKeyDownHandler"
             />
-            <div class="w-full flex justify-between items-center pr-1 pt-4">
+            <div class="w-full flex justify-between items-center p-1">
               <FormButton
-                v-tippy="'Attach'"
                 :icon-left="PaperClipIcon"
                 hide-text
                 :disabled="isPostingNewThread"
                 color="subtle"
-                class="!bg-foundation-page dark:!bg-foundation"
+                class="!bg-foundation dark:!bg-foundation-2"
                 @click="trackAttachAndOpenFilePicker()"
               />
               <FormButton
@@ -66,7 +75,7 @@
               />
             </div>
           </div>
-        </div>
+        </FormFileUploadZone>
       </ViewerCommentsPortalOrDiv>
     </div>
   </div>
@@ -87,6 +96,10 @@ import {
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useThreadUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { useServerFileUploadLimit } from '~~/lib/common/composables/serverInfo'
+import { UniqueFileTypeSpecifier } from '~~/lib/core/helpers/file'
+import { acceptedFileExtensions } from '@speckle/shared/blobs'
+import type { UploadableFileItem } from '@speckle/ui-components'
 
 const { isEnabled: isEmbedEnabled } = useEmbed()
 
@@ -104,11 +117,28 @@ const props = defineProps<{
 const { onKeyDownHandler, updateIsTyping, pauseAutomaticUpdates } =
   useIsTypingUpdateEmitter()
 const { closeAllThreads, open } = useThreadUtilities()
+const { maxSizeInBytes } = useServerFileUploadLimit()
 
-const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
+const editor = ref(
+  null as Nullable<{
+    openFilePicker: () => void
+    onFilesSelected: (payload: { files: UploadableFileItem[] }) => void
+  }>
+)
+const uploadZone = ref(null as Nullable<{ triggerPicker: () => void }>)
 const commentValue = ref<CommentEditorValue>({ doc: undefined, attachments: undefined })
 const threadContainer = ref(null as Nullable<HTMLElement>)
 const isPostingNewThread = ref(false)
+
+const acceptValue = [
+  UniqueFileTypeSpecifier.AnyImage,
+  UniqueFileTypeSpecifier.AnyVideo,
+  ...acceptedFileExtensions.map((fileExtension) => `.${fileExtension}`)
+].join(',')
+
+const onFilesSelected = (payload: { files: UploadableFileItem[] }) => {
+  editor.value?.onFilesSelected(payload)
+}
 
 // const { style } = useExpandedThreadResponsiveLocation({
 //   threadContainer,
@@ -177,7 +207,7 @@ const onSubmit = (comment?: CommentEditorValue) => {
 }
 
 const trackAttachAndOpenFilePicker = () => {
-  editor.value?.openFilePicker()
+  uploadZone.value?.triggerPicker()
   mp.track('Comment Action', { type: 'action', name: 'attach' })
 }
 

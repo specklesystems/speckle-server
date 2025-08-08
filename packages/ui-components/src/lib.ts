@@ -111,6 +111,7 @@ export { vKeyboardClickable } from '~~/src/directives/accessibility'
 export { useAvatarSizeClasses } from '~~/src/composables/user/avatar'
 export type { UserAvatarSize } from '~~/src/composables/user/avatar'
 import CommonProgressBar from '~~/src/components/common/ProgressBar.vue'
+import FormRange from '~~/src/components/form/Range.vue'
 import type { FormRadioGroupItem } from '~~/src/helpers/common/components'
 
 export {
@@ -186,7 +187,8 @@ export {
   buildManualPromise,
   CommonProgressBar,
   resolveFileExtension,
-  generateFileId
+  generateFileId,
+  FormRange
 }
 export type {
   FormRadioGroupItem,

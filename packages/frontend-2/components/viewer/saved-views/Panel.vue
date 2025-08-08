@@ -1,57 +1,61 @@
 <template>
-  <ViewerLayoutPanel @close="$emit('close')">
+  <ViewerLayoutSidePanel @close="$emit('close')">
     <template #title>
       <div class="flex justify-between items-center">
         <div>Views</div>
-        <div class="flex">
-          <FormButton size="sm" color="subtle" :icon-left="Search" hide-text />
-          <div v-tippy="canCreateViewOrGroup?.errorMessage">
-            <FormButton
-              size="sm"
-              color="subtle"
-              :icon-left="FolderPlus"
-              hide-text
-              name="addGroup"
-              :disabled="!canCreateViewOrGroup?.authorized || isLoading"
-            />
-          </div>
-          <div v-tippy="canCreateViewOrGroup?.errorMessage">
-            <FormButton
-              size="sm"
-              color="subtle"
-              :icon-left="Plus"
-              hide-text
-              name="addView"
-              :disabled="!canCreateViewOrGroup?.authorized || isLoading"
-              @click="onAddView"
-            />
-          </div>
-        </div>
       </div>
     </template>
     <template #actions>
-      <FormSelectBase
-        v-model="selectedViewsType"
-        mount-menu-on-body
-        label="Views Type"
-        name="viewsType"
-        button-style="simple"
-        :menu-max-width="150"
-        menu-open-direction="right"
-        :allow-unset="false"
-        :items="viewsTypeItems"
-      >
-        <template #nothing-selected>Views Type</template>
-        <template #option="{ item }">
-          <span>{{ viewsTypeLabels[item] }}</span>
-        </template>
-        <template #something-selected="{ value }">
-          <span v-if="!isArray(value)" class="flex items-center gap-2">
-            {{ viewsTypeLabels[value] }}
-          </span>
-        </template>
-      </FormSelectBase>
+      <div class="flex">
+        <FormButton size="sm" color="subtle" :icon-left="Search" hide-text />
+        <div v-tippy="canCreateViewOrGroup?.errorMessage">
+          <FormButton
+            size="sm"
+            color="subtle"
+            :icon-left="FolderPlus"
+            hide-text
+            name="addGroup"
+            :disabled="!canCreateViewOrGroup?.authorized || isLoading"
+          />
+        </div>
+        <div v-tippy="canCreateViewOrGroup?.errorMessage">
+          <FormButton
+            size="sm"
+            color="subtle"
+            :icon-left="Plus"
+            hide-text
+            name="addView"
+            :disabled="!canCreateViewOrGroup?.authorized || isLoading"
+            @click="onAddView"
+          />
+        </div>
+      </div>
     </template>
+    <div class="border-b border-outline-2 px-4 py-2">
+      <div class="inline-block">
+        <FormSelectBase
+          v-model="selectedViewsType"
+          mount-menu-on-body
+          label="Views Type"
+          name="viewsType"
+          button-style="simple"
+          :menu-max-width="150"
+          menu-open-direction="right"
+          :allow-unset="false"
+          :items="viewsTypeItems"
+        >
+          <template #nothing-selected>Views Type</template>
+          <template #option="{ item }">
+            <span>{{ viewsTypeLabels[item] }}</span>
+          </template>
+          <template #something-selected="{ value }">
+            <span v-if="!isArray(value)" class="flex items-center gap-2">
+              {{ viewsTypeLabels[value] }}
+            </span>
+          </template>
+        </FormSelectBase>
+      </div>
+    </div>
     <div class="text-body-sm">
       <ViewerSavedViewsPanelConnectorViews
         v-if="selectedViewsType === ViewsType.Connector"
@@ -62,7 +66,7 @@
         :views-type="selectedViewsType"
       />
     </div>
-  </ViewerLayoutPanel>
+  </ViewerLayoutSidePanel>
 </template>
 <script setup lang="ts">
 import { useMutationLoading } from '@vue/apollo-composable'

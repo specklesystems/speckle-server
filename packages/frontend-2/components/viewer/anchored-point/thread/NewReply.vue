@@ -1,33 +1,46 @@
 <!-- eslint-disable vuejs-accessibility/no-autofocus -->
 <template>
-  <div
-    class="w-full relative flex flex-col border-t border-outline-2 p-3 md:p-4 pr-2 md:pr-3"
-  >
-    <ViewerCommentsEditor
-      ref="editor"
-      v-model="commentValue"
-      prompt="Press Enter to reply"
-      autofocus
-      @keydown="onKeyDownHandler"
-      @submit="onSubmit"
-    />
-    <div class="flex justify-between items-center pt-2 md:pt-3 pr-1">
-      <FormButton
-        v-tippy="'Attach'"
-        :icon-left="PaperClipIcon"
-        :disabled="loading"
-        color="subtle"
-        hide-text
-        class="!bg-foundation-page dark:!bg-foundation"
-        @click="trackAttachAndOpenFilePicker()"
-      />
-      <FormButton
-        :icon-left="PaperAirplaneIcon"
-        hide-text
-        :disabled="loading"
-        @click="onSubmit"
-      />
-    </div>
+  <div class="w-full relative flex flex-col p-2 pt-1">
+    <FormFileUploadZone
+      ref="uploadZone"
+      v-slot="{ isDraggingFiles }"
+      :size-limit="maxSizeInBytes"
+      :accept="acceptValue"
+      :disabled="loading"
+      multiple
+      @files-selected="onFilesSelected"
+    >
+      <div
+        class="border border-outline-2 rounded-lg dark:bg-foundation-2"
+        :class="[isDraggingFiles && 'border-dashed border-primary']"
+      >
+        <ViewerCommentsEditor
+          ref="editor"
+          v-model="commentValue"
+          prompt="Add reply"
+          autofocus
+          disable-drop-zone
+          @keydown="onKeyDownHandler"
+          @submit="onSubmit"
+        />
+        <div class="flex justify-between items-center p-1">
+          <FormButton
+            :icon-left="PaperClipIcon"
+            :disabled="loading"
+            color="subtle"
+            hide-text
+            class="!bg-foundation dark:!bg-foundation-2"
+            @click="trackAttachAndOpenFilePicker()"
+          />
+          <FormButton
+            :icon-left="PaperAirplaneIcon"
+            hide-text
+            :disabled="loading"
+            @click="onSubmit"
+          />
+        </div>
+      </div>
+    </FormFileUploadZone>
   </div>
 </template>
 <script setup lang="ts">
@@ -43,6 +56,10 @@ import {
   convertCommentEditorValueToInput,
   isValidCommentContentInput
 } from '~~/lib/viewer/helpers/comments'
+import { useServerFileUploadLimit } from '~~/lib/common/composables/serverInfo'
+import { UniqueFileTypeSpecifier } from '~~/lib/core/helpers/file'
+import { acceptedFileExtensions } from '@speckle/shared/blobs'
+import type { UploadableFileItem } from '@speckle/ui-components'
 
 const props = defineProps<{
   modelValue: CommentBubbleModel
@@ -55,15 +72,32 @@ const emit = defineEmits<{
 const createReply = useSubmitReply()
 const { onKeyDownHandler, updateIsTyping } = useIsTypingUpdateEmitter()
 const { projectId } = useInjectedViewerState()
+const { maxSizeInBytes } = useServerFileUploadLimit()
 
 const loading = ref(false)
-const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
+const editor = ref(
+  null as Nullable<{
+    openFilePicker: () => void
+    onFilesSelected: (payload: { files: UploadableFileItem[] }) => void
+  }>
+)
+const uploadZone = ref(null as Nullable<{ triggerPicker: () => void }>)
 const commentValue = ref<CommentEditorValue>({ doc: undefined, attachments: undefined })
 const threadId = computed(() => props.modelValue.id)
 
+const acceptValue = [
+  UniqueFileTypeSpecifier.AnyImage,
+  UniqueFileTypeSpecifier.AnyVideo,
+  ...acceptedFileExtensions.map((fileExtension) => `.${fileExtension}`)
+].join(',')
+
+const onFilesSelected = (payload: { files: UploadableFileItem[] }) => {
+  editor.value?.onFilesSelected(payload)
+}
+
 const mp = useMixpanel()
 const trackAttachAndOpenFilePicker = () => {
-  editor.value?.openFilePicker()
+  uploadZone.value?.triggerPicker()
   mp.track('Comment Action', { type: 'action', name: 'attach' })
 }
 
