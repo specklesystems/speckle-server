@@ -178,3 +178,17 @@ export const canUpdateSavedViewQuery = gql`
     }
   }
 `
+
+export const updateSavedViewMutation = gql`
+  mutation UpdateSavedView($input: UpdateSavedViewInput!) {
+    projectMutations {
+      savedViewMutations {
+        updateView(input: $input) {
+          ...BasicSavedView
+        }
+      }
+    }
+  }
+
+  ${basicSavedViewFragment}
+`

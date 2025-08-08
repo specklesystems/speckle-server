@@ -22,19 +22,20 @@ import {
   getGroupSavedViewsTotalCountFactory,
   getProjectSavedViewGroupsPageItemsFactory,
   getProjectSavedViewGroupsTotalCountFactory,
-  getSavedViewGroupFactory,
   getStoredViewCountFactory,
   getUngroupedSavedViewsGroupFactory,
   recalculateGroupResourceIdsFactory,
   storeSavedViewFactory,
-  storeSavedViewGroupFactory
+  storeSavedViewGroupFactory,
+  updateSavedViewRecordFactory
 } from '@/modules/viewer/repositories/savedViews'
 import {
   createSavedViewFactory,
   createSavedViewGroupFactory,
   deleteSavedViewFactory,
   getGroupSavedViewsFactory,
-  getProjectSavedViewGroupsFactory
+  getProjectSavedViewGroupsFactory,
+  updateSavedViewFactory
 } from '@/modules/viewer/services/savedViewsManagement'
 import { getViewerResourceGroupsFactory } from '@/modules/viewer/services/viewerResources'
 import { Authz } from '@speckle/shared'
@@ -43,6 +44,10 @@ import { formatSerializedViewerState } from '@speckle/shared/viewer/state'
 import type { Knex } from 'knex'
 import { ungroupedScenesGroupTitle } from '@speckle/shared/saved-views'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import {
+  getSavedViewFactory,
+  getSavedViewGroupFactory
+} from '@/modules/viewer/repositories/dataLoaders/savedViews'
 
 const buildGetViewerResourceGroups = (params: { projectDb: Knex }) => {
   const { projectDb } = params
@@ -219,7 +224,7 @@ const resolvers: Resolvers = {
         getViewerResourceGroups: buildGetViewerResourceGroups({ projectDb }),
         getStoredViewCount: getStoredViewCountFactory({ db: projectDb }),
         storeSavedView: storeSavedViewFactory({ db: projectDb }),
-        getSavedViewGroup: getSavedViewGroupFactory({ db: projectDb }),
+        getSavedViewGroup: getSavedViewGroupFactory({ loaders: ctx.loaders }),
         recalculateGroupResourceIds: recalculateGroupResourceIdsFactory({
           db: projectDb
         })
@@ -254,6 +259,54 @@ const resolvers: Resolvers = {
       })
 
       return true
+    },
+    updateView: async (_parent, args, ctx) => {
+      const projectId = args.input.projectId
+      const projectDb = await getProjectDbClient({ projectId })
+
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: ctx.resourceAccessRules
+      })
+
+      const canUpdate = await ctx.authPolicies.project.savedViews.canUpdate({
+        userId: ctx.userId,
+        projectId,
+        savedViewId: args.input.id
+      })
+      throwIfAuthNotOk(canUpdate)
+
+      const updateSavedView = updateSavedViewFactory({
+        getViewerResourceGroups: buildGetViewerResourceGroups({ projectDb }),
+        getSavedView: getSavedViewFactory({ loaders: ctx.loaders }),
+        getSavedViewGroup: getSavedViewGroupFactory({ loaders: ctx.loaders }),
+        updateSavedViewRecord: updateSavedViewRecordFactory({
+          db: projectDb
+        })
+      })
+
+      const updatedView = await updateSavedView({
+        input: args.input,
+        userId: ctx.userId!
+      })
+
+      // update loader cache
+      ctx.loaders.forEachCachedRegion(({ loaders }) => {
+        loaders.savedViews.getSavedView.clear({
+          viewId: updatedView.id,
+          projectId: updatedView.projectId
+        })
+        loaders.savedViews.getSavedView.prime(
+          {
+            viewId: updatedView.id,
+            projectId: updatedView.projectId
+          },
+          updatedView
+        )
+      })
+
+      return updatedView
     },
     createGroup: async (_parent, args, ctx) => {
       const projectId = args.input.projectId

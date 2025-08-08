@@ -1,5 +1,4 @@
 <template>
-  <!-- TODO: Add seat type filter to the query -->
   <FormSelectBase
     v-model="selectedValue"
     :items="seatTypes"

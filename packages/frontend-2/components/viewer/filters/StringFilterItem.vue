@@ -101,8 +101,10 @@ const isSelected = computed(() => hasIntersection(objectIds.value, props.item.id
 const availableTargetIds = computed(() => {
   let targets = props.item.ids
 
-  if (isolatedObjectIds.value.length)
-    targets = props.item.ids.filter((id) => isolatedObjectIds.value.includes(id))
+  if (isolatedObjectIds.value.length) {
+    const isolatedSet = new Set(isolatedObjectIds.value)
+    targets = props.item.ids.filter((id) => isolatedSet.has(id))
+  }
 
   return targets
 })
@@ -121,7 +123,8 @@ const isHidden = computed(() => {
 const isIsolated = computed(() => {
   if (!isolatedObjectIds.value.length) return true
   const ids = props.item.ids
-  return isolatedObjectIds.value.some((id) => ids.includes(id))
+  const isolatedSet = new Set(isolatedObjectIds.value)
+  return ids.some((id) => isolatedSet.has(id))
 })
 
 const color = computed(() => {

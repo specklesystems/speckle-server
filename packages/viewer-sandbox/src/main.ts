@@ -624,6 +624,11 @@ const getStream = () => {
 
     // Text with color proxy
     // 'https://app.speckle.systems/projects/ebf93a561b/models/0a07bc3231'
+
+    // 'https://latest.speckle.systems/projects/9f13b874cf/models/0575b5dcd2'
+
+    // Circles of different sizes
+    // 'https://latest.speckle.systems/projects/4658eb53b9/models/bb726a3764'
   )
 }
 

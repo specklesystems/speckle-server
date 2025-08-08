@@ -9,23 +9,32 @@ import type {
   GetProjectSavedViewGroups,
   GetProjectSavedViewGroupsPageItems,
   GetProjectSavedViewGroupsTotalCount,
+  GetSavedView,
   GetSavedViewGroup,
   GetStoredViewCount,
   RecalculateGroupResourceIds,
   StoreSavedView,
-  StoreSavedViewGroup
+  StoreSavedViewGroup,
+  UpdateSavedView,
+  UpdateSavedViewRecord
 } from '@/modules/viewer/domain/operations/savedViews'
 import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
 import {
   SavedViewCreationValidationError,
   SavedViewGroupCreationValidationError,
-  SavedViewInvalidResourceTargetError
+  SavedViewInvalidResourceTargetError,
+  SavedViewUpdateValidationError
 } from '@/modules/viewer/errors/savedViews'
+import type { ResourceBuilder } from '@speckle/shared/viewer/route'
 import { resourceBuilder } from '@speckle/shared/viewer/route'
+import type { VersionedSerializedViewerState } from '@speckle/shared/viewer/state'
 import { inputToVersionedState } from '@speckle/shared/viewer/state'
 import { isValidBase64Image } from '@speckle/shared/images/base64'
 import type { GetViewerResourceGroups } from '@/modules/viewer/domain/operations/resources'
 import { formatResourceIdsForGroup } from '@/modules/viewer/helpers/savedViews'
+import { omit } from 'lodash-es'
+import type { DependenciesOf } from '@/modules/shared/helpers/factory'
+import { removeNullOrUndefinedKeys } from '@speckle/shared'
 
 /**
  * Validates an incoming resourceIdString against the resources in the project and returns the validated list (as a builder)
@@ -80,6 +89,47 @@ const validateProjectResourceIdStringFactory =
     return resourceIds
   }
 
+const validateViewerStateFactory =
+  () =>
+  (params: {
+    viewerState: unknown
+    projectId: string
+    resourceIds: ResourceBuilder
+    errorMetadata: Record<string, unknown>
+  }) => {
+    const { viewerState, projectId, resourceIds, errorMetadata } = params
+
+    const state = inputToVersionedState(viewerState)
+    if (!state) {
+      throw new SavedViewInvalidResourceTargetError(
+        'Invalid viewer state provided. Must be a valid SerializedViewerState.',
+        {
+          info: errorMetadata
+        }
+      )
+    }
+
+    // Validate state match
+    if (state.state.resources.request.resourceIdString !== resourceIds.toString()) {
+      throw new SavedViewInvalidResourceTargetError(
+        'Viewer state does not match the provided resourceIdString.',
+        {
+          info: errorMetadata
+        }
+      )
+    }
+    if (state.state.projectId !== projectId) {
+      throw new SavedViewInvalidResourceTargetError(
+        'Viewer state projectId does not match the provided projectId.',
+        {
+          info: errorMetadata
+        }
+      )
+    }
+
+    return state
+  }
+
 export const createSavedViewFactory =
   (deps: {
     getViewerResourceGroups: GetViewerResourceGroups
@@ -119,42 +169,16 @@ export const createSavedViewFactory =
       )
     }
 
-    const state = inputToVersionedState(input.viewerState)
-    if (!state) {
-      throw new SavedViewCreationValidationError(
-        'Invalid viewer state provided. Must be a valid SerializedViewerState.',
-        {
-          info: {
-            input,
-            authorId
-          }
-        }
-      )
-    }
-
-    // Validate state match
-    if (state.state.resources.request.resourceIdString !== input.resourceIdString) {
-      throw new SavedViewCreationValidationError(
-        'Viewer state does not match the provided resourceIdString.',
-        {
-          info: {
-            input,
-            authorId
-          }
-        }
-      )
-    }
-    if (state.state.projectId !== projectId) {
-      throw new SavedViewCreationValidationError(
-        'Viewer state projectId does not match the provided projectId.',
-        {
-          info: {
-            input,
-            authorId
-          }
-        }
-      )
-    }
+    // Validate state
+    const state = validateViewerStateFactory()({
+      viewerState: input.viewerState,
+      projectId,
+      resourceIds,
+      errorMetadata: {
+        input,
+        authorId
+      }
+    })
 
     // Validate groupId - group is a valid and accessible group in the project
     if (groupId) {
@@ -180,6 +204,16 @@ export const createSavedViewFactory =
     if (!name?.length) {
       const viewCount = await deps.getStoredViewCount({ projectId })
       name = `View - ${String(viewCount + 1).padStart(3, '0')}`
+    } else if (name.length > 255) {
+      throw new SavedViewCreationValidationError(
+        'View name must be between 1 and 255 characters long',
+        {
+          info: {
+            input,
+            authorId
+          }
+        }
+      )
     }
 
     const concreteResourceIds = resourceIds.toResources().map((r) => r.toString())
@@ -296,4 +330,160 @@ export const deleteSavedViewFactory =
   async (params) => {
     const { id } = params
     await deps.deleteSavedViewRecord({ savedViewId: id })
+  }
+
+export const updateSavedViewFactory =
+  (
+    deps: {
+      getSavedView: GetSavedView
+      getSavedViewGroup: GetSavedViewGroup
+      updateSavedViewRecord: UpdateSavedViewRecord
+    } & DependenciesOf<typeof validateProjectResourceIdStringFactory>
+  ): UpdateSavedView =>
+  async (params) => {
+    const { input, userId } = params
+    const { projectId, id } = input
+
+    // Check if view even exists
+    const view = await deps.getSavedView({
+      id: input.id,
+      projectId
+    })
+    if (!view) {
+      throw new SavedViewUpdateValidationError(
+        "The specified saved view doesn't exist",
+        {
+          info: {
+            input,
+            userId
+          }
+        }
+      )
+    }
+
+    // Validate that required fields are set
+    const hasResourceIdString = 'resourceIdString' in input && input.resourceIdString
+    const hasViewerState = 'viewerState' in input && input.viewerState
+    const hasScreenshot = 'screenshot' in input && input.screenshot
+    if (hasResourceIdString || hasViewerState) {
+      if (!hasResourceIdString || !hasViewerState || !hasScreenshot) {
+        throw new SavedViewUpdateValidationError(
+          'If the resourceIdString or viewerState are being updated, resourceIdString, viewerState and screenshot must all be submitted.',
+          {
+            info: {
+              input,
+              userId
+            }
+          }
+        )
+      }
+    }
+
+    // Check if there's any actual changes
+    const changes = removeNullOrUndefinedKeys(omit(input, ['id', 'projectId']))
+    if (Object.keys(changes).length === 0) {
+      throw new SavedViewUpdateValidationError('No changes submitted with the input.', {
+        info: {
+          input,
+          userId
+        }
+      })
+    }
+
+    // Validate updated resourceIds
+    let resourceIds: ResourceBuilder | undefined = undefined
+    if ('resourceIdString' in changes && changes.resourceIdString) {
+      const validate = validateProjectResourceIdStringFactory(deps)
+      resourceIds = await validate({
+        resourceIdString: changes.resourceIdString,
+        projectId: input.projectId,
+        errorMetadata: {
+          input,
+          userId
+        }
+      })
+    }
+
+    // Validate viewerState
+    let viewerState: VersionedSerializedViewerState | undefined = undefined
+    if ('viewerState' in changes && changes.viewerState) {
+      // Validate state
+      viewerState = validateViewerStateFactory()({
+        viewerState: changes.viewerState,
+        projectId,
+        resourceIds: resourceIds!, // ts not smart enough, we checked for this above
+        errorMetadata: {
+          input,
+          userId
+        }
+      })
+    }
+
+    // Validate groupId - group is a valid and accessible group in the project
+    if (changes.groupId) {
+      const group = await deps.getSavedViewGroup({
+        id: changes.groupId,
+        projectId
+      })
+      if (!group) {
+        throw new SavedViewUpdateValidationError(
+          'Provided groupId does not exist in the project.',
+          {
+            info: {
+              input,
+              userId
+            }
+          }
+        )
+      }
+    }
+
+    // Validate screenshot
+    if (changes.screenshot && !isValidBase64Image(changes.screenshot)) {
+      throw new SavedViewUpdateValidationError(
+        'Invalid screenshot provided. Must be a valid base64 encoded image.',
+        {
+          info: {
+            input,
+            userId
+          }
+        }
+      )
+    }
+
+    // Validate name
+    if (changes.name && changes.name.length > 255) {
+      throw new SavedViewUpdateValidationError(
+        'View name must be between 1 and 255 characters long',
+        {
+          info: {
+            input,
+            userId
+          }
+        }
+      )
+    }
+
+    const finalChanges = omit(changes, ['resourceIdString', 'viewerState'])
+    const updatedView = await deps.updateSavedViewRecord({
+      id,
+      projectId,
+      update: {
+        ...finalChanges,
+        ...(resourceIds
+          ? {
+              resourceIds: resourceIds
+                ? resourceIds.map((r) => r.toString())
+                : undefined,
+              groupResourceIds: formatResourceIdsForGroup(resourceIds)
+            }
+          : { resourceIdString: undefined }),
+        ...(viewerState
+          ? {
+              viewerState
+            }
+          : { viewerState: undefined })
+      }
+    })
+    return updatedView! // should exist, we checked before
   }

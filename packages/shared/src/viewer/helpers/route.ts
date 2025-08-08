@@ -132,14 +132,14 @@ export const isModelFolderResource = (
   r: ViewerResource
 ): r is ViewerModelFolderResource => r.type === ViewerResourceType.ModelFolder
 
-type StringViewerResources = string | string[]
-type ViewerResources =
+type StringViewerResourcesTarget = string | string[]
+export type ViewerResourcesTarget =
   | ViewerResourceBuilder
   | ViewerResource[]
   | ViewerResource
-  | StringViewerResources
+  | StringViewerResourcesTarget
 
-const toViewerResourceArray = (res: ViewerResources): ViewerResource[] => {
+const toViewerResourceArray = (res: ViewerResourcesTarget): ViewerResource[] => {
   if (res instanceof ViewerResourceBuilder) {
     return res.toResources()
   }
@@ -184,7 +184,7 @@ class ViewerResourceBuilder implements Iterable<ViewerResource> {
   /**
    * @deprecated Use 'addResources' or 'addNew' instead
    */
-  addFromString(stringResources: StringViewerResources) {
+  addFromString(stringResources: StringViewerResourcesTarget) {
     const strings = Array.isArray(stringResources) ? stringResources : [stringResources]
     for (const resourceIdString of strings) {
       const resources = parseUrlParameters(resourceIdString.toLowerCase())
@@ -194,7 +194,7 @@ class ViewerResourceBuilder implements Iterable<ViewerResource> {
     this.#order()
     return this
   }
-  addResources(res: ViewerResources) {
+  addResources(res: ViewerResourcesTarget) {
     this.#resources.push(...toViewerResourceArray(res))
     this.#order()
     return this
@@ -204,7 +204,7 @@ class ViewerResourceBuilder implements Iterable<ViewerResource> {
    * Only add those resources that are not already in the builder.
    */
   addNew(
-    incoming: ViewerResources,
+    incoming: ViewerResourcesTarget,
     options?: {
       /**
        * If true, will require exact version matches for model resources
@@ -290,3 +290,5 @@ class ViewerResourceBuilder implements Iterable<ViewerResource> {
 export function resourceBuilder() {
   return new ViewerResourceBuilder()
 }
+
+export type ResourceBuilder = ReturnType<typeof resourceBuilder>

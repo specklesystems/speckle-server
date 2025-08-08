@@ -9,7 +9,9 @@ import type {
   GetProjectSavedViewGroupQueryVariables,
   GetProjectSavedViewGroupsQueryVariables,
   GetProjectSavedViewQueryVariables,
-  GetProjectUngroupedViewGroupQueryVariables
+  GetProjectUngroupedViewGroupQueryVariables,
+  UpdateSavedViewInput,
+  UpdateSavedViewMutationVariables
 } from '@/modules/core/graph/generated/graphql'
 import {
   CanCreateSavedViewDocument,
@@ -20,7 +22,8 @@ import {
   GetProjectSavedViewDocument,
   GetProjectSavedViewGroupDocument,
   GetProjectSavedViewGroupsDocument,
-  GetProjectUngroupedViewGroupDocument
+  GetProjectUngroupedViewGroupDocument,
+  UpdateSavedViewDocument
 } from '@/modules/core/graph/generated/graphql'
 import {
   buildBasicTestModel,
@@ -32,7 +35,8 @@ import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
 import {
   SavedViewCreationValidationError,
   SavedViewGroupCreationValidationError,
-  SavedViewInvalidResourceTargetError
+  SavedViewInvalidResourceTargetError,
+  SavedViewUpdateValidationError
 } from '@/modules/viewer/errors/savedViews'
 import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
@@ -67,6 +71,8 @@ const { FF_WORKSPACES_MODULE_ENABLED, FF_SAVED_VIEWS_ENABLED } = getFeatureFlags
 
 const fakeScreenshot =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PiQ2YQAAAABJRU5ErkJggg=='
+const fakeScreenshot2 =
+  'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAICAgICAgICAgICAgICAwUDAwMDAwYEBAMFBQYGBQYGBwcICQoJCQkJCQoMCgsMDAwMDAwP/2wBDAwMDAwQDBAgEBAgQEBAgMCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgP/wAARCAABAAEDAREAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAHEAP/EABQQAQAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAQUCf//EABQRAQAAAAAAAAAAAAAAAAAAAD/2gAIAQMBAT8BP//EABQRAQAAAAAAAAAAAAAAAAAAAD/2gAIAQIBAT8BP//Z'
 
 const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerState>) =>
   merge(
@@ -99,6 +105,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
   let apollo: TestApolloServer
   let me: BasicTestUser
   let guest: BasicTestUser
+  let otherGuy: BasicTestUser
   let myProject: BasicTestStream
   let myProjectWorkspace: BasicTestWorkspace
   let myLackingProjectWorkspace: BasicTestWorkspace
@@ -174,47 +181,67 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     options?: ExecuteOperationOptions
   ) => apollo.execute(CanUpdateSavedViewDocument, input, options)
 
+  const updateView = (
+    input: UpdateSavedViewMutationVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(UpdateSavedViewDocument, input, options)
+
   const model1ResourceIds = () => ViewerRoute.resourceBuilder().addModel(myModel1.id)
 
   const model2ResourceIds = () => ViewerRoute.resourceBuilder().addModel(myModel2.id)
 
   before(async () => {
-    me = await createTestUser(buildBasicTestUser({ name: 'me' }))
-    guest = await createTestUser(buildBasicTestUser({ name: 'guest' }))
+    const userCreate = await Promise.all([
+      createTestUser(buildBasicTestUser({ name: 'me' })),
+      createTestUser(buildBasicTestUser({ name: 'guest' })),
+      createTestUser(buildBasicTestUser({ name: 'other-guy' }))
+    ])
+    me = userCreate[0]
+    guest = userCreate[1]
+    otherGuy = userCreate[2]
 
-    myLackingProjectWorkspace = await createTestWorkspace(
-      buildBasicTestWorkspace(),
-      me,
-      {
+    const workspaceCreate = await Promise.all([
+      createTestWorkspace(buildBasicTestWorkspace(), me, {
         addPlan: WorkspacePlans.Free
-      }
-    )
-    myLackingProject = await createTestStream(
-      buildBasicTestProject({
-        workspaceId: myLackingProjectWorkspace.id
       }),
-      me
-    )
+      createTestWorkspace(buildBasicTestWorkspace(), me, {
+        addPlan: WorkspacePlans.Pro
+      })
+    ])
+    myLackingProjectWorkspace = workspaceCreate[0]
+    myProjectWorkspace = workspaceCreate[1]
 
-    myProjectWorkspace = await createTestWorkspace(buildBasicTestWorkspace(), me, {
-      addPlan: WorkspacePlans.Pro
-    })
-    myProject = await createTestStream(
-      buildBasicTestProject({
-        workspaceId: myProjectWorkspace.id
+    const projectCreate = await Promise.all([
+      createTestStream(
+        buildBasicTestProject({
+          workspaceId: myLackingProjectWorkspace.id
+        }),
+        me
+      ),
+      createTestStream(
+        buildBasicTestProject({
+          workspaceId: myProjectWorkspace.id
+        }),
+        me
+      )
+    ])
+    myLackingProject = projectCreate[0]
+    myProject = projectCreate[1]
+
+    const modelCreate = await Promise.all([
+      createTestBranch({
+        branch: buildBasicTestModel(),
+        stream: myProject,
+        owner: me
       }),
-      me
-    )
-    myModel1 = await createTestBranch({
-      branch: buildBasicTestModel(),
-      stream: myProject,
-      owner: me
-    })
-    myModel2 = await createTestBranch({
-      branch: buildBasicTestModel({ name: 'model-2' }),
-      stream: myProject,
-      owner: me
-    })
+      createTestBranch({
+        branch: buildBasicTestModel({ name: 'model-2' }),
+        stream: myProject,
+        owner: me
+      })
+    ])
+    myModel1 = modelCreate[0]
+    myModel2 = modelCreate[1]
     apollo = await testApolloServer({ authUserId: me.id })
 
     // We only run a small subset of tests if the module is disabled, and we dont need this stuff:
@@ -606,7 +633,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         )
 
         expect(res).to.haveGraphQLErrors({
-          code: SavedViewCreationValidationError.code
+          code: SavedViewInvalidResourceTargetError.code
         })
         expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
       })
@@ -633,7 +660,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         )
 
         expect(res).to.haveGraphQLErrors({
-          code: SavedViewCreationValidationError.code
+          code: SavedViewInvalidResourceTargetError.code
         })
         expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
       })
@@ -651,7 +678,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         )
 
         expect(res).to.haveGraphQLErrors({
-          code: SavedViewCreationValidationError.code
+          code: SavedViewInvalidResourceTargetError.code
         })
         expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
       })
@@ -686,6 +713,279 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
       })
     })
 
+    describe('updates', () => {
+      let updatablesProject: BasicTestStream
+      let models: BasicTestBranch[]
+      let testView: BasicSavedViewFragment
+      let optionalGroup: BasicSavedViewGroupFragment
+
+      before(async () => {
+        updatablesProject = await createTestStream(
+          buildBasicTestProject({
+            name: 'updatables-project',
+            workspaceId: myProjectWorkspace.id
+          }),
+          me
+        )
+        await addToStream(updatablesProject, otherGuy, Roles.Stream.Reviewer)
+
+        models = await Promise.all(
+          times(3, async (i) => {
+            return await createTestBranch({
+              branch: buildBasicTestModel({
+                name: `Model #${i}`
+              }),
+              stream: updatablesProject,
+              owner: me
+            })
+          })
+        )
+
+        optionalGroup = (
+          await createSavedViewGroup(
+            {
+              input: {
+                projectId: updatablesProject.id,
+                resourceIdString: models[0].id,
+                groupName: 'Test Recalculation Group'
+              }
+            },
+            { assertNoErrors: true }
+          )
+        )?.data?.projectMutations.savedViewMutations.createGroup!
+      })
+
+      beforeEach(async () => {
+        const createRes = await createSavedView(
+          buildCreateInput({
+            projectId: updatablesProject.id,
+            resourceIdString: models[0].id,
+            overrides: { name: 'View to update' }
+          }),
+          { assertNoErrors: true }
+        )
+        testView = createRes.data?.projectMutations.savedViewMutations.createView!
+        expect(testView).to.be.ok
+      })
+
+      afterEach(async () => {
+        await deleteView(
+          {
+            input: {
+              id: testView.id,
+              projectId: updatablesProject.id
+            }
+          },
+          { assertNoErrors: true }
+        )
+      })
+
+      const buildValidResourcesUpdate = () => ({
+        resourceIdString: 'invalid-resource-id',
+        screenshot: fakeScreenshot,
+        viewerState: fakeViewerState({
+          projectId: updatablesProject.id,
+          resources: {
+            request: {
+              resourceIdString: models[0].id
+            }
+          }
+        })
+      })
+
+      it('successfully updates a saved view (name)', async () => {
+        const newName = 'Updated View Name'
+
+        const res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            name: newName
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        const updatedView = res.data?.projectMutations.savedViewMutations.updateView
+        expect(updatedView).to.be.ok
+        expect(updatedView!.id).to.equal(testView.id)
+        expect(updatedView!.name).to.equal(newName)
+      })
+
+      it('successfully updated everyting in a saved view', async () => {
+        const input: UpdateSavedViewInput = {
+          id: testView.id,
+          projectId: updatablesProject.id,
+          // NEW UPDATES
+          resourceIdString: models.at(-1)!.id,
+          groupId: optionalGroup.id,
+          name: 'Updated View Name',
+          description: 'Updated description :)',
+          viewerState: fakeViewerState({
+            projectId: updatablesProject.id,
+            resources: {
+              request: {
+                resourceIdString: models.at(-1)!.id
+              }
+            }
+          }),
+          screenshot: fakeScreenshot2,
+          isHomeView: true,
+          visibility: SavedViewVisibility.authorOnly
+        }
+        const res = await updateView({
+          input
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const updatedView = res.data?.projectMutations.savedViewMutations.updateView
+        expect(updatedView).to.be.ok
+        expect(updatedView!.id).to.equal(testView.id)
+        expect(updatedView!.name).to.equal(input.name)
+        expect(updatedView!.description).to.equal(input.description)
+        expect(updatedView!.groupId).to.equal(input.groupId)
+        expect(updatedView!.resourceIdString).to.equal(input.resourceIdString)
+        expect(updatedView!.viewerState).to.deep.equalInAnyOrder(input.viewerState)
+        expect(updatedView!.screenshot).to.equal(input.screenshot)
+        expect(updatedView!.isHomeView).to.equal(input.isHomeView)
+        expect(updatedView!.visibility).to.equal(input.visibility)
+      })
+
+      it('fails if user has no access to update the view', async () => {
+        const newName = 'Updated View Name'
+
+        const res = await updateView(
+          {
+            input: {
+              id: testView.id,
+              projectId: updatablesProject.id,
+              name: newName
+            }
+          },
+          { authUserId: otherGuy.id }
+        )
+
+        expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+
+      it('fails if view does not exist', async () => {
+        const res = await updateView({
+          input: { id: 'non-existent-id', projectId: updatablesProject.id, name: 'x' }
+        })
+        expect(res).to.haveGraphQLErrors({ code: NotFoundError.code })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+
+      it('fails if no changes submitted', async () => {
+        const res = await updateView({
+          input: { id: testView.id, projectId: updatablesProject.id }
+        })
+        expect(res).to.haveGraphQLErrors({ code: SavedViewUpdateValidationError.code })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+
+      it('fails if updating resourceIdString/viewerState/screenshot with missing required fields', async () => {
+        // Only resourceIdString
+        let res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            resourceIdString: models[0].id
+          }
+        })
+        expect(res).to.haveGraphQLErrors({ code: SavedViewUpdateValidationError.code })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+
+        // Only viewerState
+        res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            viewerState: { a: 1 }
+          }
+        })
+        expect(res).to.haveGraphQLErrors({ code: SavedViewUpdateValidationError.code })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+
+        // Only screenshot
+        res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            screenshot: 'invalid'
+          }
+        })
+        expect(res).to.haveGraphQLErrors({ code: SavedViewUpdateValidationError.code })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+
+      it('fails if groupId does not exist', async () => {
+        const res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            groupId: 'non-existent-group-id',
+            name: 'x'
+          }
+        })
+        expect(res).to.haveGraphQLErrors({ code: SavedViewUpdateValidationError.code })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+
+      it('fails if screenshot is invalid', async () => {
+        const res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            screenshot: 'not-base64',
+            name: 'x'
+          }
+        })
+        expect(res).to.haveGraphQLErrors({ code: SavedViewUpdateValidationError.code })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+
+      it('fails if name is too long', async () => {
+        const longName = 'x'.repeat(256)
+        const res = await updateView({
+          input: { id: testView.id, projectId: updatablesProject.id, name: longName }
+        })
+        expect(res).to.haveGraphQLErrors({ code: SavedViewUpdateValidationError.code })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+
+      it('fails updating resourceIdString, if its invalid', async () => {
+        const res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            ...buildValidResourcesUpdate(),
+            resourceIdString: 'invalid-resource-id'
+          }
+        })
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewInvalidResourceTargetError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+
+      it('fails updating viewerState, if its invalid', async () => {
+        const res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            ...buildValidResourcesUpdate(),
+            viewerState: { a: 1 } as unknown as ViewerState.SerializedViewerState // invalid state
+          }
+        })
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewInvalidResourceTargetError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+    })
+
     describe('deletions', () => {
       let deletablesProject: BasicTestStream
       let models: BasicTestBranch[]
@@ -711,8 +1011,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           })
         )
 
-        // add guest as reviewer
-        await addToStream(deletablesProject, guest, Roles.Stream.Reviewer, {
+        await addToStream(deletablesProject, otherGuy, Roles.Stream.Reviewer, {
           owner: me
         })
       })
@@ -783,7 +1082,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
             viewId: view.id
           },
           {
-            authUserId: guest.id
+            authUserId: otherGuy.id
           }
         )
 
