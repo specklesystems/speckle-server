@@ -26,6 +26,7 @@
             :items="menuItems"
             :menu-id="menuId"
             mount-menu-on-body
+            :size="230"
             @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
           >
             <FormButton
@@ -71,12 +72,11 @@ import { useMutationLoading } from '@vue/apollo-composable'
 import { Ellipsis, SquarePen } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ViewerSavedViewsPanelView_SavedViewFragment } from '~/lib/common/generated/gql/graphql'
-import { useEventBus } from '~/lib/core/composables/eventBus'
+import { useViewerSavedViewsUtils } from '~/lib/viewer/composables/savedViews/general'
 import { useDeleteSavedView } from '~/lib/viewer/composables/savedViews/management'
-import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
 
-const Menuitems = StringEnum(['Delete'])
-type MenuItems = StringEnumValues<typeof Menuitems>
+const MenuItems = StringEnum(['Delete', 'LoadOriginalVersions', 'CopyLink'])
+type MenuItems = StringEnumValues<typeof MenuItems>
 
 graphql(`
   fragment ViewerSavedViewsPanelView_SavedView on SavedView {
@@ -103,9 +103,9 @@ const props = defineProps<{
   view: ViewerSavedViewsPanelView_SavedViewFragment
 }>()
 
-const eventBus = useEventBus()
 const deleteView = useDeleteSavedView()
 const isLoading = useMutationLoading()
+const { copyLink, applyView } = useViewerSavedViewsUtils()
 
 const showEditDialog = ref(false)
 const showMenu = ref(false)
@@ -115,7 +115,17 @@ const canUpdate = computed(() => props.view.permissions.canUpdate)
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
-      id: Menuitems.Delete,
+      id: MenuItems.LoadOriginalVersions,
+      title: 'Load with original model version'
+    },
+    {
+      id: MenuItems.CopyLink,
+      title: 'Copy link'
+    }
+  ],
+  [
+    {
+      id: MenuItems.Delete,
       title: 'Delete',
       disabled: !canUpdate.value?.authorized || isLoading.value,
       disabledTooltip: canUpdate.value.errorMessage
@@ -125,8 +135,21 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
 
 const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
   switch (item.id) {
-    case Menuitems.Delete:
+    case MenuItems.Delete:
       await deleteView({ view: props.view })
+      break
+    case MenuItems.CopyLink:
+      await copyLink({
+        settings: {
+          id: props.view.id
+        }
+      })
+      break
+    case MenuItems.LoadOriginalVersions:
+      applyView({
+        id: props.view.id,
+        loadOriginal: true
+      })
       break
     default:
       throwUncoveredError(item.id)
@@ -134,10 +157,8 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
 }
 
 const apply = async () => {
-  // Force update, even if the view id is already set
-  // (in case this is a frustration click w/ the state not applying)
-  eventBus.emit(ViewerEventBusKeys.UpdateSavedView, {
-    viewId: props.view.id
+  applyView({
+    id: props.view.id
   })
 }
 </script>

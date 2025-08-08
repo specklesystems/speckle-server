@@ -51,6 +51,7 @@ import {
 import type { LayoutMenuItem } from '~~/src/helpers/layout/components'
 import { useElementBounding, useEventListener } from '@vueuse/core'
 import { useBodyMountedMenuPositioning } from '~~/src/composables/layout/menu'
+import { isNumber } from '#lodash'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
@@ -63,7 +64,7 @@ const props = defineProps<{
    * 2D array so that items can be grouped with dividers between them
    */
   items: LayoutMenuItem<MenuIds>[][]
-  size?: 'base' | 'lg'
+  size?: 'base' | 'lg' | number
   menuId?: string
   /**
    * Preferable menu position/directed. This can change depending on available space.
@@ -103,6 +104,8 @@ const { menuStyle } = useBodyMountedMenuPositioning({
   menuOpenDirection: menuDirection,
   buttonBoundingBox: menuButtonBounding,
   menuWidth: computed(() => {
+    if (isNumber(props.size)) return props.size
+
     switch (props.size) {
       case 'lg':
         return 208

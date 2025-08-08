@@ -80,6 +80,7 @@ import {
   type ViewerResource
 } from '@speckle/shared/viewer/route'
 import { useAreSavedViewsEnabled } from '~/lib/viewer/composables/savedViews/general'
+import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -98,11 +99,6 @@ export type InjectableViewerState = Readonly<{
    * The project which we're opening in the viewer (all loaded models should belong to it)
    */
   projectId: AsyncWritableComputedRef<string>
-  /**
-   * Core source of truth for the view id (other is in hash state). This allows you to
-   * set a view to load, without it showing up in the URL.
-   */
-  savedViewId: Ref<Nullable<string>>
   /**
    * User viewer session ID. The same user will have different IDs in different tabs if multiple are open.
    * This is used to ignore user activity messages from the same tab.
@@ -154,6 +150,17 @@ export type InjectableViewerState = Readonly<{
      */
     request: {
       /**
+       * Saved view parameters, that affect what resources we're loading and how
+       */
+      savedView: {
+        id: Ref<Nullable<string>>
+        /**
+         * By default we use latest or already loaded versions, but this allows
+         * us to load the versions originally specified when creating the view
+         */
+        loadOriginal: Ref<boolean>
+      }
+      /**
        * All currently requested identifiers. You
        * can write to this to change which resources should be loaded.
        */
@@ -173,9 +180,6 @@ export type InjectableViewerState = Readonly<{
        * Helper for switching model to a specific version (or just latest)
        */
       switchModelToVersion: (modelId: string, versionId?: string) => Promise<void>
-      // addModelVersion: (modelId: string, versionId: string) => void
-      // removeModelVersion: (modelId: string, versionId?: string) => void
-      // setModelVersions: (newResources: ViewerResource[]) => void
     }
     /**
      * State of resolved, validated & de-duplicated resources that are loaded in the viewer. These
@@ -319,7 +323,11 @@ export type InjectableViewerState = Readonly<{
   urlHashState: {
     focusedThreadId: AsyncWritableComputedRef<Nullable<string>>
     diff: AsyncWritableComputedRef<Nullable<DiffStateCommand>>
-    savedViewId: AsyncWritableComputedRef<Nullable<string>>
+    /**
+     * Core source of truth is under `resources.request.savedView`, but this allows
+     * the saved view settings to be URL controlled
+     */
+    savedView: AsyncWritableComputedRef<Nullable<SavedViewUrlSettings>>
   }
 }>
 
@@ -332,7 +340,7 @@ type CachedViewerState = Pick<
 
 type InitialSetupState = Pick<
   InjectableViewerState,
-  'projectId' | 'viewer' | 'sessionId' | 'urlHashState' | 'savedViewId'
+  'projectId' | 'viewer' | 'sessionId' | 'urlHashState'
 >
 
 type InitialStateWithRequest = InitialSetupState & {
@@ -440,7 +448,6 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
 
   return {
     projectId: params.projectId,
-    savedViewId: ref<string | null>(null),
     sessionId,
     viewer: import.meta.server
       ? ({
@@ -553,6 +560,10 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     ...state,
     resources: {
       request: {
+        savedView: {
+          id: ref<string | null>(null),
+          loadOriginal: ref<boolean>(false)
+        },
         items: resources,
         resourceIdString,
         threadFilters,
@@ -578,9 +589,11 @@ function setupResponseResourceItems(
   const globalError = useError()
   const {
     projectId,
-    savedViewId,
     resources: {
-      request: { resourceIdString }
+      request: {
+        resourceIdString,
+        savedView: { id: savedViewId }
+      }
     }
   } = state
 
@@ -712,10 +725,13 @@ function setupResponseResourceData(
   const savedViewsEnabled = useAreSavedViewsEnabled()
 
   const {
-    savedViewId,
     projectId,
     resources: {
-      request: { resourceIdString, threadFilters }
+      request: {
+        resourceIdString,
+        threadFilters,
+        savedView: { id: savedViewId }
+      }
     },
     urlHashState: { diff }
   } = state

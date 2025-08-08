@@ -1,5 +1,5 @@
 import { isClient, type UseElementBoundingReturn } from '@vueuse/core'
-import { isUndefined } from 'lodash-es'
+import { isUndefined } from '#lodash'
 import { computed, unref, type ComputedRef, type CSSProperties } from 'vue'
 import { HorizontalDirection } from '~~/src/composables/common/window'
 

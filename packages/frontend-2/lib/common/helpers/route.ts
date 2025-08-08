@@ -113,6 +113,8 @@ export const modelRoute = (
   `/projects/${projectId}/models/${resourceIdString}${
     hashState ? serializeHashState(hashState) || '' : ''
   }`
+export const viewerRoute = modelRoute
+
 export const modelVersionsRoute = (projectId: string, modelId: string) =>
   `/projects/${projectId}/models/${modelId}/versions`
 

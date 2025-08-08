@@ -55,3 +55,21 @@ export function useRouteHashState() {
 
   return { hashState }
 }
+
+export const useAppUrlUtils = () => {
+  const {
+    public: { baseUrl }
+  } = useRuntimeConfig()
+
+  const buildUrl = (relativeUrl: string | URL): string => {
+    const url = new URL(relativeUrl, baseUrl)
+    return decodeURI(url.toString()) // url encoded looks ugly
+  }
+
+  return {
+    /**
+     * Build full/absolute URL
+     */
+    buildUrl
+  }
+}
