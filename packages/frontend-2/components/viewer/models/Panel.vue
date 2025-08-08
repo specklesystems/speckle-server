@@ -22,21 +22,41 @@
 
       <div class="flex flex-col h-full">
         <template v-if="resourceItems.length">
+          <!-- Sticky Header Area (outside virtual list) -->
+          <div v-if="stickyHeader" class="sticky top-0 z-20 h-16">
+            <ViewerModelsCard
+              :model="stickyHeader!.model"
+              :version-id="stickyHeader!.versionId"
+              :last="false"
+              :first="false"
+              :expand-level="expandLevel"
+              :manual-expand-level="manualExpandLevel"
+              :root-nodes="[]"
+              :is-expanded="expandedModels.has(stickyHeader!.model.id)"
+              @toggle-expansion="toggleModelExpansion(stickyHeader!.model.id)"
+              @remove="(id: string) => removeModel(id)"
+              @expanded="(e: number) => (manualExpandLevel < e ? (manualExpandLevel = e) : '')"
+              @show-versions="handleShowVersions"
+              @show-diff="handleShowDiff"
+            />
+          </div>
+
           <div
             class="flex-1 simple-scrollbar overflow-x-hidden"
             data-virtual-list-container
             v-bind="containerProps"
+            @scroll="handleScroll"
           >
             <div v-bind="wrapperProps">
               <div
                 v-for="{ data: item } in virtualList"
                 :key="item.id"
                 :data-item-id="item.id"
-                class="group"
+                class="group first:hidden"
               >
                 <!-- Model Header -->
                 <template v-if="item.type === 'model-header'">
-                  <div class="sticky top-0 z-20 bg-foundation">
+                  <div class="bg-foundation h-16">
                     <ViewerModelsCard
                       :model="getModelFromItem(item)"
                       :version-id="getVersionIdFromItem(item)"
@@ -120,6 +140,9 @@ const expandedModels = ref<Set<string>>(new Set())
 const disableScrollOnNextSelection = ref(false)
 const refhack = ref(1)
 
+// Sticky header state
+const stickyHeader = ref<{ model: ModelItem; versionId: string } | null>(null)
+
 const { resourceItems, modelsAndVersionIds, objects } =
   useInjectedViewerLoadedResources()
 const { items } = useInjectedViewerRequestedResources()
@@ -170,9 +193,39 @@ const {
 } = useVirtualList(unifiedVirtualItems, {
   itemHeight: (index) => {
     const item = unifiedVirtualItems.value[index]
-    return item?.type === 'model-header' ? 80 : 40
+    return item?.type === 'model-header' ? 64 : 40
   },
-  overscan: 10
+  overscan: 20
+})
+
+const scrollTop = ref(0)
+
+// Calculate header positions precisely - memoized for performance
+const modelHeaderPositions = computed(() => {
+  const headers: Array<{
+    index: number
+    model: ModelItem
+    versionId: string
+    position: number
+  }> = []
+
+  let cumulativeHeight = 0
+  for (let i = 0; i < unifiedVirtualItems.value.length; i++) {
+    const item = unifiedVirtualItems.value[i]
+    const itemHeight = item.type === 'model-header' ? 64 : 40
+
+    if (item.type === 'model-header') {
+      const data = item.data as { model: ModelItem; versionId: string }
+      headers.push({
+        index: i,
+        model: data.model,
+        versionId: data.versionId,
+        position: cumulativeHeight
+      })
+    }
+    cumulativeHeight += itemHeight
+  }
+  return headers
 })
 
 const handleShowVersions = (modelId: string) => {
@@ -340,5 +393,56 @@ const handleSelectionChange = useDebounceFn(
   100
 )
 
+// Simple scroll tracking - just switch headers
+const handleScroll = (e: Event) => {
+  const container = e.target as HTMLElement
+  if (!container) return
+
+  scrollTop.value = container.scrollTop
+
+  const modelHeaders = modelHeaderPositions.value
+  if (modelHeaders.length === 0) return
+
+  // Find the current active header
+  let currentHeaderIndex = 0
+  for (let i = modelHeaders.length - 1; i >= 0; i--) {
+    if (modelHeaders[i].position <= scrollTop.value) {
+      currentHeaderIndex = i
+      break
+    }
+  }
+
+  const currentHeader = modelHeaders[currentHeaderIndex]
+
+  // Simply update sticky header
+  if (currentHeader) {
+    stickyHeader.value = {
+      model: currentHeader.model,
+      versionId: currentHeader.versionId
+    }
+  }
+}
 watch(selectedObjects, handleSelectionChange, { deep: true })
+
+// Initialize and update sticky header when models change
+watch(
+  unifiedVirtualItems,
+  (items) => {
+    if (items.length > 0) {
+      const firstModelHeader = items.find((item) => item.type === 'model-header')
+      if (firstModelHeader) {
+        const data = firstModelHeader.data as { model: ModelItem; versionId: string }
+
+        // Always update to the current first model (handles new models being added)
+        stickyHeader.value = {
+          model: data.model,
+          versionId: data.versionId
+        }
+      }
+    } else {
+      stickyHeader.value = null
+    }
+  },
+  { immediate: true }
+)
 </script>

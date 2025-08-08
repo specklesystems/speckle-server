@@ -233,7 +233,7 @@ export class InstancedMeshBatch implements Batch {
       const offset = transparentGroup.start
       const count =
         hiddenGroup !== undefined
-          ? hiddenGroup.start
+          ? hiddenGroup.start - transparentGroup.start
           : this.getCount() - transparentGroup.start
       if (offset === 0 && count === this.getCount()) return AllBatchUpdateRange
       return {

@@ -184,7 +184,7 @@ export abstract class PrimitiveBatch implements Batch {
         offset: transparentGroup.start,
         count:
           hiddenGroup !== undefined
-            ? hiddenGroup.start
+            ? hiddenGroup.start - transparentGroup.start
             : this.getCount() - transparentGroup.start
       }
     }

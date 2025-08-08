@@ -119,17 +119,24 @@ export default class TextBatch implements Batch {
     return AllBatchUpdateRange
   }
 
+  /** TODO: Need to give this a glow up */
   public getOpaque(): BatchUpdateRange {
     if (Materials.isOpaque(this.batchMaterial)) return AllBatchUpdateRange
     return NoneBatchUpdateRange
   }
+
+  /** TODO: Need to give this a glow up */
   public getDepth(): BatchUpdateRange {
     return this.getOpaque()
   }
+
+  /** TODO: Need to give this a glow up */
   public getTransparent(): BatchUpdateRange {
     if (Materials.isTransparent(this.batchMaterial)) return AllBatchUpdateRange
     return NoneBatchUpdateRange
   }
+
+  /** TODO: Need to give this a glow up */
   public getStencil(): BatchUpdateRange {
     if (this.batchMaterial.stencilWrite === true) return AllBatchUpdateRange
     return NoneBatchUpdateRange
