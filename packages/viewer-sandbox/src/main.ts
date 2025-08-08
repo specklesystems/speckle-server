@@ -627,6 +627,10 @@ const getStream = () => {
 
     // Sum building
     // 'https://app.speckle.systems/projects/a2b933a867/models/5b6b6e9360'
+    // 'https://latest.speckle.systems/projects/9f13b874cf/models/0575b5dcd2'
+
+    // Circles of different sizes
+    // 'https://latest.speckle.systems/projects/4658eb53b9/models/bb726a3764'
   )
 }
 
