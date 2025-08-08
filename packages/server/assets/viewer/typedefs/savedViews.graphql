@@ -170,10 +170,47 @@ input DeleteSavedViewInput {
   projectId: ID!
 }
 
+input UpdateSavedViewInput {
+  id: ID!
+  projectId: ID!
+  """
+  New resource targets, if necessary. Must be set together w/ viewerState & screenshot.
+  """
+  resourceIdString: String
+  """
+  New group id, if grouping necessary
+  """
+  groupId: String
+  """
+  New name for the view
+  """
+  name: String
+  description: String
+  """
+  SerializedViewerState. If omitted, comment won't render (correctly) inside the
+  viewer, but will still be retrievable through the API.
+  Must be set together w/ resourceIdString & screenshot.
+  """
+  viewerState: JSONObject
+  """
+  Encoded screenshot of the view.
+  """
+  screenshot: String
+  """
+  Optionally also set this as the home/default view for the target model
+  """
+  isHomeView: Boolean
+  """
+  Optionally change visibility of the view
+  """
+  visibility: SavedViewVisibility
+}
+
 type SavedViewMutations {
   createGroup(input: CreateSavedViewGroupInput!): SavedViewGroup!
   createView(input: CreateSavedViewInput!): SavedView!
   deleteView(input: DeleteSavedViewInput!): Boolean!
+  updateView(input: UpdateSavedViewInput!): SavedView!
 }
 
 extend type ProjectMutations {

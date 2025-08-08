@@ -111,6 +111,7 @@ export { vKeyboardClickable } from '~~/src/directives/accessibility'
 export { useAvatarSizeClasses } from '~~/src/composables/user/avatar'
 export type { UserAvatarSize } from '~~/src/composables/user/avatar'
 import CommonProgressBar from '~~/src/components/common/ProgressBar.vue'
+import type { FormRadioGroupItem } from '~~/src/helpers/common/components'
 
 export {
   MissingFileExtensionError,
@@ -188,6 +189,7 @@ export {
   generateFileId
 }
 export type {
+  FormRadioGroupItem,
   LayoutDialogButton,
   LayoutHeaderButton,
   ToastNotification,
