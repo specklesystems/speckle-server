@@ -462,29 +462,11 @@ export function useTreeManagement() {
     })
   }
 
-  const getObjectDepth = (
-    nodes: ExplorerNode[],
-    objectId: string,
-    currentDepth = 0
-  ): number => {
-    for (const node of nodes) {
-      if (node.raw?.id === objectId) return currentDepth
-
-      if (node.children) {
-        const childDepth = getObjectDepth(node.children, objectId, currentDepth + 1)
-        if (childDepth !== -1) return childDepth
-      }
-    }
-    return -1
-  }
-
   return {
-    isAllowedType,
     flattenModelTree,
     getRootNodesForModel,
     findObjectInNodes,
     expandNodesToShowObject,
-    getObjectDepth,
     treeStateManager
   }
 }

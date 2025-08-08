@@ -27,14 +27,8 @@
             <ViewerModelsCard
               :model="stickyHeader!.model"
               :version-id="stickyHeader!.versionId"
-              :last="false"
-              :first="false"
-              :expand-level="expandLevel"
-              :manual-expand-level="manualExpandLevel"
-              :root-nodes="[]"
               :is-expanded="expandedModels.has(stickyHeader!.model.id)"
               @toggle-expansion="toggleModelExpansion(stickyHeader!.model.id)"
-              @expanded="(e: number) => (manualExpandLevel < e ? (manualExpandLevel = e) : '')"
               @show-versions="handleShowVersions"
               @show-diff="handleShowDiff"
             />
@@ -59,14 +53,8 @@
                     <ViewerModelsCard
                       :model="getModelFromItem(item)"
                       :version-id="getVersionIdFromItem(item)"
-                      :last="false"
-                      :first="item.isFirstModel"
-                      :expand-level="expandLevel"
-                      :manual-expand-level="manualExpandLevel"
-                      :root-nodes="[]"
                       :is-expanded="expandedModels.has(item.modelId)"
                       @toggle-expansion="toggleModelExpansion(item.modelId)"
-                      @expanded="(e: number) => (manualExpandLevel < e ? (manualExpandLevel = e) : '')"
                       @show-versions="handleShowVersions"
                       @show-diff="handleShowDiff"
                     />
@@ -108,8 +96,7 @@ import {
   useInjectedViewer,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-import { ViewerEvent } from '@speckle/viewer'
-import { useViewerEventListener } from '~~/lib/viewer/composables/viewer'
+
 import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
 import type { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import type { Get } from 'type-fest'
@@ -127,12 +114,11 @@ defineEmits(['close'])
 const showVersions = ref(false)
 const showAddModel = ref(false)
 const expandedModelId = ref<string | null>(null)
-const expandLevel = ref(2)
-const manualExpandLevel = ref(-1)
+
 const expandedNodes = ref<Set<string>>(new Set())
 const expandedModels = ref<Set<string>>(new Set())
 const disableScrollOnNextSelection = ref(false)
-const refhack = ref(1)
+
 const stickyHeader = ref<{ model: ModelItem; versionId: string } | null>(null)
 const scrollTop = ref(0)
 
@@ -158,7 +144,6 @@ const {
   getRootNodesForModel,
   findObjectInNodes,
   expandNodesToShowObject,
-  getObjectDepth,
   treeStateManager
 } = useTreeManagement()
 
@@ -344,11 +329,6 @@ const handleSelectionChange = useDebounceFn(
               expandedNodes.value
             )
 
-            const objectDepth = getObjectDepth(modelRootNodes, selectedObj.id)
-            if (objectDepth > manualExpandLevel.value) {
-              manualExpandLevel.value = objectDepth
-            }
-
             scrollToSelectedItem(selectedObj.id)
             break
           }
@@ -391,10 +371,6 @@ const handleScroll = (e: Event) => {
     }
   }
 }
-
-useViewerEventListener(ViewerEvent.LoadComplete, () => {
-  void refhack.value++
-})
 
 watch(selectedObjects, handleSelectionChange, { deep: true })
 
