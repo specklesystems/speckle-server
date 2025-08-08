@@ -2524,6 +2524,7 @@ export type ProjectViewerResourcesArgs = {
   loadedVersionsOnly?: InputMaybe<Scalars['Boolean']['input']>;
   resourceIdString: Scalars['String']['input'];
   savedViewId?: InputMaybe<Scalars['String']['input']>;
+  savedViewSettings?: InputMaybe<SavedViewsLoadSettings>;
 };
 
 
@@ -3550,6 +3551,14 @@ export const SavedViewVisibility = {
 } as const;
 
 export type SavedViewVisibility = typeof SavedViewVisibility[keyof typeof SavedViewVisibility];
+export type SavedViewsLoadSettings = {
+  /**
+   * If true, load versions originally specified in the view, rather than the latest ones
+   * or ones already being loaded otherwise
+   */
+  loadOriginal?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 /** Available scopes. */
 export type Scope = {
   __typename?: 'Scope';
@@ -6027,6 +6036,7 @@ export type ResolversTypes = {
   SavedViewMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   SavedViewPermissionChecks: ResolverTypeWrapper<SavedViewPermissionChecksGraphQLReturn>;
   SavedViewVisibility: SavedViewVisibility;
+  SavedViewsLoadSettings: SavedViewsLoadSettings;
   Scope: ResolverTypeWrapper<Scope>;
   ServerApp: ResolverTypeWrapper<ServerAppGraphQLReturn>;
   ServerAppListItem: ResolverTypeWrapper<ServerAppListItemGraphQLReturn>;
@@ -6384,6 +6394,7 @@ export type ResolversParentTypes = {
   SavedViewGroupsInput: SavedViewGroupsInput;
   SavedViewMutations: MutationsObjectGraphQLReturn;
   SavedViewPermissionChecks: SavedViewPermissionChecksGraphQLReturn;
+  SavedViewsLoadSettings: SavedViewsLoadSettings;
   Scope: Scope;
   ServerApp: ServerAppGraphQLReturn;
   ServerAppListItem: ServerAppListItemGraphQLReturn;

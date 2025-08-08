@@ -33,6 +33,7 @@ extend type Project {
     If a saved view ID is specified, the returned resources will be adjusted to return the view's resources instead
     """
     savedViewId: String
+    savedViewSettings: SavedViewsLoadSettings
     loadedVersionsOnly: Boolean = true
   ): [ViewerResourceGroup!]!
   """
@@ -60,6 +61,14 @@ extend type User {
   """
   versions(authoredOnly: Boolean! = false, limit: Int! = 25): CountOnlyCollection!
     @isOwner
+}
+
+input SavedViewsLoadSettings {
+  """
+  If true, load versions originally specified in the view, rather than the latest ones
+  or ones already being loaded otherwise
+  """
+  loadOriginal: Boolean
 }
 
 input ProjectModelsTreeFilter {

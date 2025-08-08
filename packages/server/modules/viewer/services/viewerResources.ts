@@ -9,18 +9,26 @@ import type {
 } from '@/modules/core/domain/commits/operations'
 import type { GetStreamObjects } from '@/modules/core/domain/objects/operations'
 import type {
+  SavedViewsLoadSettings,
   ViewerResourceGroup,
   ViewerResourceItem,
   ViewerUpdateTrackingTarget
 } from '@/modules/core/graph/generated/graphql'
 import type { CommitRecord } from '@/modules/core/helpers/types'
+import { NotFoundError } from '@/modules/shared/errors'
+import type { DependenciesOf } from '@/modules/shared/helpers/factory'
 import type {
   GetViewerResourceGroups,
   GetViewerResourceItemsUngrouped
 } from '@/modules/viewer/domain/operations/resources'
-import type { Optional } from '@speckle/shared'
+import type { GetSavedView } from '@/modules/viewer/domain/operations/savedViews'
+import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import { SpeckleViewer } from '@speckle/shared'
-import type { ViewerModelResource } from '@speckle/shared/viewer/route'
+import {
+  isModelResource,
+  resourceBuilder,
+  ViewerModelResource
+} from '@speckle/shared/viewer/route'
 import { flatten, keyBy, uniq, uniqWith } from 'lodash-es'
 
 export function isResourceItemEqual(a: ViewerResourceItem, b: ViewerResourceItem) {
@@ -325,23 +333,90 @@ const getVersionResourceGroupsFactory =
   }
 
 /**
+ * Resolve final resourceIdString based on the saved view and its load settings
+ */
+const adjustResourceIdStringWithSavedViewSettingsFactory =
+  (deps: { getSavedView: GetSavedView }) =>
+  async (params: {
+    projectId: string
+    resourceIdString: string
+    savedViewId: string
+    savedViewSettings: MaybeNullOrUndefined<SavedViewsLoadSettings>
+  }): Promise<string> => {
+    const { resourceIdString, projectId, savedViewId, savedViewSettings } = params
+    const { loadOriginal } = savedViewSettings || {}
+
+    const savedView = await deps.getSavedView({
+      id: savedViewId,
+      projectId
+    })
+    if (!savedView) {
+      throw new NotFoundError(
+        `Saved view with ID ${savedViewId} not found in project ${projectId}`
+      )
+    }
+
+    const savedViewResources = resourceBuilder().addFromString(savedView.resourceIds)
+    const baseResources = resourceBuilder().addFromString(resourceIdString)
+    const finalSavedViewResources = savedViewResources.map((r) => {
+      if (!isModelResource(r) || !r.versionId) {
+        return r
+      }
+
+      const matchingBaseResource = baseResources.filter(isModelResource).find((r2) => {
+        return r2.modelId === r.modelId
+      })
+      const versionId = loadOriginal ? r.versionId : matchingBaseResource?.versionId
+      return new ViewerModelResource(r.modelId, versionId)
+    })
+
+    return resourceBuilder().addResources(finalSavedViewResources).toString()
+  }
+
+type GetViewerResourceGroupsParams = ViewerUpdateTrackingTarget & {
+  /**
+   * By default this only returns groups w/ resources in them. W/ this flag set, it will also
+   * return valid model groups that have no resources in them
+   */
+  allowEmptyModels?: boolean
+  /**
+   * Saved view being applied makes the resources be loaded differently
+   */
+  savedViewId?: MaybeNullOrUndefined<string>
+  savedViewSettings?: MaybeNullOrUndefined<SavedViewsLoadSettings>
+}
+
+/**
  * Validate requested resource identifiers and build viewer resource groups & items with
  * the metadata that the viewer needs to work with these
  */
 export const getViewerResourceGroupsFactory =
   (
-    deps: GetObjectResourceGroupsDeps & GetVersionResourceGroupsDeps
+    deps: GetObjectResourceGroupsDeps &
+      GetVersionResourceGroupsDeps &
+      DependenciesOf<typeof adjustResourceIdStringWithSavedViewSettingsFactory>
   ): GetViewerResourceGroups =>
-  async (
-    target: ViewerUpdateTrackingTarget & {
-      /**
-       * By default this only returns groups w/ resources in them. W/ this flag set, it will also
-       * return valid model groups that have no resources in them
-       */
-      allowEmptyModels?: boolean
+  async (params: GetViewerResourceGroupsParams): Promise<ViewerResourceGroup[]> => {
+    const {
+      projectId,
+      loadedVersionsOnly,
+      allowEmptyModels,
+      savedViewId,
+      savedViewSettings
+    } = params
+
+    let resourceIdString = params.resourceIdString
+    if (savedViewId) {
+      resourceIdString = await adjustResourceIdStringWithSavedViewSettingsFactory(deps)(
+        {
+          resourceIdString,
+          projectId,
+          savedViewId,
+          savedViewSettings
+        }
+      )
     }
-  ): Promise<ViewerResourceGroup[]> => {
-    const { resourceIdString, projectId, loadedVersionsOnly, allowEmptyModels } = target
+
     if (!resourceIdString?.trim().length) return []
     const resources = SpeckleViewer.ViewerRoute.parseUrlParameters(resourceIdString)
 
@@ -374,12 +449,12 @@ export const getViewerResourceItemsUngroupedFactory =
   (deps: {
     getViewerResourceGroups: GetViewerResourceGroups
   }): GetViewerResourceItemsUngrouped =>
-  async (target: ViewerUpdateTrackingTarget): Promise<ViewerResourceItem[]> => {
-    const { resourceIdString } = target
+  async (params: GetViewerResourceGroupsParams): Promise<ViewerResourceItem[]> => {
+    const { resourceIdString } = params
     if (!resourceIdString?.trim().length) return []
 
     let results: ViewerResourceItem[] = []
-    const groups = await deps.getViewerResourceGroups(target)
+    const groups = await deps.getViewerResourceGroups(params)
     for (const group of groups) {
       results = results.concat(group.items)
     }
