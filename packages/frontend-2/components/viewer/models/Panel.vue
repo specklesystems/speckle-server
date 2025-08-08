@@ -61,7 +61,10 @@
             </template>
           </div>
 
-          <div ref="containerRef" class="flex-1 simple-scrollbar overflow-auto">
+          <div
+            ref="containerRef"
+            class="flex-1 simple-scrollbar overflow-y-auto overflow-x-hidden"
+          >
             <div
               :style="{
                 height: `${totalSize}px`,
