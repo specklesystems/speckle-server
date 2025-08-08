@@ -46,7 +46,8 @@ const color = computed(() => {
 
 const isSelected = computed(() => {
   const selObjsIds = selectedObjects.value.map((o) => o.id as string)
-  return selObjsIds.some((id: string) => props.objectIds.includes(id))
+  const objectIdsSet = new Set(props.objectIds)
+  return selObjsIds.some((id: string) => objectIdsSet.has(id))
 })
 
 const objectCount = computed(() => {
