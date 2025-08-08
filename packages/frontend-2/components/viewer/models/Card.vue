@@ -1,10 +1,10 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div class="relative">
+  <div class="bg-foundation relative">
     <div>
       <!-- Model Header -->
       <div
-        class="group flex items-center py-3 select-none cursor-pointer hover:bg-highlight-1 border-b border-outline-3"
+        class="group flex items-center h-16 select-none cursor-pointer hover:bg-highlight-1 border-b border-outline-3"
         @mouseenter="highlightObject"
         @mouseleave="unhighlightObject"
         @focusin="highlightObject"
@@ -20,9 +20,10 @@
           class="h-12 w-12 rounded-md overflow-hidden border border-outline-3 mr-3 shrink-0"
           :class="{ grayscale: shouldShowDimmed }"
         >
-          <PreviewImage
+          <NuxtImg
             v-if="loadedVersion?.previewUrl"
-            :preview-url="loadedVersion.previewUrl"
+            :src="loadedVersion.previewUrl"
+            class="w-full h-full object-cover"
           />
         </div>
         <div class="flex flex-col min-w-0">
