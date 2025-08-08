@@ -86,16 +86,18 @@ import {
 } from '~~/lib/viewer/composables/ui'
 import {
   useInjectedViewerState,
-  useInjectedViewerRequestedResources
+  useInjectedViewerRequestedResources,
+  useInjectedViewerLoadedResources
 } from '~~/lib/viewer/composables/setup'
 import { containsAll } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { useLoadLatestVersion } from '~~/lib/viewer/composables/resources'
+import { SpeckleViewer } from '@speckle/shared'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
 const emit = defineEmits<{
-  (e: 'remove', val: string): void
   (e: 'show-versions', modelId: string): void
   (e: 'show-diff', modelId: string, versionA: string, versionB: string): void
   (e: 'toggle-expansion'): void
@@ -111,11 +113,13 @@ const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities(
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
 const { items } = useInjectedViewerRequestedResources()
+const { resourceItems } = useInjectedViewerLoadedResources()
 const {
   viewer: {
     metadata: { filteringState }
   }
 } = useInjectedViewerState()
+const mp = useMixpanel()
 
 const route = useRoute()
 const resourceIdString = computed(() => {
@@ -282,7 +286,23 @@ const selectObject = () => {
   }
 }
 
-const onActionChosen = (params: { item: LayoutMenuItem }) => {
+const removeModel = async (modelId: string) => {
+  const builder = SpeckleViewer.ViewerRoute.resourceBuilder()
+  for (const loadedResource of resourceItems.value) {
+    if (loadedResource.modelId) {
+      if (loadedResource.modelId !== modelId) {
+        builder.addModel(loadedResource.modelId, loadedResource.versionId || undefined)
+      }
+    } else {
+      if (loadedResource.objectId !== modelId)
+        builder.addObject(loadedResource.objectId)
+    }
+  }
+  mp.track('Viewer Action', { type: 'action', name: 'federation', action: 'remove' })
+  await items.update(builder.toResources())
+}
+
+const onActionChosen = async (params: { item: LayoutMenuItem }) => {
   const { item } = params
 
   switch (item.id) {
@@ -310,7 +330,7 @@ const onActionChosen = (params: { item: LayoutMenuItem }) => {
       break
     case 'remove-model':
       if (removeEnabled.value) {
-        emit('remove', props.model.id)
+        await removeModel(props.model.id)
       }
       break
   }

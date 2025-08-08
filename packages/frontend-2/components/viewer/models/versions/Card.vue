@@ -4,7 +4,7 @@
   <div class="relative" :class="showVersions ? 'border-b border-outline-3' : ''">
     <!-- Model Header - Sticky -->
     <div
-      class="group sticky top-0 z-20 bg-foundation cursor-pointer flex items-center py-3 pr-0.5 border-b border-outline-3 hover:bg-highlight-1"
+      class="group sticky top-0 z-20 bg-foundation cursor-pointer flex items-center h-16 pr-0.5 border-b border-outline-3 hover:bg-highlight-1"
       @click="showVersions = !showVersions"
       @mouseenter="highlightObject"
       @mouseleave="unhighlightObject"
