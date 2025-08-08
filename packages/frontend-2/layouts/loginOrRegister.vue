@@ -5,7 +5,11 @@
         <LogoBlock />
         <div class="flex gap-2 items-center">
           <FormButton size="sm" text class="pointer-events-auto" @click="toggleTheme">
-            <Icon class="w-4 h-4" />
+            <Icon
+              :size="LucideSize.base"
+              :stroke-width="1.5"
+              :absolute-stroke-width="true"
+            />
           </FormButton>
           <FormButton
             size="sm"
@@ -13,7 +17,11 @@
             class="pointer-events-auto"
             @click="() => copyReference()"
           >
-            <WrenchIcon class="w-4 h-4" />
+            <Wrench
+              :size="LucideSize.base"
+              :stroke-width="1.5"
+              :absolute-stroke-width="true"
+            />
           </FormButton>
         </div>
       </div>
@@ -24,12 +32,12 @@
   </main>
 </template>
 <script setup lang="ts">
-import { SunIcon, MoonIcon, WrenchIcon } from '@heroicons/vue/24/solid'
+import { Sun, Moon, Wrench } from 'lucide-vue-next'
 import LogoBlock from '~/components/header/LogoBlock.vue'
 import { useGenerateErrorReference } from '~/lib/core/composables/error'
 import { useTheme } from '~~/lib/core/composables/theme'
 
 const { isDarkTheme, toggleTheme } = useTheme()
 const { copyReference } = useGenerateErrorReference()
-const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
+const Icon = computed(() => (isDarkTheme.value ? Sun : Moon))
 </script>

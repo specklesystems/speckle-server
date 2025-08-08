@@ -12,15 +12,21 @@
         <div class="text-body-2xs text-foreground-2 w-full flex flex-col space-y-2">
           <div class="flex">
             User ID: #{{ user.id }}
-            <ClipboardIcon
+            <Clipboard
+              :size="LucideSize.base"
+              :stroke-width="1.5"
+              :absolute-stroke-width="true"
               class="w-4 h-4 ml-2 cursor-pointer hover:text-foreground transition"
               @click="copyUserId"
             />
           </div>
           <div v-if="distinctId" class="flex">
             {{ distinctId }}
-            <ClipboardIcon
-              class="w-4 h-4 ml-2 cursor-pointer hover:text-foreground transition"
+            <Clipboard
+              :size="LucideSize.base"
+              :stroke-width="1.5"
+              :absolute-stroke-width="true"
+              class="ml-2 cursor-pointer hover:text-foreground transition"
               @click="copyDistinctId"
             />
           </div>
@@ -32,7 +38,7 @@
 
 <script setup lang="ts">
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
-import { ClipboardIcon } from '@heroicons/vue/24/outline'
+import { Clipboard } from 'lucide-vue-next'
 
 useHead({
   title: 'Settings - Profile'

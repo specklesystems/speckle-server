@@ -15,6 +15,7 @@ import type {
   AlertColor,
   AlertAction
 } from '~~/src/helpers/common/components'
+import { LucideSize } from '~~/src/helpers/common/components'
 import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
 import CommonStepsNumber from '~~/src/components/common/steps/Number.vue'
 import CommonStepsBullet from '~~/src/components/common/steps/Bullet.vue'
@@ -185,7 +186,8 @@ export {
   buildManualPromise,
   CommonProgressBar,
   resolveFileExtension,
-  generateFileId
+  generateFileId,
+  LucideSize
 }
 export type {
   LayoutDialogButton,

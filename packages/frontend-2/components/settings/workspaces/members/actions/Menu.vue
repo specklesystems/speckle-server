@@ -13,7 +13,7 @@
       <FormButton
         :color="showMenu ? 'outline' : 'subtle'"
         hide-text
-        :icon-right="showMenu ? XMarkIcon : EllipsisHorizontalIcon"
+        :icon-right="showMenu ? X : Ellipsis"
         @click="toggleMenu"
       />
     </LayoutMenu>
@@ -74,7 +74,7 @@
 
 <script setup lang="ts">
 import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
-import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { Ellipsis, X } from 'lucide-vue-next'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { WorkspaceUserActionTypes } from '~/lib/settings/helpers/types'

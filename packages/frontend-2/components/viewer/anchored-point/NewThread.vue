@@ -16,10 +16,11 @@
         } rounded-tr-full rounded-tl-full rounded-br-full w-8 h-8 -top-10 absolute flex justify-center items-center hover:shadow-md`"
         @click="onThreadClick"
       >
-        <PlusIcon
-          :class="`w-5 h-5 text-primary ${
-            modelValue.isExpanded ? 'rotate-45' : ''
-          } transition`"
+        <Plus
+          :size="LucideSize.lg"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          :class="`text-primary ${modelValue.isExpanded ? 'rotate-45' : ''} transition`"
         />
       </button>
       <ViewerCommentsPortalOrDiv to="mobileComments">
@@ -51,7 +52,7 @@
             <div class="w-full flex justify-between items-center pr-1 pt-4">
               <FormButton
                 v-tippy="'Attach'"
-                :icon-left="PaperClipIcon"
+                :icon-left="Paperclip"
                 hide-text
                 :disabled="isPostingNewThread"
                 color="subtle"
@@ -59,7 +60,7 @@
                 @click="trackAttachAndOpenFilePicker()"
               />
               <FormButton
-                :icon-left="PaperAirplaneIcon"
+                :icon-left="SendHorizontal"
                 hide-text
                 :loading="isPostingNewThread"
                 @click="() => onSubmit()"
@@ -73,7 +74,7 @@
   <div v-else></div>
 </template>
 <script setup lang="ts">
-import { PlusIcon, PaperAirplaneIcon, PaperClipIcon } from '@heroicons/vue/24/solid'
+import { Plus, SendHorizontal, Paperclip } from 'lucide-vue-next'
 import type { Nullable } from '@speckle/shared'
 import { onKeyDown } from '@vueuse/core'
 import { useIsTypingUpdateEmitter } from '~~/lib/viewer/composables/commentBubbles'

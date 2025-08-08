@@ -9,6 +9,14 @@ export type PropAnyComponent =
 
 export type HorizontalOrVertical = 'horizontal' | 'vertical'
 
+// Lucide icon size types
+
+export enum LucideSize {
+  sm = 12,
+  base = 16,
+  lg = 20
+}
+
 export interface StepCoreType {
   name: string
   href?: string

@@ -44,10 +44,7 @@
           </FormButton>
         </template>
         <template v-else>
-          <FormButton
-            :icon-left="selected ? CheckIcon : undefined"
-            @click="$emit('use')"
-          >
+          <FormButton :icon-left="selected ? Check : undefined" @click="$emit('use')">
             {{ selected ? 'Selected' : 'Select' }}
           </FormButton>
           <FormButton
@@ -79,7 +76,8 @@
 <script setup lang="ts">
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomationsFunctionsCard_AutomateFunctionFragment } from '~/lib/common/generated/gql/graphql'
-import { CheckIcon } from '@heroicons/vue/24/outline'
+
+import { Check } from 'lucide-vue-next'
 import { automateFunctionRoute } from '~/lib/common/helpers/route'
 import { useMarkdown } from '~/lib/common/composables/markdown'
 

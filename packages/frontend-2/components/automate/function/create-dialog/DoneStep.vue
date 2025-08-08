@@ -1,14 +1,19 @@
 <template>
   <div class="flex flex-col gap-6">
     <div class="flex items-center justify-center gap-0.5">
-      <CheckCircleIcon class="h-9 w-9 text-success" />
+      <CircleCheck
+        :size="36"
+        :stroke-width="1.5"
+        :absolute-stroke-width="true"
+        class="text-success"
+      />
       <span class="text-heading-lg">Success</span>
     </div>
     <div class="label-light">
       Your function is ready to go!
       <br />
       <CommonTextLink
-        :icon-right="ArrowTopRightOnSquareIcon"
+        :icon-right="SquareArrowOutUpRight"
         external
         :to="repoLink"
         target="_blank"
@@ -17,7 +22,7 @@
       </CommonTextLink>
       or
       <CommonTextLink
-        :icon-right="ArrowTopRightOnSquareIcon"
+        :icon-right="SquareArrowOutUpRight"
         external
         :to="repoCodespaceLink"
         target="_blank"
@@ -30,8 +35,8 @@
 </template>
 <script setup lang="ts">
 import type { AutomateFunctionCreateDialogDoneStep_AutomateFunctionFragment } from '~~/lib/common/generated/gql/graphql'
-import { CheckCircleIcon } from '@heroicons/vue/24/solid'
-import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
+
+import { CircleCheck, SquareArrowOutUpRight } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   buildGithubRepoHttpCloneUrl,

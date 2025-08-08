@@ -24,7 +24,7 @@
           @blur="field.value = field.value?.trim()"
         />
         <div>
-          <FormButton color="subtle" :icon-left="PlusIcon" @click="onAddInvite">
+          <FormButton color="subtle" :icon-left="Plus" @click="onAddInvite">
             Add another
           </FormButton>
         </div>
@@ -57,7 +57,7 @@
 
 <script setup lang="ts">
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
-import { PlusIcon } from '@heroicons/vue/24/outline'
+import { Plus } from 'lucide-vue-next'
 import { isEmailOrEmpty } from '~~/lib/common/helpers/validation'
 import { useForm, useFieldArray } from 'vee-validate'
 import { useMixpanel } from '~/lib/core/composables/mp'

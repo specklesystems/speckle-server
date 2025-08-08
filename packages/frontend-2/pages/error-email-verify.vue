@@ -11,7 +11,7 @@
           Please use those credentials to log in.
         </div>
         <div class="flex justify-center">
-          <FormButton size="lg" :icon-left="ArrowLeftIcon" :to="loginRoute">
+          <FormButton size="lg" :icon-left="ArrowLeft" :to="loginRoute">
             Go to login
           </FormButton>
         </div>
@@ -27,7 +27,7 @@
           <FormButton
             v-if="hasEmail"
             size="lg"
-            :icon-left="PaperAirplaneIcon"
+            :icon-left="SendHorizontal"
             :disabled="resendVerificationEmailLoading"
             @click="onResend"
           >
@@ -39,8 +39,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { PaperAirplaneIcon } from '@heroicons/vue/24/outline'
-import { ArrowLeftIcon } from '@heroicons/vue/24/solid'
+import { SendHorizontal, ArrowLeft } from 'lucide-vue-next'
 import type { Optional } from '@speckle/shared'
 import { ValidationHelpers } from '@speckle/ui-components'
 import { useMutation } from '@vue/apollo-composable'

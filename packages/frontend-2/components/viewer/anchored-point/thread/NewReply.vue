@@ -14,7 +14,7 @@
     <div class="flex justify-between items-center pt-2 md:pt-3 pr-1">
       <FormButton
         v-tippy="'Attach'"
-        :icon-left="PaperClipIcon"
+        :icon-left="Paperclip"
         :disabled="loading"
         color="subtle"
         hide-text
@@ -22,7 +22,7 @@
         @click="trackAttachAndOpenFilePicker()"
       />
       <FormButton
-        :icon-left="PaperAirplaneIcon"
+        :icon-left="SendHorizontal"
         hide-text
         :disabled="loading"
         @click="onSubmit"
@@ -31,7 +31,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { PaperAirplaneIcon, PaperClipIcon } from '@heroicons/vue/24/solid'
+import { SendHorizontal, Paperclip } from 'lucide-vue-next'
 import type { Nullable } from '@speckle/shared'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'

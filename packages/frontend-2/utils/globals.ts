@@ -12,6 +12,7 @@ import {
   ROOT_SUBSCRIPTION
 } from '~/lib/common/helpers/graphql'
 import { checkIfIsInPlaceNavigation } from '~/lib/common/helpers/navigation'
+import { LucideSize } from '@speckle/ui-components'
 
 /**
  * Debugging helper to ensure variables are available in debugging scope
@@ -34,6 +35,7 @@ export {
   modifyObjectField,
   getCacheId,
   checkIfIsInPlaceNavigation,
+  LucideSize,
   ROOT_QUERY,
   ROOT_MUTATION,
   ROOT_SUBSCRIPTION

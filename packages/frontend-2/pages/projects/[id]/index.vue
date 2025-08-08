@@ -54,7 +54,7 @@
             <FormButton
               color="subtle"
               hide-text
-              :icon-right="EllipsisHorizontalIcon"
+              :icon-right="Ellipsis"
               @click="showActionsMenu = !showActionsMenu"
             />
           </LayoutMenu>
@@ -82,7 +82,7 @@ import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables
 import { LayoutTabsHorizontal, type LayoutPageTabItem } from '@speckle/ui-components'
 import { projectRoute, projectWebhooksRoute } from '~/lib/common/helpers/route'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
-import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
+import { Ellipsis } from 'lucide-vue-next'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { useCopyProjectLink } from '~~/lib/projects/composables/projectManagement'
 import { useMixpanel } from '~/lib/core/composables/mp'

@@ -48,7 +48,7 @@
         v-else-if="requestStatus === WorkspaceJoinRequestStatus.Approved"
         color="outline"
         size="sm"
-        :icon-left="CheckIcon"
+        :icon-left="Check"
         disabled
       >
         Workspace joined
@@ -78,7 +78,7 @@
 import type { DiscoverableWorkspace_LimitedWorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { CheckIcon } from '@heroicons/vue/20/solid'
+import { Check } from 'lucide-vue-next'
 import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{

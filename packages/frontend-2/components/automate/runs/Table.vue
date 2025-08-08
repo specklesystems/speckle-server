@@ -11,7 +11,7 @@
       :items="runs"
       :buttons="[
         {
-          icon: EyeIcon,
+          icon: Eye,
           label: 'View',
           action: onView
         }
@@ -54,7 +54,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { EyeIcon } from '@heroicons/vue/24/outline'
+import { Eye } from 'lucide-vue-next'
 import { useAutomationRunDetailsFns } from '~/lib/automate/composables/runs'
 import type { AutomationRunDetailsFragment } from '~/lib/common/generated/gql/graphql'
 

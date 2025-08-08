@@ -7,7 +7,7 @@
         :placeholder="`Search ${projects?.totalCount} ${
           projects?.totalCount === 1 ? 'project' : 'projects'
         }...`"
-        :custom-icon="MagnifyingGlassIcon"
+        :custom-icon="Search"
         color="foundation"
         wrapper-classes="w-full lg:w-60"
         show-clear
@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
+import { Search } from 'lucide-vue-next'
 import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { workspaceProjectsQuery } from '~~/lib/workspaces/graphql/queries'
 import { useDebouncedTextInput } from '@speckle/ui-components'

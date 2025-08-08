@@ -1,11 +1,11 @@
 <template>
   <AuthThirdPartyLoginButtonBase :to="to" class="dark:bg-[#2F2F2F]">
-    <IdentificationIcon class="h-4" />
+    <IdCard :size="LucideSize.base" :stroke-width="1.5" :absolute-stroke-width="true" />
     <div class="ml-3">{{ oidcName }}</div>
   </AuthThirdPartyLoginButtonBase>
 </template>
 <script setup lang="ts">
-import { IdentificationIcon } from '@heroicons/vue/24/outline'
+import { IdCard } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import type { AuthThirdPartyLoginButtonOidc_ServerInfoFragment } from '~/lib/common/generated/gql/graphql'
 

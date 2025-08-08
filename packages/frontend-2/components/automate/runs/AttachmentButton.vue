@@ -3,11 +3,16 @@
     <span :class="`${restrictWidth ? 'max-w-[5rem]' : ''} truncate`">
       {{ fileInfo.name }}
     </span>
-    <PaperClipIcon class="w-3 h-3 text-primary" />
+    <Paperclip
+      :size="LucideSize.base"
+      :stroke-width="1.5"
+      :absolute-stroke-width="true"
+      class="text-primary"
+    />
   </FormButton>
 </template>
 <script setup lang="ts">
-import { PaperClipIcon } from '@heroicons/vue/20/solid'
+import { Paperclip } from 'lucide-vue-next'
 import { useQuery } from '@vue/apollo-composable'
 import { projectBlobInfoQuery } from '~~/lib/projects/graphql/queries'
 import { useFileDownload } from '~~/lib/core/composables/fileUpload'

@@ -5,7 +5,12 @@
         <span class="sr-only">Open user menu</span>
         <div class="flex items-center gap-1 p-0.5 hover:bg-highlight-2 rounded">
           <UserAvatar hide-tooltip :user="activeUser" />
-          <ChevronDownIcon :class="userOpen ? 'rotate-180' : ''" class="h-3 w-3" />
+          <ChevronDown
+            :class="userOpen ? 'rotate-180' : ''"
+            :size="LucideSize.sm"
+            :stroke-width="1.5"
+            :absolute-stroke-width="true"
+          />
         </div>
       </MenuButton>
       <Transition
@@ -113,7 +118,7 @@
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { ChevronDownIcon } from '@heroicons/vue/24/outline'
+import { ChevronDown } from 'lucide-vue-next'
 import { Roles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'

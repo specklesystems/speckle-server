@@ -9,9 +9,9 @@
   </button>
 </template>
 <script setup lang="ts">
-import { SunIcon, MoonIcon } from '@heroicons/vue/24/solid'
+import { Sun, Moon } from 'lucide-vue-next'
 import { useTheme } from '~~/lib/core/composables/theme'
 
 const { isDarkTheme, toggleTheme } = useTheme()
-const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
+const Icon = computed(() => (isDarkTheme.value ? Sun : Moon))
 </script>

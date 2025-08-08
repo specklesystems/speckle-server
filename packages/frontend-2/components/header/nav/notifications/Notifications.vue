@@ -13,8 +13,18 @@
               class="absolute -top-[4px] -right-[4px] size-2 bg-danger rounded-full"
             />
 
-            <BellIcon v-if="!menuOpen" class="w-5 h-5" />
-            <XMarkIcon v-else class="w-5 h-5" />
+            <Bell
+              v-if="!menuOpen"
+              :size="LucideSize.lg"
+              :stroke-width="1.5"
+              :absolute-stroke-width="true"
+            />
+            <X
+              v-else
+              :size="LucideSize.lg"
+              :stroke-width="1.5"
+              :absolute-stroke-width="true"
+            />
           </div>
         </div>
       </MenuButton>
@@ -52,7 +62,7 @@
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { XMarkIcon, BellIcon } from '@heroicons/vue/24/outline'
+import { X, Bell } from 'lucide-vue-next'
 import { useQuery } from '@vue/apollo-composable'
 import {
   navigationProjectInvitesQuery,
