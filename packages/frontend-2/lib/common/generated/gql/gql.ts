@@ -44,6 +44,8 @@ type Documents = {
     "\n  query DashboardSidebar {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n  }\n": typeof types.DashboardSidebarDocument,
     "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n": typeof types.FormSelectModels_ModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": typeof types.FormSelectProjects_ProjectFragmentDoc,
+    "\n  fragment FormSelectSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    title\n    isUngroupedViewsGroup\n  }\n": typeof types.FormSelectSavedViewGroup_SavedViewGroupFragmentDoc,
+    "\n  query FormSelectSavedViewGroup_SavedViewGroups(\n    $projectId: String!\n    $input: SavedViewGroupsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      savedViewGroups(input: $input) {\n        items {\n          id\n          ...FormSelectSavedViewGroup_SavedViewGroup\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n": typeof types.FormSelectSavedViewGroup_SavedViewGroupsDocument,
     "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n": typeof types.FormUsersSelectItemFragmentDoc,
     "\n  fragment HeaderWorkspaceSwitcherWorkspaceListItem_Workspace on Workspace {\n    id\n    name\n    logo\n    role\n    slug\n    creationState {\n      completed\n    }\n    plan {\n      name\n    }\n  }\n": typeof types.HeaderWorkspaceSwitcherWorkspaceListItem_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceSwitcherActiveWorkspace_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    logo\n    slug\n    role\n  }\n": typeof types.WorkspaceSwitcherActiveWorkspace_LimitedWorkspaceFragmentDoc,
@@ -165,9 +167,10 @@ type Documents = {
     "\n  fragment ViewerResourcesPersonalLimitAlert_Project on Project {\n    id\n    ...WorkspaceMoveProject_Project\n  }\n": typeof types.ViewerResourcesPersonalLimitAlert_ProjectFragmentDoc,
     "\n  fragment ViewerResourcesWorkspaceLimitAlert_Workspace on Workspace {\n    id\n    slug\n  }\n": typeof types.ViewerResourcesWorkspaceLimitAlert_WorkspaceFragmentDoc,
     "\n  fragment ViewerSavedViewsPanel_Project on Project {\n    id\n    permissions {\n      canCreateSavedView {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.ViewerSavedViewsPanel_ProjectFragmentDoc,
-    "\n  fragment ViewerSavedViewsPanelView_SavedView on SavedView {\n    id\n    name\n    description\n    screenshot\n    author {\n      id\n      name\n    }\n    updatedAt\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseDeleteSavedView_SavedView\n  }\n": typeof types.ViewerSavedViewsPanelView_SavedViewFragmentDoc,
+    "\n  fragment ViewerSavedViewsPanelView_SavedView on SavedView {\n    id\n    name\n    description\n    screenshot\n    author {\n      id\n      name\n    }\n    updatedAt\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseDeleteSavedView_SavedView\n    ...ViewerSavedViewsPanelViewEditDialog_SavedView\n  }\n": typeof types.ViewerSavedViewsPanelView_SavedViewFragmentDoc,
     "\n  fragment ViewerSavedViewsPanelViews_Project on Project {\n    id\n    savedViewGroups(input: $savedViewGroupsInput) {\n      totalCount\n      cursor\n      items {\n        id\n        ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup\n      }\n    }\n  }\n": typeof types.ViewerSavedViewsPanelViews_ProjectFragmentDoc,
     "\n  query ViewerSavedViewsPanelViews_Groups(\n    $projectId: String!\n    $savedViewGroupsInput: SavedViewGroupsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      ...ViewerSavedViewsPanelViews_Project\n    }\n  }\n": typeof types.ViewerSavedViewsPanelViews_GroupsDocument,
+    "\n  fragment ViewerSavedViewsPanelViewEditDialog_SavedView on SavedView {\n    id\n    name\n    description\n    visibility\n    group {\n      ...FormSelectSavedViewGroup_SavedViewGroup\n    }\n    ...UseUpdateSavedView_SavedView\n  }\n": typeof types.ViewerSavedViewsPanelViewEditDialog_SavedViewFragmentDoc,
     "\n  fragment ViewerSavedViewsPanelViewsGroup_SavedViewGroup on SavedViewGroup {\n    id\n    isUngroupedViewsGroup\n    ...ViewerSavedViewsPanelViewsGroupInner_SavedViewGroup\n  }\n": typeof types.ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragmentDoc,
     "\n  fragment ViewerSavedViewsPanelViewsGroup_SavedViewGroup_Paginated on SavedViewGroup {\n    id\n    views(input: $savedViewsInput) {\n      cursor\n      totalCount\n      items {\n        id\n        ...ViewerSavedViewsPanelView_SavedView\n      }\n    }\n  }\n": typeof types.ViewerSavedViewsPanelViewsGroup_SavedViewGroup_PaginatedFragmentDoc,
     "\n  fragment ViewerSavedViewsPanelViewsGroupInner_SavedViewGroup on SavedViewGroup {\n    id\n    title\n  }\n": typeof types.ViewerSavedViewsPanelViewsGroupInner_SavedViewGroupFragmentDoc,
@@ -405,6 +408,8 @@ type Documents = {
     "\n  mutation CreateSavedView($input: CreateSavedViewInput!) {\n    projectMutations {\n      savedViewMutations {\n        createView(input: $input) {\n          id\n          ...ViewerSavedViewsPanelView_SavedView\n          group {\n            id\n            ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup\n          }\n        }\n      }\n    }\n  }\n": typeof types.CreateSavedViewDocument,
     "\n  mutation DeleteSavedView($input: DeleteSavedViewInput!) {\n    projectMutations {\n      savedViewMutations {\n        deleteView(input: $input)\n      }\n    }\n  }\n": typeof types.DeleteSavedViewDocument,
     "\n  fragment UseDeleteSavedView_SavedView on SavedView {\n    id\n    projectId\n    group {\n      id\n    }\n  }\n": typeof types.UseDeleteSavedView_SavedViewFragmentDoc,
+    "\n  mutation UpdateSavedView($input: UpdateSavedViewInput!) {\n    projectMutations {\n      savedViewMutations {\n        updateView(input: $input) {\n          id\n          ...ViewerSavedViewsPanelView_SavedView\n          group {\n            id\n            ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup\n          }\n        }\n      }\n    }\n  }\n": typeof types.UpdateSavedViewDocument,
+    "\n  fragment UseUpdateSavedView_SavedView on SavedView {\n    id\n    projectId\n    group {\n      id\n    }\n  }\n": typeof types.UseUpdateSavedView_SavedViewFragmentDoc,
     "\n  fragment UseViewerSavedViewSetup_SavedView on SavedView {\n    id\n    viewerState\n  }\n": typeof types.UseViewerSavedViewSetup_SavedViewFragmentDoc,
     "\n  fragment ViewerCommentThread on Comment {\n    ...ViewerCommentsListItem\n    ...ViewerCommentBubblesData\n    ...ViewerCommentsReplyItem\n    ...ViewerCommentThreadData\n  }\n": typeof types.ViewerCommentThreadFragmentDoc,
     "\n  fragment ViewerCommentsReplyItem on Comment {\n    id\n    archived\n    rawText\n    text {\n      doc\n    }\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    ...ThreadCommentAttachment\n  }\n": typeof types.ViewerCommentsReplyItemFragmentDoc,
@@ -533,6 +538,8 @@ const documents: Documents = {
     "\n  query DashboardSidebar {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n  }\n": types.DashboardSidebarDocument,
     "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n": types.FormSelectModels_ModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": types.FormSelectProjects_ProjectFragmentDoc,
+    "\n  fragment FormSelectSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    title\n    isUngroupedViewsGroup\n  }\n": types.FormSelectSavedViewGroup_SavedViewGroupFragmentDoc,
+    "\n  query FormSelectSavedViewGroup_SavedViewGroups(\n    $projectId: String!\n    $input: SavedViewGroupsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      savedViewGroups(input: $input) {\n        items {\n          id\n          ...FormSelectSavedViewGroup_SavedViewGroup\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n": types.FormSelectSavedViewGroup_SavedViewGroupsDocument,
     "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.FormUsersSelectItemFragmentDoc,
     "\n  fragment HeaderWorkspaceSwitcherWorkspaceListItem_Workspace on Workspace {\n    id\n    name\n    logo\n    role\n    slug\n    creationState {\n      completed\n    }\n    plan {\n      name\n    }\n  }\n": types.HeaderWorkspaceSwitcherWorkspaceListItem_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceSwitcherActiveWorkspace_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    logo\n    slug\n    role\n  }\n": types.WorkspaceSwitcherActiveWorkspace_LimitedWorkspaceFragmentDoc,
@@ -654,9 +661,10 @@ const documents: Documents = {
     "\n  fragment ViewerResourcesPersonalLimitAlert_Project on Project {\n    id\n    ...WorkspaceMoveProject_Project\n  }\n": types.ViewerResourcesPersonalLimitAlert_ProjectFragmentDoc,
     "\n  fragment ViewerResourcesWorkspaceLimitAlert_Workspace on Workspace {\n    id\n    slug\n  }\n": types.ViewerResourcesWorkspaceLimitAlert_WorkspaceFragmentDoc,
     "\n  fragment ViewerSavedViewsPanel_Project on Project {\n    id\n    permissions {\n      canCreateSavedView {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.ViewerSavedViewsPanel_ProjectFragmentDoc,
-    "\n  fragment ViewerSavedViewsPanelView_SavedView on SavedView {\n    id\n    name\n    description\n    screenshot\n    author {\n      id\n      name\n    }\n    updatedAt\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseDeleteSavedView_SavedView\n  }\n": types.ViewerSavedViewsPanelView_SavedViewFragmentDoc,
+    "\n  fragment ViewerSavedViewsPanelView_SavedView on SavedView {\n    id\n    name\n    description\n    screenshot\n    author {\n      id\n      name\n    }\n    updatedAt\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseDeleteSavedView_SavedView\n    ...ViewerSavedViewsPanelViewEditDialog_SavedView\n  }\n": types.ViewerSavedViewsPanelView_SavedViewFragmentDoc,
     "\n  fragment ViewerSavedViewsPanelViews_Project on Project {\n    id\n    savedViewGroups(input: $savedViewGroupsInput) {\n      totalCount\n      cursor\n      items {\n        id\n        ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup\n      }\n    }\n  }\n": types.ViewerSavedViewsPanelViews_ProjectFragmentDoc,
     "\n  query ViewerSavedViewsPanelViews_Groups(\n    $projectId: String!\n    $savedViewGroupsInput: SavedViewGroupsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      ...ViewerSavedViewsPanelViews_Project\n    }\n  }\n": types.ViewerSavedViewsPanelViews_GroupsDocument,
+    "\n  fragment ViewerSavedViewsPanelViewEditDialog_SavedView on SavedView {\n    id\n    name\n    description\n    visibility\n    group {\n      ...FormSelectSavedViewGroup_SavedViewGroup\n    }\n    ...UseUpdateSavedView_SavedView\n  }\n": types.ViewerSavedViewsPanelViewEditDialog_SavedViewFragmentDoc,
     "\n  fragment ViewerSavedViewsPanelViewsGroup_SavedViewGroup on SavedViewGroup {\n    id\n    isUngroupedViewsGroup\n    ...ViewerSavedViewsPanelViewsGroupInner_SavedViewGroup\n  }\n": types.ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragmentDoc,
     "\n  fragment ViewerSavedViewsPanelViewsGroup_SavedViewGroup_Paginated on SavedViewGroup {\n    id\n    views(input: $savedViewsInput) {\n      cursor\n      totalCount\n      items {\n        id\n        ...ViewerSavedViewsPanelView_SavedView\n      }\n    }\n  }\n": types.ViewerSavedViewsPanelViewsGroup_SavedViewGroup_PaginatedFragmentDoc,
     "\n  fragment ViewerSavedViewsPanelViewsGroupInner_SavedViewGroup on SavedViewGroup {\n    id\n    title\n  }\n": types.ViewerSavedViewsPanelViewsGroupInner_SavedViewGroupFragmentDoc,
@@ -894,6 +902,8 @@ const documents: Documents = {
     "\n  mutation CreateSavedView($input: CreateSavedViewInput!) {\n    projectMutations {\n      savedViewMutations {\n        createView(input: $input) {\n          id\n          ...ViewerSavedViewsPanelView_SavedView\n          group {\n            id\n            ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup\n          }\n        }\n      }\n    }\n  }\n": types.CreateSavedViewDocument,
     "\n  mutation DeleteSavedView($input: DeleteSavedViewInput!) {\n    projectMutations {\n      savedViewMutations {\n        deleteView(input: $input)\n      }\n    }\n  }\n": types.DeleteSavedViewDocument,
     "\n  fragment UseDeleteSavedView_SavedView on SavedView {\n    id\n    projectId\n    group {\n      id\n    }\n  }\n": types.UseDeleteSavedView_SavedViewFragmentDoc,
+    "\n  mutation UpdateSavedView($input: UpdateSavedViewInput!) {\n    projectMutations {\n      savedViewMutations {\n        updateView(input: $input) {\n          id\n          ...ViewerSavedViewsPanelView_SavedView\n          group {\n            id\n            ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup\n          }\n        }\n      }\n    }\n  }\n": types.UpdateSavedViewDocument,
+    "\n  fragment UseUpdateSavedView_SavedView on SavedView {\n    id\n    projectId\n    group {\n      id\n    }\n  }\n": types.UseUpdateSavedView_SavedViewFragmentDoc,
     "\n  fragment UseViewerSavedViewSetup_SavedView on SavedView {\n    id\n    viewerState\n  }\n": types.UseViewerSavedViewSetup_SavedViewFragmentDoc,
     "\n  fragment ViewerCommentThread on Comment {\n    ...ViewerCommentsListItem\n    ...ViewerCommentBubblesData\n    ...ViewerCommentsReplyItem\n    ...ViewerCommentThreadData\n  }\n": types.ViewerCommentThreadFragmentDoc,
     "\n  fragment ViewerCommentsReplyItem on Comment {\n    id\n    archived\n    rawText\n    text {\n      doc\n    }\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    ...ThreadCommentAttachment\n  }\n": types.ViewerCommentsReplyItemFragmentDoc,
@@ -1126,6 +1136,14 @@ export function graphql(source: "\n  fragment FormSelectModels_Model on Model {\
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n"): (typeof documents)["\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment FormSelectSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    title\n    isUngroupedViewsGroup\n  }\n"): (typeof documents)["\n  fragment FormSelectSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    title\n    isUngroupedViewsGroup\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query FormSelectSavedViewGroup_SavedViewGroups(\n    $projectId: String!\n    $input: SavedViewGroupsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      savedViewGroups(input: $input) {\n        items {\n          id\n          ...FormSelectSavedViewGroup_SavedViewGroup\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n"): (typeof documents)["\n  query FormSelectSavedViewGroup_SavedViewGroups(\n    $projectId: String!\n    $input: SavedViewGroupsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      savedViewGroups(input: $input) {\n        items {\n          id\n          ...FormSelectSavedViewGroup_SavedViewGroup\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1613,7 +1631,7 @@ export function graphql(source: "\n  fragment ViewerSavedViewsPanel_Project on P
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ViewerSavedViewsPanelView_SavedView on SavedView {\n    id\n    name\n    description\n    screenshot\n    author {\n      id\n      name\n    }\n    updatedAt\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseDeleteSavedView_SavedView\n  }\n"): (typeof documents)["\n  fragment ViewerSavedViewsPanelView_SavedView on SavedView {\n    id\n    name\n    description\n    screenshot\n    author {\n      id\n      name\n    }\n    updatedAt\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseDeleteSavedView_SavedView\n  }\n"];
+export function graphql(source: "\n  fragment ViewerSavedViewsPanelView_SavedView on SavedView {\n    id\n    name\n    description\n    screenshot\n    author {\n      id\n      name\n    }\n    updatedAt\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseDeleteSavedView_SavedView\n    ...ViewerSavedViewsPanelViewEditDialog_SavedView\n  }\n"): (typeof documents)["\n  fragment ViewerSavedViewsPanelView_SavedView on SavedView {\n    id\n    name\n    description\n    screenshot\n    author {\n      id\n      name\n    }\n    updatedAt\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseDeleteSavedView_SavedView\n    ...ViewerSavedViewsPanelViewEditDialog_SavedView\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1622,6 +1640,10 @@ export function graphql(source: "\n  fragment ViewerSavedViewsPanelViews_Project
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query ViewerSavedViewsPanelViews_Groups(\n    $projectId: String!\n    $savedViewGroupsInput: SavedViewGroupsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      ...ViewerSavedViewsPanelViews_Project\n    }\n  }\n"): (typeof documents)["\n  query ViewerSavedViewsPanelViews_Groups(\n    $projectId: String!\n    $savedViewGroupsInput: SavedViewGroupsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      ...ViewerSavedViewsPanelViews_Project\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ViewerSavedViewsPanelViewEditDialog_SavedView on SavedView {\n    id\n    name\n    description\n    visibility\n    group {\n      ...FormSelectSavedViewGroup_SavedViewGroup\n    }\n    ...UseUpdateSavedView_SavedView\n  }\n"): (typeof documents)["\n  fragment ViewerSavedViewsPanelViewEditDialog_SavedView on SavedView {\n    id\n    name\n    description\n    visibility\n    group {\n      ...FormSelectSavedViewGroup_SavedViewGroup\n    }\n    ...UseUpdateSavedView_SavedView\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -2570,6 +2592,14 @@ export function graphql(source: "\n  mutation DeleteSavedView($input: DeleteSave
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment UseDeleteSavedView_SavedView on SavedView {\n    id\n    projectId\n    group {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment UseDeleteSavedView_SavedView on SavedView {\n    id\n    projectId\n    group {\n      id\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateSavedView($input: UpdateSavedViewInput!) {\n    projectMutations {\n      savedViewMutations {\n        updateView(input: $input) {\n          id\n          ...ViewerSavedViewsPanelView_SavedView\n          group {\n            id\n            ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateSavedView($input: UpdateSavedViewInput!) {\n    projectMutations {\n      savedViewMutations {\n        updateView(input: $input) {\n          id\n          ...ViewerSavedViewsPanelView_SavedView\n          group {\n            id\n            ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup\n          }\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment UseUpdateSavedView_SavedView on SavedView {\n    id\n    projectId\n    group {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment UseUpdateSavedView_SavedView on SavedView {\n    id\n    projectId\n    group {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
