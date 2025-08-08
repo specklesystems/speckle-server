@@ -73,6 +73,7 @@ import { useViewerRealtimeActivityTracker } from '~/lib/viewer/composables/activ
 import { resourceBuilder } from '@speckle/shared/viewer/route'
 import { useEventBus } from '~/lib/core/composables/eventBus'
 import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
+import { useTreeManagement } from '~~/lib/viewer/composables/tree'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -920,6 +921,14 @@ function useDisableZoomOnEmbed() {
   )
 }
 
+function useViewerTreeIntegration() {
+  const { viewer } = useInjectedViewerState()
+  const { treeStateManager } = useTreeManagement()
+
+  // Initialize the tree state manager with viewer instance
+  onMounted(() => treeStateManager.initialize(viewer.instance))
+}
+
 graphql(`
   fragment UseViewerSavedViewSetup_SavedView on SavedView {
     id
@@ -1095,5 +1104,6 @@ export function useViewerPostSetup() {
   useViewerMeasurementIntegration()
   useDisableZoomOnEmbed()
   useViewerCursorIntegration()
+  useViewerTreeIntegration()
   setupDebugMode()
 }
