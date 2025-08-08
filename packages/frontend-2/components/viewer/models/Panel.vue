@@ -34,7 +34,6 @@
               :root-nodes="[]"
               :is-expanded="expandedModels.has(stickyHeader!.model.id)"
               @toggle-expansion="toggleModelExpansion(stickyHeader!.model.id)"
-              @remove="(id: string) => removeModel(id)"
               @expanded="(e: number) => (manualExpandLevel < e ? (manualExpandLevel = e) : '')"
               @show-versions="handleShowVersions"
               @show-diff="handleShowDiff"
@@ -67,7 +66,6 @@
                       :root-nodes="[]"
                       :is-expanded="expandedModels.has(item.modelId)"
                       @toggle-expansion="toggleModelExpansion(item.modelId)"
-                      @remove="(id: string) => removeModel(id)"
                       @expanded="(e: number) => (manualExpandLevel < e ? (manualExpandLevel = e) : '')"
                       @show-versions="handleShowVersions"
                       @show-diff="handleShowDiff"
@@ -107,18 +105,14 @@
 <script setup lang="ts">
 import {
   useInjectedViewerLoadedResources,
-  useInjectedViewerRequestedResources,
   useInjectedViewer,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-import { SpeckleViewer } from '@speckle/shared'
-import { useMixpanel } from '~~/lib/core/composables/mp'
 import { ViewerEvent } from '@speckle/viewer'
 import { useViewerEventListener } from '~~/lib/viewer/composables/viewer'
 import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
 import type { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import type { Get } from 'type-fest'
-
 import { useDiffUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import {
   useTreeManagement,
@@ -139,13 +133,11 @@ const expandedNodes = ref<Set<string>>(new Set())
 const expandedModels = ref<Set<string>>(new Set())
 const disableScrollOnNextSelection = ref(false)
 const refhack = ref(1)
-
-// Sticky header state
 const stickyHeader = ref<{ model: ModelItem; versionId: string } | null>(null)
+const scrollTop = ref(0)
 
 const { resourceItems, modelsAndVersionIds, objects } =
   useInjectedViewerLoadedResources()
-const { items } = useInjectedViewerRequestedResources()
 const {
   metadata: { worldTree }
 } = useInjectedViewer()
@@ -160,7 +152,6 @@ const {
   clearSelection,
   removeFromSelection
 } = useSelectionUtilities()
-const mp = useMixpanel()
 const { diffModelVersions } = useDiffUtilities()
 const {
   flattenModelTree,
@@ -197,8 +188,6 @@ const {
   },
   overscan: 20
 })
-
-const scrollTop = ref(0)
 
 // Calculate header positions precisely - memoized for performance
 const modelHeaderPositions = computed(() => {
@@ -242,22 +231,6 @@ const handleShowDiff = async (modelId: string, versionA: string, versionB: strin
 const handleVersionsClose = () => {
   showVersions.value = false
   expandedModelId.value = null
-}
-
-const removeModel = async (modelId: string) => {
-  const builder = SpeckleViewer.ViewerRoute.resourceBuilder()
-  for (const loadedResource of resourceItems.value) {
-    if (loadedResource.modelId) {
-      if (loadedResource.modelId !== modelId) {
-        builder.addModel(loadedResource.modelId, loadedResource.versionId || undefined)
-      }
-    } else {
-      if (loadedResource.objectId !== modelId)
-        builder.addObject(loadedResource.objectId)
-    }
-  }
-  mp.track('Viewer Action', { type: 'action', name: 'federation', action: 'remove' })
-  await items.update(builder.toResources())
 }
 
 const toggleModelExpansion = (modelId: string) => {
@@ -325,10 +298,6 @@ const getVersionIdFromItem = (item: UnifiedVirtualItem): string => {
   }
   return ''
 }
-
-useViewerEventListener(ViewerEvent.LoadComplete, () => {
-  void refhack.value++
-})
 
 const scrollToSelectedItem = (objectId: string) => {
   nextTick(() => {
@@ -422,6 +391,11 @@ const handleScroll = (e: Event) => {
     }
   }
 }
+
+useViewerEventListener(ViewerEvent.LoadComplete, () => {
+  void refhack.value++
+})
+
 watch(selectedObjects, handleSelectionChange, { deep: true })
 
 // Initialize and update sticky header when models change
