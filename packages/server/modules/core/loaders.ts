@@ -111,6 +111,21 @@ export async function buildRequestLoaders(
   }
 
   /**
+   * Do something for each region, including mainDb (e.g. clear loader in all regions). This only
+   * loops over initiated/cached regions, not all server registrated regions.
+   */
+  const forEachCachedRegion = (
+    predicate: (params: { db: Knex; loaders: ModularizedDataLoaders }) => void
+  ) => {
+    for (const [db, loaders] of [
+      ...regionLoaders.entries(),
+      <const>[mainDb, mainDbLoaders]
+    ]) {
+      predicate({ db, loaders })
+    }
+  }
+
+  /**
    * Clear all request loaders across all regions
    */
   const clearAll = () => {
@@ -130,7 +145,8 @@ export async function buildRequestLoaders(
   return {
     ...mainDbLoaders,
     clearAll,
-    forRegion
+    forRegion,
+    forEachCachedRegion
   }
 }
 

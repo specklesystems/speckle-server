@@ -1,5 +1,6 @@
 import { base64Decode, base64Encode } from '@/modules/shared/helpers/cryptoHelper'
 import type { Nullable } from '@speckle/shared'
+import type { ViewerResourcesTarget } from '@speckle/shared/viewer/route'
 import {
   isModelResource,
   isObjectResource,
@@ -50,13 +51,9 @@ export const decodeDefaultGroupId = (id: string): Nullable<DefaultGroupMetadata>
  * Converts a resourceId string into a more abstract format used by groups that disregards
  * specific versions of models and objects.
  */
-export const formatResourceIdsForGroup = (resourceIdString: string | string[]) => {
-  resourceIdString = Array.isArray(resourceIdString)
-    ? resourceIdString.join(',')
-    : resourceIdString
-
+export const formatResourceIdsForGroup = (resources: ViewerResourcesTarget) => {
   return resourceBuilder()
-    .addFromString(resourceIdString)
+    .addResources(resources)
     .forEach((r) => {
       if (isModelResource(r)) {
         // not interested in the specific version ids originally used
