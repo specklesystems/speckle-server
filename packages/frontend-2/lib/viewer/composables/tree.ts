@@ -359,6 +359,7 @@ export function useVirtualTreeList() {
   const activeStickyStackRef = useThrottle(rawStickyStackRef, 16) // ~60fps for smooth updates
   const lastStartIndex = ref(-1)
   const lastStickyStack = ref<number[]>([])
+  const areTreeItemStickiesEnabled = ref(false)
 
   const findActiveStickyStack = (
     startIndex: number,
@@ -410,7 +411,11 @@ export function useVirtualTreeList() {
         ? unifiedVirtualItems[currentActiveModelIndex]?.modelId
         : null
 
-    if (currentModelId && currentActiveModelIndex !== undefined) {
+    if (
+      areTreeItemStickiesEnabled.value &&
+      currentModelId &&
+      currentActiveModelIndex !== undefined
+    ) {
       // Only look at tree items between this model and the visible area
       const modelStartIndex = currentActiveModelIndex
       const activeTreeStickies: number[] = []
