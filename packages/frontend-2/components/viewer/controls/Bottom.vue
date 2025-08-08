@@ -177,9 +177,7 @@ const toggleActivePanel = (panel: ActivePanel) => {
   }
 
   if (panel === ActivePanel.sectionBox) {
-    if (!isSectionBoxVisible.value) {
-      toggleSectionBox()
-    }
+    toggleSectionBox()
   }
 
   if (panel === ActivePanel.measurements) {
@@ -206,9 +204,13 @@ const toggleSectionBoxPanel = () => {
     activePanel.value === ActivePanel.sectionBox
       ? ActivePanel.none
       : ActivePanel.sectionBox
+  toggleSectionBox()
 }
 
 const onActivePanelClose = () => {
+  if (activePanel.value === ActivePanel.sectionBox) {
+    closeSectionBox()
+  }
   if (activePanel.value === ActivePanel.measurements) {
     enableMeasurements(false)
   }
