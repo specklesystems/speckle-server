@@ -26,6 +26,7 @@
             :items="menuItems"
             :menu-id="menuId"
             mount-menu-on-body
+            show-ticks="right"
             :size="230"
             @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
           >
@@ -71,11 +72,22 @@ import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { Ellipsis, SquarePen } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
-import type { ViewerSavedViewsPanelView_SavedViewFragment } from '~/lib/common/generated/gql/graphql'
+import {
+  SavedViewVisibility,
+  type ViewerSavedViewsPanelView_SavedViewFragment
+} from '~/lib/common/generated/gql/graphql'
 import { useViewerSavedViewsUtils } from '~/lib/viewer/composables/savedViews/general'
-import { useDeleteSavedView } from '~/lib/viewer/composables/savedViews/management'
+import {
+  useDeleteSavedView,
+  useUpdateSavedView
+} from '~/lib/viewer/composables/savedViews/management'
 
-const MenuItems = StringEnum(['Delete', 'LoadOriginalVersions', 'CopyLink'])
+const MenuItems = StringEnum([
+  'Delete',
+  'LoadOriginalVersions',
+  'CopyLink',
+  'ChangeVisibility'
+])
 type MenuItems = StringEnumValues<typeof MenuItems>
 
 graphql(`
@@ -84,6 +96,7 @@ graphql(`
     name
     description
     screenshot
+    visibility
     author {
       id
       name
@@ -95,6 +108,7 @@ graphql(`
       }
     }
     ...UseDeleteSavedView_SavedView
+    ...UseUpdateSavedView_SavedView
     ...ViewerSavedViewsPanelViewEditDialog_SavedView
   }
 `)
@@ -104,6 +118,7 @@ const props = defineProps<{
 }>()
 
 const deleteView = useDeleteSavedView()
+const updateView = useUpdateSavedView()
 const isLoading = useMutationLoading()
 const { copyLink, applyView } = useViewerSavedViewsUtils()
 
@@ -112,6 +127,9 @@ const showMenu = ref(false)
 const menuId = useId()
 
 const canUpdate = computed(() => props.view.permissions.canUpdate)
+const isOnlyVisibleToMe = computed(
+  () => props.view.visibility === SavedViewVisibility.AuthorOnly
+)
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
@@ -121,6 +139,13 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
     {
       id: MenuItems.CopyLink,
       title: 'Copy link'
+    }
+  ],
+  [
+    {
+      id: MenuItems.ChangeVisibility,
+      title: 'Only visible to me',
+      active: !!isOnlyVisibleToMe.value
     }
   ],
   [
@@ -149,6 +174,18 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
       applyView({
         id: props.view.id,
         loadOriginal: true
+      })
+      break
+    case MenuItems.ChangeVisibility:
+      await updateView({
+        view: props.view,
+        input: {
+          id: props.view.id,
+          projectId: props.view.projectId,
+          visibility: isOnlyVisibleToMe.value
+            ? SavedViewVisibility.Public
+            : SavedViewVisibility.AuthorOnly
+        }
       })
       break
     default:

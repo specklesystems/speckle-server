@@ -29,10 +29,15 @@
                 @click="chooseItem(item, $event)"
               >
                 <Component :is="item.icon" v-if="item.icon" class="h-4 w-4" />
-                <div v-if="showTicks" class="w-5 shrink-0">
+                <div v-if="showTicks === true" class="w-5 shrink-0">
                   <IconCheck v-if="item.active" class="h-4 w-4 text-foreground-2" />
                 </div>
-                <slot name="item" :item="item">{{ item.title }}</slot>
+                <slot name="item" :item="item">
+                  <div :class="{ grow: !!showTicks }">{{ item.title }}</div>
+                </slot>
+                <div v-if="showTicks === 'right' && item.active" class="w-5 shrink-0">
+                  <IconCheck v-if="item.active" class="h-4 w-4 text-foreground-2" />
+                </div>
               </button>
             </span>
           </MenuItem>
@@ -55,6 +60,7 @@ import type { LayoutMenuItem } from '~~/src/helpers/layout/components'
 import { useElementBounding, useEventListener } from '@vueuse/core'
 import { useBodyMountedMenuPositioning } from '~~/src/composables/layout/menu'
 import { isNumber } from '#lodash'
+import IconCheck from '~~/src/components/global/icon/Check.vue'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
@@ -75,7 +81,7 @@ const props = defineProps<{
   menuPosition?: HorizontalDirection
   mountMenuOnBody?: boolean
   customMenuItemsClasses?: string[]
-  showTicks?: boolean
+  showTicks?: boolean | 'right'
 }>()
 
 const menuItems = ref(null as Nullable<{ el: HTMLDivElement }>)
