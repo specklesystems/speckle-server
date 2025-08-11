@@ -21,6 +21,7 @@ import {
 import { SectionOutlines } from '@speckle/viewer'
 import { BoxSelection } from './Extensions/BoxSelection'
 import { PassReader } from './Extensions/PassReader'
+import { SectionCaps } from './Extensions/SectionCaps.ts/SectionCaps'
 
 const createViewer = async (containerName: string, _stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -56,6 +57,7 @@ const createViewer = async (containerName: string, _stream: string) => {
   const boxSelect = viewer.createExtension(BoxSelection)
   boxSelect.realtimeSelection = false
   viewer.createExtension(PassReader)
+  // viewer.createExtension(SectionCaps)
 
   const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 
