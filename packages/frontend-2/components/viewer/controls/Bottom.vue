@@ -19,7 +19,7 @@
 
     <ViewerLayoutPanel
       v-if="activePanel !== 'none'"
-      class="absolute left-1/2 -translate-x-1/2 z-50 flex p-1 items-center justify-between w-80"
+      class="absolute left-1/2 -translate-x-1/2 z-50 flex p-2 items-center justify-between w-80"
       :class="isEmbedEnabled ? 'bottom-[4rem]' : 'bottom-4'"
     >
       <span class="flex items-center">
@@ -43,7 +43,7 @@
         </FormButton>
       </div>
 
-      <div class="absolute left-1/2 -translate-x-1/2 bottom-9 w-80">
+      <div class="absolute left-1/2 -translate-x-1/2 bottom-11 w-80">
         <ViewerMeasurementsMenu v-show="activePanel === 'measurements'" />
         <ViewerExplodeMenu v-show="activePanel === 'explode'" />
         <ViewerViewModesMenu v-show="activePanel === 'viewModes'" />
