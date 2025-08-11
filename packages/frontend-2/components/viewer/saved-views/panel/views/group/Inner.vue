@@ -6,7 +6,7 @@
     <div v-else>
       <div
         v-if="views.length"
-        class="flex flex-col gap-3 max-h-64 overflow-y-auto simple-scrollbar"
+        class="flex flex-col gap-3 overflow-y-auto simple-scrollbar"
       >
         <ViewerSavedViewsPanelView
           v-for="view in views"

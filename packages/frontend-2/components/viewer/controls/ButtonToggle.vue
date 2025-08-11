@@ -19,9 +19,11 @@
 </template>
 
 <script setup lang="ts">
+import type { ConcreteComponent } from 'vue'
+
 defineProps<{
   active?: boolean
-  icon?: string
+  icon?: string | ConcreteComponent
   secondary?: boolean
   dot?: boolean
 }>()
