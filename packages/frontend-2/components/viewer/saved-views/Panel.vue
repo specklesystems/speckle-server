@@ -135,7 +135,7 @@ const onAddGroup = async () => {
     resourceIdString: resourceIdString.value
   })
   if (group) {
-    // Auto-open the group that the view created to
+    // Auto-open the group
     selectedGroupId.value = group.id
   }
 }
