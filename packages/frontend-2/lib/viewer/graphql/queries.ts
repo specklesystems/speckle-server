@@ -5,10 +5,15 @@ export const projectViewerResourcesQuery = graphql(`
     $projectId: String!
     $resourceUrlString: String!
     $savedViewId: String
+    $savedViewSettings: SavedViewsLoadSettings
   ) {
     project(id: $projectId) {
       id
-      viewerResources(resourceIdString: $resourceUrlString, savedViewId: $savedViewId) {
+      viewerResources(
+        resourceIdString: $resourceUrlString
+        savedViewId: $savedViewId
+        savedViewSettings: $savedViewSettings
+      ) {
         identifier
         items {
           modelId

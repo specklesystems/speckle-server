@@ -15,7 +15,11 @@ import { getViewerResourceGroupsFactory } from '@/modules/viewer/services/viewer
 
 const resolvers: Resolvers = {
   Project: {
-    async viewerResources(parent, { resourceIdString, loadedVersionsOnly }, ctx) {
+    async viewerResources(
+      parent,
+      { resourceIdString, loadedVersionsOnly, savedViewId, savedViewSettings },
+      ctx
+    ) {
       const projectDB = await getProjectDbClient({ projectId: parent.id })
       const getStreamObjects = getStreamObjectsFactory({ db: projectDB })
       const getViewerResourceGroups = getViewerResourceGroupsFactory({
@@ -31,7 +35,9 @@ const resolvers: Resolvers = {
       return await getViewerResourceGroups({
         projectId: parent.id,
         resourceIdString,
-        loadedVersionsOnly
+        loadedVersionsOnly,
+        savedViewId,
+        savedViewSettings
       })
     }
   }

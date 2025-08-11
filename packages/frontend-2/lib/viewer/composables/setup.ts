@@ -592,7 +592,7 @@ function setupResponseResourceItems(
     resources: {
       request: {
         resourceIdString,
-        savedView: { id: savedViewId }
+        savedView: { id: savedViewId, loadOriginal }
       }
     }
   } = state
@@ -608,7 +608,10 @@ function setupResponseResourceItems(
     () => ({
       projectId: projectId.value,
       resourceUrlString: resourceIdString.value,
-      savedViewId: savedViewId.value
+      savedViewId: savedViewId.value,
+      savedViewSettings: {
+        loadOriginal: loadOriginal.value
+      }
     }),
     { keepPreviousResult: true }
   )
@@ -696,7 +699,7 @@ function setupResponseResourceItems(
   const resolvedResourceIdString = computed(() =>
     resourceBuilder()
       // Combined group identifiers should result in the final resource id string
-      .addFromString(resolvedResourceGroups.value.map((group) => group.identifier))
+      .addResources(resolvedResourceGroups.value.map((group) => group.identifier))
       .toString()
   )
 

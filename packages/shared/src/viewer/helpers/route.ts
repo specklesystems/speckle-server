@@ -256,6 +256,12 @@ class ViewerResourceBuilder implements Iterable<ViewerResource> {
   get length() {
     return this.#resources.length
   }
+
+  isEqualTo(resource: ViewerResourcesTarget) {
+    const incomingBuilder = resourceBuilder().addResources(resource)
+    return this.toString() === incomingBuilder.toString()
+  }
+
   forEach(callback: (resource: ViewerResource) => void) {
     this.#resources.forEach(callback)
     return this

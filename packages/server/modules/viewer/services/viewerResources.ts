@@ -11,8 +11,7 @@ import type { GetStreamObjects } from '@/modules/core/domain/objects/operations'
 import type {
   SavedViewsLoadSettings,
   ViewerResourceGroup,
-  ViewerResourceItem,
-  ViewerUpdateTrackingTarget
+  ViewerResourceItem
 } from '@/modules/core/graph/generated/graphql'
 import type { CommitRecord } from '@/modules/core/helpers/types'
 import { NotFoundError } from '@/modules/shared/errors'
@@ -373,19 +372,6 @@ const adjustResourceIdStringWithSavedViewSettingsFactory =
     return resourceBuilder().addResources(finalSavedViewResources).toString()
   }
 
-type GetViewerResourceGroupsParams = ViewerUpdateTrackingTarget & {
-  /**
-   * By default this only returns groups w/ resources in them. W/ this flag set, it will also
-   * return valid model groups that have no resources in them
-   */
-  allowEmptyModels?: boolean
-  /**
-   * Saved view being applied makes the resources be loaded differently
-   */
-  savedViewId?: MaybeNullOrUndefined<string>
-  savedViewSettings?: MaybeNullOrUndefined<SavedViewsLoadSettings>
-}
-
 /**
  * Validate requested resource identifiers and build viewer resource groups & items with
  * the metadata that the viewer needs to work with these
@@ -396,7 +382,7 @@ export const getViewerResourceGroupsFactory =
       GetVersionResourceGroupsDeps &
       DependenciesOf<typeof adjustResourceIdStringWithSavedViewSettingsFactory>
   ): GetViewerResourceGroups =>
-  async (params: GetViewerResourceGroupsParams): Promise<ViewerResourceGroup[]> => {
+  async (params): Promise<ViewerResourceGroup[]> => {
     const {
       projectId,
       loadedVersionsOnly,
@@ -449,7 +435,7 @@ export const getViewerResourceItemsUngroupedFactory =
   (deps: {
     getViewerResourceGroups: GetViewerResourceGroups
   }): GetViewerResourceItemsUngrouped =>
-  async (params: GetViewerResourceGroupsParams): Promise<ViewerResourceItem[]> => {
+  async (params): Promise<ViewerResourceItem[]> => {
     const { resourceIdString } = params
     if (!resourceIdString?.trim().length) return []
 
