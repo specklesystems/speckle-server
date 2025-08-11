@@ -1,4 +1,4 @@
-const disabledRoutes = ['/auth', '/models/']
+const disabledRoutes = ['/auth']
 
 export const useIntercomEnabled = () => {
   const {
