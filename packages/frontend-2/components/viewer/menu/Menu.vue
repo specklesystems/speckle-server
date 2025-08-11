@@ -13,7 +13,12 @@
       v-if="open"
       ref="menuContent"
       v-keyboard-clickable
-      class="absolute left-10 sm:left-[46px] -top-0 bg-foundation rounded-md border border-outline-2 flex flex-col overflow-hidden shadow"
+      :class="[
+        'absolute bg-foundation rounded-md border border-outline-2 flex flex-col overflow-hidden shadow',
+        align === 'top'
+          ? 'bottom-10 sm:bottom-[46px] left-1/2 -translate-x-1/2'
+          : 'right-10 sm:right-[46px] -top-0'
+      ]"
     >
       <div
         v-if="$slots.title"
@@ -35,9 +40,15 @@
 <script setup lang="ts">
 import { onClickOutside } from '@vueuse/core'
 
-defineProps<{
-  tooltip?: string
-}>()
+withDefaults(
+  defineProps<{
+    tooltip?: string
+    align?: 'right' | 'top'
+  }>(),
+  {
+    align: 'right'
+  }
+)
 
 const open = defineModel<boolean>('open', { default: false })
 

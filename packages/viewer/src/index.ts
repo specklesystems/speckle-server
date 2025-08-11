@@ -36,7 +36,9 @@ import { BatchObject } from './modules/batching/BatchObject.js'
 import {
   type MeasurementOptions,
   MeasurementType,
-  MeasurementsExtension
+  MeasurementsExtension,
+  MeasurementEvent,
+  MeasurementEventPayload
 } from './modules/extensions/measurements/MeasurementsExtension.js'
 import { Units } from './modules/converter/Units.js'
 import {
@@ -198,6 +200,7 @@ export {
   AreaMeasurement,
   PointMeasurement,
   MeasurementType,
+  MeasurementEvent,
   MeasurementState,
   Units,
   Extension,
@@ -330,7 +333,8 @@ export type {
   CameraEventPayload,
   SelectionExtensionOptions,
   DefaultSelectionExtensionOptions,
-  ViewModeEventPayload
+  ViewModeEventPayload,
+  MeasurementEventPayload
 }
 
 export * as UrlHelper from './modules/UrlHelper.js'
