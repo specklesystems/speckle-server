@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-8 items-center my-16">
-    <ViewerSavedViewsPanelViewsEmptyStateImage />
+    <IllustrationEmptystateViewsTab />
     <div class="text-foreground-2">{{ message }}</div>
   </div>
 </template>

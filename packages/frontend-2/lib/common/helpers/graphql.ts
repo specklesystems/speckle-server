@@ -649,6 +649,10 @@ export const modifyObjectField = <
        * Build a reference object for a specific object in the cache
        */
       ref: typeof getObjectReference
+      /**
+       * Parse a reference object to get its type and id separately
+       */
+      fromRef: typeof parseObjectReference
     }
   }) =>
     | Optional<ModifyObjectFieldValue<Type, Field>>
@@ -744,11 +748,78 @@ export const modifyObjectField = <
           get: getIfExists,
           evict,
           readField,
-          ref: getObjectReference
+          ref: getObjectReference,
+          fromRef: parseObjectReference
         }
       })
     },
     options
+  )
+}
+
+/**
+ * Iterate over object field versions (same field can have different arg versions). If you also
+ * want to make updates, use modifyObjectField instead.
+ */
+export const iterateObjectField = <
+  Type extends keyof AllObjectTypes,
+  Field extends keyof AllObjectTypes[Type]
+>(
+  cache: ApolloCache<unknown>,
+  key: ApolloCacheObjectKey<Type>,
+  fieldName: Field,
+  predicate: (params: {
+    fieldName: string
+    variables: Field extends keyof AllObjectFieldArgTypes[Type]
+      ? AllObjectFieldArgTypes[Type][Field]
+      : never
+    /**
+     * Value found in the cache. Read-only and should not be mutated directly. Use the
+     * createUpdatedValue() helper to build a new value with updated fields.
+     */
+    value: ReadonlyDeep<ModifyObjectFieldValue<Type, Field>>
+    helpers: {
+      /**
+       * Get value from specific path, only if it exists in the cache value
+       */
+      get: <Path extends Paths<ModifyObjectFieldValue<Type, Field>> & string>(
+        path: Path
+      ) => Optional<Get<ModifyObjectFieldValue<Type, Field>, Path>>
+      /**
+       * Read field data from a Reference object
+       */
+      readField: <
+        ReadFieldType extends keyof AllObjectTypes,
+        ReadFieldName extends keyof AllObjectTypes[ReadFieldType] & string
+      >(
+        ref: CacheObjectReference<ReadFieldType>,
+        fieldName: ReadFieldName
+      ) => Optional<AllObjectTypes[ReadFieldType][ReadFieldName]>
+      /**
+       * Build a reference object for a specific object in the cache
+       */
+      ref: typeof getObjectReference
+      /**
+       * Parse a reference object to get its type and id separately
+       */
+      fromRef: typeof parseObjectReference
+    }
+  }) => void,
+  options?: Partial<{
+    debug: boolean
+  }>
+) => {
+  modifyObjectField<Type, Field>(
+    cache,
+    key,
+    fieldName,
+    (params) => {
+      predicate(params)
+    },
+    {
+      ...(options || {}),
+      autoEvictFiltered: false // no mutations here
+    }
   )
 }
 
@@ -810,4 +881,11 @@ export const errorsToAuthResult = (params: {
     message: firstError.message,
     payload: firstError.extensions || null
   }
+}
+
+export const parseObjectReference = <Type extends keyof AllObjectTypes>(
+  ref: CacheObjectReference<Type>
+): { type: Type; id: string } => {
+  const [type, id] = ref.__ref.split(':')
+  return { type: type as Type, id }
 }

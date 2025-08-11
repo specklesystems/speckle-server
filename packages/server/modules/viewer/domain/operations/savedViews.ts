@@ -8,7 +8,9 @@ import type { MaybeNullOrUndefined, NullableKeysToOptional } from '@speckle/shar
 import type { SerializedViewerState } from '@speckle/shared/viewer/state'
 import type { Exact, SetOptional } from 'type-fest'
 
+/////////////////////
 // REPO OPERATIONS:
+/////////////////////
 
 export type StoreSavedView = <
   View extends Exact<
@@ -90,10 +92,7 @@ export type GetGroupSavedViewsPageItems = (
 
 export type GetSavedViewGroup = (params: {
   id: string
-  /**
-   * If undefined, skip project ID check
-   */
-  projectId: string | undefined
+  projectId: string
 }) => Promise<SavedViewGroup | undefined>
 
 export type GetUngroupedSavedViewsGroup = (params: {
@@ -120,7 +119,26 @@ export type GetSavedViews = (params: {
   [viewId: string]: SavedView | undefined
 }>
 
+export type GetSavedView = (params: {
+  id: string
+  projectId: string
+}) => Promise<SavedView | undefined>
+
+export type DeleteSavedViewRecord = (params: {
+  savedViewId: string
+}) => Promise<boolean>
+
+export type UpdateSavedViewRecord = <
+  Update extends Exact<Partial<SavedView>, Update>
+>(params: {
+  id: string
+  projectId: string
+  update: Update
+}) => Promise<SavedView | undefined>
+
+/////////////////////
 // SERVICE OPERATIONS:
+/////////////////////
 
 export type CreateSavedViewParams = {
   input: {
@@ -166,3 +184,27 @@ export type GetProjectSavedViewGroups = (
 export type GetGroupSavedViews = (
   params: GetGroupSavedViewsPageParams
 ) => Promise<Collection<SavedView>>
+
+export type DeleteSavedView = (params: {
+  id: string
+  projectId: string
+  userId: string
+}) => Promise<void>
+
+export type UpdateSavedViewParams = {
+  id: string
+  projectId: string
+  groupId?: MaybeNullOrUndefined<string>
+  name?: MaybeNullOrUndefined<string>
+  description?: MaybeNullOrUndefined<string>
+  isHomeView?: MaybeNullOrUndefined<boolean>
+  visibility?: MaybeNullOrUndefined<SavedViewVisibility>
+  viewerState?: MaybeNullOrUndefined<unknown>
+  resourceIdString?: MaybeNullOrUndefined<string>
+  screenshot?: MaybeNullOrUndefined<string>
+}
+
+export type UpdateSavedView = (params: {
+  input: UpdateSavedViewParams
+  userId: string
+}) => Promise<SavedView>

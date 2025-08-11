@@ -5,7 +5,7 @@ import { computed, onMounted, ref, unref, watch } from 'vue'
 import type { Ref, ToRefs } from 'vue'
 import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { nanoid } from 'nanoid'
-import { debounce, isArray, isBoolean, isString, isUndefined, noop } from 'lodash'
+import { debounce, isArray, isBoolean, isString, isUndefined, noop } from '#lodash'
 import type { LabelPosition } from './input'
 
 export type InputColor = 'page' | 'foundation' | 'transparent'

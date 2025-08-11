@@ -25,17 +25,6 @@ extend type Project {
   """
   modelChildrenTree(fullName: String!): [ModelsTreeItem!]!
   """
-  Return metadata about resources being requested in the viewer
-  """
-  viewerResources(
-    resourceIdString: String!
-    """
-    If a saved view ID is specified, the returned resources will be adjusted to return the view's resources instead
-    """
-    savedViewId: String
-    loadedVersionsOnly: Boolean = true
-  ): [ViewerResourceGroup!]!
-  """
   Returns a flat list of all project versions
   """
   versions(limit: Int! = 25, cursor: String): VersionCollection!
@@ -75,29 +64,6 @@ input ProjectModelsTreeFilter {
   Filter by IDs of contributors who participated in models
   """
   contributors: [String!]
-}
-
-type ViewerResourceGroup {
-  """
-  Resource identifier used to refer to a collection of resource items
-  """
-  identifier: String!
-  """
-  Viewer resources that the identifier refers to
-  """
-  items: [ViewerResourceItem!]!
-}
-
-type ViewerResourceItem {
-  """
-  Null if resource represents an object
-  """
-  modelId: String
-  """
-  Null if resource represents an object
-  """
-  versionId: String
-  objectId: String!
 }
 
 type Model {

@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type {
-  OperationVariables,
-  QueryOptions,
-  WatchQueryFetchPolicy
+import {
+  NetworkStatus,
+  type OperationVariables,
+  type QueryOptions,
+  type WatchQueryFetchPolicy
 } from '@apollo/client/core'
 import type {
   DocumentParameter,
@@ -264,4 +265,27 @@ export const usePageQueryStandardFetchPolicy = () => {
     // we only wanna do this when transitioning between CSR routes
     return hasNavigatedInCSR.value ? 'cache-and-network' : undefined
   })
+}
+
+/**
+ * By default 'variables' off useQuery updates the moment variables are updated. This returns the variables
+ * associated with the active result. So if the result is still loading, the variables are gonna be undefined too.
+ */
+export const useQueryResultVariables = <
+  TResult = any,
+  TVariables extends OperationVariables = OperationVariables
+>(
+  useQueryRet: ReturnType<typeof useQuery<TResult, TVariables>>
+) => {
+  const { variables, onResult } = useQueryRet
+
+  const currentVariables = shallowRef<(typeof variables)['value']>()
+  onResult((res) => {
+    if (res.networkStatus !== NetworkStatus.ready) return
+    currentVariables.value = variables.value
+  })
+
+  const resultVariables = computed(() => currentVariables.value)
+
+  return resultVariables
 }

@@ -683,13 +683,9 @@ export class SpeckleGeometryConverter extends GeometryConverter {
    */
   protected CircleToGeometryData(node: NodeData): GeometryData | null {
     const conversionFactor = getConversionFactor(node.raw.units)
-    const curveSegmentLength = 0.1 * conversionFactor
     const points = this.getCircularCurvePoints(
       node.raw.plane,
-      node.raw.radius * conversionFactor,
-      undefined,
-      undefined,
-      curveSegmentLength
+      node.raw.radius * conversionFactor
     )
     return {
       attributes: {
@@ -891,7 +887,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     radius: number,
     startAngle = 0,
     endAngle = 2 * Math.PI,
-    res = 0.1
+    resolution = 128
   ) {
     // Get alignment vectors
     const center = this.PointToVector3(plane.origin)
@@ -903,8 +899,9 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     yAxis.normalize()
 
     // Determine resolution
-    let resolution = ((endAngle - startAngle) * radius) / res
-    resolution = parseInt(resolution.toString())
+    /** Alex 07.08.2025: This can blowup for very large circles, so we use a fixed number of sample points */
+    // let resolution = ((endAngle - startAngle) * radius) / res
+    // resolution = parseInt(resolution.toString())
 
     const points = []
 

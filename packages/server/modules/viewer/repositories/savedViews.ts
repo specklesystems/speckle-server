@@ -14,7 +14,10 @@ import type {
   RecalculateGroupResourceIds,
   StoreSavedView,
   StoreSavedViewGroup,
-  GetSavedViews
+  GetSavedViews,
+  DeleteSavedViewRecord,
+  UpdateSavedViewRecord,
+  GetSavedView
 } from '@/modules/viewer/domain/operations/savedViews'
 import {
   SavedViewVisibility,
@@ -482,4 +485,49 @@ export const getSavedViewsFactory =
       viewsMap[view.id] = view
     }
     return viewsMap
+  }
+
+export const getSavedViewFactory =
+  (deps: { db: Knex }): GetSavedView =>
+  async ({ id, projectId }) => {
+    const getSavedViews = getSavedViewsFactory(deps)
+    const savedViews = await getSavedViews({ viewIds: [{ viewId: id, projectId }] })
+    return savedViews[id]
+  }
+
+export const deleteSavedViewRecordFactory =
+  (deps: { db: Knex }): DeleteSavedViewRecord =>
+  async (params) => {
+    const { savedViewId } = params
+    const q = tables.savedViews(deps.db).where({
+      [SavedViews.col.id]: savedViewId
+    })
+
+    // Delete the saved view
+    const result = await q.delete()
+
+    // If no rows were deleted, return false
+    if (result === 0) {
+      return false
+    }
+
+    // Otherwise, return true
+    return true
+  }
+
+export const updateSavedViewRecordFactory =
+  (deps: { db: Knex }): UpdateSavedViewRecord =>
+  async (params) => {
+    const { id, projectId, update } = params
+
+    // Update the saved view
+    const [updatedView] = await tables
+      .savedViews(deps.db)
+      .where({
+        [SavedViews.col.id]: id,
+        [SavedViews.col.projectId]: projectId
+      })
+      .update(update, '*')
+
+    return updatedView || undefined
   }

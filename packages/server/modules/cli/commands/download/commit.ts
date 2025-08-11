@@ -56,6 +56,7 @@ import {
   getViewerResourceGroupsFactory,
   getViewerResourceItemsUngroupedFactory
 } from '@/modules/viewer/services/viewerResources'
+import { getSavedViewFactory } from '@/modules/viewer/repositories/savedViews'
 
 const command: CommandModule<
   unknown,
@@ -118,7 +119,8 @@ const command: CommandModule<
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDb }),
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
         getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb }),
-        getBranchesByIds: getBranchesByIdsFactory({ db: projectDb })
+        getBranchesByIds: getBranchesByIdsFactory({ db: projectDb }),
+        getSavedView: getSavedViewFactory({ db: projectDb })
       })
     })
     const getViewerResourcesFromLegacyIdentifiers =

@@ -47,8 +47,8 @@ export default {
 } as Meta
 
 const defaultItems = (
-  params?: Partial<{ withTooltip: boolean }>
-): LayoutMenuItem<'a' | 'b' | 'c'>[][] => [
+  params?: Partial<{ withTooltip: boolean; withActive: boolean }>
+): LayoutMenuItem<'a' | 'b' | 'c' | 'd'>[][] => [
   [
     {
       title: 'First Group Item - #1',
@@ -69,6 +69,13 @@ const defaultItems = (
       id: 'c',
       disabled: false,
       color: 'info'
+    },
+    {
+      title: 'Short',
+      id: 'd',
+      disabled: false,
+      color: 'info',
+      active: params?.withActive
     }
   ]
 ]
@@ -84,6 +91,7 @@ export const Default: StoryType = {
     <div>
       <LayoutMenu
         @click.stop.prevent
+        v-bind="args"
         v-model:open="showMenu"
         :items="args.items"
         @chosen="chosen"
@@ -205,5 +213,14 @@ export const WithResponseBodyMountedMenuDirection: StoryType = {
   args: {
     ...WithResponsiveMenuDirection.args,
     mountMenuOnBody: true
+  }
+}
+
+export const WithRightTicks: StoryType = {
+  ...Default,
+  args: {
+    ...Default.args,
+    items: defaultItems({ withActive: true }),
+    showTicks: 'right'
   }
 }

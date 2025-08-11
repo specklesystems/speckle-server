@@ -5,8 +5,9 @@ import {
   type PropertyInfo,
   ViewMode
 } from '@speckle/viewer'
-import { MeasurementsExtension, ViewModes } from '@speckle/viewer'
+import { MeasurementsExtension, ViewModes, MeasurementEvent } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
+import { useActiveElement } from '@vueuse/core'
 import { difference, isString, uniq } from 'lodash-es'
 import { useEmbedState, useEmbed } from '~/lib/viewer/composables/setup/embed'
 import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
@@ -24,7 +25,6 @@ import type {
   ViewerShortcut,
   ViewerShortcutAction
 } from '~/lib/viewer/helpers/shortcuts/types'
-import { useActiveElement } from '@vueuse/core'
 import { useTheme } from '~/lib/core/composables/theme'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
@@ -51,6 +51,10 @@ export function useSectionBoxUtilities() {
       min: box.min.toArray(),
       max: box.max.toArray()
     }
+  }
+
+  const closeSectionBox = () => {
+    visible.value = false
   }
 
   const toggleSectionBox = () => {
@@ -80,13 +84,20 @@ export function useSectionBoxUtilities() {
     }
   }
 
+  const resetSectionBoxCompletely = () => {
+    sectionBox.value = null
+    visible.value = false
+  }
+
   return {
     isSectionBoxEnabled,
     isSectionBoxVisible,
     isSectionBoxEdited,
     toggleSectionBox,
     resetSectionBox,
-    sectionBox
+    resetSectionBoxCompletely,
+    sectionBox,
+    closeSectionBox
   }
 }
 
@@ -220,8 +231,11 @@ export function useFilterUtilities(
     filters.isolatedObjectIds.value = []
     filters.propertyFilter.filter.value = null
     filters.propertyFilter.isApplied.value = false
-    explodeFactor.value = 0
     // filters.selectedObjects.value = []
+  }
+
+  const resetExplode = () => {
+    explodeFactor.value = 0
   }
 
   const waitForAvailableFilter = async (
@@ -252,6 +266,7 @@ export function useFilterUtilities(
     removePropertyFilter,
     unApplyPropertyFilter,
     resetFilters,
+    resetExplode,
     waitForAvailableFilter
   }
 }
@@ -393,6 +408,8 @@ export function useThreadUtilities() {
 export function useMeasurementUtilities() {
   const state = useInjectedViewerState()
 
+  const measurementCount = ref(0)
+
   const measurementOptions = computed(() => state.ui.measurement.options.value)
 
   const enableMeasurements = (enabled: boolean) => {
@@ -420,13 +437,37 @@ export function useMeasurementUtilities() {
     return activeMeasurement && activeMeasurement.state === 2
   }
 
+  const hasMeasurements = computed(() => measurementCount.value > 0)
+
+  const setupMeasurementListener = () => {
+    const extension = state.viewer.instance?.getExtension(MeasurementsExtension)
+    if (!extension) return
+
+    const updateCount = () => {
+      measurementCount.value = (
+        extension as unknown as { measurementCount: number }
+      ).measurementCount
+    }
+
+    // Set initial count
+    updateCount()
+
+    // Listen for changes
+    extension.on(MeasurementEvent.CountChanged, updateCount)
+  }
+
+  if (state.viewer.instance) {
+    setupMeasurementListener()
+  }
+
   return {
     measurementOptions,
     enableMeasurements,
     setMeasurementOptions,
     removeMeasurement,
     clearMeasurements,
-    getActiveMeasurement
+    getActiveMeasurement,
+    hasMeasurements
   }
 }
 
@@ -490,6 +531,7 @@ export function useViewModeUtilities() {
   const { viewMode } = useInjectedViewerInterfaceState()
   const { isLightTheme } = useTheme()
   const mp = useMixpanel()
+  const logger = useLogger()
 
   const edgesEnabled = ref(true)
   const edgesWeight = ref(1)
@@ -565,17 +607,56 @@ export function useViewModeUtilities() {
       color: color.toString(16).padStart(6, '0')
     })
   }
+  // Get the current view mode from the extension and sync the UI state
+  const initializeFromViewerState = () => {
+    try {
+      const viewModesExt = instance.getExtension(ViewModes)
+      if (viewModesExt) {
+        const extensionViewMode = viewModesExt.viewMode
+        if (extensionViewMode !== undefined) {
+          viewMode.value = extensionViewMode
+        }
 
-  onBeforeUnmount(() => {
-    // Reset edges settings
-    edgesEnabled.value = true
-    edgesWeight.value = 1
-    outlineOpacity.value = 0.75
-    edgesColor.value = defaultColor.value
+        const renderer = instance.getRenderer()
+        const currentPipeline = renderer?.pipeline
 
-    // Reset view mode to default
-    viewMode.value = ViewMode.DEFAULT
-    updateViewMode()
+        if (currentPipeline && currentPipeline.options) {
+          const currentOptions = currentPipeline.options as Record<string, unknown>
+
+          if (typeof currentOptions.edges === 'boolean') {
+            edgesEnabled.value = currentOptions.edges
+          }
+
+          const edgesPasses = currentPipeline.getPass('EDGES')
+          if (edgesPasses.length > 0) {
+            const edgesPass = edgesPasses[0] as unknown as Record<string, unknown>
+            const edgesPassOptions = edgesPass._options as Record<string, unknown>
+
+            if (
+              edgesPassOptions &&
+              typeof edgesPassOptions.outlineThickness === 'number'
+            ) {
+              edgesWeight.value = edgesPassOptions.outlineThickness
+            }
+            if (
+              edgesPassOptions &&
+              typeof edgesPassOptions.outlineOpacity === 'number'
+            ) {
+              outlineOpacity.value = edgesPassOptions.outlineOpacity
+            }
+            if (edgesPassOptions && typeof edgesPassOptions.outlineColor === 'number') {
+              edgesColor.value = edgesPassOptions.outlineColor
+            }
+          }
+        }
+      }
+    } catch (error) {
+      logger.warn('Could not initialize from viewer state, using defaults:', error)
+    }
+  }
+
+  onMounted(() => {
+    initializeFromViewerState()
   })
 
   return {
@@ -622,7 +703,7 @@ export function useViewerShortcuts() {
 
   const getShortcutDisplayText = (
     shortcut: ViewerShortcut,
-    options?: { hideName?: boolean }
+    options?: { hideName?: boolean; format?: 'default' | 'separate' }
   ) => {
     if (isSmallerOrEqualSm.value) return undefined
     if (isEmbedEnabled.value) return undefined
@@ -631,6 +712,31 @@ export function useViewerShortcuts() {
       ...shortcut.modifiers,
       formatKey(shortcut.key)
     ])
+
+    if (options?.format === 'separate') {
+      const modifiersText =
+        shortcut.modifiers.length > 0
+          ? getKeyboardShortcutTitle([...shortcut.modifiers])
+          : ''
+      const keyText = getKeyboardShortcutTitle([formatKey(shortcut.key)])
+
+      return {
+        content: `
+        <div class="flex flex-row gap-2 m-0 p-0">
+          <div class="text-body-2xs text-foreground">${shortcut.name}</div>
+          <div class="text-body-3xs text-foreground-3">
+            ${
+              modifiersText
+                ? `<kbd class="p-0.5 min-w-4 text-foreground-2 rounded-md text-body-3xs font-normal font-sans">${modifiersText}</kbd>`
+                : ''
+            }<kbd class="min-w-3 text-foreground-2 rounded-sm text-body-3xs font-sans">${keyText}</kbd>
+          </div>
+        </div>
+      `,
+        allowHTML: true,
+        theme: 'speckleTooltip'
+      }
+    }
 
     if (!options?.hideName) {
       return `${shortcut.name} (${shortcutText})`
