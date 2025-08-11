@@ -11,7 +11,7 @@
       <div>
         <FormButton
           hide-text
-          :icon-left="XMarkIcon"
+          :icon-left="X"
           color="outline"
           text
           size="lg"
@@ -22,7 +22,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { XMarkIcon } from '@heroicons/vue/24/solid'
+import { X } from 'lucide-vue-next'
 import { useAppErrorState } from '~~/lib/core/composables/error'
 
 const { isErrorState } = useAppErrorState()

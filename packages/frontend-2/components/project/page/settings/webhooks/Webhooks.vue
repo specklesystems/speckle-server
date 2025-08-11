@@ -34,13 +34,13 @@
         :items="webhooks"
         :buttons="[
           {
-            icon: PencilIcon,
+            icon: Pencil,
             label: 'Edit',
             disabled: !canUpdate?.authorized,
             action: openEditWebhookDialog
           },
           {
-            icon: TrashIcon,
+            icon: Trash2,
             label: 'Delete',
             disabled: !canUpdate?.authorized,
             action: openDeleteWebhookDialog
@@ -67,20 +67,29 @@
 
             <div class="flex gap-1 items-center">
               <div class="h-4 w-4" :class="{ grayscale: !item.enabled }">
-                <InformationCircleIcon
+                <Info
                   v-if="getHistoryStatus(item) === HistoryStatus.NoEvents"
+                  :size="LucideSize.base"
+                  :stroke-width="1.5"
+                  :absolute-stroke-width="true"
                   class="opacity-40"
                 />
-                <CheckCircleIcon
+                <CircleCheck
                   v-if="getHistoryStatus(item) === HistoryStatus.Called"
+                  :size="LucideSize.base"
+                  :stroke-width="1.5"
+                  :absolute-stroke-width="true"
                   class="text-success"
                 />
-                <XCircleIcon
+                <CircleX
                   v-if="
                     [HistoryStatus.Alert, HistoryStatus.Error].includes(
                       getHistoryStatus(item)
                     )
                   "
+                  :size="LucideSize.base"
+                  :stroke-width="1.5"
+                  :absolute-stroke-width="true"
                   class="text-danger"
                 />
               </div>
@@ -121,12 +130,7 @@
 </template>
 <script setup lang="ts">
 import { useMutation, useQuery } from '@vue/apollo-composable'
-import {
-  InformationCircleIcon,
-  CheckCircleIcon,
-  XCircleIcon
-} from '@heroicons/vue/20/solid'
-import { TrashIcon, PencilIcon } from '@heroicons/vue/24/outline'
+import { Info, CircleCheck, CircleX, Pencil, Trash2 } from 'lucide-vue-next'
 import { FormSwitch, LayoutTable } from '@speckle/ui-components'
 import { projectWebhooksQuery } from '~~/lib/projects/graphql/queries'
 import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'

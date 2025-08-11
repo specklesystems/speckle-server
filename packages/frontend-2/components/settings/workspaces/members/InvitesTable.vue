@@ -68,7 +68,7 @@
           <FormButton
             :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
             hide-text
-            :icon-right="showActionsMenu[item.id] ? XMarkIcon : EllipsisHorizontalIcon"
+            :icon-right="showActionsMenu[item.id] ? X : Ellipsis"
             @click="toggleMenu(item.id)"
           />
         </LayoutMenu>
@@ -78,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { XMarkIcon, EllipsisHorizontalIcon } from '@heroicons/vue/24/outline'
+import { X, Ellipsis } from 'lucide-vue-next'
 import { useQuery } from '@vue/apollo-composable'
 import { capitalize } from 'lodash-es'
 import { graphql } from '~/lib/common/generated/gql'

@@ -16,7 +16,7 @@
         placeholder="model/name/here"
         help="Use forward slashes in the model name to nest it below other models."
         color="foundation"
-        :custom-icon="CubeIcon"
+        :custom-icon="Box"
         :rules="rules"
         :disabled="disabled"
         autocomplete="off"
@@ -30,7 +30,7 @@
 <script setup lang="ts">
 import type { ProjectModelPageDialogMoveToVersionFragment } from '~~/lib/common/generated/gql/graphql'
 import { useModelNameValidationRules } from '~~/lib/projects/composables/modelManagement'
-import { CubeIcon } from '@heroicons/vue/24/outline'
+import { Box } from 'lucide-vue-next'
 import { useForm } from 'vee-validate'
 import { sanitizeModelName } from '~~/lib/projects/helpers/models'
 

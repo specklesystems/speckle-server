@@ -19,7 +19,7 @@
         canRevoke?.authorized
           ? [
               {
-                icon: TrashIcon,
+                icon: Trash2,
                 label: 'Delete',
                 action: openDeleteTokenDialog
               }
@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { TrashIcon } from '@heroicons/vue/24/outline'
+import { Trash2 } from 'lucide-vue-next'
 import { projectEmbedTokensQuery } from '~~/lib/projects/graphql/queries'
 import type { EmbedTokenItem } from '~~/lib/projects/helpers/types'
 import { graphql } from '~/lib/common/generated/gql'

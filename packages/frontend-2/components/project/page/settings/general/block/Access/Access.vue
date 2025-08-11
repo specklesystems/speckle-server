@@ -23,11 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  LockClosedIcon,
-  GlobeAltIcon,
-  BuildingOfficeIcon
-} from '@heroicons/vue/24/outline'
+import { Lock, Globe, Building } from 'lucide-vue-next'
 import { FormRadioGroup } from '@speckle/ui-components'
 import {
   castToSupportedVisibility,
@@ -71,7 +67,7 @@ const radioOptions = computed(() => [
     value: SupportedProjectVisibility.Public,
     title: 'Public',
     introduction: 'Anyone with the link can view',
-    icon: GlobeAltIcon
+    icon: Globe
   },
   ...(props.project.workspaceId
     ? [
@@ -79,7 +75,7 @@ const radioOptions = computed(() => [
           value: SupportedProjectVisibility.Workspace,
           introduction: 'All workspace members can view',
           title: 'Workspace',
-          icon: BuildingOfficeIcon
+          icon: Building
         }
       ]
     : []),
@@ -87,7 +83,7 @@ const radioOptions = computed(() => [
     value: SupportedProjectVisibility.Private,
     title: 'Private',
     introduction: 'Only for project members and admins',
-    icon: LockClosedIcon
+    icon: Lock
   }
 ])
 

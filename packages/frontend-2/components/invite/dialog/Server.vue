@@ -52,13 +52,18 @@
               :class="{ 'top-7': index === 0 }"
               @click="removeInviteItem(index)"
             >
-              <TrashIcon class="h-4 w-4 text-foreground-2" />
+              <Trash2
+                :size="LucideSize.base"
+                :stroke-width="1.5"
+                :absolute-stroke-width="true"
+                class="text-foreground-2"
+              />
             </CommonTextLink>
           </div>
         </div>
         <FormButton
           color="subtle"
-          :icon-left="PlusIcon"
+          :icon-left="Plus"
           :disabled="anyMutationsLoading"
           @click="addInviteItem"
         >
@@ -77,7 +82,7 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useServerInfo } from '~~/lib/core/composables/server'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { useInviteUserToServer } from '~~/lib/server/composables/invites'
-import { PlusIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { Plus, Trash2 } from 'lucide-vue-next'
 import type { InviteServerForm, InviteServerItem } from '~~/lib/invites/helpers/types'
 import { emptyInviteServerItem } from '~~/lib/invites/helpers/constants'
 import { isEmail } from '~~/lib/common/helpers/validation'

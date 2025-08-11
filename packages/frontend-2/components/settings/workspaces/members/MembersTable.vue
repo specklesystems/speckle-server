@@ -72,7 +72,12 @@
               'This user does not comply with the domain policy set on this workspace'
             "
           >
-            <ExclamationCircleIcon class="text-danger w-5" />
+            <CircleAlert
+              :size="LucideSize.lg"
+              :stroke-width="1.5"
+              :absolute-stroke-width="true"
+              class="text-danger"
+            />
           </div>
         </div>
       </template>
@@ -125,7 +130,7 @@ import type {
   SettingsWorkspacesMembersActionsMenu_UserFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
+import { CircleAlert } from 'lucide-vue-next'
 import type { WorkspaceUserActionTypes } from '~/lib/settings/helpers/types'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { useQuery } from '@vue/apollo-composable'

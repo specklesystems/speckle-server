@@ -13,7 +13,7 @@
       <FormButton
         color="subtle"
         hide-text
-        :icon-right="EllipsisHorizontalIcon"
+        :icon-right="Ellipsis"
         class="!text-foreground-2"
         @click="onButtonClick"
       ></FormButton>
@@ -50,7 +50,7 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
-import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
+import { Ellipsis } from 'lucide-vue-next'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { HorizontalDirection } from '~~/lib/common/composables/window'

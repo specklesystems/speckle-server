@@ -7,7 +7,12 @@
 
     <!-- Arrow -->
     <div class="flex justify-center my-2">
-      <ArrowDownIcon class="w-5 h-5 text-foreground-2" />
+      <ArrowDown
+        :size="LucideSize.lg"
+        :stroke-width="1.5"
+        :absolute-stroke-width="true"
+        class="text-foreground-2"
+      />
     </div>
 
     <!-- New State -->
@@ -20,5 +25,5 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowDownIcon } from '@heroicons/vue/20/solid'
+import { ArrowDown } from 'lucide-vue-next'
 </script>

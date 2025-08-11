@@ -3,15 +3,13 @@
   <Menu as="div" class="flex items-center relative">
     <MenuButton :id="menuButtonId" as="div">
       <!-- Desktop Button -->
-      <FormButton class="hidden sm:flex" :icon-right="ChevronDownIcon">
-        Share
-      </FormButton>
+      <FormButton class="hidden sm:flex" :icon-right="ChevronDown">Share</FormButton>
       <!-- Mobile Button -->
       <FormButton
         color="subtle"
         size="sm"
         class="sm:hidden"
-        :icon-right="ShareIcon"
+        :icon-right="Share2"
         hide-text
       >
         Share
@@ -71,8 +69,7 @@
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
-import { ShareIcon } from '@heroicons/vue/24/outline'
-import { ChevronDownIcon } from '@heroicons/vue/20/solid'
+import { Share2, ChevronDown } from 'lucide-vue-next'
 import { SpeckleViewer } from '@speckle/shared'
 import { keyboardClick } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql/gql'

@@ -4,7 +4,7 @@
       <FormButton
         size="sm"
         hide-text
-        :icon-left="ArrowUpIcon"
+        :icon-left="ArrowUp"
         :disabled="!moveUpEnabled"
         type="button"
         @click.stop="moveUp?.()"
@@ -14,7 +14,7 @@
         size="sm"
         color="danger"
         hide-text
-        :icon-left="XMarkIcon"
+        :icon-left="X"
         :disabled="!deleteEnabled"
         type="button"
         @click.stop="doDelete?.()"
@@ -22,7 +22,7 @@
       <FormButton
         size="sm"
         hide-text
-        :icon-left="ArrowDownIcon"
+        :icon-left="ArrowDown"
         :disabled="!moveDownEnabled"
         type="button"
         @click.stop="moveDown?.()"
@@ -34,7 +34,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ArrowDownIcon, ArrowUpIcon, XMarkIcon } from '@heroicons/vue/24/solid'
+import { ArrowDown, ArrowUp, X } from 'lucide-vue-next'
 
 withDefaults(
   defineProps<{

@@ -69,7 +69,7 @@
       </template>
       <template #actions="{ item }">
         <FormButton
-          :icon-left="ArrowDownTrayIcon"
+          :icon-left="Download"
           hide-text
           size="sm"
           color="outline"
@@ -88,7 +88,7 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { ArrowDownTrayIcon } from '@heroicons/vue/24/outline'
+import { Download } from 'lucide-vue-next'
 import {
   FileUploadConvertedStatus,
   fileUploadConvertedStatusLabels

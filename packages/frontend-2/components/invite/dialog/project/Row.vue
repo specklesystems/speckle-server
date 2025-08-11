@@ -118,7 +118,13 @@
         </div>
       </div>
       <CommonTextLink v-if="showDelete" :class="showLabel && 'mt-7'">
-        <TrashIcon class="size-4 text-foreground-2" @click="$emit('remove')" />
+        <Trash2
+          :size="LucideSize.base"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          class="text-foreground-2"
+          @click="$emit('remove')"
+        />
       </CommonTextLink>
       <div v-else class="size-4" />
     </div>
@@ -126,7 +132,7 @@
 </template>
 
 <script lang="ts" setup>
-import { TrashIcon } from '@heroicons/vue/24/outline'
+import { Trash2 } from 'lucide-vue-next'
 import { isEmailOrEmpty } from '~~/lib/common/helpers/validation'
 import {
   useElementBounding,

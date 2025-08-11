@@ -71,7 +71,7 @@
             <FormButton
               color="subtle"
               hide-text
-              :icon-right="EllipsisHorizontalIcon"
+              :icon-right="Ellipsis"
               class="!text-foreground-2"
               @click="onButtonClick"
             />
@@ -136,7 +136,7 @@ import { useWorkspaceSsoStatus } from '~/lib/workspaces/composables/sso'
 import type { SsoFormValues } from '~/lib/workspaces/helpers/types'
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
-import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
+import { Ellipsis } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import { Roles } from '@speckle/shared'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'

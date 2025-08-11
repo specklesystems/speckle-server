@@ -15,7 +15,7 @@
           label="Model name"
           show-label
           placeholder="model/name/here"
-          :custom-icon="CubeIcon"
+          :custom-icon="Box"
           :rules="rules"
           :disabled="anyMutationsLoading"
           help="Use forward slashes in the model name to nest it below other models."
@@ -37,7 +37,7 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { CubeIcon } from '@heroicons/vue/24/outline'
+import { Box } from 'lucide-vue-next'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'

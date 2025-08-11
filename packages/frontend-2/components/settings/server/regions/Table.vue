@@ -30,7 +30,7 @@
           <FormButton
             :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
             hide-text
-            :icon-right="showActionsMenu[item.id] ? XMarkIcon : EllipsisHorizontalIcon"
+            :icon-right="showActionsMenu[item.id] ? X : Ellipsis"
             @click.stop="toggleMenu(item.id)"
           />
         </LayoutMenu>
@@ -41,7 +41,7 @@
 <script setup lang="ts">
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
-import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { Ellipsis, X } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsServerRegionsTable_ServerRegionItemFragment } from '~/lib/common/generated/gql/graphql'
 

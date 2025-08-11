@@ -9,8 +9,11 @@
           @click="toggleAdmins"
         >
           <p class="text-body-xs">Workspace admins</p>
-          <ChevronDownIcon
-            :class="`h-4 w-4 ${expanded ? '-rotate-180' : 'rotate-0'}`"
+          <ChevronDown
+            :size="LucideSize.base"
+            :stroke-width="1.5"
+            :absolute-stroke-width="true"
+            :class="` ${expanded ? '-rotate-180' : 'rotate-0'}`"
           />
         </button>
         <div
@@ -47,7 +50,7 @@
 <script lang="ts" setup>
 import { roleSelectItems } from '~~/lib/projects/helpers/components'
 import type { ProjectPageCollaborators_WorkspaceCollaboratorFragment } from '~~/lib/common/generated/gql/graphql'
-import { ChevronDownIcon } from '@heroicons/vue/20/solid'
+import { ChevronDown } from 'lucide-vue-next'
 import { Roles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 

@@ -11,14 +11,14 @@
       v-if="showCopyButton"
       text
       class="shrink-0 absolute z-10 top-1 right-2 group-hover:opacity-100 opacity-0 transition-opacity duration-200"
-      :icon-left="ClipboardDocumentIcon"
+      :icon-left="Clipboard"
       hide-text
       @click="onCopy"
     />
   </div>
 </template>
 <script setup lang="ts">
-import { ClipboardDocumentIcon } from '@heroicons/vue/24/outline'
+import { Clipboard } from 'lucide-vue-next'
 import { useClipboard } from '@vueuse/core'
 
 const props = withDefaults(

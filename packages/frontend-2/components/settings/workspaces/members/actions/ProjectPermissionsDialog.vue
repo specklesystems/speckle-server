@@ -33,8 +33,11 @@
                 class="group flex gap-1 items-center max-w-max border-b border-transparent hover:border-gray-300/90"
               >
                 {{ projectRole.project.name }}
-                <ArrowTopRightOnSquareIcon
-                  class="hidden group-hover:block w-3 h-3 opacity-60"
+                <ArrowUpRight
+                  :size="LucideSize.sm"
+                  :stroke-width="1.5"
+                  :absolute-stroke-width="true"
+                  class="hidden group-hover:block opacity-60"
                 />
               </NuxtLink>
             </div>
@@ -100,7 +103,7 @@ import { useDebouncedTextInput, type LayoutDialogButton } from '@speckle/ui-comp
 import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsWorkspacesMembersActionsMenu_UserFragment } from '~/lib/common/generated/gql/graphql'
 import { projectRoute } from '~~/lib/common/helpers/route'
-import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
+import { ArrowUpRight } from 'lucide-vue-next'
 
 graphql(`
   fragment SettingsWorkspacesMembersActionsProjectPermissionsDialog_User on WorkspaceCollaborator {

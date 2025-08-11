@@ -14,7 +14,8 @@ export type HorizontalOrVertical = 'horizontal' | 'vertical'
 export enum LucideSize {
   sm = 12,
   base = 16,
-  lg = 20
+  lg = 20,
+  xxl = 32
 }
 
 export interface StepCoreType {

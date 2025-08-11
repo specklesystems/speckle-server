@@ -49,7 +49,7 @@
       <FormButton
         color="subtle"
         hide-text
-        :icon-right="EllipsisHorizontalIcon"
+        :icon-right="Ellipsis"
         @click="showActionsMenu = !showActionsMenu"
       />
     </LayoutMenu>
@@ -79,7 +79,7 @@ import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import type { Nullable, StreamRoles, MaybeNullOrUndefined } from '@speckle/shared'
 import { Roles, SeatTypes } from '@speckle/shared'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
-import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
+import { Ellipsis } from 'lucide-vue-next'
 import { roleSelectItems } from '~~/lib/projects/helpers/components'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { SettingsWorkspacesMembersTableHeader_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'

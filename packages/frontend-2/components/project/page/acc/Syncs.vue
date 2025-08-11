@@ -38,13 +38,13 @@
           <FormButton
             hide-text
             color="outline"
-            :icon-left="item.status === 'paused' ? PlayIcon : PauseIcon"
+            :icon-left="item.status === 'paused' ? Play : Pause"
             @click="handleStatusSyncItem(item.id, item.status === 'paused')"
           />
           <FormButton
             hide-text
             color="outline"
-            :icon-left="TrashIcon"
+            :icon-left="Trash2"
             @click="handleDeleteSyncItem(item.id)"
           />
         </div>
@@ -160,8 +160,7 @@ import {
 } from '~/lib/acc/graphql/mutations'
 import { projectAccSyncItemsQuery } from '~/lib/acc/graphql/queries'
 import { onProjectAccSyncItemUpdatedSubscription } from '~/lib/acc/graphql/subscriptions'
-import { PauseIcon } from '@heroicons/vue/24/solid'
-import { TrashIcon, PlayIcon } from '@heroicons/vue/24/outline'
+import { Pause, Play, Trash2 } from 'lucide-vue-next'
 
 const props = defineProps<{
   projectId: string

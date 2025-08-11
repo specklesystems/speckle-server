@@ -6,8 +6,11 @@
       <div class="flex flex-1 flex-col">
         <button class="flex items-center gap-1 cursor-pointer" @click="toggleExpanded">
           <p class="text-body-xs">Workspace members</p>
-          <ChevronDownIcon
-            :class="`h-4 w-4 ${expanded ? '-rotate-180' : 'rotate-0'}`"
+          <ChevronDown
+            :size="LucideSize.base"
+            :stroke-width="1.5"
+            :absolute-stroke-width="true"
+            :class="`${expanded ? '-rotate-180' : 'rotate-0'}`"
           />
         </button>
       </div>
@@ -24,7 +27,7 @@
         color="foundation"
         full-width
         show-clear
-        :custom-icon="MagnifyingGlassIcon"
+        :custom-icon="Search"
         placeholder="Search members..."
         v-bind="bind"
         v-on="on"
@@ -83,8 +86,7 @@ import {
   AccessSelectItems,
   accessSelectItems
 } from '~~/lib/projects/helpers/components'
-import { ChevronDownIcon } from '@heroicons/vue/20/solid'
-import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
+import { ChevronDown, Search } from 'lucide-vue-next'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'

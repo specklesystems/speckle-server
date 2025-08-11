@@ -23,8 +23,11 @@
         <button
           class="hover:bg-primary-muted hover:text-primary flex h-full items-center justify-center rounded"
         >
-          <ChevronDownIcon
-            :class="`h-3 w-3 transition ${!expanded ? '-rotate-90' : 'rotate-0'}`"
+          <ChevronDown
+            :size="LucideSize.base"
+            :stroke-width="1.5"
+            :absolute-stroke-width="true"
+            :class="`transition ${!expanded ? '-rotate-90' : 'rotate-0'}`"
           />
         </button>
       </div>
@@ -101,7 +104,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChevronDownIcon } from '@heroicons/vue/24/outline'
+import { ChevronDown } from 'lucide-vue-next'
 import { AutomateRunStatus } from '~~/lib/common/generated/gql/graphql'
 import type { AutomateViewerPanelFunctionRunRow_AutomateFunctionRunFragment } from '~~/lib/common/generated/gql/graphql'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'

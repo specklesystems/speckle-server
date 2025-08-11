@@ -52,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { EyeIcon, PencilIcon } from '@heroicons/vue/24/outline'
+import { Eye, Pencil } from 'lucide-vue-next'
 
 const props = defineProps<{
   isUpgrading: boolean
@@ -70,12 +70,12 @@ const editorDescription = computed(() =>
 
 const SeatTypes = {
   viewer: {
-    icon: EyeIcon,
+    icon: Eye,
     title: 'Viewer seat',
     description: 'Can view and comment on projects'
   },
   editor: {
-    icon: PencilIcon,
+    icon: Pencil,
     title: 'Editor seat',
     description: editorDescription.value
   }

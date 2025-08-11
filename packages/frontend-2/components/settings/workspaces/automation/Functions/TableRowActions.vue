@@ -9,7 +9,7 @@
     <FormButton
       :color="isOpen ? 'outline' : 'subtle'"
       hide-text
-      :icon-right="isOpen ? XMarkIcon : EllipsisHorizontalIcon"
+      :icon-right="isOpen ? X : Ellipsis"
       @click.stop="isOpen = true"
     />
     <SettingsWorkspacesAutomationFunctionsRegenerateTokenDialog
@@ -22,7 +22,7 @@
 <script setup lang="ts">
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { HorizontalDirection } from '@speckle/ui-components'
-import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { Ellipsis, X } from 'lucide-vue-next'
 import type { SettingsWorkspacesAutomationTableRowActions_AutomateFunctionFragment } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 

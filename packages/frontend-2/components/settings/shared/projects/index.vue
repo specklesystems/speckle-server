@@ -4,7 +4,7 @@
       <div class="relative w-full md:max-w-md mt-6 md:mt-0">
         <FormTextInput
           name="search"
-          :custom-icon="MagnifyingGlassIcon"
+          :custom-icon="Search"
           color="foundation"
           search
           placeholder="Search projects"
@@ -80,7 +80,7 @@
           <FormButton
             :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
             hide-text
-            :icon-right="showActionsMenu[item.id] ? XMarkIcon : EllipsisHorizontalIcon"
+            :icon-right="showActionsMenu[item.id] ? X : Ellipsis"
             @click.stop="toggleMenu(item.id)"
           />
         </LayoutMenu>
@@ -104,11 +104,7 @@ import type {
   ProjectsDeleteDialog_ProjectFragment,
   SettingsSharedProjects_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
-import {
-  MagnifyingGlassIcon,
-  EllipsisHorizontalIcon,
-  XMarkIcon
-} from '@heroicons/vue/24/outline'
+import { Search, Ellipsis, X } from 'lucide-vue-next'
 import { isProject } from '~~/lib/server-management/helpers/utils'
 import { useDebouncedTextInput, type LayoutMenuItem } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'

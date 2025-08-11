@@ -17,9 +17,12 @@
           <p class="text-body-xs text-foreground truncate max-w-40">
             {{ activeWorkspace?.name || 'Personal projects' }}
           </p>
-          <ChevronDownIcon
+          <ChevronDown
+            :size="LucideSize.sm"
+            :stroke-width="1.5"
+            :absolute-stroke-width="true"
             :class="userOpen ? 'rotate-180' : ''"
-            class="h-3 w-3 flex-shrink-0"
+            class="flex-shrink-0"
           />
         </div>
       </MenuButton>
@@ -96,7 +99,7 @@ import {
   navigationWorkspaceSwitcherQuery,
   workspaceSwitcherHeaderWorkspaceQuery
 } from '~/lib/navigation/graphql/queries'
-import { ChevronDownIcon } from '@heroicons/vue/24/outline'
+import { ChevronDown } from 'lucide-vue-next'
 import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { workspaceRoute } from '~/lib/common/helpers/route'

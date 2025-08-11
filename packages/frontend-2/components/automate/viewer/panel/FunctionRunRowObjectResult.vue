@@ -29,12 +29,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  CheckIcon,
-  XMarkIcon,
-  InformationCircleIcon,
-  ExclamationTriangleIcon
-} from '@heroicons/vue/24/outline'
+import { Check, X, Info, TriangleAlert } from 'lucide-vue-next'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import type { NumericPropertyInfo } from '@speckle/viewer'
@@ -162,23 +157,23 @@ const iconAndColor = computed(() => {
   switch (props.result.level) {
     case 'SUCCESS':
       return {
-        icon: CheckIcon,
+        icon: Check,
         color: 'text-success font-medium'
       }
     case 'ERROR':
       return {
-        icon: XMarkIcon,
+        icon: X,
         color: 'text-danger font-medium'
       }
     case 'WARNING':
       return {
-        icon: ExclamationTriangleIcon,
+        icon: TriangleAlert,
         color: 'text-warning font-medium'
       }
     case 'INFO':
     default:
       return {
-        icon: InformationCircleIcon,
+        icon: Info,
         color: 'text-foreground font-medium'
       }
   }

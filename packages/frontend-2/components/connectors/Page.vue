@@ -14,7 +14,7 @@
             name="modelsearch"
             :show-label="false"
             placeholder="Search connectors..."
-            :custom-icon="MagnifyingGlassIcon"
+            :custom-icon="Search"
             color="foundation"
             wrapper-classes="grow"
             :show-clear="!!search"
@@ -77,7 +77,7 @@
 <script setup lang="ts">
 import { connectorItems, connectorCategories } from '~/lib/dashboard/helpers/connectors'
 import type { ConnectorItem } from '~/lib/dashboard/helpers/types'
-import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
+import { Search } from 'lucide-vue-next'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { isArray } from 'lodash-es'
 import type { ConnectorCategory } from '~~/lib/dashboard/helpers/types'

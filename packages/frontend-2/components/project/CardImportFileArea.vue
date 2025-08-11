@@ -25,7 +25,12 @@
           v-if="errorMessage"
           class="text-danger inline-flex space-x-1 items-center text-center"
         >
-          <ExclamationTriangleIcon class="h-4 w-4 shrink-0" />
+          <TriangleAlert
+            :size="LucideSize.base"
+            :stroke-width="1.5"
+            :absolute-stroke-width="true"
+            class="shrink-0"
+          />
           <span>{{ errorMessage }}</span>
         </span>
         <div
@@ -78,7 +83,7 @@ import {
   useGlobalFileImportManager
 } from '~~/lib/core/composables/fileImport'
 import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
-import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
+import { TriangleAlert } from 'lucide-vue-next'
 import { connectorsRoute } from '~/lib/common/helpers/route'
 import type { Nullable } from '@speckle/shared'
 import { graphql } from '~/lib/common/generated/gql'

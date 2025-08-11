@@ -32,15 +32,18 @@
       </div>
     </label>
     <div class="shrink-0 ml-2 mt-1 text-foreground-2">
-      <PencilIcon
+      <Pencil
         v-if="!disabled"
-        class="w-4 h-4 opacity-0 group-hover:opacity-100 transition text-foreground-2"
+        :size="LucideSize.base"
+        :stroke-width="1.5"
+        :absolute-stroke-width="true"
+        class="opacity-0 group-hover:opacity-100 transition text-foreground-2"
       />
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { PencilIcon } from '@heroicons/vue/20/solid'
+import { Pencil } from 'lucide-vue-next'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 
 defineProps<{

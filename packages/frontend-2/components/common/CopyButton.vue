@@ -9,11 +9,16 @@
     <span v-if="title">
       {{ title + ' ' }}
     </span>
-    <ClipboardIcon class="w-3 h-3 shrink-0 inline -mt-0.5" />
+    <Clipboard
+      :size="LucideSize.sm"
+      :stroke-width="1.5"
+      :absolute-stroke-width="true"
+      class="shrink-0 inline -mt-0.5"
+    />
   </span>
 </template>
 <script setup lang="ts">
-import { ClipboardIcon } from '@heroicons/vue/24/outline'
+import { Clipboard } from 'lucide-vue-next'
 
 defineProps<{
   title?: string

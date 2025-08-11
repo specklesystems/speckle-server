@@ -35,7 +35,7 @@
         <div class="flex gap-2">
           <p class="mt-1 text-body-xs">{{ triggerLabel }}</p>
           <div v-for="model in triggerModels" :key="model.id" class="truncate">
-            <CommonTextLink :icon-left="CubeIcon" :to="finalModelUrl(model.id)">
+            <CommonTextLink :icon-left="Box" :to="finalModelUrl(model.id)">
               {{ model.name }}
             </CommonTextLink>
           </div>
@@ -45,7 +45,11 @@
         v-else
         class="flex items-center gap-1.5 truncate text-danger-darker text-body-xs"
       >
-        <ExclamationTriangleIcon class="w-4 h-4" />
+        <TriangleAlert
+          :size="LucideSize.base"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+        />
         <span>No valid models are attached to this automation</span>
       </div>
     </div>
@@ -57,7 +61,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { CubeIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import { Box, TriangleAlert } from 'lucide-vue-next'
 import { isNonNullable } from '@speckle/shared'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectPageAutomationsRow_AutomationFragment } from '~/lib/common/generated/gql/graphql'

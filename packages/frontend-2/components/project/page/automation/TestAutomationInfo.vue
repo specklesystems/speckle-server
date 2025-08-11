@@ -27,7 +27,12 @@
           class="absolute flex items-center justify-center bottom-2 right-2 w-8 h-8 rounded-md border border-outline-3 bg-foundation"
           @click="handleCopy"
         >
-          <ClipboardDocumentIcon class="h-5 w-5 text-foreground" />
+          <Clipboard
+            :size="LucideSize.lg"
+            :stroke-width="1.5"
+            :absolute-stroke-width="true"
+            class="text-foreground"
+          />
         </button>
       </div>
       <CommonTextLink
@@ -51,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { ClipboardDocumentIcon } from '@heroicons/vue/24/outline'
+import { Clipboard } from 'lucide-vue-next'
 
 const props = defineProps<{
   projectId: string

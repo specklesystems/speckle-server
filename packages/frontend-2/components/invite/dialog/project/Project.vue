@@ -33,7 +33,7 @@
             />
           </template>
           <div>
-            <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
+            <FormButton color="subtle" :icon-left="Plus" @click="addInviteItem">
               Add another user
             </FormButton>
           </div>
@@ -60,7 +60,7 @@
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
 import { useForm, useFieldArray } from 'vee-validate'
-import { PlusIcon } from '@heroicons/vue/24/outline'
+import { Plus } from 'lucide-vue-next'
 import type { InviteProjectForm, InviteProjectItem } from '~~/lib/invites/helpers/types'
 import { emptyInviteProjectItem } from '~~/lib/invites/helpers/constants'
 import type {

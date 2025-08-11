@@ -33,7 +33,7 @@
       :items="authorizedApps"
       :buttons="[
         {
-          icon: XMarkIcon,
+          icon: X,
           label: 'Revoke Access',
           action: (item) => $emit('delete', item),
           class: 'text-danger'
@@ -66,7 +66,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { X } from 'lucide-vue-next'
 import { developerSettingsAuthorizedAppsQuery } from '~~/lib/developer-settings/graphql/queries'
 import type { AuthorizedAppItem } from '~~/lib/developer-settings/helpers/types'
 

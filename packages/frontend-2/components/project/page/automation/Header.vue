@@ -2,7 +2,7 @@
   <div class="flex flex-col items-start w-full">
     <div class="flex gap-2 flex-col sm:flex-row sm:justify-between w-full">
       <div class="flex flex-col items-start gap-2">
-        <CommonTextLink :icon-left="ChevronLeftIcon" size="sm" :to="automationsLink">
+        <CommonTextLink :icon-left="ChevronLeft" size="sm" :to="automationsLink">
           Back to Automations
         </CommonTextLink>
         <div class="flex flow-row justify-start items-center z-20">
@@ -35,7 +35,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChevronLeftIcon } from '@heroicons/vue/24/outline'
+import { ChevronLeft } from 'lucide-vue-next'
 import { FormSwitch } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'

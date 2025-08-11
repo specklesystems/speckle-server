@@ -22,7 +22,12 @@
         </div>
       </div>
       <div class="flex gap-4 items-center border-primary border rounded-lg px-4 py-3">
-        <ExclamationTriangleIcon class="h-8 w-8 mt-0.5 text-primary" />
+        <TriangleAlert
+          :size="LucideSize.xxl"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          class="mt-0.5 text-primary"
+        />
         <div class="max-w-md flex flex-col gap-1.5">
           <p>
             <strong>Note:</strong>
@@ -46,7 +51,7 @@
 
 <script setup lang="ts">
 import { LayoutDialog, type LayoutDialogButton } from '@speckle/ui-components'
-import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import { TriangleAlert } from 'lucide-vue-next'
 import type { ApplicationItem } from '~~/lib/developer-settings/helpers/types'
 
 const props = defineProps<{

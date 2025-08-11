@@ -4,7 +4,7 @@
       <div class="relative w-full md:max-w-md mt-6 md:mt-0">
         <FormTextInput
           name="search"
-          :custom-icon="MagnifyingGlassIcon"
+          :custom-icon="Search"
           color="foundation"
           full-width
           search
@@ -52,7 +52,7 @@
           <FormButton
             :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
             hide-text
-            :icon-right="showActionsMenu[item.id] ? XMarkIcon : EllipsisHorizontalIcon"
+            :icon-right="showActionsMenu[item.id] ? X : Ellipsis"
             @click.stop="toggleMenu(item)"
           />
         </LayoutMenu>
@@ -79,11 +79,7 @@
 
 <script setup lang="ts">
 import { useMutation, useApolloClient } from '@vue/apollo-composable'
-import {
-  MagnifyingGlassIcon,
-  XMarkIcon,
-  EllipsisHorizontalIcon
-} from '@heroicons/vue/24/outline'
+import { Search, Ellipsis, X } from 'lucide-vue-next'
 import type { ItemType, InviteItem } from '~~/lib/server-management/helpers/types'
 import {
   adminResendInviteMutation,

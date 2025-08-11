@@ -50,7 +50,7 @@
       <template #actions="{ item }">
         <FormButton
           v-tippy="'Go to project'"
-          :icon-left="ArrowRightIcon"
+          :icon-left="ArrowRight"
           hide-text
           size="sm"
           color="outline"
@@ -61,7 +61,7 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { ArrowRightIcon } from '@heroicons/vue/24/outline'
+import { ArrowRight } from 'lucide-vue-next'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { omit } from 'lodash-es'
 import { useNavigateToProject } from '~/lib/common/helpers/route'

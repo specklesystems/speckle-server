@@ -7,7 +7,11 @@
         @move-project="(id) => onMoveProject(id, 'projects')"
       />
       <div class="flex items-center gap-2 mb-2">
-        <Squares2X2Icon class="h-5 w-5" />
+        <LayoutGrid
+          :size="LucideSize.lg"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+        />
         <h1 class="text-heading-lg">Projects</h1>
       </div>
 
@@ -17,7 +21,7 @@
             name="modelsearch"
             :show-label="false"
             placeholder="Search..."
-            :custom-icon="MagnifyingGlassIcon"
+            :custom-icon="Search"
             color="foundation"
             wrapper-classes="grow md:grow-0 md:w-60"
             :show-clear="!!search"
@@ -89,7 +93,7 @@ import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { useDebouncedTextInput, type InfiniteLoaderState } from '@speckle/ui-components'
-import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
+import { Search, LayoutGrid } from 'lucide-vue-next'
 import { useUserProjectsUpdatedTracking } from '~~/lib/user/composables/projectUpdates'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useCanCreatePersonalProject } from '~~/lib/projects/composables/permissions'

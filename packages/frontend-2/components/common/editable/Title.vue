@@ -24,11 +24,11 @@
         />
       </div>
     </label>
-    <PencilIcon v-if="!disabled" :class="pencilClasses" />
+    <Pencil v-if="!disabled" :class="pencilClasses" />
   </div>
 </template>
 <script setup lang="ts">
-import { PencilIcon } from '@heroicons/vue/20/solid'
+import { Pencil } from 'lucide-vue-next'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 
 const props = defineProps<{

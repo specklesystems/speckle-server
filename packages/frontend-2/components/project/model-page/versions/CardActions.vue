@@ -11,7 +11,7 @@
       <FormButton
         color="subtle"
         hide-text
-        :icon-right="EllipsisHorizontalIcon"
+        :icon-right="Ellipsis"
         class="!text-foreground-2"
         @click="showActionsMenu = !showActionsMenu"
       ></FormButton>
@@ -19,7 +19,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
+import { Ellipsis } from 'lucide-vue-next'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 import { VersionActionTypes } from '~~/lib/projects/helpers/components'

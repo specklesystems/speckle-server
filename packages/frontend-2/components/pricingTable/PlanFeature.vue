@@ -6,7 +6,13 @@
     }"
   >
     <IconCheck v-if="isIncluded" class="w-4 h-4 text-foreground mx-2" />
-    <XMarkIcon v-else class="w-4 h-4 mx-2 text-foreground-3" />
+    <X
+      v-else
+      :size="LucideSize.base"
+      :stroke-width="1.5"
+      :absolute-stroke-width="true"
+      class="mx-2 text-foreground-3"
+    />
     <span
       v-tippy="description"
       class="underline decoration-outline-5 decoration-dashed underline-offset-4 cursor-help"
@@ -20,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { X } from 'lucide-vue-next'
 defineProps<{
   displayName: string
   description: string

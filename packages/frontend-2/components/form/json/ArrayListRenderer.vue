@@ -13,7 +13,7 @@
       <FormButton
         v-if="!isReadonly"
         hide-text
-        :icon-left="PlusIcon"
+        :icon-left="Plus"
         size="sm"
         :disabled="!control.enabled || (appliedOptions.restrict && maxItemsReached)"
         @click="onAdd"
@@ -65,7 +65,7 @@
   </fieldset>
 </template>
 <script setup lang="ts">
-import { PlusIcon } from '@heroicons/vue/24/solid'
+import { Plus } from 'lucide-vue-next'
 import {
   type ControlElement,
   Resolve,

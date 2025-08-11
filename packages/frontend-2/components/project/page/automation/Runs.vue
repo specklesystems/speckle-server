@@ -14,7 +14,7 @@
           <FormButton
             color="subtle"
             hide-text
-            :icon-right="EllipsisHorizontalIcon"
+            :icon-right="Ellipsis"
             class="!text-foreground-2"
             @click="showActionsMenu = true"
           ></FormButton>
@@ -48,7 +48,7 @@ import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectPageAutomationRuns_AutomationFragment } from '~/lib/common/generated/gql/graphql'
 import { useTriggerAutomation } from '~/lib/projects/composables/automationManagement'
 import { projectAutomationPagePaginatedRunsQuery } from '~/lib/projects/graphql/queries'
-import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
+import { Ellipsis } from 'lucide-vue-next'
 import { HorizontalDirection, type LayoutMenuItem } from '@speckle/ui-components'
 
 // TODO: Subscriptions for new runs

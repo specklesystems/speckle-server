@@ -56,7 +56,7 @@
               :to="allProjectModelsRoute(project.id) + '/'"
               size="sm"
               color="outline"
-              :icon-right="ChevronRightIcon"
+              :icon-right="ChevronRight"
             >
               {{
                 `${modelItemTotalCount} ${
@@ -129,7 +129,7 @@ import {
   modelRoute
 } from '~~/lib/common/helpers/route'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
-import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { ChevronRight } from 'lucide-vue-next'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { RoleInfo, type StreamRoles } from '@speckle/shared'
 import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'

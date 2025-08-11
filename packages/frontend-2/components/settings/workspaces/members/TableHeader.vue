@@ -4,7 +4,7 @@
       <div class="relative mt-6 md:mt-0 gap-x-4 flex justify-flex-start">
         <FormTextInput
           name="search"
-          :custom-icon="MagnifyingGlassIcon"
+          :custom-icon="Search"
           color="foundation"
           full-width
           search
@@ -50,7 +50,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
+import { Search } from 'lucide-vue-next'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import type { SettingsWorkspacesMembersTableHeader_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'

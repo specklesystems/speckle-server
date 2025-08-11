@@ -22,7 +22,11 @@
               class="text-body-3xs text-danger hover:text-danger-lighter cursor-pointer"
               @click.stop="actions?.showUploads()"
             >
-              <ExclamationCircleIcon class="w-4 h-4" />
+              <CircleAlert
+                :size="LucideSize.base"
+                :stroke-width="1.5"
+                :absolute-stroke-width="true"
+              />
             </NuxtLink>
             <ProjectPageModelsActions
               ref="actions"
@@ -47,7 +51,7 @@
         >
           <FormButton
             color="subtle"
-            :icon-left="PlusIcon"
+            :icon-left="Plus"
             size="sm"
             :disabled="!canCreateModel.canClickCreate.value"
             @click.stop="$emit('create-submodel', model?.name || '')"
@@ -177,13 +181,21 @@
         <!-- Icon -->
         <div>
           <div class="mx-2 flex items-center hover:text-primary text-foreground-2 h-14">
-            <ChevronDownIcon
-              :class="`w-4 h-4 transition ${expanded ? 'rotate-180' : ''}`"
+            <ChevronDown
+              :size="LucideSize.base"
+              :stroke-width="1.5"
+              :absolute-stroke-width="true"
+              :class="`transition ${expanded ? 'rotate-180' : ''}`"
             />
           </div>
         </div>
         <!-- Name -->
-        <FolderIcon class="w-4 h-4 text-foreground" />
+        <Folder
+          :size="LucideSize.base"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          class="text-foreground"
+        />
         <div class="ml-2 flex-grow text-left flex items-center gap-2">
           <div class="text-heading text-foreground">
             {{ name }}
@@ -195,7 +207,11 @@
             class="text-body-3xs text-danger hover:text-danger-lighter cursor-pointer"
             @click.stop="actions?.showUploads()"
           >
-            <ExclamationCircleIcon class="w-4 h-4" />
+            <CircleAlert
+              :size="LucideSize.base"
+              :stroke-width="1.5"
+              :absolute-stroke-width="true"
+            />
           </NuxtLink>
         </div>
 
@@ -242,7 +258,12 @@
         <template v-else>
           <div v-for="child in children" :key="child.fullName" class="flex">
             <div class="h-20 absolute -ml-8 flex items-center mt-0 mr-1 pl-1">
-              <ChevronDownIcon class="w-4 h-4 rotate-45 text-foreground-2" />
+              <ChevronDown
+                :size="LucideSize.base"
+                :stroke-width="1.5"
+                :absolute-stroke-width="true"
+                class="rotate-45 text-foreground-2"
+              />
             </div>
 
             <ProjectPageModelsStructureItem
@@ -261,8 +282,8 @@
 </template>
 <script lang="ts" setup>
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
-import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid'
-import { ExclamationCircleIcon, FolderIcon } from '@heroicons/vue/24/outline'
+import { ChevronDown, Plus, Folder, CircleAlert } from 'lucide-vue-next'
+
 import type {
   PendingFileUploadFragment,
   ProjectPageModelsStructureItem_ProjectFragment,

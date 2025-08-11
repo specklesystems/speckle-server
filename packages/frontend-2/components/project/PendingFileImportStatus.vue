@@ -19,7 +19,12 @@
       v-else-if="upload.convertedStatus === FileUploadConvertedStatus.Completed"
     >
       <span class="inline-flex items-center space-x-1">
-        <CheckCircleIcon class="h-4 w-4 text-success" />
+        <CircleCheck
+          :size="LucideSize.base"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          class="text-success"
+        />
         <span>
           {{ isSelfImport ? 'Import successful' : 'Version import successful' }}
         </span>
@@ -27,7 +32,12 @@
     </template>
     <template v-else>
       <span class="inline-flex items-center space-x-1">
-        <ExclamationTriangleIcon class="h-4 w-4 text-danger" />
+        <TriangleAlert
+          :size="LucideSize.base"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          class="text-danger"
+        />
         <span>{{ isSelfImport ? 'Import failed' : 'Version import failed' }}</span>
       </span>
       <span v-if="upload.convertedMessage" class="text-center">
@@ -39,7 +49,7 @@
 <script setup lang="ts">
 import type { PendingFileUploadFragment } from '~~/lib/common/generated/gql/graphql'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
-import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
+import { CircleCheck, TriangleAlert } from 'lucide-vue-next'
 
 type ImportedItemType = 'self' | 'subversion'
 

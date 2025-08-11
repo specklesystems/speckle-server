@@ -46,8 +46,11 @@
       <template #id="{ item }">
         <div class="flex items-center text-foreground-2">
           {{ item.id }}
-          <ClipboardIcon
-            class="w-4 h-4 ml-2 cursor-pointer hover:text-foreground transition"
+          <Clipboard
+            :size="LucideSize.base"
+            :stroke-width="1.5"
+            :absolute-stroke-width="true"
+            class="ml-2 cursor-pointer hover:text-foreground transition"
             @click="() => handleCopyText(item.id)"
           />
         </div>
@@ -66,7 +69,7 @@
 import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsWorkspacesAutomationFunctions_AutomateFunctionFragment } from '~/lib/common/generated/gql/graphql'
 import { automateFunctionRoute } from '~/lib/common/helpers/route'
-import { ClipboardIcon } from '@heroicons/vue/24/outline'
+import { Clipboard } from 'lucide-vue-next'
 import type { LayoutHeaderButton } from '@speckle/ui-components'
 
 graphql(`

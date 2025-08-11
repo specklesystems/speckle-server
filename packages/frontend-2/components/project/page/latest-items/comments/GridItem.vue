@@ -32,7 +32,13 @@
         :users="allAvatars"
         :max-count="4"
       />
-      <CheckCircleIcon v-else class="w-8 h-8 text-primary" />
+      <CircleCheck
+        v-else
+        :size="32"
+        :stroke-width="1.5"
+        :absolute-stroke-width="true"
+        class="text-primary"
+      />
     </div>
     <div class="w-full" :class="isLimited ? 'h-14' : 'h-16'">
       <div class="flex flex-col w-full h-full">
@@ -62,7 +68,7 @@ import type {
 import { useCommentScreenshotImage } from '~~/lib/projects/composables/previewImage'
 import { times } from 'lodash-es'
 import { getLightLinkToThread } from '~~/lib/viewer/helpers/comments'
-import { CheckCircleIcon } from '@heroicons/vue/24/solid'
+import { CircleCheck } from 'lucide-vue-next'
 import type { AvatarUserWithId } from '@speckle/ui-components'
 
 const props = defineProps<{

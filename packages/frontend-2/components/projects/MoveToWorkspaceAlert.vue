@@ -2,7 +2,12 @@
   <div>
     <CommonCard class="pb-6 !bg-foundation mb-6">
       <div class="flex flex-col sm:flex-row sm:gap-2 text-foreground">
-        <ExclamationCircleIcon class="h-8 w-8 m-1 text-warning shrink-0" />
+        <CircleAlert
+          :size="LucideSize.xxl"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          class="m-1 text-warning shrink-0"
+        />
         <div class="flex flex-col gap-3">
           <h3 class="text-heading mt-2">
             {{
@@ -51,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
+import { CircleAlert } from 'lucide-vue-next'
 import { LearnMoreMoveProjectsUrl } from '~/lib/common/helpers/route'
 
 defineEmits(['moveProject'])

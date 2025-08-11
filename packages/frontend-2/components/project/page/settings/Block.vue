@@ -36,7 +36,12 @@
       class="flex flex-col sm:flex-row gap-2 justify-between items-end sm:items-center bg-foundation px-4 sm:px-6 py-2 border-t border-outline-2"
     >
       <div v-if="disabledMessage" class="text-xs flex gap-1 sm:items-center w-full">
-        <ExclamationCircleIcon class="h-5 w-5 text-foreground-2" />
+        <CircleAlert
+          :size="LucideSize.lg"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          class="text-foreground-2"
+        />
         <span class="text-foreground-2">
           {{ disabledMessage }}
         </span>
@@ -49,7 +54,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
+import { CircleAlert } from 'lucide-vue-next'
 import type { FullPermissionCheckResultFragment } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{

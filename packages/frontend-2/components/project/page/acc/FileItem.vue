@@ -15,7 +15,7 @@
           <FormButton
             size="sm"
             hide-text
-            :icon-left="!expanded ? ChevronDownIcon : ChevronUpIcon"
+            :icon-left="!expanded ? ChevronDown : ChevronUp"
             color="outline"
             @click.stop="expanded = !expanded"
           ></FormButton>
@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/20/solid'
+import { ChevronDown, ChevronUp } from 'lucide-vue-next'
 import type { AccItem } from '@speckle/shared/acc'
 
 defineProps<{

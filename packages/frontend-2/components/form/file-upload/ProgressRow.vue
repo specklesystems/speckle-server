@@ -6,7 +6,12 @@
         {{ prettyFileSize(item.file.size) }}
       </span>
       <button class="p-0.5 text-foreground hover:text-primary" @click="onDelete">
-        <XMarkIcon class="h-4 w-4" alt="delete" />
+        <X
+          :size="LucideSize.base"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          alt="delete"
+        />
       </button>
     </div>
     <div
@@ -39,7 +44,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { X } from 'lucide-vue-next'
 import { prettyFileSize } from '~~/lib/core/helpers/file'
 import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
 import type { UploadFileItem } from '~~/lib/form/composables/fileUpload'

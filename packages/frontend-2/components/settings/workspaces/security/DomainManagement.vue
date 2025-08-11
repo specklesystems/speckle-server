@@ -40,11 +40,14 @@
         >
           <div class="flex items-center gap-1">
             <p class="text-body-2xs text-foreground-2">Connect a verified domain</p>
-            <InformationCircleIcon
+            <Info
               v-tippy="
                 'To connect a domain, you first need to verify an email address with that domain in your personal account settings. For example, if you verify example@company.com, you can then connect the company.com domain here.'
               "
-              class="w-4 h-4 text-foreground-disabled"
+              :size="LucideSize.base"
+              :stroke-width="1.5"
+              :absolute-stroke-width="true"
+              class="text-foreground-disabled"
             />
           </div>
 
@@ -92,7 +95,7 @@ import { graphql } from '~/lib/common/generated/gql'
 import type { ShallowRef } from 'vue'
 import { blockedDomains, Roles } from '@speckle/shared'
 import { useVerifiedUserEmailDomains } from '~/lib/workspaces/composables/security'
-import { InformationCircleIcon } from '@heroicons/vue/20/solid'
+import { Info } from 'lucide-vue-next'
 import { useAddWorkspaceDomain } from '~/lib/settings/composables/management'
 import { settingsDeleteWorkspaceDomainMutation } from '~/lib/settings/graphql/mutations'
 import type { SettingsWorkspacesSecurityDomainManagement_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'

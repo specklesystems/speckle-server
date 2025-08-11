@@ -41,12 +41,17 @@
             :class="{ 'top-7': index === 0 }"
             @click="removeInviteItem(index)"
           >
-            <TrashIcon class="h-4 w-4 text-foreground-2" />
+            <Trash2
+              :size="LucideSize.base"
+              :stroke-width="1.5"
+              :absolute-stroke-width="true"
+              class="text-foreground-2"
+            />
           </CommonTextLink>
         </div>
       </div>
       <div>
-        <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
+        <FormButton color="subtle" :icon-left="Plus" @click="addInviteItem">
           Add another user
         </FormButton>
       </div>
@@ -58,7 +63,7 @@
 </template>
 <script setup lang="ts">
 import { useForm, useFieldArray } from 'vee-validate'
-import { PlusIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { Plus, Trash2 } from 'lucide-vue-next'
 import type {
   InviteWorkspaceForm,
   InviteWorkspaceItem

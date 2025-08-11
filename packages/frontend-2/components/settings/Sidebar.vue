@@ -14,7 +14,12 @@
         </FormButton>
 
         <NuxtLink :to="exitSettingsRoute" class="flex items-center gap-x-1 pl-0.5">
-          <ChevronLeftIcon class="h-4 w-4 text-foreground-2" />
+          <ChevronLeft
+            :size="LucideSize.base"
+            :stroke-width="1.5"
+            :absolute-stroke-width="true"
+            class="text-foreground-2"
+          />
           <p class="text-body-xs font-medium text-foreground">Settings</p>
         </NuxtLink>
       </div>
@@ -29,7 +34,12 @@
               :to="exitSettingsRoute"
               class="items-center gap-x-1.5 px-2.5 flex"
             >
-              <ChevronLeftIcon class="h-3 w-3 text-foreground-2" />
+              <ChevronLeft
+                :size="LucideSize.sm"
+                :stroke-width="1.5"
+                :absolute-stroke-width="true"
+                class="text-foreground-2"
+              />
               <p class="text-body-xs font-medium text-foreground">Exit settings</p>
             </NuxtLink>
           </LayoutSidebarMenuGroup>
@@ -114,7 +124,7 @@ import type { WorkspaceRoles } from '@speckle/shared'
 import { useIsWorkspacesEnabled } from '~/composables/globals'
 import { useQuery } from '@vue/apollo-composable'
 import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
-import { ChevronLeftIcon } from '@heroicons/vue/24/outline'
+import { ChevronLeft } from 'lucide-vue-next'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import { useSettingsMenu, useSettingsMenuState } from '~/lib/settings/composables/menu'
 import {
