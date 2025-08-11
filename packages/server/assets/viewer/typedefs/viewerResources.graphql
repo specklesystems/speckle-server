@@ -38,7 +38,7 @@ extend type Project {
     """
     If a saved view ID is specified, the returned resources will be adjusted to return the view's resources instead
     """
-    savedViewId: String
+    savedViewId: ID
     savedViewSettings: SavedViewsLoadSettings
     loadedVersionsOnly: Boolean = true
   ): [ViewerResourceGroup!]!

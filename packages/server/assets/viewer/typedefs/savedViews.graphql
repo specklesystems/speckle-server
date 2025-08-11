@@ -125,6 +125,10 @@ extend type Project {
   savedViewGroup(id: ID!): SavedViewGroup!
   ungroupedViewGroup(input: GetUngroupedViewGroupInput!): SavedViewGroup!
   savedView(id: ID!): SavedView!
+  """
+  Same as savedView(), but won't throw if view isn't found
+  """
+  savedViewIfExists(id: ID): SavedView
 }
 
 input CreateSavedViewInput {

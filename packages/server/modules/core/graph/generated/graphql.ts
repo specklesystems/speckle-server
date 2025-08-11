@@ -2362,6 +2362,8 @@ export type Project = {
   savedView: SavedView;
   savedViewGroup: SavedViewGroup;
   savedViewGroups: SavedViewGroupCollection;
+  /** Same as savedView(), but won't throw if view isn't found */
+  savedViewIfExists?: Maybe<SavedView>;
   /** Source apps used in any models of this project */
   sourceApps: Array<Scalars['String']['output']>;
   team: Array<ProjectCollaborator>;
@@ -2504,6 +2506,11 @@ export type ProjectSavedViewGroupsArgs = {
 };
 
 
+export type ProjectSavedViewIfExistsArgs = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
 export type ProjectUngroupedViewGroupArgs = {
   input: GetUngroupedViewGroupInput;
 };
@@ -2523,7 +2530,7 @@ export type ProjectVersionsArgs = {
 export type ProjectViewerResourcesArgs = {
   loadedVersionsOnly?: InputMaybe<Scalars['Boolean']['input']>;
   resourceIdString: Scalars['String']['input'];
-  savedViewId?: InputMaybe<Scalars['String']['input']>;
+  savedViewId?: InputMaybe<Scalars['ID']['input']>;
   savedViewSettings?: InputMaybe<SavedViewsLoadSettings>;
 };
 
@@ -7439,6 +7446,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   savedView?: Resolver<ResolversTypes['SavedView'], ParentType, ContextType, RequireFields<ProjectSavedViewArgs, 'id'>>;
   savedViewGroup?: Resolver<ResolversTypes['SavedViewGroup'], ParentType, ContextType, RequireFields<ProjectSavedViewGroupArgs, 'id'>>;
   savedViewGroups?: Resolver<ResolversTypes['SavedViewGroupCollection'], ParentType, ContextType, RequireFields<ProjectSavedViewGroupsArgs, 'input'>>;
+  savedViewIfExists?: Resolver<Maybe<ResolversTypes['SavedView']>, ParentType, ContextType, Partial<ProjectSavedViewIfExistsArgs>>;
   sourceApps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   team?: Resolver<Array<ResolversTypes['ProjectCollaborator']>, ParentType, ContextType>;
   ungroupedViewGroup?: Resolver<ResolversTypes['SavedViewGroup'], ParentType, ContextType, RequireFields<ProjectUngroupedViewGroupArgs, 'input'>>;

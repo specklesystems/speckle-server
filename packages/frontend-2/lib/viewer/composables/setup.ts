@@ -26,7 +26,6 @@ import { isNonNullable } from '@speckle/shared'
 import { useApolloClient, useLazyQuery, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
-  viewerActiveSavedViewQuery,
   viewerLoadedResourcesQuery,
   viewerLoadedThreadsQuery,
   viewerModelVersionsQuery
@@ -79,7 +78,6 @@ import {
   ViewerModelResource,
   type ViewerResource
 } from '@speckle/shared/viewer/route'
-import { useAreSavedViewsEnabled } from '~/lib/viewer/composables/savedViews/general'
 import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
 
 export type LoadedModel = NonNullable<
@@ -585,6 +583,7 @@ function setupResponseResourceItems(
   | 'resourceItemsQueryVariables'
   | 'resourceItemsLoaded'
   | 'resolvedResourceIdString'
+  | 'savedView'
 > {
   const globalError = useError()
   const {
@@ -598,6 +597,15 @@ function setupResponseResourceItems(
   } = state
 
   const initLoadDone = ref(import.meta.server ? false : true)
+
+  /**
+   * Resolves actual resources to load:
+   * - Viewer Resource Groups and items
+   * - Saved View that was used, if any
+   *
+   * Both must be loaded together to avoid race conditions. They both change
+   * what exactly ends up being loaded, so its important they're in sync.
+   */
   const {
     result: resolvedResourcesResult,
     variables: resourceItemsQueryVariables,
@@ -624,9 +632,23 @@ function setupResponseResourceItems(
     initLoadDone.value = true
   })
 
-  onResult(() => {
+  onResult((val) => {
     initLoadDone.value = true
+
+    if (import.meta.client) {
+      devLog('onresult', resolvedResourcesResult, val)
+    }
   })
+
+  if (import.meta.client) {
+    watch(resourceItemsQueryVariables, (newVal) => {
+      devLog(newVal, 'resourceItemsQueryVariables')
+    })
+
+    watch(resolvedResourcesResult, (newVal) => {
+      devLog(newVal, 'resolvedResourcesResult')
+    })
+  }
 
   const resolvedResourceGroups = computed(
     () => resolvedResourcesResult.value?.project?.viewerResources || []
@@ -696,6 +718,14 @@ function setupResponseResourceItems(
 
   const resourceItemsLoaded = computed(() => initLoadDone.value)
 
+  // Shows only the one matching the savedViewId. If the query is still loading/stale, it will return undefined
+  const savedView = computed(() =>
+    savedViewId.value &&
+    resolvedResourcesResult.value?.project?.savedViewIfExists?.id === savedViewId.value
+      ? resolvedResourcesResult.value?.project?.savedViewIfExists
+      : undefined
+  )
+
   const resolvedResourceIdString = computed(() =>
     resourceBuilder()
       // Combined group identifiers should result in the final resource id string
@@ -707,7 +737,8 @@ function setupResponseResourceItems(
     resourceItems,
     resourceItemsQueryVariables: computed(() => resourceItemsQueryVariables.value),
     resourceItemsLoaded,
-    resolvedResourceIdString
+    resolvedResourceIdString,
+    savedView
   }
 }
 
@@ -720,21 +751,17 @@ function setupResponseResourceData(
   | 'resourceItemsQueryVariables'
   | 'resourceItemsLoaded'
   | 'resolvedResourceIdString'
+  | 'savedView'
 > {
   const apollo = useApolloClient().client
   const globalError = useError()
   const { triggerNotification } = useGlobalToast()
   const logger = useLogger()
-  const savedViewsEnabled = useAreSavedViewsEnabled()
 
   const {
     projectId,
     resources: {
-      request: {
-        resourceIdString,
-        threadFilters,
-        savedView: { id: savedViewId }
-      }
+      request: { resourceIdString, threadFilters }
     },
     urlHashState: { diff }
   } = state
@@ -934,36 +961,6 @@ function setupResponseResourceData(
     logger.error(err)
   })
 
-  // SAVED VIEW
-  const { result: viewerActiveSavedViewResult, onError: onViewerActiveSavedViewError } =
-    useQuery(
-      viewerActiveSavedViewQuery,
-      () => ({
-        projectId: projectId.value,
-        savedViewId: savedViewId.value!
-      }),
-      {
-        enabled: computed(() => !!savedViewId.value && savedViewsEnabled)
-      }
-    )
-
-  onViewerActiveSavedViewError((err) => {
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Saved view loading failed',
-      description: `${err.message}`
-    })
-    logger.error(err)
-  })
-
-  // Shows only the one matching the savedViewId. If the query is still loading/stale, it will return undefined
-  const savedView = computed(() =>
-    savedViewId.value &&
-    viewerActiveSavedViewResult.value?.project?.savedView.id === savedViewId.value
-      ? viewerActiveSavedViewResult.value?.project?.savedView
-      : undefined
-  )
-
   onServerPrefetch(async () => {
     await Promise.all([serverResourcesLoadedPromise.promise])
   })
@@ -979,8 +976,7 @@ function setupResponseResourceData(
     threadsQueryVariables: computed(() => threadsQueryVariables.value),
     loadMoreVersions,
     resourcesLoaded: computed(() => initLoadDone.value),
-    resourcesLoading: computed(() => viewerLoadedResourcesLoading.value),
-    savedView
+    resourcesLoading: computed(() => viewerLoadedResourcesLoading.value)
   }
 }
 

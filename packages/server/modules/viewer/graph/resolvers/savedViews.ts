@@ -131,6 +131,19 @@ const resolvers: Resolvers = {
       }
 
       return view
+    },
+    savedViewIfExists: async (parent, args, ctx) => {
+      if (!args.id?.length) return null
+
+      const projectDb = await getProjectDbClient({ projectId: parent.id })
+      const view = await ctx.loaders
+        .forRegion({ db: projectDb })
+        .savedViews.getSavedView.load({
+          viewId: args.id,
+          projectId: parent.id
+        })
+
+      return view
     }
   },
   SavedView: {
@@ -373,6 +386,9 @@ const disabledResolvers: Resolvers = {
     },
     savedView: () => {
       throw new NotImplementedError(disabledMessage)
+    },
+    savedViewIfExists: () => {
+      return null // intentional - so we dont have to FF guard the query
     }
   },
   ProjectMutations: {

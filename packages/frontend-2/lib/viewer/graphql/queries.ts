@@ -4,7 +4,7 @@ export const projectViewerResourcesQuery = graphql(`
   query ProjectViewerResources(
     $projectId: String!
     $resourceUrlString: String!
-    $savedViewId: String
+    $savedViewId: ID
     $savedViewSettings: SavedViewsLoadSettings
   ) {
     project(id: $projectId) {
@@ -21,15 +21,7 @@ export const projectViewerResourcesQuery = graphql(`
           objectId
         }
       }
-    }
-  }
-`)
-
-export const viewerActiveSavedViewQuery = graphql(`
-  query ViewerActiveSavedView($projectId: String!, $savedViewId: ID!) {
-    project(id: $projectId) {
-      id
-      savedView(id: $savedViewId) {
+      savedViewIfExists(id: $savedViewId) {
         id
         ...UseViewerSavedViewSetup_SavedView
       }

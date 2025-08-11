@@ -958,22 +958,25 @@ const useViewerSavedViewSetup = () => {
   const update = (params: { settings: SavedViewUrlSettings }) => {
     const { settings } = params
 
+    let reapplyState = true
+
     // If passing in viewId and it differs, apply and wait for that to finish
     if (settings.id && settings.id !== savedViewId.value) {
       savedViewId.value = settings.id
-      return
     }
 
     // If changing loadOriginal value, apply and wait for that to finish
     if ((settings.loadOriginal || false) !== loadOriginal.value) {
       loadOriginal.value = settings.loadOriginal || false
-      return
+      reapplyState = false
     }
 
-    // Re-apply current state
-    const state = validState(savedView.value?.viewerState)
-    if (!state) return
-    apply(state)
+    // Re-apply current state, if queued
+    if (reapplyState) {
+      const state = validState(savedView.value?.viewerState)
+      if (!state) return
+      void apply(state)
+    }
   }
 
   const reset = () => {
