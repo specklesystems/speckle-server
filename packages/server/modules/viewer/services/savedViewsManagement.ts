@@ -278,12 +278,13 @@ export const createSavedViewGroupFactory =
         authorId
       }
     })
+    const groupResourceIds = formatResourceIdsForGroup(resourceIds)
 
     // Insert
     const group = await deps.storeSavedViewGroup({
       group: {
         projectId,
-        resourceIds: resourceIds.toResources().map((r) => r.toString()),
+        resourceIds: groupResourceIds,
         name: groupName,
         authorId
       }

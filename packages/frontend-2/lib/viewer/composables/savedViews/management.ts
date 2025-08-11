@@ -285,6 +285,7 @@ const createSavedViewGroupMutation = graphql(`
       savedViewMutations {
         createGroup(input: $input) {
           id
+          ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup
         }
       }
     }

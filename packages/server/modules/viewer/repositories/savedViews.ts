@@ -241,15 +241,23 @@ export const getProjectSavedViewGroupsPageItemsFactory =
     const { projectId } = params
     const { q, resourceIds, includeDefaultGroup } =
       await getProjectSavedViewGroupsBaseQueryFactory(deps)(params)
-    const { applyCursorSortAndFilter, resolveNewCursor } = savedGroupCursorUtils()
+    const { applyCursorSortAndFilter, resolveNewCursor, decode } =
+      savedGroupCursorUtils()
 
     const limit = clamp(params.limit ?? 10, 0, 100)
     q.limit(limit)
 
+    // Adjust cursor, in case it points to non-existant default group
+    let cursor = decode(params.cursor)
+    if (cursor?.id.startsWith('default-')) {
+      // Default appears first, so just unset the cursor to get the real first item
+      cursor = null
+    }
+
     // Apply cursor filter and sort
     applyCursorSortAndFilter({
       query: q,
-      cursor: params.cursor
+      cursor
     })
 
     const items: SavedViewGroup[] = await q
