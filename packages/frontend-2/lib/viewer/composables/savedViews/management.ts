@@ -31,15 +31,39 @@ const createSavedViewMutation = graphql(`
   }
 `)
 
-export const useCreateSavedView = () => {
-  const { mutate } = useMutation(createSavedViewMutation)
-  const { userId } = useActiveUser()
+export const useCollectNewSavedViewViewerData = () => {
   const {
     projectId,
     viewer: { instance: viewerInstance }
   } = useInjectedViewerState()
   const { serialize, buildConcreteResourceIdString } = useStateSerialization()
+
+  const collect = async (): Promise<
+    Pick<
+      CreateSavedViewInput,
+      'resourceIdString' | 'viewerState' | 'screenshot' | 'projectId'
+    >
+  > => {
+    const screenshot = await viewerInstance.screenshot()
+    return {
+      projectId: projectId.value,
+      resourceIdString: buildConcreteResourceIdString(),
+      viewerState: serialize({ concreteResourceIdString: true }),
+      screenshot
+    }
+  }
+
+  return {
+    collect
+  }
+}
+
+export const useCreateSavedView = () => {
+  const { mutate } = useMutation(createSavedViewMutation)
+  const { userId } = useActiveUser()
+  const { projectId } = useInjectedViewerState()
   const { triggerNotification } = useGlobalToast()
+  const { collect } = useCollectNewSavedViewViewerData()
 
   return async (
     input: Omit<
@@ -48,16 +72,12 @@ export const useCreateSavedView = () => {
     >
   ) => {
     if (!userId.value) return
-    const screenshot = await viewerInstance.screenshot()
 
     const result = await mutate(
       {
         input: {
           ...input,
-          projectId: projectId.value,
-          resourceIdString: buildConcreteResourceIdString(),
-          viewerState: serialize({ concreteResourceIdString: true }),
-          screenshot
+          ...(await collect())
         }
       },
       {

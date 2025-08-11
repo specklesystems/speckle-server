@@ -55,10 +55,9 @@
         v-if="isSavedViewsEnabled"
         v-tippy="getShortcutDisplayText(shortcuts.ToggleSavedViews)"
         :active="activePanel === 'savedViews'"
+        :icon="Camera"
         @click="toggleActivePanel('savedViews')"
-      >
-        <Camera class="h-4 w-4 md:h-5 md:w-5" />
-      </ViewerControlsButtonToggle>
+      ></ViewerControlsButtonToggle>
 
       <ViewerControlsButtonToggle
         v-if="allAutomationRuns.length !== 0"
