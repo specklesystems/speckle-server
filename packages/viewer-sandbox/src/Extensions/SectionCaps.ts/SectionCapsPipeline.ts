@@ -2,11 +2,11 @@ import {
   DefaultPipeline,
   ObjectLayers,
   ObjectVisibility,
+  PipelineOptions,
   SpeckleRenderer
 } from '@speckle/viewer'
 import { StencilFrontPass } from './StencilFrontPass'
 import { StencilBackPass } from './StencilBackPass'
-import { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipelines/Pipeline'
 
 export class SectionCapsPipeline extends DefaultPipeline {
   constructor(speckleRenderer: SpeckleRenderer, options?: PipelineOptions) {

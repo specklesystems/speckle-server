@@ -21,7 +21,6 @@ import {
 import { SectionOutlines } from '@speckle/viewer'
 import { BoxSelection } from './Extensions/BoxSelection'
 import { PassReader } from './Extensions/PassReader'
-import { SectionCaps } from './Extensions/SectionCaps.ts/SectionCaps'
 
 const createViewer = async (containerName: string, _stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
