@@ -20,7 +20,7 @@
         <div
           class="h-10 pl-4 pr-2 flex items-center justify-between border-b border-outline-2"
         >
-          <div class="text-body-xs text-foreground font-medium">
+          <div class="text-body-xs text-foreground font-medium leading-none">
             <slot name="title" />
           </div>
           <slot name="actions" />
