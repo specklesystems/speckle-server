@@ -78,6 +78,7 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { useViewerSavedViewsUtils } from '~/lib/viewer/composables/savedViews/general'
 import {
+  useCollectNewSavedViewViewerData,
   useDeleteSavedView,
   useUpdateSavedView
 } from '~/lib/viewer/composables/savedViews/management'
@@ -86,7 +87,8 @@ const MenuItems = StringEnum([
   'Delete',
   'LoadOriginalVersions',
   'CopyLink',
-  'ChangeVisibility'
+  'ChangeVisibility',
+  'ReplaceView'
 ])
 type MenuItems = StringEnumValues<typeof MenuItems>
 
@@ -117,6 +119,7 @@ const props = defineProps<{
   view: ViewerSavedViewsPanelView_SavedViewFragment
 }>()
 
+const { collect } = useCollectNewSavedViewViewerData()
 const deleteView = useDeleteSavedView()
 const updateView = useUpdateSavedView()
 const isLoading = useMutationLoading()
@@ -135,6 +138,10 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
     {
       id: MenuItems.LoadOriginalVersions,
       title: 'Load with original model version'
+    },
+    {
+      id: MenuItems.ReplaceView,
+      title: 'Update view'
     },
     {
       id: MenuItems.CopyLink,
@@ -185,6 +192,16 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
           visibility: isOnlyVisibleToMe.value
             ? SavedViewVisibility.Public
             : SavedViewVisibility.AuthorOnly
+        }
+      })
+      break
+    case MenuItems.ReplaceView:
+      // Replace view w/ active one
+      await updateView({
+        view: props.view,
+        input: {
+          id: props.view.id,
+          ...(await collect())
         }
       })
       break
