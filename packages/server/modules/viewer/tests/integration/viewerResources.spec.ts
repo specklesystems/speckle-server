@@ -10,6 +10,7 @@ import {
 } from '@/modules/core/repositories/commits'
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import { buildBasicTestProject } from '@/modules/core/tests/helpers/creation'
+import { getSavedViewFactory } from '@/modules/viewer/repositories/savedViews'
 import {
   doViewerResourcesFit,
   getViewerResourceGroupsFactory,
@@ -52,7 +53,8 @@ describe('Viewer Resources Collection Service', () => {
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
         getAllBranchCommits: getAllBranchCommitsFactory({ db }),
-        getBranchesByIds: getBranchesByIdsFactory({ db })
+        getBranchesByIds: getBranchesByIdsFactory({ db }),
+        getSavedView: getSavedViewFactory({ db })
       })
 
     const allVersions = (): BasicTestCommit[] => {

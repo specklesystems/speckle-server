@@ -12,9 +12,14 @@ import {
 } from '~~/lib/viewer/composables/ui'
 import { CameraController, ViewMode, VisualDiffMode } from '@speckle/viewer'
 import type { NumericPropertyInfo } from '@speckle/viewer'
-import type { PartialDeep } from 'type-fest'
+import type { Merge, PartialDeep } from 'type-fest'
 import type { SectionBoxData } from '@speckle/shared/viewer/state'
 import { useViewerRealtimeActivityTracker } from '~/lib/viewer/composables/activity'
+import {
+  isModelResource,
+  resourceBuilder,
+  type ViewerResource
+} from '@speckle/shared/viewer/route'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 
@@ -138,6 +143,13 @@ export enum StateApplyMode {
   SavedView
 }
 
+export type StateApplyOptions = Merge<
+  Record<StateApplyMode, never>,
+  {
+    [StateApplyMode.SavedView]: { loadOriginal: boolean }
+  }
+>
+
 export function useApplySerializedState() {
   const {
     projectId,
@@ -171,7 +183,11 @@ export function useApplySerializedState() {
   const logger = useLogger()
   const { update } = useViewerRealtimeActivityTracker()
 
-  return async (state: PartialDeep<SerializedViewerState>, mode: StateApplyMode) => {
+  return async <Mode extends StateApplyMode>(
+    state: PartialDeep<SerializedViewerState>,
+    mode: Mode,
+    options?: StateApplyOptions[Mode]
+  ) => {
     if (mode === StateApplyMode.Reset) {
       resetState()
       update() // Trigger activity update
@@ -186,6 +202,34 @@ export function useApplySerializedState() {
       [StateApplyMode.Spotlight, StateApplyMode.ThreadFullContextOpen].includes(mode)
     ) {
       await resourceIdString.update(state.resources?.request?.resourceIdString || '')
+    } else if (mode === StateApplyMode.SavedView) {
+      const { loadOriginal } = options || {}
+
+      const current = resourceBuilder().addResources(resourceIdString.value)
+      const incoming = resourceBuilder().addResources(
+        state.resources?.request?.resourceIdString || ''
+      )
+
+      const finalItems: ViewerResource[] = []
+      for (const incomingItem of incoming) {
+        if (!isModelResource(incomingItem)) {
+          finalItems.push(incomingItem)
+          continue
+        }
+
+        // Update versionId based on loadOriginal
+        incomingItem.versionId = loadOriginal
+          ? incomingItem.versionId
+          : current
+              .filter(isModelResource)
+              .find((r) => r.modelId === incomingItem.modelId)?.versionId
+        finalItems.push(incomingItem)
+      }
+      const newResourceIdString = resourceBuilder()
+        .addResources(finalItems)
+        .addNew(current) // keeping other federated models around
+        .toString()
+      await resourceIdString.update(newResourceIdString)
     }
 
     position.value = new Vector3(

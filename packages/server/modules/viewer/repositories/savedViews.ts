@@ -15,7 +15,9 @@ import type {
   StoreSavedView,
   StoreSavedViewGroup,
   GetSavedViews,
-  DeleteSavedViewRecord
+  DeleteSavedViewRecord,
+  UpdateSavedViewRecord,
+  GetSavedView
 } from '@/modules/viewer/domain/operations/savedViews'
 import {
   SavedViewVisibility,
@@ -485,6 +487,14 @@ export const getSavedViewsFactory =
     return viewsMap
   }
 
+export const getSavedViewFactory =
+  (deps: { db: Knex }): GetSavedView =>
+  async ({ id, projectId }) => {
+    const getSavedViews = getSavedViewsFactory(deps)
+    const savedViews = await getSavedViews({ viewIds: [{ viewId: id, projectId }] })
+    return savedViews[id]
+  }
+
 export const deleteSavedViewRecordFactory =
   (deps: { db: Knex }): DeleteSavedViewRecord =>
   async (params) => {
@@ -503,4 +513,21 @@ export const deleteSavedViewRecordFactory =
 
     // Otherwise, return true
     return true
+  }
+
+export const updateSavedViewRecordFactory =
+  (deps: { db: Knex }): UpdateSavedViewRecord =>
+  async (params) => {
+    const { id, projectId, update } = params
+
+    // Update the saved view
+    const [updatedView] = await tables
+      .savedViews(deps.db)
+      .where({
+        [SavedViews.col.id]: id,
+        [SavedViews.col.projectId]: projectId
+      })
+      .update(update, '*')
+
+    return updatedView || undefined
   }

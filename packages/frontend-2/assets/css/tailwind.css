@@ -25,6 +25,15 @@ div#__nuxt {
   height: 100%;
 }
 
+/**
+ * Disable overscroll to prevent accidental page
+ * refresh when swiping through UI elements
+ */
+html,
+body {
+  overscroll-behavior: none;
+}
+
 @layer components {
   .terms-of-service {
     a {

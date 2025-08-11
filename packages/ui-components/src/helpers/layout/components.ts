@@ -32,6 +32,7 @@ export type LayoutMenuItem<I extends string = string> = {
   disabled?: MaybeNullOrUndefined<boolean>
   disabledTooltip?: MaybeNullOrUndefined<string>
   color?: 'danger' | 'info'
+  active?: boolean
 }
 
 export type LayoutDialogButton = {

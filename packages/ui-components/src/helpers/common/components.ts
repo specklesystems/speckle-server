@@ -39,3 +39,13 @@ export type AlertAction = {
   externalUrl?: boolean
   disabled?: boolean
 }
+
+export type FormRadioGroupItem<V extends string = string> = {
+  value: V
+  title: string
+  subtitle?: string
+  introduction?: string
+  icon?: ConcreteComponent
+  help?: string
+  disabled?: boolean
+}

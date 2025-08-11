@@ -7,7 +7,7 @@ import {
 import tseslint from 'typescript-eslint'
 import pluginVue from 'eslint-plugin-vue'
 import pluginVueA11y from 'eslint-plugin-vuejs-accessibility'
-import { omit } from 'lodash-es'
+import { omit } from '#lodash'
 
 const tsParserOptions = {
   tsconfigRootDir: getESMDirname(import.meta.url),

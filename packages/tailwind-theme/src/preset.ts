@@ -90,6 +90,8 @@ const config: Config = {
         }
       },
       borderRadius: {
+        xl: '0.625rem',
+        '2xl': '0.75rem',
         '4xl': '2rem'
       }
     }

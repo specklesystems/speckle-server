@@ -29,7 +29,15 @@
                 @click="chooseItem(item, $event)"
               >
                 <Component :is="item.icon" v-if="item.icon" class="h-4 w-4" />
-                <slot name="item" :item="item">{{ item.title }}</slot>
+                <div v-if="showTicks === true" class="w-5 shrink-0">
+                  <IconCheck v-if="item.active" class="h-4 w-4 text-foreground-2" />
+                </div>
+                <slot name="item" :item="item">
+                  <div :class="{ grow: !!showTicks }">{{ item.title }}</div>
+                </slot>
+                <div v-if="showTicks === 'right' && item.active" class="w-5 shrink-0">
+                  <IconCheck v-if="item.active" class="h-4 w-4 text-foreground-2" />
+                </div>
               </button>
             </span>
           </MenuItem>
@@ -51,6 +59,8 @@ import {
 import type { LayoutMenuItem } from '~~/src/helpers/layout/components'
 import { useElementBounding, useEventListener } from '@vueuse/core'
 import { useBodyMountedMenuPositioning } from '~~/src/composables/layout/menu'
+import { isNumber } from '#lodash'
+import IconCheck from '~~/src/components/global/icon/Check.vue'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
@@ -63,13 +73,15 @@ const props = defineProps<{
    * 2D array so that items can be grouped with dividers between them
    */
   items: LayoutMenuItem<MenuIds>[][]
-  size?: 'base' | 'lg'
+  size?: 'base' | 'lg' | number
   menuId?: string
   /**
    * Preferable menu position/directed. This can change depending on available space.
    */
   menuPosition?: HorizontalDirection
   mountMenuOnBody?: boolean
+  customMenuItemsClasses?: string[]
+  showTicks?: boolean | 'right'
 }>()
 
 const menuItems = ref(null as Nullable<{ el: HTMLDivElement }>)
@@ -103,6 +115,8 @@ const { menuStyle } = useBodyMountedMenuPositioning({
   menuOpenDirection: menuDirection,
   buttonBoundingBox: menuButtonBounding,
   menuWidth: computed(() => {
+    if (isNumber(props.size)) return props.size
+
     switch (props.size) {
       case 'lg':
         return 208
@@ -130,6 +144,10 @@ const menuItemsClasses = computed(() => {
     'mt-1 w-44 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg border border-outline-2 z-50'
   ]
 
+  if (props.customMenuItemsClasses) {
+    classParts.push(...props.customMenuItemsClasses)
+  }
+
   if (props.mountMenuOnBody) {
     classParts.push('fixed')
   } else {
@@ -156,7 +174,7 @@ const buildButtonClassses = (params: {
 }) => {
   const { active, disabled, color } = params
   const classParts = [
-    'group flex space-x-2 w-full items-center rounded-md px-2 py-1 text-body-xs'
+    'group flex space-x-2 w-full items-center rounded-md px-2 py-1 text-body-xs text-left'
   ]
 
   if (active && !color) {

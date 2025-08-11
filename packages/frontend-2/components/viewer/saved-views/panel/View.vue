@@ -20,23 +20,39 @@
         <div class="text-body-2xs text-foreground-3 truncate">
           {{ view.author?.name }}
         </div>
-        <LayoutMenu
-          v-model:open="showMenu"
-          :items="menuItems"
-          :menu-id="menuId"
-          mount-menu-on-body
-          @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
-        >
-          <FormButton
-            size="sm"
-            color="subtle"
-            :icon-left="Ellipsis"
-            hide-text
-            name="viewActions"
-            class="shrink-0 opacity-0 group-hover:opacity-100"
-            @click="showMenu = !showMenu"
-          />
-        </LayoutMenu>
+        <div class="flex items-center">
+          <LayoutMenu
+            v-model:open="showMenu"
+            :items="menuItems"
+            :menu-id="menuId"
+            mount-menu-on-body
+            show-ticks="right"
+            :size="230"
+            @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
+          >
+            <FormButton
+              size="sm"
+              color="subtle"
+              :icon-left="Ellipsis"
+              hide-text
+              name="viewActions"
+              class="shrink-0 opacity-0 group-hover:opacity-100"
+              @click="showMenu = !showMenu"
+            />
+          </LayoutMenu>
+          <div v-tippy="canUpdate?.errorMessage">
+            <FormButton
+              size="sm"
+              color="subtle"
+              :icon-left="SquarePen"
+              hide-text
+              name="editView"
+              class="shrink-0 opacity-0 group-hover:opacity-100"
+              :disabled="!canUpdate?.authorized || isLoading"
+              @click="showEditDialog = !showEditDialog"
+            />
+          </div>
+        </div>
       </div>
       <div class="w-full flex">
         <div
@@ -47,21 +63,34 @@
         </div>
       </div>
     </div>
+    <ViewerSavedViewsPanelViewEditDialog v-model:open="showEditDialog" :view="view" />
   </div>
 </template>
 <script setup lang="ts">
 import { StringEnum, throwUncoveredError, type StringEnumValues } from '@speckle/shared'
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
-import { Ellipsis } from 'lucide-vue-next'
+import { Ellipsis, SquarePen } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
-import type { ViewerSavedViewsPanelView_SavedViewFragment } from '~/lib/common/generated/gql/graphql'
-import { useEventBus } from '~/lib/core/composables/eventBus'
-import { useDeleteSavedView } from '~/lib/viewer/composables/savedViews/management'
-import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
+import {
+  SavedViewVisibility,
+  type ViewerSavedViewsPanelView_SavedViewFragment
+} from '~/lib/common/generated/gql/graphql'
+import { useViewerSavedViewsUtils } from '~/lib/viewer/composables/savedViews/general'
+import {
+  useCollectNewSavedViewViewerData,
+  useDeleteSavedView,
+  useUpdateSavedView
+} from '~/lib/viewer/composables/savedViews/management'
 
-const Menuitems = StringEnum(['Delete'])
-type MenuItems = StringEnumValues<typeof Menuitems>
+const MenuItems = StringEnum([
+  'Delete',
+  'LoadOriginalVersions',
+  'CopyLink',
+  'ChangeVisibility',
+  'ReplaceView'
+])
+type MenuItems = StringEnumValues<typeof MenuItems>
 
 graphql(`
   fragment ViewerSavedViewsPanelView_SavedView on SavedView {
@@ -69,6 +98,7 @@ graphql(`
     name
     description
     screenshot
+    visibility
     author {
       id
       name
@@ -80,6 +110,8 @@ graphql(`
       }
     }
     ...UseDeleteSavedView_SavedView
+    ...UseUpdateSavedView_SavedView
+    ...ViewerSavedViewsPanelViewEditDialog_SavedView
   }
 `)
 
@@ -87,18 +119,45 @@ const props = defineProps<{
   view: ViewerSavedViewsPanelView_SavedViewFragment
 }>()
 
-const eventBus = useEventBus()
+const { collect } = useCollectNewSavedViewViewerData()
 const deleteView = useDeleteSavedView()
+const updateView = useUpdateSavedView()
 const isLoading = useMutationLoading()
+const { copyLink, applyView } = useViewerSavedViewsUtils()
 
+const showEditDialog = ref(false)
 const showMenu = ref(false)
 const menuId = useId()
 
 const canUpdate = computed(() => props.view.permissions.canUpdate)
+const isOnlyVisibleToMe = computed(
+  () => props.view.visibility === SavedViewVisibility.AuthorOnly
+)
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
-      id: Menuitems.Delete,
+      id: MenuItems.LoadOriginalVersions,
+      title: 'Load with original model version'
+    },
+    {
+      id: MenuItems.ReplaceView,
+      title: 'Update view'
+    },
+    {
+      id: MenuItems.CopyLink,
+      title: 'Copy link'
+    }
+  ],
+  [
+    {
+      id: MenuItems.ChangeVisibility,
+      title: 'Only visible to me',
+      active: !!isOnlyVisibleToMe.value
+    }
+  ],
+  [
+    {
+      id: MenuItems.Delete,
       title: 'Delete',
       disabled: !canUpdate.value?.authorized || isLoading.value,
       disabledTooltip: canUpdate.value.errorMessage
@@ -108,8 +167,43 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
 
 const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
   switch (item.id) {
-    case Menuitems.Delete:
+    case MenuItems.Delete:
       await deleteView({ view: props.view })
+      break
+    case MenuItems.CopyLink:
+      await copyLink({
+        settings: {
+          id: props.view.id
+        }
+      })
+      break
+    case MenuItems.LoadOriginalVersions:
+      applyView({
+        id: props.view.id,
+        loadOriginal: true
+      })
+      break
+    case MenuItems.ChangeVisibility:
+      await updateView({
+        view: props.view,
+        input: {
+          id: props.view.id,
+          projectId: props.view.projectId,
+          visibility: isOnlyVisibleToMe.value
+            ? SavedViewVisibility.Public
+            : SavedViewVisibility.AuthorOnly
+        }
+      })
+      break
+    case MenuItems.ReplaceView:
+      // Replace view w/ active one
+      await updateView({
+        view: props.view,
+        input: {
+          id: props.view.id,
+          ...(await collect())
+        }
+      })
       break
     default:
       throwUncoveredError(item.id)
@@ -117,10 +211,8 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
 }
 
 const apply = async () => {
-  // Force update, even if the view id is already set
-  // (in case this is a frustration click w/ the state not applying)
-  eventBus.emit(ViewerEventBusKeys.UpdateSavedView, {
-    viewId: props.view.id
+  applyView({
+    id: props.view.id
   })
 }
 </script>
