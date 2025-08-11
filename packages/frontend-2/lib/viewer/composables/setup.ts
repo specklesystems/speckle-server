@@ -185,10 +185,6 @@ export type InjectableViewerState = Readonly<{
      */
     response: {
       /**
-       * Resource id string w/ saved view applied, if any
-       */
-      resolvedResourceIdString: ComputedRef<string>
-      /**
        * Metadata about loaded items
        */
       resourceItems: ComputedRef<ViewerResourceItem[]>
@@ -579,11 +575,7 @@ function setupResponseResourceItems(
   state: InitialStateWithRequest
 ): Pick<
   InjectableViewerState['resources']['response'],
-  | 'resourceItems'
-  | 'resourceItemsQueryVariables'
-  | 'resourceItemsLoaded'
-  | 'resolvedResourceIdString'
-  | 'savedView'
+  'resourceItems' | 'resourceItemsQueryVariables' | 'resourceItemsLoaded' | 'savedView'
 > {
   const globalError = useError()
   const {
@@ -632,23 +624,9 @@ function setupResponseResourceItems(
     initLoadDone.value = true
   })
 
-  onResult((val) => {
+  onResult(() => {
     initLoadDone.value = true
-
-    if (import.meta.client) {
-      devLog('onresult', resolvedResourcesResult, val)
-    }
   })
-
-  if (import.meta.client) {
-    watch(resourceItemsQueryVariables, (newVal) => {
-      devLog(newVal, 'resourceItemsQueryVariables')
-    })
-
-    watch(resolvedResourcesResult, (newVal) => {
-      devLog(newVal, 'resolvedResourcesResult')
-    })
-  }
 
   const resolvedResourceGroups = computed(
     () => resolvedResourcesResult.value?.project?.viewerResources || []
@@ -726,18 +704,10 @@ function setupResponseResourceItems(
       : undefined
   )
 
-  const resolvedResourceIdString = computed(() =>
-    resourceBuilder()
-      // Combined group identifiers should result in the final resource id string
-      .addResources(resolvedResourceGroups.value.map((group) => group.identifier))
-      .toString()
-  )
-
   return {
     resourceItems,
     resourceItemsQueryVariables: computed(() => resourceItemsQueryVariables.value),
     resourceItemsLoaded,
-    resolvedResourceIdString,
     savedView
   }
 }
@@ -747,11 +717,7 @@ function setupResponseResourceData(
   resourceItemsData: ReturnType<typeof setupResponseResourceItems>
 ): Omit<
   InjectableViewerState['resources']['response'],
-  | 'resourceItems'
-  | 'resourceItemsQueryVariables'
-  | 'resourceItemsLoaded'
-  | 'resolvedResourceIdString'
-  | 'savedView'
+  'resourceItems' | 'resourceItemsQueryVariables' | 'resourceItemsLoaded' | 'savedView'
 > {
   const apollo = useApolloClient().client
   const globalError = useError()
