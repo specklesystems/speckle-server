@@ -18,6 +18,7 @@ import {
 } from '@/modules/core/repositories/commits'
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { getSavedViewFactory } from '@/modules/viewer/repositories/savedViews'
 import {
   getViewerResourceGroupsFactory,
   getViewerResourceItemsUngroupedFactory
@@ -44,7 +45,8 @@ export const createTestComment = async (
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDb }),
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
         getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb }),
-        getBranchesByIds: getBranchesByIdsFactory({ db: projectDb })
+        getBranchesByIds: getBranchesByIdsFactory({ db: projectDb }),
+        getSavedView: getSavedViewFactory({ db: projectDb })
       })
     }),
     validateInputAttachments: validateInputAttachmentsFactory({

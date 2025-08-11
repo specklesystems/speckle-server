@@ -21,7 +21,7 @@
   </Component>
 </template>
 <script setup lang="ts">
-import { isObjectLike } from 'lodash'
+import { isObjectLike } from '#lodash'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 import { computed, resolveDynamicComponent } from 'vue'
 import type { Nullable } from '@speckle/shared'

@@ -22,8 +22,6 @@ import {
   createBranchFactory,
   deleteBranchByIdFactory,
   getBranchByIdFactory,
-  getBranchesByIdsFactory,
-  getBranchLatestCommitsFactory,
   getModelTreeItemsFactory,
   getModelTreeItemsFilteredFactory,
   getModelTreeItemsFilteredTotalCountFactory,
@@ -31,14 +29,11 @@ import {
   getPaginatedProjectModelsItemsFactory,
   getPaginatedProjectModelsTotalCountFactory,
   getStreamBranchByNameFactory,
-  getStreamBranchesByNameFactory,
   updateBranchFactory
 } from '@/modules/core/repositories/branches'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
-import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import {
-  getAllBranchCommitsFactory,
   getBranchCommitsTotalCountFactory,
   getPaginatedBranchCommitsItemsFactory,
   getSpecificBranchCommitsFactory,
@@ -59,13 +54,6 @@ import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
-import { getViewerResourceGroupsFactory } from '@/modules/viewer/services/viewerResources'
-import { NotFoundError } from '@/modules/shared/errors'
-import {
-  isModelResource,
-  resourceBuilder,
-  ViewerModelResource
-} from '@speckle/shared/viewer/route'
 
 export default {
   User: {
@@ -169,63 +157,6 @@ export default {
           parentModelName: fullName
         }
       )
-    },
-    async viewerResources(
-      parent,
-      { resourceIdString, loadedVersionsOnly, savedViewId },
-      ctx
-    ) {
-      const projectDB = await getProjectDbClient({ projectId: parent.id })
-      const getStreamObjects = getStreamObjectsFactory({ db: projectDB })
-      const getViewerResourceGroups = getViewerResourceGroupsFactory({
-        getStreamObjects,
-        getBranchLatestCommits: getBranchLatestCommitsFactory({ db: projectDB }),
-        getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDB }),
-        getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDB }),
-        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDB }),
-        getBranchesByIds: getBranchesByIdsFactory({ db: projectDB })
-      })
-
-      // Saved View: By default load already specified versions were available,
-      // otherwise load latest versions
-      if (savedViewId) {
-        const savedView = await ctx.loaders
-          .forRegion({ db: projectDB })
-          .savedViews.getSavedView.load({ viewId: savedViewId, projectId: parent.id })
-        if (!savedView) {
-          throw new NotFoundError(
-            `Saved view with ID ${savedViewId} not found in project ${parent.id}`
-          )
-        }
-
-        const savedViewResources = resourceBuilder().addFromString(
-          savedView.resourceIds
-        )
-        const baseResources = resourceBuilder().addFromString(resourceIdString)
-        const finalSavedViewResources = savedViewResources.map((r) => {
-          if (!isModelResource(r) || !r.versionId) {
-            return r
-          }
-
-          const matchingBaseResource = baseResources
-            .filter(isModelResource)
-            .find((r2) => {
-              return r2.modelId === r.modelId
-            })
-
-          return new ViewerModelResource(r.modelId, matchingBaseResource?.versionId)
-        })
-
-        resourceIdString = resourceBuilder()
-          .addResources(finalSavedViewResources)
-          .toString()
-      }
-
-      return await getViewerResourceGroups({
-        projectId: parent.id,
-        resourceIdString,
-        loadedVersionsOnly
-      })
     },
     async versions(parent, args, ctx) {
       const projectDB = await getProjectDbClient({ projectId: parent.id })

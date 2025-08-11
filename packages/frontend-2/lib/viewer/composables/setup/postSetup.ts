@@ -61,8 +61,7 @@ import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import {
   isSerializedViewerState,
-  type SectionBoxData,
-  type SerializedViewerState
+  type SectionBoxData
 } from '@speckle/shared/viewer/state'
 import { graphql } from '~/lib/common/generated/gql'
 import {
@@ -70,10 +69,10 @@ import {
   useApplySerializedState
 } from '~/lib/viewer/composables/serialization'
 import { useViewerRealtimeActivityTracker } from '~/lib/viewer/composables/activity'
-import { resourceBuilder } from '@speckle/shared/viewer/route'
 import { useEventBus } from '~/lib/core/composables/eventBus'
 import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
 import { useTreeManagement } from '~~/lib/viewer/composables/tree'
+import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -938,12 +937,13 @@ graphql(`
 
 const useViewerSavedViewSetup = () => {
   const {
-    savedViewId,
     resources: {
-      request: { resourceIdString },
-      response: { savedView, resolvedResourceIdString }
+      request: {
+        savedView: { id: savedViewId, loadOriginal }
+      },
+      response: { savedView }
     },
-    urlHashState: { savedViewId: urlHashSavedViewId }
+    urlHashState: { savedView: urlHashStateSavedViewSettings }
   } = useInjectedViewerState()
   const applyState = useApplySerializedState()
   const { serializedStateId } = useViewerRealtimeActivityTracker()
@@ -955,67 +955,75 @@ const useViewerSavedViewSetup = () => {
 
   const validState = (state: unknown) => (isSerializedViewerState(state) ? state : null)
 
-  const apply = async (state: SerializedViewerState) => {
-    // Combine resolved w/ old, resolved taking precedence - we dont want to unload
-    // other federated resources that are not a part of the saved view
-    const combinedIdString = resourceBuilder()
-      .addResources(resolvedResourceIdString.value)
-      .addNew(resourceIdString.value)
-      .toString()
+  const apply = async () => {
+    const state = validState(savedView.value?.viewerState)
+    if (!state) return
 
-    await resourceIdString.update(combinedIdString)
-    await applyState(state, StateApplyMode.SavedView)
+    await applyState(state, StateApplyMode.SavedView, {
+      loadOriginal: loadOriginal.value
+    })
     savedViewStateId.value = serializedStateId.value
   }
 
-  const update = (params: { viewId?: string }) => {
+  const update = async (params: { settings: SavedViewUrlSettings }) => {
+    const { settings } = params
+
+    let reapplyState = true
+
     // If passing in viewId and it differs, apply and wait for that to finish
-    if (params.viewId && params.viewId !== savedViewId.value) {
-      savedViewId.value = params.viewId
-      return
+    if (settings.id && settings.id !== savedViewId.value) {
+      // wipe hash state, if any exists, otherwise the state will be stale
+      await resetUrlHashState()
+      savedViewId.value = settings.id
+      reapplyState = false
     }
 
-    // Re-apply current state
-    const state = validState(savedView.value?.viewerState)
-    if (!state) return
-    apply(state)
+    // If changing loadOriginal value, apply and wait for that to finish
+    if ((settings.loadOriginal || false) !== loadOriginal.value) {
+      loadOriginal.value = settings.loadOriginal || false
+    }
+
+    // Re-apply current state, if queued
+    if (reapplyState && settings.id === savedViewId.value) {
+      const state = validState(savedView.value?.viewerState)
+      if (!state) return
+      await apply()
+    }
+  }
+
+  const resetUrlHashState = async () => {
+    await urlHashStateSavedViewSettings.update(null)
+  }
+
+  const reset = async () => {
+    savedViewId.value = null
+    loadOriginal.value = false
+    savedViewStateId.value = undefined
+    await resetUrlHashState()
   }
 
   // Allow force update
-  on(ViewerEventBusKeys.UpdateSavedView, (params) => {
-    update(params)
+  on(ViewerEventBusKeys.UpdateSavedView, async (settings) => {
+    await update({ settings })
   })
 
   // Apply saved view state on initial load
   useOnViewerLoadComplete(async ({ isInitial }) => {
-    const state = validState(savedView.value?.viewerState)
-
-    if (isInitial && state) {
-      await apply(state)
+    if (isInitial) {
+      await apply()
     }
   })
 
   // Saved view changed, apply
-  watch(savedView, (newVal, oldVal) => {
+  watch(savedView, async (newVal, oldVal) => {
     if (!newVal || newVal.id === oldVal?.id) return
 
     const state = validState(newVal.viewerState)
     if (!state) return
 
     // If the saved view has changed, apply it
-    apply(state)
+    await apply()
   })
-
-  // If the URL hash saved view ID has changed, update the saved view ID
-  watch(
-    urlHashSavedViewId,
-    async (newVal, oldVal) => {
-      if (newVal === oldVal) return
-
-      savedViewId.value = newVal
-    },
-    { immediate: true }
-  )
 
   // Did state change after applying saved view? Undo view
   watch(
@@ -1025,9 +1033,22 @@ const useViewerSavedViewSetup = () => {
 
       // If the saved view state ID is different from the current serialized state ID, reset the saved view
       if (savedViewStateId.value && newVal !== savedViewStateId.value) {
-        savedViewId.value = null
-        void urlHashSavedViewId.update(null)
-        savedViewStateId.value = undefined
+        void reset()
+      }
+    },
+    { immediate: true }
+  )
+
+  // Url hash state -> core source of truth sync
+  watch(
+    urlHashStateSavedViewSettings,
+    async (newVal) => {
+      if ((newVal?.id || null) !== savedViewId.value) {
+        savedViewId.value = newVal?.id || null
+      }
+
+      if ((newVal?.loadOriginal || false) !== loadOriginal.value) {
+        loadOriginal.value = newVal?.loadOriginal || false
       }
     },
     { immediate: true }

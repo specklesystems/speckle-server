@@ -48,8 +48,12 @@ import {
   getSavedViewFactory,
   getSavedViewGroupFactory
 } from '@/modules/viewer/repositories/dataLoaders/savedViews'
+import type { RequestDataLoaders } from '@/modules/core/loaders'
 
-const buildGetViewerResourceGroups = (params: { projectDb: Knex }) => {
+const buildGetViewerResourceGroups = (params: {
+  projectDb: Knex
+  loaders: RequestDataLoaders
+}) => {
   const { projectDb } = params
   return getViewerResourceGroupsFactory({
     getStreamObjects: getStreamObjectsFactory({ db: projectDb }),
@@ -57,7 +61,8 @@ const buildGetViewerResourceGroups = (params: { projectDb: Knex }) => {
     getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDb }),
     getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
     getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb }),
-    getBranchesByIds: getBranchesByIdsFactory({ db: projectDb })
+    getBranchesByIds: getBranchesByIdsFactory({ db: projectDb }),
+    getSavedView: getSavedViewFactory({ loaders: params.loaders })
   })
 }
 
@@ -124,6 +129,19 @@ const resolvers: Resolvers = {
           `Saved view with ID ${args.id} not found in project ${parent.id}`
         )
       }
+
+      return view
+    },
+    savedViewIfExists: async (parent, args, ctx) => {
+      if (!args.id?.length) return null
+
+      const projectDb = await getProjectDbClient({ projectId: parent.id })
+      const view = await ctx.loaders
+        .forRegion({ db: projectDb })
+        .savedViews.getSavedView.load({
+          viewId: args.id,
+          projectId: parent.id
+        })
 
       return view
     }
@@ -221,7 +239,10 @@ const resolvers: Resolvers = {
 
       const projectDb = await getProjectDbClient({ projectId })
       const createSavedView = createSavedViewFactory({
-        getViewerResourceGroups: buildGetViewerResourceGroups({ projectDb }),
+        getViewerResourceGroups: buildGetViewerResourceGroups({
+          projectDb,
+          loaders: ctx.loaders
+        }),
         getStoredViewCount: getStoredViewCountFactory({ db: projectDb }),
         storeSavedView: storeSavedViewFactory({ db: projectDb }),
         getSavedViewGroup: getSavedViewGroupFactory({ loaders: ctx.loaders }),
@@ -278,7 +299,10 @@ const resolvers: Resolvers = {
       throwIfAuthNotOk(canUpdate)
 
       const updateSavedView = updateSavedViewFactory({
-        getViewerResourceGroups: buildGetViewerResourceGroups({ projectDb }),
+        getViewerResourceGroups: buildGetViewerResourceGroups({
+          projectDb,
+          loaders: ctx.loaders
+        }),
         getSavedView: getSavedViewFactory({ loaders: ctx.loaders }),
         getSavedViewGroup: getSavedViewGroupFactory({ loaders: ctx.loaders }),
         updateSavedViewRecord: updateSavedViewRecordFactory({
@@ -325,7 +349,10 @@ const resolvers: Resolvers = {
       const projectDb = await getProjectDbClient({ projectId })
       const createSavedViewGroup = createSavedViewGroupFactory({
         storeSavedViewGroup: storeSavedViewGroupFactory({ db: projectDb }),
-        getViewerResourceGroups: buildGetViewerResourceGroups({ projectDb })
+        getViewerResourceGroups: buildGetViewerResourceGroups({
+          projectDb,
+          loaders: ctx.loaders
+        })
       })
       return await createSavedViewGroup({
         input: args.input,
@@ -359,6 +386,9 @@ const disabledResolvers: Resolvers = {
     },
     savedView: () => {
       throw new NotImplementedError(disabledMessage)
+    },
+    savedViewIfExists: () => {
+      return null // intentional - so we dont have to FF guard the query
     }
   },
   ProjectMutations: {

@@ -1,4 +1,4 @@
-import { difference, intersection } from 'lodash'
+import { difference, intersection } from '#lodash'
 import { md5 } from '@speckle/shared'
 import type { Nullable } from '@speckle/shared'
 import { BaseError } from '~~/src/helpers/common/error'
