@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="h-full">
     <ViewerCompareChangesPanel
       v-if="showDiff"
       :clear-on-back="false"
@@ -25,7 +25,7 @@
       <div class="flex flex-col h-full">
         <template v-if="resourceItems.length">
           <!-- Versions with single scroll container for sticky headers -->
-          <div class="flex-1 overflow-y-auto">
+          <div class="flex-1 overflow-y-auto simple-scrollbar">
             <div
               v-for="({ model, versionId }, index) in modelsAndVersionIds"
               :key="model.id"
