@@ -956,6 +956,8 @@ const useViewerSavedViewSetup = () => {
 
     // If passing in viewId and it differs, apply and wait for that to finish
     if (settings.id && settings.id !== savedViewId.value) {
+      // wipe hash state, if any exists, otherwise the state will be stale
+      await resetUrlHashState()
       savedViewId.value = settings.id
       reapplyState = false
     }
@@ -973,11 +975,15 @@ const useViewerSavedViewSetup = () => {
     }
   }
 
+  const resetUrlHashState = async () => {
+    await urlHashStateSavedViewSettings.update(null)
+  }
+
   const reset = async () => {
     savedViewId.value = null
     loadOriginal.value = false
     savedViewStateId.value = undefined
-    await urlHashStateSavedViewSettings.update(null)
+    await resetUrlHashState()
   }
 
   // Allow force update

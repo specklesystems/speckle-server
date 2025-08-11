@@ -479,12 +479,15 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
 function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest {
   const route = useRoute()
   const router = useRouter()
+  const { waitUntilReady } = useRouterNavigating()
   const getParam = computed(() => route.params.modelId as string)
 
   const resources = writableAsyncComputed({
     get: () => parseUrlParameters(getParam.value),
     set: async (newResources) => {
       const modelId = createGetParamFromResources(newResources)
+
+      await waitUntilReady()
       await router.push({
         params: { modelId },
         query: route.query,
