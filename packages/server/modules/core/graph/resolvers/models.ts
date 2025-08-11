@@ -10,8 +10,6 @@ import {
 } from '@/modules/core/services/branch/retrieval'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { last } from 'lodash-es'
-
-import { getViewerResourceGroupsFactory } from '@/modules/core/services/commit/viewerResources'
 import {
   getPaginatedBranchCommitsFactory,
   legacyGetPaginatedStreamCommitsFactory
@@ -24,7 +22,6 @@ import {
   createBranchFactory,
   deleteBranchByIdFactory,
   getBranchByIdFactory,
-  getBranchLatestCommitsFactory,
   getModelTreeItemsFactory,
   getModelTreeItemsFilteredFactory,
   getModelTreeItemsFilteredTotalCountFactory,
@@ -32,14 +29,11 @@ import {
   getPaginatedProjectModelsItemsFactory,
   getPaginatedProjectModelsTotalCountFactory,
   getStreamBranchByNameFactory,
-  getStreamBranchesByNameFactory,
   updateBranchFactory
 } from '@/modules/core/repositories/branches'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
-import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import {
-  getAllBranchCommitsFactory,
   getBranchCommitsTotalCountFactory,
   getPaginatedBranchCommitsItemsFactory,
   getSpecificBranchCommitsFactory,
@@ -163,22 +157,6 @@ export default {
           parentModelName: fullName
         }
       )
-    },
-    async viewerResources(parent, { resourceIdString, loadedVersionsOnly }) {
-      const projectDB = await getProjectDbClient({ projectId: parent.id })
-      const getStreamObjects = getStreamObjectsFactory({ db: projectDB })
-      const getViewerResourceGroups = getViewerResourceGroupsFactory({
-        getStreamObjects,
-        getBranchLatestCommits: getBranchLatestCommitsFactory({ db: projectDB }),
-        getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDB }),
-        getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDB }),
-        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDB })
-      })
-      return await getViewerResourceGroups({
-        projectId: parent.id,
-        resourceIdString,
-        loadedVersionsOnly
-      })
     },
     async versions(parent, args, ctx) {
       const projectDB = await getProjectDbClient({ projectId: parent.id })

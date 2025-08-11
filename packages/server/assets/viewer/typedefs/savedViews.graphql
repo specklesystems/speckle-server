@@ -1,0 +1,222 @@
+enum SavedViewVisibility {
+  public
+  authorOnly
+}
+
+type SavedView {
+  id: ID!
+  name: String!
+  description: String
+  """
+  Empty ID means default/ungrouped view
+  """
+  groupId: ID
+  """
+  Always available because even ungrouped views show up in a fake "Ungrouped" group
+  """
+  group: SavedViewGroup!
+  author: LimitedUser
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  projectId: ID!
+  """
+  Original resource ID string that this view is associated with.
+  """
+  resourceIdString: String!
+  """
+  Same as resourceIdString, but split into an array of resource IDs.
+  """
+  resourceIds: [String!]!
+  isHomeView: Boolean!
+  visibility: SavedViewVisibility!
+  """
+  Viewer state, the actual view configuration
+  """
+  viewerState: JSONObject!
+  """
+  Encoded screenshot of the view
+  """
+  screenshot: String!
+  """
+  For figuring out position in the group
+  """
+  position: Float!
+}
+
+type SavedViewCollection {
+  cursor: String
+  totalCount: Int!
+  items: [SavedView!]!
+}
+
+input SavedViewGroupViewsInput {
+  """
+  Whether to only views authored by the current user
+  """
+  onlyAuthored: Boolean
+  """
+  Whether to only include views matching this search term
+  """
+  search: String
+  """
+  Optionally specify sort direction. Default: descending
+  """
+  sortDirection: SortDirection
+  """
+  Optionally specify sort by field. Default: updatedAt
+  Options: updatedAt, createdAt, name
+  """
+  sortBy: String
+  limit: Int
+  cursor: String
+}
+
+type SavedViewGroup {
+  """
+  This is always set even for fake/not persisted groups for Apollo caching
+  """
+  id: ID!
+  """
+  Only set if this is a real/persisted group.
+  """
+  groupId: ID
+  projectId: ID!
+  """
+  Resources that were used to find this group
+  """
+  resourceIds: [String!]!
+  title: String!
+  isUngroupedViewsGroup: Boolean!
+  views(input: SavedViewGroupViewsInput!): SavedViewCollection!
+}
+
+type SavedViewGroupCollection {
+  cursor: String
+  totalCount: Int!
+  items: [SavedViewGroup!]!
+}
+
+input SavedViewGroupsInput {
+  """
+  Viewer resource ID string that identifies which resources should be loaded
+  """
+  resourceIdString: String!
+  """
+  Whether to only include groups w/ views authored by the current user
+  """
+  onlyAuthored: Boolean
+  """
+  Whether to only include groups that have views matching this search term
+  """
+  search: String
+  limit: Int
+  cursor: String
+}
+
+input GetUngroupedViewGroupInput {
+  """
+  Viewer resource ID string that identifies which resources should be loaded
+  """
+  resourceIdString: String!
+}
+
+extend type Project {
+  savedViewGroups(input: SavedViewGroupsInput!): SavedViewGroupCollection!
+  savedViewGroup(id: ID!): SavedViewGroup!
+  ungroupedViewGroup(input: GetUngroupedViewGroupInput!): SavedViewGroup!
+  savedView(id: ID!): SavedView!
+  """
+  Same as savedView(), but won't throw if view isn't found
+  """
+  savedViewIfExists(id: ID): SavedView
+}
+
+input CreateSavedViewInput {
+  projectId: ID!
+  resourceIdString: String!
+  """
+  Group id, if grouping necessary
+  """
+  groupId: ID
+
+  """
+  Auto-generated name, if not specified
+  """
+  name: String
+  description: String
+  """
+  SerializedViewerState. If omitted, comment won't render (correctly) inside the
+  viewer, but will still be retrievable through the API
+  """
+  viewerState: JSONObject!
+  """
+  Encoded screenshot of the view
+  """
+  screenshot: String!
+  """
+  Optionally also set this as the home/default view for the target model
+  """
+  isHomeView: Boolean
+  """
+  Set visibility of the view. Default: public
+  """
+  visibility: SavedViewVisibility
+}
+
+input CreateSavedViewGroupInput {
+  projectId: ID!
+  resourceIdString: String!
+  groupName: String!
+}
+
+input DeleteSavedViewInput {
+  id: ID!
+  projectId: ID!
+}
+
+input UpdateSavedViewInput {
+  id: ID!
+  projectId: ID!
+  """
+  New resource targets, if necessary. Must be set together w/ viewerState & screenshot.
+  """
+  resourceIdString: String
+  """
+  New group id, if grouping necessary
+  """
+  groupId: String
+  """
+  New name for the view
+  """
+  name: String
+  description: String
+  """
+  SerializedViewerState. If omitted, comment won't render (correctly) inside the
+  viewer, but will still be retrievable through the API.
+  Must be set together w/ resourceIdString & screenshot.
+  """
+  viewerState: JSONObject
+  """
+  Encoded screenshot of the view.
+  """
+  screenshot: String
+  """
+  Optionally also set this as the home/default view for the target model
+  """
+  isHomeView: Boolean
+  """
+  Optionally change visibility of the view
+  """
+  visibility: SavedViewVisibility
+}
+
+type SavedViewMutations {
+  createGroup(input: CreateSavedViewGroupInput!): SavedViewGroup!
+  createView(input: CreateSavedViewInput!): SavedView!
+  deleteView(input: DeleteSavedViewInput!): Boolean!
+  updateView(input: UpdateSavedViewInput!): SavedView!
+}
+
+extend type ProjectMutations {
+  savedViewMutations: SavedViewMutations!
+}

@@ -604,8 +604,25 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_FORCE_ONBOARDING
   value: {{ .Values.featureFlags.forceOnboarding | quote }}
 
+- name: FF_SAVED_VIEWS_ENABLED
+  value: {{ .Values.featureFlags.savedViewsEnabled | quote }}
+
 - name: FF_RETRY_ERRORED_PREVIEWS_ENABLED
   value: {{ .Values.featureFlags.retryErroredPreviewsEnabled | quote }}
+
+- name: FF_ACC_INTEGRATION_ENABLED
+  value: {{ .Values.featureFlags.accIntegrationEnabled | quote }}
+
+{{- if .Values.featureFlags.accIntegrationEnabled }}
+- name: AUTODESK_INTEGRATION_CLIENT_ID
+  value: {{ .Values.server.accIntegration.client_id }}
+
+- name: AUTODESK_INTEGRATION_CLIENT_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: {{ default .Values.secretName .Values.server.accIntegration.clientSecret.secretName }}
+      key: {{ default "acc_integration_client_secret" .Values.server.accIntegration.clientSecret.secretKey }}
+{{- end }}
 
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
@@ -1148,6 +1165,12 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
   value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
 {{- end }}
+
+{{- if .Values.featureFlags.rhinoFileImporterEnabled }}
+- name: FF_RHINO_FILE_IMPORTER_ENABLED
+  value: {{ .Values.featureFlags.rhinoFileImporterEnabled  | quote }}
+{{- end }}
+
 {{- if .Values.featureFlags.backgroundJobsEnabled }}
 - name: FILEIMPORT_QUEUE_POSTGRES_URL
   valueFrom:

@@ -1,5 +1,11 @@
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
-import { useThrottleFn, onKeyStroke, watchTriggerable } from '@vueuse/core'
+import {
+  useThrottleFn,
+  onKeyStroke,
+  watchTriggerable,
+  useMagicKeys,
+  useEventListener
+} from '@vueuse/core'
 import {
   ExplodeEvent,
   ExplodeExtension,
@@ -23,7 +29,8 @@ import type { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
 import { ProjectCommentsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
 import {
   useInjectedViewer,
-  useInjectedViewerState
+  useInjectedViewerState,
+  useInjectedViewerInterfaceState
 } from '~~/lib/viewer/composables/setup'
 import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
 import {
@@ -52,7 +59,20 @@ import {
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import type { SectionBoxData } from '@speckle/shared/viewer/state'
+import {
+  isSerializedViewerState,
+  type SectionBoxData
+} from '@speckle/shared/viewer/state'
+import { graphql } from '~/lib/common/generated/gql'
+import {
+  StateApplyMode,
+  useApplySerializedState
+} from '~/lib/viewer/composables/serialization'
+import { useViewerRealtimeActivityTracker } from '~/lib/viewer/composables/activity'
+import { useEventBus } from '~/lib/core/composables/eventBus'
+import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
+import { useTreeManagement } from '~~/lib/viewer/composables/tree'
+import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -435,8 +455,8 @@ function useViewerCameraIntegration() {
   useViewerCameraTracker(
     () => {
       loadCameraDataFromViewer()
-    }
-    // { debounceWait: 100 }
+    },
+    { throttleWait: 100 }
   )
 
   useOnViewerLoadComplete(({ isInitial }) => {
@@ -900,9 +920,196 @@ function useDisableZoomOnEmbed() {
   )
 }
 
+function useViewerTreeIntegration() {
+  const { viewer } = useInjectedViewerState()
+  const { treeStateManager } = useTreeManagement()
+
+  // Initialize the tree state manager with viewer instance
+  onMounted(() => treeStateManager.initialize(viewer.instance))
+}
+
+graphql(`
+  fragment UseViewerSavedViewSetup_SavedView on SavedView {
+    id
+    viewerState
+  }
+`)
+
+const useViewerSavedViewSetup = () => {
+  const {
+    resources: {
+      request: {
+        savedView: { id: savedViewId, loadOriginal }
+      },
+      response: { savedView }
+    },
+    urlHashState: { savedView: urlHashStateSavedViewSettings }
+  } = useInjectedViewerState()
+  const applyState = useApplySerializedState()
+  const { serializedStateId } = useViewerRealtimeActivityTracker()
+  const { on } = useEventBus()
+
+  // Saved View ID will be unset, once the user does anything to the viewer that
+  // changes it from the saved view
+  const savedViewStateId = ref<string>()
+
+  const validState = (state: unknown) => (isSerializedViewerState(state) ? state : null)
+
+  const apply = async () => {
+    const state = validState(savedView.value?.viewerState)
+    if (!state) return
+
+    await applyState(state, StateApplyMode.SavedView, {
+      loadOriginal: loadOriginal.value
+    })
+    savedViewStateId.value = serializedStateId.value
+  }
+
+  const update = async (params: { settings: SavedViewUrlSettings }) => {
+    const { settings } = params
+
+    let reapplyState = true
+
+    // If passing in viewId and it differs, apply and wait for that to finish
+    if (settings.id && settings.id !== savedViewId.value) {
+      // wipe hash state, if any exists, otherwise the state will be stale
+      await resetUrlHashState()
+      savedViewId.value = settings.id
+      reapplyState = false
+    }
+
+    // If changing loadOriginal value, apply and wait for that to finish
+    if ((settings.loadOriginal || false) !== loadOriginal.value) {
+      loadOriginal.value = settings.loadOriginal || false
+    }
+
+    // Re-apply current state, if queued
+    if (reapplyState && settings.id === savedViewId.value) {
+      const state = validState(savedView.value?.viewerState)
+      if (!state) return
+      await apply()
+    }
+  }
+
+  const resetUrlHashState = async () => {
+    await urlHashStateSavedViewSettings.update(null)
+  }
+
+  const reset = async () => {
+    savedViewId.value = null
+    loadOriginal.value = false
+    savedViewStateId.value = undefined
+    await resetUrlHashState()
+  }
+
+  // Allow force update
+  on(ViewerEventBusKeys.UpdateSavedView, async (settings) => {
+    await update({ settings })
+  })
+
+  // Apply saved view state on initial load
+  useOnViewerLoadComplete(async ({ isInitial }) => {
+    if (isInitial) {
+      await apply()
+    }
+  })
+
+  // Saved view changed, apply
+  watch(savedView, async (newVal, oldVal) => {
+    if (!newVal || newVal.id === oldVal?.id) return
+
+    const state = validState(newVal.viewerState)
+    if (!state) return
+
+    // If the saved view has changed, apply it
+    await apply()
+  })
+
+  // Did state change after applying saved view? Undo view
+  watch(
+    serializedStateId,
+    (newVal, oldVal) => {
+      if (newVal === oldVal) return
+
+      // If the saved view state ID is different from the current serialized state ID, reset the saved view
+      if (savedViewStateId.value && newVal !== savedViewStateId.value) {
+        void reset()
+      }
+    },
+    { immediate: true }
+  )
+
+  // Url hash state -> core source of truth sync
+  watch(
+    urlHashStateSavedViewSettings,
+    async (newVal) => {
+      if ((newVal?.id || null) !== savedViewId.value) {
+        savedViewId.value = newVal?.id || null
+      }
+
+      if ((newVal?.loadOriginal || false) !== loadOriginal.value) {
+        loadOriginal.value = newVal?.loadOriginal || false
+      }
+    },
+    { immediate: true }
+  )
+}
+
+function useViewerCursorIntegration() {
+  const {
+    viewer: { container }
+  } = useInjectedViewerState()
+
+  const {
+    filters: { selectedObjects }
+  } = useInjectedViewerInterfaceState()
+
+  const { shift } = useMagicKeys()
+  const isDragging = ref(false)
+
+  // Handle mouse down/up to track dragging state
+  const handlePointerDown = (_event: PointerEvent) => {
+    if (shift.value && selectedObjects.value.length === 0) {
+      isDragging.value = true
+    }
+  }
+
+  const handlePointerUp = () => {
+    isDragging.value = false
+  }
+
+  // Show different cursors: grab (ready to drag) vs grabbing (actively dragging)
+  watch(
+    [shift, selectedObjects, isDragging],
+    () => {
+      if (!container) return
+
+      const hasSelection = selectedObjects.value.length > 0
+      const shouldShowDrag = shift.value && !hasSelection
+
+      if (shouldShowDrag) {
+        container.style.cursor = isDragging.value ? 'grabbing' : 'grab'
+      } else {
+        container.style.cursor = ''
+      }
+    },
+    { immediate: true }
+  )
+
+  useEventListener(container, 'pointerdown', handlePointerDown, { passive: true })
+  useEventListener(document, 'pointerup', handlePointerUp, { passive: true })
+
+  onBeforeUnmount(() => {
+    if (container) {
+      container.style.cursor = ''
+    }
+  })
+}
+
 export function useViewerPostSetup() {
   if (import.meta.server) return
   useViewerObjectAutoLoading()
+  useViewerSavedViewSetup()
   useViewerReceiveTracking()
   useViewerSelectionEventHandler()
   useViewerLoadCompleteEventHandler()
@@ -917,5 +1124,7 @@ export function useViewerPostSetup() {
   useDiffingIntegration()
   useViewerMeasurementIntegration()
   useDisableZoomOnEmbed()
+  useViewerCursorIntegration()
+  useViewerTreeIntegration()
   setupDebugMode()
 }

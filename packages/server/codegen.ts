@@ -185,7 +185,19 @@ const config: CodegenConfig = {
           RootPermissionChecks:
             '@/modules/core/helpers/graphTypes#RootPermissionChecksGraphQLReturn',
           WorkspacePermissionChecks:
-            '@/modules/workspacesCore/helpers/graphTypes#WorkspacePermissionChecksGraphQLReturn'
+            '@/modules/workspacesCore/helpers/graphTypes#WorkspacePermissionChecksGraphQLReturn',
+          AccSyncItem: '@/modules/acc/helpers/graphTypes#AccSyncItemGraphQLReturn',
+          AccSyncItemMutations:
+            '@/modules/acc/helpers/graphTypes#AccSyncItemMutationsGraphQLReturn',
+          SavedViewMutations:
+            '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
+          SavedView: '@/modules/viewer/helpers/graphTypes#SavedViewGraphQLReturn',
+          SavedViewGroup:
+            '@/modules/viewer/helpers/graphTypes#SavedViewGroupGraphQLReturn',
+          PermissionCheckResult:
+            '@/modules/core/helpers/graphTypes#PermissionCheckResultGraphQLReturn',
+          SavedViewPermissionChecks:
+            '@/modules/viewer/helpers/graphTypes#SavedViewPermissionChecksGraphQLReturn'
         }
       }
     }

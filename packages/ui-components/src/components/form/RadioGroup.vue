@@ -18,6 +18,7 @@
               : 'hover:border-outline-1'
           ]"
           :disabled="disabled || option.disabled"
+          type="button"
           @click="selectItem(option.value)"
         >
           <div
@@ -84,36 +85,46 @@
         </div>
       </div>
     </div>
+    <div v-if="errorMessage" class="text-danger text-body-2xs mt-2">
+      {{ errorMessage }}
+    </div>
   </div>
 </template>
 
 <script setup lang="ts" generic="Value extends string">
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
-import { type ConcreteComponent } from 'vue'
+import { useField, type RuleExpression } from 'vee-validate'
+import { computed } from 'vue'
+import type { FormRadioGroupItem } from '~~/src/helpers/common/components'
 
-type OptionType = {
-  value: Value
-  title: string
-  subtitle?: string
-  introduction?: string
-  icon?: ConcreteComponent
-  help?: string
-  disabled?: boolean
-}
+defineEmits<{
+  (e: 'update:modelValue', v: Value): void
+}>()
 
 const props = withDefaults(
   defineProps<{
-    options: OptionType[]
+    name?: string
+    modelValue?: Value
+    options: FormRadioGroupItem<Value>[]
     disabled?: boolean
     isStacked?: boolean
     size?: 'sm' | 'base'
+    rules?: RuleExpression<Value>
   }>(),
   {
-    size: 'base'
+    size: 'base',
+    name: 'formRadioGroup'
   }
 )
 
-const selected = defineModel<Value>()
+const { value, errorMessage } = useField<Value>(props.name, props.rules, {
+  initialValue: props.modelValue as Value
+})
+
+const selected = computed({
+  get: () => value.value,
+  set: (newVal: Value) => (value.value = newVal)
+})
 
 const selectItem = (value: Value) => {
   selected.value = value

@@ -48,7 +48,7 @@ import {
   InformationCircleIcon,
   ExclamationCircleIcon
 } from '@heroicons/vue/24/outline'
-import { noop } from 'lodash'
+import { noop } from '#lodash'
 import { computed, useSlots, type SetupContext } from 'vue'
 import FormButton from '~~/src/components/form/Button.vue'
 import type {

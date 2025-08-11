@@ -109,7 +109,8 @@ const configs = [
   {
     files: ['**/*.spec.ts', '**/tests/**/*.{js,ts}', 'test/**/*.{js,ts}'],
     rules: {
-      '@typescript-eslint/no-unused-expressions': 'off'
+      '@typescript-eslint/no-unused-expressions': 'off',
+      '@typescript-eslint/no-non-null-asserted-optional-chain': 'off'
     }
   },
   prettierConfig

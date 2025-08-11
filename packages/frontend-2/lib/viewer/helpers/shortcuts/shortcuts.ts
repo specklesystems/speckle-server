@@ -9,12 +9,12 @@ export const PanelShortcuts = {
     key: 'M',
     action: 'ToggleModels'
   },
-  ToggleExplorer: {
-    name: 'Scene explorer',
-    description: 'Toggle scene explorer panel',
+  ToggleFilters: {
+    name: 'Filters',
+    description: 'Toggle filters panel',
     modifiers: [ModifierKeys.Shift],
-    key: 'E',
-    action: 'ToggleExplorer'
+    key: 'F',
+    action: 'ToggleFilters'
   },
   ToggleDiscussions: {
     name: 'Discussions',
@@ -22,6 +22,20 @@ export const PanelShortcuts = {
     modifiers: [ModifierKeys.Shift],
     key: 'D',
     action: 'ToggleDiscussions'
+  },
+  ToggleDevMode: {
+    name: 'Dev Mode',
+    description: 'Toggle dev mode',
+    modifiers: [ModifierKeys.Shift],
+    key: 'E',
+    action: 'ToggleDevMode'
+  },
+  ToggleSavedViews: {
+    name: 'Saved Views',
+    description: 'Toggle saved views panel',
+    modifiers: [ModifierKeys.Shift],
+    key: 'V',
+    action: 'ToggleSavedViews'
   }
 } as const
 

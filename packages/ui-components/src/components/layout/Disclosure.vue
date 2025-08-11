@@ -1,15 +1,15 @@
 <template>
   <div>
-    <HeadlessDisclosure v-slot="{ open }">
-      <DisclosureButton :class="buttonClasses">
+    <HeadlessDisclosure>
+      <DisclosureButton :class="buttonClasses" @click="toggle">
         <div class="inline-flex items-center space-x-2">
           <Component :is="icon" v-if="icon" class="h-5 w-5" />
           <span>{{ title }}</span>
         </div>
         <ChevronUpIcon :class="!open ? 'rotate-180 transform' : ''" class="h-5 w-5" />
       </DisclosureButton>
-      <DisclosurePanel :class="panelClasses">
-        <div class="label-light">
+      <DisclosurePanel v-if="open" :class="panelClasses" static>
+        <div v-if="!lazyLoad || open" class="label-light">
           <slot>Panel contents</slot>
         </div>
       </DisclosurePanel>
@@ -36,11 +36,19 @@ const props = withDefaults(
      */
     icon?: PropAnyComponent
     color?: DisclosureColor
+    /**
+     * Whether to lazy load the panel contents only upon opening
+     */
+    lazyLoad?: boolean
   }>(),
   {
     color: 'default'
   }
 )
+
+const open = defineModel<boolean>('open', {
+  default: false
+})
 
 const buttonClasses = computed(() => {
   const classParts = [
@@ -94,4 +102,8 @@ const panelClasses = computed(() => {
 
   return classParts.join(' ')
 })
+
+const toggle = () => {
+  open.value = !open.value
+}
 </script>

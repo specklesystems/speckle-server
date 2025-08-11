@@ -50,6 +50,7 @@ export default {
           userId: context.userId,
           projectId: parent.projectId
         })
+
       return Authz.toGraphqlResult(canCreateAutomation)
     }
   }

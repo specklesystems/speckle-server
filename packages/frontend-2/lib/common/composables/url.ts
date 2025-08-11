@@ -37,6 +37,7 @@ export function deserializeHashState(hashString: string) {
 export function useRouteHashState() {
   const route = useRoute()
   const router = useRouter()
+  const { waitUntilReady } = useRouterNavigating()
 
   const hashState = writableAsyncComputed({
     get: () => {
@@ -44,6 +45,8 @@ export function useRouteHashState() {
     },
     set: async (newVal) => {
       const hashString = serializeHashState(newVal)
+
+      await waitUntilReady()
       await router.push({
         query: route.query,
         hash: hashString
@@ -54,4 +57,22 @@ export function useRouteHashState() {
   })
 
   return { hashState }
+}
+
+export const useAppUrlUtils = () => {
+  const {
+    public: { baseUrl }
+  } = useRuntimeConfig()
+
+  const buildUrl = (relativeUrl: string | URL): string => {
+    const url = new URL(relativeUrl, baseUrl)
+    return decodeURI(url.toString()) // url encoded looks ugly
+  }
+
+  return {
+    /**
+     * Build full/absolute URL
+     */
+    buildUrl
+  }
 }

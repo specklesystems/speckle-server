@@ -16,7 +16,7 @@ import { expect } from 'chai'
 import type { ApolloServer, GraphQLResponse } from '@apollo/server'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { db } from '@/db/knex'
-import { get, pick, set } from 'lodash-es'
+import { get, isUndefined, pick, set } from 'lodash-es'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { publish, TestSubscriptions } from '@/modules/shared/utils/subscriptions'
 import cryptoRandomString from 'crypto-random-string'
@@ -146,7 +146,7 @@ const buildMergedContext = async (params: {
   /**
    * If set, adjust context to be authed w/ all scopes and the actual user role for this user id.
    */
-  authUserId?: string
+  authUserId?: string | null
 }) => {
   let baseCtx: GraphQLContext = params.baseCtx || (await createTestContext())
 
@@ -160,6 +160,12 @@ const buildMergedContext = async (params: {
     baseCtx = {
       ...baseCtx,
       ...pick(userCtx, ['auth', 'userId', 'role', 'token', 'scopes'])
+    }
+  } else if (params?.authUserId === null) {
+    // Apply unauthed context to base
+    baseCtx = {
+      ...baseCtx,
+      ...pick(await createTestContext(), ['auth', 'userId', 'role', 'token', 'scopes'])
     }
   }
 
@@ -218,8 +224,9 @@ export const testApolloServer = async (params?: {
       /**
        * If set, will create an authed context w/ all scopes and the actual user role for this user id.
        * If user doesn't exist yet, will default to the User role
+       * Null means - set to anonymous
        */
-      authUserId?: string
+      authUserId?: string | null
       /**
        * Whether to add an assertion that there were no GQL errors
        */
@@ -227,7 +234,7 @@ export const testApolloServer = async (params?: {
     }>
   ): Promise<ExecuteOperationResponse<R>> => {
     const operationCtx =
-      options?.authUserId || options?.context
+      !isUndefined(options?.authUserId) || options?.context
         ? await buildMergedContext({
             baseCtx,
             authUserId: options?.authUserId,
