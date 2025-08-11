@@ -188,7 +188,7 @@ function createTreeStateManager() {
   return {
     initialize,
     getUnifiedVirtualItems,
-    clearCache: readonly(clearCache)
+    clearCache
   }
 }
 
