@@ -102,12 +102,12 @@
           secondary
           @click="openDocs"
         />
-        <!-- TODO: Add intercom click event -->
         <ViewerControlsButtonToggle
           v-if="isIntercomEnabled"
           v-tippy="getTooltipProps('Get help')"
           :icon="'IconIntercom'"
           secondary
+          @click="openIntercomChat"
         />
       </div>
     </div>
@@ -233,6 +233,7 @@ const isMobile = breakpoints.smaller('sm')
 const isTablet = breakpoints.smaller('lg')
 const { getTooltipProps } = useSmartTooltipDelay()
 const isSavedViewsEnabled = useAreSavedViewsEnabled()
+const { $intercom } = useNuxtApp()
 
 const activePanel = ref<ActivePanel>('none')
 
@@ -289,6 +290,12 @@ const forceClosePanel = () => {
 
 const openDocs = () => {
   window.open(viewerDocsRoute, '_blank')
+}
+
+const openIntercomChat = () => {
+  if (isIntercomEnabled.value) {
+    $intercom.show()
+  }
 }
 
 onMounted(() => {
