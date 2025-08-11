@@ -319,9 +319,12 @@ export default class SpeckleConverter {
       } else {
         real.references++
       }
-      if (typeof real.data[0] !== 'number' || isNaN(real.data[0])) {
+      if (
+        real.data.length &&
+        (typeof real.data[0] !== 'number' || isNaN(real.data[0]))
+      ) {
         Logger.error(
-          `Chunk id ${real.id} used for mesh ${ref.referencedId} might not have numeric geometry data. This is not supported!`
+          `Chunk id ${real.id} might not have numeric geometry data. This is not supported!`
         )
       }
       chunked.push(real)
@@ -620,7 +623,7 @@ export default class SpeckleConverter {
     const targetObjects = obj.objects as []
     for (let k = 0; k < targetObjects.length; k++) {
       if (this.renderMaterialMap[targetObjects[k]]) {
-        Logger.error(`Overwritting renderMaterial ${targetObjects[k]}`)
+        Logger.warn(`Overwritting renderMaterial ${targetObjects[k]}`)
       }
       this.renderMaterialMap[targetObjects[k]] = renderMaterialValue
     }
@@ -638,7 +641,7 @@ export default class SpeckleConverter {
     const targetObjects = obj.objects as []
     for (let k = 0; k < targetObjects.length; k++) {
       if (this.colorMap[targetObjects[k]]) {
-        Logger.error(`Overwritting color ${targetObjects[k]}`)
+        Logger.warn(`Overwritting color ${targetObjects[k]}`)
       }
       this.colorMap[targetObjects[k]] = obj
     }

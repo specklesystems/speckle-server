@@ -67,6 +67,7 @@ export class EdgesPipeline extends ProgressivePipeline {
         const material = batch.materials[value.materialIndex]
         return (
           Materials.isTransparent(material) &&
+          material.visible &&
           !(material instanceof SpeckleGhostMaterial)
         )
       })
@@ -81,7 +82,7 @@ export class EdgesPipeline extends ProgressivePipeline {
           offset: transparentGroup.start,
           count:
             hiddenGroup !== undefined
-              ? hiddenGroup.start
+              ? hiddenGroup.start - transparentGroup.start
               : batch.getCount() - transparentGroup.start
         }
         continue

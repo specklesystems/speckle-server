@@ -993,7 +993,6 @@ function setupInterfaceState(
     if (isolatedObjectIds.value.length) return true
     if (hiddenObjectIds.value.length) return true
     if (propertyFilter.value || isPropertyFilterApplied.value) return true
-    if (explodeFactor.value !== 0) return true
     return false
   })
   const viewMode = ref<ViewMode>(ViewMode.DEFAULT)
