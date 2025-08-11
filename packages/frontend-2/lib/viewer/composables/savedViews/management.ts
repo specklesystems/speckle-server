@@ -1,6 +1,7 @@
 import { useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
+  CreateSavedViewGroupInput,
   CreateSavedViewInput,
   UpdateSavedViewInput,
   UseDeleteSavedView_SavedViewFragment,
@@ -249,6 +250,79 @@ export const useUpdateSavedView = () => {
       const err = getFirstGqlErrorMessage(result?.errors)
       triggerNotification({
         title: "Couldn't update saved view",
+        description: err,
+        type: ToastNotificationType.Danger
+      })
+    }
+
+    return res
+  }
+}
+
+const createSavedViewGroupMutation = graphql(`
+  mutation CreateSavedViewGroup($input: CreateSavedViewGroupInput!) {
+    projectMutations {
+      savedViewMutations {
+        createGroup(input: $input) {
+          id
+        }
+      }
+    }
+  }
+`)
+
+export const useCreateSavedViewGroup = () => {
+  const { mutate } = useMutation(createSavedViewGroupMutation)
+  const { triggerNotification } = useGlobalToast()
+  const { isLoggedIn } = useActiveUser()
+
+  return async (input: CreateSavedViewGroupInput) => {
+    if (!isLoggedIn.value) return
+
+    const ret = await mutate(
+      { input },
+      {
+        update: (cache, res) => {
+          const group = res.data?.projectMutations.savedViewMutations.createGroup
+          if (!group?.id) return
+
+          // Project.savedViewGroups +1
+          modifyObjectField(
+            cache,
+            getCacheId('Project', input.projectId),
+            'savedViewGroups',
+            ({ helpers: { createUpdatedValue, fromRef, ref } }) =>
+              createUpdatedValue(({ update }) => {
+                update('totalCount', (totalCount) => totalCount + 1)
+                update('items', (items) => {
+                  const newItems = items.slice()
+
+                  // default comes first, then new group
+                  const defaultIdx = newItems.findIndex((i) =>
+                    fromRef(i).id.startsWith('default-')
+                  )
+
+                  newItems.splice(defaultIdx + 1, 0, ref('SavedViewGroup', group.id))
+
+                  return newItems
+                })
+              }),
+            { autoEvictFiltered: true }
+          )
+        }
+      }
+    ).catch(convertThrowIntoFetchResult)
+
+    const res = ret?.data?.projectMutations.savedViewMutations.createGroup
+    if (res?.id) {
+      triggerNotification({
+        title: 'Group created',
+        type: ToastNotificationType.Success
+      })
+    } else {
+      const err = getFirstGqlErrorMessage(ret?.errors)
+      triggerNotification({
+        title: "Couldn't create group",
         description: err,
         type: ToastNotificationType.Danger
       })

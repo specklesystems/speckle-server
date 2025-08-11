@@ -410,6 +410,7 @@ type Documents = {
     "\n  fragment UseDeleteSavedView_SavedView on SavedView {\n    id\n    projectId\n    group {\n      id\n    }\n  }\n": typeof types.UseDeleteSavedView_SavedViewFragmentDoc,
     "\n  mutation UpdateSavedView($input: UpdateSavedViewInput!) {\n    projectMutations {\n      savedViewMutations {\n        updateView(input: $input) {\n          id\n          ...ViewerSavedViewsPanelView_SavedView\n          group {\n            id\n            ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup\n          }\n        }\n      }\n    }\n  }\n": typeof types.UpdateSavedViewDocument,
     "\n  fragment UseUpdateSavedView_SavedView on SavedView {\n    id\n    projectId\n    group {\n      id\n    }\n  }\n": typeof types.UseUpdateSavedView_SavedViewFragmentDoc,
+    "\n  mutation CreateSavedViewGroup($input: CreateSavedViewGroupInput!) {\n    projectMutations {\n      savedViewMutations {\n        createGroup(input: $input) {\n          id\n        }\n      }\n    }\n  }\n": typeof types.CreateSavedViewGroupDocument,
     "\n  fragment UseViewerSavedViewSetup_SavedView on SavedView {\n    id\n    viewerState\n  }\n": typeof types.UseViewerSavedViewSetup_SavedViewFragmentDoc,
     "\n  fragment ViewerCommentThread on Comment {\n    ...ViewerCommentsListItem\n    ...ViewerCommentBubblesData\n    ...ViewerCommentsReplyItem\n    ...ViewerCommentThreadData\n  }\n": typeof types.ViewerCommentThreadFragmentDoc,
     "\n  fragment ViewerCommentsReplyItem on Comment {\n    id\n    archived\n    rawText\n    text {\n      doc\n    }\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    ...ThreadCommentAttachment\n  }\n": typeof types.ViewerCommentsReplyItemFragmentDoc,
@@ -903,6 +904,7 @@ const documents: Documents = {
     "\n  fragment UseDeleteSavedView_SavedView on SavedView {\n    id\n    projectId\n    group {\n      id\n    }\n  }\n": types.UseDeleteSavedView_SavedViewFragmentDoc,
     "\n  mutation UpdateSavedView($input: UpdateSavedViewInput!) {\n    projectMutations {\n      savedViewMutations {\n        updateView(input: $input) {\n          id\n          ...ViewerSavedViewsPanelView_SavedView\n          group {\n            id\n            ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup\n          }\n        }\n      }\n    }\n  }\n": types.UpdateSavedViewDocument,
     "\n  fragment UseUpdateSavedView_SavedView on SavedView {\n    id\n    projectId\n    group {\n      id\n    }\n  }\n": types.UseUpdateSavedView_SavedViewFragmentDoc,
+    "\n  mutation CreateSavedViewGroup($input: CreateSavedViewGroupInput!) {\n    projectMutations {\n      savedViewMutations {\n        createGroup(input: $input) {\n          id\n        }\n      }\n    }\n  }\n": types.CreateSavedViewGroupDocument,
     "\n  fragment UseViewerSavedViewSetup_SavedView on SavedView {\n    id\n    viewerState\n  }\n": types.UseViewerSavedViewSetup_SavedViewFragmentDoc,
     "\n  fragment ViewerCommentThread on Comment {\n    ...ViewerCommentsListItem\n    ...ViewerCommentBubblesData\n    ...ViewerCommentsReplyItem\n    ...ViewerCommentThreadData\n  }\n": types.ViewerCommentThreadFragmentDoc,
     "\n  fragment ViewerCommentsReplyItem on Comment {\n    id\n    archived\n    rawText\n    text {\n      doc\n    }\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    ...ThreadCommentAttachment\n  }\n": types.ViewerCommentsReplyItemFragmentDoc,
@@ -2598,6 +2600,10 @@ export function graphql(source: "\n  mutation UpdateSavedView($input: UpdateSave
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment UseUpdateSavedView_SavedView on SavedView {\n    id\n    projectId\n    group {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment UseUpdateSavedView_SavedView on SavedView {\n    id\n    projectId\n    group {\n      id\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation CreateSavedViewGroup($input: CreateSavedViewGroupInput!) {\n    projectMutations {\n      savedViewMutations {\n        createGroup(input: $input) {\n          id\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateSavedViewGroup($input: CreateSavedViewGroupInput!) {\n    projectMutations {\n      savedViewMutations {\n        createGroup(input: $input) {\n          id\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

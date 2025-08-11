@@ -17,7 +17,8 @@ import type {
   GetSavedViews,
   DeleteSavedViewRecord,
   UpdateSavedViewRecord,
-  GetSavedView
+  GetSavedView,
+  GetStoredViewGroupCount
 } from '@/modules/viewer/domain/operations/savedViews'
 import {
   SavedViewVisibility,
@@ -124,6 +125,13 @@ export const getStoredViewCountFactory =
   (deps: { db: Knex }): GetStoredViewCount =>
   async ({ projectId }) => {
     const [count] = await tables.savedViews(deps.db).where({ projectId }).count()
+    return parseInt(count.count + '')
+  }
+
+export const getStoredViewGroupCountFactory =
+  (deps: { db: Knex }): GetStoredViewGroupCount =>
+  async ({ projectId }) => {
+    const [count] = await tables.savedViewGroups(deps.db).where({ projectId }).count()
     return parseInt(count.count + '')
   }
 
