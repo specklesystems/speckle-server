@@ -34,7 +34,7 @@ export const lightThemeVariables = {
 
   /* outline variations */
   '--outline-1': primitives.blue[55],
-  '--outline-2': primitives.neutral[85],
+  '--outline-2': primitives.neutral[90],
   '--outline-3': primitives.neutral[95],
   '--outline-4': primitives.blue[50],
   '--outline-5': primitives.neutral[85],
