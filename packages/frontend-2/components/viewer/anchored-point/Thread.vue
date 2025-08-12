@@ -248,7 +248,7 @@ const { ellipsis, controls } = useAnimatingEllipsis()
 const { threadResourceStatus, hasClickedFullContext, goBack, handleContextClick } =
   useCommentContext()
 const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
-const router = useRouter()
+const router = useSafeRouter()
 const menuId = useId()
 
 const showMenu = ref(false)
@@ -440,9 +440,11 @@ const changeExpanded = async (newVal: boolean) => {
 const toggleCommentResolvedStatus = async () => {
   // Remove thread ID from URL when resolving
   if (!props.modelValue.archived) {
-    const query = { ...router.currentRoute.value.query }
-    delete query.thread
-    await router.replace({ query })
+    await router.replace(() => {
+      const query = { ...router.currentRoute.value.query }
+      delete query.thread
+      return { query }
+    })
   }
 
   await archiveComment({

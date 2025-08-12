@@ -159,7 +159,7 @@ const emit = defineEmits<{
   setup: [InjectableViewerState]
 }>()
 
-const router = useRouter()
+const router = useSafeRouter()
 const route = useRoute()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
@@ -175,9 +175,9 @@ const projectId = writableAsyncComputed({
   get: () => route.params.id as string,
   set: async (value: string) => {
     // Just rewrite route id param
-    await router.push({
+    await router.push(() => ({
       params: { id: value }
-    })
+    }))
   },
   initialState: route.params.id as string,
   asyncRead: false
