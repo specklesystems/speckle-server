@@ -255,6 +255,10 @@ export function useFilterUtilities(
     return filter as NonNullable<typeof filter>
   }
 
+  const hasActiveFilters = computed(() => {
+    return !!filters.propertyFilter.filter.value
+  })
+
   return {
     isolateObjects,
     unIsolateObjects,
@@ -267,7 +271,8 @@ export function useFilterUtilities(
     unApplyPropertyFilter,
     resetFilters,
     resetExplode,
-    waitForAvailableFilter
+    waitForAvailableFilter,
+    hasActiveFilters
   }
 }
 

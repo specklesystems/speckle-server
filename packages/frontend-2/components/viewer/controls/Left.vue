@@ -34,6 +34,7 @@
         "
         :active="activePanel === 'filters'"
         :icon="'IconViewerExplorer'"
+        :dot="hasActiveFilters"
         @click="toggleActivePanel('filters')"
       />
       <ViewerControlsButtonToggle
@@ -155,7 +156,7 @@
 </template>
 
 <script setup lang="ts">
-import { useViewerShortcuts } from '~~/lib/viewer/composables/ui'
+import { useViewerShortcuts, useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useEventListener, useResizeObserver, useBreakpoints } from '@vueuse/core'
@@ -233,6 +234,7 @@ const isTablet = breakpoints.smaller('lg')
 const { getTooltipProps } = useSmartTooltipDelay()
 const isSavedViewsEnabled = useAreSavedViewsEnabled()
 const { $intercom } = useNuxtApp()
+const { hasActiveFilters } = useFilterUtilities()
 
 const activePanel = ref<ActivePanel>('none')
 
