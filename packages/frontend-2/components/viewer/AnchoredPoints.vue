@@ -37,7 +37,7 @@
     <div v-if="!isEmbedEnabled">
       <!-- Active users -->
       <ViewerAnchoredPointUser
-        v-for="user in Object.values(users)"
+        v-for="user in visibleUsers"
         :key="user.state.sessionId"
         :user="user"
         class="z-[10]"
@@ -251,6 +251,12 @@ const usersWithAvatars = computed(() =>
     (u): u is SetFullyRequired<typeof u, 'user'> => !!u.user
   )
 )
+
+const visibleUsers = computed(() =>
+  // Hide users who are following someone else
+  Object.values(users.value).filter((user) => !user.state.ui.spotlightUserSessionId)
+)
+
 const spotlightUser = computed(() => {
   return Object.values(users.value).find(
     (u) => u.sessionId === spotlightUserSessionId.value
