@@ -62,6 +62,7 @@ import {
 } from '@/modules/fileuploads/services/requestHandler'
 import type { UpdateFileStatusForProjectFactory } from '@/modules/fileuploads/domain/operations'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+import { rhinoImporterSupportedFileExtensions } from '@speckle/shared/blobs'
 
 const {
   FF_NEXT_GEN_FILE_IMPORTER_ENABLED,
@@ -147,8 +148,8 @@ export const init: SpeckleModule['init'] = async ({
         const queueDb = connectionUri
           ? configureClient({ postgres: { connectionUri } }).public
           : db
-        const queueInits = [
-          initializePostgresQueue({
+        const requestQueues = [
+          await initializePostgresQueue({
             label: 'ifc',
             supportedFileTypes: ['ifc'],
             db: queueDb
@@ -156,24 +157,19 @@ export const init: SpeckleModule['init'] = async ({
         ]
         if (FF_RHINO_FILE_IMPORTER_ENABLED) {
           moduleLogger.info('🦏 Rhino File Importer is ENABLED')
-          const connectionUri = getFileImporterQueuePostgresUrl()
           if (!connectionUri)
             throw new MisconfiguredEnvironmentError(
               'Need a dedicated queue for Rhino based fileimports'
             )
-          const rhinoQueueDb = configureClient({ postgres: { connectionUri } })
-          queueInits.push(
-            initializePostgresQueue({
+          requestQueues.push(
+            await initializePostgresQueue({
               label: 'rhino',
-              supportedFileTypes: ['obj', 'stl', 'skp'],
+              supportedFileTypes: [...rhinoImporterSupportedFileExtensions],
               // using public here, as the private uri is not applicable here
-              db: rhinoQueueDb.public
+              db: queueDb
             })
           )
         }
-        // no need to store the queue refs here for now
-        const requestQueues = await Promise.all(queueInits)
-        //stick to the bull queue based mechanism by default
         ;({ observeResult } = initializeMetrics({
           registers: [metricsRegister],
           requestQueues

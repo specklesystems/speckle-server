@@ -1,4 +1,4 @@
-import { Box3 } from 'three'
+import { Box3, Matrix4 } from 'three'
 import { GeometryType } from '../batching/Batch.js'
 import { GeometryAttributes, type GeometryData } from '../converter/Geometry.js'
 import Materials, {
@@ -7,6 +7,7 @@ import Materials, {
   type RenderMaterial
 } from '../materials/Materials.js'
 import { SpeckleType } from '../loaders/GeometryConverter.js'
+import { ChunkArray } from '../converter/VirtualArray.js'
 
 export interface NodeRenderData {
   id: string
@@ -84,6 +85,10 @@ export class NodeRenderView {
     return this._aabb
   }
 
+  public set aabb(value: Box3) {
+    this._aabb.copy(value)
+  }
+
   public get transparent(): boolean {
     return (
       (this._renderData.renderMaterial &&
@@ -150,14 +155,18 @@ export class NodeRenderView {
     if (vertEnd !== undefined) this._batchVertexEnd = vertEnd
   }
 
-  public computeAABB() {
+  public computeAABB(transform?: Matrix4) {
     if (!this._aabb) this._aabb = new Box3()
 
     if (
       this._renderData.geometry.attributes &&
       this._renderData.geometry.attributes.POSITION.length
     ) {
-      this._aabb.setFromArray(this._renderData.geometry.attributes.POSITION)
+      /** For transformations that contain non-uniform scaling combine with rotation the resulting
+       *  aabb is not going to be accurate. We will re-compute and assign it when we build the batches
+       */
+      this._aabb.copy(this._renderData.geometry.attributes.POSITION.computeBox3())
+      if (transform) this._aabb.applyMatrix4(transform)
     }
   }
 
@@ -181,7 +190,9 @@ export class NodeRenderView {
 
   public disposeGeometry() {
     for (const attr in this._renderData.geometry.attributes) {
-      this._renderData.geometry.attributes[attr as GeometryAttributes] = []
+      this._renderData.geometry.attributes[attr as GeometryAttributes] = new ChunkArray(
+        []
+      )
     }
   }
 }

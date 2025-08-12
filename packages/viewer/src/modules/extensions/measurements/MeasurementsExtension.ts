@@ -21,6 +21,14 @@ export enum MeasurementType {
   POINT
 }
 
+export enum MeasurementEvent {
+  CountChanged = 'measurement-count-changed'
+}
+
+export interface MeasurementEventPayload {
+  [MeasurementEvent.CountChanged]: number
+}
+
 export interface MeasurementOptions {
   visible: boolean
   type?: MeasurementType
@@ -99,6 +107,14 @@ export class MeasurementsExtension extends Extension {
     return this._activeMeasurement
   }
 
+  public get measurementCount(): number {
+    return this.measurements.length
+  }
+
+  private emitMeasurementCountChanged() {
+    this.emit(MeasurementEvent.CountChanged, this.measurements.length)
+  }
+
   public constructor(viewer: IViewer, protected cameraProvider: CameraController) {
     super(viewer)
     this.renderer = viewer.getRenderer()
@@ -108,6 +124,13 @@ export class MeasurementsExtension extends Extension {
     this.renderer.input.on(InputEvent.PointerMove, this.onPointerMove.bind(this))
     this.renderer.input.on(InputEvent.Click, this.onPointerClick.bind(this))
     this.renderer.input.on(InputEvent.DoubleClick, this.onPointerDoubleClick.bind(this))
+  }
+
+  public on<T extends MeasurementEvent>(
+    eventType: T,
+    listener: (arg: MeasurementEventPayload[T]) => void
+  ): void {
+    super.on(eventType, listener)
   }
 
   public onLateUpdate() {
@@ -216,6 +239,12 @@ export class MeasurementsExtension extends Extension {
         if (count === 0) this.cancelMeasurement()
       } else this.cancelMeasurement()
       return
+    }
+
+    /** This will not work for iOS < 13 (pre-2019) (allegedly) */
+    /** Because there is no hovering with touch input, we simulate a hover when tapping  */
+    if (data.event.pointerType === 'touch') {
+      this.onPointerMove(data)
     }
 
     if (!this._activeMeasurement) return
@@ -348,6 +377,7 @@ export class MeasurementsExtension extends Extension {
     void this._activeMeasurement.update()
     if (this._activeMeasurement.value > 0) {
       this.measurements.push(this._activeMeasurement)
+      this.emitMeasurementCountChanged()
     } else {
       this.renderer.scene.remove(this._activeMeasurement)
       Logger.error('Ignoring zero value measurement!')
@@ -382,6 +412,7 @@ export class MeasurementsExtension extends Extension {
       this.measurements.splice(this.measurements.indexOf(this._selectedMeasurement), 1)
       this.renderer.scene.remove(this._selectedMeasurement)
       this._selectedMeasurement = null
+      this.emitMeasurementCountChanged()
       this.viewer.requestRender()
     } else {
       this.cancelMeasurement()
@@ -394,6 +425,7 @@ export class MeasurementsExtension extends Extension {
       this.renderer.scene.remove(measurement)
     })
     this.measurements = []
+    this.emitMeasurementCountChanged()
     this.viewer.requestRender()
   }
 

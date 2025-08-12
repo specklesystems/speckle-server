@@ -1,6 +1,6 @@
 import { wait } from '@speckle/shared'
 import type { Meta, StoryObj } from '@storybook/vue3'
-import { times } from 'lodash'
+import { times } from '#lodash'
 import { useForm } from 'vee-validate'
 import FormButton from '~~/src/components/form/Button.vue'
 import FormSelectTags from '~~/src/components/form/Tags.vue'

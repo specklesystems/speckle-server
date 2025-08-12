@@ -22,12 +22,13 @@ import {
 } from '@/modules/fileuploads/domain/consts'
 import type { Knex } from 'knex'
 import { migrateDbToLatest } from '@/db/migrations'
-import { scheduleBackgroundJobFactory } from '@/modules/backgroundjobs/services'
+import { createBackgroundJobFactory } from '@/modules/backgroundjobs/services/create'
 import {
   getBackgroundJobCountFactory,
   storeBackgroundJobFactory
 } from '@/modules/backgroundjobs/repositories'
 import { BackgroundJobStatus, BackgroundJobType } from '@/modules/backgroundjobs/domain'
+import { rhinoImporterSupportedFileExtensions } from '@speckle/shared/blobs'
 
 const FILEIMPORT_SERVICE_RHINO_QUEUE_NAME = getFileImportServiceRhinoQueueName()
 const FILEIMPORT_SERVICE_IFC_QUEUE_NAME = getFileImportServiceIFCQueueName()
@@ -136,7 +137,7 @@ export const initializePostgresQueue = async ({
   // migrating the DB up, the queue DB might be added based on a config
   await migrateDbToLatest({ db, region: `Queue DB for ${label}` })
 
-  const scheduleBackgroundJob = scheduleBackgroundJobFactory({
+  const createBackgroundJob = createBackgroundJobFactory({
     jobConfig: { maxAttempt: 3, timeoutMs: timeout },
     storeBackgroundJob: storeBackgroundJobFactory({
       db,
@@ -152,7 +153,7 @@ export const initializePostgresQueue = async ({
     ),
     shutdown: async () => {},
     scheduleJob: async (jobData: JobPayload) => {
-      await scheduleBackgroundJob({
+      await createBackgroundJob({
         jobPayload: { jobType: 'fileImport', payloadVersion: 1, ...jobData }
       })
     },
@@ -187,7 +188,7 @@ export const initializeRhinoQueueFactory =
       label: 'rhino',
       queueName: FILEIMPORT_SERVICE_RHINO_QUEUE_NAME,
       redisUrl: rhinoImportServiceRedisUrl ? rhinoImportServiceRedisUrl : getRedisUrl(),
-      supportedFileTypes: ['obj', 'stl', 'skp']
+      supportedFileTypes: [...rhinoImporterSupportedFileExtensions]
     })
   }
 

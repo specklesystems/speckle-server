@@ -243,7 +243,7 @@ import {
   XMarkIcon,
   ExclamationCircleIcon
 } from '@heroicons/vue/20/solid'
-import { debounce, isArray, isObjectLike } from 'lodash'
+import { debounce, isArray, isObjectLike } from '#lodash'
 import type { CSSProperties, PropType, Ref } from 'vue'
 import { computed, onMounted, ref, unref, watch } from 'vue'
 import type { MaybeAsync, Nullable, Optional } from '@speckle/shared'

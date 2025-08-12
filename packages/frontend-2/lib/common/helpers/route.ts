@@ -15,12 +15,15 @@ export const forgottenPasswordRoute = '/authn/forgotten-password'
 export const verifyEmailRoute = '/verify-email'
 export const verifyEmailCountdownRoute = '/verify-email?source=registration'
 export const serverManagementRoute = '/server-management'
+export const accLoginRoute = '/authn/acc'
+export const accRoute = '/acc'
 export const connectorsRoute = '/connectors'
 export const tutorialsRoute = '/tutorials'
 export const docsPageUrl = 'https://docs.speckle.systems/'
 export const forumPageUrl = 'https://speckle.community/'
 export const guideBillingUrl = 'https://docs.speckle.systems/workspaces/billing'
 export const onboardingRoute = '/onboarding'
+export const viewerDocsRoute = 'https://docs.speckle.systems/3d-viewer/interface-nav'
 
 export const settingsUserRoutes = {
   profile: '/settings/user/profile',
@@ -90,7 +93,7 @@ export const settingsWorkspaceRoutes = {
 
 export const projectRoute = (
   id: string,
-  tab?: 'models' | 'discussions' | 'automations' | 'collaborators' | 'settings'
+  tab?: 'models' | 'discussions' | 'automations' | 'collaborators' | 'settings' | 'acc'
 ) => {
   let res = `/projects/${id}`
   if (tab && tab !== 'models') {
@@ -111,6 +114,8 @@ export const modelRoute = (
   `/projects/${projectId}/models/${resourceIdString}${
     hashState ? serializeHashState(hashState) || '' : ''
   }`
+export const viewerRoute = modelRoute
+
 export const modelVersionsRoute = (projectId: string, modelId: string) =>
   `/projects/${projectId}/models/${modelId}/versions`
 

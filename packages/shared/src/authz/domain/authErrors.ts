@@ -117,7 +117,7 @@ export const WorkspaceLimitsReachedError = defineAuthError<
 })
 
 export const WorkspacePlanNoFeatureAccessError = defineAuthError({
-  code: 'WorkspaceNoFeatureAccess',
+  code: 'WorkspacePlanNoFeatureAccessError',
   message: 'Your workspace plan does not have access to this feature.'
 })
 
@@ -194,6 +194,16 @@ export const AutomateFunctionNotFoundError = defineAuthError({
 export const AutomateFunctionNotCreatorError = defineAuthError({
   code: 'AutomateFunctionNotCreator',
   message: 'You are not the function creator and cannot make changes to it.'
+})
+
+export const AccIntegrationNotEnabledError = defineAuthError({
+  code: 'AccIntegrationNotEnabled',
+  message: 'The ACC Integration is not enabled on this server or project'
+})
+
+export const SavedViewNotFoundError = defineAuthError({
+  code: 'SavedViewNotFound',
+  message: 'Saved view not found'
 })
 
 // Resolve all exported error types

@@ -220,6 +220,9 @@ export default defineNuxtConfig({
         to: '/workspaces/actions/create',
         statusCode: 301
       }
+    },
+    '/projects/:id/models/:modelId': {
+      ssr: true // TODO: Should experiment w/ false, but this breaks SSR script injection like for RUM
     }
   },
 

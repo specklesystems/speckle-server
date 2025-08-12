@@ -12,7 +12,7 @@ import { useSetActiveWorkspace } from '~/lib/user/composables/activeWorkspace'
 /**
  * Used in project page to validate that project ID refers to a valid project and redirects to 404 if not
  */
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineNuxtRouteMiddleware(async (to, from) => {
   const projectId = to.params.id as string
 
   // Check if embed token is present in URL
@@ -28,6 +28,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const { isLoggedIn } = useActiveUser()
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
+  const isInPlaceNavigation = checkIfIsInPlaceNavigation(to, from)
+
   const { data, errors } = await client
     .query({
       query: projectAccessCheckQuery,
@@ -35,7 +37,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
       context: {
         skipLoggingErrors: true
       },
-      fetchPolicy: 'network-only'
+      fetchPolicy: isInPlaceNavigation ? 'cache-first' : 'network-only'
     })
     .catch(convertThrowIntoFetchResult)
 
@@ -79,7 +81,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
   }
 
-  if (isLoggedIn.value && isWorkspacesEnabled.value) {
+  if (isLoggedIn.value && isWorkspacesEnabled.value && !isInPlaceNavigation) {
     await setActiveWorkspace({ id: data?.project.workspaceId })
   }
 })

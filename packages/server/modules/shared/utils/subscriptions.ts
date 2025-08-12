@@ -54,7 +54,9 @@ import type {
   SubscriptionWorkspaceProjectsUpdatedArgs,
   WorkspaceProjectsUpdatedMessage,
   SubscriptionWorkspaceUpdatedArgs,
-  WorkspaceUpdatedMessage
+  WorkspaceUpdatedMessage,
+  ProjectAccSyncItemsUpdatedMessage,
+  SubscriptionProjectAccSyncItemsUpdatedArgs
 } from '@/modules/core/graph/generated/graphql'
 import type { Merge, OverrideProperties } from 'type-fest'
 import type {
@@ -72,6 +74,7 @@ import type { CommentRecord } from '@/modules/comments/helpers/types'
 import type { CommitRecord } from '@/modules/core/helpers/types'
 import type { BranchRecord } from '@/modules/core/helpers/types'
 import type { WorkspaceGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
+import type { AccSyncItemGraphQLReturn } from '@/modules/acc/helpers/graphTypes'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -122,6 +125,7 @@ export enum ProjectSubscriptions {
   ProjectVersionsUpdated = 'PROJECT_VERSIONS_UPDATED',
   ProjectVersionsPreviewGenerated = 'PROJECT_VERSIONS_PREVIEW_GENERATED',
   ProjectCommentsUpdated = 'PROJECT_COMMENTS_UPDATED',
+  ProjectAccSyncItemUpdated = 'PROJECT_ACC_SYNC_ITEM_UPDATED',
   // old beta subscription:
   ProjectTriggeredAutomationsStatusUpdated = 'PROJECT_TRIGGERED_AUTOMATION_STATUS_UPDATED',
   ProjectAutomationsUpdated = 'PROJECT_AUTOMATIONS_UPDATED',
@@ -228,6 +232,16 @@ type SubscriptionTypeMap = {
       resourceItems: ViewerResourceItem[]
     }
     variables: SubscriptionProjectCommentsUpdatedArgs
+  }
+  [ProjectSubscriptions.ProjectAccSyncItemUpdated]: {
+    payload: {
+      projectAccSyncItemsUpdated: Merge<
+        ProjectAccSyncItemsUpdatedMessage,
+        { accSyncItem: Nullable<AccSyncItemGraphQLReturn> }
+      >
+      projectId: string
+    }
+    variables: SubscriptionProjectAccSyncItemsUpdatedArgs
   }
   [FileImportSubscriptions.ProjectPendingModelsUpdated]: {
     payload: {

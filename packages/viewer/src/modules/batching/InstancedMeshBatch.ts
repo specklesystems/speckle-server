@@ -233,7 +233,7 @@ export class InstancedMeshBatch implements Batch {
       const offset = transparentGroup.start
       const count =
         hiddenGroup !== undefined
-          ? hiddenGroup.start
+          ? hiddenGroup.start - transparentGroup.start
           : this.getCount() - transparentGroup.start
       if (offset === 0 && count === this.getCount()) return AllBatchUpdateRange
       return {
@@ -525,6 +525,21 @@ export class InstancedMeshBatch implements Batch {
     )
     const targetInstanceTransformBuffer = this.getCurrentTransformBuffer()
 
+    const positions =
+      this.renderViews[0].renderData.geometry.attributes?.POSITION.getFloat32Array()
+    const indicesLength =
+      this.renderViews[0].renderData.geometry.attributes?.INDEX.length ?? 0
+    const positionsLength =
+      this.renderViews[0].renderData.geometry.attributes?.POSITION.length ?? 0
+    const indices =
+      indicesLength < 65535 && positionsLength < 65535
+        ? this.renderViews[0].renderData.geometry.attributes?.INDEX.getUint16Array()
+        : this.renderViews[0].renderData.geometry.attributes?.INDEX.getUint32Array()
+    const colors =
+      this.renderViews[0].renderData.geometry.attributes?.COLOR?.getFloat32Array()
+    const normals =
+      this.renderViews[0].renderData.geometry.attributes?.NORMAL?.getFloat32Array()
+
     for (let k = 0; k < this.renderViews.length; k++) {
       /** Catering to typescript
        *  There is no unniverse where an instanced render view does not have a transform
@@ -555,13 +570,10 @@ export class InstancedMeshBatch implements Batch {
           batchObject.localOrigin.z
         )
         transform.invert()
-        const indices: number[] | undefined =
-          this.renderViews[k].renderData.geometry.attributes?.INDEX
-        const position: number[] | undefined = this.renderViews[k].renderData.geometry
-          .attributes?.POSITION as number[]
+
         instanceBVH = AccelerationStructure.buildBVH(
           indices,
-          position,
+          positions,
           DefaultBVHOptions,
           transform
         )
@@ -572,32 +584,13 @@ export class InstancedMeshBatch implements Batch {
       batchObjects.push(batchObject)
     }
 
-    const indices: number[] | undefined =
-      this.renderViews[0].renderData.geometry.attributes?.INDEX
-
-    const positions: number[] | undefined =
-      this.renderViews[0].renderData.geometry.attributes?.POSITION
-
-    const colors: number[] | undefined =
-      this.renderViews[0].renderData.geometry.attributes?.COLOR
-
-    const normals: number[] | undefined =
-      this.renderViews[0].renderData.geometry.attributes?.NORMAL
-
     /** Catering to typescript
      *  There is no unniverse where indices or positions are undefined at this point
      */
     if (!indices || !positions) {
       throw new Error(`Cannot build batch ${this.id}. Undefined indices or positions`)
     }
-    this.geometry = this.makeInstancedMeshGeometry(
-      positions.length >= 65535 || indices.length >= 65535
-        ? new Uint32Array(indices)
-        : new Uint16Array(indices),
-      new Float64Array(positions),
-      normals ? new Float32Array(normals) : undefined,
-      colors ? new Float32Array(colors) : undefined
-    )
+    this.geometry = this.makeInstancedMeshGeometry(indices, positions, normals, colors)
 
     this.mesh = new SpeckleInstancedMesh(this.geometry)
     this.mesh.setBatchObjects(batchObjects)
@@ -655,16 +648,12 @@ export class InstancedMeshBatch implements Batch {
 
   private makeInstancedMeshGeometry(
     indices: Uint32Array | Uint16Array,
-    position: Float64Array,
+    position: Float32Array,
     normal?: Float32Array,
     color?: Float32Array
   ): BufferGeometry {
     const geometry = new BufferGeometry()
     if (position) {
-      /** When RTE enabled, we'll be storing the high component of the encoding here,
-       * which considering our current encoding method is actually the original casted
-       * down float32 position!
-       */
       geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
     }
 

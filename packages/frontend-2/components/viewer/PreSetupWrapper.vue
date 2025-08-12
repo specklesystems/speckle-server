@@ -41,7 +41,10 @@
               enter-from-class="opacity-0"
               enter-active-class="transition duration-1000"
             >
-              <ViewerAnchoredPoints />
+              <ViewerAnchoredPoints
+                ref="anchoredPoints"
+                @force-close-panels="() => closeAllPanels('threads')"
+              />
             </Transition>
           </div>
 
@@ -51,8 +54,19 @@
             :class="isEmbedEnabled ? 'top-0' : ' -top-2'"
           />
 
-          <!-- Sidebar controls -->
-          <ViewerControls v-if="showControls" class="relative z-20" />
+          <!-- Controls -->
+          <!-- <ViewerControls v-if="showControls" class="relative z-20" /> -->
+          <template v-if="showControls">
+            <ViewerControlsLeft
+              ref="leftControls"
+              @force-close-panels="() => closeAllPanels('left')"
+            />
+            <ViewerControlsBottom
+              ref="bottomControls"
+              @force-close-panels="() => closeAllPanels('bottom')"
+            />
+            <ViewerControlsRight v-if="isMobile" />
+          </template>
 
           <ViewerLimitsDialog
             v-if="project"
@@ -68,11 +82,10 @@
             enter-from-class="opacity-0"
             enter-active-class="transition duration-1000"
           >
-            <ViewerSelectionSidebar class="z-20" />
+            <ViewerSelectionSidebar ref="selectionSidebar" class="z-20" />
           </Transition>
           <div
-            class="absolute z-10 w-screen px-8 grid grid-cols-1 sm:grid-cols-3 gap-2"
-            :class="isEmbedEnabled ? 'bottom-16 mb-1' : 'bottom-6'"
+            class="absolute z-10 w-screen px-8 grid grid-cols-1 sm:grid-cols-3 gap-2 top-[3.75rem]"
           >
             <div class="flex items-end justify-center sm:justify-start">
               <PortalTarget name="pocket-left"></PortalTarget>
@@ -81,12 +94,6 @@
               <PortalTarget name="pocket-tip"></PortalTarget>
               <div class="flex gap-3">
                 <PortalTarget name="pocket-actions"></PortalTarget>
-                <!-- Shows up when filters are applied for an easy return to normality -->
-                <ViewerGlobalFilterReset
-                  v-if="hasAnyFiltersApplied"
-                  class="z-20"
-                  :embed="!!isEmbedEnabled"
-                />
               </div>
             </div>
             <div class="flex items-end justify-center sm:justify-end">
@@ -120,12 +127,13 @@ import {
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
-import { useFilterUtilities } from '~/lib/viewer/composables/ui'
 import { projectsRoute, workspaceRoute } from '~~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { writableAsyncComputed } from '~/lib/common/composables/async'
 import { parseUrlParameters, resourceBuilder } from '@speckle/shared/viewer/route'
 import { ViewerLimitsDialogType } from '~/lib/projects/helpers/limits'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { useBreakpoints } from '@vueuse/core'
 
 graphql(`
   fragment ModelPageProject on Project {
@@ -151,18 +159,25 @@ const emit = defineEmits<{
   setup: [InjectableViewerState]
 }>()
 
-const router = useRouter()
+const router = useSafeRouter()
 const route = useRoute()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('sm')
+
+const leftControls = ref()
+const bottomControls = ref()
+const selectionSidebar = ref()
+const anchoredPoints = ref()
 
 const resourceIdString = computed(() => route.params.modelId as string)
 const projectId = writableAsyncComputed({
   get: () => route.params.id as string,
   set: async (value: string) => {
     // Just rewrite route id param
-    await router.push({
+    await router.push(() => ({
       params: { id: value }
-    })
+    }))
   },
   initialState: route.params.id as string,
   asyncRead: false
@@ -171,9 +186,6 @@ const projectId = writableAsyncComputed({
 const state = useSetupViewer({
   projectId
 })
-const {
-  filters: { hasAnyFiltersApplied }
-} = useFilterUtilities({ state })
 const {
   isEnabled: isEmbedEnabled,
   hideSelectionInfo,
@@ -296,4 +308,18 @@ watch(
   },
   { immediate: true }
 )
+
+const closeAllPanels = (except?: 'left' | 'bottom' | 'threads') => {
+  if (except !== 'left' && leftControls.value?.forceClosePanels) {
+    leftControls.value.forceClosePanels()
+  }
+  if (except !== 'bottom' && bottomControls.value?.forceClosePanels) {
+    bottomControls.value.forceClosePanels()
+  }
+  if (except !== 'threads' && anchoredPoints.value?.forceCloseThreads) {
+    anchoredPoints.value.forceCloseThreads()
+  }
+
+  selectionSidebar.value.forceClose()
+}
 </script>

@@ -48,12 +48,9 @@ import {
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import {
-  doViewerResourcesFit,
   getViewerResourcesForCommentFactory,
   getViewerResourcesFromLegacyIdentifiersFactory,
-  getViewerResourcesForCommentsFactory,
-  getViewerResourceItemsUngroupedFactory,
-  getViewerResourceGroupsFactory
+  getViewerResourcesForCommentsFactory
 } from '@/modules/core/services/commit/viewerResources'
 import {
   createCommentThreadAndNotifyFactory,
@@ -81,6 +78,7 @@ import {
   getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import {
+  getBranchesByIdsFactory,
   getBranchLatestCommitsFactory,
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
@@ -93,6 +91,13 @@ import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { isCreatedBeyondHistoryLimitCutoffFactory } from '@/modules/gatekeeperCore/utils/limits'
+import {
+  doViewerResourcesFit,
+  getViewerResourceGroupsFactory,
+  getViewerResourceItemsUngroupedFactory
+} from '@/modules/viewer/services/viewerResources'
+import type { RequestDataLoaders } from '@/modules/core/loaders'
+import { getSavedViewFactory } from '@/modules/viewer/repositories/dataLoaders/savedViews'
 
 // We can use the main DB for these
 const getStream = getStreamFactory({ db })
@@ -111,14 +116,19 @@ const buildGetViewerResourcesFromLegacyIdentifiers = (deps: { db: Knex }) => {
   return getViewerResourcesFromLegacyIdentifiers
 }
 
-const buildGetViewerResourceItemsUngrouped = (deps: { db: Knex }) =>
+const buildGetViewerResourceItemsUngrouped = (deps: {
+  db: Knex
+  loaders: RequestDataLoaders
+}) =>
   getViewerResourceItemsUngroupedFactory({
     getViewerResourceGroups: getViewerResourceGroupsFactory({
       getStreamObjects: getStreamObjectsFactory(deps),
       getBranchLatestCommits: getBranchLatestCommitsFactory(deps),
       getStreamBranchesByName: getStreamBranchesByNameFactory(deps),
       getSpecificBranchCommits: getSpecificBranchCommitsFactory(deps),
-      getAllBranchCommits: getAllBranchCommitsFactory(deps)
+      getAllBranchCommits: getAllBranchCommitsFactory(deps),
+      getBranchesByIds: getBranchesByIdsFactory(deps),
+      getSavedView: getSavedViewFactory(deps)
     })
   })
 
@@ -536,7 +546,8 @@ export default {
       const projectDb = await getProjectDbClient({ projectId })
 
       const getViewerResourceItemsUngrouped = buildGetViewerResourceItemsUngrouped({
-        db: projectDb
+        db: projectDb,
+        loaders: ctx.loaders
       })
 
       const validateInputAttachments = validateInputAttachmentsFactory({
@@ -705,7 +716,8 @@ export default {
 
       const projectDb = await getProjectDbClient({ projectId })
       const getViewerResourceItemsUngrouped = buildGetViewerResourceItemsUngrouped({
-        db: projectDb
+        db: projectDb,
+        loaders: context.loaders
       })
 
       await publish(ViewerSubscriptions.UserActivityBroadcasted, {
@@ -1054,7 +1066,8 @@ export default {
 
           const projectDb = await getProjectDbClient({ projectId: payload.projectId })
           const getViewerResourceItemsUngrouped = buildGetViewerResourceItemsUngrouped({
-            db: projectDb
+            db: projectDb,
+            loaders: context.loaders
           })
           const requestedResourceItems = await getViewerResourceItemsUngrouped(target)
 
@@ -1090,7 +1103,8 @@ export default {
 
           const projectDb = await getProjectDbClient({ projectId: payload.projectId })
           const getViewerResourceItemsUngrouped = buildGetViewerResourceItemsUngrouped({
-            db: projectDb
+            db: projectDb,
+            loaders: context.loaders
           })
 
           const requestedResourceItems = await getViewerResourceItemsUngrouped(target)

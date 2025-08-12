@@ -98,8 +98,16 @@ export abstract class Pipeline {
     this.passList.forEach((pass: GPass) => {
       if (!pass.enabled || !pass.render) return
 
+      let passObjectVisibility = restoreVisibility
       if (pass.visibility) {
-        this.speckleRenderer.batcher.applyVisibility(visibilityMap[pass.visibility])
+        if (pass.visibility === ObjectVisibility.CUSTOM) {
+          if (pass.visibilityFunction)
+            passObjectVisibility = pass.visibilityFunction(this.speckleRenderer)
+        } else passObjectVisibility = visibilityMap[pass.visibility]
+      }
+
+      if (pass.visibility) {
+        this.speckleRenderer.batcher.applyVisibility(passObjectVisibility)
         lastVisibility = pass.visibility
       } else if (lastVisibility) {
         this.speckleRenderer.batcher.applyVisibility(restoreVisibility)
@@ -107,13 +115,13 @@ export abstract class Pipeline {
 
       if (pass.overrideMaterial)
         this.speckleRenderer.batcher.overrideMaterial(
-          pass.visibility ? visibilityMap[pass.visibility] : restoreVisibility,
+          pass.visibility ? passObjectVisibility : restoreVisibility,
           pass.overrideMaterial
         )
 
       if (pass.overrideBatchMaterial)
         this.speckleRenderer.batcher.overrideBatchMaterial(
-          pass.visibility ? visibilityMap[pass.visibility] : restoreVisibility,
+          pass.visibility ? passObjectVisibility : restoreVisibility,
           pass.overrideBatchMaterial
         )
 
@@ -161,11 +169,11 @@ export abstract class Pipeline {
         this.speckleRenderer.batcher.applyVisibility(restoreVisibility)
       if (pass.overrideMaterial)
         this.speckleRenderer.batcher.restoreMaterial(
-          pass.visibility ? visibilityMap[pass.visibility] : restoreVisibility
+          pass.visibility ? passObjectVisibility : restoreVisibility
         )
       if (pass.overrideBatchMaterial)
         this.speckleRenderer.batcher.restoreBatchMaterial(
-          pass.visibility ? visibilityMap[pass.visibility] : restoreVisibility
+          pass.visibility ? passObjectVisibility : restoreVisibility
         )
       if (pass.jitter && camera) camera.projectionMatrix.copy(this.frameProjection)
     })

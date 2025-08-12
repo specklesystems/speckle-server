@@ -37,7 +37,7 @@
     <div v-if="!isEmbedEnabled">
       <!-- Active users -->
       <ViewerAnchoredPointUser
-        v-for="user in Object.values(users)"
+        v-for="user in visibleUsers"
         :key="user.state.sessionId"
         :user="user"
         class="z-[10]"
@@ -82,63 +82,47 @@
 
     <!-- Active user tracking cancel & Follower count display -->
     <div
-      v-if="
-        (!isEmbedEnabled && spotlightUserSessionId && spotlightUser) ||
-        followers.length !== 0
-      "
+      v-if="showFollowerMessage"
       class="absolute w-screen z-10 p-1 h-[calc(100dvh-3rem)]"
       :class="isEmbedEnabled ? '' : 'mt-[3rem]'"
     >
-      <div
-        class="w-full h-full outline -outline-offset-0 outline-8 rounded-md outline-primary"
-      >
-        <div class="absolute top-0 left-0 w-full justify-center flex">
-          <svg
-            class="mt-1"
-            width="8"
-            height="8"
-            viewBox="0 0 8 8"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path d="M0 0C4.5 0 8 3.5 8 8V0H0Z" class="fill-primary" />
-          </svg>
-          <div
-            class="pointer-events-auto bg-primary text-white text-xs px-3 h-8 flex items-center rounded-b-md cursor-default"
-          >
-            <div v-if="spotlightUserSessionId && spotlightUser">
-              Following {{ spotlightUser?.userName.split(' ')[0] }}
-              <FormButton
-                color="outline"
-                size="sm"
-                class="ml-1 -mr-1.5"
-                @click="() => (spotlightUserSessionId = null)"
-              >
-                <span>Stop</span>
-              </FormButton>
-            </div>
-            <div
-              v-else
-              v-tippy="{ placement: 'bottom' }"
-              :content="followers.map((u) => u.name).join(', ')"
+      <div class="absolute top-0 left-0 w-full justify-center flex">
+        <div
+          class="pointer-events-auto bg-primary text-white text-xs px-3 h-8 flex items-center rounded-b-md cursor-default"
+        >
+          <div v-if="spotlightUserSessionId && spotlightUser">
+            Following {{ spotlightUser?.userName.split(' ')[0] }}
+            <FormButton
+              color="outline"
+              size="sm"
+              class="ml-1 -mr-1.5"
+              @click="() => (spotlightUserSessionId = null)"
             >
-              Followed by {{ followers[0].name.split(' ')[0] }}
-              <span v-if="followers.length > 1">
-                & {{ followers.length - 1 }}
-                {{ followers.length - 1 === 1 ? 'other' : 'others' }}
-              </span>
-            </div>
+              <span>Stop</span>
+            </FormButton>
           </div>
-          <svg
-            class="mt-1"
-            width="8"
-            height="8"
-            viewBox="0 0 8 8"
-            xmlns="http://www.w3.org/2000/svg"
+          <div
+            v-else-if="followers.length > 0"
+            v-tippy="{ placement: 'bottom' }"
+            :content="followers.map((u) => u.name).join(', ')"
           >
-            <path d="M0 0H8C3.5 0 0 3.5 0 8V0Z" class="fill-primary" />
-          </svg>
+            Followed by {{ followers[0].name.split(' ')[0] }}
+            <span v-if="followers.length > 1">
+              & {{ followers.length - 1 }}
+              {{ followers.length - 1 === 1 ? 'other' : 'others' }}
+            </span>
+          </div>
         </div>
       </div>
+    </div>
+
+    <!-- Shows up when filters are applied for an easy return to normality -->
+    <div
+      v-if="hasAnyFiltersApplied"
+      class="z-20 absolute left-1/2 -translate-x-1/2"
+      :class="showFollowerMessage ? 'top-24' : 'top-14'"
+    >
+      <ViewerGlobalFilterReset />
     </div>
   </div>
 </template>
@@ -160,15 +144,26 @@ import {
   useInjectedViewerInterfaceState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
+import { useThreadUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { useBreakpoints } from '@vueuse/core'
+
+const emit = defineEmits<{
+  forceClosePanels: []
+}>()
 
 const parentEl = ref(null as Nullable<HTMLElement>)
 const { isLoggedIn } = useActiveUser()
-const { sessionId } = useInjectedViewerState()
+const viewerState = useInjectedViewerState()
+const { sessionId } = viewerState
 const { users } = useViewerUserActivityTracking({ parentEl })
-const { isOpenThread, open } = useThreadUtilities()
-
+const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
+const {
+  filters: { hasAnyFiltersApplied }
+} = useFilterUtilities({ state: viewerState })
 const canPostComment = useCheckViewerCommentingAccess()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('sm')
 
 const { isEnabled: isEmbedEnabled } = useEmbed()
 
@@ -256,11 +251,23 @@ const usersWithAvatars = computed(() =>
     (u): u is SetFullyRequired<typeof u, 'user'> => !!u.user
   )
 )
+
+const visibleUsers = computed(() =>
+  // Hide users who are following someone else
+  Object.values(users.value).filter((user) => !user.state.ui.spotlightUserSessionId)
+)
+
 const spotlightUser = computed(() => {
   return Object.values(users.value).find(
     (u) => u.sessionId === spotlightUserSessionId.value
   )
 })
+
+const showFollowerMessage = computed(
+  () =>
+    (!isEmbedEnabled.value && spotlightUserSessionId.value && spotlightUser.value) ||
+    followers.value.length !== 0
+)
 
 const mp = useMixpanel()
 function setUserSpotlight(sessionId: string) {
@@ -283,4 +290,23 @@ function setUserSpotlight(sessionId: string) {
     source: 'navbar'
   })
 }
+
+const forceCloseThreads = async () => {
+  await closeAllThreads()
+}
+
+// Watch for thread opening on mobile and emit event
+watch(
+  () => openThread.value,
+  (newThread, oldThread) => {
+    // If a thread opened (wasn't open before) on mobile, emit event
+    if (newThread && !oldThread && isMobile.value) {
+      emit('forceClosePanels')
+    }
+  }
+)
+
+defineExpose({
+  forceCloseThreads
+})
 </script>

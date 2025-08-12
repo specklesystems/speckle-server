@@ -147,7 +147,7 @@ import {
   TransitionRoot
 } from '@headlessui/vue'
 import { CheckIcon, XMarkIcon, ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { debounce, uniq } from 'lodash'
+import { debounce, uniq } from '#lodash'
 import { useTextInputCore } from '~~/src/composables/form/textInput'
 import type { InputColor } from '~~/src/composables/form/textInput'
 import type { RuleExpression } from 'vee-validate'

@@ -1,0 +1,45 @@
+input SavedViewsLoadSettings {
+  """
+  If true, load versions originally specified in the view, rather than the latest ones
+  or ones already being loaded otherwise
+  """
+  loadOriginal: Boolean
+}
+
+type ViewerResourceGroup {
+  """
+  Resource identifier used to refer to a collection of resource items
+  """
+  identifier: String!
+  """
+  Viewer resources that the identifier refers to
+  """
+  items: [ViewerResourceItem!]!
+}
+
+type ViewerResourceItem {
+  """
+  Null if resource represents an object
+  """
+  modelId: String
+  """
+  Null if resource represents an object
+  """
+  versionId: String
+  objectId: String!
+}
+
+extend type Project {
+  """
+  Return metadata about resources being requested in the viewer
+  """
+  viewerResources(
+    resourceIdString: String!
+    """
+    If a saved view ID is specified, the returned resources will be adjusted to return the view's resources instead
+    """
+    savedViewId: ID
+    savedViewSettings: SavedViewsLoadSettings
+    loadedVersionsOnly: Boolean = true
+  ): [ViewerResourceGroup!]!
+}

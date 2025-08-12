@@ -9,6 +9,13 @@ import { Texture, WebGLMultipleRenderTargets } from 'three'
 import { DepthPass } from '../Passes/DepthPass.js'
 import { NormalsPass } from '../Passes/NormalsPass.js'
 import { BasePipelineOptions } from './Pipeline.js'
+import {
+  BatchUpdateRange,
+  GeometryType,
+  NoneBatchUpdateRange
+} from '../../batching/Batch.js'
+import Materials from '../../materials/Materials.js'
+import SpeckleGhostMaterial from '../../materials/SpeckleGhostMaterial.js'
 
 export interface EdgesPipelineOptions extends BasePipelineOptions {
   outlineThickness?: number
@@ -44,6 +51,48 @@ export class EdgesPipeline extends ProgressivePipeline {
     else this.SRTPipeline(options)
   }
 
+  protected depthNormalIdPassVisibility(
+    renderer: SpeckleRenderer
+  ): Record<string, BatchUpdateRange> {
+    const visibilityRanges: Record<string, BatchUpdateRange> = {}
+    for (const k in renderer.batcher.batches) {
+      const batch = renderer.batcher.batches[k]
+      if (batch.geometryType !== GeometryType.MESH) {
+        visibilityRanges[k] = NoneBatchUpdateRange
+        continue
+      }
+      /** Look for a transparent group */
+      const transparentGroup = batch.groups.find((value) => {
+        if (value.materialIndex === undefined) return false
+        const material = batch.materials[value.materialIndex]
+        return (
+          Materials.isTransparent(material) &&
+          material.visible &&
+          !(material instanceof SpeckleGhostMaterial)
+        )
+      })
+      /** Look for a hidden group */
+      const hiddenGroup = batch.groups.find((value) => {
+        if (value.materialIndex === undefined) return false
+        return batch.materials[value.materialIndex].visible === false
+      })
+      /** If there is a group return it's range */
+      if (transparentGroup) {
+        visibilityRanges[k] = {
+          offset: transparentGroup.start,
+          count:
+            hiddenGroup !== undefined
+              ? hiddenGroup.start - transparentGroup.start
+              : batch.getCount() - transparentGroup.start
+        }
+        continue
+      }
+      /** Exclude entire batch */
+      visibilityRanges[k] = NoneBatchUpdateRange
+    }
+    return visibilityRanges
+  }
+
   protected MRTPipeline(options: EdgesPipelineOptions) {
     const depthNormalIdPass = new DepthNormalIdPass()
     depthNormalIdPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
@@ -55,7 +104,11 @@ export class EdgesPipeline extends ProgressivePipeline {
     const depthNormalIdPassTransparent = new DepthNormalIdPass()
     depthNormalIdPassTransparent.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     depthNormalIdPassTransparent.setJitter(true)
-    depthNormalIdPassTransparent.setVisibility(ObjectVisibility.TRANSPARENT)
+    depthNormalIdPassTransparent.setVisibility(
+      ObjectVisibility.CUSTOM,
+      this.depthNormalIdPassVisibility
+    )
+
     depthNormalIdPassTransparent.outputTarget =
       depthNormalIdPass.outputTarget as unknown as WebGLMultipleRenderTargets
 
@@ -67,7 +120,10 @@ export class EdgesPipeline extends ProgressivePipeline {
 
     const depthPassNormalIdDynamicTransparent = new DepthNormalIdPass()
     depthPassNormalIdDynamicTransparent.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    depthPassNormalIdDynamicTransparent.setVisibility(ObjectVisibility.TRANSPARENT)
+    depthPassNormalIdDynamicTransparent.setVisibility(
+      ObjectVisibility.CUSTOM,
+      this.depthNormalIdPassVisibility
+    )
     depthPassNormalIdDynamicTransparent.outputTarget =
       depthPassNormalIdDynamic.outputTarget as unknown as WebGLMultipleRenderTargets
 

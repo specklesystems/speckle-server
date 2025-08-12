@@ -139,7 +139,7 @@ import { FormButton, type LayoutDialogButton } from '~~/src/lib'
 import { XMarkIcon, ChevronLeftIcon } from '@heroicons/vue/24/outline'
 import { isClient, useResizeObserver, type ResizeObserverCallback } from '@vueuse/core'
 import { computed, onUnmounted, ref, useSlots, watch, type SetupContext } from 'vue'
-import { throttle } from 'lodash'
+import { throttle } from '#lodash'
 import { directive as vTippy } from 'vue-tippy'
 
 type MaxWidthValue = 'xs' | 'sm' | 'md' | 'lg' | 'xl'

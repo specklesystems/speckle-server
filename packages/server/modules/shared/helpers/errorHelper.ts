@@ -1,3 +1,4 @@
+import { AccModuleDisabledError } from '@/modules/acc/errors/acc'
 import { AutomateModuleDisabledError } from '@/modules/core/errors/automate'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
@@ -56,6 +57,8 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
       return new WorkspacesModuleDisabledError()
     case Authz.AutomateNotEnabledError.code:
       return new AutomateModuleDisabledError()
+    case Authz.AccIntegrationNotEnabledError.code:
+      return new AccModuleDisabledError()
     case Authz.ProjectLastOwnerError.code:
     case Authz.ReservedModelNotDeletableError.code:
       return new BadRequestError(e.message)
@@ -63,6 +66,7 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
     case Authz.ModelNotFoundError.code:
     case Authz.VersionNotFoundError.code:
     case Authz.AutomateFunctionNotFoundError.code:
+    case Authz.SavedViewNotFoundError.code:
       return new NotFoundError(e.message)
     case Authz.PersonalProjectsLimitedError.code:
       return new BadRequestError(e.message)

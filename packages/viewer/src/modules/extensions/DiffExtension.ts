@@ -7,7 +7,7 @@ import SpeckleLineMaterial from '../materials/SpeckleLineMaterial.js'
 import SpecklePointMaterial from '../materials/SpecklePointMaterial.js'
 import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial.js'
 import { NodeRenderView } from '../tree/NodeRenderView.js'
-import { type IViewer } from '../../IViewer.js'
+import { UpdateFlags, type IViewer } from '../../IViewer.js'
 import { Extension } from './Extension.js'
 import { SpeckleTypeAllRenderables } from '../loaders/GeometryConverter.js'
 import { SpeckleLoader } from '../loaders/Speckle/SpeckleLoader.js'
@@ -369,7 +369,15 @@ export class DiffExtension extends Extension {
         this._diffMode = mode
       }
     }
+
+    let needsRenderReset = false
     if (time !== undefined && time !== this._diffTime) {
+      /** We only want to do a reset at the edges of the time value
+       *  because that's where materials become to/from visible from/to visible
+       */
+      needsRenderReset =
+        (this._diffTime === 0) !== (time === 0) ||
+        (this._diffTime === 1) !== (time === 1)
       this.setDiffTime(time)
       this._diffTime = time
     }
@@ -378,7 +386,11 @@ export class DiffExtension extends Extension {
       this._materialGroups.forEach((value) => {
         this.viewer.getRenderer().setMaterial(value.rvs, value.material)
       })
-    this.viewer.requestRender()
+    this.viewer.requestRender(
+      needsRenderReset
+        ? UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS
+        : UpdateFlags.RENDER
+    )
   }
 
   private setDiffTime(time: number) {
@@ -392,6 +404,7 @@ export class DiffExtension extends Extension {
           : from
       mat.depthWrite = from < 0.5 ? false : true
       mat.transparent = mat.opacity < 1
+      mat.visible = mat.opacity === 0 ? false : true
       mat.needsCopy = true
     })
 
@@ -402,6 +415,7 @@ export class DiffExtension extends Extension {
           : to
       mat.depthWrite = to < 0.5 ? false : true
       mat.transparent = mat.opacity < 1
+      mat.visible = mat.opacity === 0 ? false : true
       mat.needsCopy = true
     })
 
@@ -412,6 +426,7 @@ export class DiffExtension extends Extension {
           : from
       mat.depthWrite = from < 0.5 ? false : true
       mat.transparent = mat.opacity < 1
+      mat.visible = mat.opacity === 0 ? false : true
       mat.needsCopy = true
     })
 
@@ -422,6 +437,7 @@ export class DiffExtension extends Extension {
           : to
       mat.depthWrite = to < 0.5 ? false : true
       mat.transparent = mat.opacity < 1
+      mat.visible = mat.opacity === 0 ? false : true
       mat.needsCopy = true
     })
   }
