@@ -64,6 +64,11 @@
       </div>
     </div>
     <ViewerSavedViewsPanelViewEditDialog v-model:open="showEditDialog" :view="view" />
+    <ViewerSavedViewsPanelViewMoveDialog
+      v-model:open="showMoveDialog"
+      :view="view"
+      @success="onMoveSuccess"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -82,13 +87,15 @@ import {
   useDeleteSavedView,
   useUpdateSavedView
 } from '~/lib/viewer/composables/savedViews/management'
+import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
 
 const MenuItems = StringEnum([
   'Delete',
   'LoadOriginalVersions',
   'CopyLink',
   'ChangeVisibility',
-  'ReplaceView'
+  'ReplaceView',
+  'MoveToGroup'
 ])
 type MenuItems = StringEnumValues<typeof MenuItems>
 
@@ -124,7 +131,9 @@ const deleteView = useDeleteSavedView()
 const updateView = useUpdateSavedView()
 const isLoading = useMutationLoading()
 const { copyLink, applyView } = useViewerSavedViewsUtils()
+const eventBus = useEventBus()
 
+const showMoveDialog = ref(false)
 const showEditDialog = ref(false)
 const showMenu = ref(false)
 const menuId = useId()
@@ -141,7 +150,15 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
     },
     {
       id: MenuItems.ReplaceView,
-      title: 'Update view'
+      title: 'Update view',
+      disabled: !canUpdate.value?.authorized || isLoading.value,
+      disabledTooltip: canUpdate.value.errorMessage
+    },
+    {
+      id: MenuItems.MoveToGroup,
+      title: 'Move to group',
+      disabled: !canUpdate.value?.authorized || isLoading.value,
+      disabledTooltip: canUpdate.value.errorMessage
     },
     {
       id: MenuItems.CopyLink,
@@ -152,7 +169,9 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
     {
       id: MenuItems.ChangeVisibility,
       title: 'Only visible to me',
-      active: !!isOnlyVisibleToMe.value
+      active: !!isOnlyVisibleToMe.value,
+      disabled: !canUpdate.value?.authorized || isLoading.value,
+      disabledTooltip: canUpdate.value.errorMessage
     }
   ],
   [
@@ -205,6 +224,9 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
         }
       })
       break
+    case MenuItems.MoveToGroup:
+      showMoveDialog.value = true
+      break
     default:
       throwUncoveredError(item.id)
   }
@@ -214,5 +236,10 @@ const apply = async () => {
   applyView({
     id: props.view.id
   })
+}
+
+const onMoveSuccess = (groupId: string) => {
+  devLog('on movee')
+  eventBus.emit(ViewerEventBusKeys.SelectSavedViewGroup, { groupId })
 }
 </script>

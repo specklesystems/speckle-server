@@ -1,4 +1,5 @@
 import type { ApolloCache } from '@apollo/client/cache'
+import { isUngroupedGroup } from '@speckle/shared/saved-views'
 
 /**
  * Cache mutations for when a group gets a new view:
@@ -75,7 +76,7 @@ export const onGroupViewRemovalCacheUpdates = (
   const { viewId: id, groupId, projectId } = params
 
   // Check if default/ungrouped group
-  const isDefaultGroup = groupId.startsWith('default-')
+  const isDefaultGroup = isUngroupedGroup(groupId)
 
   // If default group and its now empty - remove it as it doesn't exist otherwise
   let shouldEvict

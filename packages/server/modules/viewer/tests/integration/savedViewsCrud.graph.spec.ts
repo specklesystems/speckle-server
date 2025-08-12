@@ -866,6 +866,39 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(updatedView!.visibility).to.equal(input.visibility)
       })
 
+      it('successfully sets and unsets a group', async () => {
+        const newGroupId = optionalGroup.id
+
+        const res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            groupId: newGroupId
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        const updatedView = res.data?.projectMutations.savedViewMutations.updateView
+        expect(updatedView).to.be.ok
+        expect(updatedView!.id).to.equal(testView.id)
+        expect(updatedView!.groupId).to.equal(newGroupId)
+
+        // Unset group
+        const res2 = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            groupId: null
+          }
+        })
+
+        expect(res2).to.not.haveGraphQLErrors()
+        const updatedView2 = res2.data?.projectMutations.savedViewMutations.updateView
+        expect(updatedView2).to.be.ok
+        expect(updatedView2!.id).to.equal(testView.id)
+        expect(updatedView2!.groupId).to.be.null
+      })
+
       it('fails if user has no access to update the view', async () => {
         const newName = 'Updated View Name'
 
