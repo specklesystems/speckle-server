@@ -14,7 +14,7 @@ import {
   shutdownQueue,
   startQueue
 } from '@/modules/multiregion/services/queue'
-import { scheduleStalePreparedTransactionCleanup } from '@/modules/multiregion/services/schedule'
+import { scheduleStalePreparedTransactionCleanup } from '@/modules/multiregion/tasks/pendingTransactions'
 import type cron from 'node-cron'
 
 let scheduledTasks: cron.ScheduledTask[] = []
