@@ -387,11 +387,26 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(group!.isUngroupedViewsGroup).to.be.false
       })
 
+      it('should successfully create a group w/o a name', async () => {
+        const resourceIds = model1ResourceIds()
+        const resourceIdString = resourceIds.toString()
+
+        const res = await createSavedViewGroup({
+          input: {
+            projectId: myProject.id,
+            resourceIdString
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const group = res.data?.projectMutations.savedViewMutations.createGroup
+        expect(group).to.be.ok
+        expect(group!.title.startsWith('Group -')).to.equal(true)
+      })
+
       itEach(
-        [
-          { val: '', title: 'too short' },
-          { val: cryptoRandomString({ length: 300 }), title: 'too long' }
-        ],
+        [{ val: cryptoRandomString({ length: 300 }), title: 'too long' }],
         ({ title }) => `should fail to create group w/ invalid name: ${title}`,
         async ({ val }) => {
           const resourceIds = model1ResourceIds()

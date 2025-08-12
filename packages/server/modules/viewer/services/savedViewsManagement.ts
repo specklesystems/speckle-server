@@ -12,6 +12,7 @@ import type {
   GetSavedView,
   GetSavedViewGroup,
   GetStoredViewCount,
+  GetStoredViewGroupCount,
   RecalculateGroupResourceIds,
   StoreSavedView,
   StoreSavedViewGroup,
@@ -246,10 +247,16 @@ export const createSavedViewGroupFactory =
   (deps: {
     storeSavedViewGroup: StoreSavedViewGroup
     getViewerResourceGroups: GetViewerResourceGroups
+    getStoredViewGroupCount: GetStoredViewGroupCount
   }): CreateSavedViewGroup =>
   async ({ input, authorId }) => {
     const { projectId, resourceIdString } = input
-    const groupName = input.groupName.trim()
+    let groupName = input.groupName?.trim()
+    if (!groupName) {
+      const groupCount = await deps.getStoredViewGroupCount({ projectId })
+      groupName = `Group - ${String(groupCount + 1).padStart(3, '0')}`
+    }
+
     if (groupName.length < 1 || groupName.length > 255) {
       throw new SavedViewGroupCreationValidationError(
         'Group name must be between 1 and 255 characters long',
@@ -271,12 +278,13 @@ export const createSavedViewGroupFactory =
         authorId
       }
     })
+    const groupResourceIds = formatResourceIdsForGroup(resourceIds)
 
     // Insert
     const group = await deps.storeSavedViewGroup({
       group: {
         projectId,
-        resourceIds: resourceIds.toResources().map((r) => r.toString()),
+        resourceIds: groupResourceIds,
         name: groupName,
         authorId
       }
