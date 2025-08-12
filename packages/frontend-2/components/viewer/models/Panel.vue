@@ -14,14 +14,23 @@
       <template #actions>
         <ViewerModelsActions
           v-if="!hasObjects"
-          :hide-versions="resourceItems.length === 0"
+          :hide-versions="resourceItems.length === 0 && objects.length === 0"
           @show-versions="showVersions = true"
           @add-model="showAddModel = true"
         />
       </template>
 
       <div class="flex flex-col h-full">
-        <template v-if="resourceItems.length">
+        <template v-if="resourceItems.length || objects.length">
+          <!-- Detached Objects Section -->
+          <div v-if="objects.length > 0">
+            <ViewerModelsDetachedObjectCard
+              v-for="object in objects"
+              :key="object.objectId"
+              :object-id="object.objectId"
+            />
+          </div>
+
           <!-- Sticky Header Area (outside virtual list) -->
           <div v-if="stickyHeader" class="sticky top-0 z-20 h-16">
             <ViewerModelsCard
