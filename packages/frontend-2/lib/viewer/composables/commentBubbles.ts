@@ -48,6 +48,7 @@ export type ViewerNewThreadBubbleModel = {
   isOccluded: boolean
   style: Partial<CSSProperties>
   clickLocation: Nullable<Vector3>
+  selectedObjectId: Nullable<string>
 }
 
 export function useViewerNewThreadBubble(params: {
@@ -73,6 +74,7 @@ export function useViewerNewThreadBubble(params: {
     isVisible: false,
     isOccluded: false,
     clickLocation: null,
+    selectedObjectId: null,
     style: {}
   } as ViewerNewThreadBubbleModel)
 
@@ -94,10 +96,8 @@ export function useViewerNewThreadBubble(params: {
     buttonState.value.isExpanded = false
     buttonState.value.isVisible = false
     buttonState.value.clickLocation = null
+    buttonState.value.selectedObjectId = null
   }
-
-  // Flag to skip the next selection change (from viewer click)
-  const skipNextSelectionWatch = ref(false)
 
   useSelectionEvents({
     singleClickCallback: (_event, { firstVisibleSelectionHit }) => {
@@ -109,8 +109,8 @@ export function useViewerNewThreadBubble(params: {
         return
       }
 
-      skipNextSelectionWatch.value = true
       buttonState.value.clickLocation = firstVisibleSelectionHit.point.clone()
+      buttonState.value.selectedObjectId = firstVisibleSelectionHit.node.model.id
       buttonState.value.isVisible = true
       updatePositions()
     }
@@ -160,14 +160,17 @@ export function useViewerNewThreadBubble(params: {
     }
   })
 
-  // Clear button when selection changes (external sources like models panel)
-  watch(selectedObjects, () => {
-    if (skipNextSelectionWatch.value) {
-      skipNextSelectionWatch.value = false
+  // Clear button when its selected object is no longer in the current selection
+  watch(selectedObjects, (newSelection) => {
+    if (!buttonState.value.isVisible || !buttonState.value.selectedObjectId) {
       return
     }
 
-    if (buttonState.value.isVisible) {
+    // Check if the button's object is still selected
+    const isStillSelected = newSelection.some(
+      (obj) => obj.id === buttonState.value.selectedObjectId
+    )
+    if (!isStillSelected) {
       closeNewThread()
     }
   })
