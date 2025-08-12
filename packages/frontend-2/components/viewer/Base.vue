@@ -8,6 +8,7 @@
 <script setup lang="ts">
 import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
 import { useCommentContext } from '~~/lib/viewer/composables/commentManagement'
+import { useViewModeUtilities } from '~/lib/viewer/composables/ui'
 
 const rendererparent = ref<HTMLElement>()
 const {
@@ -17,6 +18,7 @@ const {
 } = useInjectedViewer()
 
 const { cleanupThreadContext } = useCommentContext()
+const { resetViewMode } = useViewModeUtilities()
 
 onMounted(async () => {
   if (!import.meta.client) return
@@ -34,6 +36,7 @@ onBeforeUnmount(() => {
   if (!import.meta.client) return
   container.style.display = 'none'
   cleanupThreadContext()
+  resetViewMode()
   document.body.appendChild(container)
 })
 </script>
