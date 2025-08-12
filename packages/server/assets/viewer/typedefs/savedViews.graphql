@@ -166,7 +166,10 @@ input CreateSavedViewInput {
 input CreateSavedViewGroupInput {
   projectId: ID!
   resourceIdString: String!
-  groupName: String!
+  """
+  Will default to auto-generated group name otherwise
+  """
+  groupName: String
 }
 
 input DeleteSavedViewInput {

@@ -16,6 +16,7 @@
             hide-text
             name="addGroup"
             :disabled="!canCreateViewOrGroup?.authorized || isLoading"
+            @click="onAddGroup"
           />
         </div>
         <div v-tippy="canCreateViewOrGroup?.errorMessage">
@@ -73,7 +74,10 @@ import { useMutationLoading } from '@vue/apollo-composable'
 import { isArray } from 'lodash-es'
 import { Search, FolderPlus, Plus } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
-import { useCreateSavedView } from '~/lib/viewer/composables/savedViews/management'
+import {
+  useCreateSavedView,
+  useCreateSavedViewGroup
+} from '~/lib/viewer/composables/savedViews/management'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { ViewsType, viewsTypeLabels } from '~/lib/viewer/helpers/savedViews'
 
@@ -93,10 +97,13 @@ defineEmits<{
 }>()
 
 const {
+  projectId,
   resources: {
+    request: { resourceIdString },
     response: { project }
   }
 } = useInjectedViewerState()
+const createGroup = useCreateSavedViewGroup()
 const createSavedView = useCreateSavedView()
 const isLoading = useMutationLoading()
 
@@ -118,6 +125,18 @@ const onAddView = async () => {
   if (view) {
     // Auto-open the group that the view created to
     selectedGroupId.value = view.group.id
+  }
+}
+
+const onAddGroup = async () => {
+  if (isLoading.value) return
+  const group = await createGroup({
+    projectId: projectId.value,
+    resourceIdString: resourceIdString.value
+  })
+  if (group) {
+    // Auto-open the group
+    selectedGroupId.value = group.id
   }
 }
 </script>

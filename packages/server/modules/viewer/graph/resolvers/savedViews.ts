@@ -23,6 +23,7 @@ import {
   getProjectSavedViewGroupsPageItemsFactory,
   getProjectSavedViewGroupsTotalCountFactory,
   getStoredViewCountFactory,
+  getStoredViewGroupCountFactory,
   getUngroupedSavedViewsGroupFactory,
   recalculateGroupResourceIdsFactory,
   storeSavedViewFactory,
@@ -352,6 +353,9 @@ const resolvers: Resolvers = {
         getViewerResourceGroups: buildGetViewerResourceGroups({
           projectDb,
           loaders: ctx.loaders
+        }),
+        getStoredViewGroupCount: getStoredViewGroupCountFactory({
+          db: projectDb
         })
       })
       return await createSavedViewGroup({

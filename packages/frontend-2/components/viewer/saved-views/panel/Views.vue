@@ -81,7 +81,6 @@ const {
   baseVariables: computed(() => ({
     projectId: projectId.value,
     savedViewGroupsInput: {
-      limit: 1,
       resourceIdString: resourceIdString.value,
       cursor: null as null | string,
       search: search.value?.trim() || null

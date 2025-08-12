@@ -4,22 +4,27 @@
       <CommonLoadingIcon class="m-4" />
     </div>
     <div v-else>
-      <div
-        v-if="views.length"
-        class="flex flex-col gap-3 overflow-y-auto simple-scrollbar"
-      >
-        <ViewerSavedViewsPanelView
-          v-for="view in views"
-          :key="view.id"
-          :view="view"
-        ></ViewerSavedViewsPanelView>
-      </div>
-      <InfiniteLoading
-        v-if="views.length"
-        :settings="{ identifier }"
-        hide-when-complete
-        @infinite="onInfiniteLoad"
-      />
+      <template v-if="views.length">
+        <div
+          v-if="views.length"
+          class="flex flex-col gap-3 overflow-y-auto simple-scrollbar"
+        >
+          <ViewerSavedViewsPanelView
+            v-for="view in views"
+            :key="view.id"
+            :view="view"
+          ></ViewerSavedViewsPanelView>
+        </div>
+        <InfiniteLoading
+          v-if="views.length"
+          :settings="{ identifier }"
+          hide-when-complete
+          @infinite="onInfiniteLoad"
+        />
+      </template>
+      <template v-else>
+        <span>No views in group</span>
+      </template>
     </div>
   </div>
 </template>

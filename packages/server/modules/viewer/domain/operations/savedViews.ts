@@ -35,6 +35,8 @@ export type StoreSavedViewGroup = <
 
 export type GetStoredViewCount = (params: { projectId: string }) => Promise<number>
 
+export type GetStoredViewGroupCount = (params: { projectId: string }) => Promise<number>
+
 export type GetProjectSavedViewGroupsBaseParams = {
   /**
    * Falsy means - anonymous user (so no onlyAuthored filtering)
@@ -168,7 +170,7 @@ export type CreateSavedViewGroupParams = {
   input: {
     projectId: string
     resourceIdString: string
-    groupName: string
+    groupName?: MaybeNullOrUndefined<string>
   }
   authorId: string
 }
