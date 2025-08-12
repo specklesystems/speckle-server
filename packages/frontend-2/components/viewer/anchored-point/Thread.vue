@@ -200,7 +200,7 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
 import { useDisableGlobalTextSelection } from '~~/lib/common/composables/window'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
+import { useThreadUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ConcreteComponent } from 'vue'
@@ -252,6 +252,7 @@ const { ellipsis, controls } = useAnimatingEllipsis()
 const { threadResourceStatus, hasClickedFullContext, goBack, handleContextClick } =
   useCommentContext()
 const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
+const { clearSelection } = useSelectionUtilities()
 const router = useSafeRouter()
 const menuId = useId()
 
@@ -430,6 +431,7 @@ const changeExpanded = async (newVal: boolean) => {
     await open(props.modelValue.id)
   } else {
     await closeAllThreads()
+    clearSelection()
   }
 
   emit('update:expanded', newVal)
