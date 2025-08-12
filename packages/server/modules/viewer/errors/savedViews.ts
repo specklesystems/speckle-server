@@ -23,3 +23,9 @@ export class SavedViewUpdateValidationError extends BaseError {
   static defaultMessage = 'Saved view update failed due to a validation error'
   static statusCode = 400
 }
+
+export class SavedViewGroupUpdateValidationError extends BaseError {
+  static code = 'SAVED_VIEW_GROUP_UPDATE_VALIDATION_ERROR'
+  static defaultMessage = 'Saved view group update failed due to a validation error'
+  static statusCode = 400
+}

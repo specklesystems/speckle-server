@@ -172,6 +172,11 @@ input CreateSavedViewGroupInput {
   groupName: String
 }
 
+input DeleteSavedViewGroupInput {
+  projectId: ID!
+  groupId: ID!
+}
+
 input DeleteSavedViewInput {
   id: ID!
   projectId: ID!
@@ -215,6 +220,7 @@ input UpdateSavedViewInput {
 
 type SavedViewMutations {
   createGroup(input: CreateSavedViewGroupInput!): SavedViewGroup!
+  deleteGroup(input: DeleteSavedViewGroupInput!): Boolean!
   createView(input: CreateSavedViewInput!): SavedView!
   deleteView(input: DeleteSavedViewInput!): Boolean!
   updateView(input: UpdateSavedViewInput!): SavedView!

@@ -2,6 +2,8 @@ import type {
   CreateSavedView,
   CreateSavedViewGroup,
   DeleteSavedView,
+  DeleteSavedViewGroup,
+  DeleteSavedViewGroupRecord,
   DeleteSavedViewRecord,
   GetGroupSavedViews,
   GetGroupSavedViewsPageItems,
@@ -23,6 +25,7 @@ import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
 import {
   SavedViewCreationValidationError,
   SavedViewGroupCreationValidationError,
+  SavedViewGroupUpdateValidationError,
   SavedViewInvalidResourceTargetError,
   SavedViewUpdateValidationError
 } from '@/modules/viewer/errors/savedViews'
@@ -508,4 +511,23 @@ export const updateSavedViewFactory =
       }
     })
     return updatedView! // should exist, we checked before
+  }
+
+export const deleteSavedViewGroupFactory =
+  (deps: {
+    deleteSavedViewGroupRecord: DeleteSavedViewGroupRecord
+  }): DeleteSavedViewGroup =>
+  async ({ input }) => {
+    const { groupId, projectId } = input
+
+    if (isUngroupedGroup(groupId)) {
+      throw new SavedViewGroupUpdateValidationError(
+        'Cannot mutate ungrouped/default saved view group.'
+      )
+    }
+
+    return deps.deleteSavedViewGroupRecord({
+      groupId,
+      projectId
+    })
   }
