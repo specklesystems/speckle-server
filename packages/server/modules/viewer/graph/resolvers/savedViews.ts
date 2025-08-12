@@ -273,7 +273,11 @@ const resolvers: Resolvers = {
       throwIfAuthNotOk(canUpdate)
 
       await deleteSavedViewFactory({
+        getSavedView: getSavedViewFactory({ loaders: ctx.loaders }),
         deleteSavedViewRecord: deleteSavedViewRecordFactory({
+          db: projectDb
+        }),
+        recalculateGroupResourceIds: recalculateGroupResourceIdsFactory({
           db: projectDb
         })
       })({
@@ -309,6 +313,9 @@ const resolvers: Resolvers = {
         getSavedView: getSavedViewFactory({ loaders: ctx.loaders }),
         getSavedViewGroup: getSavedViewGroupFactory({ loaders: ctx.loaders }),
         updateSavedViewRecord: updateSavedViewRecordFactory({
+          db: projectDb
+        }),
+        recalculateGroupResourceIds: recalculateGroupResourceIdsFactory({
           db: projectDb
         })
       })

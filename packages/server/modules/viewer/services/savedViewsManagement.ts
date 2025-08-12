@@ -43,6 +43,7 @@ import { isUndefined, omit } from 'lodash-es'
 import type { DependenciesOf } from '@/modules/shared/helpers/factory'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
 import { isUngroupedGroup } from '@speckle/shared/saved-views'
+import { NotFoundError } from '@/modules/shared/errors'
 
 /**
  * Validates an incoming resourceIdString against the resources in the project and returns the validated list (as a builder)
@@ -340,10 +341,28 @@ export const getGroupSavedViewsFactory =
   }
 
 export const deleteSavedViewFactory =
-  (deps: { deleteSavedViewRecord: DeleteSavedViewRecord }): DeleteSavedView =>
+  (deps: {
+    getSavedView: GetSavedView
+    deleteSavedViewRecord: DeleteSavedViewRecord
+    recalculateGroupResourceIds: RecalculateGroupResourceIds
+  }): DeleteSavedView =>
   async (params) => {
-    const { id } = params
+    const { id, projectId } = params
+    const view = await deps.getSavedView({
+      id,
+      projectId
+    })
+    if (!view) {
+      throw new NotFoundError('Saved view not found', {
+        info: params
+      })
+    }
+
     await deps.deleteSavedViewRecord({ savedViewId: id })
+
+    if (view.groupId) {
+      await deps.recalculateGroupResourceIds({ groupId: view.groupId })
+    }
   }
 
 export const updateSavedViewFactory =
@@ -352,6 +371,7 @@ export const updateSavedViewFactory =
       getSavedView: GetSavedView
       getSavedViewGroup: GetSavedViewGroup
       updateSavedViewRecord: UpdateSavedViewRecord
+      recalculateGroupResourceIds: RecalculateGroupResourceIds
     } & DependenciesOf<typeof validateProjectResourceIdStringFactory>
   ): UpdateSavedView =>
   async (params) => {
@@ -512,6 +532,26 @@ export const updateSavedViewFactory =
           : { viewerState: undefined })
       }
     })
+
+    if (updatedView?.groupId !== view.groupId) {
+      await Promise.all([
+        ...(updatedView?.groupId
+          ? [
+              deps.recalculateGroupResourceIds({
+                groupId: updatedView.groupId
+              })
+            ]
+          : []),
+        ...(view.groupId
+          ? [
+              deps.recalculateGroupResourceIds({
+                groupId: view.groupId
+              })
+            ]
+          : [])
+      ])
+    }
+
     return updatedView! // should exist, we checked before
   }
 
