@@ -1023,7 +1023,8 @@ export type CreateModelInput = {
 };
 
 export type CreateSavedViewGroupInput = {
-  groupName: Scalars['String']['input'];
+  /** Will default to auto-generated group name otherwise */
+  groupName?: InputMaybe<Scalars['String']['input']>;
   projectId: Scalars['ID']['input'];
   resourceIdString: Scalars['String']['input'];
 };
