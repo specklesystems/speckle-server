@@ -11,6 +11,7 @@
         :group="group"
         :is-selected="group.id === selectedGroupId"
         :only-authored="viewsType === ViewsType.My"
+        @update:is-selected="(value) => (selectedGroupId = value ? group.id : null)"
       />
       <InfiniteLoading
         v-if="groups.length"
