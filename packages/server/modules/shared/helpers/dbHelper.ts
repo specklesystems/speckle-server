@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Knex } from 'knex'
 import { postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
-import { EnvironmentResourceError } from '@/modules/shared/errors'
+import { EnvironmentResourceError, LogicError } from '@/modules/shared/errors'
 import type { MaybeAsync } from '@speckle/shared'
 import { isNonNullable } from '@speckle/shared'
 import { base64Decode, base64Encode } from '@/modules/shared/helpers/cryptoHelper'
@@ -10,6 +10,7 @@ import dayjs from 'dayjs'
 import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import type { SchemaConfig } from '@/modules/core/dbSchema'
 import { has, isObjectLike, isString, mapValues, pick, times } from 'lodash-es'
+import cryptoRandomString from 'crypto-random-string'
 
 export type Collection<T> = {
   cursor: string | null
@@ -301,4 +302,23 @@ export const compositeCursorTools = <
     applyCursorSortAndFilter,
     resolveNewCursor
   }
+}
+
+export const prepareTransaction = async (db: Knex): Promise<string> => {
+  if (!db.isTransaction) {
+    throw new LogicError('Cannot PREPARE postgres operation outside of a transaction')
+  }
+
+  const preparedId = cryptoRandomString({ length: 10 })
+
+  await db.raw(`PREPARE TRANSACTION '${preparedId}';`)
+
+  return preparedId
+}
+
+export const rollbackPreparedTransaction = async (
+  db: Knex,
+  gid: string
+): Promise<void> => {
+  await db.raw(`ROLLBACK PREPARED '${gid}';`)
 }

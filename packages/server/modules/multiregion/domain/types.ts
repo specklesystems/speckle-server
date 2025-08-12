@@ -13,3 +13,9 @@ export type ProjectRegion = {
   projectId: string
   regionKey: RegionKey
 }
+
+export type StalePendingTransaction = {
+  transaction: string
+  gid: string
+  prepared: Date
+}

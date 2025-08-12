@@ -14,6 +14,10 @@ import {
   shutdownQueue,
   startQueue
 } from '@/modules/multiregion/services/queue'
+import { scheduleStalePreparedTransactionCleanup } from '@/modules/multiregion/tasks/pendingTransactions'
+import type cron from 'node-cron'
+
+let scheduledTasks: cron.ScheduledTask[] = []
 
 const multiRegion: SpeckleModule = {
   async init({ isInitial }) {
@@ -38,10 +42,14 @@ const multiRegion: SpeckleModule = {
     if (isInitial) {
       await initializeQueue()
       await startQueue()
+      scheduledTasks = [await scheduleStalePreparedTransactionCleanup()]
     }
   },
   async shutdown() {
     await shutdownQueue()
+    scheduledTasks.forEach((task) => {
+      task.stop()
+    })
   }
 }
 
