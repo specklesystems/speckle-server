@@ -41,7 +41,7 @@ import {
   isSerializedViewerState,
   type SerializedViewerState
 } from '@speckle/shared/viewer/state'
-import { omit } from 'lodash-es'
+import { omit, debounce } from 'lodash-es'
 
 /**
  * How often we send out an "activity" message even if user hasn't made any clicks (just to keep him active)
@@ -298,10 +298,23 @@ export function useViewerUserActivityTracking(params: {
     if (currentUserId && incomingUserId && currentUserId === incomingUserId) return
 
     if (!isEmbedEnabled.value && status === ViewerUserActivityStatus.Disconnected) {
-      triggerNotification({
-        title: `${users.value[incomingSessionId]?.userName || 'A user'} left.`,
-        type: ToastNotificationType.Info
-      })
+      const disconnectingUser = users.value[incomingSessionId]
+
+      // Check if this user has other active sessions before showing "left" notification
+      const hasOtherActiveSessions = incomingUserId
+        ? Object.values(users.value).some(
+            (user) =>
+              user.userId === incomingUserId && user.sessionId !== incomingSessionId
+          )
+        : false
+
+      // Only show "left" notification if this is the user's last session
+      if (disconnectingUser && !hasOtherActiveSessions) {
+        triggerNotification({
+          title: `${disconnectingUser.userName || 'A user'} left.`,
+          type: ToastNotificationType.Info
+        })
+      }
 
       if (spotlightUserSessionId.value === incomingSessionId)
         spotlightUserSessionId.value = null // ensure we're not spotlighting disconnected users
@@ -327,10 +340,13 @@ export function useViewerUserActivityTracking(params: {
       lastUpdate: dayjs()
     }
 
-    if (
-      !isEmbedEnabled.value &&
-      !Object.keys(users.value).includes(incomingSessionId)
-    ) {
+    // Only show "joined" notification if this is a new user (not just a new session for existing user)
+    const isNewSession = !Object.keys(users.value).includes(incomingSessionId)
+    const hasExistingUserSessions = incomingUserId
+      ? Object.values(users.value).some((user) => user.userId === incomingUserId)
+      : false
+
+    if (!isEmbedEnabled.value && isNewSession && !hasExistingUserSessions) {
       triggerNotification({
         title: `${userData.userName} joined.`,
         type: ToastNotificationType.Info
@@ -414,14 +430,21 @@ export function useViewerUserActivityTracking(params: {
 
   const focused = useWindowFocus()
 
-  // Disable disconnect-on-blur behaviour in development mode only
-  // For testing multi-user interactions (like follow mode)
-  watch(focused, async (newVal) => {
-    if (import.meta.dev) return
-
-    if (!newVal) {
+  // Debounced disconnect function - 30 second delay
+  const debouncedDisconnect = debounce(
+    async () => {
       await sendUpdate.emitDisconnected()
+    },
+    30 * 1000 // 30 seconds
+  )
+
+  watch(focused, async (newVal) => {
+    if (!newVal) {
+      // Window lost focus - start debounced disconnect
+      debouncedDisconnect()
     } else {
+      // Window regained focus - cancel any pending disconnect and emit viewing
+      debouncedDisconnect.cancel()
       await sendUpdate.emitViewing()
     }
   })
@@ -445,13 +468,19 @@ export function useViewerUserActivityTracking(params: {
 
   useViewerCameraControlEndTracker(() => sendUpdate.emitViewing())
 
-  useOnBeforeWindowUnload(async () => await sendUpdate.emitDisconnected())
+  useOnBeforeWindowUnload(async () => {
+    // Cancel any pending debounced disconnect since we're actually leaving
+    debouncedDisconnect.cancel()
+    await sendUpdate.emitDisconnected()
+  })
 
   onMounted(() => {
     sendUpdate.emitViewing()
   })
 
   onBeforeUnmount(() => {
+    // Cancel any pending debounced disconnect
+    debouncedDisconnect.cancel()
     sendUpdate.emitDisconnected()
   })
 
