@@ -191,9 +191,15 @@ const getProjectSavedViewGroupsBaseQueryFactory =
         })
       }
 
-      // checking search only on views
+      // checking search on views and group names too
       if (search) {
-        query.andWhere(SavedViews.col.name, 'ilike', `%${search}%`)
+        query.andWhere((w1) => {
+          w1.andWhere(SavedViews.col.name, 'ilike', `%${search}%`)
+
+          if (mode === 'group') {
+            w1.orWhere(SavedViewGroups.col.name, 'ilike', `%${search}%`)
+          }
+        })
       }
 
       return query

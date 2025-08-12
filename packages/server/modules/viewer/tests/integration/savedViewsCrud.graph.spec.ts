@@ -1322,16 +1322,18 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     })
 
     describe('reading groups', () => {
-      const NAMED_GROUP_COUNT = 15
-      const GROUP_COUNT = NAMED_GROUP_COUNT + 1 // + ungrouped group
+      const NAMED_GROUP_COUNT = 14
+      const GROUP_COUNT = NAMED_GROUP_COUNT + 2 // + ungrouped group + search string group
 
       const PAGE_COUNT = 3
 
       const SEARCH_STRING = 'bababooey'
-      const SEARCH_STRING_ITEM_COUNT = GROUP_COUNT / 2
+      const SEARCH_STRING_VIEW_COUNT = GROUP_COUNT / 2
+      const SEARCH_STRING_ITEM_COUNT = SEARCH_STRING_VIEW_COUNT + 1 // +1 for searchable group
 
       const OTHER_AUTHOR_ITEM_COUNT = GROUP_COUNT / 4
       // const OTHER_AUTHOR_PRIVATE_ITEM_COUNT = OTHER_AUTHOR_ITEM_COUNT / 2
+      const SEARCHABLE_GROUP_NAME_STRING = `${SEARCH_STRING}-you-can-find-me`
 
       const modelIds: string[] = []
       let readTestProject: BasicTestStream
@@ -1366,10 +1368,13 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         // Create a bunch of groups (views w/ groupNames), each w/ a different model
         let includedSearchString = 0
         const createGroupView = async (groupName: string | null, idx: number) => {
+          const isSearchableGroupName = groupName === SEARCHABLE_GROUP_NAME_STRING
           const useDifferentAuthor = idx % 4 === 0
           const shouldBePrivate = useDifferentAuthor && idx % (2 * 4) === 0
           const includeSearchString =
-            !shouldBePrivate && includedSearchString++ < SEARCH_STRING_ITEM_COUNT
+            !shouldBePrivate &&
+            !isSearchableGroupName &&
+            includedSearchString++ < SEARCH_STRING_VIEW_COUNT
 
           const model = await createTestBranch({
             branch: buildBasicTestModel({
@@ -1391,7 +1396,9 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
                 input: {
                   projectId: readTestProject.id,
                   resourceIdString,
-                  groupName
+                  groupName: includeSearchString
+                    ? `${groupName} includedSearchString`
+                    : groupName
                 }
               },
               {
@@ -1420,8 +1427,17 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           })
         }
 
+        const groupNames: Array<string | null> = times(
+          NAMED_GROUP_COUNT,
+          (i) => `group-${i + 1}`
+        )
+
+        // add one group to have a custom search string in its name
+        groupNames.push(SEARCHABLE_GROUP_NAME_STRING)
+
         // one view without a group at the end
-        const groupNames = [...times(NAMED_GROUP_COUNT, (i) => `group-${i + 1}`), null]
+        groupNames.push(null)
+
         await Promise.all(
           groupNames.map((groupName, idx) => createGroupView(groupName, idx))
         )
@@ -1561,7 +1577,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(group2!.isUngroupedViewsGroup).to.be.false
       })
 
-      it('should respect search filter and filter out groups w/ views that dont have the search string in their name', async () => {
+      it('should respect search filter and filter out by group/view name', async () => {
         const res = await getProjectViewGroups({
           projectId: readTestProject.id,
           input: {
@@ -1577,6 +1593,19 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(data).to.be.ok
         expect(data!.totalCount).to.equal(SEARCH_STRING_ITEM_COUNT)
         expect(data!.items.length).to.equal(SEARCH_STRING_ITEM_COUNT)
+
+        // should have found a bunch of groups because of their view names
+        // and one group because of its own name
+        const searchableGroup = data?.items.find(
+          (i) => i.title === SEARCHABLE_GROUP_NAME_STRING
+        )
+        expect(searchableGroup).to.be.ok
+
+        const searchableViewGroups = data?.items.filter((i) =>
+          i.title.includes('includedSearchString')
+        )
+
+        expect(searchableViewGroups).to.have.lengthOf(SEARCH_STRING_VIEW_COUNT)
       })
 
       it('should respect onlyAuthored flag', async () => {
