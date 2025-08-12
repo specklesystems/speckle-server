@@ -372,6 +372,7 @@ graphql(`
     id
     groupId
     projectId
+    isUngroupedViewsGroup
   }
 `)
 
@@ -384,7 +385,7 @@ export const useDeleteSavedViewGroup = () => {
     if (!isLoggedIn.value) return
     const groupId = group.groupId
     const projectId = group.projectId
-    if (!groupId) return // not real group
+    if (!groupId || group.isUngroupedViewsGroup) return // not real group
 
     const result = await mutate(
       { input: { groupId, projectId } },

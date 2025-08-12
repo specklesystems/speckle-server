@@ -59,11 +59,11 @@ import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { Ellipsis, Plus } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
-import type { ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment } from '~/lib/common/generated/gql/graphql'
-import {
-  useCreateSavedView,
-  useDeleteSavedViewGroup
-} from '~/lib/viewer/composables/savedViews/management'
+import type {
+  ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment,
+  ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroupFragment
+} from '~/lib/common/generated/gql/graphql'
+import { useCreateSavedView } from '~/lib/viewer/composables/savedViews/management'
 
 const MenuItems = StringEnum(['Delete'])
 type MenuItems = StringEnumValues<typeof MenuItems>
@@ -78,7 +78,7 @@ graphql(`
       }
     }
     ...ViewerSavedViewsPanelViewsGroupInner_SavedViewGroup
-    ...UseDeleteSavedViewGroup_SavedViewGroup
+    ...ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroup
   }
 `)
 
@@ -96,6 +96,12 @@ graphql(`
   }
 `)
 
+const emit = defineEmits<{
+  'delete-group': [
+    group: ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroupFragment
+  ]
+}>()
+
 const props = defineProps<{
   group: ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment
   search?: string
@@ -104,7 +110,6 @@ const props = defineProps<{
 
 const isLoading = useMutationLoading()
 const createView = useCreateSavedView()
-const deleteGroup = useDeleteSavedViewGroup()
 const isSelected = defineModel<boolean>('isSelected')
 
 const open = ref(false)
@@ -128,7 +133,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
 const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
   switch (item.id) {
     case MenuItems.Delete:
-      await deleteGroup(props.group)
+      emit('delete-group', props.group)
       break
     default:
       throwUncoveredError(item.id)
