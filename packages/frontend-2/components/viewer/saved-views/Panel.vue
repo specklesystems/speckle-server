@@ -79,7 +79,6 @@ import {
   useCreateSavedViewGroup
 } from '~/lib/viewer/composables/savedViews/management'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
-import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
 import { ViewsType, viewsTypeLabels } from '~/lib/viewer/helpers/savedViews'
 
 graphql(`
@@ -107,11 +106,6 @@ const {
 const createGroup = useCreateSavedViewGroup()
 const createSavedView = useCreateSavedView()
 const isLoading = useMutationLoading()
-const eventBus = useEventBus()
-
-eventBus.on(ViewerEventBusKeys.SelectSavedViewGroup, ({ groupId }) => {
-  selectedGroupId.value = groupId
-})
 
 const selectedViewsType = ref<ViewsType>(ViewsType.All)
 const selectedGroupId = ref<string | null>(null)

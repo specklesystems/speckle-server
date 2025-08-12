@@ -1,17 +1,26 @@
+import type {
+  ViewerSavedViewsPanelViewEditDialog_SavedViewFragment,
+  ViewerSavedViewsPanelViewMoveDialog_SavedViewFragment
+} from '~/lib/common/generated/gql/graphql'
 import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
 
 export enum ViewerEventBusKeys {
-  UpdateSavedView = 'UpdateSavedView',
-  SelectSavedViewGroup = 'SelectSavedViewGroup'
+  ApplySavedView = 'UpdateSavedView',
+  MarkSavedViewForEdit = 'MarkSavedViewForEdit'
 }
 
 export type ViewerSavedViewEventBusPayloads = {
-  [ViewerEventBusKeys.UpdateSavedView]: SavedViewUrlSettings
-  [ViewerEventBusKeys.SelectSavedViewGroup]: { groupId: string }
+  [ViewerEventBusKeys.ApplySavedView]: SavedViewUrlSettings
+  [ViewerEventBusKeys.MarkSavedViewForEdit]:
+    | {
+        type: 'edit'
+        view: ViewerSavedViewsPanelViewEditDialog_SavedViewFragment
+      }
+    | { type: 'move'; view: ViewerSavedViewsPanelViewMoveDialog_SavedViewFragment }
 }
 
 // Add mappings between event keys and expected payloads here
 export type ViewerEventBusKeyPayloadMap = {
-  [ViewerEventBusKeys.UpdateSavedView]: ViewerSavedViewEventBusPayloads[ViewerEventBusKeys.UpdateSavedView]
-  [ViewerEventBusKeys.SelectSavedViewGroup]: ViewerSavedViewEventBusPayloads[ViewerEventBusKeys.SelectSavedViewGroup]
+  [ViewerEventBusKeys.ApplySavedView]: ViewerSavedViewEventBusPayloads[ViewerEventBusKeys.ApplySavedView]
+  [ViewerEventBusKeys.MarkSavedViewForEdit]: ViewerSavedViewEventBusPayloads[ViewerEventBusKeys.MarkSavedViewForEdit]
 } & { [k in ViewerEventBusKeys]: unknown } & Record<string, unknown>

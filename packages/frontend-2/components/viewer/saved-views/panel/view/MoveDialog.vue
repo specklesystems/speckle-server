@@ -49,7 +49,7 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  view: ViewerSavedViewsPanelViewMoveDialog_SavedViewFragment
+  view: ViewerSavedViewsPanelViewMoveDialog_SavedViewFragment | undefined
 }>()
 
 const open = defineModel<boolean>('open', {
@@ -83,6 +83,7 @@ const buttons = computed((): LayoutDialogButton[] => [
 ])
 
 const onSubmit = handleSubmit(async (values) => {
+  if (!props.view) return
   const groupId = values.group.id !== props.view.group.id ? values.group.id : null
   if (!groupId) return
 
@@ -98,11 +99,13 @@ const onSubmit = handleSubmit(async (values) => {
   if (res?.id) {
     emit('success', groupId)
     await nextTick() // otherwise success gets swallowed
-    // open.value = false
+    open.value = false
   }
 })
 
 watch(open, (newVal, oldVal) => {
+  if (!props.view) return
+
   if (newVal && !oldVal) {
     // Reset form state when dialog opens
     setValues({

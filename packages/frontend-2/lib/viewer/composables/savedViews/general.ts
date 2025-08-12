@@ -41,7 +41,7 @@ export const useViewerSavedViewsUtils = () => {
   const applyView = (settings: SavedViewUrlSettings) => {
     // Force update, even if the view id is already set
     // (in case this is a frustration click w/ the state not applying)
-    eventBus.emit(ViewerEventBusKeys.UpdateSavedView, settings)
+    eventBus.emit(ViewerEventBusKeys.ApplySavedView, settings)
   }
 
   return {
