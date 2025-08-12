@@ -36,11 +36,15 @@
           <div v-if="isLatest" class="text-body-3xs text-foreground">
             Latest version
           </div>
+          <div v-else class="text-body-3xs text-primary">Viewing old version</div>
           <div class="text-body-3xs text-foreground-2">
             {{ createdAtFormatted.relative }}
           </div>
         </div>
-        <div class="flex items-center ml-auto mr-2 w-0 group-hover:w-auto">
+        <div
+          class="flex items-center ml-auto mr-2 w-0 group-hover:w-auto"
+          :class="showActionsMenu ? '!w-auto' : ''"
+        >
           <LayoutMenu
             v-model:open="showActionsMenu"
             :items="actionsItems"
