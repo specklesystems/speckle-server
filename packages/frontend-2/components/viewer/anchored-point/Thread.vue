@@ -15,7 +15,11 @@
         transition bg-foundation shadow hover:shadow-xl flex -space-x-2 items-center p-[2px] rounded-tr-full rounded-tl-full rounded-br-full`"
           @click="onThreadClick"
         >
-          <UserAvatarGroup v-if="!modelValue.archived" :users="threadAuthors" />
+          <UserAvatarGroup
+            v-if="!modelValue.archived"
+            hide-tooltips
+            :users="threadAuthors"
+          />
           <div
             v-if="modelValue.archived"
             class="w-7 h-7 flex items-center justify-center"
