@@ -1,8 +1,10 @@
 <template>
   <div>
     <nav class="fixed z-40 top-0 h-12 bg-foundation border-b border-outline-2">
-      <div class="flex gap-4 items-center justify-between h-full w-screen py-4 px-3">
-        <div class="hidden lg:block lg:w-52">
+      <div
+        class="flex gap-4 items-center justify-between h-full w-screen px-2 lg:pl-1.5"
+      >
+        <div class="hidden lg:flex lg:w-52">
           <HeaderWorkspaceSwitcher v-if="isWorkspacesEnabled && isLoggedIn" />
           <HeaderLogoBlock
             v-else
