@@ -1,6 +1,5 @@
 import type { StringEnumValues } from '@speckle/shared'
 import { isObjectLike, isString } from 'lodash-es'
-import type { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
 
 export const ViewsType = {
   All: 'all-views',
@@ -21,10 +20,6 @@ export const viewsTypeLabels: Record<ViewsType, string> = {
 export type SavedViewUrlSettings = {
   id: string
   loadOriginal?: boolean
-}
-
-export type ViewerSavedViewEventBusPayloads = {
-  [ViewerEventBusKeys.UpdateSavedView]: SavedViewUrlSettings
 }
 
 export const parseSavedViewUrlSettings = (

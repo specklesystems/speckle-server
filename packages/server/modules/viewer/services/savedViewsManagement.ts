@@ -33,9 +33,10 @@ import { inputToVersionedState } from '@speckle/shared/viewer/state'
 import { isValidBase64Image } from '@speckle/shared/images/base64'
 import type { GetViewerResourceGroups } from '@/modules/viewer/domain/operations/resources'
 import { formatResourceIdsForGroup } from '@/modules/viewer/helpers/savedViews'
-import { omit } from 'lodash-es'
+import { isUndefined, omit } from 'lodash-es'
 import type { DependenciesOf } from '@/modules/shared/helpers/factory'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
+import { isUngroupedGroup } from '@speckle/shared/saved-views'
 
 /**
  * Validates an incoming resourceIdString against the resources in the project and returns the validated list (as a builder)
@@ -388,7 +389,14 @@ export const updateSavedViewFactory =
     }
 
     // Check if there's any actual changes
-    const changes = removeNullOrUndefinedKeys(omit(input, ['id', 'projectId']))
+    const changes = {
+      ...removeNullOrUndefinedKeys(omit(input, ['id', 'projectId'])),
+      ...(!isUndefined(input.groupId)
+        ? {
+            groupId: input.groupId // we want to allow null, which means - no group
+          }
+        : {})
+    }
     if (Object.keys(changes).length === 0) {
       throw new SavedViewUpdateValidationError('No changes submitted with the input.', {
         info: {
@@ -429,20 +437,26 @@ export const updateSavedViewFactory =
 
     // Validate groupId - group is a valid and accessible group in the project
     if (changes.groupId) {
-      const group = await deps.getSavedViewGroup({
-        id: changes.groupId,
-        projectId
-      })
-      if (!group) {
-        throw new SavedViewUpdateValidationError(
-          'Provided groupId does not exist in the project.',
-          {
-            info: {
-              input,
-              userId
+      // Check if default group (actually means - null group)
+      const isDefaultGroup = changes.groupId && isUngroupedGroup(changes.groupId)
+      if (isDefaultGroup) {
+        changes.groupId = null
+      } else {
+        const group = await deps.getSavedViewGroup({
+          id: changes.groupId,
+          projectId
+        })
+        if (!group) {
+          throw new SavedViewUpdateValidationError(
+            'Provided groupId does not exist in the project.',
+            {
+              info: {
+                input,
+                userId
+              }
             }
-          }
-        )
+          )
+        }
       }
     }
 

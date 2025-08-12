@@ -13,6 +13,7 @@ import {
   onGroupViewRemovalCacheUpdates,
   onNewGroupViewCacheUpdates
 } from '~/lib/viewer/helpers/savedViews/cache'
+import { isUngroupedGroup } from '@speckle/shared/saved-views'
 
 const createSavedViewMutation = graphql(`
   mutation CreateSavedView($input: CreateSavedViewInput!) {
@@ -320,7 +321,7 @@ export const useCreateSavedViewGroup = () => {
 
                   // default comes first, then new group
                   const defaultIdx = newItems.findIndex((i) =>
-                    fromRef(i).id.startsWith('default-')
+                    isUngroupedGroup(fromRef(i).id)
                   )
 
                   newItems.splice(defaultIdx + 1, 0, ref('SavedViewGroup', group.id))

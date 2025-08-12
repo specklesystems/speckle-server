@@ -13,6 +13,7 @@ import {
   ROOT_SUBSCRIPTION
 } from '~/lib/common/helpers/graphql'
 import { checkIfIsInPlaceNavigation } from '~/lib/common/helpers/navigation'
+import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
 
 /**
  * Debugging helper to ensure variables are available in debugging scope
@@ -38,5 +39,6 @@ export {
   checkIfIsInPlaceNavigation,
   ROOT_QUERY,
   ROOT_MUTATION,
-  ROOT_SUBSCRIPTION
+  ROOT_SUBSCRIPTION,
+  ViewerEventBusKeys
 }

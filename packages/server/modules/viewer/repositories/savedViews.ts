@@ -31,6 +31,7 @@ import {
   decodeDefaultGroupId,
   formatResourceIdsForGroup
 } from '@/modules/viewer/helpers/savedViews'
+import { isUngroupedGroup } from '@speckle/shared/saved-views'
 import { resourceBuilder } from '@speckle/shared/viewer/route'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
@@ -249,7 +250,7 @@ export const getProjectSavedViewGroupsPageItemsFactory =
 
     // Adjust cursor, in case it points to non-existant default group
     let cursor = decode(params.cursor)
-    if (cursor?.id.startsWith('default-')) {
+    if (cursor?.id && isUngroupedGroup(cursor.id)) {
       // Default appears first, so just unset the cursor to get the real first item
       cursor = null
     }

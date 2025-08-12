@@ -18,6 +18,15 @@
         hide-when-complete
         @infinite="onInfiniteLoad"
       />
+      <ViewerSavedViewsPanelViewEditDialog
+        v-model:open="showEditDialog"
+        :view="viewBeingEdited"
+      />
+      <ViewerSavedViewsPanelViewMoveDialog
+        v-model:open="showMoveDialog"
+        :view="viewBeingMoved"
+        @success="onMoveSuccess"
+      />
     </div>
   </div>
 </template>
@@ -25,6 +34,10 @@
 import { omit } from 'lodash-es'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
+import type {
+  ViewerSavedViewsPanelViewEditDialog_SavedViewFragment,
+  ViewerSavedViewsPanelViewMoveDialog_SavedViewFragment
+} from '~/lib/common/generated/gql/graphql'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { ViewsType } from '~/lib/viewer/helpers/savedViews'
 
@@ -68,8 +81,11 @@ const {
     request: { resourceIdString }
   }
 } = useInjectedViewerState()
+const eventBus = useEventBus()
 
 const search = ref('')
+const viewBeingEdited = ref<ViewerSavedViewsPanelViewEditDialog_SavedViewFragment>()
+const viewBeingMoved = ref<ViewerSavedViewsPanelViewMoveDialog_SavedViewFragment>()
 
 const {
   identifier,
@@ -111,6 +127,24 @@ const groups = computed(() => {
   return result.value?.project.savedViewGroups.items || []
 })
 
+const showEditDialog = computed({
+  get: () => !!viewBeingEdited.value,
+  set: (value) => {
+    if (!value) {
+      viewBeingEdited.value = undefined
+    }
+  }
+})
+
+const showMoveDialog = computed({
+  get: () => !!viewBeingMoved.value,
+  set: (value) => {
+    if (!value) {
+      viewBeingMoved.value = undefined
+    }
+  }
+})
+
 watch(
   groups,
   (newGroups) => {
@@ -120,4 +154,16 @@ watch(
   },
   { immediate: true }
 )
+
+eventBus.on(ViewerEventBusKeys.MarkSavedViewForEdit, ({ type, view }) => {
+  if (type === 'edit') {
+    viewBeingEdited.value = view
+  } else if (type === 'move') {
+    viewBeingMoved.value = view
+  }
+})
+
+const onMoveSuccess = (groupId: string) => {
+  selectedGroupId.value = groupId
+}
 </script>

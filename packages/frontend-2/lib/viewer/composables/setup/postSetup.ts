@@ -1003,7 +1003,7 @@ const useViewerSavedViewSetup = () => {
   }
 
   // Allow force update
-  on(ViewerEventBusKeys.UpdateSavedView, async (settings) => {
+  on(ViewerEventBusKeys.ApplySavedView, async (settings) => {
     await update({ settings })
   })
 

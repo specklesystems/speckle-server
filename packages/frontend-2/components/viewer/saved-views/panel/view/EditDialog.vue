@@ -77,7 +77,7 @@ type FormType = {
 }
 
 const props = defineProps<{
-  view: ViewerSavedViewsPanelViewEditDialog_SavedViewFragment
+  view: ViewerSavedViewsPanelViewEditDialog_SavedViewFragment | undefined
 }>()
 
 const open = defineModel<boolean>('open', {
@@ -126,6 +126,8 @@ const radioOptions = computed((): FormRadioGroupItem<SavedViewVisibility>[] => [
 ])
 
 const onSubmit = handleSubmit(async (values) => {
+  if (!props.view) return
+
   const name =
     values.name.trim() && values.name.trim() !== props.view.name
       ? values.name.trim()
@@ -156,6 +158,8 @@ const onSubmit = handleSubmit(async (values) => {
 })
 
 watch(open, (newVal, oldVal) => {
+  if (!props.view) return
+
   if (newVal && !oldVal) {
     // Reset form state when dialog opens
     setValues({
