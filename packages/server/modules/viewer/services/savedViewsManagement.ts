@@ -29,7 +29,10 @@ import {
   SavedViewInvalidResourceTargetError,
   SavedViewUpdateValidationError
 } from '@/modules/viewer/errors/savedViews'
-import type { ResourceBuilder } from '@speckle/shared/viewer/route'
+import type {
+  ResourceBuilder,
+  ViewerResourcesTarget
+} from '@speckle/shared/viewer/route'
 import { resourceBuilder } from '@speckle/shared/viewer/route'
 import type { VersionedSerializedViewerState } from '@speckle/shared/viewer/state'
 import { inputToVersionedState } from '@speckle/shared/viewer/state'
@@ -47,14 +50,14 @@ import { isUngroupedGroup } from '@speckle/shared/saved-views'
 const validateProjectResourceIdStringFactory =
   (deps: { getViewerResourceGroups: GetViewerResourceGroups }) =>
   async (params: {
-    resourceIdString: string
+    resourceIdString: ViewerResourcesTarget
     projectId: string
     errorMetadata: Record<string, unknown>
   }) => {
     const { resourceIdString, errorMetadata, projectId } = params
 
     // Validate resourceIdString - it should only point to valid resources belonging to the project
-    const resourceIds = resourceBuilder().addFromString(resourceIdString)
+    const resourceIds = resourceBuilder().addResources(resourceIdString)
     if (!resourceIds.length) {
       throw new SavedViewInvalidResourceTargetError(
         "No valid resources referenced in 'resourceIdString'",
@@ -275,20 +278,19 @@ export const createSavedViewGroupFactory =
 
     // Validate resourceIdString - it should only point to valid resources belonging to the project
     const resourceIds = await validateProjectResourceIdStringFactory(deps)({
-      resourceIdString,
+      resourceIdString: formatResourceIdsForGroup(resourceIdString),
       projectId,
       errorMetadata: {
         input,
         authorId
       }
     })
-    const groupResourceIds = formatResourceIdsForGroup(resourceIds)
 
     // Insert
     const group = await deps.storeSavedViewGroup({
       group: {
         projectId,
-        resourceIds: groupResourceIds,
+        resourceIds: resourceIds.map((r) => r.toString()),
         name: groupName,
         authorId
       }

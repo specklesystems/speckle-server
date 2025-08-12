@@ -3527,7 +3527,7 @@ export type SavedViewGroupsInput = {
   onlyAuthored?: InputMaybe<Scalars['Boolean']['input']>;
   /** Viewer resource ID string that identifies which resources should be loaded */
   resourceIdString: Scalars['String']['input'];
-  /** Whether to only include groups that have views matching this search term */
+  /** Whether to only include groups that have names or views matching this search term */
   search?: InputMaybe<Scalars['String']['input']>;
 };
 

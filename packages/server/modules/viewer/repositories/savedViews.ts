@@ -32,7 +32,10 @@ import {
   decodeDefaultGroupId,
   formatResourceIdsForGroup
 } from '@/modules/viewer/helpers/savedViews'
-import { isUngroupedGroup } from '@speckle/shared/saved-views'
+import {
+  isUngroupedGroup,
+  ungroupedScenesGroupTitle
+} from '@speckle/shared/saved-views'
 import { resourceBuilder } from '@speckle/shared/viewer/route'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
@@ -210,7 +213,9 @@ const getProjectSavedViewGroupsBaseQueryFactory =
       .select<SavedViewGroup[]>(SavedViewGroups.cols)
 
     if (isFiltering) {
-      q.innerJoin(SavedViews.name, SavedViews.col.groupId, SavedViewGroups.col.id)
+      // left join cause we may want to find groups by name and they may not
+      // have any views in them
+      q.leftJoin(SavedViews.name, SavedViews.col.groupId, SavedViewGroups.col.id)
     }
 
     applyFilters(q, 'group')
@@ -225,7 +230,11 @@ const getProjectSavedViewGroupsBaseQueryFactory =
       tables.savedViews(deps.db),
       'view'
     ).first()
-    const includeDefaultGroup = Boolean(ungroupedViewFound)
+    const ungroupedSearchString = search
+      ? ungroupedScenesGroupTitle.toLowerCase().includes(search)
+      : null
+
+    const includeDefaultGroup = Boolean(ungroupedViewFound) || ungroupedSearchString
 
     return { q, resourceIds, isFiltering, includeDefaultGroup }
   }
@@ -428,7 +437,7 @@ export const recalculateGroupResourceIdsFactory =
             SELECT ARRAY(
               SELECT DISTINCT unnest
               FROM ${RawSavedViews.name},
-                  unnest(${RawSavedViews.col.resourceIds}) AS unnest
+                  unnest(${RawSavedViews.col.groupResourceIds}) AS unnest
               WHERE ${RawSavedViews.col.groupId} = ${RawSavedViewGroups.col.id}
             )
            )`

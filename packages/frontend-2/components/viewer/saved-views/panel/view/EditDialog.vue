@@ -53,9 +53,6 @@ import { isRequired, isStringOfLength } from '~/lib/common/helpers/validation'
 import { useUpdateSavedView } from '~/lib/viewer/composables/savedViews/management'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 
-// TODO: Should we switch to resolvedResourceIdString everywhere?
-// TODO: If search for 'Ungrouped' (ungrouped title), then return the ungrouped group too
-
 graphql(`
   fragment ViewerSavedViewsPanelViewEditDialog_SavedView on SavedView {
     id
