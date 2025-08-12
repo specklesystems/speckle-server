@@ -15,7 +15,23 @@
         class="flex gap-1 items-center opacity-0 group-hover/disclosure:opacity-100"
         @click.stop
       >
-        <FormButton size="sm" color="subtle" :icon-left="Ellipsis" hide-text />
+        <LayoutMenu
+          v-model:open="showMenu"
+          :items="menuItems"
+          :menu-id="menuId"
+          mount-menu-on-body
+          show-ticks="right"
+          @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
+        >
+          <FormButton
+            name="viewActions"
+            size="sm"
+            color="subtle"
+            :icon-left="Ellipsis"
+            hide-text
+            @click="showMenu = !showMenu"
+          />
+        </LayoutMenu>
         <div v-tippy="canUpdate?.errorMessage">
           <FormButton
             size="sm"
@@ -38,11 +54,19 @@
   />
 </template>
 <script setup lang="ts">
+import { StringEnum, throwUncoveredError, type StringEnumValues } from '@speckle/shared'
+import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { Ellipsis, Plus } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment } from '~/lib/common/generated/gql/graphql'
-import { useCreateSavedView } from '~/lib/viewer/composables/savedViews/management'
+import {
+  useCreateSavedView,
+  useDeleteSavedViewGroup
+} from '~/lib/viewer/composables/savedViews/management'
+
+const MenuItems = StringEnum(['Delete'])
+type MenuItems = StringEnumValues<typeof MenuItems>
 
 graphql(`
   fragment ViewerSavedViewsPanelViewsGroup_SavedViewGroup on SavedViewGroup {
@@ -54,6 +78,7 @@ graphql(`
       }
     }
     ...ViewerSavedViewsPanelViewsGroupInner_SavedViewGroup
+    ...UseDeleteSavedViewGroup_SavedViewGroup
   }
 `)
 
@@ -79,12 +104,36 @@ const props = defineProps<{
 
 const isLoading = useMutationLoading()
 const createView = useCreateSavedView()
+const deleteGroup = useDeleteSavedViewGroup()
 const isSelected = defineModel<boolean>('isSelected')
 
 const open = ref(false)
+const showMenu = ref(false)
+const menuId = useId()
 
 const isUngroupedGroup = computed(() => props.group.isUngroupedViewsGroup)
 const canUpdate = computed(() => props.group.permissions.canUpdate)
+
+const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
+  [
+    {
+      id: MenuItems.Delete,
+      title: 'Delete',
+      disabled: !canUpdate.value?.authorized || isLoading.value,
+      disabledTooltip: canUpdate.value.errorMessage
+    }
+  ]
+])
+
+const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
+  switch (item.id) {
+    case MenuItems.Delete:
+      await deleteGroup(props.group)
+      break
+    default:
+      throwUncoveredError(item.id)
+  }
+}
 
 const onAddGroupView = async () => {
   await createView({
