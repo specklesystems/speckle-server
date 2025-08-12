@@ -186,6 +186,11 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     options?: ExecuteOperationOptions
   ) => apollo.execute(UpdateSavedViewDocument, input, options)
 
+  const getProjectViewGroups = (
+    input: GetProjectSavedViewGroupsQueryVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(GetProjectSavedViewGroupsDocument, input, options)
+
   const model1ResourceIds = () => ViewerRoute.resourceBuilder().addModel(myModel1.id)
 
   const model2ResourceIds = () => ViewerRoute.resourceBuilder().addModel(myModel2.id)
@@ -899,6 +904,40 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(updatedView2!.groupId).to.be.null
       })
 
+      it('allow setting default group as group, which actually sets it to null', async () => {
+        // Get default group id
+        const groupsRes = await getProjectViewGroups(
+          {
+            projectId: updatablesProject.id,
+            input: {
+              limit: 1,
+              resourceIdString: models[0].id
+            }
+          },
+          { assertNoErrors: true }
+        )
+
+        const defaultGroup = groupsRes.data?.project.savedViewGroups.items[0]
+        expect(defaultGroup).to.be.ok
+
+        // Update view to have that be the group
+        const update = await updateView(
+          {
+            input: {
+              id: testView.id,
+              projectId: updatablesProject.id,
+              groupId: defaultGroup!.id
+            }
+          },
+          { assertNoErrors: true }
+        )
+
+        const updatedView = update.data?.projectMutations.savedViewMutations.updateView
+        expect(updatedView?.id).to.be.ok
+        expect(updatedView?.groupId).to.be.null
+        expect(updatedView?.group.id).to.equal(defaultGroup!.id)
+      })
+
       it('fails if user has no access to update the view', async () => {
         const newName = 'Updated View Name'
 
@@ -1163,11 +1202,6 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           modelIds.map((id) => new ViewerRoute.ViewerModelResource(id))
         )
 
-      const getProjectViewGroups = (
-        input: GetProjectSavedViewGroupsQueryVariables,
-        options?: ExecuteOperationOptions
-      ) => apollo.execute(GetProjectSavedViewGroupsDocument, input, options)
-
       before(async () => {
         otherReader = await createTestUser(buildBasicTestUser({ name: 'other-reader' }))
         await assignToWorkspace(
@@ -1350,22 +1384,42 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(defaultGroupsFound).to.equal(1) // only 1 default group
       })
 
-      // it('should return different groups in same project, if resource string differs', async () => {
-      //   const res = await getProjectViewGroups({
-      //     projectId: readTestProject.id,
-      //     input: {
-      //       limit: GROUP_COUNT, // all in 1 page
-      //       resourceIdString: 'ayy'
-      //     }
-      //   })
+      it('should support default groups cursor', async () => {
+        const res1 = await getProjectViewGroups(
+          {
+            projectId: readTestProject.id,
+            input: {
+              limit: 1, // only get default group
+              resourceIdString: getAllReadModelResourceIds().toString()
+            }
+          },
+          { assertNoErrors: true }
+        )
 
-      //   expect(res).to.not.haveGraphQLErrors()
-      //   const data = res.data?.project.savedViewGroups
-      //   expect(data).to.be.ok
-      //   expect(data!.totalCount).to.equal(1) // only default group returned
-      //   expect(data!.items.length).to.equal(1)
-      //   expect(data!.cursor).to.not.be.null
-      // })
+        const group = res1.data?.project.savedViewGroups.items[0]
+        const cursor = res1.data?.project.savedViewGroups.cursor
+
+        expect(group).to.be.ok
+        expect(group!.isUngroupedViewsGroup).to.be.true
+        expect(cursor).to.be.ok
+
+        const res2 = await getProjectViewGroups(
+          {
+            projectId: readTestProject.id,
+            input: {
+              limit: 1, // get first real item
+              resourceIdString: getAllReadModelResourceIds().toString(),
+              cursor
+            }
+          },
+          { assertNoErrors: true }
+        )
+
+        const group2 = res2.data?.project.savedViewGroups.items[0]
+
+        expect(group2).to.be.ok
+        expect(group2!.isUngroupedViewsGroup).to.be.false
+      })
 
       it('should respect search filter and filter out groups w/ views that dont have the search string in their name', async () => {
         const res = await getProjectViewGroups({
