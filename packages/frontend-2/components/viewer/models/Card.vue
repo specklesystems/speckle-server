@@ -10,6 +10,7 @@
         @focusin="highlightObject"
         @focusout="unhighlightObject"
         @click="selectObject"
+        @dblclick="zoomToModel"
         @keydown.enter="selectObject"
       >
         <ViewerExpansionTriangle
@@ -86,7 +87,8 @@ import type { Get } from 'type-fest'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import {
   useHighlightedObjectsUtilities,
-  useFilterUtilities
+  useFilterUtilities,
+  useCameraUtilities
 } from '~~/lib/viewer/composables/ui'
 import {
   useInjectedViewerState,
@@ -116,6 +118,7 @@ const props = defineProps<{
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
+const { zoom } = useCameraUtilities()
 const { items } = useInjectedViewerRequestedResources()
 const { resourceItems } = useInjectedViewerLoadedResources()
 const {
@@ -287,6 +290,12 @@ const selectObject = () => {
   // Only expand if not already expanded
   if (!props.isExpanded) {
     emit('toggle-expansion')
+  }
+}
+
+const zoomToModel = () => {
+  if (modelObjectIds.value.length > 0) {
+    zoom(modelObjectIds.value)
   }
 }
 
