@@ -61,7 +61,8 @@ export function useViewerNewThreadBubble(params: {
       openThread: { newThreadEditor }
     },
     camera: { target },
-    selection
+    selection,
+    filters: { selectedObjects }
   } = useInjectedViewerInterfaceState()
   const getCamCenterObjId = useGetScreenCenterObjectId()
   const { setSelectionFromObjectIds } = useSelectionUtilities()
@@ -95,6 +96,9 @@ export function useViewerNewThreadBubble(params: {
     buttonState.value.clickLocation = null
   }
 
+  // Flag to skip the next selection change (from viewer click)
+  const skipNextSelectionWatch = ref(false)
+
   useSelectionEvents({
     singleClickCallback: (_event, { firstVisibleSelectionHit }) => {
       if (block?.value) return
@@ -105,6 +109,7 @@ export function useViewerNewThreadBubble(params: {
         return
       }
 
+      skipNextSelectionWatch.value = true
       buttonState.value.clickLocation = firstVisibleSelectionHit.point.clone()
       buttonState.value.isVisible = true
       updatePositions()
@@ -152,6 +157,18 @@ export function useViewerNewThreadBubble(params: {
       const oid = getCamCenterObjId()
       if (!oid) return
       setSelectionFromObjectIds([oid])
+    }
+  })
+
+  // Clear button when selection changes (external sources like models panel)
+  watch(selectedObjects, () => {
+    if (skipNextSelectionWatch.value) {
+      skipNextSelectionWatch.value = false
+      return
+    }
+
+    if (buttonState.value.isVisible) {
+      closeNewThread()
     }
   })
 
