@@ -98,7 +98,6 @@ const onSubmit = handleSubmit(async (values) => {
 
   if (res?.id) {
     emit('success', groupId)
-    await nextTick() // otherwise success gets swallowed
     open.value = false
   }
 })
