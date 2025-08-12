@@ -128,7 +128,7 @@ const panels = shallowRef({
     id: ActivePanel.explode,
     name: 'Explode',
     icon: 'IconViewerExplode',
-    tooltip: 'Explode model',
+    tooltip: 'Explode',
     extraClasses: 'hidden md:flex'
   },
   [ActivePanel.viewModes]: {
