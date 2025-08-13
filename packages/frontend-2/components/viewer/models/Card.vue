@@ -37,9 +37,17 @@
           <div v-if="isLatest" class="text-body-3xs text-foreground">
             Latest version
           </div>
-          <div v-else class="text-body-3xs text-primary">Viewing old version</div>
-          <div class="text-body-3xs text-foreground-2">
-            {{ createdAtFormatted.relative }}
+          <div v-else class="text-body-3xs text-primary truncate">
+            Viewing old version
+          </div>
+          <div class="flex items-center gap-1 text-body-3xs text-foreground-2 min-w-0">
+            <span v-if="loadedVersion?.sourceApplication" class="shrink-0">
+              {{ loadedVersion.sourceApplication }}
+            </span>
+            <span v-if="loadedVersion?.sourceApplication" class="shrink-0">·</span>
+            <span class="truncate">
+              {{ createdAtFormatted.relative }}
+            </span>
           </div>
         </div>
         <div
