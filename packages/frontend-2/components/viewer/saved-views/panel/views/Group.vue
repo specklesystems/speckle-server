@@ -117,6 +117,7 @@ const props = defineProps<{
   onlyAuthored?: boolean
 }>()
 
+const { triggerNotification } = useGlobalToast()
 const isLoading = useMutationLoading()
 const createView = useCreateSavedView()
 const updateGroup = useUpdateSavedViewGroup()
@@ -170,6 +171,15 @@ const onAddGroupView = async () => {
 }
 
 const onRename = async (newName: string) => {
+  if (!newName.trim() || newName.length > 255) {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Name must be between 1 and 255 characters long'
+    })
+    renameMode.value = false
+    return
+  }
+
   if (props.group.title === newName) {
     renameMode.value = false
     return

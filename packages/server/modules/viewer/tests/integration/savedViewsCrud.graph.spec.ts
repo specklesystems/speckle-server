@@ -972,6 +972,25 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(updatedView?.group.id).to.equal(defaultGroup!.id)
       })
 
+      it('empty string name update gets ignored', async () => {
+        const updatedname = ''
+
+        const res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            name: updatedname
+          }
+        })
+
+        // should show empty changes update as we have nothing else to update
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewUpdateValidationError.code,
+          message: 'No changes submitted with the input'
+        })
+        expect(res.data?.projectMutations.savedViewMutations.updateView.id).to.not.be.ok
+      })
+
       it('fails if user has no access to update the view', async () => {
         const newName = 'Updated View Name'
 
@@ -1150,6 +1169,44 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           const group = res.data?.projectMutations.savedViewMutations.updateGroup
           expect(group?.id).to.be.ok
           expect(group?.title).to.equal(updatedname)
+        })
+
+        it('fail invalid name length', async () => {
+          const updatedname = 'a'.repeat(300)
+
+          const res = await updateSavedViewGroup({
+            input: {
+              groupId: updatableGroup.id,
+              projectId: updatableGroup.projectId,
+              name: updatedname
+            }
+          })
+
+          expect(res).to.haveGraphQLErrors({
+            code: SavedViewGroupUpdateValidationError.code
+          })
+          expect(res.data?.projectMutations.savedViewMutations.updateGroup.id).to.not.be
+            .ok
+        })
+
+        it('empty string name update gets ignored', async () => {
+          const updatedname = ''
+
+          const res = await updateSavedViewGroup({
+            input: {
+              groupId: updatableGroup.id,
+              projectId: updatableGroup.projectId,
+              name: updatedname
+            }
+          })
+
+          // should show empty changes update as we have nothing else to update
+          expect(res).to.haveGraphQLErrors({
+            code: SavedViewGroupUpdateValidationError.code,
+            message: 'No changes submitted with the input'
+          })
+          expect(res.data?.projectMutations.savedViewMutations.updateGroup.id).to.not.be
+            .ok
         })
 
         it('prevent updates to default/ungrouped groups', async () => {
