@@ -61,7 +61,7 @@
       <ViewerSavedViewsPanelConnectorViews
         v-if="selectedViewsType === ViewsType.Connector"
       />
-      <ViewerSavedViewsPanelViews
+      <ViewerSavedViewsPanelGroups
         v-else
         v-model:selected-group-id="selectedGroupId"
         :views-type="selectedViewsType"

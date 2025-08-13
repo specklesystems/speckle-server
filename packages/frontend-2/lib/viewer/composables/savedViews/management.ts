@@ -3,9 +3,13 @@ import { graphql } from '~/lib/common/generated/gql'
 import type {
   CreateSavedViewGroupInput,
   CreateSavedViewInput,
+  UpdateSavedViewGroupInput,
+  UpdateSavedViewGroupMutationVariables,
   UpdateSavedViewInput,
   UseDeleteSavedView_SavedViewFragment,
-  UseUpdateSavedView_SavedViewFragment
+  UseDeleteSavedViewGroup_SavedViewGroupFragment,
+  UseUpdateSavedView_SavedViewFragment,
+  UseUpdateSavedViewGroup_SavedViewGroupFragment
 } from '~/lib/common/generated/gql/graphql'
 import { useStateSerialization } from '~/lib/viewer/composables/serialization'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
@@ -14,6 +18,8 @@ import {
   onNewGroupViewCacheUpdates
 } from '~/lib/viewer/helpers/savedViews/cache'
 import { isUngroupedGroup } from '@speckle/shared/saved-views'
+import type { Optional } from '@speckle/shared'
+import type { CacheObjectReference } from '~/lib/common/helpers/graphql'
 
 const createSavedViewMutation = graphql(`
   mutation CreateSavedView($input: CreateSavedViewInput!) {
@@ -345,6 +351,203 @@ export const useCreateSavedViewGroup = () => {
       const err = getFirstGqlErrorMessage(ret?.errors)
       triggerNotification({
         title: "Couldn't create group",
+        description: err,
+        type: ToastNotificationType.Danger
+      })
+    }
+
+    return res
+  }
+}
+
+const deleteSavedViewGroupMutation = graphql(`
+  mutation DeleteSavedViewGroup($input: DeleteSavedViewGroupInput!) {
+    projectMutations {
+      savedViewMutations {
+        deleteGroup(input: $input)
+      }
+    }
+  }
+`)
+
+graphql(`
+  fragment UseDeleteSavedViewGroup_SavedViewGroup on SavedViewGroup {
+    id
+    groupId
+    projectId
+    isUngroupedViewsGroup
+  }
+`)
+
+export const useDeleteSavedViewGroup = () => {
+  const { mutate } = useMutation(deleteSavedViewGroupMutation)
+  const { triggerNotification } = useGlobalToast()
+  const { isLoggedIn } = useActiveUser()
+
+  return async (group: UseDeleteSavedViewGroup_SavedViewGroupFragment) => {
+    if (!isLoggedIn.value) return
+    const groupId = group.groupId
+    const projectId = group.projectId
+    if (!groupId || group.isUngroupedViewsGroup) return // not real group
+
+    const result = await mutate(
+      { input: { groupId, projectId } },
+      {
+        update: (cache, res) => {
+          const deleteSuccessful =
+            res.data?.projectMutations.savedViewMutations.deleteGroup
+          if (!deleteSuccessful) return
+
+          // Project.savedViewGroups - 1
+          modifyObjectField(
+            cache,
+            getCacheId('Project', projectId),
+            'savedViewGroups',
+            ({ helpers: { createUpdatedValue, fromRef } }) =>
+              createUpdatedValue(({ update }) => {
+                update('totalCount', (totalCount) => totalCount - 1)
+                update('items', (items) => {
+                  const newItems = items.filter((i) => fromRef(i).id !== groupId)
+                  return newItems
+                })
+              }),
+            { autoEvictFiltered: true }
+          )
+
+          // Possibly a bunch of views got moved back to Ungrouped as well
+          // Try to find Ungrouped group first
+          let ungroupedGroupRef = undefined as Optional<
+            CacheObjectReference<'SavedViewGroup'>
+          >
+          iterateObjectField(
+            cache,
+            getCacheId('Project', projectId),
+            'savedViewGroups',
+            ({ value, variables, helpers: { fromRef } }) => {
+              if (variables.input.onlyAuthored || variables.input.onlyAuthored) return
+
+              const candidate = value.items?.find((i) =>
+                isUngroupedGroup(fromRef(i).id)
+              )
+              if (candidate) {
+                ungroupedGroupRef = candidate
+              }
+            }
+          )
+
+          if (ungroupedGroupRef) {
+            // Evict SavedViewGroup.views for ungrouped view
+            modifyObjectField(
+              cache,
+              ungroupedGroupRef.__ref,
+              'views',
+              ({ helpers: { evict } }) => {
+                return evict()
+              }
+            )
+          }
+
+          // Evict
+          cache.evict({
+            id: getCacheId('SavedViewGroup', groupId)
+          })
+        }
+      }
+    ).catch(convertThrowIntoFetchResult)
+
+    const res = result?.data?.projectMutations.savedViewMutations.deleteGroup
+    if (res) {
+      triggerNotification({
+        title: 'Group deleted',
+        type: ToastNotificationType.Success
+      })
+    } else {
+      const err = getFirstGqlErrorMessage(result?.errors)
+      triggerNotification({
+        title: "Couldn't delete group",
+        description: err,
+        type: ToastNotificationType.Danger
+      })
+    }
+
+    return res
+  }
+}
+
+const updateSavedViewGroupMutation = graphql(`
+  mutation UpdateSavedViewGroup($input: UpdateSavedViewGroupInput!) {
+    projectMutations {
+      savedViewMutations {
+        updateGroup(input: $input) {
+          id
+          ...UseUpdateSavedViewGroup_SavedViewGroup
+        }
+      }
+    }
+  }
+`)
+
+graphql(`
+  fragment UseUpdateSavedViewGroup_SavedViewGroup on SavedViewGroup {
+    id
+    projectId
+    groupId
+    title
+    isUngroupedViewsGroup
+  }
+`)
+
+export const useUpdateSavedViewGroup = () => {
+  const { mutate } = useMutation(updateSavedViewGroupMutation)
+  const { triggerNotification } = useGlobalToast()
+  const { isLoggedIn } = useActiveUser()
+
+  return async (params: {
+    group: UseUpdateSavedViewGroup_SavedViewGroupFragment
+    update: Omit<UpdateSavedViewGroupInput, 'projectId' | 'groupId'>
+  }) => {
+    const { group, update } = params
+    if (!isLoggedIn.value) return
+    if (group.isUngroupedViewsGroup) return
+
+    const result = await mutate(
+      {
+        input: {
+          projectId: group.projectId,
+          groupId: group.id,
+          ...update
+        }
+      },
+      {
+        optimisticResponse(vars) {
+          // apollo typing issue:
+          const typedVars = vars as UpdateSavedViewGroupMutationVariables
+
+          // We want the name update to be immediate to avoid flashing content
+          return {
+            projectMutations: {
+              savedViewMutations: {
+                updateGroup: {
+                  ...group,
+                  title: typedVars.input.name || group.title
+                }
+              }
+            }
+          }
+        }
+      }
+    ).catch(convertThrowIntoFetchResult)
+
+    const res = result?.data?.projectMutations.savedViewMutations.updateGroup
+    if (res?.id) {
+      triggerNotification({
+        title: 'Group updated',
+        type: ToastNotificationType.Success
+      })
+    } else {
+      const err = getFirstGqlErrorMessage(result?.errors)
+      triggerNotification({
+        title: "Couldn't update group",
         description: err,
         type: ToastNotificationType.Danger
       })

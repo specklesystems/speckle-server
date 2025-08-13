@@ -59,6 +59,7 @@
           :readonly="readOnly"
           role="textbox"
           v-bind="$attrs"
+          :style="inputStyle"
           @change="$emit('change', { event: $event, value })"
           @input="$emit('input', { event: $event, value })"
           @focus="$emit('focus')"
@@ -119,7 +120,7 @@
 import type { RuleExpression } from 'vee-validate'
 import { XMarkIcon } from '@heroicons/vue/20/solid'
 import { computed, ref, toRefs, useSlots } from 'vue'
-import type { PropType } from 'vue'
+import type { CSSProperties, PropType } from 'vue'
 import type { Nullable, Optional } from '@speckle/shared'
 import { useTextInputCore } from '~~/src/composables/form/textInput'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
@@ -343,6 +344,16 @@ const {
   inputEl: inputElement
 })
 
+const inputStyle = computed((): CSSProperties => {
+  if (props.color !== 'fully-transparent') return {}
+
+  // In fully transparent mode, we want the input to fully blend in w/ parent styling
+  const style: CSSProperties = {
+    fontSize: 'inherit'
+  }
+  return style
+})
+
 const leadingIconClasses = computed(() => {
   const classParts: string[] = ['h-4 w-4']
 
@@ -372,16 +383,21 @@ const iconClasses = computed((): string => {
 })
 
 const sizeClasses = computed((): string => {
+  // fully transparent should get sizing/coloring info from parent elements,
+  // its supposed to fit into the existing style
+  const ifNotFullyTransparent = (val: string) =>
+    props.color === 'fully-transparent' ? '' : val
+
   switch (props.size) {
     case 'sm':
-      return 'h-6 text-body sm:text-body-sm'
+      return `h-6 ${ifNotFullyTransparent('text-body sm:text-body-sm')}`
     case 'lg':
-      return 'h-10 text-body sm:text-[13px]'
+      return `h-10 ${ifNotFullyTransparent('text-body sm:text-[13px]')}`
     case 'xl':
-      return 'h-14 text-body sm:text-sm'
+      return `h-14 ${ifNotFullyTransparent('text-body sm:text-sm')}`
     case 'base':
     default:
-      return 'h-8 text-body sm:text-body-sm'
+      return `h-8 ${ifNotFullyTransparent('text-body sm:text-body-sm')}`
   }
 })
 

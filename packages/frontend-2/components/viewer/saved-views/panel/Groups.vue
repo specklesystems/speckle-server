@@ -9,8 +9,13 @@
         v-for="group in groups"
         :key="group.id"
         :group="group"
-        :is-selected="group.id === selectedGroupId"
+        :is-selected="isGroupSelected(group)"
+        :rename-mode="isGroupInRenameMode(group)"
         :only-authored="viewsType === ViewsType.My"
+        @update:is-selected="(value) => (selectedGroupId = value ? group.id : null)"
+        @update:rename-mode="(value) => (groupBeingRenamed = value ? group : undefined)"
+        @delete-group="($event) => (groupBeingDeleted = $event)"
+        @rename-group="($event) => (groupBeingRenamed = $event)"
       />
       <InfiniteLoading
         v-if="groups.length"
@@ -27,6 +32,14 @@
         :view="viewBeingMoved"
         @success="onMoveSuccess"
       />
+      <ViewerSavedViewsPanelViewDeleteDialog
+        v-model:open="showDeleteDialog"
+        :view="viewBeingDeleted"
+      />
+      <ViewerSavedViewsPanelViewsGroupDeleteDialog
+        v-model:open="showGroupDeleteDialog"
+        :group="groupBeingDeleted"
+      />
     </div>
   </div>
 </template>
@@ -35,14 +48,18 @@ import { omit } from 'lodash-es'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
+  UseUpdateSavedViewGroup_SavedViewGroupFragment,
+  ViewerSavedViewsPanelViewDeleteDialog_SavedViewFragment,
   ViewerSavedViewsPanelViewEditDialog_SavedViewFragment,
-  ViewerSavedViewsPanelViewMoveDialog_SavedViewFragment
+  ViewerSavedViewsPanelViewMoveDialog_SavedViewFragment,
+  ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment,
+  ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroupFragment
 } from '~/lib/common/generated/gql/graphql'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { ViewsType } from '~/lib/viewer/helpers/savedViews'
 
 graphql(`
-  fragment ViewerSavedViewsPanelViews_Project on Project {
+  fragment ViewerSavedViewsPanelGroups_Project on Project {
     id
     savedViewGroups(input: $savedViewGroupsInput) {
       totalCount
@@ -56,13 +73,13 @@ graphql(`
 `)
 
 const paginableGroupsQuery = graphql(`
-  query ViewerSavedViewsPanelViews_Groups(
+  query ViewerSavedViewsPanelGroups_SavedViewGroups(
     $projectId: String!
     $savedViewGroupsInput: SavedViewGroupsInput!
   ) {
     project(id: $projectId) {
       id
-      ...ViewerSavedViewsPanelViews_Project
+      ...ViewerSavedViewsPanelGroups_Project
     }
   }
 `)
@@ -86,6 +103,10 @@ const eventBus = useEventBus()
 const search = ref('')
 const viewBeingEdited = ref<ViewerSavedViewsPanelViewEditDialog_SavedViewFragment>()
 const viewBeingMoved = ref<ViewerSavedViewsPanelViewMoveDialog_SavedViewFragment>()
+const viewBeingDeleted = ref<ViewerSavedViewsPanelViewDeleteDialog_SavedViewFragment>()
+const groupBeingDeleted =
+  ref<ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroupFragment>()
+const groupBeingRenamed = ref<UseUpdateSavedViewGroup_SavedViewGroupFragment>()
 
 const {
   identifier,
@@ -145,6 +166,36 @@ const showMoveDialog = computed({
   }
 })
 
+const showDeleteDialog = computed({
+  get: () => !!viewBeingDeleted.value,
+  set: (value) => {
+    if (!value) {
+      viewBeingDeleted.value = undefined
+    }
+  }
+})
+
+const showGroupDeleteDialog = computed({
+  get: () => !!groupBeingDeleted.value,
+  set: (value) => {
+    if (!value) {
+      groupBeingDeleted.value = undefined
+    }
+  }
+})
+
+const isGroupInRenameMode = (
+  group: ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment
+) => {
+  return group.id === groupBeingRenamed.value?.id
+}
+
+const isGroupSelected = (
+  group: ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment
+) => {
+  return group.id === selectedGroupId.value
+}
+
 watch(
   groups,
   (newGroups) => {
@@ -160,6 +211,8 @@ eventBus.on(ViewerEventBusKeys.MarkSavedViewForEdit, ({ type, view }) => {
     viewBeingEdited.value = view
   } else if (type === 'move') {
     viewBeingMoved.value = view
+  } else if (type === 'delete') {
+    viewBeingDeleted.value = view
   }
 })
 

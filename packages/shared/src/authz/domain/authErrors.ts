@@ -206,6 +206,16 @@ export const SavedViewNotFoundError = defineAuthError({
   message: 'Saved view not found'
 })
 
+export const SavedViewGroupNotFoundError = defineAuthError({
+  code: 'SavedViewGroupNotFound',
+  message: 'Saved view group not found'
+})
+
+export const UngroupedSavedViewGroupLockError = defineAuthError({
+  code: 'UngroupedSavedViewGroupLock',
+  message: 'The default/ungrouped group cannot be modified.'
+})
+
 // Resolve all exported error types
 export type AllAuthErrors = ValueOf<{
   [key in keyof typeof import('./authErrors.js')]: typeof import('./authErrors.js')[key] extends new (

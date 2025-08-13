@@ -1,7 +1,12 @@
 <template>
   <div class="select-none h-full">
+    <ViewerCompareChangesPanel
+      v-if="subView === 'diff'"
+      :clear-on-back="false"
+      @close="handleDiffClose"
+    />
     <ViewerModelsVersions
-      v-if="showVersions"
+      v-else-if="subView === 'versions'"
       :expanded-model-id="expandedModelId"
       @close="handleVersionsClose"
     />
@@ -15,7 +20,7 @@
         <ViewerModelsActions
           v-if="!hasObjects"
           :hide-versions="resourceItems.length === 0 && objects.length === 0"
-          @show-versions="showVersions = true"
+          @show-versions="subView = ModelsSubView.Versions"
           @add-model="showAddModel = true"
         />
       </template>
@@ -83,6 +88,14 @@
           </div>
         </template>
 
+        <!-- Loading State -->
+        <div
+          v-else-if="resourcesLoading"
+          class="flex items-center justify-center h-full -mt-8 opacity-60"
+        >
+          <CommonLoadingIcon />
+        </div>
+
         <!-- Empty State -->
         <div
           v-else
@@ -105,8 +118,7 @@ import {
   useInjectedViewer,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-
-import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
+import { ModelsSubView, type ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
 import type { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import type { Get } from 'type-fest'
 import { useDiffUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
@@ -118,11 +130,10 @@ import { useVirtualList, useDebounceFn } from '@vueuse/core'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
-defineEmits(['close'])
-
-const showVersions = ref(false)
-const showAddModel = ref(false)
+const subView = defineModel<ModelsSubView>('subView', { default: ModelsSubView.Main })
 const expandedModelId = ref<string | null>(null)
+
+const showAddModel = ref(false)
 
 const expandedNodes = ref<Set<string>>(new Set())
 const expandedModels = ref<Set<string>>(new Set())
@@ -131,7 +142,7 @@ const disableScrollOnNextSelection = ref(false)
 const stickyHeader = ref<{ model: ModelItem; versionId: string } | null>(null)
 const scrollTop = ref(0)
 
-const { resourceItems, modelsAndVersionIds, objects } =
+const { resourceItems, modelsAndVersionIds, objects, resourcesLoading } =
   useInjectedViewerLoadedResources()
 const {
   metadata: { worldTree }
@@ -139,7 +150,8 @@ const {
 const {
   resources: {
     response: { resourceItems: stateResourceItems }
-  }
+  },
+  ui: { diff: diffState }
 } = useInjectedViewerState()
 const {
   objects: selectedObjects,
@@ -147,7 +159,7 @@ const {
   clearSelection,
   removeFromSelection
 } = useSelectionUtilities()
-const { diffModelVersions } = useDiffUtilities()
+const { diffModelVersions, endDiff } = useDiffUtilities()
 const {
   flattenModelTree,
   getRootNodesForModel,
@@ -211,20 +223,29 @@ const modelHeaderPositions = computed(() => {
   return headers
 })
 
+const hasDiffActive = computed(() => {
+  return !!(diffState.oldVersion.value && diffState.newVersion.value)
+})
+
 const handleShowVersions = (modelId: string) => {
   expandedModelId.value = modelId
-  showVersions.value = true
+  subView.value = ModelsSubView.Versions
 }
 
 const handleShowDiff = async (modelId: string, versionA: string, versionB: string) => {
   await diffModelVersions(modelId, versionA, versionB)
   expandedModelId.value = modelId
-  showVersions.value = true
+  subView.value = ModelsSubView.Diff
 }
 
 const handleVersionsClose = () => {
-  showVersions.value = false
+  subView.value = ModelsSubView.Main
   expandedModelId.value = null
+}
+
+const handleDiffClose = async () => {
+  await endDiff()
+  subView.value = ModelsSubView.Versions
 }
 
 const toggleModelExpansion = (modelId: string) => {
@@ -382,6 +403,18 @@ const handleScroll = (e: Event) => {
 }
 
 watch(selectedObjects, handleSelectionChange, { deep: true })
+
+watch(subView, (newSubView) => {
+  if (newSubView === ModelsSubView.Main) {
+    expandedModelId.value = null
+  }
+})
+
+watch(hasDiffActive, (isActive) => {
+  if (isActive && subView.value !== ModelsSubView.Diff) {
+    subView.value = ModelsSubView.Diff
+  }
+})
 
 // Initialize and update sticky header when models change
 watch(

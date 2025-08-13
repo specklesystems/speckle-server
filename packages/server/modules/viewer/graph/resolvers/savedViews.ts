@@ -17,6 +17,7 @@ import { LogicError, NotFoundError, NotImplementedError } from '@/modules/shared
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { buildDefaultGroupId } from '@/modules/viewer/helpers/savedViews'
 import {
+  deleteSavedViewGroupRecordFactory,
   deleteSavedViewRecordFactory,
   getGroupSavedViewsPageItemsFactory,
   getGroupSavedViewsTotalCountFactory,
@@ -28,15 +29,18 @@ import {
   recalculateGroupResourceIdsFactory,
   storeSavedViewFactory,
   storeSavedViewGroupFactory,
+  updateSavedViewGroupRecordFactory,
   updateSavedViewRecordFactory
 } from '@/modules/viewer/repositories/savedViews'
 import {
   createSavedViewFactory,
   createSavedViewGroupFactory,
   deleteSavedViewFactory,
+  deleteSavedViewGroupFactory,
   getGroupSavedViewsFactory,
   getProjectSavedViewGroupsFactory,
-  updateSavedViewFactory
+  updateSavedViewFactory,
+  updateSavedViewGroupFactory
 } from '@/modules/viewer/services/savedViewsManagement'
 import { getViewerResourceGroupsFactory } from '@/modules/viewer/services/viewerResources'
 import { Authz } from '@speckle/shared'
@@ -271,7 +275,11 @@ const resolvers: Resolvers = {
       throwIfAuthNotOk(canUpdate)
 
       await deleteSavedViewFactory({
+        getSavedView: getSavedViewFactory({ loaders: ctx.loaders }),
         deleteSavedViewRecord: deleteSavedViewRecordFactory({
+          db: projectDb
+        }),
+        recalculateGroupResourceIds: recalculateGroupResourceIdsFactory({
           db: projectDb
         })
       })({
@@ -307,6 +315,9 @@ const resolvers: Resolvers = {
         getSavedView: getSavedViewFactory({ loaders: ctx.loaders }),
         getSavedViewGroup: getSavedViewGroupFactory({ loaders: ctx.loaders }),
         updateSavedViewRecord: updateSavedViewRecordFactory({
+          db: projectDb
+        }),
+        recalculateGroupResourceIds: recalculateGroupResourceIdsFactory({
           db: projectDb
         })
       })
@@ -361,6 +372,66 @@ const resolvers: Resolvers = {
       return await createSavedViewGroup({
         input: args.input,
         authorId: ctx.userId!
+      })
+    },
+    deleteGroup: async (_parent, args, ctx) => {
+      const projectId = args.input.projectId
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: ctx.resourceAccessRules
+      })
+
+      const canDelete = await ctx.authPolicies.project.savedViews.canUpdateGroup({
+        userId: ctx.userId,
+        projectId,
+        groupId: args.input.groupId
+      })
+      throwIfAuthNotOk(canDelete)
+
+      const projectDb = await getProjectDbClient({ projectId })
+      const deleteSavedViewGroup = deleteSavedViewGroupFactory({
+        deleteSavedViewGroupRecord: deleteSavedViewGroupRecordFactory({
+          db: projectDb
+        })
+      })
+
+      await deleteSavedViewGroup({
+        input: {
+          groupId: args.input.groupId,
+          projectId
+        },
+        userId: ctx.userId!
+      })
+
+      return true
+    },
+    updateGroup: async (_parent, args, ctx) => {
+      const projectId = args.input.projectId
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: ctx.resourceAccessRules
+      })
+
+      const canUpdate = await ctx.authPolicies.project.savedViews.canUpdateGroup({
+        userId: ctx.userId,
+        projectId,
+        groupId: args.input.groupId
+      })
+      throwIfAuthNotOk(canUpdate)
+
+      const projectDb = await getProjectDbClient({ projectId })
+      const updateSavedViewGroup = updateSavedViewGroupFactory({
+        updateSavedViewGroupRecord: updateSavedViewGroupRecordFactory({
+          db: projectDb
+        }),
+        getSavedViewGroup: getSavedViewGroupFactory({ loaders: ctx.loaders })
+      })
+
+      return await updateSavedViewGroup({
+        input: args.input,
+        userId: ctx.userId!
       })
     }
   },

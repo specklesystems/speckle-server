@@ -8,6 +8,12 @@ import { ApolloClients, provideApolloClient } from '@vue/apollo-composable'
 import {markRaw, toRaw} from 'vue'
 
 export default defineNuxtPlugin(async (nuxt) => {
+  // in dev mode, load better messages
+  if (import.meta.dev) {
+    const devSettings = await import('@apollo/client/dev')
+    devSettings.loadDevMessages()
+  }
+
   // Load all configs
   const keyedConfigs = {};
   <% for (const key of Object.keys(options.configResolvers)) { %>

@@ -67,8 +67,10 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
     case Authz.VersionNotFoundError.code:
     case Authz.AutomateFunctionNotFoundError.code:
     case Authz.SavedViewNotFoundError.code:
+    case Authz.SavedViewGroupNotFoundError.code:
       return new NotFoundError(e.message)
     case Authz.PersonalProjectsLimitedError.code:
+    case Authz.UngroupedSavedViewGroupLockError.code:
       return new BadRequestError(e.message)
     default:
       throwUncoveredError(e)

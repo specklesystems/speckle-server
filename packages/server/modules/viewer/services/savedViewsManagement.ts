@@ -2,6 +2,8 @@ import type {
   CreateSavedView,
   CreateSavedViewGroup,
   DeleteSavedView,
+  DeleteSavedViewGroup,
+  DeleteSavedViewGroupRecord,
   DeleteSavedViewRecord,
   GetGroupSavedViews,
   GetGroupSavedViewsPageItems,
@@ -17,16 +19,22 @@ import type {
   StoreSavedView,
   StoreSavedViewGroup,
   UpdateSavedView,
+  UpdateSavedViewGroup,
+  UpdateSavedViewGroupRecord,
   UpdateSavedViewRecord
 } from '@/modules/viewer/domain/operations/savedViews'
 import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
 import {
   SavedViewCreationValidationError,
   SavedViewGroupCreationValidationError,
+  SavedViewGroupUpdateValidationError,
   SavedViewInvalidResourceTargetError,
   SavedViewUpdateValidationError
 } from '@/modules/viewer/errors/savedViews'
-import type { ResourceBuilder } from '@speckle/shared/viewer/route'
+import type {
+  ResourceBuilder,
+  ViewerResourcesTarget
+} from '@speckle/shared/viewer/route'
 import { resourceBuilder } from '@speckle/shared/viewer/route'
 import type { VersionedSerializedViewerState } from '@speckle/shared/viewer/state'
 import { inputToVersionedState } from '@speckle/shared/viewer/state'
@@ -37,6 +45,7 @@ import { isUndefined, omit } from 'lodash-es'
 import type { DependenciesOf } from '@/modules/shared/helpers/factory'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
 import { isUngroupedGroup } from '@speckle/shared/saved-views'
+import { NotFoundError } from '@/modules/shared/errors'
 
 /**
  * Validates an incoming resourceIdString against the resources in the project and returns the validated list (as a builder)
@@ -44,14 +53,14 @@ import { isUngroupedGroup } from '@speckle/shared/saved-views'
 const validateProjectResourceIdStringFactory =
   (deps: { getViewerResourceGroups: GetViewerResourceGroups }) =>
   async (params: {
-    resourceIdString: string
+    resourceIdString: ViewerResourcesTarget
     projectId: string
     errorMetadata: Record<string, unknown>
   }) => {
     const { resourceIdString, errorMetadata, projectId } = params
 
     // Validate resourceIdString - it should only point to valid resources belonging to the project
-    const resourceIds = resourceBuilder().addFromString(resourceIdString)
+    const resourceIds = resourceBuilder().addResources(resourceIdString)
     if (!resourceIds.length) {
       throw new SavedViewInvalidResourceTargetError(
         "No valid resources referenced in 'resourceIdString'",
@@ -272,20 +281,19 @@ export const createSavedViewGroupFactory =
 
     // Validate resourceIdString - it should only point to valid resources belonging to the project
     const resourceIds = await validateProjectResourceIdStringFactory(deps)({
-      resourceIdString,
+      resourceIdString: formatResourceIdsForGroup(resourceIdString),
       projectId,
       errorMetadata: {
         input,
         authorId
       }
     })
-    const groupResourceIds = formatResourceIdsForGroup(resourceIds)
 
     // Insert
     const group = await deps.storeSavedViewGroup({
       group: {
         projectId,
-        resourceIds: groupResourceIds,
+        resourceIds: resourceIds.map((r) => r.toString()),
         name: groupName,
         authorId
       }
@@ -335,10 +343,28 @@ export const getGroupSavedViewsFactory =
   }
 
 export const deleteSavedViewFactory =
-  (deps: { deleteSavedViewRecord: DeleteSavedViewRecord }): DeleteSavedView =>
+  (deps: {
+    getSavedView: GetSavedView
+    deleteSavedViewRecord: DeleteSavedViewRecord
+    recalculateGroupResourceIds: RecalculateGroupResourceIds
+  }): DeleteSavedView =>
   async (params) => {
-    const { id } = params
+    const { id, projectId } = params
+    const view = await deps.getSavedView({
+      id,
+      projectId
+    })
+    if (!view) {
+      throw new NotFoundError('Saved view not found', {
+        info: params
+      })
+    }
+
     await deps.deleteSavedViewRecord({ savedViewId: id })
+
+    if (view.groupId) {
+      await deps.recalculateGroupResourceIds({ groupId: view.groupId })
+    }
   }
 
 export const updateSavedViewFactory =
@@ -347,6 +373,7 @@ export const updateSavedViewFactory =
       getSavedView: GetSavedView
       getSavedViewGroup: GetSavedViewGroup
       updateSavedViewRecord: UpdateSavedViewRecord
+      recalculateGroupResourceIds: RecalculateGroupResourceIds
     } & DependenciesOf<typeof validateProjectResourceIdStringFactory>
   ): UpdateSavedView =>
   async (params) => {
@@ -396,14 +423,6 @@ export const updateSavedViewFactory =
             groupId: input.groupId // we want to allow null, which means - no group
           }
         : {})
-    }
-    if (Object.keys(changes).length === 0) {
-      throw new SavedViewUpdateValidationError('No changes submitted with the input.', {
-        info: {
-          input,
-          userId
-        }
-      })
     }
 
     // Validate updated resourceIds
@@ -474,9 +493,142 @@ export const updateSavedViewFactory =
     }
 
     // Validate name
-    if (changes.name && changes.name.length > 255) {
-      throw new SavedViewUpdateValidationError(
-        'View name must be between 1 and 255 characters long',
+    if (changes.name?.trim()) {
+      if (changes.name.length > 255) {
+        throw new SavedViewUpdateValidationError(
+          'View name must be between 1 and 255 characters long',
+          {
+            info: {
+              input,
+              userId
+            }
+          }
+        )
+      }
+    } else {
+      delete changes['name']
+    }
+
+    const finalChanges = omit(changes, ['resourceIdString', 'viewerState'])
+    const update = {
+      ...finalChanges,
+      ...(resourceIds
+        ? {
+            resourceIds: resourceIds ? resourceIds.map((r) => r.toString()) : undefined,
+            groupResourceIds: formatResourceIdsForGroup(resourceIds)
+          }
+        : {}),
+      ...(viewerState
+        ? {
+            viewerState
+          }
+        : {})
+    }
+    if (Object.keys(update).length === 0) {
+      throw new SavedViewUpdateValidationError('No changes submitted with the input.', {
+        info: {
+          input,
+          userId
+        }
+      })
+    }
+
+    const updatedView = await deps.updateSavedViewRecord({
+      id,
+      projectId,
+      update
+    })
+
+    if (updatedView?.groupId !== view.groupId) {
+      await Promise.all([
+        ...(updatedView?.groupId
+          ? [
+              deps.recalculateGroupResourceIds({
+                groupId: updatedView.groupId
+              })
+            ]
+          : []),
+        ...(view.groupId
+          ? [
+              deps.recalculateGroupResourceIds({
+                groupId: view.groupId
+              })
+            ]
+          : [])
+      ])
+    }
+
+    return updatedView! // should exist, we checked before
+  }
+
+export const deleteSavedViewGroupFactory =
+  (deps: {
+    deleteSavedViewGroupRecord: DeleteSavedViewGroupRecord
+  }): DeleteSavedViewGroup =>
+  async ({ input }) => {
+    const { groupId, projectId } = input
+
+    if (isUngroupedGroup(groupId)) {
+      throw new SavedViewGroupUpdateValidationError(
+        'Cannot mutate ungrouped/default saved view group.'
+      )
+    }
+
+    return deps.deleteSavedViewGroupRecord({
+      groupId,
+      projectId
+    })
+  }
+
+export const updateSavedViewGroupFactory =
+  (deps: {
+    updateSavedViewGroupRecord: UpdateSavedViewGroupRecord
+    getSavedViewGroup: GetSavedViewGroup
+  }): UpdateSavedViewGroup =>
+  async ({ input, userId }) => {
+    const { groupId, projectId } = input
+
+    if (isUngroupedGroup(groupId)) {
+      throw new SavedViewGroupUpdateValidationError(
+        'Cannot update ungrouped/default saved view group.'
+      )
+    }
+
+    const group = await deps.getSavedViewGroup({
+      id: groupId,
+      projectId
+    })
+    if (!group) {
+      throw new SavedViewGroupUpdateValidationError('Group not found.', {
+        info: {
+          input,
+          userId
+        }
+      })
+    }
+
+    const changes = removeNullOrUndefinedKeys(omit(input, ['groupId', 'projectId']))
+
+    // Validate name
+    if (changes.name?.trim()) {
+      if (changes.name.length > 255) {
+        throw new SavedViewGroupUpdateValidationError(
+          'View name must be between 1 and 255 characters long',
+          {
+            info: {
+              input,
+              userId
+            }
+          }
+        )
+      }
+    } else {
+      delete changes['name']
+    }
+
+    if (Object.keys(changes).length === 0) {
+      throw new SavedViewGroupUpdateValidationError(
+        'No changes submitted with the input.',
         {
           info: {
             input,
@@ -486,26 +638,12 @@ export const updateSavedViewFactory =
       )
     }
 
-    const finalChanges = omit(changes, ['resourceIdString', 'viewerState'])
-    const updatedView = await deps.updateSavedViewRecord({
-      id,
+    // Update the saved view group
+    const updatedGroup = await deps.updateSavedViewGroupRecord({
+      groupId,
       projectId,
-      update: {
-        ...finalChanges,
-        ...(resourceIds
-          ? {
-              resourceIds: resourceIds
-                ? resourceIds.map((r) => r.toString())
-                : undefined,
-              groupResourceIds: formatResourceIdsForGroup(resourceIds)
-            }
-          : { resourceIdString: undefined }),
-        ...(viewerState
-          ? {
-              viewerState
-            }
-          : { viewerState: undefined })
-      }
+      update: changes
     })
-    return updatedView! // should exist, we checked before
+
+    return updatedGroup! // should exist, we checked before
   }

@@ -2,39 +2,46 @@ import type {
   BasicSavedViewFragment,
   BasicSavedViewGroupFragment,
   CanCreateSavedViewQueryVariables,
+  CanUpdateSavedViewGroupQueryVariables,
   CanUpdateSavedViewQueryVariables,
   CreateSavedViewGroupMutationVariables,
   CreateSavedViewMutationVariables,
+  DeleteSavedViewGroupMutationVariables,
   DeleteSavedViewMutationVariables,
   GetProjectSavedViewGroupQueryVariables,
   GetProjectSavedViewGroupsQueryVariables,
   GetProjectSavedViewQueryVariables,
   GetProjectUngroupedViewGroupQueryVariables,
+  UpdateSavedViewGroupMutationVariables,
   UpdateSavedViewInput,
   UpdateSavedViewMutationVariables
 } from '@/modules/core/graph/generated/graphql'
 import {
   CanCreateSavedViewDocument,
   CanUpdateSavedViewDocument,
+  CanUpdateSavedViewGroupDocument,
   CreateSavedViewDocument,
   CreateSavedViewGroupDocument,
   DeleteSavedViewDocument,
+  DeleteSavedViewGroupDocument,
   GetProjectSavedViewDocument,
   GetProjectSavedViewGroupDocument,
   GetProjectSavedViewGroupsDocument,
   GetProjectUngroupedViewGroupDocument,
-  UpdateSavedViewDocument
+  UpdateSavedViewDocument,
+  UpdateSavedViewGroupDocument
 } from '@/modules/core/graph/generated/graphql'
 import {
   buildBasicTestModel,
   buildBasicTestProject
 } from '@/modules/core/tests/helpers/creation'
-import { ForbiddenError, NotFoundError } from '@/modules/shared/errors'
+import { BadRequestError, ForbiddenError, NotFoundError } from '@/modules/shared/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
 import {
   SavedViewCreationValidationError,
   SavedViewGroupCreationValidationError,
+  SavedViewGroupUpdateValidationError,
   SavedViewInvalidResourceTargetError,
   SavedViewUpdateValidationError
 } from '@/modules/viewer/errors/savedViews'
@@ -190,6 +197,45 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     input: GetProjectSavedViewGroupsQueryVariables,
     options?: ExecuteOperationOptions
   ) => apollo.execute(GetProjectSavedViewGroupsDocument, input, options)
+
+  const deleteSavedViewGroup = (
+    input: DeleteSavedViewGroupMutationVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(DeleteSavedViewGroupDocument, input, options)
+
+  const canUpdateSavedViewGroup = (
+    input: CanUpdateSavedViewGroupQueryVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(CanUpdateSavedViewGroupDocument, input, options)
+
+  const updateSavedViewGroup = (
+    input: UpdateSavedViewGroupMutationVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(UpdateSavedViewGroupDocument, input, options)
+
+  const getDefaultGroup = async (params: {
+    projectId: string
+    resourceIdString: string
+  }) => {
+    const { projectId, resourceIdString } = params
+
+    // Get default group id
+    const groupsRes = await getProjectViewGroups(
+      {
+        projectId,
+        input: {
+          limit: 1,
+          resourceIdString
+        }
+      },
+      { assertNoErrors: true }
+    )
+
+    const defaultGroup = groupsRes.data?.project.savedViewGroups.items[0]
+    expect(defaultGroup).to.be.ok
+    expect(defaultGroup?.isUngroupedViewsGroup).to.be.true
+    return defaultGroup!
+  }
 
   const model1ResourceIds = () => ViewerRoute.resourceBuilder().addModel(myModel1.id)
 
@@ -905,22 +951,10 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
       })
 
       it('allow setting default group as group, which actually sets it to null', async () => {
-        // Get default group id
-        const groupsRes = await getProjectViewGroups(
-          {
-            projectId: updatablesProject.id,
-            input: {
-              limit: 1,
-              resourceIdString: models[0].id
-            }
-          },
-          { assertNoErrors: true }
-        )
-
-        const defaultGroup = groupsRes.data?.project.savedViewGroups.items[0]
-        expect(defaultGroup).to.be.ok
-
-        // Update view to have that be the group
+        const defaultGroup = await getDefaultGroup({
+          projectId: updatablesProject.id,
+          resourceIdString: models[0].id
+        })
         const update = await updateView(
           {
             input: {
@@ -936,6 +970,25 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(updatedView?.id).to.be.ok
         expect(updatedView?.groupId).to.be.null
         expect(updatedView?.group.id).to.equal(defaultGroup!.id)
+      })
+
+      it('empty string name update gets ignored', async () => {
+        const updatedname = ''
+
+        const res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            name: updatedname
+          }
+        })
+
+        // should show empty changes update as we have nothing else to update
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewUpdateValidationError.code,
+          message: 'No changes submitted with the input'
+        })
+        expect(res.data?.projectMutations.savedViewMutations.updateView.id).to.not.be.ok
       })
 
       it('fails if user has no access to update the view', async () => {
@@ -1071,11 +1124,151 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         })
         expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
       })
+
+      describe('to groups', () => {
+        let updatableGroup: BasicSavedViewGroupFragment
+
+        beforeEach(async () => {
+          const createRes = await createSavedViewGroup(
+            {
+              input: {
+                projectId: updatablesProject.id,
+                resourceIdString: models[0].id,
+                groupName: 'Group to update'
+              }
+            },
+            { assertNoErrors: true }
+          )
+          const group = createRes.data?.projectMutations.savedViewMutations.createGroup!
+          expect(group).to.be.ok
+          updatableGroup = group
+        })
+
+        afterEach(async () => {
+          await deleteSavedViewGroup({
+            input: {
+              groupId: updatableGroup.id,
+              projectId: updatablesProject.id
+            }
+          })
+        })
+
+        it('successfully update the name', async () => {
+          const updatedname = 'babababababababa123'
+
+          const res = await updateSavedViewGroup({
+            input: {
+              groupId: updatableGroup.id,
+              projectId: updatableGroup.projectId,
+              name: updatedname
+            }
+          })
+
+          expect(res).to.not.haveGraphQLErrors()
+
+          const group = res.data?.projectMutations.savedViewMutations.updateGroup
+          expect(group?.id).to.be.ok
+          expect(group?.title).to.equal(updatedname)
+        })
+
+        it('fail invalid name length', async () => {
+          const updatedname = 'a'.repeat(300)
+
+          const res = await updateSavedViewGroup({
+            input: {
+              groupId: updatableGroup.id,
+              projectId: updatableGroup.projectId,
+              name: updatedname
+            }
+          })
+
+          expect(res).to.haveGraphQLErrors({
+            code: SavedViewGroupUpdateValidationError.code
+          })
+          expect(res.data?.projectMutations.savedViewMutations.updateGroup.id).to.not.be
+            .ok
+        })
+
+        it('empty string name update gets ignored', async () => {
+          const updatedname = ''
+
+          const res = await updateSavedViewGroup({
+            input: {
+              groupId: updatableGroup.id,
+              projectId: updatableGroup.projectId,
+              name: updatedname
+            }
+          })
+
+          // should show empty changes update as we have nothing else to update
+          expect(res).to.haveGraphQLErrors({
+            code: SavedViewGroupUpdateValidationError.code,
+            message: 'No changes submitted with the input'
+          })
+          expect(res.data?.projectMutations.savedViewMutations.updateGroup.id).to.not.be
+            .ok
+        })
+
+        it('prevent updates to default/ungrouped groups', async () => {
+          const defaultGroup = await getDefaultGroup({
+            projectId: updatableGroup.projectId,
+            resourceIdString: models[0].id
+          })
+
+          const res = await updateSavedViewGroup({
+            input: {
+              groupId: defaultGroup.id,
+              projectId: defaultGroup.projectId,
+              name: 'New Group Name'
+            }
+          })
+
+          expect(res).to.haveGraphQLErrors({
+            code: BadRequestError.code,
+            message: 'ungrouped group cannot be modified'
+          })
+          expect(res.data?.projectMutations.savedViewMutations.updateGroup.id).to.not.be
+            .ok
+        })
+
+        it('prevent updates to nonexistant groups', async () => {
+          const res = await updateSavedViewGroup({
+            input: {
+              groupId: 'nonexistent-group-id',
+              projectId: updatableGroup.projectId,
+              name: 'New Group Name'
+            }
+          })
+
+          expect(res).to.haveGraphQLErrors({
+            code: NotFoundError.code
+          })
+          expect(res.data?.projectMutations.savedViewMutations.updateGroup.id).to.not.be
+            .ok
+        })
+
+        it('disallow empty changes being submitted', async () => {
+          const res = await updateSavedViewGroup({
+            input: {
+              groupId: updatableGroup.id,
+              projectId: updatableGroup.projectId
+            }
+          })
+
+          expect(res).to.haveGraphQLErrors({
+            code: SavedViewGroupUpdateValidationError.code
+          })
+          expect(res.data?.projectMutations.savedViewMutations.updateGroup.id).to.not.be
+            .ok
+        })
+      })
     })
 
     describe('deletions', () => {
       let deletablesProject: BasicTestStream
       let models: BasicTestBranch[]
+      let deletableView: BasicSavedViewFragment
+      let deletableGroup: BasicSavedViewGroupFragment
 
       before(async () => {
         deletablesProject = await createTestStream(
@@ -1103,6 +1296,29 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         })
       })
 
+      beforeEach(async () => {
+        const creates = await Promise.all([createTestView(), createTestGroup()])
+
+        deletableView = creates[0]
+        deletableGroup = creates[1]
+      })
+
+      afterEach(async () => {
+        await deleteView({
+          input: {
+            id: deletableView.id,
+            projectId: deletablesProject.id
+          }
+        })
+
+        await deleteSavedViewGroup({
+          input: {
+            groupId: deletableGroup.id,
+            projectId: deletablesProject.id
+          }
+        })
+      })
+
       const createTestView = async () => {
         const createRes = await createSavedView(
           buildCreateInput({
@@ -1118,6 +1334,23 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         return view
       }
 
+      const createTestGroup = async () => {
+        const createRes = await createSavedViewGroup(
+          {
+            input: {
+              projectId: deletablesProject.id,
+              resourceIdString: models[0].id,
+              groupName: 'Group to delete'
+            }
+          },
+          { assertNoErrors: true }
+        )
+        const group = createRes.data?.projectMutations.savedViewMutations.createGroup!
+        expect(group).to.be.ok
+
+        return group
+      }
+
       const findView = async (viewId: string) => {
         const foundView = await getView({
           projectId: deletablesProject.id,
@@ -1126,16 +1359,22 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         return foundView.data?.project.savedView
       }
 
-      it('allow deleting a view', async () => {
-        const view = await createTestView()
+      const findGroup = async (groupId: string) => {
+        const foundGroup = await getGroup({
+          projectId: deletablesProject.id,
+          groupId
+        })
+        return foundGroup.data?.project.savedViewGroup
+      }
 
-        const foundView = await findView(view.id)
+      it('allow deleting a view', async () => {
+        const foundView = await findView(deletableView.id)
         expect(foundView).to.be.ok
 
         const deleteRes = await deleteView(
           {
             input: {
-              id: view.id,
+              id: deletableView.id,
               projectId: deletablesProject.id
             }
           },
@@ -1144,7 +1383,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(deleteRes.data?.projectMutations.savedViewMutations.deleteView).to.be
           .true
 
-        const deletedView = await findView(view.id)
+        const deletedView = await findView(deletableView.id)
         expect(deletedView).to.not.be.ok
       })
 
@@ -1161,12 +1400,10 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
       })
 
       it('should support dedicated auth policy check', async () => {
-        const view = await createTestView()
-
         const res = await canUpdateSavedView(
           {
             projectId: deletablesProject.id,
-            viewId: view.id
+            viewId: deletableView.id
           },
           {
             authUserId: otherGuy.id
@@ -1179,19 +1416,88 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(data?.authorized).to.be.false
         expect(data?.code).to.equal(ProjectNotEnoughPermissionsError.code)
       })
+
+      describe('of groups', async () => {
+        it('allow deleting a group', async () => {
+          const deleteRes = await deleteSavedViewGroup(
+            {
+              input: {
+                groupId: deletableGroup.id,
+                projectId: deletablesProject.id
+              }
+            },
+            { assertNoErrors: true }
+          )
+          expect(deleteRes.data?.projectMutations.savedViewMutations.deleteGroup).to.be
+            .true
+
+          const deletedGroup = await findGroup(deletableGroup.id)
+          expect(deletedGroup).to.not.be.ok
+        })
+
+        it('should fail to delete a group if not found', async () => {
+          const res = await deleteSavedViewGroup({
+            input: {
+              groupId: 'non-existent-group-id',
+              projectId: deletablesProject.id
+            }
+          })
+
+          expect(res).to.haveGraphQLErrors({ code: NotFoundError.code })
+          expect(res.data?.projectMutations.savedViewMutations.deleteGroup).to.not.be.ok
+        })
+
+        it('should support dedicated auth policy check', async () => {
+          const res = await canUpdateSavedViewGroup(
+            {
+              projectId: deletablesProject.id,
+              groupId: deletableGroup.id
+            },
+            {
+              authUserId: otherGuy.id
+            }
+          )
+
+          expect(res).to.not.haveGraphQLErrors()
+
+          const data = res.data?.project.savedViewGroup.permissions.canUpdate
+          expect(data?.authorized).to.be.false
+          expect(data?.code).to.equal(ProjectNotEnoughPermissionsError.code)
+        })
+
+        it('should fail to delete default group', async () => {
+          const defaultGroup = await getDefaultGroup({
+            projectId: deletablesProject.id,
+            resourceIdString: models[0].id
+          })
+          const res = await deleteSavedViewGroup({
+            input: {
+              groupId: defaultGroup!.id,
+              projectId: deletablesProject.id
+            }
+          })
+
+          expect(res).to.haveGraphQLErrors({
+            code: BadRequestError.code
+          })
+          expect(res.data?.projectMutations.savedViewMutations.deleteGroup).to.not.be.ok
+        })
+      })
     })
 
     describe('reading groups', () => {
-      const NAMED_GROUP_COUNT = 15
-      const GROUP_COUNT = NAMED_GROUP_COUNT + 1 // + ungrouped group
+      const NAMED_GROUP_COUNT = 14
+      const GROUP_COUNT = NAMED_GROUP_COUNT + 2 // + ungrouped group + search string group
 
       const PAGE_COUNT = 3
 
       const SEARCH_STRING = 'bababooey'
-      const SEARCH_STRING_ITEM_COUNT = GROUP_COUNT / 2
+      const SEARCH_STRING_VIEW_COUNT = GROUP_COUNT / 2
+      const SEARCH_STRING_ITEM_COUNT = SEARCH_STRING_VIEW_COUNT + 1 // +1 for searchable group
 
       const OTHER_AUTHOR_ITEM_COUNT = GROUP_COUNT / 4
       // const OTHER_AUTHOR_PRIVATE_ITEM_COUNT = OTHER_AUTHOR_ITEM_COUNT / 2
+      const SEARCHABLE_GROUP_NAME_STRING = `${SEARCH_STRING}-you-can-find-me`
 
       const modelIds: string[] = []
       let readTestProject: BasicTestStream
@@ -1226,10 +1532,13 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         // Create a bunch of groups (views w/ groupNames), each w/ a different model
         let includedSearchString = 0
         const createGroupView = async (groupName: string | null, idx: number) => {
+          const isSearchableGroupName = groupName === SEARCHABLE_GROUP_NAME_STRING
           const useDifferentAuthor = idx % 4 === 0
           const shouldBePrivate = useDifferentAuthor && idx % (2 * 4) === 0
           const includeSearchString =
-            !shouldBePrivate && includedSearchString++ < SEARCH_STRING_ITEM_COUNT
+            !shouldBePrivate &&
+            !isSearchableGroupName &&
+            includedSearchString++ < SEARCH_STRING_VIEW_COUNT
 
           const model = await createTestBranch({
             branch: buildBasicTestModel({
@@ -1251,7 +1560,9 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
                 input: {
                   projectId: readTestProject.id,
                   resourceIdString,
-                  groupName
+                  groupName: includeSearchString
+                    ? `${groupName} includedSearchString`
+                    : groupName
                 }
               },
               {
@@ -1280,8 +1591,17 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           })
         }
 
+        const groupNames: Array<string | null> = times(
+          NAMED_GROUP_COUNT,
+          (i) => `group-${i + 1}`
+        )
+
+        // add one group to have a custom search string in its name
+        groupNames.push(SEARCHABLE_GROUP_NAME_STRING)
+
         // one view without a group at the end
-        const groupNames = [...times(NAMED_GROUP_COUNT, (i) => `group-${i + 1}`), null]
+        groupNames.push(null)
+
         await Promise.all(
           groupNames.map((groupName, idx) => createGroupView(groupName, idx))
         )
@@ -1421,7 +1741,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(group2!.isUngroupedViewsGroup).to.be.false
       })
 
-      it('should respect search filter and filter out groups w/ views that dont have the search string in their name', async () => {
+      it('should respect search filter and filter out by group/view name', async () => {
         const res = await getProjectViewGroups({
           projectId: readTestProject.id,
           input: {
@@ -1437,6 +1757,19 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(data).to.be.ok
         expect(data!.totalCount).to.equal(SEARCH_STRING_ITEM_COUNT)
         expect(data!.items.length).to.equal(SEARCH_STRING_ITEM_COUNT)
+
+        // should have found a bunch of groups because of their view names
+        // and one group because of its own name
+        const searchableGroup = data?.items.find(
+          (i) => i.title === SEARCHABLE_GROUP_NAME_STRING
+        )
+        expect(searchableGroup).to.be.ok
+
+        const searchableViewGroups = data?.items.filter((i) =>
+          i.title.includes('includedSearchString')
+        )
+
+        expect(searchableViewGroups).to.have.lengthOf(SEARCH_STRING_VIEW_COUNT)
       })
 
       it('should respect onlyAuthored flag', async () => {

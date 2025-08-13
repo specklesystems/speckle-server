@@ -20,7 +20,7 @@ export default {
       control: { type: 'select' }
     },
     color: {
-      options: ['page', 'foundation', 'transparent'],
+      options: ['page', 'foundation', 'transparent', 'fully-transparent'],
       control: { type: 'select' }
     },
     rules: {
@@ -205,5 +205,21 @@ export const WithFoundationColor = mergeStories(Default, {
   args: {
     color: 'foundation',
     name: generateRandomName('withFoundationColor')
+  }
+})
+
+export const WithFullyTransparentColor = mergeStories(Default, {
+  render: (args) => ({
+    components: { FormTextInput },
+    setup() {
+      return { args }
+    },
+    template: `<div class="bg-foundation-page p-5">
+    <form-text-input v-bind="args" @update:modelValue="args['update:modelValue']"/>
+    </div>`
+  }),
+  args: {
+    color: 'fully-transparent',
+    name: generateRandomName('withFullyTransparentColor')
   }
 })

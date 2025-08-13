@@ -36,6 +36,7 @@ import { canUpdateEmbedTokensPolicy } from './project/canUpdateEmbedTokens.js'
 import { canReadAccIntegrationSettingsPolicy } from './project/canReadAccIntegrationSettings.js'
 import { canCreateSavedViewPolicy } from './project/savedViews/canCreate.js'
 import { canUpdateSavedViewPolicy } from './project/savedViews/canUpdate.js'
+import { canUpdateSavedViewGroupPolicy } from './project/savedViews/canUpdateGroup.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   automate: {
@@ -68,7 +69,8 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
     },
     savedViews: {
       canCreate: canCreateSavedViewPolicy(loaders),
-      canUpdate: canUpdateSavedViewPolicy(loaders)
+      canUpdate: canUpdateSavedViewPolicy(loaders),
+      canUpdateGroup: canUpdateSavedViewGroupPolicy(loaders)
     },
     canBroadcastActivity: canBroadcastProjectActivityPolicy(loaders),
     canRead: canReadProjectPolicy(loaders),
