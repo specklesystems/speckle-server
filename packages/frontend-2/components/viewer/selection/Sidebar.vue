@@ -43,7 +43,7 @@
               hide-text
               color="subtle"
               size="sm"
-              :icon-left="settingsIcon"
+              :icon-left="Ellipsis"
               :class="{
                 '!bg-highlight-3': showSubMenu
               }"
@@ -87,8 +87,8 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 import { modelRoute } from '~/lib/common/helpers/route'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import type { ConcreteComponent } from 'vue'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+import { Ellipsis } from 'lucide-vue-next'
 
 enum ActionTypes {
   OpenInNewTab = 'open-in-new-tab'
@@ -116,7 +116,6 @@ const itemCount = ref(20)
 const sidebarOpen = ref(false)
 const sidebarWidth = ref(280)
 const showSubMenu = ref(false)
-const settingsIcon = resolveComponent('IconThreeDots') as ConcreteComponent
 
 const objectsUniqueByAppId = computed(() => {
   if (!diff.enabled.value) return objects.value

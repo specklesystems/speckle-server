@@ -272,32 +272,22 @@ const buttonClasses = computed(() => {
 const iconClasses = computed(() => {
   const classParts: string[] = ['shrink-0']
 
-  if (props.hideText) {
-    switch (props.size) {
-      case 'sm':
+  switch (props.size) {
+    case 'sm':
+      // Dont add padding to icon if hideText is true on sm size
+      if (props.hideText) {
         classParts.push('h-4 w-4')
-        break
-      case 'lg':
-        classParts.push('h-6 w-6')
-        break
-      case 'base':
-      default:
-        classParts.push('h-6 w-6')
-        break
-    }
-  } else {
-    switch (props.size) {
-      case 'sm':
+      } else {
         classParts.push('h-4 w-4 p-0.5')
-        break
-      case 'lg':
-        classParts.push('h-6 w-6 p-1')
-        break
-      case 'base':
-      default:
-        classParts.push('h-6 w-6 p-1')
-        break
-    }
+      }
+      break
+    case 'lg':
+      classParts.push('h-6 w-6 p-1')
+      break
+    case 'base':
+    default:
+      classParts.push('h-6 w-6 p-1')
+      break
   }
 
   return classParts.join(' ')

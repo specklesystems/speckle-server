@@ -72,7 +72,7 @@
                 '!bg-highlight-3': showActionsMenu
               }"
               color="subtle"
-              icon-left="IconThreeDots"
+              :icon-left="Ellipsis"
               size="sm"
               @click="showActionsMenu = !showActionsMenu"
             />
@@ -113,6 +113,7 @@ import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { useLoadLatestVersion } from '~~/lib/viewer/composables/resources'
 import { SpeckleViewer } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { Ellipsis } from 'lucide-vue-next'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
