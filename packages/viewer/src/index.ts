@@ -114,6 +114,8 @@ import {
   ProgressiveGPass
 } from './modules/pipeline/Passes/GPass.js'
 import {
+  PipelineOptions,
+  BasePipelineOptions,
   DefaultPipelineOptions,
   Pipeline
 } from './modules/pipeline/Pipelines/Pipeline.js'
@@ -283,6 +285,8 @@ export {
   ArcticViewPipeline,
   TAAPipeline,
   ShadedViewPipeline,
+  PipelineOptions,
+  BasePipelineOptions,
   DefaultPipelineOptions,
   DefaultEdgesPipelineOptions,
   ViewModes,
