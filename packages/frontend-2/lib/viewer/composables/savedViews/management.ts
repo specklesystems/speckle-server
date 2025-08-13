@@ -4,6 +4,7 @@ import type {
   CreateSavedViewGroupInput,
   CreateSavedViewInput,
   UpdateSavedViewGroupInput,
+  UpdateSavedViewGroupMutationVariables,
   UpdateSavedViewInput,
   UseDeleteSavedView_SavedViewFragment,
   UseDeleteSavedViewGroup_SavedViewGroupFragment,
@@ -519,13 +520,16 @@ export const useUpdateSavedViewGroup = () => {
       },
       {
         optimisticResponse(vars) {
+          // apollo typing issue:
+          const typedVars = vars as UpdateSavedViewGroupMutationVariables
+
           // We want the name update to be immediate to avoid flashing content
           return {
             projectMutations: {
               savedViewMutations: {
                 updateGroup: {
                   ...group,
-                  title: vars.input.title
+                  title: typedVars.input.name || group.title
                 }
               }
             }
