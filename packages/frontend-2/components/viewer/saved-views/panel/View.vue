@@ -78,7 +78,6 @@ import {
 import { useViewerSavedViewsUtils } from '~/lib/viewer/composables/savedViews/general'
 import {
   useCollectNewSavedViewViewerData,
-  useDeleteSavedView,
   useUpdateSavedView
 } from '~/lib/viewer/composables/savedViews/management'
 
@@ -120,7 +119,6 @@ const props = defineProps<{
 }>()
 
 const { collect } = useCollectNewSavedViewViewerData()
-const deleteView = useDeleteSavedView()
 const updateView = useUpdateSavedView()
 const isLoading = useMutationLoading()
 const { copyLink, applyView } = useViewerSavedViewsUtils()
@@ -178,7 +176,10 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
 const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
   switch (item.id) {
     case MenuItems.Delete:
-      await deleteView({ view: props.view })
+      eventBus.emit(ViewerEventBusKeys.MarkSavedViewForEdit, {
+        type: 'delete',
+        view: props.view
+      })
       break
     case MenuItems.CopyLink:
       await copyLink({

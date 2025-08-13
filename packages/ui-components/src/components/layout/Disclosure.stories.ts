@@ -2,6 +2,7 @@ import { FaceSmileIcon } from '@heroicons/vue/24/outline'
 import type { Meta, StoryObj } from '@storybook/vue3'
 import { ref } from 'vue'
 import LayoutDisclosure from '~~/src/components/layout/Disclosure.vue'
+import { FormButton } from '~~/src/lib'
 
 export default {
   component: LayoutDisclosure,
@@ -87,6 +88,33 @@ export const WithModel: StoryObj = {
           <div class="h4 font-semibold">Hello world!</div>
           <div>Lorem ipsum blah blah blah</div>
         </div>
+      </LayoutDisclosure>
+    </div>`
+  }),
+  args: {
+    ...Default.args
+  }
+}
+
+export const WithTitleActions: StoryObj = {
+  render: (args) => ({
+    components: { LayoutDisclosure, FormButton },
+    setup() {
+      const counter = ref(0)
+      const increment = () => (counter.value = counter.value + 1)
+
+      return { args, counter, increment }
+    },
+    template: `
+    <div>
+      <LayoutDisclosure v-bind="args">
+        <div class="flex flex-col text-foreground space-y-4">
+          <div class="h4 font-semibold">Hello world!</div>
+          <div>Lorem ipsum blah blah blah</div>
+        </div>
+        <template #title-actions>
+          <FormButton @click.stop="increment" class="opacity-0 group-hover/disclosure:opacity-100">Put stuff here - {{ counter }}</FormButton>
+        </template>
       </LayoutDisclosure>
     </div>`
   }),
