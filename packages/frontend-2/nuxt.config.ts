@@ -146,6 +146,12 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
+    '/**': {
+      headers: {
+        // No search engine indexing on any of the pages anywhere! TODO: Come up with a more appropriate policy
+        'X-Robots-Tag': 'noindex, nofollow, noarchive'
+      }
+    },
     '/functions': {
       redirect: {
         to: '/',
@@ -195,6 +201,7 @@ export default defineNuxtConfig({
         statusCode: 301
       }
     },
+    // Redirect old settings - End
     '/settings/**': {
       appMiddleware: ['auth', 'settings']
     },
