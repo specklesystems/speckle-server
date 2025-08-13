@@ -2,8 +2,8 @@
   <LayoutDisclosure
     v-if="!isUngroupedGroup"
     v-model:open="open"
+    v-model:edit-title="renameMode"
     :title="group.title"
-    :edit-title="renameMode"
     lazy-load
     @update:title="onRename"
   >
