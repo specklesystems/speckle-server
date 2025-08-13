@@ -88,6 +88,14 @@
           </div>
         </template>
 
+        <!-- Loading State -->
+        <div
+          v-else-if="resourcesLoading"
+          class="flex items-center justify-center h-full -mt-8 opacity-60"
+        >
+          <CommonLoadingIcon />
+        </div>
+
         <!-- Empty State -->
         <div
           v-else
@@ -110,7 +118,6 @@ import {
   useInjectedViewer,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-
 import { ModelsSubView, type ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
 import type { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import type { Get } from 'type-fest'
@@ -135,7 +142,7 @@ const disableScrollOnNextSelection = ref(false)
 const stickyHeader = ref<{ model: ModelItem; versionId: string } | null>(null)
 const scrollTop = ref(0)
 
-const { resourceItems, modelsAndVersionIds, objects } =
+const { resourceItems, modelsAndVersionIds, objects, resourcesLoading } =
   useInjectedViewerLoadedResources()
 const {
   metadata: { worldTree }
