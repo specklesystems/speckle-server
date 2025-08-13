@@ -35,7 +35,7 @@ import {
   DisclosurePanel
 } from '@headlessui/vue'
 import { ChevronUpIcon } from '@heroicons/vue/24/solid'
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 import { FormTextInput, useDebouncedTextInput } from '~~/src/lib'
 
@@ -69,7 +69,7 @@ const open = defineModel<boolean>('open', {
   default: false
 })
 
-const { on, bind } = useDebouncedTextInput({
+const { on, bind, syncFromValue } = useDebouncedTextInput({
   disableDebouncedInput: true,
   model: title
 })
@@ -154,4 +154,11 @@ const onTitleInputBlur = () => {
 
   editTitle.value = false
 }
+
+watch(editTitle, (newVal, oldVal) => {
+  // Reset input value on turning on edit mode
+  if (newVal && !oldVal) {
+    syncFromValue()
+  }
+})
 </script>

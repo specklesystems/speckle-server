@@ -346,9 +346,18 @@ export function useDebouncedTextInput(params?: {
     model.value = value.value
   })
 
+  const syncFromValue = () => {
+    debouncedValueUpdate?.cancel()
+    model.value = value.value
+  }
+
   return {
     on,
     bind,
-    value
+    value,
+    /**
+     * Force sync internal state from the source of truth
+     */
+    syncFromValue
   }
 }
