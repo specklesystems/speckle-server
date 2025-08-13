@@ -63,7 +63,7 @@ export function useViewerNewThreadBubble(params: {
     },
     camera: { target },
     selection,
-    filters: { selectedObjects }
+    filters: { selectedObjectIds }
   } = useInjectedViewerInterfaceState()
   const getCamCenterObjId = useGetScreenCenterObjectId()
   const { setSelectionFromObjectIds } = useSelectionUtilities()
@@ -161,14 +161,15 @@ export function useViewerNewThreadBubble(params: {
   })
 
   // Clear button when its selected object is no longer in the current selection
-  watch(selectedObjects, (newSelection) => {
+  watch(selectedObjectIds, () => {
     if (!buttonState.value.isVisible || !buttonState.value.selectedObjectId) {
       return
     }
 
     // Check if the button's object is still selected
-    const selectedObjectIds = new Set(newSelection.map((obj) => obj.id))
-    const isStillSelected = selectedObjectIds.has(buttonState.value.selectedObjectId)
+    const isStillSelected = selectedObjectIds.value.has(
+      buttonState.value.selectedObjectId
+    )
     if (!isStillSelected) {
       closeNewThread()
     }
