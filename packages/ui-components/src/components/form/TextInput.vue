@@ -372,16 +372,21 @@ const iconClasses = computed((): string => {
 })
 
 const sizeClasses = computed((): string => {
+  // fully transparent should get sizing/coloring info from parent elements,
+  // its supposed to fit into the existing style
+  const ifNotFullyTransparent = (val: string) =>
+    props.color === 'fully-transparent' ? '' : val
+
   switch (props.size) {
     case 'sm':
-      return 'h-6 text-body sm:text-body-sm'
+      return `h-6 ${ifNotFullyTransparent('text-body sm:text-body-sm')}`
     case 'lg':
-      return 'h-10 text-body sm:text-[13px]'
+      return `h-10 ${ifNotFullyTransparent('text-body sm:text-[13px]')}`
     case 'xl':
-      return 'h-14 text-body sm:text-sm'
+      return `h-14 ${ifNotFullyTransparent('text-body sm:text-sm')}`
     case 'base':
     default:
-      return 'h-8 text-body sm:text-body-sm'
+      return `h-8 ${ifNotFullyTransparent('text-body sm:text-body-sm')}`
   }
 })
 

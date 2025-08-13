@@ -4,7 +4,16 @@
       <DisclosureButton :class="buttonClasses" @click="toggle">
         <div class="inline-flex items-center space-x-2">
           <Component :is="icon" v-if="icon" class="h-5 w-5" />
-          <span>{{ title }}</span>
+          <span v-if="!editTitle">{{ title }}</span>
+          <FormTextInput
+            v-else
+            v-bind="bind"
+            name="disclosureTitle"
+            color="fully-transparent"
+            :input-classes="buttonTextClasses"
+            v-on="on"
+            @click.stop
+          />
           <slot name="title-actions" />
         </div>
         <ChevronUpIcon :class="!open ? 'rotate-180 transform' : ''" class="h-5 w-5" />
@@ -26,12 +35,12 @@ import {
 import { ChevronUpIcon } from '@heroicons/vue/24/solid'
 import { computed } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
+import { FormTextInput, useDebouncedTextInput } from '~~/src/lib'
 
 type DisclosureColor = 'default' | 'danger' | 'success' | 'warning'
 
 const props = withDefaults(
   defineProps<{
-    title: string
     /**
      * HeadlessUI icon component to use
      */
@@ -41,42 +50,70 @@ const props = withDefaults(
      * Whether to lazy load the panel contents only upon opening
      */
     lazyLoad?: boolean
+    /**
+     * Whether to enable title editing
+     */
+    editTitle?: boolean
   }>(),
   {
     color: 'default'
   }
 )
 
+const title = defineModel<string>('title')
+
 const open = defineModel<boolean>('open', {
   default: false
+})
+
+const { on, bind } = useDebouncedTextInput({
+  disableDebouncedInput: true,
+  model: title
+})
+
+const buttonTextClasses = computed(() => {
+  const classParts = ['font-medium']
+
+  switch (props.color) {
+    case 'warning':
+      classParts.push('text-warning')
+      break
+    case 'success':
+      classParts.push('text-success')
+      break
+    case 'danger':
+      classParts.push('text-danger')
+      break
+    case 'default':
+    default:
+      classParts.push('text-primary')
+      break
+  }
+
+  return classParts.join(' ')
 })
 
 const buttonClasses = computed(() => {
   const classParts = [
     'pr-3 h-10 w-full flex items-center justify-between border-l-2 px-2 rounded transition',
-    'ring-1 font-medium',
-    'group/disclosure'
+    'ring-1',
+    'group/disclosure',
+    buttonTextClasses.value
   ]
 
   switch (props.color) {
     case 'warning':
-      classParts.push(
-        'border-warning text-warning ring-warning-lighter hover:ring-warning'
-      )
+      classParts.push('border-warning ring-warning-lighter hover:ring-warning')
       break
     case 'success':
-      classParts.push(
-        'border-success text-success ring-success-lighter hover:ring-success'
-      )
+      classParts.push('border-success ring-success-lighter hover:ring-success')
       break
     case 'danger':
-      classParts.push('border-danger text-danger ring-danger-lighter hover:ring-danger')
+      classParts.push('border-danger ring-danger-lighter hover:ring-danger')
       break
     case 'default':
     default:
-      classParts.push(
-        'border-primary text-primary ring-primary-muted hover:ring-primary'
-      )
+      classParts.push('border-primary ring-primary-muted hover:ring-primary')
       break
   }
 

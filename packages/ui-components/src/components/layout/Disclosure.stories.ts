@@ -122,3 +122,30 @@ export const WithTitleActions: StoryObj = {
     ...Default.args
   }
 }
+
+export const WithEditableTitle: StoryObj = {
+  render: (args) => ({
+    components: { LayoutDisclosure, FormButton },
+    setup() {
+      const title = ref("Baby's first title")
+
+      return { args, title }
+    },
+    template: `
+    <div class="flex flex-col gap-2">
+      <LayoutDisclosure v-bind="args" v-model:title="title">
+        <div class="flex flex-col text-foreground space-y-4">
+          <div class="h4 font-semibold">Hello world!</div>
+          <div>Lorem ipsum blah blah blah</div>
+        </div>
+      </LayoutDisclosure>
+      <div>
+        Saved/current title: {{ title }}
+      </div>
+    </div>`
+  }),
+  args: {
+    ...Default.args,
+    editTitle: true
+  }
+}
