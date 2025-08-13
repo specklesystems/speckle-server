@@ -12,6 +12,7 @@ import type {
   GetProjectSavedViewGroupsQueryVariables,
   GetProjectSavedViewQueryVariables,
   GetProjectUngroupedViewGroupQueryVariables,
+  UpdateSavedViewGroupMutationVariables,
   UpdateSavedViewInput,
   UpdateSavedViewMutationVariables
 } from '@/modules/core/graph/generated/graphql'
@@ -27,7 +28,8 @@ import {
   GetProjectSavedViewGroupDocument,
   GetProjectSavedViewGroupsDocument,
   GetProjectUngroupedViewGroupDocument,
-  UpdateSavedViewDocument
+  UpdateSavedViewDocument,
+  UpdateSavedViewGroupDocument
 } from '@/modules/core/graph/generated/graphql'
 import {
   buildBasicTestModel,
@@ -39,6 +41,7 @@ import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
 import {
   SavedViewCreationValidationError,
   SavedViewGroupCreationValidationError,
+  SavedViewGroupUpdateValidationError,
   SavedViewInvalidResourceTargetError,
   SavedViewUpdateValidationError
 } from '@/modules/viewer/errors/savedViews'
@@ -204,6 +207,35 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     input: CanUpdateSavedViewGroupQueryVariables,
     options?: ExecuteOperationOptions
   ) => apollo.execute(CanUpdateSavedViewGroupDocument, input, options)
+
+  const updateSavedViewGroup = (
+    input: UpdateSavedViewGroupMutationVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(UpdateSavedViewGroupDocument, input, options)
+
+  const getDefaultGroup = async (params: {
+    projectId: string
+    resourceIdString: string
+  }) => {
+    const { projectId, resourceIdString } = params
+
+    // Get default group id
+    const groupsRes = await getProjectViewGroups(
+      {
+        projectId,
+        input: {
+          limit: 1,
+          resourceIdString
+        }
+      },
+      { assertNoErrors: true }
+    )
+
+    const defaultGroup = groupsRes.data?.project.savedViewGroups.items[0]
+    expect(defaultGroup).to.be.ok
+    expect(defaultGroup?.isUngroupedViewsGroup).to.be.true
+    return defaultGroup!
+  }
 
   const model1ResourceIds = () => ViewerRoute.resourceBuilder().addModel(myModel1.id)
 
@@ -919,23 +951,10 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
       })
 
       it('allow setting default group as group, which actually sets it to null', async () => {
-        // Get default group id
-        const groupsRes = await getProjectViewGroups(
-          {
-            projectId: updatablesProject.id,
-            input: {
-              limit: 1,
-              resourceIdString: models[0].id
-            }
-          },
-          { assertNoErrors: true }
-        )
-
-        const defaultGroup = groupsRes.data?.project.savedViewGroups.items[0]
-        expect(defaultGroup).to.be.ok
-        expect(defaultGroup?.isUngroupedViewsGroup).to.be.true
-
-        // Update view to have that be the group
+        const defaultGroup = await getDefaultGroup({
+          projectId: updatablesProject.id,
+          resourceIdString: models[0].id
+        })
         const update = await updateView(
           {
             input: {
@@ -1085,6 +1104,106 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           code: SavedViewInvalidResourceTargetError.code
         })
         expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+
+      describe('to groups', () => {
+        let updatableGroup: BasicSavedViewGroupFragment
+
+        beforeEach(async () => {
+          const createRes = await createSavedViewGroup(
+            {
+              input: {
+                projectId: updatablesProject.id,
+                resourceIdString: models[0].id,
+                groupName: 'Group to update'
+              }
+            },
+            { assertNoErrors: true }
+          )
+          const group = createRes.data?.projectMutations.savedViewMutations.createGroup!
+          expect(group).to.be.ok
+          updatableGroup = group
+        })
+
+        afterEach(async () => {
+          await deleteSavedViewGroup({
+            input: {
+              groupId: updatableGroup.id,
+              projectId: updatablesProject.id
+            }
+          })
+        })
+
+        it('successfully update the name', async () => {
+          const updatedname = 'babababababababa123'
+
+          const res = await updateSavedViewGroup({
+            input: {
+              groupId: updatableGroup.id,
+              projectId: updatableGroup.projectId,
+              name: updatedname
+            }
+          })
+
+          expect(res).to.not.haveGraphQLErrors()
+
+          const group = res.data?.projectMutations.savedViewMutations.updateGroup
+          expect(group?.id).to.be.ok
+          expect(group?.title).to.equal(updatedname)
+        })
+
+        it('prevent updates to default/ungrouped groups', async () => {
+          const defaultGroup = await getDefaultGroup({
+            projectId: updatableGroup.projectId,
+            resourceIdString: models[0].id
+          })
+
+          const res = await updateSavedViewGroup({
+            input: {
+              groupId: defaultGroup.id,
+              projectId: defaultGroup.projectId,
+              name: 'New Group Name'
+            }
+          })
+
+          expect(res).to.haveGraphQLErrors({
+            code: BadRequestError.code,
+            message: 'ungrouped group cannot be modified'
+          })
+          expect(res.data?.projectMutations.savedViewMutations.updateGroup.id).to.not.be
+            .ok
+        })
+
+        it('prevent updates to nonexistant groups', async () => {
+          const res = await updateSavedViewGroup({
+            input: {
+              groupId: 'nonexistent-group-id',
+              projectId: updatableGroup.projectId,
+              name: 'New Group Name'
+            }
+          })
+
+          expect(res).to.haveGraphQLErrors({
+            code: NotFoundError.code
+          })
+          expect(res.data?.projectMutations.savedViewMutations.updateGroup.id).to.not.be
+            .ok
+        })
+
+        it('disallow empty changes being submitted', async () => {
+          const res = await updateSavedViewGroup({
+            input: {
+              groupId: updatableGroup.id,
+              projectId: updatableGroup.projectId
+            }
+          })
+
+          expect(res).to.haveGraphQLErrors({
+            code: SavedViewGroupUpdateValidationError.code
+          })
+          expect(res.data?.projectMutations.savedViewMutations.updateGroup.id).to.not.be
+            .ok
+        })
       })
     })
 
@@ -1290,22 +1409,10 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         })
 
         it('should fail to delete default group', async () => {
-          // Get default group id
-          const groupsRes = await getProjectViewGroups(
-            {
-              projectId: deletablesProject.id,
-              input: {
-                limit: 1,
-                resourceIdString: models[0].id
-              }
-            },
-            { assertNoErrors: true }
-          )
-
-          const defaultGroup = groupsRes.data?.project.savedViewGroups.items[0]
-          expect(defaultGroup).to.be.ok
-          expect(defaultGroup?.isUngroupedViewsGroup).to.be.true
-
+          const defaultGroup = await getDefaultGroup({
+            projectId: deletablesProject.id,
+            resourceIdString: models[0].id
+          })
           const res = await deleteSavedViewGroup({
             input: {
               groupId: defaultGroup!.id,

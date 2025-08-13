@@ -143,6 +143,14 @@ export type DeleteSavedViewGroupRecord = (params: {
   projectId: string
 }) => Promise<boolean>
 
+export type UpdateSavedViewGroupRecord = <
+  Update extends Exact<Partial<SavedViewGroup>, Update>
+>(params: {
+  groupId: string
+  projectId: string
+  update: Update
+}) => Promise<SavedViewGroup | undefined>
+
 /////////////////////
 // SERVICE OPERATIONS:
 /////////////////////
@@ -223,3 +231,12 @@ export type DeleteSavedViewGroup = (params: {
   }
   userId: string
 }) => Promise<boolean>
+
+export type UpdateSavedViewGroup = (params: {
+  input: {
+    groupId: string
+    projectId: string
+    name?: MaybeNullOrUndefined<string>
+  }
+  userId: string
+}) => Promise<SavedViewGroup>

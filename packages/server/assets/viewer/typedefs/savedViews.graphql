@@ -207,9 +207,16 @@ input UpdateSavedViewInput {
   visibility: SavedViewVisibility
 }
 
+input UpdateSavedViewGroupInput {
+  projectId: ID!
+  groupId: ID!
+  name: String
+}
+
 type SavedViewMutations {
   createGroup(input: CreateSavedViewGroupInput!): SavedViewGroup!
   deleteGroup(input: DeleteSavedViewGroupInput!): Boolean!
+  updateGroup(input: UpdateSavedViewGroupInput!): SavedViewGroup!
   createView(input: CreateSavedViewInput!): SavedView!
   deleteView(input: DeleteSavedViewInput!): Boolean!
   updateView(input: UpdateSavedViewInput!): SavedView!

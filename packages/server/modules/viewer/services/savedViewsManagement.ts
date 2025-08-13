@@ -19,6 +19,8 @@ import type {
   StoreSavedView,
   StoreSavedViewGroup,
   UpdateSavedView,
+  UpdateSavedViewGroup,
+  UpdateSavedViewGroupRecord,
   UpdateSavedViewRecord
 } from '@/modules/viewer/domain/operations/savedViews'
 import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
@@ -572,4 +574,54 @@ export const deleteSavedViewGroupFactory =
       groupId,
       projectId
     })
+  }
+
+export const updateSavedViewGroupFactory =
+  (deps: {
+    updateSavedViewGroupRecord: UpdateSavedViewGroupRecord
+    getSavedViewGroup: GetSavedViewGroup
+  }): UpdateSavedViewGroup =>
+  async ({ input, userId }) => {
+    const { groupId, projectId } = input
+
+    if (isUngroupedGroup(groupId)) {
+      throw new SavedViewGroupUpdateValidationError(
+        'Cannot update ungrouped/default saved view group.'
+      )
+    }
+
+    const group = await deps.getSavedViewGroup({
+      id: groupId,
+      projectId
+    })
+    if (!group) {
+      throw new SavedViewGroupUpdateValidationError('Group not found.', {
+        info: {
+          input,
+          userId
+        }
+      })
+    }
+
+    const changes = removeNullOrUndefinedKeys(omit(input, ['groupId', 'projectId']))
+    if (Object.keys(changes).length === 0) {
+      throw new SavedViewGroupUpdateValidationError(
+        'No changes submitted with the input.',
+        {
+          info: {
+            input,
+            userId
+          }
+        }
+      )
+    }
+
+    // Update the saved view group
+    const updatedGroup = await deps.updateSavedViewGroupRecord({
+      groupId,
+      projectId,
+      update: changes
+    })
+
+    return updatedGroup! // should exist, we checked before
   }
