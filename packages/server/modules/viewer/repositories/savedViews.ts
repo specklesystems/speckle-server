@@ -601,5 +601,5 @@ export const updateSavedViewGroupRecordFactory =
       })
       .update(update, '*')
 
-    return updatedGroup || undefined
+    return updatedGroup
   }
