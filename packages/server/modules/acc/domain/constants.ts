@@ -3,8 +3,8 @@ import { StringEnum } from '@speckle/shared'
 
 export const ImporterAutomateFunctions = {
   svf2: {
-    functionId: '4665e0b3ba',
-    functionReleaseId: '5cedfc8034'
+    functionId: '2909d29a9d',
+    functionReleaseId: 'ede3667b40'
   }
 }
 
