@@ -10,6 +10,7 @@ import {
 } from '@/modules/core/repositories/commits'
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { getSavedViewFactory } from '@/modules/viewer/repositories/dataLoaders/savedViews'
 import { getViewerResourceGroupsFactory } from '@/modules/viewer/services/viewerResources'
 
@@ -20,7 +21,19 @@ const resolvers: Resolvers = {
       { resourceIdString, loadedVersionsOnly, savedViewId, savedViewSettings },
       ctx
     ) {
-      const projectDB = await getProjectDbClient({ projectId: parent.id })
+      const projectId = parent.id
+      const projectDB = await getProjectDbClient({ projectId })
+
+      // If savedViewId set, check for access
+      if (savedViewId) {
+        const canRead = await ctx.authPolicies.project.savedViews.canRead({
+          userId: ctx.userId,
+          projectId,
+          savedViewId
+        })
+        throwIfAuthNotOk(canRead)
+      }
+
       const getStreamObjects = getStreamObjectsFactory({ db: projectDB })
       const getViewerResourceGroups = getViewerResourceGroupsFactory({
         getStreamObjects,
