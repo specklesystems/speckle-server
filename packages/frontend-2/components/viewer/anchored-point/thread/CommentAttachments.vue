@@ -34,7 +34,7 @@
             </template>
             <template v-else>
               <span class="inline-flex space-x-4 items-center">
-                <ExclamationTriangleIcon class="w-6 h-6" />
+                <TriangleAlert class="w-6 h-6" />
                 <span>
                   Please note: This file is user-uploaded and has not been scanned for
                   security. Download at your own discretion.
@@ -48,7 +48,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ArrowDownTrayIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import type { Get } from 'type-fest'
 import { ensureError } from '@speckle/shared'
 import type { Nullable, Optional } from '@speckle/shared'
@@ -58,7 +57,7 @@ import { prettyFileSize } from '~~/lib/core/helpers/file'
 import { useFileDownload } from '~~/lib/core/composables/fileUpload'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import { Paperclip } from 'lucide-vue-next'
+import { Download, Paperclip, TriangleAlert } from 'lucide-vue-next'
 
 type AttachmentFile = NonNullable<
   Get<ThreadCommentAttachmentFragment, 'text.attachments[0]'>
@@ -132,7 +131,7 @@ const dialogButtons = computed((): Optional<LayoutDialogButton[]> => {
       ? prettyFileSize(dialogAttachment.value.fileSize)
       : 'Download',
     props: {
-      iconLeft: ArrowDownTrayIcon,
+      iconLeft: Download,
       color: 'outline'
     },
     onClick: () => {

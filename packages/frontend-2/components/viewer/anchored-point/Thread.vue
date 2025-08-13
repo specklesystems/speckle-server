@@ -176,7 +176,15 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ArrowLeftIcon, ArrowUpRightIcon } from '@heroicons/vue/24/outline'
+import {
+  MoveLeft,
+  MoveRight,
+  CircleCheck,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Ellipsis
+} from 'lucide-vue-next'
 import { ensureError } from '@speckle/shared'
 import type { Nullable } from '@speckle/shared'
 import { onKeyDown, useClipboard, useDraggable, onClickOutside } from '@vueuse/core'
@@ -200,7 +208,6 @@ import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { graphql } from '~/lib/common/generated/gql'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
-import { CircleCheck, X, ChevronLeft, ChevronRight, Ellipsis } from 'lucide-vue-next'
 
 enum ActionTypes {
   CopyLink = 'copy-link',
@@ -577,13 +584,13 @@ const bannerButton = computed(() => {
   if (hasClickedFullContext.value) {
     return {
       text: 'Back',
-      icon: ArrowLeftIcon,
+      icon: MoveLeft,
       action: goBack
     }
   }
   return {
     text: 'Full context',
-    icon: ArrowUpRightIcon,
+    icon: MoveRight,
     action: handleContextClick
   }
 })
