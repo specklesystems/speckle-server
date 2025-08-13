@@ -92,7 +92,7 @@ const {
 const { getActiveMeasurement, removeMeasurement, enableMeasurements, hasMeasurements } =
   useMeasurementUtilities()
 const { resetExplode } = useFilterUtilities()
-const { currentViewMode } = useViewModeUtilities()
+const { currentViewMode, setViewMode } = useViewModeUtilities()
 const {
   ui: { explodeFactor }
 } = useInjectedViewerState()
@@ -128,21 +128,23 @@ const panels = shallowRef({
     id: ActivePanel.explode,
     name: 'Explode',
     icon: 'IconViewerExplode',
-    tooltip: 'Explode',
+    tooltip: getShortcutDisplayText(shortcuts.ToggleExplode, { format: 'separate' }),
     extraClasses: 'hidden md:flex'
   },
   [ActivePanel.viewModes]: {
     id: ActivePanel.viewModes,
     name: 'View modes',
     icon: 'IconViewerViewModes',
-    tooltip: 'View modes',
+    tooltip: getShortcutDisplayText(shortcuts.ToggleViewModes, { format: 'separate' }),
     extraClasses: ''
   },
   [ActivePanel.lightControls]: {
     id: ActivePanel.lightControls,
     name: 'Light controls',
     icon: 'IconViewerLightControls',
-    tooltip: 'Light controls',
+    tooltip: getShortcutDisplayText(shortcuts.ToggleLightControls, {
+      format: 'separate'
+    }),
     extraClasses: 'hidden md:flex'
   }
 })
@@ -195,6 +197,11 @@ const toggleMeasurements = () => {
   activePanel.value = isMeasurementsActive ? ActivePanel.none : ActivePanel.measurements
 }
 
+const toggleExplode = () => {
+  activePanel.value =
+    activePanel.value === ActivePanel.explode ? ActivePanel.none : ActivePanel.explode
+}
+
 const toggleSectionBoxPanel = () => {
   if (activePanel.value === ActivePanel.measurements) {
     enableMeasurements(false)
@@ -205,6 +212,20 @@ const toggleSectionBoxPanel = () => {
       ? ActivePanel.none
       : ActivePanel.sectionBox
   toggleSectionBox()
+}
+
+const toggleViewModes = () => {
+  activePanel.value =
+    activePanel.value === ActivePanel.viewModes
+      ? ActivePanel.none
+      : ActivePanel.viewModes
+}
+
+const toggleLightControls = () => {
+  activePanel.value =
+    activePanel.value === ActivePanel.lightControls
+      ? ActivePanel.none
+      : ActivePanel.lightControls
 }
 
 const onActivePanelClose = () => {
@@ -230,9 +251,21 @@ const forceClosePanels = () => {
   activePanel.value = ActivePanel.none
 }
 
+const handleViewModeChange = (mode: ViewMode) => {
+  setViewMode(mode)
+}
+
 registerShortcuts({
   ToggleMeasurements: () => toggleMeasurements(),
-  ToggleSectionBox: () => toggleSectionBoxPanel()
+  ToggleExplode: () => toggleExplode(),
+  ToggleSectionBox: () => toggleSectionBoxPanel(),
+  ToggleViewModes: () => toggleViewModes(),
+  ToggleLightControls: () => toggleLightControls(),
+  SetViewModeDefault: () => handleViewModeChange(ViewMode.DEFAULT),
+  SetViewModeSolid: () => handleViewModeChange(ViewMode.SOLID),
+  SetViewModePen: () => handleViewModeChange(ViewMode.PEN),
+  SetViewModeArctic: () => handleViewModeChange(ViewMode.ARCTIC),
+  SetViewModeShaded: () => handleViewModeChange(ViewMode.SHADED)
 })
 
 onKeyStroke('Escape', () => {
