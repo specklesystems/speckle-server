@@ -92,12 +92,10 @@
 
 <script setup lang="ts">
 import { ViewMode } from '@speckle/viewer'
-import { useViewerShortcuts, useViewModeUtilities } from '~~/lib/viewer/composables/ui'
+import { useViewModeUtilities } from '~~/lib/viewer/composables/ui'
 import { ViewModeShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
 import { FormSwitch } from '@speckle/ui-components'
 import { useTheme } from '~/lib/core/composables/theme'
-
-const open = defineModel<boolean>('open', { default: false })
 
 const {
   setViewMode,
@@ -109,18 +107,9 @@ const {
   setEdgesColor,
   edgesColor
 } = useViewModeUtilities()
-const { registerShortcuts } = useViewerShortcuts()
 const { isLightTheme } = useTheme()
 
 const showSettings = ref(false)
-
-registerShortcuts({
-  SetViewModeDefault: () => handleViewModeChange(ViewMode.DEFAULT, true),
-  SetViewModeSolid: () => handleViewModeChange(ViewMode.SOLID, true),
-  SetViewModePen: () => handleViewModeChange(ViewMode.PEN, true),
-  SetViewModeArctic: () => handleViewModeChange(ViewMode.ARCTIC, true),
-  SetViewModeShaded: () => handleViewModeChange(ViewMode.SHADED, true)
-})
 
 const isActiveMode = (mode: ViewMode) => mode === currentViewMode.value
 
@@ -135,11 +124,7 @@ const edgesColorOptions = computed(() => [
   0xf43f5e //rose-500
 ])
 
-const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
+const handleViewModeChange = (mode: ViewMode) => {
   setViewMode(mode)
-
-  if (isShortcut) {
-    open.value = true
-  }
 }
 </script>
