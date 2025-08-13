@@ -11,8 +11,10 @@
             name="disclosureTitle"
             color="fully-transparent"
             :input-classes="buttonTextClasses"
+            :auto-focus="true"
             v-on="on"
             @click.stop
+            @blur="onTitleInputBlur"
           />
           <slot name="title-actions" />
         </div>
@@ -51,17 +53,18 @@ const props = withDefaults(
      */
     lazyLoad?: boolean
     /**
-     * Whether to enable title editing
+     * If edit mode enabled - it will exit mode when user unfocuses
      */
-    editTitle?: boolean
+    exitEditModeOnBlur?: boolean
   }>(),
   {
-    color: 'default'
+    color: 'default',
+    exitEditModeOnBlur: true
   }
 )
 
+const editTitle = defineModel<boolean>('editTitle')
 const title = defineModel<string>('title')
-
 const open = defineModel<boolean>('open', {
   default: false
 })
@@ -144,5 +147,11 @@ const panelClasses = computed(() => {
 
 const toggle = () => {
   open.value = !open.value
+}
+
+const onTitleInputBlur = () => {
+  if (!props.exitEditModeOnBlur) return
+
+  editTitle.value = false
 }
 </script>

@@ -242,12 +242,18 @@ export function useDebouncedTextInput(params?: {
    * Set to true if you want to see debug output for how events fire and are handled
    */
   debug?: boolean | ((...logArgs: unknown[]) => void)
+
+  /**
+   * Callback function that gets called when a new value is actually written to the model
+   */
+  onWrite?: (val: string) => void
 }) {
   const {
     debouncedBy = 1000,
     isBasicHtmlInput = false,
     submitOnEnter,
-    disableDebouncedInput
+    disableDebouncedInput,
+    onWrite
   } = params || {}
   const log = params?.debug
     ? isBoolean(params.debug)
@@ -255,7 +261,10 @@ export function useDebouncedTextInput(params?: {
       : params.debug
     : noop
 
+  // The actual source of truth holding the final value
   const value = params?.model || ref('')
+
+  // The internal model of the input
   const model = ref(value.value)
 
   const getValue = (val: string | InputEvent | Event | FormInputChangeEvent) => {
@@ -266,11 +275,19 @@ export function useDebouncedTextInput(params?: {
     return target?.value || ''
   }
 
+  /**
+   * Persist changes to the core underlying source of truth that's available outwards
+   */
+  const persistValue = (val: string) => {
+    value.value = val
+    log('Value updated: ' + val)
+    onWrite?.(val)
+  }
+
   const debouncedValueUpdate = disableDebouncedInput
     ? undefined
     : debounce((val: string) => {
-        value.value = val
-        log('Value updated: ' + val)
+        persistValue(val)
       }, debouncedBy)
 
   const inputEventName = isBasicHtmlInput ? 'input' : 'update:modelValue'
@@ -284,13 +301,13 @@ export function useDebouncedTextInput(params?: {
     clear: () => {
       debouncedValueUpdate?.cancel()
       model.value = ''
-      value.value = ''
+      persistValue('')
       log('Clear event')
     },
     change: (val: FormInputChangeEvent | Event) => {
       const newVal = getValue(val)
       debouncedValueUpdate?.cancel()
-      value.value = newVal
+      persistValue(newVal)
       model.value = newVal
       log('Change event: ' + newVal)
     },

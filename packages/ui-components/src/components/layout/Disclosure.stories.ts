@@ -128,12 +128,13 @@ export const WithEditableTitle: StoryObj = {
     components: { LayoutDisclosure, FormButton },
     setup() {
       const title = ref("Baby's first title")
+      const editTitle = ref(false)
 
-      return { args, title }
+      return { args, title, editTitle }
     },
     template: `
     <div class="flex flex-col gap-2">
-      <LayoutDisclosure v-bind="args" v-model:title="title">
+      <LayoutDisclosure v-bind="args" v-model:edit-title="editTitle" v-model:title="title">
         <div class="flex flex-col text-foreground space-y-4">
           <div class="h4 font-semibold">Hello world!</div>
           <div>Lorem ipsum blah blah blah</div>
@@ -142,10 +143,10 @@ export const WithEditableTitle: StoryObj = {
       <div>
         Saved/current title: {{ title }}
       </div>
+      <FormButton @click="editTitle = true">Enable edit mode</FormButton>
     </div>`
   }),
   args: {
-    ...Default.args,
-    editTitle: true
+    ...Default.args
   }
 }

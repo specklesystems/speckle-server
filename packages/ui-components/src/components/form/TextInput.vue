@@ -59,6 +59,7 @@
           :readonly="readOnly"
           role="textbox"
           v-bind="$attrs"
+          :style="inputStyle"
           @change="$emit('change', { event: $event, value })"
           @input="$emit('input', { event: $event, value })"
           @focus="$emit('focus')"
@@ -119,7 +120,7 @@
 import type { RuleExpression } from 'vee-validate'
 import { XMarkIcon } from '@heroicons/vue/20/solid'
 import { computed, ref, toRefs, useSlots } from 'vue'
-import type { PropType } from 'vue'
+import type { CSSProperties, PropType } from 'vue'
 import type { Nullable, Optional } from '@speckle/shared'
 import { useTextInputCore } from '~~/src/composables/form/textInput'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
@@ -341,6 +342,16 @@ const {
   props: toRefs(props),
   emit,
   inputEl: inputElement
+})
+
+const inputStyle = computed((): CSSProperties => {
+  if (props.color !== 'fully-transparent') return {}
+
+  // In fully transparent mode, we want the input to fully blend in w/ parent styling
+  const style: CSSProperties = {
+    fontSize: 'inherit'
+  }
+  return style
 })
 
 const leadingIconClasses = computed(() => {

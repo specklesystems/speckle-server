@@ -3,10 +3,12 @@ import { graphql } from '~/lib/common/generated/gql'
 import type {
   CreateSavedViewGroupInput,
   CreateSavedViewInput,
+  UpdateSavedViewGroupInput,
   UpdateSavedViewInput,
   UseDeleteSavedView_SavedViewFragment,
   UseDeleteSavedViewGroup_SavedViewGroupFragment,
-  UseUpdateSavedView_SavedViewFragment
+  UseUpdateSavedView_SavedViewFragment,
+  UseUpdateSavedViewGroup_SavedViewGroupFragment
 } from '~/lib/common/generated/gql/graphql'
 import { useStateSerialization } from '~/lib/viewer/composables/serialization'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
@@ -462,6 +464,86 @@ export const useDeleteSavedViewGroup = () => {
       const err = getFirstGqlErrorMessage(result?.errors)
       triggerNotification({
         title: "Couldn't delete group",
+        description: err,
+        type: ToastNotificationType.Danger
+      })
+    }
+
+    return res
+  }
+}
+
+const updateSavedViewGroupMutation = graphql(`
+  mutation UpdateSavedViewGroup($input: UpdateSavedViewGroupInput!) {
+    projectMutations {
+      savedViewMutations {
+        updateGroup(input: $input) {
+          id
+          ...UseUpdateSavedViewGroup_SavedViewGroup
+        }
+      }
+    }
+  }
+`)
+
+graphql(`
+  fragment UseUpdateSavedViewGroup_SavedViewGroup on SavedViewGroup {
+    id
+    projectId
+    groupId
+    title
+    isUngroupedViewsGroup
+  }
+`)
+
+export const useUpdateSavedViewGroup = () => {
+  const { mutate } = useMutation(updateSavedViewGroupMutation)
+  const { triggerNotification } = useGlobalToast()
+  const { isLoggedIn } = useActiveUser()
+
+  return async (params: {
+    group: UseUpdateSavedViewGroup_SavedViewGroupFragment
+    update: Omit<UpdateSavedViewGroupInput, 'projectId' | 'groupId'>
+  }) => {
+    const { group, update } = params
+    if (!isLoggedIn.value) return
+    if (group.isUngroupedViewsGroup) return
+
+    const result = await mutate(
+      {
+        input: {
+          projectId: group.projectId,
+          groupId: group.id,
+          ...update
+        }
+      },
+      {
+        optimisticResponse(vars) {
+          // We want the name update to be immediate to avoid flashing content
+          return {
+            projectMutations: {
+              savedViewMutations: {
+                updateGroup: {
+                  ...group,
+                  title: vars.input.title
+                }
+              }
+            }
+          }
+        }
+      }
+    ).catch(convertThrowIntoFetchResult)
+
+    const res = result?.data?.projectMutations.savedViewMutations.updateGroup
+    if (res?.id) {
+      triggerNotification({
+        title: 'Group updated',
+        type: ToastNotificationType.Success
+      })
+    } else {
+      const err = getFirstGqlErrorMessage(result?.errors)
+      triggerNotification({
+        title: "Couldn't update group",
         description: err,
         type: ToastNotificationType.Danger
       })
