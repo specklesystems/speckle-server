@@ -133,7 +133,7 @@
       :style="`width: ${widthClass};`"
     >
       <KeepAlive v-show="activePanel === 'models'">
-        <ViewerModelsPanel />
+        <ViewerModelsPanel v-model:sub-view="modelsSubView" />
       </KeepAlive>
       <KeepAlive v-show="resourceItems.length !== 0 && activePanel === 'filters'">
         <ViewerFiltersPanel />
@@ -167,6 +167,7 @@ import { useIntercomEnabled } from '~~/lib/intercom/composables/enabled'
 import { viewerDocsRoute } from '~~/lib/common/helpers/route'
 import { useAreSavedViewsEnabled } from '~/lib/viewer/composables/savedViews/general'
 import { Camera } from 'lucide-vue-next'
+import { ModelsSubView } from '~~/lib/viewer/helpers/sceneExplorer'
 
 type ActivePanel =
   | 'none'
@@ -237,6 +238,7 @@ const { $intercom } = useNuxtApp()
 const { hasActiveFilters } = useFilterUtilities()
 
 const activePanel = ref<ActivePanel>('none')
+const modelsSubView = ref<ModelsSubView>(ModelsSubView.Main)
 
 const hasActivePanel = computed(() => activePanel.value !== 'none')
 
@@ -277,7 +279,28 @@ registerShortcuts({
 
 const toggleActivePanel = (panel: ActivePanel) => {
   const wasNone = activePanel.value === 'none'
-  activePanel.value = activePanel.value === panel ? 'none' : panel
+
+  if (panel === 'models') {
+    if (activePanel.value === 'models') {
+      if (
+        modelsSubView.value === ModelsSubView.Versions ||
+        modelsSubView.value === ModelsSubView.Diff
+      ) {
+        // Go back to main models view instead of closing
+        modelsSubView.value = ModelsSubView.Main
+        return
+      } else {
+        activePanel.value = 'none'
+      }
+    } else {
+      // Open models panel and reset to main view
+      activePanel.value = 'models'
+      modelsSubView.value = ModelsSubView.Main
+    }
+  } else {
+    activePanel.value = activePanel.value === panel ? 'none' : panel
+    modelsSubView.value = ModelsSubView.Main
+  }
 
   // If a panel is being opened (not closed) on mobile, emit event to parent
   if (wasNone && activePanel.value !== 'none' && isMobile.value) {

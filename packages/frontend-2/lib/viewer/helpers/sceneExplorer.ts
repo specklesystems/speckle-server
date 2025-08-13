@@ -32,3 +32,9 @@ export type TreeItemComponentModel = {
 }
 
 export type { SpeckleObject, SpeckleReference }
+
+export enum ModelsSubView {
+  Main = 'main',
+  Versions = 'versions',
+  Diff = 'diff'
+}
