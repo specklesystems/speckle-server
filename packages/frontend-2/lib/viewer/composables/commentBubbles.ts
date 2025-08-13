@@ -48,6 +48,7 @@ export type ViewerNewThreadBubbleModel = {
   isOccluded: boolean
   style: Partial<CSSProperties>
   clickLocation: Nullable<Vector3>
+  selectedObjectId: Nullable<string>
 }
 
 export function useViewerNewThreadBubble(params: {
@@ -61,7 +62,8 @@ export function useViewerNewThreadBubble(params: {
       openThread: { newThreadEditor }
     },
     camera: { target },
-    selection
+    selection,
+    filters: { selectedObjectIds }
   } = useInjectedViewerInterfaceState()
   const getCamCenterObjId = useGetScreenCenterObjectId()
   const { setSelectionFromObjectIds } = useSelectionUtilities()
@@ -72,6 +74,7 @@ export function useViewerNewThreadBubble(params: {
     isVisible: false,
     isOccluded: false,
     clickLocation: null,
+    selectedObjectId: null,
     style: {}
   } as ViewerNewThreadBubbleModel)
 
@@ -93,6 +96,7 @@ export function useViewerNewThreadBubble(params: {
     buttonState.value.isExpanded = false
     buttonState.value.isVisible = false
     buttonState.value.clickLocation = null
+    buttonState.value.selectedObjectId = null
   }
 
   useSelectionEvents({
@@ -106,6 +110,7 @@ export function useViewerNewThreadBubble(params: {
       }
 
       buttonState.value.clickLocation = firstVisibleSelectionHit.point.clone()
+      buttonState.value.selectedObjectId = firstVisibleSelectionHit.node.model.id
       buttonState.value.isVisible = true
       updatePositions()
     }
@@ -152,6 +157,21 @@ export function useViewerNewThreadBubble(params: {
       const oid = getCamCenterObjId()
       if (!oid) return
       setSelectionFromObjectIds([oid])
+    }
+  })
+
+  // Clear button when its selected object is no longer in the current selection
+  watch(selectedObjectIds, () => {
+    if (!buttonState.value.isVisible || !buttonState.value.selectedObjectId) {
+      return
+    }
+
+    // Check if the button's object is still selected
+    const isStillSelected = selectedObjectIds.value.has(
+      buttonState.value.selectedObjectId
+    )
+    if (!isStillSelected) {
+      closeNewThread()
     }
   })
 
