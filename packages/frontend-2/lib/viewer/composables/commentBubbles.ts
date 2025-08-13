@@ -167,9 +167,8 @@ export function useViewerNewThreadBubble(params: {
     }
 
     // Check if the button's object is still selected
-    const isStillSelected = newSelection.some(
-      (obj) => obj.id === buttonState.value.selectedObjectId
-    )
+    const selectedObjectIds = new Set(newSelection.map((obj) => obj.id))
+    const isStillSelected = selectedObjectIds.has(buttonState.value.selectedObjectId)
     if (!isStillSelected) {
       closeNewThread()
     }
