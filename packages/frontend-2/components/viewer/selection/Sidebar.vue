@@ -13,7 +13,7 @@
     >
       <template #title>
         <div class="flex items-center gap-x-2">
-          <p>Selected</p>
+          <span>Selected</span>
           <CommonBadge v-if="objects.length > 1" rounded>
             {{ objects.length }}
           </CommonBadge>
@@ -21,30 +21,16 @@
       </template>
       <template #actions>
         <div class="flex gap-x-0.5 items-center">
-          <div
-            v-tippy="getTooltipProps(isHidden ? 'Show' : 'Hide', { placement: 'top' })"
-          >
-            <FormButton
-              color="subtle"
-              :icon-left="isHidden ? iconEyeClosed : iconEye"
-              hide-text
-              @click.stop="hideOrShowSelection"
-            />
-          </div>
-          <div
-            v-tippy="
-              getTooltipProps(isIsolated ? 'Unisolate' : 'Isolate', {
-                placement: 'top'
-              })
-            "
-          >
-            <FormButton
-              color="subtle"
-              :icon-left="isIsolated ? iconViewerUnisolate : iconViewerIsolate"
-              hide-text
-              @click.stop="isolateOrUnisolateSelection"
-            />
-          </div>
+          <ViewerVisibilityButton
+            :is-hidden="isHidden"
+            :force-visible="showSubMenu"
+            @click="hideOrShowSelection"
+          />
+          <ViewerIsolateButton
+            :is-isolated="isIsolated"
+            :force-visible="showSubMenu"
+            @click="isolateOrUnisolateSelection"
+          />
           <LayoutMenu
             v-model:open="showSubMenu"
             :menu-id="menuId"
@@ -56,7 +42,11 @@
             <FormButton
               hide-text
               color="subtle"
+              size="sm"
               :icon-left="settingsIcon"
+              :class="{
+                '!bg-highlight-3': showSubMenu
+              }"
               @click="showSubMenu = !showSubMenu"
             />
           </LayoutMenu>
@@ -121,16 +111,11 @@ const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isGreaterThanSm = breakpoints.greater('sm')
 const menuId = useId()
 const mp = useMixpanel()
-const { getTooltipProps } = useSmartTooltipDelay()
 
 const itemCount = ref(20)
 const sidebarOpen = ref(false)
 const sidebarWidth = ref(280)
 const showSubMenu = ref(false)
-const iconViewerUnisolate = resolveComponent('IconViewerUnisolate') as ConcreteComponent
-const iconViewerIsolate = resolveComponent('IconViewerIsolate') as ConcreteComponent
-const iconEyeClosed = resolveComponent('IconEyeClosed') as ConcreteComponent
-const iconEye = resolveComponent('IconEye') as ConcreteComponent
 const settingsIcon = resolveComponent('IconThreeDots') as ConcreteComponent
 
 const objectsUniqueByAppId = computed(() => {
