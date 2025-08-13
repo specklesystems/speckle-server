@@ -41,10 +41,15 @@
             Viewing old version
           </div>
           <div class="flex items-center gap-1 text-body-3xs text-foreground-2 min-w-0">
-            <span v-if="loadedVersion?.sourceApplication" class="shrink-0">
-              {{ loadedVersion.sourceApplication }}
-            </span>
-            <span v-if="loadedVersion?.sourceApplication" class="shrink-0">·</span>
+            <div
+              v-if="loadedVersion?.sourceApplication"
+              class="shrink-0 flex items-center gap-1"
+            >
+              <span>
+                {{ loadedVersion.sourceApplication }}
+              </span>
+              <span class="shrink-0">·</span>
+            </div>
             <span class="truncate">
               {{ createdAtFormatted.relative }}
             </span>
