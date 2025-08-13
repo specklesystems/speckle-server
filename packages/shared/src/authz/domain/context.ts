@@ -14,3 +14,7 @@ export type ModelContext = { modelId: string }
 export type VersionContext = { versionId: string }
 
 export type AutomateFunctionContext = { functionId: string }
+
+export type SavedViewContext = { savedViewId: string }
+
+export type SavedViewGroupContext = { savedViewGroupId: string }

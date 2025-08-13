@@ -23,7 +23,7 @@ import { Loaders } from '../../../domain/loaders.js'
 import { AuthPolicy } from '../../../domain/policies.js'
 import { ensureCanAccessSavedViewFragment } from '../../../fragments/savedViews.js'
 
-export const canUpdateSavedViewPolicy: AuthPolicy<
+export const canReadSavedViewPolicy: AuthPolicy<
   | typeof Loaders.getSavedView
   | typeof Loaders.getProject
   | typeof Loaders.getEnv
@@ -58,6 +58,6 @@ export const canUpdateSavedViewPolicy: AuthPolicy<
       userId,
       projectId,
       savedViewId,
-      access: 'write'
+      access: 'read'
     })
   }
