@@ -10,6 +10,7 @@
         @focusin="highlightObject"
         @focusout="unhighlightObject"
         @click="selectObject"
+        @dblclick="zoomToModel"
         @keydown.enter="selectObject"
       >
         <ViewerExpansionTriangle
@@ -36,11 +37,15 @@
           <div v-if="isLatest" class="text-body-3xs text-foreground">
             Latest version
           </div>
+          <div v-else class="text-body-3xs text-primary">Viewing old version</div>
           <div class="text-body-3xs text-foreground-2">
             {{ createdAtFormatted.relative }}
           </div>
         </div>
-        <div class="flex items-center ml-auto mr-2 w-0 group-hover:w-auto">
+        <div
+          class="flex items-center ml-auto mr-2 w-0 group-hover:w-auto"
+          :class="showActionsMenu ? '!w-auto' : ''"
+        >
           <LayoutMenu
             v-model:open="showActionsMenu"
             :items="actionsItems"
@@ -82,7 +87,8 @@ import type { Get } from 'type-fest'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import {
   useHighlightedObjectsUtilities,
-  useFilterUtilities
+  useFilterUtilities,
+  useCameraUtilities
 } from '~~/lib/viewer/composables/ui'
 import {
   useInjectedViewerState,
@@ -112,6 +118,7 @@ const props = defineProps<{
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
+const { zoom } = useCameraUtilities()
 const { items } = useInjectedViewerRequestedResources()
 const { resourceItems } = useInjectedViewerLoadedResources()
 const {
@@ -283,6 +290,12 @@ const selectObject = () => {
   // Only expand if not already expanded
   if (!props.isExpanded) {
     emit('toggle-expansion')
+  }
+}
+
+const zoomToModel = () => {
+  if (modelObjectIds.value.length > 0) {
+    zoom(modelObjectIds.value)
   }
 }
 

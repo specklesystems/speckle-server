@@ -25,7 +25,7 @@ import { GetComment } from './comments/operations.js'
 import { GetModel } from './models/operations.js'
 import { GetVersion } from './versions/operations.js'
 import { GetAutomateFunction } from './automate/operations.js'
-import { GetSavedView } from './savedViews/operations.js'
+import { GetSavedView, GetSavedViewGroup } from './savedViews/operations.js'
 
 // utility type that ensures all properties functions that return promises
 type PromiseAll<T> = {
@@ -77,7 +77,8 @@ export const AuthCheckContextLoaderKeys = StringEnum([
   'getComment',
   'getModel',
   'getVersion',
-  'getSavedView'
+  'getSavedView',
+  'getSavedViewGroup'
 ])
 
 export const Loaders = AuthCheckContextLoaderKeys // shorter alias
@@ -110,6 +111,7 @@ export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getModel: GetModel
   getVersion: GetVersion
   getSavedView: GetSavedView
+  getSavedViewGroup: GetSavedViewGroup
 }>
 
 export type AuthCheckContextLoaders<

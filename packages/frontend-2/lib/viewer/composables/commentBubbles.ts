@@ -298,9 +298,37 @@ export function useViewerThreadTracking() {
     if (newThread?.id !== oldThread?.id) {
       const newState = newThread?.viewerState
       if (newState && SpeckleViewer.ViewerState.isSerializedViewerState(newState)) {
+        // Save current state before applying thread state (only if no previous thread)
+        if (!oldThread) {
+          const currentState = serializeState()
+          oldState.value = {
+            ...currentState,
+            ui: {
+              ...currentState.ui,
+              threads: {
+                ...currentState.ui.threads,
+                openThread: {
+                  threadId: null,
+                  isTyping: false,
+                  newThreadEditor: false
+                }
+              }
+            }
+          }
+        }
         await refocus(newState)
-      } else {
-        resetState()
+      } else if (oldThread) {
+        // Closing a thread - restore old state if available
+        if (
+          oldState.value &&
+          SpeckleViewer.ViewerState.isSerializedViewerState(oldState.value)
+        ) {
+          await applyState(oldState.value, StateApplyMode.SavedView, {
+            loadOriginal: false
+          })
+        } else {
+          resetState()
+        }
       }
     }
   })

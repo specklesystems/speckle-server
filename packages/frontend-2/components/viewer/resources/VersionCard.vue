@@ -100,6 +100,7 @@ import type { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useCopyModelLink } from '~/lib/projects/composables/modelManagement'
 
 dayjs.extend(localizedFormat)
 
@@ -136,6 +137,7 @@ const {
     response: { project }
   }
 } = useInjectedViewerState()
+const copyModelLink = useCopyModelLink()
 
 const IconThreeDots = resolveComponent('IconThreeDots')
 
@@ -188,6 +190,14 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
         : undefined
     },
     {
+      title: 'Copy link to version',
+      id: 'copy-link-to-version',
+      disabled: isLimited.value,
+      disabledTooltip: isLimited.value ? 'Outside workspace version limits' : undefined
+    }
+  ],
+  [
+    {
       title: 'Remove version',
       id: 'remove-version',
       disabled: !canDeleteVersion.value,
@@ -221,6 +231,11 @@ const onActionChosen = (params: { item: LayoutMenuItem }) => {
     case 'view-changes':
       if (!isLoaded.value && !isLimited.value) {
         handleViewChanges()
+      }
+      break
+    case 'copy-link-to-version':
+      if (project.value?.id && props.modelId) {
+        copyModelLink(project.value.id, props.modelId, props.version.id)
       }
       break
     case 'remove-version':

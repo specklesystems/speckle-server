@@ -5,6 +5,7 @@
         <div class="inline-flex items-center space-x-2">
           <Component :is="icon" v-if="icon" class="h-5 w-5" />
           <span>{{ title }}</span>
+          <slot name="title-actions" />
         </div>
         <ChevronUpIcon :class="!open ? 'rotate-180 transform' : ''" class="h-5 w-5" />
       </DisclosureButton>
@@ -53,7 +54,8 @@ const open = defineModel<boolean>('open', {
 const buttonClasses = computed(() => {
   const classParts = [
     'pr-3 h-10 w-full flex items-center justify-between border-l-2 px-2 rounded transition',
-    'ring-1 font-medium'
+    'ring-1 font-medium',
+    'group/disclosure'
   ]
 
   switch (props.color) {

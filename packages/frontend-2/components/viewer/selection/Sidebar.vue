@@ -14,7 +14,7 @@
       <template #title>
         <div class="flex items-center gap-x-2">
           <p>Selected</p>
-          <CommonBadge v-if="objects.length" rounded>
+          <CommonBadge v-if="objects.length > 1" rounded>
             {{ objects.length }}
           </CommonBadge>
         </div>
