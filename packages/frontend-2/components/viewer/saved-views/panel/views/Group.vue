@@ -71,8 +71,6 @@ import {
   useUpdateSavedViewGroup
 } from '~/lib/viewer/composables/savedViews/management'
 
-// TODO: Menu clipping near bottom of screen
-
 const MenuItems = StringEnum(['Delete', 'Rename'])
 type MenuItems = StringEnumValues<typeof MenuItems>
 
