@@ -221,3 +221,20 @@ export const canUpdateSavedViewGroupQuery = gql`
     }
   }
 `
+
+export const updateSavedViewGroupMutation = gql`
+  mutation UpdateSavedViewGroup(
+    $input: UpdateSavedViewGroupInput!
+    $viewsInput: SavedViewGroupViewsInput! = { limit: 10 }
+  ) {
+    projectMutations {
+      savedViewMutations {
+        updateGroup(input: $input) {
+          ...BasicSavedViewGroup
+        }
+      }
+    }
+  }
+
+  ${basicSavedViewGroupFragment}
+`

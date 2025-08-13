@@ -19,6 +19,8 @@ import type {
   StoreSavedView,
   StoreSavedViewGroup,
   UpdateSavedView,
+  UpdateSavedViewGroup,
+  UpdateSavedViewGroupRecord,
   UpdateSavedViewRecord
 } from '@/modules/viewer/domain/operations/savedViews'
 import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
@@ -422,14 +424,6 @@ export const updateSavedViewFactory =
           }
         : {})
     }
-    if (Object.keys(changes).length === 0) {
-      throw new SavedViewUpdateValidationError('No changes submitted with the input.', {
-        info: {
-          input,
-          userId
-        }
-      })
-    }
 
     // Validate updated resourceIds
     let resourceIds: ResourceBuilder | undefined = undefined
@@ -499,38 +493,50 @@ export const updateSavedViewFactory =
     }
 
     // Validate name
-    if (changes.name && changes.name.length > 255) {
-      throw new SavedViewUpdateValidationError(
-        'View name must be between 1 and 255 characters long',
-        {
-          info: {
-            input,
-            userId
+    if (changes.name?.trim()) {
+      if (changes.name.length > 255) {
+        throw new SavedViewUpdateValidationError(
+          'View name must be between 1 and 255 characters long',
+          {
+            info: {
+              input,
+              userId
+            }
           }
-        }
-      )
+        )
+      }
+    } else {
+      delete changes['name']
     }
 
     const finalChanges = omit(changes, ['resourceIdString', 'viewerState'])
+    const update = {
+      ...finalChanges,
+      ...(resourceIds
+        ? {
+            resourceIds: resourceIds ? resourceIds.map((r) => r.toString()) : undefined,
+            groupResourceIds: formatResourceIdsForGroup(resourceIds)
+          }
+        : {}),
+      ...(viewerState
+        ? {
+            viewerState
+          }
+        : {})
+    }
+    if (Object.keys(update).length === 0) {
+      throw new SavedViewUpdateValidationError('No changes submitted with the input.', {
+        info: {
+          input,
+          userId
+        }
+      })
+    }
+
     const updatedView = await deps.updateSavedViewRecord({
       id,
       projectId,
-      update: {
-        ...finalChanges,
-        ...(resourceIds
-          ? {
-              resourceIds: resourceIds
-                ? resourceIds.map((r) => r.toString())
-                : undefined,
-              groupResourceIds: formatResourceIdsForGroup(resourceIds)
-            }
-          : { resourceIdString: undefined }),
-        ...(viewerState
-          ? {
-              viewerState
-            }
-          : { viewerState: undefined })
-      }
+      update
     })
 
     if (updatedView?.groupId !== view.groupId) {
@@ -572,4 +578,72 @@ export const deleteSavedViewGroupFactory =
       groupId,
       projectId
     })
+  }
+
+export const updateSavedViewGroupFactory =
+  (deps: {
+    updateSavedViewGroupRecord: UpdateSavedViewGroupRecord
+    getSavedViewGroup: GetSavedViewGroup
+  }): UpdateSavedViewGroup =>
+  async ({ input, userId }) => {
+    const { groupId, projectId } = input
+
+    if (isUngroupedGroup(groupId)) {
+      throw new SavedViewGroupUpdateValidationError(
+        'Cannot update ungrouped/default saved view group.'
+      )
+    }
+
+    const group = await deps.getSavedViewGroup({
+      id: groupId,
+      projectId
+    })
+    if (!group) {
+      throw new SavedViewGroupUpdateValidationError('Group not found.', {
+        info: {
+          input,
+          userId
+        }
+      })
+    }
+
+    const changes = removeNullOrUndefinedKeys(omit(input, ['groupId', 'projectId']))
+
+    // Validate name
+    if (changes.name?.trim()) {
+      if (changes.name.length > 255) {
+        throw new SavedViewGroupUpdateValidationError(
+          'View name must be between 1 and 255 characters long',
+          {
+            info: {
+              input,
+              userId
+            }
+          }
+        )
+      }
+    } else {
+      delete changes['name']
+    }
+
+    if (Object.keys(changes).length === 0) {
+      throw new SavedViewGroupUpdateValidationError(
+        'No changes submitted with the input.',
+        {
+          info: {
+            input,
+            userId
+          }
+        }
+      )
+    }
+
+    // Update the saved view group
+    const updatedGroup = await deps.updateSavedViewGroupRecord({
+      groupId,
+      projectId,
+      update: changes
+    })
+
+    return updatedGroup! // should exist, we checked before
   }

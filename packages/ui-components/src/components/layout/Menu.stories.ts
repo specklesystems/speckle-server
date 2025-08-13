@@ -6,6 +6,8 @@ import { EllipsisVerticalIcon, StarIcon } from '@heroicons/vue/24/solid'
 import { action } from '@storybook/addon-actions'
 import { computed, ref } from 'vue'
 import { HorizontalDirection } from '~~/src/lib'
+import { StringEnum, type StringEnumValues } from '@speckle/shared'
+import { includes } from 'lodash-es'
 
 type StoryType = StoryObj<
   Record<string, unknown> & {
@@ -142,28 +144,76 @@ export const WithResponsiveMenuDirection: StoryType = {
   render: (args, ctx) => ({
     components: { LayoutMenu, FormButton, EllipsisVerticalIcon },
     setup() {
-      const location = ref<string | undefined>('left')
+      const Location = StringEnum([
+        'TopLeft',
+        'TopCenter',
+        'TopRight',
+        'BottomLeft',
+        'BottomCenter',
+        'BottomRight'
+      ])
+      type Location = StringEnumValues<typeof Location>
+
+      const location = ref<Location>(Location.TopLeft)
       const showMenu = ref(false)
 
       const changeLocation = () => {
-        if (location.value === 'left') {
-          location.value = 'right'
-        } else if (location.value === 'right') {
-          location.value = undefined
-        } else {
-          location.value = 'left'
+        switch (location.value) {
+          case Location.TopLeft:
+            location.value = Location.TopCenter
+            break
+          case Location.TopCenter:
+            location.value = Location.TopRight
+            break
+          case Location.TopRight:
+            location.value = Location.BottomLeft
+            break
+          case Location.BottomLeft:
+            location.value = Location.BottomCenter
+            break
+          case Location.BottomCenter:
+            location.value = Location.BottomRight
+            break
+          case Location.BottomRight:
+            location.value = Location.TopLeft
+            break
         }
       }
 
       const wrapperClasses = computed(() => {
         const classParts: string[] = []
 
-        if (location.value === 'left') {
+        // x axis
+        const isLeft = includes([Location.TopLeft, Location.BottomLeft], location.value)
+        const isRight = includes(
+          [Location.TopRight, Location.BottomRight],
+          location.value
+        )
+        const isCenter = includes(
+          [Location.TopCenter, Location.BottomCenter],
+          location.value
+        )
+        if (isLeft) {
           classParts.push('items-start')
-        } else if (location.value === 'right') {
+        } else if (isRight) {
           classParts.push('items-end')
-        } else {
+        } else if (isCenter) {
           classParts.push('items-center')
+        }
+
+        // y axis
+        const isTop = includes(
+          [Location.TopLeft, Location.TopCenter, Location.TopRight],
+          location.value
+        )
+        const isBottom = includes(
+          [Location.BottomLeft, Location.BottomCenter, Location.BottomRight],
+          location.value
+        )
+        if (isTop) {
+          classParts.push('justify-start')
+        } else if (isBottom) {
+          classParts.push('justify-end')
         }
 
         return classParts.join(' ')
@@ -179,23 +229,27 @@ export const WithResponsiveMenuDirection: StoryType = {
         wrapperClasses
       }
     },
+    // -2rem for padding added by storybook
     template: `
-    <div :class="['flex gap-2 flex-col', wrapperClasses]">
-      <LayoutMenu
-        v-bind="args"
-        @click.stop.prevent
-        v-model:open="showMenu"
-        :items="longItems"
-        @chosen="chosen"
-        @update:open="args['update:open']"
-      >
-        <FormButton @click="showMenu = !showMenu">
-          <EllipsisVerticalIcon class="w-4 h-4" />
-          Open menu
-        </FormButton>
-      </LayoutMenu>
-      <FormButton @click="changeLocation">Change location</FormButton>
-    </div>`,
+      <div class="flex gap-2 flex-col min-h-[calc(100vh-2rem)]">
+        <FormButton @click="changeLocation">Change location</FormButton>
+        <div :class="['flex gap-2 flex-col grow', wrapperClasses]">
+          <LayoutMenu
+            v-bind="args"
+            @click.stop.prevent
+            v-model:open="showMenu"
+            :items="longItems"
+            @chosen="chosen"
+            @update:open="args['update:open']"
+          >
+            <FormButton @click="showMenu = !showMenu">
+              <EllipsisVerticalIcon class="w-4 h-4" />
+              Open menu
+            </FormButton>
+          </LayoutMenu>
+        </div>
+      </div>
+    `,
     methods: {
       onOpenUpdate(val: boolean) {
         args['update:open'](val)

@@ -19,7 +19,8 @@ import type {
   UpdateSavedViewRecord,
   GetSavedView,
   GetStoredViewGroupCount,
-  DeleteSavedViewGroupRecord
+  DeleteSavedViewGroupRecord,
+  UpdateSavedViewGroupRecord
 } from '@/modules/viewer/domain/operations/savedViews'
 import {
   SavedViewVisibility,
@@ -584,4 +585,21 @@ export const deleteSavedViewGroupRecordFactory =
 
     // Otherwise, return true
     return true
+  }
+
+export const updateSavedViewGroupRecordFactory =
+  (deps: { db: Knex }): UpdateSavedViewGroupRecord =>
+  async (params) => {
+    const { groupId, projectId, update } = params
+
+    // Update the saved view group
+    const [updatedGroup] = await tables
+      .savedViewGroups(deps.db)
+      .where({
+        [SavedViewGroups.col.id]: groupId,
+        [SavedViewGroups.col.projectId]: projectId
+      })
+      .update(update, '*')
+
+    return updatedGroup
   }
