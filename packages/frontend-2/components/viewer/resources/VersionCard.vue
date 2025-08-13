@@ -18,7 +18,7 @@
         v-if="isLoaded"
         class="absolute -top-1.5 -left-2 flex items-center justify-center h-4 w-4 bg-foundation-2 rounded-full"
       >
-        <IconCheck class="h-4 w-4 text-foreground" />
+        <Check class="h-3 w-3 text-foreground" />
       </div>
       <div
         v-else
@@ -68,7 +68,7 @@
           <div
             class="flex h-8 w-8 items-center justify-center rounded-md bg-foundation border border-outline-3"
           >
-            <LockClosedIcon class="h-4 w-4 text-foreground-3" />
+            <Lock class="h-4 w-4 text-foreground-3" />
           </div>
         </div>
         <PreviewImage v-else :preview-url="version.previewUrl" />
@@ -95,7 +95,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { LockClosedIcon } from '@heroicons/vue/24/solid'
 import { CommonBadge, keyboardClick } from '@speckle/ui-components'
 import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
@@ -105,7 +104,7 @@ import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useCopyModelLink } from '~/lib/projects/composables/modelManagement'
-import { Ellipsis } from 'lucide-vue-next'
+import { Ellipsis, Check, Lock } from 'lucide-vue-next'
 
 dayjs.extend(localizedFormat)
 
@@ -161,7 +160,6 @@ const createdAt = computed(() => {
 
 const author = computed(() => props.version.authorUser)
 
-const IconCheck = resolveComponent('IconCheck')
 const showActionsMenu = ref(false)
 
 const canDeleteVersion = computed(() => {

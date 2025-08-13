@@ -2,7 +2,7 @@
   <div class="flex">
     <div v-if="!hideVersions" v-tippy="'Versions'" class="flex">
       <FormButton
-        icon-left="IconVersions"
+        :icon-left="History"
         hide-text
         size="sm"
         color="subtle"
@@ -13,7 +13,7 @@
     </div>
     <div v-tippy="'Add model'" class="flex">
       <FormButton
-        icon-left="IconPlus"
+        :icon-left="Plus"
         hide-text
         size="sm"
         color="subtle"
@@ -27,6 +27,7 @@
 
 <script setup lang="ts">
 import { FormButton } from '@speckle/ui-components'
+import { Plus, History } from 'lucide-vue-next'
 
 defineProps<{
   hideVersions?: boolean

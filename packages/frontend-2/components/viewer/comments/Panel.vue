@@ -20,6 +20,7 @@
             hide-text
             color="subtle"
             :icon-left="settingsIcon"
+            size="sm"
             :class="
               showVisibilityOptions
                 ? '!text-primary-focus !dark:text-foreground-on-primary !bg-info-lighter'

@@ -23,7 +23,7 @@ import type { ConcreteComponent } from 'vue'
 
 defineProps<{
   active?: boolean
-  icon?: string | ConcreteComponent
+  icon?: ConcreteComponent
   secondary?: boolean
   dot?: boolean
 }>()

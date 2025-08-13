@@ -91,10 +91,6 @@ const props = defineProps<{
   /**
    * Hide default slot (when you want to show icons only)
    */
-  iconSize?: 'sm' | 'base' | 'lg'
-  /**
-   * Hide default slot (when you want to show icons only)
-   */
   hideText?: boolean
   /**
    * Customize component to be used when rendering links.
