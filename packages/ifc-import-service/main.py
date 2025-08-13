@@ -34,11 +34,16 @@ def configure_logger() -> structlog.stdlib.BoundLogger:
 
 
 class HealthcheckHTTPRequestHandler(BaseHTTPRequestHandler):
-    def do_get(self):
-        self.send_response(200)
-        self.send_header("Content-type", "application/json")
-        self.end_headers()
-        self.wfile.write(b'{"status": "OK"}')
+    def do_GET(self):  # noqa: N802
+        match self.path:
+            case "/healthz":
+                self.send_response(200)
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(b'{"status": "OK"}')
+            case _:
+                self.send_response(404)
+                self.end_headers()
 
 
 async def main():
