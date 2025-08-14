@@ -10,6 +10,9 @@ import {
 } from '@/modules/core/repositories/commits'
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import { buildBasicTestProject } from '@/modules/core/tests/helpers/creation'
+import { NotFoundError } from '@/modules/shared/errors'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import type { SavedView } from '@/modules/viewer/domain/types/savedViews'
 import { getSavedViewFactory } from '@/modules/viewer/repositories/savedViews'
 import {
   doViewerResourcesFit,
@@ -17,7 +20,8 @@ import {
   isResourceItemEqual,
   viewerResourcesToString
 } from '@/modules/viewer/services/viewerResources'
-import { itEach } from '@/test/assertionHelper'
+import { createTestSavedView } from '@/modules/viewer/tests/helpers/savedViews'
+import { expectToThrow, itEach } from '@/test/assertionHelper'
 import type { BasicTestUser } from '@/test/authHelper'
 import { buildBasicTestUser, createTestUser } from '@/test/authHelper'
 import {
@@ -234,6 +238,84 @@ describe('Viewer Resources Collection Service', () => {
         expect(item.versionId).to.equal(latestVersion!.id)
       }
     })
+
+    it('successfully de-duplicates resources and provides them in the correct order', async () => {
+      const sut = buildSUT()
+
+      const groupCount = 2
+      const wrongOrderModelIds = myModels
+        .slice(0, groupCount)
+        .map((m) => m.id)
+        .sort((a, b) => {
+          // Sort in wrong order - alphabetical descending
+          return b.localeCompare(a)
+        })
+      const resourceIdString = [...wrongOrderModelIds, ...wrongOrderModelIds].join(',')
+
+      const result = await sut({
+        projectId: myProject.id,
+        resourceIdString
+      })
+
+      expect(result).to.have.length(2)
+
+      // group ids combined should make up a valid (properly ordered & de-duplicated) resource id string
+      const combinedIdentifierString = result.map((group) => group.identifier).join(',')
+      const expectedResources = resourceBuilder().addResources(resourceIdString) // de-duplicates and re-orders
+
+      expect(combinedIdentifierString).to.equal(expectedResources.toString())
+    })
+
+    if (getFeatureFlags().FF_SAVED_VIEWS_ENABLED) {
+      describe('w/ saved views', () => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        let firstModelHomeView: SavedView
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        let secondModelBasicView: SavedView
+
+        const firstModel = () => myModels[0]
+        const secondModel = () => myModels[1]
+
+        before(async () => {
+          const views = await Promise.all([
+            createTestSavedView({
+              author: me,
+              project: myProject,
+              view: {
+                resourceIds: [firstModel().id],
+                isHomeView: true
+              }
+            }),
+            createTestSavedView({
+              author: me,
+              project: myProject,
+              view: {
+                resourceIds: [secondModel().id],
+                isHomeView: false
+              }
+            })
+          ])
+
+          firstModelHomeView = views[0]
+          secondModelBasicView = views[1]
+        })
+
+        it('throws if setting nonexistant view', async () => {
+          const sut = buildSUT()
+
+          const err = await expectToThrow(
+            async () =>
+              await sut({
+                projectId: myProject.id,
+                resourceIdString: firstModel().id,
+                savedViewId: 'aaa'
+              })
+          )
+          expect(err instanceof NotFoundError).to.be.true
+          expect(err.message).to.include('Saved view')
+        })
+      })
+    }
   })
 
   describe('isResourceItemEqual', () => {

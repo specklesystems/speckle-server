@@ -245,6 +245,12 @@ export type InjectableViewerState = Readonly<{
        * Loaded saved view, if any
        */
       savedView: ComputedRef<Optional<LoadedSavedView>>
+      /**
+       * Whether we're in a federated view - loading multiple models/objects. We judge by the actual
+       * resources being loaded not just the resourceIdString. The string could refer to multiple models,
+       * but if none of them actually exist and are loaded then I wouldn't count that as a federated view.
+       */
+      isFederatedView: ComputedRef<boolean>
     }
   }
   /**
@@ -575,7 +581,11 @@ function setupResponseResourceItems(
   state: InitialStateWithRequest
 ): Pick<
   InjectableViewerState['resources']['response'],
-  'resourceItems' | 'resourceItemsQueryVariables' | 'resourceItemsLoaded' | 'savedView'
+  | 'resourceItems'
+  | 'resourceItemsQueryVariables'
+  | 'resourceItemsLoaded'
+  | 'savedView'
+  | 'isFederatedView'
 > {
   const globalError = useError()
   const {
@@ -704,11 +714,14 @@ function setupResponseResourceItems(
       : undefined
   )
 
+  const isFederatedView = computed(() => resourceItems.value.length > 1)
+
   return {
     resourceItems,
     resourceItemsQueryVariables: computed(() => resourceItemsQueryVariables.value),
     resourceItemsLoaded,
-    savedView
+    savedView,
+    isFederatedView
   }
 }
 
@@ -717,7 +730,11 @@ function setupResponseResourceData(
   resourceItemsData: ReturnType<typeof setupResponseResourceItems>
 ): Omit<
   InjectableViewerState['resources']['response'],
-  'resourceItems' | 'resourceItemsQueryVariables' | 'resourceItemsLoaded' | 'savedView'
+  | 'resourceItems'
+  | 'resourceItemsQueryVariables'
+  | 'resourceItemsLoaded'
+  | 'savedView'
+  | 'isFederatedView'
 > {
   const apollo = useApolloClient().client
   const globalError = useError()

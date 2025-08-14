@@ -15,6 +15,7 @@ import type {
 } from '@/modules/core/graph/generated/graphql'
 import type { CommitRecord } from '@/modules/core/helpers/types'
 import { NotFoundError } from '@/modules/shared/errors'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import type { DependenciesOf } from '@/modules/shared/helpers/factory'
 import type {
   GetViewerResourceGroups,
@@ -392,7 +393,7 @@ export const getViewerResourceGroupsFactory =
     } = params
 
     let resourceIdString = params.resourceIdString
-    if (savedViewId) {
+    if (savedViewId && getFeatureFlags().FF_SAVED_VIEWS_ENABLED) {
       resourceIdString = await adjustResourceIdStringWithSavedViewSettingsFactory(deps)(
         {
           resourceIdString,

@@ -36,7 +36,9 @@ extend type Project {
   viewerResources(
     resourceIdString: String!
     """
-    If a saved view ID is specified, the returned resources will be adjusted to return the view's resources instead
+    If a saved view ID is specified, the returned resources will be adjusted to return the view's resources instead.
+    Even if no saved view ID is specified - if the resourceIdString refers to a model w/ a home view, that home
+    saved view will be implicitly applied.
     """
     savedViewId: ID
     savedViewSettings: SavedViewsLoadSettings

@@ -21,7 +21,6 @@ import {
   CanCreateSavedViewDocument,
   CanUpdateSavedViewDocument,
   CanUpdateSavedViewGroupDocument,
-  CreateSavedViewDocument,
   CreateSavedViewGroupDocument,
   DeleteSavedViewDocument,
   DeleteSavedViewGroupDocument,
@@ -39,6 +38,7 @@ import {
 } from '@/modules/core/tests/helpers/creation'
 import { BadRequestError, ForbiddenError, NotFoundError } from '@/modules/shared/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import type { FactoryResultOf } from '@/modules/shared/helpers/factory'
 import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
 import {
   SavedViewCreationValidationError,
@@ -47,6 +47,11 @@ import {
   SavedViewInvalidResourceTargetError,
   SavedViewUpdateValidationError
 } from '@/modules/viewer/errors/savedViews'
+import { createSavedViewFactory } from '@/modules/viewer/tests/helpers/graphql'
+import {
+  fakeScreenshot,
+  fakeScreenshot2
+} from '@/modules/viewer/tests/helpers/savedViews'
 import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   assignToWorkspace,
@@ -79,11 +84,6 @@ import type { PartialDeep } from 'type-fest'
 
 const { FF_WORKSPACES_MODULE_ENABLED, FF_SAVED_VIEWS_ENABLED } = getFeatureFlags()
 
-const fakeScreenshot =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PiQ2YQAAAABJRU5ErkJggg=='
-const fakeScreenshot2 =
-  'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAICAgICAgICAgICAgICAwUDAwMDAwYEBAMFBQYGBQYGBwcICQoJCQkJCQoMCgsMDAwMDAwP/2wBDAwMDAwQDBAgEBAgQEBAgMCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgP/wAARCAABAAEDAREAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAHEAP/EABQQAQAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAQUCf//EABQRAQAAAAAAAAAAAAAAAAAAAD/2gAIAQMBAT8BP//EABQRAQAAAAAAAAAAAAAAAAAAAD/2gAIAQIBAT8BP//Z'
-
 const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerState>) =>
   merge(
     {},
@@ -109,6 +109,9 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
  * - Test that default group can be resolved even if view has more specific resourceIds w/ versions
  * - Test that default group shows up or doesn't depending if there are views in it, regardless of
  * whether there's filtering
+ *
+ * Home views:
+ * - Test that isHomeView can only be set on non-federated views (+federated replace on home view fails)
  */
 
 ;(FF_SAVED_VIEWS_ENABLED ? describe : describe.skip)('Saved Views GraphQL CRUD', () => {
@@ -151,10 +154,8 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     )
   })
 
-  const createSavedView = (
-    input: CreateSavedViewMutationVariables,
-    options?: ExecuteOperationOptions
-  ) => apollo.execute(CreateSavedViewDocument, input, options)
+  const createSavedView: FactoryResultOf<typeof createSavedViewFactory> = (...args) =>
+    createSavedViewFactory({ apollo })(...args)
 
   const createSavedViewGroup = (
     input: CreateSavedViewGroupMutationVariables,
