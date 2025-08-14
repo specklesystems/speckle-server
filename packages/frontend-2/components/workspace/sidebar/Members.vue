@@ -103,7 +103,7 @@ graphql(`
       id
       role
     }
-    adminWorkspacesJoinRequests(limit: 5) {
+    adminWorkspacesJoinRequests {
       totalCount
       items {
         status
@@ -143,6 +143,6 @@ const adminWorkspacesJoinRequestsCount = computed(
   () =>
     props.workspace?.adminWorkspacesJoinRequests?.items.filter(
       (request) => request.status === WorkspaceJoinRequestStatus.Pending
-    ).length ?? 0
+    ).length
 )
 </script>

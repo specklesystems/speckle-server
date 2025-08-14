@@ -56,8 +56,7 @@ const { result: workspacePageResult } = useQuery(
     invitesFilter: {}
   }),
   () => ({
-    fetchPolicy: pageFetchPolicy.value || 'cache-first',
-    errorPolicy: 'all'
+    fetchPolicy: pageFetchPolicy.value
   })
 )
 const token = computed(() => route.query.token as string | undefined)
