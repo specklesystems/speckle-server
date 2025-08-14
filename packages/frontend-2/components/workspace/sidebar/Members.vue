@@ -13,7 +13,7 @@
       >
         <div class="flex gap-y-3 flex-col w-full">
           <UserAvatarGroup
-            v-if="workspace?.sidebarTeam && team.length > 0"
+            v-if="team.length"
             :overlap="false"
             :users="team.map((teamMember) => teamMember.user)"
             :max-avatars="4"
@@ -27,7 +27,7 @@
 
           <div
             v-if="
-              workspace?.sidebarTeam &&
+              team.length &&
               isWorkspaceAdmin &&
               (adminWorkspacesJoinRequestsCount || invitedTeamCount)
             "
@@ -59,7 +59,7 @@
           </div>
         </div>
         <FormButton
-          v-if="workspace?.sidebarTeam && isWorkspaceAdmin"
+          v-if="team.length && isWorkspaceAdmin"
           color="outline"
           size="sm"
           @click="showInviteDialog = true"

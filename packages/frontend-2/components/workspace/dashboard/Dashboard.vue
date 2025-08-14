@@ -56,9 +56,15 @@ const props = defineProps<{
 
 const { validateCheckoutSession } = useBillingActions()
 const { finalizeWizard } = useWorkspacesWizard()
+const workspaceTitle = ref<string>('')
+
+useHeadSafe({
+  title: workspaceTitle
+})
 const hasFinalized = ref(false)
 
 const workspace = computed(() => props.workspace)
+
 const showBillingAlert = computed(
   () =>
     workspace?.value?.role !== Roles.Workspace.Guest &&
@@ -84,9 +90,7 @@ watch(
         )
       }
 
-      useHeadSafe({
-        title: newWorkspace.name
-      })
+      workspaceTitle.value = newWorkspace.name
       validateCheckoutSession(newWorkspace)
     }
   },
