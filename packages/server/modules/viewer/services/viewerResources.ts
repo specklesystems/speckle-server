@@ -370,7 +370,10 @@ const adjustResourceIdStringWithSavedViewSettingsFactory =
       return new ViewerModelResource(r.modelId, versionId)
     })
 
-    return resourceBuilder().addResources(finalSavedViewResources).toString()
+    return resourceBuilder()
+      .addResources(finalSavedViewResources)
+      .addNew(baseResources) // keep other stuff around
+      .toString()
   }
 
 /**

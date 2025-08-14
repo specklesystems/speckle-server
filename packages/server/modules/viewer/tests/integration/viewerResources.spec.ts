@@ -12,6 +12,7 @@ import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import { buildBasicTestProject } from '@/modules/core/tests/helpers/creation'
 import { NotFoundError } from '@/modules/shared/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import type { ViewerResourceGroup } from '@/modules/viewer/domain/types/resources'
 import type { SavedView } from '@/modules/viewer/domain/types/savedViews'
 import { getSavedViewFactory } from '@/modules/viewer/repositories/savedViews'
 import {
@@ -32,7 +33,9 @@ import type { BasicTestCommit } from '@/test/speckle-helpers/commitHelper'
 import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { wait } from '@speckle/shared'
 import {
+  isModelResource,
   resourceBuilder,
   ViewerAllModelsResource,
   ViewerModelResource,
@@ -47,6 +50,9 @@ describe('Viewer Resources Collection Service', () => {
     let myProject: BasicTestStream
     let myModels: BasicTestBranch[]
     let myVersions: {
+      /**
+       * Versions are sorted by date asc - latest version is the last one
+       */
       [modelId: string]: BasicTestCommit[]
     }
 
@@ -60,6 +66,9 @@ describe('Viewer Resources Collection Service', () => {
         getBranchesByIds: getBranchesByIdsFactory({ db }),
         getSavedView: getSavedViewFactory({ db })
       })
+
+    const resourceIdStringFromGroups = (groups: ViewerResourceGroup[]) =>
+      groups.map((g) => g.identifier).join(',')
 
     const allVersions = (): BasicTestCommit[] => {
       return Object.values(myVersions).flat()
@@ -86,25 +95,28 @@ describe('Viewer Resources Collection Service', () => {
         )
       )
 
-      // Add 3 versions to each model
-      const dateGen = (i: number) => new Date(Date.now() - i * 1000)
-
       myVersions = {}
       await Promise.all(
         myModels.map(async (model) => {
-          myVersions[model.id] = await Promise.all(
-            times(3, (i) =>
-              createTestCommit({
+          const versions: BasicTestCommit[] = []
+
+          // Create versions serially so that we can easily resolve latest/default version
+          for (let i = 0; i < 3; i++) {
+            await wait(10)
+            versions.push(
+              await createTestCommit({
                 streamId: myProject.id,
                 authorId: me.id,
                 message: `Version ${i + 1} for model ${model.name}`,
-                createdAt: dateGen(i),
+                createdAt: new Date(),
                 id: '',
                 objectId: '',
                 branchId: model.id
               })
             )
-          )
+          }
+
+          myVersions[model.id] = versions
         })
       )
     })
@@ -252,15 +264,15 @@ describe('Viewer Resources Collection Service', () => {
         })
       const resourceIdString = [...wrongOrderModelIds, ...wrongOrderModelIds].join(',')
 
-      const result = await sut({
+      const groups = await sut({
         projectId: myProject.id,
         resourceIdString
       })
 
-      expect(result).to.have.length(2)
+      expect(groups).to.have.length(2)
 
       // group ids combined should make up a valid (properly ordered & de-duplicated) resource id string
-      const combinedIdentifierString = result.map((group) => group.identifier).join(',')
+      const combinedIdentifierString = resourceIdStringFromGroups(groups)
       const expectedResources = resourceBuilder().addResources(resourceIdString) // de-duplicates and re-orders
 
       expect(combinedIdentifierString).to.equal(expectedResources.toString())
@@ -270,7 +282,7 @@ describe('Viewer Resources Collection Service', () => {
       describe('w/ saved views', () => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         let firstModelHomeView: SavedView
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
         let secondModelBasicView: SavedView
 
         const firstModel = () => myModels[0]
@@ -282,7 +294,10 @@ describe('Viewer Resources Collection Service', () => {
               author: me,
               project: myProject,
               view: {
-                resourceIds: [firstModel().id],
+                resourceIds: resourceBuilder()
+                  // First model and first version (not default which would be latest version)
+                  .addModel(firstModel().id, myVersions[firstModel().id][0].id)
+                  .toResourceIds(),
                 isHomeView: true
               }
             }),
@@ -290,7 +305,10 @@ describe('Viewer Resources Collection Service', () => {
               author: me,
               project: myProject,
               view: {
-                resourceIds: [secondModel().id],
+                resourceIds: resourceBuilder()
+                  // Second model and first version (not default which would be latest version)
+                  .addModel(secondModel().id, myVersions[secondModel().id][0].id)
+                  .toResourceIds(),
                 isHomeView: false
               }
             })
@@ -307,13 +325,70 @@ describe('Viewer Resources Collection Service', () => {
             async () =>
               await sut({
                 projectId: myProject.id,
-                resourceIdString: firstModel().id,
+                resourceIdString: resourceBuilder()
+                  .addResources(firstModel().id)
+                  .toString(),
                 savedViewId: 'aaa'
               })
           )
           expect(err instanceof NotFoundError).to.be.true
           expect(err.message).to.include('Saved view')
         })
+
+        itEach(
+          [{ loadOriginal: false }, { loadOriginal: true }],
+          ({ loadOriginal }) =>
+            `add saved view resources without changing other ones (loadOriginal=${loadOriginal})`,
+          async ({ loadOriginal }) => {
+            const sut = buildSUT()
+
+            const firstModelIdString = resourceBuilder()
+              // 1st model specific version - should be left as is
+              // 2nd model should be added by the view
+              .addModel(firstModel().id, myVersions[firstModel().id][0].id)
+              .toString()
+
+            const groups = await sut({
+              projectId: myProject.id,
+              resourceIdString: firstModelIdString,
+              savedViewId: secondModelBasicView.id,
+              loadedVersionsOnly: true,
+              savedViewSettings: { loadOriginal }
+            })
+
+            expect(groups).to.have.length(2)
+            const firstModelGroup = groups.find(
+              (g) => g.identifier === firstModelIdString
+            )
+            expect(firstModelGroup).to.be.ok
+            expect(firstModelGroup!.items.length).to.equal(1)
+            expect(firstModelGroup!.items[0].modelId).to.equal(firstModel().id)
+            expect(firstModelGroup!.items[0].versionId).to.equal(
+              myVersions[firstModel().id][0].id
+            )
+            expect(firstModelGroup!.items[0].objectId).to.be.ok
+
+            const secondModelGroup = groups.find((g) => {
+              const groupId = resourceBuilder().addResources(g.identifier)
+              const viewIds = resourceBuilder()
+                .addResources(secondModelBasicView.resourceIds)
+                .forEach((r) => {
+                  if (!isModelResource(r)) return
+
+                  r.versionId = loadOriginal ? r.versionId : undefined // cause we didn't specify anything in the arg resourceIdString for this model
+                })
+
+              return groupId.isEqualTo(viewIds)
+            })
+            expect(secondModelGroup).to.be.ok
+            expect(secondModelGroup!.items.length).to.equal(1)
+            expect(secondModelGroup!.items[0].modelId).to.equal(secondModel().id)
+            expect(secondModelGroup!.items[0].versionId).to.equal(
+              myVersions[secondModel().id].at(loadOriginal ? 0 : -1)!.id
+            )
+            expect(secondModelGroup!.items[0].objectId).to.be.ok
+          }
+        )
       })
     }
   })
