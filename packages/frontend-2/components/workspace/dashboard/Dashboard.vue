@@ -8,13 +8,13 @@
       />
     </Portal>
     <WorkspaceDashboardHeader
-      :workspace="workspace"
+      :workspace="props.workspace"
       :workspace-slug="workspaceSlug"
       :show-billing-alert="showBillingAlert"
     />
     <WorkspaceDashboardProjectList
       :workspace-slug="workspaceSlug"
-      :workspace="workspace"
+      :workspace="props.workspace"
       class="mt-2 lg:mt-4"
     />
   </div>
@@ -63,18 +63,16 @@ useHeadSafe({
 })
 const hasFinalized = ref(false)
 
-const workspace = computed(() => props.workspace)
-
 const showBillingAlert = computed(
   () =>
-    workspace?.value?.role !== Roles.Workspace.Guest &&
-    (workspace.value?.plan?.status === WorkspacePlanStatuses.PaymentFailed ||
-      workspace.value?.plan?.status === WorkspacePlanStatuses.Canceled ||
-      workspace.value?.plan?.status === WorkspacePlanStatuses.CancelationScheduled)
+    props.workspace?.role !== Roles.Workspace.Guest &&
+    (props.workspace?.plan?.status === WorkspacePlanStatuses.PaymentFailed ||
+      props.workspace?.plan?.status === WorkspacePlanStatuses.Canceled ||
+      props.workspace?.plan?.status === WorkspacePlanStatuses.CancelationScheduled)
 )
 
 watch(
-  workspace,
+  () => props.workspace,
   (newWorkspace) => {
     if (newWorkspace) {
       if (
