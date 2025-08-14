@@ -20,7 +20,7 @@
           )
         "
         :active="activePanel === 'models'"
-        :icon="'IconViewerModels'"
+        :icon="Box"
         @click="toggleActivePanel('models')"
       />
       <ViewerControlsButtonToggle
@@ -33,7 +33,7 @@
           )
         "
         :active="activePanel === 'filters'"
-        :icon="'IconViewerExplorer'"
+        :icon="ListFilter"
         :dot="hasActiveFilters"
         @click="toggleActivePanel('filters')"
       />
@@ -47,7 +47,7 @@
           )
         "
         :active="activePanel === 'discussions'"
-        :icon="'IconViewerDiscussions'"
+        :icon="MessageSquareText"
         @click="toggleActivePanel('discussions')"
       />
 
@@ -88,7 +88,7 @@
             )
           "
           :active="activePanel === 'devMode'"
-          :icon="'IconViewerDev'"
+          :icon="CodeXml"
           secondary
           @click="toggleActivePanel('devMode')"
         />
@@ -98,14 +98,14 @@
               placement: 'right'
             })
           "
-          :icon="'IconDocs'"
+          :icon="BookOpen"
           secondary
           @click="openDocs"
         />
         <ViewerControlsButtonToggle
           v-if="isIntercomEnabled"
           v-tippy="getTooltipProps('Get help')"
-          :icon="'IconIntercom'"
+          :icon="CircleQuestionMark"
           secondary
           @click="openIntercomChat"
         />
@@ -166,7 +166,15 @@ import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStat
 import { useIntercomEnabled } from '~~/lib/intercom/composables/enabled'
 import { viewerDocsRoute } from '~~/lib/common/helpers/route'
 import { useAreSavedViewsEnabled } from '~/lib/viewer/composables/savedViews/general'
-import { Camera } from 'lucide-vue-next'
+import {
+  Camera,
+  CodeXml,
+  BookOpen,
+  Box,
+  ListFilter,
+  MessageSquareText,
+  CircleQuestionMark
+} from 'lucide-vue-next'
 import { ModelsSubView } from '~~/lib/viewer/helpers/sceneExplorer'
 
 type ActivePanel =

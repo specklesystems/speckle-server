@@ -270,7 +270,12 @@ const iconClasses = computed(() => {
 
   switch (props.size) {
     case 'sm':
-      classParts.push('h-4 w-4 p-0.5')
+      // Dont add padding to icon if hideText is true on sm size
+      if (props.hideText) {
+        classParts.push('h-4 w-4')
+      } else {
+        classParts.push('h-4 w-4 p-0.5')
+      }
       break
     case 'lg':
       classParts.push('h-6 w-6 p-1')

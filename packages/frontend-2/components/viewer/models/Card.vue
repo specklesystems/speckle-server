@@ -56,8 +56,8 @@
           </div>
         </div>
         <div
-          class="flex items-center ml-auto mr-2 w-0 group-hover:w-auto"
-          :class="showActionsMenu ? '!w-auto' : ''"
+          class="flex items-center ml-auto mr-2 w-0 group-hover:w-auto opacity-0 group-hover:opacity-100 transition"
+          :class="showActionsMenu ? '!w-auto !opacity-100' : ''"
         >
           <LayoutMenu
             v-model:open="showActionsMenu"
@@ -66,16 +66,16 @@
             @click.stop.prevent
             @chosen="onActionChosen"
           >
-            <button
-              class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-6 w-6 flex items-center justify-center"
+            <FormButton
+              hide-text
               :class="{
-                'opacity-100 bg-highlight-3': showActionsMenu,
-                'sm:opacity-0': !showActionsMenu
+                '!bg-highlight-3': showActionsMenu
               }"
-              @click.stop="showActionsMenu = !showActionsMenu"
-            >
-              <IconThreeDots class="w-4 h-4" />
-            </button>
+              color="subtle"
+              :icon-left="Ellipsis"
+              size="sm"
+              @click="showActionsMenu = !showActionsMenu"
+            />
           </LayoutMenu>
           <ViewerVisibilityButton
             :is-hidden="isHidden"
@@ -113,6 +113,7 @@ import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { useLoadLatestVersion } from '~~/lib/viewer/composables/resources'
 import { SpeckleViewer } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { Ellipsis } from 'lucide-vue-next'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 

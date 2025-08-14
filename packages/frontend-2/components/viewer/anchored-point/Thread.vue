@@ -51,7 +51,7 @@
             <div class="flex-grow flex items-center gap-x-1">
               <div class="flex items-center gap-x-0.5">
                 <FormButton
-                  :icon-left="ChevronLeftIcon"
+                  :icon-left="ChevronLeft"
                   color="outline"
                   hide-text
                   size="sm"
@@ -59,7 +59,7 @@
                   @click="emit('prev', modelValue)"
                 />
                 <FormButton
-                  :icon-left="ChevronRightIcon"
+                  :icon-left="ChevronRight"
                   color="outline"
                   hide-text
                   size="sm"
@@ -82,14 +82,15 @@
                     hide-text
                     size="sm"
                     color="subtle"
-                    :icon-left="iconThreeDots"
+                    :class="showMenu ? '!bg-highlight-3' : ''"
+                    :icon-left="Ellipsis"
                     @click="showMenu = !showMenu"
                   />
                 </LayoutMenu>
               </div>
               <FormButton
                 v-tippy="modelValue.archived ? 'Unresolve' : 'Resolve'"
-                :icon-left="IconCircleCheck"
+                :icon-left="CircleCheck"
                 hide-text
                 :disabled="!canArchiveOrUnarchive"
                 color="subtle"
@@ -97,7 +98,7 @@
                 @click="toggleCommentResolvedStatus()"
               />
               <FormButton
-                :icon-left="IconXMark"
+                :icon-left="X"
                 hide-text
                 color="subtle"
                 size="sm"
@@ -176,11 +177,14 @@
 </template>
 <script setup lang="ts">
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ArrowLeftIcon,
-  ArrowUpRightIcon
-} from '@heroicons/vue/24/outline'
+  MoveLeft,
+  MoveRight,
+  CircleCheck,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Ellipsis
+} from 'lucide-vue-next'
 import { ensureError } from '@speckle/shared'
 import type { Nullable } from '@speckle/shared'
 import { onKeyDown, useClipboard, useDraggable, onClickOutside } from '@vueuse/core'
@@ -203,7 +207,6 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { graphql } from '~/lib/common/generated/gql'
-import type { ConcreteComponent } from 'vue'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 
 enum ActionTypes {
@@ -259,7 +262,6 @@ const showMenu = ref(false)
 const commentsContainer = ref(null as Nullable<HTMLElement>)
 const threadContainer = ref(null as Nullable<HTMLElement>)
 const threadActivator = ref(null as Nullable<HTMLElement>)
-const iconThreeDots = resolveComponent('IconThreeDots') as ConcreteComponent
 
 onClickOutside(threadContainer, (event) => {
   const viewerElement = document.getElementById('viewer')
@@ -276,8 +278,6 @@ onClickOutside(threadContainer, (event) => {
 
 const handle = ref(null as Nullable<HTMLElement>)
 const justCreatedReply = ref(false)
-const IconXMark = resolveComponent('IconXMark') as ConcreteComponent
-const IconCircleCheck = resolveComponent('IconCircleCheck') as ConcreteComponent
 
 const comments = computed(() => [
   props.modelValue,
@@ -584,13 +584,13 @@ const bannerButton = computed(() => {
   if (hasClickedFullContext.value) {
     return {
       text: 'Back',
-      icon: ArrowLeftIcon,
+      icon: MoveLeft,
       action: goBack
     }
   }
   return {
     text: 'Full context',
-    icon: ArrowUpRightIcon,
+    icon: MoveRight,
     action: handleContextClick
   }
 })

@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    class="group relative w-full rounded-md pb-2 text-left pl-5 pt-2"
+    class="group relative w-full rounded-md text-left pl-5 pt-1 pb-2"
     :class="
       clickable && !isLimited ? 'hover:bg-highlight-1 cursor-pointer' : 'cursor-default'
     "
@@ -11,14 +11,14 @@
     <!-- Timeline left border -->
     <div
       v-if="showTimeline"
-      class="absolute top-5 left-4 z-10 ml-[2px] w-1 border-l border-outline-3"
+      class="absolute top-4 left-4 z-10 ml-[2px] mt-[2px] w-1 border-l border-outline-3"
       :class="last ? 'h-0' : 'h-[99%]'"
     >
       <div
         v-if="isLoaded"
-        class="absolute -top-2.5 -left-2 flex items-center justify-center h-4 w-4 bg-foundation-2 rounded-full"
+        class="absolute -top-1.5 -left-2 flex items-center justify-center h-4 w-4 bg-foundation-2 rounded-full"
       >
-        <IconCheck class="h-4 w-4 text-foreground" />
+        <Check class="h-3 w-3 text-foreground" />
       </div>
       <div
         v-else
@@ -37,25 +37,29 @@
         </span>
       </div>
       <CommonBadge v-if="isLoaded" rounded>Viewing</CommonBadge>
-      <LayoutMenu
-        v-model:open="showActionsMenu"
-        class="ml-auto mr-2"
-        :items="actionsItems"
-        :menu-position="HorizontalDirection.Left"
-        mount-menu-on-body
-        @click.stop.prevent
-        @chosen="onActionChosen"
-      >
-        <button
-          class="opacity-0 group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-5 w-5 flex items-center justify-center shrink-0"
-          @click.stop="showActionsMenu = !showActionsMenu"
+      <div class="ml-auto mr-2 mt-0.5">
+        <LayoutMenu
+          v-model:open="showActionsMenu"
+          :items="actionsItems"
+          :menu-position="HorizontalDirection.Left"
+          mount-menu-on-body
+          @click.stop.prevent
+          @chosen="onActionChosen"
         >
-          <IconThreeDots />
-        </button>
-      </LayoutMenu>
+          <FormButton
+            hide-text
+            color="subtle"
+            :icon-left="Ellipsis"
+            size="sm"
+            @click.stop="showActionsMenu = !showActionsMenu"
+          >
+            Menu
+          </FormButton>
+        </LayoutMenu>
+      </div>
     </div>
     <!-- Main stuff -->
-    <div class="flex items-center pl-5 gap-2 mt-2">
+    <div class="flex items-center pl-5 gap-2 mt-1">
       <div
         class="bg-foundation h-12 w-12 flex-shrink-0 rounded-md border border-outline-3"
         :class="isLimited ? 'diagonal-stripes' : ''"
@@ -64,7 +68,7 @@
           <div
             class="flex h-8 w-8 items-center justify-center rounded-md bg-foundation border border-outline-3"
           >
-            <LockClosedIcon class="h-4 w-4 text-foreground-3" />
+            <Lock class="h-4 w-4 text-foreground-3" />
           </div>
         </div>
         <PreviewImage v-else :preview-url="version.previewUrl" />
@@ -91,7 +95,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { LockClosedIcon } from '@heroicons/vue/24/solid'
 import { CommonBadge, keyboardClick } from '@speckle/ui-components'
 import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
@@ -101,6 +104,7 @@ import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useCopyModelLink } from '~/lib/projects/composables/modelManagement'
+import { Ellipsis, Check, Lock } from 'lucide-vue-next'
 
 dayjs.extend(localizedFormat)
 
@@ -139,8 +143,6 @@ const {
 } = useInjectedViewerState()
 const copyModelLink = useCopyModelLink()
 
-const IconThreeDots = resolveComponent('IconThreeDots')
-
 const isLoaded = computed(() => props.isLoadedVersion)
 const isLatest = computed(() => props.isLatestVersion)
 
@@ -158,7 +160,6 @@ const createdAt = computed(() => {
 
 const author = computed(() => props.version.authorUser)
 
-const IconCheck = resolveComponent('IconCheck')
 const showActionsMenu = ref(false)
 
 const canDeleteVersion = computed(() => {

@@ -67,6 +67,7 @@ import { onKeyStroke, useBreakpoints } from '@vueuse/core'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { Ruler, Scissors, Sun, Layers2, Glasses } from 'lucide-vue-next'
 
 enum ActivePanel {
   none = 'none',
@@ -111,7 +112,7 @@ const panels = shallowRef({
   [ActivePanel.measurements]: {
     id: ActivePanel.measurements,
     name: 'Measure',
-    icon: 'IconViewerMeasurements',
+    icon: Ruler,
     tooltip: getShortcutDisplayText(shortcuts.ToggleMeasurements, {
       format: 'separate'
     }),
@@ -120,28 +121,28 @@ const panels = shallowRef({
   [ActivePanel.sectionBox]: {
     id: ActivePanel.sectionBox,
     name: 'Section',
-    icon: 'IconViewerSectionBox',
+    icon: Scissors,
     tooltip: getShortcutDisplayText(shortcuts.ToggleSectionBox, { format: 'separate' }),
     extraClasses: ''
   },
   [ActivePanel.explode]: {
     id: ActivePanel.explode,
     name: 'Explode',
-    icon: 'IconViewerExplode',
+    icon: Layers2,
     tooltip: getShortcutDisplayText(shortcuts.ToggleExplode, { format: 'separate' }),
     extraClasses: 'hidden md:flex'
   },
   [ActivePanel.viewModes]: {
     id: ActivePanel.viewModes,
     name: 'View modes',
-    icon: 'IconViewerViewModes',
+    icon: Glasses,
     tooltip: getShortcutDisplayText(shortcuts.ToggleViewModes, { format: 'separate' }),
     extraClasses: ''
   },
   [ActivePanel.lightControls]: {
     id: ActivePanel.lightControls,
     name: 'Light controls',
-    icon: 'IconViewerLightControls',
+    icon: Sun,
     tooltip: getShortcutDisplayText(shortcuts.ToggleLightControls, {
       format: 'separate'
     }),

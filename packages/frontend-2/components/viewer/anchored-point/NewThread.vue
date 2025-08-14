@@ -14,7 +14,7 @@
         class="bg-foundation-2 outline outline-2 outline-primary rounded-tr-full rounded-tl-full rounded-br-full w-8 h-8 -top-10 absolute flex justify-center items-center hover:shadow-md"
         @click="onThreadClick"
       >
-        <PlusIcon
+        <Plus
           :class="`w-5 h-5 text-primary ${
             modelValue.isExpanded ? 'rotate-45' : ''
           } transition`"
@@ -27,7 +27,7 @@
         >
           Add Comment
           <button v-tippy="'Close'" @click="onThreadClick">
-            <PlusIcon class="w-5 h-5 text-foreground-2 rotate-45" />
+            <Plus class="w-4 h-4 text-foreground-2 rotate-45" />
           </button>
         </div>
         <FormFileUploadZone
@@ -60,15 +60,14 @@
             />
             <div class="w-full flex justify-between items-center p-1">
               <FormButton
-                :icon-left="PaperClipIcon"
+                :icon-left="Paperclip"
                 hide-text
                 :disabled="isPostingNewThread"
                 color="subtle"
-                class="!bg-foundation dark:!bg-foundation-2"
                 @click="trackAttachAndOpenFilePicker()"
               />
               <FormButton
-                :icon-left="PaperAirplaneIcon"
+                :icon-left="SendHorizonal"
                 hide-text
                 :loading="isPostingNewThread"
                 @click="() => onSubmit()"
@@ -82,7 +81,6 @@
   <div v-else></div>
 </template>
 <script setup lang="ts">
-import { PlusIcon, PaperAirplaneIcon, PaperClipIcon } from '@heroicons/vue/24/solid'
 import type { Nullable } from '@speckle/shared'
 import { onKeyDown } from '@vueuse/core'
 import { useIsTypingUpdateEmitter } from '~~/lib/viewer/composables/commentBubbles'
@@ -100,6 +98,7 @@ import { useServerFileUploadLimit } from '~~/lib/common/composables/serverInfo'
 import { UniqueFileTypeSpecifier } from '~~/lib/core/helpers/file'
 import { acceptedFileExtensions } from '@speckle/shared/blobs'
 import type { UploadableFileItem } from '@speckle/ui-components'
+import { Paperclip, SendHorizonal, Plus } from 'lucide-vue-next'
 
 const { isEnabled: isEmbedEnabled } = useEmbed()
 

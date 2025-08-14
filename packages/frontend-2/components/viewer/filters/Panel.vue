@@ -19,6 +19,7 @@
         <FormButton
           v-tippy="'Toggle coloring'"
           color="subtle"
+          size="sm"
           hide-text
           :icon-right="colors ? 'IconColouring' : 'IconColouringOutline'"
           @click="toggleColors()"

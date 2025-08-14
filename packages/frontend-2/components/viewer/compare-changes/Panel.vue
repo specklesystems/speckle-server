@@ -3,7 +3,7 @@
     <template #title>
       <div class="flex items-center gap-x-1">
         <FormButton
-          :icon-left="ChevronLeftIcon"
+          :icon-left="ChevronLeft"
           color="subtle"
           class="-ml-3"
           hide-text
@@ -71,7 +71,7 @@
   </ViewerLayoutSidePanel>
 </template>
 <script setup lang="ts">
-import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
+import { ChevronLeft } from 'lucide-vue-next'
 import { VisualDiffMode } from '@speckle/viewer'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { uniqBy, debounce } from 'lodash-es'

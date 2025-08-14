@@ -3,7 +3,7 @@
     <template #title>
       <div class="flex items-center gap-x-1">
         <FormButton
-          :icon-left="ChevronLeftIcon"
+          :icon-left="ChevronLeft"
           color="subtle"
           class="-ml-3"
           hide-text
@@ -58,7 +58,7 @@ import { SpeckleViewer } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { ViewerEvent } from '@speckle/viewer'
 import { useViewerEventListener } from '~~/lib/viewer/composables/viewer'
-import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
+import { ChevronLeft } from 'lucide-vue-next'
 import { useDiffUtilities } from '~~/lib/viewer/composables/ui'
 
 const props = defineProps<{

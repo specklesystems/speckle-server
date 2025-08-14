@@ -52,7 +52,7 @@
           }`"
           @click.stop="hideOrShowObject"
         > -->
-        <EyeSlashIcon v-if="isHidden" class="h-3 w-3" />
+        <EyeClosed v-if="isHidden" class="h-3 w-3" />
         <!-- </button>
         <button
           :class="`hover:text-primary px-1 py-2 opacity-0 transition group-hover:opacity-100 ${
@@ -60,8 +60,8 @@
           }`"
           @click.stop="isolateOrUnisolateObject"
         > -->
-        <FunnelIconOutline v-if="!isIsolated" class="h-3 w-3" />
-        <FunnelIcon v-else class="h-3 w-3" />
+        <FunnelX v-if="!isIsolated" class="h-3 w-3" />
+        <Funnel v-else class="h-3 w-3" />
         <!-- </button> -->
       </div>
     </button>
@@ -72,11 +72,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { EyeSlashIcon, FunnelIcon } from '@heroicons/vue/24/solid'
-import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 import { containsAll, hasIntersection } from '~~/lib/common/helpers/utils'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import { EyeClosed, Funnel, FunnelX } from 'lucide-vue-next'
 
 const props = defineProps<{
   item: {
