@@ -104,7 +104,8 @@ export type CreateAndStorePersonalAccessToken = (
   userId: string,
   name: string,
   scopes: ServerScope[],
-  lifespan?: number | bigint
+  lifespan?: number | bigint,
+  limitResources?: TokenResourceIdentifierInput[] | null
 ) => Promise<string>
 
 export type CreateAndStoreEmbedToken = (args: {
