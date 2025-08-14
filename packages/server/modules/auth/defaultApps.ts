@@ -140,6 +140,7 @@ const SpecklePowerBi = {
     Scopes.Profile.Email,
     Scopes.Users.Read,
     Scopes.Users.Invite,
+    Scopes.Tokens.Write,
     ...workspaceScopes
   ]
 }

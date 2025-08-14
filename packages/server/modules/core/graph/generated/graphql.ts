@@ -271,6 +271,8 @@ export type ApiToken = {
 
 export type ApiTokenCreateInput = {
   lifespan?: InputMaybe<Scalars['BigInt']['input']>;
+  /** Optionally limit the token to only have access to specific resources */
+  limitResources?: InputMaybe<Array<TokenResourceIdentifierInput>>;
   name: Scalars['String']['input'];
   scopes: Array<Scalars['String']['input']>;
 };
