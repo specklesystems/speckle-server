@@ -18,6 +18,7 @@ import { has, isObjectLike, isString, mapValues, pick, times } from 'lodash-es'
 import cryptoRandomString from 'crypto-random-string'
 import { logger } from '@/observability/logging'
 import { isEqual } from 'lodash-es'
+import { PromiseAllSettledResultStatus } from '@/modules/shared/domain/constants'
 
 export type Collection<T> = {
   cursor: string | null
@@ -367,49 +368,71 @@ export const replicateQuery = <T, U>(
       )
 
       const errors = results.filter((result): result is PromiseRejectedResult => {
-        return result.status === 'rejected'
+        return result.status === PromiseAllSettledResultStatus.rejected
       })
 
       if (errors.length > 0) {
         logger.error(
           {
             params,
-            errors
+            errors,
+            errorCount: errors.length,
+            resultCount: results.length
           },
-          `Failed ${errors.length} of ${results.length} transactions in 2PC operation.`
+          `Failed {errorCount} of {resultCount} transactions in 2PC operation.`
         )
-        throw new RegionalTransactionError()
+        throw new RegionalTransactionError(
+          'Failed some or all transactions in 2PC operation.',
+          preparedTransactions
+        )
       }
 
       // TODO: Do we need this validation?
       if (!returnValues.every((value) => isEqual(value, returnValues[0]))) {
         throw new RegionalTransactionError(
-          'Return values of 2PC transactions do not match'
+          'Return values of 2PC transactions do not match',
+          preparedTransactions
         )
       }
 
       return returnValues[0]
-    } catch (err) {
+    } catch {
       const rollbacks = preparedTransactions.map(async ({ knex, preparedId }) => {
         try {
           await rollbackPreparedTransaction(knex, preparedId)
-        } catch {
+        } catch (err) {
           logger.error(
             { preparedId },
             'Failed to rollback prepared transaction {preparedId}'
           )
+          throw err
         }
       })
 
-      console.warn(err, 'Error during 2PC operation. Rolling back all transactions.')
+      logger.warn(
+        {
+          preparedTransactions: preparedTransactions.map(({ preparedId }) => preparedId)
+        },
+        'Error during 2PC operation. Rolling back all transactions.'
+      )
 
       const results = await Promise.allSettled(rollbacks)
 
-      if (results.some((result) => result.status === 'rejected')) {
-        throw new RegionalTransactionFatalError()
+      if (
+        results.some(
+          (result) => result.status === PromiseAllSettledResultStatus.rejected
+        )
+      ) {
+        throw new RegionalTransactionFatalError(
+          'Failed to rollback all transactions.',
+          preparedTransactions
+        )
       }
 
-      throw new RegionalTransactionError()
+      throw new RegionalTransactionError(
+        'Failed to complete 2PC operation but successfully recovered.',
+        preparedTransactions
+      )
     }
   }
 }
