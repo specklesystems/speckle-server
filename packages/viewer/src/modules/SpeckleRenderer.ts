@@ -112,17 +112,17 @@ export class RenderingStats {
 }
 
 export interface ObjectPickConfiguration {
-  pickedObjectsFilter: (arg: [NodeRenderView, Material]) => boolean
+  pickedObjectsFilter: ((arg: [NodeRenderView, Material]) => boolean) | null
 }
 
 export const DefaultObjctPickConfiguration = {
   pickedObjectsFilter: (arg: [NodeRenderView, Material]) => {
     const material = arg[1]
     return (
-      material &&
-      material.visible &&
-      (material.transparent ? material.opacity > 0 : true) &&
-      !(material instanceof SpeckleGhostMaterial)
+      material && // Mateirial exists
+      material.visible && // Material is visible
+      (material.transparent ? material.opacity > 0 : true) && // Material is transparent and opacity is non zero
+      !(material instanceof SpeckleGhostMaterial) // Material is not a GhostMaterial
     )
   }
 }
@@ -1038,8 +1038,10 @@ export default class SpeckleRenderer {
         results[k]
       )
       if (
-        rvMaterial[0] &&
-        this.objectPickConfiguration.pickedObjectsFilter(rvMaterial)
+        rvMaterial[0] && // If the rv exists
+        this.objectPickConfiguration.pickedObjectsFilter // If there is a pick filter
+          ? this.objectPickConfiguration.pickedObjectsFilter(rvMaterial) // If the pick filter passes
+          : true
       ) {
         rvs.push(rvMaterial[0])
         points.push(results[k].point)
