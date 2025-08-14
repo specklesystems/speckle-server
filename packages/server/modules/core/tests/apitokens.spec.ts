@@ -31,6 +31,9 @@ import {
   storeTokenScopesFactory,
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+
+const { FF_USERS_INVITE_SCOPE_IS_PUBLIC } = getFeatureFlags()
 
 const createApp = createAppFactory({ db })
 const createAppToken = createAppTokenFactory({
@@ -130,6 +133,44 @@ describe('API Tokens', () => {
         )
       )
     ).to.be.ok
+  })
+  describe(`FF_USERS_INVITE_SCOPE_IS_PUBLIC is ${
+    FF_USERS_INVITE_SCOPE_IS_PUBLIC ? 'enabled' : 'disabled'
+  }`, () => {
+    it(`${
+      FF_USERS_INVITE_SCOPE_IS_PUBLIC ? 'can' : 'cannot'
+    } create a PAT with users:invite`, async () => {
+      const scopes = [Scopes.Profile.Read, Scopes.Users.Invite, Scopes.Tokens.Write]
+      const { data, errors } = await apollo.execute(
+        CreateTokenDocument,
+        {
+          token: {
+            name: 'invalidone',
+            scopes: [Scopes.Profile.Read, Scopes.Streams.Read]
+          }
+        },
+        {
+          context: {
+            scopes
+          }
+        }
+      )
+
+      if (FF_USERS_INVITE_SCOPE_IS_PUBLIC) {
+        expect(data?.apiTokenCreate).to.be.ok
+        expect(errors).to.be.undefined
+      } else {
+        expect(data?.apiTokenCreate).to.not.be.ok
+        expect(errors).to.be.ok
+        expect(
+          errors!.find((e) =>
+            e.message.includes(
+              "You can't create a personal access token with the users:invite scope"
+            )
+          )
+        ).to.be.ok
+      }
+    })
   })
 
   describe('without the tokens:write scope', () => {
