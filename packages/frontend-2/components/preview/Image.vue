@@ -1,6 +1,6 @@
+<!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
   <div
     ref="parent"
     class="relative w-full h-full"
@@ -14,67 +14,43 @@
         clientY: e.touches[0].clientY
       })"
   >
-    <Transition
-      enter-from-class="opacity-0"
-      enter-active-class="transition duration-300"
-      leave-to-class="opacity-0"
-      leave-active-class="transition duration-300"
-    >
-      <div v-if="shouldShowMainPreview" class="relative w-full h-full">
-        <CommonTransitioningContents
-          ref="finalPreviewTransitioner"
-          class="w-full h-full"
+    <div v-if="shouldShowMainPreview" class="relative w-full h-full">
+      <CommonTransitioningContents ref="finalPreviewTransitioner" class="w-full h-full">
+        <div
+          v-show="!hasDoneFirstLoad || !finalPreviewUrl?.length"
+          :class="[
+            mainPreviewClasses,
+            'absolute inset-0 flex items-center justify-center bg-foundation-page rounded-xl'
+          ]"
         >
-          <div
-            v-if="!hasDoneFirstLoad || !finalPreviewUrl?.length"
-            :class="[mainPreviewClasses, 'flex items-center justify-center']"
-          >
-            <CommonLoadingIcon class="opacity-50" />
-          </div>
-          <div
-            v-else
-            :class="mainPreviewClasses"
-            :style="{
-              backgroundImage: `url('${finalPreviewUrl}')`
-            }"
-          />
-        </CommonTransitioningContents>
-      </div>
-    </Transition>
-    <Transition
-      enter-from-class="opacity-0"
-      enter-active-class="transition duration-300"
-      leave-to-class="opacity-0"
-      leave-active-class="transition duration-300"
-    >
-      <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
-      <div
-        v-show="shouldShowPanoramicPreview"
-        ref="panorama"
-        :style="{
-          backgroundImage: panoramaPreviewUrl
-            ? `url('${panoramaPreviewUrl}')`
-            : undefined,
-          backgroundSize: 'cover',
-          backgroundPosition: `${positionMagic}px 0`,
-          position: 'absolute',
-          top: '0',
-          width: '100%',
-          height: '100%'
-        }"
-      />
-    </Transition>
-    <Transition
-      enter-from-class="opacity-0"
-      leave-to-class="opacity-0"
-      enter-active-class="transition duration-300"
-      leave-active-class="transition duration-300"
-    >
-      <CommonLoadingBar
-        :loading="isLoadingPanorama && hovered"
-        class="absolute bottom-0 w-full"
-      />
-    </Transition>
+          <CommonLoadingIcon class="opacity-50" />
+        </div>
+        <div
+          :class="mainPreviewClasses"
+          :style="{
+            backgroundImage: `url('${finalPreviewUrl}')`
+          }"
+        />
+      </CommonTransitioningContents>
+    </div>
+    <div
+      v-show="shouldShowPanoramicPreview"
+      ref="panorama"
+      :style="{
+        backgroundImage: panoramaPreviewUrl
+          ? `url('${panoramaPreviewUrl}')`
+          : undefined,
+        backgroundSize: 'cover',
+        backgroundPosition: `${positionMagic}px 0`,
+        position: 'absolute',
+        top: '0',
+        width: '100%',
+        height: '100%'
+      }"
+    />
+    <div class="absolute inset-0 flex items-end rounded-b-xl overflow-hidden">
+      <CommonLoadingBar :loading="isLoadingPanorama && hovered" />
+    </div>
   </div>
 </template>
 <script setup lang="ts">
