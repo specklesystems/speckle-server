@@ -51,7 +51,8 @@ const resolvers = {
             context.userId!,
             args.token.name,
             args.token.scopes.filter(isValidScope),
-            args.token.lifespan || undefined
+            args.token.lifespan || undefined,
+            args.token.limitResources || null
           ),
         {
           logger: context.log,
