@@ -33,18 +33,27 @@
         </FormButton>
       </div>
     </div>
+
+    <div class="lg:hidden mb-2">
+      <WorkspaceSidebarMembers
+        :workspace="workspace"
+        :is-workspace-admin="isWorkspaceAdmin"
+        :is-workspace-guest="isWorkspaceGuest"
+      />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import type { WorkspaceDashboard_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
+import type { WorkspaceDashboardHeader_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { Cog8ToothIcon } from '@heroicons/vue/24/outline'
 import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment WorkspaceDashboardHeader_Workspace on Workspace {
+    ...WorkspaceSidebarMembers_Workspace
     ...WorkspaceAddProjectMenu_Workspace
     ...BillingAlert_Workspace
     id
@@ -54,12 +63,14 @@ graphql(`
 
 const props = defineProps<{
   workspaceSlug: string
-  workspace: MaybeNullOrUndefined<WorkspaceDashboard_WorkspaceFragment>
+  workspace: MaybeNullOrUndefined<WorkspaceDashboardHeader_WorkspaceFragment>
   showBillingAlert?: boolean
 }>()
 
 const { activeUser } = useActiveUser()
 
+const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
+const isWorkspaceGuest = computed(() => props.workspace?.role === Roles.Workspace.Guest)
 const isWorkspaceMember = computed(
   () => props.workspace?.role === Roles.Workspace.Member
 )
