@@ -1,0 +1,93 @@
+---
+description: Development workflow, git practices, and code quality guidelines
+globs: []
+alwaysApply: false
+---
+
+# Development Workflow
+
+## Git & GitHub Practices
+
+### Commit Messages
+
+- **Conventional commits** for changelog generation
+- **Semantic commit format**: `type(scope): description`
+- **Always squash PRs** when merging into main
+- **Meaningful commit messages** that explain the "why"
+
+Examples:
+
+```
+feat(components): add new Button component with variants
+fix(auth): resolve login redirect issue
+docs(readme): update installation instructions
+refactor(utils): simplify date formatting logic
+```
+
+### Branch Management
+
+- **Feature branches** for all changes
+- **Pull requests** required for main branch
+- **Branch naming**: `feature/description`, `fix/issue-description`, `chore/task-name`
+- **Clean history** - squash commits before merging
+
+## Code Quality
+
+### Pre-commit Checks
+
+- **ESLint** must pass before commits
+- **TypeScript** compilation without errors
+- **Prettier** formatting enforced
+- **Husky hooks** for automated checks
+
+### Code Review Guidelines
+
+- **Small, focused PRs** - easier to review and understand
+- **Clear PR descriptions** with context and screenshots
+- **Test your changes** before requesting review
+- **Respond to feedback** constructively
+
+## Documentation
+
+### Code Documentation
+
+- **JSDoc** for complex functions
+- **Type annotations** for all parameters when JSDoc is applicable
+- **README** files for packages
+- **Document business logic** - but don't add redundant comments
+- **Follow existing patterns** consistently
+
+### Component Documentation
+
+- **Storybook stories** for UI components
+- **Usage examples** in documentation
+- **Props documentation** with types
+- **Accessibility notes** where relevant
+
+## Accessibility Guidelines
+
+### Requirements
+
+- **ARIA labels** for interactive elements
+- **Keyboard navigation** support
+- **Screen reader** compatibility
+- **Color contrast** compliance when possible
+- **Focus management** in modals/dialogs
+
+## Working with This Codebase
+
+### Key Principles
+
+1. **Follow TypeScript strict mode** - No any types without good reason
+2. **Use composition API** - Prefer composables over mixins
+3. **Keep components focused** - Single responsibility principle
+4. **Consider accessibility**
+5. **Document complex logic** - Document business logic, but don't add redundant comments
+6. **Follow existing patterns**
+
+### When in Doubt
+
+- **Check existing implementations** for similar functionality
+- **Ask questions** in code reviews or discussions
+- **Refer to the design system** before creating custom styles
+- **Use the logging composables** instead of console.log
