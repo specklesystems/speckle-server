@@ -181,7 +181,10 @@ import {
   EdgesPipeline
 } from './modules/pipeline/Pipelines/EdgesPipeline.js'
 import { Geometry } from './modules/converter/Geometry.js'
-
+import {
+  ObjectPickConfiguration,
+  DefaultObjectPickConfiguration
+} from './modules/SpeckleRenderer.js'
 export {
   Viewer,
   LegacyViewer,
@@ -189,7 +192,9 @@ export {
   SpeckleWebGLRenderer,
   DefaultViewerParams,
   ViewerEvent,
+  ObjectPickConfiguration,
   DefaultLightConfiguration,
+  DefaultObjectPickConfiguration,
   World,
   BatchObject,
   InstancedBatchObject,
