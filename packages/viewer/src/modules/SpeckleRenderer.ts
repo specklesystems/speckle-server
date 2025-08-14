@@ -74,6 +74,7 @@ import Logger from './utils/Logger.js'
 import '../type-augmentations/three-extensions.js'
 import { TextBatch } from '../index.js'
 import { SpeckleBatchedText } from './objects/SpeckleBatchedText.js'
+import SpeckleGhostMaterial from './materials/SpeckleGhostMaterial.js'
 
 export class RenderingStats {
   private renderTimeAcc = 0
@@ -110,6 +111,22 @@ export class RenderingStats {
   }
 }
 
+export interface ObjectPickConfiguration {
+  pickedObjectsFilter: (arg: [NodeRenderView, Material]) => boolean
+}
+
+export const DefaultObjctPickConfiguration = {
+  pickedObjectsFilter: (arg: [NodeRenderView, Material]) => {
+    const material = arg[1]
+    return (
+      material &&
+      material.visible &&
+      (material.transparent ? material.opacity > 0 : true) &&
+      !(material instanceof SpeckleGhostMaterial)
+    )
+  }
+}
+
 export default class SpeckleRenderer {
   protected readonly SHOW_HELPERS = false
   protected readonly IGNORE_ZERO_OPACITY_OBJECTS = true
@@ -138,6 +155,9 @@ export default class SpeckleRenderer {
   protected _clippingVolume: OBB = new OBB()
 
   protected _renderOverride: (() => void) | null = null
+
+  public objectPickConfiguration: ObjectPickConfiguration =
+    DefaultObjctPickConfiguration
 
   public viewer: Viewer // TEMPORARY
   public batcher: Batcher
@@ -1011,12 +1031,17 @@ export default class SpeckleRenderer {
   public queryHits(
     results: Array<ExtendedIntersection>
   ): Array<{ node: TreeNode; point: Vector3 }> | null {
-    const rvs = []
+    const rvs: Array<NodeRenderView> = []
     const points = []
     for (let k = 0; k < results.length; k++) {
-      const rv = this.renderViewFromIntersection(results[k])
-      if (rv) {
-        rvs.push(rv)
+      const rvMaterial: [NodeRenderView, Material] = this.renderViewFromIntersection(
+        results[k]
+      )
+      if (
+        rvMaterial[0] &&
+        this.objectPickConfiguration.pickedObjectsFilter(rvMaterial)
+      ) {
+        rvs.push(rvMaterial[0])
         points.push(results[k].point)
       }
     }
@@ -1071,15 +1096,14 @@ export default class SpeckleRenderer {
   // TO DO: Maybe need a better way
   public renderViewFromIntersection(
     intersection: ExtendedIntersection
-  ): NodeRenderView | null {
+  ): [NodeRenderView, Material] {
     let rv = null
+    let material = null
     if (intersection.batchObject) {
       rv = intersection.batchObject.renderView
-      const material = (intersection.object as SpeckleMesh).getBatchObjectMaterial(
+      material = (intersection.object as SpeckleMesh).getBatchObjectMaterial(
         intersection.batchObject
       )
-      if (material && material.opacity === 0 && this.IGNORE_ZERO_OPACITY_OBJECTS)
-        return null
     } else {
       const index =
         intersection.faceIndex !== undefined && intersection.faceIndex !== null
@@ -1090,17 +1114,13 @@ export default class SpeckleRenderer {
       if (index !== undefined) {
         rv = this.batcher.getRenderView(intersection.object.uuid, index)
         if (rv) {
-          const material = this.batcher.getRenderViewMaterial(
-            intersection.object.uuid,
-            index
-          )
-          if (material && material.opacity === 0 && this.IGNORE_ZERO_OPACITY_OBJECTS)
-            return null
+          material = this.batcher.getRenderViewMaterial(intersection.object.uuid, index)
         }
       }
     }
-
-    return rv
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
+    return [rv, material]
   }
 
   private onClick(e: Vector2 & { multiSelect: boolean; event: PointerEvent }) {

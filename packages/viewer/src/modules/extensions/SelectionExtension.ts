@@ -59,11 +59,11 @@ export class SelectionExtension extends Extension {
   protected selectedNodes: Array<TreeNode> = []
   protected selectionRvs: { [id: string]: NodeRenderView } = {}
   protected selectionMaterials: { [id: string]: Material } = {}
-  protected hoverRv!: NodeRenderView | null
-  protected hoverMaterial!: Material | null
-  protected selectionMaterialData!: RenderMaterial & DisplayStyle & MaterialOptions
-  protected hoverMaterialData!: RenderMaterial & DisplayStyle & MaterialOptions
-  protected transparentSelectionMaterialData!: RenderMaterial &
+  protected hoverRv: NodeRenderView | null
+  protected hoverMaterial: Material | null
+  protected selectionMaterialData: RenderMaterial & DisplayStyle & MaterialOptions
+  protected hoverMaterialData: RenderMaterial & DisplayStyle & MaterialOptions
+  protected transparentSelectionMaterialData: RenderMaterial &
     DisplayStyle &
     MaterialOptions
   protected transparentHoverMaterialData!: RenderMaterial &
