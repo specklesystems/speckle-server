@@ -7,7 +7,11 @@
           :workspace-slug="workspaceSlug"
           :token="token"
         />
-        <WorkspaceDashboard v-else :workspace-slug="workspaceSlug" />
+        <WorkspaceDashboard
+          v-else
+          :workspace-slug="workspaceSlug"
+          :workspace="workspace"
+        />
       </div>
     </main>
 
@@ -16,15 +20,25 @@
       class="hidden lg:flex h-full w-[17rem] shrink-0 border-l border-outline-3 bg-foundation-page"
     >
       <div class="h-full w-full">
-        <WorkspaceSidebar :workspace-slug="workspaceSlug" />
+        <WorkspaceSidebar :workspace-slug="workspaceSlug" :workspace="workspace" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useQuery } from '@vue/apollo-composable'
 import { useOnWorkspaceUpdated } from '~/lib/workspaces/composables/management'
 import { useWorkspaceProjectsUpdatedTracking } from '~/lib/workspaces/composables/projectUpdates'
+import { graphql } from '~~/lib/common/generated/gql'
+import { workspacePageQuery } from '~~/lib/workspaces/graphql/queries'
+
+graphql(`
+  fragment WorkspacePage_Workspace on Workspace {
+    ...WorkspaceDashboard_Workspace
+    ...WorkspaceSidebar_Workspace
+  }
+`)
 
 definePageMeta({
   middleware: ['requires-workspaces-enabled', 'require-valid-workspace'],
@@ -33,8 +47,22 @@ definePageMeta({
 
 const route = useRoute()
 const workspaceSlug = computed(() => route.params.slug as string)
+
+const pageFetchPolicy = usePageQueryStandardFetchPolicy()
+const { result: workspacePageResult } = useQuery(
+  workspacePageQuery,
+  () => ({
+    workspaceSlug: route.params.slug as string,
+    invitesFilter: {}
+  }),
+  () => ({
+    fetchPolicy: pageFetchPolicy.value || 'cache-first',
+    errorPolicy: 'all'
+  })
+)
+const token = computed(() => route.query.token as string | undefined)
+const workspace = computed(() => workspacePageResult.value?.workspaceBySlug)
+
 useOnWorkspaceUpdated({ workspaceSlug })
 useWorkspaceProjectsUpdatedTracking(workspaceSlug)
-
-const token = computed(() => route.query.token as string | undefined)
 </script>
