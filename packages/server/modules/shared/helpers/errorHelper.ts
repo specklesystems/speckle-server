@@ -42,6 +42,7 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
     case Authz.WorkspacePlanNoFeatureAccessError.code:
     case Authz.EligibleForExclusiveWorkspaceError.code:
     case Authz.AutomateFunctionNotCreatorError.code:
+    case Authz.SavedViewNoAccessError.code:
       return new ForbiddenError(e.message)
     case Authz.WorkspaceSsoSessionNoAccessError.code:
       throw new SsoSessionMissingOrExpiredError(e.message, {

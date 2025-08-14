@@ -13,7 +13,11 @@ import { FeatureFlags, parseFeatureFlags } from '../environment/index.js'
 import { mapValues } from 'lodash'
 import { WorkspacePlan } from '../workspaces/index.js'
 import { TIME_MS } from '../core/index.js'
-import { SavedView, SavedViewGroup } from '../authz/domain/savedViews/types.js'
+import {
+  SavedView,
+  SavedViewGroup,
+  SavedViewVisibility
+} from '../authz/domain/savedViews/types.js'
 
 export const fakeGetFactory =
   <T extends Record<string, unknown>>(defaults: () => T) =>
@@ -81,7 +85,8 @@ export const getSavedViewFake = fakeGetFactory<SavedView>(() => ({
   name: nanoid(10),
   authorId: nanoid(10),
   projectId: nanoid(10),
-  groupId: null
+  groupId: null,
+  visibility: SavedViewVisibility.public
 }))
 
 export const getSavedViewGroupFake = fakeGetFactory<SavedViewGroup>(() => ({

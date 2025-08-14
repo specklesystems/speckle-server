@@ -206,6 +206,11 @@ export const SavedViewNotFoundError = defineAuthError({
   message: 'Saved view not found'
 })
 
+export const SavedViewNoAccessError = defineAuthError({
+  code: 'SavedViewNoAccess',
+  message: 'You do not have access to this saved view'
+})
+
 export const SavedViewGroupNotFoundError = defineAuthError({
   code: 'SavedViewGroupNotFound',
   message: 'Saved view group not found'

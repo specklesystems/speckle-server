@@ -50,7 +50,7 @@ describe('canUpdateSavedViewGroupPolicy', () => {
     const result = await policy({
       userId: 'user-id',
       projectId: 'project-id',
-      groupId: 'saved-group-id'
+      savedViewGroupId: 'saved-group-id'
     })
 
     expect(result).toBeAuthErrorResult({
@@ -90,7 +90,7 @@ describe('canUpdateSavedViewGroupPolicy', () => {
       const result = await sut({
         userId: 'user-id',
         projectId: 'project-id',
-        groupId: 'saved-group-id'
+        savedViewGroupId: 'saved-group-id'
       })
 
       expect(result).toBeOKResult()
@@ -107,7 +107,7 @@ describe('canUpdateSavedViewGroupPolicy', () => {
       const result = await sut({
         userId: 'user-id',
         projectId: 'project-id',
-        groupId: 'saved-group-id'
+        savedViewGroupId: 'saved-group-id'
       })
 
       expect(result).toBeAuthErrorResult({
@@ -126,7 +126,7 @@ describe('canUpdateSavedViewGroupPolicy', () => {
       const result = await sut({
         userId: 'user-id',
         projectId: 'project-id',
-        groupId: 'saved-group-id'
+        savedViewGroupId: 'saved-group-id'
       })
 
       expect(result).toBeAuthErrorResult({
@@ -142,7 +142,7 @@ describe('canUpdateSavedViewGroupPolicy', () => {
       const result = await sut({
         userId: 'user-id',
         projectId: 'project-id',
-        groupId: 'saved-group-id'
+        savedViewGroupId: 'saved-group-id'
       })
 
       expect(result).toBeAuthErrorResult({
@@ -160,7 +160,7 @@ describe('canUpdateSavedViewGroupPolicy', () => {
       const result = await sut({
         userId: 'aaa',
         projectId: 'project-id',
-        groupId: 'saved-group-id'
+        savedViewGroupId: 'saved-group-id'
       })
       expect(result).toBeAuthErrorResult({
         code: ServerNoAccessError.code
@@ -179,7 +179,7 @@ describe('canUpdateSavedViewGroupPolicy', () => {
       const result = await sut({
         userId: 'user-id',
         projectId: 'project-id',
-        groupId: 'saved-group-id'
+        savedViewGroupId: 'saved-group-id'
       })
 
       expect(result).toBeAuthErrorResult({
@@ -198,7 +198,7 @@ describe('canUpdateSavedViewGroupPolicy', () => {
       const result = await sut({
         userId: 'user-id',
         projectId: 'project-id',
-        groupId: 'default-XXX'
+        savedViewGroupId: 'default-XXX'
       })
 
       expect(result).toBeAuthErrorResult({
@@ -218,7 +218,7 @@ describe('canUpdateSavedViewGroupPolicy', () => {
       const result = await sut({
         userId: 'user-id',
         projectId: 'project-id',
-        groupId: 'saved-group-id'
+        savedViewGroupId: 'saved-group-id'
       })
 
       expect(result).toBeOKResult()

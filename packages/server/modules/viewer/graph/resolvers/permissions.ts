@@ -40,7 +40,7 @@ const resolvers: Resolvers = {
       const canUpdate = await ctx.authPolicies.project.savedViews.canUpdateGroup({
         userId: ctx.userId,
         projectId: parent.savedViewGroup.projectId,
-        groupId: savedViewGroupId
+        savedViewGroupId
       })
       return toGraphqlResult(canUpdate)
     }

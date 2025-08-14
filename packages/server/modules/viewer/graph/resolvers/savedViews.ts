@@ -122,12 +122,20 @@ const resolvers: Resolvers = {
       return group
     },
     savedView: async (parent, args, ctx) => {
-      const projectDb = await getProjectDbClient({ projectId: parent.id })
+      const projectId = parent.id
+      const canRead = await ctx.authPolicies.project.savedViews.canRead({
+        userId: ctx.userId,
+        projectId,
+        savedViewId: args.id
+      })
+      throwIfAuthNotOk(canRead)
+
+      const projectDb = await getProjectDbClient({ projectId })
       const view = await ctx.loaders
         .forRegion({ db: projectDb })
         .savedViews.getSavedView.load({
           viewId: args.id,
-          projectId: parent.id
+          projectId
         })
       if (!view) {
         throw new NotFoundError(
@@ -138,15 +146,26 @@ const resolvers: Resolvers = {
       return view
     },
     savedViewIfExists: async (parent, args, ctx) => {
+      const projectId = parent.id
       if (!args.id?.length) return null
 
-      const projectDb = await getProjectDbClient({ projectId: parent.id })
+      const projectDb = await getProjectDbClient({ projectId })
       const view = await ctx.loaders
         .forRegion({ db: projectDb })
         .savedViews.getSavedView.load({
           viewId: args.id,
-          projectId: parent.id
+          projectId
         })
+
+      if (view) {
+        // Only access check if found
+        const canRead = await ctx.authPolicies.project.savedViews.canRead({
+          userId: ctx.userId,
+          projectId,
+          savedViewId: args.id
+        })
+        throwIfAuthNotOk(canRead)
+      }
 
       return view
     }
@@ -385,7 +404,7 @@ const resolvers: Resolvers = {
       const canDelete = await ctx.authPolicies.project.savedViews.canUpdateGroup({
         userId: ctx.userId,
         projectId,
-        groupId: args.input.groupId
+        savedViewGroupId: args.input.groupId
       })
       throwIfAuthNotOk(canDelete)
 
@@ -417,7 +436,7 @@ const resolvers: Resolvers = {
       const canUpdate = await ctx.authPolicies.project.savedViews.canUpdateGroup({
         userId: ctx.userId,
         projectId,
-        groupId: args.input.groupId
+        savedViewGroupId: args.input.groupId
       })
       throwIfAuthNotOk(canUpdate)
 

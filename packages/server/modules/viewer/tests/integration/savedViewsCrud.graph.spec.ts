@@ -10,6 +10,7 @@ import type {
   DeleteSavedViewMutationVariables,
   GetProjectSavedViewGroupQueryVariables,
   GetProjectSavedViewGroupsQueryVariables,
+  GetProjectSavedViewIfExistsQueryVariables,
   GetProjectSavedViewQueryVariables,
   GetProjectUngroupedViewGroupQueryVariables,
   UpdateSavedViewGroupMutationVariables,
@@ -27,6 +28,7 @@ import {
   GetProjectSavedViewDocument,
   GetProjectSavedViewGroupDocument,
   GetProjectSavedViewGroupsDocument,
+  GetProjectSavedViewIfExistsDocument,
   GetProjectUngroupedViewGroupDocument,
   UpdateSavedViewDocument,
   UpdateSavedViewGroupDocument
@@ -64,6 +66,7 @@ import { addToStream, createTestStream } from '@/test/speckle-helpers/streamHelp
 import { Roles, WorkspacePlans } from '@speckle/shared'
 import {
   ProjectNotEnoughPermissionsError,
+  SavedViewNoAccessError,
   WorkspacePlanNoFeatureAccessError
 } from '@speckle/shared/authz'
 import * as ViewerRoute from '@speckle/shared/viewer/route'
@@ -167,6 +170,11 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     input: GetProjectSavedViewQueryVariables,
     options?: ExecuteOperationOptions
   ) => apollo.execute(GetProjectSavedViewDocument, input, options)
+
+  const getViewIfExists = (
+    input: GetProjectSavedViewIfExistsQueryVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(GetProjectSavedViewIfExistsDocument, input, options)
 
   const deleteView = (
     input: DeleteSavedViewMutationVariables,
@@ -1414,7 +1422,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
         const data = res.data?.project.savedView.permissions.canUpdate
         expect(data?.authorized).to.be.false
-        expect(data?.code).to.equal(ProjectNotEnoughPermissionsError.code)
+        expect(data?.code).to.equal(SavedViewNoAccessError.code)
       })
 
       describe('of groups', async () => {
@@ -1502,6 +1510,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
       const modelIds: string[] = []
       let readTestProject: BasicTestStream
       let otherReader: BasicTestUser
+      let otherReaderAdmin: BasicTestUser
 
       const getAllReadModelResourceIds = () =>
         ViewerRoute.resourceBuilder().addResources(
@@ -1509,13 +1518,27 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         )
 
       before(async () => {
-        otherReader = await createTestUser(buildBasicTestUser({ name: 'other-reader' }))
-        await assignToWorkspace(
-          myProjectWorkspace,
-          otherReader,
-          Roles.Workspace.Member,
-          WorkspaceSeatType.Editor
-        )
+        const otherReaders = await Promise.all([
+          createTestUser(buildBasicTestUser({ name: 'other-reader' })),
+          createTestUser(buildBasicTestUser({ name: 'other-reader-admin' }))
+        ])
+        otherReader = otherReaders[0]
+        otherReaderAdmin = otherReaders[1]
+
+        await Promise.all([
+          assignToWorkspace(
+            myProjectWorkspace,
+            otherReader,
+            Roles.Workspace.Member,
+            WorkspaceSeatType.Editor
+          ),
+          assignToWorkspace(
+            myProjectWorkspace,
+            otherReaderAdmin,
+            Roles.Workspace.Admin,
+            WorkspaceSeatType.Editor
+          )
+        ])
 
         readTestProject = await createTestStream(
           buildBasicTestProject({
@@ -1525,9 +1548,14 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           me
         )
 
-        await addToStream(readTestProject, otherReader, Roles.Stream.Contributor, {
-          owner: me
-        })
+        await Promise.all([
+          addToStream(readTestProject, otherReader, Roles.Stream.Contributor, {
+            owner: me
+          }),
+          addToStream(readTestProject, otherReaderAdmin, Roles.Stream.Owner, {
+            owner: me
+          })
+        ])
 
         // Create a bunch of groups (views w/ groupNames), each w/ a different model
         let includedSearchString = 0
@@ -1911,26 +1939,79 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           }
         })
 
-        it('should successfully read specific view', async () => {
-          const view = myFirstGroupViews[0]
+        it('should fail to read private view, even as workspace admin/project owner', async () => {
+          const view = myFirstGroupViews.find(
+            (v) =>
+              v.author?.id !== otherReaderAdmin.id &&
+              v.visibility === SavedViewVisibility.authorOnly
+          )
+          expect(view).to.be.ok
+
           const res = await getView(
             {
               projectId: readTestProject.id,
-              viewId: view.id
+              viewId: view!.id
             },
-            { assertNoErrors: true }
+            { authUserId: otherReaderAdmin.id }
           )
 
-          const data = res.data?.project.savedView
-          expect(data).to.be.ok
-          expect(data!.id).to.equal(view.id)
-          expect(data!.name).to.equal(view.name)
-          expect(data!.description).to.equal(view.description)
-          expect(data!.author?.id).to.equal(view.author?.id)
-          expect(data!.groupId).to.equal(view.groupId)
-          expect(data!.createdAt.toISOString()).to.equal(view.createdAt.toISOString())
-          expect(data!.group.id).to.equal(myFirstGroup.id)
+          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
+          expect(res.data?.project.savedView).to.not.be.ok
+
+          const res2 = await getViewIfExists(
+            {
+              projectId: readTestProject.id,
+              viewId: view!.id
+            },
+            { authUserId: otherReaderAdmin.id }
+          )
+
+          expect(res2).to.haveGraphQLErrors({ code: ForbiddenError.code })
+          expect(res2.data?.project.savedViewIfExists).to.not.be.ok
         })
+
+        itEach(
+          [{ savedViewIfExists: false }, { savedViewIfExists: true }],
+          ({ savedViewIfExists }) =>
+            `should successfully read specific view (w/ ${
+              savedViewIfExists ? 'savedViewIfExists' : 'savedView '
+            })`,
+          async ({ savedViewIfExists }) => {
+            const view = myFirstGroupViews.find((v) => v.author?.id === me.id)!
+
+            let data: BasicSavedViewFragment | undefined = undefined
+            if (savedViewIfExists) {
+              const res = await getViewIfExists(
+                {
+                  projectId: readTestProject.id,
+                  viewId: view.id
+                },
+                { assertNoErrors: true }
+              )
+
+              data = res.data?.project.savedViewIfExists || undefined
+            } else {
+              const res = await getView(
+                {
+                  projectId: readTestProject.id,
+                  viewId: view.id
+                },
+                { assertNoErrors: true }
+              )
+
+              data = res.data?.project.savedView
+            }
+
+            expect(data).to.be.ok
+            expect(data!.id).to.equal(view.id)
+            expect(data!.name).to.equal(view.name)
+            expect(data!.description).to.equal(view.description)
+            expect(data!.author?.id).to.equal(view.author?.id)
+            expect(data!.groupId).to.equal(view.groupId)
+            expect(data!.createdAt.toISOString()).to.equal(view.createdAt.toISOString())
+            expect(data!.group.id).to.equal(myFirstGroup.id)
+          }
+        )
 
         it('should get NotFoundError if trying to get nonexistant view', async () => {
           const res = await getView({
@@ -1940,6 +2021,16 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
           expect(res).to.haveGraphQLErrors({ code: NotFoundError.code })
           expect(res.data?.project.savedView).to.not.be.ok
+        })
+
+        it('should not get errors if trying to get nonexistant view through savedViewIfExists', async () => {
+          const res = await getViewIfExists({
+            projectId: readTestProject.id,
+            viewId: 'zabababababababa'
+          })
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(res.data?.project.savedViewIfExists).to.eq(null)
         })
 
         it('should successfully read a group with its views', async () => {

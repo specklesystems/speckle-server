@@ -134,6 +134,17 @@ export const getProjectSavedViewQuery = gql`
   ${basicSavedViewFragment}
 `
 
+export const getProjectSavedViewIfExistsQuery = gql`
+  query GetProjectSavedViewIfExists($projectId: String!, $viewId: ID!) {
+    project(id: $projectId) {
+      savedViewIfExists(id: $viewId) {
+        ...BasicSavedView
+      }
+    }
+  }
+  ${basicSavedViewFragment}
+`
+
 export const deleteSavedViewMutation = gql`
   mutation DeleteSavedView($input: DeleteSavedViewInput!) {
     projectMutations {
