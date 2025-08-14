@@ -177,6 +177,45 @@ import type { ProjectFragment } from '~/lib/common/generated/gql/graphql'
 - **Graceful degradation** when features fail
 - **Error boundaries** for component-level error handling
 
+## Development Workflow
+
+### Code Quality
+
+#### Pre-commit Checks
+
+- **ESLint** must pass before commits
+- **TypeScript** compilation without errors
+- **Prettier** formatting enforced
+- **Husky hooks** for automated checks
+
+## Accessibility Guidelines
+
+### Requirements
+
+- **ARIA labels** for interactive elements
+- **Keyboard navigation** support
+- **Screen reader** compatibility
+- **Color contrast** compliance when possible
+- **Focus management** in modals/dialogs
+
+## Working with This Codebase
+
+### Key Principles
+
+1. **Follow TypeScript strict mode** - No any types without good reason
+2. **Use composition API** - Prefer composables over mixins
+3. **Keep components focused** - Single responsibility principle
+4. **Consider accessibility**
+5. **Document complex logic** - Document business logic, but don't add redundant comments
+6. **Follow existing patterns**
+
+### When in Doubt
+
+- **Check existing implementations** for similar functionality
+- **Ask questions** in code reviews or discussions
+- **Refer to the design system** before creating custom styles
+- **Use the logging composables** instead of console.log
+
 @.prettierrc
 @eslint.config.mjs
 @packages/frontend-2/eslint.config.mjs
