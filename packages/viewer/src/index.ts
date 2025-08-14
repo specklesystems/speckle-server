@@ -183,7 +183,7 @@ import {
 import { Geometry } from './modules/converter/Geometry.js'
 import {
   ObjectPickConfiguration,
-  DefaultObjctPickConfiguration
+  DefaultObjectPickConfiguration
 } from './modules/SpeckleRenderer.js'
 export {
   Viewer,
@@ -194,7 +194,7 @@ export {
   ViewerEvent,
   ObjectPickConfiguration,
   DefaultLightConfiguration,
-  DefaultObjctPickConfiguration,
+  DefaultObjectPickConfiguration,
   World,
   BatchObject,
   InstancedBatchObject,
