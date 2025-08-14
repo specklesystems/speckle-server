@@ -353,10 +353,9 @@ export const replicateQuery = <T, U>(
       // Phase 1: Prepare transaction across all specified db instances
       for (const db of dbs) {
         const trx = await db.transaction()
-        const preparedId = cryptoRandomString({ length: 10 })
         const returnValue = await factory({ db: trx })(params)
         returnValues.push(returnValue)
-        await prepareTransaction(trx)
+        const preparedId = await prepareTransaction(trx)
         preparedTransactions.push({ knex: db, preparedId })
       }
 
@@ -374,11 +373,12 @@ export const replicateQuery = <T, U>(
       if (errors.length > 0) {
         logger.error(
           {
-            params
+            params,
+            errors
           },
           `Failed ${errors.length} of ${results.length} transactions in 2PC operation.`
         )
-        throw new RegionalTransactionError(errors.at(0)?.reason)
+        throw new RegionalTransactionError()
       }
 
       // TODO: Do we need this validation?

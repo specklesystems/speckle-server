@@ -992,7 +992,7 @@ describe('Workspace project GQL CRUD', () => {
     })
 
     isMultiRegionTestMode()
-      ? describe('when the default server db region is not the main db', () => {
+      ? describe('when the default server db region is not the main db @multiregion', () => {
           const regionalProject: StreamRecord = {
             id: cryptoRandomString({ length: 9 }),
             name: 'My Special Project',

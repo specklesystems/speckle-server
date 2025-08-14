@@ -163,7 +163,7 @@ export class TestOnlyLogicError extends BaseError {
   static statusCode = 500
 }
 
-// 2PC failed but we successfully rolled back pending
+// 2PC failed but we successfully rolled back all prepared transactions.
 export class RegionalTransactionError extends BaseError {
   static code = 'REGIONAL_TRANSACTION_ERROR'
   static defaultMessage = 'Failed to complete 2PC operation'

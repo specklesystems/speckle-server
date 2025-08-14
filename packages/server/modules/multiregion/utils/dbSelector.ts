@@ -15,8 +15,8 @@ import { configureClient } from '@/knexfile'
 import type { InitializeRegion } from '@/modules/multiregion/domain/operations'
 import {
   getAvailableRegionConfig,
-  getDefaultProjectRegionKey
-  //  getMainRegionConfig
+  getDefaultProjectRegionKey,
+  getMainRegionConfig
 } from '@/modules/multiregion/regionConfig'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { ensureError } from '@speckle/shared'
@@ -174,26 +174,26 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
   if (!newRegionDbConfig.skipInitialization) {
     await migrateDbToLatest({ db: regionDb.public, region: regionKey })
 
-    // const mainDbConfig = await getMainRegionConfig()
-    // const mainDb = configureClient(mainDbConfig)
+    const mainDbConfig = await getMainRegionConfig()
+    const mainDb = configureClient(mainDbConfig)
 
-    // const sslmode = newRegionConfig.postgres.publicTlsCertificate
-    //   ? 'require'
-    //   : 'disable'
+    const sslmode = newRegionConfig.postgres.publicTlsCertificate
+      ? 'require'
+      : 'disable'
 
-    // await setUpUserReplication({
-    //   from: mainDb,
-    //   to: regionDb,
-    //   regionName: regionKey,
-    //   sslmode
-    // })
+    await setUpUserReplication({
+      from: mainDb,
+      to: regionDb,
+      regionName: regionKey,
+      sslmode
+    })
 
-    // await setUpProjectReplication({
-    //   from: regionDb,
-    //   to: mainDb,
-    //   regionName: regionKey,
-    //   sslmode
-    // })
+    await setUpProjectReplication({
+      from: regionDb,
+      to: mainDb,
+      regionName: regionKey,
+      sslmode
+    })
   }
 
   // pushing to the singleton object here, only if its not available
@@ -210,7 +210,6 @@ interface ReplicationArgs {
   regionName: string
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const setUpUserReplication = async ({
   from,
   to,
@@ -311,7 +310,6 @@ const setUpUserReplication = async ({
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const setUpProjectReplication = async ({
   from,
   to,
