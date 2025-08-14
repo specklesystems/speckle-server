@@ -230,13 +230,12 @@ export class SelectionExtension extends Extension {
         ) as ExtendedIntersection[]) || []
 
     /* TEMPORARY */
-    let rv = null
+    let rvMaterial: [NodeRenderView | null, Material | null] = [null, null]
     for (let k = 0; k < result.length; k++) {
-      rv = this.viewer.getRenderer().renderViewFromIntersection(result[k])
-      if (rv) break
+      rvMaterial = this.viewer.getRenderer().renderViewFromIntersection(result[k])
+      if (rvMaterial) break
     }
-
-    this.applyHover(rv)
+    this.applyHover(rvMaterial[0])
   }
 
   protected applySelection() {

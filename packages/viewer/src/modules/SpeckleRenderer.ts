@@ -115,7 +115,7 @@ export interface ObjectPickConfiguration {
   pickedObjectsFilter: ((arg: [NodeRenderView, Material]) => boolean) | null
 }
 
-export const DefaultObjctPickConfiguration = {
+export const DefaultObjectPickConfiguration = {
   pickedObjectsFilter: (arg: [NodeRenderView, Material]) => {
     const material = arg[1]
     return (
@@ -157,7 +157,7 @@ export default class SpeckleRenderer {
   protected _renderOverride: (() => void) | null = null
 
   public objectPickConfiguration: ObjectPickConfiguration =
-    DefaultObjctPickConfiguration
+    DefaultObjectPickConfiguration
 
   public viewer: Viewer // TEMPORARY
   public batcher: Batcher
