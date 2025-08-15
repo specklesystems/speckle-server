@@ -257,7 +257,7 @@ const keyValuePairs = computed(() => {
       arrayLength,
       arrayPreview,
       value: props.object[key],
-      backendPath: key // For regular properties, key matches backend path
+      backendPath: key
     })
   }
 
