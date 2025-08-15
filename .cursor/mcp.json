@@ -9,7 +9,9 @@
         "--output-dir",
         "/tmp/playwright-mcp",
         "--save-trace",
-        "--save-session"
+        "--save-session",
+        "--port",
+        "8081" // Match to your Nuxt server port
       ]
     }
   }
