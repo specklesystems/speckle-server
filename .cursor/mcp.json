@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest",
+        "--browser",
+        "chrome",
+        "--output-dir",
+        "/tmp/playwright-mcp",
+        "--save-trace",
+        "--save-session"
+      ]
+    }
+  }
+}
