@@ -1193,11 +1193,18 @@ export type ExtendedViewerResources = {
   __typename?: 'ExtendedViewerResources';
   /** The groups of viewer resources themselves */
   groups: Array<ViewerResourceGroup>;
+  /** Metadata about the request that was made to resolve this. */
+  request?: Maybe<ExtendedViewerResourcesRequest>;
   /**
    * The saved view that was used, if any. Even if no savedViewId was specified, a home view could
    * have been implicitly loaded.
    */
   savedView?: Maybe<SavedView>;
+};
+
+export type ExtendedViewerResourcesRequest = {
+  __typename?: 'ExtendedViewerResourcesRequest';
+  savedViewId?: Maybe<Scalars['ID']['output']>;
 };
 
 export type FileImportResultInput = {
@@ -5987,6 +5994,7 @@ export type ResolversTypes = {
   EmbedTokenCollection: ResolverTypeWrapper<Omit<EmbedTokenCollection, 'items'> & { items: Array<ResolversTypes['EmbedToken']> }>;
   EmbedTokenCreateInput: EmbedTokenCreateInput;
   ExtendedViewerResources: ResolverTypeWrapper<ExtendedViewerResourcesGraphQLReturn>;
+  ExtendedViewerResourcesRequest: ResolverTypeWrapper<ExtendedViewerResourcesRequest>;
   FileImportResultInput: FileImportResultInput;
   FileUpload: ResolverTypeWrapper<FileUploadGraphQLReturn>;
   FileUploadCollection: ResolverTypeWrapper<Omit<FileUploadCollection, 'items'> & { items: Array<ResolversTypes['FileUpload']> }>;
@@ -6364,6 +6372,7 @@ export type ResolversParentTypes = {
   EmbedTokenCollection: Omit<EmbedTokenCollection, 'items'> & { items: Array<ResolversParentTypes['EmbedToken']> };
   EmbedTokenCreateInput: EmbedTokenCreateInput;
   ExtendedViewerResources: ExtendedViewerResourcesGraphQLReturn;
+  ExtendedViewerResourcesRequest: ExtendedViewerResourcesRequest;
   FileImportResultInput: FileImportResultInput;
   FileUpload: FileUploadGraphQLReturn;
   FileUploadCollection: Omit<FileUploadCollection, 'items'> & { items: Array<ResolversParentTypes['FileUpload']> };
@@ -7132,7 +7141,13 @@ export type EmbedTokenCollectionResolvers<ContextType = GraphQLContext, ParentTy
 
 export type ExtendedViewerResourcesResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ExtendedViewerResources'] = ResolversParentTypes['ExtendedViewerResources']> = {
   groups?: Resolver<Array<ResolversTypes['ViewerResourceGroup']>, ParentType, ContextType>;
+  request?: Resolver<Maybe<ResolversTypes['ExtendedViewerResourcesRequest']>, ParentType, ContextType>;
   savedView?: Resolver<Maybe<ResolversTypes['SavedView']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ExtendedViewerResourcesRequestResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ExtendedViewerResourcesRequest'] = ResolversParentTypes['ExtendedViewerResourcesRequest']> = {
+  savedViewId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -8685,6 +8700,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   EmbedToken?: EmbedTokenResolvers<ContextType>;
   EmbedTokenCollection?: EmbedTokenCollectionResolvers<ContextType>;
   ExtendedViewerResources?: ExtendedViewerResourcesResolvers<ContextType>;
+  ExtendedViewerResourcesRequest?: ExtendedViewerResourcesRequestResolvers<ContextType>;
   FileUpload?: FileUploadResolvers<ContextType>;
   FileUploadCollection?: FileUploadCollectionResolvers<ContextType>;
   FileUploadMutations?: FileUploadMutationsResolvers<ContextType>;

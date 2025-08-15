@@ -29,6 +29,13 @@ type ViewerResourceItem {
   objectId: String!
 }
 
+type ExtendedViewerResourcesRequest {
+  """
+  Specific id that was requested or null if loaded implicit (undefined req) or nothing (null req)
+  """
+  savedViewId: ID
+}
+
 type ExtendedViewerResources {
   """
   The groups of viewer resources themselves
@@ -39,6 +46,14 @@ type ExtendedViewerResources {
   have been implicitly loaded.
   """
   savedView: SavedView
+  """
+  Final/adjusted/resolved resource id string
+  """
+  resourceIdString: String!
+  """
+  Metadata about the request that was made to resolve this.
+  """
+  request: ExtendedViewerResourcesRequest
 }
 
 extend type Project {

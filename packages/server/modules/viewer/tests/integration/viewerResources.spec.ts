@@ -369,13 +369,30 @@ describe('Viewer Resources Collection Service', () => {
 
             const resourceIdString = resources.toString()
 
-            const { groups, savedView } = await sut({
+            const {
+              groups,
+              savedView,
+              resourceIdString: returnedResourceIdString
+            } = await sut({
               projectId: myProject.id,
               resourceIdString,
               savedViewId: secondModelBasicView.id,
               loadedVersionsOnly: true,
               savedViewSettings: { loadOriginal }
             })
+
+            const expectedFinalResourceIdString = resourceBuilder()
+              .addModel(firstModel().id, getModelVersions(firstModel().id)[1].id)
+              .addModel(
+                secondModel().id,
+                !loadOriginal && !conflictWithView
+                  ? undefined
+                  : getModelVersions(secondModel().id).at(
+                      loadOriginal ? 0 : conflictWithView ? 1 : -1
+                    )!.id
+              )
+              .toString()
+            expect(returnedResourceIdString).to.equal(expectedFinalResourceIdString)
 
             expect(savedView?.id).to.equal(secondModelBasicView.id)
             expect(groups).to.have.length(2)
@@ -446,6 +463,30 @@ describe('Viewer Resources Collection Service', () => {
           expect(homeViewGroup!.items[0].objectId).to.be.ok
         })
 
+        it("doesn't load home view if savedViewId explicitly null instead", async () => {
+          const sut = buildSUT()
+          const resources = resourceBuilder().addModel(homeViewModel().id)
+
+          const { groups, savedView } = await sut({
+            projectId: myProject.id,
+            resourceIdString: resources.toString(),
+            savedViewId: null,
+            loadedVersionsOnly: true
+          })
+
+          expect(savedView).to.be.not.ok
+          expect(groups).to.have.length(1)
+
+          const homeViewGroup = groups[0]
+          expect(homeViewGroup).to.be.ok
+          expect(homeViewGroup!.items.length).to.equal(1)
+          expect(homeViewGroup!.items[0].modelId).to.equal(homeViewModel().id)
+          expect(homeViewGroup!.items[0].versionId).to.equal(
+            getModelVersions(homeViewModel().id).at(-1)!.id
+          ) // default: latest one
+          expect(homeViewGroup!.items[0].objectId).to.be.ok
+        })
+
         it('doesnt load model home view if specific version specified', async () => {
           const sut = buildSUT()
           const resources = resourceBuilder().addModel(
@@ -470,6 +511,34 @@ describe('Viewer Resources Collection Service', () => {
           expect(homeViewGroup!.items[0].versionId).to.equal(
             getModelVersions(homeViewModel().id)[1].id
           ) // concrete version specified
+          expect(homeViewGroup!.items[0].objectId).to.be.ok
+        })
+
+        it('loads model home view if specific version specified exactly matches view', async () => {
+          const sut = buildSUT()
+          const resources = resourceBuilder().addModel(
+            homeViewModel().id,
+            getModelVersions(homeViewModel().id)[0].id // same one we have in view
+          )
+
+          const { groups, savedView, request } = await sut({
+            projectId: myProject.id,
+            resourceIdString: resources.toString(),
+            savedViewId: undefined,
+            loadedVersionsOnly: true
+          })
+
+          expect(request.savedViewId).to.not.be.ok
+          expect(savedView?.id).to.equal(firstModelHomeView.id)
+          expect(groups).to.have.length(1)
+
+          const homeViewGroup = groups[0]
+          expect(homeViewGroup).to.be.ok
+          expect(homeViewGroup!.items.length).to.equal(1)
+          expect(homeViewGroup!.items[0].modelId).to.equal(homeViewModel().id)
+          expect(homeViewGroup!.items[0].versionId).to.equal(
+            getModelVersions(homeViewModel().id)[0].id
+          ) // version specified in view, not latest one
           expect(homeViewGroup!.items[0].objectId).to.be.ok
         })
       })

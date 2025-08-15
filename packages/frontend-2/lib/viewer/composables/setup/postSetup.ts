@@ -1044,7 +1044,7 @@ const useViewerSavedViewSetup = () => {
   watch(
     urlHashStateSavedViewSettings,
     async (newVal) => {
-      if ((newVal?.id || null) !== savedViewId.value) {
+      if ((newVal?.id || null) !== (savedViewId.value || null)) {
         savedViewId.value = newVal?.id || null
       }
 

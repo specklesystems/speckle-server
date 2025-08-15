@@ -1,21 +1,20 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div
-    class="flex gap-2 p-2 w-full group hover:bg-foundation-2 rounded"
-    :view-id="view.id"
-  >
-    <div v-keyboard-clickable class="relative cursor-pointer" @click="apply">
-      <img
-        :src="view.screenshot"
-        alt="View screenshot"
-        class="w-20 h-14 object-cover rounded border border-outline-3 bg-foundation-page cursor-pointer"
-      />
-      <div
-        v-if="isHomeView"
-        class="absolute -top-1 -left-1 bg-orange-500 w-4 h-4 flex items-center justify-center rounded-sm"
-      >
-        <Bookmark class="text-white w-3 h-3" fill="currentColor" />
+  <div :class="wrapperClasses" :view-id="view.id">
+    <div class="flex items-center">
+      <div v-keyboard-clickable class="relative cursor-pointer" @click="apply">
+        <img
+          :src="view.screenshot"
+          alt="View screenshot"
+          class="w-20 h-14 object-cover rounded border border-outline-3 bg-foundation-page cursor-pointer"
+        />
+        <div
+          v-if="isHomeView"
+          class="absolute -top-1 -left-1 bg-orange-500 w-4 h-4 flex items-center justify-center rounded-sm"
+        >
+          <Bookmark class="text-white w-3 h-3" fill="currentColor" />
+        </div>
       </div>
     </div>
     <div class="flex flex-col gap-1 min-w-0 grow">
@@ -86,6 +85,7 @@ import {
   useCollectNewSavedViewViewerData,
   useUpdateSavedView
 } from '~/lib/viewer/composables/savedViews/management'
+import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 
 const MenuItems = StringEnum([
   'Delete',
@@ -126,6 +126,11 @@ const props = defineProps<{
   view: ViewerSavedViewsPanelView_SavedViewFragment
 }>()
 
+const {
+  resources: {
+    response: { savedView }
+  }
+} = useInjectedViewerState()
 const { collect } = useCollectNewSavedViewViewerData()
 const updateView = useUpdateSavedView()
 const isLoading = useMutationLoading()
@@ -140,6 +145,7 @@ const isOnlyVisibleToMe = computed(
   () => props.view.visibility === SavedViewVisibility.AuthorOnly
 )
 const isHomeView = computed(() => props.view.isHomeView)
+const isActive = computed(() => props.view.id === savedView.value?.id)
 
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
@@ -189,6 +195,18 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
     }
   ]
 ])
+
+const wrapperClasses = computed(() => {
+  const classParts = ['flex gap-2 p-2 w-full group rounded']
+
+  if (isActive.value) {
+    classParts.push('bg-highlight-2 hover:bg-highlight-3')
+  } else {
+    classParts.push('hover:bg-highlight-1')
+  }
+
+  return classParts.join(' ')
+})
 
 const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
   switch (item.id) {

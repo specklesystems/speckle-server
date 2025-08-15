@@ -34,7 +34,7 @@ import {
   resourceBuilder,
   ViewerModelResource
 } from '@speckle/shared/viewer/route'
-import { flatten, isString, keyBy, uniq, uniqWith } from 'lodash-es'
+import { flatten, isString, isUndefined, keyBy, uniq, uniqWith } from 'lodash-es'
 
 export function isResourceItemEqual(a: ViewerResourceItem, b: ViewerResourceItem) {
   if (a.modelId !== b.modelId) return false
@@ -421,11 +421,6 @@ const adjustResourceIdStringWithHomeSavedViewSettingsFactory =
     }
 
     const modelId = modelIds[0]
-    if (modelId.versionId) {
-      // If versionId set, also ignore
-      return emptyReturn
-    }
-
     const savedView = await deps.getModelHomeSavedView({
       modelId: modelId.modelId,
       projectId
@@ -433,6 +428,26 @@ const adjustResourceIdStringWithHomeSavedViewSettingsFactory =
     if (!savedView) {
       // no home view found
       return emptyReturn
+    }
+
+    // If versionId set, also ignore
+    if (modelId.versionId) {
+      // BUT: if its the same one the home view has, at least return the view too, cause the FE will change the
+      // resourceIdString to be more like the view's which will set a specific versionId that would otherwise be ignored
+      const viewResource = resourceBuilder()
+        .addResources(savedView.resourceIds)
+        .toResources()
+        .filter(isModelResource)
+        .at(0)
+
+      return {
+        ...emptyReturn,
+        savedView:
+          viewResource?.modelId === modelId.modelId &&
+          viewResource?.versionId === modelId.versionId
+            ? savedView
+            : undefined
+      }
     }
 
     return adjustResourceIdStringWithSpecificSavedViewSettingsFactory(deps)({
@@ -464,7 +479,7 @@ const adjustResourceIdStringWithSavedViewSettingsFactory =
   }): Promise<ResourceIdStringWithSavedView> => {
     const { savedViewId } = params
 
-    return savedViewId
+    return !isUndefined(savedViewId)
       ? adjustResourceIdStringWithSpecificSavedViewSettingsFactory(deps)(params)
       : adjustResourceIdStringWithHomeSavedViewSettingsFactory(deps)(params)
   }
@@ -505,7 +520,9 @@ export const getViewerResourceGroupsFactory =
     const { resourceIdString } = resourceIdStringWithSavedView
     const ret: ExtendedViewerResourcesGraphQLReturn = {
       groups: [],
-      savedView: resourceIdStringWithSavedView.savedView
+      savedView: resourceIdStringWithSavedView.savedView,
+      request: { savedViewId },
+      resourceIdString: resourceIdStringWithSavedView.resourceIdString
     }
 
     if (!resourceIdString?.trim().length) return ret
@@ -533,7 +550,10 @@ export const getViewerResourceGroupsFactory =
         })
       ])
     )
+
+    // Update return w/ new data
     ret.groups = results
+    ret.resourceIdString = resourceBuilder().addResources(resources).toString() // de-duplicated and ordered
 
     return ret
   }

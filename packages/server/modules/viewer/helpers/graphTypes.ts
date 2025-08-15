@@ -1,3 +1,4 @@
+import type { ExtendedViewerResourcesRequest } from '@/modules/core/graph/generated/graphql'
 import type { ViewerResourceGroup } from '@/modules/viewer/domain/types/resources'
 import type {
   SavedView,
@@ -15,4 +16,6 @@ export type SavedViewGroupPermissionChecksGraphQLReturn = {
 export type ExtendedViewerResourcesGraphQLReturn = {
   groups: Array<ViewerResourceGroup>
   savedView?: MaybeNullOrUndefined<SavedView>
+  request: ExtendedViewerResourcesRequest
+  resourceIdString: string
 }
