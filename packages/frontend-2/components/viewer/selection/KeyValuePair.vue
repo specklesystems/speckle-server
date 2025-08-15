@@ -64,6 +64,9 @@
 import { VALID_HTTP_URL } from '~~/lib/common/helpers/validation'
 import { LayoutMenu, type LayoutMenuItem } from '@speckle/ui-components'
 import { Ellipsis } from 'lucide-vue-next'
+import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
+import type { PropertyInfo } from '@speckle/viewer'
 
 const props = defineProps<{
   kvp: Record<string, unknown> & { key: string; value: unknown; units?: string }
@@ -71,10 +74,30 @@ const props = defineProps<{
 
 const showActionsMenu = ref(false)
 
+const { setPropertyFilter, applyPropertyFilter, isPropertyFilterable } =
+  useFilterUtilities()
+const {
+  metadata: { availableFilters }
+} = useInjectedViewer()
+
 const isUrlString = (v: unknown) => typeof v === 'string' && VALID_HTTP_URL.test(v)
 
 const isCopyable = (kvp: Record<string, unknown>) => {
   return kvp.value !== null && kvp.value !== undefined && typeof kvp.value !== 'object'
+}
+
+const isFilterable = (kvp: Record<string, unknown>) => {
+  const key = kvp.key as string
+  return isPropertyFilterable(key, availableFilters.value)
+}
+
+const handleFilterByProperty = (kvp: Record<string, unknown>) => {
+  const key = kvp.key as string
+  const filter = availableFilters.value?.find((f: PropertyInfo) => f.key === key)
+  if (filter) {
+    setPropertyFilter(filter)
+    applyPropertyFilter()
+  }
 }
 
 const handleCopy = async (kvp: Record<string, unknown>) => {
@@ -89,37 +112,42 @@ const handleCopy = async (kvp: Record<string, unknown>) => {
 }
 
 const actionsItems = computed<LayoutMenuItem[][]>(() => {
-  const items: LayoutMenuItem[][] = []
-
-  // Only show copy option if the value is copyable
-  if (isCopyable(props.kvp)) {
-    items.push([
+  return [
+    [
       {
         title: 'Copy value',
-        id: 'copy-value'
+        id: 'copy-value',
+        disabled: !isCopyable(props.kvp),
+        disabledTooltip: isCopyable(props.kvp)
+          ? undefined
+          : 'Cannot copy objects, arrays, or null values'
       }
-    ])
-  }
-
-  items.push([
-    {
-      title: 'Filter by value',
-      id: 'filter-by-value'
-    }
-  ])
-
-  return items
+    ],
+    [
+      {
+        title: 'Filter by property',
+        id: 'filter-by-property',
+        disabled: !isFilterable(props.kvp),
+        disabledTooltip: isFilterable(props.kvp)
+          ? undefined
+          : 'This property is not available for filtering'
+      }
+    ]
+  ]
 })
 
 const onActionChosen = (params: { item: LayoutMenuItem }) => {
   const { item } = params
 
+  // Don't execute if item is disabled
+  if (item.disabled) return
+
   switch (item.id) {
     case 'copy-value':
       handleCopy(props.kvp)
       break
-    case 'filter-by-value':
-      // TODO: Implement filter by value functionality
+    case 'filter-by-property':
+      handleFilterByProperty(props.kvp)
       break
   }
 }
