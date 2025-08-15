@@ -201,6 +201,7 @@ const buildButtonClassses = (params: {
 
 const chooseItem = (item: LayoutMenuItem<MenuIds>, event: MouseEvent) => {
   emit('chosen', { item, event })
+  setOpen(false)
 }
 
 const toggle = () => {
@@ -208,6 +209,11 @@ const toggle = () => {
   if (props.mountMenuOnBody) {
     menuButtonBounding.update()
   }
+}
+
+const setOpen = (open: boolean) => {
+  if (isOpenInternally.value === open) return
+  toggle()
 }
 
 // ok this is a bit hacky, but it's done because of headlessui's limited API

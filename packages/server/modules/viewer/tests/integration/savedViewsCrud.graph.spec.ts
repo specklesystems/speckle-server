@@ -21,7 +21,6 @@ import {
   CanCreateSavedViewDocument,
   CanUpdateSavedViewDocument,
   CanUpdateSavedViewGroupDocument,
-  CreateSavedViewDocument,
   CreateSavedViewGroupDocument,
   DeleteSavedViewDocument,
   DeleteSavedViewGroupDocument,
@@ -39,14 +38,21 @@ import {
 } from '@/modules/core/tests/helpers/creation'
 import { BadRequestError, ForbiddenError, NotFoundError } from '@/modules/shared/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import type { FactoryResultOf } from '@/modules/shared/helpers/factory'
 import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
 import {
   SavedViewCreationValidationError,
   SavedViewGroupCreationValidationError,
   SavedViewGroupUpdateValidationError,
+  SavedViewInvalidHomeViewSettingsError,
   SavedViewInvalidResourceTargetError,
   SavedViewUpdateValidationError
 } from '@/modules/viewer/errors/savedViews'
+import { createSavedViewFactory } from '@/modules/viewer/tests/helpers/graphql'
+import {
+  fakeScreenshot,
+  fakeScreenshot2
+} from '@/modules/viewer/tests/helpers/savedViews'
 import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   assignToWorkspace,
@@ -61,6 +67,7 @@ import type { ExecuteOperationOptions, TestApolloServer } from '@/test/graphqlHe
 import { testApolloServer } from '@/test/graphqlHelper'
 import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestObject } from '@/test/speckle-helpers/commitHelper'
 import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { addToStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { Roles, WorkspacePlans } from '@speckle/shared'
@@ -70,6 +77,7 @@ import {
   WorkspacePlanNoFeatureAccessError
 } from '@speckle/shared/authz'
 import * as ViewerRoute from '@speckle/shared/viewer/route'
+import { resourceBuilder } from '@speckle/shared/viewer/route'
 import * as ViewerState from '@speckle/shared/viewer/state'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
@@ -78,11 +86,6 @@ import { intersection, merge, times } from 'lodash-es'
 import type { PartialDeep } from 'type-fest'
 
 const { FF_WORKSPACES_MODULE_ENABLED, FF_SAVED_VIEWS_ENABLED } = getFeatureFlags()
-
-const fakeScreenshot =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PiQ2YQAAAABJRU5ErkJggg=='
-const fakeScreenshot2 =
-  'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAICAgICAgICAgICAgICAwUDAwMDAwYEBAMFBQYGBQYGBwcICQoJCQkJCQoMCgsMDAwMDAwP/2wBDAwMDAwQDBAgEBAgQEBAgMCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgP/wAARCAABAAEDAREAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAHEAP/EABQQAQAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAQUCf//EABQRAQAAAAAAAAAAAAAAAAAAAD/2gAIAQMBAT8BP//EABQRAQAAAAAAAAAAAAAAAAAAAD/2gAIAQIBAT8BP//Z'
 
 const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerState>) =>
   merge(
@@ -151,10 +154,8 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     )
   })
 
-  const createSavedView = (
-    input: CreateSavedViewMutationVariables,
-    options?: ExecuteOperationOptions
-  ) => apollo.execute(CreateSavedViewDocument, input, options)
+  const createSavedView: FactoryResultOf<typeof createSavedViewFactory> = (...args) =>
+    createSavedViewFactory({ apollo })(...args)
 
   const createSavedViewGroup = (
     input: CreateSavedViewGroupMutationVariables,
@@ -543,7 +544,6 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         const groupId = testGroup1.id
         const name = 'heyooo brodie'
         const description = 'this is a description'
-        const isHomeView = true
         const visibility = SavedViewVisibility.authorOnly
 
         const resourceIds = model1ResourceIds()
@@ -565,7 +565,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
               groupId,
               name,
               description,
-              isHomeView,
+              isHomeView: false,
               visibility
             }
           })
@@ -579,7 +579,6 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(view!.name).to.equal(name)
         expect(view!.description).to.equal(description)
         expect(view!.groupId).to.equal(groupId)
-        expect(view!.isHomeView).to.equal(isHomeView)
         expect(view!.visibility).to.equal(visibility)
       })
 
@@ -607,6 +606,61 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
         expect(res).to.haveGraphQLErrors({
           code: SavedViewCreationValidationError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+      })
+
+      it('should fail to create a private home view', async () => {
+        const resourceIdString = model1ResourceIds().toString()
+        const res = await createSavedView(
+          buildCreateInput({
+            resourceIdString,
+            overrides: { isHomeView: true, visibility: SavedViewVisibility.authorOnly }
+          })
+        )
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewInvalidHomeViewSettingsError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+      })
+
+      it('should fail to create a federated home view', async () => {
+        const resourceIdString = model1ResourceIds()
+          .addResources(model2ResourceIds())
+          .toString()
+        const res = await createSavedView(
+          buildCreateInput({
+            resourceIdString,
+            overrides: {
+              isHomeView: true
+            }
+          })
+        )
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewInvalidHomeViewSettingsError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+      })
+
+      it('should fail to create an object id targeting home view', async () => {
+        const objectId = await createTestObject({
+          projectId: myProject.id,
+          object: { baba: 'booey' }
+        })
+
+        const res = await createSavedView(
+          buildCreateInput({
+            resourceIdString: resourceBuilder().addObject(objectId).toString(),
+            overrides: {
+              isHomeView: true
+            }
+          })
+        )
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewInvalidHomeViewSettingsError.code
         })
         expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
       })
@@ -903,7 +957,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
             }
           }),
           screenshot: fakeScreenshot2,
-          isHomeView: true,
+          isHomeView: false,
           visibility: SavedViewVisibility.authorOnly
         }
         const res = await updateView({
@@ -997,6 +1051,82 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           message: 'No changes submitted with the input'
         })
         expect(res.data?.projectMutations.savedViewMutations.updateView.id).to.not.be.ok
+      })
+
+      it('fails if updating view to be private home view', async () => {
+        const res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            isHomeView: true,
+            visibility: SavedViewVisibility.authorOnly
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewInvalidHomeViewSettingsError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+
+      it('fails if updating view to be a federated home view', async () => {
+        const resourceIdString = resourceBuilder()
+          .addModel(models.at(-1)!.id)
+          .addModel(models.at(-2)!.id)
+          .toString()
+
+        const res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            isHomeView: true,
+            resourceIdString,
+            viewerState: fakeViewerState({
+              projectId: updatablesProject.id,
+              resources: {
+                request: {
+                  resourceIdString
+                }
+              }
+            }),
+            screenshot: fakeScreenshot2
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewInvalidHomeViewSettingsError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+
+      it('fails if updating view to be an object targetting home view', async () => {
+        const objectId = await createTestObject({
+          projectId: updatablesProject.id,
+          object: { aa: 'bb' }
+        })
+
+        const res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            isHomeView: true,
+            resourceIdString: objectId,
+            viewerState: fakeViewerState({
+              projectId: updatablesProject.id,
+              resources: {
+                request: {
+                  resourceIdString: objectId
+                }
+              }
+            }),
+            screenshot: fakeScreenshot2
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewInvalidHomeViewSettingsError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
       })
 
       it('fails if user has no access to update the view', async () => {

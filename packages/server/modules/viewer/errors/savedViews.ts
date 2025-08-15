@@ -18,6 +18,12 @@ export class SavedViewInvalidResourceTargetError extends BaseError {
   static statusCode = 400
 }
 
+export class SavedViewInvalidHomeViewSettingsError extends BaseError {
+  static code = 'SAVED_VIEW_INVALID_HOME_VIEW_SETTINGS_ERROR'
+  static defaultMessage = 'Invalid home view settings specified'
+  static statusCode = 400
+}
+
 export class SavedViewUpdateValidationError extends BaseError {
   static code = 'SAVED_VIEW_UPDATE_VALIDATION_ERROR'
   static defaultMessage = 'Saved view update failed due to a validation error'

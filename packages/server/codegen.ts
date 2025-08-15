@@ -199,7 +199,9 @@ const config: CodegenConfig = {
           SavedViewPermissionChecks:
             '@/modules/viewer/helpers/graphTypes#SavedViewPermissionChecksGraphQLReturn',
           SavedViewGroupPermissionChecks:
-            '@/modules/viewer/helpers/graphTypes#SavedViewGroupPermissionChecksGraphQLReturn'
+            '@/modules/viewer/helpers/graphTypes#SavedViewGroupPermissionChecksGraphQLReturn',
+          ExtendedViewerResources:
+            '@/modules/viewer/helpers/graphTypes#ExtendedViewerResourcesGraphQLReturn'
         }
       }
     }

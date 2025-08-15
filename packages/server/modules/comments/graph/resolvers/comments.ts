@@ -97,7 +97,10 @@ import {
   getViewerResourceItemsUngroupedFactory
 } from '@/modules/viewer/services/viewerResources'
 import type { RequestDataLoaders } from '@/modules/core/loaders'
-import { getSavedViewFactory } from '@/modules/viewer/repositories/dataLoaders/savedViews'
+import {
+  getModelHomeSavedViewFactory,
+  getSavedViewFactory
+} from '@/modules/viewer/repositories/dataLoaders/savedViews'
 
 // We can use the main DB for these
 const getStream = getStreamFactory({ db })
@@ -128,7 +131,8 @@ const buildGetViewerResourceItemsUngrouped = (deps: {
       getSpecificBranchCommits: getSpecificBranchCommitsFactory(deps),
       getAllBranchCommits: getAllBranchCommitsFactory(deps),
       getBranchesByIds: getBranchesByIdsFactory(deps),
-      getSavedView: getSavedViewFactory(deps)
+      getSavedView: getSavedViewFactory(deps),
+      getModelHomeSavedView: getModelHomeSavedViewFactory(deps)
     })
   })
 

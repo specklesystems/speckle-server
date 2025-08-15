@@ -1,3 +1,6 @@
+import type { CreateSavedViewMutationVariables } from '@/modules/core/graph/generated/graphql'
+import { CreateSavedViewDocument } from '@/modules/core/graph/generated/graphql'
+import type { ExecuteOperationOptions, TestApolloServer } from '@/test/graphqlHelper'
 import gql from 'graphql-tag'
 
 const basicSavedViewFragment = gql`
@@ -249,3 +252,8 @@ export const updateSavedViewGroupMutation = gql`
 
   ${basicSavedViewGroupFragment}
 `
+
+export const createSavedViewFactory =
+  (deps: { apollo: TestApolloServer }) =>
+  (input: CreateSavedViewMutationVariables, options?: ExecuteOperationOptions) =>
+    deps.apollo.execute(CreateSavedViewDocument, input, options)
