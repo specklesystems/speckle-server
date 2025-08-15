@@ -199,7 +199,7 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
   ],
   [
     {
-      title: 'Remove version',
+      title: 'Delete version...',
       id: 'remove-version',
       disabled: !canDeleteVersion.value,
       disabledTooltip: deleteDisabledReason.value

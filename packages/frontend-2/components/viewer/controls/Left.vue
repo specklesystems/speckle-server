@@ -243,7 +243,7 @@ const isTablet = breakpoints.smaller('lg')
 const { getTooltipProps } = useSmartTooltipDelay()
 const isSavedViewsEnabled = useAreSavedViewsEnabled()
 const { $intercom } = useNuxtApp()
-const { hasActiveFilters } = useFilterUtilities()
+const { hasActiveFilters, filters } = useFilterUtilities()
 
 const activePanel = ref<ActivePanel>('none')
 const modelsSubView = ref<ModelsSubView>(ModelsSubView.Main)
@@ -338,6 +338,17 @@ onMounted(() => {
 watch(isSmallerOrEqualSm, (newVal) => {
   activePanel.value = newVal ? 'none' : 'models'
 })
+
+// Auto-open filters panel when a new filter is applied from elsewhere
+watch(
+  () => filters.propertyFilter.isApplied.value && filters.propertyFilter.filter.value,
+  (newFilterApplied, oldFilterApplied) => {
+    // Only trigger if we're going from no filter to having a filter (not when changing filters or removing)
+    if (newFilterApplied && !oldFilterApplied) {
+      activePanel.value = 'filters'
+    }
+  }
+)
 
 defineExpose({
   forceClosePanel,
