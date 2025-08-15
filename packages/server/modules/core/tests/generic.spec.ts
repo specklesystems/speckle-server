@@ -67,6 +67,7 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import type { Request } from 'express'
+import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const buildFinalizeProjectInvite = () =>
   finalizeResourceInviteFactory({
@@ -159,7 +160,7 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
-  storeUser: storeUserFactory({ db }),
+  storeUser: replicateQuery([db], storeUserFactory),
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: validateAndCreateUserEmailFactory({

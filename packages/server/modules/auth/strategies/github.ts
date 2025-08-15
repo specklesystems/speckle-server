@@ -44,7 +44,7 @@ const githubStrategyBuilderFactory =
   (deps: {
     getServerInfo: GetServerInfo
     getUserByEmail: LegacyGetUserByEmail
-    findOrCreateUser: FindOrCreateValidatedUser
+    buildFindOrCreateUser: () => Promise<FindOrCreateValidatedUser>
     validateServerInvite: ValidateServerInvite
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
@@ -91,6 +91,8 @@ const githubStrategyBuilderFactory =
           serverVersion: serverInfo.version
         })
 
+        const findOrCreateUser = await deps.buildFindOrCreateUser()
+
         try {
           const email = profile.emails?.[0].value
           if (!email) {
@@ -115,7 +117,7 @@ const githubStrategyBuilderFactory =
           // if there is an existing user, go ahead and log them in (regardless of
           // whether the server is invite only or not).
           if (existingUser) {
-            const myUser = await deps.findOrCreateUser({ user })
+            const myUser = await findOrCreateUser({ user })
             return done(null, myUser)
           }
 
@@ -133,7 +135,7 @@ const githubStrategyBuilderFactory =
           }
 
           // create the user
-          const myUser = await deps.findOrCreateUser({
+          const myUser = await findOrCreateUser({
             user: {
               ...user,
               role: invite

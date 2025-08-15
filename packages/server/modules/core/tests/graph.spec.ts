@@ -65,6 +65,7 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const { FF_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
 
@@ -104,7 +105,7 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
-  storeUser: storeUserFactory({ db }),
+  storeUser: replicateQuery([db], storeUserFactory),
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: validateAndCreateUserEmailFactory({

@@ -4,13 +4,14 @@ import { expect } from 'chai'
 import type { Knex } from 'knex'
 import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
+import { db } from '@/db/knex'
 
 isMultiRegionTestMode()
   ? describe('Prepared transaction utils (2PC) @multiregion', async () => {
       let main: Knex
       let region1: Knex
       let region2: Knex
-      let ALL_DBS: Knex[] = []
+      let ALL_DBS: [Knex, ...Knex[]] = [db]
 
       const testOperationFactory =
         ({ db }: { db: Knex }) =>
@@ -23,7 +24,7 @@ isMultiRegionTestMode()
         }
 
       before(async () => {
-        main = await getDb({ regionKey: null })
+        main = db
         region1 = await getDb({ regionKey: 'region1' })
         region2 = await getDb({ regionKey: 'region2' })
         ALL_DBS = [main, region1, region2]

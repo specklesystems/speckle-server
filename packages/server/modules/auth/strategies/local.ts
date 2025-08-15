@@ -34,7 +34,7 @@ const localStrategyBuilderFactory =
     getUserByEmail: LegacyGetUserByEmail
     getServerInfo: GetServerInfo
     validateServerInvite: ValidateServerInvite
-    createUser: CreateValidatedUser
+    buildCreateUser: () => Promise<CreateValidatedUser>
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
     throwIfRateLimited: ThrowIfRateLimited
@@ -128,7 +128,8 @@ const localStrategyBuilderFactory =
           //    * the server public and the user has a valid invite
           //    * the server public and the user doesn't have an invite
           // so we go ahead and register the user
-          const userId = await deps.createUser({
+          const createUser = await deps.buildCreateUser()
+          const userId = await createUser({
             ...user,
             role: invite
               ? getResourceTypeRole(invite.resource, ServerInviteResourceType)

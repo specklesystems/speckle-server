@@ -61,6 +61,7 @@ import {
   buildBasicTestVersion
 } from '@/modules/core/tests/helpers/creation'
 import type { Optional } from '@speckle/shared'
+import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -88,7 +89,7 @@ const findEmail = findEmailFactory({ db })
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
-  storeUser: storeUserFactory({ db }),
+  storeUser: replicateQuery([db], storeUserFactory),
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: createUserEmail,

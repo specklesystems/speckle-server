@@ -31,6 +31,7 @@ import {
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import type { BasicTestUser } from '@/test/authHelper'
+import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const ResetTokens = () => knex('pwdreset_tokens')
 const db = knex
@@ -47,7 +48,7 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
-  storeUser: storeUserFactory({ db }),
+  storeUser: replicateQuery([db], storeUserFactory),
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
