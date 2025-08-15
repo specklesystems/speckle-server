@@ -42,6 +42,21 @@ const useRouterNavigatingDevUtils = () => {
   return ret
 }
 
+type SafeRouterNavigationTarget =
+  | string
+  | RouteLocationAsRelativeGeneric
+  | RouteLocationAsPathGeneric
+
+type SafeRouterNavigationOptions<
+  Target extends SafeRouterNavigationTarget = SafeRouterNavigationTarget
+> = Partial<{
+  /**
+   * When router finally gets to fire, optionally do an extra check to see if you
+   * want to cancel the navigation instead
+   */
+  skipIf?: (target: Target) => boolean
+}>
+
 /**
  * Safely queues up navigation changes so that concurrent invocations don't interfere with each other and break navigation.
  * Useful in navigation-heavy environments like the Viewer.
@@ -53,11 +68,12 @@ export const useSafeRouter = () => {
   const router = useRouter()
   const state = useRouterNavigatingState()
 
-  // const { waitUntilReady } = useRouterNavigating()
-
-  const pushOrReplace = async (
-    to: () => string | RouteLocationAsRelativeGeneric | RouteLocationAsPathGeneric,
-    action: 'push' | 'replace'
+  const pushOrReplace = async <
+    Target extends SafeRouterNavigationTarget = SafeRouterNavigationTarget
+  >(
+    to: () => Target,
+    action: 'push' | 'replace',
+    options?: SafeRouterNavigationOptions<Target>
   ) => {
     // We want to add new promise to queue ASAP to avoid race conditions when 2 invocations
     // occur very close to each other. Basically we have to queue it up before we do any async
@@ -98,8 +114,19 @@ export const useSafeRouter = () => {
         }
       )
       await waitForNavigationsClear()
-
       const finalTo = to()
+
+      if (options?.skipIf && options?.skipIf(finalTo)) {
+        debugLog(
+          `[{logId}] Safe router ${action} ready, but skipped due to skipIf...`,
+          {
+            logId
+          }
+        )
+        waitPromise.resolve()
+        return undefined
+      }
+
       debugLog(
         `[{logId}] Safe router ${action} ready, firing and waiting for clear...`,
         {
@@ -133,16 +160,22 @@ export const useSafeRouter = () => {
     }
   }
 
-  const push = async (
-    to: () => string | RouteLocationAsRelativeGeneric | RouteLocationAsPathGeneric
+  const push = async <
+    Target extends SafeRouterNavigationTarget = SafeRouterNavigationTarget
+  >(
+    to: () => Target,
+    options?: SafeRouterNavigationOptions<Target>
   ) => {
-    return await pushOrReplace(to, 'push')
+    return await pushOrReplace(to, 'push', options)
   }
 
-  const replace = async (
-    to: () => string | RouteLocationAsRelativeGeneric | RouteLocationAsPathGeneric
+  const replace = async <
+    Target extends SafeRouterNavigationTarget = SafeRouterNavigationTarget
+  >(
+    to: () => Target,
+    options?: SafeRouterNavigationOptions<Target>
   ) => {
-    return await pushOrReplace(to, 'replace')
+    return await pushOrReplace(to, 'replace', options)
   }
 
   return { ...router, push, replace }

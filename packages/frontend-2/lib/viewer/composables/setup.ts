@@ -503,11 +503,21 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     get: () => parseUrlParameters(getParam.value),
     set: async (newResources) => {
       const modelId = createGetParamFromResources(newResources)
-      await router.push(() => ({
-        params: { modelId },
-        query: route.query,
-        hash: route.hash
-      }))
+      await router.push(
+        () => ({
+          params: { modelId },
+          query: route.query,
+          hash: route.hash
+        }),
+        {
+          skipIf: (to) => {
+            if (to.params.modelId !== getParam.value) return false
+            if (to.query !== route.query) return false
+            if (to.hash !== route.hash) return false
+            return true
+          }
+        }
+      )
     },
     initialState: [],
     asyncRead: false
@@ -569,6 +579,15 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
   )
 
   const savedViewId = ref<string | null | undefined>(undefined)
+
+  // // For debugging uncomment:
+  // watch(
+  //   savedViewId,
+  //   (newVal, oldVal) => {
+  //     devTrace('savedViewId', { newVal, oldVal })
+  //   },
+  //   { flush: 'sync' }
+  // )
 
   return {
     ...state,

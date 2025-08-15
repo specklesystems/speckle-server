@@ -975,6 +975,9 @@ const useViewerSavedViewSetup = () => {
     if (settings.id && settings.id !== savedViewId.value) {
       // wipe hash state, if any exists, otherwise the state will be stale
       await resetUrlHashState()
+
+      // this acts as a reset of the state id too, cause it only applies to active view
+      savedViewStateId.value = undefined
       savedViewId.value = settings.id
       reapplyState = false
     }
@@ -1026,15 +1029,13 @@ const useViewerSavedViewSetup = () => {
     await apply()
   })
 
-  // Did state change after applying saved view? Undo view
   watch(
-    serializedStateId,
-    (newVal, oldVal) => {
+    () => serializedStateId.value,
+    async (newVal, oldVal) => {
       if (newVal === oldVal) return
-
-      // If the saved view state ID is different from the current serialized state ID, reset the saved view
+      // If the saved view state ID is different from the current serialized state ID (user interaction), reset the saved view
       if (savedViewStateId.value && newVal !== savedViewStateId.value) {
-        void reset()
+        await reset()
       }
     },
     { immediate: true }

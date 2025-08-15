@@ -29,11 +29,11 @@ export default defineNuxtPlugin(() => {
   if (debugRoutes) {
     // Debug navigations
     router.beforeEach((to, from) => {
-      logger.debug(`BEFORE: ${from.fullPath} to ${to.fullPath}`)
+      logger.debug(`BEFORE:\n${from.fullPath} to\n${to.fullPath}`)
     })
 
     router.afterEach((to, from) => {
-      logger.debug(`AFTER:  ${from.fullPath} to ${to.fullPath}`)
+      logger.debug(`AFTER:\n${from.fullPath} to\n${to.fullPath}`)
     })
   }
 
