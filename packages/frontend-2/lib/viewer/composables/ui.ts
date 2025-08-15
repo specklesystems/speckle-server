@@ -388,11 +388,11 @@ export function useFilterUtilities(
    * Determines if a key-value pair is filterable (with smart matching for nested properties)
    */
   const isKvpFilterable = (
-    kvp: Record<string, unknown> & { key: string; backendPath?: string },
+    kvp: { key: string; backendPath?: string },
     availableFilters: PropertyInfo[] | null | undefined
   ): boolean => {
     // Use backendPath if available, otherwise fall back to display key
-    const backendKey = (kvp.backendPath as string | undefined) || (kvp.key as string)
+    const backendKey = kvp.backendPath || kvp.key
 
     // First check direct match
     const directMatch = availableFilters?.some((f) => f.key === backendKey)
@@ -415,10 +415,10 @@ export function useFilterUtilities(
    * Gets a detailed reason why a property is disabled for filtering
    */
   const getFilterDisabledReason = (
-    kvp: Record<string, unknown> & { key: string; backendPath?: string },
+    kvp: { key: string; backendPath?: string },
     availableFilters: PropertyInfo[] | null | undefined
   ): string => {
-    const backendKey = (kvp.backendPath as string | undefined) || (kvp.key as string)
+    const backendKey = kvp.backendPath || kvp.key
     const availableKeys = availableFilters?.map((f) => f.key) || []
 
     // Check if it's not in available filters
@@ -451,11 +451,11 @@ export function useFilterUtilities(
    * Applies a filter for a key-value pair (with smart matching)
    */
   const applyKvpFilter = (
-    kvp: Record<string, unknown> & { key: string; backendPath?: string },
+    kvp: { key: string; backendPath?: string },
     availableFilters: PropertyInfo[] | null | undefined
   ): void => {
     // Use backendPath if available, otherwise fall back to display key
-    const backendKey = (kvp.backendPath as string | undefined) || (kvp.key as string)
+    const backendKey = kvp.backendPath || kvp.key
 
     // First try direct match
     let filter = availableFilters?.find((f: PropertyInfo) => f.key === backendKey)

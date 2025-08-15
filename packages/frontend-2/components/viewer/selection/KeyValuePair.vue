@@ -7,7 +7,7 @@
     >
       <div
         class="col-span-1 truncate text-body-3xs mr-2 font-medium text-foreground-2"
-        :title="(kvp.key as string)"
+        :title="kvp.key"
       >
         {{ kvp.key }}
       </div>
@@ -66,14 +66,10 @@ import { LayoutMenu, type LayoutMenuItem } from '@speckle/ui-components'
 import { Ellipsis } from 'lucide-vue-next'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
+import type { KeyValuePair } from '~/components/viewer/selection/types'
 
 const props = defineProps<{
-  kvp: Record<string, unknown> & {
-    key: string
-    value: unknown
-    units?: string
-    backendPath?: string
-  }
+  kvp: KeyValuePair
 }>()
 
 const showActionsMenu = ref(false)
@@ -86,38 +82,28 @@ const {
 
 const isUrlString = (v: unknown) => typeof v === 'string' && VALID_HTTP_URL.test(v)
 
-const isCopyable = (kvp: Record<string, unknown>) => {
+const isCopyable = (kvp: KeyValuePair) => {
   return kvp.value !== null && kvp.value !== undefined && typeof kvp.value !== 'object'
 }
 
-const isFilterable = (kvp: Record<string, unknown>) => {
-  return isKvpFilterable(
-    kvp as Record<string, unknown> & { key: string; backendPath?: string },
-    availableFilters.value
-  )
+const isFilterable = (kvp: KeyValuePair) => {
+  return isKvpFilterable(kvp, availableFilters.value)
 }
 
-const getDisabledReason = (kvp: Record<string, unknown>) => {
-  return getFilterDisabledReason(
-    kvp as Record<string, unknown> & { key: string; backendPath?: string },
-    availableFilters.value
-  )
+const getDisabledReason = (kvp: KeyValuePair) => {
+  return getFilterDisabledReason(kvp, availableFilters.value)
 }
 
-const handleFilterByProperty = (kvp: Record<string, unknown>) => {
-  applyKvpFilter(
-    kvp as Record<string, unknown> & { key: string; backendPath?: string },
-    availableFilters.value
-  )
+const handleFilterByProperty = (kvp: KeyValuePair) => {
+  applyKvpFilter(kvp, availableFilters.value)
 }
 
-const handleCopy = async (kvp: Record<string, unknown>) => {
+const handleCopy = async (kvp: KeyValuePair) => {
   const { copy } = useClipboard()
   if (isCopyable(kvp)) {
-    const keyName = kvp.key as string
     await copy(kvp.value as string, {
-      successMessage: `${keyName} copied to clipboard`,
-      failureMessage: `Failed to copy ${keyName} to clipboard`
+      successMessage: `${kvp.key} copied to clipboard`,
+      failureMessage: `Failed to copy ${kvp.key} to clipboard`
     })
   }
 }

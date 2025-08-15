@@ -97,6 +97,7 @@ import type { SpeckleObject } from '~~/lib/viewer/helpers/sceneExplorer'
 import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useHighlightedObjectsUtilities } from '~/lib/viewer/composables/ui'
+import type { KeyValuePair } from '~/components/viewer/selection/types'
 
 const {
   ui: {
@@ -194,20 +195,19 @@ const ignoredProps = [
 ]
 
 const keyValuePairs = computed(() => {
-  const kvps = [] as (Record<string, unknown> & {
-    key: string
-    value: unknown
-    backendPath?: string
-  })[]
+  const kvps: KeyValuePair[] = []
 
   // handle revit paramters
   if (props.title === 'parameters') {
     const paramKeys = Object.keys(props.object)
     for (const prop of paramKeys) {
-      const param = props.object[prop] as Record<string, unknown>
-      if (!param) continue
+      const param = props.object[prop]
+      if (!param || typeof param !== 'object' || param === null) continue
+      if (!('name' in param) || typeof param.name !== 'string') continue
+      if (!('value' in param)) continue
+
       kvps.push({
-        key: param.name as string,
+        key: param.name,
         type: typeof param.value,
         innerType: null,
         arrayLength: null,
