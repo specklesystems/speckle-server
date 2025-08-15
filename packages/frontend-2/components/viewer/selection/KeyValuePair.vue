@@ -66,15 +66,19 @@ import { LayoutMenu, type LayoutMenuItem } from '@speckle/ui-components'
 import { Ellipsis } from 'lucide-vue-next'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
-import type { PropertyInfo } from '@speckle/viewer'
 
 const props = defineProps<{
-  kvp: Record<string, unknown> & { key: string; value: unknown; units?: string }
+  kvp: Record<string, unknown> & {
+    key: string
+    value: unknown
+    units?: string
+    backendPath?: string
+  }
 }>()
 
 const showActionsMenu = ref(false)
 
-const { setPropertyFilter, applyPropertyFilter, isPropertyFilterable } =
+const { isKvpFilterable, getFilterDisabledReason, applyKvpFilter } =
   useFilterUtilities()
 const {
   metadata: { availableFilters }
@@ -87,17 +91,24 @@ const isCopyable = (kvp: Record<string, unknown>) => {
 }
 
 const isFilterable = (kvp: Record<string, unknown>) => {
-  const key = kvp.key as string
-  return isPropertyFilterable(key, availableFilters.value)
+  return isKvpFilterable(
+    kvp as Record<string, unknown> & { key: string; backendPath?: string },
+    availableFilters.value
+  )
+}
+
+const getDisabledReason = (kvp: Record<string, unknown>) => {
+  return getFilterDisabledReason(
+    kvp as Record<string, unknown> & { key: string; backendPath?: string },
+    availableFilters.value
+  )
 }
 
 const handleFilterByProperty = (kvp: Record<string, unknown>) => {
-  const key = kvp.key as string
-  const filter = availableFilters.value?.find((f: PropertyInfo) => f.key === key)
-  if (filter) {
-    setPropertyFilter(filter)
-    applyPropertyFilter()
-  }
+  applyKvpFilter(
+    kvp as Record<string, unknown> & { key: string; backendPath?: string },
+    availableFilters.value
+  )
 }
 
 const handleCopy = async (kvp: Record<string, unknown>) => {
@@ -130,7 +141,7 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => {
         disabled: !isFilterable(props.kvp),
         disabledTooltip: isFilterable(props.kvp)
           ? undefined
-          : 'This property is not available for filtering'
+          : getDisabledReason(props.kvp)
       }
     ]
   ]

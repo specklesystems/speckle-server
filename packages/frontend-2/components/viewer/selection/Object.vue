@@ -194,7 +194,11 @@ const ignoredProps = [
 ]
 
 const keyValuePairs = computed(() => {
-  const kvps = [] as (Record<string, unknown> & { key: string; value: unknown })[]
+  const kvps = [] as (Record<string, unknown> & {
+    key: string
+    value: unknown
+    backendPath?: string
+  })[]
 
   // handle revit paramters
   if (props.title === 'parameters') {
@@ -252,7 +256,8 @@ const keyValuePairs = computed(() => {
       innerType,
       arrayLength,
       arrayPreview,
-      value: props.object[key]
+      value: props.object[key],
+      backendPath: key // For regular properties, key matches backend path
     })
   }
 
