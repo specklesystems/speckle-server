@@ -53,7 +53,7 @@ export const projectDashboardItemFragment = graphql(`
     id
     ...ProjectDashboardItemNoModels
     ...ProjectCardImportFileArea_Project
-    models(limit: 4) {
+    models(limit: 3) {
       totalCount
       items {
         ...ProjectPageLatestItemsModelItem
@@ -66,7 +66,7 @@ export const projectDashboardItemFragment = graphql(`
       logo
       readOnly
     }
-    pendingImportedModels(limit: 4) {
+    pendingImportedModels(limit: 3) {
       ...PendingFileUpload
     }
   }

@@ -13,10 +13,10 @@
       >
         <div class="flex gap-y-3 flex-col w-full">
           <UserAvatarGroup
-            v-if="workspace?.team"
+            v-if="team.length"
             :overlap="false"
             :users="team.map((teamMember) => teamMember.user)"
-            :max-avatars="5"
+            :max-avatars="4"
             class="shrink-0"
             :on-hidden-count-click="
               () => {
@@ -24,9 +24,10 @@
               }
             "
           />
+
           <div
             v-if="
-              workspace?.team &&
+              team.length &&
               isWorkspaceAdmin &&
               (adminWorkspacesJoinRequestsCount || invitedTeamCount)
             "
@@ -58,7 +59,7 @@
           </div>
         </div>
         <FormButton
-          v-if="workspace?.team && isWorkspaceAdmin"
+          v-if="team.length && isWorkspaceAdmin"
           color="outline"
           size="sm"
           @click="showInviteDialog = true"
@@ -82,24 +83,25 @@ import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 graphql(`
   fragment WorkspaceSidebarMembers_Workspace on Workspace {
-    ...InviteDialogWorkspace_Workspace
     id
     slug
-    team {
+    name
+    domainBasedMembershipProtectionEnabled
+    defaultSeatType
+    sidebarTeam: team(limit: 6) {
       totalCount
       items {
         id
         user {
           id
           name
-          ...LimitedUserAvatar
+          avatar
         }
       }
     }
     invitedTeam(filter: $invitesFilter) {
       id
       role
-      email
     }
     adminWorkspacesJoinRequests {
       totalCount
@@ -120,7 +122,7 @@ const props = defineProps<{
 
 const showInviteDialog = ref(false)
 
-const team = computed(() => props.workspace?.team.items || [])
+const team = computed(() => props.workspace?.sidebarTeam.items || [])
 
 const iconName = computed(() => (props.isWorkspaceAdmin ? 'edit' : 'view'))
 
