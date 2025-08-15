@@ -357,6 +357,10 @@ export const replicateQuery = <F extends (...args: any[]) => Promise<any>>(
 
     const returnValues: ReturnType<F>[] = []
 
+    if (dbs.length === 1) {
+      return factory({ db: dbs[0] })(...params) as Promise<ReturnType<F>>
+    }
+
     try {
       // Phase 1: Prepare transaction across all specified db instances
       for (const db of dbs) {
