@@ -155,6 +155,12 @@ export const parseFeatureFlags = (
       schema: z.boolean(),
       description: 'Enables the saved views feature for project models',
       defaults: { _: false }
+    },
+    FF_USERS_INVITE_SCOPE_IS_PUBLIC: {
+      schema: z.boolean(),
+      description:
+        'Enables Personal Access Tokens (PAT) to be created with users:invite scope. **WARNING** This can be used to spam invitations to any email address. It is not advised to enable this on servers which are open to public account registration or to which untrusted users have been, or can be, invited.',
+      defaults: { _: false }
     }
   })
 
@@ -195,6 +201,7 @@ export type FeatureFlags = {
   FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED: boolean
   FF_ACC_INTEGRATION_ENABLED: boolean
   FF_SAVED_VIEWS_ENABLED: boolean
+  FF_USERS_INVITE_SCOPE_IS_PUBLIC: boolean
 }
 
 export function getFeatureFlags(): FeatureFlags {

@@ -8,12 +8,15 @@ import { publish } from '@/modules/shared/utils/subscriptions'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getProjectInviteProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { reportSubscriptionEventsFactory } from '@/modules/serverinvites/events/subscriptionListeners'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+
+const { FF_USERS_INVITE_SCOPE_IS_PUBLIC } = getFeatureFlags()
 
 const scopes = [
   {
     name: Scopes.Users.Invite,
     description: 'Invite others to join this server.',
-    public: false
+    public: FF_USERS_INVITE_SCOPE_IS_PUBLIC
   }
 ]
 
