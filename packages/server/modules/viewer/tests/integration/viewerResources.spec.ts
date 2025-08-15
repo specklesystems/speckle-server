@@ -14,7 +14,10 @@ import { NotFoundError } from '@/modules/shared/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import type { ViewerResourceGroup } from '@/modules/viewer/domain/types/resources'
 import type { SavedView } from '@/modules/viewer/domain/types/savedViews'
-import { getSavedViewFactory } from '@/modules/viewer/repositories/savedViews'
+import {
+  getModelHomeSavedViewFactory,
+  getSavedViewFactory
+} from '@/modules/viewer/repositories/savedViews'
 import {
   doViewerResourcesFit,
   getViewerResourceGroupsFactory,
@@ -64,7 +67,8 @@ describe('Viewer Resources Collection Service', () => {
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
         getAllBranchCommits: getAllBranchCommitsFactory({ db }),
         getBranchesByIds: getBranchesByIdsFactory({ db }),
-        getSavedView: getSavedViewFactory({ db })
+        getSavedView: getSavedViewFactory({ db }),
+        getModelHomeSavedView: getModelHomeSavedViewFactory({ db })
       })
 
     const resourceIdStringFromGroups = (groups: ViewerResourceGroup[]) =>
@@ -73,6 +77,8 @@ describe('Viewer Resources Collection Service', () => {
     const allVersions = (): BasicTestCommit[] => {
       return Object.values(myVersions).flat()
     }
+
+    const getModelVersions = (modelId: string) => myVersions[modelId].slice() // slice to avoid mutating source
 
     before(async () => {
       me = await createTestUser(buildBasicTestUser())
@@ -131,12 +137,12 @@ describe('Viewer Resources Collection Service', () => {
             (m) =>
               new ViewerModelResource(
                 m.id,
-                type === 'specific' ? myVersions[m.id].at(-1)?.id : undefined
+                type === 'specific' ? getModelVersions(m.id).at(-1)?.id : undefined
               )
           )
         )
 
-        const result = await sut({
+        const { groups: result } = await sut({
           projectId: myProject.id,
           resourceIdString: resourceIds.toString().toString(),
           loadedVersionsOnly: type !== 'all'
@@ -147,7 +153,7 @@ describe('Viewer Resources Collection Service', () => {
           const model = myModels.find((m) => group.identifier.startsWith(m.id))
           expect(model).to.be.ok
 
-          const versions = myVersions[model!.id]
+          const versions = getModelVersions(model!.id)
           expect(group.items).to.have.length(type === 'all' ? 3 : 1)
 
           if (type === 'all') {
@@ -184,7 +190,7 @@ describe('Viewer Resources Collection Service', () => {
 
     it('return empty array on empty resourceIdString', async () => {
       const sut = buildSUT()
-      const result = await sut({
+      const { groups: result } = await sut({
         projectId: myProject.id,
         resourceIdString: ''
       })
@@ -199,7 +205,7 @@ describe('Viewer Resources Collection Service', () => {
         versions.map((v) => new ViewerObjectResource(v.objectId))
       )
 
-      const result = await sut({
+      const { groups: result } = await sut({
         projectId: myProject.id,
         resourceIdString: resourceIds.toString()
       })
@@ -224,7 +230,7 @@ describe('Viewer Resources Collection Service', () => {
         new ViewerAllModelsResource()
       ])
 
-      const result = await sut({
+      const { groups: result } = await sut({
         projectId: myProject.id,
         resourceIdString: resourceIds.toString()
       })
@@ -240,7 +246,7 @@ describe('Viewer Resources Collection Service', () => {
         expect(item.modelId).to.equal(model!.id)
 
         // Sort versions by createdAt, descending
-        const latestVersion = myVersions[model!.id]
+        const latestVersion = getModelVersions(model!.id)
           .slice()
           .sort((a, b) => b.createdAt!.getTime() - a.createdAt!.getTime())
           .at(0)
@@ -264,7 +270,7 @@ describe('Viewer Resources Collection Service', () => {
         })
       const resourceIdString = [...wrongOrderModelIds, ...wrongOrderModelIds].join(',')
 
-      const groups = await sut({
+      const { groups } = await sut({
         projectId: myProject.id,
         resourceIdString
       })
@@ -280,11 +286,10 @@ describe('Viewer Resources Collection Service', () => {
 
     if (getFeatureFlags().FF_SAVED_VIEWS_ENABLED) {
       describe('w/ saved views', () => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         let firstModelHomeView: SavedView
-
         let secondModelBasicView: SavedView
 
+        const homeViewModel = () => firstModel()
         const firstModel = () => myModels[0]
         const secondModel = () => myModels[1]
 
@@ -296,7 +301,7 @@ describe('Viewer Resources Collection Service', () => {
               view: {
                 resourceIds: resourceBuilder()
                   // First model and first version (not default which would be latest version)
-                  .addModel(firstModel().id, myVersions[firstModel().id][0].id)
+                  .addModel(firstModel().id, getModelVersions(firstModel().id)[0].id)
                   .toResourceIds(),
                 isHomeView: true
               }
@@ -307,7 +312,7 @@ describe('Viewer Resources Collection Service', () => {
               view: {
                 resourceIds: resourceBuilder()
                   // Second model and first version (not default which would be latest version)
-                  .addModel(secondModel().id, myVersions[secondModel().id][0].id)
+                  .addModel(secondModel().id, getModelVersions(secondModel().id)[0].id)
                   .toResourceIds(),
                 isHomeView: false
               }
@@ -336,35 +341,56 @@ describe('Viewer Resources Collection Service', () => {
         })
 
         itEach(
-          [{ loadOriginal: false }, { loadOriginal: true }],
-          ({ loadOriginal }) =>
-            `add saved view resources without changing other ones (loadOriginal=${loadOriginal})`,
-          async ({ loadOriginal }) => {
+          [
+            { loadOriginal: false, conflictWithView: false },
+            { loadOriginal: true, conflictWithView: false },
+            { loadOriginal: false, conflictWithView: true },
+            { loadOriginal: true, conflictWithView: true }
+          ],
+          ({ loadOriginal, conflictWithView }) =>
+            `add saved view resources without changing other ones${
+              conflictWithView ? ' and merging into conflicting ones' : ''
+            } (loadOriginal=${loadOriginal})`,
+          async ({ loadOriginal, conflictWithView }) => {
             const sut = buildSUT()
 
-            const firstModelIdString = resourceBuilder()
+            const resources = resourceBuilder()
               // 1st model specific version - should be left as is
+              .addModel(firstModel().id, getModelVersions(firstModel().id)[1].id)
+            if (conflictWithView) {
+              // 2nd model add conflicting one w/ view - same model, different version
+              resources.addModel(
+                secondModel().id,
+                getModelVersions(secondModel().id).at(1)!.id // 2nd one
+              )
+            } else {
               // 2nd model should be added by the view
-              .addModel(firstModel().id, myVersions[firstModel().id][0].id)
-              .toString()
+            }
 
-            const groups = await sut({
+            const resourceIdString = resources.toString()
+
+            const { groups, savedView } = await sut({
               projectId: myProject.id,
-              resourceIdString: firstModelIdString,
+              resourceIdString,
               savedViewId: secondModelBasicView.id,
               loadedVersionsOnly: true,
               savedViewSettings: { loadOriginal }
             })
 
+            expect(savedView?.id).to.equal(secondModelBasicView.id)
             expect(groups).to.have.length(2)
+
+            const firstModelResource = resources
+              .filter(isModelResource)
+              .find((r) => r.modelId === firstModel().id)
             const firstModelGroup = groups.find(
-              (g) => g.identifier === firstModelIdString
+              (g) => g.identifier === firstModelResource?.toString()
             )
             expect(firstModelGroup).to.be.ok
             expect(firstModelGroup!.items.length).to.equal(1)
             expect(firstModelGroup!.items[0].modelId).to.equal(firstModel().id)
             expect(firstModelGroup!.items[0].versionId).to.equal(
-              myVersions[firstModel().id][0].id
+              getModelVersions(firstModel().id)[1].id
             )
             expect(firstModelGroup!.items[0].objectId).to.be.ok
 
@@ -375,7 +401,11 @@ describe('Viewer Resources Collection Service', () => {
                 .forEach((r) => {
                   if (!isModelResource(r)) return
 
-                  r.versionId = loadOriginal ? r.versionId : undefined // cause we didn't specify anything in the arg resourceIdString for this model
+                  r.versionId = loadOriginal
+                    ? r.versionId
+                    : conflictWithView
+                    ? getModelVersions(secondModel().id).at(1)!.id // cause we specified this one
+                    : undefined // cause we didn't specify anything in the arg resourceIdString for this model
                 })
 
               return groupId.isEqualTo(viewIds)
@@ -384,11 +414,64 @@ describe('Viewer Resources Collection Service', () => {
             expect(secondModelGroup!.items.length).to.equal(1)
             expect(secondModelGroup!.items[0].modelId).to.equal(secondModel().id)
             expect(secondModelGroup!.items[0].versionId).to.equal(
-              myVersions[secondModel().id].at(loadOriginal ? 0 : -1)!.id
+              getModelVersions(secondModel().id).at(
+                loadOriginal ? 0 : conflictWithView ? 1 : -1
+              )!.id
             )
             expect(secondModelGroup!.items[0].objectId).to.be.ok
           }
         )
+
+        it('load model home view', async () => {
+          const sut = buildSUT()
+          const resources = resourceBuilder().addModel(homeViewModel().id)
+
+          const { groups, savedView } = await sut({
+            projectId: myProject.id,
+            resourceIdString: resources.toString(),
+            savedViewId: undefined,
+            loadedVersionsOnly: true
+          })
+
+          expect(savedView?.id).to.equal(firstModelHomeView.id)
+          expect(groups).to.have.length(1)
+
+          const homeViewGroup = groups[0]
+          expect(homeViewGroup).to.be.ok
+          expect(homeViewGroup!.items.length).to.equal(1)
+          expect(homeViewGroup!.items[0].modelId).to.equal(homeViewModel().id)
+          expect(homeViewGroup!.items[0].versionId).to.equal(
+            getModelVersions(homeViewModel().id)[0].id
+          ) // version specified in view, not latest one
+          expect(homeViewGroup!.items[0].objectId).to.be.ok
+        })
+
+        it('doesnt load model home view if specific version specified', async () => {
+          const sut = buildSUT()
+          const resources = resourceBuilder().addModel(
+            homeViewModel().id,
+            getModelVersions(homeViewModel().id)[1].id
+          )
+
+          const { groups, savedView } = await sut({
+            projectId: myProject.id,
+            resourceIdString: resources.toString(),
+            savedViewId: undefined,
+            loadedVersionsOnly: true
+          })
+
+          expect(savedView).to.be.not.ok
+          expect(groups).to.have.length(1)
+
+          const homeViewGroup = groups[0]
+          expect(homeViewGroup).to.be.ok
+          expect(homeViewGroup!.items.length).to.equal(1)
+          expect(homeViewGroup!.items[0].modelId).to.equal(homeViewModel().id)
+          expect(homeViewGroup!.items[0].versionId).to.equal(
+            getModelVersions(homeViewModel().id)[1].id
+          ) // concrete version specified
+          expect(homeViewGroup!.items[0].objectId).to.be.ok
+        })
       })
     }
   })

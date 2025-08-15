@@ -16,7 +16,7 @@ import type { ServerAppGraphQLReturn, ServerAppListItemGraphQLReturn } from '@/m
 import type { GendoAIRenderGraphQLReturn } from '@/modules/gendo/helpers/types/graphTypes';
 import type { ServerRegionItemGraphQLReturn } from '@/modules/multiregion/helpers/graphTypes';
 import type { AccSyncItemGraphQLReturn, AccSyncItemMutationsGraphQLReturn } from '@/modules/acc/helpers/graphTypes';
-import type { SavedViewGraphQLReturn, SavedViewGroupGraphQLReturn, SavedViewPermissionChecksGraphQLReturn, SavedViewGroupPermissionChecksGraphQLReturn } from '@/modules/viewer/helpers/graphTypes';
+import type { SavedViewGraphQLReturn, SavedViewGroupGraphQLReturn, SavedViewPermissionChecksGraphQLReturn, SavedViewGroupPermissionChecksGraphQLReturn, ExtendedViewerResourcesGraphQLReturn } from '@/modules/viewer/helpers/graphTypes';
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type Maybe<T> = T | null;
@@ -1187,6 +1187,17 @@ export type EmbedTokenCreateInput = {
   projectId: Scalars['String']['input'];
   /** The model(s) and version(s) string used in the embed url */
   resourceIdString: Scalars['String']['input'];
+};
+
+export type ExtendedViewerResources = {
+  __typename?: 'ExtendedViewerResources';
+  /** The groups of viewer resources themselves */
+  groups: Array<ViewerResourceGroup>;
+  /**
+   * The saved view that was used, if any. Even if no savedViewId was specified, a home view could
+   * have been implicitly loaded.
+   */
+  savedView?: Maybe<SavedView>;
 };
 
 export type FileImportResultInput = {
@@ -2379,8 +2390,13 @@ export type Project = {
   version: Version;
   /** Returns a flat list of all project versions */
   versions: VersionCollection;
-  /** Return metadata about resources being requested in the viewer */
+  /**
+   * Return metadata about resources being requested in the viewer
+   * @deprecated Use viewerResourcesExtended instead. viewerResources() will be removed soon
+   */
   viewerResources: Array<ViewerResourceGroup>;
+  /** Return extended metadata about resources being requested in the viewer */
+  viewerResourcesExtended: ExtendedViewerResources;
   visibility: ProjectVisibility;
   webhooks: WebhookCollection;
   workspace?: Maybe<Workspace>;
@@ -2534,6 +2550,14 @@ export type ProjectVersionsArgs = {
 
 
 export type ProjectViewerResourcesArgs = {
+  loadedVersionsOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  resourceIdString: Scalars['String']['input'];
+  savedViewId?: InputMaybe<Scalars['ID']['input']>;
+  savedViewSettings?: InputMaybe<SavedViewsLoadSettings>;
+};
+
+
+export type ProjectViewerResourcesExtendedArgs = {
   loadedVersionsOnly?: InputMaybe<Scalars['Boolean']['input']>;
   resourceIdString: Scalars['String']['input'];
   savedViewId?: InputMaybe<Scalars['ID']['input']>;
@@ -5962,6 +5986,7 @@ export type ResolversTypes = {
   EmbedToken: ResolverTypeWrapper<EmbedTokenGraphQLReturn>;
   EmbedTokenCollection: ResolverTypeWrapper<Omit<EmbedTokenCollection, 'items'> & { items: Array<ResolversTypes['EmbedToken']> }>;
   EmbedTokenCreateInput: EmbedTokenCreateInput;
+  ExtendedViewerResources: ResolverTypeWrapper<ExtendedViewerResourcesGraphQLReturn>;
   FileImportResultInput: FileImportResultInput;
   FileUpload: ResolverTypeWrapper<FileUploadGraphQLReturn>;
   FileUploadCollection: ResolverTypeWrapper<Omit<FileUploadCollection, 'items'> & { items: Array<ResolversTypes['FileUpload']> }>;
@@ -6338,6 +6363,7 @@ export type ResolversParentTypes = {
   EmbedToken: EmbedTokenGraphQLReturn;
   EmbedTokenCollection: Omit<EmbedTokenCollection, 'items'> & { items: Array<ResolversParentTypes['EmbedToken']> };
   EmbedTokenCreateInput: EmbedTokenCreateInput;
+  ExtendedViewerResources: ExtendedViewerResourcesGraphQLReturn;
   FileImportResultInput: FileImportResultInput;
   FileUpload: FileUploadGraphQLReturn;
   FileUploadCollection: Omit<FileUploadCollection, 'items'> & { items: Array<ResolversParentTypes['FileUpload']> };
@@ -7104,6 +7130,12 @@ export type EmbedTokenCollectionResolvers<ContextType = GraphQLContext, ParentTy
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type ExtendedViewerResourcesResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ExtendedViewerResources'] = ResolversParentTypes['ExtendedViewerResources']> = {
+  groups?: Resolver<Array<ResolversTypes['ViewerResourceGroup']>, ParentType, ContextType>;
+  savedView?: Resolver<Maybe<ResolversTypes['SavedView']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type FileUploadResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FileUpload'] = ResolversParentTypes['FileUpload']> = {
   branchName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   convertedCommitId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -7490,6 +7522,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   version?: Resolver<ResolversTypes['Version'], ParentType, ContextType, RequireFields<ProjectVersionArgs, 'id'>>;
   versions?: Resolver<ResolversTypes['VersionCollection'], ParentType, ContextType, RequireFields<ProjectVersionsArgs, 'limit'>>;
   viewerResources?: Resolver<Array<ResolversTypes['ViewerResourceGroup']>, ParentType, ContextType, RequireFields<ProjectViewerResourcesArgs, 'loadedVersionsOnly' | 'resourceIdString'>>;
+  viewerResourcesExtended?: Resolver<ResolversTypes['ExtendedViewerResources'], ParentType, ContextType, RequireFields<ProjectViewerResourcesExtendedArgs, 'loadedVersionsOnly' | 'resourceIdString'>>;
   visibility?: Resolver<ResolversTypes['ProjectVisibility'], ParentType, ContextType>;
   webhooks?: Resolver<ResolversTypes['WebhookCollection'], ParentType, ContextType, Partial<ProjectWebhooksArgs>>;
   workspace?: Resolver<Maybe<ResolversTypes['Workspace']>, ParentType, ContextType>;
@@ -8651,6 +8684,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DateTime?: GraphQLScalarType;
   EmbedToken?: EmbedTokenResolvers<ContextType>;
   EmbedTokenCollection?: EmbedTokenCollectionResolvers<ContextType>;
+  ExtendedViewerResources?: ExtendedViewerResourcesResolvers<ContextType>;
   FileUpload?: FileUploadResolvers<ContextType>;
   FileUploadCollection?: FileUploadCollectionResolvers<ContextType>;
   FileUploadMutations?: FileUploadMutationsResolvers<ContextType>;

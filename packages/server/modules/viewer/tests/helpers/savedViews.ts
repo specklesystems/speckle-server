@@ -15,6 +15,7 @@ import {
 } from '@/modules/viewer/domain/types/savedViews'
 import { formatResourceIdsForGroup } from '@/modules/viewer/helpers/savedViews'
 import {
+  getModelHomeSavedViewFactory,
   getSavedViewFactory,
   getSavedViewGroupFactory,
   getStoredViewCountFactory,
@@ -116,7 +117,8 @@ export const createTestSavedView = async (params?: {
     getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
     getAllBranchCommits: getAllBranchCommitsFactory({ db }),
     getBranchesByIds: getBranchesByIdsFactory({ db }),
-    getSavedView: getSavedViewFactory({ db })
+    getSavedView: getSavedViewFactory({ db }),
+    getModelHomeSavedView: getModelHomeSavedViewFactory({ db })
   })
 
   const createSavedView = createSavedViewFactory({

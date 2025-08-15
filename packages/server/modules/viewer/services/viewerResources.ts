@@ -21,7 +21,12 @@ import type {
   GetViewerResourceGroups,
   GetViewerResourceItemsUngrouped
 } from '@/modules/viewer/domain/operations/resources'
-import type { GetSavedView } from '@/modules/viewer/domain/operations/savedViews'
+import type {
+  GetModelHomeSavedView,
+  GetSavedView
+} from '@/modules/viewer/domain/operations/savedViews'
+import type { SavedView } from '@/modules/viewer/domain/types/savedViews'
+import type { ExtendedViewerResourcesGraphQLReturn } from '@/modules/viewer/helpers/graphTypes'
 import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import { SpeckleViewer } from '@speckle/shared'
 import {
@@ -29,7 +34,7 @@ import {
   resourceBuilder,
   ViewerModelResource
 } from '@speckle/shared/viewer/route'
-import { flatten, keyBy, uniq, uniqWith } from 'lodash-es'
+import { flatten, isString, keyBy, uniq, uniqWith } from 'lodash-es'
 
 export function isResourceItemEqual(a: ViewerResourceItem, b: ViewerResourceItem) {
   if (a.modelId !== b.modelId) return false
@@ -332,27 +337,41 @@ const getVersionResourceGroupsFactory =
     return [...(allModelsGroup ? [allModelsGroup] : []), ...groups]
   }
 
+type ResourceIdStringWithSavedView = {
+  resourceIdString: string
+  savedView: SavedView | undefined
+}
+
 /**
- * Resolve final resourceIdString based on the saved view and its load settings
+ * Resolve final resourceIdString based on a saved view and its load settings
  */
-const adjustResourceIdStringWithSavedViewSettingsFactory =
+const adjustResourceIdStringWithSpecificSavedViewSettingsFactory =
   (deps: { getSavedView: GetSavedView }) =>
   async (params: {
     projectId: string
     resourceIdString: string
-    savedViewId: string
+    savedViewId: MaybeNullOrUndefined<string | SavedView>
     savedViewSettings: MaybeNullOrUndefined<SavedViewsLoadSettings>
-  }): Promise<string> => {
-    const { resourceIdString, projectId, savedViewId, savedViewSettings } = params
+  }): Promise<ResourceIdStringWithSavedView> => {
+    const { resourceIdString, projectId, savedViewSettings } = params
     const { loadOriginal } = savedViewSettings || {}
+    const emptyReturn = { resourceIdString, savedView: undefined }
 
-    const savedView = await deps.getSavedView({
-      id: savedViewId,
-      projectId
-    })
+    if (!params.savedViewId) {
+      // If there's no saved view ID, we can't adjust the resource ID string
+      return emptyReturn
+    }
+
+    const savedView = isString(params.savedViewId)
+      ? await deps.getSavedView({
+          id: params.savedViewId,
+          projectId
+        })
+      : params.savedViewId
+
     if (!savedView) {
       throw new NotFoundError(
-        `Saved view with ID ${savedViewId} not found in project ${projectId}`
+        `Saved view with ID ${params.savedViewId} not found in project ${projectId}`
       )
     }
 
@@ -370,10 +389,84 @@ const adjustResourceIdStringWithSavedViewSettingsFactory =
       return new ViewerModelResource(r.modelId, versionId)
     })
 
-    return resourceBuilder()
-      .addResources(finalSavedViewResources)
-      .addNew(baseResources) // keep other stuff around
-      .toString()
+    return {
+      savedView,
+      resourceIdString: resourceBuilder()
+        .addResources(finalSavedViewResources)
+        .addNew(baseResources) // keep other stuff around
+        .toString()
+    }
+  }
+
+/**
+ * Resolve final resourceIdString based on an implicit (home) saved view that may exist for the resource
+ */
+const adjustResourceIdStringWithHomeSavedViewSettingsFactory =
+  (deps: {
+    getSavedView: GetSavedView
+    getModelHomeSavedView: GetModelHomeSavedView
+  }) =>
+  async (params: {
+    projectId: string
+    resourceIdString: string
+  }): Promise<ResourceIdStringWithSavedView> => {
+    const { projectId, resourceIdString } = params
+    const emptyReturn = { resourceIdString, savedView: undefined }
+    const modelIds = resourceBuilder()
+      .addResources(resourceIdString)
+      .filter(isModelResource)
+    if (modelIds.length !== 1) {
+      // home view loading only supported in non-federated views for a single model
+      return emptyReturn
+    }
+
+    const modelId = modelIds[0]
+    if (modelId.versionId) {
+      // If versionId set, also ignore
+      return emptyReturn
+    }
+
+    const savedView = await deps.getModelHomeSavedView({
+      modelId: modelId.modelId,
+      projectId
+    })
+    if (!savedView) {
+      // no home view found
+      return emptyReturn
+    }
+
+    return adjustResourceIdStringWithSpecificSavedViewSettingsFactory(deps)({
+      projectId,
+      resourceIdString,
+      savedViewId: savedView,
+      savedViewSettings: {
+        // home view means - load that specific version too, otherwise theres no point
+        loadOriginal: true
+      }
+    })
+  }
+
+/**
+ * Resolve final resourceIdString based on the saved view and its load settings
+ */
+const adjustResourceIdStringWithSavedViewSettingsFactory =
+  (
+    deps: DependenciesOf<
+      typeof adjustResourceIdStringWithSpecificSavedViewSettingsFactory
+    > &
+      DependenciesOf<typeof adjustResourceIdStringWithHomeSavedViewSettingsFactory>
+  ) =>
+  async (params: {
+    projectId: string
+    resourceIdString: string
+    savedViewId: MaybeNullOrUndefined<string>
+    savedViewSettings: MaybeNullOrUndefined<SavedViewsLoadSettings>
+  }): Promise<ResourceIdStringWithSavedView> => {
+    const { savedViewId } = params
+
+    return savedViewId
+      ? adjustResourceIdStringWithSpecificSavedViewSettingsFactory(deps)(params)
+      : adjustResourceIdStringWithHomeSavedViewSettingsFactory(deps)(params)
   }
 
 /**
@@ -386,7 +479,7 @@ export const getViewerResourceGroupsFactory =
       GetVersionResourceGroupsDeps &
       DependenciesOf<typeof adjustResourceIdStringWithSavedViewSettingsFactory>
   ): GetViewerResourceGroups =>
-  async (params): Promise<ViewerResourceGroup[]> => {
+  async (params): Promise<ExtendedViewerResourcesGraphQLReturn> => {
     const {
       projectId,
       loadedVersionsOnly,
@@ -395,19 +488,28 @@ export const getViewerResourceGroupsFactory =
       savedViewSettings
     } = params
 
-    let resourceIdString = params.resourceIdString
-    if (savedViewId && getFeatureFlags().FF_SAVED_VIEWS_ENABLED) {
-      resourceIdString = await adjustResourceIdStringWithSavedViewSettingsFactory(deps)(
-        {
-          resourceIdString,
+    let resourceIdStringWithSavedView: ResourceIdStringWithSavedView = {
+      resourceIdString: params.resourceIdString,
+      savedView: undefined
+    }
+    if (getFeatureFlags().FF_SAVED_VIEWS_ENABLED) {
+      resourceIdStringWithSavedView =
+        await adjustResourceIdStringWithSavedViewSettingsFactory(deps)({
+          resourceIdString: params.resourceIdString,
           projectId,
           savedViewId,
           savedViewSettings
-        }
-      )
+        })
     }
 
-    if (!resourceIdString?.trim().length) return []
+    const { resourceIdString } = resourceIdStringWithSavedView
+    const ret: ExtendedViewerResourcesGraphQLReturn = {
+      groups: [],
+      savedView: resourceIdStringWithSavedView.savedView
+    }
+
+    if (!resourceIdString?.trim().length) return ret
+
     const resources = SpeckleViewer.ViewerRoute.parseUrlParameters(resourceIdString)
 
     const allModelsResource = resources.find(
@@ -431,8 +533,9 @@ export const getViewerResourceGroupsFactory =
         })
       ])
     )
+    ret.groups = results
 
-    return results
+    return ret
   }
 
 export const getViewerResourceItemsUngroupedFactory =
@@ -445,7 +548,7 @@ export const getViewerResourceItemsUngroupedFactory =
 
     let results: ViewerResourceItem[] = []
     const groups = await deps.getViewerResourceGroups(params)
-    for (const group of groups) {
+    for (const group of groups.groups) {
       results = results.concat(group.items)
     }
 

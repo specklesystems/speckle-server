@@ -70,7 +70,7 @@ const validateProjectResourceIdStringFactory =
       )
     }
 
-    const resourceGroups = await deps.getViewerResourceGroups({
+    const { groups: resourceGroups } = await deps.getViewerResourceGroups({
       projectId,
       loadedVersionsOnly: true,
       resourceIdString: resourceIds.toString(),

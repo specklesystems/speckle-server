@@ -50,6 +50,7 @@ import type { Knex } from 'knex'
 import { ungroupedScenesGroupTitle } from '@speckle/shared/saved-views'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
+  getModelHomeSavedViewFactory,
   getSavedViewFactory,
   getSavedViewGroupFactory
 } from '@/modules/viewer/repositories/dataLoaders/savedViews'
@@ -67,7 +68,8 @@ const buildGetViewerResourceGroups = (params: {
     getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
     getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb }),
     getBranchesByIds: getBranchesByIdsFactory({ db: projectDb }),
-    getSavedView: getSavedViewFactory({ loaders: params.loaders })
+    getSavedView: getSavedViewFactory({ loaders: params.loaders }),
+    getModelHomeSavedView: getModelHomeSavedViewFactory({ loaders: params.loaders })
   })
 }
 

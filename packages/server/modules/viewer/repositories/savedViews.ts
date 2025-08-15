@@ -1,5 +1,9 @@
-import { buildTableHelper } from '@/modules/core/dbSchema'
-import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
+import { Branches, buildTableHelper } from '@/modules/core/dbSchema'
+import type { Model } from '@/modules/core/domain/branches/types'
+import {
+  compositeCursorTools,
+  formatJsonArrayRecords
+} from '@/modules/shared/helpers/dbHelper'
 import type {
   GetGroupSavedViewsBaseParams,
   GetGroupSavedViewsPageItems,
@@ -20,7 +24,9 @@ import type {
   GetSavedView,
   GetStoredViewGroupCount,
   DeleteSavedViewGroupRecord,
-  UpdateSavedViewGroupRecord
+  UpdateSavedViewGroupRecord,
+  GetModelHomeSavedViews,
+  GetModelHomeSavedView
 } from '@/modules/viewer/domain/operations/savedViews'
 import {
   SavedViewVisibility,
@@ -98,7 +104,8 @@ const buildDefaultGroup = (params: {
 
 const tables = {
   savedViews: (db: Knex) => db<SavedView>(SavedViews.name),
-  savedViewGroups: (db: Knex) => db<SavedViewGroup>(SavedViewGroups.name)
+  savedViewGroups: (db: Knex) => db<SavedViewGroup>(SavedViewGroups.name),
+  branches: (db: Knex) => db<Model>(Branches.name)
 }
 
 export const storeSavedViewFactory =
@@ -602,4 +609,62 @@ export const updateSavedViewGroupRecordFactory =
       .update(update, '*')
 
     return updatedGroup
+  }
+
+export const getModelHomeSavedViewsFactory =
+  (deps: { db: Knex }): GetModelHomeSavedViews =>
+  async (params) => {
+    const { requests } = params
+
+    const q = tables
+      .branches(deps.db)
+      // there should really only be 1 group per 1 view, but the schema does technically
+      // allow for multiple
+      .select<Array<{ modelId: string; views: SavedView[] }>>([
+        Branches.colAs('id', 'modelId'),
+        SavedViews.groupArray('views')
+      ])
+      .whereIn(
+        [Branches.col.id, Branches.col.streamId],
+        requests.map((r) => [r.modelId, r.projectId])
+      )
+      .innerJoin(SavedViews.name, (j1) => {
+        j1.on(
+          deps.db.raw('?? && ARRAY[??]', [
+            SavedViews.col.groupResourceIds,
+            Branches.col.id
+          ])
+        ).andOnVal(SavedViews.col.isHomeView, true)
+      })
+      .groupBy('modelId')
+
+    const modelViews = (await q).map(({ modelId, views }) => {
+      const formattedViews = formatJsonArrayRecords(views)
+      return {
+        modelId,
+        view: formattedViews.at(0)
+      }
+    })
+
+    const viewsMap: { [modelId: string]: SavedView | undefined } = {}
+    for (const { modelId, view } of modelViews) {
+      viewsMap[modelId] = view
+    }
+    return viewsMap
+  }
+
+export const getModelHomeSavedViewFactory =
+  (deps: { db: Knex }): GetModelHomeSavedView =>
+  async (params) => {
+    const { modelId, projectId } = params
+    const ret = await getModelHomeSavedViewsFactory(deps)({
+      requests: [
+        {
+          modelId,
+          projectId
+        }
+      ]
+    })
+    const [view] = Object.values(ret)
+    return view
   }
