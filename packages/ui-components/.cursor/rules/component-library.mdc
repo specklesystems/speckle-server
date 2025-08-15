@@ -1,0 +1,147 @@
+---
+description: Component library patterns and Storybook conventions for ui-components
+globs: ['**/*.vue', '**/*.ts', '**/*.js', '**/*.stories.*', '**/lib.ts']
+alwaysApply: false
+---
+
+# Component Library Patterns
+
+## File Structure
+
+```
+packages/ui-components/
+├── src/
+│   ├── components/   # Reusable UI components
+│   ├── helpers/      # Component utilities
+│   └── lib.ts       # Main export file
+```
+
+## Component Development
+
+### Reusable Components
+
+- **Focus on reusability** - components should work in multiple contexts
+- **Minimal external dependencies** - keep the library lightweight
+- **Props-driven** - all variations should be controllable via props
+- **No business logic** - components should be presentational
+
+### Component Composition
+
+- **Compound components** for complex UI patterns
+- **Render props** or slots for customizable content
+- **Headless patterns** where appropriate for maximum flexibility
+
+```vue
+<!-- Good: Flexible and reusable -->
+<template>
+  <button :class="buttonClasses" :disabled="disabled" @click="$emit('click', $event)">
+    <Icon v-if="icon" :name="icon" />
+    <slot />
+  </button>
+</template>
+
+<script setup lang="ts">
+interface Props {
+  variant?: 'primary' | 'secondary' | 'danger'
+  size?: 'sm' | 'md' | 'lg'
+  icon?: string
+  disabled?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  variant: 'primary',
+  size: 'md'
+})
+
+const emit = defineEmits<{
+  click: [event: MouseEvent]
+}>()
+</script>
+```
+
+## Storybook Development
+
+### Story Organization
+
+- **One story file per component**
+- **Multiple variants** to showcase all component states
+- **Interactive controls** for all props
+- **Documentation** with usage examples
+
+```typescript
+// Button.stories.ts
+import type { Meta, StoryObj } from '@storybook/vue3'
+import Button from './Button.vue'
+
+const meta: Meta<typeof Button> = {
+  title: 'Form/Button',
+  component: Button,
+  parameters: {
+    docs: {
+      description: {
+        component: 'Primary button component with multiple variants'
+      }
+    }
+  },
+  argTypes: {
+    variant: {
+      control: { type: 'select' },
+      options: ['primary', 'secondary', 'danger']
+    }
+  }
+}
+
+export default meta
+type Story = StoryObj<typeof meta>
+
+export const Primary: Story = {
+  args: {
+    variant: 'primary'
+  }
+}
+
+export const AllVariants: Story = {
+  render: () => ({
+    components: { Button },
+    template: `
+      <div class="space-x-4">
+        <Button variant="primary">Primary</Button>
+        <Button variant="secondary">Secondary</Button>
+        <Button variant="danger">Danger</Button>
+      </div>
+    `
+  })
+}
+```
+
+### Story Best Practices
+
+- **Show all states** (default, hover, disabled, loading, etc.)
+- **Responsive examples** for components that adapt to screen size
+- **Accessibility testing** with a11y addon
+- **Performance testing** for complex components
+
+## Library Exports
+
+### Main Export File
+
+```typescript
+// src/lib.ts
+export { default as Button } from './components/Button.vue'
+export { default as Input } from './components/Input.vue'
+export { default as Modal } from './components/Modal.vue'
+
+// Export types
+export type { ButtonProps } from './components/Button.vue'
+export type { InputProps } from './components/Input.vue'
+
+// Export utilities
+export * from './helpers/validation'
+export * from './helpers/formatting'
+```
+
+### Tree-Shakeable Exports
+
+- **Named exports only** - no default exports for the library
+- **Separate type exports** - allow importing types without importing components
+- **Utility separation** - helpers should be importable independently

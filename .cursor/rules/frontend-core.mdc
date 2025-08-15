@@ -1,0 +1,225 @@
+---
+description: Core frontend development patterns for Vue 3 + Nuxt 3 applications
+globs: ['packages/frontend-2/**/*', 'packages/ui-components/**/*']
+alwaysApply: false
+---
+
+# Frontend Development Rules
+
+## Tech Stack
+
+### Frontend App (packages/frontend-2)
+
+- **Framework**: Nuxt 3 with Vue 3 composition API
+- **Styling**: Tailwind CSS with custom theme from @speckle/tailwind-theme
+- **State**: Vue composables, no Vuex/Pinia
+- **Forms**: vee-validate for form validation
+- **GraphQL**: Apollo Client with @vue/apollo-composable
+- **Icons**: Lucide icons (Heroicons are deprecated)
+- **Rich Text**: TipTap editor
+- **Build**: Vite with TypeScript
+
+### Component Library (packages/ui-components)
+
+- **Framework**: Vue 3 with composition API
+- **Build**: Vite with TypeScript for library builds
+- **Styling**: Tailwind CSS with custom theme
+- **Development**: Storybook for component development and documentation
+
+## Code Style & Formatting
+
+### TypeScript
+
+- **Strict mode enabled** - Use strict TypeScript everywhere
+- **ES2021 target** with modern features
+- **Module resolution**: "bundler" for modern imports
+- **Path aliases**: Use `~/` for Nuxt auto-imports in frontend-2
+- **Import style**: Prefer named imports, consistent type imports
+- **Type definitions**: Explicit types over `any`, use utility types
+- **Type guards over type assertions** - Use type narrowing instead of `as` casting
+- **Explicit return types** for exported/public functions
+
+### Formatting & Linting Configuration
+
+**For up-to-date formatting and linting rules, reference these files:**
+
+- **Prettier configuration**: `.prettierrc`
+
+  - Contains formatting rules for quotes, semicolons, indentation, print width
+  - Enforced via pre-commit hooks and CI
+
+- **ESLint configurations**:
+
+  - **Frontend-2**: `packages/frontend-2/eslint.config.mjs`
+  - **UI Components**: `packages/ui-components/eslint.config.mjs`
+  - **Base config**: `eslint.config.mjs` (shared rules)
+
+- **TypeScript configuration**:
+  - **Frontend-2**: `packages/frontend-2/tsconfig.json`
+  - **UI Components**: `packages/ui-components/tsconfig.json`
+
+### Constants and Magic Strings
+
+- **Use enums or constants** instead of duplicating string literals
+- **Co-locate types** with implementations when not domain-specific
+- **Object parameters** over positional parameters for functions
+- **First parameter** for main params, **second optional** for options
+
+### Icons
+
+- **Always use Lucide icons** - Heroicons are deprecated
+- **Import from** `lucide-vue-next` package
+- **Consistent sizing** using Tailwind classes
+
+## File & Directory Conventions
+
+### Naming
+
+- **kebab-case** for file names
+- **PascalCase** for Vue component files
+- **camelCase** for TypeScript/JavaScript files
+- **kebab-case** for directories
+
+### Path Resolution & Imports
+
+- **Workspace packages**: `@speckle/package-name`
+- **Frontend-2 paths**: Use `~/` for Nuxt auto-imports and absolute paths
+- **Type imports**: Use `type` keyword for type-only imports
+- **Always use alias imports** - Never use relative paths
+
+```typescript
+// 1. Node modules
+import { computed, ref } from 'vue'
+import { useQuery } from '@vue/apollo-composable'
+
+// 2. Internal packages
+import { type Nullable } from '@speckle/shared'
+import { FormButton } from '@speckle/ui-components'
+
+// 3. Local imports
+import { useProjectData } from '~/lib/projects/composables'
+import type { ProjectFragment } from '~/lib/common/generated/gql/graphql'
+```
+
+## Common Patterns & Decision Making
+
+### When Creating New Files
+
+- **Components**: Use PascalCase, place in feature-based directories
+- **Composables**: Use camelCase with `use` prefix, group by domain
+- **Types**: Co-locate with implementation unless domain-specific
+- **Always check existing patterns** before creating new ones
+
+### Component Composition Patterns
+
+- **Small, focused components** over large multi-purpose ones
+- **Props for data down**, **emits for events up**
+- **Composables for logic sharing** between components
+- **Fragments for data requirements** rather than over-fetching
+
+### Import Resolution Priority
+
+1. **Workspace packages** (`@speckle/package-name`)
+2. **Nuxt auto-imports** (`~/lib/...`)
+3. **Node modules** (external packages)
+4. **Never use relative imports** beyond same directory
+
+## Performance Guidelines
+
+### General Performance Rules
+
+- **Use `computed`** for derived reactive data
+- **Use `ref`** for simple reactive values
+- **Use `shallowRef`** for large objects that change by reference
+- **Lazy loading** for routes and components
+- **Virtual scrolling** for lists > 100 items
+
+### Frontend-2 (Application Performance)
+
+- **Image optimization** with Nuxt Image if relevant
+- **Code splitting** at route level
+- **Bundle analysis** to monitor size
+
+### UI Components (Library Performance)
+
+- **Efficient component composition** to avoid unnecessary re-renders
+- **Prop validation** only in development mode
+- **Minimal dependencies** to keep bundle size small
+- **Tree-shakeable exports** for optimal bundling
+
+## Logging Patterns
+
+### Structured Logging
+
+- **Structured logging** with Pino for production
+- **useLogger()** composable for standard logging
+- **useStrictLogger()** when you need guaranteed real Pino logger
+- **devLog()** or **useDevLogger()** for development-only logging
+- **Never use console.log** - use logging composables instead
+- **Development logging** is automatically skipped in production
+- **Log levels** appropriate to environment
+- **Error context** for debugging
+
+### Analytics & Tracking
+
+- **Don't add Mixpanel events** unless specifically requested
+- **Event naming convention**: Past tense with every first letter capitalized
+  - Examples: "Button Clicked", "Dialog Dismissed", "Form Submitted"
+- **Use mixpanel composable** from `~/lib/core/composables/mp`
+
+## Error Handling
+
+### Frontend Applications
+
+- **Try-catch** for async operations
+- **Loading states** for all async actions
+- **User feedback** for errors via toast/notification
+- **Graceful degradation** when features fail
+- **Error boundaries** for component-level error handling
+
+## Development Workflow
+
+### Code Quality
+
+#### Pre-commit Checks
+
+- **ESLint** must pass before commits
+- **TypeScript** compilation without errors
+- **Prettier** formatting enforced
+- **Husky hooks** for automated checks
+
+## Accessibility Guidelines
+
+### Requirements
+
+- **ARIA labels** for interactive elements
+- **Keyboard navigation** support
+- **Screen reader** compatibility
+- **Color contrast** compliance when possible
+- **Focus management** in modals/dialogs
+
+## Working with This Codebase
+
+### Key Principles
+
+1. **Follow TypeScript strict mode** - No any types without good reason
+2. **Use composition API** - Prefer composables over mixins
+3. **Keep components focused** - Single responsibility principle
+4. **Consider accessibility**
+5. **Document complex logic** - Document business logic, but don't add redundant comments
+6. **Follow existing patterns**
+
+### When in Doubt
+
+- **Check existing implementations** for similar functionality
+- **Ask questions** in code reviews or discussions
+- **Refer to the design system** before creating custom styles
+- **Use the logging composables** instead of console.log
+
+@.prettierrc
+@eslint.config.mjs
+@packages/frontend-2/eslint.config.mjs
+@packages/ui-components/eslint.config.mjs
+@packages/frontend-2/tsconfig.json
+@packages/ui-components/tsconfig.json
+@packages/frontend-2/composables/logging.ts
