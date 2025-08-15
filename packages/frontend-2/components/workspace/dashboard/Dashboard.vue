@@ -8,13 +8,13 @@
       />
     </Portal>
     <WorkspaceDashboardHeader
-      :workspace="props.workspace"
+      :workspace="workspace"
       :workspace-slug="workspaceSlug"
       :show-billing-alert="showBillingAlert"
     />
     <WorkspaceDashboardProjectList
       :workspace-slug="workspaceSlug"
-      :workspace="props.workspace"
+      :workspace="workspace"
       class="mt-2 lg:mt-4"
     />
   </div>
