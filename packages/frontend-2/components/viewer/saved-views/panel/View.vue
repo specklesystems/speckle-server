@@ -10,7 +10,7 @@
           class="w-20 h-14 object-cover rounded border border-outline-3 bg-foundation-page cursor-pointer"
         />
         <div
-          v-if="isHomeView"
+          v-if="isHomeView && !isFederatedView"
           class="absolute -top-1 -left-1 bg-orange-500 w-4 h-4 flex items-center justify-center rounded-sm"
         >
           <Bookmark class="text-white w-3 h-3" fill="currentColor" />
@@ -128,7 +128,7 @@ const props = defineProps<{
 
 const {
   resources: {
-    response: { savedView }
+    response: { savedView, isFederatedView }
   }
 } = useInjectedViewerState()
 const { collect } = useCollectNewSavedViewViewerData()
@@ -175,8 +175,11 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
       id: MenuItems.SetAsHomeView,
       title: 'Set as home view',
       active: !!isHomeView.value,
-      disabled: !canUpdate.value?.authorized || isLoading.value,
-      disabledTooltip: canUpdate.value.errorMessage
+      disabled:
+        isFederatedView.value || !canUpdate.value?.authorized || isLoading.value,
+      disabledTooltip: isFederatedView
+        ? "Home views can't be updated in a federated view"
+        : canUpdate.value.errorMessage
     },
     {
       id: MenuItems.ChangeVisibility,
