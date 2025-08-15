@@ -163,5 +163,50 @@ export class TestOnlyLogicError extends BaseError {
   static statusCode = 500
 }
 
+const getErrorInfoFromTransactions = (
+  preparedTransactions: { knex: Knex; preparedId: string }[]
+) => {
+  return preparedTransactions.map(({ knex, preparedId }) => ({
+    db: retrieveMetadataFromDatabaseClient(knex),
+    gid: preparedId
+  }))
+}
+
+// 2PC failed but we successfully rolled back all prepared transactions.
+export class RegionalTransactionError extends BaseError {
+  static code = 'REGIONAL_TRANSACTION_ERROR'
+  static defaultMessage = 'Failed to complete 2PC operation'
+  static statusCode = 500
+
+  constructor(
+    message?: string | null,
+    preparedTransactions: { knex: Knex; preparedId: string }[] = []
+  ) {
+    super(message, {
+      info: {
+        clients: getErrorInfoFromTransactions(preparedTransactions)
+      }
+    })
+  }
+}
+
+// 2PC failed and we failed to rollback. A prepared transaction may have been left behind.
+export class RegionalTransactionFatalError extends BaseError {
+  static code = 'REGIONAL_TRANSACTION_FATAL_ERROR'
+  static defaultMessage = 'Failed to rollback 2PC operation'
+  static statusCode = 500
+
+  constructor(
+    message?: string | null,
+    preparedTransactions: { knex: Knex; preparedId: string }[] = []
+  ) {
+    super(message, {
+      info: {
+        clients: getErrorInfoFromTransactions(preparedTransactions)
+      }
+    })
+  }
+}
+
 export { BaseError }
 export type { Info }
