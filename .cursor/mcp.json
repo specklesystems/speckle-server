@@ -11,7 +11,7 @@
         "--save-trace",
         "--save-session",
         "--port",
-        "8081" // Match to your Nuxt server port
+        "8081"
       ]
     }
   }
