@@ -47,8 +47,8 @@
             @chosen="onActionChosen"
           >
             <button
-              :class="isCopyable(kvp) ? 'cursor-pointer' : 'cursor-default'"
-              class="opacity-0 group-hover:opacity-100 hover:bg-highlight-1 rounded h-4 w-4 flex items-center justify-center"
+              class="group-hover:opacity-100 hover:bg-highlight-1 rounded h-4 w-4 flex items-center justify-center"
+              :class="showActionsMenu ? 'bg-highlight-1 opacity-100' : 'opacity-0'"
               @click="showActionsMenu = !showActionsMenu"
             >
               <Ellipsis class="h-3 w-3" />
