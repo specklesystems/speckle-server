@@ -299,11 +299,15 @@ const categorisedValuePairs = computed(() => {
 })
 
 const highlightObject = () => {
-  highlightObjects([props.object.id])
+  if (props.object.id && typeof props.object.id === 'string') {
+    highlightObjects([props.object.id])
+  }
 }
 
 const unhighlightObject = () => {
-  unhighlightObjects([props.object.id])
+  if (props.object.id && typeof props.object.id === 'string') {
+    unhighlightObjects([props.object.id])
+  }
 }
 
 watch(
