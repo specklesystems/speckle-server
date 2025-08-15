@@ -8,7 +8,7 @@ import {
   getPaginatedProjectModelsFactory,
   getProjectTopLevelModelsTreeFactory
 } from '@/modules/core/services/branch/retrieval'
-import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { last } from 'lodash-es'
 import {
   getPaginatedBranchCommitsFactory,
@@ -189,6 +189,20 @@ export default {
     },
     async previewUrl(parent, _args, ctx) {
       const projectDB = await getProjectDbClient({ projectId: parent.streamId })
+
+      if (getFeatureFlags().FF_SAVED_VIEWS_ENABLED) {
+        const homeView = await ctx.loaders
+          .forRegion({ db: projectDB })
+          .savedViews.getModelHomeSavedView.load({
+            modelId: parent.id,
+            projectId: parent.streamId
+          })
+
+        if (homeView) {
+          return homeView.screenshot
+        }
+      }
+
       const latestCommit = await ctx.loaders
         .forRegion({ db: projectDB })
         .branches.getLatestCommit.load(parent.id)
