@@ -118,7 +118,7 @@ const {
   unApplyPropertyFilter,
   filters: { propertyFilter },
   getRelevantFilters,
-  isRevitProperty
+  getPropertyName
 } = useFilterUtilities()
 
 const {
@@ -212,24 +212,5 @@ const refreshColorsIfSetOrActiveFilterIsNumeric = () => {
 
   // removePropertyFilter()
   applyPropertyFilter()
-}
-
-const getPropertyName = (key: string): string => {
-  if (!key) return 'Loading'
-
-  if (key === 'level.name') return 'Level Name'
-  if (key === 'speckle_type') return 'Object Type'
-
-  if (isRevitProperty(key) && key.endsWith('.value')) {
-    const correspondingProperty = (allFilters.value || []).find(
-      (f: PropertyInfo) => f.key === key.replace('.value', '.name')
-    )
-    if (correspondingProperty && isStringPropertyInfo(correspondingProperty)) {
-      return correspondingProperty.valueGroups[0]?.value || key.split('.').pop() || key
-    }
-  }
-
-  // For all other properties, just return the last part of the path
-  return key.split('.').pop() || key
 }
 </script>

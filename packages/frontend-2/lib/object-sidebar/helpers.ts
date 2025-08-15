@@ -96,9 +96,9 @@ export function getTargetObjectIds(object: Record<string, unknown> | SpeckleObje
   if (object.speckle_type === 'Array Collection' && Array.isArray(object.children)) {
     return object.children
       .map((k) => (k as { referencedId: string }).referencedId)
-      .filter((id) => !!id)
+      .filter((id) => !!id && typeof id === 'string')
   }
   // Handles both actual collection objecs( ala IFC) and individual objects
-  if (object.id) return [object.id as string]
+  if (object.id && typeof object.id === 'string') return [object.id]
   return []
 }

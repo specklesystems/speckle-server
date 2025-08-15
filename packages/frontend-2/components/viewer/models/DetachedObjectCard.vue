@@ -49,11 +49,15 @@ const handleObjectClick = () => {
 }
 
 const handleObjectMouseEnter = () => {
-  highlightObjects([props.objectId])
+  if (props.objectId && typeof props.objectId === 'string') {
+    highlightObjects([props.objectId])
+  }
 }
 
 const handleObjectMouseLeave = () => {
-  unhighlightObjects([props.objectId])
+  if (props.objectId && typeof props.objectId === 'string') {
+    unhighlightObjects([props.objectId])
+  }
 }
 
 const getObjectBackgroundClass = (): string => {

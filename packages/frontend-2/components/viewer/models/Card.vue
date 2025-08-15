@@ -292,12 +292,12 @@ const isolateOrUnisolateObject = (e: Event) => {
 
 const highlightObject = () => {
   const refObject = props.model.loadedVersion.items[0]?.referencedObject
-  if (refObject) highlightObjects([refObject])
+  if (refObject && typeof refObject === 'string') highlightObjects([refObject])
 }
 
 const unhighlightObject = () => {
   const refObject = props.model.loadedVersion.items[0]?.referencedObject
-  if (refObject) unhighlightObjects([refObject])
+  if (refObject && typeof refObject === 'string') unhighlightObjects([refObject])
 }
 
 const selectObject = () => {
