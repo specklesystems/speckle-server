@@ -259,6 +259,93 @@ export function useFilterUtilities(
     return !!filters.propertyFilter.filter.value
   })
 
+  // Regex patterns for identifying Revit properties
+  const revitPropertyRegex = /^parameters\./
+  // Note: we've split this regex check in two to not clash with navis properties. This makes generally makes dim very sad, as we're layering hacks.
+  // Navis object properties come under `properties`, same as revit ones - as such we can't assume they're the same. Here we're targeting revit's
+  // specific two subcategories of `properties`.
+  const revitPropertyRegexDui3000InstanceProps = /^properties\.Instance/ // note this is partially valid for civil3d, or dim should test against it
+  const revitPropertyRegexDui3000TypeProps = /^properties\.Type/ // note this is partially valid for civil3d, or dim should test against it
+
+  /**
+   * Determines if a property key represents a Revit property
+   */
+  const isRevitProperty = (key: string): boolean => {
+    return (
+      revitPropertyRegex.test(key) ||
+      revitPropertyRegexDui3000InstanceProps.test(key) ||
+      revitPropertyRegexDui3000TypeProps.test(key)
+    )
+  }
+
+  /**
+   * Determines if a property should be excluded from filtering based on its key
+   */
+  const shouldExcludeFromFiltering = (key: string): boolean => {
+    if (
+      key.endsWith('.units') ||
+      key.endsWith('.speckle_type') ||
+      key.includes('.parameters.') ||
+      // key.includes('level.') ||
+      key.includes('renderMaterial') ||
+      key.includes('.domain') ||
+      key.includes('plane.') ||
+      key.includes('baseLine') ||
+      key.includes('referenceLine') ||
+      key.includes('end.') ||
+      key.includes('start.') ||
+      key.includes('endPoint.') ||
+      key.includes('midPoint.') ||
+      key.includes('startPoint.') ||
+      key.includes('.materialName') ||
+      key.includes('.materialClass') ||
+      key.includes('.materialCategory') ||
+      key.includes('displayStyle') ||
+      key.includes('displayValue') ||
+      key.includes('displayMesh')
+    ) {
+      return true
+    }
+
+    // handle revit params: the actual one single value we're interested is in parameters.HOST_BLA BLA_.value, the rest are not needed
+    if (isRevitProperty(key)) {
+      if (key.endsWith('.value')) return false
+      else return true
+    }
+
+    return false
+  }
+
+  /**
+   * Filters the available filters to only include relevant ones for the filter UI
+   */
+  const getRelevantFilters = (
+    allFilters: PropertyInfo[] | null | undefined
+  ): PropertyInfo[] => {
+    return (allFilters || []).filter((f: PropertyInfo) => {
+      return !shouldExcludeFromFiltering(f.key)
+    })
+  }
+
+  /**
+   * Determines if a property key should be filterable
+   * (exists in available filters and is not excluded)
+   */
+  const isPropertyFilterable = (
+    key: string,
+    availableFilters: PropertyInfo[] | null | undefined
+  ): boolean => {
+    const availableFilterKeys = availableFilters?.map((f: PropertyInfo) => f.key) || []
+
+    // First check if it's in available filters
+    if (!availableFilterKeys.includes(key)) {
+      return false
+    }
+
+    // Then check if it should be excluded
+    return !shouldExcludeFromFiltering(key)
+  }
+
   return {
     isolateObjects,
     unIsolateObjects,
@@ -272,7 +359,11 @@ export function useFilterUtilities(
     resetFilters,
     resetExplode,
     waitForAvailableFilter,
-    hasActiveFilters
+    hasActiveFilters,
+    isRevitProperty,
+    shouldExcludeFromFiltering,
+    getRelevantFilters,
+    isPropertyFilterable
   }
 }
 
