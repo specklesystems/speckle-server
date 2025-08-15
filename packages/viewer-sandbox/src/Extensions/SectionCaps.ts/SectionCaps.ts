@@ -8,20 +8,20 @@ import {
 } from '@speckle/viewer'
 import {
   FrontSide,
-  KeepStencilOp,
+  LessStencilFunc,
   Matrix4,
   Mesh,
   MeshBasicMaterial,
-  NotEqualStencilFunc,
   Plane,
   PlaneGeometry,
   Quaternion,
+  ReplaceStencilOp,
   Vector3
 } from 'three'
 import { SectionCapsPipeline } from './SectionCapsPipeline'
 
 export class SectionCaps extends Extension {
-  protected planeMesh: Mesh
+  protected planeMeshes: Mesh[] = []
   protected _enabled = false
 
   public get enabled(): boolean {
@@ -47,32 +47,46 @@ export class SectionCaps extends Extension {
   constructor(viewer: IViewer, protected sectionTool: SectionTool) {
     super(viewer)
 
-    this.planeMesh = new Mesh(
-      new PlaneGeometry(1, 1),
-      new MeshBasicMaterial({
-        color: 0x047efb,
-        side: FrontSide,
-        stencilWrite: true,
-        stencilFunc: NotEqualStencilFunc,
-        stencilFail: KeepStencilOp,
-        stencilZFail: KeepStencilOp,
-        stencilZPass: KeepStencilOp
-      })
-    )
-    this.planeMesh.renderOrder = 5
-    this.planeMesh.layers.set(ObjectLayers.OVERLAY)
-    viewer.getRenderer().scene.add(this.planeMesh)
+    for (let k = 0; k < 6; k++) {
+      const planeMesh = new Mesh(
+        new PlaneGeometry(1, 1),
+        new MeshBasicMaterial({
+          color: 0x047efb,
+          side: FrontSide,
+          // Original
+          // stencilWrite: true,
+          // stencilFunc: NotEqualStencilFunc,
+          // stencilFail: KeepStencilOp,
+          // stencilZFail: KeepStencilOp,
+          // stencilZPass: KeepStencilOp
+
+          // Ours
+          stencilWrite: true,
+          stencilRef: 0,
+          stencilFunc: LessStencilFunc,
+          stencilFail: ReplaceStencilOp,
+          stencilZFail: ReplaceStencilOp,
+          stencilZPass: ReplaceStencilOp
+        })
+      )
+      planeMesh.renderOrder = 5
+      planeMesh.matrixAutoUpdate = false
+      planeMesh.layers.set(ObjectLayers.OVERLAY)
+      viewer.getRenderer().scene.add(planeMesh)
+      this.planeMeshes.push(planeMesh)
+    }
 
     this.sectionTool.on(SectionToolEvent.Updated, (planes: Plane[]) => {
       const obb = this.sectionTool.getBox()
-      this.planeMesh.matrixAutoUpdate = false
-      this.planeMesh.matrix.copy(
-        this.getPlaneTransform(
-          // Top facing plane
-          planes[5],
-          new Vector3(2 * obb.halfSize.x, 2 * obb.halfSize.y, 1)
+      for (let k = 0; k < planes.length; k++) {
+        this.planeMeshes[k].matrix.copy(
+          this.getPlaneTransform(
+            // Top facing plane
+            planes[k],
+            new Vector3(2 * obb.halfSize.x, 2 * obb.halfSize.y, 1)
+          )
         )
-      )
+      }
     })
   }
 

@@ -21,6 +21,7 @@ import {
 import { SectionOutlines } from '@speckle/viewer'
 import { BoxSelection } from './Extensions/BoxSelection'
 import { PassReader } from './Extensions/PassReader'
+import { SectionCaps } from './Extensions/SectionCaps.ts/SectionCaps'
 
 const createViewer = async (containerName: string, _stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -56,7 +57,7 @@ const createViewer = async (containerName: string, _stream: string) => {
   const boxSelect = viewer.createExtension(BoxSelection)
   boxSelect.realtimeSelection = false
   viewer.createExtension(PassReader)
-  // viewer.createExtension(SectionCaps)
+  viewer.createExtension(SectionCaps)
 
   const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 
@@ -148,7 +149,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/8e4347e65d/models/39bea37d69'
 
     // 'Super' heavy revit shit
-    //'https://app.speckle.systems/streams/e6f9156405/commits/0694d53bb5'
+    // 'https://app.speckle.systems/streams/e6f9156405/commits/0694d53bb5'
     // IFC building (good for a tree based structure)
     // 'https://latest.speckle.systems/streams/92b620fb17/commits/2ebd336223'
     // IFC story, a subtree of the above
@@ -632,6 +633,14 @@ const getStream = () => {
 
     // Circles of different sizes
     // 'https://latest.speckle.systems/projects/4658eb53b9/models/bb726a3764'
+
+    // Murder Cube Reloaded
+    // 'https://app.speckle.systems/projects/b32c51b3d2/models/f9367ad6f7'
+
+    // Mosque
+    // 'https://app.speckle.systems/projects/b32c51b3d2/models/62d28abec5'
+
+    // 'https://app.speckle.systems/projects/858cccb9b3/models/d0e7fd51e6'
   )
 }
 
