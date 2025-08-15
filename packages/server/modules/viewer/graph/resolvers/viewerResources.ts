@@ -45,6 +45,9 @@ const extendedViewerResourcesResolver = async (
     throwIfAuthNotOk(canRead)
   }
 
+  // TODO: Home view gets implicitly resolved inside the service, in the future
+  // when we have model-level access checks we'll need to validate access for that
+
   const getStreamObjects = getStreamObjectsFactory({ db: projectDB })
   const getViewerResourceGroups = getViewerResourceGroupsFactory({
     getStreamObjects,

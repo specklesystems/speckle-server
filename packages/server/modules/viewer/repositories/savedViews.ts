@@ -634,7 +634,9 @@ export const getModelHomeSavedViewsFactory =
             SavedViews.col.groupResourceIds,
             Branches.col.id
           ])
-        ).andOnVal(SavedViews.col.isHomeView, true)
+        )
+          .andOnVal(SavedViews.col.isHomeView, true)
+          .andOnVal(SavedViews.col.visibility, SavedViewVisibility.public) // public only
       })
       .groupBy('modelId')
 

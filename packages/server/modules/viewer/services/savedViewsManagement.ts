@@ -28,6 +28,7 @@ import {
   SavedViewCreationValidationError,
   SavedViewGroupCreationValidationError,
   SavedViewGroupUpdateValidationError,
+  SavedViewInvalidHomeViewSettingsError,
   SavedViewInvalidResourceTargetError,
   SavedViewUpdateValidationError
 } from '@/modules/viewer/errors/savedViews'
@@ -35,7 +36,7 @@ import type {
   ResourceBuilder,
   ViewerResourcesTarget
 } from '@speckle/shared/viewer/route'
-import { resourceBuilder } from '@speckle/shared/viewer/route'
+import { isModelResource, resourceBuilder } from '@speckle/shared/viewer/route'
 import type { VersionedSerializedViewerState } from '@speckle/shared/viewer/state'
 import { inputToVersionedState } from '@speckle/shared/viewer/state'
 import { isValidBase64Image } from '@speckle/shared/images/base64'
@@ -43,6 +44,7 @@ import type { GetViewerResourceGroups } from '@/modules/viewer/domain/operations
 import { formatResourceIdsForGroup } from '@/modules/viewer/helpers/savedViews'
 import { isUndefined, omit } from 'lodash-es'
 import type { DependenciesOf } from '@/modules/shared/helpers/factory'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
 import { isUngroupedGroup } from '@speckle/shared/saved-views'
 import { NotFoundError } from '@/modules/shared/errors'
@@ -141,6 +143,36 @@ const validateViewerStateFactory =
     return state
   }
 
+const validateHomeViewSettingsFactory =
+  () =>
+  (params: {
+    isHomeView: MaybeNullOrUndefined<boolean>
+    visibility: MaybeNullOrUndefined<SavedViewVisibility>
+    errorMetadata: Record<string, unknown>
+    resourceIds: ResourceBuilder
+  }) => {
+    const { isHomeView, visibility, errorMetadata, resourceIds } = params
+
+    if (isHomeView) {
+      if (visibility !== SavedViewVisibility.public) {
+        throw new SavedViewInvalidHomeViewSettingsError('Home views must be public.', {
+          info: errorMetadata
+        })
+      }
+
+      const isSingleModelView =
+        resourceIds.length === 1 && isModelResource(resourceIds.toResources()[0])
+      if (!isSingleModelView) {
+        throw new SavedViewInvalidHomeViewSettingsError(
+          `Home views can't be federated and must refer to a single model.`,
+          {
+            info: errorMetadata
+          }
+        )
+      }
+    }
+  }
+
 export const createSavedViewFactory =
   (deps: {
     getViewerResourceGroups: GetViewerResourceGroups
@@ -226,6 +258,17 @@ export const createSavedViewFactory =
         }
       )
     }
+
+    // Validate home view settings
+    validateHomeViewSettingsFactory()({
+      isHomeView,
+      visibility,
+      errorMetadata: {
+        input,
+        authorId
+      },
+      resourceIds
+    })
 
     const concreteResourceIds = resourceIds.toResources().map((r) => r.toString())
     const ret = await deps.storeSavedView({
@@ -509,12 +552,26 @@ export const updateSavedViewFactory =
       delete changes['name']
     }
 
+    // Validate home view settings
+    if (changes.isHomeView) {
+      // Validate home view settings
+      validateHomeViewSettingsFactory()({
+        isHomeView: changes.isHomeView,
+        visibility: changes.visibility || view.visibility,
+        errorMetadata: {
+          input,
+          userId
+        },
+        resourceIds: resourceIds || resourceBuilder().addResources(view.resourceIds)
+      })
+    }
+
     const finalChanges = omit(changes, ['resourceIdString', 'viewerState'])
     const update = {
       ...finalChanges,
       ...(resourceIds
         ? {
-            resourceIds: resourceIds ? resourceIds.map((r) => r.toString()) : undefined,
+            resourceIds: resourceIds ? resourceIds.toResourceIds() : undefined,
             groupResourceIds: formatResourceIdsForGroup(resourceIds)
           }
         : {}),
