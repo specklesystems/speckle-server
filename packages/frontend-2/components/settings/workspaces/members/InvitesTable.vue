@@ -47,12 +47,12 @@
         </div>
       </template>
       <template #role="{ item }">
-        <span class="text-body-xs text-foreground-2">
+        <span class="text-body-xs text-foreground">
           {{ roleDisplayName(item.role) }}
         </span>
       </template>
       <template #lastRemindedOn="{ item }">
-        <span class="text-body-xs text-foreground-2">
+        <span class="text-body-xs text-foreground">
           {{ formattedFullDate(item.updatedAt) }}
         </span>
       </template>
