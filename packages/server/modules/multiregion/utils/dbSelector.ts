@@ -185,12 +185,12 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
     //   sslmode
     // })
 
-    await dropUserReplication({
-      from: mainDb,
-      to: regionDb,
-      regionName: regionKey,
-      sslmode
-    })
+    // await dropUserReplication({
+    //   from: mainDb,
+    //   to: regionDb,
+    //   regionName: regionKey,
+    //   sslmode
+    // })
 
     await setUpProjectReplication({
       from: regionDb,
@@ -215,27 +215,27 @@ interface ReplicationArgs {
 }
 
 // Note: Not try-catch because we need this to succeed for a valid server start
-const dropUserReplication = async ({
-  from,
-  to,
-  regionName
-}: ReplicationArgs): Promise<void> => {
-  const subName = createPubSubName(`userssub_${regionName}`)
-  const pubName = createPubSubName('userspub')
+// const dropUserReplication = async ({
+//   from,
+//   to,
+//   regionName
+// }: ReplicationArgs): Promise<void> => {
+//   const subName = createPubSubName(`userssub_${regionName}`)
+//   const pubName = createPubSubName('userspub')
 
-  // Aiven has no "IF EXISTS" equivalent and will throw here if sub does not exist
-  await to.public.raw('CREATE EXTENSION IF NOT EXISTS "aiven_extras"')
-  const subs = await to.public.raw(
-    'SELECT * FROM aiven_extras.pg_list_all_subscriptions();'
-  )
-  if ((subs?.rows ?? []).some((row: { subname: string }) => row.subname === subName)) {
-    await to.public.raw('SELECT * FROM aiven_extras.pg_drop_subscription(?);', [
-      subName
-    ])
-  }
-  // Drop publications after subscriptions to avoid errors from subscribers
-  await from.public.raw(`DROP PUBLICATION IF EXISTS ??;`, [pubName])
-}
+//   // Aiven has no "IF EXISTS" equivalent and will throw here if sub does not exist
+//   await to.public.raw('CREATE EXTENSION IF NOT EXISTS "aiven_extras"')
+//   const subs = await to.public.raw(
+//     'SELECT * FROM aiven_extras.pg_list_all_subscriptions();'
+//   )
+//   if ((subs?.rows ?? []).some((row: { subname: string }) => row.subname === subName)) {
+//     await to.public.raw('SELECT * FROM aiven_extras.pg_drop_subscription(?);', [
+//       subName
+//     ])
+//   }
+//   // Drop publications after subscriptions to avoid errors from subscribers
+//   await from.public.raw(`DROP PUBLICATION IF EXISTS ??;`, [pubName])
+// }
 
 // const setUpUserReplication = async ({
 //   from,
