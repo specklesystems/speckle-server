@@ -132,6 +132,7 @@ import {
 import { authorizeResolver } from '@/modules/shared'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
 import { queryAllProjectsFactory } from '@/modules/core/services/projects'
+import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -247,7 +248,7 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
-  storeUser: storeUserFactory({ db }),
+  storeUser: replicateQuery([db], storeUserFactory),
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: validateAndCreateUserEmailFactory({

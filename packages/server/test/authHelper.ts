@@ -29,11 +29,13 @@ import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repos
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { getRegisteredRegionClients } from '@/modules/multiregion/utils/dbSelector'
 import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { faker } from '@faker-js/faker'
@@ -52,24 +54,7 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
   renderEmail,
   sendEmail
 })
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
+
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
   storeTokenScopes: storeTokenScopesFactory({ db }),
@@ -126,6 +111,28 @@ export async function createTestUser(userObj?: Partial<BasicTestUser>) {
   if (!baseUser.email) {
     setVal('email', createRandomEmail().toLowerCase())
   }
+
+  const regionClients = await getRegisteredRegionClients()
+  const regionDbs = Object.values(regionClients)
+
+  const createUser = createUserFactory({
+    getServerInfo,
+    findEmail,
+    storeUser: replicateQuery([db, ...regionDbs], storeUserFactory),
+    countAdminUsers: countAdminUsersFactory({ db }),
+    storeUserAcl: storeUserAclFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail,
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification
+    }),
+    emitEvent: getEventBus().emit
+  })
 
   const id = await createUser(omit(baseUser, ['id', 'allowPersonalEmail']), {
     skipPropertyValidation: true,

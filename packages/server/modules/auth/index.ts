@@ -60,6 +60,8 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
+import { getRegisteredRegionClients } from '@/modules/multiregion/utils/dbSelector'
+import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
@@ -71,30 +73,6 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
   }),
   renderEmail,
   sendEmail
-})
-
-const createUser = createUserFactory({
-  getServerInfo: getServerInfoFactory({ db }),
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
-
-const findOrCreateUser = findOrCreateUserFactory({
-  createUser,
-  findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
 })
 
 const initializeDefaultApps = initializeDefaultAppsFactory({
@@ -113,10 +91,39 @@ const finalizeInvitedServerRegistration = finalizeInvitedServerRegistrationFacto
 })
 const resolveAuthRedirectPath = resolveAuthRedirectPathFactory()
 
+const buildCreateUser = async () => {
+  const regionClients = await getRegisteredRegionClients()
+  const regionDbs = Object.values(regionClients)
+
+  return createUserFactory({
+    getServerInfo: getServerInfoFactory({ db }),
+    findEmail,
+    storeUser: replicateQuery([db, ...regionDbs], storeUserFactory),
+    countAdminUsers: countAdminUsersFactory({ db }),
+    storeUserAcl: storeUserAclFactory({ db }),
+    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+      createUserEmail: createUserEmailFactory({ db }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+      findEmail,
+      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+      }),
+      requestNewEmailVerification
+    }),
+    emitEvent: getEventBus().emit
+  })
+}
+
 const commonBuilderDeps = {
   getServerInfo: getServerInfoFactory({ db }),
   getUserByEmail: legacyGetUserByEmailFactory({ db }),
-  findOrCreateUser,
+  buildFindOrCreateUser: async () => {
+    return findOrCreateUserFactory({
+      createUser: await buildCreateUser(),
+      findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
+    })
+  },
   validateServerInvite,
   finalizeInvitedServerRegistration,
   resolveAuthRedirectPath,
@@ -135,7 +142,7 @@ const setupStrategies = setupStrategiesFactory({
     validateUserPassword: validateUserPasswordFactory({
       getUserByEmail: getUserByEmailFactory({ db })
     }),
-    createUser,
+    buildCreateUser,
     throwIfRateLimited: throwIfRateLimitedFactory({
       rateLimiterEnabled: isRateLimiterEnabled()
     })

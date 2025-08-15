@@ -54,6 +54,7 @@ import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import type { QueryAllProjects } from '@/modules/core/domain/projects/operations'
 import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
+import type { RegionalOperation } from '@/modules/shared/helpers/dbHelper'
 
 const { FF_NO_PERSONAL_EMAILS_ENABLED } = getFeatureFlags()
 
@@ -154,7 +155,7 @@ export const createUserFactory =
   (deps: {
     getServerInfo: GetServerInfo
     findEmail: FindEmail
-    storeUser: StoreUser
+    storeUser: RegionalOperation<StoreUser>
     countAdminUsers: CountAdminUsers
     storeUserAcl: StoreUserAcl
     validateAndCreateUserEmail: ValidateAndCreateUserEmail

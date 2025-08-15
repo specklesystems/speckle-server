@@ -67,6 +67,7 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
+import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 // To ensure that the invites are created in the correct order, we need to wait a bit between each creation
 const WAIT_TIMEOUT = 5
@@ -164,7 +165,7 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
-  storeUser: storeUserFactory({ db }),
+  storeUser: replicateQuery([db], storeUserFactory),
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: validateAndCreateUserEmailFactory({

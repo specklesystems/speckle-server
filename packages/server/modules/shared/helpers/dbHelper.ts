@@ -17,7 +17,6 @@ import type { SchemaConfig } from '@/modules/core/dbSchema'
 import { has, isObjectLike, isString, mapValues, pick, times } from 'lodash-es'
 import cryptoRandomString from 'crypto-random-string'
 import { logger } from '@/observability/logging'
-import { isEqual } from 'lodash-es'
 import { PromiseAllSettledResultStatus } from '@/modules/shared/domain/constants'
 
 export type Collection<T> = {
@@ -338,26 +337,34 @@ export const rollbackPreparedTransaction = async (
   await db.raw(`ROLLBACK PREPARED '${gid}';`)
 }
 
-export const replicateQuery = <T, U>(
-  dbs: Knex[],
-  factory: ({ db }: { db: Knex }) => (params: T) => Promise<U>
-) => {
-  return async (params: T) => {
+/**
+ * Indicates that the service function expects the given operation to be regional. Wrap the
+ * factory function in `replicateQuery` to satisfy the constraint.
+ */
+export type RegionalOperation<F extends (...args: any[]) => Promise<any>> = F & {
+  readonly regional: unique symbol
+}
+
+export const replicateQuery = <F extends (...args: any[]) => Promise<any>>(
+  dbs: [Knex, ...Knex[]],
+  factory: ({ db }: { db: Knex }) => F
+): RegionalOperation<F> => {
+  return (async (...params: Parameters<F>) => {
     const preparedTransactions: {
-      knex: Knex
+      knex: Knex.Transaction<any, any>
       preparedId: string
     }[] = []
 
-    const returnValues: U[] = []
+    const returnValues: ReturnType<F>[] = []
 
     try {
       // Phase 1: Prepare transaction across all specified db instances
       for (const db of dbs) {
         const trx = await db.transaction()
-        const returnValue = await factory({ db: trx })(params)
+        const returnValue = await factory({ db: trx })(...params)
         returnValues.push(returnValue)
         const preparedId = await prepareTransaction(trx)
-        preparedTransactions.push({ knex: db, preparedId })
+        preparedTransactions.push({ knex: trx, preparedId })
       }
 
       // Phase 2: Attempt commit of all prepared transactions
@@ -387,19 +394,15 @@ export const replicateQuery = <T, U>(
         )
       }
 
-      // TODO: Do we need this validation?
-      if (!returnValues.every((value) => isEqual(value, returnValues[0]))) {
-        throw new RegionalTransactionError(
-          'Return values of 2PC transactions do not match',
-          preparedTransactions
-        )
-      }
+      // Phase 2.5: Tell knex connection can be released
+      await Promise.all(preparedTransactions.map(({ knex }) => knex.commit()))
 
-      return returnValues[0]
+      return returnValues.at(0)
     } catch {
       const rollbacks = preparedTransactions.map(async ({ knex, preparedId }) => {
         try {
           await rollbackPreparedTransaction(knex, preparedId)
+          await knex.rollback()
         } catch (err) {
           logger.error(
             { preparedId },
@@ -434,5 +437,5 @@ export const replicateQuery = <T, U>(
         preparedTransactions
       )
     }
-  }
+  }) as unknown as RegionalOperation<F>
 }

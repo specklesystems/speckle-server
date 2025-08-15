@@ -79,6 +79,7 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import type { ObjectRecord } from '@/modules/core/helpers/types'
+import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const sampleCommit = JSON.parse(`{
   "Objects": [
@@ -195,7 +196,7 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
-  storeUser: storeUserFactory({ db }),
+  storeUser: replicateQuery([db], storeUserFactory),
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: validateAndCreateUserEmailFactory({

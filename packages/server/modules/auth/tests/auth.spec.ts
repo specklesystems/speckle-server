@@ -76,6 +76,7 @@ import { UserInputError } from '@/modules/core/errors/userinput'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import cryptoRandomString from 'crypto-random-string'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
+import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -171,7 +172,7 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
-  storeUser: storeUserFactory({ db }),
+  storeUser: replicateQuery([db], storeUserFactory),
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: validateAndCreateUserEmailFactory({

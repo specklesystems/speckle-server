@@ -46,6 +46,7 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = legacyGetPaginatedUsersFactory({ db })
@@ -76,7 +77,7 @@ const findEmail = findEmailFactory({ db })
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
-  storeUser: storeUserFactory({ db }),
+  storeUser: replicateQuery([db], storeUserFactory),
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: createUserEmail,

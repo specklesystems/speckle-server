@@ -75,6 +75,7 @@ import type {
   DefaultAppIds,
   DefaultAppWithUnwrappedScopes
 } from '@/modules/auth/defaultApps'
+import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const db = knex
 const getApp = getAppFactory({ db: knex })
@@ -128,7 +129,7 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
-  storeUser: storeUserFactory({ db }),
+  storeUser: replicateQuery([db], storeUserFactory),
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: validateAndCreateUserEmailFactory({

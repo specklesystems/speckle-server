@@ -38,6 +38,7 @@ import { WorkspaceReadOnlyError } from '@/modules/gatekeeper/errors/billing'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { PaidWorkspacePlanStatuses } from '@speckle/shared'
+import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -65,7 +66,7 @@ const findEmail = findEmailFactory({ db })
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
-  storeUser: storeUserFactory({ db }),
+  storeUser: replicateQuery([db], storeUserFactory),
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: createUserEmail,

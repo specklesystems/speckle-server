@@ -40,6 +40,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createTestUser, login } from '@/test/authHelper'
 import { EmailVerificationFinalizationError } from '@/modules/emails/errors'
 import { Roles } from '@speckle/shared'
+import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -67,7 +68,7 @@ const findEmail = findEmailFactory({ db })
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
-  storeUser: storeUserFactory({ db }),
+  storeUser: replicateQuery([db], storeUserFactory),
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: createUserEmail,
