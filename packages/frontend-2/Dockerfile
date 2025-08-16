@@ -1,6 +1,6 @@
 ARG NODE_ENV=production
 
-FROM node:22-bookworm-slim@sha256:221ee67425de7a3c11ce4e81e63e50caaec82ede3a7d34599ab20e59d29a0cb5 AS build-stage
+FROM node:22-bookworm-slim@sha256:752ea8a2f758c34002a0461bd9f1cee4f9a3c36d48494586f60ffce1fc708e0e AS build-stage
 
 WORKDIR /speckle-server
 
@@ -60,7 +60,7 @@ ARG SPECKLE_SERVER_VERSION=custom
 # hadolint ignore=DL3059
 RUN yarn workspaces foreach --include "packages/frontend-2" -W run build
 
-FROM gcr.io/distroless/nodejs22-debian12:nonroot@sha256:ed26b3ab750110c51d9dbdfd6c697561dc40a01c296460c3494d47b550ef4126 AS production-stage
+FROM gcr.io/distroless/nodejs22-debian12:nonroot@sha256:8929dbab735ee399ff886ba7d81419dbe7df002993a7d69715e1c16b7d41c531 AS production-stage
 ENV PORT=8080
 
 ENV NUXT_PUBLIC_MIXPANEL_TOKEN_ID=acd87c5a50b56df91a795e999812a3a4
