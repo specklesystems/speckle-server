@@ -164,11 +164,11 @@ export class TestOnlyLogicError extends BaseError {
 }
 
 const getErrorInfoFromTransactions = (
-  preparedTransactions: { knex: Knex; preparedId: string }[]
+  preparedTransactions: { knex: Knex; preparedTransactionId: string }[]
 ) => {
-  return preparedTransactions.map(({ knex, preparedId }) => ({
+  return preparedTransactions.map(({ knex, preparedTransactionId: gid }) => ({
     db: retrieveMetadataFromDatabaseClient(knex),
-    gid: preparedId
+    gid
   }))
 }
 
@@ -180,7 +180,7 @@ export class RegionalTransactionError extends BaseError {
 
   constructor(
     message?: string | null,
-    preparedTransactions: { knex: Knex; preparedId: string }[] = []
+    preparedTransactions: { knex: Knex; preparedTransactionId: string }[] = []
   ) {
     super(message, {
       info: {
@@ -198,7 +198,7 @@ export class RegionalTransactionFatalError extends BaseError {
 
   constructor(
     message?: string | null,
-    preparedTransactions: { knex: Knex; preparedId: string }[] = []
+    preparedTransactions: { knex: Knex; preparedTransactionId: string }[] = []
   ) {
     super(message, {
       info: {

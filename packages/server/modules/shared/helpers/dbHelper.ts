@@ -3,7 +3,6 @@ import type { Knex } from 'knex'
 import { postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
 import {
   EnvironmentResourceError,
-  LogicError,
   RegionalTransactionFatalError,
   RegionalTransactionError
 } from '@/modules/shared/errors'
@@ -311,16 +310,8 @@ export const compositeCursorTools = <
   }
 }
 
-export const prepareTransaction = async (db: Knex): Promise<string> => {
-  if (!db.isTransaction) {
-    throw new LogicError('Cannot PREPARE postgres operation outside of a transaction')
-  }
-
-  const preparedId = cryptoRandomString({ length: 10 })
-
-  await db.raw(`PREPARE TRANSACTION '${preparedId}';`)
-
-  return preparedId
+export const prepareTransaction = async (db: Knex, gid: string): Promise<void> => {
+  await db.raw(`PREPARE TRANSACTION '${gid}';`)
 }
 
 export const commitPreparedTransaction = async (
@@ -345,88 +336,93 @@ export type RegionalOperation<F extends (...args: any[]) => Promise<any>> = F & 
   readonly regional: unique symbol
 }
 
+// TODO: This is messy because of interactions between how knex internals manage connections and the way we use `knex.raw` to prepare transactions
 export const replicateQuery = <F extends (...args: any[]) => Promise<any>>(
   dbs: [Knex, ...Knex[]],
   factory: ({ db }: { db: Knex }) => F
 ): RegionalOperation<F> => {
   return (async (...params: Parameters<F>) => {
-    const preparedTransactions: {
-      knex: Knex.Transaction<any, any>
-      preparedId: string
-    }[] = []
-
-    const returnValues: ReturnType<F>[] = []
-
     if (dbs.length === 1) {
       return factory({ db: dbs[0] })(...params) as Promise<ReturnType<F>>
     }
 
-    try {
-      // Phase 1: Prepare transaction across all specified db instances
-      for (const db of dbs) {
-        const trx = await db.transaction()
-        const returnValue = await factory({ db: trx })(...params)
-        returnValues.push(returnValue)
-        const preparedId = await prepareTransaction(trx)
-        preparedTransactions.push({ knex: trx, preparedId })
-      }
+    const preparedTransactions: {
+      // The regional db instance
+      knex: Knex
+      preparedTransactionId: string
+    }[] = []
 
-      // Phase 2: Attempt commit of all prepared transactions
-      const results = await Promise.allSettled(
-        preparedTransactions.map(({ knex, preparedId }) => {
-          return commitPreparedTransaction(knex, preparedId)
+    const returnValues: ReturnType<F>[] = []
+
+    // Phase 1: Prepare transaction across all specified db instances
+    try {
+      for (const db of dbs) {
+        const preparedTransactionId = cryptoRandomString({ length: 10 })
+
+        const trx = await db.transaction()
+        let transactionPrepared = false
+
+        try {
+          returnValues.push(await factory({ db: trx })(...params))
+          await prepareTransaction(trx, preparedTransactionId)
+          transactionPrepared = true
+        } catch (err) {
+          if (!transactionPrepared) {
+            try {
+              await trx.rollback()
+            } catch {}
+          }
+          throw err
+        } finally {
+          if (transactionPrepared) {
+            try {
+              await trx.rollback()
+            } catch {}
+          } else {
+            console.log('ope')
+          }
+        }
+
+        preparedTransactions.push({ knex: db, preparedTransactionId })
+      }
+    } catch (e) {
+      await Promise.allSettled(
+        preparedTransactions.map(async ({ knex, preparedTransactionId }) => {
+          await rollbackPreparedTransaction(knex, preparedTransactionId)
+        })
+      )
+      throw e
+    }
+
+    // Phase 2: Attempt commit of all prepared transactions
+    const results = await Promise.allSettled(
+      preparedTransactions.map(({ knex, preparedTransactionId }) => {
+        return commitPreparedTransaction(knex, preparedTransactionId)
+      })
+    )
+
+    const errors = results.filter((result): result is PromiseRejectedResult => {
+      return result.status === PromiseAllSettledResultStatus.rejected
+    })
+
+    if (errors.length > 0) {
+      logger.error(
+        {
+          params,
+          errors,
+          errorCount: errors.length,
+          resultCount: results.length
+        },
+        `Failed {errorCount} of {resultCount} transactions in 2PC operation.`
+      )
+      const rollbacks = await Promise.allSettled(
+        preparedTransactions.map(async ({ knex, preparedTransactionId }) => {
+          await rollbackPreparedTransaction(knex, preparedTransactionId)
         })
       )
 
-      const errors = results.filter((result): result is PromiseRejectedResult => {
-        return result.status === PromiseAllSettledResultStatus.rejected
-      })
-
-      if (errors.length > 0) {
-        logger.error(
-          {
-            params,
-            errors,
-            errorCount: errors.length,
-            resultCount: results.length
-          },
-          `Failed {errorCount} of {resultCount} transactions in 2PC operation.`
-        )
-        throw new RegionalTransactionError(
-          'Failed some or all transactions in 2PC operation.',
-          preparedTransactions
-        )
-      }
-
-      // Phase 2.5: Tell knex connection can be released
-      await Promise.all(preparedTransactions.map(({ knex }) => knex.commit()))
-
-      return returnValues.at(0)
-    } catch {
-      const rollbacks = preparedTransactions.map(async ({ knex, preparedId }) => {
-        try {
-          await rollbackPreparedTransaction(knex, preparedId)
-          await knex.rollback()
-        } catch (err) {
-          logger.error(
-            { preparedId },
-            'Failed to rollback prepared transaction {preparedId}'
-          )
-          throw err
-        }
-      })
-
-      logger.warn(
-        {
-          preparedTransactions: preparedTransactions.map(({ preparedId }) => preparedId)
-        },
-        'Error during 2PC operation. Rolling back all transactions.'
-      )
-
-      const results = await Promise.allSettled(rollbacks)
-
       if (
-        results.some(
+        rollbacks.some(
           (result) => result.status === PromiseAllSettledResultStatus.rejected
         )
       ) {
@@ -437,9 +433,11 @@ export const replicateQuery = <F extends (...args: any[]) => Promise<any>>(
       }
 
       throw new RegionalTransactionError(
-        'Failed to complete 2PC operation but successfully recovered.',
+        'Failed some or all transactions in 2PC operation.',
         preparedTransactions
       )
     }
+
+    return returnValues.at(0)
   }) as unknown as RegionalOperation<F>
 }
