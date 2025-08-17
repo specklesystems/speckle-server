@@ -7,6 +7,7 @@ import {
 } from '@/modules/shared/helpers/dbHelper'
 import { wait } from '@speckle/shared'
 import { expect } from 'chai'
+import cryptoRandomString from 'crypto-random-string'
 
 describe('prepared transaction repository functions', () => {
   describe('getStalePreparedTransactionsFactory returns a function, that', () => {
@@ -15,7 +16,9 @@ describe('prepared transaction repository functions', () => {
 
     beforeEach(async () => {
       trx = await db.transaction()
-      transactionId = await prepareTransaction(trx)
+      transactionId = cryptoRandomString({ length: 10 })
+
+      await prepareTransaction(trx, transactionId)
     })
 
     afterEach(async () => {
