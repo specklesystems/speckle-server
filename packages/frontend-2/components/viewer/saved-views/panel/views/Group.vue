@@ -3,6 +3,7 @@
     v-if="!isUngroupedGroup"
     v-model:open="open"
     v-model:edit-title="renameMode"
+    color="subtle"
     :title="group.title"
     lazy-load
     @update:title="onRename"
@@ -14,7 +15,7 @@
     />
     <template #title-actions>
       <div
-        class="flex gap-1 items-center opacity-0 group-hover/disclosure:opacity-100"
+        class="flex gap-0.5 items-center opacity-0 group-hover/disclosure:opacity-100"
         @click.stop
       >
         <LayoutMenu
