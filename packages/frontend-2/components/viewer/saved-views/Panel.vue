@@ -1,14 +1,20 @@
 <template>
-  <ViewerLayoutSidePanel @close="$emit('close')">
+  <ViewerLayoutSidePanel disable-scrollbar @close="$emit('close')">
     <template #title>
       <div class="flex justify-between items-center">
         <div>Views</div>
       </div>
     </template>
     <template #actions>
-      <div class="flex">
-        <FormButton size="sm" color="subtle" :icon-left="Search" hide-text />
-        <div v-tippy="canCreateViewOrGroup?.errorMessage">
+      <div class="flex items-center">
+        <FormButton
+          v-if="false"
+          size="sm"
+          color="subtle"
+          :icon-left="Search"
+          hide-text
+        />
+        <div v-tippy="canCreateViewOrGroup?.errorMessage" class="flex items-center">
           <FormButton
             size="sm"
             color="subtle"
@@ -19,7 +25,7 @@
             @click="onAddGroup"
           />
         </div>
-        <div v-tippy="canCreateViewOrGroup?.errorMessage">
+        <div v-tippy="canCreateViewOrGroup?.errorMessage" class="flex items-center">
           <FormButton
             size="sm"
             color="subtle"
@@ -32,7 +38,7 @@
         </div>
       </div>
     </template>
-    <div class="border-b border-outline-2 px-4 py-2">
+    <div class="px-4 pt-2">
       <ViewerButtonGroup>
         <ViewerButtonGroupButton
           v-for="viewsType in Object.values(ViewsType)"
@@ -47,7 +53,7 @@
         </ViewerButtonGroupButton>
       </ViewerButtonGroup>
     </div>
-    <div class="text-body-sm">
+    <div class="text-body-sm flex-1 min-h-0 overflow-y-auto simple-scrollbar">
       <ViewerSavedViewsPanelGroups
         v-model:selected-group-id="selectedGroupId"
         :views-type="selectedViewsType"

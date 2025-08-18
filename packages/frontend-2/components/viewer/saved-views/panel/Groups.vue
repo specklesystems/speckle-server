@@ -2,7 +2,7 @@
   <div v-if="isVeryFirstLoading" class="flex justify-center">
     <CommonLoadingIcon class="m-16" />
   </div>
-  <div v-else>
+  <div v-else class="">
     <ViewerSavedViewsPanelViewsEmptyState
       v-if="!hasGroups || !project"
       :type="emptyStateType"
