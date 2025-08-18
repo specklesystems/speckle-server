@@ -45,6 +45,7 @@ export type GetProjectSavedViewGroupsBaseParams = {
   projectId: string
   resourceIdString: string
   onlyAuthored?: MaybeNullOrUndefined<boolean>
+  onlyVisibility?: MaybeNullOrUndefined<SavedViewVisibility>
   search?: MaybeNullOrUndefined<string>
 }
 
@@ -74,6 +75,7 @@ export type GetGroupSavedViewsBaseParams = {
    */
   groupId: MaybeNullOrUndefined<string>
   onlyAuthored?: MaybeNullOrUndefined<boolean>
+  onlyVisibility?: MaybeNullOrUndefined<SavedViewVisibility>
   search?: MaybeNullOrUndefined<string>
 }
 
