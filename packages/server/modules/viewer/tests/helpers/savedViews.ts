@@ -20,6 +20,7 @@ import {
   getSavedViewGroupFactory,
   getStoredViewCountFactory,
   recalculateGroupResourceIdsFactory,
+  setNewHomeViewFactory,
   storeSavedViewFactory
 } from '@/modules/viewer/repositories/savedViews'
 import { createSavedViewFactory } from '@/modules/viewer/services/savedViewsManagement'
@@ -127,6 +128,9 @@ export const createTestSavedView = async (params?: {
     storeSavedView: storeSavedViewFactory({ db }),
     getSavedViewGroup: getSavedViewGroupFactory({ db }),
     recalculateGroupResourceIds: recalculateGroupResourceIdsFactory({
+      db
+    }),
+    setNewHomeView: setNewHomeViewFactory({
       db
     })
   })

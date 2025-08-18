@@ -27,6 +27,7 @@ import {
   getStoredViewGroupCountFactory,
   getUngroupedSavedViewsGroupFactory,
   recalculateGroupResourceIdsFactory,
+  setNewHomeViewFactory,
   storeSavedViewFactory,
   storeSavedViewGroupFactory,
   updateSavedViewGroupRecordFactory,
@@ -287,6 +288,9 @@ const resolvers: Resolvers = {
         getSavedViewGroup: getSavedViewGroupFactory({ loaders: ctx.loaders }),
         recalculateGroupResourceIds: recalculateGroupResourceIdsFactory({
           db: projectDb
+        }),
+        setNewHomeView: setNewHomeViewFactory({
+          db: projectDb
         })
       })
       return await createSavedView({ input: args.input, authorId: ctx.userId! })
@@ -352,6 +356,9 @@ const resolvers: Resolvers = {
           db: projectDb
         }),
         recalculateGroupResourceIds: recalculateGroupResourceIdsFactory({
+          db: projectDb
+        }),
+        setNewHomeView: setNewHomeViewFactory({
           db: projectDb
         })
       })

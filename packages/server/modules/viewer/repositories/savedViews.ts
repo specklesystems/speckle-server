@@ -26,7 +26,8 @@ import type {
   DeleteSavedViewGroupRecord,
   UpdateSavedViewGroupRecord,
   GetModelHomeSavedViews,
-  GetModelHomeSavedView
+  GetModelHomeSavedView,
+  SetNewHomeView
 } from '@/modules/viewer/domain/operations/savedViews'
 import {
   SavedViewVisibility,
@@ -669,4 +670,31 @@ export const getModelHomeSavedViewFactory =
     })
     const [view] = Object.values(ret)
     return view
+  }
+
+export const setNewHomeViewFactory =
+  (deps: { db: Knex }): SetNewHomeView =>
+  async (params) => {
+    const { projectId, modelId, newHomeViewId } = params
+
+    const q = tables
+      .savedViews(deps.db)
+      .where({
+        [SavedViews.col.projectId]: projectId,
+        [SavedViews.col.groupResourceIds]: [modelId]
+      })
+      .update({
+        [SavedViews.short.col.isHomeView]: newHomeViewId
+          ? deps.db.raw(
+              `
+          CASE WHEN ?? = ? THEN true ELSE false END
+          `,
+              [SavedViews.col.id, newHomeViewId]
+            )
+          : false
+      })
+
+    await q
+
+    return true
   }

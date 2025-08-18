@@ -543,6 +543,57 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(view!.position).to.equal(0) // default position
       })
 
+      it('setting a new home view unsets home view from old one', async () => {
+        const resourceIds = model1ResourceIds()
+        const resourceIdString = resourceIds.toString()
+        const viewerState = fakeViewerState({
+          projectId: myProject.id,
+          resources: {
+            request: {
+              resourceIdString
+            }
+          }
+        })
+
+        const res1 = await createSavedView(
+          buildCreateInput({
+            resourceIdString,
+            viewerState,
+            overrides: { isHomeView: true }
+          }),
+          { assertNoErrors: true }
+        )
+
+        const view1 = res1.data?.projectMutations.savedViewMutations.createView
+        expect(view1).to.be.ok
+        expect(view1!.isHomeView).to.be.true
+
+        const res2 = await createSavedView(
+          buildCreateInput({
+            resourceIdString,
+            viewerState,
+            overrides: { isHomeView: true }
+          }),
+          { assertNoErrors: true }
+        )
+
+        const view2 = res2.data?.projectMutations.savedViewMutations.createView
+        expect(view2).to.be.ok
+        expect(view2!.isHomeView).to.be.true
+
+        const res3 = await getView(
+          {
+            viewId: view1!.id,
+            projectId: myProject.id
+          },
+          { assertNoErrors: true }
+        )
+        const view1Again = res3.data?.project.savedView
+
+        expect(view1Again).to.be.ok
+        expect(view1Again!.isHomeView).to.be.false
+      })
+
       it('should successfully create a saved view w/ non-default input values', async () => {
         const groupId = testGroup1.id
         const name = 'heyooo brodie'
@@ -848,6 +899,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
       let updatablesProject: BasicTestStream
       let models: BasicTestBranch[]
       let testView: BasicSavedViewFragment
+      let testView2: BasicSavedViewFragment
       let optionalGroup: BasicSavedViewGroupFragment
 
       before(async () => {
@@ -887,28 +939,53 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
       })
 
       beforeEach(async () => {
-        const createRes = await createSavedView(
-          buildCreateInput({
-            projectId: updatablesProject.id,
-            resourceIdString: models[0].id,
-            overrides: { name: 'View to update' }
+        await Promise.all([
+          createSavedView(
+            buildCreateInput({
+              projectId: updatablesProject.id,
+              resourceIdString: models[0].id,
+              overrides: { name: 'View to update' }
+            }),
+            { assertNoErrors: true }
+          ).then((createRes1) => {
+            testView = createRes1.data?.projectMutations.savedViewMutations.createView!
+            expect(testView).to.be.ok
           }),
-          { assertNoErrors: true }
-        )
-        testView = createRes.data?.projectMutations.savedViewMutations.createView!
-        expect(testView).to.be.ok
+          createSavedView(
+            buildCreateInput({
+              projectId: updatablesProject.id,
+              resourceIdString: models[0].id,
+              overrides: { name: 'View to update 2' }
+            }),
+            { assertNoErrors: true }
+          ).then((createRes2) => {
+            testView2 = createRes2.data?.projectMutations.savedViewMutations.createView!
+            expect(testView2).to.be.ok
+          })
+        ])
       })
 
       afterEach(async () => {
-        await deleteView(
-          {
-            input: {
-              id: testView.id,
-              projectId: updatablesProject.id
-            }
-          },
-          { assertNoErrors: true }
-        )
+        await Promise.all([
+          deleteView(
+            {
+              input: {
+                id: testView.id,
+                projectId: updatablesProject.id
+              }
+            },
+            { assertNoErrors: true }
+          ),
+          deleteView(
+            {
+              input: {
+                id: testView2.id,
+                projectId: updatablesProject.id
+              }
+            },
+            { assertNoErrors: true }
+          )
+        ])
       })
 
       const buildValidResourcesUpdate = () => ({
@@ -1054,6 +1131,44 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           message: 'No changes submitted with the input'
         })
         expect(res.data?.projectMutations.savedViewMutations.updateView.id).to.not.be.ok
+      })
+
+      it('setting a new home view unsets home view from old one', async () => {
+        const res1 = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            isHomeView: true
+          }
+        })
+
+        const view1 = res1.data?.projectMutations.savedViewMutations.updateView
+        expect(view1).to.be.ok
+        expect(view1!.isHomeView).to.be.true
+
+        const res2 = await updateView({
+          input: {
+            id: testView2.id,
+            projectId: updatablesProject.id,
+            isHomeView: true
+          }
+        })
+
+        const view2 = res2.data?.projectMutations.savedViewMutations.updateView
+        expect(view2).to.be.ok
+        expect(view2!.isHomeView).to.be.true
+
+        const res3 = await getView(
+          {
+            viewId: testView.id,
+            projectId: updatablesProject.id
+          },
+          { assertNoErrors: true }
+        )
+        const view1Again = res3.data?.project.savedView
+
+        expect(view1Again).to.be.ok
+        expect(view1Again!.isHomeView).to.be.false
       })
 
       it('fails if updating view to be private home view', async () => {

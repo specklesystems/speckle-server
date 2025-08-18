@@ -162,6 +162,12 @@ export type GetModelHomeSavedView = (params: {
   projectId: string
 }) => Promise<SavedView | undefined>
 
+export type SetNewHomeView = (params: {
+  projectId: string
+  modelId: string
+  newHomeViewId: string | null
+}) => Promise<boolean>
+
 /////////////////////
 // SERVICE OPERATIONS:
 /////////////////////
