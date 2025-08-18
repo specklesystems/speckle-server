@@ -34,7 +34,11 @@
       @login="showLoginDialog = true"
     />
 
-    <ViewerContextMenu :parent-el="parentEl" />
+    <ViewerContextMenu
+      ref="contextMenuRef"
+      :parent-el="parentEl"
+      @menu-opened="closeNewThread"
+    />
 
     <div v-if="!isEmbedEnabled">
       <!-- Active users -->
@@ -210,6 +214,10 @@ const onThreadUpdate = (thread: CommentBubbleModel) => {
 const onThreadExpandedChange = (isExpanded: boolean) => {
   if (isExpanded) {
     closeNewThread()
+    // Close context menu when thread expands
+    if (contextMenuRef.value) {
+      contextMenuRef.value.closeContextMenu()
+    }
   }
 }
 
@@ -309,7 +317,6 @@ watch(
   }
 )
 
-// Close context menu when new thread is created
 watch(
   () => buttonState.value.isVisible,
   (isVisible) => {
