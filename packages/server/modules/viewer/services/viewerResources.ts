@@ -412,13 +412,15 @@ const adjustResourceIdStringWithHomeSavedViewSettingsFactory =
   }): Promise<ResourceIdStringWithSavedView> => {
     const { projectId, resourceIdString } = params
     const emptyReturn = { resourceIdString, savedView: undefined }
-    const modelIds = resourceBuilder()
-      .addResources(resourceIdString)
-      .filter(isModelResource)
-    if (modelIds.length !== 1) {
+    const resourceIds = resourceBuilder().addResources(resourceIdString)
+
+    if (resourceIds.length !== 1) {
       // home view loading only supported in non-federated views for a single model
       return emptyReturn
     }
+
+    const modelIds = resourceIds.filter(isModelResource)
+    if (!modelIds.length) return emptyReturn
 
     const modelId = modelIds[0]
     const savedView = await deps.getModelHomeSavedView({
