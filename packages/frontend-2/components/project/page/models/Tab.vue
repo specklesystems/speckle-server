@@ -12,7 +12,6 @@
     />
     <FormFileUploadZone
       v-if="hasModels"
-      ref="uploadZone"
       v-slot="{ isDraggingFiles }"
       :disabled="!canCreateModel"
       :size-limit="maxSizeInBytes"
@@ -24,23 +23,20 @@
         class="relative mt-8 min-h-[360px]"
         :class="[isDraggingFiles && canCreateModel ? 'pointer-events-none' : '']"
       >
-        <div class="">
-          <ProjectPageModelsResults
-            v-model:grid-or-list="gridOrList"
-            v-model:search="search"
-            v-model:loading="loading"
-            :source-apps="selectedApps"
-            :contributors="selectedMembers"
-            :project="project"
-            :project-id="projectId"
-            class="z-[0] relative"
-            @clear-search="clearSearch"
-          />
-        </div>
+        <ProjectPageModelsResults
+          v-model:grid-or-list="gridOrList"
+          v-model:search="search"
+          v-model:loading="loading"
+          :source-apps="selectedApps"
+          :contributors="selectedMembers"
+          :project="project"
+          :project-id="projectId"
+          @clear-search="clearSearch"
+        />
 
         <div
           v-if="isDraggingFiles && canCreateModel"
-          class="absolute inset-0 bg-primary/10 border-2 border-dashed border-primary rounded-lg flex items-center justify-center z-10"
+          class="absolute inset-0 bg-primary/10 border border-dashed border-primary rounded-lg flex items-center justify-center z-10"
         >
           <div class="text-center p-8">
             <div class="text-heading-lg text-primary mb-2">Drop file to upload</div>
@@ -62,7 +58,6 @@
         :contributors="selectedMembers"
         :project="project"
         :project-id="projectId"
-        class="z-[0] relative"
         @clear-search="clearSearch"
       />
     </div>
