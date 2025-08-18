@@ -27,6 +27,7 @@ import type {
 } from '~/lib/viewer/helpers/shortcuts/types'
 import { useTheme } from '~/lib/core/composables/theme'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { isStringPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -259,6 +260,218 @@ export function useFilterUtilities(
     return !!filters.propertyFilter.filter.value
   })
 
+  // Regex patterns for identifying Revit properties
+  const revitPropertyRegex = /^parameters\./
+  // Note: we've split this regex check in two to not clash with navis properties. This makes generally makes dim very sad, as we're layering hacks.
+  // Navis object properties come under `properties`, same as revit ones - as such we can't assume they're the same. Here we're targeting revit's
+  // specific two subcategories of `properties`.
+  const revitPropertyRegexDui3000InstanceProps = /^properties\.Instance/ // note this is partially valid for civil3d, or dim should test against it
+  const revitPropertyRegexDui3000TypeProps = /^properties\.Type/ // note this is partially valid for civil3d, or dim should test against it
+
+  /**
+   * Determines if a property key represents a Revit property
+   */
+  const isRevitProperty = (key: string): boolean => {
+    return (
+      revitPropertyRegex.test(key) ||
+      revitPropertyRegexDui3000InstanceProps.test(key) ||
+      revitPropertyRegexDui3000TypeProps.test(key)
+    )
+  }
+
+  /**
+   * Determines if a property should be excluded from filtering based on its key
+   */
+  const shouldExcludeFromFiltering = (key: string): boolean => {
+    if (
+      key.endsWith('.units') ||
+      key.endsWith('.speckle_type') ||
+      key.includes('.parameters.') ||
+      // key.includes('level.') ||
+      key.includes('renderMaterial') ||
+      key.includes('.domain') ||
+      key.includes('plane.') ||
+      key.includes('baseLine') ||
+      key.includes('referenceLine') ||
+      key.includes('end.') ||
+      key.includes('start.') ||
+      key.includes('endPoint.') ||
+      key.includes('midPoint.') ||
+      key.includes('startPoint.') ||
+      key.includes('.materialName') ||
+      key.includes('.materialClass') ||
+      key.includes('.materialCategory') ||
+      key.includes('displayStyle') ||
+      key.includes('displayValue') ||
+      key.includes('displayMesh')
+    ) {
+      return true
+    }
+
+    // handle revit params: the actual one single value we're interested is in parameters.HOST_BLA BLA_.value, the rest are not needed
+    if (isRevitProperty(key)) {
+      if (key.endsWith('.value')) return false
+      else return true
+    }
+
+    return false
+  }
+
+  /**
+   * Filters the available filters to only include relevant ones for the filter UI
+   */
+  const getRelevantFilters = (
+    allFilters: PropertyInfo[] | null | undefined
+  ): PropertyInfo[] => {
+    return (allFilters || []).filter((f: PropertyInfo) => {
+      return !shouldExcludeFromFiltering(f.key)
+    })
+  }
+
+  /**
+   * Determines if a property key should be filterable
+   * (exists in available filters and is not excluded)
+   */
+  const isPropertyFilterable = (
+    key: string,
+    availableFilters: PropertyInfo[] | null | undefined
+  ): boolean => {
+    const availableFilterKeys = availableFilters?.map((f: PropertyInfo) => f.key) || []
+
+    // First check if it's in available filters
+    if (!availableFilterKeys.includes(key)) {
+      return false
+    }
+
+    // Then check if it should be excluded
+    return !shouldExcludeFromFiltering(key)
+  }
+
+  /**
+   * Gets a user-friendly display name for a property key
+   */
+  const getPropertyName = (key: string): string => {
+    if (!key) return 'Loading'
+
+    if (key === 'level.name') return 'Level Name'
+    if (key === 'speckle_type') return 'Object Type'
+
+    if (isRevitProperty(key) && key.endsWith('.value')) {
+      const correspondingProperty = (viewer.metadata.availableFilters.value || []).find(
+        (f: PropertyInfo) => f.key === key.replace('.value', '.name')
+      )
+      if (correspondingProperty && isStringPropertyInfo(correspondingProperty)) {
+        return (
+          correspondingProperty.valueGroups[0]?.value || key.split('.').pop() || key
+        )
+      }
+    }
+
+    // For all other properties, just return the last part of the path
+    return key.split('.').pop() || key
+  }
+
+  /**
+   * Finds a filter by matching display names (handles complex nested properties)
+   */
+  const findFilterByDisplayName = (
+    displayKey: string,
+    availableFilters: PropertyInfo[] | null | undefined
+  ): PropertyInfo | undefined => {
+    return availableFilters?.find((f) => {
+      const backendDisplayName = getPropertyName(f.key)
+      return backendDisplayName === displayKey || f.key.split('.').pop() === displayKey
+    })
+  }
+
+  /**
+   * Determines if a key-value pair is filterable (with smart matching for nested properties)
+   */
+  const isKvpFilterable = (
+    kvp: { key: string; backendPath?: string },
+    availableFilters: PropertyInfo[] | null | undefined
+  ): boolean => {
+    // Use backendPath if available, otherwise fall back to display key
+    const backendKey = kvp.backendPath || kvp.key
+
+    // First check direct match
+    const directMatch = availableFilters?.some((f) => f.key === backendKey)
+    if (directMatch) {
+      return isPropertyFilterable(backendKey, availableFilters)
+    }
+
+    // For complex nested properties, try to find a match by display name
+    const displayKey = kvp.key as string
+    const matchByDisplayName = findFilterByDisplayName(displayKey, availableFilters)
+
+    if (matchByDisplayName) {
+      return isPropertyFilterable(matchByDisplayName.key, availableFilters)
+    }
+
+    return false
+  }
+
+  /**
+   * Gets a detailed reason why a property is disabled for filtering
+   */
+  const getFilterDisabledReason = (
+    kvp: { key: string; backendPath?: string },
+    availableFilters: PropertyInfo[] | null | undefined
+  ): string => {
+    const backendKey = kvp.backendPath || kvp.key
+    const availableKeys = availableFilters?.map((f) => f.key) || []
+
+    // Check if it's not in available filters
+    if (!availableKeys.includes(backendKey)) {
+      // For debugging: show similar keys that might be available
+      const similarKeys = availableKeys.filter(
+        (key) =>
+          key.toLowerCase().includes('type') ||
+          key.toLowerCase().includes('category') ||
+          key.toLowerCase().includes('class')
+      )
+
+      const debugInfo =
+        similarKeys.length > 0
+          ? ` (Similar available: ${similarKeys.slice(0, 3).join(', ')})`
+          : ''
+
+      return `Property '${backendKey}' is not available in backend filters${debugInfo}`
+    }
+
+    // Check if it's excluded by filtering logic
+    if (shouldExcludeFromFiltering(backendKey)) {
+      return `Property '${backendKey}' is excluded from filtering (technical property)`
+    }
+
+    return 'This property is not available for filtering'
+  }
+
+  /**
+   * Applies a filter for a key-value pair (with smart matching)
+   */
+  const applyKvpFilter = (
+    kvp: { key: string; backendPath?: string },
+    availableFilters: PropertyInfo[] | null | undefined
+  ): void => {
+    // Use backendPath if available, otherwise fall back to display key
+    const backendKey = kvp.backendPath || kvp.key
+
+    // First try direct match
+    let filter = availableFilters?.find((f: PropertyInfo) => f.key === backendKey)
+
+    // If no direct match, try to find by display name using shared logic
+    if (!filter) {
+      const displayKey = kvp.key as string
+      filter = findFilterByDisplayName(displayKey, availableFilters)
+    }
+
+    if (filter) {
+      setPropertyFilter(filter)
+      applyPropertyFilter()
+    }
+  }
+
   return {
     isolateObjects,
     unIsolateObjects,
@@ -272,7 +485,16 @@ export function useFilterUtilities(
     resetFilters,
     resetExplode,
     waitForAvailableFilter,
-    hasActiveFilters
+    hasActiveFilters,
+    isRevitProperty,
+    shouldExcludeFromFiltering,
+    getRelevantFilters,
+    isPropertyFilterable,
+    getPropertyName,
+    findFilterByDisplayName,
+    isKvpFilterable,
+    getFilterDisabledReason,
+    applyKvpFilter
   }
 }
 

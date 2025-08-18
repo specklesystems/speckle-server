@@ -20,7 +20,7 @@
           )
         "
         :active="activePanel === 'models'"
-        :icon="'IconViewerModels'"
+        :icon="Box"
         @click="toggleActivePanel('models')"
       />
       <ViewerControlsButtonToggle
@@ -33,7 +33,7 @@
           )
         "
         :active="activePanel === 'filters'"
-        :icon="'IconViewerExplorer'"
+        :icon="ListFilter"
         :dot="hasActiveFilters"
         @click="toggleActivePanel('filters')"
       />
@@ -47,7 +47,7 @@
           )
         "
         :active="activePanel === 'discussions'"
-        :icon="'IconViewerDiscussions'"
+        :icon="MessageSquareText"
         @click="toggleActivePanel('discussions')"
       />
 
@@ -88,7 +88,7 @@
             )
           "
           :active="activePanel === 'devMode'"
-          :icon="'IconViewerDev'"
+          :icon="CodeXml"
           secondary
           @click="toggleActivePanel('devMode')"
         />
@@ -98,14 +98,14 @@
               placement: 'right'
             })
           "
-          :icon="'IconDocs'"
+          :icon="BookOpen"
           secondary
           @click="openDocs"
         />
         <ViewerControlsButtonToggle
           v-if="isIntercomEnabled"
           v-tippy="getTooltipProps('Get help')"
-          :icon="'IconIntercom'"
+          :icon="CircleQuestionMark"
           secondary
           @click="openIntercomChat"
         />
@@ -166,7 +166,15 @@ import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStat
 import { useIntercomEnabled } from '~~/lib/intercom/composables/enabled'
 import { viewerDocsRoute } from '~~/lib/common/helpers/route'
 import { useAreSavedViewsEnabled } from '~/lib/viewer/composables/savedViews/general'
-import { Camera } from 'lucide-vue-next'
+import {
+  Camera,
+  CodeXml,
+  BookOpen,
+  Box,
+  ListFilter,
+  MessageSquareText,
+  CircleQuestionMark
+} from 'lucide-vue-next'
 import { ModelsSubView } from '~~/lib/viewer/helpers/sceneExplorer'
 
 type ActivePanel =
@@ -235,7 +243,7 @@ const isTablet = breakpoints.smaller('lg')
 const { getTooltipProps } = useSmartTooltipDelay()
 const isSavedViewsEnabled = useAreSavedViewsEnabled()
 const { $intercom } = useNuxtApp()
-const { hasActiveFilters } = useFilterUtilities()
+const { hasActiveFilters, filters } = useFilterUtilities()
 
 const activePanel = ref<ActivePanel>('none')
 const modelsSubView = ref<ModelsSubView>(ModelsSubView.Main)
@@ -330,6 +338,17 @@ onMounted(() => {
 watch(isSmallerOrEqualSm, (newVal) => {
   activePanel.value = newVal ? 'none' : 'models'
 })
+
+// Auto-open filters panel when a new filter is applied from elsewhere
+watch(
+  () => filters.propertyFilter.isApplied.value && filters.propertyFilter.filter.value,
+  (newFilterApplied, oldFilterApplied) => {
+    // Only trigger if we're going from no filter to having a filter (not when changing filters or removing)
+    if (newFilterApplied && !oldFilterApplied) {
+      activePanel.value = 'filters'
+    }
+  }
+)
 
 defineExpose({
   forceClosePanel,

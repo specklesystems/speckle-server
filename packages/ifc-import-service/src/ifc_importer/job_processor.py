@@ -69,11 +69,13 @@ async def job_handler(
 
 async def job_processor(logger: structlog.stdlib.BoundLogger):
     parser = "speckle_ifc"
+    logger = logger.bind(parser=parser)
     connection = await setup_connection()
+    logger.info("job processor started")
     while True:
         job = await get_next_job(connection)
         if not job:
-            logger.info("no job found")
+            logger.debug("no job found")
             await asyncio.sleep(IDLE_TIMEOUT)
             continue
 

@@ -1,6 +1,8 @@
 import asyncio
 import logging
 import sys
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import structlog
 from structlog_to_seq import CelfProcessor
@@ -31,9 +33,25 @@ def configure_logger() -> structlog.stdlib.BoundLogger:
     return logger
 
 
+class HealthcheckHTTPRequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):  # noqa: N802
+        match self.path:
+            case "/healthz":
+                self.send_response(200)
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(b'{"status": "OK"}')
+            case _:
+                self.send_response(404)
+                self.end_headers()
+
+
 async def main():
     logger = configure_logger()
     task = asyncio.create_task(job_processor(logger))
+    httpd = HTTPServer(("0.0.0.0", 9080), HealthcheckHTTPRequestHandler)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
 
     # we do not need any sort of signal handling logic,
     # cause if the context of the job transaction exits,

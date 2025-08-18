@@ -14,7 +14,7 @@ export const startHealthCheckServer = (params: { logger: Logger }) => {
   })
 
   server.listen(9080, '0.0.0.0', () => {
-    logger.info('Server running, listening to 0.0.0.0 and path /healthz')
+    logger.info('Healthcheck server is running. Serving at 0.0.0.0:9080/healthz')
   })
 
   return server

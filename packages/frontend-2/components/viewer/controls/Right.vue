@@ -19,12 +19,12 @@
             }
           )
         "
-        icon="IconViewerZoom"
+        :icon="Fullscreen"
         @click="trackAndzoomExtentsOrSelection()"
       />
       <ViewerControlsButtonToggle
         v-tippy="getTooltipProps('Camera controls', { placement: 'left' })"
-        icon="IconViewerCameraControls"
+        :icon="Video"
         :active="activePanel === 'cameraControls'"
         @click="toggleActivePanel('cameraControls')"
       />
@@ -47,6 +47,7 @@ import { onClickOutside, useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import type { Nullable } from '@speckle/shared'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { Fullscreen, Video } from 'lucide-vue-next'
 
 type ActivePanel = 'none' | 'cameraControls'
 

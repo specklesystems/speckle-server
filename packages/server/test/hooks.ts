@@ -45,6 +45,8 @@ import { set } from 'lodash-es'
 import { fixStackTrace } from '@/test/speckle-helpers/error'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 import * as mocha from 'mocha'
+import { getStalePreparedTransactionsFactory } from '@/modules/multiregion/repositories/transactions'
+import { rollbackPreparedTransaction } from '@/modules/shared/helpers/dbHelper'
 
 // Register chai plugins
 chai.use(chaiAsPromised)
@@ -257,6 +259,13 @@ const resetSchemaFactory =
 
     const resetPubSub = resetPubSubFactory(deps)
     const truncate = truncateTablesFactory(deps)
+
+    const pendingTransactions = await getStalePreparedTransactionsFactory({
+      db: deps.db
+    })({ interval: '1 second' })
+    await Promise.all(
+      pendingTransactions.map(({ gid }) => rollbackPreparedTransaction(deps.db, gid))
+    )
 
     await unlockFactory(deps)()
     await resetPubSub()
