@@ -1,9 +1,9 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div :class="wrapperClasses" :view-id="view.id">
+  <div v-keyboard-clickable :class="wrapperClasses" :view-id="view.id" @click="apply">
     <div class="flex items-center shrink-0">
-      <div v-keyboard-clickable class="relative cursor-pointer sgh" @click="apply">
+      <div class="relative">
         <img
           :src="view.screenshot"
           alt="View screenshot"
@@ -25,7 +25,7 @@
         <div class="text-body-2xs text-foreground-3 truncate">
           {{ view.author?.name }}
         </div>
-        <div class="flex items-center">
+        <div class="flex items-center" @click.stop>
           <LayoutMenu
             v-model:open="showMenu"
             :items="menuItems"
@@ -205,7 +205,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
 ])
 
 const wrapperClasses = computed(() => {
-  const classParts = ['flex gap-2 p-2 w-full group rounded']
+  const classParts = ['flex gap-2 p-2 w-full group rounded cursor-pointer']
 
   if (isActive.value) {
     classParts.push('bg-highlight-2 hover:bg-highlight-3')
