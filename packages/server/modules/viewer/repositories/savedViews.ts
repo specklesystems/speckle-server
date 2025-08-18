@@ -197,8 +197,8 @@ const getProjectSavedViewGroupsBaseQueryFactory =
         query.andWhereRaw('false')
       }
 
-      // checking visibility/authorship
-      if (onlyAuthored || onlyVisibility) {
+      // checking visibility/authorship but ONLY for view query - groups query should return everything still
+      if ((onlyAuthored || onlyVisibility) && mode === 'view') {
         if (onlyAuthored || onlyVisibility === SavedViewVisibility.authorOnly) {
           query.andWhere({ [SavedViews.col.authorId]: userId })
         }
@@ -247,11 +247,12 @@ const getProjectSavedViewGroupsBaseQueryFactory =
 
     /**
      * Check if default group should be shown
+     * - We wanna show it always unless if we're searching, then check for
+     * specific views
      */
-    const ungroupedViewFound = await applyFilters(
-      tables.savedViews(deps.db),
-      'view'
-    ).first()
+    const ungroupedViewFound = search
+      ? await applyFilters(tables.savedViews(deps.db), 'view').first()
+      : true
     const ungroupedSearchString = search
       ? ungroupedScenesGroupTitle.toLowerCase().includes(search)
       : null

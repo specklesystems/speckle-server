@@ -2,8 +2,8 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div :class="wrapperClasses" :view-id="view.id">
-    <div class="flex items-center">
-      <div v-keyboard-clickable class="relative cursor-pointer" @click="apply">
+    <div class="flex items-center shrink-0">
+      <div v-keyboard-clickable class="relative cursor-pointer sgh" @click="apply">
         <img
           :src="view.screenshot"
           alt="View screenshot"
@@ -33,6 +33,7 @@
             mount-menu-on-body
             show-ticks="right"
             :size="230"
+            class="shrink-0 opacity-0 group-hover:opacity-100"
             @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
           >
             <FormButton
@@ -41,25 +42,29 @@
               :icon-left="Ellipsis"
               hide-text
               name="viewActions"
-              class="shrink-0 opacity-0 group-hover:opacity-100"
+              class="shrink-0"
               @click="showMenu = !showMenu"
             />
           </LayoutMenu>
-          <div v-tippy="canUpdate?.errorMessage">
+          <div
+            v-tippy="canUpdate?.errorMessage"
+            class="shrink-0 opacity-0 group-hover:opacity-100"
+          >
             <FormButton
               size="sm"
               color="subtle"
               :icon-left="SquarePen"
               hide-text
               name="editView"
-              class="shrink-0 opacity-0 group-hover:opacity-100"
+              class="shrink-0"
               :disabled="!canUpdate?.authorized || isLoading"
               @click="onEdit"
             />
           </div>
         </div>
       </div>
-      <div class="w-full flex">
+      <div class="w-full flex items-center gap-1">
+        <Globe v-if="!isOnlyVisibleToMe" class="w-3 h-3" />
         <div
           v-tippy="formattedFullDate(view.updatedAt)"
           class="text-body-2xs text-foreground-3 truncate"
@@ -74,7 +79,7 @@
 import { StringEnum, throwUncoveredError, type StringEnumValues } from '@speckle/shared'
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
-import { Ellipsis, SquarePen, Bookmark } from 'lucide-vue-next'
+import { Ellipsis, SquarePen, Bookmark, Globe } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   SavedViewVisibility,
@@ -183,8 +188,8 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
     },
     {
       id: MenuItems.ChangeVisibility,
-      title: 'Only visible to me',
-      active: !!isOnlyVisibleToMe.value,
+      title: 'Share view to workspace',
+      active: !isOnlyVisibleToMe.value,
       disabled: !canUpdate.value?.authorized || isLoading.value,
       disabledTooltip: canUpdate.value.errorMessage
     }

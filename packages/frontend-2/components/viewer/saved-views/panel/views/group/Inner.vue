@@ -34,6 +34,7 @@ import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ViewerSavedViewsPanelViewsGroupInner_SavedViewGroupFragment } from '~/lib/common/generated/gql/graphql'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
+import { viewsTypeToFilters, type ViewsType } from '~/lib/viewer/helpers/savedViews'
 
 graphql(`
   fragment ViewerSavedViewsPanelViewsGroupInner_SavedViewGroup on SavedViewGroup {
@@ -74,8 +75,8 @@ const viewsQuery = graphql(`
 
 const props = defineProps<{
   group: ViewerSavedViewsPanelViewsGroupInner_SavedViewGroupFragment
+  viewsType: ViewsType
   search?: string
-  onlyAuthored?: boolean
 }>()
 
 const { projectId } = useInjectedViewerState()
@@ -94,7 +95,7 @@ const {
       limit: 10,
       cursor: null as null | string,
       search: props.search?.trim() || null,
-      onlyAuthored: props.onlyAuthored
+      ...viewsTypeToFilters(props.viewsType)
     }
   })),
   resolveKey: (vars) => ({

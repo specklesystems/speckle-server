@@ -1,17 +1,16 @@
-import type { StringEnumValues } from '@speckle/shared'
+import { throwUncoveredError, type StringEnumValues } from '@speckle/shared'
 import { isObjectLike, isString } from 'lodash-es'
+import { SavedViewVisibility } from '~/lib/common/generated/gql/graphql'
 
 export const ViewsType = {
-  All: 'all-views',
-  My: 'my-views',
-  Connector: 'connector-views'
+  Personal: 'personal',
+  Shared: 'shared'
 } as const
 export type ViewsType = StringEnumValues<typeof ViewsType>
 
 export const viewsTypeLabels: Record<ViewsType, string> = {
-  [ViewsType.All]: 'All Views',
-  [ViewsType.My]: 'My Views',
-  [ViewsType.Connector]: 'From connectors'
+  [ViewsType.Personal]: 'Personal',
+  [ViewsType.Shared]: 'Shared'
 }
 
 /**
@@ -43,4 +42,18 @@ export const serializeSavedViewUrlSettings = (
   settings: SavedViewUrlSettings
 ): string => {
   return JSON.stringify(settings)
+}
+
+export const viewsTypeToFilters = (type: ViewsType) => {
+  if (type === ViewsType.Personal) {
+    return {
+      onlyAuthored: true
+    }
+  } else if (type === ViewsType.Shared) {
+    return {
+      onlyVisibility: SavedViewVisibility.Public
+    }
+  } else {
+    throwUncoveredError(type)
+  }
 }
