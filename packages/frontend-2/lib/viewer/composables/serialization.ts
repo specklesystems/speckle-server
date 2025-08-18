@@ -203,7 +203,6 @@ export function useApplySerializedState() {
     ) {
       await resourceIdString.update(state.resources?.request?.resourceIdString || '')
     } else if (mode === StateApplyMode.SavedView) {
-      // TODO: Changes needed here?
       const { loadOriginal } = options || {}
 
       const current = resourceBuilder().addResources(resourceIdString.value)

@@ -183,6 +183,9 @@ export default {
     }
   },
   Model: {
+    async projectId(parent) {
+      return parent.streamId
+    },
     async author(parent, _args, ctx) {
       if (!parent.authorId) return null
       return await ctx.loaders.users.getUser.load(parent.authorId)

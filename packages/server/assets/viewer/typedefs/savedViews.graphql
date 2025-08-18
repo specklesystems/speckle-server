@@ -236,3 +236,10 @@ extend type Project {
   """
   savedViewIfExists(id: ID): SavedView
 }
+
+extend type Model {
+  """
+  The model's home view, if any
+  """
+  homeView: SavedView
+}

@@ -172,6 +172,19 @@ const resolvers: Resolvers = {
       return view
     }
   },
+  Model: {
+    homeView: async (parent, _args, ctx) => {
+      const projectId = parent.streamId
+      const projectDb = await getProjectDbClient({ projectId })
+
+      return ctx.loaders
+        .forRegion({ db: projectDb })
+        .savedViews.getModelHomeSavedView.load({
+          modelId: parent.id,
+          projectId
+        })
+    }
+  },
   SavedView: {
     async author(parent, _args, ctx) {
       return parent.authorId
@@ -486,6 +499,9 @@ const disabledResolvers: Resolvers = {
     savedViewIfExists: () => {
       return null // intentional - so we dont have to FF guard the query
     }
+  },
+  Model: {
+    homeView: () => null // intentional - so we dont have to FF guard the query
   },
   ProjectMutations: {
     savedViewMutations: () => {

@@ -32,6 +32,11 @@ const useRouterNavigatingDevUtils = () => {
     },
     debugLog: (...args: unknown[]) => {
       ret.ifDebugRoutes(() => {
+        devLog(...args)
+      })
+    },
+    debugTrace: (...args: unknown[]) => {
+      ret.ifDebugRoutes(() => {
         devTrace(...args)
       })
     },
@@ -64,7 +69,8 @@ type SafeRouterNavigationOptions<
  * Supports debugRoutes=1 query param for debug logs
  */
 export const useSafeRouter = () => {
-  const { getLogId, debugLog, isNuxtNavigating, logger } = useRouterNavigatingDevUtils()
+  const { getLogId, debugLog, debugTrace, isNuxtNavigating, logger } =
+    useRouterNavigatingDevUtils()
   const router = useRouter()
   const state = useRouterNavigatingState()
 
@@ -92,7 +98,7 @@ export const useSafeRouter = () => {
           logger.error({ err }, 'Waiting for nuxt navigations to clear timed out')
         })
 
-    debugLog(`[{logId}] Safe router ${action} registered`, {
+    debugTrace(`[{logId}] Safe router ${action} registered`, {
       initialTo: to(),
       logId
     })

@@ -1195,6 +1195,8 @@ export type ExtendedViewerResources = {
   groups: Array<ViewerResourceGroup>;
   /** Metadata about the request that was made to resolve this. */
   request?: Maybe<ExtendedViewerResourcesRequest>;
+  /** Final/adjusted/resolved resource id string */
+  resourceIdString: Scalars['String']['output'];
   /**
    * The saved view that was used, if any. Even if no savedViewId was specified, a home view could
    * have been implicitly loaded.
@@ -1204,6 +1206,7 @@ export type ExtendedViewerResources = {
 
 export type ExtendedViewerResourcesRequest = {
   __typename?: 'ExtendedViewerResourcesRequest';
+  /** Specific id that was requested or null if loaded implicit (undefined req) or nothing (null req) */
   savedViewId?: Maybe<Scalars['ID']['output']>;
 };
 
@@ -1581,6 +1584,8 @@ export type Model = {
   description?: Maybe<Scalars['String']['output']>;
   /** The shortened/display name that doesn't include the names of parent models */
   displayName: Scalars['String']['output'];
+  /** The model's home view, if any */
+  homeView?: Maybe<SavedView>;
   id: Scalars['ID']['output'];
   /** Full name including the names of parent models delimited by forward slashes */
   name: Scalars['String']['output'];
@@ -1588,6 +1593,7 @@ export type Model = {
   pendingImportedVersions: Array<FileUpload>;
   permissions: ModelPermissionChecks;
   previewUrl?: Maybe<Scalars['String']['output']>;
+  projectId: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
   /** Get all file uploads ever done in this model */
   uploads: FileUploadCollection;
@@ -7142,6 +7148,7 @@ export type EmbedTokenCollectionResolvers<ContextType = GraphQLContext, ParentTy
 export type ExtendedViewerResourcesResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ExtendedViewerResources'] = ResolversParentTypes['ExtendedViewerResources']> = {
   groups?: Resolver<Array<ResolversTypes['ViewerResourceGroup']>, ParentType, ContextType>;
   request?: Resolver<Maybe<ResolversTypes['ExtendedViewerResourcesRequest']>, ParentType, ContextType>;
+  resourceIdString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   savedView?: Resolver<Maybe<ResolversTypes['SavedView']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -7297,11 +7304,13 @@ export type ModelResolvers<ContextType = GraphQLContext, ParentType extends Reso
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   displayName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  homeView?: Resolver<Maybe<ResolversTypes['SavedView']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   pendingImportedVersions?: Resolver<Array<ResolversTypes['FileUpload']>, ParentType, ContextType, RequireFields<ModelPendingImportedVersionsArgs, 'limit'>>;
   permissions?: Resolver<ResolversTypes['ModelPermissionChecks'], ParentType, ContextType>;
   previewUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   uploads?: Resolver<ResolversTypes['FileUploadCollection'], ParentType, ContextType, Partial<ModelUploadsArgs>>;
   version?: Resolver<ResolversTypes['Version'], ParentType, ContextType, RequireFields<ModelVersionArgs, 'id'>>;

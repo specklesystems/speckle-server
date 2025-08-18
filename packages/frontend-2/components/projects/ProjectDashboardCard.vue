@@ -105,7 +105,7 @@
             show-actions
             :project-id="project.id"
             height="h-48"
-            @click="router.push(modelRoute(project.id, model.id))"
+            @click="router.push(getModelItemRoute(model))"
           />
         </template>
         <ProjectCardImportFileArea
@@ -123,16 +123,13 @@
 import { Roles } from '@speckle/shared'
 import { FormButton } from '@speckle/ui-components'
 import type { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
-import {
-  projectRoute,
-  allProjectModelsRoute,
-  modelRoute
-} from '~~/lib/common/helpers/route'
+import { projectRoute, allProjectModelsRoute } from '~~/lib/common/helpers/route'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { RoleInfo, type StreamRoles } from '@speckle/shared'
 import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
+import { getModelItemRoute } from '~/lib/projects/helpers/models'
 
 defineEmits<{
   (e: 'moveProject'): void

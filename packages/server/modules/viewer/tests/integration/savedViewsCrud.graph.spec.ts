@@ -112,6 +112,9 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
  * - Test that default group can be resolved even if view has more specific resourceIds w/ versions
  * - Test that default group shows up or doesn't depending if there are views in it, regardless of
  * whether there's filtering
+ *
+ * Home view:
+ * - Unset home view on others as u set it on a new one
  */
 
 ;(FF_SAVED_VIEWS_ENABLED ? describe : describe.skip)('Saved Views GraphQL CRUD', () => {
