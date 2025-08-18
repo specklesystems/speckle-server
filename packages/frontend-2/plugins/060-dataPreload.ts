@@ -5,6 +5,7 @@ import {
 } from '~/lib/auth/graphql/queries'
 import { usePreloadApolloQueries } from '~/lib/common/composables/graphql'
 import { mainServerInfoDataQuery } from '~/lib/core/composables/server'
+import { navigationWorkspaceSwitcherQuery } from '~/lib/navigation/graphql/queries'
 
 /**
  * Prefetches data for specific routes to avoid the problem of serial API requests
@@ -26,7 +27,17 @@ export default defineNuxtPlugin(async (ctx) => {
   // Standard/global
   promises.push(
     preload({
-      queries: [{ query: activeUserQuery }, { query: mainServerInfoDataQuery }]
+      queries: [
+        { query: activeUserQuery },
+        { query: mainServerInfoDataQuery },
+        ...(isWorkspacesEnabled.value
+          ? [
+              {
+                query: navigationWorkspaceSwitcherQuery
+              }
+            ]
+          : [])
+      ]
     })
   )
 
