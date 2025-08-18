@@ -130,15 +130,49 @@
       </div>
 
       <!-- Empty State -->
-      <div v-else class="flex-1 flex items-center justify-center">
-        <div class="text-center p-6">
-          <div class="text-foreground-2 text-body-sm mb-2">No filters applied</div>
-          <div class="text-foreground-3 text-body-xs">
-            Click the + button above or select a property to add filters
+      <div v-else class="flex-1 flex flex-col gap-6 items-center justify-center">
+        <IllustrationEmptystateFilters class="-mt-8" />
+        <div class="text-foreground-2 text-body-xs">There are no filters, yet.</div>
+        <FormButton @click="addNewEmptyFilter">Add filter</FormButton>
+      </div>
+    </div>
+    <!-- Property Selection Portal -->
+    <Portal v-if="showPropertySelection" to="panel-extension">
+      <div class="h-full flex flex-col">
+        <div class="relative border-b border-outline-2 flex-shrink-0">
+          <input
+            id="property-search"
+            v-model="propertySearch"
+            type="text"
+            placeholder="Search for a property..."
+            class="text-body-2xs text-foreground-2 placeholder:text-foreground-2 w-full rounded-t-md border-none h-8 pl-8"
+          />
+          <label for="property-search" class="sr-only">Search for a property...</label>
+          <Search class="absolute top-2.5 left-3 h-3 w-3" />
+        </div>
+
+        <div class="flex-1 overflow-y-auto overflow-x-hidden simple-scrollbar p-2">
+          <div class="flex flex-col">
+            <button
+              v-for="property in propertySelectOptions"
+              :key="property.value"
+              class="px-2 py-2 text-foreground rounded-md hover:bg-highlight-3 text-left flex items-center gap-2"
+              @click="selectProperty(property.value)"
+            >
+              <component
+                :is="getPropertyTypeIcon(property.type)"
+                class="h-3 w-3 mt-0.5 text-foreground-2 shrink-0"
+              />
+              <div class="min-w-0">
+                <div class="text-body-2xs font-medium text-foreground">
+                  {{ property.label }}
+                </div>
+              </div>
+            </button>
           </div>
         </div>
       </div>
-    </div>
+    </Portal>
   </ViewerLayoutSidePanel>
 </template>
 <script setup lang="ts">
@@ -147,8 +181,8 @@ import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { isNumericPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
 import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
-import { X, Plus } from 'lucide-vue-next'
-import { FormSelectBase } from '@speckle/ui-components'
+import { X, Plus, Search, CaseLower, Hash, ToggleLeft } from 'lucide-vue-next'
+import { FormButton, FormSelectBase } from '@speckle/ui-components'
 
 const {
   removePropertyFilter,
@@ -174,12 +208,66 @@ const relevantFilters = computed(() => {
   return getRelevantFilters(allFilters.value)
 })
 
+// Helper function to get property type icon
+const getPropertyTypeIcon = (type: string) => {
+  switch (type) {
+    case 'string':
+      return CaseLower
+    case 'number':
+      return Hash
+    case 'boolean':
+      return ToggleLeft
+    default:
+      return CaseLower
+  }
+}
+
+// Helper function to get property type
+const getPropertyType = (filter: PropertyInfo): string => {
+  if (isNumericPropertyInfo(filter)) {
+    return 'number'
+  }
+  // Check if it's a boolean type using the same type guard pattern
+  const hasValueGroups = (
+    f: PropertyInfo
+  ): f is PropertyInfo & {
+    valueGroups: Array<{ value: unknown; ids?: string[] }>
+  } => {
+    return (
+      'valueGroups' in f &&
+      Array.isArray((f as unknown as Record<string, unknown>).valueGroups)
+    )
+  }
+
+  if (
+    hasValueGroups(filter) &&
+    filter.valueGroups.some((vg) => typeof vg.value === 'boolean')
+  ) {
+    return 'boolean'
+  }
+  return 'string'
+}
+
 // Options for property selection dropdown
 const propertySelectOptions = computed(() => {
-  return relevantFilters.value.map((filter) => ({
+  const allOptions = relevantFilters.value.map((filter) => ({
     value: filter.key,
-    label: getPropertyName(filter.key)
+    label: getPropertyName(filter.key),
+    type: getPropertyType(filter)
   }))
+
+  // Filter based on search input
+  if (!propertySearch.value.trim()) {
+    return allOptions
+  }
+
+  const searchTerm = propertySearch.value.toLowerCase().trim()
+  return allOptions.filter(
+    (option) =>
+      option.label.toLowerCase().includes(searchTerm) ||
+      option.value.toLowerCase().includes(searchTerm) ||
+      option.type.toLowerCase().includes(searchTerm)
+  )
 })
 
 // Options for condition dropdown
@@ -219,25 +307,42 @@ const colors = computed(() => !!propertyFilter.isApplied.value)
 
 // === NEW MULTI-FILTER LOGIC ===
 
+// Property selection state
+const showPropertySelection = ref(false)
+const propertySearch = ref('')
+
 const addNewEmptyFilter = () => {
-  // Add a filter without a property selected - user will choose from dropdown
+  // Show property selection in panel extension instead of immediately adding filter
+  showPropertySelection.value = true
+
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'filters',
+    action: 'open-property-selection'
+  })
+}
+
+const selectProperty = (propertyKey: string) => {
+  // Create the filter with the selected property
   const filterId = `filter-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
   activeFilters.value.push({
     id: filterId,
-    filter: null, // No property selected yet
+    filter: relevantFilters.value.find((p) => p.key === propertyKey) || null,
     isApplied: false,
     selectedValues: [],
     condition: 'is'
   })
 
+  // Hide property selection
+  showPropertySelection.value = false
+
   mp.track('Viewer Action', {
     type: 'action',
     name: 'filters',
-    action: 'add-new-filter'
+    action: 'add-new-filter',
+    value: propertyKey
   })
-
-  return filterId
 }
 
 const setFilterProperty = (filterId: string, propertyKey: string) => {

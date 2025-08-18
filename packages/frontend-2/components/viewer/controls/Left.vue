@@ -152,6 +152,15 @@
         @close="activePanel = 'none'"
       />
     </div>
+
+    <!-- Panel Extension - Portal target for additional content -->
+    <div
+      id="panel-extension"
+      class="absolute max-h-96 h-full empty:hidden z-30 w-64 top-2 bg-foundation border border-outline-2 rounded-lg overflow-hidden"
+      :style="`left: ${panelExtensionLeft}px`"
+    >
+      <PortalTarget name="panel-extension"></PortalTarget>
+    </div>
   </aside>
 </template>
 
@@ -271,6 +280,16 @@ const widthClass = computed(() => {
   } else {
     return `${width.value + 4}px`
   }
+})
+
+const panelExtensionLeft = computed(() => {
+  const mainPanelWidth = isMobile.value
+    ? window.innerWidth - 60
+    : isTablet.value
+    ? 240
+    : width.value
+  const mainPanelLeft = isEmbedEnabled.value ? 52 : 60
+  return mainPanelLeft + mainPanelWidth
 })
 
 const { summary } = useFunctionRunsStatusSummary({
