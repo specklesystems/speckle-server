@@ -200,6 +200,9 @@ function createCache(): InMemoryCache {
           viewerResources: {
             merge: (_existing, incoming) => [...incoming]
           },
+          viewerResourcesExtended: {
+            merge: true
+          },
           model: {
             read(original, { args, toReference }) {
               if (args?.id) {
@@ -325,6 +328,9 @@ function createCache(): InMemoryCache {
         merge: true
       },
       ProjectPermissionChecks: {
+        merge: true
+      },
+      ExtendedViewerResources: {
         merge: true
       },
       AutomateFunction: {
