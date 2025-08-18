@@ -34,6 +34,8 @@
       @login="showLoginDialog = true"
     />
 
+    <ViewerContextMenu :parent-el="parentEl" />
+
     <div v-if="!isEmbedEnabled">
       <!-- Active users -->
       <ViewerAnchoredPointUser
@@ -187,6 +189,7 @@ const {
 } = useInjectedViewerInterfaceState()
 
 const showLoginDialog = ref(false)
+const contextMenuRef = ref()
 
 useViewerCommentBubblesProjection({ parentEl })
 
@@ -302,6 +305,16 @@ watch(
     // If a thread opened (wasn't open before) on mobile, emit event
     if (newThread && !oldThread && isMobile.value) {
       emit('forceClosePanels')
+    }
+  }
+)
+
+// Close context menu when new thread is created
+watch(
+  () => buttonState.value.isVisible,
+  (isVisible) => {
+    if (isVisible && contextMenuRef.value) {
+      contextMenuRef.value.closeContextMenu()
     }
   }
 )
