@@ -227,11 +227,202 @@ export function useFilterUtilities(
     filters.propertyFilter.isApplied.value = false
   }
 
+  /**
+   * Gets available values for the current property filter
+   */
+  const getAvailableFilterValues = (filter: PropertyInfo): string[] => {
+    // Type guard to check if filter has valueGroups property
+    const hasValueGroups = (
+      f: PropertyInfo
+    ): f is PropertyInfo & { valueGroups: Array<{ value: unknown }> } => {
+      return (
+        'valueGroups' in f &&
+        Array.isArray((f as unknown as Record<string, unknown>).valueGroups)
+      )
+    }
+
+    if (hasValueGroups(filter)) {
+      return filter.valueGroups
+        .map((vg) => String(vg.value))
+        .filter(
+          (v) => v !== null && v !== undefined && v !== 'null' && v !== 'undefined'
+        )
+    }
+
+    return []
+  }
+
+  /**
+   * Sets the selected values for the current property filter
+   */
+  const setSelectedFilterValues = (values: string[]) => {
+    filters.propertyFilter.selectedValues.value = [...values]
+  }
+
+  /**
+   * Adds a value to the selected filter values
+   */
+  const addSelectedFilterValue = (value: string) => {
+    if (!filters.propertyFilter.selectedValues.value.includes(value)) {
+      filters.propertyFilter.selectedValues.value.push(value)
+    }
+  }
+
+  /**
+   * Removes a value from the selected filter values
+   */
+  const removeSelectedFilterValue = (value: string) => {
+    const index = filters.propertyFilter.selectedValues.value.indexOf(value)
+    if (index > -1) {
+      filters.propertyFilter.selectedValues.value.splice(index, 1)
+    }
+  }
+
+  /**
+   * Toggles a value in the selected filter values (checkbox-style)
+   */
+  const toggleSelectedFilterValue = (value: string) => {
+    if (filters.propertyFilter.selectedValues.value.includes(value)) {
+      removeSelectedFilterValue(value)
+    } else {
+      addSelectedFilterValue(value)
+    }
+  }
+
+  /**
+   * Checks if a value is currently selected
+   */
+  const isValueSelected = (value: string): boolean => {
+    return filters.propertyFilter.selectedValues.value.includes(value)
+  }
+
+  /**
+   * Gets the values to filter by - either selected values or all values (for backward compatibility)
+   */
+  const getFilterValues = (): string[] => {
+    const selectedValues = filters.propertyFilter.selectedValues.value
+    const currentFilter = filters.propertyFilter.filter.value
+
+    // If we have selected values, use those
+    if (selectedValues.length > 0) {
+      return selectedValues
+    }
+
+    // Otherwise, fall back to all available values (backward compatibility)
+    if (currentFilter) {
+      return getAvailableFilterValues(currentFilter)
+    }
+
+    return []
+  }
+
+  // === NEW MULTI-FILTER FUNCTIONS ===
+
+  /**
+   * Adds a new active filter or updates existing one
+   */
+  const addActiveFilter = (filter: PropertyInfo): string => {
+    const existingIndex = filters.activeFilters.value.findIndex(
+      (f) => f.filter?.key === filter.key
+    )
+
+    if (existingIndex !== -1) {
+      // Update existing filter
+      return filters.activeFilters.value[existingIndex].id
+    } else {
+      // Add new filter
+      const id = `filter-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      filters.activeFilters.value.push({
+        filter,
+        isApplied: false,
+        selectedValues: [],
+        id,
+        condition: 'is'
+      })
+      return id
+    }
+  }
+
+  /**
+   * Removes an active filter by ID
+   */
+  const removeActiveFilter = (filterId: string) => {
+    const index = filters.activeFilters.value.findIndex((f) => f.id === filterId)
+    if (index !== -1) {
+      filters.activeFilters.value.splice(index, 1)
+    }
+  }
+
+  /**
+   * Toggles the applied state of a specific filter
+   */
+  const toggleFilterApplied = (filterId: string) => {
+    const filter = filters.activeFilters.value.find((f) => f.id === filterId)
+    if (filter) {
+      filter.isApplied = !filter.isApplied
+    }
+  }
+
+  /**
+   * Updates selected values for a specific active filter
+   */
+  const updateActiveFilterValues = (filterId: string, values: string[]) => {
+    const filter = filters.activeFilters.value.find((f) => f.id === filterId)
+    if (filter) {
+      filter.selectedValues = [...values]
+    }
+  }
+
+  /**
+   * Updates condition for a specific active filter
+   */
+  const updateFilterCondition = (
+    filterId: string,
+    condition: 'is' | 'is_not' | 'contains' | 'starts_with' | 'ends_with'
+  ) => {
+    const filter = filters.activeFilters.value.find((f) => f.id === filterId)
+    if (filter) {
+      filter.condition = condition
+    }
+  }
+
+  /**
+   * Toggles a value for a specific active filter
+   */
+  const toggleActiveFilterValue = (filterId: string, value: string) => {
+    const filter = filters.activeFilters.value.find((f) => f.id === filterId)
+    if (filter) {
+      const index = filter.selectedValues.indexOf(value)
+      if (index > -1) {
+        filter.selectedValues.splice(index, 1)
+      } else {
+        filter.selectedValues.push(value)
+      }
+    }
+  }
+
+  /**
+   * Checks if a value is selected for a specific active filter
+   */
+  const isActiveFilterValueSelected = (filterId: string, value: string): boolean => {
+    const filter = filters.activeFilters.value.find((f) => f.id === filterId)
+    return filter ? filter.selectedValues.includes(value) : false
+  }
+
+  /**
+   * Gets all currently applied filters
+   */
+  const getAppliedFilters = () => {
+    return filters.activeFilters.value.filter((f) => f.isApplied)
+  }
+
   const resetFilters = () => {
     filters.hiddenObjectIds.value = []
     filters.isolatedObjectIds.value = []
     filters.propertyFilter.filter.value = null
     filters.propertyFilter.isApplied.value = false
+    filters.propertyFilter.selectedValues.value = []
+    filters.activeFilters.value = [] // Reset active filters
     // filters.selectedObjects.value = []
   }
 
@@ -482,6 +673,23 @@ export function useFilterUtilities(
     applyPropertyFilter,
     removePropertyFilter,
     unApplyPropertyFilter,
+    // New multi-value filter functions
+    getAvailableFilterValues,
+    setSelectedFilterValues,
+    addSelectedFilterValue,
+    removeSelectedFilterValue,
+    toggleSelectedFilterValue,
+    isValueSelected,
+    getFilterValues,
+    // New multi-filter functions
+    addActiveFilter,
+    removeActiveFilter,
+    toggleFilterApplied,
+    updateActiveFilterValues,
+    updateFilterCondition,
+    toggleActiveFilterValue,
+    isActiveFilterValueSelected,
+    getAppliedFilters,
     resetFilters,
     resetExplode,
     waitForAvailableFilter,

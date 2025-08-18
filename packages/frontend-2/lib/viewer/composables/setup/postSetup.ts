@@ -552,6 +552,7 @@ function useViewerFiltersIntegration() {
   const {
     metadata: { availableFilters: allFilters }
   } = useInjectedViewer()
+  const logger = useLogger()
 
   const stateKey = 'default'
   let preventFilterWatchers = false
@@ -580,8 +581,12 @@ function useViewerFiltersIntegration() {
   watch(
     filters.isolatedObjectIds,
     (newVal, oldVal) => {
-      if (preventFilterWatchers) return
-      if (arraysEqual(newVal, oldVal || [])) return
+      if (preventFilterWatchers) {
+        return
+      }
+      if (arraysEqual(newVal, oldVal || [])) {
+        return
+      }
 
       const isolatable = difference(newVal, oldVal || [])
       const unisolatable = difference(oldVal || [], newVal)
@@ -638,6 +643,194 @@ function useViewerFiltersIntegration() {
     if (!isApplied) await instance.removeColorFilter()
   }
 
+  // New function to handle multiple active filters
+  const applyMultipleFilters = async (
+    activeFilters: Array<{
+      filter: PropertyInfo | null
+      isApplied: boolean
+      selectedValues: string[]
+      id: string
+      condition: 'is' | 'is_not' | 'contains' | 'starts_with' | 'ends_with'
+    }>
+  ) => {
+    // Get filters that have selected values (for isolation)
+    const filtersWithValues = activeFilters.filter(
+      (f) => f.filter !== null && f.selectedValues.length > 0
+    )
+
+    // Get filters that are applied (for coloring - only one should be active)
+    const appliedFilters = activeFilters.filter((f) => f.isApplied && f.filter !== null)
+
+    // Handle isolation based on selected values
+    await applyIsolation(
+      filtersWithValues.map((f) => ({
+        filter: f.filter!,
+        selectedValues: f.selectedValues,
+        id: f.id
+      }))
+    )
+
+    // Handle coloring based on applied state (only one filter)
+    await applyColoring(
+      appliedFilters.map((f) => ({
+        filter: f.filter!,
+        selectedValues: f.selectedValues,
+        id: f.id
+      }))
+    )
+  }
+
+  // Handle isolation based on selected filter values
+  const applyIsolation = async (
+    filtersWithValues: Array<{
+      filter: PropertyInfo
+      selectedValues: string[]
+      id: string
+    }>
+  ) => {
+    const worldTree = instance.getWorldTree()
+    if (!worldTree) {
+      return
+    }
+
+    // Collect all matching object IDs from all filters with selected values
+    const allMatchingObjectIds = new Set<string>()
+
+    for (const filterConfig of filtersWithValues) {
+      const matchingObjectIds = getObjectIdsForFilter(filterConfig)
+      matchingObjectIds.forEach((id) => allMatchingObjectIds.add(id))
+    }
+
+    // Update isolation state (don't disable watchers - we want the isolation watcher to trigger)
+    if (allMatchingObjectIds.size > 0) {
+      filters.isolatedObjectIds.value = Array.from(allMatchingObjectIds)
+      filters.hiddenObjectIds.value = []
+    } else {
+      filters.isolatedObjectIds.value = []
+      filters.hiddenObjectIds.value = []
+    }
+  }
+
+  // Handle coloring based on applied filters (only one at a time)
+  const applyColoring = async (
+    appliedFilters: Array<{
+      filter: PropertyInfo
+      selectedValues: string[]
+      id: string
+    }>
+  ) => {
+    if (appliedFilters.length === 0) {
+      // No coloring applied - remove colors
+      await instance.removeColorFilter()
+      return
+    }
+
+    if (appliedFilters.length > 1) {
+      // Multiple filters trying to apply coloring - only allow one
+      // Keep the first one, disable the rest
+      for (let i = 1; i < appliedFilters.length; i++) {
+        const filterId = appliedFilters[i].id
+        const filter = filters.activeFilters.value.find((f) => f.id === filterId)
+        if (filter) {
+          filter.isApplied = false
+        }
+      }
+      // Apply coloring for the first filter only
+      await applyColoring([appliedFilters[0]])
+      return
+    }
+
+    // Single filter coloring
+    const filterConfig = appliedFilters[0]
+
+    if (filterConfig.selectedValues.length === 0) {
+      // No specific values selected - use traditional color filter
+      await instance.setColorFilter(filterConfig.filter)
+    } else {
+      // Specific values selected - color only those objects
+      const matchingObjectIds = getObjectIdsForFilter(filterConfig)
+      if (matchingObjectIds.length > 0) {
+        try {
+          await instance.setUserObjectColors([
+            {
+              objectIds: matchingObjectIds,
+              color: '#ff6b6b' // Single color for the active filter
+            }
+          ])
+        } catch (error) {
+          logger.error('Color application failed:', error)
+        }
+      } else {
+        await instance.removeColorFilter()
+      }
+    }
+  }
+
+  // Helper function to get object IDs that match a filter configuration
+  const getObjectIdsForFilter = (filterConfig: {
+    filter: PropertyInfo
+    selectedValues: string[]
+  }): string[] => {
+    const worldTree = instance.getWorldTree()
+    if (!worldTree) return []
+
+    const matchingIds: string[] = []
+    const { filter, selectedValues } = filterConfig
+
+    worldTree.walk((node) => {
+      const nodeData = node.model.raw
+      if (nodeData && nodeData.id) {
+        // Get the property value for this object
+        const propertyValue = getObjectPropertyValue(
+          nodeData as Record<string, unknown>,
+          filter.key
+        )
+
+        if (propertyValue !== undefined && propertyValue !== null) {
+          const valueStr = String(propertyValue)
+
+          // If no specific values selected, match all objects with this property
+          if (selectedValues.length === 0) {
+            matchingIds.push(nodeData.id)
+          } else {
+            // Check if this object's value is in the selected values
+            if (selectedValues.includes(valueStr)) {
+              matchingIds.push(nodeData.id)
+            }
+          }
+        }
+      }
+      return true
+    })
+
+    return matchingIds
+  }
+
+  // Helper function to get property value from object data
+  const getObjectPropertyValue = (
+    objData: Record<string, unknown>,
+    propertyKey: string
+  ): unknown => {
+    const keys = propertyKey.split('.')
+    let value: unknown = objData
+
+    for (const key of keys) {
+      if (
+        value &&
+        typeof value === 'object' &&
+        value !== null &&
+        key in (value as Record<string, unknown>)
+      ) {
+        value = (value as Record<string, unknown>)[key]
+      } else {
+        return undefined
+      }
+    }
+
+    return value
+  }
+
+  // Watch legacy single filter
   watch(
     () =>
       <const>[
@@ -646,17 +839,58 @@ function useViewerFiltersIntegration() {
       ],
     async (newVal) => {
       const [filter, isApplied] = newVal
-      await syncColorFilterToViewer(filter, isApplied)
+      // Only apply single filter if no active filters are present
+      if (filters.activeFilters.value.length === 0) {
+        await syncColorFilterToViewer(filter, isApplied)
+      }
     },
     { immediate: true, flush: 'sync' }
   )
 
+  // Watch new multi-filter system
+  watch(
+    () => filters.activeFilters.value,
+    async (activeFilters) => {
+      await applyMultipleFilters(activeFilters)
+    },
+    { immediate: true, flush: 'sync', deep: true }
+  )
+
+  // Also watch for changes in selected values to trigger isolation immediately
+  watch(
+    () =>
+      filters.activeFilters.value.map((f) => ({
+        id: f.id,
+        selectedValues: f.selectedValues
+      })),
+    async () => {
+      // Get filters that have selected values (for isolation)
+      const filtersWithValues = filters.activeFilters.value.filter(
+        (f) => f.filter !== null && f.selectedValues.length > 0
+      )
+      await applyIsolation(
+        filtersWithValues.map((f) => ({
+          filter: f.filter!,
+          selectedValues: f.selectedValues,
+          id: f.id
+        }))
+      )
+    },
+    { deep: true, flush: 'sync' }
+  )
+
   useOnViewerLoadComplete(
     async () => {
-      const targetFilter =
-        filters.propertyFilter.filter.value || speckleTypeFilter.value
-      const isApplied = filters.propertyFilter.isApplied.value
-      await syncColorFilterToViewer(targetFilter, isApplied)
+      // Check if we have active filters first
+      if (filters.activeFilters.value.length > 0) {
+        await applyMultipleFilters(filters.activeFilters.value)
+      } else {
+        // Fall back to legacy single filter
+        const targetFilter =
+          filters.propertyFilter.filter.value || speckleTypeFilter.value
+        const isApplied = filters.propertyFilter.isApplied.value
+        await syncColorFilterToViewer(targetFilter, isApplied)
+      }
     },
     { initialOnly: true }
   )
