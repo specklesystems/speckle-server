@@ -39,7 +39,8 @@ import type {
   ViewerLoadedThreadsQueryVariables,
   ProjectCommentsFilter,
   ViewerModelVersionCardItemFragment,
-  UseViewerSavedViewSetup_SavedViewFragment
+  UseViewerSavedViewSetup_SavedViewFragment,
+  ProjectViewerResourcesQuery
 } from '~~/lib/common/generated/gql/graphql'
 import type { SetNonNullable, Get } from 'type-fest'
 import {
@@ -57,7 +58,7 @@ import type { AsyncWritableComputedRef } from '~~/lib/common/composables/async'
 import { setupUiDiffState } from '~~/lib/viewer/composables/setup/diff'
 import type { DiffStateCommand } from '~~/lib/viewer/composables/setup/diff'
 import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
-import { flatten, reduce } from 'lodash-es'
+import { flatten, isUndefined, reduce } from 'lodash-es'
 import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
 import {
   InjectableViewerStateKey,
@@ -83,14 +84,15 @@ import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
 >
-
 export type LoadedThreadsMetadata = NonNullable<
   Get<ViewerLoadedThreadsQuery, 'project.commentThreads'>
 >
-
-export type LoadedSavedView = UseViewerSavedViewSetup_SavedViewFragment
-
 export type LoadedCommentThread = NonNullable<Get<LoadedThreadsMetadata, 'items[0]'>>
+type LoadedSavedView = UseViewerSavedViewSetup_SavedViewFragment
+type LoadedExtendedResourceItems =
+  | Get<ProjectViewerResourcesQuery, 'project.viewerResourcesExtended'>
+  | null
+  | undefined
 
 export type InjectableViewerState = Readonly<{
   /**
@@ -151,7 +153,16 @@ export type InjectableViewerState = Readonly<{
        * Saved view parameters, that affect what resources we're loading and how
        */
       savedView: {
-        id: Ref<Nullable<string>>
+        /**
+         * The specific view to load.
+         * Null - load NO saved view, not even implicit/home views
+         * Undefined - load no specific view, but allow for implicit views (init value)
+         * Specific ID - load this specific view
+         *
+         * Note: The implication here is that response.savedView can be loaded/set, even when
+         * this value is falsy (undefined), because an implicit/home view was resolved
+         */
+        id: Ref<string | null | undefined>
         /**
          * By default we use latest or already loaded versions, but this allows
          * us to load the versions originally specified when creating the view
@@ -194,6 +205,7 @@ export type InjectableViewerState = Readonly<{
       resourceItemsQueryVariables: ComputedRef<
         Optional<ProjectViewerResourcesQueryVariables>
       >
+      resourceItemsExtended: ComputedRef<LoadedExtendedResourceItems>
       /**
        * Whether or not the initial resource items load has happened (useful in SSR)
        */
@@ -245,6 +257,12 @@ export type InjectableViewerState = Readonly<{
        * Loaded saved view, if any
        */
       savedView: ComputedRef<Optional<LoadedSavedView>>
+      /**
+       * Whether we're in a federated view - loading multiple models/objects. We judge by the actual
+       * resources being loaded not just the resourceIdString. The string could refer to multiple models,
+       * but if none of them actually exist and are loaded then I wouldn't count that as a federated view.
+       */
+      isFederatedView: ComputedRef<boolean>
     }
   }
   /**
@@ -485,11 +503,21 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     get: () => parseUrlParameters(getParam.value),
     set: async (newResources) => {
       const modelId = createGetParamFromResources(newResources)
-      await router.push(() => ({
-        params: { modelId },
-        query: route.query,
-        hash: route.hash
-      }))
+      await router.push(
+        () => ({
+          params: { modelId },
+          query: route.query,
+          hash: route.hash
+        }),
+        {
+          skipIf: (to) => {
+            if (to.params.modelId !== getParam.value) return false
+            if (to.query !== route.query) return false
+            if (to.hash !== route.hash) return false
+            return true
+          }
+        }
+      )
     },
     initialState: [],
     asyncRead: false
@@ -550,12 +578,23 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     }
   )
 
+  const savedViewId = ref<string | null | undefined>(undefined)
+
+  // // For debugging uncomment:
+  // watch(
+  //   savedViewId,
+  //   (newVal, oldVal) => {
+  //     devTrace('savedViewId', { newVal, oldVal })
+  //   },
+  //   { flush: 'sync' }
+  // )
+
   return {
     ...state,
     resources: {
       request: {
         savedView: {
-          id: ref<string | null>(null),
+          id: savedViewId,
           loadOriginal: ref<boolean>(false)
         },
         items: resources,
@@ -575,7 +614,12 @@ function setupResponseResourceItems(
   state: InitialStateWithRequest
 ): Pick<
   InjectableViewerState['resources']['response'],
-  'resourceItems' | 'resourceItemsQueryVariables' | 'resourceItemsLoaded' | 'savedView'
+  | 'resourceItems'
+  | 'resourceItemsQueryVariables'
+  | 'resourceItemsLoaded'
+  | 'savedView'
+  | 'isFederatedView'
+  | 'resourceItemsExtended'
 > {
   const globalError = useError()
   const {
@@ -608,9 +652,16 @@ function setupResponseResourceItems(
     () => ({
       projectId: projectId.value,
       resourceUrlString: resourceIdString.value,
-      savedViewId: savedViewId.value,
+      ...(isUndefined(savedViewId.value)
+        ? {
+            // Omit entirely if undefined to allow for implicit/home views
+          }
+        : {
+            // Load specific or load NONE
+            savedViewId: savedViewId.value
+          }),
       savedViewSettings: {
-        loadOriginal: loadOriginal.value
+        loadOriginal: loadOriginal.value || false
       }
     }),
     { keepPreviousResult: true }
@@ -624,12 +675,29 @@ function setupResponseResourceItems(
     initLoadDone.value = true
   })
 
-  onResult(() => {
+  onResult(async (res) => {
     initLoadDone.value = true
+
+    // If saved view resolved, update resourceIdString from response
+    // cause it may have changed
+    const data = res.data?.project?.viewerResourcesExtended
+    if (data?.savedView?.id) {
+      const incomingResourceIdString = resourceBuilder().addResources(
+        data.resourceIdString
+      )
+      const existing = resourceBuilder().addResources(resourceIdString.value)
+      if (!incomingResourceIdString.isEqualTo(existing)) {
+        await resourceIdString.update(incomingResourceIdString.toString())
+      }
+    }
   })
 
+  const resourceItemsExtended = computed(
+    () => resolvedResourcesResult.value?.project?.viewerResourcesExtended
+  )
+
   const resolvedResourceGroups = computed(
-    () => resolvedResourcesResult.value?.project?.viewerResources || []
+    () => resourceItemsExtended.value?.groups || []
   )
 
   /**
@@ -696,28 +764,48 @@ function setupResponseResourceItems(
 
   const resourceItemsLoaded = computed(() => initLoadDone.value)
 
-  // Shows only the one matching the savedViewId. If the query is still loading/stale, it will return undefined
-  const savedView = computed(() =>
-    savedViewId.value &&
-    resolvedResourcesResult.value?.project?.savedViewIfExists?.id === savedViewId.value
-      ? resolvedResourcesResult.value?.project?.savedViewIfExists
-      : undefined
-  )
+  const savedView = computed(() => {
+    const idToLoad = savedViewId.value
+    const idLoaded =
+      resolvedResourcesResult.value?.project?.viewerResourcesExtended.savedView?.id
+    const savedViewFromRes =
+      resolvedResourcesResult.value?.project?.viewerResourcesExtended.savedView ||
+      undefined
+
+    if (idToLoad && idToLoad !== idLoaded) return undefined // stale query
+    if (!idToLoad && !idLoaded) return savedViewFromRes // could be home view
+
+    return savedViewFromRes
+  })
+
+  const isFederatedView = computed(() => resourceItems.value.length > 1)
 
   return {
+    resourceItemsExtended,
     resourceItems,
     resourceItemsQueryVariables: computed(() => resourceItemsQueryVariables.value),
     resourceItemsLoaded,
-    savedView
+    savedView,
+    isFederatedView
   }
 }
 
 function setupResponseResourceData(
   state: InitialStateWithRequest,
   resourceItemsData: ReturnType<typeof setupResponseResourceItems>
-): Omit<
+): Pick<
   InjectableViewerState['resources']['response'],
-  'resourceItems' | 'resourceItemsQueryVariables' | 'resourceItemsLoaded' | 'savedView'
+  | 'objects'
+  | 'commentThreads'
+  | 'commentThreadsMetadata'
+  | 'modelsAndVersionIds'
+  | 'availableModelsAndVersions'
+  | 'project'
+  | 'resourceQueryVariables'
+  | 'threadsQueryVariables'
+  | 'loadMoreVersions'
+  | 'resourcesLoaded'
+  | 'resourcesLoading'
 > {
   const apollo = useApolloClient().client
   const globalError = useError()

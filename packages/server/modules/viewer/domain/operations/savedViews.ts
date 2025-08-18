@@ -151,6 +151,23 @@ export type UpdateSavedViewGroupRecord = <
   update: Update
 }) => Promise<SavedViewGroup | undefined>
 
+export type GetModelHomeSavedViews = (params: {
+  requests: Array<{ modelId: string; projectId: string }>
+}) => Promise<{
+  [modelId: string]: SavedView | undefined
+}>
+
+export type GetModelHomeSavedView = (params: {
+  modelId: string
+  projectId: string
+}) => Promise<SavedView | undefined>
+
+export type SetNewHomeView = (params: {
+  projectId: string
+  modelId: string
+  newHomeViewId: string | null
+}) => Promise<boolean>
+
 /////////////////////
 // SERVICE OPERATIONS:
 /////////////////////

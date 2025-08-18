@@ -50,6 +50,7 @@
   </LayoutDisclosure>
   <ViewerSavedViewsPanelViewsGroupInner
     v-else
+    class="mb-2"
     :group="group"
     :search="search"
     :only-authored="onlyAuthored"
