@@ -18,7 +18,9 @@ import type {
   DeleteSavedViewRecord,
   UpdateSavedViewRecord,
   GetSavedView,
-  GetStoredViewGroupCount
+  GetStoredViewGroupCount,
+  DeleteSavedViewGroupRecord,
+  UpdateSavedViewGroupRecord
 } from '@/modules/viewer/domain/operations/savedViews'
 import {
   SavedViewVisibility,
@@ -31,6 +33,10 @@ import {
   decodeDefaultGroupId,
   formatResourceIdsForGroup
 } from '@/modules/viewer/helpers/savedViews'
+import {
+  isUngroupedGroup,
+  ungroupedScenesGroupTitle
+} from '@speckle/shared/saved-views'
 import { resourceBuilder } from '@speckle/shared/viewer/route'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
@@ -189,9 +195,15 @@ const getProjectSavedViewGroupsBaseQueryFactory =
         })
       }
 
-      // checking search only on views
+      // checking search on views and group names too
       if (search) {
-        query.andWhere(SavedViews.col.name, 'ilike', `%${search}%`)
+        query.andWhere((w1) => {
+          w1.andWhere(SavedViews.col.name, 'ilike', `%${search}%`)
+
+          if (mode === 'group') {
+            w1.orWhere(SavedViewGroups.col.name, 'ilike', `%${search}%`)
+          }
+        })
       }
 
       return query
@@ -202,7 +214,9 @@ const getProjectSavedViewGroupsBaseQueryFactory =
       .select<SavedViewGroup[]>(SavedViewGroups.cols)
 
     if (isFiltering) {
-      q.innerJoin(SavedViews.name, SavedViews.col.groupId, SavedViewGroups.col.id)
+      // left join cause we may want to find groups by name and they may not
+      // have any views in them
+      q.leftJoin(SavedViews.name, SavedViews.col.groupId, SavedViewGroups.col.id)
     }
 
     applyFilters(q, 'group')
@@ -217,7 +231,11 @@ const getProjectSavedViewGroupsBaseQueryFactory =
       tables.savedViews(deps.db),
       'view'
     ).first()
-    const includeDefaultGroup = Boolean(ungroupedViewFound)
+    const ungroupedSearchString = search
+      ? ungroupedScenesGroupTitle.toLowerCase().includes(search)
+      : null
+
+    const includeDefaultGroup = Boolean(ungroupedViewFound) || ungroupedSearchString
 
     return { q, resourceIds, isFiltering, includeDefaultGroup }
   }
@@ -249,7 +267,7 @@ export const getProjectSavedViewGroupsPageItemsFactory =
 
     // Adjust cursor, in case it points to non-existant default group
     let cursor = decode(params.cursor)
-    if (cursor?.id.startsWith('default-')) {
+    if (cursor?.id && isUngroupedGroup(cursor.id)) {
       // Default appears first, so just unset the cursor to get the real first item
       cursor = null
     }
@@ -420,7 +438,7 @@ export const recalculateGroupResourceIdsFactory =
             SELECT ARRAY(
               SELECT DISTINCT unnest
               FROM ${RawSavedViews.name},
-                  unnest(${RawSavedViews.col.resourceIds}) AS unnest
+                  unnest(${RawSavedViews.col.groupResourceIds}) AS unnest
               WHERE ${RawSavedViews.col.groupId} = ${RawSavedViewGroups.col.id}
             )
            )`
@@ -546,4 +564,42 @@ export const updateSavedViewRecordFactory =
       .update(update, '*')
 
     return updatedView || undefined
+  }
+
+export const deleteSavedViewGroupRecordFactory =
+  (deps: { db: Knex }): DeleteSavedViewGroupRecord =>
+  async (params) => {
+    const { groupId, projectId } = params
+    const q = tables.savedViewGroups(deps.db).where({
+      [SavedViewGroups.col.id]: groupId,
+      [SavedViewGroups.col.projectId]: projectId
+    })
+
+    // Delete the saved view group
+    const result = await q.delete()
+
+    // If no rows were deleted, return false
+    if (result === 0) {
+      return false
+    }
+
+    // Otherwise, return true
+    return true
+  }
+
+export const updateSavedViewGroupRecordFactory =
+  (deps: { db: Knex }): UpdateSavedViewGroupRecord =>
+  async (params) => {
+    const { groupId, projectId, update } = params
+
+    // Update the saved view group
+    const [updatedGroup] = await tables
+      .savedViewGroups(deps.db)
+      .where({
+        [SavedViewGroups.col.id]: groupId,
+        [SavedViewGroups.col.projectId]: projectId
+      })
+      .update(update, '*')
+
+    return updatedGroup
   }

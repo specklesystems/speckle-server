@@ -5,6 +5,7 @@
       class="group flex items-center w-full p-1 pr-2 cursor-pointer text-left justify-between"
       :class="[getItemBackgroundClass(), getItemOpacityClass()]"
       @click="handleItemClick($event)"
+      @dblclick="handleItemDoubleClick()"
       @mouseenter="handleItemMouseEnter()"
       @mouseleave="handleItemMouseLeave()"
       @focusin="handleItemMouseEnter()"
@@ -65,7 +66,8 @@ import {
 import {
   useSelectionUtilities,
   useFilterUtilities,
-  useHighlightedObjectsUtilities
+  useHighlightedObjectsUtilities,
+  useCameraUtilities
 } from '~~/lib/viewer/composables/ui'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import type { UnifiedVirtualItem } from '~~/lib/viewer/composables/tree'
@@ -83,6 +85,7 @@ const { objects: selectedObjects } = useSelectionUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
+const { zoom } = useCameraUtilities()
 
 const {
   viewer: {
@@ -144,6 +147,11 @@ const toggleExpansion = () => {
 
 const handleItemClick = (event: MouseEvent | KeyboardEvent) => {
   emit('item-click', props.item, event)
+}
+
+const handleItemDoubleClick = () => {
+  if (!rawSpeckleData.value?.id) return
+  zoom([rawSpeckleData.value.id])
 }
 
 const handleItemMouseEnter = () => {

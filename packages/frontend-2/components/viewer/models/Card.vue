@@ -10,6 +10,7 @@
         @focusin="highlightObject"
         @focusout="unhighlightObject"
         @click="selectObject"
+        @dblclick="zoomToModel"
         @keydown.enter="selectObject"
       >
         <ViewerExpansionTriangle
@@ -36,11 +37,28 @@
           <div v-if="isLatest" class="text-body-3xs text-foreground">
             Latest version
           </div>
-          <div class="text-body-3xs text-foreground-2">
-            {{ createdAtFormatted.relative }}
+          <div v-else class="text-body-3xs text-primary truncate">
+            Viewing old version
+          </div>
+          <div class="flex items-center gap-1 text-body-3xs text-foreground-2 min-w-0">
+            <div
+              v-if="loadedVersion?.sourceApplication"
+              class="shrink-0 flex items-center gap-1"
+            >
+              <span>
+                {{ loadedVersion.sourceApplication }}
+              </span>
+              <span class="shrink-0">·</span>
+            </div>
+            <span class="truncate">
+              {{ createdAtFormatted.relative }}
+            </span>
           </div>
         </div>
-        <div class="flex items-center ml-auto mr-2 w-0 group-hover:w-auto">
+        <div
+          class="flex items-center ml-auto mr-2 w-0 group-hover:w-auto opacity-0 group-hover:opacity-100 transition"
+          :class="showActionsMenu ? '!w-auto !opacity-100' : ''"
+        >
           <LayoutMenu
             v-model:open="showActionsMenu"
             :items="actionsItems"
@@ -48,16 +66,16 @@
             @click.stop.prevent
             @chosen="onActionChosen"
           >
-            <button
-              class="group-hover:opacity-100 hover:bg-highlight-3 rounded-md h-6 w-6 flex items-center justify-center"
+            <FormButton
+              hide-text
               :class="{
-                'opacity-100 bg-highlight-3': showActionsMenu,
-                'sm:opacity-0': !showActionsMenu
+                '!bg-highlight-3': showActionsMenu
               }"
-              @click.stop="showActionsMenu = !showActionsMenu"
-            >
-              <IconThreeDots class="w-4 h-4" />
-            </button>
+              color="subtle"
+              :icon-left="Ellipsis"
+              size="sm"
+              @click="showActionsMenu = !showActionsMenu"
+            />
           </LayoutMenu>
           <ViewerVisibilityButton
             :is-hidden="isHidden"
@@ -82,7 +100,8 @@ import type { Get } from 'type-fest'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import {
   useHighlightedObjectsUtilities,
-  useFilterUtilities
+  useFilterUtilities,
+  useCameraUtilities
 } from '~~/lib/viewer/composables/ui'
 import {
   useInjectedViewerState,
@@ -94,6 +113,7 @@ import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { useLoadLatestVersion } from '~~/lib/viewer/composables/resources'
 import { SpeckleViewer } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { Ellipsis } from 'lucide-vue-next'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
@@ -112,6 +132,7 @@ const props = defineProps<{
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
+const { zoom } = useCameraUtilities()
 const { items } = useInjectedViewerRequestedResources()
 const { resourceItems } = useInjectedViewerLoadedResources()
 const {
@@ -271,18 +292,24 @@ const isolateOrUnisolateObject = (e: Event) => {
 
 const highlightObject = () => {
   const refObject = props.model.loadedVersion.items[0]?.referencedObject
-  if (refObject) highlightObjects([refObject])
+  if (refObject && typeof refObject === 'string') highlightObjects([refObject])
 }
 
 const unhighlightObject = () => {
   const refObject = props.model.loadedVersion.items[0]?.referencedObject
-  if (refObject) unhighlightObjects([refObject])
+  if (refObject && typeof refObject === 'string') unhighlightObjects([refObject])
 }
 
 const selectObject = () => {
   // Only expand if not already expanded
   if (!props.isExpanded) {
     emit('toggle-expansion')
+  }
+}
+
+const zoomToModel = () => {
+  if (modelObjectIds.value.length > 0) {
+    zoom(modelObjectIds.value)
   }
 }
 

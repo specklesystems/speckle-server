@@ -19,6 +19,7 @@
         <FormButton
           v-tippy="'Toggle coloring'"
           color="subtle"
+          size="sm"
           hide-text
           :icon-right="colors ? 'IconColouring' : 'IconColouringOutline'"
           @click="toggleColors()"
@@ -115,64 +116,19 @@ const {
   removePropertyFilter,
   applyPropertyFilter,
   unApplyPropertyFilter,
-  filters: { propertyFilter }
+  filters: { propertyFilter },
+  getRelevantFilters,
+  getPropertyName
 } = useFilterUtilities()
 
 const {
   metadata: { availableFilters: allFilters }
 } = useInjectedViewer()
 
-const revitPropertyRegex = /^parameters\./
-// Note: we've split this regex check in two to not clash with navis properties. This makes generally makes dim very sad, as we're layering hacks.
-// Navis object properties come under `properties`, same as revit ones - as such we can't assume they're the same. Here we're targeting revit's
-// specific two subcategories of `properties`.
-const revitPropertyRegexDui3000InstanceProps = /^properties\.Instance/ // note this is partially valid for civil3d, or dim should test against it
-const revitPropertyRegexDui3000TypeProps = /^properties\.Type/ // note this is partially valid for civil3d, or dim should test against it
-
 const showAllFilters = ref(false)
 
-const isRevitProperty = (key: string): boolean => {
-  return (
-    revitPropertyRegex.test(key) ||
-    revitPropertyRegexDui3000InstanceProps.test(key) ||
-    revitPropertyRegexDui3000TypeProps.test(key)
-  )
-}
-
 const relevantFilters = computed(() => {
-  return (allFilters.value || []).filter((f: PropertyInfo) => {
-    if (
-      f.key.endsWith('.units') ||
-      f.key.endsWith('.speckle_type') ||
-      f.key.includes('.parameters.') ||
-      // f.key.includes('level.') ||
-      f.key.includes('renderMaterial') ||
-      f.key.includes('.domain') ||
-      f.key.includes('plane.') ||
-      f.key.includes('baseLine') ||
-      f.key.includes('referenceLine') ||
-      f.key.includes('end.') ||
-      f.key.includes('start.') ||
-      f.key.includes('endPoint.') ||
-      f.key.includes('midPoint.') ||
-      f.key.includes('startPoint.') ||
-      f.key.includes('startPoint.') ||
-      f.key.includes('.materialName') ||
-      f.key.includes('.materialClass') ||
-      f.key.includes('.materialCategory') ||
-      f.key.includes('displayStyle') ||
-      f.key.includes('displayValue') ||
-      f.key.includes('displayMesh')
-    ) {
-      return false
-    }
-    // handle revit params: the actual one single value we're interested is in paramters.HOST_BLA BLA_.value, the rest are not needed
-    if (isRevitProperty(f.key)) {
-      if (f.key.endsWith('.value')) return true
-      else return false
-    }
-    return true
-  })
+  return getRelevantFilters(allFilters.value)
 })
 
 const speckleTypeFilter = computed(() =>
@@ -256,24 +212,5 @@ const refreshColorsIfSetOrActiveFilterIsNumeric = () => {
 
   // removePropertyFilter()
   applyPropertyFilter()
-}
-
-const getPropertyName = (key: string): string => {
-  if (!key) return 'Loading'
-
-  if (key === 'level.name') return 'Level Name'
-  if (key === 'speckle_type') return 'Object Type'
-
-  if (isRevitProperty(key) && key.endsWith('.value')) {
-    const correspondingProperty = (allFilters.value || []).find(
-      (f: PropertyInfo) => f.key === key.replace('.value', '.name')
-    )
-    if (correspondingProperty && isStringPropertyInfo(correspondingProperty)) {
-      return correspondingProperty.valueGroups[0]?.value || key.split('.').pop() || key
-    }
-  }
-
-  // For all other properties, just return the last part of the path
-  return key.split('.').pop() || key
 }
 </script>

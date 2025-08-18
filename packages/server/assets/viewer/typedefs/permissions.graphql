@@ -9,3 +9,11 @@ type SavedViewPermissionChecks {
 extend type SavedView {
   permissions: SavedViewPermissionChecks!
 }
+
+type SavedViewGroupPermissionChecks {
+  canUpdate: PermissionCheckResult!
+}
+
+extend type SavedViewGroup {
+  permissions: SavedViewGroupPermissionChecks!
+}

@@ -20,7 +20,7 @@
           )
         "
         :active="activePanel === 'models'"
-        :icon="'IconViewerModels'"
+        :icon="Box"
         @click="toggleActivePanel('models')"
       />
       <ViewerControlsButtonToggle
@@ -33,7 +33,8 @@
           )
         "
         :active="activePanel === 'filters'"
-        :icon="'IconViewerExplorer'"
+        :icon="ListFilter"
+        :dot="hasActiveFilters"
         @click="toggleActivePanel('filters')"
       />
       <ViewerControlsButtonToggle
@@ -46,7 +47,7 @@
           )
         "
         :active="activePanel === 'discussions'"
-        :icon="'IconViewerDiscussions'"
+        :icon="MessageSquareText"
         @click="toggleActivePanel('discussions')"
       />
 
@@ -87,7 +88,7 @@
             )
           "
           :active="activePanel === 'devMode'"
-          :icon="'IconViewerDev'"
+          :icon="CodeXml"
           secondary
           @click="toggleActivePanel('devMode')"
         />
@@ -97,14 +98,14 @@
               placement: 'right'
             })
           "
-          :icon="'IconDocs'"
+          :icon="BookOpen"
           secondary
           @click="openDocs"
         />
         <ViewerControlsButtonToggle
           v-if="isIntercomEnabled"
           v-tippy="getTooltipProps('Get help')"
-          :icon="'IconIntercom'"
+          :icon="CircleQuestionMark"
           secondary
           @click="openIntercomChat"
         />
@@ -132,7 +133,7 @@
       :style="`width: ${widthClass};`"
     >
       <KeepAlive v-show="activePanel === 'models'">
-        <ViewerModelsPanel />
+        <ViewerModelsPanel v-model:sub-view="modelsSubView" />
       </KeepAlive>
       <KeepAlive v-show="resourceItems.length !== 0 && activePanel === 'filters'">
         <ViewerFiltersPanel />
@@ -155,7 +156,7 @@
 </template>
 
 <script setup lang="ts">
-import { useViewerShortcuts } from '~~/lib/viewer/composables/ui'
+import { useViewerShortcuts, useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useEventListener, useResizeObserver, useBreakpoints } from '@vueuse/core'
@@ -165,7 +166,16 @@ import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStat
 import { useIntercomEnabled } from '~~/lib/intercom/composables/enabled'
 import { viewerDocsRoute } from '~~/lib/common/helpers/route'
 import { useAreSavedViewsEnabled } from '~/lib/viewer/composables/savedViews/general'
-import { Camera } from 'lucide-vue-next'
+import {
+  Camera,
+  CodeXml,
+  BookOpen,
+  Box,
+  ListFilter,
+  MessageSquareText,
+  CircleQuestionMark
+} from 'lucide-vue-next'
+import { ModelsSubView } from '~~/lib/viewer/helpers/sceneExplorer'
 
 type ActivePanel =
   | 'none'
@@ -233,8 +243,10 @@ const isTablet = breakpoints.smaller('lg')
 const { getTooltipProps } = useSmartTooltipDelay()
 const isSavedViewsEnabled = useAreSavedViewsEnabled()
 const { $intercom } = useNuxtApp()
+const { hasActiveFilters, filters } = useFilterUtilities()
 
 const activePanel = ref<ActivePanel>('none')
+const modelsSubView = ref<ModelsSubView>(ModelsSubView.Main)
 
 const hasActivePanel = computed(() => activePanel.value !== 'none')
 
@@ -275,7 +287,28 @@ registerShortcuts({
 
 const toggleActivePanel = (panel: ActivePanel) => {
   const wasNone = activePanel.value === 'none'
-  activePanel.value = activePanel.value === panel ? 'none' : panel
+
+  if (panel === 'models') {
+    if (activePanel.value === 'models') {
+      if (
+        modelsSubView.value === ModelsSubView.Versions ||
+        modelsSubView.value === ModelsSubView.Diff
+      ) {
+        // Go back to main models view instead of closing
+        modelsSubView.value = ModelsSubView.Main
+        return
+      } else {
+        activePanel.value = 'none'
+      }
+    } else {
+      // Open models panel and reset to main view
+      activePanel.value = 'models'
+      modelsSubView.value = ModelsSubView.Main
+    }
+  } else {
+    activePanel.value = activePanel.value === panel ? 'none' : panel
+    modelsSubView.value = ModelsSubView.Main
+  }
 
   // If a panel is being opened (not closed) on mobile, emit event to parent
   if (wasNone && activePanel.value !== 'none' && isMobile.value) {
@@ -305,6 +338,17 @@ onMounted(() => {
 watch(isSmallerOrEqualSm, (newVal) => {
   activePanel.value = newVal ? 'none' : 'models'
 })
+
+// Auto-open filters panel when a new filter is applied from elsewhere
+watch(
+  () => filters.propertyFilter.isApplied.value && filters.propertyFilter.filter.value,
+  (newFilterApplied, oldFilterApplied) => {
+    // Only trigger if we're going from no filter to having a filter (not when changing filters or removing)
+    if (newFilterApplied && !oldFilterApplied) {
+      activePanel.value = 'filters'
+    }
+  }
+)
 
 defineExpose({
   forceClosePanel,

@@ -42,6 +42,7 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
     case Authz.WorkspacePlanNoFeatureAccessError.code:
     case Authz.EligibleForExclusiveWorkspaceError.code:
     case Authz.AutomateFunctionNotCreatorError.code:
+    case Authz.SavedViewNoAccessError.code:
       return new ForbiddenError(e.message)
     case Authz.WorkspaceSsoSessionNoAccessError.code:
       throw new SsoSessionMissingOrExpiredError(e.message, {
@@ -67,8 +68,10 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
     case Authz.VersionNotFoundError.code:
     case Authz.AutomateFunctionNotFoundError.code:
     case Authz.SavedViewNotFoundError.code:
+    case Authz.SavedViewGroupNotFoundError.code:
       return new NotFoundError(e.message)
     case Authz.PersonalProjectsLimitedError.code:
+    case Authz.UngroupedSavedViewGroupLockError.code:
       return new BadRequestError(e.message)
     default:
       throwUncoveredError(e)

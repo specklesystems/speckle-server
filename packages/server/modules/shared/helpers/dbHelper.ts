@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Knex } from 'knex'
 import { postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
-import { EnvironmentResourceError } from '@/modules/shared/errors'
+import {
+  EnvironmentResourceError,
+  LogicError,
+  RegionalTransactionFatalError,
+  RegionalTransactionError
+} from '@/modules/shared/errors'
 import type { MaybeAsync } from '@speckle/shared'
 import { isNonNullable } from '@speckle/shared'
 import { base64Decode, base64Encode } from '@/modules/shared/helpers/cryptoHelper'
@@ -10,6 +15,10 @@ import dayjs from 'dayjs'
 import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import type { SchemaConfig } from '@/modules/core/dbSchema'
 import { has, isObjectLike, isString, mapValues, pick, times } from 'lodash-es'
+import cryptoRandomString from 'crypto-random-string'
+import { logger } from '@/observability/logging'
+import { isEqual } from 'lodash-es'
+import { PromiseAllSettledResultStatus } from '@/modules/shared/domain/constants'
 
 export type Collection<T> = {
   cursor: string | null
@@ -300,5 +309,130 @@ export const compositeCursorTools = <
     decode,
     applyCursorSortAndFilter,
     resolveNewCursor
+  }
+}
+
+export const prepareTransaction = async (db: Knex): Promise<string> => {
+  if (!db.isTransaction) {
+    throw new LogicError('Cannot PREPARE postgres operation outside of a transaction')
+  }
+
+  const preparedId = cryptoRandomString({ length: 10 })
+
+  await db.raw(`PREPARE TRANSACTION '${preparedId}';`)
+
+  return preparedId
+}
+
+export const commitPreparedTransaction = async (
+  db: Knex,
+  gid: string
+): Promise<void> => {
+  await db.raw(`COMMIT PREPARED '${gid}';`)
+}
+
+export const rollbackPreparedTransaction = async (
+  db: Knex,
+  gid: string
+): Promise<void> => {
+  await db.raw(`ROLLBACK PREPARED '${gid}';`)
+}
+
+export const replicateQuery = <T, U>(
+  dbs: Knex[],
+  factory: ({ db }: { db: Knex }) => (params: T) => Promise<U>
+) => {
+  return async (params: T) => {
+    const preparedTransactions: {
+      knex: Knex
+      preparedId: string
+    }[] = []
+
+    const returnValues: U[] = []
+
+    try {
+      // Phase 1: Prepare transaction across all specified db instances
+      for (const db of dbs) {
+        const trx = await db.transaction()
+        const returnValue = await factory({ db: trx })(params)
+        returnValues.push(returnValue)
+        const preparedId = await prepareTransaction(trx)
+        preparedTransactions.push({ knex: db, preparedId })
+      }
+
+      // Phase 2: Attempt commit of all prepared transactions
+      const results = await Promise.allSettled(
+        preparedTransactions.map(({ knex, preparedId }) => {
+          return commitPreparedTransaction(knex, preparedId)
+        })
+      )
+
+      const errors = results.filter((result): result is PromiseRejectedResult => {
+        return result.status === PromiseAllSettledResultStatus.rejected
+      })
+
+      if (errors.length > 0) {
+        logger.error(
+          {
+            params,
+            errors,
+            errorCount: errors.length,
+            resultCount: results.length
+          },
+          `Failed {errorCount} of {resultCount} transactions in 2PC operation.`
+        )
+        throw new RegionalTransactionError(
+          'Failed some or all transactions in 2PC operation.',
+          preparedTransactions
+        )
+      }
+
+      // TODO: Do we need this validation?
+      if (!returnValues.every((value) => isEqual(value, returnValues[0]))) {
+        throw new RegionalTransactionError(
+          'Return values of 2PC transactions do not match',
+          preparedTransactions
+        )
+      }
+
+      return returnValues[0]
+    } catch {
+      const rollbacks = preparedTransactions.map(async ({ knex, preparedId }) => {
+        try {
+          await rollbackPreparedTransaction(knex, preparedId)
+        } catch (err) {
+          logger.error(
+            { preparedId },
+            'Failed to rollback prepared transaction {preparedId}'
+          )
+          throw err
+        }
+      })
+
+      logger.warn(
+        {
+          preparedTransactions: preparedTransactions.map(({ preparedId }) => preparedId)
+        },
+        'Error during 2PC operation. Rolling back all transactions.'
+      )
+
+      const results = await Promise.allSettled(rollbacks)
+
+      if (
+        results.some(
+          (result) => result.status === PromiseAllSettledResultStatus.rejected
+        )
+      ) {
+        throw new RegionalTransactionFatalError(
+          'Failed to rollback all transactions.',
+          preparedTransactions
+        )
+      }
+
+      throw new RegionalTransactionError(
+        'Failed to complete 2PC operation but successfully recovered.',
+        preparedTransactions
+      )
+    }
   }
 }

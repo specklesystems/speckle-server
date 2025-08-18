@@ -106,7 +106,7 @@ input SavedViewGroupsInput {
   """
   onlyAuthored: Boolean
   """
-  Whether to only include groups that have views matching this search term
+  Whether to only include groups that have names or views matching this search term
   """
   search: String
   limit: Int
@@ -118,17 +118,6 @@ input GetUngroupedViewGroupInput {
   Viewer resource ID string that identifies which resources should be loaded
   """
   resourceIdString: String!
-}
-
-extend type Project {
-  savedViewGroups(input: SavedViewGroupsInput!): SavedViewGroupCollection!
-  savedViewGroup(id: ID!): SavedViewGroup!
-  ungroupedViewGroup(input: GetUngroupedViewGroupInput!): SavedViewGroup!
-  savedView(id: ID!): SavedView!
-  """
-  Same as savedView(), but won't throw if view isn't found
-  """
-  savedViewIfExists(id: ID): SavedView
 }
 
 input CreateSavedViewInput {
@@ -172,6 +161,11 @@ input CreateSavedViewGroupInput {
   groupName: String
 }
 
+input DeleteSavedViewGroupInput {
+  projectId: ID!
+  groupId: ID!
+}
+
 input DeleteSavedViewInput {
   id: ID!
   projectId: ID!
@@ -213,8 +207,16 @@ input UpdateSavedViewInput {
   visibility: SavedViewVisibility
 }
 
+input UpdateSavedViewGroupInput {
+  projectId: ID!
+  groupId: ID!
+  name: String
+}
+
 type SavedViewMutations {
   createGroup(input: CreateSavedViewGroupInput!): SavedViewGroup!
+  deleteGroup(input: DeleteSavedViewGroupInput!): Boolean!
+  updateGroup(input: UpdateSavedViewGroupInput!): SavedViewGroup!
   createView(input: CreateSavedViewInput!): SavedView!
   deleteView(input: DeleteSavedViewInput!): Boolean!
   updateView(input: UpdateSavedViewInput!): SavedView!
@@ -222,4 +224,15 @@ type SavedViewMutations {
 
 extend type ProjectMutations {
   savedViewMutations: SavedViewMutations!
+}
+
+extend type Project {
+  savedViewGroups(input: SavedViewGroupsInput!): SavedViewGroupCollection!
+  savedViewGroup(id: ID!): SavedViewGroup!
+  ungroupedViewGroup(input: GetUngroupedViewGroupInput!): SavedViewGroup!
+  savedView(id: ID!): SavedView!
+  """
+  Same as savedView(), but won't throw if view isn't found
+  """
+  savedViewIfExists(id: ID): SavedView
 }

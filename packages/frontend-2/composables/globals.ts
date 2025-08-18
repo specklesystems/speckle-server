@@ -1,6 +1,7 @@
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import { usePageQueryStandardFetchPolicy } from '~/lib/common/composables/graphql'
 import { useGlobalToast } from '~/lib/common/composables/toast'
+import { useEventBus } from '~/lib/core/composables/eventBus'
 
 export const useIsAccModuleEnabled = () => {
   const {
@@ -83,4 +84,4 @@ export const useIsRhinoFileImporterEnabled = () => {
   return ref(FF_RHINO_FILE_IMPORTER_ENABLED)
 }
 
-export { useGlobalToast, useActiveUser, usePageQueryStandardFetchPolicy }
+export { useGlobalToast, useActiveUser, usePageQueryStandardFetchPolicy, useEventBus }

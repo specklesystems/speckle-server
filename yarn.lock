@@ -135,18 +135,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apollo/rover@npm:^0.23.0":
-  version: 0.23.0
-  resolution: "@apollo/rover@npm:0.23.0"
+"@apollo/rover@npm:^0.35.0":
+  version: 0.35.0
+  resolution: "@apollo/rover@npm:0.35.0"
   dependencies:
     axios: "npm:^1.6.5"
     axios-proxy-builder: "npm:^0.1.1"
     console.table: "npm:^0.10.0"
     detect-libc: "npm:^2.0.0"
-    tar: "npm:^6.2.0"
+    tar: "npm:^7.0.0"
   bin:
     rover: run.js
-  checksum: 10/945f723c0a076503daf6622225653db761c3a0e2e80ee11f58b5f8cdc1cfe92eeaa732a5488881967b9123c49a92589800d3586ef61355767de16012be0af34a
+  checksum: 10/d3f87f65e2fe9f57360315a5f8cb57c00fd9eb7a3c6154d9aea2644cc023c882c60caa92a189db9008695223927e76d6941d760ca740619dae3bf811ee446616
   languageName: node
   linkType: hard
 
@@ -16278,7 +16278,7 @@ __metadata:
   resolution: "@speckle/server@workspace:packages/server"
   dependencies:
     "@apollo/client": "npm:^3.7.0"
-    "@apollo/rover": "npm:^0.23.0"
+    "@apollo/rover": "npm:^0.35.0"
     "@apollo/server": "npm:^4.11.0"
     "@aws-sdk/client-s3": "npm:^3.276.0"
     "@aws-sdk/lib-storage": "npm:^3.100.0"
@@ -47036,7 +47036,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tar@npm:^7.4.0":
+"tar@npm:^7.0.0, tar@npm:^7.4.0":
   version: 7.4.3
   resolution: "tar@npm:7.4.3"
   dependencies:

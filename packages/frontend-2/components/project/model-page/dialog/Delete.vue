@@ -14,7 +14,12 @@
     @fully-closed="$emit('fully-closed')"
   >
     <template #header>
-      Delete {{ `${versions.length} version${versions.length > 1 ? 's' : ''}` }}
+      Delete
+      {{
+        `${versions.length > 1 ? versions.length : ''} version${
+          versions.length > 1 ? 's' : ''
+        }`
+      }}
     </template>
     <div class="flex flex-col text-foreground">
       <p>

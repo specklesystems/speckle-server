@@ -159,11 +159,10 @@ function createTreeStateManager() {
           stateResourceItems,
           modelsAndVersionIds
         )
-        const childNodes = flatten(modelRootNodes.map((node) => node.children || []))
 
-        if (childNodes.length > 0) {
+        if (modelRootNodes.length > 0) {
           const treeItems = flattenModelTree(
-            childNodes,
+            modelRootNodes,
             model.id,
             expandedNodes,
             selectedObjects

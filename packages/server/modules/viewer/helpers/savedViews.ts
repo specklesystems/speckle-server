@@ -1,5 +1,6 @@
 import { base64Decode, base64Encode } from '@/modules/shared/helpers/cryptoHelper'
 import type { Nullable } from '@speckle/shared'
+import { isUngroupedGroup } from '@speckle/shared/saved-views'
 import type { ViewerResourcesTarget } from '@speckle/shared/viewer/route'
 import {
   isModelResource,
@@ -29,7 +30,7 @@ export const buildDefaultGroupId = (params: {
 
 export const decodeDefaultGroupId = (id: string): Nullable<DefaultGroupMetadata> => {
   try {
-    if (!id.startsWith('default-')) return null
+    if (!isUngroupedGroup(id)) return null
     const json = base64Decode(id.replace('default-', ''))
     const obj = JSON.parse(json)
     if (

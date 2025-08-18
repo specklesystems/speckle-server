@@ -138,6 +138,19 @@ export type UpdateSavedViewRecord = <
   update: Update
 }) => Promise<SavedView | undefined>
 
+export type DeleteSavedViewGroupRecord = (params: {
+  groupId: string
+  projectId: string
+}) => Promise<boolean>
+
+export type UpdateSavedViewGroupRecord = <
+  Update extends Exact<Partial<SavedViewGroup>, Update>
+>(params: {
+  groupId: string
+  projectId: string
+  update: Update
+}) => Promise<SavedViewGroup | undefined>
+
 /////////////////////
 // SERVICE OPERATIONS:
 /////////////////////
@@ -210,3 +223,20 @@ export type UpdateSavedView = (params: {
   input: UpdateSavedViewParams
   userId: string
 }) => Promise<SavedView>
+
+export type DeleteSavedViewGroup = (params: {
+  input: {
+    groupId: string
+    projectId: string
+  }
+  userId: string
+}) => Promise<boolean>
+
+export type UpdateSavedViewGroup = (params: {
+  input: {
+    groupId: string
+    projectId: string
+    name?: MaybeNullOrUndefined<string>
+  }
+  userId: string
+}) => Promise<SavedViewGroup>

@@ -25,15 +25,14 @@
         />
         <div class="flex justify-between items-center p-1">
           <FormButton
-            :icon-left="PaperClipIcon"
+            :icon-left="Paperclip"
             :disabled="loading"
             color="subtle"
             hide-text
-            class="!bg-foundation dark:!bg-foundation-2"
             @click="trackAttachAndOpenFilePicker()"
           />
           <FormButton
-            :icon-left="PaperAirplaneIcon"
+            :icon-left="SendHorizonal"
             hide-text
             :disabled="loading"
             @click="onSubmit"
@@ -44,7 +43,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { PaperAirplaneIcon, PaperClipIcon } from '@heroicons/vue/24/solid'
 import type { Nullable } from '@speckle/shared'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -60,6 +58,7 @@ import { useServerFileUploadLimit } from '~~/lib/common/composables/serverInfo'
 import { UniqueFileTypeSpecifier } from '~~/lib/core/helpers/file'
 import { acceptedFileExtensions } from '@speckle/shared/blobs'
 import type { UploadableFileItem } from '@speckle/ui-components'
+import { Paperclip, SendHorizonal } from 'lucide-vue-next'
 
 const props = defineProps<{
   modelValue: CommentBubbleModel

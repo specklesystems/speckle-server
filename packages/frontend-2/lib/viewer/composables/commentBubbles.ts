@@ -48,6 +48,7 @@ export type ViewerNewThreadBubbleModel = {
   isOccluded: boolean
   style: Partial<CSSProperties>
   clickLocation: Nullable<Vector3>
+  selectedObjectId: Nullable<string>
 }
 
 export function useViewerNewThreadBubble(params: {
@@ -61,7 +62,8 @@ export function useViewerNewThreadBubble(params: {
       openThread: { newThreadEditor }
     },
     camera: { target },
-    selection
+    selection,
+    filters: { selectedObjectIds }
   } = useInjectedViewerInterfaceState()
   const getCamCenterObjId = useGetScreenCenterObjectId()
   const { setSelectionFromObjectIds } = useSelectionUtilities()
@@ -72,6 +74,7 @@ export function useViewerNewThreadBubble(params: {
     isVisible: false,
     isOccluded: false,
     clickLocation: null,
+    selectedObjectId: null,
     style: {}
   } as ViewerNewThreadBubbleModel)
 
@@ -93,6 +96,7 @@ export function useViewerNewThreadBubble(params: {
     buttonState.value.isExpanded = false
     buttonState.value.isVisible = false
     buttonState.value.clickLocation = null
+    buttonState.value.selectedObjectId = null
   }
 
   useSelectionEvents({
@@ -106,6 +110,7 @@ export function useViewerNewThreadBubble(params: {
       }
 
       buttonState.value.clickLocation = firstVisibleSelectionHit.point.clone()
+      buttonState.value.selectedObjectId = firstVisibleSelectionHit.node.model.id
       buttonState.value.isVisible = true
       updatePositions()
     }
@@ -152,6 +157,21 @@ export function useViewerNewThreadBubble(params: {
       const oid = getCamCenterObjId()
       if (!oid) return
       setSelectionFromObjectIds([oid])
+    }
+  })
+
+  // Clear button when its selected object is no longer in the current selection
+  watch(selectedObjectIds, () => {
+    if (!buttonState.value.isVisible || !buttonState.value.selectedObjectId) {
+      return
+    }
+
+    // Check if the button's object is still selected
+    const isStillSelected = selectedObjectIds.value.has(
+      buttonState.value.selectedObjectId
+    )
+    if (!isStillSelected) {
+      closeNewThread()
     }
   })
 
@@ -278,9 +298,37 @@ export function useViewerThreadTracking() {
     if (newThread?.id !== oldThread?.id) {
       const newState = newThread?.viewerState
       if (newState && SpeckleViewer.ViewerState.isSerializedViewerState(newState)) {
+        // Save current state before applying thread state (only if no previous thread)
+        if (!oldThread) {
+          const currentState = serializeState()
+          oldState.value = {
+            ...currentState,
+            ui: {
+              ...currentState.ui,
+              threads: {
+                ...currentState.ui.threads,
+                openThread: {
+                  threadId: null,
+                  isTyping: false,
+                  newThreadEditor: false
+                }
+              }
+            }
+          }
+        }
         await refocus(newState)
-      } else {
-        resetState()
+      } else if (oldThread) {
+        // Closing a thread - restore old state if available
+        if (
+          oldState.value &&
+          SpeckleViewer.ViewerState.isSerializedViewerState(oldState.value)
+        ) {
+          await applyState(oldState.value, StateApplyMode.SavedView, {
+            loadOriginal: false
+          })
+        } else {
+          resetState()
+        }
       }
     }
   })

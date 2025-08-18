@@ -13,38 +13,24 @@
     >
       <template #title>
         <div class="flex items-center gap-x-2">
-          <p>Selected</p>
-          <CommonBadge v-if="objects.length" rounded>
+          <span>Selected</span>
+          <CommonBadge v-if="objects.length > 1" rounded>
             {{ objects.length }}
           </CommonBadge>
         </div>
       </template>
       <template #actions>
         <div class="flex gap-x-0.5 items-center">
-          <div
-            v-tippy="getTooltipProps(isHidden ? 'Show' : 'Hide', { placement: 'top' })"
-          >
-            <FormButton
-              color="subtle"
-              :icon-left="isHidden ? iconEyeClosed : iconEye"
-              hide-text
-              @click.stop="hideOrShowSelection"
-            />
-          </div>
-          <div
-            v-tippy="
-              getTooltipProps(isIsolated ? 'Unisolate' : 'Isolate', {
-                placement: 'top'
-              })
-            "
-          >
-            <FormButton
-              color="subtle"
-              :icon-left="isIsolated ? iconViewerUnisolate : iconViewerIsolate"
-              hide-text
-              @click.stop="isolateOrUnisolateSelection"
-            />
-          </div>
+          <ViewerVisibilityButton
+            :is-hidden="isHidden"
+            :force-visible="showSubMenu"
+            @click="hideOrShowSelection"
+          />
+          <ViewerIsolateButton
+            :is-isolated="isIsolated"
+            :force-visible="showSubMenu"
+            @click="isolateOrUnisolateSelection"
+          />
           <LayoutMenu
             v-model:open="showSubMenu"
             :menu-id="menuId"
@@ -56,7 +42,11 @@
             <FormButton
               hide-text
               color="subtle"
-              :icon-left="settingsIcon"
+              size="sm"
+              :icon-left="Ellipsis"
+              :class="{
+                '!bg-highlight-3': showSubMenu
+              }"
               @click="showSubMenu = !showSubMenu"
             />
           </LayoutMenu>
@@ -97,8 +87,8 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 import { modelRoute } from '~/lib/common/helpers/route'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import type { ConcreteComponent } from 'vue'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+import { Ellipsis } from 'lucide-vue-next'
 
 enum ActionTypes {
   OpenInNewTab = 'open-in-new-tab'
@@ -121,17 +111,11 @@ const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isGreaterThanSm = breakpoints.greater('sm')
 const menuId = useId()
 const mp = useMixpanel()
-const { getTooltipProps } = useSmartTooltipDelay()
 
 const itemCount = ref(20)
 const sidebarOpen = ref(false)
 const sidebarWidth = ref(280)
 const showSubMenu = ref(false)
-const iconViewerUnisolate = resolveComponent('IconViewerUnisolate') as ConcreteComponent
-const iconViewerIsolate = resolveComponent('IconViewerIsolate') as ConcreteComponent
-const iconEyeClosed = resolveComponent('IconEyeClosed') as ConcreteComponent
-const iconEye = resolveComponent('IconEye') as ConcreteComponent
-const settingsIcon = resolveComponent('IconThreeDots') as ConcreteComponent
 
 const objectsUniqueByAppId = computed(() => {
   if (!diff.enabled.value) return objects.value

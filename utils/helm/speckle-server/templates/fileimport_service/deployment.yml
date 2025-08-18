@@ -37,9 +37,42 @@ spec:
             containerPort: 9093
             protocol: TCP
 
+        startupProbe:
+          periodSeconds: 10
+          failureThreshold: 18 # 10 * 18 = 180s to startup
+          timeoutSeconds: 3
+          {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
+          httpGet:
+            path: /healthz
+            port: 9080
+          {{- else }}
+          exec:
+            command:
+              - /usr/bin/node
+              - -e
+              - "process.exit((Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 25 * 60 * 1000) ? 1 : 0)"
+          {{- end }}
+
         livenessProbe:
           initialDelaySeconds: 60
           periodSeconds: 60
+          timeoutSeconds: 3
+          {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
+          httpGet:
+            path: /healthz
+            port: 9080
+          {{- else }}
+          exec:
+            command:
+              - /usr/bin/node
+              - -e
+              - "process.exit((Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 25 * 60 * 1000) ? 1 : 0)"
+          {{- end }}
+
+        readinessProbe:
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
           {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
           httpGet:
             path: /healthz

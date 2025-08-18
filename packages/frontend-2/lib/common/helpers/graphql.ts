@@ -666,8 +666,10 @@ export const modifyObjectField = <
      * Whether to auto evict values that have variables with common filters in them (e.g. a 'filter' or
      * 'search' prop). Often its better to evict filtered values, because we can't tell if the newly
      * added item should be included in the filtered list or not.
+     *
+     * If string array passed in, these extra filter keys will be checked to see if we need to evict
      */
-    autoEvictFiltered: boolean
+    autoEvictFiltered: boolean | string[]
   }>
 ) => {
   const { autoEvictFiltered } = options || {}
@@ -692,7 +694,14 @@ export const modifyObjectField = <
           return false
         }
 
-        const commonFilters = ['query', 'filter', 'search', 'filter.search']
+        const commonFilters = [
+          'query',
+          'filter',
+          'search',
+          'filter.search',
+          'filter.onlyAuthored',
+          ...(isArray(autoEvictFiltered) ? autoEvictFiltered : [])
+        ]
         const hasFilter = commonFilters.some(checkFilter)
 
         if (hasFilter) {

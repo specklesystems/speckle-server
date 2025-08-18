@@ -10,7 +10,7 @@
       <!-- Resize Handle -->
       <div
         ref="resizeHandle"
-        class="absolute h-full max-h-[calc(100dvh-3rem)] w-4 transition border-l sm:rounded-lg lg:rounded-none hover:border-l-[2px] border-outline-2 hover:border-primary hidden sm:flex items-center cursor-ew-resize z-30"
+        class="absolute h-full max-h-[calc(100dvh-3rem)] w-4 transition border-l sm:rounded-lg lg:rounded-none hover:border-l-[2px] border-outline-2 hover:border-primary hidden lg:flex items-center cursor-ew-resize z-30"
         @mousedown="startResizing"
       />
 

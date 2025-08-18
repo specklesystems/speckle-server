@@ -6,3 +6,6 @@ import type {
 export type SavedViewGraphQLReturn = SavedView
 export type SavedViewGroupGraphQLReturn = SavedViewGroup
 export type SavedViewPermissionChecksGraphQLReturn = { savedView: SavedView }
+export type SavedViewGroupPermissionChecksGraphQLReturn = {
+  savedViewGroup: SavedViewGroup
+}

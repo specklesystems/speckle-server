@@ -5,10 +5,18 @@ import { computed, onMounted, ref, unref, watch } from 'vue'
 import type { Ref, ToRefs } from 'vue'
 import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { nanoid } from 'nanoid'
-import { debounce, isArray, isBoolean, isString, isUndefined, noop } from '#lodash'
+import {
+  debounce,
+  includes,
+  isArray,
+  isBoolean,
+  isString,
+  isUndefined,
+  noop
+} from '#lodash'
 import type { LabelPosition } from './input'
 
-export type InputColor = 'page' | 'foundation' | 'transparent'
+export type InputColor = 'page' | 'foundation' | 'transparent' | 'fully-transparent'
 
 /**
  * Common setup for text input & textarea fields
@@ -77,23 +85,31 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
   })
 
   const coreClasses = computed(() => {
-    const classParts = [
-      'block w-full text-foreground transition-all',
-      coreInputClasses.value
-    ]
+    const color = unref(props.color)
+    const classParts = ['block w-full text-foreground', coreInputClasses.value]
+
+    if (color !== 'fully-transparent') {
+      classParts.push('py-2 px-3')
+    } else {
+      classParts.push('p-0')
+    }
 
     if (hasError.value) {
       classParts.push('!border-danger')
     } else {
-      classParts.push('border-0 focus:ring-2 focus:ring-outline-2')
+      classParts.push('border-0')
+      if (color !== 'fully-transparent') {
+        classParts.push('transition-all focus:ring-2 focus:ring-outline-2')
+      } else {
+        classParts.push('focus:ring-0')
+      }
     }
 
-    const color = unref(props.color)
     if (color === 'foundation') {
       classParts.push(
         'bg-foundation !border border-outline-2 hover:border-outline-5 focus-visible:border-outline-4 !ring-0 focus-visible:!outline-0'
       )
-    } else if (color === 'transparent') {
+    } else if (includes(['transparent', 'fully-transparent'], color)) {
       classParts.push('bg-transparent')
     } else {
       classParts.push('bg-foundation-page')
@@ -127,6 +143,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
   const helpTipId = computed(() =>
     hasHelpTip.value ? `${unref(props.name)}-${internalHelpTipId.value}` : undefined
   )
+
   const helpTipClasses = computed((): string => {
     const classParts = ['text-body-2xs break-words']
     classParts.push(hasError.value ? 'text-danger' : 'text-foreground-2')
@@ -135,6 +152,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     }
     return classParts.join(' ')
   })
+
   const shouldShowClear = computed(() => {
     if (!unref(props.showClear)) return false
     return (value.value?.length || 0) > 0
@@ -193,6 +211,13 @@ export function useDebouncedTextInput(params?: {
   debouncedBy?: number
 
   /**
+   * If enabled, value will only change on submit/enter, and just typing in values will never
+   * register.
+   * Default: false
+   */
+  disableDebouncedInput?: boolean
+
+  /**
    * Optionally pass in the model ref that should be used as the source of truth
    */
   model?: Ref<MaybeNullOrUndefined<string>>
@@ -217,15 +242,29 @@ export function useDebouncedTextInput(params?: {
    * Set to true if you want to see debug output for how events fire and are handled
    */
   debug?: boolean | ((...logArgs: unknown[]) => void)
+
+  /**
+   * Callback function that gets called when a new value is actually written to the model
+   */
+  onWrite?: (val: string) => void
 }) {
-  const { debouncedBy = 1000, isBasicHtmlInput = false, submitOnEnter } = params || {}
+  const {
+    debouncedBy = 1000,
+    isBasicHtmlInput = false,
+    submitOnEnter,
+    disableDebouncedInput,
+    onWrite
+  } = params || {}
   const log = params?.debug
     ? isBoolean(params.debug)
       ? console.debug
       : params.debug
     : noop
 
+  // The actual source of truth holding the final value
   const value = params?.model || ref('')
+
+  // The internal model of the input
   const model = ref(value.value)
 
   const getValue = (val: string | InputEvent | Event | FormInputChangeEvent) => {
@@ -236,29 +275,39 @@ export function useDebouncedTextInput(params?: {
     return target?.value || ''
   }
 
-  const debouncedValueUpdate = debounce((val: string) => {
+  /**
+   * Persist changes to the core underlying source of truth that's available outwards
+   */
+  const persistValue = (val: string) => {
     value.value = val
     log('Value updated: ' + val)
-  }, debouncedBy)
+    onWrite?.(val)
+  }
+
+  const debouncedValueUpdate = disableDebouncedInput
+    ? undefined
+    : debounce((val: string) => {
+        persistValue(val)
+      }, debouncedBy)
 
   const inputEventName = isBasicHtmlInput ? 'input' : 'update:modelValue'
   const on = {
     [inputEventName]: (val: string | InputEvent) => {
       const newVal = getValue(val)
       model.value = newVal
-      debouncedValueUpdate(newVal)
+      debouncedValueUpdate?.(newVal)
       log(`Input event [${inputEventName}] triggered: ${newVal}`)
     },
     clear: () => {
-      debouncedValueUpdate.cancel()
+      debouncedValueUpdate?.cancel()
       model.value = ''
-      value.value = ''
+      persistValue('')
       log('Clear event')
     },
     change: (val: FormInputChangeEvent | Event) => {
       const newVal = getValue(val)
-      debouncedValueUpdate.cancel()
-      value.value = newVal
+      debouncedValueUpdate?.cancel()
+      persistValue(newVal)
       model.value = newVal
       log('Change event: ' + newVal)
     },
@@ -297,9 +346,18 @@ export function useDebouncedTextInput(params?: {
     model.value = value.value
   })
 
+  const syncFromValue = () => {
+    debouncedValueUpdate?.cancel()
+    model.value = value.value
+  }
+
   return {
     on,
     bind,
-    value
+    value,
+    /**
+     * Force sync internal state from the source of truth
+     */
+    syncFromValue
   }
 }

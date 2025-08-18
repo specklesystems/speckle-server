@@ -49,7 +49,7 @@
               name="editView"
               class="shrink-0 opacity-0 group-hover:opacity-100"
               :disabled="!canUpdate?.authorized || isLoading"
-              @click="showEditDialog = !showEditDialog"
+              @click="onEdit"
             />
           </div>
         </div>
@@ -63,7 +63,6 @@
         </div>
       </div>
     </div>
-    <ViewerSavedViewsPanelViewEditDialog v-model:open="showEditDialog" :view="view" />
   </div>
 </template>
 <script setup lang="ts">
@@ -79,7 +78,6 @@ import {
 import { useViewerSavedViewsUtils } from '~/lib/viewer/composables/savedViews/general'
 import {
   useCollectNewSavedViewViewerData,
-  useDeleteSavedView,
   useUpdateSavedView
 } from '~/lib/viewer/composables/savedViews/management'
 
@@ -88,7 +86,8 @@ const MenuItems = StringEnum([
   'LoadOriginalVersions',
   'CopyLink',
   'ChangeVisibility',
-  'ReplaceView'
+  'ReplaceView',
+  'MoveToGroup'
 ])
 type MenuItems = StringEnumValues<typeof MenuItems>
 
@@ -120,12 +119,11 @@ const props = defineProps<{
 }>()
 
 const { collect } = useCollectNewSavedViewViewerData()
-const deleteView = useDeleteSavedView()
 const updateView = useUpdateSavedView()
 const isLoading = useMutationLoading()
 const { copyLink, applyView } = useViewerSavedViewsUtils()
+const eventBus = useEventBus()
 
-const showEditDialog = ref(false)
 const showMenu = ref(false)
 const menuId = useId()
 
@@ -141,7 +139,15 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
     },
     {
       id: MenuItems.ReplaceView,
-      title: 'Update view'
+      title: 'Update view',
+      disabled: !canUpdate.value?.authorized || isLoading.value,
+      disabledTooltip: canUpdate.value.errorMessage
+    },
+    {
+      id: MenuItems.MoveToGroup,
+      title: 'Move to group',
+      disabled: !canUpdate.value?.authorized || isLoading.value,
+      disabledTooltip: canUpdate.value.errorMessage
     },
     {
       id: MenuItems.CopyLink,
@@ -152,7 +158,9 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
     {
       id: MenuItems.ChangeVisibility,
       title: 'Only visible to me',
-      active: !!isOnlyVisibleToMe.value
+      active: !!isOnlyVisibleToMe.value,
+      disabled: !canUpdate.value?.authorized || isLoading.value,
+      disabledTooltip: canUpdate.value.errorMessage
     }
   ],
   [
@@ -168,7 +176,10 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
 const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
   switch (item.id) {
     case MenuItems.Delete:
-      await deleteView({ view: props.view })
+      eventBus.emit(ViewerEventBusKeys.MarkSavedViewForEdit, {
+        type: 'delete',
+        view: props.view
+      })
       break
     case MenuItems.CopyLink:
       await copyLink({
@@ -205,6 +216,12 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
         }
       })
       break
+    case MenuItems.MoveToGroup:
+      eventBus.emit(ViewerEventBusKeys.MarkSavedViewForEdit, {
+        type: 'move',
+        view: props.view
+      })
+      break
     default:
       throwUncoveredError(item.id)
   }
@@ -213,6 +230,13 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
 const apply = async () => {
   applyView({
     id: props.view.id
+  })
+}
+
+const onEdit = () => {
+  eventBus.emit(ViewerEventBusKeys.MarkSavedViewForEdit, {
+    type: 'edit',
+    view: props.view
   })
 }
 </script>

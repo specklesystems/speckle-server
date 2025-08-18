@@ -134,6 +134,17 @@ export const getProjectSavedViewQuery = gql`
   ${basicSavedViewFragment}
 `
 
+export const getProjectSavedViewIfExistsQuery = gql`
+  query GetProjectSavedViewIfExists($projectId: String!, $viewId: ID!) {
+    project(id: $projectId) {
+      savedViewIfExists(id: $viewId) {
+        ...BasicSavedView
+      }
+    }
+  }
+  ${basicSavedViewFragment}
+`
+
 export const deleteSavedViewMutation = gql`
   mutation DeleteSavedView($input: DeleteSavedViewInput!) {
     projectMutations {
@@ -191,4 +202,50 @@ export const updateSavedViewMutation = gql`
   }
 
   ${basicSavedViewFragment}
+`
+
+export const deleteSavedViewGroupMutation = gql`
+  mutation DeleteSavedViewGroup($input: DeleteSavedViewGroupInput!) {
+    projectMutations {
+      savedViewMutations {
+        deleteGroup(input: $input)
+      }
+    }
+  }
+`
+
+export const canUpdateSavedViewGroupQuery = gql`
+  query CanUpdateSavedViewGroup($projectId: String!, $groupId: ID!) {
+    project(id: $projectId) {
+      id
+      savedViewGroup(id: $groupId) {
+        id
+        permissions {
+          canUpdate {
+            authorized
+            code
+            message
+            payload
+          }
+        }
+      }
+    }
+  }
+`
+
+export const updateSavedViewGroupMutation = gql`
+  mutation UpdateSavedViewGroup(
+    $input: UpdateSavedViewGroupInput!
+    $viewsInput: SavedViewGroupViewsInput! = { limit: 10 }
+  ) {
+    projectMutations {
+      savedViewMutations {
+        updateGroup(input: $input) {
+          ...BasicSavedViewGroup
+        }
+      }
+    }
+  }
+
+  ${basicSavedViewGroupFragment}
 `

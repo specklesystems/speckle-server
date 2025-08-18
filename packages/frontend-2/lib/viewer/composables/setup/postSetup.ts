@@ -54,7 +54,8 @@ import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import { SafeLocalStorage, type Nullable } from '@speckle/shared'
 import {
   useCameraUtilities,
-  useMeasurementUtilities
+  useMeasurementUtilities,
+  useViewModeUtilities
 } from '~~/lib/viewer/composables/ui'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
@@ -1003,7 +1004,7 @@ const useViewerSavedViewSetup = () => {
   }
 
   // Allow force update
-  on(ViewerEventBusKeys.UpdateSavedView, async (settings) => {
+  on(ViewerEventBusKeys.ApplySavedView, async (settings) => {
     await update({ settings })
   })
 
@@ -1106,6 +1107,14 @@ function useViewerCursorIntegration() {
   })
 }
 
+function useViewerViewModesIntegration() {
+  const { resetViewMode } = useViewModeUtilities()
+
+  onBeforeUnmount(() => {
+    resetViewMode()
+  })
+}
+
 export function useViewerPostSetup() {
   if (import.meta.server) return
   useViewerObjectAutoLoading()
@@ -1126,5 +1135,6 @@ export function useViewerPostSetup() {
   useDisableZoomOnEmbed()
   useViewerCursorIntegration()
   useViewerTreeIntegration()
+  useViewerViewModesIntegration()
   setupDebugMode()
 }
