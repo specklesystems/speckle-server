@@ -11,10 +11,5 @@ export const isValidBase64Image = (data: string): boolean => {
   const base64Regex = /^[A-Za-z0-9+/]+={0,2}$/
   if (!base64Regex.test(base64String)) return false
 
-  try {
-    const buffer = Buffer.from(base64String, 'base64')
-    return buffer.length > 0
-  } catch {
-    return false
-  }
+  return true
 }

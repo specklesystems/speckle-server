@@ -4,7 +4,6 @@ import { useClipboard } from '@vueuse/core'
 import type { MaybeRef } from '@vueuse/core'
 import type { Get } from 'type-fest'
 import type { GenericValidateFunction } from 'vee-validate'
-import { SpeckleViewer } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type {
   DeleteModelInput,
@@ -14,7 +13,8 @@ import type {
   ProjectModelsArgs,
   ProjectModelsTreeArgs,
   ProjectPendingImportedModelsArgs,
-  UpdateModelInput
+  UpdateModelInput,
+  UseCopyModelLink_ModelFragment
 } from '~~/lib/common/generated/gql/graphql'
 import {
   ProjectModelsUpdatedMessageType,
@@ -37,7 +37,7 @@ import {
   onProjectModelsUpdateSubscription,
   onProjectPendingModelsUpdatedSubscription
 } from '~~/lib/projects/graphql/subscriptions'
-import { modelRoute, useNavigateToProject } from '~~/lib/common/helpers/route'
+import { useNavigateToProject } from '~~/lib/common/helpers/route'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 import { useLock } from '~~/lib/common/composables/singleton'
 import { isUndefined } from 'lodash-es'
@@ -45,6 +45,8 @@ import {
   useFailedFileImportJobUtils,
   useGlobalFileImportManager
 } from '~/lib/core/composables/fileImport'
+import { graphql } from '~/lib/common/generated/gql'
+import { getModelItemRoute } from '~/lib/projects/helpers/models'
 
 const isValidModelName: GenericValidateFunction<string> = (name) => {
   name = name.trim()
@@ -414,21 +416,29 @@ export function useProjectPendingModelUpdateTracking(
   })
 }
 
+graphql(`
+  fragment UseCopyModelLink_Model on Model {
+    id
+    projectId
+    ...GetModelItemRoute_Model
+  }
+`)
+
 export function useCopyModelLink() {
   const { copy } = useClipboard()
   const { triggerNotification } = useGlobalToast()
 
-  return async (projectId: string, modelId: string, versionId?: string) => {
+  return async (params: {
+    model: UseCopyModelLink_ModelFragment | { projectId: string; id: string }
+    versionId?: string
+  }) => {
+    const { model, versionId } = params
+
     if (import.meta.server) {
       throw new Error('Not supported in SSR')
     }
 
-    const path = modelRoute(
-      projectId,
-      SpeckleViewer.ViewerRoute.resourceBuilder()
-        .addModel(modelId, versionId)
-        .toString()
-    )
+    const path = getModelItemRoute(model)
     const url = new URL(path, window.location.toString()).toString()
 
     await copy(url)

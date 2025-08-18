@@ -27,6 +27,7 @@ import {
   getStoredViewGroupCountFactory,
   getUngroupedSavedViewsGroupFactory,
   recalculateGroupResourceIdsFactory,
+  setNewHomeViewFactory,
   storeSavedViewFactory,
   storeSavedViewGroupFactory,
   updateSavedViewGroupRecordFactory,
@@ -50,6 +51,7 @@ import type { Knex } from 'knex'
 import { ungroupedScenesGroupTitle } from '@speckle/shared/saved-views'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
+  getModelHomeSavedViewFactory,
   getSavedViewFactory,
   getSavedViewGroupFactory
 } from '@/modules/viewer/repositories/dataLoaders/savedViews'
@@ -67,7 +69,8 @@ const buildGetViewerResourceGroups = (params: {
     getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
     getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb }),
     getBranchesByIds: getBranchesByIdsFactory({ db: projectDb }),
-    getSavedView: getSavedViewFactory({ loaders: params.loaders })
+    getSavedView: getSavedViewFactory({ loaders: params.loaders }),
+    getModelHomeSavedView: getModelHomeSavedViewFactory({ loaders: params.loaders })
   })
 }
 
@@ -168,6 +171,19 @@ const resolvers: Resolvers = {
       }
 
       return view
+    }
+  },
+  Model: {
+    homeView: async (parent, _args, ctx) => {
+      const projectId = parent.streamId
+      const projectDb = await getProjectDbClient({ projectId })
+
+      return ctx.loaders
+        .forRegion({ db: projectDb })
+        .savedViews.getModelHomeSavedView.load({
+          modelId: parent.id,
+          projectId
+        })
     }
   },
   SavedView: {
@@ -272,6 +288,9 @@ const resolvers: Resolvers = {
         getSavedViewGroup: getSavedViewGroupFactory({ loaders: ctx.loaders }),
         recalculateGroupResourceIds: recalculateGroupResourceIdsFactory({
           db: projectDb
+        }),
+        setNewHomeView: setNewHomeViewFactory({
+          db: projectDb
         })
       })
       return await createSavedView({ input: args.input, authorId: ctx.userId! })
@@ -337,6 +356,9 @@ const resolvers: Resolvers = {
           db: projectDb
         }),
         recalculateGroupResourceIds: recalculateGroupResourceIdsFactory({
+          db: projectDb
+        }),
+        setNewHomeView: setNewHomeViewFactory({
           db: projectDb
         })
       })
@@ -484,6 +506,9 @@ const disabledResolvers: Resolvers = {
     savedViewIfExists: () => {
       return null // intentional - so we dont have to FF guard the query
     }
+  },
+  Model: {
+    homeView: () => null // intentional - so we dont have to FF guard the query
   },
   ProjectMutations: {
     savedViewMutations: () => {

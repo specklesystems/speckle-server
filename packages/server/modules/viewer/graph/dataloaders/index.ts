@@ -4,6 +4,7 @@ import type {
   SavedViewGroup
 } from '@/modules/viewer/domain/types/savedViews'
 import {
+  getModelHomeSavedViewsFactory,
   getSavedViewGroupsFactory,
   getSavedViewsFactory
 } from '@/modules/viewer/repositories/savedViews'
@@ -51,6 +52,21 @@ const dataLoadersDefinition = defineRequestDataloaders(
           },
           {
             cacheKeyFn: ({ viewId, projectId }) => `${viewId}-${projectId}`
+          }
+        ),
+        getModelHomeSavedView: createLoader<
+          { modelId: string; projectId: string },
+          Nullable<SavedView>,
+          string
+        >(
+          async (ids) => {
+            const views = await getModelHomeSavedViewsFactory({ db })({
+              requests: ids.slice()
+            })
+            return ids.map(({ modelId }) => views[modelId] || null)
+          },
+          {
+            cacheKeyFn: ({ modelId, projectId }) => `${modelId}-${projectId}`
           }
         )
       }

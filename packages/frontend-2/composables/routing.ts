@@ -7,75 +7,181 @@ import { buildManualPromise } from '@speckle/shared'
 
 const useRouterNavigatingState = () =>
   useState('use_router_navigating_state', () => ({
-    allActiveWaits: <Array<Promise<unknown>>>[]
+    allActiveWaits: <Array<Promise<unknown>>>[],
+    /**
+     * Used for debugging to assign an incrementing id to each invocation
+     */
+    logId: 0
   }))
 
-/**
- * Global state that tells you if the router is in the middle of a navigation
- */
-const useRouterNavigating = () => {
-  const { $isNavigating } = useNuxtApp()
-  const logger = useLogger()
-
+const useRouterNavigatingDevUtils = () => {
   const state = useRouterNavigatingState()
+  const { $debugRoutes, $isNavigating, $logger } = useNuxtApp()
 
-  const waitUntilReady = async () => {
-    try {
-      // Wait for all queued up waits
-      await Promise.allSettled(state.value.allActiveWaits)
+  const ret = {
+    getLogId: () => {
+      const newVal = state.value.logId + 1
+      state.value.logId = newVal
 
-      // Queue up another wait
-      const waitPromise = buildManualPromise<void>()
-      state.value.allActiveWaits = [...state.value.allActiveWaits, waitPromise.promise]
-
-      // Invoke it
-      const wait = async () => {
-        try {
-          await until($isNavigating).toBe(false, { throwOnTimeout: true, timeout: 500 })
-        } finally {
-          // clean up
-          state.value.allActiveWaits = state.value.allActiveWaits.filter(
-            (p) => p !== waitPromise.promise
-          )
-          waitPromise.resolve()
-        }
+      return newVal + ''
+    },
+    ifDebugRoutes: (fn: () => void) => {
+      if ($debugRoutes) {
+        fn()
       }
-      await wait()
-    } catch (e) {
-      logger.warn(e, 'Wait for router ready failed w/ timeout')
-    }
+    },
+    debugLog: (...args: unknown[]) => {
+      ret.ifDebugRoutes(() => {
+        devLog(...args)
+      })
+    },
+    debugTrace: (...args: unknown[]) => {
+      ret.ifDebugRoutes(() => {
+        devTrace(...args)
+      })
+    },
+    isNuxtNavigating: $isNavigating,
+    logger: $logger
   }
 
-  return {
-    isNavigating: $isNavigating,
-    /**
-     * Wait for router to flush active navigations. Concurrent invocations will have ordered
-     * execution guarantees.
-     */
-    waitUntilReady
-  }
+  return ret
 }
+
+type SafeRouterNavigationTarget =
+  | string
+  | RouteLocationAsRelativeGeneric
+  | RouteLocationAsPathGeneric
+
+type SafeRouterNavigationOptions<
+  Target extends SafeRouterNavigationTarget = SafeRouterNavigationTarget
+> = Partial<{
+  /**
+   * When router finally gets to fire, optionally do an extra check to see if you
+   * want to cancel the navigation instead
+   */
+  skipIf?: (target: Target) => boolean
+}>
 
 /**
  * Safely queues up navigation changes so that concurrent invocations don't interfere with each other and break navigation.
  * Useful in navigation-heavy environments like the Viewer.
+ *
+ * Supports debugRoutes=1 query param for debug logs
  */
 export const useSafeRouter = () => {
+  const { getLogId, debugLog, debugTrace, isNuxtNavigating, logger } =
+    useRouterNavigatingDevUtils()
   const router = useRouter()
-  const { waitUntilReady } = useRouterNavigating()
+  const state = useRouterNavigatingState()
 
-  const push = async (
-    to: () => string | RouteLocationAsRelativeGeneric | RouteLocationAsPathGeneric
+  const pushOrReplace = async <
+    Target extends SafeRouterNavigationTarget = SafeRouterNavigationTarget
+  >(
+    to: () => Target,
+    action: 'push' | 'replace',
+    options?: SafeRouterNavigationOptions<Target>
   ) => {
-    await waitUntilReady()
-    return await router.push(to())
+    // We want to add new promise to queue ASAP to avoid race conditions when 2 invocations
+    // occur very close to each other. Basically we have to queue it up before we do any async
+    // actions inside
+    const waitPromise = buildManualPromise<void>()
+    const logId = getLogId()
+
+    const waitForNavigationsClear = async () =>
+      await until(isNuxtNavigating)
+        .toBe(false, {
+          throwOnTimeout: true,
+          timeout: 500
+        })
+        .catch((err) => {
+          // Swallow throw, just log and continue
+          logger.error({ err }, 'Waiting for nuxt navigations to clear timed out')
+        })
+
+    debugTrace(`[{logId}] Safe router ${action} registered`, {
+      initialTo: to(),
+      logId
+    })
+
+    try {
+      const activeWaits = state.value.allActiveWaits.slice()
+
+      // Queue up another wait
+      state.value.allActiveWaits = [...state.value.allActiveWaits, waitPromise.promise]
+
+      // Wait for all previously queued up waits
+      await Promise.allSettled(activeWaits)
+
+      debugLog(
+        '[{logId}] All active waits awaited, lets wait for navigations to clear generally...',
+        {
+          logId,
+          activeWaits
+        }
+      )
+      await waitForNavigationsClear()
+      const finalTo = to()
+
+      if (options?.skipIf && options?.skipIf(finalTo)) {
+        debugLog(
+          `[{logId}] Safe router ${action} ready, but skipped due to skipIf...`,
+          {
+            logId
+          }
+        )
+        waitPromise.resolve()
+        return undefined
+      }
+
+      debugLog(
+        `[{logId}] Safe router ${action} ready, firing and waiting for clear...`,
+        {
+          finalTo,
+          logId
+        }
+      )
+
+      const navResult = await router[action](finalTo)
+      await waitForNavigationsClear()
+
+      // Resolve and clean up
+      debugLog(`[{logId}] Navigation finished and cleared!`, {
+        finalTo,
+        logId,
+        navResult
+      })
+      state.value.allActiveWaits = state.value.allActiveWaits.filter(
+        (p) => p !== waitPromise.promise
+      )
+      waitPromise.resolve()
+
+      return navResult
+    } catch (e) {
+      waitPromise.reject(e)
+      throw e
+    } finally {
+      state.value.allActiveWaits = state.value.allActiveWaits.filter(
+        (p) => p !== waitPromise.promise
+      )
+    }
   }
 
-  const replace = async (
-    to: () => string | RouteLocationAsRelativeGeneric | RouteLocationAsPathGeneric
+  const push = async <
+    Target extends SafeRouterNavigationTarget = SafeRouterNavigationTarget
+  >(
+    to: () => Target,
+    options?: SafeRouterNavigationOptions<Target>
   ) => {
-    await waitUntilReady()
-    return await router.replace(to())
+    return await pushOrReplace(to, 'push', options)
+  }
+
+  const replace = async <
+    Target extends SafeRouterNavigationTarget = SafeRouterNavigationTarget
+  >(
+    to: () => Target,
+    options?: SafeRouterNavigationOptions<Target>
+  ) => {
+    return await pushOrReplace(to, 'replace', options)
   }
 
   return { ...router, push, replace }

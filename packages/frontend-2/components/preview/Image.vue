@@ -152,8 +152,10 @@ const shouldShowMainPreview = computed(
     (!hovered.value && finalPreviewUrl.value) ||
     isLoadingPanorama.value ||
     !props.panoramaOnHover ||
-    isPanoramaPlaceholder.value
+    isPanoramaPlaceholder.value ||
+    !panoramaPreviewUrl.value
 )
+
 const shouldShowPanoramicPreview = computed(
   () =>
     hovered.value &&

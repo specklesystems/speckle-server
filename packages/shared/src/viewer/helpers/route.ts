@@ -243,6 +243,9 @@ class ViewerResourceBuilder implements Iterable<ViewerResource> {
   toResources() {
     return this.#resources.slice()
   }
+  toResourceIds() {
+    return this.toResources().map((r) => r.toString())
+  }
   clear() {
     this.#resources = []
     return this
