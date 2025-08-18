@@ -1,6 +1,7 @@
 <template>
   <div
     v-if="shouldShowContextMenu"
+    ref="contextMenuEl"
     class="absolute pointer-events-auto z-50"
     :style="contextMenuState.style"
   >
@@ -37,24 +38,14 @@ const props = defineProps<{
   parentEl: Nullable<HTMLElement>
 }>()
 
-const emit = defineEmits<{
-  'menu-opened': []
-}>()
+const isOpen = defineModel<boolean>('open', { default: false })
+const contextMenuEl = ref<HTMLElement>()
 
-const {
-  contextMenuState,
-  contextMenuItems,
-  shouldShowContextMenu,
-  onItemChosen,
-  closeContextMenu
-} = useViewerContextMenu({
-  parentEl: toRef(() => props.parentEl),
-  emit
-})
-
-defineExpose({
-  closeContextMenu
-})
+const { contextMenuState, contextMenuItems, shouldShowContextMenu, onItemChosen } =
+  useViewerContextMenu({
+    parentEl: toRef(() => props.parentEl),
+    isOpen
+  })
 
 const buildButtonClasses = (item: LayoutMenuItem) => {
   const classParts = [

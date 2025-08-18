@@ -20,9 +20,9 @@ export type ViewerContextMenuModel = {
 
 export function useViewerContextMenu(params: {
   parentEl: Ref<Nullable<HTMLElement>>
-  emit: (event: 'menu-opened') => void
+  isOpen: Ref<boolean>
 }) {
-  const { parentEl, emit } = params
+  const { parentEl, isOpen } = params
   const { filters } = useInjectedViewerInterfaceState()
   const { setSelectionFromObjectIds, clearSelection } = useSelectionUtilities()
   const { isolateObjects, hideObjects, unIsolateObjects } = useFilterUtilities()
@@ -98,6 +98,7 @@ export function useViewerContextMenu(params: {
     contextMenuState.value.isVisible = false
     contextMenuState.value.clickLocation = null
     contextMenuState.value.selectedObjectId = null
+    isOpen.value = false
   }
 
   const onItemChosen = ({ item }: { item: LayoutMenuItem }) => {
@@ -139,29 +140,34 @@ export function useViewerContextMenu(params: {
     }
   }
 
-  // Handle right-clicks for context menu
+  // Handle right-clicks for context menu and left-clicks to close it
   useSelectionEvents({
     singleClickCallback: (event, { firstVisibleSelectionHit }) => {
-      if (!event?.event || event.event.button !== 2) return
+      // Handle right-clicks to open context menu
+      if (event?.event && event.event.button === 2) {
+        event.event.preventDefault()
 
-      event.event.preventDefault()
+        if (firstVisibleSelectionHit) {
+          const clickLocation = firstVisibleSelectionHit.point.clone()
+          const selectedObjectId = firstVisibleSelectionHit.node.model.id
 
-      if (firstVisibleSelectionHit) {
-        const clickLocation = firstVisibleSelectionHit.point.clone()
-        const selectedObjectId = firstVisibleSelectionHit.node.model.id
+          setSelectionFromObjectIds([selectedObjectId])
 
-        setSelectionFromObjectIds([selectedObjectId])
+          contextMenuState.value.clickLocation = clickLocation
+          contextMenuState.value.selectedObjectId = selectedObjectId
+          contextMenuState.value.isVisible = true
+          isOpen.value = true
 
-        contextMenuState.value.clickLocation = clickLocation
-        contextMenuState.value.selectedObjectId = selectedObjectId
-        contextMenuState.value.isVisible = true
+          nextTick(() => {
+            updatePositions()
+          })
+        } else {
+          closeContextMenu()
+        }
+      }
 
-        emit('menu-opened')
-
-        nextTick(() => {
-          updatePositions()
-        })
-      } else {
+      // Handle left-clicks to close context menu
+      if (event?.event && event.event.button === 0 && isOpen.value) {
         closeContextMenu()
       }
     }

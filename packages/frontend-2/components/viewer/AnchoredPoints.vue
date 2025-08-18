@@ -34,11 +34,7 @@
       @login="showLoginDialog = true"
     />
 
-    <ViewerContextMenu
-      ref="contextMenuRef"
-      :parent-el="parentEl"
-      @menu-opened="closeNewThread"
-    />
+    <ViewerContextMenu v-model:open="contextMenuOpen" :parent-el="parentEl" />
 
     <div v-if="!isEmbedEnabled">
       <!-- Active users -->
@@ -193,7 +189,7 @@ const {
 } = useInjectedViewerInterfaceState()
 
 const showLoginDialog = ref(false)
-const contextMenuRef = ref()
+const contextMenuOpen = ref(false)
 
 useViewerCommentBubblesProjection({ parentEl })
 
@@ -214,10 +210,7 @@ const onThreadUpdate = (thread: CommentBubbleModel) => {
 const onThreadExpandedChange = (isExpanded: boolean) => {
   if (isExpanded) {
     closeNewThread()
-    // Close context menu when thread expands
-    if (contextMenuRef.value) {
-      contextMenuRef.value.closeContextMenu()
-    }
+    contextMenuOpen.value = false
   }
 }
 
@@ -318,10 +311,10 @@ watch(
 )
 
 watch(
-  () => buttonState.value.isVisible,
-  (isVisible) => {
-    if (isVisible && contextMenuRef.value) {
-      contextMenuRef.value.closeContextMenu()
+  () => contextMenuOpen.value,
+  (isOpen) => {
+    if (isOpen) {
+      closeNewThread()
     }
   }
 )
