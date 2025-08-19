@@ -55,10 +55,10 @@ import { SafeLocalStorage, type Nullable } from '@speckle/shared'
 import {
   useCameraUtilities,
   useMeasurementUtilities,
-  useViewModeUtilities
+  useViewModeUtilities,
+  useFilterUtilities
 } from '~~/lib/viewer/composables/ui'
 import { FilterCondition } from '~/lib/viewer/helpers/filters/types'
-import { useObjectDataStore } from '~~/composables/viewer/useObjectDataStore'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -551,18 +551,13 @@ function useViewerFiltersIntegration() {
     ui: { filters, highlightedObjectIds }
   } = useInjectedViewerState()
 
-  // Initialize object data store
-  const objectDataStore = useObjectDataStore()
+  // Get filter utilities (includes data store)
+  const filterUtils = useFilterUtilities({ state: useInjectedViewerState() })
+  const { dataStore: objectDataStore } = filterUtils
 
   const {
     metadata: { availableFilters: allFilters }
   } = useInjectedViewer()
-
-  const {
-    resources: {
-      response: { resourceItems }
-    }
-  } = useInjectedViewerState()
 
   const logger = useLogger()
   const stateKey = 'default'
@@ -574,37 +569,19 @@ function useViewerFiltersIntegration() {
     if (!isAlreadyInPreventScope) preventFilterWatchers = false
   }
 
-  // Populate data store when viewer loads with actual resource items
-  useOnViewerLoadComplete(async ({ isInitial }) => {
-    if (isInitial && import.meta.client) {
-      // Convert viewer resource items to data store resources
-      const resources = resourceItems.value.map((item) => ({
-        resourceUrl: item.objectId // Use objectId as the resource identifier
-      }))
-
-      await objectDataStore.populateDataStore(instance, resources)
-    }
-  })
-
-  // Watch data store final object IDs and apply to viewer
+  // Watch data store final object IDs and apply to viewer (follows existing filter patterns)
   watch(
     objectDataStore.finalObjectIds,
     (newObjectIds, oldObjectIds) => {
-      if (preventFilterWatchers) {
-        return
-      }
-      if (arraysEqual(newObjectIds, oldObjectIds || [])) {
-        return
-      }
+      if (preventFilterWatchers) return
+      if (arraysEqual(newObjectIds, oldObjectIds || [])) return
 
       withWatchersDisabled(() => {
         if (newObjectIds.length > 0) {
-          // Isolate the filtered objects
           instance.isolateObjects(newObjectIds, stateKey, true)
           filters.hiddenObjectIds.value = []
           filters.isolatedObjectIds.value = newObjectIds
         } else {
-          // No objects match filters - clear isolation
           instance.resetFilters()
           filters.isolatedObjectIds.value = []
           filters.hiddenObjectIds.value = []

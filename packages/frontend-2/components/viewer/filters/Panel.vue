@@ -16,9 +16,14 @@
           v-tippy="'Add new filter'"
           color="subtle"
           size="sm"
+          :class="showPropertySelection ? '!bg-highlight-3' : ''"
           hide-text
-          :icon-left="Plus"
-          @click="addNewEmptyFilter"
+          :icon-left="showPropertySelection ? X : Plus"
+          @click="
+            showPropertySelection
+              ? (showPropertySelection = false)
+              : addNewEmptyFilter()
+          "
         />
       </div>
     </template>
@@ -200,6 +205,7 @@
         <FormButton @click="addNewEmptyFilter">Add filter</FormButton>
       </div>
     </div>
+
     <!-- Property Selection Portal -->
     <Portal v-if="showPropertySelection" to="panel-extension">
       <div class="h-full flex flex-col">
@@ -227,9 +233,15 @@
                 :is="getPropertyTypeIcon(property.type)"
                 class="h-3 w-3 mt-0.5 text-foreground-2 shrink-0"
               />
-              <div class="min-w-0">
-                <div class="text-body-2xs font-medium text-foreground">
+              <div class="min-w-0 flex-1">
+                <div class="text-body-2xs font-medium text-foreground truncate">
                   {{ property.label }}
+                </div>
+                <div
+                  v-if="property.parentPath"
+                  class="text-body-3xs text-foreground-2 truncate"
+                >
+                  {{ property.parentPath }}
                 </div>
               </div>
             </button>
@@ -302,22 +314,47 @@ const getPropertyType = (filter: PropertyInfo): string => {
 
 // Options for property selection dropdown
 const propertySelectOptions = computed(() => {
-  const allOptions = relevantFilters.value.map((filter) => ({
-    value: filter.key,
-    label: getPropertyName(filter.key),
-    type: getPropertyType(filter)
-  }))
+  const allOptions = relevantFilters.value.map((filter) => {
+    const pathParts = filter.key.split('.')
+    const propertyName = pathParts[pathParts.length - 1] // Last part (e.g., "name")
+    const parentPath = pathParts.slice(0, -1).join('.') // Everything except last part (e.g., "ab")
+
+    return {
+      value: filter.key,
+      label: propertyName, // Clean property name for main display
+      parentPath, // Full path without the property name
+      type: getPropertyType(filter),
+      hasParent: parentPath.length > 0
+    }
+  })
+
+  // Sort: root properties first, then grouped by parent
+  const sortedOptions = allOptions.sort((a, b) => {
+    // Root properties (no parent) come first
+    if (!a.hasParent && b.hasParent) return -1
+    if (a.hasParent && !b.hasParent) return 1
+
+    // If both have parents, group by parent path
+    if (a.hasParent && b.hasParent) {
+      const parentComparison = a.parentPath.localeCompare(b.parentPath)
+      if (parentComparison !== 0) return parentComparison
+    }
+
+    // Within same group, sort by property name
+    return a.label.localeCompare(b.label)
+  })
 
   // Filter based on search input
   if (!propertySearch.value.trim()) {
-    return allOptions
+    return sortedOptions
   }
 
   const searchTerm = propertySearch.value.toLowerCase().trim()
-  return allOptions.filter(
+  return sortedOptions.filter(
     (option) =>
       option.label.toLowerCase().includes(searchTerm) ||
       option.value.toLowerCase().includes(searchTerm) ||
+      option.parentPath.toLowerCase().includes(searchTerm) ||
       option.type.toLowerCase().includes(searchTerm)
   )
 })

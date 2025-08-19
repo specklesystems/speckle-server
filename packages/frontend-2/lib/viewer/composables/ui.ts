@@ -29,6 +29,8 @@ import { useTheme } from '~/lib/core/composables/theme'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { isStringPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
 import { FilterCondition } from '~/lib/viewer/helpers/filters/types'
+import { useObjectDataStore } from '~~/composables/viewer/useObjectDataStore'
+import { useOnViewerLoadComplete } from '~~/lib/viewer/composables/viewer'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -159,6 +161,42 @@ export function useFilterUtilities(
     viewer,
     ui: { filters, explodeFactor }
   } = state
+
+  // Initialize object data store for advanced filtering
+  const dataStore = useObjectDataStore()
+
+  // Populate data store when viewer loads models
+  if (import.meta.client) {
+    const { instance } = viewer
+    const { resourceItems } = state.resources.response
+
+    const populateDataStore = async () => {
+      const tree = instance.getWorldTree()
+      if (!tree || !resourceItems.value.length) return
+
+      // Check if resources are actually available in the world tree
+      const availableResources = resourceItems.value.filter((item) => {
+        const nodes = tree.findId(item.objectId)
+        return nodes && nodes.length > 0
+      })
+
+      if (availableResources.length === 0) return
+
+      // Clear and repopulate the entire data store
+      dataStore.clearDataOnRouteLeave()
+
+      const resources = availableResources.map((item) => ({
+        resourceUrl: item.objectId
+      }))
+
+      await dataStore.populateDataStore(instance, resources)
+    }
+
+    // Populate whenever a model finishes loading
+    useOnViewerLoadComplete(async () => {
+      await populateDataStore()
+    })
+  }
 
   const isolateObjects = (
     objectIds: string[],
@@ -700,7 +738,9 @@ export function useFilterUtilities(
     findFilterByDisplayName,
     isKvpFilterable,
     getFilterDisabledReason,
-    applyKvpFilter
+    applyKvpFilter,
+    // Data store for advanced filtering
+    dataStore
   }
 }
 

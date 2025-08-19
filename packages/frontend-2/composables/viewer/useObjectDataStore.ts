@@ -92,16 +92,12 @@ export function useObjectDataStore() {
    */
   async function populateDataStore(viewer: Viewer, resources: ResourceInfo[]) {
     const tree = viewer.getWorldTree()
-    if (!tree) {
-      return
-    }
+    if (!tree) return
 
     for (const res of resources) {
       const foundNodes = tree.findId(res.resourceUrl)
       const subnode = foundNodes?.[0]
-      if (!subnode) {
-        continue
-      }
+      if (!subnode) continue
 
       const objectMap: Record<string, SpeckleObject> = {}
       const propertyMap: Record<string, PropertyInfoBase> = {}
