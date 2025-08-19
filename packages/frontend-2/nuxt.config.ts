@@ -213,7 +213,8 @@ export default defineNuxtConfig({
         'auth',
         'settings',
         'requires-workspaces-enabled',
-        'require-valid-workspace'
+        'require-valid-workspace',
+        'require-valid-sso-session'
       ]
     },
     '/downloads': {
