@@ -2,9 +2,9 @@
   <div>
     <HeadlessDisclosure>
       <DisclosureButton :class="buttonClasses" @click="toggle">
-        <div class="inline-flex items-center space-x-2">
+        <div class="inline-flex items-center space-x-2 w-full">
           <Component :is="icon" v-if="icon" class="h-5 w-5" />
-          <span v-if="!editTitle">{{ title }}</span>
+          <span v-if="!editTitle" class="text-left w-full">{{ title }}</span>
           <FormTextInput
             v-else
             v-bind="bind"
@@ -18,7 +18,7 @@
           />
           <slot name="title-actions" />
         </div>
-        <ChevronUpIcon :class="!open ? 'rotate-180 transform' : ''" class="h-5 w-5" />
+        <ChevronUpIcon :class="chevronClasses" />
       </DisclosureButton>
       <DisclosurePanel v-if="open" :class="panelClasses" static>
         <div v-if="!lazyLoad || open" class="label-light">
@@ -39,7 +39,7 @@ import { computed, watch } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 import { FormTextInput, useDebouncedTextInput } from '~~/src/lib'
 
-type DisclosureColor = 'default' | 'danger' | 'success' | 'warning'
+type DisclosureColor = 'default' | 'danger' | 'success' | 'warning' | 'subtle'
 
 const props = withDefaults(
   defineProps<{
@@ -87,6 +87,9 @@ const buttonTextClasses = computed(() => {
     case 'danger':
       classParts.push('text-danger')
       break
+    case 'subtle':
+      classParts.push('text-foreground text-body-2xs')
+      break
     case 'default':
     default:
       classParts.push('text-primary')
@@ -97,13 +100,43 @@ const buttonTextClasses = computed(() => {
 })
 
 const buttonClasses = computed(() => {
-  const classParts = [
-    'pr-3 h-10 w-full flex items-center justify-between border-l-2 px-2 rounded transition',
-    'ring-1',
+  let classParts: string[] = []
+
+  // Common classes shared between subtle and other variants
+  classParts = [
+    'w-full',
+    'flex',
+    'items-center',
+    'transition',
     'group/disclosure',
     buttonTextClasses.value
   ]
 
+  if (props.color === 'subtle') {
+    // Subtle variant specific styling
+    classParts.push(
+      'h-7',
+      'justify-normal',
+      'pl-1',
+      'pr-0.5',
+      'rounded-md',
+      'hover:bg-highlight-1',
+      'ring-none'
+    )
+  } else {
+    // Default styling for other variants
+    classParts.push(
+      'pr-3',
+      'h-10',
+      'justify-between',
+      'border-l-2',
+      'px-2',
+      'rounded',
+      'ring-1'
+    )
+  }
+
+  // Add color-specific styling
   switch (props.color) {
     case 'warning':
       classParts.push('border-warning ring-warning-lighter hover:ring-warning')
@@ -113,6 +146,9 @@ const buttonClasses = computed(() => {
       break
     case 'danger':
       classParts.push('border-danger ring-danger-lighter hover:ring-danger')
+      break
+    case 'subtle':
+      classParts.push('border-none ring-none flex-row-reverse gap-x-1 justify-end')
       break
     case 'default':
     default:
@@ -136,6 +172,9 @@ const panelClasses = computed(() => {
     case 'danger':
       classParts.push('border-danger-lighter')
       break
+    case 'subtle':
+      classParts.push('border-none pl-0 pr-0 pb-0 pt-0 rounded-none')
+      break
     case 'default':
     default:
       classParts.push('border-primary-muted')
@@ -143,6 +182,20 @@ const panelClasses = computed(() => {
   }
 
   return classParts.join(' ')
+})
+
+const chevronClasses = computed(() => {
+  const baseClasses = 'h-4 w-4 transition-transform duration-200 ease-in-out'
+
+  if (props.color === 'subtle') {
+    // Subtle variant: 90° when closed, 0° when open
+    return open.value
+      ? `${baseClasses} rotate-180 transform`
+      : `${baseClasses} rotate-90 transform`
+  } else {
+    // Other variants: rotate when closed (default behavior)
+    return !open.value ? `${baseClasses} rotate-180 transform` : baseClasses
+  }
 })
 
 const toggle = () => {
