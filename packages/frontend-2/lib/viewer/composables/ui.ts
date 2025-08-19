@@ -28,6 +28,7 @@ import type {
 import { useTheme } from '~/lib/core/composables/theme'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { isStringPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
+import { FilterCondition } from '~/lib/viewer/helpers/filters/types'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -337,7 +338,7 @@ export function useFilterUtilities(
         isApplied: false,
         selectedValues: [],
         id,
-        condition: 'is'
+        condition: FilterCondition.Is
       })
       return id
     }
@@ -376,10 +377,7 @@ export function useFilterUtilities(
   /**
    * Updates condition for a specific active filter
    */
-  const updateFilterCondition = (
-    filterId: string,
-    condition: 'is' | 'is_not' | 'contains' | 'starts_with' | 'ends_with'
-  ) => {
+  const updateFilterCondition = (filterId: string, condition: FilterCondition) => {
     const filter = filters.activeFilters.value.find((f) => f.id === filterId)
     if (filter) {
       filter.condition = condition

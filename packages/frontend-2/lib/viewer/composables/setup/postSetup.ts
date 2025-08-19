@@ -57,6 +57,8 @@ import {
   useMeasurementUtilities,
   useViewModeUtilities
 } from '~~/lib/viewer/composables/ui'
+import { FilterCondition } from '~/lib/viewer/helpers/filters/types'
+import { useObjectDataStore } from '~~/composables/viewer/useObjectDataStore'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -549,11 +551,20 @@ function useViewerFiltersIntegration() {
     ui: { filters, highlightedObjectIds }
   } = useInjectedViewerState()
 
+  // Initialize object data store
+  const objectDataStore = useObjectDataStore()
+
   const {
     metadata: { availableFilters: allFilters }
   } = useInjectedViewer()
-  const logger = useLogger()
 
+  const {
+    resources: {
+      response: { resourceItems }
+    }
+  } = useInjectedViewerState()
+
+  const logger = useLogger()
   const stateKey = 'default'
   let preventFilterWatchers = false
   const withWatchersDisabled = (fn: () => void) => {
@@ -562,6 +573,46 @@ function useViewerFiltersIntegration() {
     fn()
     if (!isAlreadyInPreventScope) preventFilterWatchers = false
   }
+
+  // Populate data store when viewer loads with actual resource items
+  useOnViewerLoadComplete(async ({ isInitial }) => {
+    if (isInitial && import.meta.client) {
+      // Convert viewer resource items to data store resources
+      const resources = resourceItems.value.map((item) => ({
+        resourceUrl: item.objectId // Use objectId as the resource identifier
+      }))
+
+      await objectDataStore.populateDataStore(instance, resources)
+    }
+  })
+
+  // Watch data store final object IDs and apply to viewer
+  watch(
+    objectDataStore.finalObjectIds,
+    (newObjectIds, oldObjectIds) => {
+      if (preventFilterWatchers) {
+        return
+      }
+      if (arraysEqual(newObjectIds, oldObjectIds || [])) {
+        return
+      }
+
+      withWatchersDisabled(() => {
+        if (newObjectIds.length > 0) {
+          // Isolate the filtered objects
+          instance.isolateObjects(newObjectIds, stateKey, true)
+          filters.hiddenObjectIds.value = []
+          filters.isolatedObjectIds.value = newObjectIds
+        } else {
+          // No objects match filters - clear isolation
+          instance.resetFilters()
+          filters.isolatedObjectIds.value = []
+          filters.hiddenObjectIds.value = []
+        }
+      })
+    },
+    { immediate: true, flush: 'sync' }
+  )
 
   const speckleTypeFilter = computed(
     () => allFilters.value?.find((f) => f.key === 'speckle_type') as StringPropertyInfo
@@ -578,60 +629,62 @@ function useViewerFiltersIntegration() {
     { immediate: true, flush: 'sync' }
   )
 
-  watch(
-    filters.isolatedObjectIds,
-    (newVal, oldVal) => {
-      if (preventFilterWatchers) {
-        return
-      }
-      if (arraysEqual(newVal, oldVal || [])) {
-        return
-      }
+  // OLD FILTER SYSTEM - DISABLED IN FAVOR OF DATA STORE
+  // watch(
+  //   filters.isolatedObjectIds,
+  //   (newVal, oldVal) => {
+  //     if (preventFilterWatchers) {
+  //       return
+  //     }
+  //     if (arraysEqual(newVal, oldVal || [])) {
+  //       return
+  //     }
 
-      const isolatable = difference(newVal, oldVal || [])
-      const unisolatable = difference(oldVal || [], newVal)
+  //     const isolatable = difference(newVal, oldVal || [])
+  //     const unisolatable = difference(oldVal || [], newVal)
 
-      if (isolatable.length) {
-        withWatchersDisabled(() => {
-          instance.isolateObjects(isolatable, stateKey, true)
-          filters.hiddenObjectIds.value = []
-        })
-      }
+  //     if (isolatable.length) {
+  //       withWatchersDisabled(() => {
+  //         instance.isolateObjects(isolatable, stateKey, true)
+  //         filters.hiddenObjectIds.value = []
+  //       })
+  //     }
 
-      if (unisolatable.length) {
-        withWatchersDisabled(() => {
-          instance.unIsolateObjects(unisolatable, stateKey, true)
-          filters.hiddenObjectIds.value = []
-        })
-      }
-    },
-    { immediate: true, flush: 'sync' }
-  )
+  //     if (unisolatable.length) {
+  //       withWatchersDisabled(() => {
+  //         instance.unIsolateObjects(unisolatable, stateKey, true)
+  //         filters.hiddenObjectIds.value = []
+  //       })
+  //     }
+  //   },
+  //   { immediate: true, flush: 'sync' }
+  // )
 
-  watch(
-    filters.hiddenObjectIds,
-    (newVal, oldVal) => {
-      if (preventFilterWatchers) return
-      if (arraysEqual(newVal, oldVal || [])) return
+  // OLD FILTER SYSTEM - DISABLED IN FAVOR OF DATA STORE
+  // watch(
+  //   filters.hiddenObjectIds,
+  //   (newVal, oldVal) => {
+  //     if (preventFilterWatchers) return
+  //     if (arraysEqual(newVal, oldVal || [])) return
 
-      const hidable = difference(newVal, oldVal || [])
-      const showable = difference(oldVal || [], newVal)
+  //     const hidable = difference(newVal, oldVal || [])
+  //     const showable = difference(oldVal || [], newVal)
 
-      if (hidable.length) {
-        withWatchersDisabled(() => {
-          instance.hideObjects(hidable, stateKey, true)
-          filters.isolatedObjectIds.value = []
-        })
-      }
-      if (showable.length) {
-        withWatchersDisabled(() => {
-          instance.showObjects(showable, stateKey, true)
-          filters.isolatedObjectIds.value = []
-        })
-      }
-    },
-    { immediate: true, flush: 'sync' }
-  )
+  //     if (hidable.length) {
+  //       withWatchersDisabled(() => {
+  //         instance.hideObjects(hidable, stateKey, true)
+  //         filters.isolatedObjectIds.value = []
+  //       })
+  //     }
+  //     if (showable.length) {
+  //       withWatchersDisabled(() => {
+  //         instance.showObjects(showable, stateKey, true)
+  //         filters.isolatedObjectIds.value = []
+  //       })
+  //     }
+  //   },
+  //   { immediate: true, flush: 'sync' }
+  // )
 
   const syncColorFilterToViewer = async (
     filter: Nullable<PropertyInfo>,
@@ -650,7 +703,7 @@ function useViewerFiltersIntegration() {
       isApplied: boolean
       selectedValues: string[]
       id: string
-      condition: 'is' | 'is_not' | 'contains' | 'starts_with' | 'ends_with'
+      condition: FilterCondition
     }>
   ) => {
     // Get filters that have selected values (for isolation)
@@ -666,7 +719,8 @@ function useViewerFiltersIntegration() {
       filtersWithValues.map((f) => ({
         filter: f.filter!,
         selectedValues: f.selectedValues,
-        id: f.id
+        id: f.id,
+        condition: f.condition
       }))
     )
 
@@ -675,7 +729,8 @@ function useViewerFiltersIntegration() {
       appliedFilters.map((f) => ({
         filter: f.filter!,
         selectedValues: f.selectedValues,
-        id: f.id
+        id: f.id,
+        condition: f.condition
       }))
     )
   }
@@ -686,6 +741,7 @@ function useViewerFiltersIntegration() {
       filter: PropertyInfo
       selectedValues: string[]
       id: string
+      condition?: FilterCondition
     }>
   ) => {
     const worldTree = instance.getWorldTree()
@@ -697,7 +753,10 @@ function useViewerFiltersIntegration() {
     const allMatchingObjectIds = new Set<string>()
 
     for (const filterConfig of filtersWithValues) {
-      const matchingObjectIds = getObjectIdsForFilter(filterConfig)
+      const matchingObjectIds = getObjectIdsForFilter({
+        ...filterConfig,
+        condition: filterConfig.condition || FilterCondition.Is
+      })
       matchingObjectIds.forEach((id) => allMatchingObjectIds.add(id))
     }
 
@@ -717,6 +776,7 @@ function useViewerFiltersIntegration() {
       filter: PropertyInfo
       selectedValues: string[]
       id: string
+      condition?: FilterCondition
     }>
   ) => {
     if (appliedFilters.length === 0) {
@@ -748,7 +808,10 @@ function useViewerFiltersIntegration() {
       await instance.setColorFilter(filterConfig.filter)
     } else {
       // Specific values selected - color only those objects
-      const matchingObjectIds = getObjectIdsForFilter(filterConfig)
+      const matchingObjectIds = getObjectIdsForFilter({
+        ...filterConfig,
+        condition: filterConfig.condition || FilterCondition.Is
+      })
       if (matchingObjectIds.length > 0) {
         try {
           await instance.setUserObjectColors([
@@ -770,12 +833,13 @@ function useViewerFiltersIntegration() {
   const getObjectIdsForFilter = (filterConfig: {
     filter: PropertyInfo
     selectedValues: string[]
+    condition?: FilterCondition
   }): string[] => {
     const worldTree = instance.getWorldTree()
     if (!worldTree) return []
 
     const matchingIds: string[] = []
-    const { filter, selectedValues } = filterConfig
+    const { filter, selectedValues, condition = FilterCondition.Is } = filterConfig
 
     worldTree.walk((node) => {
       const nodeData = node.model.raw
@@ -793,8 +857,12 @@ function useViewerFiltersIntegration() {
           if (selectedValues.length === 0) {
             matchingIds.push(nodeData.id)
           } else {
-            // Check if this object's value is in the selected values
-            if (selectedValues.includes(valueStr)) {
+            // Check if this object's value matches the condition
+            const isInSelectedValues = selectedValues.includes(valueStr)
+
+            if (condition === FilterCondition.Is && isInSelectedValues) {
+              matchingIds.push(nodeData.id)
+            } else if (condition === FilterCondition.IsNot && !isInSelectedValues) {
               matchingIds.push(nodeData.id)
             }
           }
@@ -847,37 +915,38 @@ function useViewerFiltersIntegration() {
     { immediate: true, flush: 'sync' }
   )
 
+  // OLD FILTER SYSTEM - DISABLED IN FAVOR OF DATA STORE
   // Watch new multi-filter system
-  watch(
-    () => filters.activeFilters.value,
-    async (activeFilters) => {
-      await applyMultipleFilters(activeFilters)
-    },
-    { immediate: true, flush: 'sync', deep: true }
-  )
+  // watch(
+  //   () => filters.activeFilters.value,
+  //   async (activeFilters) => {
+  //     await applyMultipleFilters(activeFilters)
+  //   },
+  //   { immediate: true, flush: 'sync', deep: true }
+  // )
 
-  // Also watch for changes in selected values to trigger isolation immediately
-  watch(
-    () =>
-      filters.activeFilters.value.map((f) => ({
-        id: f.id,
-        selectedValues: f.selectedValues
-      })),
-    async () => {
-      // Get filters that have selected values (for isolation)
-      const filtersWithValues = filters.activeFilters.value.filter(
-        (f) => f.filter !== null && f.selectedValues.length > 0
-      )
-      await applyIsolation(
-        filtersWithValues.map((f) => ({
-          filter: f.filter!,
-          selectedValues: f.selectedValues,
-          id: f.id
-        }))
-      )
-    },
-    { deep: true, flush: 'sync' }
-  )
+  // // Also watch for changes in selected values to trigger isolation immediately
+  // watch(
+  //   () =>
+  //     filters.activeFilters.value.map((f) => ({
+  //       id: f.id,
+  //       selectedValues: f.selectedValues
+  //     })),
+  //   async () => {
+  //     // Get filters that have selected values (for isolation)
+  //     const filtersWithValues = filters.activeFilters.value.filter(
+  //       (f) => f.filter !== null && f.selectedValues.length > 0
+  //     )
+  //     await applyIsolation(
+  //       filtersWithValues.map((f) => ({
+  //         filter: f.filter!,
+  //         selectedValues: f.selectedValues,
+  //         id: f.id
+  //       }))
+  //     )
+  //   },
+  //   { deep: true, flush: 'sync' }
+  // )
 
   useOnViewerLoadComplete(
     async () => {

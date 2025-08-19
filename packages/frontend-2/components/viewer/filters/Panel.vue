@@ -23,6 +23,30 @@
       </div>
     </template>
 
+    <!-- Filter Logic Selection -->
+    <div
+      v-if="activeFilters.length > 0"
+      class="px-3 pt-3 pb-2 border-b border-outline-2"
+    >
+      <FormSelectBase
+        name="filter-logic"
+        label="Filter Logic"
+        :model-value="filterLogicOptions.find((opt) => opt.value === filterLogic)"
+        :items="filterLogicOptions"
+        by="value"
+        @update:model-value="(val) => handleFilterLogicChange(val)"
+      >
+        <template #something-selected="{ value }">
+          <span class="text-foreground">
+            {{ Array.isArray(value) ? value[0]?.label : value?.label }}
+          </span>
+        </template>
+        <template #option="{ item }">
+          <span class="text-foreground">{{ item.label }}</span>
+        </template>
+      </FormSelectBase>
+    </div>
+
     <div class="h-full flex flex-col">
       <!-- Active Filters Section -->
       <div
@@ -91,37 +115,77 @@
                 label="Condition"
                 :model-value="
                   conditionOptions.find(
-                    (opt) => opt.value === (filter.condition || 'is')
+                    (opt) => opt.value === (filter.condition || FilterCondition.Is)
                   )
                 "
                 :items="conditionOptions"
+                by="value"
                 @update:model-value="(val) => handleConditionSelect(filter.id, val)"
-              />
+              >
+                <template #something-selected="{ value }">
+                  <span class="text-foreground">
+                    {{ Array.isArray(value) ? value[0]?.label : value?.label }}
+                  </span>
+                </template>
+                <template #option="{ item }">
+                  <span class="text-foreground">{{ item.label }}</span>
+                </template>
+              </FormSelectBase>
             </div>
 
-            <!-- Filter Values with Checkboxes -->
-            <div
-              v-if="filter.filter"
-              class="max-h-48 overflow-y-auto overflow-x-hidden simple-scrollbar"
-            >
-              <div
-                v-for="value in getAvailableFilterValues(filter.filter)"
-                :key="value"
-                class="flex items-center justify-between gap-2 text-body-2xs pr-2 py-1 px-2 hover:bg-primary-muted"
-              >
-                <div class="flex items-center min-w-0">
-                  <FormCheckbox
-                    :name="`filter-${filter.id}-${value}`"
-                    :model-value="isActiveFilterValueSelected(filter.id, value)"
-                    hide-label
-                    @update:model-value="toggleActiveFilterValue(filter.id, value)"
-                  />
-                  <span class="flex-1 truncate text-foreground ml-2">
-                    {{ value }}
+            <!-- Filter Values - Different UI for numeric vs string -->
+            <div v-if="filter.filter" class="px-2">
+              <!-- Numeric Range Slider -->
+              <div v-if="isNumericPropertyInfo(filter.filter)" class="space-y-2">
+                <div class="flex justify-between text-body-3xs text-foreground-2">
+                  <span>{{ filter.filter.min }}</span>
+                  <span>{{ filter.filter.max }}</span>
+                </div>
+                <label :for="`range-${filter.id}`" class="sr-only">
+                  Range slider for {{ getPropertyName(filter.filter.key) }}
+                </label>
+                <input
+                  :id="`range-${filter.id}`"
+                  type="range"
+                  :min="filter.filter.min"
+                  :max="filter.filter.max"
+                  :value="filter.filter.passMin || filter.filter.min"
+                  class="w-full"
+                  @input="handleNumericRangeChange(filter.id, $event)"
+                />
+                <div class="flex gap-2 text-body-3xs">
+                  <span class="text-foreground-2">Range:</span>
+                  <span>
+                    {{ filter.filter.passMin || filter.filter.min }} -
+                    {{ filter.filter.passMax || filter.filter.max }}
                   </span>
                 </div>
-                <div class="shrink-0 text-foreground-2 text-body-3xs">
-                  {{ getValueCount(filter.filter, value) }}
+              </div>
+
+              <!-- String Checkboxes -->
+              <div
+                v-else
+                class="max-h-48 overflow-y-auto overflow-x-hidden simple-scrollbar"
+              >
+                <div
+                  v-for="value in getAvailableFilterValues(filter.filter)"
+                  :key="value"
+                  class="flex items-center justify-between gap-2 text-body-2xs pr-2 py-1 px-2 hover:bg-primary-muted"
+                >
+                  <div class="flex items-center min-w-0">
+                    <FormCheckbox
+                      :name="`filter-${filter.id}-${value}`"
+                      :model-value="isActiveFilterValueSelected(filter.id, value)"
+                      hide-label
+                      @update:model-value="toggleActiveFilterValue(filter.id, value)"
+                    />
+                    <span class="flex-1 truncate text-foreground ml-2">
+                      {{ value }}
+                    </span>
+                  </div>
+                  <div class="shrink-0 text-foreground-2 text-body-3xs">
+                    {{ getValueCount(filter.filter, value) }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -178,10 +242,15 @@
 <script setup lang="ts">
 import type { PropertyInfo } from '@speckle/viewer'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { FilterCondition, FilterLogic } from '~/lib/viewer/helpers/filters/types'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { isNumericPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
 import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
-import { X, Plus, Search, CaseLower, Hash, ToggleLeft } from 'lucide-vue-next'
+import {
+  useObjectDataStore,
+  type QueryCriteria
+} from '~~/composables/viewer/useObjectDataStore'
+import { X, Plus, Search, CaseLower, Hash } from 'lucide-vue-next'
 import { FormButton, FormSelectBase } from '@speckle/ui-components'
 
 const {
@@ -204,6 +273,9 @@ const {
   metadata: { availableFilters: allFilters }
 } = useInjectedViewer()
 
+// Initialize object data store
+const objectDataStore = useObjectDataStore()
+
 const relevantFilters = computed(() => {
   return getRelevantFilters(allFilters.value)
 })
@@ -211,12 +283,9 @@ const relevantFilters = computed(() => {
 // Helper function to get property type icon
 const getPropertyTypeIcon = (type: string) => {
   switch (type) {
-    case 'string':
-      return CaseLower
     case 'number':
       return Hash
-    case 'boolean':
-      return ToggleLeft
+    case 'string':
     default:
       return CaseLower
   }
@@ -227,24 +296,7 @@ const getPropertyType = (filter: PropertyInfo): string => {
   if (isNumericPropertyInfo(filter)) {
     return 'number'
   }
-  // Check if it's a boolean type using the same type guard pattern
-  const hasValueGroups = (
-    f: PropertyInfo
-  ): f is PropertyInfo & {
-    valueGroups: Array<{ value: unknown; ids?: string[] }>
-  } => {
-    return (
-      'valueGroups' in f &&
-      Array.isArray((f as unknown as Record<string, unknown>).valueGroups)
-    )
-  }
-
-  if (
-    hasValueGroups(filter) &&
-    filter.valueGroups.some((vg) => typeof vg.value === 'boolean')
-  ) {
-    return 'boolean'
-  }
+  // According to PropertyInfo interface, only 'number' and 'string' types exist
   return 'string'
 }
 
@@ -270,14 +322,22 @@ const propertySelectOptions = computed(() => {
   )
 })
 
-// Options for condition dropdown
 const conditionOptions = [
-  { value: 'is', label: 'is' },
-  { value: 'is_not', label: 'is not' },
-  { value: 'contains', label: 'contains' },
-  { value: 'starts_with', label: 'starts with' },
-  { value: 'ends_with', label: 'ends with' }
+  { value: FilterCondition.Is, label: 'is' },
+  { value: FilterCondition.IsNot, label: 'is not' }
 ]
+
+// Filter logic options
+const filterLogicOptions = [
+  { value: FilterLogic.All, label: 'Match all rules' },
+  { value: FilterLogic.Any, label: 'Match any rule' }
+]
+
+// Filter logic state
+const filterLogic = ref<FilterLogic>(FilterLogic.All)
+
+// Initialize data store logic
+objectDataStore.setFilterLogic(filterLogic.value)
 
 const speckleTypeFilter = computed(() =>
   relevantFilters.value.find((f: PropertyInfo) => f.key === 'speckle_type')
@@ -311,6 +371,48 @@ const colors = computed(() => !!propertyFilter.isApplied.value)
 const showPropertySelection = ref(false)
 const propertySearch = ref('')
 
+// Watch for filter changes and update data store slices
+watch(
+  () => activeFilters.value,
+  (newFilters) => {
+    // Clear existing slices from this panel
+    const existingSlices = objectDataStore.dataSlices.value.filter((slice) =>
+      slice.id.startsWith('filter-panel-')
+    )
+
+    existingSlices.forEach((slice) => objectDataStore.popSlice(slice))
+
+    // Create new slices for filters with selected values
+    newFilters.forEach((filter) => {
+      if (filter.filter && filter.selectedValues.length > 0) {
+        const queryCriteria: QueryCriteria = {
+          propertyKey: filter.filter.key,
+          condition: filter.condition,
+          values: filter.selectedValues
+        }
+
+        const matchingObjectIds = objectDataStore.queryObjects(queryCriteria)
+
+        const slice = {
+          id: `filter-panel-${filter.id}`,
+          name: `${getPropertyName(filter.filter.key)} ${
+            filter.condition === FilterCondition.Is ? 'is' : 'is not'
+          } ${filter.selectedValues.join(', ')}`,
+          objectIds: matchingObjectIds
+        }
+
+        objectDataStore.pushOrReplaceSlice(slice)
+      }
+    })
+  },
+  { deep: true, immediate: true }
+)
+
+// Watch for filter logic changes and update data store
+watch(filterLogic, (newLogic) => {
+  objectDataStore.setFilterLogic(newLogic)
+})
+
 const addNewEmptyFilter = () => {
   // Show property selection in panel extension instead of immediately adding filter
   showPropertySelection.value = true
@@ -331,7 +433,7 @@ const selectProperty = (propertyKey: string) => {
     filter: relevantFilters.value.find((p) => p.key === propertyKey) || null,
     isApplied: false,
     selectedValues: [],
-    condition: 'is'
+    condition: FilterCondition.Is
   })
 
   // Hide property selection
@@ -396,10 +498,15 @@ const handleConditionSelect = (
   val: { value: string; label: string } | { value: string; label: string }[] | undefined
 ) => {
   if (val && !Array.isArray(val)) {
-    updateFilterCondition(
-      filterId,
-      val.value as 'is' | 'is_not' | 'contains' | 'starts_with' | 'ends_with'
-    )
+    updateFilterCondition(filterId, val.value as FilterCondition)
+  }
+}
+
+const handleFilterLogicChange = (
+  val: { value: string; label: string } | { value: string; label: string }[] | undefined
+) => {
+  if (val && !Array.isArray(val)) {
+    filterLogic.value = val.value as FilterLogic
   }
 }
 
@@ -422,6 +529,14 @@ const getValueCount = (filter: PropertyInfo, value: string): number => {
   }
 
   return 0
+}
+
+const handleNumericRangeChange = (filterId: string, event: Event) => {
+  const target = event.target as HTMLInputElement
+  const _value = parseFloat(target.value)
+
+  // For now, just update the passMin value
+  // TODO: Implement proper range handling with min/max values
 }
 
 // Handles a rather complicated ux flow: user sets a numeric filter which only makes sense with colors on. we set the force colors flag in that scenario, so we can revert it if user selects a non-numeric filter afterwards.

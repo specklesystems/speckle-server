@@ -80,6 +80,7 @@ import {
   type ViewerResource
 } from '@speckle/shared/viewer/route'
 import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
+import type { FilterCondition } from '~/lib/viewer/helpers/filters/types'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -305,7 +306,7 @@ export type InjectableViewerState = Readonly<{
           isApplied: boolean
           selectedValues: string[]
           id: string
-          condition: 'is' | 'is_not' | 'contains' | 'starts_with' | 'ends_with'
+          condition: FilterCondition
         }>
       >
       hasAnyFiltersApplied: ComputedRef<boolean>
@@ -1094,7 +1095,7 @@ function setupInterfaceState(
       isApplied: boolean
       selectedValues: string[]
       id: string
-      condition: 'is' | 'is_not' | 'contains' | 'starts_with' | 'ends_with'
+      condition: FilterCondition
     }>
   >([])
   const hasAnyFiltersApplied = computed(() => {
