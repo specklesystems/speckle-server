@@ -45,10 +45,17 @@ export function useRouteHashState() {
     set: async (newVal) => {
       const hashString = serializeHashState(newVal)
 
-      await router.push(() => ({
-        query: route.query,
-        hash: hashString
-      }))
+      await router.push(
+        () => ({
+          query: route.query,
+          hash: hashString
+        }),
+        {
+          skipIf: (to) => {
+            return (to.hash || '') === route.hash
+          }
+        }
+      )
     },
     initialState: {},
     asyncRead: false

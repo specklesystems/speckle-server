@@ -45,6 +45,7 @@
 import type {
   FormUsersSelectItemFragment,
   ProjectLatestModelsPaginationQueryVariables,
+  ProjectPageLatestItemsModelItemFragment,
   ProjectPageLatestItemsModelsFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
@@ -59,7 +60,14 @@ import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
-  (e: 'model-clicked', v: { id: string; e: MouseEvent | KeyboardEvent }): void
+  (
+    e: 'model-clicked',
+    v: {
+      id: string
+      e: MouseEvent | KeyboardEvent
+      model: ProjectPageLatestItemsModelItemFragment | undefined
+    }
+  ): void
   (e: 'clear-search'): void
 }>()
 

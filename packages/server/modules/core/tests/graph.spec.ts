@@ -66,8 +66,16 @@ import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
+import { GetAllAvailableScopesDocument } from '@/modules/core/graph/generated/graphql'
+import {
+  createTestContext,
+  testApolloServer,
+  type TestApolloServer
+} from '@/test/graphqlHelper'
+import { AllScopes } from '@/modules/core/helpers/mainConstants'
 
-const { FF_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
+const { FF_PERSONAL_PROJECTS_LIMITS_ENABLED, FF_USERS_INVITE_SCOPE_IS_PUBLIC } =
+  getFeatureFlags()
 
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -133,6 +141,7 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
 let app: Express
 let server: Server
 let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
+let apollo: TestApolloServer
 
 const changeUserRole = changeUserRoleFactory({
   getServerInfo,
@@ -218,6 +227,16 @@ const changeUserRole = changeUserRoleFactory({
           Scopes.Profile.Email
         ]
       )}`
+
+      apollo = await testApolloServer({
+        context: await createTestContext({
+          auth: true,
+          userId: userA.id,
+          role: Roles.Server.Admin,
+          token: 'asd',
+          scopes: AllScopes
+        })
+      })
 
       // Prepare API tokens for use in tests
       const res1 = await sendRequest(userA.token, {
@@ -1949,6 +1968,29 @@ const changeUserRole = changeUserRoleFactory({
         expect(si.scopes).to.be.a('array')
         expect(si.configuration.objectSizeLimitBytes).to.be.a('number')
         expect(si.configuration.objectMultipartUploadSizeLimitBytes).to.be.a('number')
+      })
+
+      describe(`FF_USERS_INVITE_SCOPE_IS_PUBLIC is ${
+        FF_USERS_INVITE_SCOPE_IS_PUBLIC ? 'enabled' : 'disabled'
+      }`, () => {
+        it(`serverInfo scopes ${
+          FF_USERS_INVITE_SCOPE_IS_PUBLIC ? 'include' : 'do not include'
+        } users:invite scope`, async () => {
+          const { data, errors } = await apollo.execute(
+            GetAllAvailableScopesDocument,
+            {}
+          )
+
+          if (FF_USERS_INVITE_SCOPE_IS_PUBLIC) {
+            expect(data?.serverInfo.scopes).to.be.ok
+            expect(data?.serverInfo.scopes).to.include(Scopes.Users.Invite)
+            expect(errors).not.to.be.ok
+          } else {
+            expect(data?.serverInfo.scopes).to.be.ok
+            expect(data?.serverInfo.scopes).to.not.include(Scopes.Users.Invite)
+            expect(errors).not.to.be.ok
+          }
+        })
       })
 
       it('Should update the server info object', async () => {

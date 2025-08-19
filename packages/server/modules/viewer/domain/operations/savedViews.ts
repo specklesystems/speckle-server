@@ -45,6 +45,7 @@ export type GetProjectSavedViewGroupsBaseParams = {
   projectId: string
   resourceIdString: string
   onlyAuthored?: MaybeNullOrUndefined<boolean>
+  onlyVisibility?: MaybeNullOrUndefined<SavedViewVisibility>
   search?: MaybeNullOrUndefined<string>
 }
 
@@ -74,6 +75,7 @@ export type GetGroupSavedViewsBaseParams = {
    */
   groupId: MaybeNullOrUndefined<string>
   onlyAuthored?: MaybeNullOrUndefined<boolean>
+  onlyVisibility?: MaybeNullOrUndefined<SavedViewVisibility>
   search?: MaybeNullOrUndefined<string>
 }
 
@@ -150,6 +152,23 @@ export type UpdateSavedViewGroupRecord = <
   projectId: string
   update: Update
 }) => Promise<SavedViewGroup | undefined>
+
+export type GetModelHomeSavedViews = (params: {
+  requests: Array<{ modelId: string; projectId: string }>
+}) => Promise<{
+  [modelId: string]: SavedView | undefined
+}>
+
+export type GetModelHomeSavedView = (params: {
+  modelId: string
+  projectId: string
+}) => Promise<SavedView | undefined>
+
+export type SetNewHomeView = (params: {
+  projectId: string
+  modelId: string
+  newHomeViewId: string | null
+}) => Promise<boolean>
 
 /////////////////////
 // SERVICE OPERATIONS:

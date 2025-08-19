@@ -78,7 +78,7 @@
       </template>
       <template #email="{ item }">
         <div class="flex">
-          <span class="text-foreground-2 truncate">
+          <span class="text-foreground truncate">
             {{ item.email }}
           </span>
         </div>
@@ -90,7 +90,7 @@
         />
       </template>
       <template #joined="{ item }">
-        <span class="text-foreground-2">{{ formattedFullDate(item.joinDate) }}</span>
+        <span class="text-foreground">{{ formattedFullDate(item.joinDate) }}</span>
       </template>
       <template #actions="{ item }">
         <SettingsWorkspacesMembersActionsMenu

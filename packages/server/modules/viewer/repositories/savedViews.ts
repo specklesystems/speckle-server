@@ -1,5 +1,9 @@
-import { buildTableHelper } from '@/modules/core/dbSchema'
-import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
+import { Branches, buildTableHelper } from '@/modules/core/dbSchema'
+import type { Model } from '@/modules/core/domain/branches/types'
+import {
+  compositeCursorTools,
+  formatJsonArrayRecords
+} from '@/modules/shared/helpers/dbHelper'
 import type {
   GetGroupSavedViewsBaseParams,
   GetGroupSavedViewsPageItems,
@@ -20,7 +24,10 @@ import type {
   GetSavedView,
   GetStoredViewGroupCount,
   DeleteSavedViewGroupRecord,
-  UpdateSavedViewGroupRecord
+  UpdateSavedViewGroupRecord,
+  GetModelHomeSavedViews,
+  GetModelHomeSavedView,
+  SetNewHomeView
 } from '@/modules/viewer/domain/operations/savedViews'
 import {
   SavedViewVisibility,
@@ -98,7 +105,8 @@ const buildDefaultGroup = (params: {
 
 const tables = {
   savedViews: (db: Knex) => db<SavedView>(SavedViews.name),
-  savedViewGroups: (db: Knex) => db<SavedViewGroup>(SavedViewGroups.name)
+  savedViewGroups: (db: Knex) => db<SavedViewGroup>(SavedViewGroups.name),
+  branches: (db: Knex) => db<Model>(Branches.name)
 }
 
 export const storeSavedViewFactory =
@@ -144,8 +152,14 @@ export const getStoredViewGroupCountFactory =
 const getProjectSavedViewGroupsBaseQueryFactory =
   (deps: { db: Knex }) => async (params: GetProjectSavedViewGroupsBaseParams) => {
     const { projectId, resourceIdString, search, userId } = params
+
     const onlyAuthored = params.onlyAuthored && userId
-    const isFiltering = search || onlyAuthored
+    const onlyVisibility =
+      params.onlyVisibility === SavedViewVisibility.authorOnly && !userId
+        ? undefined
+        : params.onlyVisibility
+
+    const isFiltering = search || onlyVisibility || onlyAuthored
     const resourceIds = formatResourceIdsForGroup(resourceIdString)
 
     /**
@@ -183,9 +197,16 @@ const getProjectSavedViewGroupsBaseQueryFactory =
         query.andWhereRaw('false')
       }
 
-      // checking authored only on views (in case of groups, they're joined on)
-      if (onlyAuthored) {
-        query.andWhere({ [SavedViews.col.authorId]: userId })
+      // checking visibility/authorship but ONLY for view query - groups query should return everything still
+      if ((onlyAuthored || onlyVisibility) && mode === 'view') {
+        if (onlyAuthored || onlyVisibility === SavedViewVisibility.authorOnly) {
+          query.andWhere({ [SavedViews.col.authorId]: userId })
+        }
+
+        // filter by visibility, if needed
+        if (onlyVisibility) {
+          query.andWhere({ [SavedViews.col.visibility]: onlyVisibility })
+        }
       } else if (mode === 'view') {
         query.andWhere((w1) => {
           w1.andWhere(SavedViews.col.visibility, SavedViewVisibility.public)
@@ -226,6 +247,9 @@ const getProjectSavedViewGroupsBaseQueryFactory =
 
     /**
      * Check if default group should be shown
+     * - We wanna show it always unless if we're searching, then check for
+     * specific views
+     * - Unless if there's no views in the default group at all, in which case don't show the default group
      */
     const ungroupedViewFound = await applyFilters(
       tables.savedViews(deps.db),
@@ -237,7 +261,7 @@ const getProjectSavedViewGroupsBaseQueryFactory =
 
     const includeDefaultGroup = Boolean(ungroupedViewFound) || ungroupedSearchString
 
-    return { q, resourceIds, isFiltering, includeDefaultGroup }
+    return { q, resourceIds, includeDefaultGroup }
   }
 
 export const getProjectSavedViewGroupsTotalCountFactory =
@@ -306,7 +330,12 @@ export const getProjectSavedViewGroupsPageItemsFactory =
 const getGroupSavedViewsBaseQueryFactory =
   (deps: { db: Knex }) => (params: GetGroupSavedViewsBaseParams) => {
     const { projectId, groupResourceIdString, groupId, search, userId } = params
+
     const onlyAuthored = params.onlyAuthored && userId
+    const onlyVisibility =
+      params.onlyVisibility === SavedViewVisibility.authorOnly && !userId
+        ? undefined
+        : params.onlyVisibility
 
     const q = tables
       .savedViews(deps.db)
@@ -329,8 +358,16 @@ const getGroupSavedViewsBaseQueryFactory =
       q.whereRaw('?? && ?', [SavedViews.col.groupResourceIds, groupResourceIds])
     }
 
-    if (onlyAuthored) {
-      q.where({ [SavedViews.col.authorId]: userId })
+    // checking visibility/authorship
+    if (onlyAuthored || onlyVisibility) {
+      if (onlyAuthored || onlyVisibility === SavedViewVisibility.authorOnly) {
+        q.andWhere({ [SavedViews.col.authorId]: userId })
+      }
+
+      // filter by visibility, if needed
+      if (onlyVisibility) {
+        q.andWhere({ [SavedViews.col.visibility]: onlyVisibility })
+      }
     } else {
       q.andWhere((w1) => {
         w1.andWhere(SavedViews.col.visibility, SavedViewVisibility.public)
@@ -602,4 +639,91 @@ export const updateSavedViewGroupRecordFactory =
       .update(update, '*')
 
     return updatedGroup
+  }
+
+export const getModelHomeSavedViewsFactory =
+  (deps: { db: Knex }): GetModelHomeSavedViews =>
+  async (params) => {
+    const { requests } = params
+
+    const q = tables
+      .branches(deps.db)
+      // there should really only be 1 group per 1 view, but the schema does technically
+      // allow for multiple
+      .select<Array<{ modelId: string; views: SavedView[] }>>([
+        Branches.colAs('id', 'modelId'),
+        SavedViews.groupArray('views')
+      ])
+      .whereIn(
+        [Branches.col.id, Branches.col.streamId],
+        requests.map((r) => [r.modelId, r.projectId])
+      )
+      .innerJoin(SavedViews.name, (j1) => {
+        j1.on(
+          deps.db.raw('?? && ARRAY[??]', [
+            SavedViews.col.groupResourceIds,
+            Branches.col.id
+          ])
+        )
+          .andOnVal(SavedViews.col.isHomeView, true)
+          .andOnVal(SavedViews.col.visibility, SavedViewVisibility.public) // public only
+      })
+      .groupBy('modelId')
+
+    const modelViews = (await q).map(({ modelId, views }) => {
+      const formattedViews = formatJsonArrayRecords(views)
+      return {
+        modelId,
+        view: formattedViews.at(0)
+      }
+    })
+
+    const viewsMap: { [modelId: string]: SavedView | undefined } = {}
+    for (const { modelId, view } of modelViews) {
+      viewsMap[modelId] = view
+    }
+    return viewsMap
+  }
+
+export const getModelHomeSavedViewFactory =
+  (deps: { db: Knex }): GetModelHomeSavedView =>
+  async (params) => {
+    const { modelId, projectId } = params
+    const ret = await getModelHomeSavedViewsFactory(deps)({
+      requests: [
+        {
+          modelId,
+          projectId
+        }
+      ]
+    })
+    const [view] = Object.values(ret)
+    return view
+  }
+
+export const setNewHomeViewFactory =
+  (deps: { db: Knex }): SetNewHomeView =>
+  async (params) => {
+    const { projectId, modelId, newHomeViewId } = params
+
+    const q = tables
+      .savedViews(deps.db)
+      .where({
+        [SavedViews.col.projectId]: projectId,
+        [SavedViews.col.groupResourceIds]: [modelId]
+      })
+      .update({
+        [SavedViews.short.col.isHomeView]: newHomeViewId
+          ? deps.db.raw(
+              `
+          CASE WHEN ?? = ? THEN true ELSE false END
+          `,
+              [SavedViews.col.id, newHomeViewId]
+            )
+          : false
+      })
+
+    await q
+
+    return true
   }

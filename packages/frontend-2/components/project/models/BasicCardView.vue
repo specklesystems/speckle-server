@@ -12,7 +12,14 @@
       height="h-32 sm:h-64"
       :disable-default-link="disableDefaultLinks"
       :style="`z-index: ${items.length - i};`"
-      @click="($event) => $emit('model-clicked', { id: item.id, e: $event })"
+      @click="
+        ($event) =>
+          $emit('model-clicked', {
+            id: item.id,
+            e: $event,
+            model: isPendingModelFragment(item) ? undefined : item
+          })
+      "
     />
   </div>
 </template>
@@ -23,9 +30,17 @@ import type {
   ProjectPageLatestItemsModelItemFragment,
   ProjectPageModelsCardProjectFragment
 } from '~/lib/common/generated/gql/graphql'
+import { isPendingModelFragment } from '~/lib/projects/helpers/models'
 
 defineEmits<{
-  (e: 'model-clicked', v: { id: string; e: MouseEvent | KeyboardEvent }): void
+  (
+    e: 'model-clicked',
+    v: {
+      id: string
+      e: MouseEvent | KeyboardEvent
+      model: ProjectPageLatestItemsModelItemFragment | undefined
+    }
+  ): void
 }>()
 
 const props = withDefaults(
