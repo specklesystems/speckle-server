@@ -175,20 +175,18 @@ export function useViewerContextMenu(params: {
 
   // Close context menu when selection changes
   watch(
-    () => filters.selectedObjects.value,
-    (newSelection, oldSelection) => {
-      if (contextMenuState.value.isVisible && newSelection !== oldSelection) {
+    () => filters.selectedObjectIds.value,
+    (newSelectionIds) => {
+      if (contextMenuState.value.isVisible) {
         const currentMenuObjectId = contextMenuState.value.selectedObjectId
-        const isCurrentObjectStillSelected = newSelection.some(
-          (obj) => obj.id === currentMenuObjectId
+        const isCurrentObjectStillSelected = newSelectionIds.has(
+          currentMenuObjectId || ''
         )
-
         if (!isCurrentObjectStillSelected) {
           closeContextMenu()
         }
       }
-    },
-    { deep: true }
+    }
   )
 
   return {
