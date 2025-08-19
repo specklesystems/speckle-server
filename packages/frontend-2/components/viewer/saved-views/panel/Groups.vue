@@ -2,16 +2,20 @@
   <div v-if="isVeryFirstLoading" class="flex justify-center">
     <CommonLoadingIcon class="m-16" />
   </div>
-  <div v-else>
-    <ViewerSavedViewsPanelViewsEmptyState v-if="!hasGroups" :type="emptyStateType" />
+  <div v-else class="">
+    <ViewerSavedViewsPanelViewsEmptyState
+      v-if="!hasGroups || !project"
+      :type="emptyStateType"
+    />
     <div v-else class="p-2">
       <ViewerSavedViewsPanelViewsGroup
         v-for="group in groups"
         :key="group.id"
+        :views-type="viewsType"
         :group="group"
+        :project="project"
         :is-selected="isGroupSelected(group)"
         :rename-mode="isGroupInRenameMode(group)"
-        :only-authored="viewsType === ViewsType.My"
         @update:is-selected="(value) => (selectedGroupId = value ? group.id : null)"
         @update:rename-mode="(value) => (groupBeingRenamed = value ? group : undefined)"
         @delete-group="($event) => (groupBeingDeleted = $event)"
@@ -56,7 +60,8 @@ import type {
   ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroupFragment
 } from '~/lib/common/generated/gql/graphql'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
-import { ViewsType } from '~/lib/viewer/helpers/savedViews'
+import type { ViewsType } from '~/lib/viewer/helpers/savedViews'
+import { viewsTypeToFilters } from '~/lib/viewer/helpers/savedViews'
 
 graphql(`
   fragment ViewerSavedViewsPanelGroups_Project on Project {
@@ -69,6 +74,7 @@ graphql(`
         ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup
       }
     }
+    ...ViewerSavedViewsPanelViewsGroup_Project
   }
 `)
 
@@ -84,7 +90,7 @@ const paginableGroupsQuery = graphql(`
   }
 `)
 
-defineProps<{
+const props = defineProps<{
   viewsType: ViewsType
 }>()
 
@@ -120,7 +126,8 @@ const {
     savedViewGroupsInput: {
       resourceIdString: resourceIdString.value,
       cursor: null as null | string,
-      search: search.value?.trim() || null
+      search: search.value?.trim() || null,
+      ...viewsTypeToFilters(props.viewsType)
     }
   })),
   resolveKey: (vars) => ({
@@ -144,9 +151,8 @@ const hasGroups = computed(
 const isSearch = computed(() => search.value?.trim().length > 0)
 const emptyStateType = computed(() => (isSearch.value ? 'search' : 'base'))
 
-const groups = computed(() => {
-  return result.value?.project.savedViewGroups.items || []
-})
+const project = computed(() => result.value?.project)
+const groups = computed(() => project.value?.savedViewGroups.items || [])
 
 const showEditDialog = computed({
   get: () => !!viewBeingEdited.value,

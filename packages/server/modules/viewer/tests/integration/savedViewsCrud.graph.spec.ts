@@ -112,9 +112,6 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
  * - Test that default group can be resolved even if view has more specific resourceIds w/ versions
  * - Test that default group shows up or doesn't depending if there are views in it, regardless of
  * whether there's filtering
- *
- * Home view:
- * - Unset home view on others as u set it on a new one
  */
 
 ;(FF_SAVED_VIEWS_ENABLED ? describe : describe.skip)('Saved Views GraphQL CRUD', () => {
@@ -151,7 +148,8 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
                 resourceIdString: params.resourceIdString
               }
             }
-          })
+          }),
+        visibility: SavedViewVisibility.public
       },
       params.overrides || {}
     )
@@ -518,7 +516,13 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         })
 
         const res = await createSavedView(
-          buildCreateInput({ resourceIdString, viewerState })
+          buildCreateInput({
+            resourceIdString,
+            viewerState,
+            overrides: {
+              visibility: null // allow default
+            }
+          })
         )
 
         expect(res).to.not.haveGraphQLErrors()
@@ -537,7 +541,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           resourceIds.toResources().map((r) => r.toString())
         )
         expect(view!.isHomeView).to.be.false
-        expect(view!.visibility).to.equal('public') // default
+        expect(view!.visibility).to.equal(SavedViewVisibility.authorOnly) // default
         expect(view!.viewerState).to.deep.equalInAnyOrder(viewerState)
         expect(view!.screenshot).to.equal(fakeScreenshot)
         expect(view!.position).to.equal(0) // default position
@@ -1134,25 +1138,31 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
       })
 
       it('setting a new home view unsets home view from old one', async () => {
-        const res1 = await updateView({
-          input: {
-            id: testView.id,
-            projectId: updatablesProject.id,
-            isHomeView: true
-          }
-        })
+        const res1 = await updateView(
+          {
+            input: {
+              id: testView.id,
+              projectId: updatablesProject.id,
+              isHomeView: true
+            }
+          },
+          { assertNoErrors: true }
+        )
 
         const view1 = res1.data?.projectMutations.savedViewMutations.updateView
         expect(view1).to.be.ok
         expect(view1!.isHomeView).to.be.true
 
-        const res2 = await updateView({
-          input: {
-            id: testView2.id,
-            projectId: updatablesProject.id,
-            isHomeView: true
-          }
-        })
+        const res2 = await updateView(
+          {
+            input: {
+              id: testView2.id,
+              projectId: updatablesProject.id,
+              isHomeView: true
+            }
+          },
+          { assertNoErrors: true }
+        )
 
         const view2 = res2.data?.projectMutations.savedViewMutations.updateView
         expect(view2).to.be.ok
@@ -1751,8 +1761,14 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
       const SEARCH_STRING_VIEW_COUNT = GROUP_COUNT / 2
       const SEARCH_STRING_ITEM_COUNT = SEARCH_STRING_VIEW_COUNT + 1 // +1 for searchable group
 
-      const OTHER_AUTHOR_ITEM_COUNT = GROUP_COUNT / 4
+      // const OTHER_AUTHOR_ITEM_COUNT = GROUP_COUNT / 4
+      // const MY_ITEM_COUNT = GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT
+
       // const OTHER_AUTHOR_PRIVATE_ITEM_COUNT = OTHER_AUTHOR_ITEM_COUNT / 2
+      // const OTHER_AUTHOR_PUBLIC_ITEM_COUNT =
+      //   OTHER_AUTHOR_ITEM_COUNT - OTHER_AUTHOR_PRIVATE_ITEM_COUNT
+      // const PUBLIC_ITEM_COUNT = MY_ITEM_COUNT + OTHER_AUTHOR_PUBLIC_ITEM_COUNT
+
       const SEARCHABLE_GROUP_NAME_STRING = `${SEARCH_STRING}-you-can-find-me`
 
       const modelIds: string[] = []
@@ -2055,6 +2071,9 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
             limit: GROUP_COUNT, // all in 1 page
             resourceIdString: getAllReadModelResourceIds().toString(),
             onlyAuthored: true
+          },
+          viewsInput: {
+            onlyAuthored: true
           }
         })
 
@@ -2062,9 +2081,56 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
         const data = res.data?.project.savedViewGroups
         expect(data).to.be.ok
-        expect(data!.totalCount).to.equal(GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT)
-        expect(data!.items.length).to.equal(GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT)
+
+        // all groups are gonna be returned, except default
+        const expectedCount = GROUP_COUNT
+        expect(data!.totalCount).to.equal(expectedCount)
+        expect(data!.items.length).to.equal(expectedCount)
+
+        // but their views are filtered
+        for (const item of data!.items) {
+          const otherAuthor = item.views.items.find((i) => i.author?.id !== me.id)
+          expect(otherAuthor).to.not.be.ok
+        }
       })
+
+      itEach(
+        [SavedViewVisibility.authorOnly, SavedViewVisibility.public],
+        (visibility) => `should respect onlyVisibility === ${visibility}`,
+        async (onlyVisibility) => {
+          const isPrivate = onlyVisibility === SavedViewVisibility.authorOnly
+          const res = await getProjectViewGroups(
+            {
+              projectId: readTestProject.id,
+              input: {
+                limit: GROUP_COUNT, // all in 1 page
+                resourceIdString: getAllReadModelResourceIds().toString(),
+                onlyVisibility
+              },
+              viewsInput: {
+                onlyVisibility
+              }
+            },
+            {
+              authUserId: otherReader.id
+            }
+          )
+
+          expect(res).to.not.haveGraphQLErrors()
+
+          const expectedCount = isPrivate ? GROUP_COUNT - 1 : GROUP_COUNT
+          const data = res.data?.project.savedViewGroups
+          expect(data).to.be.ok
+          expect(data!.totalCount).to.equal(expectedCount)
+          expect(data!.items.length).to.equal(expectedCount)
+
+          expect(
+            data!.items.every((i) =>
+              i.views.items.every((v) => v.visibility === onlyVisibility)
+            )
+          ).to.be.true
+        }
+      )
 
       it('can retrieve default group both by id and also ungroupedViewGroup query', async () => {
         const allGroupsRes = await getProjectViewGroups(

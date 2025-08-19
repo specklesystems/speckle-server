@@ -152,8 +152,14 @@ export const getStoredViewGroupCountFactory =
 const getProjectSavedViewGroupsBaseQueryFactory =
   (deps: { db: Knex }) => async (params: GetProjectSavedViewGroupsBaseParams) => {
     const { projectId, resourceIdString, search, userId } = params
+
     const onlyAuthored = params.onlyAuthored && userId
-    const isFiltering = search || onlyAuthored
+    const onlyVisibility =
+      params.onlyVisibility === SavedViewVisibility.authorOnly && !userId
+        ? undefined
+        : params.onlyVisibility
+
+    const isFiltering = search || onlyVisibility || onlyAuthored
     const resourceIds = formatResourceIdsForGroup(resourceIdString)
 
     /**
@@ -191,9 +197,16 @@ const getProjectSavedViewGroupsBaseQueryFactory =
         query.andWhereRaw('false')
       }
 
-      // checking authored only on views (in case of groups, they're joined on)
-      if (onlyAuthored) {
-        query.andWhere({ [SavedViews.col.authorId]: userId })
+      // checking visibility/authorship but ONLY for view query - groups query should return everything still
+      if ((onlyAuthored || onlyVisibility) && mode === 'view') {
+        if (onlyAuthored || onlyVisibility === SavedViewVisibility.authorOnly) {
+          query.andWhere({ [SavedViews.col.authorId]: userId })
+        }
+
+        // filter by visibility, if needed
+        if (onlyVisibility) {
+          query.andWhere({ [SavedViews.col.visibility]: onlyVisibility })
+        }
       } else if (mode === 'view') {
         query.andWhere((w1) => {
           w1.andWhere(SavedViews.col.visibility, SavedViewVisibility.public)
@@ -234,6 +247,9 @@ const getProjectSavedViewGroupsBaseQueryFactory =
 
     /**
      * Check if default group should be shown
+     * - We wanna show it always unless if we're searching, then check for
+     * specific views
+     * - Unless if there's no views in the default group at all, in which case don't show the default group
      */
     const ungroupedViewFound = await applyFilters(
       tables.savedViews(deps.db),
@@ -245,7 +261,7 @@ const getProjectSavedViewGroupsBaseQueryFactory =
 
     const includeDefaultGroup = Boolean(ungroupedViewFound) || ungroupedSearchString
 
-    return { q, resourceIds, isFiltering, includeDefaultGroup }
+    return { q, resourceIds, includeDefaultGroup }
   }
 
 export const getProjectSavedViewGroupsTotalCountFactory =
@@ -314,7 +330,12 @@ export const getProjectSavedViewGroupsPageItemsFactory =
 const getGroupSavedViewsBaseQueryFactory =
   (deps: { db: Knex }) => (params: GetGroupSavedViewsBaseParams) => {
     const { projectId, groupResourceIdString, groupId, search, userId } = params
+
     const onlyAuthored = params.onlyAuthored && userId
+    const onlyVisibility =
+      params.onlyVisibility === SavedViewVisibility.authorOnly && !userId
+        ? undefined
+        : params.onlyVisibility
 
     const q = tables
       .savedViews(deps.db)
@@ -337,8 +358,16 @@ const getGroupSavedViewsBaseQueryFactory =
       q.whereRaw('?? && ?', [SavedViews.col.groupResourceIds, groupResourceIds])
     }
 
-    if (onlyAuthored) {
-      q.where({ [SavedViews.col.authorId]: userId })
+    // checking visibility/authorship
+    if (onlyAuthored || onlyVisibility) {
+      if (onlyAuthored || onlyVisibility === SavedViewVisibility.authorOnly) {
+        q.andWhere({ [SavedViews.col.authorId]: userId })
+      }
+
+      // filter by visibility, if needed
+      if (onlyVisibility) {
+        q.andWhere({ [SavedViews.col.visibility]: onlyVisibility })
+      }
     } else {
       q.andWhere((w1) => {
         w1.andWhere(SavedViews.col.visibility, SavedViewVisibility.public)

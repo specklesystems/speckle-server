@@ -700,6 +700,7 @@ export const modifyObjectField = <
           'search',
           'filter.search',
           'filter.onlyAuthored',
+          'filter.onlyVisibility',
           ...(isArray(autoEvictFiltered) ? autoEvictFiltered : [])
         ]
         const hasFilter = commonFilters.some(checkFilter)
