@@ -249,10 +249,12 @@ const getProjectSavedViewGroupsBaseQueryFactory =
      * Check if default group should be shown
      * - We wanna show it always unless if we're searching, then check for
      * specific views
+     * - Unless if there's no views in the default group at all, in which case don't show the default group
      */
-    const ungroupedViewFound = search
-      ? await applyFilters(tables.savedViews(deps.db), 'view').first()
-      : true
+    const ungroupedViewFound = await applyFilters(
+      tables.savedViews(deps.db),
+      'view'
+    ).first()
     const ungroupedSearchString = search
       ? ungroupedScenesGroupTitle.toLowerCase().includes(search)
       : null

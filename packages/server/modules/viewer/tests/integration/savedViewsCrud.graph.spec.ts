@@ -1761,13 +1761,13 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
       const SEARCH_STRING_VIEW_COUNT = GROUP_COUNT / 2
       const SEARCH_STRING_ITEM_COUNT = SEARCH_STRING_VIEW_COUNT + 1 // +1 for searchable group
 
-      const OTHER_AUTHOR_ITEM_COUNT = GROUP_COUNT / 4
-      const MY_ITEM_COUNT = GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT
+      // const OTHER_AUTHOR_ITEM_COUNT = GROUP_COUNT / 4
+      // const MY_ITEM_COUNT = GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT
 
-      const OTHER_AUTHOR_PRIVATE_ITEM_COUNT = OTHER_AUTHOR_ITEM_COUNT / 2
-      const OTHER_AUTHOR_PUBLIC_ITEM_COUNT =
-        OTHER_AUTHOR_ITEM_COUNT - OTHER_AUTHOR_PRIVATE_ITEM_COUNT
-      const PUBLIC_ITEM_COUNT = MY_ITEM_COUNT + OTHER_AUTHOR_PUBLIC_ITEM_COUNT
+      // const OTHER_AUTHOR_PRIVATE_ITEM_COUNT = OTHER_AUTHOR_ITEM_COUNT / 2
+      // const OTHER_AUTHOR_PUBLIC_ITEM_COUNT =
+      //   OTHER_AUTHOR_ITEM_COUNT - OTHER_AUTHOR_PRIVATE_ITEM_COUNT
+      // const PUBLIC_ITEM_COUNT = MY_ITEM_COUNT + OTHER_AUTHOR_PUBLIC_ITEM_COUNT
 
       const SEARCHABLE_GROUP_NAME_STRING = `${SEARCH_STRING}-you-can-find-me`
 
@@ -2071,6 +2071,9 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
             limit: GROUP_COUNT, // all in 1 page
             resourceIdString: getAllReadModelResourceIds().toString(),
             onlyAuthored: true
+          },
+          viewsInput: {
+            onlyAuthored: true
           }
         })
 
@@ -2078,8 +2081,17 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
         const data = res.data?.project.savedViewGroups
         expect(data).to.be.ok
-        expect(data!.totalCount).to.equal(GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT)
-        expect(data!.items.length).to.equal(GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT)
+
+        // all groups are gonna be returned, except default
+        const expectedCount = GROUP_COUNT
+        expect(data!.totalCount).to.equal(expectedCount)
+        expect(data!.items.length).to.equal(expectedCount)
+
+        // but their views are filtered
+        for (const item of data!.items) {
+          const otherAuthor = item.views.items.find((i) => i.author?.id !== me.id)
+          expect(otherAuthor).to.not.be.ok
+        }
       })
 
       itEach(
@@ -2094,6 +2106,9 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
                 limit: GROUP_COUNT, // all in 1 page
                 resourceIdString: getAllReadModelResourceIds().toString(),
                 onlyVisibility
+              },
+              viewsInput: {
+                onlyVisibility
               }
             },
             {
@@ -2103,9 +2118,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
           expect(res).to.not.haveGraphQLErrors()
 
-          const expectedCount = isPrivate
-            ? OTHER_AUTHOR_PRIVATE_ITEM_COUNT
-            : PUBLIC_ITEM_COUNT
+          const expectedCount = isPrivate ? GROUP_COUNT - 1 : GROUP_COUNT
           const data = res.data?.project.savedViewGroups
           expect(data).to.be.ok
           expect(data!.totalCount).to.equal(expectedCount)
