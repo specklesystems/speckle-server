@@ -78,7 +78,7 @@
       <ViewerSavedViewsPanelGroups
         v-model:selected-group-id="selectedGroupId"
         :views-type="selectedViewsType"
-        :search="searchMode ? search : undefined"
+        :search="searchMode ? search || undefined : undefined"
       />
     </div>
   </ViewerLayoutSidePanel>

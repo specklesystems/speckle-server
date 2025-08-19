@@ -207,7 +207,10 @@ watch(
   groups,
   (newGroups) => {
     if (newGroups.length && !selectedGroupId.value) {
-      selectedGroupId.value = newGroups[0].id
+      selectedGroupId.value =
+        (props.search
+          ? newGroups[0].id
+          : newGroups.find((g) => !g.isUngroupedViewsGroup)?.id) || null
     }
   },
   { immediate: true }
