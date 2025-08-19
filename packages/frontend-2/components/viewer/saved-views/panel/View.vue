@@ -64,7 +64,13 @@
         </div>
       </div>
       <div class="w-full flex items-center gap-1">
-        <Globe v-if="!isOnlyVisibleToMe" class="w-3 h-3" />
+        <Globe
+          v-if="!isOnlyVisibleToMe"
+          :size="12"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          class="w-3 h-3 text-foreground-2"
+        />
         <div
           v-tippy="formattedFullDate(view.updatedAt)"
           class="text-body-2xs text-foreground-3 truncate pr-1.5"
