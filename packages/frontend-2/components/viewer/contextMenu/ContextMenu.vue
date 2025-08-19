@@ -1,7 +1,6 @@
 <template>
   <div
     v-if="shouldShowContextMenu"
-    ref="contextMenuEl"
     class="absolute pointer-events-auto z-50"
     :style="contextMenuState.style"
   >
@@ -39,7 +38,6 @@ const props = defineProps<{
 }>()
 
 const isOpen = defineModel<boolean>('open', { default: false })
-const contextMenuEl = ref<HTMLElement>()
 
 const { contextMenuState, contextMenuItems, shouldShowContextMenu, onItemChosen } =
   useViewerContextMenu({
