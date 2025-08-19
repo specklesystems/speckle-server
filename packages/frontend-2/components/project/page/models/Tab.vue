@@ -36,15 +36,9 @@
 
         <div
           v-if="isDraggingFiles && canCreateModel"
-          class="absolute inset-0 bg-primary/10 border border-dashed border-primary rounded-lg flex items-center justify-center z-10"
+          class="absolute inset-0 bg-primary/10 border border-dashed border-primary rounded-lg flex items-center justify-center z-10 bg-white/50 dark:bg-black/50 text-center text-heading text-primary"
         >
-          <div class="text-center p-8">
-            <div class="text-heading-lg text-primary mb-2">Drop file to upload</div>
-            <div class="text-body-sm text-foreground-2">
-              Drop your IFC/OBJ/STL{{ isNextGenFileImporterEnabled ? '/SKP' : '' }} file
-              here to create a new model
-            </div>
-          </div>
+          Drop file to upload
         </div>
       </div>
     </FormFileUploadZone>
@@ -80,7 +74,6 @@ import {
   useFileImport,
   useGlobalFileImportManager
 } from '~~/lib/core/composables/fileImport'
-import { useIsNextGenFileImporterEnabled } from '~/composables/globals'
 import type { ProjectPageLatestItemsModelItemFragment } from '~/lib/common/generated/gql/graphql'
 
 const route = useRoute()
@@ -99,7 +92,6 @@ const { result } = useQuery(projectModelsPageQuery, () => ({
 const project = computed(() => result.value?.project)
 
 // File upload logic
-const isNextGenFileImporterEnabled = useIsNextGenFileImporterEnabled()
 const { addFailedJob } = useGlobalFileImportManager()
 const showNewModelDialog = ref(false)
 
