@@ -16608,6 +16608,7 @@ __metadata:
     eslint-plugin-vuejs-accessibility: "npm:^2.3.0"
     lodash: "npm:^4.0.0"
     lodash-es: "npm:^4.0.0"
+    lucide-vue-next: "npm:^0.537.0"
     nanoid: "npm:^3.0.0"
     postcss: "npm:^8.4.31"
     postcss-nesting: "npm:^10.2.0"
