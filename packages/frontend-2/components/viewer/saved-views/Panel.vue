@@ -6,7 +6,7 @@
       </div>
     </template>
     <template #actions>
-      <div v-if="!isLowerPlan" class="flex items-center">
+      <div v-if="!isLowerPlan" class="flex items-center gap-0.5">
         <FormButton
           v-if="false"
           size="sm"
