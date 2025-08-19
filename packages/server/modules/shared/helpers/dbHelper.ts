@@ -16,7 +16,6 @@ import { has, isObjectLike, isString, mapValues, pick, times } from 'lodash-es'
 import cryptoRandomString from 'crypto-random-string'
 import { logger } from '@/observability/logging'
 import { PromiseAllSettledResultStatus } from '@/modules/shared/domain/constants'
-import { logKnexConnections } from '@/test/hooks'
 
 export type Collection<T> = {
   cursor: string | null
@@ -427,7 +426,23 @@ export const replicateQuery = <F extends (...args: any[]) => Promise<any>>(
     console.log(`- ${preparedTransactionId} [end]`)
 
     // DEBUG: DELETE!
-    await logKnexConnections()
+    const a = (k: Knex) => ({
+      free: numberOfFreeConnections(k),
+      pool: {
+        free: k.client.pool.numFree(),
+        used: k.client.pool.numUsed(),
+        aq: k.client.pool.numPendingAcquires(),
+        cr: k.client.pool.numPendingCreates(),
+        val: k.client.pool.numPendingValidations()
+      }
+    })
+
+    const t = {}
+    for (const db of dbs) {
+      // @ts-expect-error remove plis
+      t[`${db.client.connectionSettings.connectionString}`] = a(db)
+    }
+    console.log(t)
 
     return returnValues.at(0) as F
   }) as unknown as RegionalOperation<F>
