@@ -179,10 +179,7 @@ export function useViewerContextMenu(params: {
     (newSelectionIds) => {
       if (contextMenuState.value.isVisible) {
         const currentMenuObjectId = contextMenuState.value.selectedObjectId
-        const isCurrentObjectStillSelected = newSelectionIds.has(
-          currentMenuObjectId || ''
-        )
-        if (!isCurrentObjectStillSelected) {
+        if (!newSelectionIds.has(currentMenuObjectId || '')) {
           closeContextMenu()
         }
       }
