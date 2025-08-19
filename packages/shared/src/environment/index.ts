@@ -133,18 +133,6 @@ export const parseFeatureFlags = (
         'Enables the legacy file importer. This proxies file uploads via REST API on the server instead of directly PUTing files to S3 via pre-signed urls.',
       defaults: { _: false }
     },
-    FF_LEGACY_IFC_IMPORTER_ENABLED: {
-      schema: z.boolean(),
-      description:
-        'Enables the legacy javascript based webIFC file importer (pre-2025). Even if disabled this importer can be accessed by appending `.legacyimporter.ifc` to the uploaded file name. This is deprecated and will be removed in the future.',
-      defaults: { _: false }
-    },
-    FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED: {
-      schema: z.boolean(),
-      description:
-        'Enables the IFC file importer based on IFCOpenShell (as of July 2025). Even if enabled, the previous webIFC & .Net importer can be accessed by appending `.dotnetimporter.ifc` to the uploaded file name.',
-      defaults: { _: false }
-    },
     FF_ACC_INTEGRATION_ENABLED: {
       schema: z.boolean(),
       description:
@@ -197,8 +185,6 @@ export type FeatureFlags = {
   FF_RHINO_FILE_IMPORTER_ENABLED: boolean
   FF_BACKGROUND_JOBS_ENABLED: boolean
   FF_LEGACY_FILE_IMPORTS_ENABLED: boolean
-  FF_LEGACY_IFC_IMPORTER_ENABLED: boolean
-  FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED: boolean
   FF_ACC_INTEGRATION_ENABLED: boolean
   FF_SAVED_VIEWS_ENABLED: boolean
   FF_USERS_INVITE_SCOPE_IS_PUBLIC: boolean
