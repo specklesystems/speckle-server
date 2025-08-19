@@ -102,22 +102,38 @@ const buttonTextClasses = computed(() => {
 const buttonClasses = computed(() => {
   let classParts: string[] = []
 
+  // Common classes shared between subtle and other variants
+  classParts = [
+    'w-full',
+    'flex',
+    'items-center',
+    'transition',
+    'group/disclosure',
+    buttonTextClasses.value
+  ]
+
   if (props.color === 'subtle') {
-    // Subtle variant gets completely different styling
-    classParts = [
-      'h-7 w-full flex items-center justify-normal pl-1 pr-0.5 rounded-md transition hover:bg-highlight-1',
-      'ring-none',
-      'group/disclosure',
-      buttonTextClasses.value
-    ]
+    // Subtle variant specific styling
+    classParts.push(
+      'h-7',
+      'justify-normal',
+      'pl-1',
+      'pr-0.5',
+      'rounded-md',
+      'hover:bg-highlight-1',
+      'ring-none'
+    )
   } else {
     // Default styling for other variants
-    classParts = [
-      'pr-3 h-10 w-full flex items-center justify-between border-l-2 px-2 rounded transition',
-      'ring-1',
-      'group/disclosure',
-      buttonTextClasses.value
-    ]
+    classParts.push(
+      'pr-3',
+      'h-10',
+      'justify-between',
+      'border-l-2',
+      'px-2',
+      'rounded',
+      'ring-1'
+    )
   }
 
   // Add color-specific styling
