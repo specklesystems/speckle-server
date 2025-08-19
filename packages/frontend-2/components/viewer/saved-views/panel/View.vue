@@ -11,13 +11,13 @@
         />
         <div
           v-if="isHomeView && !isFederatedView"
-          class="absolute -top-1 -left-1 bg-orange-500 w-4 h-4 flex items-center justify-center rounded-sm"
+          class="absolute -top-1 -left-1 bg-orange-500 w-4 h-4 flex items-center justify-center rounded-[3px]"
         >
-          <Bookmark class="text-white w-3 h-3" fill="currentColor" />
+          <Bookmark class="text-white w-3 h-3" fill="currentColor" stroke-width="0" />
         </div>
       </div>
     </div>
-    <div class="flex flex-col gap-1 min-w-0 grow">
+    <div class="flex flex-col min-w-0 grow">
       <div class="text-body-2xs font-medium text-foreground truncate grow-0">
         {{ view.name }}
       </div>
@@ -25,7 +25,7 @@
         <div class="text-body-2xs text-foreground-3 truncate">
           {{ view.author?.name }}
         </div>
-        <div class="flex items-center" @click.stop>
+        <div class="flex gap-0.5 items-center" @click.stop>
           <LayoutMenu
             v-model:open="showMenu"
             :items="menuItems"
@@ -205,7 +205,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
 ])
 
 const wrapperClasses = computed(() => {
-  const classParts = ['flex gap-2 p-2 w-full group rounded cursor-pointer']
+  const classParts = ['flex gap-2 p-2 pr-0.5 w-full group rounded-md cursor-pointer']
 
   if (isActive.value) {
     classParts.push('bg-highlight-2 hover:bg-highlight-3')
