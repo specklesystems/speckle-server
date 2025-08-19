@@ -1154,6 +1154,10 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.openTelemetry.tracing.value | quote }}
 {{- end }}
 
+{{- if .Values.featureFlags.usersInviteScopeIsPublic }}
+- name: FF_USERS_INVITE_SCOPE_IS_PUBLIC
+  value: {{ .Values.featureFlags.usersInviteScopeIsPublic | quote }}
+{{- end }}
 
 {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
 # Multi-region

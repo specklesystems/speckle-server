@@ -1,7 +1,8 @@
 <template>
   <button
-    class="group text-left relative border border-foreground-1 bg-foundation rounded p-1 hover:text-primary hover:bg-primary-muted transition cursor-pointer hover:shadow-md"
-    :class="selected ? 'border border-foreground-2 bg-foundation-focus' : ''"
+    :class="`group text-left relative border border-foreground-1 bg-foundation rounded p-1 hover:text-primary hover:bg-primary-muted transition hover:shadow-md ${
+      selected ? 'border border-foreground-2 bg-foundation-focus' : ''
+    } ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`"
     :disabled="disabled"
   >
     <div class="flex items-center space-x-2 max-[275px]:space-x-0">

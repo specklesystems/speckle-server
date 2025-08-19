@@ -55,6 +55,10 @@ input SavedViewGroupViewsInput {
   """
   onlyAuthored: Boolean
   """
+  Optionally filter by visibility. Setting this to 'authorOnly' is the equivalent of setting 'onlyAuthored' to true.
+  """
+  onlyVisibility: SavedViewVisibility
+  """
   Whether to only include views matching this search term
   """
   search: String
@@ -109,6 +113,10 @@ input SavedViewGroupsInput {
   Whether to only include groups that have names or views matching this search term
   """
   search: String
+  """
+  Optionally filter by visibility. Setting this to 'authorOnly' is the equivalent of setting 'onlyAuthored' to true.
+  """
+  onlyVisibility: SavedViewVisibility
   limit: Int
   cursor: String
 }
@@ -235,4 +243,11 @@ extend type Project {
   Same as savedView(), but won't throw if view isn't found
   """
   savedViewIfExists(id: ID): SavedView
+}
+
+extend type Model {
+  """
+  The model's home view, if any
+  """
+  homeView: SavedView
 }

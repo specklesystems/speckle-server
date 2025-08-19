@@ -98,6 +98,8 @@ export const useViewerRealtimeActivityTracker = () => {
   const state = useViewerRealtimeActivityState()
   const getMainMetadata = useCollectMainMetadata()
 
+  const serializer = (val: unknown) => JSON.stringify(val)
+
   const activity = computed({
     get: () => state.value.activity || getMainMetadata(),
     set: (value) => {
@@ -115,13 +117,13 @@ export const useViewerRealtimeActivityTracker = () => {
   const serializedState = computed(() => activity.value.state)
 
   // Ids for easy equality comparisons
-  const serializedStateId = computed(() => JSON.stringify(serializedState.value))
+  const serializedStateId = computed(() => serializer(serializedState.value))
   const activityId = computed(() => {
     const stateId = serializedStateId.value
     const otherActivity: Omit<ViewerActivityMetadata, 'state'> = omit(activity.value, [
       'state'
     ])
-    const otherActivityId = JSON.stringify(otherActivity)
+    const otherActivityId = serializer(otherActivity)
     return `${stateId}-${otherActivityId}-${status.value}`
   })
 
@@ -142,7 +144,15 @@ export const useViewerRealtimeActivityTracker = () => {
     state.value.status = ViewerUserActivityStatus.Viewing
   })
 
-  return { activity, serializedState, status, update, serializedStateId, activityId }
+  return {
+    activity,
+    serializedState,
+    status,
+    update,
+    serializedStateId,
+    activityId,
+    serializer
+  }
 }
 
 export function useViewerUserActivityBroadcasting(

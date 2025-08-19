@@ -4,6 +4,7 @@ import { onProjectVersionsPreviewGeneratedSubscription } from '~~/lib/projects/g
 import { useSubscription } from '@vue/apollo-composable'
 import { useLock } from '~~/lib/common/composables/singleton'
 import PreviewPlaceholder from '~~/assets/images/preview_placeholder.png'
+import { isValidBase64Image } from '@speckle/shared/images/base64'
 
 const previewUrlProjectIdRegexp = /\/preview\/([\w\d]+)\//i
 const previewUrlCommitIdRegexp = /\/commits\/([\w\d]+)/i
@@ -124,6 +125,13 @@ export function usePreviewImageBlob(
         return
       }
 
+      if (isValidBase64Image(basePreviewUrl)) {
+        // return as is
+        url.value = basePreviewUrl
+        hasDoneFirstLoad.value = true
+        return
+      }
+
       const blobUrlConfig = new URL(basePreviewUrl)
       blobUrlConfig.searchParams.set('v', cacheBust.value.toString())
       const blobUrl = blobUrlConfig.toString()
@@ -155,6 +163,11 @@ export function usePreviewImageBlob(
       isLoadingPanorama.value = true
       if (!basePreviewUrl) {
         url.value = PreviewPlaceholder
+        return
+      }
+
+      if (isValidBase64Image(basePreviewUrl)) {
+        panoramaUrl.value = null // panorama unsupported
         return
       }
 
