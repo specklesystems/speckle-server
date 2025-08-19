@@ -46,7 +46,10 @@ import { fixStackTrace } from '@/test/speckle-helpers/error'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 import * as mocha from 'mocha'
 import { getStalePreparedTransactionsFactory } from '@/modules/multiregion/repositories/transactions'
-import { rollbackPreparedTransaction } from '@/modules/shared/helpers/dbHelper'
+import {
+  numberOfFreeConnections,
+  rollbackPreparedTransaction
+} from '@/modules/shared/helpers/dbHelper'
 
 // Register chai plugins
 chai.use(chaiAsPromised)
@@ -314,6 +317,28 @@ export const truncateTables = async (
     const truncate = truncateTablesFactory({ db })
     await truncate(tableNames)
   }
+}
+
+export const logKnexConnections = async () => {
+  const dbs = [mainDb, ...Object.values(regionClients)]
+  const a = (k: Knex) => ({
+    free: numberOfFreeConnections(k),
+    pool: {
+      free: k.client.pool.numFree(),
+      used: k.client.pool.numUsed(),
+      aq: k.client.pool.numPendingAcquires(),
+      cr: k.client.pool.numPendingCreates(),
+      val: k.client.pool.numPendingValidations()
+    }
+  })
+
+  const t = {}
+  for (const db of dbs) {
+    // @ts-expect-error remove plis
+    t[`${db.client.connectionSettings.connectionString}`] = a(db)
+  }
+
+  console.log(t)
 }
 
 export const initializeTestServer = async (params: {

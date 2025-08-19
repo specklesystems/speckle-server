@@ -28,6 +28,10 @@ import type { MultiRegionConfig } from '@speckle/shared/environment/db'
 import { getConnectionSettings } from '@speckle/shared/environment/db'
 import { expect } from 'chai'
 import { merge } from 'lodash-es'
+import {
+  getRegisteredRegionClients,
+  resetRegisteredRegions
+} from '@/modules/multiregion/utils/dbSelector'
 
 const isEnabled = isMultiRegionEnabled()
 
@@ -74,6 +78,7 @@ isEnabled
       before(async () => {
         // Faking multi region config (but retain active config, in case were running multiregion tests)
         originalConfig = await getMultiRegionConfig()
+        console.log('original config before: ', Object.keys(originalConfig))
 
         const connectionUri = getConnectionSettings(mainDb).connectionString!
         const mainStorage = getMainObjectStorage()
@@ -110,6 +115,8 @@ isEnabled
       after(async () => {
         setMultiRegionConfig(originalConfig)
         await truncateRegionsSafely()
+        resetRegisteredRegions()
+        await getRegisteredRegionClients()
       })
 
       describe('server config', () => {
