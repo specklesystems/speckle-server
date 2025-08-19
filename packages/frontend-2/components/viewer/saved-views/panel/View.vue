@@ -7,7 +7,7 @@
         <img
           :src="view.screenshot"
           alt="View screenshot"
-          class="w-20 h-14 object-cover rounded border border-outline-3 bg-foundation-page cursor-pointer"
+          class="w-20 h-[60px] object-cover rounded border border-outline-3 bg-foundation-page cursor-pointer"
         />
         <div
           v-if="isHomeView && !isFederatedView"
