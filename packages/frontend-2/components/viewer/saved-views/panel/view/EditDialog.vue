@@ -52,6 +52,7 @@ import {
 import { isRequired, isStringOfLength } from '~/lib/common/helpers/validation'
 import { useUpdateSavedView } from '~/lib/viewer/composables/savedViews/management'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
+import { isUndefined } from 'lodash-es'
 
 graphql(`
   fragment ViewerSavedViewsPanelViewEditDialog_SavedView on SavedView {
@@ -128,22 +129,30 @@ const onSubmit = handleSubmit(async (values) => {
   const name =
     values.name.trim() && values.name.trim() !== props.view.name
       ? values.name.trim()
-      : null
+      : undefined
   const description =
     values.description?.trim() !== (props.view.description || undefined)
       ? values.description?.trim() || null
-      : null
+      : undefined
   const visibility =
-    values.visibility !== props.view.visibility ? values.visibility : null
-  const groupId = values.group.id !== props.view.group.id ? values.group.id : null
+    values.visibility !== props.view.visibility ? values.visibility : undefined
+  const groupId = values.group.id !== props.view.group.id ? values.group.id : undefined
+
+  const coreInput = {
+    ...(isUndefined(name) ? {} : { name }),
+    ...(isUndefined(description) ? {} : { description }),
+    ...(isUndefined(visibility) ? {} : { visibility }),
+    ...(isUndefined(groupId) ? {} : { groupId })
+  }
+  if (!Object.keys(coreInput).length) {
+    open.value = false
+    return
+  }
 
   const res = await updateView({
     view: props.view,
     input: {
-      name,
-      description,
-      visibility,
-      groupId,
+      ...coreInput,
       id: props.view.id,
       projectId: props.view.projectId
     }

@@ -8,11 +8,11 @@
     <template #actions>
       <div class="flex items-center">
         <FormButton
-          v-if="false"
           size="sm"
           color="subtle"
           :icon-left="Search"
           hide-text
+          @click="setSearchMode(true)"
         />
         <div v-tippy="canCreateViewOrGroup?.errorMessage" class="flex items-center">
           <FormButton
@@ -38,6 +38,27 @@
         </div>
       </div>
     </template>
+    <template v-if="searchMode" #fullTitle>
+      <div class="self-center w-full pr-2 flex gap-2 items-center">
+        <FormTextInput
+          v-bind="bind"
+          name="search"
+          placeholder="Search"
+          color="foundation"
+          auto-focus
+          v-on="on"
+        />
+        <FormButton
+          v-tippy="'Exit search'"
+          size="sm"
+          color="subtle"
+          :icon-left="X"
+          hide-text
+          name="disableSearch"
+          @click="setSearchMode(false)"
+        />
+      </div>
+    </template>
     <div class="px-4 pt-2">
       <ViewerButtonGroup>
         <ViewerButtonGroupButton
@@ -57,13 +78,14 @@
       <ViewerSavedViewsPanelGroups
         v-model:selected-group-id="selectedGroupId"
         :views-type="selectedViewsType"
+        :search="searchMode ? search : undefined"
       />
     </div>
   </ViewerLayoutSidePanel>
 </template>
 <script setup lang="ts">
 import { useMutationLoading } from '@vue/apollo-composable'
-import { Search, FolderPlus, Plus } from 'lucide-vue-next'
+import { Search, FolderPlus, Plus, X } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import { SavedViewVisibility } from '~/lib/common/generated/gql/graphql'
 import {
@@ -72,6 +94,7 @@ import {
 } from '~/lib/viewer/composables/savedViews/management'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { ViewsType, viewsTypeLabels } from '~/lib/viewer/helpers/savedViews'
+import { useDebouncedTextInput } from '@speckle/ui-components'
 
 graphql(`
   fragment ViewerSavedViewsPanel_Project on Project {
@@ -98,9 +121,11 @@ const {
 const createGroup = useCreateSavedViewGroup()
 const createSavedView = useCreateSavedView()
 const isLoading = useMutationLoading()
+const { on, bind, value: search } = useDebouncedTextInput()
 
 const selectedViewsType = ref<ViewsType>(ViewsType.Personal)
 const selectedGroupId = ref<string | null>(null)
+const searchMode = ref(false)
 
 const canCreateViewOrGroup = computed(
   () => project.value?.permissions.canCreateSavedView
@@ -130,5 +155,15 @@ const onAddGroup = async () => {
     // Auto-open the group
     selectedGroupId.value = group.id
   }
+}
+
+const setSearchMode = (val: boolean) => {
+  if (val) {
+    searchMode.value = true
+  } else {
+    searchMode.value = false
+  }
+
+  search.value = ''
 }
 </script>
