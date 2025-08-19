@@ -34,6 +34,8 @@
       @login="showLoginDialog = true"
     />
 
+    <ViewerContextMenu v-model:open="contextMenuOpen" :parent-el="parentEl" />
+
     <div v-if="!isEmbedEnabled">
       <!-- Active users -->
       <ViewerAnchoredPointUser
@@ -187,6 +189,7 @@ const {
 } = useInjectedViewerInterfaceState()
 
 const showLoginDialog = ref(false)
+const contextMenuOpen = ref(false)
 
 useViewerCommentBubblesProjection({ parentEl })
 
@@ -207,6 +210,7 @@ const onThreadUpdate = (thread: CommentBubbleModel) => {
 const onThreadExpandedChange = (isExpanded: boolean) => {
   if (isExpanded) {
     closeNewThread()
+    contextMenuOpen.value = false
   }
 }
 
@@ -302,6 +306,15 @@ watch(
     // If a thread opened (wasn't open before) on mobile, emit event
     if (newThread && !oldThread && isMobile.value) {
       emit('forceClosePanels')
+    }
+  }
+)
+
+watch(
+  () => contextMenuOpen.value,
+  (isOpen) => {
+    if (isOpen) {
+      closeNewThread()
     }
   }
 )

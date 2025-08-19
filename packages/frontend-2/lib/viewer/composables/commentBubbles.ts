@@ -12,9 +12,10 @@ import { debounce } from 'lodash-es'
 import { Vector3 } from 'three'
 import {
   useOnViewerLoadComplete,
-  useSelectionEvents,
-  useViewerCameraTracker
+  useViewerCameraTracker,
+  useSelectionEvents
 } from '~~/lib/viewer/composables/viewer'
+
 import {
   useGetScreenCenterObjectId,
   useViewerAnchoredPoints
@@ -100,19 +101,20 @@ export function useViewerNewThreadBubble(params: {
   }
 
   useSelectionEvents({
-    singleClickCallback: (_event, { firstVisibleSelectionHit }) => {
+    singleClickCallback: (event, { firstVisibleSelectionHit }) => {
       if (block?.value) return
+      if (!event?.event || event.event.button !== 0) return
 
       buttonState.value.isExpanded = false
-      if (!firstVisibleSelectionHit) {
-        closeNewThread()
-        return
-      }
 
-      buttonState.value.clickLocation = firstVisibleSelectionHit.point.clone()
-      buttonState.value.selectedObjectId = firstVisibleSelectionHit.node.model.id
-      buttonState.value.isVisible = true
-      updatePositions()
+      if (firstVisibleSelectionHit) {
+        buttonState.value.clickLocation = firstVisibleSelectionHit.point.clone()
+        buttonState.value.selectedObjectId = firstVisibleSelectionHit.node.model.id
+        buttonState.value.isVisible = true
+        updatePositions()
+      } else {
+        closeNewThread()
+      }
     }
   })
 

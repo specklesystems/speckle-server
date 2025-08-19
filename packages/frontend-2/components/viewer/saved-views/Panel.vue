@@ -1,14 +1,20 @@
 <template>
-  <ViewerLayoutSidePanel @close="$emit('close')">
+  <ViewerLayoutSidePanel disable-scrollbar @close="$emit('close')">
     <template #title>
       <div class="flex justify-between items-center">
         <div>Views</div>
       </div>
     </template>
     <template #actions>
-      <div class="flex">
-        <FormButton size="sm" color="subtle" :icon-left="Search" hide-text />
-        <div v-tippy="canCreateViewOrGroup?.errorMessage">
+      <div class="flex items-center">
+        <FormButton
+          v-if="false"
+          size="sm"
+          color="subtle"
+          :icon-left="Search"
+          hide-text
+        />
+        <div v-tippy="canCreateViewOrGroup?.errorMessage" class="flex items-center">
           <FormButton
             size="sm"
             color="subtle"
@@ -19,7 +25,7 @@
             @click="onAddGroup"
           />
         </div>
-        <div v-tippy="canCreateViewOrGroup?.errorMessage">
+        <div v-tippy="canCreateViewOrGroup?.errorMessage" class="flex items-center">
           <FormButton
             size="sm"
             color="subtle"
@@ -32,37 +38,23 @@
         </div>
       </div>
     </template>
-    <div class="border-b border-outline-2 px-4 py-2">
-      <div class="inline-block">
-        <FormSelectBase
-          v-model="selectedViewsType"
-          mount-menu-on-body
-          label="Views Type"
-          name="viewsType"
-          button-style="simple"
-          :menu-max-width="150"
-          menu-open-direction="right"
-          :allow-unset="false"
-          :items="viewsTypeItems"
+    <div class="px-4 pt-2">
+      <ViewerButtonGroup>
+        <ViewerButtonGroupButton
+          v-for="viewsType in Object.values(ViewsType)"
+          :key="viewsType"
+          :is-active="selectedViewsType === viewsType"
+          class="grow"
+          @click="() => (selectedViewsType = viewsType)"
         >
-          <template #nothing-selected>Views Type</template>
-          <template #option="{ item }">
-            <span>{{ viewsTypeLabels[item] }}</span>
-          </template>
-          <template #something-selected="{ value }">
-            <span v-if="!isArray(value)" class="flex items-center gap-2">
-              {{ viewsTypeLabels[value] }}
-            </span>
-          </template>
-        </FormSelectBase>
-      </div>
+          <span class="text-body-2xs text-foreground px-2 py-1">
+            {{ viewsTypeLabels[viewsType] }}
+          </span>
+        </ViewerButtonGroupButton>
+      </ViewerButtonGroup>
     </div>
-    <div class="text-body-sm">
-      <ViewerSavedViewsPanelConnectorViews
-        v-if="selectedViewsType === ViewsType.Connector"
-      />
+    <div class="text-body-sm flex-1 min-h-0 overflow-y-auto simple-scrollbar">
       <ViewerSavedViewsPanelGroups
-        v-else
         v-model:selected-group-id="selectedGroupId"
         :views-type="selectedViewsType"
       />
@@ -71,9 +63,9 @@
 </template>
 <script setup lang="ts">
 import { useMutationLoading } from '@vue/apollo-composable'
-import { isArray } from 'lodash-es'
 import { Search, FolderPlus, Plus } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
+import { SavedViewVisibility } from '~/lib/common/generated/gql/graphql'
 import {
   useCreateSavedView,
   useCreateSavedViewGroup
@@ -107,21 +99,21 @@ const createGroup = useCreateSavedViewGroup()
 const createSavedView = useCreateSavedView()
 const isLoading = useMutationLoading()
 
-const selectedViewsType = ref<ViewsType>(ViewsType.All)
+const selectedViewsType = ref<ViewsType>(ViewsType.Personal)
 const selectedGroupId = ref<string | null>(null)
 
-const viewsTypeItems = computed((): ViewsType[] => [
-  ViewsType.All,
-  ViewsType.My,
-  ViewsType.Connector
-])
 const canCreateViewOrGroup = computed(
   () => project.value?.permissions.canCreateSavedView
 )
 
 const onAddView = async () => {
   if (isLoading.value) return
-  const view = await createSavedView({})
+  const view = await createSavedView({
+    visibility:
+      selectedViewsType.value === ViewsType.Shared
+        ? SavedViewVisibility.Public
+        : undefined
+  })
   if (view) {
     // Auto-open the group that the view created to
     selectedGroupId.value = view.group.id
