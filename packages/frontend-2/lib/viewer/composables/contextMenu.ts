@@ -146,6 +146,7 @@ export function useViewerContextMenu(params: {
       // Handle right-clicks to open context menu
       if (event?.event && event.event.button === 2) {
         event.event.preventDefault()
+        event.event.stopPropagation()
 
         if (firstVisibleSelectionHit) {
           const clickLocation = firstVisibleSelectionHit.point.clone()
