@@ -19,38 +19,17 @@
           :class="showPropertySelection ? '!bg-highlight-3' : ''"
           hide-text
           :icon-left="showPropertySelection ? X : Plus"
-          @click="
-            showPropertySelection
-              ? (showPropertySelection = false)
-              : addNewEmptyFilter()
-          "
+          @click="handleAddFilterClick"
         />
       </div>
     </template>
 
     <!-- Filter Logic Selection -->
-    <div
+    <ViewerFiltersFilterLogicSelector
       v-if="activeFilters.length > 0"
-      class="px-3 pt-3 pb-2 border-b border-outline-2"
-    >
-      <FormSelectBase
-        name="filter-logic"
-        label="Filter Logic"
-        :model-value="filterLogicOptions.find((opt) => opt.value === filterLogic)"
-        :items="filterLogicOptions"
-        by="value"
-        @update:model-value="(val) => handleFilterLogicChange(val)"
-      >
-        <template #something-selected="{ value }">
-          <span class="text-foreground">
-            {{ Array.isArray(value) ? value[0]?.label : value?.label }}
-          </span>
-        </template>
-        <template #option="{ item }">
-          <span class="text-foreground">{{ item.label }}</span>
-        </template>
-      </FormSelectBase>
-    </div>
+      v-model="filterLogic"
+      @update:model-value="handleFilterLogicChange"
+    />
 
     <div class="h-full flex flex-col">
       <!-- Active Filters Section -->
@@ -59,198 +38,37 @@
         class="flex-1 overflow-y-scroll simple-scrollbar"
       >
         <div class="space-y-3 p-3">
-          <div
+          <ViewerFiltersFilterCard
             v-for="filter in activeFilters"
             :key="filter.id"
-            class="border border-outline-2 rounded-lg p-1"
-          >
-            <!-- Filter Header -->
-            <div class="flex items-center justify-between mb-2 px-2 pt-1">
-              <div class="flex items-center gap-2">
-                <span class="text-body-3xs text-foreground-2">Filter</span>
-                <span class="text-body-3xs text-foreground-2">
-                  ({{ filter.selectedValues.length }} selected)
-                </span>
-              </div>
-              <div class="flex items-center gap-1">
-                <!-- Independent Color Toggle -->
-                <FormButton
-                  v-tippy="
-                    'Toggle coloring for this filter (only one filter can be colored at a time)'
-                  "
-                  color="subtle"
-                  size="sm"
-                  hide-text
-                  :disabled="!filter.filter"
-                  :icon-right="
-                    filter.isApplied ? 'IconColouring' : 'IconColouringOutline'
-                  "
-                  @click="toggleFilterColors(filter.id)"
-                />
-                <FormButton
-                  v-tippy="'Remove filter'"
-                  color="subtle"
-                  size="sm"
-                  hide-text
-                  :icon-right="X"
-                  @click="removeFilter(filter.id)"
-                />
-              </div>
-            </div>
-
-            <!-- Property Selection -->
-            <div class="px-2 mb-2">
-              <FormSelectBase
-                v-if="!filter.filter"
-                name="property-select"
-                label="Property"
-                placeholder="Select a property..."
-                :items="propertySelectOptions"
-                @update:model-value="(val) => handlePropertySelect(filter.id, val)"
-              />
-              <div v-else class="text-body-xs font-medium text-foreground">
-                {{ getPropertyName(filter.filter?.key || '') }}
-              </div>
-            </div>
-
-            <!-- Condition Selection -->
-            <div v-if="filter.filter" class="px-2 mb-2">
-              <FormSelectBase
-                :name="`condition-${filter.id}`"
-                label="Condition"
-                :model-value="
-                  conditionOptions.find(
-                    (opt) => opt.value === (filter.condition || FilterCondition.Is)
-                  )
-                "
-                :items="conditionOptions"
-                by="value"
-                @update:model-value="(val) => handleConditionSelect(filter.id, val)"
-              >
-                <template #something-selected="{ value }">
-                  <span class="text-foreground">
-                    {{ Array.isArray(value) ? value[0]?.label : value?.label }}
-                  </span>
-                </template>
-                <template #option="{ item }">
-                  <span class="text-foreground">{{ item.label }}</span>
-                </template>
-              </FormSelectBase>
-            </div>
-
-            <!-- Filter Values - Different UI for numeric vs string -->
-            <div v-if="filter.filter" class="px-2">
-              <!-- Numeric Range Slider -->
-              <div v-if="isNumericPropertyInfo(filter.filter)" class="space-y-2">
-                <div class="flex justify-between text-body-3xs text-foreground-2">
-                  <span>{{ filter.filter.min }}</span>
-                  <span>{{ filter.filter.max }}</span>
-                </div>
-                <label :for="`range-${filter.id}`" class="sr-only">
-                  Range slider for {{ getPropertyName(filter.filter.key) }}
-                </label>
-                <input
-                  :id="`range-${filter.id}`"
-                  type="range"
-                  :min="filter.filter.min"
-                  :max="filter.filter.max"
-                  :value="filter.filter.passMin || filter.filter.min"
-                  class="w-full"
-                  @input="handleNumericRangeChange(filter.id, $event)"
-                />
-                <div class="flex gap-2 text-body-3xs">
-                  <span class="text-foreground-2">Range:</span>
-                  <span>
-                    {{ filter.filter.passMin || filter.filter.min }} -
-                    {{ filter.filter.passMax || filter.filter.max }}
-                  </span>
-                </div>
-              </div>
-
-              <!-- String Checkboxes -->
-              <div
-                v-else
-                class="max-h-48 overflow-y-auto overflow-x-hidden simple-scrollbar"
-              >
-                <div
-                  v-for="value in getAvailableFilterValues(filter.filter)"
-                  :key="value"
-                  class="flex items-center justify-between gap-2 text-body-2xs pr-2 py-1 px-2 hover:bg-primary-muted"
-                >
-                  <div class="flex items-center min-w-0">
-                    <FormCheckbox
-                      :name="`filter-${filter.id}-${value}`"
-                      :model-value="isActiveFilterValueSelected(filter.id, value)"
-                      hide-label
-                      @update:model-value="toggleActiveFilterValue(filter.id, value)"
-                    />
-                    <span class="flex-1 truncate text-foreground ml-2">
-                      {{ value }}
-                    </span>
-                  </div>
-                  <div class="shrink-0 text-foreground-2 text-body-3xs">
-                    {{ getValueCount(filter.filter, value) }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+            :filter="filter"
+            :property-options="propertySelectOptions"
+            @toggle-colors="toggleFilterColors(filter.id)"
+            @remove="removeFilter(filter.id)"
+            @select-property="(val) => handlePropertySelect(filter.id, val)"
+            @select-condition="(val) => handleConditionSelect(filter.id, val)"
+            @range-change="(event) => handleNumericRangeChange(filter.id, event)"
+            @toggle-value="(value) => toggleActiveFilterValue(filter.id, value)"
+          />
         </div>
       </div>
 
       <!-- Empty State -->
-      <div v-else class="flex-1 flex flex-col gap-6 items-center justify-center">
-        <IllustrationEmptystateFilters class="-mt-8" />
-        <div class="text-foreground-2 text-body-xs">There are no filters, yet.</div>
-        <FormButton @click="addNewEmptyFilter">Add filter</FormButton>
-      </div>
+      <ViewerFiltersFilterEmptyState v-else @add-filter="addNewEmptyFilter" />
     </div>
 
     <!-- Property Selection Portal -->
     <Portal v-if="showPropertySelection" to="panel-extension">
-      <div class="h-full flex flex-col">
-        <div class="relative border-b border-outline-2 flex-shrink-0">
-          <input
-            id="property-search"
-            v-model="propertySearch"
-            type="text"
-            placeholder="Search for a property..."
-            class="text-body-2xs text-foreground-2 placeholder:text-foreground-2 w-full rounded-t-md border-none h-8 pl-8"
-          />
-          <label for="property-search" class="sr-only">Search for a property...</label>
-          <Search class="absolute top-2.5 left-3 h-3 w-3" />
-        </div>
-
-        <div class="flex-1 overflow-y-auto overflow-x-hidden simple-scrollbar p-2">
-          <div class="flex flex-col">
-            <button
-              v-for="property in propertySelectOptions"
-              :key="property.value"
-              class="px-2 py-2 text-foreground rounded-md hover:bg-highlight-3 text-left flex items-center gap-2"
-              @click="selectProperty(property.value)"
-            >
-              <component
-                :is="getPropertyTypeIcon(property.type)"
-                class="h-3 w-3 mt-0.5 text-foreground-2 shrink-0"
-              />
-              <div class="min-w-0 flex-1">
-                <div class="text-body-2xs font-medium text-foreground truncate">
-                  {{ property.label }}
-                </div>
-                <div
-                  v-if="property.parentPath"
-                  class="text-body-3xs text-foreground-2 truncate"
-                >
-                  {{ property.parentPath }}
-                </div>
-              </div>
-            </button>
-          </div>
-        </div>
+      <div ref="propertySelectionRef" class="h-full">
+        <ViewerFiltersPropertySelectionPanel
+          :options="propertySelectOptions"
+          @select-property="selectProperty"
+        />
       </div>
     </Portal>
   </ViewerLayoutSidePanel>
 </template>
+
 <script setup lang="ts">
 import type { PropertyInfo } from '@speckle/viewer'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
@@ -262,8 +80,9 @@ import {
   useObjectDataStore,
   type QueryCriteria
 } from '~~/composables/viewer/useObjectDataStore'
-import { X, Plus, Search, CaseLower, Hash } from 'lucide-vue-next'
-import { FormButton, FormSelectBase } from '@speckle/ui-components'
+import { X, Plus } from 'lucide-vue-next'
+import { FormButton } from '@speckle/ui-components'
+import { onClickOutside } from '@vueuse/core'
 
 const {
   removePropertyFilter,
@@ -272,12 +91,9 @@ const {
   filters: { propertyFilter, activeFilters },
   getRelevantFilters,
   getPropertyName,
-  // New multi-filter functions
   removeActiveFilter,
   toggleFilterApplied,
-  getAvailableFilterValues,
   toggleActiveFilterValue,
-  isActiveFilterValueSelected,
   updateFilterCondition
 } = useFilterUtilities()
 
@@ -291,17 +107,6 @@ const objectDataStore = useObjectDataStore()
 const relevantFilters = computed(() => {
   return getRelevantFilters(allFilters.value)
 })
-
-// Helper function to get property type icon
-const getPropertyTypeIcon = (type: string) => {
-  switch (type) {
-    case 'number':
-      return Hash
-    case 'string':
-    default:
-      return CaseLower
-  }
-}
 
 // Helper function to get property type
 const getPropertyType = (filter: PropertyInfo): string => {
@@ -344,31 +149,8 @@ const propertySelectOptions = computed(() => {
     return a.label.localeCompare(b.label)
   })
 
-  // Filter based on search input
-  if (!propertySearch.value.trim()) {
-    return sortedOptions
-  }
-
-  const searchTerm = propertySearch.value.toLowerCase().trim()
-  return sortedOptions.filter(
-    (option) =>
-      option.label.toLowerCase().includes(searchTerm) ||
-      option.value.toLowerCase().includes(searchTerm) ||
-      option.parentPath.toLowerCase().includes(searchTerm) ||
-      option.type.toLowerCase().includes(searchTerm)
-  )
+  return sortedOptions
 })
-
-const conditionOptions = [
-  { value: FilterCondition.Is, label: 'is' },
-  { value: FilterCondition.IsNot, label: 'is not' }
-]
-
-// Filter logic options
-const filterLogicOptions = [
-  { value: FilterLogic.All, label: 'Match all rules' },
-  { value: FilterLogic.Any, label: 'Match any rule' }
-]
 
 // Filter logic state
 const filterLogic = ref<FilterLogic>(FilterLogic.All)
@@ -402,11 +184,8 @@ const title = computed(() => getPropertyName(activeFilter.value?.key ?? ''))
 
 const colors = computed(() => !!propertyFilter.isApplied.value)
 
-// === NEW MULTI-FILTER LOGIC ===
-
-// Property selection state
 const showPropertySelection = ref(false)
-const propertySearch = ref('')
+const propertySelectionRef = ref<HTMLElement>()
 
 // Watch for filter changes and update data store slices
 watch(
@@ -459,6 +238,14 @@ const addNewEmptyFilter = () => {
     name: 'filters',
     action: 'open-property-selection'
   })
+}
+
+const handleAddFilterClick = () => {
+  if (showPropertySelection.value) {
+    showPropertySelection.value = false
+  } else {
+    addNewEmptyFilter()
+  }
 }
 
 const selectProperty = (propertyKey: string) => {
@@ -521,51 +308,40 @@ const toggleFilterColors = (filterId: string) => {
   })
 }
 
-const handlePropertySelect = (
-  filterId: string,
-  val: { value: string; label: string } | { value: string; label: string }[] | undefined
-) => {
-  if (val && !Array.isArray(val)) {
-    setFilterProperty(filterId, val.value)
+const handlePropertySelect = (filterId: string, val: unknown) => {
+  if (
+    val &&
+    !Array.isArray(val) &&
+    typeof val === 'object' &&
+    val !== null &&
+    'value' in val
+  ) {
+    setFilterProperty(filterId, (val as { value: string }).value)
   }
 }
 
-const handleConditionSelect = (
-  filterId: string,
-  val: { value: string; label: string } | { value: string; label: string }[] | undefined
-) => {
-  if (val && !Array.isArray(val)) {
-    updateFilterCondition(filterId, val.value as FilterCondition)
+const handleConditionSelect = (filterId: string, val: unknown) => {
+  if (
+    val &&
+    !Array.isArray(val) &&
+    typeof val === 'object' &&
+    val !== null &&
+    'value' in val
+  ) {
+    updateFilterCondition(filterId, (val as { value: string }).value as FilterCondition)
   }
 }
 
-const handleFilterLogicChange = (
-  val: { value: string; label: string } | { value: string; label: string }[] | undefined
-) => {
-  if (val && !Array.isArray(val)) {
-    filterLogic.value = val.value as FilterLogic
+const handleFilterLogicChange = (val: unknown) => {
+  if (
+    val &&
+    !Array.isArray(val) &&
+    typeof val === 'object' &&
+    val !== null &&
+    'value' in val
+  ) {
+    filterLogic.value = (val as { value: string }).value as FilterLogic
   }
-}
-
-const getValueCount = (filter: PropertyInfo, value: string): number => {
-  // Type guard to check if filter has valueGroups property
-  const hasValueGroups = (
-    f: PropertyInfo
-  ): f is PropertyInfo & {
-    valueGroups: Array<{ value: unknown; ids?: string[] }>
-  } => {
-    return (
-      'valueGroups' in f &&
-      Array.isArray((f as unknown as Record<string, unknown>).valueGroups)
-    )
-  }
-
-  if (hasValueGroups(filter)) {
-    const valueGroup = filter.valueGroups.find((vg) => String(vg.value) === value)
-    return valueGroup?.ids?.length || 0
-  }
-
-  return 0
 }
 
 const handleNumericRangeChange = (filterId: string, event: Event) => {
@@ -596,4 +372,11 @@ const refreshColorsIfSetOrActiveFilterIsNumeric = () => {
   // removePropertyFilter()
   applyPropertyFilter()
 }
+
+// Click outside to close property selection
+onClickOutside(propertySelectionRef, () => {
+  if (showPropertySelection.value) {
+    showPropertySelection.value = false
+  }
+})
 </script>
