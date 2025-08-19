@@ -18,7 +18,7 @@
       </div>
     </div>
     <div class="flex flex-col min-w-0 grow">
-      <div class="text-body-2xs font-medium text-foreground truncate grow-0">
+      <div class="text-body-2xs font-medium text-foreground truncate grow-0 pr-1.5">
         {{ view.name }}
       </div>
       <div class="flex gap-1 items-center justify-between">
@@ -67,7 +67,7 @@
         <Globe v-if="!isOnlyVisibleToMe" class="w-3 h-3" />
         <div
           v-tippy="formattedFullDate(view.updatedAt)"
-          class="text-body-2xs text-foreground-3 truncate"
+          class="text-body-2xs text-foreground-3 truncate pr-1.5"
         >
           {{ formattedRelativeDate(view.updatedAt) }}
         </div>
