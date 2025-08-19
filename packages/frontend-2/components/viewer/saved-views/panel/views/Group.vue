@@ -51,7 +51,7 @@
   </LayoutDisclosure>
   <ViewerSavedViewsPanelViewsGroupInner
     v-else
-    class="mb-2"
+    class="mb-[1px]"
     :group="group"
     :search="search"
     :views-type="viewsType"
