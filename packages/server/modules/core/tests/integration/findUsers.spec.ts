@@ -36,7 +36,7 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import type { BasicTestUser } from '@/test/authHelper'
-import { createTestUser } from '@/test/authHelper'
+import { buildBasicTestUser, createTestUser } from '@/test/authHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
@@ -156,11 +156,13 @@ describe('Find users @core', () => {
   describe('getUserByEmail', () => {
     it('should ignore email casing', async () => {
       const email = 'TeST@ExamPLE.oRg'
-      await createUser({
-        name: 'John Doe',
-        password: createRandomPassword(),
-        email
-      })
+      await createUser(
+        buildBasicTestUser({
+          name: 'John Doe',
+          password: createRandomPassword(),
+          email
+        })
+      )
       const user = await getUserByEmail(email)
       expect(user!.email).to.equal(email.toLowerCase())
     })
@@ -169,41 +171,49 @@ describe('Find users @core', () => {
   describe('lookupUsers', () => {
     it('should find matches by name', async () => {
       const email = createRandomEmail()
-      const userId = await createUser({
-        email,
-        name: 'John Spackle',
-        password: createRandomPassword()
-      })
+      const userId = await createUser(
+        buildBasicTestUser({
+          email,
+          name: 'John Spackle',
+          password: createRandomPassword()
+        })
+      )
       const { users } = await lookupUsers({ query: 'Spack' })
       expect(users.some((user) => user.id === userId)).to.equal(true)
     })
     it('should not find matches by name if filtered to emails only', async () => {
       const email = createRandomEmail()
-      const userId = await createUser({
-        email,
-        name: 'John Spackle',
-        password: createRandomPassword()
-      })
+      const userId = await createUser(
+        buildBasicTestUser({
+          email,
+          name: 'John Spackle',
+          password: createRandomPassword()
+        })
+      )
       const { users } = await lookupUsers({ query: 'Spack', emailOnly: true })
       expect(users.some((user) => user.id === userId)).to.equal(false)
     })
     it('should find matches by email', async () => {
       const email = createRandomEmail()
-      const userId = await createUser({
-        email,
-        name: 'John Spackle',
-        password: createRandomPassword()
-      })
+      const userId = await createUser(
+        buildBasicTestUser({
+          email,
+          name: 'John Spackle',
+          password: createRandomPassword()
+        })
+      )
       const { users } = await lookupUsers({ query: email })
       expect(users.some((user) => user.id === userId)).to.equal(true)
     })
     it('should find matches by email, case insensitive', async () => {
       const email = 'fooBAR@example.org'
-      const userId = await createUser({
-        email,
-        name: 'John Spackle',
-        password: createRandomPassword()
-      })
+      const userId = await createUser(
+        buildBasicTestUser({
+          email,
+          name: 'John Spackle',
+          password: createRandomPassword()
+        })
+      )
       const { users } = await lookupUsers({ query: 'FoObAr@example.org' })
       expect(users.some((user) => user.id === userId)).to.equal(true)
     })

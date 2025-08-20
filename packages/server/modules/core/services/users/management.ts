@@ -55,6 +55,7 @@ import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import type { QueryAllProjects } from '@/modules/core/domain/projects/operations'
 import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
 import type { RegionalOperation } from '@/modules/shared/helpers/dbHelper'
+import { v4 } from 'uuid'
 
 const { FF_NO_PERSONAL_EMAILS_ENABLED } = getFeatureFlags()
 
@@ -170,11 +171,12 @@ export const createUserFactory =
 
     const signUpCtx = user.signUpContext
 
-    let finalUser: typeof user &
-      Omit<NullableKeysToOptional<UserRecord>, 'suuid' | 'createdAt'> = {
+    let finalUser: typeof user & NullableKeysToOptional<UserRecord> = {
       ...user,
       id: crs({ length: 10 }),
-      verified: user.verified || false
+      verified: user.verified || false,
+      createdAt: new Date(),
+      suuid: v4()
     }
     delete finalUser.signUpContext
 
@@ -208,7 +210,10 @@ export const createUserFactory =
           'name',
           'company',
           'verified',
-          'avatar'
+          'avatar',
+          'verified',
+          'createdAt',
+          'suuid'
         ]) as typeof finalUser)
 
     finalUser.email = finalUser.email.toLowerCase()

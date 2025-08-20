@@ -43,6 +43,7 @@ import type { ServerScope } from '@speckle/shared'
 import { wait } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { assign, isArray, isNumber, omit, times } from 'lodash-es'
+import { v4 } from 'uuid'
 
 const getServerInfo = getServerInfoFactory({ db })
 const findEmail = findEmailFactory({ db })
@@ -112,6 +113,18 @@ export async function createTestUser(userObj?: Partial<BasicTestUser>) {
     setVal('email', createRandomEmail().toLowerCase())
   }
 
+  if (!baseUser.suuid) {
+    setVal('suuid', v4())
+  }
+
+  if (typeof baseUser.verified !== 'boolean') {
+    setVal('verified', false)
+  }
+
+  if (!baseUser.createdAt) {
+    setVal('createdAt', new Date())
+  }
+
   const createUser = createUserFactory({
     getServerInfo,
     findEmail,
@@ -166,7 +179,9 @@ export const buildBasicTestUser = (overrides?: Partial<BasicTestUser>): BasicTes
       id: cryptoRandomString({ length: 10 }),
       name: cryptoRandomString({ length: 10 }),
       email: createRandomEmail(),
-      verified: true
+      verified: true,
+      createdAt: new Date(),
+      suuid: v4()
     },
     overrides
   )
