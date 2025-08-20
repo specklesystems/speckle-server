@@ -12,7 +12,7 @@
         </template>
       </CommonAlert>
       <CommonAlert
-        v-if="!canClickCreate"
+        v-if="!canClickCreate && !permissionLoading"
         color="danger"
         class="w-lg mb-6 max-w-lg mx-auto"
       >
@@ -64,7 +64,11 @@ const route = useRoute()
 const mixpanel = useMixpanel()
 const { goToStep, currentStep, isLoading, state } = useWorkspacesWizard()
 
-const { canClickCreate, cantClickCreateReason } = useCanCreateWorkspace()
+const {
+  canClickCreate,
+  cantClickCreateReason,
+  loading: permissionLoading
+} = useCanCreateWorkspace()
 
 const { loading: queryLoading, onResult } = useQuery(
   workspaceWizardQuery,
