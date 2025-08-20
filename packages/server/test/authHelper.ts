@@ -29,7 +29,7 @@ import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repos
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { getRegisteredRegionClients } from '@/modules/multiregion/utils/dbSelector'
+import { getTestRegionClients } from '@/modules/multiregion/tests/helpers'
 import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
@@ -38,12 +38,10 @@ import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvite
 import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
-import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import { faker } from '@faker-js/faker'
 import type { ServerScope } from '@speckle/shared'
 import { wait } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import type { Knex } from 'knex'
 import { assign, isArray, isNumber, omit, times } from 'lodash-es'
 
 const getServerInfo = getServerInfoFactory({ db })
@@ -114,14 +112,10 @@ export async function createTestUser(userObj?: Partial<BasicTestUser>) {
     setVal('email', createRandomEmail().toLowerCase())
   }
 
-  const regionClients = await getRegisteredRegionClients()
-  const regionDbs = Object.values(regionClients)
-  const dbs: [Knex, ...Knex[]] = isMultiRegionTestMode() ? [db, ...regionDbs] : [db]
-
   const createUser = createUserFactory({
     getServerInfo,
     findEmail,
-    storeUser: replicateQuery(dbs, storeUserFactory),
+    storeUser: replicateQuery(await getTestRegionClients(), storeUserFactory),
     countAdminUsers: countAdminUsersFactory({ db }),
     storeUserAcl: storeUserAclFactory({ db }),
     validateAndCreateUserEmail: validateAndCreateUserEmailFactory({

@@ -120,8 +120,6 @@ export const initializeRegisteredRegionClients = async (): Promise<RegionClients
     Object.keys(ret).map((regionKey) => initializeRegion({ regionKey }))
   )
 
-  console.log('|||| loaded regions:', Object.keys(ret))
-
   registeredRegionClients = ret
   return ret
 }
@@ -130,7 +128,6 @@ export const getRegisteredRegionClients = async (): Promise<RegionClients> => {
   if (!registeredRegionClients)
     registeredRegionClients = await initializeRegisteredRegionClients()
 
-  console.log('|||| cached regions:', Object.keys(registeredRegionClients))
   return registeredRegionClients
 }
 

@@ -48,6 +48,7 @@ import { expect } from 'chai'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
 import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
+import { getTestRegionClients } from '@/modules/multiregion/tests/helpers'
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 const countUsers = legacyGetPaginatedUsersCountFactory({ db })
@@ -65,7 +66,7 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
-  storeUser: replicateQuery([db], storeUserFactory),
+  storeUser: replicateQuery(await getTestRegionClients(), storeUserFactory),
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
@@ -90,7 +91,10 @@ const deleteUser = deleteUserFactory({
   }),
   getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
   deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
-  deleteUserRecord: deleteUserRecordFactory({ db }),
+  deleteUserRecord: replicateQuery(
+    await getTestRegionClients(),
+    deleteUserRecordFactory
+  ),
   emitEvent: getEventBus().emit
 })
 const getUserRole = getUserRoleFactory({ db })
@@ -102,7 +106,7 @@ const buildChangeUserRole = (guestModeEnabled = false) =>
   })
 const changeUserRole = buildChangeUserRole()
 
-describe('User admin @user-services', () => {
+describe('User admin @user-services @multiregion', () => {
   const myTestActor = {
     name: 'Gergo Jedlicska',
     email: 'gergo@jedlicska.com',

@@ -295,7 +295,7 @@ export const deleteUserFactory =
     getUserDeletableStreams: GetUserDeletableStreams
     deleteAllUserInvites: DeleteAllUserInvites
     getUserWorkspaceSeats: GetUserWorkspaceSeatsFactory
-    deleteUserRecord: DeleteUserRecord
+    deleteUserRecord: RegionalOperation<DeleteUserRecord>
     queryAllProjects: QueryAllProjects
     emitEvent: EventBusEmit
   }): DeleteUser =>

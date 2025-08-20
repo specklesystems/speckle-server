@@ -54,6 +54,8 @@ import { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
 import { queryAllProjectsFactory } from '@/modules/core/services/projects'
+import { getRegisteredRegionClients } from '@/modules/multiregion/utils/dbSelector'
+import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -65,19 +67,26 @@ const updateUserAndNotify = updateUserAndNotifyFactory({
 })
 
 const getServerInfo = getServerInfoFactory({ db })
-const deleteUser = deleteUserFactory({
-  deleteStream: deleteStreamFactory({ db }),
-  logger: dbLogger,
-  isLastAdminUser: isLastAdminUserFactory({ db }),
-  getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
-  queryAllProjects: queryAllProjectsFactory({
-    getExplicitProjects: getExplicitProjects({ db })
-  }),
-  getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
-  deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
-  deleteUserRecord: deleteUserRecordFactory({ db }),
-  emitEvent: getEventBus().emit
-})
+
+const buildDeleteUser = async () => {
+  const regionClients = await getRegisteredRegionClients()
+  const regionDbs = Object.values(regionClients)
+
+  return deleteUserFactory({
+    deleteStream: deleteStreamFactory({ db }),
+    logger: dbLogger,
+    isLastAdminUser: isLastAdminUserFactory({ db }),
+    getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
+    queryAllProjects: queryAllProjectsFactory({
+      getExplicitProjects: getExplicitProjects({ db })
+    }),
+    getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
+    deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
+    deleteUserRecord: replicateQuery([db, ...regionDbs], deleteUserRecordFactory),
+    emitEvent: getEventBus().emit
+  })
+}
+
 const getUserRole = getUserRoleFactory({ db })
 const changeUserRole = changeUserRoleFactory({
   getServerInfo,
@@ -299,6 +308,8 @@ export default {
       const logger = context.log.child({
         userIdToOperateOn: user.id
       })
+      const deleteUser = await buildDeleteUser()
+
       await withOperationLogging(
         async () => await deleteUser(user.id, context.userId),
         {
@@ -325,6 +336,7 @@ export default {
       // Since I am paranoid, I'll leave them here too.
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Profile.Delete)
+      const deleteUser = await buildDeleteUser()
 
       await withOperationLogging(
         async () => await deleteUser(context.userId!, context.userId!),
