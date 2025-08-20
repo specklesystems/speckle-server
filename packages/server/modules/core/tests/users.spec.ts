@@ -271,12 +271,12 @@ const findOrCreateUser = findOrCreateUserFactory({
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
 const updateUser = updateUserAndNotifyFactory({
   getUser: getUserFactory({ db }),
-  updateUser: updateUserFactory({ db }),
+  updateUser: replicateQuery(await getTestRegionClients(), updateUserFactory),
   emitEvent: getEventBus().emit
 })
 const updateUserPassword = changePasswordFactory({
   getUser: getUserFactory({ db }),
-  updateUser: updateUserFactory({ db })
+  updateUser: replicateQuery(await getTestRegionClients(), updateUserFactory)
 })
 const validateUserPassword = validateUserPasswordFactory({
   getUserByEmail: getUserByEmailFactory({ db })

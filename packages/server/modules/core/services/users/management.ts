@@ -68,7 +68,7 @@ const createPasswordDigest = async (newPassword: string) => {
 export const updateUserAndNotifyFactory =
   (deps: {
     getUser: GetUser
-    updateUser: UpdateUser
+    updateUser: RegionalOperation<UpdateUser>
     emitEvent: EventBusEmit
   }): UpdateUserAndNotify =>
   async (userId: string, update: UserUpdateInput) => {
@@ -130,7 +130,10 @@ export const validateUserPasswordFactory =
   }
 
 export const changePasswordFactory =
-  (deps: { getUser: GetUser; updateUser: UpdateUser }): ChangeUserPassword =>
+  (deps: {
+    getUser: GetUser
+    updateUser: RegionalOperation<UpdateUser>
+  }): ChangeUserPassword =>
   async (params) => {
     const { newPassword, id: userId } = params
     const user = await deps.getUser(userId, { skipClean: true })

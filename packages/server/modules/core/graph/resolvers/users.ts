@@ -60,12 +60,6 @@ import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
 
-const updateUserAndNotify = updateUserAndNotifyFactory({
-  getUser: getUserFactory({ db }),
-  updateUser: updateUserFactory({ db }),
-  emitEvent: getEventBus().emit
-})
-
 const getServerInfo = getServerInfoFactory({ db })
 
 const buildDeleteUser = async () => {
@@ -270,6 +264,15 @@ export default {
       const logger = context.log.child({
         userIdToOperateOn: context.userId
       })
+      const regionClients = await getRegisteredRegionClients()
+      const regionDbs = Object.values(regionClients)
+
+      const updateUserAndNotify = updateUserAndNotifyFactory({
+        getUser: getUserFactory({ db }),
+        updateUser: replicateQuery([db, ...regionDbs], updateUserFactory),
+        emitEvent: getEventBus().emit
+      })
+
       await withOperationLogging(
         async () => await updateUserAndNotify(context.userId!, args.user),
         {
@@ -406,6 +409,15 @@ export default {
     },
     async update(_parent, args, context) {
       const logger = context.log
+      const regionClients = await getRegisteredRegionClients()
+      const regionDbs = Object.values(regionClients)
+
+      const updateUserAndNotify = updateUserAndNotifyFactory({
+        getUser: getUserFactory({ db }),
+        updateUser: replicateQuery([db, ...regionDbs], updateUserFactory),
+        emitEvent: getEventBus().emit
+      })
+
       const newUser = await withOperationLogging(
         async () => await updateUserAndNotify(context.userId!, args.user),
         {

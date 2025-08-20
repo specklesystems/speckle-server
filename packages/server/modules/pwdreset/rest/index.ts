@@ -9,6 +9,7 @@ import {
 import { changePasswordFactory } from '@/modules/core/services/users/management'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { getRegisteredRegionClients } from '@/modules/multiregion/utils/dbSelector'
 import {
   createTokenFactory,
   deleteTokensFactory,
@@ -17,6 +18,7 @@ import {
 import { finalizePasswordResetFactory } from '@/modules/pwdreset/services/finalize'
 import { requestPasswordRecoveryFactory } from '@/modules/pwdreset/services/request'
 import { BadRequestError } from '@/modules/shared/errors'
+import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { ensureError } from '@speckle/shared'
 import type { Express } from 'express'
@@ -55,13 +57,16 @@ export default function (app: Express) {
   app.post('/auth/pwdreset/finalize', async (req, res) => {
     const logger = req.log
     try {
+      const regionClients = await getRegisteredRegionClients()
+      const regionDbs = Object.values(regionClients)
+
       const finalizePasswordReset = finalizePasswordResetFactory({
         getUserByEmail,
         getPendingToken: getPendingTokenFactory({ db }),
         deleteTokens: deleteTokensFactory({ db }),
         updateUserPassword: changePasswordFactory({
           getUser: getUserFactory({ db }),
-          updateUser: updateUserFactory({ db })
+          updateUser: replicateQuery([db, ...regionDbs], updateUserFactory)
         }),
         deleteExistingAuthTokens: deleteExistingAuthTokensFactory({ db })
       })
