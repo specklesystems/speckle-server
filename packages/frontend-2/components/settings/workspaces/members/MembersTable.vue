@@ -146,6 +146,7 @@ const { activeUser } = useActiveUser()
 const { result } = useQuery(settingsWorkspacesMembersTableQuery, () => ({
   slug: props.workspaceSlug
 }))
+const { formattedFullDate } = useDateFormatters()
 
 const selectedAction = ref<Record<string, WorkspaceUserActionTypes>>({})
 const search = ref('')
