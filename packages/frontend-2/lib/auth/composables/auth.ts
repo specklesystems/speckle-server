@@ -139,9 +139,10 @@ const useResetAuthState = (
   const apollo = options?.deferredApollo ? undefined : useApolloClient().client
   const resolveDistinctId = useResolveUserDistinctId()
   const { cbs } = useOnAuthStateChangeState()
+  const authToken = useAuthCookie()
 
   return async (
-    resetOptions?: Partial<{
+    resetOptions: Partial<{
       /**
        * If true, won't await the full reset and return early after reset has started
        */
@@ -149,12 +150,19 @@ const useResetAuthState = (
     }>
   ) => {
     const client = apollo || (await options?.deferredApollo?.())
+    const isLoggedIn = !!authToken.value
 
     let user: MaybeNullOrUndefined<ActiveUserMainMetadataQuery['activeUser']> = null
     let resetPromise: Promise<unknown> = Promise.resolve()
     if (client) {
       // evict user early
-      client.cache.evict({ id: 'ROOT_QUERY', fieldName: 'activeUser' })
+      if (isLoggedIn) {
+        // evict so we re-do user resolution
+        client.cache.evict({ id: 'ROOT_QUERY', fieldName: 'activeUser' })
+      } else {
+        // don't evict, just set to null (before full reset)
+        modifyObjectField(client.cache, ROOT_QUERY, 'activeUser', () => null)
+      }
 
       // evict entire cache (not enough to just evict user, various other fields
       // also depend on active user (e.g. Workspace.seatType))
