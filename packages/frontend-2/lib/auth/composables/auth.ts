@@ -236,7 +236,11 @@ export const useAuthManager = (
    */
   const saveNewToken = async (
     newToken?: string,
-    options?: Partial<{ skipRedirect: boolean; skipStateReset: boolean }>
+    options?: Partial<{
+      skipRedirect: boolean
+      skipStateReset: boolean
+      lazyStateReset: boolean
+    }>
   ) => {
     const skipStateReset = options?.skipStateReset
     const skipRedirect = skipStateReset ? true : options?.skipRedirect
@@ -248,7 +252,11 @@ export const useAuthManager = (
     SafeLocalStorage.remove(LocalStorageKeys.AuthAppChallenge)
 
     // Wipe auth state
-    if (!skipStateReset) await resetAuthState()
+    if (!skipStateReset) {
+      await resetAuthState({
+        lazyReset: options?.lazyStateReset
+      })
+    }
 
     // redirect home & wipe access code from querystring
     if (!skipRedirect) goHome({ query: {} })
@@ -465,11 +473,18 @@ export const useAuthManager = (
     options?: Partial<{
       skipToast: boolean
       skipRedirect: boolean
+      /**
+       * If true, will trigger a full page load to /authn/login in CSR, instead of just doing a CSR
+       * redirect to the page. Useful when you want to fully restart the app after logging out.
+       */
+      forceFullReload: boolean
     }>
   ) => {
     const isServer = import.meta.server
 
-    await saveNewToken(undefined, { skipRedirect: true, skipStateReset: !isServer })
+    // lazy reset, we dont need it to finish before we can redirect to login page
+    // (and we wanna avoid flashes of broken content)
+    await saveNewToken(undefined, { skipRedirect: true, lazyStateReset: true })
 
     if (!options?.skipToast) {
       triggerNotification({
@@ -486,9 +501,7 @@ export const useAuthManager = (
     }
 
     if (!options?.skipRedirect) {
-      if (import.meta.client) {
-        // we skip clearing the cache and do a full reload to avoid ugly flashes of broken content
-        // during logout (while cache is in an odd state)
+      if (options?.forceFullReload && import.meta.client) {
         window.location.href = loginRoute
       } else {
         await goToLogin()
