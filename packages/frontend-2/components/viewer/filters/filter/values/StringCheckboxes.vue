@@ -16,8 +16,15 @@
           {{ value }}
         </span>
       </div>
-      <div class="shrink-0 text-foreground-2 text-body-3xs">
-        {{ getValueCount(value) }}
+      <div class="flex items-center">
+        <div class="shrink-0 text-foreground-2 text-body-3xs">
+          {{ getValueCount(value) }}
+        </div>
+        <div
+          v-if="getValueColor(value)"
+          class="w-3 h-3 rounded-full border border-outline-3 ml-2 shrink-0"
+          :style="{ backgroundColor: getValueColor(value) || undefined }"
+        />
       </div>
     </div>
   </div>
@@ -31,6 +38,7 @@ defineProps<{
   availableValues: string[]
   isValueSelected: (value: string) => boolean
   getValueCount: (value: string) => number
+  getValueColor: (value: string) => string | null
 }>()
 
 defineEmits<{

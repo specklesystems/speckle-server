@@ -310,6 +310,7 @@ export type InjectableViewerState = Readonly<{
         }>
       >
       hasAnyFiltersApplied: ComputedRef<boolean>
+      activeColorFilterId: Ref<string | null>
     }
     camera: {
       position: Ref<Vector3>
@@ -1098,6 +1099,10 @@ function setupInterfaceState(
       condition: FilterCondition
     }>
   >([])
+
+  // Track which filter is currently applying colors (only one at a time)
+  const activeColorFilterId = ref<string | null>(null)
+
   const hasAnyFiltersApplied = computed(() => {
     if (isolatedObjectIds.value.length) return true
     if (hiddenObjectIds.value.length) return true
@@ -1185,7 +1190,8 @@ function setupInterfaceState(
         selectedObjects,
         selectedObjectIds,
         propertyFilters,
-        hasAnyFiltersApplied
+        hasAnyFiltersApplied,
+        activeColorFilterId
       },
       highlightedObjectIds,
       measurement: {

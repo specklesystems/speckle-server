@@ -568,7 +568,28 @@ function useViewerFiltersIntegration() {
           filters.hiddenObjectIds.value = []
           filters.isolatedObjectIds.value = newObjectIds
         } else {
+          // Preserve color filter when clearing isolation
+          const currentColorFilterId = filters.activeColorFilterId.value
+          let activeColorFilter = null
+
+          if (currentColorFilterId) {
+            const activeFilter = filters.propertyFilters.value.find(
+              (f) => f.id === currentColorFilterId
+            )
+            if (activeFilter?.filter) {
+              activeColorFilter = activeFilter.filter
+            }
+          }
+
+          // Reset all filters (including isolation)
           filteringExtension.resetFilters()
+
+          // Restore color filter if it was active
+          if (activeColorFilter && currentColorFilterId) {
+            filteringExtension.setColorFilter(activeColorFilter)
+            filters.activeColorFilterId.value = currentColorFilterId
+          }
+
           filters.isolatedObjectIds.value = []
           filters.hiddenObjectIds.value = []
         }
@@ -587,63 +608,6 @@ function useViewerFiltersIntegration() {
     },
     { immediate: true, flush: 'sync' }
   )
-
-  // OLD FILTER SYSTEM - DISABLED IN FAVOR OF DATA STORE
-  // watch(
-  //   filters.isolatedObjectIds,
-  //   (newVal, oldVal) => {
-  //     if (preventFilterWatchers) {
-  //       return
-  //     }
-  //     if (arraysEqual(newVal, oldVal || [])) {
-  //       return
-  //     }
-
-  //     const isolatable = difference(newVal, oldVal || [])
-  //     const unisolatable = difference(oldVal || [], newVal)
-
-  //     if (isolatable.length) {
-  //       withWatchersDisabled(() => {
-  //         instance.isolateObjects(isolatable, stateKey, true)
-  //         filters.hiddenObjectIds.value = []
-  //       })
-  //     }
-
-  //     if (unisolatable.length) {
-  //       withWatchersDisabled(() => {
-  //         instance.unIsolateObjects(unisolatable, stateKey, true)
-  //         filters.hiddenObjectIds.value = []
-  //       })
-  //     }
-  //   },
-  //   { immediate: true, flush: 'sync' }
-  // )
-
-  // OLD FILTER SYSTEM - DISABLED IN FAVOR OF DATA STORE
-  // watch(
-  //   filters.hiddenObjectIds,
-  //   (newVal, oldVal) => {
-  //     if (preventFilterWatchers) return
-  //     if (arraysEqual(newVal, oldVal || [])) return
-
-  //     const hidable = difference(newVal, oldVal || [])
-  //     const showable = difference(oldVal || [], newVal)
-
-  //     if (hidable.length) {
-  //       withWatchersDisabled(() => {
-  //         instance.hideObjects(hidable, stateKey, true)
-  //         filters.isolatedObjectIds.value = []
-  //       })
-  //     }
-  //     if (showable.length) {
-  //       withWatchersDisabled(() => {
-  //         instance.showObjects(showable, stateKey, true)
-  //         filters.isolatedObjectIds.value = []
-  //       })
-  //     }
-  //   },
-  //   { immediate: true, flush: 'sync' }
-  // )
 
   // New function to handle multiple active filters
   const applyMultipleFilters = async (

@@ -302,6 +302,10 @@ export function useFilterUtilities(
   const removeActiveFilter = (filterId: string) => {
     const index = filters.propertyFilters.value.findIndex((f) => f.id === filterId)
     if (index !== -1) {
+      // If this filter was applying colors, remove the color filter
+      if (filters.activeColorFilterId.value === filterId) {
+        removeColorFilter()
+      }
       filters.propertyFilters.value.splice(index, 1)
     }
   }
@@ -367,12 +371,17 @@ export function useFilterUtilities(
   }
 
   const resetFilters = () => {
+    // Clear all filter state
     filters.hiddenObjectIds.value = []
     filters.isolatedObjectIds.value = []
     filters.propertyFilters.value = []
     filters.selectedObjects.value = []
+    filters.activeColorFilterId.value = null
+
+    // Clear all viewer filters including colors
     const filteringExtension = viewer.instance.getExtension(FilteringExtension)
     filteringExtension.resetFilters()
+    filteringExtension.removeColorFilter()
   }
 
   const resetExplode = () => {
@@ -605,6 +614,76 @@ export function useFilterUtilities(
     return filter
   }
 
+  /**
+   * Applies color filtering to objects based on a property filter
+   */
+  const setColorFilter = (filterId: string) => {
+    const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
+    if (!filter?.filter) return
+
+    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
+    filteringExtension.setColorFilter(filter.filter)
+
+    // Update state to track which filter is applying colors
+    filters.activeColorFilterId.value = filterId
+  }
+
+  /**
+   * Removes color filtering from all objects
+   */
+  const removeColorFilter = () => {
+    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
+    filteringExtension.removeColorFilter()
+
+    // Clear the active color filter state
+    filters.activeColorFilterId.value = null
+  }
+
+  /**
+   * Toggles color filtering for a specific filter
+   */
+  const toggleColorFilter = (filterId: string) => {
+    // If this filter is already applying colors, turn off colors
+    if (filters.activeColorFilterId.value === filterId) {
+      removeColorFilter()
+    } else {
+      // Otherwise, apply colors for this filter (and remove from any other)
+      setColorFilter(filterId)
+    }
+  }
+
+  /**
+   * Gets the color groups from the FilteringExtension for the currently active color filter
+   */
+  const getFilterColorGroups = () => {
+    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
+    const filteringState = filteringExtension.filteringState
+
+    // Auto-sync: if there are no color groups but we think there's an active filter, clear it
+    if (
+      (!filteringState.colorGroups || filteringState.colorGroups.length === 0) &&
+      filters.activeColorFilterId.value
+    ) {
+      filters.activeColorFilterId.value = null
+    }
+
+    return filteringState.colorGroups || []
+  }
+
+  /**
+   * Gets the color for a specific filter value
+   */
+  const getFilterValueColor = (value: string): string | null => {
+    const colorGroups = getFilterColorGroups()
+    const colorGroup = colorGroups.find((group) => group.value === value)
+
+    if (!colorGroup?.color) return null
+
+    // Ensure the color has a # prefix for CSS
+    const color = colorGroup.color
+    return color.startsWith('#') ? color : `#${color}`
+  }
+
   return {
     isolateObjects,
     unIsolateObjects,
@@ -634,6 +713,12 @@ export function useFilterUtilities(
     isKvpFilterable,
     getFilterDisabledReason,
     findFilterByKvp,
+    // Color filtering functions
+    setColorFilter,
+    removeColorFilter,
+    toggleColorFilter,
+    getFilterColorGroups,
+    getFilterValueColor,
     // Data store for advanced filtering
     dataStore
   }

@@ -4,6 +4,7 @@
       :selected-count="filter.selectedValues.length"
       :has-filter="!!filter.filter"
       :is-applied="filter.isApplied"
+      :filter-id="filter.id"
       @toggle-colors="$emit('toggleColors')"
       @remove="$emit('remove')"
     />
@@ -30,6 +31,9 @@
         :max="filter.filter.max"
         :current-min="filter.filter.passMin || filter.filter.min"
         :current-max="filter.filter.passMax || filter.filter.max"
+        :has-colors="
+          activeColorFilterId === filter.id && !!getFilterColorGroups().length
+        "
         @range-change="$emit('rangeChange', $event)"
       />
 
@@ -39,6 +43,7 @@
         :available-values="getAvailableFilterValues(filter.filter)"
         :is-value-selected="(value: string) => isActiveFilterValueSelected(filter.id, value)"
         :get-value-count="(value: string) => filter.filter ? getValueCount(filter.filter, value) : 0"
+        :get-value-color="(value: string) => activeColorFilterId === filter.id ? getFilterValueColor(value) : null"
         @toggle-value="$emit('toggleValue', $event)"
       />
     </div>
@@ -50,6 +55,7 @@ import type { PropertyInfo } from '@speckle/viewer'
 import type { FilterCondition } from '~/lib/viewer/helpers/filters/types'
 import { isNumericPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 
 type FilterData = {
   id: string
@@ -73,8 +79,17 @@ defineEmits([
   'toggleValue'
 ])
 
-const { getPropertyName, getAvailableFilterValues, isActiveFilterValueSelected } =
-  useFilterUtilities()
+const {
+  getPropertyName,
+  getAvailableFilterValues,
+  isActiveFilterValueSelected,
+  getFilterValueColor,
+  getFilterColorGroups
+} = useFilterUtilities()
+
+const {
+  filters: { activeColorFilterId }
+} = useInjectedViewerInterfaceState()
 
 const getValueCount = (filter: PropertyInfo, value: string): number => {
   // Type guard to check if filter has valueGroups property

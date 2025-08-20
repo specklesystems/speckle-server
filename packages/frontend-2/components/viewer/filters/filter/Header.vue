@@ -15,7 +15,7 @@
         size="sm"
         hide-text
         :disabled="!hasFilter"
-        :icon-right="isApplied ? 'IconColouring' : 'IconColouringOutline'"
+        :icon-right="isColoringActive ? 'IconColouring' : 'IconColouringOutline'"
         @click="$emit('toggleColors')"
       />
       <FormButton
@@ -33,15 +33,23 @@
 <script setup lang="ts">
 import { X } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
+import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 
-defineProps<{
+const props = defineProps<{
   selectedCount: number
   hasFilter: boolean
   isApplied: boolean
+  filterId: string
 }>()
 
 defineEmits<{
   toggleColors: []
   remove: []
 }>()
+
+const {
+  filters: { activeColorFilterId }
+} = useInjectedViewerInterfaceState()
+
+const isColoringActive = computed(() => activeColorFilterId.value === props.filterId)
 </script>

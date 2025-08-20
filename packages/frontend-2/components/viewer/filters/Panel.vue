@@ -93,11 +93,11 @@ const {
   getPropertyName,
   addActiveFilter,
   removeActiveFilter,
-  toggleFilterApplied,
   toggleActiveFilterValue,
   updateFilterCondition,
   updateActiveFilterValues,
-  resetFilters
+  resetFilters,
+  toggleColorFilter
 } = useFilterUtilities()
 
 const {
@@ -105,26 +105,22 @@ const {
 } = useInjectedViewer()
 
 const {
-  filters: { hasAnyFiltersApplied }
+  filters: { hasAnyFiltersApplied, activeColorFilterId }
 } = useInjectedViewerInterfaceState()
 
-// Initialize object data store
 const objectDataStore = useObjectDataStore()
 
 const relevantFilters = computed(() => {
   return getRelevantFilters(allFilters.value)
 })
 
-// Helper function to get property type
 const getPropertyType = (filter: PropertyInfo): string => {
   if (isNumericPropertyInfo(filter)) {
     return 'number'
   }
-  // According to PropertyInfo interface, only 'number' and 'string' types exist
   return 'string'
 }
 
-// Options for property selection dropdown
 const propertySelectOptions = computed(() => {
   const allOptions = relevantFilters.value.map((filter) => {
     const pathParts = filter.key.split('.')
@@ -159,10 +155,8 @@ const propertySelectOptions = computed(() => {
   return sortedOptions
 })
 
-// Filter logic state
 const filterLogic = ref<FilterLogic>(FilterLogic.All)
 
-// Initialize data store logic
 objectDataStore.setFilterLogic(filterLogic.value)
 
 const mp = useMixpanel()
@@ -256,6 +250,11 @@ const setFilterProperty = (filterId: string, propertyKey: string) => {
   const property = relevantFilters.value.find((p) => p.key === propertyKey)
 
   if (filter && property) {
+    // If this filter was applying colors, remove colors when property changes
+    if (activeColorFilterId.value === filterId) {
+      toggleColorFilter(filterId) // This will turn off colors
+    }
+
     filter.filter = property
     // Reset selected values when property changes using the proper API
     updateActiveFilterValues(filterId, [])
@@ -280,7 +279,7 @@ const removeFilter = (filterId: string) => {
 }
 
 const toggleFilterColors = (filterId: string) => {
-  toggleFilterApplied(filterId)
+  toggleColorFilter(filterId)
 
   mp.track('Viewer Action', {
     type: 'action',
