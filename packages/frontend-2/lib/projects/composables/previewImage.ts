@@ -5,6 +5,7 @@ import { useSubscription } from '@vue/apollo-composable'
 import { useLock } from '~~/lib/common/composables/singleton'
 import PreviewPlaceholder from '~~/assets/images/preview_placeholder.png'
 import { isValidBase64Image } from '@speckle/shared/images/base64'
+import { nanoid } from 'nanoid'
 
 /**
  * Eager loading previews ensures a better LCP score, but also hits the preview endpoint more often.
@@ -30,7 +31,11 @@ const usePreviewsState = () =>
     /**
      * How many previews have already been eager loaded
      */
-    eagerLoaded: 0
+    eagerLoadedKeys: new Set<string>(),
+    /**
+     * We disable eager loading after hydration
+     */
+    allowEagerLoad: true
   }))
 
 /**
@@ -48,18 +53,24 @@ export function usePreviewImageBlob(
      * Whether to avoid spinners and just embed the image immediately. Means we will likely
      * load a lot more than needed, but also get a way better LCP score (no spinners).
      *
-     * If set to true, overrides `enabled` to be true.
+     * If enabled, overrides `enabled` to be true.
      */
     eagerLoad: boolean
   }>
 ) {
+  // Checking if we're allowed to eager load
   const state = usePreviewsState()
   const eagerLoad =
-    options?.eagerLoad && state.value.eagerLoaded < PREVIEWS_EAGER_LOAD_COUNT
+    options?.eagerLoad &&
+    state.value.allowEagerLoad &&
+    state.value.eagerLoadedKeys.size < PREVIEWS_EAGER_LOAD_COUNT
+  const eagerLoadKey = nanoid()
+
   if (eagerLoad) {
-    state.value.eagerLoaded = state.value.eagerLoaded + 1
+    state.value.eagerLoadedKeys.add(eagerLoadKey)
   }
 
+  // Continue on with normal operation
   const { enabled = ref(true) } = options || {}
   const logger = useLogger()
   const lazyLoad = !eagerLoad
@@ -271,6 +282,10 @@ export function usePreviewImageBlob(
       void regeneratePreviews()
     }
   )
+
+  onMounted(() => {
+    state.value.allowEagerLoad = false // disable eager loading after hydration
+  })
 
   return ret
 }

@@ -81,7 +81,10 @@
 import type { Nullable } from '@speckle/shared'
 import { CommonLoadingIcon } from '@speckle/ui-components'
 import { useElementVisibility, useResizeObserver } from '@vueuse/core'
-import { usePreviewImageBlob } from '~~/lib/projects/composables/previewImage'
+import {
+  usePreviewImageBlob,
+  type EagerLoadSettings
+} from '~~/lib/projects/composables/previewImage'
 
 type PanoramaStyleMouseOrTouchEvent = Pick<MouseEvent, 'target' | 'clientX' | 'clientY'>
 
@@ -89,10 +92,11 @@ const props = withDefaults(
   defineProps<{
     previewUrl: string
     panoramaOnHover?: boolean
-    eagerLoad?: boolean
+    eagerLoad?: EagerLoadSettings
   }>(),
   {
-    panoramaOnHover: true
+    panoramaOnHover: true,
+    eagerLoad: true
   }
 )
 
@@ -110,7 +114,10 @@ const {
   isLoadingPanorama,
   hasDoneFirstLoad,
   isPanoramaPlaceholder
-} = usePreviewImageBlob(basePreviewUrl, { enabled: isInViewport, eagerLoad: true })
+} = usePreviewImageBlob(basePreviewUrl, {
+  enabled: isInViewport,
+  eagerLoad: props.eagerLoad
+})
 
 const hovered = ref(false)
 const panorama = ref(null as Nullable<HTMLDivElement>)
