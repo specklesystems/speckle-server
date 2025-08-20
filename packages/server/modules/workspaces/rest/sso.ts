@@ -625,7 +625,9 @@ const handleOidcCallbackFactory =
         userId: req.user.id,
         providerId: decryptedOidcProvider.providerId,
         createdAt: new Date(),
-        validUntil: getDefaultSsoSessionExpirationDate()
+        validUntil: getDefaultSsoSessionExpirationDate(
+          decryptedOidcProvider.sessionTimeoutDays
+        )
       }
     })
 
