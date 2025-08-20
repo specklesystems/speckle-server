@@ -142,7 +142,7 @@ const useResetAuthState = (
   const authToken = useAuthCookie()
 
   return async (
-    resetOptions: Partial<{
+    resetOptions?: Partial<{
       /**
        * If true, won't await the full reset and return early after reset has started
        */
