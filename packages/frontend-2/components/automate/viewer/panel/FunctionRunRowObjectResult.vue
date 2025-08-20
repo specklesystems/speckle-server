@@ -54,7 +54,7 @@ const {
   }
 } = useInjectedViewerState()
 
-const { isolateObjects, resetFilters, setPropertyFilter, applyPropertyFilter } =
+const { isolateObjects, resetFilters, addActiveFilter, toggleFilterApplied } =
   useFilterUtilities()
 const { setSelectionFromObjectIds, clearSelection } = useSelectionUtilities()
 
@@ -154,8 +154,8 @@ const setOrUnsetGradient = () => {
   if (!computedPropInfo.value) return
 
   metadataGradientIsSet.value = true
-  setPropertyFilter(computedPropInfo.value)
-  applyPropertyFilter()
+  const filterId = addActiveFilter(computedPropInfo.value)
+  toggleFilterApplied(filterId)
 }
 
 const iconAndColor = computed(() => {

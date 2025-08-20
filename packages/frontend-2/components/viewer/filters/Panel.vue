@@ -8,7 +8,7 @@
           size="sm"
           color="subtle"
           tabindex="-1"
-          @click="removePropertyFilter(), refreshColorsIfSetOrActiveFilterIsNumeric()"
+          @click="resetFilters()"
         >
           Reset
         </FormButton>
@@ -26,7 +26,7 @@
 
     <!-- Filter Logic Selection -->
     <ViewerFiltersFilterLogicSelector
-      v-if="activeFilters.length > 0"
+      v-if="propertyFilters.length > 0"
       v-model="filterLogic"
       @update:model-value="handleFilterLogicChange"
     />
@@ -34,12 +34,12 @@
     <div class="h-full flex flex-col">
       <!-- Active Filters Section -->
       <div
-        v-if="activeFilters.length > 0"
+        v-if="propertyFilters.length > 0"
         class="flex-1 overflow-y-scroll simple-scrollbar"
       >
         <div class="space-y-3 p-3">
           <ViewerFiltersFilterCard
-            v-for="filter in activeFilters"
+            v-for="filter in propertyFilters"
             :key="filter.id"
             :filter="filter"
             :property-options="propertySelectOptions"
@@ -85,16 +85,16 @@ import { FormButton } from '@speckle/ui-components'
 import { onClickOutside } from '@vueuse/core'
 
 const {
-  removePropertyFilter,
-  applyPropertyFilter,
-  unApplyPropertyFilter,
-  filters: { propertyFilter, activeFilters },
+  filters: { propertyFilters },
   getRelevantFilters,
   getPropertyName,
+  addActiveFilter,
   removeActiveFilter,
   toggleFilterApplied,
   toggleActiveFilterValue,
-  updateFilterCondition
+  updateFilterCondition,
+  updateActiveFilterValues,
+  resetFilters
 } = useFilterUtilities()
 
 const {
@@ -158,38 +158,16 @@ const filterLogic = ref<FilterLogic>(FilterLogic.All)
 // Initialize data store logic
 objectDataStore.setFilterLogic(filterLogic.value)
 
-const speckleTypeFilter = computed(() =>
-  relevantFilters.value.find((f: PropertyInfo) => f.key === 'speckle_type')
-)
-const activeFilter = computed(
-  () => propertyFilter.filter.value || speckleTypeFilter.value
-)
-
 const mp = useMixpanel()
-watch(activeFilter, (newVal) => {
-  if (!newVal) return
-  mp.track('Viewer Action', {
-    type: 'action',
-    name: 'filters',
-    action: 'set-active-filter',
-    value: newVal.key
-  })
-})
 
-const numericActiveFilter = computed(() =>
-  isNumericPropertyInfo(activeFilter.value) ? activeFilter.value : undefined
-)
-
-const title = computed(() => getPropertyName(activeFilter.value?.key ?? ''))
-
-const colors = computed(() => !!propertyFilter.isApplied.value)
+const title = computed(() => 'Filters')
 
 const showPropertySelection = ref(false)
 const propertySelectionRef = ref<HTMLElement>()
 
 // Watch for filter changes and update data store slices
 watch(
-  () => activeFilters.value,
+  () => propertyFilters.value,
   (newFilters) => {
     // Clear existing slices from this panel
     const existingSlices = objectDataStore.dataSlices.value.filter((slice) =>
@@ -249,16 +227,13 @@ const handleAddFilterClick = () => {
 }
 
 const selectProperty = (propertyKey: string) => {
-  // Create the filter with the selected property
-  const filterId = `filter-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  // Find the property filter
+  const property = relevantFilters.value.find((p) => p.key === propertyKey)
 
-  activeFilters.value.push({
-    id: filterId,
-    filter: relevantFilters.value.find((p) => p.key === propertyKey) || null,
-    isApplied: false,
-    selectedValues: [],
-    condition: FilterCondition.Is
-  })
+  if (property) {
+    // Use the addActiveFilter function to maintain consistency
+    addActiveFilter(property)
+  }
 
   // Hide property selection
   showPropertySelection.value = false
@@ -272,12 +247,13 @@ const selectProperty = (propertyKey: string) => {
 }
 
 const setFilterProperty = (filterId: string, propertyKey: string) => {
-  const filter = activeFilters.value.find((f) => f.id === filterId)
+  const filter = propertyFilters.value.find((f) => f.id === filterId)
   const property = relevantFilters.value.find((p) => p.key === propertyKey)
 
   if (filter && property) {
     filter.filter = property
-    filter.selectedValues = [] // Reset selected values when property changes
+    // Reset selected values when property changes using the proper API
+    updateActiveFilterValues(filterId, [])
 
     mp.track('Viewer Action', {
       type: 'action',
@@ -350,27 +326,6 @@ const handleNumericRangeChange = (filterId: string, event: Event) => {
 
   // For now, just update the passMin value
   // TODO: Implement proper range handling with min/max values
-}
-
-// Handles a rather complicated ux flow: user sets a numeric filter which only makes sense with colors on. we set the force colors flag in that scenario, so we can revert it if user selects a non-numeric filter afterwards.
-let forcedColors = false
-const refreshColorsIfSetOrActiveFilterIsNumeric = () => {
-  if (!!numericActiveFilter.value && !colors.value) {
-    forcedColors = true
-    applyPropertyFilter()
-    return
-  }
-
-  if (!colors.value) return
-
-  if (forcedColors) {
-    forcedColors = false
-    unApplyPropertyFilter()
-    return
-  }
-
-  // removePropertyFilter()
-  applyPropertyFilter()
 }
 
 // Click outside to close property selection

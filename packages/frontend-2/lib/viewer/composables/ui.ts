@@ -5,7 +5,12 @@ import {
   type PropertyInfo,
   ViewMode
 } from '@speckle/viewer'
-import { MeasurementsExtension, ViewModes, MeasurementEvent } from '@speckle/viewer'
+import {
+  MeasurementsExtension,
+  ViewModes,
+  MeasurementEvent,
+  FilteringExtension
+} from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { useActiveElement } from '@vueuse/core'
 import { difference, isString, uniq } from 'lodash-es'
@@ -208,7 +213,8 @@ export function useFilterUtilities(
       ...(options?.replace ? [] : filters.isolatedObjectIds.value),
       ...objectIds
     ])
-    // instance.isolateObjects(objectIds, 'utilities', true)
+    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
+    filteringExtension.isolateObjects(objectIds, 'utilities', true, true)
   }
 
   const unIsolateObjects = (objectIds: string[]) => {
@@ -216,7 +222,8 @@ export function useFilterUtilities(
       filters.isolatedObjectIds.value,
       objectIds
     )
-    // instance.unIsolateObjects(objectIds, 'utilities', true)
+    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
+    filteringExtension.unIsolateObjects(objectIds, 'utilities', true, true)
   }
 
   const hideObjects = (
@@ -229,41 +236,14 @@ export function useFilterUtilities(
       ...(options?.replace ? [] : filters.hiddenObjectIds.value),
       ...objectIds
     ])
-    // instance.hideObjects(objectIds, 'utilities', true)
+    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
+    filteringExtension.hideObjects(objectIds, 'utilities', false, false)
   }
 
   const showObjects = (objectIds: string[]) => {
     filters.hiddenObjectIds.value = difference(filters.hiddenObjectIds.value, objectIds)
-    // instance.showObjects(objectIds, 'utilities', true)
-  }
-
-  /**
-   * Sets the current filter property. Does not apply it (instruct viewer to color objects).
-   */
-  const setPropertyFilter = (property: PropertyInfo) => {
-    filters.propertyFilter.filter.value = property
-  }
-
-  /**
-   * Instructs the viewer to apply the current property filter (color objects).
-   */
-  const applyPropertyFilter = () => {
-    filters.propertyFilter.isApplied.value = true
-  }
-
-  /**
-   * Unsets the current property filter.
-   */
-  const removePropertyFilter = () => {
-    filters.propertyFilter.isApplied.value = false
-    filters.propertyFilter.filter.value = null
-  }
-
-  /**
-   * Unapplies the current property filter - removes object colouring
-   */
-  const unApplyPropertyFilter = () => {
-    filters.propertyFilter.isApplied.value = false
+    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
+    filteringExtension.showObjects(objectIds, 'utilities', false)
   }
 
   /**
@@ -292,86 +272,20 @@ export function useFilterUtilities(
   }
 
   /**
-   * Sets the selected values for the current property filter
-   */
-  const setSelectedFilterValues = (values: string[]) => {
-    filters.propertyFilter.selectedValues.value = [...values]
-  }
-
-  /**
-   * Adds a value to the selected filter values
-   */
-  const addSelectedFilterValue = (value: string) => {
-    if (!filters.propertyFilter.selectedValues.value.includes(value)) {
-      filters.propertyFilter.selectedValues.value.push(value)
-    }
-  }
-
-  /**
-   * Removes a value from the selected filter values
-   */
-  const removeSelectedFilterValue = (value: string) => {
-    const index = filters.propertyFilter.selectedValues.value.indexOf(value)
-    if (index > -1) {
-      filters.propertyFilter.selectedValues.value.splice(index, 1)
-    }
-  }
-
-  /**
-   * Toggles a value in the selected filter values (checkbox-style)
-   */
-  const toggleSelectedFilterValue = (value: string) => {
-    if (filters.propertyFilter.selectedValues.value.includes(value)) {
-      removeSelectedFilterValue(value)
-    } else {
-      addSelectedFilterValue(value)
-    }
-  }
-
-  /**
-   * Checks if a value is currently selected
-   */
-  const isValueSelected = (value: string): boolean => {
-    return filters.propertyFilter.selectedValues.value.includes(value)
-  }
-
-  /**
-   * Gets the values to filter by - either selected values or all values (for backward compatibility)
-   */
-  const getFilterValues = (): string[] => {
-    const selectedValues = filters.propertyFilter.selectedValues.value
-    const currentFilter = filters.propertyFilter.filter.value
-
-    // If we have selected values, use those
-    if (selectedValues.length > 0) {
-      return selectedValues
-    }
-
-    // Otherwise, fall back to all available values (backward compatibility)
-    if (currentFilter) {
-      return getAvailableFilterValues(currentFilter)
-    }
-
-    return []
-  }
-
-  // === NEW MULTI-FILTER FUNCTIONS ===
-
-  /**
-   * Adds a new active filter or updates existing one
+   * Adds a new filter or updates existing one
    */
   const addActiveFilter = (filter: PropertyInfo): string => {
-    const existingIndex = filters.activeFilters.value.findIndex(
+    const existingIndex = filters.propertyFilters.value.findIndex(
       (f) => f.filter?.key === filter.key
     )
 
     if (existingIndex !== -1) {
       // Update existing filter
-      return filters.activeFilters.value[existingIndex].id
+      return filters.propertyFilters.value[existingIndex].id
     } else {
       // Add new filter
       const id = `filter-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      filters.activeFilters.value.push({
+      filters.propertyFilters.value.push({
         filter,
         isApplied: false,
         selectedValues: [],
@@ -386,9 +300,9 @@ export function useFilterUtilities(
    * Removes an active filter by ID
    */
   const removeActiveFilter = (filterId: string) => {
-    const index = filters.activeFilters.value.findIndex((f) => f.id === filterId)
+    const index = filters.propertyFilters.value.findIndex((f) => f.id === filterId)
     if (index !== -1) {
-      filters.activeFilters.value.splice(index, 1)
+      filters.propertyFilters.value.splice(index, 1)
     }
   }
 
@@ -396,7 +310,7 @@ export function useFilterUtilities(
    * Toggles the applied state of a specific filter
    */
   const toggleFilterApplied = (filterId: string) => {
-    const filter = filters.activeFilters.value.find((f) => f.id === filterId)
+    const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
       filter.isApplied = !filter.isApplied
     }
@@ -406,7 +320,7 @@ export function useFilterUtilities(
    * Updates selected values for a specific active filter
    */
   const updateActiveFilterValues = (filterId: string, values: string[]) => {
-    const filter = filters.activeFilters.value.find((f) => f.id === filterId)
+    const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
       filter.selectedValues = [...values]
     }
@@ -416,7 +330,7 @@ export function useFilterUtilities(
    * Updates condition for a specific active filter
    */
   const updateFilterCondition = (filterId: string, condition: FilterCondition) => {
-    const filter = filters.activeFilters.value.find((f) => f.id === filterId)
+    const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
       filter.condition = condition
     }
@@ -426,7 +340,7 @@ export function useFilterUtilities(
    * Toggles a value for a specific active filter
    */
   const toggleActiveFilterValue = (filterId: string, value: string) => {
-    const filter = filters.activeFilters.value.find((f) => f.id === filterId)
+    const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
       const index = filter.selectedValues.indexOf(value)
       if (index > -1) {
@@ -441,7 +355,7 @@ export function useFilterUtilities(
    * Checks if a value is selected for a specific active filter
    */
   const isActiveFilterValueSelected = (filterId: string, value: string): boolean => {
-    const filter = filters.activeFilters.value.find((f) => f.id === filterId)
+    const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     return filter ? filter.selectedValues.includes(value) : false
   }
 
@@ -449,17 +363,16 @@ export function useFilterUtilities(
    * Gets all currently applied filters
    */
   const getAppliedFilters = () => {
-    return filters.activeFilters.value.filter((f) => f.isApplied)
+    return filters.propertyFilters.value.filter((f) => f.isApplied)
   }
 
   const resetFilters = () => {
     filters.hiddenObjectIds.value = []
     filters.isolatedObjectIds.value = []
-    filters.propertyFilter.filter.value = null
-    filters.propertyFilter.isApplied.value = false
-    filters.propertyFilter.selectedValues.value = []
-    filters.activeFilters.value = [] // Reset active filters
-    // filters.selectedObjects.value = []
+    filters.propertyFilters.value = []
+    filters.selectedObjects.value = []
+    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
+    filteringExtension.resetFilters()
   }
 
   const resetExplode = () => {
@@ -484,7 +397,7 @@ export function useFilterUtilities(
   }
 
   const hasActiveFilters = computed(() => {
-    return !!filters.propertyFilter.filter.value
+    return filters.propertyFilters.value.length > 0
   })
 
   // Regex patterns for identifying Revit properties
@@ -675,12 +588,12 @@ export function useFilterUtilities(
   }
 
   /**
-   * Applies a filter for a key-value pair (with smart matching)
+   * Finds a filter for a key-value pair using smart matching logic
    */
-  const applyKvpFilter = (
+  const findFilterByKvp = (
     kvp: { key: string; backendPath?: string },
     availableFilters: PropertyInfo[] | null | undefined
-  ): void => {
+  ): PropertyInfo | undefined => {
     // Use backendPath if available, otherwise fall back to display key
     const backendKey = kvp.backendPath || kvp.key
 
@@ -693,10 +606,7 @@ export function useFilterUtilities(
       filter = findFilterByDisplayName(displayKey, availableFilters)
     }
 
-    if (filter) {
-      setPropertyFilter(filter)
-      applyPropertyFilter()
-    }
+    return filter
   }
 
   return {
@@ -705,19 +615,9 @@ export function useFilterUtilities(
     hideObjects,
     showObjects,
     filters,
-    setPropertyFilter,
-    applyPropertyFilter,
-    removePropertyFilter,
-    unApplyPropertyFilter,
-    // New multi-value filter functions
+    // Filter value functions
     getAvailableFilterValues,
-    setSelectedFilterValues,
-    addSelectedFilterValue,
-    removeSelectedFilterValue,
-    toggleSelectedFilterValue,
-    isValueSelected,
-    getFilterValues,
-    // New multi-filter functions
+    // Multi-filter functions
     addActiveFilter,
     removeActiveFilter,
     toggleFilterApplied,
@@ -738,7 +638,7 @@ export function useFilterUtilities(
     findFilterByDisplayName,
     isKvpFilterable,
     getFilterDisabledReason,
-    applyKvpFilter,
+    findFilterByKvp,
     // Data store for advanced filtering
     dataStore
   }
@@ -894,9 +794,7 @@ export function useMeasurementUtilities() {
   }
 
   const removeMeasurement = () => {
-    if (state.viewer.instance?.removeMeasurement) {
-      state.viewer.instance.removeMeasurement()
-    }
+    state.viewer.instance.getExtension(MeasurementsExtension).removeMeasurement()
   }
 
   const clearMeasurements = () => {

@@ -33,7 +33,7 @@ export type ResourceInfo = {
 }
 
 /**
- * Extracts nested properties from an object, similar to the viewer's property extraction
+ * Extracts nested properties from an object for advanced filtering and data slicing.
  */
 function extractNestedProperties(obj: Record<string, unknown>): PropertyInfoBase[] {
   const properties: PropertyInfoBase[] = []
@@ -66,15 +66,6 @@ const globalDataSourcesMap: Ref<Record<string, DataSource>> = ref({})
 const globalDataSlices: Ref<DataSlice[]> = ref([])
 const globalCurrentFilterLogic = ref<FilterLogic>(FilterLogic.All)
 
-/**
- * Object data store for viewer filtering and data slicing operations.
- *
- * Based on the dashboard's objectDataStore pattern, this provides:
- * - Multi-resource object and property management
- * - Slice-based filtering with intersection logic
- * - Property extraction from viewer objects
- * - Query capabilities for filtering operations
- */
 export function useObjectDataStore() {
   const logger = useLogger()
 

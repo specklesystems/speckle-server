@@ -2,7 +2,7 @@ import {
   useInjectedViewerState,
   useResetUiState
 } from '~~/lib/viewer/composables/setup'
-import { SpeckleViewer, TimeoutError } from '@speckle/shared'
+import { SpeckleViewer } from '@speckle/shared'
 import { get } from 'lodash-es'
 import { Vector3 } from 'three'
 import {
@@ -11,7 +11,7 @@ import {
   useSelectionUtilities
 } from '~~/lib/viewer/composables/ui'
 import { CameraController, ViewMode, VisualDiffMode } from '@speckle/viewer'
-import type { NumericPropertyInfo } from '@speckle/viewer'
+
 import type { Merge, PartialDeep } from 'type-fest'
 import type { SectionBoxData } from '@speckle/shared/viewer/state'
 import { useViewerRealtimeActivityTracker } from '~/lib/viewer/composables/activity'
@@ -107,8 +107,8 @@ export function useStateSerialization() {
             return ret
           }, {} as Record<string, string | null>),
           propertyFilter: {
-            key: state.ui.filters.propertyFilter.filter.value?.key || null,
-            isApplied: state.ui.filters.propertyFilter.isApplied.value
+            key: null, // Legacy field - not used in new multi-filter system
+            isApplied: false
           }
         },
         camera: {
@@ -167,20 +167,10 @@ export function useApplySerializedState() {
     },
     urlHashState
   } = useInjectedViewerState()
-  const {
-    resetFilters,
-    hideObjects,
-    isolateObjects,
-    removePropertyFilter,
-    setPropertyFilter,
-    applyPropertyFilter,
-    unApplyPropertyFilter,
-    waitForAvailableFilter
-  } = useFilterUtilities()
+  const { resetFilters, hideObjects, isolateObjects } = useFilterUtilities()
   const resetState = useResetUiState()
   const { diffModelVersions, deserializeDiffCommand, endDiff } = useDiffUtilities()
   const { setSelectionFromObjectIds } = useSelectionUtilities()
-  const logger = useLogger()
   const { update } = useViewerRealtimeActivityTracker()
 
   return async <Mode extends StateApplyMode>(
@@ -259,44 +249,6 @@ export function useApplySerializedState() {
       isolateObjects(filters.isolatedObjectIds, { replace: true })
     } else {
       resetFilters()
-    }
-
-    const propertyFilterApplied = filters.propertyFilter?.isApplied
-    if (propertyFilterApplied) {
-      applyPropertyFilter()
-    } else {
-      unApplyPropertyFilter()
-    }
-
-    const propertyInfoKey = filters.propertyFilter?.key
-    const passMin = state.viewer?.metadata?.filteringState?.passMin
-    const passMax = state.viewer?.metadata?.filteringState?.passMax
-    if (propertyInfoKey) {
-      removePropertyFilter()
-
-      // Setting property filter asynchronously, when it's possible to do so
-      waitForAvailableFilter(propertyInfoKey)
-        .then((filter) => {
-          if (passMin || passMax) {
-            const numericFilter = { ...filter } as NumericPropertyInfo
-            numericFilter.passMin = passMin || numericFilter.min
-            numericFilter.passMax = passMax || numericFilter.max
-            setPropertyFilter(numericFilter)
-            applyPropertyFilter()
-          } else {
-            setPropertyFilter(filter)
-            applyPropertyFilter()
-          }
-        })
-        .catch((e) => {
-          if (e instanceof TimeoutError) {
-            logger.warn(
-              `${e.message} - filter probably comes from a thread context that isn't currently loaded`
-            )
-          } else {
-            logger.error(e)
-          }
-        })
     }
 
     // Handle resource string updates

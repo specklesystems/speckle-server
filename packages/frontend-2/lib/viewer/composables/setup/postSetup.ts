@@ -11,8 +11,8 @@ import {
   ExplodeExtension,
   LoaderEvent,
   type PropertyInfo,
-  type StringPropertyInfo,
-  type SunLightConfiguration
+  type SunLightConfiguration,
+  FilteringExtension
 } from '@speckle/viewer'
 import {
   ViewerEvent,
@@ -28,7 +28,6 @@ import { useAuthManager } from '~~/lib/auth/composables/auth'
 import type { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
 import { ProjectCommentsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
 import {
-  useInjectedViewer,
   useInjectedViewerState,
   useInjectedViewerInterfaceState
 } from '~~/lib/viewer/composables/setup'
@@ -51,7 +50,7 @@ import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
-import { SafeLocalStorage, type Nullable } from '@speckle/shared'
+import { SafeLocalStorage } from '@speckle/shared'
 import {
   useCameraUtilities,
   useMeasurementUtilities,
@@ -555,10 +554,6 @@ function useViewerFiltersIntegration() {
   const filterUtils = useFilterUtilities({ state: useInjectedViewerState() })
   const { dataStore: objectDataStore } = filterUtils
 
-  const {
-    metadata: { availableFilters: allFilters }
-  } = useInjectedViewer()
-
   const logger = useLogger()
   const stateKey = 'default'
   let preventFilterWatchers = false
@@ -569,7 +564,7 @@ function useViewerFiltersIntegration() {
     if (!isAlreadyInPreventScope) preventFilterWatchers = false
   }
 
-  // Watch data store final object IDs and apply to viewer (follows existing filter patterns)
+  // Watch data store final object IDs and apply to viewer using FilteringExtension
   watch(
     objectDataStore.finalObjectIds,
     (newObjectIds, oldObjectIds) => {
@@ -577,22 +572,19 @@ function useViewerFiltersIntegration() {
       if (arraysEqual(newObjectIds, oldObjectIds || [])) return
 
       withWatchersDisabled(() => {
+        const filteringExtension = instance.getExtension(FilteringExtension)
         if (newObjectIds.length > 0) {
-          instance.isolateObjects(newObjectIds, stateKey, true)
+          filteringExtension.isolateObjects(newObjectIds, stateKey, true, true)
           filters.hiddenObjectIds.value = []
           filters.isolatedObjectIds.value = newObjectIds
         } else {
-          instance.resetFilters()
+          filteringExtension.resetFilters()
           filters.isolatedObjectIds.value = []
           filters.hiddenObjectIds.value = []
         }
       })
     },
     { immediate: true, flush: 'sync' }
-  )
-
-  const speckleTypeFilter = computed(
-    () => allFilters.value?.find((f) => f.key === 'speckle_type') as StringPropertyInfo
   )
 
   // state -> viewer
@@ -662,16 +654,6 @@ function useViewerFiltersIntegration() {
   //   },
   //   { immediate: true, flush: 'sync' }
   // )
-
-  const syncColorFilterToViewer = async (
-    filter: Nullable<PropertyInfo>,
-    isApplied: boolean
-  ) => {
-    const targetFilter = filter || speckleTypeFilter.value
-
-    if (isApplied && targetFilter) await instance.setColorFilter(targetFilter)
-    if (!isApplied) await instance.removeColorFilter()
-  }
 
   // New function to handle multiple active filters
   const applyMultipleFilters = async (
@@ -767,7 +749,7 @@ function useViewerFiltersIntegration() {
       // Keep the first one, disable the rest
       for (let i = 1; i < appliedFilters.length; i++) {
         const filterId = appliedFilters[i].id
-        const filter = filters.activeFilters.value.find((f) => f.id === filterId)
+        const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
         if (filter) {
           filter.isApplied = false
         }
@@ -875,67 +857,11 @@ function useViewerFiltersIntegration() {
     return value
   }
 
-  // Watch legacy single filter
-  watch(
-    () =>
-      <const>[
-        filters.propertyFilter.filter.value,
-        filters.propertyFilter.isApplied.value
-      ],
-    async (newVal) => {
-      const [filter, isApplied] = newVal
-      // Only apply single filter if no active filters are present
-      if (filters.activeFilters.value.length === 0) {
-        await syncColorFilterToViewer(filter, isApplied)
-      }
-    },
-    { immediate: true, flush: 'sync' }
-  )
-
-  // OLD FILTER SYSTEM - DISABLED IN FAVOR OF DATA STORE
-  // Watch new multi-filter system
-  // watch(
-  //   () => filters.activeFilters.value,
-  //   async (activeFilters) => {
-  //     await applyMultipleFilters(activeFilters)
-  //   },
-  //   { immediate: true, flush: 'sync', deep: true }
-  // )
-
-  // // Also watch for changes in selected values to trigger isolation immediately
-  // watch(
-  //   () =>
-  //     filters.activeFilters.value.map((f) => ({
-  //       id: f.id,
-  //       selectedValues: f.selectedValues
-  //     })),
-  //   async () => {
-  //     // Get filters that have selected values (for isolation)
-  //     const filtersWithValues = filters.activeFilters.value.filter(
-  //       (f) => f.filter !== null && f.selectedValues.length > 0
-  //     )
-  //     await applyIsolation(
-  //       filtersWithValues.map((f) => ({
-  //         filter: f.filter!,
-  //         selectedValues: f.selectedValues,
-  //         id: f.id
-  //       }))
-  //     )
-  //   },
-  //   { deep: true, flush: 'sync' }
-  // )
-
   useOnViewerLoadComplete(
     async () => {
-      // Check if we have active filters first
-      if (filters.activeFilters.value.length > 0) {
-        await applyMultipleFilters(filters.activeFilters.value)
-      } else {
-        // Fall back to legacy single filter
-        const targetFilter =
-          filters.propertyFilter.filter.value || speckleTypeFilter.value
-        const isApplied = filters.propertyFilter.isApplied.value
-        await syncColorFilterToViewer(targetFilter, isApplied)
+      // Apply property filters on load
+      if (filters.propertyFilters.value.length > 0) {
+        await applyMultipleFilters(filters.propertyFilters.value)
       }
     },
     { initialOnly: true }

@@ -294,13 +294,9 @@ export type InjectableViewerState = Readonly<{
        * For quick object ID lookups
        */
       selectedObjectIds: ComputedRef<Set<string>>
-      propertyFilter: {
-        filter: Ref<Nullable<PropertyInfo>>
-        isApplied: Ref<boolean>
-        selectedValues: Ref<string[]> // Array of selected values for checkbox-style filtering
-      }
-      // New: Support for multiple active filters
-      activeFilters: Ref<
+
+      // Multi-filter system
+      propertyFilters: Ref<
         Array<{
           filter: PropertyInfo | null
           isApplied: boolean
@@ -1084,12 +1080,8 @@ function setupInterfaceState(
   const isolatedObjectIds = ref([] as string[])
   const hiddenObjectIds = ref([] as string[])
   const selectedObjects = shallowRef<Raw<SpeckleObject>[]>([])
-  const propertyFilter = ref(null as Nullable<PropertyInfo>)
-  const isPropertyFilterApplied = ref(false)
-  const selectedFilterValues = ref<string[]>([])
 
-  // New: Array to track multiple active filters
-  const activeFilters = ref<
+  const propertyFilters = ref<
     Array<{
       filter: PropertyInfo | null
       isApplied: boolean
@@ -1101,7 +1093,7 @@ function setupInterfaceState(
   const hasAnyFiltersApplied = computed(() => {
     if (isolatedObjectIds.value.length) return true
     if (hiddenObjectIds.value.length) return true
-    if (propertyFilter.value || isPropertyFilterApplied.value) return true
+    if (propertyFilters.value.length > 0) return true
     return false
   })
   const viewMode = ref<ViewMode>(ViewMode.DEFAULT)
@@ -1179,12 +1171,7 @@ function setupInterfaceState(
         hiddenObjectIds,
         selectedObjects,
         selectedObjectIds,
-        propertyFilter: {
-          filter: propertyFilter,
-          isApplied: isPropertyFilterApplied,
-          selectedValues: selectedFilterValues
-        },
-        activeFilters,
+        propertyFilters,
         hasAnyFiltersApplied
       },
       highlightedObjectIds,

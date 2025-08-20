@@ -356,12 +356,12 @@ watch(isSmallerOrEqualSm, (newVal) => {
   activePanel.value = newVal ? 'none' : 'models'
 })
 
-// Auto-open filters panel when a new filter is applied from elsewhere
+// Auto-open filters panel when property filters are added
 watch(
-  () => filters.propertyFilter.isApplied.value && filters.propertyFilter.filter.value,
-  (newFilterApplied, oldFilterApplied) => {
-    // Only trigger if we're going from no filter to having a filter (not when changing filters or removing)
-    if (newFilterApplied && !oldFilterApplied) {
+  () => filters.propertyFilters.value.length,
+  (newCount, oldCount) => {
+    // Only trigger if we're adding filters
+    if (newCount > 0 && (oldCount === 0 || newCount > oldCount)) {
       activePanel.value = 'filters'
     }
   }

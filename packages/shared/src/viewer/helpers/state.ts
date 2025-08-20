@@ -81,6 +81,14 @@ export type SerializedViewerState = {
         key: Nullable<string>
         isApplied: boolean
       }
+      // New multi-filter system (optional for backward compatibility)
+      propertyFilters?: Array<{
+        key: Nullable<string>
+        isApplied: boolean
+        selectedValues: string[]
+        id: string
+        condition: 'AND' | 'OR'
+      }>
     }
     camera: {
       position: number[]
@@ -227,7 +235,11 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
           ...(state.ui?.filters?.propertyFilter || {}),
           key: state.ui?.filters?.propertyFilter?.key || null,
           isApplied: state.ui?.filters?.propertyFilter?.isApplied || false
-        }
+        },
+        // Optional new multi-filter system
+        ...(state.ui?.filters?.propertyFilters && {
+          propertyFilters: state.ui.filters.propertyFilters
+        })
       },
       camera: {
         ...(state.ui?.camera || {}),

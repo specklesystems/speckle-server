@@ -55,7 +55,7 @@
 import type { NumericPropertyInfo } from '@speckle/viewer'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 
-const { setPropertyFilter } = useFilterUtilities()
+const { addActiveFilter, toggleFilterApplied } = useFilterUtilities()
 
 const props = defineProps<{
   filter: NumericPropertyInfo
@@ -77,6 +77,9 @@ const setFilterPass = () => {
   const max = Math.max(passMin.value, passMax.value)
   propInfo.passMin = min
   propInfo.passMax = max
-  setPropertyFilter(propInfo)
+
+  // Add filter using new multi-filter system
+  const filterId = addActiveFilter(propInfo)
+  toggleFilterApplied(filterId)
 }
 </script>

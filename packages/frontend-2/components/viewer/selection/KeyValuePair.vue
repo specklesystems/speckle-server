@@ -72,35 +72,52 @@ const props = defineProps<{
   kvp: KeyValuePair
 }>()
 
-const showActionsMenu = ref(false)
+const {
+  isKvpFilterable,
+  getFilterDisabledReason,
+  findFilterByKvp,
+  addActiveFilter,
+  updateActiveFilterValues,
+  toggleFilterApplied
+} = useFilterUtilities()
 
-const { isKvpFilterable, getFilterDisabledReason, applyKvpFilter } =
-  useFilterUtilities()
 const {
   metadata: { availableFilters }
 } = useInjectedViewer()
 
+const showActionsMenu = ref(false)
+
 const isUrlString = (v: unknown) => typeof v === 'string' && VALID_HTTP_URL.test(v)
 
-const isCopyable = (kvp: KeyValuePair) => {
-  return kvp.value !== null && kvp.value !== undefined && typeof kvp.value !== 'object'
-}
+const isCopyable = computed(() => {
+  return (
+    props.kvp.value !== null &&
+    props.kvp.value !== undefined &&
+    typeof props.kvp.value !== 'object'
+  )
+})
 
-const isFilterable = (kvp: KeyValuePair) => {
-  return isKvpFilterable(kvp, availableFilters.value)
-}
+const isFilterable = computed(() => {
+  return isKvpFilterable(props.kvp, availableFilters.value)
+})
 
-const getDisabledReason = (kvp: KeyValuePair) => {
-  return getFilterDisabledReason(kvp, availableFilters.value)
-}
+const getDisabledReason = computed(() => {
+  return getFilterDisabledReason(props.kvp, availableFilters.value)
+})
 
-const handleFilterByProperty = (kvp: KeyValuePair) => {
-  applyKvpFilter(kvp, availableFilters.value)
+const handleAddToFilters = (kvp: KeyValuePair) => {
+  const filter = findFilterByKvp(kvp, availableFilters.value)
+  if (filter && kvp.value !== null && kvp.value !== undefined) {
+    const filterId = addActiveFilter(filter)
+    const values = [String(kvp.value)]
+    updateActiveFilterValues(filterId, values)
+    toggleFilterApplied(filterId)
+  }
 }
 
 const handleCopy = async (kvp: KeyValuePair) => {
   const { copy } = useClipboard()
-  if (isCopyable(kvp)) {
+  if (isCopyable.value) {
     await copy(kvp.value as string, {
       successMessage: `${kvp.key} copied to clipboard`,
       failureMessage: `Failed to copy ${kvp.key} to clipboard`
@@ -114,20 +131,20 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => {
       {
         title: 'Copy value',
         id: 'copy-value',
-        disabled: !isCopyable(props.kvp),
-        disabledTooltip: isCopyable(props.kvp)
+        disabled: !isCopyable.value,
+        disabledTooltip: isCopyable.value
           ? undefined
           : 'Cannot copy objects, arrays, or null values'
       }
     ],
     [
       {
-        title: 'Filter by property',
-        id: 'filter-by-property',
-        disabled: !isFilterable(props.kvp),
-        disabledTooltip: isFilterable(props.kvp)
-          ? undefined
-          : getDisabledReason(props.kvp)
+        title: 'Add to filters',
+        id: 'add-to-filters',
+        disabled: !isFilterable.value,
+        disabledTooltip: isFilterable.value
+          ? 'Add this property to filters'
+          : getDisabledReason.value
       }
     ]
   ]
@@ -143,8 +160,8 @@ const onActionChosen = (params: { item: LayoutMenuItem }) => {
     case 'copy-value':
       handleCopy(props.kvp)
       break
-    case 'filter-by-property':
-      handleFilterByProperty(props.kvp)
+    case 'add-to-filters':
+      handleAddToFilters(props.kvp)
       break
   }
 }
