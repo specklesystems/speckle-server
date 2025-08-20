@@ -15,6 +15,12 @@ It is intended to eventually replace the File Import Service.
    uv sync
    ```
 
+1. Copy `.env.example` to `.env` and update values as needed.
+
+   ```bash
+   cp .env.example .env
+   ```
+
 1. Run the service
 
    ```bash
