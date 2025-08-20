@@ -155,14 +155,19 @@ const useResetAuthState = (
     let user: MaybeNullOrUndefined<ActiveUserMainMetadataQuery['activeUser']> = null
     let resetPromise: Promise<unknown> = Promise.resolve()
     if (client) {
-      // evict user early
-      if (isLoggedIn) {
-        // evict so we re-do user resolution
-        client.cache.evict({ id: 'ROOT_QUERY', fieldName: 'activeUser' })
-      } else {
-        // don't evict, just set to null (before full reset)
-        modifyObjectField(client.cache, ROOT_QUERY, 'activeUser', () => null)
-      }
+      // evict user early (in case we're not waiting for full reset), as that's what most pages rely on
+      modifyObjectField(
+        client.cache,
+        ROOT_QUERY,
+        'activeUser',
+        ({ helpers: { evict } }) =>
+          isLoggedIn
+            ? // if we just logged in, we want to evict so that activeUser query retriggers
+              evict()
+            : // if we logged out, we don't want to reload activeUser query yet, just
+              // mark it as if it's resolved to be null
+              null
+      )
 
       // evict entire cache (not enough to just evict user, various other fields
       // also depend on active user (e.g. Workspace.seatType))
