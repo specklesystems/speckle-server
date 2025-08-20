@@ -31,11 +31,7 @@ const usePreviewsState = () =>
     /**
      * How many previews have already been eager loaded
      */
-    eagerLoadedKeys: new Set<string>(),
-    /**
-     * We disable eager loading after hydration
-     */
-    allowEagerLoad: true
+    eagerLoadedKeys: new Set<string>()
   }))
 
 /**
@@ -59,10 +55,11 @@ export function usePreviewImageBlob(
   }>
 ) {
   // Checking if we're allowed to eager load
+  const { $isAppHydrated } = useNuxtApp()
   const state = usePreviewsState()
   const eagerLoad =
     options?.eagerLoad &&
-    state.value.allowEagerLoad &&
+    !$isAppHydrated.value &&
     state.value.eagerLoadedKeys.size < PREVIEWS_EAGER_LOAD_COUNT
   const eagerLoadKey = nanoid()
 
@@ -282,10 +279,6 @@ export function usePreviewImageBlob(
       void regeneratePreviews()
     }
   )
-
-  onMounted(() => {
-    state.value.allowEagerLoad = false // disable eager loading after hydration
-  })
 
   return ret
 }

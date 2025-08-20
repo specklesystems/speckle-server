@@ -141,6 +141,7 @@ const {
   }
 } = useInjectedViewerState()
 const mp = useMixpanel()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const route = useRoute()
 const resourceIdString = computed(() => {
