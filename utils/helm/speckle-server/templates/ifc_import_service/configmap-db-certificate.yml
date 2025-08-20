@@ -1,4 +1,4 @@
-{{ if ( and .Values.featureFlags.backgroundJobsEnabled .Values.ifc_import_service.db.certificate.enabled .Values.ifc_import_service.db.certificate.data ) }}
+{{ if ( and .Values.ifc_import_service.enabled .Values.ifc_import_service.db.certificate.enabled .Values.ifc_import_service.db.certificate.data ) }}
 
 apiVersion: v1
 kind: ConfigMap
