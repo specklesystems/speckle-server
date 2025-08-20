@@ -218,9 +218,12 @@ const onRename = async (newName: string) => {
 
 watch(
   () => isSelected.value,
-  (isSelected) => {
-    if (isSelected) {
+  (newVal) => {
+    if (newVal) {
       open.value = true
+
+      // unmark selection so that it's available for next group
+      isSelected.value = false
     }
   },
   { immediate: true }
