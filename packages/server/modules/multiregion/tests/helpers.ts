@@ -4,7 +4,9 @@ import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import type { Knex } from 'knex'
 
 export async function getTestRegionClients(): Promise<[Knex, ...Knex[]]> {
+  if (!isMultiRegionTestMode()) return [db]
+
   const regionClients = await getRegisteredRegionClients()
   const regionDbs = Object.values(regionClients)
-  return isMultiRegionTestMode() ? [db, ...regionDbs] : [db]
+  return [db, ...regionDbs]
 }
