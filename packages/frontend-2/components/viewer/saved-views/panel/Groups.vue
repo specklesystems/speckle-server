@@ -15,9 +15,9 @@
         :group="group"
         :project="project"
         :search="search"
-        :is-selected="isGroupSelected(group)"
+        :open="isGroupSelected(group)"
         :rename-mode="isGroupInRenameMode(group)"
-        @update:is-selected="(value) => (selectedGroupId = value ? group.id : null)"
+        @update:open="(value) => onIsSelectedChange(value, group)"
         @update:rename-mode="(value) => (groupBeingRenamed = value ? group : undefined)"
         @delete-group="($event) => (groupBeingDeleted = $event)"
         @rename-group="($event) => (groupBeingRenamed = $event)"
@@ -96,14 +96,13 @@ const props = defineProps<{
   search?: string
 }>()
 
-const selectedGroupId = defineModel<string | null>('selectedGroupId', {
-  required: true
-})
-
 const {
   projectId,
   resources: {
     request: { resourceIdString }
+  },
+  ui: {
+    savedViews: { openedGroupState }
   }
 } = useInjectedViewerState()
 const eventBus = useEventBus()
@@ -200,17 +199,31 @@ const isGroupInRenameMode = (
 const isGroupSelected = (
   group: ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment
 ) => {
-  return group.id === selectedGroupId.value
+  return openedGroupState.value.get(group.id)
+}
+
+const onIsSelectedChange = (
+  value: boolean | undefined,
+  group: ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment
+) => {
+  if (value) {
+    openedGroupState.value.set(group.id, true)
+  } else {
+    openedGroupState.value.delete(group.id)
+  }
 }
 
 watch(
   groups,
   (newGroups) => {
-    if (newGroups.length && !selectedGroupId.value) {
-      selectedGroupId.value =
-        (props.search
-          ? newGroups[0].id
-          : newGroups.find((g) => !g.isUngroupedViewsGroup)?.id) || null
+    if (newGroups.length) {
+      // first group should be selected
+      const selectableGroupId = props.search
+        ? newGroups[0].id
+        : newGroups.find((g) => !g.isUngroupedViewsGroup)?.id
+      if (selectableGroupId) {
+        openedGroupState.value.set(selectableGroupId, true)
+      }
     }
   },
   { immediate: true }
@@ -227,6 +240,6 @@ eventBus.on(ViewerEventBusKeys.MarkSavedViewForEdit, ({ type, view }) => {
 })
 
 const onMoveSuccess = (groupId: string) => {
-  selectedGroupId.value = groupId
+  openedGroupState.value.set(groupId, true)
 }
 </script>
