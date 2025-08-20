@@ -14,6 +14,7 @@ import type {
 import { useStateSerialization } from '~/lib/viewer/composables/serialization'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import {
+  filterKeys,
   onGroupViewRemovalCacheUpdates,
   onNewGroupViewCacheUpdates
 } from '~/lib/viewer/helpers/savedViews/cache'
@@ -349,7 +350,7 @@ export const useCreateSavedViewGroup = () => {
                   return newItems
                 })
               }),
-            { autoEvictFiltered: true }
+            { autoEvictFiltered: filterKeys }
           )
         }
       }
@@ -425,7 +426,7 @@ export const useDeleteSavedViewGroup = () => {
                   return newItems
                 })
               }),
-            { autoEvictFiltered: true }
+            { autoEvictFiltered: filterKeys }
           )
 
           // Possibly a bunch of views got moved back to Ungrouped as well

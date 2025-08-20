@@ -14,6 +14,7 @@
         :views-type="viewsType"
         :group="group"
         :project="project"
+        :search="search"
         :is-selected="isGroupSelected(group)"
         :rename-mode="isGroupInRenameMode(group)"
         @update:is-selected="(value) => (selectedGroupId = value ? group.id : null)"
@@ -92,6 +93,7 @@ const paginableGroupsQuery = graphql(`
 
 const props = defineProps<{
   viewsType: ViewsType
+  search?: string
 }>()
 
 const selectedGroupId = defineModel<string | null>('selectedGroupId', {
@@ -106,7 +108,6 @@ const {
 } = useInjectedViewerState()
 const eventBus = useEventBus()
 
-const search = ref('')
 const viewBeingEdited = ref<ViewerSavedViewsPanelViewEditDialog_SavedViewFragment>()
 const viewBeingMoved = ref<ViewerSavedViewsPanelViewMoveDialog_SavedViewFragment>()
 const viewBeingDeleted = ref<ViewerSavedViewsPanelViewDeleteDialog_SavedViewFragment>()
@@ -126,7 +127,7 @@ const {
     savedViewGroupsInput: {
       resourceIdString: resourceIdString.value,
       cursor: null as null | string,
-      search: search.value?.trim() || null,
+      search: props.search?.trim() || null,
       ...viewsTypeToFilters(props.viewsType)
     }
   })),
@@ -148,7 +149,7 @@ const {
 const hasGroups = computed(
   () => (result.value?.project.savedViewGroups.items.length || 0) > 0
 )
-const isSearch = computed(() => search.value?.trim().length > 0)
+const isSearch = computed(() => (props.search || '').trim().length > 0)
 const emptyStateType = computed(() => (isSearch.value ? 'search' : 'base'))
 
 const project = computed(() => result.value?.project)
@@ -206,8 +207,10 @@ watch(
   groups,
   (newGroups) => {
     if (newGroups.length && !selectedGroupId.value) {
-      // open default group, if any
-      selectedGroupId.value = newGroups.find((g) => g.isUngroupedViewsGroup)?.id || null
+      selectedGroupId.value =
+        (props.search
+          ? newGroups[0].id
+          : newGroups.find((g) => !g.isUngroupedViewsGroup)?.id) || null
     }
   },
   { immediate: true }
