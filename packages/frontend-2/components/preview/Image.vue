@@ -89,6 +89,7 @@ const props = withDefaults(
   defineProps<{
     previewUrl: string
     panoramaOnHover?: boolean
+    eagerLoad?: boolean
   }>(),
   {
     panoramaOnHover: true
@@ -109,7 +110,7 @@ const {
   isLoadingPanorama,
   hasDoneFirstLoad,
   isPanoramaPlaceholder
-} = usePreviewImageBlob(basePreviewUrl, { enabled: isInViewport })
+} = usePreviewImageBlob(basePreviewUrl, { enabled: isInViewport, eagerLoad: true })
 
 const hovered = ref(false)
 const panorama = ref(null as Nullable<HTMLDivElement>)
