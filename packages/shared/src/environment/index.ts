@@ -1,6 +1,7 @@
 import { has } from '#lodash'
 import { parseEnv } from 'znv'
 import { z } from 'zod'
+import { FeatureFlags } from './featureFlags.js'
 
 // Convenience variable to override below individual feature flags, which has the effect of setting all to 'false' (disabled)
 // Takes precedence over ENABLE_ALL_FFS
@@ -167,28 +168,6 @@ export const parseFeatureFlags = (
 }
 
 let parsedFlags: FeatureFlags | undefined
-
-export type FeatureFlags = {
-  FF_AUTOMATE_MODULE_ENABLED: boolean
-  FF_GENDOAI_MODULE_ENABLED: boolean
-  FF_WORKSPACES_MODULE_ENABLED: boolean
-  FF_WORKSPACES_SSO_ENABLED: boolean
-  FF_GATEKEEPER_MODULE_ENABLED: boolean
-  FF_BILLING_INTEGRATION_ENABLED: boolean
-  FF_WORKSPACES_MULTI_REGION_ENABLED: boolean
-  FF_FORCE_ONBOARDING: boolean
-  FF_MOVE_PROJECT_REGION_ENABLED: boolean
-  FF_NO_PERSONAL_EMAILS_ENABLED: boolean
-  FF_RETRY_ERRORED_PREVIEWS_ENABLED: boolean
-  FF_PERSONAL_PROJECTS_LIMITS_ENABLED: boolean
-  FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
-  FF_RHINO_FILE_IMPORTER_ENABLED: boolean
-  FF_BACKGROUND_JOBS_ENABLED: boolean
-  FF_LEGACY_FILE_IMPORTS_ENABLED: boolean
-  FF_ACC_INTEGRATION_ENABLED: boolean
-  FF_SAVED_VIEWS_ENABLED: boolean
-  FF_USERS_INVITE_SCOPE_IS_PUBLIC: boolean
-}
 
 export function getFeatureFlags(): FeatureFlags {
   //@ts-expect-error this way, the parse function typing is a lot better

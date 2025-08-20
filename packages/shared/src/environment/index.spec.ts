@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach, beforeEach } from 'vitest'
-import { type FeatureFlags, parseFeatureFlags } from './index.js'
+import { parseFeatureFlags } from './index.js'
+import { FeatureFlags } from './featureFlags.js'
 
 const originalDisableAllFfs = process.env.DISABLE_ALL_FFS || ''
 const originalEnableAllFfs = process.env.ENABLE_ALL_FFS || ''

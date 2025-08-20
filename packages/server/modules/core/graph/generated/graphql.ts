@@ -3548,6 +3548,8 @@ export type SavedViewGroupViewsInput = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   /** Whether to only views authored by the current user */
   onlyAuthored?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Optionally filter by visibility. Setting this to 'authorOnly' is the equivalent of setting 'onlyAuthored' to true. */
+  onlyVisibility?: InputMaybe<SavedViewVisibility>;
   /** Whether to only include views matching this search term */
   search?: InputMaybe<Scalars['String']['input']>;
   /**
@@ -3564,6 +3566,8 @@ export type SavedViewGroupsInput = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   /** Whether to only include groups w/ views authored by the current user */
   onlyAuthored?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Optionally filter by visibility. Setting this to 'authorOnly' is the equivalent of setting 'onlyAuthored' to true. */
+  onlyVisibility?: InputMaybe<SavedViewVisibility>;
   /** Viewer resource ID string that identifies which resources should be loaded */
   resourceIdString: Scalars['String']['input'];
   /** Whether to only include groups that have names or views matching this search term */
@@ -5301,6 +5305,7 @@ export const WorkspaceFeatureName = {
   ExclusiveMembership: 'exclusiveMembership',
   HideSpeckleBranding: 'hideSpeckleBranding',
   OidcSso: 'oidcSso',
+  SavedViews: 'savedViews',
   WorkspaceDataRegionSpecificity: 'workspaceDataRegionSpecificity'
 } as const;
 

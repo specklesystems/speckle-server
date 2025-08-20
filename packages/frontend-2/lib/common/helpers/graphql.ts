@@ -699,7 +699,7 @@ export const modifyObjectField = <
           'filter',
           'search',
           'filter.search',
-          'filter.onlyAuthored',
+          'input.search',
           ...(isArray(autoEvictFiltered) ? autoEvictFiltered : [])
         ]
         const hasFilter = commonFilters.some(checkFilter)
