@@ -1,20 +1,23 @@
 <template>
-  <div class="px-3 pt-3 pb-2 border-b border-outline-2">
+  <div class="px-3 pt-3">
     <FormSelectBase
       name="filter-logic"
       label="Filter Logic"
+      button-style="simple"
+      size="sm"
+      class="w-40"
       :model-value="filterLogicOptions.find((opt) => opt.value === modelValue)"
       :items="filterLogicOptions"
       by="value"
       @update:model-value="$emit('update:modelValue', $event)"
     >
       <template #something-selected="{ value }">
-        <span class="text-foreground">
+        <span class="text-foreground font-medium text-body-2xs">
           {{ Array.isArray(value) ? value[0]?.label : value?.label }}
         </span>
       </template>
       <template #option="{ item }">
-        <span class="text-foreground">{{ item.label }}</span>
+        <span class="text-foreground text-body-2xs">{{ item.label }}</span>
       </template>
     </FormSelectBase>
   </div>

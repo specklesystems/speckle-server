@@ -42,10 +42,8 @@
             v-for="filter in propertyFilters"
             :key="filter.id"
             :filter="filter"
-            :property-options="propertySelectOptions"
             @toggle-colors="toggleFilterColors(filter.id)"
             @remove="removeFilter(filter.id)"
-            @select-property="(val) => handlePropertySelect(filter.id, val)"
             @select-condition="(val) => handleConditionSelect(filter.id, val)"
             @range-change="(event) => handleNumericRangeChange(filter.id, event)"
             @toggle-value="(value) => toggleActiveFilterValue(filter.id, value)"
@@ -70,15 +68,13 @@
 </template>
 
 <script setup lang="ts">
-import type { PropertyInfo } from '@speckle/viewer'
-import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 import {
   useInjectedViewerInterfaceState,
   useInjectedViewer
 } from '~~/lib/viewer/composables/setup'
 import { FilterCondition, FilterLogic } from '~/lib/viewer/helpers/filters/types'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { isNumericPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
 import {
   useObjectDataStore,
   type QueryCriteria
@@ -91,11 +87,11 @@ const {
   filters: { propertyFilters },
   getRelevantFilters,
   getPropertyName,
+  getPropertyType,
   addActiveFilter,
   removeActiveFilter,
   toggleActiveFilterValue,
   updateFilterCondition,
-  updateActiveFilterValues,
   resetFilters,
   toggleColorFilter
 } = useFilterUtilities()
@@ -105,7 +101,7 @@ const {
 } = useInjectedViewer()
 
 const {
-  filters: { hasAnyFiltersApplied, activeColorFilterId }
+  filters: { hasAnyFiltersApplied }
 } = useInjectedViewerInterfaceState()
 
 const objectDataStore = useObjectDataStore()
@@ -113,13 +109,6 @@ const objectDataStore = useObjectDataStore()
 const relevantFilters = computed(() => {
   return getRelevantFilters(allFilters.value)
 })
-
-const getPropertyType = (filter: PropertyInfo): string => {
-  if (isNumericPropertyInfo(filter)) {
-    return 'number'
-  }
-  return 'string'
-}
 
 const propertySelectOptions = computed(() => {
   const allOptions = relevantFilters.value.map((filter) => {
@@ -245,29 +234,6 @@ const selectProperty = (propertyKey: string) => {
   })
 }
 
-const setFilterProperty = (filterId: string, propertyKey: string) => {
-  const filter = propertyFilters.value.find((f) => f.id === filterId)
-  const property = relevantFilters.value.find((p) => p.key === propertyKey)
-
-  if (filter && property) {
-    // If this filter was applying colors, remove colors when property changes
-    if (activeColorFilterId.value === filterId) {
-      toggleColorFilter(filterId) // This will turn off colors
-    }
-
-    filter.filter = property
-    // Reset selected values when property changes using the proper API
-    updateActiveFilterValues(filterId, [])
-
-    mp.track('Viewer Action', {
-      type: 'action',
-      name: 'filters',
-      action: 'set-filter-property',
-      value: propertyKey
-    })
-  }
-}
-
 const removeFilter = (filterId: string) => {
   removeActiveFilter(filterId)
 
@@ -286,18 +252,6 @@ const toggleFilterColors = (filterId: string) => {
     name: 'filters',
     action: 'toggle-filter-colors'
   })
-}
-
-const handlePropertySelect = (filterId: string, val: unknown) => {
-  if (
-    val &&
-    !Array.isArray(val) &&
-    typeof val === 'object' &&
-    val !== null &&
-    'value' in val
-  ) {
-    setFilterProperty(filterId, (val as { value: string }).value)
-  }
 }
 
 const handleConditionSelect = (filterId: string, val: unknown) => {

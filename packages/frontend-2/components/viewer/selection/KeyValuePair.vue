@@ -64,7 +64,7 @@
 import { VALID_HTTP_URL } from '~~/lib/common/helpers/validation'
 import { LayoutMenu, type LayoutMenuItem } from '@speckle/ui-components'
 import { Ellipsis } from 'lucide-vue-next'
-import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
 import type { KeyValuePair } from '~/components/viewer/selection/types'
 

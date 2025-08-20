@@ -146,7 +146,8 @@ import {
   useInjectedViewerInterfaceState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-import { useThreadUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useBreakpoints } from '@vueuse/core'
 

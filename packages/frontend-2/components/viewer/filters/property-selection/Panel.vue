@@ -15,9 +15,9 @@
           @click="$emit('selectProperty', property.value)"
         >
           <component
-            :is="getPropertyTypeIcon(property.type)"
+            :is="getPropertyTypeDisplay(property.type).icon"
             class="h-3 w-3 shrink-0"
-            :class="property.type === 'number' ? 'text-green-300' : 'text-violet-500'"
+            :class="getPropertyTypeDisplay(property.type).classes"
           />
           <div class="min-w-0 flex-1">
             <div class="text-body-2xs font-medium text-foreground truncate">
@@ -37,13 +37,13 @@
 </template>
 
 <script setup lang="ts">
-import { CaseLower, Hash } from 'lucide-vue-next'
+import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 
 type PropertyOption = {
   value: string
   label: string
   parentPath: string
-  type: string
+  type: 'number' | 'string'
   hasParent: boolean
 }
 
@@ -57,15 +57,7 @@ defineEmits<{
 
 const searchQuery = ref('')
 
-const getPropertyTypeIcon = (type: string) => {
-  switch (type) {
-    case 'number':
-      return Hash
-    case 'string':
-    default:
-      return CaseLower
-  }
-}
+const { getPropertyTypeDisplay } = useFilterUtilities()
 
 const filteredOptions = computed(() => {
   if (!searchQuery.value.trim()) {

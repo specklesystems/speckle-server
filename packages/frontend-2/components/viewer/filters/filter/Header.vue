@@ -1,10 +1,12 @@
 <template>
-  <div class="flex items-center justify-between mb-2 px-2 pt-1">
+  <div class="flex items-center justify-between pl-2">
     <div class="flex items-center gap-2">
-      <span class="text-body-3xs text-foreground-2">Filter</span>
-      <span class="text-body-3xs text-foreground-2">
-        ({{ selectedCount }} selected)
-      </span>
+      <component
+        :is="propertyTypeDisplay.icon"
+        class="h-3 w-3"
+        :class="propertyTypeDisplay.classes"
+      />
+      <span class="text-body-2xs text-foreground font-medium">{{ propertyName }}</span>
     </div>
     <div class="flex items-center gap-1">
       <FormButton
@@ -33,13 +35,16 @@
 <script setup lang="ts">
 import { X } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
+import type { PropertyInfo } from '@speckle/viewer'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
+import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 
 const props = defineProps<{
-  selectedCount: number
+  propertyName: string
   hasFilter: boolean
   isApplied: boolean
   filterId: string
+  propertyFilter?: PropertyInfo | null
 }>()
 
 defineEmits<{
@@ -51,5 +56,17 @@ const {
   filters: { activeColorFilterId }
 } = useInjectedViewerInterfaceState()
 
+const { getPropertyType, getPropertyTypeDisplay } = useFilterUtilities()
+
 const isColoringActive = computed(() => activeColorFilterId.value === props.filterId)
+
+const propertyTypeDisplay = computed(() => {
+  if (!props.propertyFilter) {
+    // Default to string type if no filter is available
+    return getPropertyTypeDisplay('string')
+  }
+
+  const type = getPropertyType(props.propertyFilter)
+  return getPropertyTypeDisplay(type)
+})
 </script>

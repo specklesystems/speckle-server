@@ -163,7 +163,8 @@
 </template>
 
 <script setup lang="ts">
-import { useViewerShortcuts, useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useViewerShortcuts } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 import {
   useInjectedViewerInterfaceState,
   useInjectedViewerLoadedResources

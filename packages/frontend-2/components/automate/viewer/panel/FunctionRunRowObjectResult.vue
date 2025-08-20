@@ -36,7 +36,8 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 import type { NumericPropertyInfo } from '@speckle/viewer'
 import { containsAll } from '~~/lib/common/helpers/utils'
 import type { Automate } from '@speckle/shared'
