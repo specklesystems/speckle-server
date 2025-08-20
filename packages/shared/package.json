@@ -87,6 +87,7 @@
       "./package.json": "./package.json",
       "./pinoPrettyTransport.cjs": "./pinoPrettyTransport.cjs",
       "./environment": "./src/environment/index.ts",
+      "./environment/featureFlags": "./src/environment/featureFlags.ts",
       "./environment/db": "./src/environment/db.ts",
       "./environment/node": "./src/environment/node.ts",
       "./environment/multiRegionConfig": "./src/environment/db.ts",
@@ -141,6 +142,16 @@
       "require": {
         "types": "./dist/commonjs/environment/index.d.ts",
         "default": "./dist/commonjs/environment/index.js"
+      }
+    },
+    "./environment/featureFlags": {
+      "import": {
+        "types": "./dist/esm/environment/featureFlags.d.ts",
+        "default": "./dist/esm/environment/featureFlags.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/environment/featureFlags.d.ts",
+        "default": "./dist/commonjs/environment/featureFlags.js"
       }
     },
     "./environment/db": {

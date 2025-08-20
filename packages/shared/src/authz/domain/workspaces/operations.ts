@@ -1,5 +1,5 @@
 import { WorkspaceRoles, WorkspaceSeatType } from '../../../core/constants.js'
-import { FeatureFlags } from '../../../environment/index.js'
+import { FeatureFlags } from '../../../environment/featureFlags.js'
 import { WorkspaceLimits } from '../../../workspaces/helpers/limits.js'
 import { WorkspacePlan } from '../../../workspaces/index.js'
 import { UserContext, WorkspaceContext } from '../context.js'

@@ -206,7 +206,8 @@ watch(
   groups,
   (newGroups) => {
     if (newGroups.length && !selectedGroupId.value) {
-      selectedGroupId.value = newGroups[0].id
+      // open default group, if any
+      selectedGroupId.value = newGroups.find((g) => g.isUngroupedViewsGroup)?.id || null
     }
   },
   { immediate: true }
