@@ -14,7 +14,6 @@ import type {
   ViewerResourceItem
 } from '@/modules/core/graph/generated/graphql'
 import type { CommitRecord } from '@/modules/core/helpers/types'
-import { NotFoundError } from '@/modules/shared/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import type { DependenciesOf } from '@/modules/shared/helpers/factory'
 import type {
@@ -370,9 +369,9 @@ const adjustResourceIdStringWithSpecificSavedViewSettingsFactory =
       : params.savedViewId
 
     if (!savedView) {
-      throw new NotFoundError(
-        `Saved view with ID ${params.savedViewId} not found in project ${projectId}`
-      )
+      // We don't want this to fail, cause this would break the app when nonexistant views are referenced
+      // Just ignore the view
+      return emptyReturn
     }
 
     const savedViewResources = resourceBuilder().addFromString(savedView.resourceIds)
