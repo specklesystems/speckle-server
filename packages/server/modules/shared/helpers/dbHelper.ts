@@ -366,27 +366,18 @@ export const replicateQuery = <F extends (...args: any[]) => Promise<any>>(
     // the transaction (the prepared one and the connection transaction) that's why it's wrapped in a transaction block
 
     try {
-      console.log(`- ${preparedTransactionId} [start] [${dbs.length}]`)
       for (const db of dbs) {
         await db.transaction(async (trx) => {
-          console.log(`- ${preparedTransactionId} \t ${dbs.indexOf(db)} \t tsx`)
           returnValues.push(await factory({ db: trx })(...params))
-          console.log(`- ${preparedTransactionId} \t ${dbs.indexOf(db)} \t val`)
           await prepareTransaction(trx, preparedTransactionId)
-          console.log(`- ${preparedTransactionId} \t ${dbs.indexOf(db)} \t pre`)
           preparedTransactions.push({ knex: db, preparedTransactionId })
         })
       }
-
-      console.log(`- ${preparedTransactionId} [prepared]`)
     } catch (e) {
-      console.log(`- ${preparedTransactionId} safe rollback!`)
       await rollbackPreparedTransactions()
 
       throw e
     }
-
-    console.log(`- ${preparedTransactionId} [commiting]`)
 
     // Commit all prepared transactions
     const results = await Promise.allSettled(
@@ -394,8 +385,6 @@ export const replicateQuery = <F extends (...args: any[]) => Promise<any>>(
         commitPreparedTransaction(knex, preparedTransactionId)
       )
     )
-
-    console.log(`- ${preparedTransactionId} [commited]`)
 
     const errors = results.filter((result): result is PromiseRejectedResult => {
       return result.status === PromiseAllSettledResultStatus.rejected
@@ -413,7 +402,6 @@ export const replicateQuery = <F extends (...args: any[]) => Promise<any>>(
         `Failed {errorCount} of {resultCount} transactions in 2PC operation.`
       )
 
-      console.log(`- ${preparedTransactionId} FATAL`)
       await rollbackPreparedTransactions()
 
       throw new RegionalTransactionFatalError(
@@ -421,28 +409,6 @@ export const replicateQuery = <F extends (...args: any[]) => Promise<any>>(
         preparedTransactions
       )
     }
-
-    // this wont have any effect but knex releases the connection in a suc
-    console.log(`- ${preparedTransactionId} [end]`)
-
-    // DEBUG: DELETE!
-    const a = (k: Knex) => ({
-      free: numberOfFreeConnections(k),
-      pool: {
-        free: k.client.pool.numFree(),
-        used: k.client.pool.numUsed(),
-        aq: k.client.pool.numPendingAcquires(),
-        cr: k.client.pool.numPendingCreates(),
-        val: k.client.pool.numPendingValidations()
-      }
-    })
-
-    const t = {}
-    for (const db of dbs) {
-      // @ts-expect-error remove plis
-      t[`${db.client.connectionSettings.connectionString}`] = a(db)
-    }
-    console.log(t)
 
     return returnValues.at(0) as F
   }) as unknown as RegionalOperation<F>
