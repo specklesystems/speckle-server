@@ -133,6 +133,7 @@ import { authorizeResolver } from '@/modules/shared'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
 import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
+import { getTestRegionClients } from '@/modules/multiregion/tests/helpers'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -248,7 +249,7 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
-  storeUser: replicateQuery([db], storeUserFactory),
+  storeUser: replicateQuery(await getTestRegionClients(), storeUserFactory),
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
@@ -270,12 +271,12 @@ const findOrCreateUser = findOrCreateUserFactory({
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
 const updateUser = updateUserAndNotifyFactory({
   getUser: getUserFactory({ db }),
-  updateUser: updateUserFactory({ db }),
+  updateUser: replicateQuery(await getTestRegionClients(), updateUserFactory),
   emitEvent: getEventBus().emit
 })
 const updateUserPassword = changePasswordFactory({
   getUser: getUserFactory({ db }),
-  updateUser: updateUserFactory({ db })
+  updateUser: replicateQuery(await getTestRegionClients(), updateUserFactory)
 })
 const validateUserPassword = validateUserPasswordFactory({
   getUserByEmail: getUserByEmailFactory({ db })
@@ -290,9 +291,13 @@ const deleteUser = deleteUserFactory({
   }),
   getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
   deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
-  deleteUserRecord: deleteUserRecordFactory({ db }),
+  deleteUserRecord: replicateQuery(
+    await getTestRegionClients(),
+    deleteUserRecordFactory
+  ),
   emitEvent: getEventBus().emit
 })
+
 const changeUserRole = changeUserRoleFactory({
   getServerInfo,
   isLastAdminUser: isLastAdminUserFactory({ db }),
@@ -333,7 +338,7 @@ const createObject = createObjectFactory({
   storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
-describe('Actors & Tokens @user-services', () => {
+describe('Actors & Tokens @user-services @multiregion', () => {
   const myTestActor = {
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie@example.org',
@@ -393,7 +398,7 @@ describe('Actors & Tokens @user-services', () => {
     })
 
     // Note: deletion is more complicated.
-    it('Should delete a user', async () => {
+    it('Should delete a user @multiregion', async () => {
       const soloOwnerStream = {
         name: 'Test Stream 01',
         description: 'wonderful test stream',

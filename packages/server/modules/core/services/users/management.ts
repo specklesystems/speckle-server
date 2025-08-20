@@ -55,6 +55,7 @@ import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import type { QueryAllProjects } from '@/modules/core/domain/projects/operations'
 import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
 import type { RegionalOperation } from '@/modules/shared/helpers/dbHelper'
+import { v4 } from 'uuid'
 
 const { FF_NO_PERSONAL_EMAILS_ENABLED } = getFeatureFlags()
 
@@ -67,7 +68,7 @@ const createPasswordDigest = async (newPassword: string) => {
 export const updateUserAndNotifyFactory =
   (deps: {
     getUser: GetUser
-    updateUser: UpdateUser
+    updateUser: RegionalOperation<UpdateUser>
     emitEvent: EventBusEmit
   }): UpdateUserAndNotify =>
   async (userId: string, update: UserUpdateInput) => {
@@ -129,7 +130,10 @@ export const validateUserPasswordFactory =
   }
 
 export const changePasswordFactory =
-  (deps: { getUser: GetUser; updateUser: UpdateUser }): ChangeUserPassword =>
+  (deps: {
+    getUser: GetUser
+    updateUser: RegionalOperation<UpdateUser>
+  }): ChangeUserPassword =>
   async (params) => {
     const { newPassword, id: userId } = params
     const user = await deps.getUser(userId, { skipClean: true })
@@ -170,11 +174,12 @@ export const createUserFactory =
 
     const signUpCtx = user.signUpContext
 
-    let finalUser: typeof user &
-      Omit<NullableKeysToOptional<UserRecord>, 'suuid' | 'createdAt'> = {
+    let finalUser: typeof user & NullableKeysToOptional<UserRecord> = {
       ...user,
       id: crs({ length: 10 }),
-      verified: user.verified || false
+      verified: user.verified || false,
+      createdAt: new Date(),
+      suuid: v4()
     }
     delete finalUser.signUpContext
 
@@ -208,7 +213,10 @@ export const createUserFactory =
           'name',
           'company',
           'verified',
-          'avatar'
+          'avatar',
+          'verified',
+          'createdAt',
+          'suuid'
         ]) as typeof finalUser)
 
     finalUser.email = finalUser.email.toLowerCase()
@@ -295,7 +303,7 @@ export const deleteUserFactory =
     getUserDeletableStreams: GetUserDeletableStreams
     deleteAllUserInvites: DeleteAllUserInvites
     getUserWorkspaceSeats: GetUserWorkspaceSeatsFactory
-    deleteUserRecord: DeleteUserRecord
+    deleteUserRecord: RegionalOperation<DeleteUserRecord>
     queryAllProjects: QueryAllProjects
     emitEvent: EventBusEmit
   }): DeleteUser =>

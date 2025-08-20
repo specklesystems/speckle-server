@@ -172,24 +172,6 @@ const getErrorInfoFromTransactions = (
   }))
 }
 
-// 2PC failed but we successfully rolled back all prepared transactions.
-export class RegionalTransactionError extends BaseError {
-  static code = 'REGIONAL_TRANSACTION_ERROR'
-  static defaultMessage = 'Failed to complete 2PC operation'
-  static statusCode = 500
-
-  constructor(
-    message?: string | null,
-    preparedTransactions: { knex: Knex; preparedTransactionId: string }[] = []
-  ) {
-    super(message, {
-      info: {
-        clients: getErrorInfoFromTransactions(preparedTransactions)
-      }
-    })
-  }
-}
-
 // 2PC failed and we failed to rollback. A prepared transaction may have been left behind.
 export class RegionalTransactionFatalError extends BaseError {
   static code = 'REGIONAL_TRANSACTION_FATAL_ERROR'

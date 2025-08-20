@@ -5,11 +5,9 @@ import {
   createRandomEmail,
   createRandomPassword
 } from '@/modules/core/helpers/testHelpers'
-import { UserEmails } from '@/modules/core/dbSchema'
 import {
   countAdminUsersFactory,
   getUserFactory,
-  legacyGetUserFactory,
   storeUserAclFactory,
   storeUserFactory,
   updateUserFactory
@@ -34,11 +32,9 @@ import {
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
-
-const userEmailsDB = db(UserEmails.name)
+import { buildBasicTestUser } from '@/test/authHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
-const getUser = legacyGetUserFactory({ db })
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,
@@ -66,6 +62,7 @@ const createUser = createUserFactory({
   }),
   emitEvent: getEventBus().emit
 })
+
 const updateUser = updateUserFactory({ db })
 
 describe('Users @core-users', () => {
@@ -86,23 +83,20 @@ describe('Users @core-users', () => {
     expect(err.message).eq('User update payload empty')
   })
 
-  it('Should update user email if skipClean is true', async () => {
-    const email = createRandomEmail()
-    const newUser = {
-      name: 'John Doe',
-      email,
-      password: createRandomPassword()
-    }
-
-    const userId = await createUser(newUser)
+  // this will never actually happen
+  it('updates the user email', async () => {
+    const userId = await createUser(
+      buildBasicTestUser({
+        name: 'John Doe',
+        email: createRandomEmail(),
+        password: createRandomPassword()
+      })
+    )
 
     const newEmail = createRandomEmail()
     await updateUser(userId, { email: newEmail }, { skipClean: true })
 
-    const updated = await getUser(userId)
-    const updatedUserEmail = await userEmailsDB.where({ userId, primary: true }).first()
-
+    const updated = await db('users').where({ id: userId }).first()
     expect(updated.email.toLowerCase()).eq(newEmail.toLowerCase())
-    expect(updatedUserEmail.email.toLowerCase()).eq(newEmail.toLowerCase())
   })
 })

@@ -3,8 +3,7 @@ import type { Knex } from 'knex'
 import { postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
 import {
   EnvironmentResourceError,
-  RegionalTransactionFatalError,
-  RegionalTransactionError
+  RegionalTransactionFatalError
 } from '@/modules/shared/errors'
 import type { MaybeAsync } from '@speckle/shared'
 import { isNonNullable } from '@speckle/shared'
@@ -338,7 +337,7 @@ export type RegionalOperation<F extends (...args: any[]) => Promise<any>> = F & 
 
 // TODO: This is messy because of interactions between how knex internals manage connections and the way we use `knex.raw` to prepare transactions
 export const replicateQuery = <F extends (...args: any[]) => Promise<any>>(
-  dbs: [Knex, ...Knex[]],
+  dbs: [Knex, ...Knex[]], // TODO: should only allow db instances, not transaction contexts!
   factory: ({ db }: { db: Knex }) => F
 ): RegionalOperation<F> => {
   return (async (...params: Parameters<F>) => {
@@ -346,59 +345,45 @@ export const replicateQuery = <F extends (...args: any[]) => Promise<any>>(
       return factory({ db: dbs[0] })(...params) as Promise<ReturnType<F>>
     }
 
+    const returnValues: ReturnType<F>[] = []
+    const preparedTransactionId = cryptoRandomString({ length: 10 })
     const preparedTransactions: {
-      // The regional db instance
       knex: Knex
       preparedTransactionId: string
     }[] = []
-
-    const returnValues: ReturnType<F>[] = []
-
-    // Phase 1: Prepare transaction across all specified db instances
-    try {
-      for (const db of dbs) {
-        const preparedTransactionId = cryptoRandomString({ length: 10 })
-
-        const trx = await db.transaction()
-        let transactionPrepared = false
-
-        try {
-          returnValues.push(await factory({ db: trx })(...params))
-          await prepareTransaction(trx, preparedTransactionId)
-          transactionPrepared = true
-        } catch (err) {
-          if (!transactionPrepared) {
-            try {
-              await trx.rollback()
-            } catch {}
-          }
-          throw err
-        } finally {
-          if (transactionPrepared) {
-            try {
-              await trx.rollback()
-            } catch {}
-          } else {
-            console.log('ope')
-          }
-        }
-
-        preparedTransactions.push({ knex: db, preparedTransactionId })
-      }
-    } catch (e) {
-      await Promise.allSettled(
+    const rollbackPreparedTransactions = async () =>
+      Promise.allSettled(
         preparedTransactions.map(async ({ knex, preparedTransactionId }) => {
           await rollbackPreparedTransaction(knex, preparedTransactionId)
         })
       )
+
+    // Every transaction is prepared
+    // - if a query won't complete, every preparedTransaction is rollbacked (from prepared or unprepared)
+    // - this applies a lock on the rows to be updated to assure that the commit will succeed.
+    // - the transactions once prepared, gets written to disk db and is no longer scoped to the connection.
+    // - this last part knex does not handle well, so no matter what, we need to rollback/commit
+    // the transaction (the prepared one and the connection transaction) that's why it's wrapped in a transaction block
+
+    try {
+      for (const db of dbs) {
+        await db.transaction(async (trx) => {
+          returnValues.push(await factory({ db: trx })(...params))
+          await prepareTransaction(trx, preparedTransactionId)
+          preparedTransactions.push({ knex: db, preparedTransactionId })
+        })
+      }
+    } catch (e) {
+      await rollbackPreparedTransactions()
+
       throw e
     }
 
-    // Phase 2: Attempt commit of all prepared transactions
+    // Commit all prepared transactions
     const results = await Promise.allSettled(
-      preparedTransactions.map(({ knex, preparedTransactionId }) => {
-        return commitPreparedTransaction(knex, preparedTransactionId)
-      })
+      preparedTransactions.map(({ knex, preparedTransactionId }) =>
+        commitPreparedTransaction(knex, preparedTransactionId)
+      )
     )
 
     const errors = results.filter((result): result is PromiseRejectedResult => {
@@ -406,6 +391,7 @@ export const replicateQuery = <F extends (...args: any[]) => Promise<any>>(
     })
 
     if (errors.length > 0) {
+      // Theoretically, we never should reach this point, as once a transaction is prepared successfully, it will commit.
       logger.error(
         {
           params,
@@ -415,29 +401,15 @@ export const replicateQuery = <F extends (...args: any[]) => Promise<any>>(
         },
         `Failed {errorCount} of {resultCount} transactions in 2PC operation.`
       )
-      const rollbacks = await Promise.allSettled(
-        preparedTransactions.map(async ({ knex, preparedTransactionId }) => {
-          await rollbackPreparedTransaction(knex, preparedTransactionId)
-        })
-      )
 
-      if (
-        rollbacks.some(
-          (result) => result.status === PromiseAllSettledResultStatus.rejected
-        )
-      ) {
-        throw new RegionalTransactionFatalError(
-          'Failed to rollback all transactions.',
-          preparedTransactions
-        )
-      }
+      await rollbackPreparedTransactions()
 
-      throw new RegionalTransactionError(
+      throw new RegionalTransactionFatalError(
         'Failed some or all transactions in 2PC operation.',
         preparedTransactions
       )
     }
 
-    return returnValues.at(0)
+    return returnValues.at(0) as F
   }) as unknown as RegionalOperation<F>
 }

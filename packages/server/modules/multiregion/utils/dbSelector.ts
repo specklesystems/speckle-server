@@ -9,7 +9,8 @@ import { getRegionFactory } from '@/modules/multiregion/repositories'
 import {
   DatabaseError,
   LogicError,
-  MisconfiguredEnvironmentError
+  MisconfiguredEnvironmentError,
+  TestOnlyLogicError
 } from '@/modules/shared/errors'
 import { configureClient } from '@/knexfile'
 import type { InitializeRegion } from '@/modules/multiregion/domain/operations'
@@ -126,6 +127,7 @@ export const initializeRegisteredRegionClients = async (): Promise<RegionClients
 export const getRegisteredRegionClients = async (): Promise<RegionClients> => {
   if (!registeredRegionClients)
     registeredRegionClients = await initializeRegisteredRegionClients()
+
   return registeredRegionClients
 }
 
@@ -436,4 +438,12 @@ const sanitizeError = (err: unknown): unknown => {
   if (!err) return err
   if (get(err, 'where').includes('password='))
     return { ...err, where: '[REDACTED AS IT CONTAINS CONNECTION STRING]' }
+}
+
+export const resetRegisteredRegions = () => {
+  if (!isTestEnv()) {
+    throw new TestOnlyLogicError()
+  }
+
+  registeredRegionClients = undefined
 }

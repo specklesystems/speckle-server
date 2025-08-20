@@ -8,7 +8,6 @@ import {
   legacyGetPaginatedUsersFactory,
   legacyGetUserByEmailFactory,
   listUsersFactory,
-  markUserAsVerifiedFactory,
   storeUserAclFactory,
   storeUserFactory
 } from '@/modules/core/repositories/users'
@@ -47,6 +46,7 @@ import { createUserFactory } from '@/modules/core/services/users/management'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
+import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = legacyGetPaginatedUsersFactory({ db })
@@ -86,7 +86,9 @@ const createUser = createUserFactory({
 const getUserByEmail = getUserByEmailFactory({ db })
 const legacyGetUserByEmail = legacyGetUserByEmailFactory({ db })
 const listUsers = listUsersFactory({ db })
-const markUserAsVerified = markUserAsVerifiedFactory({ db })
+const markUserEmailAsVerified = markUserEmailAsVerifiedFactory({
+  updateUserEmail: updateUserEmailFactory({ db })
+})
 
 describe('Core @user-emails', () => {
   before(async () => {
@@ -107,7 +109,7 @@ describe('Core @user-emails', () => {
         password: createRandomPassword()
       })
 
-      await markUserAsVerified(email)
+      await markUserEmailAsVerified({ email })
 
       const userEmail = await findEmailFactory({ db })({ email })
       expect(userEmail?.verified).to.be.true
@@ -487,7 +489,9 @@ describe('Core @user-emails', () => {
     })
 
     it('with markUserAsVerified()', async () => {
-      const res = await markUserAsVerified(randomizeCase(randomCaseGuy.email))
+      const res = await markUserEmailAsVerified({
+        email: randomizeCase(randomCaseGuy.email)
+      })
       expect(res).to.be.ok
 
       const user = await getUserByEmail(randomCaseGuy.email)

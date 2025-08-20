@@ -5,6 +5,7 @@ import type { Knex } from 'knex'
 import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import { db } from '@/db/knex'
+import { sleep } from '@/test/helpers'
 
 isMultiRegionTestMode()
   ? describe('Prepared transaction utils (2PC) @multiregion', async () => {
@@ -100,10 +101,7 @@ isMultiRegionTestMode()
         }
 
         const dbThatFails = {
-          transaction: () =>
-            Promise.resolve(() => ({
-              insert: () => Promise.resolve()
-            })) // will fail on raw call
+          transaction: async () => Promise.reject(new Error('Transaction failed'))
         } as unknown as Knex
 
         const promise = replicateQuery(
@@ -129,6 +127,30 @@ isMultiRegionTestMode()
         expect(scopeMain).to.be.undefined
         expect(scopeRegion1).to.be.undefined
         expect(scopeRegion2).to.be.undefined
+      })
+
+      it('should not overwhelm the connection pool', async () => {
+        const connectionsUsedBefore = main.client.pool.numUsed()
+
+        const oneKnexInstanceCall = async () => {
+          const { buildBasicTestUser, createTestUsers } = await import(
+            '@/test/authHelper'
+          )
+
+          const user = buildBasicTestUser()
+          await createTestUsers([user, user])
+        }
+
+        const manyWeirdKnexInstanceCalls = async () => {
+          await Promise.allSettled(Array.from({ length: 100 }, oneKnexInstanceCall))
+        }
+
+        await manyWeirdKnexInstanceCalls()
+        await sleep(1000) // just in case
+
+        const connectionsUsedAfter = main.client.pool.numUsed()
+
+        expect(connectionsUsedAfter).to.be.lte(connectionsUsedBefore)
       })
     })
   : null
