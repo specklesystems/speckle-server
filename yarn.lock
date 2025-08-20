@@ -15981,7 +15981,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
     "@typescript-eslint/parser": "npm:^7.12.0"
     "@vue/apollo-composable": "npm:^4.2.2"
-    "@vue/apollo-ssr": "npm:4.0.0"
+    "@vue/apollo-ssr": "npm:4.2.2"
     "@vueuse/core": "npm:^10.9.0"
     apollo-upload-client: "npm:^18.0.1"
     autoprefixer: "npm:^10.4.14"
@@ -20646,12 +20646,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/apollo-ssr@npm:4.0.0":
-  version: 4.0.0
-  resolution: "@vue/apollo-ssr@npm:4.0.0"
+"@vue/apollo-ssr@npm:4.2.2":
+  version: 4.2.2
+  resolution: "@vue/apollo-ssr@npm:4.2.2"
   dependencies:
     serialize-javascript: "npm:^6.0.1"
-  checksum: 10/e9a82bc27ad5ea464f0b9fb30edc7bae03b399bd3c7c8192652a00df5a0f77bf306a911ccf00e060aa72b7bd395eb5cc5abb35c60132f64387ff5ed5526e47e2
+  checksum: 10/49a8d019b590f90d954db3fcf3e7501deb978737a1ef9bcca4f05e7509242948c007d1e58f9137a5d89eae643f084cae2fe465a23a7bc3caddd3fa20b8d35c6b
   languageName: node
   linkType: hard
 

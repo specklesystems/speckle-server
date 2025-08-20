@@ -180,12 +180,14 @@ const hasDiscoverableWorkspacesOrJoinRequests = computed(
   () => discoverableWorkspacesAndJoinRequestsCount.value > 0
 )
 
-onActiveWorkspaceResult(({ data }) => {
-  if (data?.activeUser?.activeWorkspace) {
-    $intercom.updateCompany({
-      id: data.activeUser.activeWorkspace.id,
-      name: data.activeUser.activeWorkspace.name
-    })
-  }
-})
+if (import.meta.client) {
+  onActiveWorkspaceResult(({ data }) => {
+    if (data?.activeUser?.activeWorkspace) {
+      $intercom.updateCompany({
+        id: data.activeUser.activeWorkspace.id,
+        name: data.activeUser.activeWorkspace.name
+      })
+    }
+  })
+}
 </script>
