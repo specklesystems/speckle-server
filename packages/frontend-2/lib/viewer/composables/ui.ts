@@ -396,10 +396,6 @@ export function useFilterUtilities(
     return filter as NonNullable<typeof filter>
   }
 
-  const hasActiveFilters = computed(() => {
-    return filters.propertyFilters.value.length > 0
-  })
-
   // Regex patterns for identifying Revit properties
   const revitPropertyRegex = /^parameters\./
   // Note: we've split this regex check in two to not clash with navis properties. This makes generally makes dim very sad, as we're layering hacks.
@@ -629,7 +625,6 @@ export function useFilterUtilities(
     resetFilters,
     resetExplode,
     waitForAvailableFilter,
-    hasActiveFilters,
     isRevitProperty,
     shouldExcludeFromFiltering,
     getRelevantFilters,

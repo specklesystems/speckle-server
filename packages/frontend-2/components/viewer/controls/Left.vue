@@ -34,7 +34,7 @@
         "
         :active="activePanel === 'filters'"
         :icon="ListFilter"
-        :dot="hasActiveFilters"
+        :dot="hasAnyFiltersApplied"
         @click="toggleActivePanel('filters')"
       />
       <ViewerControlsButtonToggle
@@ -164,11 +164,14 @@
 
 <script setup lang="ts">
 import { useViewerShortcuts, useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useInjectedViewerInterfaceState,
+  useInjectedViewerLoadedResources
+} from '~~/lib/viewer/composables/setup'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useEventListener, useResizeObserver, useBreakpoints } from '@vueuse/core'
 import { type Nullable, isNonNullable } from '@speckle/shared'
-import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { useIntercomEnabled } from '~~/lib/intercom/composables/enabled'
 import { viewerDocsRoute } from '~~/lib/common/helpers/route'
@@ -250,7 +253,10 @@ const isTablet = breakpoints.smaller('lg')
 const { getTooltipProps } = useSmartTooltipDelay()
 const isSavedViewsEnabled = useAreSavedViewsEnabled()
 const { $intercom } = useNuxtApp()
-const { hasActiveFilters, filters } = useFilterUtilities()
+const { filters } = useFilterUtilities()
+const {
+  filters: { hasAnyFiltersApplied }
+} = useInjectedViewerInterfaceState()
 
 const activePanel = ref<ActivePanel>('none')
 const modelsSubView = ref<ModelsSubView>(ModelsSubView.Main)

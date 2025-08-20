@@ -4,7 +4,7 @@
     <template #actions>
       <div class="flex gap-x-0.5 items-center">
         <FormButton
-          v-if="title !== 'Object Type'"
+          v-if="hasAnyFiltersApplied"
           size="sm"
           color="subtle"
           tabindex="-1"
@@ -72,10 +72,13 @@
 <script setup lang="ts">
 import type { PropertyInfo } from '@speckle/viewer'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useInjectedViewerInterfaceState,
+  useInjectedViewer
+} from '~~/lib/viewer/composables/setup'
 import { FilterCondition, FilterLogic } from '~/lib/viewer/helpers/filters/types'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { isNumericPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
-import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
 import {
   useObjectDataStore,
   type QueryCriteria
@@ -100,6 +103,10 @@ const {
 const {
   metadata: { availableFilters: allFilters }
 } = useInjectedViewer()
+
+const {
+  filters: { hasAnyFiltersApplied }
+} = useInjectedViewerInterfaceState()
 
 // Initialize object data store
 const objectDataStore = useObjectDataStore()
@@ -159,8 +166,6 @@ const filterLogic = ref<FilterLogic>(FilterLogic.All)
 objectDataStore.setFilterLogic(filterLogic.value)
 
 const mp = useMixpanel()
-
-const title = computed(() => 'Filters')
 
 const showPropertySelection = ref(false)
 const propertySelectionRef = ref<HTMLElement>()

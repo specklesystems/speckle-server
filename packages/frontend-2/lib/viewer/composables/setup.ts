@@ -1101,7 +1101,12 @@ function setupInterfaceState(
   const hasAnyFiltersApplied = computed(() => {
     if (isolatedObjectIds.value.length) return true
     if (hiddenObjectIds.value.length) return true
-    if (propertyFilters.value.length > 0) return true
+    if (
+      propertyFilters.value.some(
+        (filter) => filter.selectedValues && filter.selectedValues.length > 0
+      )
+    )
+      return true
     return false
   })
   const viewMode = ref<ViewMode>(ViewMode.DEFAULT)
