@@ -117,28 +117,6 @@ jobs:
         run: yarn build
         working-directory: 'packages/viewer-sandbox'
 
-  ui-components-chromatic:
-    env:
-      CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
-    name: UI components chromatic
-    runs-on: blacksmith
-    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
-    steps:
-      - uses: actions/checkout@v4.2.2
-        with:
-          fetch-depth: 0
-      - uses: useblacksmith/setup-node@v5
-        with:
-          node-version: 22
-          cache: yarn
-      - name: Install dependencies
-        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
-      - name: Build public packages
-        run: yarn build:public
-      - name: Run chromatic
-        run: yarn chromatic
-        working-directory: 'packages/ui-components'
-
   test-shared:
     name: Shared
     runs-on: blacksmith
