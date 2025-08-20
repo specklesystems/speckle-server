@@ -58,7 +58,7 @@ import type {
   ProjectAccSyncItemsUpdatedMessage,
   SubscriptionProjectAccSyncItemsUpdatedArgs
 } from '@/modules/core/graph/generated/graphql'
-import type { Merge, OverrideProperties } from 'type-fest'
+import type { Merge, OverrideProperties, SetNonNullable } from 'type-fest'
 import type {
   ModelGraphQLReturn,
   ProjectGraphQLReturn,
@@ -215,7 +215,7 @@ type SubscriptionTypeMap = {
   }
   [ViewerSubscriptions.UserActivityBroadcasted]: {
     payload: {
-      viewerUserActivityBroadcasted: ViewerUserActivityMessage
+      viewerUserActivityBroadcasted: SetNonNullable<ViewerUserActivityMessage, 'userId'>
       projectId: string
       resourceItems: ViewerResourceItem[]
       userId: Nullable<string>

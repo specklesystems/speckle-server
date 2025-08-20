@@ -11,9 +11,6 @@ import { DOTNET_BINARY_PATH, RHINO_IMPORTER_PATH } from './config.js'
 import { getIfcDllPath } from '@/controller/helpers/env.js'
 import { z } from 'zod'
 import { TIME_MS } from '@speckle/shared'
-import { getFeatureFlags } from '@speckle/shared/environment'
-
-const { FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED } = getFeatureFlags()
 
 const jobSuccess = z.object({
   success: z.literal(true),
@@ -123,9 +120,9 @@ export const jobProcessor = async ({
     switch (fileType) {
       case 'ifc':
         parserUsed = 'ifc'
-        const useDotnetIfcImporter =
-          job.fileName.toLowerCase().endsWith('.dotnetimporter.ifc') ||
-          !FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED
+        const useDotnetIfcImporter = job.fileName
+          .toLowerCase()
+          .endsWith('.dotnetimporter.ifc')
 
         if (useDotnetIfcImporter) {
           await runProcessWithTimeout(

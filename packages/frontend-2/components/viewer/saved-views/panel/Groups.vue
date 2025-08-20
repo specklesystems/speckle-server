@@ -14,9 +14,10 @@
         :views-type="viewsType"
         :group="group"
         :project="project"
-        :is-selected="isGroupSelected(group)"
+        :search="search"
+        :open="isGroupSelected(group)"
         :rename-mode="isGroupInRenameMode(group)"
-        @update:is-selected="(value) => (selectedGroupId = value ? group.id : null)"
+        @update:open="(value) => onIsSelectedChange(value, group)"
         @update:rename-mode="(value) => (groupBeingRenamed = value ? group : undefined)"
         @delete-group="($event) => (groupBeingDeleted = $event)"
         @rename-group="($event) => (groupBeingRenamed = $event)"
@@ -92,21 +93,20 @@ const paginableGroupsQuery = graphql(`
 
 const props = defineProps<{
   viewsType: ViewsType
+  search?: string
 }>()
-
-const selectedGroupId = defineModel<string | null>('selectedGroupId', {
-  required: true
-})
 
 const {
   projectId,
   resources: {
     request: { resourceIdString }
+  },
+  ui: {
+    savedViews: { openedGroupState }
   }
 } = useInjectedViewerState()
 const eventBus = useEventBus()
 
-const search = ref('')
 const viewBeingEdited = ref<ViewerSavedViewsPanelViewEditDialog_SavedViewFragment>()
 const viewBeingMoved = ref<ViewerSavedViewsPanelViewMoveDialog_SavedViewFragment>()
 const viewBeingDeleted = ref<ViewerSavedViewsPanelViewDeleteDialog_SavedViewFragment>()
@@ -126,7 +126,7 @@ const {
     savedViewGroupsInput: {
       resourceIdString: resourceIdString.value,
       cursor: null as null | string,
-      search: search.value?.trim() || null,
+      search: props.search?.trim() || null,
       ...viewsTypeToFilters(props.viewsType)
     }
   })),
@@ -148,7 +148,7 @@ const {
 const hasGroups = computed(
   () => (result.value?.project.savedViewGroups.items.length || 0) > 0
 )
-const isSearch = computed(() => search.value?.trim().length > 0)
+const isSearch = computed(() => (props.search || '').trim().length > 0)
 const emptyStateType = computed(() => (isSearch.value ? 'search' : 'base'))
 
 const project = computed(() => result.value?.project)
@@ -199,14 +199,31 @@ const isGroupInRenameMode = (
 const isGroupSelected = (
   group: ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment
 ) => {
-  return group.id === selectedGroupId.value
+  return openedGroupState.value.get(group.id)
+}
+
+const onIsSelectedChange = (
+  value: boolean | undefined,
+  group: ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment
+) => {
+  if (value) {
+    openedGroupState.value.set(group.id, true)
+  } else {
+    openedGroupState.value.delete(group.id)
+  }
 }
 
 watch(
   groups,
   (newGroups) => {
-    if (newGroups.length && !selectedGroupId.value) {
-      selectedGroupId.value = newGroups[0].id
+    if (newGroups.length) {
+      // first group should be selected
+      const selectableGroupId = props.search
+        ? newGroups[0].id
+        : newGroups.find((g) => !g.isUngroupedViewsGroup)?.id
+      if (selectableGroupId) {
+        openedGroupState.value.set(selectableGroupId, true)
+      }
     }
   },
   { immediate: true }
@@ -223,6 +240,6 @@ eventBus.on(ViewerEventBusKeys.MarkSavedViewForEdit, ({ type, view }) => {
 })
 
 const onMoveSuccess = (groupId: string) => {
-  selectedGroupId.value = groupId
+  openedGroupState.value.set(groupId, true)
 }
 </script>

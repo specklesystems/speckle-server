@@ -52,6 +52,10 @@ export const ensureCanAccessSavedViewFragment: AuthPolicyEnsureFragment<
     ProjectContext &
     SavedViewContext & {
       access: 'read' | 'write'
+      /**
+       * In some cases we want to just ignore a view being non-existant, instead of throwing
+       */
+      allowNonExistent?: boolean
     },
   InstanceType<
     | typeof SavedViewNotFoundError
@@ -71,7 +75,7 @@ export const ensureCanAccessSavedViewFragment: AuthPolicyEnsureFragment<
   >
 > =
   (loaders) =>
-  async ({ userId, projectId, savedViewId, access }) => {
+  async ({ userId, projectId, savedViewId, access, allowNonExistent }) => {
     const canUseSavedViews = await ensureCanUseProjectWorkspacePlanFeatureFragment(
       loaders
     )({
@@ -81,7 +85,10 @@ export const ensureCanAccessSavedViewFragment: AuthPolicyEnsureFragment<
     if (canUseSavedViews.isErr) return err(canUseSavedViews.error)
 
     const savedView = await loaders.getSavedView({ projectId, savedViewId })
-    if (!savedView) return err(new SavedViewNotFoundError())
+    if (!savedView) {
+      if (allowNonExistent) return ok()
+      return err(new SavedViewNotFoundError())
+    }
 
     const isPublic = savedView.visibility === SavedViewVisibility.public
     if (isPublic && access === 'read') {

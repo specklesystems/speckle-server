@@ -598,7 +598,7 @@ export const updateSavedViewRecordFactory =
         [SavedViews.col.id]: id,
         [SavedViews.col.projectId]: projectId
       })
-      .update(update, '*')
+      .update({ ...update, updatedAt: new Date() }, '*')
 
     return updatedView || undefined
   }
@@ -636,7 +636,13 @@ export const updateSavedViewGroupRecordFactory =
         [SavedViewGroups.col.id]: groupId,
         [SavedViewGroups.col.projectId]: projectId
       })
-      .update(update, '*')
+      .update(
+        {
+          ...update,
+          updatedAt: new Date()
+        },
+        '*'
+      )
 
     return updatedGroup
   }

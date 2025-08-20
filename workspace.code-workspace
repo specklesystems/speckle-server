@@ -69,6 +69,10 @@
       "name": "📊 monitor-deployment"
     },
     {
+      "path": "packages/ifc-import-service",
+      "name": "🛖 ifc-import-service"
+    },
+    {
       "path": ".",
       "name": "🏡 root"
     }
