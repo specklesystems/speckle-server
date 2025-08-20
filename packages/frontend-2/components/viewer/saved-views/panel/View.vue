@@ -7,25 +7,25 @@
         <img
           :src="view.screenshot"
           alt="View screenshot"
-          class="w-20 h-14 object-cover rounded border border-outline-3 bg-foundation-page cursor-pointer"
+          class="w-20 h-[60px] object-cover rounded border border-outline-3 bg-foundation-page cursor-pointer"
         />
         <div
           v-if="isHomeView && !isFederatedView"
-          class="absolute -top-1 -left-1 bg-orange-500 w-4 h-4 flex items-center justify-center rounded-sm"
+          class="absolute -top-1 -left-1 bg-orange-500 w-4 h-4 flex items-center justify-center rounded-[3px]"
         >
-          <Bookmark class="text-white w-3 h-3" fill="currentColor" />
+          <Bookmark class="text-white w-3 h-3" fill="currentColor" stroke-width="0" />
         </div>
       </div>
     </div>
-    <div class="flex flex-col gap-1 min-w-0 grow">
-      <div class="text-body-2xs font-medium text-foreground truncate grow-0">
+    <div class="flex flex-col min-w-0 grow">
+      <div class="text-body-2xs font-medium text-foreground truncate grow-0 pr-1.5">
         {{ view.name }}
       </div>
       <div class="flex gap-1 items-center justify-between">
         <div class="text-body-2xs text-foreground-3 truncate">
           {{ view.author?.name }}
         </div>
-        <div class="flex items-center" @click.stop>
+        <div class="flex gap-0.5 items-center" @click.stop>
           <LayoutMenu
             v-model:open="showMenu"
             :items="menuItems"
@@ -64,10 +64,16 @@
         </div>
       </div>
       <div class="w-full flex items-center gap-1">
-        <Globe v-if="!isOnlyVisibleToMe" class="w-3 h-3" />
+        <Globe
+          v-if="!isOnlyVisibleToMe"
+          :size="12"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          class="w-3 h-3 text-foreground-2"
+        />
         <div
           v-tippy="formattedFullDate(view.updatedAt)"
-          class="text-body-2xs text-foreground-3 truncate"
+          class="text-body-2xs text-foreground-3 truncate pr-1.5"
         >
           {{ formattedRelativeDate(view.updatedAt) }}
         </div>
@@ -205,7 +211,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
 ])
 
 const wrapperClasses = computed(() => {
-  const classParts = ['flex gap-2 p-2 w-full group rounded cursor-pointer']
+  const classParts = ['flex gap-2 p-2 pr-0.5 w-full group rounded-md cursor-pointer']
 
   if (isActive.value) {
     classParts.push('bg-highlight-2 hover:bg-highlight-3')

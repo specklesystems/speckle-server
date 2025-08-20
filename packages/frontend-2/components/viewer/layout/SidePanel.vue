@@ -1,7 +1,7 @@
 <template>
   <div :class="['flex flex-col h-full', disableScrollbar ? '' : 'overflow-hidden']">
     <div
-      class="flex shrink-0 justify-between items-center border-b border-outline-3 h-10 pl-4 pr-2"
+      class="flex shrink-0 justify-between items-center border-b border-outline-3 h-10 pl-4 pr-2.5"
     >
       <slot name="fullTitle">
         <div class="text-body-xs text-foreground font-medium leading-none">

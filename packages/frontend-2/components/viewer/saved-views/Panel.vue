@@ -1,12 +1,12 @@
 <template>
-  <ViewerLayoutSidePanel disable-scrollbar @close="$emit('close')">
+  <ViewerLayoutSidePanel disable-scrollbar class="relative" @close="$emit('close')">
     <template #title>
       <div class="flex justify-between items-center">
         <div>Views</div>
       </div>
     </template>
     <template #actions>
-      <div class="flex items-center">
+      <div v-if="!isLowerPlan" class="flex items-center gap-0.5">
         <FormButton
           size="sm"
           color="subtle"
@@ -59,35 +59,54 @@
         />
       </div>
     </template>
-    <div class="px-4 pt-2">
-      <ViewerButtonGroup>
-        <ViewerButtonGroupButton
-          v-for="viewsType in Object.values(ViewsType)"
-          :key="viewsType"
-          :is-active="selectedViewsType === viewsType"
-          class="grow"
-          @click="() => (selectedViewsType = viewsType)"
-        >
-          <span class="text-body-2xs text-foreground px-2 py-1">
-            {{ viewsTypeLabels[viewsType] }}
-          </span>
-        </ViewerButtonGroupButton>
-      </ViewerButtonGroup>
-    </div>
-    <div class="text-body-sm flex-1 min-h-0 overflow-y-auto simple-scrollbar">
-      <ViewerSavedViewsPanelGroups
-        v-model:selected-group-id="selectedGroupId"
-        :views-type="selectedViewsType"
-        :search="searchMode ? search || undefined : undefined"
-      />
-    </div>
+    <template v-if="!isLowerPlan">
+      <div class="px-4 pt-2">
+        <ViewerButtonGroup>
+          <ViewerButtonGroupButton
+            v-for="viewsType in Object.values(ViewsType)"
+            :key="viewsType"
+            :is-active="selectedViewsType === viewsType"
+            class="grow"
+            @click="() => (selectedViewsType = viewsType)"
+          >
+            <span class="text-body-2xs text-foreground px-2 py-1">
+              {{ viewsTypeLabels[viewsType] }}
+            </span>
+          </ViewerButtonGroupButton>
+        </ViewerButtonGroup>
+      </div>
+      <div class="text-body-sm flex-1 min-h-0 overflow-y-auto simple-scrollbar">
+        <ViewerSavedViewsPanelGroups
+          v-model:selected-group-id="selectedGroupId"
+          :views-type="selectedViewsType"
+          :search="searchMode ? search || undefined : undefined"
+        />
+      </div>
+      <div
+        v-if="isViewerSeat && !hideViewerSeatDisclaimer"
+        class="absolute bottom-0 left-0 right-0 p-2"
+      >
+        <CommonPromoAlert
+          title="Save your views"
+          text="With an editor seat, unlock the option to save your own views."
+          :button="{ title: 'Learn more' }"
+          show-closer
+          @close="hideViewerSeatDisclaimer = true"
+        />
+      </div>
+    </template>
+    <ViewerSavedViewsPlanUpsell v-else />
   </ViewerLayoutSidePanel>
 </template>
 <script setup lang="ts">
 import { useMutationLoading } from '@vue/apollo-composable'
 import { Search, FolderPlus, Plus, X } from 'lucide-vue-next'
+import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 import { graphql } from '~/lib/common/generated/gql'
-import { SavedViewVisibility } from '~/lib/common/generated/gql/graphql'
+import {
+  SavedViewVisibility,
+  WorkspaceSeatType
+} from '~/lib/common/generated/gql/graphql'
 import {
   useCreateSavedView,
   useCreateSavedViewGroup
@@ -103,6 +122,11 @@ graphql(`
       canCreateSavedView {
         ...FullPermissionCheckResult
       }
+    }
+    workspace {
+      id
+      seatType
+      planSupportsSavedViews: hasAccessToFeature(featureName: savedViews)
     }
   }
 `)
@@ -125,11 +149,21 @@ const { on, bind, value: search } = useDebouncedTextInput()
 
 const selectedViewsType = ref<ViewsType>(ViewsType.Personal)
 const selectedGroupId = ref<string | null>(null)
+const hideViewerSeatDisclaimer = useSynchronizedCookie<boolean>(
+  'hideViewerSeatSavedViewsDisclaimer',
+  {
+    default: () => false
+  }
+)
 const searchMode = ref(false)
 
 const canCreateViewOrGroup = computed(
   () => project.value?.permissions.canCreateSavedView
 )
+const isViewerSeat = computed(
+  () => project.value?.workspace?.seatType === WorkspaceSeatType.Viewer
+)
+const isLowerPlan = computed(() => !project.value?.workspace?.planSupportsSavedViews)
 
 const onAddView = async () => {
   if (isLoading.value) return
