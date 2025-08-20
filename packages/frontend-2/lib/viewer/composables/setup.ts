@@ -80,6 +80,10 @@ import {
   type ViewerResource
 } from '@speckle/shared/viewer/route'
 import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
+import {
+  useBuildSavedViewsUIState,
+  type SavedViewsUIState
+} from '~/lib/viewer/composables/savedViews/state'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -328,6 +332,10 @@ export type InjectableViewerState = Readonly<{
       enabled: Ref<boolean>
       options: Ref<MeasurementOptions>
     }
+    /**
+     * Various saved views UI settings
+     */
+    savedViews: SavedViewsUIState
   }
   /**
    * State stored in the anchor string of the URL
@@ -1171,7 +1179,8 @@ function setupInterfaceState(
           vertexSnap: true,
           precision: 2
         })
-      }
+      },
+      savedViews: useBuildSavedViewsUIState()
     }
   }
 }

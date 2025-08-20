@@ -138,10 +138,9 @@ const { triggerNotification } = useGlobalToast()
 const isLoading = useMutationLoading()
 const createView = useCreateSavedView()
 const updateGroup = useUpdateSavedViewGroup()
-const isSelected = defineModel<boolean>('isSelected')
 const renameMode = defineModel<boolean>('renameMode')
 
-const open = ref(false)
+const open = defineModel<boolean>('open')
 const showMenu = ref(false)
 const menuId = useId()
 
@@ -187,7 +186,7 @@ const onAddGroupView = async () => {
     visibility:
       props.viewsType === ViewsType.Shared ? SavedViewVisibility.Public : undefined
   })
-  isSelected.value = true
+  open.value = true
 }
 
 const onRename = async (newName: string) => {
@@ -215,17 +214,4 @@ const onRename = async (newName: string) => {
     renameMode.value = false
   }
 }
-
-watch(
-  () => isSelected.value,
-  (newVal) => {
-    if (newVal) {
-      open.value = true
-
-      // unmark selection so that it's available for next group
-      isSelected.value = false
-    }
-  },
-  { immediate: true }
-)
 </script>
