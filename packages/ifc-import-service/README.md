@@ -11,12 +11,12 @@ It is intended to eventually replace the File Import Service.
 1. Install [uv](https://docs.astral.sh/uv)
 1. Sync the project dependencies
 
-    ```bash
-    uv sync
-    ```
+   ```bash
+   uv sync
+   ```
 
 1. Run the service
 
-    ```bash
-    uv run main.py
-    ```
+   ```bash
+   uv run main.py
+   ```
