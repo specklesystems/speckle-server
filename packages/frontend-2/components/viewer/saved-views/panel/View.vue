@@ -72,7 +72,13 @@
           class="w-3 h-3 text-foreground-2"
         />
         <div
-          v-tippy="formattedFullDate(view.updatedAt)"
+          v-tippy="{
+            content: formattedFullDate(view.updatedAt),
+            delay: [700, 100],
+            duration: [120, 150],
+            offset: [0, 2],
+            placement: 'right'
+          }"
           class="text-body-2xs text-foreground-3 truncate pr-1.5"
         >
           {{ formattedRelativeDate(view.updatedAt) }}

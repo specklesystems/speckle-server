@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-8 items-center my-16">
     <IllustrationEmptystateViewsTab />
-    <div class="text-foreground-2">{{ message }}</div>
+    <div class="text-foreground-2 px-6">{{ message }}</div>
   </div>
 </template>
 <script setup lang="ts">

@@ -480,7 +480,11 @@ export default {
   ViewerUserActivityMessage: {
     async user(parent, _args, context) {
       const { userId } = parent
-      return context.loaders.users.getUser.load(userId!)
+      if (!userId) {
+        return null
+      }
+
+      return context.loaders.users.getUser.load(userId)
     }
   },
   Stream: {
@@ -727,9 +731,13 @@ export default {
       await publish(ViewerSubscriptions.UserActivityBroadcasted, {
         projectId: args.projectId,
         resourceItems: await getViewerResourceItemsUngrouped(args),
-        viewerUserActivityBroadcasted: args.message,
+        viewerUserActivityBroadcasted: {
+          ...args.message,
+          userId: context.userId!
+        },
         userId: context.userId!
       })
+
       return true
     },
 

@@ -5305,6 +5305,7 @@ export const WorkspaceFeatureName = {
   ExclusiveMembership: 'exclusiveMembership',
   HideSpeckleBranding: 'hideSpeckleBranding',
   OidcSso: 'oidcSso',
+  SavedViews: 'savedViews',
   WorkspaceDataRegionSpecificity: 'workspaceDataRegionSpecificity'
 } as const;
 
