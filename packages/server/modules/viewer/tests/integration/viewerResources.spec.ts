@@ -10,7 +10,6 @@ import {
 } from '@/modules/core/repositories/commits'
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import { buildBasicTestProject } from '@/modules/core/tests/helpers/creation'
-import { NotFoundError } from '@/modules/shared/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import type { ViewerResourceGroup } from '@/modules/viewer/domain/types/resources'
 import type { SavedView } from '@/modules/viewer/domain/types/savedViews'
@@ -25,7 +24,7 @@ import {
   viewerResourcesToString
 } from '@/modules/viewer/services/viewerResources'
 import { createTestSavedView } from '@/modules/viewer/tests/helpers/savedViews'
-import { expectToThrow, itEach } from '@/test/assertionHelper'
+import { itEach } from '@/test/assertionHelper'
 import type { BasicTestUser } from '@/test/authHelper'
 import { buildBasicTestUser, createTestUser } from '@/test/authHelper'
 import {
@@ -323,21 +322,20 @@ describe('Viewer Resources Collection Service', () => {
           secondModelBasicView = views[1]
         })
 
-        it('throws if setting nonexistant view', async () => {
+        it('should not throw if setting nonexistant view', async () => {
           const sut = buildSUT()
 
-          const err = await expectToThrow(
-            async () =>
-              await sut({
-                projectId: myProject.id,
-                resourceIdString: resourceBuilder()
-                  .addResources(firstModel().id)
-                  .toString(),
-                savedViewId: 'aaa'
-              })
-          )
-          expect(err instanceof NotFoundError).to.be.true
-          expect(err.message).to.include('Saved view')
+          // shouldnt throw so that deleting a view while its referred to in the URL doesn't
+          // cause the entire app to break - just ignore the value then
+          const res = await sut({
+            projectId: myProject.id,
+            resourceIdString: resourceBuilder()
+              .addResources(firstModel().id)
+              .toString(),
+            savedViewId: 'aaa'
+          })
+
+          expect(res).to.be.ok
         })
 
         itEach(
