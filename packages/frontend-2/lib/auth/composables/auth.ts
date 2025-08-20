@@ -140,26 +140,44 @@ const useResetAuthState = (
   const resolveDistinctId = useResolveUserDistinctId()
   const { cbs } = useOnAuthStateChangeState()
 
-  return async () => {
+  return async (
+    resetOptions?: Partial<{
+      /**
+       * If true, won't await the full reset and return early after reset has started
+       */
+      lazyReset: boolean
+    }>
+  ) => {
     const client = apollo || (await options?.deferredApollo?.())
 
     let user: MaybeNullOrUndefined<ActiveUserMainMetadataQuery['activeUser']> = null
+    let resetPromise: Promise<unknown> = Promise.resolve()
     if (client) {
-      // evict cache
+      // evict user early
       client.cache.evict({ id: 'ROOT_QUERY', fieldName: 'activeUser' })
 
-      // wait till active user is reloaded
-      const { data: activeUserRes } = await client
-        .query({
-          query: activeUserQuery,
-          fetchPolicy: 'network-only'
-        })
-        .catch(convertThrowIntoFetchResult)
-      user = activeUserRes?.activeUser
+      // evict entire cache (not enough to just evict user, various other fields
+      // also depend on active user (e.g. Workspace.seatType))
+      resetPromise = client.resetStore().then(async () => {
+        // wait till active user is reloaded
+        const { data: activeUserRes } = await client
+          .query({
+            query: activeUserQuery,
+            fetchPolicy: 'network-only'
+          })
+          .catch(convertThrowIntoFetchResult)
+        user = activeUserRes?.activeUser
+      })
     }
 
-    // process state change callbacks
-    cbs.forEach((cb) => cb(user, { resolveDistinctId, isReset: true }))
+    resetPromise = resetPromise.then(() => {
+      // process state change callbacks
+      cbs.forEach((cb) => cb(user, { resolveDistinctId, isReset: true }))
+    })
+
+    if (!resetOptions?.lazyReset) {
+      await resetPromise
+    }
   }
 }
 
@@ -218,8 +236,11 @@ export const useAuthManager = (
    */
   const saveNewToken = async (
     newToken?: string,
-    options?: Partial<{ skipRedirect: boolean }>
+    options?: Partial<{ skipRedirect: boolean; skipStateReset: boolean }>
   ) => {
+    const skipStateReset = options?.skipStateReset
+    const skipRedirect = skipStateReset ? true : options?.skipRedirect
+
     // write to cookie
     authToken.value = newToken
 
@@ -227,10 +248,10 @@ export const useAuthManager = (
     SafeLocalStorage.remove(LocalStorageKeys.AuthAppChallenge)
 
     // Wipe auth state
-    await resetAuthState()
+    if (!skipStateReset) await resetAuthState()
 
     // redirect home & wipe access code from querystring
-    if (!options?.skipRedirect) goHome({ query: {} })
+    if (!skipRedirect) goHome({ query: {} })
   }
 
   /**
@@ -444,14 +465,11 @@ export const useAuthManager = (
     options?: Partial<{
       skipToast: boolean
       skipRedirect: boolean
-      /**
-       * If true, will trigger a full page load to /authn/login in CSR, instead of just doing a CSR
-       * redirect to the page. Useful when you want to fully restart the app after logging out.
-       */
-      forceFullReload: boolean
     }>
   ) => {
-    await saveNewToken(undefined, { skipRedirect: true })
+    const isServer = import.meta.server
+
+    await saveNewToken(undefined, { skipRedirect: true, skipStateReset: !isServer })
 
     if (!options?.skipToast) {
       triggerNotification({
@@ -463,12 +481,14 @@ export const useAuthManager = (
 
     postAuthRedirect.deleteState()
 
-    if (import.meta.server) {
+    if (isServer) {
       markLoggedOut()
     }
 
     if (!options?.skipRedirect) {
-      if (options?.forceFullReload && import.meta.client) {
+      if (import.meta.client) {
+        // we skip clearing the cache and do a full reload to avoid ugly flashes of broken content
+        // during logout (while cache is in an odd state)
         window.location.href = loginRoute
       } else {
         await goToLogin()
