@@ -77,7 +77,6 @@
       </div>
       <div class="text-body-sm flex-1 min-h-0 overflow-y-auto simple-scrollbar">
         <ViewerSavedViewsPanelGroups
-          v-model:selected-group-id="selectedGroupId"
           :views-type="selectedViewsType"
           :search="searchMode ? search || undefined : undefined"
         />
@@ -140,6 +139,9 @@ const {
   resources: {
     request: { resourceIdString },
     response: { project }
+  },
+  ui: {
+    savedViews: { openedGroupState }
   }
 } = useInjectedViewerState()
 const createGroup = useCreateSavedViewGroup()
@@ -148,7 +150,6 @@ const isLoading = useMutationLoading()
 const { on, bind, value: search } = useDebouncedTextInput()
 
 const selectedViewsType = ref<ViewsType>(ViewsType.Personal)
-const selectedGroupId = ref<string | null>(null)
 const hideViewerSeatDisclaimer = useSynchronizedCookie<boolean>(
   'hideViewerSeatSavedViewsDisclaimer',
   {
@@ -175,7 +176,7 @@ const onAddView = async () => {
   })
   if (view) {
     // Auto-open the group that the view created to
-    selectedGroupId.value = view.group.id
+    openedGroupState.value.set(view.group.id, true)
   }
 }
 
@@ -187,7 +188,7 @@ const onAddGroup = async () => {
   })
   if (group) {
     // Auto-open the group
-    selectedGroupId.value = group.id
+    openedGroupState.value.set(group.id, true)
   }
 }
 

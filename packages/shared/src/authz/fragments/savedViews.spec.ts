@@ -229,6 +229,24 @@ describe('ensureCanAccessSavedViewFragment', () => {
         })
       }
     )
+
+    it.each(<const>['read', 'write'])(
+      `doesn't fail if view doesnt exist and allowNonExistent set (%s)`,
+      async (access) => {
+        const sut = buildWorkspaceSUT({
+          getSavedView: async () => null
+        })
+
+        const result = await sut({
+          userId,
+          projectId,
+          savedViewId,
+          access,
+          allowNonExistent: true
+        })
+        expect(result).toBeAuthOKResult()
+      }
+    )
   })
 })
 

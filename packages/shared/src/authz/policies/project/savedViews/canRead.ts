@@ -34,7 +34,14 @@ export const canReadSavedViewPolicy: AuthPolicy<
   | typeof Loaders.getWorkspaceSsoProvider
   | typeof Loaders.getWorkspaceSsoSession
   | typeof Loaders.getProjectRole,
-  MaybeUserContext & ProjectContext & SavedViewContext,
+  MaybeUserContext &
+    ProjectContext &
+    SavedViewContext & {
+      /**
+       * In some cases we want to just ignore a view being non-existant, instead of throwing
+       */
+      allowNonExistent?: boolean
+    },
   InstanceType<
     | typeof SavedViewNotFoundError
     | typeof SavedViewNoAccessError
@@ -53,11 +60,12 @@ export const canReadSavedViewPolicy: AuthPolicy<
   >
 > =
   (loaders) =>
-  async ({ userId, projectId, savedViewId }) => {
+  async ({ userId, projectId, savedViewId, allowNonExistent }) => {
     return await ensureCanAccessSavedViewFragment(loaders)({
       userId,
       projectId,
       savedViewId,
-      access: 'read'
+      access: 'read',
+      allowNonExistent
     })
   }

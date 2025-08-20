@@ -88,7 +88,12 @@
   </div>
 </template>
 <script setup lang="ts">
-import { StringEnum, throwUncoveredError, type StringEnumValues } from '@speckle/shared'
+import {
+  StringEnum,
+  throwUncoveredError,
+  type Optional,
+  type StringEnumValues
+} from '@speckle/shared'
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { Ellipsis, SquarePen, Bookmark, Globe } from 'lucide-vue-next'
@@ -164,6 +169,29 @@ const isOnlyVisibleToMe = computed(
 const isHomeView = computed(() => props.view.isHomeView)
 const isActive = computed(() => props.view.id === savedView.value?.id)
 
+const canSetHomeView = computed(
+  (): { authorized: boolean; message: Optional<string> } => {
+    if (!canUpdate.value?.authorized || isLoading.value) {
+      return { authorized: false, message: canUpdate.value.errorMessage || undefined }
+    }
+
+    if (isFederatedView.value) {
+      return {
+        authorized: false,
+        message: "Home view settings can't be updated while in a federated view"
+      }
+    }
+
+    if (isOnlyVisibleToMe.value) {
+      return {
+        authorized: false,
+        message: 'A view must be shared to be set as home view'
+      }
+    }
+
+    return { authorized: true, message: undefined }
+  }
+)
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
@@ -192,11 +220,8 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
       id: MenuItems.SetAsHomeView,
       title: 'Set as home view',
       active: !!isHomeView.value,
-      disabled:
-        isFederatedView.value || !canUpdate.value?.authorized || isLoading.value,
-      disabledTooltip: isFederatedView
-        ? "Home views can't be updated in a federated view"
-        : canUpdate.value.errorMessage
+      disabled: !canSetHomeView.value.authorized,
+      disabledTooltip: canSetHomeView.value.message
     },
     {
       id: MenuItems.ChangeVisibility,

@@ -40,7 +40,8 @@ const extendedViewerResourcesResolver = async (
     const canRead = await ctx.authPolicies.project.savedViews.canRead({
       userId: ctx.userId,
       projectId,
-      savedViewId
+      savedViewId,
+      allowNonExistent: true // ignore missing view
     })
     throwIfAuthNotOk(canRead)
   }
