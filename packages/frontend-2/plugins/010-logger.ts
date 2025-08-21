@@ -24,6 +24,25 @@ import {
 
 const simpleStripHtml = (str: string) => str.replace(/<[^>]*>?/gm, '')
 
+// i dunno why but importing this returns undefined in server build, it makes no sense to me why it would be stripped out
+// but the solution is to duplicate this here
+const consolaLogLevels = {
+  silent: Number.NEGATIVE_INFINITY,
+  fatal: 0,
+  error: 0,
+  warn: 1,
+  log: 2,
+  info: 3,
+  success: 3,
+  fail: 3,
+  ready: 3,
+  start: 3,
+  box: 3,
+  debug: 4,
+  trace: 5,
+  verbose: Number.POSITIVE_INFINITY
+}
+
 /**
  * - Setting up Pino logger in SSR, basic console.log fallback in CSR
  * - Also sets up ability to add extra transport for other observability tools
@@ -98,31 +117,34 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     })
 
     // Send to consola for SSR log streaming
-    const { consola, LogLevels } = await import('consola')
+    const { consola } = await import('consola')
 
-    // remove print to stdout, pino already handles all that
-    consola.setReporters(
-      consola.options.reporters.filter(
-        (r) => get(r, 'constructor.name') !== 'FancyReporter'
+    // (consola exports are sometimes being stripped from build for some reason, hence the extra checks)
+    if (consola) {
+      // remove print to stdout, pino already handles all that
+      consola.setReporters(
+        consola.options.reporters.filter(
+          (r) => get(r, 'constructor.name') !== 'FancyReporter'
+        )
       )
-    )
-    consola.level = LogLevels[logLevel] || 0
+      consola.level = consolaLogLevels[logLevel] || 0
 
-    const unhandledHandler: AbstractUnhandledErrorHandler = ({
-      error,
-      message,
-      isUnhandledRejection
-    }) => {
-      consola.error({ err: error, isUnhandledRejection }, message)
-    }
-    unhandledErrorHandlers.push(unhandledHandler)
+      const unhandledHandler: AbstractUnhandledErrorHandler = ({
+        error,
+        message,
+        isUnhandledRejection
+      }) => {
+        consola.error({ err: error, isUnhandledRejection }, message)
+      }
+      unhandledErrorHandlers.push(unhandledHandler)
 
-    const errorHandler: AbstractLoggerHandler = ({ args, level }) => {
-      // applying pino-like message templating, cause consola doesnt have it
-      // the arg slice is TS appeasement
-      prettifiedLoggerFactory(consola[level])(args[0], ...args.slice(1))
+      const errorHandler: AbstractLoggerHandler = ({ args, level }) => {
+        // applying pino-like message templating, cause consola doesnt have it
+        // the arg slice is TS appeasement
+        prettifiedLoggerFactory(consola[level])(args[0], ...args.slice(1))
+      }
+      logHandlers.push(errorHandler)
     }
-    logHandlers.push(errorHandler)
   } else {
     const localTimeFormat = new Intl.DateTimeFormat('en-GB', {
       dateStyle: 'full',
