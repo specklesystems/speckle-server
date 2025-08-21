@@ -140,6 +140,7 @@ const useResetAuthState = (
   const resolveDistinctId = useResolveUserDistinctId()
   const { cbs } = useOnAuthStateChangeState()
   const authToken = useAuthCookie()
+  const logger = useLogger()
 
   return async (
     resetOptions?: Partial<{
@@ -171,7 +172,13 @@ const useResetAuthState = (
 
       // evict entire cache (not enough to just evict user, various other fields
       // also depend on active user (e.g. Workspace.seatType))
-      resetPromise = client.resetStore().then(async () => {
+      resetPromise = (async () => {
+        if (import.meta.server) {
+          logger?.error('attempting to resetStore from SSR')
+        } else {
+          await client.resetStore()
+        }
+
         // wait till active user is reloaded
         const { data: activeUserRes } = await client
           .query({
@@ -180,7 +187,7 @@ const useResetAuthState = (
           })
           .catch(convertThrowIntoFetchResult)
         user = activeUserRes?.activeUser
-      })
+      })()
     }
 
     resetPromise = resetPromise.then(() => {
