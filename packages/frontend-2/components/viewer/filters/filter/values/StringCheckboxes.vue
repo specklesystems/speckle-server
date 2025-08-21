@@ -1,6 +1,16 @@
 <template>
-  <div ref="containerRef" class="h-48 overflow-auto">
-    <div v-bind="containerProps" class="relative h-full simple-scrollbar">
+  <div>
+    <ViewerFiltersFilterValuesSelectAllCheckbox
+      :selected-count="selectedCount"
+      :total-count="filteredValues.length"
+      @select-all="emit('selectAll', $event)"
+    />
+
+    <div
+      v-bind="containerProps"
+      class="relative simple-scrollbar"
+      :style="{ height: containerHeight }"
+    >
       <div
         v-for="{ data: value, index } in list"
         :key="`${index}-${value}`"
@@ -12,36 +22,21 @@
           height: `${itemHeight}px`,
           transform: `translateY(${index * itemHeight}px)`
         }"
-        class="flex items-center justify-between gap-2 text-body-2xs pr-2 py-1 px-2 hover:bg-primary-muted"
       >
-        <div class="flex items-center min-w-0">
-          <FormCheckbox
-            :name="`filter-${filterId}-${value}`"
-            :model-value="isValueSelected(value)"
-            hide-label
-            @update:model-value="$emit('toggleValue', value)"
-          />
-          <span class="flex-1 truncate text-foreground ml-2">
-            {{ value }}
-          </span>
-        </div>
-        <div class="flex items-center">
-          <div class="shrink-0 text-foreground-2 text-body-3xs">
-            {{ getValueCount(value) }}
-          </div>
-          <div
-            v-if="getValueColor(value)"
-            class="w-3 h-3 rounded-full border border-outline-3 ml-2 shrink-0"
-            :style="{ backgroundColor: getValueColor(value) || undefined }"
-          />
-        </div>
+        <ViewerFiltersFilterValuesFilterValueItem
+          :filter-id="filterId"
+          :value="value"
+          :is-selected="isValueSelected(value)"
+          :count="getValueCount(value)"
+          :color="getValueColor(value)"
+          @toggle="emit('toggleValue', value)"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { FormCheckbox } from '@speckle/ui-components'
 import { useVirtualList } from '@vueuse/core'
 
 const props = defineProps<{
@@ -53,8 +48,9 @@ const props = defineProps<{
   getValueColor: (value: string) => string | null
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   toggleValue: [value: string]
+  selectAll: [selected: boolean]
 }>()
 
 // Filter values based on search query
@@ -69,10 +65,19 @@ const filteredValues = computed(() => {
   )
 })
 
+// Select all logic
+const selectedCount = computed(() => {
+  return filteredValues.value.filter((value) => props.isValueSelected(value)).length
+})
+
 // Virtual list setup
 const itemHeight = 32 // Height of each checkbox item in pixels
+const maxHeight = 144 // 36 * 4px (h-36 equivalent)
 
-const containerRef = ref<HTMLElement>()
+const containerHeight = computed(() => {
+  const contentHeight = filteredValues.value.length * itemHeight
+  return `${Math.min(contentHeight, maxHeight)}px`
+})
 
 const { list, containerProps } = useVirtualList(filteredValues, {
   itemHeight,

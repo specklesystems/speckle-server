@@ -1,28 +1,30 @@
 <template>
-  <div class="pl-7 pt-2 pb-1">
-    <FormSelectBase
-      v-model="selectedCondition"
-      :name="`condition-${filterId}`"
-      label="Condition"
-      button-style="simple"
-      :items="conditionOptions"
-      by="value"
+  <div class="pl-8 -mb-0.5">
+    <LayoutMenu
+      v-model:open="showMenu"
+      :items="menuItems"
+      show-ticks="right"
+      :custom-menu-items-classes="['!w-24 !text-body-2xs']"
+      @chosen="onConditionChosen"
     >
-      <template #something-selected="{ value }">
+      <FormButton
+        class="-ml-2"
+        color="subtle"
+        size="sm"
+        :class="showMenu ? '!bg-highlight-2' : ''"
+        @click="showMenu = !showMenu"
+      >
         <span class="text-foreground-2 font-medium text-body-2xs">
-          {{ Array.isArray(value) ? value[0]?.label : value?.label }}
+          {{ selectedConditionLabel }}
         </span>
-      </template>
-      <template #option="{ item }">
-        <span class="text-foreground">{{ item.label }}</span>
-      </template>
-    </FormSelectBase>
+      </FormButton>
+    </LayoutMenu>
   </div>
 </template>
 
 <script setup lang="ts">
 import { FilterCondition } from '~/lib/viewer/helpers/filters/types'
-import { FormSelectBase } from '@speckle/ui-components'
+import { LayoutMenu, FormButton, type LayoutMenuItem } from '@speckle/ui-components'
 
 const props = defineProps<{
   filterId: string
@@ -31,20 +33,33 @@ const props = defineProps<{
 
 const emit = defineEmits(['selectCondition'])
 
-const selectedCondition = computed({
-  get: () =>
-    conditionOptions.find(
-      (opt) => opt.value === (props.currentCondition || FilterCondition.Is)
-    ),
-  set: (newVal) => {
-    if (newVal && !Array.isArray(newVal)) {
-      emit('selectCondition', newVal)
-    }
-  }
-})
+const showMenu = ref(false)
 
 const conditionOptions = [
   { value: FilterCondition.Is, label: 'is' },
   { value: FilterCondition.IsNot, label: 'is not' }
 ]
+
+const menuItems = computed<LayoutMenuItem[][]>(() => [
+  conditionOptions.map((option) => ({
+    id: option.value,
+    title: option.label,
+    active: option.value === (props.currentCondition || FilterCondition.Is)
+  }))
+])
+
+const selectedConditionLabel = computed(() => {
+  const selectedOption = conditionOptions.find(
+    (opt) => opt.value === (props.currentCondition || FilterCondition.Is)
+  )
+  return selectedOption?.label || 'is'
+})
+
+const onConditionChosen = ({ item }: { item: LayoutMenuItem }) => {
+  const selectedOption = conditionOptions.find((opt) => opt.value === item.id)
+  if (selectedOption) {
+    emit('selectCondition', selectedOption)
+  }
+  showMenu.value = false
+}
 </script>

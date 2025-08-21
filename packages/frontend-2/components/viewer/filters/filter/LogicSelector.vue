@@ -1,31 +1,28 @@
 <template>
   <div class="px-3 pt-3">
-    <FormSelectBase
-      name="filter-logic"
-      label="Filter Logic"
-      button-style="simple"
-      size="sm"
-      class="w-40"
-      :model-value="filterLogicOptions.find((opt) => opt.value === modelValue)"
-      :items="filterLogicOptions"
-      by="value"
-      @update:model-value="$emit('update:modelValue', $event)"
-    >
-      <template #something-selected="{ value }">
-        <span class="text-foreground font-medium text-body-2xs">
-          {{ Array.isArray(value) ? value[0]?.label : value?.label }}
-        </span>
-      </template>
-      <template #option="{ item }">
-        <span class="text-foreground text-body-2xs">{{ item.label }}</span>
-      </template>
-    </FormSelectBase>
+    <div class="space-y-1">
+      <div class="text-body-2xs font-medium text-foreground-2">Filter Logic</div>
+      <div class="flex gap-1 p-1 bg-foundation-2 rounded-md w-fit">
+        <button
+          v-for="option in filterLogicOptions"
+          :key="option.value"
+          class="px-2 py-1 text-body-2xs rounded transition-colors"
+          :class="[
+            modelValue === option.value
+              ? 'bg-foundation text-foreground font-medium shadow-sm'
+              : 'text-foreground-2 hover:text-foreground hover:bg-foundation/50'
+          ]"
+          @click="$emit('update:modelValue', option)"
+        >
+          {{ option.label }}
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { FilterLogic } from '~/lib/viewer/helpers/filters/types'
-import { FormSelectBase } from '@speckle/ui-components'
 
 defineProps<{
   modelValue: FilterLogic

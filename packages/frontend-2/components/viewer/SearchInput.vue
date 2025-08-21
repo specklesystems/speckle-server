@@ -34,6 +34,6 @@ const iconClasses = computed(() => {
 })
 
 const inputClasses = computed(() => {
-  return '!pl-7 text-foreground-2 placeholder:!text-foreground-3 placeholder:group-hover:!text-foreground-2 focus:placeholder:text-foreground-2'
+  return 'text-foreground-2 placeholder:!text-foreground-3 placeholder:group-hover:!text-foreground-2 focus:placeholder:text-foreground-2'
 })
 </script>

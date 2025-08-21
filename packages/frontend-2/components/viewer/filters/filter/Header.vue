@@ -1,6 +1,6 @@
 <template>
   <div class="flex items-center justify-between pl-2">
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-3">
       <component
         :is="propertyTypeDisplay.icon"
         class="h-3 w-3"
@@ -8,18 +8,7 @@
       />
       <span class="text-body-2xs text-foreground font-medium">{{ propertyName }}</span>
     </div>
-    <div class="flex items-center gap-1">
-      <FormButton
-        v-tippy="
-          'Toggle coloring for this filter (only one filter can be colored at a time)'
-        "
-        color="subtle"
-        size="sm"
-        hide-text
-        :disabled="!hasFilter"
-        :icon-right="isColoringActive ? 'IconColouring' : 'IconColouringOutline'"
-        @click="$emit('toggleColors')"
-      />
+    <div class="flex items-center">
       <FormButton
         v-tippy="'Remove filter'"
         color="subtle"
@@ -28,12 +17,21 @@
         :icon-right="X"
         @click="$emit('remove')"
       />
+      <FormButton
+        v-tippy="'Toggle coloring for this property'"
+        :color="isColoringActive ? 'primary' : 'subtle'"
+        size="sm"
+        hide-text
+        :disabled="!hasFilter"
+        :icon-right="PaintBucket"
+        @click="$emit('toggleColors')"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { X } from 'lucide-vue-next'
+import { X, PaintBucket } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
 import type { PropertyInfo } from '@speckle/viewer'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'

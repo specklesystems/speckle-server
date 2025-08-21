@@ -141,12 +141,14 @@ export function useFilterUtilities(
       // Update existing filter
       return filters.propertyFilters.value[existingIndex].id
     } else {
-      // Add new filter
+      // Add new filter with all values selected by default
       const id = `filter-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      const availableValues = getAvailableFilterValues(filter)
+
       filters.propertyFilters.value.push({
         filter,
         isApplied: false,
-        selectedValues: [],
+        selectedValues: [...availableValues], // Start with all values selected
         id,
         condition: FilterCondition.Is
       })

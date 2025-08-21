@@ -44,6 +44,7 @@
         :get-value-count="(value: string) => filter.filter ? getValueCount(filter.filter, value) : 0"
         :get-value-color="(value: string) => activeColorFilterId === filter.id ? getFilterValueColor(value) : null"
         @toggle-value="$emit('toggleValue', $event)"
+        @select-all="$emit('selectAll', $event)"
       />
     </div>
   </div>
@@ -68,7 +69,14 @@ defineProps<{
   filter: FilterData
 }>()
 
-defineEmits(['toggleColors', 'remove', 'selectCondition', 'rangeChange', 'toggleValue'])
+defineEmits([
+  'toggleColors',
+  'remove',
+  'selectCondition',
+  'rangeChange',
+  'toggleValue',
+  'selectAll'
+])
 
 const {
   getPropertyName,

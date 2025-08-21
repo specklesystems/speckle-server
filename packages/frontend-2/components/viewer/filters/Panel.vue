@@ -31,7 +31,7 @@
       @update:model-value="handleFilterLogicChange"
     />
 
-    <div class="h-full flex flex-col">
+    <div class="h-full flex flex-col select-none">
       <!-- Active Filters Section -->
       <div
         v-if="propertyFilters.length > 0"
@@ -47,6 +47,7 @@
             @select-condition="(val) => handleConditionSelect(filter.id, val)"
             @range-change="(event) => handleNumericRangeChange(filter.id, event)"
             @toggle-value="(value) => toggleActiveFilterValue(filter.id, value)"
+            @select-all="(selected) => handleSelectAll(filter.id, selected)"
           />
         </div>
       </div>
@@ -92,7 +93,8 @@ const {
   toggleActiveFilterValue,
   updateFilterCondition,
   resetFilters,
-  toggleColorFilter
+  toggleColorFilter,
+  getAvailableFilterValues
 } = useFilterUtilities()
 
 const {
@@ -274,6 +276,35 @@ const handleNumericRangeChange = (filterId: string, event: Event) => {
 
   // For now, just update the passMin value
   // TODO: Implement proper range handling with min/max values
+}
+
+const handleSelectAll = (filterId: string, selected: boolean) => {
+  const filter = propertyFilters.value.find((f) => f.id === filterId)
+  if (!filter || !filter.filter) return
+
+  const availableValues = getAvailableFilterValues(filter.filter)
+
+  if (selected) {
+    // Select all available values that aren't already selected
+    availableValues.forEach((value) => {
+      if (!filter.selectedValues.includes(value)) {
+        toggleActiveFilterValue(filterId, value)
+      }
+    })
+  } else {
+    // Deselect all currently selected values
+    const selectedValuesCopy = [...filter.selectedValues]
+    selectedValuesCopy.forEach((value) => {
+      toggleActiveFilterValue(filterId, value)
+    })
+  }
+
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'filters',
+    action: selected ? 'select-all-filter-values' : 'deselect-all-filter-values',
+    filterId
+  })
 }
 
 // Watch for filter logic changes and update data store
