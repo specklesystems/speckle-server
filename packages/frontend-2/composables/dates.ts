@@ -13,7 +13,10 @@ const customRelativeTime = (
   capitalize?: boolean
 ): string => {
   const pastDate = dayjs(date)
-  now = dayjs(now)
+  now = dayjs(new Date())
+
+  const diffInSeconds = now.diff(date, 'second')
+  return `${diffInSeconds} seconds ago`
 
   const diffInMinutes = now.diff(date, 'minute')
   const diffInHours = now.diff(date, 'hour')
