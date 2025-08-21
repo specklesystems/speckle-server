@@ -12,7 +12,16 @@ export const useLogger = () => {
  * There are scopes where useNuxtApp() is available and we have to fall back to a different logger. This composable
  * can be invoked everywhere in all scopes (not in `server` code tho!) to get the best kind of logger available
  */
-export const useSafeLogger = () => {
+export const useSafeLogger = (
+  options?: Partial<{
+    /**
+     * Prevent reporting back that we used a logger fallback.
+     *
+     * Default: false
+     */
+    preventFallbackReporting: boolean
+  }>
+) => {
   let nuxtApp: Optional<NuxtApp> = undefined
   const fallbackSyncLogger = buildFakePinoLogger()
   let fallbackFullLogger: Optional<ReturnType<typeof buildFakePinoLogger>> = undefined
@@ -43,20 +52,31 @@ export const useSafeLogger = () => {
     }
   }
 
-  const logger = () => {
+  const logger = (
+    loggerOptions?: Partial<{
+      /**
+       * Prevent reporting back that we used a logger fallback.
+       *
+       * Default: false
+       */
+      preventFallbackReporting: boolean
+    }>
+  ) => {
+    const preventFallbackReporting =
+      loggerOptions?.preventFallbackReporting || options?.preventFallbackReporting
+
     void tryResolvingLogger()
     if (nuxtApp?.$logger) return nuxtApp.$logger
 
-    const err = new Error(
-      'Nuxt app for logger not found! Initializing fallback structured logger...'
-    )
+    const err = new Error('Nuxt app for logger not found! Returning fallback logger...')
     let logger: ReturnType<typeof buildFakePinoLogger>
     if (fallbackFullLogger) {
       logger = fallbackFullLogger
     } else {
       logger = fallbackSyncLogger
     }
-    logger.error(err)
+
+    if (!preventFallbackReporting) logger.error(err)
 
     return logger
   }
