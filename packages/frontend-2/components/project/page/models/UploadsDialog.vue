@@ -146,6 +146,7 @@ const props = defineProps<{
 
 const open = defineModel<boolean>('open', { required: true })
 const { copy } = useClipboard()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const { getErrorMessage, convertUploadToFailedJob } = useFailedFileImportJobUtils()
 const {

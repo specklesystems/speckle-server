@@ -143,6 +143,7 @@ const props = defineProps<{
 
 const router = useRouter()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const isModelUploading = ref(false)
 

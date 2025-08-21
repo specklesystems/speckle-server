@@ -121,6 +121,7 @@ const {
     response: { project }
   }
 } = useInjectedViewerState()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const showVersions = ref(!!props.initiallyExpanded)
 const showDeleteDialog = ref(false)

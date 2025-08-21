@@ -7,9 +7,14 @@ import dayjs from 'dayjs'
  * customRelativeTime('2023-07-16') - returns "Jul 16" or "Jul 16, 2023" if the year is different from the current year
  * customRelativeTime(new Date()) - returns "just now"
  */
-const customRelativeTime = (date: ConfigType, capitalize?: boolean): string => {
+const customRelativeTime = (
+  date: ConfigType,
+  now: ConfigType,
+  capitalize?: boolean
+): string => {
   const pastDate = dayjs(date)
-  const now = dayjs()
+  now = dayjs(now)
+
   const diffInMinutes = now.diff(date, 'minute')
   const diffInHours = now.diff(date, 'hour')
   const diffInDays = now.diff(date, 'day')
@@ -35,8 +40,8 @@ const customRelativeTime = (date: ConfigType, capitalize?: boolean): string => {
  * isTimeframe('2023-07-16') - returns false
  * isTimeframe(new Date()) - returns true or false depending on the current time
  */
-const isTimeframe = (date: ConfigType) => {
-  const unit = customRelativeTime(date)
+const isTimeframe = (date: ConfigType, now: ConfigType) => {
+  const unit = customRelativeTime(date, now)
   return (
     unit.includes('second') ||
     unit.includes('minute') ||
@@ -51,7 +56,7 @@ const isTimeframe = (date: ConfigType) => {
  * @example
  * formattedFullDate('2023-12-01') - returns "Dec 12, 2023"
  */
-export const formattedFullDate = (date: ConfigType): string =>
+const formattedFullDate = (date: ConfigType): string =>
   dayjs(date).format('MMM D, YYYY, H:mm')
 
 /**
@@ -63,15 +68,51 @@ export const formattedFullDate = (date: ConfigType): string =>
  * formattedRelativeDate('2023-12-31') -  returns "1 day ago"
  * formattedRelativeDate('2023-12-31', { prefix: true }) -  returns "1 day ago"
  */
-export const formattedRelativeDate = (
+const formattedRelativeDate = (
   date: ConfigType,
+  now: ConfigType,
   options?: Partial<{ prefix: boolean; capitalize: boolean }>
 ): string => {
   if (options?.prefix) {
-    return isTimeframe(date)
-      ? customRelativeTime(date, options?.capitalize)
-      : `on ${customRelativeTime(date)}`
+    return isTimeframe(date, now)
+      ? customRelativeTime(date, now, options?.capitalize)
+      : `on ${customRelativeTime(date, now)}`
   } else {
-    return customRelativeTime(date, options?.capitalize)
+    return customRelativeTime(date, now, options?.capitalize)
+  }
+}
+
+// Remembering and reusing same now() value in SSR and CSR to avoid hydration mismatches
+const useNowState = () => useState('now', () => new Date())
+
+export const useDateFormatters = () => {
+  const state = useNowState()
+  const { $isAppHydrated } = useNuxtApp()
+
+  return {
+    /**
+     * Formats a given date input into a relative time string with optional prefix
+     * @example
+     * Assuming today is January 1st 2024
+     * formattedRelativeDate('2023-12-01') - returns "Dec 12, 2023"
+     * formattedRelativeDate('2023-12-01', { prefix: true }) - returns "on Dec 12, 2023"
+     * formattedRelativeDate('2023-12-31') -  returns "1 day ago"
+     * formattedRelativeDate('2023-12-31', { prefix: true }) -  returns "1 day ago"
+     */
+    formattedRelativeDate: (
+      date: ConfigType,
+      options?: Partial<{ prefix: boolean; capitalize: boolean; now: ConfigType }>
+    ): string => {
+      // during SSR and hydration use static now, afterwards use a fresh one each time
+      // (unless if specific one fed in)
+      const now = options?.now || ($isAppHydrated.value ? new Date() : state.value)
+      return formattedRelativeDate(date, now, options)
+    },
+    /**
+     * Formats a given date input into a full date string with our default format
+     * @example
+     * formattedFullDate('2023-12-01') - returns "Dec 12, 2023"
+     */
+    formattedFullDate
   }
 }
