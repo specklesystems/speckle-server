@@ -1,5 +1,5 @@
 <template>
-  <div class="pl-7 py-2">
+  <div class="pl-7 pt-2 pb-1">
     <FormSelectBase
       v-model="selectedCondition"
       :name="`condition-${filterId}`"

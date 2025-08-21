@@ -1,6 +1,6 @@
 <template>
   <div class="border border-outline-2 rounded-lg">
-    <div class="border-b border-outline-3 p-1">
+    <div class="border-b border-outline-3 p-1 pb-0.5">
       <ViewerFiltersFilterHeader
         :has-filter="!!filter.filter"
         :is-applied="filter.isApplied"
@@ -17,13 +17,7 @@
         @select-condition="$emit('selectCondition', $event)"
       />
 
-      <FormTextInput
-        v-model="searchQuery"
-        name="filter-search"
-        placeholder="Search for a value..."
-        input-type="search"
-        size="sm"
-      />
+      <ViewerSearchInput v-model="searchQuery" placeholder="Search for a value..." />
     </div>
 
     <div v-if="filter.filter">
@@ -61,7 +55,6 @@ import type { FilterCondition } from '~/lib/viewer/helpers/filters/types'
 import { isNumericPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
 import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
-import { FormTextInput } from '@speckle/ui-components'
 
 type FilterData = {
   id: string

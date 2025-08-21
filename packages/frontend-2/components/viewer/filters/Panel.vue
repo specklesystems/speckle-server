@@ -13,7 +13,7 @@
           Reset
         </FormButton>
         <FormButton
-          v-tippy="'Add new filter'"
+          v-tippy="showPropertySelection ? undefined : 'Add new filter'"
           color="subtle"
           size="sm"
           :class="showPropertySelection ? '!bg-highlight-3' : ''"
@@ -81,7 +81,6 @@ import {
 } from '~~/composables/viewer/useObjectDataStore'
 import { X, Plus } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
-import { onClickOutside } from '@vueuse/core'
 
 const {
   filters: { propertyFilters },
@@ -190,13 +189,7 @@ watch(
   { deep: true, immediate: true }
 )
 
-// Watch for filter logic changes and update data store
-watch(filterLogic, (newLogic) => {
-  objectDataStore.setFilterLogic(newLogic)
-})
-
 const addNewEmptyFilter = () => {
-  // Show property selection in panel extension instead of immediately adding filter
   showPropertySelection.value = true
 
   mp.track('Viewer Action', {
@@ -215,15 +208,12 @@ const handleAddFilterClick = () => {
 }
 
 const selectProperty = (propertyKey: string) => {
-  // Find the property filter
   const property = relevantFilters.value.find((p) => p.key === propertyKey)
 
   if (property) {
-    // Use the addActiveFilter function to maintain consistency
     addActiveFilter(property)
   }
 
-  // Hide property selection
   showPropertySelection.value = false
 
   mp.track('Viewer Action', {
@@ -286,10 +276,8 @@ const handleNumericRangeChange = (filterId: string, event: Event) => {
   // TODO: Implement proper range handling with min/max values
 }
 
-// Click outside to close property selection
-onClickOutside(propertySelectionRef, () => {
-  if (showPropertySelection.value) {
-    showPropertySelection.value = false
-  }
+// Watch for filter logic changes and update data store
+watch(filterLogic, (newLogic) => {
+  objectDataStore.setFilterLogic(newLogic)
 })
 </script>

@@ -1,20 +1,11 @@
 <template>
-  <div class="relative border-b border-outline-2 flex-shrink-0">
-    <input
-      :id="inputId"
-      v-model="searchValue"
-      type="text"
-      :placeholder="placeholder"
-      class="text-body-2xs font-medium text-foreground bg-transparent placeholder:text-foreground-2 w-full rounded-t-md border-none h-10 pl-8"
-      @input="handleInput"
-    />
-    <label :for="inputId" class="sr-only">{{ placeholder }}</label>
-    <div
-      class="absolute top-0 left-0 w-8 flex justify-center items-center h-full pointer-events-none"
-    >
-      <Search
-        class="h-3 w-3"
-        :class="hasSearchValue ? 'text-foreground' : 'text-foreground-2'"
+  <div class="border-b border-outline-2 flex-shrink-0 relative">
+    <div class="py-1">
+      <ViewerSearchInput
+        v-model="searchValue"
+        :placeholder="placeholder"
+        auto-focus
+        @input="handleInput"
       />
     </div>
     <div
@@ -36,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { Search, X } from 'lucide-vue-next'
+import { X } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
 
 defineProps<{
