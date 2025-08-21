@@ -43,12 +43,10 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     this.typeLookupTable[rawType] = typeRet
     return typeRet
   }
-  public objectTypes = {}
 
   public convertNodeToGeometryData(node: NodeData): GeometryData | null {
     const type = this.getSpeckleType(node)
-    if (!this.objectTypes[type]) this.objectTypes[type] = 0
-    this.objectTypes[type]++
+
     switch (type) {
       case SpeckleType.BlockInstance:
         return this.BlockInstanceToGeometryData(node)
