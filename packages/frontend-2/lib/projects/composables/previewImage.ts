@@ -57,11 +57,12 @@ export function usePreviewImageBlob(
   // Checking if we're allowed to eager load
   const { $isAppHydrated } = useNuxtApp()
   const state = usePreviewsState()
+  const eagerLoadKey = unref(previewUrl) || nanoid()
   const eagerLoad =
     options?.eagerLoad &&
     !$isAppHydrated.value &&
-    state.value.eagerLoadedKeys.size < PREVIEWS_EAGER_LOAD_COUNT
-  const eagerLoadKey = nanoid()
+    (state.value.eagerLoadedKeys.size < PREVIEWS_EAGER_LOAD_COUNT ||
+      state.value.eagerLoadedKeys.has(eagerLoadKey))
 
   if (eagerLoad) {
     state.value.eagerLoadedKeys.add(eagerLoadKey)
@@ -285,7 +286,12 @@ export function usePreviewImageBlob(
     /**
      * Run this at the bottom of the component to fully initialize it
      */
-    init: regeneratePreviews
+    init: async () => {
+      const promise = regeneratePreviews()
+      if (eagerLoad) {
+        await promise
+      }
+    }
   }
 }
 

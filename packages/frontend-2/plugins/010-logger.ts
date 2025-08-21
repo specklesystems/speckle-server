@@ -1,5 +1,6 @@
 import { collectLongTrace } from '@speckle/shared'
 import type { LogType } from 'consola'
+import dayjs from 'dayjs'
 import { get, omit } from 'lodash-es'
 import type { SetRequired } from 'type-fest'
 import { useReadUserId } from '~/lib/auth/composables/activeUser'
@@ -71,6 +72,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   const registerErrorTransport = useCreateLoggingTransport()
   const { invokeTransportsWithPayload } = useLogToLoggingTransports()
 
+  const profilerLogger = route.query.profilerLogger === '1'
+
   const collectMainInfo = (params: { isBrowser: boolean }) => {
     const info = {
       browser: params.isBrowser,
@@ -141,7 +144,9 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       const errorHandler: AbstractLoggerHandler = ({ args, level }) => {
         // applying pino-like message templating, cause consola doesnt have it
         // the arg slice is TS appeasement
-        prettifiedLoggerFactory(consola[level])(args[0], ...args.slice(1))
+        prettifiedLoggerFactory(consola[level])(args[0], ...args.slice(1), {
+          time: dayjs().format('HH:mm:ss.SSS')
+        })
       }
       logHandlers.push(errorHandler)
     }
@@ -182,7 +187,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     })
 
     logger = buildFakePinoLogger({
-      consoleBindings: logCsrEmitProps ? collectCoreInfo : undefined
+      consoleBindings: logCsrEmitProps ? collectCoreInfo : undefined,
+      time: profilerLogger
     })
 
     // SEQ Browser integration
