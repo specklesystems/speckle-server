@@ -32,7 +32,7 @@ export const prettify = (log: object, msg: string) =>
  * Wrap any logger call w/ logic that prettifies the error message like pino-pretty does
  * and emits bindings if they are provided
  */
-const prettifiedLoggerFactory =
+export const prettifiedLoggerFactory =
   (logger: (...args: unknown[]) => void, bindings?: () => Record<string, unknown>) =>
   (...vals: unknown[]) => {
     const finalVals = vals.slice()

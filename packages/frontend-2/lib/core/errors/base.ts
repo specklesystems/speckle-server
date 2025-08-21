@@ -9,5 +9,5 @@ export {
 } from '@speckle/ui-components'
 
 export class ResourceLoadError extends BaseError {
-  static defaultMessage = 'External resource failed to load'
+  static override defaultMessage = 'External resource failed to load'
 }

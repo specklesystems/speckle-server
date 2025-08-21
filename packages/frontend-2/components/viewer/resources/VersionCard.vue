@@ -142,6 +142,7 @@ const {
   }
 } = useInjectedViewerState()
 const copyModelLink = useCopyModelLink()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const isLoaded = computed(() => props.isLoadedVersion)
 const isLatest = computed(() => props.isLatestVersion)

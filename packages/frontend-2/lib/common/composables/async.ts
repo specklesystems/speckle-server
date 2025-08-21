@@ -13,7 +13,7 @@ export type { AsyncWritableComputedOptions, AsyncWritableComputedRef }
  * @param params
  */
 export const writableAsyncComputed: typeof originalWritableAsyncComputed = (params) => {
-  const logger = useLogger()
+  const logger = useStrictLoggerSync()
   return originalWritableAsyncComputed({
     ...params,
     debugging: params.debugging?.log
@@ -34,7 +34,7 @@ export const writableAsyncComputed: typeof originalWritableAsyncComputed = (para
  */
 export const watchAsync = ((...args: Parameters<typeof watch>) => {
   const [source, cb, options] = args
-  const logger = useLogger()
+  const logger = useStrictLoggerSync()
 
   const watches = shallowRef<Array<Promise<unknown>>>([])
 

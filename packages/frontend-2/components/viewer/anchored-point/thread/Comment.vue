@@ -59,6 +59,7 @@ const {
     response: { project }
   }
 } = useInjectedViewerState()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const createdAt = computed(() => {
   return {

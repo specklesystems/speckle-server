@@ -57,6 +57,8 @@ ENV BUILD_SOURCEMAPS=${BUILD_SOURCEMAPS}
 # for better sourcemaps (the app still gets minified at the end)
 ENV SKIP_LIBRARY_MINIFICATION=true
 ARG SPECKLE_SERVER_VERSION=custom
+# for better hydration mismatch errors in prod (larger bundle size tho)
+ENV HYDRATION_MISMATCH_REPORTING=true
 # hadolint ignore=DL3059
 RUN yarn workspaces foreach --include "packages/frontend-2" -W run build
 

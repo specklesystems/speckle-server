@@ -195,7 +195,7 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
 ): boolean {
   const { fragment, query } = filter
   const { ignoreCacheErrors = true, overwrite = true } = options
-  const logger = useLogger()
+  const logger = useStrictLoggerSync()
 
   if (!fragment && !query) {
     throw new Error(
@@ -382,7 +382,7 @@ export function modifyObjectFields<
 ) {
   const { fieldNameWhitelist, debug = false } = options || {}
 
-  const logger = useLogger()
+  const logger = useStrictLoggerSync()
   const invocationId = nanoid()
   const log = (...args: Parameters<typeof logger.debug>) => {
     if (!debug) return
