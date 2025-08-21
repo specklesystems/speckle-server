@@ -13,7 +13,7 @@
     <div class="flex flex-col">
       <div v-if="!condensed" class="relative bg-primary h-32 md:h-48 select-none">
         <NuxtImg
-          src="/images/workspace/cubes.png"
+          src="~/assets/images/workspace/cubes.webp"
           alt="Speckle cubes"
           class="w-full object-cover h-full"
         />
