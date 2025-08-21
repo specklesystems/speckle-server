@@ -119,7 +119,8 @@ export const useFailedFileImportJobUtils = () => {
         return `The file you tried to upload does not have a valid file extension.`
       case FailedFileImportJobError.InvalidFileType: {
         const fileExtension = resolveFileExtension(job.fileName)
-        return `The file you tried to upload (${fileExtension}) is not a supported file type. Only ${accept.value} are supported by this server.`
+        const formattedExtensions = accept.value.replace(/,/g, ', ')
+        return `The file you tried to upload (${fileExtension}) is not a supported file type. Only ${formattedExtensions} are supported by this server.`
       }
       case FailedFileImportJobError.ImportFailed:
       case FailedFileImportJobError.UploadFailed: {

@@ -34,15 +34,13 @@
         </div>
       </template>
       <template #error="{ item }">
-        <div class="text-foreground break-words">
-          {{ getErrorMessage(item) + ' ' }}
-          <ErrorReference
-            v-if="shouldShowErrorReference(item)"
-            class="text-left inline"
-            size="text-body-xs"
-            @click="copyErrorReference(item)"
-          />
-        </div>
+        <span class="text-foreground">{{ getErrorMessage(item) + ' ' }}</span>
+        <ErrorReference
+          v-if="shouldShowErrorReference(item)"
+          class="text-left inline"
+          size="text-body-xs"
+          @click="copyErrorReference(item)"
+        />
       </template>
       <template #date="{ item }">
         <span v-tippy="formattedFullDate(item.date)" class="text-foreground-2">
