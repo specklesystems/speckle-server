@@ -384,15 +384,17 @@ export const useAuthManager = (
    * Watch for embed token in query string and save it
    */
   const watchEmbedToken = () => {
-    watch(
-      () => embedToken.value,
-      async (newVal, oldVal) => {
-        if (newVal && newVal !== oldVal) {
-          await resetAuthState()
-        }
-      },
-      { immediate: true }
-    )
+    if (import.meta.client) {
+      watch(
+        () => embedToken.value,
+        async (newVal, oldVal) => {
+          if (newVal && newVal !== oldVal) {
+            await resetAuthState()
+          }
+        },
+        { immediate: true }
+      )
+    }
   }
 
   /**
