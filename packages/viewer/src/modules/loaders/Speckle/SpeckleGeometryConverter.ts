@@ -7,6 +7,12 @@ import { GeometryConverter, SpeckleType } from '../GeometryConverter.js'
 import Logger from '../../utils/Logger.js'
 import { DataChunk } from '../../../IViewer.js'
 import { ChunkArray } from '../../converter/VirtualArray.js'
+const _vec30 = new Vector3()
+const _vec31 = new Vector3()
+const _vec32 = new Vector3()
+const _vec33 = new Vector3()
+const _vec34 = new Vector3()
+const _vec35 = new Vector3()
 
 export class SpeckleGeometryConverter extends GeometryConverter {
   public typeLookupTable: { [type: string]: SpeckleType } = {}
@@ -37,9 +43,12 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     this.typeLookupTable[rawType] = typeRet
     return typeRet
   }
+  public objectTypes = {}
 
   public convertNodeToGeometryData(node: NodeData): GeometryData | null {
     const type = this.getSpeckleType(node)
+    if (!this.objectTypes[type]) this.objectTypes[type] = 0
+    this.objectTypes[type]++
     switch (type) {
       case SpeckleType.BlockInstance:
         return this.BlockInstanceToGeometryData(node)
@@ -691,7 +700,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
       attributes: {
         POSITION: new ChunkArray([
           {
-            data: this.FlattenVector3Array(points),
+            data: points as unknown as number[],
             id: MathUtils.generateUUID(),
             references: 1
           }
@@ -887,12 +896,12 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     radius: number,
     startAngle = 0,
     endAngle = 2 * Math.PI,
-    resolution = 128
+    resolution = 127
   ) {
     // Get alignment vectors
-    const center = this.PointToVector3(plane.origin)
-    const xAxis = this.PointToVector3(plane.xdir)
-    const yAxis = this.PointToVector3(plane.ydir)
+    const center = this.PointToVector3(plane.origin, _vec30)
+    const xAxis = this.PointToVector3(plane.xdir, _vec31)
+    const yAxis = this.PointToVector3(plane.ydir, _vec32)
 
     // Make sure plane axis are unit length!!!!
     xAxis.normalize()
@@ -903,37 +912,42 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     // let resolution = ((endAngle - startAngle) * radius) / res
     // resolution = parseInt(resolution.toString())
 
-    const points = []
+    /** Not ecstatic about using Float64, but it *might* be needed. Still better than number[] in any case */
+    const points = new Float64Array((resolution + 1) * 3)
 
     for (let index = 0; index <= resolution; index++) {
       const t = startAngle + (index * (endAngle - startAngle)) / resolution
       const x = Math.cos(t) * radius
       const y = Math.sin(t) * radius
-      const xMove = new Vector3(xAxis.x * x, xAxis.y * x, xAxis.z * x)
-      const yMove = new Vector3(yAxis.x * y, yAxis.y * y, yAxis.z * y)
+      const xMove = _vec33.set(xAxis.x * x, xAxis.y * x, xAxis.z * x)
+      const yMove = _vec34.set(yAxis.x * y, yAxis.y * y, yAxis.z * y)
 
-      const pt = new Vector3().addVectors(xMove, yMove).add(center)
-      points.push(pt)
+      const pt = _vec35.addVectors(xMove, yMove).add(center)
+
+      points[index * 3] = pt.x
+      points[index * 3 + 1] = pt.y
+      points[index * 3 + 2] = pt.z
     }
     return points
   }
 
   protected PointToVector3(
     obj: { value: Array<number>; units: string } & { x: number; y: number; z: number },
+    target?: Vector3,
     scale = true
   ) {
     const conversionFactor = scale ? getConversionFactor(obj.units) : 1
-    let v = null
+    const v = target ? target : new Vector3()
     if (obj.value) {
       // Old point format based on value list
-      v = new Vector3(
+      v.set(
         obj.value[0] * conversionFactor,
         obj.value[1] * conversionFactor,
         obj.value[2] * conversionFactor
       )
     } else {
       // New point format based on cartesian coords
-      v = new Vector3(
+      v.set(
         obj.x * conversionFactor,
         obj.y * conversionFactor,
         obj.z * conversionFactor
