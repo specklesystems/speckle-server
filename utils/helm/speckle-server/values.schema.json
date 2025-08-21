@@ -105,11 +105,6 @@
           "description": "Toggles whether the system periodically retries preview requests which have previously errored.",
           "default": false
         },
-        "nextGenFileImporterEnabled": {
-          "type": "boolean",
-          "description": "Enables the next generation file importer. Requires ifc_import_service to be enabled and configured.",
-          "default": false
-        },
         "legacyFileImportsEnabled": {
           "type": "boolean",
           "description": "Enables the legacy file upload mechanism, using REST API to proxy file uploads via the server",

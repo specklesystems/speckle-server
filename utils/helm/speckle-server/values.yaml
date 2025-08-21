@@ -63,8 +63,6 @@ featureFlags:
   moveProjectRegionEnabled: false
   ## @param featureFlags.retryErroredPreviewsEnabled Toggles whether the system periodically retries preview requests which have previously errored.
   retryErroredPreviewsEnabled: false
-  ## @param featureFlags.nextGenFileImporterEnabled Enables the next generation file importer. Requires ifc_import_service to be enabled and configured.
-  nextGenFileImporterEnabled: false
   ## @param featureFlags.legacyFileImportsEnabled Enables the legacy file upload mechanism, using REST API to proxy file uploads via the server
   legacyFileImportsEnabled: false
   ## @param featureFlags.accIntegrationEnabled Enables the ability to import data from ACC

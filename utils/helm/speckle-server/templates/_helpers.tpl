@@ -1147,13 +1147,12 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.featureFlags.rhinoFileImporterEnabled  | quote }}
 {{- end }}
 
-{{- if .Values.featureFlags.nextGenFileImporterEnabled }}
 - name: FILEIMPORT_QUEUE_POSTGRES_URL
   valueFrom:
     secretKeyRef:
       name: {{ default .Values.secretName .Values.ifc_import_service.db.connectionString.secretName }}
       key: {{ default "fileimport_queue_postgres_url" .Values.ifc_import_service.db.connectionString.secretKey }}
-{{- end }}
+
 - name: FILE_UPLOAD_URL_EXPIRY_MINUTES
   value: {{ .Values.file_upload_url_expiry_minutes | quote }}
 {{- end }}
