@@ -272,19 +272,16 @@ export function usePreviewImageBlob(
       }
     )
   } else {
+    useHead({
+      link: computed(() => [
+        ...(url.value?.length && isPreviewServiceUrl.value
+          ? [{ rel: 'preload', as: <const>'image', href: url.value }]
+          : [])
+      ])
+    })
+
     onServerPrefetch(async () => {
       await regeneratePreviews()
-
-      // Preload the image
-      if (isPreviewServiceUrl && url.value?.length) {
-        useHead({
-          link: [
-            ...(url.value?.length
-              ? [{ rel: 'preload', as: <const>'image', href: url.value }]
-              : [])
-          ]
-        })
-      }
     })
   }
 
