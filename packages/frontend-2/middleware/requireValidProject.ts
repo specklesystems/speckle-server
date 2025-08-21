@@ -29,7 +29,6 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const { isLoggedIn } = useActiveUser()
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
   const fetchPolicy = useMiddlewareQueryFetchPolicy()
-  const isInPlaceNavigation = checkIfIsInPlaceNavigation(to, from)
 
   const { data, errors } = await client
     .query({
@@ -82,7 +81,11 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     }
   }
 
-  if (isLoggedIn.value && isWorkspacesEnabled.value && !isInPlaceNavigation) {
+  if (
+    isLoggedIn.value &&
+    isWorkspacesEnabled.value &&
+    data?.activeUser?.activeWorkspace?.id !== data?.project.workspaceId
+  ) {
     await setActiveWorkspace({ id: data?.project.workspaceId })
   }
 })

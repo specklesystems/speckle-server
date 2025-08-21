@@ -31,8 +31,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const [{ data: serverInfoData }, { data: userData }] = await Promise.all([
     client
       .query({
-        query: mainServerInfoDataQuery,
-        fetchPolicy: fetchPolicy(to, from)
+        query: mainServerInfoDataQuery
       })
       .catch(convertThrowIntoFetchResult),
     client
