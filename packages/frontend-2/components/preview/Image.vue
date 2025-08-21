@@ -112,7 +112,7 @@ const {
   hasDoneFirstLoad,
   isPanoramaPlaceholder
 } = usePreviewImageBlob(basePreviewUrl, {
-  enabled: isInViewport,
+  enabled: computed(() => props.eagerLoad || isInViewport.value),
   eagerLoad: props.eagerLoad
 })
 
