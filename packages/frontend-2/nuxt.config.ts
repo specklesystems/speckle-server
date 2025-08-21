@@ -260,5 +260,8 @@ export default defineNuxtConfig({
   },
   prometheus: {
     verbose: false
+  },
+  features: {
+    devLogs: true
   }
 })
