@@ -5,19 +5,21 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import { useSetActiveWorkspace } from '~/lib/user/composables/activeWorkspace'
 import { buildWorkspaceAccessCheckQuery } from '~/lib/workspaces/helpers/middleware'
+import { useMiddlewareQueryFetchPolicy } from '~/lib/core/composables/navigation'
 
 /**
  * Used to validate that the workspace ID refers to a valid workspace and redirects to 404 if not
  */
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineNuxtRouteMiddleware(async (to, from) => {
   const workspaceSlug = to.params.slug as string
 
   const client = useApolloClientFromNuxt()
   const { setActiveWorkspace } = useSetActiveWorkspace()
   const { isLoggedIn } = useActiveUser()
+  const fetchPolicy = useMiddlewareQueryFetchPolicy()
 
   const { data, errors } = await client
-    .query(buildWorkspaceAccessCheckQuery(workspaceSlug))
+    .query(buildWorkspaceAccessCheckQuery(workspaceSlug, fetchPolicy(to, from)))
     .catch(convertThrowIntoFetchResult)
 
   if (

@@ -58,7 +58,8 @@ export const useWorkspacePlan = (slug: MaybeRef<string>) => {
       slug: unref(slug)
     }),
     () => ({
-      enabled: isBillingIntegrationEnabled.value && !!unref(slug).length
+      enabled: isBillingIntegrationEnabled.value && !!unref(slug).length,
+      fetchPolicy: 'cache-only'
     })
   )
 

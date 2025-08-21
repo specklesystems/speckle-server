@@ -4,6 +4,7 @@ export const workspaceAccessCheckQuery = graphql(`
   query WorkspaceAccessCheck($slug: String!) {
     workspaceBySlug(slug: $slug) {
       id
+      slug
     }
     activeUser {
       id
