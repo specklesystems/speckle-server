@@ -37,7 +37,7 @@ export function isEmbedOptions(obj: unknown): obj is EmbedOptions {
 }
 
 export function deserializeEmbedOptions(embedString: string | null): EmbedOptions {
-  const logger = useStrictLoggerSync()
+  const { logger } = useSafeLogger()
   if (!embedString) {
     return { isEnabled: false }
   }
@@ -47,9 +47,9 @@ export function deserializeEmbedOptions(embedString: string | null): EmbedOption
     if (isEmbedOptions(parsed)) {
       return { ...parsed, isEnabled: true }
     }
-    logger.error('Parsed object is not of type EmbedOptions')
+    logger().error('Parsed object is not of type EmbedOptions')
   } catch (error) {
-    logger.error(error)
+    logger().error(error)
   }
 
   return { isEnabled: false }
