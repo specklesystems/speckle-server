@@ -16,7 +16,6 @@ import {
 import { World } from './World.js'
 import { type TreeNode, WorldTree } from './tree/WorldTree.js'
 import SpeckleRenderer from './SpeckleRenderer.js'
-import { type PropertyInfo, PropertyManager } from './filtering/PropertyManager.js'
 import type { Query, QueryArgsResultMap } from './queries/Query.js'
 import { Queries } from './queries/Queries.js'
 import { type Utils } from './Utils.js'
@@ -30,6 +29,8 @@ import { RenderTree } from './tree/RenderTree.js'
 import Logger from './utils/Logger.js'
 import Stats from './three/stats.js'
 import { TIME_MS } from '@speckle/shared'
+import { PropertyInfo, PropertyManager } from './filtering/PropertyManager.js'
+import { PropertyInfo as OL2PropertyInfo } from '@speckle/objectloader2'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -49,6 +50,7 @@ export class Viewer extends EventEmitter implements IViewer {
   /** Misc members */
   protected clock: Clock
   protected loaders: { [id: string]: Loader } = {}
+  private properties: Record<string, OL2PropertyInfo[]> = {}
 
   protected extensions: {
     [id: string]: Extension
@@ -155,9 +157,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.speckleRenderer = new SpeckleRenderer(this.tree, this)
     this.speckleRenderer.create(this.container)
     window.addEventListener('resize', this.resize.bind(this), false)
-
-    this.propertyManager = new PropertyManager()
-
+this.propertyManager = new PropertyManager()
     this.frame()
     this.resize()
   }
@@ -244,11 +244,38 @@ export class Viewer extends EventEmitter implements IViewer {
     super.on(eventType, listener)
   }
 
-  public getObjectProperties(
+  public async getObjectProperties(
     resourceURL: string | null = null,
     bypassCache = true
   ): Promise<PropertyInfo[]> {
-    return this.propertyManager.getProperties(this.tree, resourceURL, bypassCache)
+    if (!resourceURL) {
+      return Promise.resolve([])
+    }
+    const ol2Props = this.properties[resourceURL]
+    if (ol2Props) {
+      const oldProps = await this.propertyManager.getProperties(this.tree, resourceURL, bypassCache)
+      oldProps.sort((a, b) => a.key.localeCompare(b.key))
+      const newProps  = ol2Props as unknown as PropertyInfo[]
+      newProps.sort((a, b) => a.key.localeCompare(b.key))
+      if (oldProps.length !== newProps.length) {
+        console.error(
+          `Property count mismatch for ${resourceURL}: New: ${newProps.length}, Old: ${oldProps.length}`
+        )
+      }
+      for(const oldProp of oldProps) {
+        const newProp = newProps.find((p) => p.key === oldProp.key)
+        if (!newProp) {
+          console.error(`Property ${oldProp.key} not found in New properties`);
+        }
+      } for (const newProp of newProps) {
+        const oldProp = oldProps.find((p) => p.key === newProp.key)
+        if (!oldProp) {
+          console.error(`Property ${newProp.key} not found in Old properties`)
+        }
+      }
+      return newProps
+    }
+    return Promise.resolve([])
   }
 
   public getDataTree(): void {
@@ -333,6 +360,7 @@ export class Viewer extends EventEmitter implements IViewer {
       Logger.log(this.getRenderer().renderingStats)
       Logger.log('ASYNC batch build time -> ', performance.now() - t0)
       this.requestRender(UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS)
+      this.properties[loader.resource] = loader.properties
       this.emit(ViewerEvent.LoadComplete, loader.resource)
     }
 
