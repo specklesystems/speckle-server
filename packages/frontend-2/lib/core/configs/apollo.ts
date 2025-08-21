@@ -321,6 +321,9 @@ function createCache(): InMemoryCache {
       ServerConfiguration: {
         merge: true
       },
+      WorkspaceSubscription: {
+        merge: true
+      },
       CommentThreadActivityMessage: {
         merge: true
       },
@@ -354,7 +357,7 @@ function createCache(): InMemoryCache {
       Workspace: {
         fields: {
           invitedTeam: {
-            merge: (_existing, incoming) => incoming
+            merge: incomingOverwritesExistingMergeFunction
           },
           team: {
             keyArgs: ['limit', 'filter', ['roles', 'search', 'seatType']],

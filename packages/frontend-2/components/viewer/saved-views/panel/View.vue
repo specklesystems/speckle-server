@@ -158,6 +158,7 @@ const updateView = useUpdateSavedView()
 const isLoading = useMutationLoading()
 const { copyLink, applyView } = useViewerSavedViewsUtils()
 const eventBus = useEventBus()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const showMenu = ref(false)
 const menuId = useId()

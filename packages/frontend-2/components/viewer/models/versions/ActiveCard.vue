@@ -33,6 +33,7 @@ interface Version {
 const props = defineProps<{
   version: Version
 }>()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const createdAt = computed(() => {
   return {

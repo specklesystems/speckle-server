@@ -129,6 +129,7 @@ const props = defineProps<{
 const search = ref('')
 const showActionsMenu = ref<Record<string, boolean>>({})
 
+const { formattedFullDate } = useDateFormatters()
 const cancelInvite = useCancelWorkspaceInvite()
 const resendInvite = useResendWorkspaceInvite()
 const { result: searchResult, loading: searchResultLoading } = useQuery(

@@ -74,6 +74,7 @@ const props = defineProps<{
 const { screenshot } = useCommentScreenshotImage(
   computed(() => props.thread.screenshot)
 )
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const isLimited = computed(() => {
   return !props.thread.rawText
