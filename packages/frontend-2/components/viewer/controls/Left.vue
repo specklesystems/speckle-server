@@ -154,7 +154,7 @@
     <!-- Panel Extension - Portal target for additional content -->
     <div
       id="panel-extension"
-      class="absolute max-h-96 h-full empty:hidden z-30 w-64 top-1.5 bg-foundation border border-outline-2 rounded-lg overflow-hidden"
+      class="absolute max-h-[calc(100dvh-4rem)] empty:hidden z-30 w-64 top-1.5 bg-foundation border border-outline-2 rounded-lg overflow-hidden"
       :style="`left: ${panelExtensionLeft}px`"
     >
       <PortalTarget name="panel-extension"></PortalTarget>
