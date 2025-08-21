@@ -115,7 +115,6 @@ export const init: SpeckleModule['init'] = async ({
   let observeResult: ObserveResult | undefined = undefined
 
   if (isInitial) {
-    moduleLogger.info('🗳️ Next Gen File importer is ENABLED')
     const connectionUri = getFileImporterQueuePostgresUrl()
     const queueDb = connectionUri
       ? configureClient({ postgres: { connectionUri } }).public
