@@ -82,7 +82,11 @@ export const useSafeLogger = () => {
 export const useDevLogger = () => {
   if (!import.meta.dev) return noop
 
-  const logger = useLogger()
-  const debug = logger.debug.bind(logger)
-  return debug as (...args: unknown[]) => void
+  const { logger } = useSafeLogger()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (...args: any[]) => {
+    const actualLogger = logger()
+    const debug = actualLogger.debug.bind(actualLogger)
+    return debug(args[0], ...args.slice(1)) //ts appeasement
+  }
 }
