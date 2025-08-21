@@ -10,6 +10,7 @@ import {
   useFilterUtilities,
   useCameraUtilities
 } from '~~/lib/viewer/composables/ui'
+import { useEventListener } from '@vueuse/core'
 
 export type ViewerContextMenuModel = {
   isVisible: boolean
@@ -28,6 +29,17 @@ export function useViewerContextMenu(params: {
   const { isolateObjects, hideObjects, unIsolateObjects } = useFilterUtilities()
   const { copy } = useClipboard()
   const { zoomExtentsOrSelection } = useCameraUtilities()
+
+  // Prevent native context menu on the viewer
+  useEventListener(
+    parentEl,
+    'contextmenu',
+    (event: MouseEvent) => {
+      event.preventDefault()
+      event.stopPropagation()
+    },
+    { passive: false }
+  )
 
   const contextMenuState = ref<ViewerContextMenuModel>({
     isVisible: false,
@@ -145,9 +157,6 @@ export function useViewerContextMenu(params: {
     singleClickCallback: (event, { firstVisibleSelectionHit }) => {
       // Handle right-clicks to open context menu
       if (event?.event && event.event.button === 2) {
-        event.event.preventDefault()
-        event.event.stopPropagation()
-
         if (firstVisibleSelectionHit) {
           const clickLocation = firstVisibleSelectionHit.point.clone()
           const selectedObjectId = firstVisibleSelectionHit.node.model.id
