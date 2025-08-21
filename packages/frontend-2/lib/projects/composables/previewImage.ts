@@ -91,7 +91,8 @@ export function usePreviewImageBlob(
     isLoadingPanorama,
     shouldLoadPanorama,
     hasDoneFirstLoad: computed(() => hasDoneFirstLoad.value),
-    isPanoramaPlaceholder: computed(() => isPanoramaPlaceholder.value)
+    isPanoramaPlaceholder: computed(() => isPanoramaPlaceholder.value),
+    wasEagerLoaded: eagerLoad
   }
 
   const previewUrlPath = computed(() => {

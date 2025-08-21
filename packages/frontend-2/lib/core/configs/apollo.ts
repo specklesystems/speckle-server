@@ -366,10 +366,10 @@ function createCache(): InMemoryCache {
             )
           },
           plan: {
-            merge: incomingOverwritesExistingMergeFunction
+            merge: mergeAsObjectsFunction
           },
           planPrices: {
-            merge: incomingOverwritesExistingMergeFunction
+            merge: mergeAsObjectsFunction
           },
           projects: {
             keyArgs: ['filter', 'limit'],
