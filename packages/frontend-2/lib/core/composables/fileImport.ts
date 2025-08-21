@@ -11,10 +11,7 @@ import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { BlobUploadStatus, type BlobPostResultItem } from '~~/lib/core/api/blobStorage'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { graphql } from '~/lib/common/generated/gql'
-import {
-  useIsNextGenFileImporterEnabled,
-  useIsRhinoFileImporterEnabled
-} from '~/composables/globals'
+import { useIsRhinoFileImporterEnabled } from '~/composables/globals'
 import {
   rhinoImporterSupportedFileExtensions,
   FileUploadConvertedStatus
@@ -356,11 +353,9 @@ graphql(`
 
 export const useFileImportBaseSettings = () => {
   const { maxSizeInBytes } = useServerFileUploadLimit()
-  const isNextGenFileImporterEnabled = useIsNextGenFileImporterEnabled()
   const isRhinoFileImportEnabled = useIsRhinoFileImporterEnabled()
 
-  const legacyFileImportService = '.ifc,.obj,.stl'
-  const nextGenBackgroundJobs = `.ifc,${
+  const acceptedFileExtensions = `.ifc,${
     isRhinoFileImportEnabled.value
       ? [...rhinoImporterSupportedFileExtensions]
           .map((ext: string) => `.${ext}`)
@@ -368,9 +363,7 @@ export const useFileImportBaseSettings = () => {
       : ''
   }`
 
-  const accept = computed(() =>
-    isNextGenFileImporterEnabled.value ? nextGenBackgroundJobs : legacyFileImportService
-  )
+  const accept = computed(() => acceptedFileExtensions)
 
   return { maxSizeInBytes, accept }
 }

@@ -143,8 +143,6 @@ spec:
             value: {{ .Values.featureFlags.savedViewsEnabled | quote }}
           - name: NUXT_PUBLIC_FF_WORKSPACES_NEW_PLANS_ENABLED
             value: {{ .Values.featureFlags.workspacesNewPlanEnabled | quote }}
-          - name: NUXT_PUBLIC_FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-            value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
           - name: NUXT_PUBLIC_FF_RHINO_FILE_IMPORTER_ENABLED
             value: {{ .Values.featureFlags.rhinoFileImporterEnabled | quote }}
           - name: NUXT_PUBLIC_FF_LEGACY_FILE_IMPORTS_ENABLED
