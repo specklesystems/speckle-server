@@ -3,8 +3,8 @@ import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
-import { workspaceAccessCheckQuery } from '~~/lib/workspaces/graphql/queries'
 import { useSetActiveWorkspace } from '~/lib/user/composables/activeWorkspace'
+import { buildWorkspaceAccessCheckQuery } from '~/lib/workspaces/helpers/middleware'
 
 /**
  * Used to validate that the workspace ID refers to a valid workspace and redirects to 404 if not
@@ -17,17 +17,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const { isLoggedIn } = useActiveUser()
 
   const { data, errors } = await client
-    .query({
-      query: workspaceAccessCheckQuery,
-      variables: { slug: workspaceSlug },
-      context: {
-        skipLoggingErrors: true
-      },
-      fetchPolicy: 'network-only'
-    })
+    .query(buildWorkspaceAccessCheckQuery(workspaceSlug))
     .catch(convertThrowIntoFetchResult)
 
-  if (data?.workspaceBySlug.id && isLoggedIn.value) {
+  if (
+    data?.workspaceBySlug.id &&
+    isLoggedIn.value &&
+    data.workspaceBySlug?.id !== data.activeUser?.activeWorkspace?.id
+  ) {
     await setActiveWorkspace({ slug: workspaceSlug })
   }
 

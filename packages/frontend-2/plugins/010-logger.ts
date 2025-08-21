@@ -145,7 +145,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
         // applying pino-like message templating, cause consola doesnt have it
         // the arg slice is TS appeasement
         prettifiedLoggerFactory(consola[level])(args[0], ...args.slice(1), {
-          time: dayjs().format('HH:mm:ss.SSS')
+          time: dayjs().format('HH:mm:ss.SSS'),
+          separator: '═══════════════════════════════════════════►'
         })
       }
       logHandlers.push(errorHandler)

@@ -5,6 +5,13 @@ export const workspaceAccessCheckQuery = graphql(`
     workspaceBySlug(slug: $slug) {
       id
     }
+    activeUser {
+      id
+      activeWorkspace {
+        id
+        slug
+      }
+    }
   }
 `)
 

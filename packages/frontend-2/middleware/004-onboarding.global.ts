@@ -14,9 +14,9 @@ import {
 } from '~/lib/common/helpers/route'
 import { mainServerInfoDataQuery } from '~/lib/core/composables/server'
 import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
-import { activeUserWorkspaceExistenceCheckQuery } from '~/lib/auth/graphql/queries'
 import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
+import { buildActiveUserWorkspaceExistenceCheckQuery } from '~/lib/workspaces/helpers/middleware'
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
   const isAuthPage = to.path.startsWith('/authn/')
@@ -87,15 +87,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   if (!isWorkspacesEnabled.value) return
 
   const { data: workspaceExistenceData } = await client
-    .query({
-      query: activeUserWorkspaceExistenceCheckQuery,
-      variables: {
-        filter: {
-          personalOnly: true
-        },
-        limit: 0
-      }
-    })
+    .query(buildActiveUserWorkspaceExistenceCheckQuery())
     .catch(convertThrowIntoFetchResult)
 
   const workspaces = workspaceExistenceData?.activeUser?.workspaces?.items ?? []
