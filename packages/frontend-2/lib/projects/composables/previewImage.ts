@@ -259,8 +259,7 @@ export function usePreviewImageBlob(
       () => unref(previewUrl),
       () => {
         void regeneratePreviews()
-      },
-      { immediate: true }
+      }
     )
 
     watch(
@@ -279,13 +278,15 @@ export function usePreviewImageBlob(
           : [])
       ])
     })
-
-    onServerPrefetch(async () => {
-      await regeneratePreviews()
-    })
   }
 
-  return ret
+  return {
+    ...ret,
+    /**
+     * Run this at the bottom of the component to fully initialize it
+     */
+    init: regeneratePreviews
+  }
 }
 
 export function useCommentScreenshotImage(
