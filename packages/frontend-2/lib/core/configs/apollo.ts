@@ -7,7 +7,7 @@ import { WebSocketLink } from '@apollo/client/link/ws'
 import { getMainDefinition } from '@apollo/client/utilities'
 import { Kind } from 'graphql'
 import type { GraphQLError, OperationDefinitionNode } from 'graphql'
-import type { CookieRef } from '#app'
+import type { CookieRef, NuxtApp } from '#app'
 import type { Optional } from '@speckle/shared'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import {
@@ -436,7 +436,7 @@ function createLink(params: {
   httpEndpoint: string
   wsClient?: SubscriptionClient
   authToken: CookieRef<Optional<string>>
-  nuxtApp: NuxtAppvu
+  nuxtApp: NuxtApp
   reqId: string
   logout: ReturnType<typeof useAuthManager>['logout']
 }): ApolloLink {
