@@ -133,20 +133,20 @@ services:
       - speckle-server
       # - postgres
 
-  fileimport-service:
+  ifc-import-service:
     build:
       context: .
-      dockerfile: packages/fileimport-service/Dockerfile
+      dockerfile: packages/ifc-import-service/Dockerfile
     platform: linux/amd64
-    image: speckle/speckle-fileimport-service:local
+    image: speckle/speckle-ifc-import-service:local
     restart: always
     environment:
       LOG_LEVEL: 'info'
       LOG_PRETTY: 'true'
-      PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
-      SPECKLE_SERVER_URL: 'http://speckle-server:3000'
       FILE_IMPORT_TIME_LIMIT_MIN: 10
-      REDIS_URL: 'redis://redis'
+      FILEIMPORT_QUEUE_POSTGRES_URL: 'postgres://speckle:speckle@postgres/speckle'
+      # EXTRA_CA_CERTS
+
     depends_on:
       - speckle-server
       # - postgres
