@@ -139,27 +139,58 @@ const useResetAuthState = (
   const apollo = options?.deferredApollo ? undefined : useApolloClient().client
   const resolveDistinctId = useResolveUserDistinctId()
   const { cbs } = useOnAuthStateChangeState()
+  const authToken = useAuthCookie()
 
-  return async () => {
+  return async (
+    resetOptions?: Partial<{
+      /**
+       * If true, won't await the full reset and return early after reset has started
+       */
+      lazyReset: boolean
+    }>
+  ) => {
     const client = apollo || (await options?.deferredApollo?.())
+    const isLoggedIn = !!authToken.value
 
     let user: MaybeNullOrUndefined<ActiveUserMainMetadataQuery['activeUser']> = null
+    let resetPromise: Promise<unknown> = Promise.resolve()
     if (client) {
-      // evict cache
-      client.cache.evict({ id: 'ROOT_QUERY', fieldName: 'activeUser' })
+      // evict user early (in case we're not waiting for full reset), as that's what most pages rely on
+      modifyObjectField(
+        client.cache,
+        ROOT_QUERY,
+        'activeUser',
+        ({ helpers: { evict } }) =>
+          isLoggedIn
+            ? // if we just logged in, we want to evict so that activeUser query retriggers
+              evict()
+            : // if we logged out, we don't want to reload activeUser query yet, just
+              // mark it as if it's resolved to be null
+              null
+      )
 
-      // wait till active user is reloaded
-      const { data: activeUserRes } = await client
-        .query({
-          query: activeUserQuery,
-          fetchPolicy: 'network-only'
-        })
-        .catch(convertThrowIntoFetchResult)
-      user = activeUserRes?.activeUser
+      // evict entire cache (not enough to just evict user, various other fields
+      // also depend on active user (e.g. Workspace.seatType))
+      resetPromise = client.resetStore().then(async () => {
+        // wait till active user is reloaded
+        const { data: activeUserRes } = await client
+          .query({
+            query: activeUserQuery,
+            fetchPolicy: 'network-only'
+          })
+          .catch(convertThrowIntoFetchResult)
+        user = activeUserRes?.activeUser
+      })
     }
 
-    // process state change callbacks
-    cbs.forEach((cb) => cb(user, { resolveDistinctId, isReset: true }))
+    resetPromise = resetPromise.then(() => {
+      // process state change callbacks
+      cbs.forEach((cb) => cb(user, { resolveDistinctId, isReset: true }))
+    })
+
+    if (!resetOptions?.lazyReset) {
+      await resetPromise
+    }
   }
 }
 
@@ -218,8 +249,15 @@ export const useAuthManager = (
    */
   const saveNewToken = async (
     newToken?: string,
-    options?: Partial<{ skipRedirect: boolean }>
+    options?: Partial<{
+      skipRedirect: boolean
+      skipStateReset: boolean
+      lazyStateReset: boolean
+    }>
   ) => {
+    const skipStateReset = options?.skipStateReset
+    const skipRedirect = skipStateReset ? true : options?.skipRedirect
+
     // write to cookie
     authToken.value = newToken
 
@@ -227,10 +265,14 @@ export const useAuthManager = (
     SafeLocalStorage.remove(LocalStorageKeys.AuthAppChallenge)
 
     // Wipe auth state
-    await resetAuthState()
+    if (!skipStateReset) {
+      await resetAuthState({
+        lazyReset: options?.lazyStateReset
+      })
+    }
 
     // redirect home & wipe access code from querystring
-    if (!options?.skipRedirect) goHome({ query: {} })
+    if (!skipRedirect) goHome({ query: {} })
   }
 
   /**
@@ -451,7 +493,11 @@ export const useAuthManager = (
       forceFullReload: boolean
     }>
   ) => {
-    await saveNewToken(undefined, { skipRedirect: true })
+    const isServer = import.meta.server
+
+    // lazy reset, we dont need it to finish before we can redirect to login page
+    // (and we wanna avoid flashes of broken content)
+    await saveNewToken(undefined, { skipRedirect: true, lazyStateReset: true })
 
     if (!options?.skipToast) {
       triggerNotification({
@@ -463,7 +509,7 @@ export const useAuthManager = (
 
     postAuthRedirect.deleteState()
 
-    if (import.meta.server) {
+    if (isServer) {
       markLoggedOut()
     }
 

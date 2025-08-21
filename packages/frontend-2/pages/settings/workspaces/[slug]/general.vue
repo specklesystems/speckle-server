@@ -157,7 +157,7 @@
           </div>
         </div>
       </template>
-      <template v-if="(isServerAdmin || isAdmin) && workspaceId">
+      <template v-if="workspaceResult?.workspaceBySlug?.id">
         <hr class="mb-6 mt-8 border-outline-2" />
         <p class="text-body-2xs text-foreground-2">
           Workspace ID: #{{ workspaceResult?.workspaceBySlug?.id }}
@@ -264,7 +264,6 @@ const config = useRuntimeConfig()
 const { hasSsoEnabled, needsSsoLogin } = useWorkspaceSsoStatus({
   workspaceSlug: computed(() => workspaceResult.value?.workspaceBySlug?.slug || '')
 })
-const { isAdmin: isServerAdmin } = useActiveUser()
 
 const name = ref('')
 const slug = ref('')
@@ -278,7 +277,6 @@ const isAdmin = computed(
   () => workspaceResult.value?.workspaceBySlug?.role === Roles.Workspace.Admin
 )
 const adminRef = toRef(isAdmin)
-const workspaceId = computed(() => workspaceResult.value?.workspaceBySlug?.id)
 const canDeleteWorkspace = computed(
   () =>
     isAdmin.value &&
