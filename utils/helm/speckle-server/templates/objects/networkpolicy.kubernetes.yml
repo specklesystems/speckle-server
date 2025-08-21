@@ -69,13 +69,6 @@ spec:
       ports:
         - port: http
 {{- end }}
-    # allow ingress from the fileimport service
-    - from:
-        - podSelector:
-            matchLabels:
-{{ include "fileimport_service.selectorLabels" $ | indent 14}}
-      ports:
-        - port: http
 {{- if .Values.helm_test_enabled }}
     # allow ingress from the test
     - from:

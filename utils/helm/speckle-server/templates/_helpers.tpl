@@ -721,7 +721,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.file_size_limit_mb | quote }}
 
 - name: FILE_IMPORT_TIME_LIMIT_MIN
-  value: {{ (or .Values.file_import_time_limit_min .Values.fileimport_service.time_limit_min) | quote }}
+  value: {{ .Values.file_import_time_limit_min | quote }}
 
 - name: MAX_PROJECT_MODELS_PER_PAGE
   value: {{ .Values.server.max_project_models_per_page | quote }}

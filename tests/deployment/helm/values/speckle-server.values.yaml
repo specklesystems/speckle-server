@@ -56,12 +56,8 @@ webhook_service:
   replicas: 0
   logPretty: true
 
-fileimport_service:
-  replicas: 0
-  logPretty: true
-
 ifc_import_service:
-  enabled: false
+  enabled: true
   replicas: 1
   logPretty: true
 
