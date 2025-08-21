@@ -1,5 +1,5 @@
 import type { MaybeRef } from '@vueuse/core'
-import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { onProjectVersionsPreviewGeneratedSubscription } from '~~/lib/projects/graphql/subscriptions'
 import { useSubscription } from '@vue/apollo-composable'
 import { useLock } from '~~/lib/common/composables/singleton'
@@ -72,18 +72,14 @@ export function usePreviewImageBlob(
   const logger = useLogger()
   const lazyLoad = !eagerLoad
 
-  const url = ref<Nullable<string>>(
-    (eagerLoad ? unref(previewUrl) : PreviewPlaceholder) || null
-  )
-  const hasDoneFirstLoad = ref(eagerLoad)
+  const url = ref<Nullable<string>>(PreviewPlaceholder)
+  const hasDoneFirstLoad = ref(false)
   const panoramaUrl = ref(null as Nullable<string>)
   const isLoadingPanorama = ref(false)
   const shouldLoadPanorama = ref(false)
   const basePanoramaUrl = computed(() => unref(previewUrl) + '/all')
   const isEnabled = computed(() => {
     if (import.meta.server) return true // always true on server
-    if (eagerLoad) return true // always true if eagerLoad
-
     return unref(enabled)
   })
   const cacheBust = ref(0)
@@ -95,20 +91,9 @@ export function usePreviewImageBlob(
     isLoadingPanorama,
     shouldLoadPanorama,
     hasDoneFirstLoad: computed(() => hasDoneFirstLoad.value),
-    isPanoramaPlaceholder: computed(() => isPanoramaPlaceholder.value)
+    isPanoramaPlaceholder: computed(() => isPanoramaPlaceholder.value),
+    wasEagerLoaded: eagerLoad
   }
-
-  // Preload the image
-  const directPreviewUrl = unref(previewUrl)
-  useHead({
-    link: [
-      ...(directPreviewUrl?.length
-        ? [{ rel: 'preload', as: <const>'image', href: directPreviewUrl }]
-        : [])
-    ]
-  })
-
-  if (import.meta.server) return ret
 
   const previewUrlPath = computed(() => {
     const basePreviewUrl = unref(previewUrl)
@@ -139,6 +124,8 @@ export function usePreviewImageBlob(
     return val
   })
 
+  const isPreviewServiceUrl = computed(() => !!projectId.value)
+
   const { hasLock } = useLock(
     computed(() => `useProjectModelUpdateTracking-${unref(previewUrl) || ''}`)
   )
@@ -147,7 +134,10 @@ export function usePreviewImageBlob(
     () => ({
       id: projectId.value || ''
     }),
-    () => ({ enabled: !!projectId.value && hasLock.value && isEnabled.value })
+    () => ({
+      enabled:
+        !!projectId.value && hasLock.value && isEnabled.value && !import.meta.server
+    })
   )
 
   onProjectPreviewGenerated((res) => {
@@ -162,13 +152,14 @@ export function usePreviewImageBlob(
     }
 
     if (regenerate) {
-      regeneratePreviews()
+      void regeneratePreviews()
     }
   })
 
-  async function processBasePreviewUrl(basePreviewUrl: MaybeNullOrUndefined<string>) {
+  async function processBasePreviewUrl() {
     if (!isEnabled.value) return
 
+    const basePreviewUrl = unref(previewUrl)
     try {
       if (!basePreviewUrl) {
         url.value = PreviewPlaceholder
@@ -207,7 +198,7 @@ export function usePreviewImageBlob(
   }
 
   async function processPanoramaPreviewUrl() {
-    if (!isEnabled.value) return
+    if (!isEnabled.value || import.meta.server) return
 
     const basePreviewUrl = unref(previewUrl)
     try {
@@ -251,34 +242,51 @@ export function usePreviewImageBlob(
     }
   }
 
-  const regeneratePreviews = async (basePreviewUrl?: string) => {
+  const regeneratePreviews = async () => {
     cacheBust.value++
     await Promise.all([
-      processBasePreviewUrl(basePreviewUrl || unref(previewUrl)),
+      processBasePreviewUrl(),
       ...(shouldLoadPanorama.value ? [processPanoramaPreviewUrl()] : [])
     ])
   }
 
-  watch(shouldLoadPanorama, (newVal) => {
-    if (newVal) processPanoramaPreviewUrl()
-  })
+  if (import.meta.client) {
+    watch(shouldLoadPanorama, (newVal) => {
+      if (newVal) processPanoramaPreviewUrl()
+    })
 
-  watch(
-    () => unref(previewUrl),
-    (newVal) => {
-      void regeneratePreviews(newVal || undefined)
-    },
-    { immediate: true }
-  )
+    watch(
+      () => unref(previewUrl),
+      () => {
+        void regeneratePreviews()
+      },
+      { immediate: true }
+    )
 
-  watch(
-    () => isEnabled.value,
-    (newVal) => {
-      if (!newVal) return
+    watch(
+      () => isEnabled.value,
+      (newVal) => {
+        if (!newVal) return
 
-      void regeneratePreviews()
-    }
-  )
+        void regeneratePreviews()
+      }
+    )
+  } else {
+    onServerPrefetch(async () => {
+      await regeneratePreviews()
+
+      // Preload the image
+      if (isPreviewServiceUrl && url.value?.length) {
+        useHead({
+          link: [
+            ...(url.value?.length
+              ? [{ rel: 'preload', as: <const>'image', href: url.value }]
+              : [])
+          ]
+        })
+      }
+    })
+  }
 
   return ret
 }
