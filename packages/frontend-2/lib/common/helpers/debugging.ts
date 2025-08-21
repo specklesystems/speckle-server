@@ -11,7 +11,7 @@ export function wrapRefWithTracking<R extends Ref<unknown>>(
 ): R {
   const { writesOnly, readsOnly } = options || {}
   const getTrace = () => (new Error('Trace:').stack || '').substring(7)
-  const logger = useLogger()
+  const logger = useStrictLoggerSync()
 
   return computed({
     get: () => {

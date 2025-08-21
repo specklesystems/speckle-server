@@ -37,7 +37,7 @@ export function isEmbedOptions(obj: unknown): obj is EmbedOptions {
 }
 
 export function deserializeEmbedOptions(embedString: string | null): EmbedOptions {
-  const logger = useLogger()
+  const logger = useStrictLoggerSync()
   if (!embedString) {
     return { isEnabled: false }
   }

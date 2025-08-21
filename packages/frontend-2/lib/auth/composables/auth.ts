@@ -140,7 +140,7 @@ const useResetAuthState = (
   const resolveDistinctId = useResolveUserDistinctId()
   const { cbs } = useOnAuthStateChangeState()
   const authToken = useAuthCookie()
-  const logger = useLogger()
+  const logger = useStrictLoggerSync()
 
   return async (
     resetOptions?: Partial<{
@@ -229,7 +229,7 @@ export const useAuthManager = (
   const getMixpanel = useDeferredMixpanel()
   const postAuthRedirect = usePostAuthRedirect()
   const { markLoggedOut } = useJustLoggedOutTracking()
-  const logger = useLogger()
+  const logger = useStrictLoggerSync()
 
   /**
    * Invite token, if any
