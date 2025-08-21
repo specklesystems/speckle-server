@@ -22,6 +22,7 @@ export const useSafeLogger = (
     preventFallbackReporting: boolean
   }>
 ) => {
+  let fallbackReported = false
   let nuxtApp: Optional<NuxtApp> = undefined
   const fallbackSyncLogger = buildFakePinoLogger()
   let fallbackFullLogger: Optional<ReturnType<typeof buildFakePinoLogger>> = undefined
@@ -76,7 +77,11 @@ export const useSafeLogger = (
       logger = fallbackSyncLogger
     }
 
-    if (!preventFallbackReporting) logger.error(err)
+    // we only wanna report this once
+    if (!preventFallbackReporting && !fallbackReported) {
+      logger.error(err)
+      fallbackReported = true
+    }
 
     return logger
   }
