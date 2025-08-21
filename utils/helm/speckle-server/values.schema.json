@@ -2267,7 +2267,7 @@
         "enabled": {
           "type": "boolean",
           "description": "If enabled, the File Import Service will be deployed within the cluster.",
-          "default": false
+          "default": true
         },
         "replicas": {
           "type": "number",

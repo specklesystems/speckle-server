@@ -1382,7 +1382,7 @@ webhook_service:
 ##
 ifc_import_service:
   ## @param ifc_import_service.enabled If enabled, the File Import Service will be deployed within the cluster.
-  enabled: false
+  enabled: true
   ## @param ifc_import_service.replicas The number of instances of the FileImport Service pod to be deployed within the cluster.
   ##
   replicas: 1

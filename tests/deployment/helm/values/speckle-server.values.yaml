@@ -57,7 +57,6 @@ webhook_service:
   logPretty: true
 
 ifc_import_service:
-  enabled: true
   replicas: 1
   logPretty: true
 
