@@ -1,8 +1,9 @@
-import { GetWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
-import {
+import type { GetWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
+import type {
   CanWorkspaceAccessFeature,
   WorkspaceFeatureAccessFunction
 } from '@/modules/gatekeeper/domain/operations'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { throwUncoveredError, workspacePlanHasAccessToFeature } from '@speckle/shared'
 
 export const canWorkspaceAccessFeatureFactory =
@@ -27,7 +28,8 @@ export const canWorkspaceAccessFeatureFactory =
 
     return workspacePlanHasAccessToFeature({
       plan: workspacePlan.name,
-      feature: workspaceFeature
+      feature: workspaceFeature,
+      featureFlags: getFeatureFlags()
     })
   }
 

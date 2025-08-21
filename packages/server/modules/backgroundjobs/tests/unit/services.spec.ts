@@ -1,12 +1,12 @@
 import { expect } from 'chai'
-import { scheduleBackgroundJobFactory } from '@/modules/backgroundjobs/services'
-import {
+import { createBackgroundJobFactory } from '@/modules/backgroundjobs/services/create'
+import type {
   BackgroundJob,
   BackgroundJobConfig,
   BackgroundJobPayload,
-  BackgroundJobStatus,
   StoreBackgroundJob
 } from '@/modules/backgroundjobs/domain'
+import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain'
 
 describe('scheduleBackgroundJobFactory', () => {
   const mockJobConfig: BackgroundJobConfig = {
@@ -15,13 +15,13 @@ describe('scheduleBackgroundJobFactory', () => {
   }
 
   interface TestJobPayload extends BackgroundJobPayload {
-    jobType: 'test-job'
+    jobType: 'fileImport'
     payloadVersion: 1
     testData: string
   }
 
   const mockJobPayload: TestJobPayload = {
-    jobType: 'test-job',
+    jobType: 'fileImport',
     payloadVersion: 1,
     testData: 'test-data-value'
   }
@@ -41,12 +41,12 @@ describe('scheduleBackgroundJobFactory', () => {
 
   describe('when called with valid parameters', () => {
     it('should create and store a background job with correct properties', async () => {
-      const scheduleBackgroundJob = scheduleBackgroundJobFactory({
+      const createBackgroundJob = createBackgroundJobFactory({
         storeBackgroundJob: mockStoreBackgroundJob,
         jobConfig: mockJobConfig
       })
 
-      const result = await scheduleBackgroundJob({ jobPayload: mockJobPayload })
+      const result = await createBackgroundJob({ jobPayload: mockJobPayload })
 
       expect(storeBackgroundJobCalled).to.be.true
       expect(storedJob).to.not.be.null
@@ -54,58 +54,58 @@ describe('scheduleBackgroundJobFactory', () => {
     })
 
     it('should generate a unique job ID', async () => {
-      const scheduleBackgroundJob = scheduleBackgroundJobFactory({
+      const createBackgroundJob = createBackgroundJobFactory({
         storeBackgroundJob: mockStoreBackgroundJob,
         jobConfig: mockJobConfig
       })
 
-      const result = await scheduleBackgroundJob({ jobPayload: mockJobPayload })
+      const result = await createBackgroundJob({ jobPayload: mockJobPayload })
 
       expect(result.id).to.be.a('string')
       expect(result.id).to.have.length(10)
     })
 
     it('should set job status to Queued', async () => {
-      const scheduleBackgroundJob = scheduleBackgroundJobFactory({
+      const createBackgroundJob = createBackgroundJobFactory({
         storeBackgroundJob: mockStoreBackgroundJob,
         jobConfig: mockJobConfig
       })
 
-      const result = await scheduleBackgroundJob({ jobPayload: mockJobPayload })
+      const result = await createBackgroundJob({ jobPayload: mockJobPayload })
 
       expect(result.status).to.equal(BackgroundJobStatus.Queued)
     })
 
     it('should set attempt to 0', async () => {
-      const scheduleBackgroundJob = scheduleBackgroundJobFactory({
+      const createBackgroundJob = createBackgroundJobFactory({
         storeBackgroundJob: mockStoreBackgroundJob,
         jobConfig: mockJobConfig
       })
 
-      const result = await scheduleBackgroundJob({ jobPayload: mockJobPayload })
+      const result = await createBackgroundJob({ jobPayload: mockJobPayload })
 
       expect(result.attempt).to.equal(0)
     })
 
     it('should include job config properties', async () => {
-      const scheduleBackgroundJob = scheduleBackgroundJobFactory({
+      const createBackgroundJob = createBackgroundJobFactory({
         storeBackgroundJob: mockStoreBackgroundJob,
         jobConfig: mockJobConfig
       })
 
-      const result = await scheduleBackgroundJob({ jobPayload: mockJobPayload })
+      const result = await createBackgroundJob({ jobPayload: mockJobPayload })
 
       expect(result.maxAttempt).to.equal(mockJobConfig.maxAttempt)
       expect(result.timeoutMs).to.equal(mockJobConfig.timeoutMs)
     })
 
     it('should preserve job payload', async () => {
-      const scheduleBackgroundJob = scheduleBackgroundJobFactory({
+      const createBackgroundJob = createBackgroundJobFactory({
         storeBackgroundJob: mockStoreBackgroundJob,
         jobConfig: mockJobConfig
       })
 
-      const result = await scheduleBackgroundJob({ jobPayload: mockJobPayload })
+      const result = await createBackgroundJob({ jobPayload: mockJobPayload })
 
       expect(result.payload).to.deep.equal(mockJobPayload)
       expect(result.jobType).to.equal(mockJobPayload.jobType)
@@ -114,12 +114,12 @@ describe('scheduleBackgroundJobFactory', () => {
     it('should set createdAt and updatedAt timestamps', async () => {
       const beforeTest = new Date()
 
-      const scheduleBackgroundJob = scheduleBackgroundJobFactory({
+      const createBackgroundJob = createBackgroundJobFactory({
         storeBackgroundJob: mockStoreBackgroundJob,
         jobConfig: mockJobConfig
       })
 
-      const result = await scheduleBackgroundJob({ jobPayload: mockJobPayload })
+      const result = await createBackgroundJob({ jobPayload: mockJobPayload })
 
       const afterTest = new Date()
 
@@ -138,13 +138,13 @@ describe('scheduleBackgroundJobFactory', () => {
           throw new Error(errorMessage)
         }
 
-        const scheduleBackgroundJob = scheduleBackgroundJobFactory({
+        const createBackgroundJob = createBackgroundJobFactory({
           storeBackgroundJob: failingStore,
           jobConfig: mockJobConfig
         })
 
         try {
-          await scheduleBackgroundJob({ jobPayload: mockJobPayload })
+          await createBackgroundJob({ jobPayload: mockJobPayload })
           expect.fail('Should have thrown an error')
         } catch (error) {
           expect(error).to.be.instanceof(Error)

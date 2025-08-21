@@ -1,16 +1,16 @@
 <template>
   <div>
-    <template v-if="workspace">
+    <template v-if="isWorkspaceMode">
       <ProjectsAddDialog
         v-model:open="openNewWorkspaceProject"
-        :workspace-id="workspace.id"
+        :workspace-id="workspaceId"
       />
       <WorkspacePlanProjectModelLimitReachedDialog
         v-model:open="openWorkspaceLimitsHit"
-        :workspace-name="workspace.name"
-        :plan="workspace.plan?.name"
-        :workspace-role="workspace.role"
-        :workspace-slug="workspace.slug || ''"
+        :workspace-name="workspace?.name"
+        :plan="workspace?.plan?.name"
+        :workspace-role="workspace?.role"
+        :workspace-slug="workspaceSlug || ''"
         :location="location"
       />
     </template>
@@ -62,12 +62,14 @@ const props = withDefaults(
   defineProps<{
     workspace?: MaybeNullOrUndefined<ProjectsAdd_WorkspaceFragment>
     location?: string
+    workspaceSlug?: string
   }>(),
   {
     location: 'add_project'
   }
 )
 
+const isWorkspaceMode = computed(() => !!props.workspaceSlug)
 const workspaceId = computed(() => props.workspace?.id || undefined)
 
 const canCreateWorkspace = useCanCreateWorkspaceProject({
@@ -81,7 +83,7 @@ const { openNewWorkspaceProject, openWorkspaceLimitsHit, openNewPersonalProject 
       newWorkspaceProject: computed(
         () =>
           !!(
-            workspaceId.value &&
+            isWorkspaceMode.value &&
             !([WorkspaceLimitsReachedError.code] as string[]).includes(
               canCreateWorkspace.cantClickCreateCode.value || ''
             )
@@ -90,12 +92,12 @@ const { openNewWorkspaceProject, openWorkspaceLimitsHit, openNewPersonalProject 
       workspaceLimitsHit: computed(
         () =>
           !!(
-            workspaceId.value &&
+            isWorkspaceMode.value &&
             canCreateWorkspace.cantClickCreateCode.value ===
               WorkspaceLimitsReachedError.code
           )
       ),
-      newPersonalProject: computed(() => !workspaceId.value)
+      newPersonalProject: computed(() => !isWorkspaceMode.value)
     }
   })
 </script>

@@ -5,13 +5,13 @@ import { maximumObjectUploadFileSizeMb } from '@/modules/shared/helpers/envHelpe
 import { ObjectHandlingError } from '@/modules/core/errors/object'
 import { estimateStringMegabyteSize } from '@/modules/core/utils/chunking'
 import { toMegabytesWith1DecimalPlace } from '@/modules/core/utils/formatting'
-import { Router } from 'express'
+import type { Router } from 'express'
 import { createObjectsBatchedAndNoClosuresFactory } from '@/modules/core/services/objects/management'
 import { storeObjectsIfNotFoundFactory } from '@/modules/core/repositories/objects'
 import { validatePermissionsWriteStreamFactory } from '@/modules/core/services/streams/auth'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { ExecuteHooks } from '@/modules/core/hooks'
+import type { ExecuteHooks } from '@/modules/core/hooks'
 import { logWithErr } from '@/observability/utils/logLevels'
 
 const MAX_FILE_SIZE = maximumObjectUploadFileSizeMb() * 1024 * 1024

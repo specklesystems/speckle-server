@@ -14,17 +14,24 @@ import {
   ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
   WorkspaceNotEnoughPermissionsError,
+  WorkspacePlanNoFeatureAccessError,
+  WorkspaceReadOnlyError,
+  WorkspacesNotEnabledError,
   WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
 import { Roles, StreamRoles } from '../../core/constants.js'
 import { isMinimumProjectRole } from '../domain/logic/roles.js'
 import { hasMinimumProjectRole, isPubliclyReadableProject } from '../checks/projects.js'
-import { ensureWorkspaceRoleAndSessionFragment } from './workspaces.js'
+import {
+  ensureCanUseWorkspacePlanFeatureFragment,
+  ensureWorkspaceRoleAndSessionFragment
+} from './workspaces.js'
 import {
   checkIfAdminOverrideEnabledFragment,
   ensureMinimumServerRoleFragment
 } from './server.js'
 import { ProjectVisibility } from '../domain/projects/types.js'
+import { WorkspacePlanFeatures } from '../../workspaces/index.js'
 
 const workspaceRoleImplicitProjectRoleMap = (projectVisibility: ProjectVisibility) => {
   const isFullyPrivate = projectVisibility === ProjectVisibility.Private
@@ -319,5 +326,50 @@ export const ensureImplicitProjectMemberWithWriteAccessFragment: AuthPolicyEnsur
       return err(ensuredWorkspaceAccess.error)
     }
 
+    return ok()
+  }
+
+/**
+ * Ensure project is workspaced and has access to a specific plan feature
+ */
+export const ensureCanUseProjectWorkspacePlanFeatureFragment: AuthPolicyEnsureFragment<
+  typeof Loaders.getEnv | typeof Loaders.getProject | typeof Loaders.getWorkspacePlan,
+  ProjectContext & {
+    feature: WorkspacePlanFeatures
+    /**
+     * Whether to also allow if project is not workspaced at all
+     * Default: false
+     */
+    allowUnworkspaced?: boolean
+  },
+  InstanceType<
+    | typeof WorkspacesNotEnabledError
+    | typeof ProjectNotFoundError
+    | typeof WorkspaceNoAccessError
+    | typeof WorkspaceReadOnlyError
+    | typeof WorkspacePlanNoFeatureAccessError
+  >
+> =
+  (loaders) =>
+  async ({ projectId, feature, allowUnworkspaced = false }) => {
+    const project = await loaders.getProject({ projectId })
+    if (!project) return err(new ProjectNotFoundError())
+
+    const workspaceId = project.workspaceId
+    if (!workspaceId) {
+      if (allowUnworkspaced) return ok()
+
+      return err(
+        new WorkspaceNoAccessError({
+          message: 'The project must be in a workspace'
+        })
+      )
+    }
+
+    const canUseFeature = await ensureCanUseWorkspacePlanFeatureFragment(loaders)({
+      workspaceId,
+      feature
+    })
+    if (canUseFeature.isErr) return err(canUseFeature.error)
     return ok()
   }

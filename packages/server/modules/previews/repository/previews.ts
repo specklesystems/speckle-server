@@ -1,5 +1,5 @@
 import { buildTableHelper } from '@/modules/core/dbSchema'
-import {
+import type {
   GetObjectPreviewInfo,
   GetPaginatedObjectPreviewsPage,
   GetPaginatedObjectPreviewsTotalCount,
@@ -9,12 +9,12 @@ import {
   StorePreview,
   UpdateObjectPreview
 } from '@/modules/previews/domain/operations'
-import {
+import type {
   ObjectPreview as ObjectPreviewRecord,
   Preview
 } from '@/modules/previews/domain/types'
 import type { Knex } from 'knex'
-import { SetOptional } from 'type-fest'
+import type { SetOptional } from 'type-fest'
 import { PreviewStatus } from '@/modules/previews/domain/consts'
 import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
 import { omit } from 'lodash-es'
@@ -73,9 +73,7 @@ export const getPaginatedObjectPreviewsPageFactory =
 
     const query = getPaginatedObjectsPreviewsBaseQueryFactory(deps)(params)
 
-    if (cursor) {
-      applyCursorSortAndFilter({ query, cursor, sort: 'desc' })
-    }
+    applyCursorSortAndFilter({ query, cursor, sort: 'asc' })
 
     query.limit(limit)
 

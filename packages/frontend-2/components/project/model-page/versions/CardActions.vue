@@ -101,7 +101,13 @@ const onActionChosen = (params: { item: LayoutMenuItem<VersionActionTypes> }) =>
       emit('select')
       break
     case VersionActionTypes.Share:
-      copyModelLink(props.projectId, props.modelId, props.versionId)
+      void copyModelLink({
+        model: {
+          projectId: props.projectId,
+          id: props.modelId
+        },
+        versionId: props.versionId
+      })
       break
     case VersionActionTypes.CopyId:
       copy(props.versionId, { successMessage: 'Version ID copied to clipboard' })

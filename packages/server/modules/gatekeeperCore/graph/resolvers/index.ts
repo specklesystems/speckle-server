@@ -1,4 +1,4 @@
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { GatekeeperModuleDisabledError } from '@/modules/gatekeeperCore/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 

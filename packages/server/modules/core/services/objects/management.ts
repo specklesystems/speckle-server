@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import {
+import type {
   InsertableSpeckleObject,
   RawSpeckleObject
 } from '@/modules/core/domain/objects/types'
@@ -10,7 +10,7 @@ import {
 } from '@/modules/core/utils/chunking'
 import { ObjectHandlingError } from '@/modules/core/errors/object'
 import { servicesLogger } from '@/observability/logging'
-import {
+import type {
   CreateObject,
   CreateObjects,
   CreateObjectsBatchedAndNoClosures,

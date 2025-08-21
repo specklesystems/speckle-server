@@ -7,8 +7,7 @@ import Intercom, {
   trackEvent
 } from '@intercom/messenger-js-sdk'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-
-const disabledRoutes = ['/auth', '/models/']
+import { useIntercomEnabled } from '~/lib/intercom/composables/enabled'
 
 export const useIntercom = () => {
   const {
@@ -26,9 +25,9 @@ export const useIntercom = () => {
     }
   }
 
-  const isWorkspacesEnabled = useIsWorkspacesEnabled()
-  const route = useRoute()
   const { activeUser: user } = useActiveUser()
+  const { isIntercomEnabled, isRouteBlacklisted } = useIntercomEnabled()
+  const route = useRoute()
 
   const isInitialized = ref(false)
 
@@ -43,29 +42,25 @@ export const useIntercom = () => {
     { immediate: true }
   )
 
-  const isRouteBlacklisted = computed(() => {
-    return disabledRoutes.some((disabledRoute) => route.path.includes(disabledRoute))
-  })
-
-  const shouldEnableIntercom = computed(
-    () => isWorkspacesEnabled.value && !isRouteBlacklisted.value
-  )
-
   const bootIntercom = () => {
     if (
-      !shouldEnableIntercom.value ||
+      !isIntercomEnabled.value ||
+      isRouteBlacklisted.value ||
       !user.value ||
-      isInitialized.value ||
-      !intercomAppId
+      isInitialized.value
     )
       return
     isInitialized.value = true
+
+    // Hide default launcher on viewer routes (/models/)
+    const isViewerRoute = route.path.includes('/models/')
 
     Intercom({
       /* eslint-disable camelcase */
       app_id: intercomAppId,
       user_id: user.value.id || '',
       created_at: Math.floor(new Date(user.value.createdAt || '').getTime() / 1000),
+      hide_default_launcher: isViewerRoute,
       /* eslint-enable camelcase */
       name: user.value.name || '',
       email: user.value.email || ''
@@ -104,12 +99,25 @@ export const useIntercom = () => {
     })
   }
 
-  // On route change, check if we need to shutodwn or boot Intercom
+  // Update launcher visibility based on current route
+  const updateLauncherVisibility = () => {
+    if (!isInitialized.value) return
+
+    const isViewerRoute = route.path.includes('/models/')
+    update({
+      /* eslint-disable camelcase */
+      hide_default_launcher: isViewerRoute
+      /* eslint-enable camelcase */
+    })
+  }
+
+  // On route change, check if we need to shutdown or boot Intercom
   watch(route, () => {
     if (isRouteBlacklisted.value) {
       shutdownIntercom()
     } else {
       bootIntercom()
+      updateLauncherVisibility()
     }
   })
 

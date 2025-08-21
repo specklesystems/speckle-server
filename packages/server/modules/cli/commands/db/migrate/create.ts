@@ -2,7 +2,7 @@ import knex from '@/db/knex'
 import { appRoot } from '@/bootstrap'
 import fs from 'fs/promises'
 import { cliLogger as logger } from '@/observability/logging'
-import { CommandModule } from 'yargs'
+import type { CommandModule } from 'yargs'
 import { ensureError } from '@speckle/shared'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 

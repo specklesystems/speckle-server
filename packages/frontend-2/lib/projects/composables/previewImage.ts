@@ -1,15 +1,38 @@
 import type { MaybeRef } from '@vueuse/core'
-import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { onProjectVersionsPreviewGeneratedSubscription } from '~~/lib/projects/graphql/subscriptions'
 import { useSubscription } from '@vue/apollo-composable'
 import { useLock } from '~~/lib/common/composables/singleton'
 import PreviewPlaceholder from '~~/assets/images/preview_placeholder.png'
+import { isValidBase64Image } from '@speckle/shared/images/base64'
+import { nanoid } from 'nanoid'
+
+/**
+ * Eager loading previews ensures a better LCP score, but also hits the preview endpoint more often.
+ * Since we don't know the viewport size in SSR, we can just set a limit of how many previews to eager
+ * load after which they should use spinners.
+ *
+ * Theoretically even 1 eager load will fix the LCP issue, but it will look odd if all of the other ones
+ * show up as spinners. So ideally just set enough for 1 page load.
+ *
+ * Assuming a large screen w/ the busiest preview page (project page w/ model grid), there would be
+ * about 20 previews
+ */
+const PREVIEWS_EAGER_LOAD_COUNT = 20
 
 const previewUrlProjectIdRegexp = /\/preview\/([\w\d]+)\//i
 const previewUrlCommitIdRegexp = /\/commits\/([\w\d]+)/i
 const previewUrlObjectIdRegexp = /\/commits\/([\w\d]+)/i
 
 class AngleNotFoundError extends Error {}
+
+const usePreviewsState = () =>
+  useState('preview_images_load_state', () => ({
+    /**
+     * How many previews have already been eager loaded
+     */
+    eagerLoadedKeys: new Set<string>()
+  }))
 
 /**
  * Get authenticated preview image URL and subscribes to preview image generation events so that the preview image URL
@@ -22,18 +45,43 @@ export function usePreviewImageBlob(
      * Allows disabling the mechanism conditionally (e.g. if image not in viewport)
      */
     enabled: MaybeRef<boolean>
+    /**
+     * Whether to avoid spinners and just embed the image immediately. Means we will likely
+     * load a lot more than needed, but also get a way better LCP score (no spinners).
+     *
+     * If enabled, overrides `enabled` to be true.
+     */
+    eagerLoad: boolean
   }>
 ) {
+  // Checking if we're allowed to eager load
+  const { $isAppHydrated } = useNuxtApp()
+  const state = usePreviewsState()
+  const eagerLoad =
+    options?.eagerLoad &&
+    !$isAppHydrated.value &&
+    state.value.eagerLoadedKeys.size < PREVIEWS_EAGER_LOAD_COUNT
+  const eagerLoadKey = nanoid()
+
+  if (eagerLoad) {
+    state.value.eagerLoadedKeys.add(eagerLoadKey)
+  }
+
+  // Continue on with normal operation
   const { enabled = ref(true) } = options || {}
   const logger = useLogger()
+  const lazyLoad = !eagerLoad
 
-  const url = ref(PreviewPlaceholder as Nullable<string>)
+  const url = ref<Nullable<string>>(PreviewPlaceholder)
   const hasDoneFirstLoad = ref(false)
   const panoramaUrl = ref(null as Nullable<string>)
   const isLoadingPanorama = ref(false)
   const shouldLoadPanorama = ref(false)
   const basePanoramaUrl = computed(() => unref(previewUrl) + '/all')
-  const isEnabled = computed(() => (import.meta.server ? true : unref(enabled)))
+  const isEnabled = computed(() => {
+    if (import.meta.server) return true // always true on server
+    return unref(enabled)
+  })
   const cacheBust = ref(0)
   const isPanoramaPlaceholder = ref(false)
 
@@ -43,20 +91,9 @@ export function usePreviewImageBlob(
     isLoadingPanorama,
     shouldLoadPanorama,
     hasDoneFirstLoad: computed(() => hasDoneFirstLoad.value),
-    isPanoramaPlaceholder: computed(() => isPanoramaPlaceholder.value)
+    isPanoramaPlaceholder: computed(() => isPanoramaPlaceholder.value),
+    wasEagerLoaded: eagerLoad
   }
-
-  // Preload the image
-  const directPreviewUrl = unref(previewUrl)
-  useHead({
-    link: [
-      ...(directPreviewUrl?.length
-        ? [{ rel: 'preload', as: <const>'image', href: directPreviewUrl }]
-        : [])
-    ]
-  })
-
-  if (import.meta.server) return ret
 
   const previewUrlPath = computed(() => {
     const basePreviewUrl = unref(previewUrl)
@@ -87,6 +124,8 @@ export function usePreviewImageBlob(
     return val
   })
 
+  const isPreviewServiceUrl = computed(() => !!projectId.value)
+
   const { hasLock } = useLock(
     computed(() => `useProjectModelUpdateTracking-${unref(previewUrl) || ''}`)
   )
@@ -95,7 +134,10 @@ export function usePreviewImageBlob(
     () => ({
       id: projectId.value || ''
     }),
-    () => ({ enabled: !!projectId.value && hasLock.value && isEnabled.value })
+    () => ({
+      enabled:
+        !!projectId.value && hasLock.value && isEnabled.value && !import.meta.server
+    })
   )
 
   onProjectPreviewGenerated((res) => {
@@ -110,16 +152,24 @@ export function usePreviewImageBlob(
     }
 
     if (regenerate) {
-      regeneratePreviews()
+      void regeneratePreviews()
     }
   })
 
-  async function processBasePreviewUrl(basePreviewUrl: MaybeNullOrUndefined<string>) {
+  async function processBasePreviewUrl() {
     if (!isEnabled.value) return
 
+    const basePreviewUrl = unref(previewUrl)
     try {
       if (!basePreviewUrl) {
         url.value = PreviewPlaceholder
+        hasDoneFirstLoad.value = true
+        return
+      }
+
+      if (isValidBase64Image(basePreviewUrl)) {
+        // return as is
+        url.value = basePreviewUrl
         hasDoneFirstLoad.value = true
         return
       }
@@ -129,7 +179,7 @@ export function usePreviewImageBlob(
       const blobUrl = blobUrlConfig.toString()
 
       // Load img in browser first, before we set the url
-      if (import.meta.client) {
+      if (import.meta.client && lazyLoad) {
         const img = new Image()
         img.src = blobUrl
         await new Promise((resolve, reject) => {
@@ -148,13 +198,18 @@ export function usePreviewImageBlob(
   }
 
   async function processPanoramaPreviewUrl() {
-    if (!isEnabled.value) return
+    if (!isEnabled.value || import.meta.server) return
 
     const basePreviewUrl = unref(previewUrl)
     try {
       isLoadingPanorama.value = true
       if (!basePreviewUrl) {
         url.value = PreviewPlaceholder
+        return
+      }
+
+      if (isValidBase64Image(basePreviewUrl)) {
+        panoramaUrl.value = null // panorama unsupported
         return
       }
 
@@ -187,32 +242,48 @@ export function usePreviewImageBlob(
     }
   }
 
-  const regeneratePreviews = (basePreviewUrl?: string) => {
+  const regeneratePreviews = async () => {
     cacheBust.value++
-    processBasePreviewUrl(basePreviewUrl || unref(previewUrl))
-    if (shouldLoadPanorama.value) processPanoramaPreviewUrl()
+    await Promise.all([
+      processBasePreviewUrl(),
+      ...(shouldLoadPanorama.value ? [processPanoramaPreviewUrl()] : [])
+    ])
   }
 
-  watch(shouldLoadPanorama, (newVal) => {
-    if (newVal) processPanoramaPreviewUrl()
-  })
+  if (import.meta.client) {
+    watch(shouldLoadPanorama, (newVal) => {
+      if (newVal) processPanoramaPreviewUrl()
+    })
 
-  watch(
-    () => unref(previewUrl),
-    (newVal) => {
-      regeneratePreviews(newVal || undefined)
-    },
-    { immediate: true }
-  )
+    watch(
+      () => unref(previewUrl),
+      () => {
+        void regeneratePreviews()
+      },
+      { immediate: true }
+    )
 
-  watch(
-    () => isEnabled.value,
-    (newVal) => {
-      if (!newVal) return
+    watch(
+      () => isEnabled.value,
+      (newVal) => {
+        if (!newVal) return
 
-      regeneratePreviews()
-    }
-  )
+        void regeneratePreviews()
+      }
+    )
+  } else {
+    useHead({
+      link: computed(() => [
+        ...(url.value?.length && isPreviewServiceUrl.value
+          ? [{ rel: 'preload', as: <const>'image', href: url.value }]
+          : [])
+      ])
+    })
+
+    onServerPrefetch(async () => {
+      await regeneratePreviews()
+    })
+  }
 
   return ret
 }

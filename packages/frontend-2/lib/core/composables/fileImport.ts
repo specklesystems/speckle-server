@@ -11,7 +11,14 @@ import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { BlobUploadStatus, type BlobPostResultItem } from '~~/lib/core/api/blobStorage'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { graphql } from '~/lib/common/generated/gql'
-import { useIsNextGenFileImporterEnabled } from '~/composables/globals'
+import {
+  useIsNextGenFileImporterEnabled,
+  useIsRhinoFileImporterEnabled
+} from '~/composables/globals'
+import {
+  rhinoImporterSupportedFileExtensions,
+  FileUploadConvertedStatus
+} from '@speckle/shared/blobs'
 import type {
   UseFailedFileImportJobUtils_FileUploadFragment,
   UseFileImport_ModelFragment,
@@ -26,7 +33,7 @@ import {
   prettyFileSize,
   resolveFileExtension
 } from '@speckle/ui-components'
-import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
+
 import dayjs from 'dayjs'
 import { uniqBy } from 'lodash-es'
 
@@ -204,7 +211,7 @@ const startFileImportMutation = graphql(`
 
 export const useFileImportApi = () => {
   const {
-    public: { FF_LARGE_FILE_IMPORTS_ENABLED }
+    public: { FF_LEGACY_FILE_IMPORTS_ENABLED }
   } = useRuntimeConfig()
   const apollo = useApolloClient().client
   const { registerActiveUpload, unregisterActiveUpload } = useGlobalFileImportManager()
@@ -321,7 +328,7 @@ export const useFileImportApi = () => {
     const uploadId = resolveUploadId()
     try {
       registerActiveUpload(uploadId)
-      return await (FF_LARGE_FILE_IMPORTS_ENABLED ? importFileV2 : importFileLegacy)(
+      return await (FF_LEGACY_FILE_IMPORTS_ENABLED ? importFileLegacy : importFileV2)(
         ...args
       )
     } finally {
@@ -350,9 +357,19 @@ graphql(`
 export const useFileImportBaseSettings = () => {
   const { maxSizeInBytes } = useServerFileUploadLimit()
   const isNextGenFileImporterEnabled = useIsNextGenFileImporterEnabled()
+  const isRhinoFileImportEnabled = useIsRhinoFileImporterEnabled()
 
-  const accept = computed(
-    () => `.ifc,.stl,.obj${isNextGenFileImporterEnabled.value ? ',.skp' : ''}`
+  const legacyFileImportService = '.ifc,.obj,.stl'
+  const nextGenBackgroundJobs = `.ifc,${
+    isRhinoFileImportEnabled.value
+      ? [...rhinoImporterSupportedFileExtensions]
+          .map((ext: string) => `.${ext}`)
+          .join(',')
+      : ''
+  }`
+
+  const accept = computed(() =>
+    isNextGenFileImporterEnabled.value ? nextGenBackgroundJobs : legacyFileImportService
   )
 
   return { maxSizeInBytes, accept }

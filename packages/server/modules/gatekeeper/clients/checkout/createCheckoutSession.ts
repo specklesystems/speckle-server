@@ -1,12 +1,12 @@
 /* eslint-disable camelcase */
 import { getResultUrl } from '@/modules/gatekeeper/clients/getResultUrl'
-import {
+import type {
   CreateCheckoutSession,
   GetStripeClient,
   GetWorkspacePlanPriceId
 } from '@/modules/gatekeeper/domain/billing'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
-import { Stripe } from 'stripe'
+import type { Stripe } from 'stripe'
 
 export const createCheckoutSessionFactory =
   ({
@@ -45,6 +45,9 @@ export const createCheckoutSessionFactory =
 
       success_url: `${resultUrl.toString()}&payment_status=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url,
+      automatic_tax: {
+        enabled: true
+      },
       tax_id_collection: {
         enabled: true
       }

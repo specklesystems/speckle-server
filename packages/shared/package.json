@@ -87,6 +87,7 @@
       "./package.json": "./package.json",
       "./pinoPrettyTransport.cjs": "./pinoPrettyTransport.cjs",
       "./environment": "./src/environment/index.ts",
+      "./environment/featureFlags": "./src/environment/featureFlags.ts",
       "./environment/db": "./src/environment/db.ts",
       "./environment/node": "./src/environment/node.ts",
       "./environment/multiRegionConfig": "./src/environment/db.ts",
@@ -104,7 +105,10 @@
       "./viewer/route": "./src/viewer/helpers/route.ts",
       "./viewer/state": "./src/viewer/helpers/state.ts",
       "./automate": "./src/automate/index.ts",
-      "./dist/*": "./dist/*"
+      "./acc": "./src/acc/index.ts",
+      "./dist/*": "./dist/*",
+      "./images/base64": "./src/images/base64.ts",
+      "./saved-views": "./src/saved-views/index.ts"
     },
     "exclude": [
       "**/*.spec.ts",
@@ -138,6 +142,16 @@
       "require": {
         "types": "./dist/commonjs/environment/index.d.ts",
         "default": "./dist/commonjs/environment/index.js"
+      }
+    },
+    "./environment/featureFlags": {
+      "import": {
+        "types": "./dist/esm/environment/featureFlags.d.ts",
+        "default": "./dist/esm/environment/featureFlags.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/environment/featureFlags.d.ts",
+        "default": "./dist/commonjs/environment/featureFlags.js"
       }
     },
     "./environment/db": {
@@ -310,6 +324,36 @@
         "default": "./dist/commonjs/automate/index.js"
       }
     },
-    "./dist/*": "./dist/*"
+    "./acc": {
+      "import": {
+        "types": "./dist/esm/acc/index.d.ts",
+        "default": "./dist/esm/acc/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/acc/index.d.ts",
+        "default": "./dist/commonjs/acc/index.js"
+      }
+    },
+    "./dist/*": "./dist/*",
+    "./images/base64": {
+      "import": {
+        "types": "./dist/esm/images/base64.d.ts",
+        "default": "./dist/esm/images/base64.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/images/base64.d.ts",
+        "default": "./dist/commonjs/images/base64.js"
+      }
+    },
+    "./saved-views": {
+      "import": {
+        "types": "./dist/esm/saved-views/index.d.ts",
+        "default": "./dist/esm/saved-views/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/saved-views/index.d.ts",
+        "default": "./dist/commonjs/saved-views/index.js"
+      }
+    }
   }
 }

@@ -6,6 +6,7 @@ import { SpeckleType, type SpeckleObject } from '../../../index.js'
 import Logger from '../../utils/Logger.js'
 import { ObjectLoader2 } from '@speckle/objectloader2'
 import { SpeckleTypeAllRenderables } from '../GeometryConverter.js'
+import { DataChunk } from '../../../IViewer.js'
 
 export type ConverterResultDelegate = (count: number) => void
 export type SpeckleConverterNodeDelegate =
@@ -64,7 +65,7 @@ export default class SpeckleConverter {
     Parameter: null
   }
 
-  protected readonly IgnoreNodes = ['Parameter']
+  protected readonly IgnoreNodes = ['Parameter', 'RawEncoding']
 
   constructor(objectLoader: ObjectLoader2, tree: WorldTree) {
     if (!objectLoader) {
@@ -287,24 +288,52 @@ export default class SpeckleConverter {
    * @param  {[type]} arr [description]
    * @return {[type]}     [description]
    */
-  private async dechunk(arr: Array<{ referencedId: string }>) {
-    if (!arr || arr.length === 0) return arr
-    // Handles pre-chunking objects, or arrs that have not been chunked
-    if (!arr[0].referencedId) return arr
+  private async dechunk(arr: Array<{ referencedId: string }>): Promise<DataChunk[]> {
+    if (!arr || arr.length === 0) {
+      return arr as unknown as DataChunk[]
+    }
 
-    const chunked: unknown[] = []
+    if (Array.isArray(arr[0]) && !arr[0].referencedId) {
+      return arr as unknown as DataChunk[]
+    }
+    // Handles pre-chunking objects, or arrs that have not been chunked
+    if (!arr[0].referencedId) {
+      if (!(arr[0] instanceof Object))
+        return [
+          {
+            data: arr,
+            id: MathUtils.generateUUID(),
+            references: 1
+          }
+        ] as unknown as DataChunk[]
+      else return arr as unknown as DataChunk[]
+    }
+
+    const chunked: DataChunk[] = []
     for (const ref of arr) {
-      const real: Record<string, unknown> = (await this.objectLoader.getObject({
+      const real: DataChunk = (await this.objectLoader.getObject({
         id: ref.referencedId
-      })) as unknown as Record<string, number>
-      chunked.push(real.data)
+      })) as unknown as DataChunk
+      if (real.references === undefined) {
+        real.references = 1
+      } else {
+        real.references++
+      }
+      if (
+        real.data.length &&
+        (typeof real.data[0] !== 'number' || isNaN(real.data[0]))
+      ) {
+        Logger.error(
+          `Chunk id ${real.id} might not have numeric geometry data. This is not supported!`
+        )
+      }
+      chunked.push(real)
       // await this.asyncPause()
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dechunked = [].concat(...(chunked as any))
+    // const dechunked = [].concat(...(chunked as any))
 
-    return dechunked
+    return chunked
   }
 
   /**
@@ -594,7 +623,7 @@ export default class SpeckleConverter {
     const targetObjects = obj.objects as []
     for (let k = 0; k < targetObjects.length; k++) {
       if (this.renderMaterialMap[targetObjects[k]]) {
-        Logger.error(`Overwritting renderMaterial ${targetObjects[k]}`)
+        Logger.warn(`Overwritting renderMaterial ${targetObjects[k]}`)
       }
       this.renderMaterialMap[targetObjects[k]] = renderMaterialValue
     }
@@ -612,7 +641,7 @@ export default class SpeckleConverter {
     const targetObjects = obj.objects as []
     for (let k = 0; k < targetObjects.length; k++) {
       if (this.colorMap[targetObjects[k]]) {
-        Logger.error(`Overwritting color ${targetObjects[k]}`)
+        Logger.warn(`Overwritting color ${targetObjects[k]}`)
       }
       this.colorMap[targetObjects[k]] = obj
     }
@@ -916,14 +945,23 @@ export default class SpeckleConverter {
       Logger.warn(
         `Object id ${obj.id} of type ${obj.speckle_type} has no vertex position data and will be ignored`
       )
+      node.model.raw.vertices = []
+      node.model.raw.faces = []
+      node.model.raw.colors = []
+      node.model.raw.vertexNormals = []
       return
     }
     if (!obj.faces || (obj.faces as Array<number>).length === 0) {
       Logger.warn(
         `Object id ${obj.id} of type ${obj.speckle_type} has no face data and will be ignored`
       )
+      node.model.raw.vertices = []
+      node.model.raw.faces = []
+      node.model.raw.colors = []
+      node.model.raw.vertexNormals = []
       return
     }
+
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     //@ts-ignore
     node.model.raw.vertices = await this.dechunk(obj.vertices)

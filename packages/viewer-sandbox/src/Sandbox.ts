@@ -54,7 +54,12 @@ import Bright from '../assets/hdri/Bright.png'
 import { Euler, Vector3, Box3, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
-import { ObjectLoader2Factory } from '@speckle/objectloader2'
+import {
+  getFeatureFlag,
+  ObjectLoader2Flags,
+  ObjectLoader2Factory
+} from '@speckle/objectloader2'
+import { SectionCaps } from './Extensions/SectionCaps.ts/SectionCaps'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -429,6 +434,8 @@ export default class Sandbox {
       }
       this.viewer.getExtension(SectionTool).setBox(box)
       this.viewer.getExtension(SectionTool).toggle()
+      const sectionCaps = this.viewer.getExtension(SectionCaps)
+      if (sectionCaps) sectionCaps.enabled = !sectionCaps.enabled
     })
 
     const toggleSectionBoxVisibility = this.tabs.pages[0].addButton({
@@ -730,7 +737,7 @@ export default class Sandbox {
         this.viewer.requestRender()
       })
 
-    /** Disabled color grading for now 
+    /** Disabled color grading for now
     postFolder
       .addInput(this.sceneParams, 'contrast', {
         min: 0,
@@ -1294,6 +1301,7 @@ export default class Sandbox {
       let dataProgress = 0
       let renderedCount = 0
       let traversedCount = 0
+      const shouldLog = getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true' // means we're not already logging
       /** Too spammy */
       loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
         const p = Math.floor(arg.progress * 100)
@@ -1301,25 +1309,30 @@ export default class Sandbox {
           if (colorImage)
             colorImage.style.clipPath = `inset(${(1 - arg.progress) * 100}% 0 0 0)`
           dataProgress = p
-          console.log(`Loading ${p}%`)
-        }
-      })
-      loader.on(LoaderEvent.Traversed, (arg: { count: number }) => {
-        if (arg.count > traversedCount) {
-          traversedCount = arg.count
-          if (traversedCount % 500 === 0) {
-            console.log(`Traversed ${traversedCount}`)
+
+          if (!shouldLog) {
+            console.log(`Loading ${p}%`)
           }
         }
       })
-      loader.on(LoaderEvent.Converted, (arg: { count: number }) => {
-        if (arg.count > renderedCount) {
-          renderedCount = arg.count
-          if (renderedCount % 500 === 0) {
-            console.log(`Converting Data ${renderedCount}`)
+      if (!shouldLog) {
+        loader.on(LoaderEvent.Traversed, (arg: { count: number }) => {
+          if (arg.count > traversedCount) {
+            traversedCount = arg.count
+            if (traversedCount % 500 === 0) {
+              console.log(`Traversed ${traversedCount}`)
+            }
           }
-        }
-      })
+        })
+        loader.on(LoaderEvent.Converted, (arg: { count: number }) => {
+          if (arg.count > renderedCount) {
+            renderedCount = arg.count
+            if (renderedCount % 500 === 0) {
+              console.log(`Converting Data ${renderedCount}`)
+            }
+          }
+        })
+      }
       loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
         console.warn(`Resource ${resource} loading was canceled`)
       })

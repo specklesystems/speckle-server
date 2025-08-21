@@ -1,5 +1,5 @@
-import { LimitedUserWithStreamRole } from '@/modules/core/domain/streams/types'
-import {
+import type { LimitedUserWithStreamRole } from '@/modules/core/domain/streams/types'
+import type {
   ObjectPreviewInput,
   ObjectPreviewRequest
 } from '@/modules/previews/domain/operations'

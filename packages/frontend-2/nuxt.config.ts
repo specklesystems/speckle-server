@@ -14,13 +14,17 @@ const {
   SPECKLE_SERVER_VERSION,
   NUXT_PUBLIC_LOG_LEVEL = 'info',
   NUXT_PUBLIC_LOG_PRETTY = false,
-  BUILD_SOURCEMAPS = 'false'
+  BUILD_SOURCEMAPS = 'false',
+  HYDRATION_MISMATCH_REPORTING = 'false'
 } = process.env
 
 const featureFlags = Environment.getFeatureFlags()
 
 const isLogPretty = ['1', 'true', true, 1].includes(NUXT_PUBLIC_LOG_PRETTY)
 const buildSourceMaps = ['1', 'true', true, 1].includes(BUILD_SOURCEMAPS)
+const hydrationMismatchReportingEnabled = ['1', 'true', true, 1].includes(
+  HYDRATION_MISMATCH_REPORTING
+)
 
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
@@ -89,6 +93,14 @@ export default defineNuxtConfig({
   },
 
   vite: {
+    define: {
+      ...(hydrationMismatchReportingEnabled
+        ? {
+            __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'true'
+          }
+        : {})
+    },
+
     optimizeDeps: {
       // Should only be ran on serverside anyway. W/o this it tries to transpile it unsuccessfully
       exclude: ['jsdom']
@@ -146,6 +158,12 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
+    '/**': {
+      headers: {
+        // No search engine indexing on any of the pages anywhere! TODO: Come up with a more appropriate policy
+        'X-Robots-Tag': 'noindex, nofollow, noarchive'
+      }
+    },
     '/functions': {
       redirect: {
         to: '/',
@@ -195,6 +213,7 @@ export default defineNuxtConfig({
         statusCode: 301
       }
     },
+    // Redirect old settings - End
     '/settings/**': {
       appMiddleware: ['auth', 'settings']
     },
@@ -220,6 +239,9 @@ export default defineNuxtConfig({
         to: '/workspaces/actions/create',
         statusCode: 301
       }
+    },
+    '/projects/:id/models/:modelId': {
+      ssr: true // TODO: Should experiment w/ false, but this breaks SSR script injection like for RUM
     }
   },
 
@@ -250,5 +272,8 @@ export default defineNuxtConfig({
   },
   prometheus: {
     verbose: false
+  },
+  features: {
+    devLogs: true
   }
 })

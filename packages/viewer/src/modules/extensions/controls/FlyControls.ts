@@ -370,6 +370,11 @@ class FlyControls extends SpeckleControls {
   }
 
   protected onKeyDown = (event: KeyboardEvent) => {
+    // Don't trigger movement if any modifier keys are pressed
+    if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) {
+      return
+    }
+
     switch (event.code) {
       case 'ArrowUp':
       case 'KeyW':
@@ -404,6 +409,11 @@ class FlyControls extends SpeckleControls {
   }
 
   protected onKeyUp = (event: KeyboardEvent) => {
+    // Don't trigger movement if any modifier keys are pressed
+    if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) {
+      return
+    }
+
     switch (event.code) {
       case 'ArrowUp':
       case 'KeyW':

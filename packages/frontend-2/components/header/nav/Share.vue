@@ -127,7 +127,13 @@ const handleCopyId = () => {
 const handleCopyLink = () => {
   const modelIdValue = modelId.value
   const versionIdValue = versionId.value ? versionId.value : undefined
-  copyModelLink(props.project.id, modelIdValue, versionIdValue)
+  void copyModelLink({
+    model: {
+      projectId: props.project.id,
+      id: modelIdValue
+    },
+    versionId: versionIdValue
+  })
 }
 
 const handleEmbed = () => {

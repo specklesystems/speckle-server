@@ -1,10 +1,10 @@
+import type { NotificationPreferences } from '@/modules/notifications/helpers/types'
 import {
   NotificationChannel,
-  NotificationType,
-  NotificationPreferences
+  NotificationType
 } from '@/modules/notifications/helpers/types'
 import { InvalidArgumentError } from '@/modules/shared/errors'
-import {
+import type {
   GetSavedUserNotificationPreferences,
   GetUserNotificationPreferences,
   SaveUserNotificationPreferences

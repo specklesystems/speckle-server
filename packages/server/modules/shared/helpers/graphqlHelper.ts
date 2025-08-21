@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AuthContext } from '@/modules/shared/authz'
-import DataLoader from 'dataloader'
+import type { AuthContext } from '@/modules/shared/authz'
+import type DataLoader from 'dataloader'
 import { ApolloServerErrorCode } from '@apollo/server/errors'
 import { GraphQLError } from 'graphql'
 import {
@@ -10,8 +10,8 @@ import {
   NotFoundError,
   UnauthorizedError
 } from '@/modules/shared/errors'
-import { Optional } from '@speckle/shared'
-import { Knex } from 'knex'
+import type { Optional } from '@speckle/shared'
+import type { Knex } from 'knex'
 
 /**
  * All dataloaders must at the very least follow this type

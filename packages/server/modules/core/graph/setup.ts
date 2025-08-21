@@ -1,8 +1,8 @@
 import { BadRequestError } from '@/modules/shared/errors'
 import { isGraphQLError } from '@/modules/shared/helpers/graphqlHelper'
-import { ApolloServerOptions, BaseContext } from '@apollo/server'
+import type { ApolloServerOptions, BaseContext } from '@apollo/server'
 import { ensureError } from '@speckle/shared'
-import { omit } from 'lodash-es'
+import { get, isArray, isBoolean, isNumber, isString, omit } from 'lodash-es'
 import VError from 'verror'
 import { ZodError } from 'zod'
 import { fromZodError } from 'zod-validation-error'
@@ -12,6 +12,19 @@ import { fromZodError } from 'zod-validation-error'
  * of VErrors once they're converted to them
  */
 const VERROR_TRASH_PROPS = ['jse_shortmsg', 'jse_cause', 'jse_info']
+
+/**
+ * Add pino-pretty like formatting
+ */
+const pinoPretty = (log: object, msg: string) =>
+  msg.replace(/{([^{}]+)}/g, (match: string, p1: string) => {
+    const val = get(log, p1)
+    if (val === undefined) return match
+
+    const formattedValue =
+      isString(val) || isNumber(val) || isBoolean(val) ? val : JSON.stringify(val)
+    return formattedValue as string
+  })
 
 /**
  * Builds apollo server error formatter
@@ -64,8 +77,19 @@ export function buildErrorFormatter(params: {
             ? VError.fullStack(realError)
             : ensureError(realError).stack
       } else {
-        delete extensions.exception.stacktrace
+        delete extensions.stacktrace
       }
+    }
+
+    // Fix error message to work w/ pino templating
+    writableFormattedError.message = pinoPretty(
+      extensions,
+      writableFormattedError.message
+    )
+    if (extensions.stacktrace && isArray(extensions.stacktrace)) {
+      extensions.stacktrace = extensions.stacktrace.map((stack: string) =>
+        pinoPretty(extensions, stack)
+      )
     }
 
     return {

@@ -5,8 +5,9 @@ import {
   type PropertyInfo,
   ViewMode
 } from '@speckle/viewer'
-import { MeasurementsExtension, ViewModes } from '@speckle/viewer'
+import { MeasurementsExtension, ViewModes, MeasurementEvent } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
+import { useActiveElement } from '@vueuse/core'
 import { difference, isString, uniq } from 'lodash-es'
 import { useEmbedState, useEmbed } from '~/lib/viewer/composables/setup/embed'
 import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
@@ -24,9 +25,9 @@ import type {
   ViewerShortcut,
   ViewerShortcutAction
 } from '~/lib/viewer/helpers/shortcuts/types'
-import { useActiveElement } from '@vueuse/core'
 import { useTheme } from '~/lib/core/composables/theme'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { isStringPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -51,6 +52,10 @@ export function useSectionBoxUtilities() {
       min: box.min.toArray(),
       max: box.max.toArray()
     }
+  }
+
+  const closeSectionBox = () => {
+    visible.value = false
   }
 
   const toggleSectionBox = () => {
@@ -80,13 +85,20 @@ export function useSectionBoxUtilities() {
     }
   }
 
+  const resetSectionBoxCompletely = () => {
+    sectionBox.value = null
+    visible.value = false
+  }
+
   return {
     isSectionBoxEnabled,
     isSectionBoxVisible,
     isSectionBoxEdited,
     toggleSectionBox,
     resetSectionBox,
-    sectionBox
+    resetSectionBoxCompletely,
+    sectionBox,
+    closeSectionBox
   }
 }
 
@@ -220,8 +232,11 @@ export function useFilterUtilities(
     filters.isolatedObjectIds.value = []
     filters.propertyFilter.filter.value = null
     filters.propertyFilter.isApplied.value = false
-    explodeFactor.value = 0
     // filters.selectedObjects.value = []
+  }
+
+  const resetExplode = () => {
+    explodeFactor.value = 0
   }
 
   const waitForAvailableFilter = async (
@@ -241,6 +256,222 @@ export function useFilterUtilities(
     return filter as NonNullable<typeof filter>
   }
 
+  const hasActiveFilters = computed(() => {
+    return !!filters.propertyFilter.filter.value
+  })
+
+  // Regex patterns for identifying Revit properties
+  const revitPropertyRegex = /^parameters\./
+  // Note: we've split this regex check in two to not clash with navis properties. This makes generally makes dim very sad, as we're layering hacks.
+  // Navis object properties come under `properties`, same as revit ones - as such we can't assume they're the same. Here we're targeting revit's
+  // specific two subcategories of `properties`.
+  const revitPropertyRegexDui3000InstanceProps = /^properties\.Instance/ // note this is partially valid for civil3d, or dim should test against it
+  const revitPropertyRegexDui3000TypeProps = /^properties\.Type/ // note this is partially valid for civil3d, or dim should test against it
+
+  /**
+   * Determines if a property key represents a Revit property
+   */
+  const isRevitProperty = (key: string): boolean => {
+    return (
+      revitPropertyRegex.test(key) ||
+      revitPropertyRegexDui3000InstanceProps.test(key) ||
+      revitPropertyRegexDui3000TypeProps.test(key)
+    )
+  }
+
+  /**
+   * Determines if a property should be excluded from filtering based on its key
+   */
+  const shouldExcludeFromFiltering = (key: string): boolean => {
+    if (
+      key.endsWith('.units') ||
+      key.endsWith('.speckle_type') ||
+      key.includes('.parameters.') ||
+      // key.includes('level.') ||
+      key.includes('renderMaterial') ||
+      key.includes('.domain') ||
+      key.includes('plane.') ||
+      key.includes('baseLine') ||
+      key.includes('referenceLine') ||
+      key.includes('end.') ||
+      key.includes('start.') ||
+      key.includes('endPoint.') ||
+      key.includes('midPoint.') ||
+      key.includes('startPoint.') ||
+      key.includes('.materialName') ||
+      key.includes('.materialClass') ||
+      key.includes('.materialCategory') ||
+      key.includes('displayStyle') ||
+      key.includes('displayValue') ||
+      key.includes('displayMesh')
+    ) {
+      return true
+    }
+
+    // handle revit params: the actual one single value we're interested is in parameters.HOST_BLA BLA_.value, the rest are not needed
+    if (isRevitProperty(key)) {
+      if (key.endsWith('.value')) return false
+      else return true
+    }
+
+    return false
+  }
+
+  /**
+   * Filters the available filters to only include relevant ones for the filter UI
+   */
+  const getRelevantFilters = (
+    allFilters: PropertyInfo[] | null | undefined
+  ): PropertyInfo[] => {
+    return (allFilters || []).filter((f: PropertyInfo) => {
+      return !shouldExcludeFromFiltering(f.key)
+    })
+  }
+
+  /**
+   * Determines if a property key should be filterable
+   * (exists in available filters and is not excluded)
+   */
+  const isPropertyFilterable = (
+    key: string,
+    availableFilters: PropertyInfo[] | null | undefined
+  ): boolean => {
+    const availableFilterKeys = availableFilters?.map((f: PropertyInfo) => f.key) || []
+
+    // First check if it's in available filters
+    if (!availableFilterKeys.includes(key)) {
+      return false
+    }
+
+    // Then check if it should be excluded
+    return !shouldExcludeFromFiltering(key)
+  }
+
+  /**
+   * Gets a user-friendly display name for a property key
+   */
+  const getPropertyName = (key: string): string => {
+    if (!key) return 'Loading'
+
+    if (key === 'level.name') return 'Level Name'
+    if (key === 'speckle_type') return 'Object Type'
+
+    if (isRevitProperty(key) && key.endsWith('.value')) {
+      const correspondingProperty = (viewer.metadata.availableFilters.value || []).find(
+        (f: PropertyInfo) => f.key === key.replace('.value', '.name')
+      )
+      if (correspondingProperty && isStringPropertyInfo(correspondingProperty)) {
+        return (
+          correspondingProperty.valueGroups[0]?.value || key.split('.').pop() || key
+        )
+      }
+    }
+
+    // For all other properties, just return the last part of the path
+    return key.split('.').pop() || key
+  }
+
+  /**
+   * Finds a filter by matching display names (handles complex nested properties)
+   */
+  const findFilterByDisplayName = (
+    displayKey: string,
+    availableFilters: PropertyInfo[] | null | undefined
+  ): PropertyInfo | undefined => {
+    return availableFilters?.find((f) => {
+      const backendDisplayName = getPropertyName(f.key)
+      return backendDisplayName === displayKey || f.key.split('.').pop() === displayKey
+    })
+  }
+
+  /**
+   * Determines if a key-value pair is filterable (with smart matching for nested properties)
+   */
+  const isKvpFilterable = (
+    kvp: { key: string; backendPath?: string },
+    availableFilters: PropertyInfo[] | null | undefined
+  ): boolean => {
+    // Use backendPath if available, otherwise fall back to display key
+    const backendKey = kvp.backendPath || kvp.key
+
+    // First check direct match
+    const directMatch = availableFilters?.some((f) => f.key === backendKey)
+    if (directMatch) {
+      return isPropertyFilterable(backendKey, availableFilters)
+    }
+
+    // For complex nested properties, try to find a match by display name
+    const displayKey = kvp.key as string
+    const matchByDisplayName = findFilterByDisplayName(displayKey, availableFilters)
+
+    if (matchByDisplayName) {
+      return isPropertyFilterable(matchByDisplayName.key, availableFilters)
+    }
+
+    return false
+  }
+
+  /**
+   * Gets a detailed reason why a property is disabled for filtering
+   */
+  const getFilterDisabledReason = (
+    kvp: { key: string; backendPath?: string },
+    availableFilters: PropertyInfo[] | null | undefined
+  ): string => {
+    const backendKey = kvp.backendPath || kvp.key
+    const availableKeys = availableFilters?.map((f) => f.key) || []
+
+    // Check if it's not in available filters
+    if (!availableKeys.includes(backendKey)) {
+      // For debugging: show similar keys that might be available
+      const similarKeys = availableKeys.filter(
+        (key) =>
+          key.toLowerCase().includes('type') ||
+          key.toLowerCase().includes('category') ||
+          key.toLowerCase().includes('class')
+      )
+
+      const debugInfo =
+        similarKeys.length > 0
+          ? ` (Similar available: ${similarKeys.slice(0, 3).join(', ')})`
+          : ''
+
+      return `Property '${backendKey}' is not available in backend filters${debugInfo}`
+    }
+
+    // Check if it's excluded by filtering logic
+    if (shouldExcludeFromFiltering(backendKey)) {
+      return `Property '${backendKey}' is excluded from filtering (technical property)`
+    }
+
+    return 'This property is not available for filtering'
+  }
+
+  /**
+   * Applies a filter for a key-value pair (with smart matching)
+   */
+  const applyKvpFilter = (
+    kvp: { key: string; backendPath?: string },
+    availableFilters: PropertyInfo[] | null | undefined
+  ): void => {
+    // Use backendPath if available, otherwise fall back to display key
+    const backendKey = kvp.backendPath || kvp.key
+
+    // First try direct match
+    let filter = availableFilters?.find((f: PropertyInfo) => f.key === backendKey)
+
+    // If no direct match, try to find by display name using shared logic
+    if (!filter) {
+      const displayKey = kvp.key as string
+      filter = findFilterByDisplayName(displayKey, availableFilters)
+    }
+
+    if (filter) {
+      setPropertyFilter(filter)
+      applyPropertyFilter()
+    }
+  }
+
   return {
     isolateObjects,
     unIsolateObjects,
@@ -252,7 +483,18 @@ export function useFilterUtilities(
     removePropertyFilter,
     unApplyPropertyFilter,
     resetFilters,
-    waitForAvailableFilter
+    resetExplode,
+    waitForAvailableFilter,
+    hasActiveFilters,
+    isRevitProperty,
+    shouldExcludeFromFiltering,
+    getRelevantFilters,
+    isPropertyFilterable,
+    getPropertyName,
+    findFilterByDisplayName,
+    isKvpFilterable,
+    getFilterDisabledReason,
+    applyKvpFilter
   }
 }
 
@@ -393,6 +635,8 @@ export function useThreadUtilities() {
 export function useMeasurementUtilities() {
   const state = useInjectedViewerState()
 
+  const measurementCount = ref(0)
+
   const measurementOptions = computed(() => state.ui.measurement.options.value)
 
   const enableMeasurements = (enabled: boolean) => {
@@ -420,13 +664,37 @@ export function useMeasurementUtilities() {
     return activeMeasurement && activeMeasurement.state === 2
   }
 
+  const hasMeasurements = computed(() => measurementCount.value > 0)
+
+  const setupMeasurementListener = () => {
+    const extension = state.viewer.instance?.getExtension(MeasurementsExtension)
+    if (!extension) return
+
+    const updateCount = () => {
+      measurementCount.value = (
+        extension as unknown as { measurementCount: number }
+      ).measurementCount
+    }
+
+    // Set initial count
+    updateCount()
+
+    // Listen for changes
+    extension.on(MeasurementEvent.CountChanged, updateCount)
+  }
+
+  if (state.viewer.instance) {
+    setupMeasurementListener()
+  }
+
   return {
     measurementOptions,
     enableMeasurements,
     setMeasurementOptions,
     removeMeasurement,
     clearMeasurements,
-    getActiveMeasurement
+    getActiveMeasurement,
+    hasMeasurements
   }
 }
 
@@ -566,17 +834,13 @@ export function useViewModeUtilities() {
     })
   }
 
-  onBeforeUnmount(() => {
-    // Reset edges settings
+  const resetViewMode = () => {
+    setViewMode(ViewMode.DEFAULT)
     edgesEnabled.value = true
     edgesWeight.value = 1
     outlineOpacity.value = 0.75
     edgesColor.value = defaultColor.value
-
-    // Reset view mode to default
-    viewMode.value = ViewMode.DEFAULT
-    updateViewMode()
-  })
+  }
 
   return {
     currentViewMode,
@@ -586,7 +850,8 @@ export function useViewModeUtilities() {
     edgesWeight,
     setEdgesWeight,
     setEdgesColor,
-    edgesColor
+    edgesColor,
+    resetViewMode
   }
 }
 
@@ -622,7 +887,7 @@ export function useViewerShortcuts() {
 
   const getShortcutDisplayText = (
     shortcut: ViewerShortcut,
-    options?: { hideName?: boolean }
+    options?: { hideName?: boolean; format?: 'default' | 'separate' }
   ) => {
     if (isSmallerOrEqualSm.value) return undefined
     if (isEmbedEnabled.value) return undefined
@@ -631,6 +896,31 @@ export function useViewerShortcuts() {
       ...shortcut.modifiers,
       formatKey(shortcut.key)
     ])
+
+    if (options?.format === 'separate') {
+      const modifiersText =
+        shortcut.modifiers.length > 0
+          ? getKeyboardShortcutTitle([...shortcut.modifiers])
+          : ''
+      const keyText = getKeyboardShortcutTitle([formatKey(shortcut.key)])
+
+      return {
+        content: `
+        <div class="flex flex-row gap-2 m-0 p-0">
+          <div class="text-body-2xs text-foreground">${shortcut.name}</div>
+          <div class="text-body-3xs text-foreground-3">
+            ${
+              modifiersText
+                ? `<kbd class="p-0.5 min-w-4 text-foreground-2 rounded-md text-body-3xs font-normal font-sans">${modifiersText}</kbd>`
+                : ''
+            }<kbd class="min-w-3 text-foreground-2 rounded-sm text-body-3xs font-sans">${keyText}</kbd>
+          </div>
+        </div>
+      `,
+        allowHTML: true,
+        theme: 'speckleTooltip'
+      }
+    }
 
     if (!options?.hideName) {
       return `${shortcut.name} (${shortcutText})`

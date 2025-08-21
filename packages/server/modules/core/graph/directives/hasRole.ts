@@ -9,7 +9,7 @@ import {
   throwForNotHavingServerRoleFactory,
   validateServerRoleBuilderFactory
 } from '@/modules/shared/authz'
-import { GraphqlDirectiveBuilder } from '@/modules/core/graph/helpers/directiveHelper'
+import type { GraphqlDirectiveBuilder } from '@/modules/core/graph/helpers/directiveHelper'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { db } from '@/db/knex'
 import { authorizeResolver } from '@/modules/shared'

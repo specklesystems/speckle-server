@@ -19,9 +19,6 @@ import {
   getConnectionSettings,
   obfuscateConnectionString
 } from '@speckle/shared/environment/db'
-import { getFeatureFlags } from '@speckle/shared/environment'
-
-const { FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED } = getFeatureFlags()
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
@@ -178,10 +175,31 @@ async function doTask(
     taskLogger.info('Triggering importer for {fileType}')
 
     if (info.fileType.toLowerCase() === 'ifc') {
-      if (
-        info.fileName.toLowerCase().endsWith('.dotnetimporter.ifc') ||
-        !FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED
-      ) {
+      if (info.fileName.toLowerCase().endsWith('.legacyimporter.ifc')) {
+        await runProcessWithTimeout(
+          taskLogger,
+          process.env['NODE_BINARY_PATH'] || 'node',
+          [
+            '--no-experimental-fetch',
+            '--loader=./dist/src/aliasLoader.js',
+            './src/ifc/import_file.js',
+            TMP_FILE_PATH,
+            TMP_RESULTS_PATH,
+            info.userId,
+            info.streamId,
+            info.branchName,
+            `File upload: ${info.fileName}`,
+            info.id,
+            existingBranch?.id || '',
+            regionName
+          ],
+          {
+            USER_TOKEN: tempUserToken
+          },
+          TIME_LIMIT,
+          TMP_RESULTS_PATH
+        )
+      } else if (info.fileName.toLowerCase().endsWith('.dotnetimporter.ifc')) {
         await runProcessWithTimeout(
           taskLogger,
           process.env['DOTNET_BINARY_PATH'] || 'dotnet',

@@ -1,25 +1,20 @@
-import {
+import type {
   AuthContext,
-  authPipelineCreator,
   AuthPipelineFunction,
-  AuthParams,
-  authHasFailed
+  AuthParams
 } from '@/modules/shared/authz'
-import {
-  Request,
-  RequestHandler,
-  raw as expressRawBodyParser,
-  json as expressJsonBodyParser
-} from 'express'
+import { authPipelineCreator, authHasFailed } from '@/modules/shared/authz'
+import type { Request, RequestHandler } from 'express'
+import { raw as expressRawBodyParser, json as expressJsonBodyParser } from 'express'
 import {
   ForbiddenError,
   NotFoundError,
   UnauthorizedError
 } from '@/modules/shared/errors'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
-import { TokenValidationResult } from '@/modules/core/helpers/types'
+import type { TokenValidationResult } from '@/modules/core/helpers/types'
 import { buildRequestLoaders } from '@/modules/core/loaders'
-import {
+import type {
   GraphQLContext,
   MaybeNullOrUndefined,
   Nullable

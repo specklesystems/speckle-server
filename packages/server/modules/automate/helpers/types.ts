@@ -1,4 +1,4 @@
-import { Automate, Nullable } from '@speckle/shared'
+import type { Automate, Nullable } from '@speckle/shared'
 
 export type AutomationRecord = {
   id: string

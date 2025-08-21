@@ -1,6 +1,6 @@
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { MaybeNullOrUndefined } from '@/modules/shared/helpers/typeHelper'
+import type { MaybeNullOrUndefined } from '@/modules/shared/helpers/typeHelper'
 
 /**
  * Collection of functions for resolving relative routes from the backend, so that they aren't duplicated

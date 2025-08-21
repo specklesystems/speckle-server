@@ -1,5 +1,5 @@
-import { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/userHelper'
-import { ServerRoles } from '@speckle/shared'
+import type { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/userHelper'
+import type { ServerRoles } from '@speckle/shared'
 import type express from 'express'
 import type http from 'http'
 

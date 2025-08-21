@@ -1,6 +1,6 @@
 import { dirname, join } from 'path'
 import type { StorybookConfig } from '@storybook/vue3-vite'
-import { get, isObjectLike } from 'lodash'
+import { get, isObjectLike } from '#lodash'
 
 function getAbsolutePath<V extends string = string>(value: V): V {
   return dirname(require.resolve(join(value, 'package.json'))) as V

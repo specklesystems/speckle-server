@@ -1,6 +1,7 @@
 import { has } from '#lodash'
 import { parseEnv } from 'znv'
 import { z } from 'zod'
+import { FeatureFlags } from './featureFlags.js'
 
 // Convenience variable to override below individual feature flags, which has the effect of setting all to 'false' (disabled)
 // Takes precedence over ENABLE_ALL_FFS
@@ -24,6 +25,16 @@ export const parseFeatureFlags = (
   }>
 ): FeatureFlags => {
   const { forceInputs = true } = options || {}
+
+  // Clean up input: unset empty values
+  for (const key of Object.keys(input)) {
+    const typedKey = key as keyof FeatureFlags
+    const typedVal = input[typedKey] as unknown
+
+    if (typedVal === undefined || typedVal === '') {
+      delete input[typedKey]
+    }
+  }
 
   //INFO
   // As a convention all feature flags should be prefixed with a FF_
@@ -104,8 +115,7 @@ export const parseFeatureFlags = (
     },
     FF_NEXT_GEN_FILE_IMPORTER_ENABLED: {
       schema: z.boolean(),
-      description:
-        'Enables the new file importer. Requires FF_LARGE_FILE_IMPORTS_ENABLED to be true.',
+      description: 'Enables the new file importer.',
       defaults: { _: false }
     },
     FF_RHINO_FILE_IMPORTER_ENABLED: {
@@ -113,21 +123,27 @@ export const parseFeatureFlags = (
       description: 'Enables the Rhino based file importer.',
       defaults: { _: false }
     },
-    FF_BACKGROUND_JOBS_ENABLED: {
-      schema: z.boolean(),
-      description: 'Enables the postgres based background job mechanism',
-      defaults: { _: false }
-    },
-    FF_LARGE_FILE_IMPORTS_ENABLED: {
+    FF_LEGACY_FILE_IMPORTS_ENABLED: {
       schema: z.boolean(),
       description:
-        'Enables the new file importer to handle large files via pre-signed URLs.',
+        'Enables the legacy file importer. This proxies file uploads via REST API on the server instead of directly PUTing files to S3 via pre-signed urls.',
       defaults: { _: false }
     },
-    FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED: {
+    FF_ACC_INTEGRATION_ENABLED: {
       schema: z.boolean(),
       description:
-        'Enables the IFC file importer based on IFCOpenShell (as of July 2025). Even if enabled, the previous webIFC & .Net importer can be accessed by appending `.dotnetimporter.ifc` to the uploaded file name.',
+        'Enables the integration with ACC. This synchronizes models with specified ACC assets.',
+      defaults: { _: false }
+    },
+    FF_SAVED_VIEWS_ENABLED: {
+      schema: z.boolean(),
+      description: 'Enables the saved views feature for project models',
+      defaults: { _: false }
+    },
+    FF_USERS_INVITE_SCOPE_IS_PUBLIC: {
+      schema: z.boolean(),
+      description:
+        'Enables Personal Access Tokens (PAT) to be created with users:invite scope. **WARNING** This can be used to spam invitations to any email address. It is not advised to enable this on servers which are open to public account registration or to which untrusted users have been, or can be, invited.',
       defaults: { _: false }
     }
   })
@@ -147,26 +163,6 @@ export const parseFeatureFlags = (
 }
 
 let parsedFlags: FeatureFlags | undefined
-
-export type FeatureFlags = {
-  FF_AUTOMATE_MODULE_ENABLED: boolean
-  FF_GENDOAI_MODULE_ENABLED: boolean
-  FF_WORKSPACES_MODULE_ENABLED: boolean
-  FF_WORKSPACES_SSO_ENABLED: boolean
-  FF_GATEKEEPER_MODULE_ENABLED: boolean
-  FF_BILLING_INTEGRATION_ENABLED: boolean
-  FF_WORKSPACES_MULTI_REGION_ENABLED: boolean
-  FF_FORCE_ONBOARDING: boolean
-  FF_MOVE_PROJECT_REGION_ENABLED: boolean
-  FF_NO_PERSONAL_EMAILS_ENABLED: boolean
-  FF_RETRY_ERRORED_PREVIEWS_ENABLED: boolean
-  FF_PERSONAL_PROJECTS_LIMITS_ENABLED: boolean
-  FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
-  FF_RHINO_FILE_IMPORTER_ENABLED: boolean
-  FF_BACKGROUND_JOBS_ENABLED: boolean
-  FF_LARGE_FILE_IMPORTS_ENABLED: boolean
-  FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED: boolean
-}
 
 export function getFeatureFlags(): FeatureFlags {
   //@ts-expect-error this way, the parse function typing is a lot better

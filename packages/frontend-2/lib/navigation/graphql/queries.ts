@@ -1,32 +1,36 @@
 import { graphql } from '~/lib/common/generated/gql'
 
-export const navigationActiveWorkspaceQuery = graphql(`
-  query NavigationActiveWorkspace($slug: String!) {
+export const navigationWorkspaceSwitcherQuery = graphql(`
+  query NavigationWorkspaceSwitcher($joinRequestFilter: WorkspaceJoinRequestFilter) {
+    activeUser {
+      id
+      ...WorkspaceSwitcherActiveWorkspace_User
+    }
+  }
+`)
+
+export const workspaceSwitcherHeaderWorkspaceQuery = graphql(`
+  query WorkspaceSwitcherHeaderWorkspace($slug: String!) {
     workspaceBySlug(slug: $slug) {
       ...HeaderWorkspaceSwitcherHeaderWorkspace_Workspace
-      ...InviteDialogWorkspace_Workspace
-      id
-      name
-      logo
     }
   }
 `)
 
 export const navigationWorkspaceListQuery = graphql(`
-  query NavigationWorkspaceList($filter: UserProjectsFilter) {
+  query NavigationWorkspaceList(
+    $workspaceFilter: UserWorkspacesFilter
+    $projectFilter: UserProjectsFilter
+  ) {
     activeUser {
       id
-      expiredSsoSessions {
-        id
-        ...HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspace
-      }
-      workspaces {
+      workspaces(filter: $workspaceFilter) {
         items {
           id
           ...HeaderWorkspaceSwitcherWorkspaceListItem_Workspace
         }
       }
-      projects(filter: $filter) {
+      projects(filter: $projectFilter) {
         totalCount
       }
     }

@@ -45,19 +45,45 @@ export const useStrictLogger = async (
 }
 
 /**
- * Short-cut to useLogger().info, useful when you quickly want to console.log something during development.
+ * Use when you need to be sure that the real structured pino logger is available
+ * (it isn't in some early startup contexts like apollo link setup)
+ *
+ * The async version is better in that it will build a real pino logger, but in sync contexts
+ * you can use this one that will at least fallback to console.log/warn/error
+ */
+export const useStrictLoggerSync = (
+  options?: Partial<{ dontNotifyFallback: boolean }>
+) => {
+  const { dontNotifyFallback } = options || {}
+
+  let nuxtApp: Optional<NuxtApp> = undefined
+  try {
+    nuxtApp = useNuxtApp()
+  } catch {
+    // suppress 'nuxt is not available'
+  }
+
+  if (nuxtApp?.$logger) return nuxtApp?.$logger
+
+  // Nuxt app not found in this scope
+  const err = new Error(
+    'Nuxt app for logger not found! Initializing fallback structured logger...'
+  )
+  const logger = buildFakePinoLogger()
+
+  if (!dontNotifyFallback) logger.error(err)
+
+  return logger
+}
+
+/**
+ * Short-cut to useLogger().debug, useful when you quickly want to console.log something during development.
  * Calls to this are skipped outside of dev mode.
  */
 export const useDevLogger = () => {
   if (!import.meta.dev) return noop
 
   const logger = useLogger()
-  const info = logger.info.bind(logger)
-  return info as (...args: unknown[]) => void
+  const debug = logger.debug.bind(logger)
+  return debug as (...args: unknown[]) => void
 }
-
-/**
- * console.log replacement for development mode. Calls to this are skipped outside of dev mode
- * and it ensures that the real structured logger is used.
- */
-export const devLog = (...args: unknown[]) => useDevLogger()(...args)

@@ -45,6 +45,9 @@ type PolicyErrors = InstanceType<
 export const canLoadPolicy: AuthPolicy<PolicyLoaderKeys, PolicyArgs, PolicyErrors> =
   (loaders) =>
   async ({ userId, projectId }) => {
+    if (publiclyLoadableProjects.includes(projectId)) {
+      return ok()
+    }
     const hasAdminAccess = await checkIfAdminOverrideEnabledFragment(loaders)({
       userId
     })
@@ -70,3 +73,7 @@ export const canLoadPolicy: AuthPolicy<PolicyLoaderKeys, PolicyArgs, PolicyError
 
     return ok()
   }
+
+const publiclyLoadableProjects = [
+  '8be1007be1' // Demo models
+]

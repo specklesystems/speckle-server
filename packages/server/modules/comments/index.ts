@@ -12,7 +12,7 @@ import {
   getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
 import { publishNotification } from '@/modules/notifications/services/publication'
-import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
 

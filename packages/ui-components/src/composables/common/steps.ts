@@ -4,7 +4,7 @@ import type {
   HorizontalOrVertical,
   StepCoreType
 } from '~~/src/helpers/common/components'
-import { clamp } from 'lodash'
+import { clamp } from '#lodash'
 import { TailwindBreakpoints, markClassesUsed } from '~~/src/helpers/tailwind'
 
 export type StepsPadding = 'base' | 'xs' | 'sm'

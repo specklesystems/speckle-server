@@ -1,6 +1,6 @@
-import { InsertableSpeckleObject } from '@/modules/core/domain/objects/types'
+import type { InsertableSpeckleObject } from '@/modules/core/domain/objects/types'
 import { BaseError } from '@/modules/shared/errors'
-import { Options } from 'verror'
+import type { Options } from 'verror'
 
 type InsertionObject = Pick<InsertableSpeckleObject, 'data'>
 

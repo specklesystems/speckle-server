@@ -1,7 +1,7 @@
 import { db } from '@/db/knex'
 import { StreamAcl } from '@/modules/core/dbSchema'
 import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
-import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
+import type { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
@@ -54,14 +54,15 @@ import {
 } from '@/modules/serverinvites/services/processing'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { authorizeResolver } from '@/modules/shared'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import type { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import { createWorkspaceProjectFactory } from '@/modules/workspaces/services/projects'
-import { BasicTestUser } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
 import { ProjectVisibility } from '@/modules/core/graph/generated/graphql'
 import { faker } from '@faker-js/faker'
-import { ensureError, Roles, StreamRoles } from '@speckle/shared'
+import type { StreamRoles } from '@speckle/shared'
+import { ensureError, Roles } from '@speckle/shared'
 import { omit } from 'lodash-es'
 
 const getServerInfo = getServerInfoFactory({ db })
@@ -192,10 +193,10 @@ export async function createTestStreams(
 /**
  * Create basic stream for testing and update streamObj in-place, via reference, to have a real ID
  */
-export async function createTestStream(
-  streamObj: Partial<BasicTestStream>,
+export async function createTestStream<S extends Partial<BasicTestStream>>(
+  streamObj: S,
   owner: BasicTestUser
-) {
+): Promise<S> {
   let id: string
 
   const visibility = streamObj.isPublic

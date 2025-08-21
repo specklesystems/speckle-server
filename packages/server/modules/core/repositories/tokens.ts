@@ -1,10 +1,10 @@
-import {
+import type {
   EmbedApiTokenRecord,
   PersonalApiTokenRecord,
   TokenScopeRecord,
   UserServerAppTokenRecord
 } from '@/modules/auth/helpers/types'
-import { ApiTokenRecord } from '@/modules/auth/repositories'
+import type { ApiTokenRecord } from '@/modules/auth/repositories'
 import {
   ApiTokens,
   EmbedApiTokens,
@@ -13,7 +13,7 @@ import {
   TokenScopes,
   UserServerAppTokens
 } from '@/modules/core/dbSchema'
-import {
+import type {
   GetApiTokenById,
   GetTokenResourceAccessDefinitionsById,
   GetTokenScopesById,
@@ -28,9 +28,9 @@ import {
   UpdateApiToken
 } from '@/modules/core/domain/tokens/operations'
 import { UserInputError } from '@/modules/core/errors/userinput'
-import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
-import { ServerScope } from '@speckle/shared'
-import { Knex } from 'knex'
+import type { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
+import type { ServerScope } from '@speckle/shared'
+import type { Knex } from 'knex'
 import { TokenRevokationError } from '@/modules/core/errors/tokens'
 
 const tables = {

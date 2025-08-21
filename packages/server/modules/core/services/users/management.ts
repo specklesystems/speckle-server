@@ -1,4 +1,4 @@
-import {
+import type {
   ChangeUserPassword,
   ChangeUserRole,
   CountAdminUsers,
@@ -26,39 +26,34 @@ import {
   PasswordTooShortError,
   UserInputError
 } from '@/modules/core/errors/userinput'
-import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
+import type { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import type { UserRecord } from '@/modules/core/helpers/userHelper'
 import { sanitizeImageUrl } from '@/modules/shared/helpers/sanitization'
-import {
-  blockedDomains,
-  isNullOrUndefined,
-  NullableKeysToOptional,
-  Roles,
-  ServerRoles
-} from '@speckle/shared'
+import type { NullableKeysToOptional, ServerRoles } from '@speckle/shared'
+import { blockedDomains, isNullOrUndefined, Roles } from '@speckle/shared'
 import { pick } from 'lodash-es'
 import bcrypt from 'bcrypt'
 import crs from 'crypto-random-string'
-import {
+import type {
   FindEmail,
   FindPrimaryEmailForUser,
   ValidateAndCreateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
-import {
+import type {
   DeleteStreamRecord,
   GetUserDeletableStreams
 } from '@/modules/core/domain/streams/operations'
 import type { Logger } from '@/observability/logging'
-import { DeleteAllUserInvites } from '@/modules/serverinvites/domain/operations'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { DeleteAllUserInvites } from '@/modules/serverinvites/domain/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { UserEvents } from '@/modules/core/domain/users/events'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-import { GetUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/domain/operations'
+import type { GetUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/domain/operations'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
-import { QueryAllProjects } from '@/modules/core/domain/projects/operations'
-import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
+import type { QueryAllProjects } from '@/modules/core/domain/projects/operations'
+import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
 
 const { FF_NO_PERSONAL_EMAILS_ENABLED } = getFeatureFlags()
 

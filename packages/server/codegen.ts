@@ -20,6 +20,7 @@ const config: CodegenConfig = {
         'typed-document-node'
       ],
       config: {
+        useTypeImports: true,
         enumsAsConst: true,
         contextType: '@/modules/shared/helpers/typeHelper#GraphQLContext',
         mappers: {
@@ -184,7 +185,23 @@ const config: CodegenConfig = {
           RootPermissionChecks:
             '@/modules/core/helpers/graphTypes#RootPermissionChecksGraphQLReturn',
           WorkspacePermissionChecks:
-            '@/modules/workspacesCore/helpers/graphTypes#WorkspacePermissionChecksGraphQLReturn'
+            '@/modules/workspacesCore/helpers/graphTypes#WorkspacePermissionChecksGraphQLReturn',
+          AccSyncItem: '@/modules/acc/helpers/graphTypes#AccSyncItemGraphQLReturn',
+          AccSyncItemMutations:
+            '@/modules/acc/helpers/graphTypes#AccSyncItemMutationsGraphQLReturn',
+          SavedViewMutations:
+            '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
+          SavedView: '@/modules/viewer/helpers/graphTypes#SavedViewGraphQLReturn',
+          SavedViewGroup:
+            '@/modules/viewer/helpers/graphTypes#SavedViewGroupGraphQLReturn',
+          PermissionCheckResult:
+            '@/modules/core/helpers/graphTypes#PermissionCheckResultGraphQLReturn',
+          SavedViewPermissionChecks:
+            '@/modules/viewer/helpers/graphTypes#SavedViewPermissionChecksGraphQLReturn',
+          SavedViewGroupPermissionChecks:
+            '@/modules/viewer/helpers/graphTypes#SavedViewGroupPermissionChecksGraphQLReturn',
+          ExtendedViewerResources:
+            '@/modules/viewer/helpers/graphTypes#ExtendedViewerResourcesGraphQLReturn'
         }
       }
     }

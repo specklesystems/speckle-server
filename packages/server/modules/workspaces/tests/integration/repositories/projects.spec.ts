@@ -1,16 +1,14 @@
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import { intersectProjectCollaboratorsAndWorkspaceCollaboratorsFactory } from '@/modules/workspaces/repositories/projects'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   assignToWorkspaces,
-  BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
-import {
-  addAllToStream,
-  BasicTestStream,
-  createTestStream
-} from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { addAllToStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import cryptoRandomString from 'crypto-random-string'
 import { db } from '@/db/knex'
 import { expect } from 'chai'

@@ -110,3 +110,15 @@ export function noErrors(res: unknown) {
   if (bodyErrors)
     throw new Error(`Failed GraphQL request: ${JSON.stringify(bodyErrors)}`)
 }
+
+/**
+ * Checks the response body to contain errors. To be used in expect assertions.
+ * Will throw an error if 'errors' do not exist.
+ * @param {*} res
+ */
+export function haveErrors(res: unknown) {
+  if (
+    !['error', 'body.errors', 'body.err', 'body.error'].some((path) => get(res, path))
+  )
+    throw new Error(`Expected errors, but got none`)
+}

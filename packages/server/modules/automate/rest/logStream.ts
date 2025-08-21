@@ -15,7 +15,7 @@ import {
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { Roles, Scopes } from '@speckle/shared'
-import { Application } from 'express'
+import type { Application } from 'express'
 import { FunctionRunNotFoundError } from '@/modules/automate/errors/runs'
 
 export default (app: Application) => {

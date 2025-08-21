@@ -1,4 +1,4 @@
-import {
+import type {
   MarkAutomationDeleted,
   GetActiveTriggerDefinitions,
   GetAutomation,
@@ -29,11 +29,11 @@ import {
   UpsertAutomationFunctionRun,
   UpsertAutomationRun
 } from '@/modules/automate/domain/operations'
-import {
+import type {
   AutomationRunFullTrigger,
   InsertableAutomationFunctionRun
 } from '@/modules/automate/domain/types'
-import {
+import type {
   AutomationRecord,
   AutomationRevisionRecord,
   AutomationTriggerDefinitionRecord,
@@ -45,7 +45,9 @@ import {
   AutomationRunTriggerRecord,
   AutomationFunctionRunRecord,
   AutomationRevisionWithTriggersFunctions,
-  AutomationTriggerType,
+  AutomationTriggerType
+} from '@/modules/automate/helpers/types'
+import {
   VersionCreationTriggerType,
   isVersionCreatedTrigger
 } from '@/modules/automate/helpers/types'
@@ -65,11 +67,11 @@ import {
   Streams,
   knex
 } from '@/modules/core/dbSchema'
-import {
+import type {
   AutomationRunsArgs,
   ProjectAutomationsArgs
 } from '@/modules/core/graph/generated/graphql'
-import { StreamRecord } from '@/modules/core/helpers/types'
+import type { StreamRecord } from '@/modules/core/helpers/types'
 
 import {
   executeBatchedSelect,
@@ -80,11 +82,12 @@ import {
   decodeIsoDateCursor,
   encodeIsoDateCursor
 } from '@/modules/shared/helpers/dbHelper'
-import { Nullable, StreamRoles, isNullOrUndefined } from '@speckle/shared'
+import type { Nullable, StreamRoles } from '@speckle/shared'
+import { isNullOrUndefined } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { clamp, groupBy, keyBy, pick } from 'lodash-es'
-import { SetOptional, SetRequired } from 'type-fest'
+import type { SetOptional, SetRequired } from 'type-fest'
 
 const tables = {
   automations: (db: Knex) => db<AutomationRecord>(Automations.name),

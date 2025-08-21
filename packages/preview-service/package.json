@@ -12,7 +12,7 @@
   },
   "type": "module",
   "engines": {
-    "node": "^22.6.0"
+    "node": "^22.17.1"
   },
   "scripts": {
     "build:frontend": "yarn workspace @speckle/preview-frontend build",

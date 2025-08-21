@@ -69,6 +69,10 @@
       "name": "📊 monitor-deployment"
     },
     {
+      "path": "packages/ifc-import-service",
+      "name": "🛖 ifc-import-service"
+    },
+    {
       "path": ".",
       "name": "🏡 root"
     }
@@ -131,6 +135,7 @@
     "[json]": {
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
+
     "vue.complete.casing.props": "kebab",
     "vue.inlayHints.missingProps": true,
     "circleci.persistedProjectSelection": ["gh/specklesystems/speckle-server"]

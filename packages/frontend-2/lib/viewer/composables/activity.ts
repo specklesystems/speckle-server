@@ -13,7 +13,7 @@ import {
   useSelectionEvents,
   useViewerCameraControlEndTracker
 } from '~~/lib/viewer/composables/viewer'
-import { SpeckleViewer, xor, TIME_MS } from '@speckle/shared'
+import { xor, TIME_MS } from '@speckle/shared'
 import type { Nullable, Optional } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -35,8 +35,13 @@ import {
   useApplySerializedState,
   useStateSerialization
 } from '~~/lib/viewer/composables/serialization'
-import type { Merge } from 'type-fest'
+import type { Merge, OverrideProperties } from 'type-fest'
 import { graphql } from '~/lib/common/generated/gql'
+import {
+  isSerializedViewerState,
+  type SerializedViewerState
+} from '@speckle/shared/viewer/state'
+import { omit, debounce } from 'lodash-es'
 
 /**
  * How often we send out an "activity" message even if user hasn't made any clicks (just to keep him active)
@@ -55,11 +60,16 @@ const USER_STALE_AFTER_PERIOD = 20 * OWN_ACTIVITY_UPDATE_INTERVAL
  */
 const USER_REMOVABLE_AFTER_PERIOD = USER_STALE_AFTER_PERIOD * 2
 
+type ViewerActivityMetadata = OverrideProperties<
+  Required<Omit<ViewerUserActivityMessageInput, 'status'>>,
+  { state: SerializedViewerState }
+>
+
 function useCollectMainMetadata() {
   const { sessionId } = useInjectedViewerState()
   const { activeUser } = useActiveUser()
   const { serialize } = useStateSerialization()
-  return (): Omit<ViewerUserActivityMessageInput, 'status' | 'selection'> => ({
+  return (): ViewerActivityMetadata => ({
     userId: activeUser.value?.id || null,
     userName: activeUser.value?.name || 'Anonymous Viewer',
     state: serialize(),
@@ -78,6 +88,73 @@ graphql(`
   }
 `)
 
+const useViewerRealtimeActivityState = () =>
+  useState('viewer_realtime_activity_state', () => ({
+    activity: undefined as Optional<ViewerActivityMetadata>,
+    status: ViewerUserActivityStatus.Viewing as ViewerUserActivityStatus
+  }))
+
+export const useViewerRealtimeActivityTracker = () => {
+  const state = useViewerRealtimeActivityState()
+  const getMainMetadata = useCollectMainMetadata()
+
+  const serializer = (val: unknown) => JSON.stringify(val)
+
+  const activity = computed({
+    get: () => state.value.activity || getMainMetadata(),
+    set: (value) => {
+      state.value.activity = value
+    }
+  })
+
+  const status = computed({
+    get: () => state.value.status,
+    set: (value) => {
+      state.value.status = value
+    }
+  })
+
+  const serializedState = computed(() => activity.value.state)
+
+  // Ids for easy equality comparisons
+  const serializedStateId = computed(() => serializer(serializedState.value))
+  const activityId = computed(() => {
+    const stateId = serializedStateId.value
+    const otherActivity: Omit<ViewerActivityMetadata, 'state'> = omit(activity.value, [
+      'state'
+    ])
+    const otherActivityId = serializer(otherActivity)
+    return `${stateId}-${otherActivityId}-${status.value}`
+  })
+
+  const update = (params?: {
+    newActivity?: ViewerActivityMetadata
+    status?: ViewerUserActivityStatus
+  }) => {
+    activity.value = params?.newActivity || getMainMetadata()
+
+    if (params?.status) {
+      status.value = params.status
+    }
+  }
+
+  onUnmounted(() => {
+    // Reset activity state on unmount
+    state.value.activity = undefined
+    state.value.status = ViewerUserActivityStatus.Viewing
+  })
+
+  return {
+    activity,
+    serializedState,
+    status,
+    update,
+    serializedStateId,
+    activityId,
+    serializer
+  }
+}
+
 export function useViewerUserActivityBroadcasting(
   options?: Partial<{
     state: InjectableViewerState
@@ -90,7 +167,8 @@ export function useViewerUserActivityBroadcasting(
       response: { project }
     }
   } = options?.state || useInjectedViewerState()
-  const getMainMetadata = useCollectMainMetadata()
+  const { activeUser } = useActiveUser()
+  const { update, activity, status, activityId } = useViewerRealtimeActivityTracker()
   const apollo = useApolloClient().client
   const { isEnabled: isEmbedEnabled } = useEmbed()
 
@@ -98,22 +176,29 @@ export function useViewerUserActivityBroadcasting(
     () => project.value?.permissions.canBroadcastActivity.authorized
   )
 
-  const isSameMessage = (
-    previousSerializedMessage: Optional<string>,
-    newMessage: ViewerUserActivityMessageInput
+  const isSameActivity = (
+    previousActivityId: Optional<string>,
+    newActivityId: string
   ) => {
-    if (xor(previousSerializedMessage, newMessage)) return false
-    if (!previousSerializedMessage && !newMessage) return false
-    return previousSerializedMessage === JSON.stringify(newMessage)
+    if (xor(previousActivityId, newActivityId)) return false
+    if (!previousActivityId && !newActivityId) return false
+    return previousActivityId === newActivityId
   }
 
-  const invokeMutation = async (message: ViewerUserActivityMessageInput) => {
+  const invokeMutation = async () => {
+    if (!activeUser.value?.id) return false
+
     const result = await apollo
       .mutate({
         mutation: broadcastViewerUserActivityMutation,
         variables: {
           resourceIdString: resourceIdString.value,
-          message,
+          message: {
+            ...activity.value,
+            status: status.value,
+            userId: activeUser.value.id,
+            userName: activeUser.value.name
+          },
           projectId: projectId.value
         }
       })
@@ -122,43 +207,43 @@ export function useViewerUserActivityBroadcasting(
     return result.data?.broadcastViewerUserActivity || false
   }
 
-  let serializedPreviousMessage: Optional<string> = undefined
-  const invokeObservabilityEvent = async (message: ViewerUserActivityMessageInput) => {
+  let previousActivityId: Optional<string> = undefined
+  const invokeObservabilityEvent = async () => {
     const dd = window.DD_RUM
     if (!dd || !('addAction' in dd)) return
 
-    if (isSameMessage(serializedPreviousMessage, message)) return
+    const message = {
+      ...activity.value,
+      status: status.value
+    }
 
-    serializedPreviousMessage = JSON.stringify(message)
+    if (isSameActivity(previousActivityId, activityId.value)) return
+
+    previousActivityId = activityId.value
     dd.addAction('Viewer User Activity', { message })
   }
 
-  const invoke = async (message: ViewerUserActivityMessageInput) => {
+  const invoke = async () => {
     if (!canBroadcast.value || isEmbedEnabled.value) return false
-    return await Promise.all([
-      invokeMutation(message),
-      invokeObservabilityEvent(message)
-    ])
+
+    return await Promise.all([invokeMutation(), invokeObservabilityEvent()])
   }
 
   return {
-    emitDisconnected: async () =>
-      await invoke({
-        ...getMainMetadata(),
-        status: ViewerUserActivityStatus.Disconnected
-      }),
+    emitDisconnected: async () => {
+      update({ status: ViewerUserActivityStatus.Disconnected })
+      await invoke()
+    },
     emitViewing: async () => {
-      await invoke({
-        ...getMainMetadata(),
-        status: ViewerUserActivityStatus.Viewing
-      })
+      update({ status: ViewerUserActivityStatus.Viewing })
+      await invoke()
     }
   }
 }
 
 export type UserActivityModel = Merge<
   OnViewerUserActivityBroadcastedSubscription['viewerUserActivityBroadcasted'],
-  { state: SpeckleViewer.ViewerState.SerializedViewerState }
+  { state: SerializedViewerState }
 > & {
   isStale: boolean
   isOccluded: boolean
@@ -228,10 +313,23 @@ export function useViewerUserActivityTracking(params: {
     if (currentUserId && incomingUserId && currentUserId === incomingUserId) return
 
     if (!isEmbedEnabled.value && status === ViewerUserActivityStatus.Disconnected) {
-      triggerNotification({
-        title: `${users.value[incomingSessionId]?.userName || 'A user'} left.`,
-        type: ToastNotificationType.Info
-      })
+      const disconnectingUser = users.value[incomingSessionId]
+
+      // Check if this user has other active sessions before showing "left" notification
+      const hasOtherActiveSessions = incomingUserId
+        ? Object.values(users.value).some(
+            (user) =>
+              user.userId === incomingUserId && user.sessionId !== incomingSessionId
+          )
+        : false
+
+      // Only show "left" notification if this is the user's last session
+      if (disconnectingUser && !hasOtherActiveSessions) {
+        triggerNotification({
+          title: `${disconnectingUser.userName || 'A user'} left.`,
+          type: ToastNotificationType.Info
+        })
+      }
 
       if (spotlightUserSessionId.value === incomingSessionId)
         spotlightUserSessionId.value = null // ensure we're not spotlighting disconnected users
@@ -239,9 +337,7 @@ export function useViewerUserActivityTracking(params: {
       return
     }
 
-    const state = SpeckleViewer.ViewerState.isSerializedViewerState(event.state)
-      ? event.state
-      : null
+    const state = isSerializedViewerState(event.state) ? event.state : null
     if (!state) return
 
     const userData: UserActivityModel = {
@@ -259,10 +355,13 @@ export function useViewerUserActivityTracking(params: {
       lastUpdate: dayjs()
     }
 
-    if (
-      !isEmbedEnabled.value &&
-      !Object.keys(users.value).includes(incomingSessionId)
-    ) {
+    // Only show "joined" notification if this is a new user (not just a new session for existing user)
+    const isNewSession = !Object.keys(users.value).includes(incomingSessionId)
+    const hasExistingUserSessions = incomingUserId
+      ? Object.values(users.value).some((user) => user.userId === incomingUserId)
+      : false
+
+    if (!isEmbedEnabled.value && isNewSession && !hasExistingUserSessions) {
       triggerNotification({
         title: `${userData.userName} joined.`,
         type: ToastNotificationType.Info
@@ -346,14 +445,21 @@ export function useViewerUserActivityTracking(params: {
 
   const focused = useWindowFocus()
 
-  // Disable disconnect-on-blur behaviour in development mode only
-  // For testing multi-user interactions (like follow mode)
-  watch(focused, async (newVal) => {
-    if (import.meta.dev) return
-
-    if (!newVal) {
+  // Debounced disconnect function - 30 second delay
+  const debouncedDisconnect = debounce(
+    async () => {
       await sendUpdate.emitDisconnected()
+    },
+    30 * 1000 // 30 seconds
+  )
+
+  watch(focused, async (newVal) => {
+    if (!newVal) {
+      // Window lost focus - start debounced disconnect
+      debouncedDisconnect()
     } else {
+      // Window regained focus - cancel any pending disconnect and emit viewing
+      debouncedDisconnect.cancel()
       await sendUpdate.emitViewing()
     }
   })
@@ -377,13 +483,19 @@ export function useViewerUserActivityTracking(params: {
 
   useViewerCameraControlEndTracker(() => sendUpdate.emitViewing())
 
-  useOnBeforeWindowUnload(async () => await sendUpdate.emitDisconnected())
+  useOnBeforeWindowUnload(async () => {
+    // Cancel any pending debounced disconnect since we're actually leaving
+    debouncedDisconnect.cancel()
+    await sendUpdate.emitDisconnected()
+  })
 
   onMounted(() => {
     sendUpdate.emitViewing()
   })
 
   onBeforeUnmount(() => {
+    // Cancel any pending debounced disconnect
+    debouncedDisconnect.cancel()
     sendUpdate.emitDisconnected()
   })
 
@@ -429,7 +541,7 @@ function useViewerSpotlightTracking() {
 type UserTypingInfo = {
   userId: string
   userName: string
-  thread: SpeckleViewer.ViewerState.SerializedViewerState['ui']['threads']['openThread']
+  thread: SerializedViewerState['ui']['threads']['openThread']
   lastSeen: Dayjs
 }
 
@@ -471,9 +583,7 @@ export function useViewerThreadTypingTracking(threadId: MaybeRef<string>) {
       usersTyping.value.splice(existingItemIdx, 1)
     }
 
-    const state = SpeckleViewer.ViewerState.isSerializedViewerState(event.state)
-      ? event.state
-      : null
+    const state = isSerializedViewerState(event.state) ? event.state : null
     if (!state) return
     const typingPayload = state.ui.threads.openThread
     if (typingPayload.threadId !== unref(threadId)) {

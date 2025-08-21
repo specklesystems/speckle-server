@@ -117,7 +117,7 @@ export const WorkspaceLimitsReachedError = defineAuthError<
 })
 
 export const WorkspacePlanNoFeatureAccessError = defineAuthError({
-  code: 'WorkspaceNoFeatureAccess',
+  code: 'WorkspacePlanNoFeatureAccessError',
   message: 'Your workspace plan does not have access to this feature.'
 })
 
@@ -194,6 +194,31 @@ export const AutomateFunctionNotFoundError = defineAuthError({
 export const AutomateFunctionNotCreatorError = defineAuthError({
   code: 'AutomateFunctionNotCreator',
   message: 'You are not the function creator and cannot make changes to it.'
+})
+
+export const AccIntegrationNotEnabledError = defineAuthError({
+  code: 'AccIntegrationNotEnabled',
+  message: 'The ACC Integration is not enabled on this server or project'
+})
+
+export const SavedViewNotFoundError = defineAuthError({
+  code: 'SavedViewNotFound',
+  message: 'Saved view not found'
+})
+
+export const SavedViewNoAccessError = defineAuthError({
+  code: 'SavedViewNoAccess',
+  message: 'You do not have access to this saved view'
+})
+
+export const SavedViewGroupNotFoundError = defineAuthError({
+  code: 'SavedViewGroupNotFound',
+  message: 'Saved view group not found'
+})
+
+export const UngroupedSavedViewGroupLockError = defineAuthError({
+  code: 'UngroupedSavedViewGroupLock',
+  message: 'The default/ungrouped group cannot be modified.'
 })
 
 // Resolve all exported error types

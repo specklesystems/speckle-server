@@ -1,4 +1,4 @@
-import { CommandModule } from 'yargs'
+import type { CommandModule } from 'yargs'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { cliLogger as logger } from '@/observability/logging'
 import {
@@ -8,6 +8,7 @@ import {
 } from '@/modules/core/repositories/streams'
 import {
   getBranchByIdFactory,
+  getBranchesByIdsFactory,
   getBranchLatestCommitsFactory,
   getStreamBranchByNameFactory,
   getStreamBranchesByNameFactory,
@@ -23,8 +24,6 @@ import {
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
 import {
-  getViewerResourceGroupsFactory,
-  getViewerResourceItemsUngroupedFactory,
   getViewerResourcesForCommentFactory,
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
@@ -53,6 +52,14 @@ import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { db } from '@/db/knex'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import {
+  getViewerResourceGroupsFactory,
+  getViewerResourceItemsUngroupedFactory
+} from '@/modules/viewer/services/viewerResources'
+import {
+  getModelHomeSavedViewFactory,
+  getSavedViewFactory
+} from '@/modules/viewer/repositories/savedViews'
 
 const command: CommandModule<
   unknown,
@@ -114,7 +121,10 @@ const command: CommandModule<
         getBranchLatestCommits,
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDb }),
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
-        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb })
+        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb }),
+        getBranchesByIds: getBranchesByIdsFactory({ db: projectDb }),
+        getSavedView: getSavedViewFactory({ db: projectDb }),
+        getModelHomeSavedView: getModelHomeSavedViewFactory({ db: projectDb })
       })
     })
     const getViewerResourcesFromLegacyIdentifiers =

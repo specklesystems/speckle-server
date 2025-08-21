@@ -1,8 +1,9 @@
-import Bull from 'bull'
+import type Bull from 'bull'
 import { logger } from '@/observability/logging'
 import { isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
-import { Optional, TIME_MS } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
+import { TIME_MS } from '@speckle/shared'
 import { UninitializedResourceAccessError } from '@/modules/shared/errors'
 import {
   MultiRegionInvalidJobError,
@@ -256,7 +257,7 @@ export const startQueue = async () => {
           // Wait for replication from regional db
           await waitForRegionProjectFactory({
             getProject: getProjectFactory({ db }),
-            deleteProject: deleteProjectFactory({ db })
+            deleteProject: deleteProjectFactory({ db: targetDb })
           })({
             projectId: project.id,
             regionKey,
@@ -278,6 +279,8 @@ export const startQueue = async () => {
             }))
           })
         }
+
+        return
       }
       case 'delete-project-region-data':
       default:

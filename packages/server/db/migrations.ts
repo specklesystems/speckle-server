@@ -1,4 +1,4 @@
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { DatabaseError } from '@/modules/shared/errors'
 import { ensureError } from '@speckle/shared'
 import { startupLogger } from '@/observability/logging'

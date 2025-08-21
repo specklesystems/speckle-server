@@ -1,4 +1,4 @@
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Authz } from '@speckle/shared'
 
 export default {
@@ -50,6 +50,7 @@ export default {
           userId: context.userId,
           projectId: parent.projectId
         })
+
       return Authz.toGraphqlResult(canCreateAutomation)
     }
   }

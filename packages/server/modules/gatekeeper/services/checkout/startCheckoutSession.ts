@@ -1,14 +1,14 @@
-import {
+import type {
   CheckoutSession,
   CreateCheckoutSession,
   Currency,
   DeleteCheckoutSession,
   GetWorkspaceCheckoutSession,
   GetWorkspacePlan,
-  SaveCheckoutSession,
-  WorkspaceSeatType
+  SaveCheckoutSession
 } from '@/modules/gatekeeper/domain/billing'
-import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
+import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import type { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
 import {
   InvalidWorkspacePlanUpgradeError,
   WorkspaceAlreadyPaidError,
@@ -16,12 +16,8 @@ import {
 } from '@/modules/gatekeeper/errors/billing'
 import { isUpgradeWorkspacePlanValid } from '@/modules/gatekeeper/services/upgrades'
 import { NotFoundError } from '@/modules/shared/errors'
-import {
-  PaidWorkspacePlans,
-  throwUncoveredError,
-  TIME_MS,
-  WorkspacePlanBillingIntervals
-} from '@speckle/shared'
+import type { PaidWorkspacePlans, WorkspacePlanBillingIntervals } from '@speckle/shared'
+import { throwUncoveredError, TIME_MS } from '@speckle/shared'
 
 export const startCheckoutSessionFactory =
   ({

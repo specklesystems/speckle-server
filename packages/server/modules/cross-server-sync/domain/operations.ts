@@ -1,5 +1,5 @@
 import { type Logger } from '@/observability/logging'
-import { StreamRecord } from '@/modules/core/helpers/types'
+import type { StreamRecord } from '@/modules/core/helpers/types'
 
 export type DownloadCommit = (
   argv: {

@@ -32,7 +32,6 @@ services:
       NUXT_PUBLIC_BACKEND_API_ORIGIN: 'http://speckle-server:3000'
       NUXT_PUBLIC_LOG_LEVEL: 'warn'
       NUXT_REDIS_URL: 'redis://redis'
-      NUXT_PUBLIC_FF_LARGE_FILE_IMPORTS_ENABLED: 'true'
       LOG_LEVEL: 'info'
       LOG_PRETTY: 'true'
     depends_on:
@@ -51,7 +50,7 @@ services:
         - CMD
         - /nodejs/bin/node
         - -e
-        - "try { require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/readiness', method: 'GET', timeout: 2000 }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end(); } catch { process.exit(1); }"
+        - "try { require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/readiness', method: 'GET', timeout: 2000 }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error') ? 1 : 0);}); }).end(); } catch { process.exit(1); }"
       interval: 10s
       timeout: 10s
       retries: 3
@@ -95,8 +94,6 @@ services:
 
       FRONTEND_ORIGIN: 'http://127.0.0.1'
       ONBOARDING_STREAM_URL: 'https://latest.speckle.systems/projects/843d07eb10'
-
-      FF_LARGE_FILE_IMPORTS_ENABLED: 'true'
     depends_on:
       []
       # - minio

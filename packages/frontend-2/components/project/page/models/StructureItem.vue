@@ -280,6 +280,7 @@ import { useCanCreateModel } from '~/lib/projects/composables/permissions'
 import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
 import dayjs from 'dayjs'
 import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
+import { getModelItemRoute } from '~/lib/projects/helpers/models'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -338,6 +339,7 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const importArea = ref(
   null as Nullable<{
@@ -468,13 +470,9 @@ const updatedAt = computed(() => {
 })
 
 const modelLink = computed(() => {
-  if (
-    isPendingFileUpload(props.item) ||
-    !props.item.model ||
-    props.item.model?.versionCount.totalCount === 0
-  )
-    return null
-  return modelRoute(props.project.id, props.item.model.id)
+  const item = isPendingFileUpload(props.item) ? props.item : props.item.model
+  if (!item) return null
+  return getModelItemRoute(item)
 })
 
 const viewAllUrl = computed(() => {

@@ -10,10 +10,10 @@ import type {
   FunctionSchemaType,
   FunctionWithVersionsSchemaType
 } from '@/modules/automate/helpers/executionEngine'
+import type { VersionCreationTriggerType } from '@/modules/automate/helpers/types'
 import {
   type AutomationFunctionRunRecord,
   type BaseTriggerManifest,
-  VersionCreationTriggerType,
   isVersionCreatedTriggerManifest
 } from '@/modules/automate/helpers/types'
 import type { AuthCodePayload } from '@/modules/automate/services/authCode'

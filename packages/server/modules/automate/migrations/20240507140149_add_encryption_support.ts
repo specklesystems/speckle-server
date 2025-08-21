@@ -1,4 +1,4 @@
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const AUTOMATION_REVISIONS_TABLE = 'automation_revisions'
 const AUTOMATION_REVISION_FUNCTIONS_TABLE = 'automation_revision_functions'

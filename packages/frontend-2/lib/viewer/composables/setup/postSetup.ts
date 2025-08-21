@@ -1,5 +1,11 @@
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
-import { useThrottleFn, onKeyStroke, watchTriggerable } from '@vueuse/core'
+import {
+  useThrottleFn,
+  onKeyStroke,
+  watchTriggerable,
+  useMagicKeys,
+  useEventListener
+} from '@vueuse/core'
 import {
   ExplodeEvent,
   ExplodeExtension,
@@ -23,7 +29,8 @@ import type { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
 import { ProjectCommentsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
 import {
   useInjectedViewer,
-  useInjectedViewerState
+  useInjectedViewerState,
+  useInjectedViewerInterfaceState
 } from '~~/lib/viewer/composables/setup'
 import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
 import {
@@ -47,25 +54,29 @@ import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import { SafeLocalStorage, type Nullable } from '@speckle/shared'
 import {
   useCameraUtilities,
-  useMeasurementUtilities
+  useMeasurementUtilities,
+  useViewModeUtilities
 } from '~~/lib/viewer/composables/ui'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import type { SectionBoxData } from '@speckle/shared/viewer/state'
+import { graphql } from '~/lib/common/generated/gql'
+import { useTreeManagement } from '~~/lib/viewer/composables/tree'
+import { useViewerSavedViewIntegration } from '~/lib/viewer/composables/savedViews/state'
 
-function useViewerIsBusyEventHandler() {
+function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
 
-  const callback = (isBusy: boolean) => {
-    state.ui.viewerBusy.value = isBusy
+  const callback = () => {
+    state.ui.loading.value = false
   }
   onMounted(() => {
-    state.viewer.instance.on(ViewerEvent.Busy, callback)
+    state.viewer.instance.on(ViewerEvent.LoadComplete, callback)
   })
 
   onBeforeUnmount(() => {
-    state.viewer.instance.removeListener(ViewerEvent.Busy, callback)
+    state.viewer.instance.removeListener(ViewerEvent.LoadComplete, callback)
   })
 }
 
@@ -89,7 +100,7 @@ function useViewerObjectAutoLoading() {
     resources: {
       response: { resourceItems }
     },
-    ui: { loadProgress },
+    ui: { loadProgress, loading },
     urlHashState: { focusedThreadId }
   } = useInjectedViewerState()
 
@@ -102,13 +113,11 @@ function useViewerObjectAutoLoading() {
 
   const consolidateProgressInternal = (args: { progress: number; id: string }) => {
     loadingProgressMap[args.id] = args.progress
-    let min = 42
-    const values = Object.values(loadingProgressMap) as number[]
-    for (const num of values) {
-      min = Math.min(min, num)
-    }
+    const values = Object.values(loadingProgressMap)
+    const min = values.length ? Math.min(...values) : 1
 
     loadProgress.value = min
+    loading.value = min < 1
   }
 
   const consolidateProgressThorttled = useThrottleFn(consolidateProgressInternal, 250)
@@ -131,7 +140,9 @@ function useViewerObjectAutoLoading() {
         undefined
       )
 
-      loader.on(LoaderEvent.LoadProgress, (args) => consolidateProgressThorttled(args))
+      loader.on(LoaderEvent.LoadProgress, (args) => {
+        consolidateProgressThorttled(args)
+      })
       loader.on(LoaderEvent.LoadCancelled, (id) => {
         delete loadingProgressMap[id]
         consolidateProgressInternal({ id, progress: 1 })
@@ -435,8 +446,8 @@ function useViewerCameraIntegration() {
   useViewerCameraTracker(
     () => {
       loadCameraDataFromViewer()
-    }
-    // { debounceWait: 100 }
+    },
+    { throttleWait: 100 }
   )
 
   useOnViewerLoadComplete(({ isInitial }) => {
@@ -900,12 +911,87 @@ function useDisableZoomOnEmbed() {
   )
 }
 
+function useViewerTreeIntegration() {
+  const { viewer } = useInjectedViewerState()
+  const { treeStateManager } = useTreeManagement()
+
+  // Initialize the tree state manager with viewer instance
+  onMounted(() => treeStateManager.initialize(viewer.instance))
+}
+
+graphql(`
+  fragment UseViewerSavedViewSetup_SavedView on SavedView {
+    id
+    viewerState
+  }
+`)
+
+function useViewerCursorIntegration() {
+  const {
+    viewer: { container }
+  } = useInjectedViewerState()
+
+  const {
+    filters: { selectedObjects }
+  } = useInjectedViewerInterfaceState()
+
+  const { shift } = useMagicKeys()
+  const isDragging = ref(false)
+
+  // Handle mouse down/up to track dragging state
+  const handlePointerDown = (_event: PointerEvent) => {
+    if (shift.value && selectedObjects.value.length === 0) {
+      isDragging.value = true
+    }
+  }
+
+  const handlePointerUp = () => {
+    isDragging.value = false
+  }
+
+  // Show different cursors: grab (ready to drag) vs grabbing (actively dragging)
+  watch(
+    [shift, selectedObjects, isDragging],
+    () => {
+      if (!container) return
+
+      const hasSelection = selectedObjects.value.length > 0
+      const shouldShowDrag = shift.value && !hasSelection
+
+      if (shouldShowDrag) {
+        container.style.cursor = isDragging.value ? 'grabbing' : 'grab'
+      } else {
+        container.style.cursor = ''
+      }
+    },
+    { immediate: true }
+  )
+
+  useEventListener(container, 'pointerdown', handlePointerDown, { passive: true })
+  useEventListener(document, 'pointerup', handlePointerUp, { passive: true })
+
+  onBeforeUnmount(() => {
+    if (container) {
+      container.style.cursor = ''
+    }
+  })
+}
+
+function useViewerViewModesIntegration() {
+  const { resetViewMode } = useViewModeUtilities()
+
+  onBeforeUnmount(() => {
+    resetViewMode()
+  })
+}
+
 export function useViewerPostSetup() {
   if (import.meta.server) return
   useViewerObjectAutoLoading()
+  useViewerSavedViewIntegration()
   useViewerReceiveTracking()
   useViewerSelectionEventHandler()
-  useViewerIsBusyEventHandler()
+  useViewerLoadCompleteEventHandler()
   useViewerSubscriptionEventTracker()
   useViewerThreadTracking()
   useViewerOpenedThreadUpdateEmitter()
@@ -917,5 +1003,8 @@ export function useViewerPostSetup() {
   useDiffingIntegration()
   useViewerMeasurementIntegration()
   useDisableZoomOnEmbed()
+  useViewerCursorIntegration()
+  useViewerTreeIntegration()
+  useViewerViewModesIntegration()
   setupDebugMode()
 }

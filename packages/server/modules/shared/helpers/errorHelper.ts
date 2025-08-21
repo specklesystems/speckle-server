@@ -1,12 +1,9 @@
+import { AccModuleDisabledError } from '@/modules/acc/errors/acc'
 import { AutomateModuleDisabledError } from '@/modules/core/errors/automate'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
-import {
-  BadRequestError,
-  BaseError,
-  ForbiddenError,
-  NotFoundError
-} from '@/modules/shared/errors'
+import type { BaseError } from '@/modules/shared/errors'
+import { BadRequestError, ForbiddenError, NotFoundError } from '@/modules/shared/errors'
 import { SsoSessionMissingOrExpiredError } from '@/modules/workspacesCore/errors'
 import { Authz, ensureError, throwUncoveredError } from '@speckle/shared'
 import VError from 'verror'
@@ -45,6 +42,7 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
     case Authz.WorkspacePlanNoFeatureAccessError.code:
     case Authz.EligibleForExclusiveWorkspaceError.code:
     case Authz.AutomateFunctionNotCreatorError.code:
+    case Authz.SavedViewNoAccessError.code:
       return new ForbiddenError(e.message)
     case Authz.WorkspaceSsoSessionNoAccessError.code:
       throw new SsoSessionMissingOrExpiredError(e.message, {
@@ -60,6 +58,8 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
       return new WorkspacesModuleDisabledError()
     case Authz.AutomateNotEnabledError.code:
       return new AutomateModuleDisabledError()
+    case Authz.AccIntegrationNotEnabledError.code:
+      return new AccModuleDisabledError()
     case Authz.ProjectLastOwnerError.code:
     case Authz.ReservedModelNotDeletableError.code:
       return new BadRequestError(e.message)
@@ -67,8 +67,11 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
     case Authz.ModelNotFoundError.code:
     case Authz.VersionNotFoundError.code:
     case Authz.AutomateFunctionNotFoundError.code:
+    case Authz.SavedViewNotFoundError.code:
+    case Authz.SavedViewGroupNotFoundError.code:
       return new NotFoundError(e.message)
     case Authz.PersonalProjectsLimitedError.code:
+    case Authz.UngroupedSavedViewGroupLockError.code:
       return new BadRequestError(e.message)
     default:
       throwUncoveredError(e)

@@ -17,6 +17,7 @@ import {
 import {
   createBranchFactory,
   getBranchByIdFactory,
+  getBranchesByIdsFactory,
   getBranchLatestCommitsFactory,
   getStreamBranchByNameFactory,
   getStreamBranchesByNameFactory,
@@ -53,8 +54,6 @@ import { getFirstAdminFactory, getUserFactory } from '@/modules/core/repositorie
 import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
 import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
 import {
-  getViewerResourceGroupsFactory,
-  getViewerResourceItemsUngroupedFactory,
   getViewerResourcesForCommentFactory,
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
@@ -67,8 +66,16 @@ import {
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { ensureOnboardingProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import {
+  getViewerResourceGroupsFactory,
+  getViewerResourceItemsUngroupedFactory
+} from '@/modules/viewer/services/viewerResources'
+import {
+  getModelHomeSavedViewFactory,
+  getSavedViewFactory
+} from '@/modules/viewer/repositories/savedViews'
 
 const crossServerSyncModule: SpeckleModule = {
   init() {
@@ -96,7 +103,10 @@ const crossServerSyncModule: SpeckleModule = {
         getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
-        getAllBranchCommits: getAllBranchCommitsFactory({ db })
+        getAllBranchCommits: getAllBranchCommitsFactory({ db }),
+        getBranchesByIds: getBranchesByIdsFactory({ db }),
+        getSavedView: getSavedViewFactory({ db }),
+        getModelHomeSavedView: getModelHomeSavedViewFactory({ db })
       })
     })
     const getViewerResourcesFromLegacyIdentifiers =

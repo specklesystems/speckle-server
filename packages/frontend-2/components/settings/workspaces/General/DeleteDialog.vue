@@ -21,17 +21,6 @@
       class="text-sm mb-2"
       color="foundation"
     />
-    <FormTextArea
-      v-model="feedback"
-      name="reasonForDeletion"
-      label="Why did you delete this workspace?"
-      placeholder="We want to improve so we're curious about your honest feedback"
-      show-label
-      show-optional
-      full-width
-      class="text-sm mb-2"
-      color="foundation"
-    />
   </LayoutDialog>
 </template>
 
@@ -54,11 +43,9 @@ import {
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { isUndefined } from 'lodash-es'
-import { homeRoute, defaultZapierWebhookUrl } from '~/lib/common/helpers/route'
-import { useZapier } from '~/lib/core/composables/zapier'
-import { useForm } from 'vee-validate'
+import { homeRoute } from '~/lib/common/helpers/route'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import { useNavigation } from '~/lib/navigation/composables/navigation'
+import { useSetActiveWorkspace } from '~/lib/user/composables/activeWorkspace'
 
 graphql(`
   fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {
@@ -78,19 +65,16 @@ const { triggerNotification } = useGlobalToast()
 const { activeUser } = useActiveUser()
 const router = useRouter()
 const apollo = useApolloClient().client
-const { sendWebhook } = useZapier()
-const { resetForm } = useForm<{ feedback: string }>()
-const { mutateActiveWorkspaceSlug } = useNavigation()
+const { setActiveWorkspace } = useSetActiveWorkspace()
 
 const workspaceNameInput = ref('')
-const feedback = ref('')
 
 const onDelete = async () => {
   if (!props.workspace) return
   if (workspaceNameInput.value !== props.workspace.name) return
 
   // Create a copy of the workspace name and ID before deletion to avoid errors after deletion/cache update
-  const { name: workspaceName, id: workspaceId } = props.workspace
+  const { name: workspaceName } = props.workspace
   const cache = apollo.cache
   const result = await deleteWorkspace({
     workspaceId: props.workspace.id
@@ -121,24 +105,12 @@ const onDelete = async () => {
       )
     }
 
-    if (feedback.value) {
-      await sendWebhook(defaultZapierWebhookUrl, {
-        feedback: [
-          `**Action:** Workspace Deleted`,
-          `**Workspace:** ${workspaceName}`,
-          `**User ID:** ${activeUser.value?.id}`,
-          `**Workspace ID:** ${workspaceId}`,
-          `**Feedback:** ${feedback.value}`
-        ].join('\n')
-      })
-    }
-
     triggerNotification({
       type: ToastNotificationType.Success,
       title: `${workspaceName} workspace deleted`
     })
 
-    mutateActiveWorkspaceSlug(null)
+    await setActiveWorkspace({ id: null })
     router.push(homeRoute)
     isOpen.value = false
   } else {
@@ -168,8 +140,4 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     onClick: onDelete
   }
 ])
-
-watch(isOpen, () => {
-  resetForm()
-})
 </script>

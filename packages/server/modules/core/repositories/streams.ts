@@ -25,22 +25,25 @@ import {
   ServerAcl
 } from '@/modules/core/dbSchema'
 import { InvalidArgumentError, LogicError } from '@/modules/shared/errors'
-import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
-import {
-  ProjectRecordVisibility,
+import type { StreamRoles } from '@/modules/core/helpers/mainConstants'
+import { Roles } from '@/modules/core/helpers/mainConstants'
+import type {
   StreamAclRecord,
   StreamCommitRecord,
   StreamFavoriteRecord,
   StreamRecord,
   UserWithRole
 } from '@/modules/core/helpers/types'
-import {
-  DiscoverableStreamsSortType,
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import type {
   ProjectUpdateInput,
-  SortDirection,
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
-import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
+import {
+  DiscoverableStreamsSortType,
+  SortDirection
+} from '@/modules/core/graph/generated/graphql'
+import type { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
 import {
   decodeCompositeCursor,
   decodeCursor,
@@ -49,7 +52,7 @@ import {
 } from '@/modules/shared/helpers/dbHelper'
 import dayjs from 'dayjs'
 import cryptoRandomString from 'crypto-random-string'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import {
   isProjectCreateInput,
   mapGqlToDbProjectVisibility
@@ -61,16 +64,16 @@ import {
 } from '@/modules/core/errors/stream'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import {
+import type {
   DeleteProjectRole,
   UpdateProject,
   UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
-import {
+import type {
   StreamWithCommitId,
   StreamWithOptionalRole
 } from '@/modules/core/domain/streams/types'
-import {
+import type {
   StoreStream,
   GetCommitStream,
   GetCommitStreams,
@@ -108,7 +111,8 @@ import {
   GetStreamsCollaborators,
   GetStreamsCollaboratorCounts,
   GetImplicitUserProjectsCountFactory,
-  GrantProjectPermissions
+  GrantProjectPermissions,
+  GetExplicitProjects
 } from '@/modules/core/domain/streams/operations'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
 import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
@@ -1488,4 +1492,47 @@ export const getImplicitUserProjectsCountFactory =
 
     const [{ count }] = await q
     return parseInt(count)
+  }
+
+/**
+ * Batch the explicit projects givent by the workspace, the user or both
+ */
+export const getExplicitProjects =
+  (deps: { db: Knex }): GetExplicitProjects =>
+  async ({ limit, cursor, filter: { userId, workspaceId } }) => {
+    if (!userId && !workspaceId) throw new LogicError('A filter must be provided')
+
+    const cursorTarget = Streams.col.id
+    const q = tables
+      .streams(deps.db)
+      .select<StreamWithOptionalRole[]>([
+        ...Object.values(Streams.col),
+        ...(userId ? [StreamAcl.col.role] : [])
+      ])
+      .limit(limit)
+      .orderBy(cursorTarget, 'desc')
+
+    if (userId) {
+      q.join(StreamAcl.name, (j) => {
+        j.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
+          StreamAcl.col.userId,
+          userId
+        )
+      })
+    }
+
+    if (cursor) {
+      q.where(cursorTarget, '<', decodeCursor(cursor))
+    }
+
+    if (workspaceId) {
+      q.where(Streams.col.workspaceId, workspaceId)
+    }
+
+    const rows = await q
+
+    return {
+      items: rows,
+      cursor: rows.length ? encodeCursor(rows[rows.length - 1].id) : null
+    }
   }

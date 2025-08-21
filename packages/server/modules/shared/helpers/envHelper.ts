@@ -1,7 +1,8 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { has, trimEnd } from 'lodash-es'
 import * as Environment from '@speckle/shared/environment'
-import { ensureError, Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
 
 export function getStringFromEnv(
   envVarKey: string,
@@ -127,28 +128,6 @@ export const previewServiceShouldUsePrivateObjectsServerUrl = (): boolean => {
 
 export const fileImportServiceShouldUsePrivateObjectsServerUrl = (): boolean => {
   return getBooleanFromEnv('FILEIMPORT_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL')
-}
-
-export const getFileImportServiceRhinoParserRedisUrl = (): string | undefined => {
-  return getStringFromEnv('FILEIMPORT_SERVICE_RHINO_REDIS_URL', { unsafe: true })
-}
-
-export const getFileImportServiceRhinoQueueName = (): string => {
-  return (
-    getStringFromEnv('FILEIMPORT_SERVICE_RHINO_QUEUE_NAME', { unsafe: true }) ||
-    'fileimport-service-jobs'
-  )
-}
-
-export const getFileImportServiceIFCParserRedisUrl = (): string | undefined => {
-  return getStringFromEnv('FILEIMPORT_SERVICE_IFC_REDIS_URL', { unsafe: true })
-}
-
-export const getFileImportServiceIFCQueueName = (): string => {
-  return (
-    getStringFromEnv('FILEIMPORT_SERVICE_IFC_QUEUE_NAME', { unsafe: true }) ||
-    'fileimport-service-jobs'
-  )
 }
 
 export const getPreviewServiceRedisUrl = (): string | undefined => {
@@ -534,3 +513,14 @@ export const getPreviewServiceMaxQueueBackpressure = (): number => {
 export const emailVerificationTimeoutMinutes = (): number => {
   return getIntFromEnv('EMAIL_VERIFICATION_TIMEOUT_MINUTES', '5')
 }
+
+export function getAutodeskIntegrationClientId() {
+  return getStringFromEnv('AUTODESK_INTEGRATION_CLIENT_ID')
+}
+
+export function getAutodeskIntegrationClientSecret() {
+  return getStringFromEnv('AUTODESK_INTEGRATION_CLIENT_SECRET')
+}
+
+export const areSavedViewsEnabled = (): boolean =>
+  getFeatureFlags().FF_SAVED_VIEWS_ENABLED

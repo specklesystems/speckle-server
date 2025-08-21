@@ -1,0 +1,19 @@
+extend type ProjectPermissionChecks {
+  canCreateSavedView: PermissionCheckResult!
+}
+
+type SavedViewPermissionChecks {
+  canUpdate: PermissionCheckResult!
+}
+
+extend type SavedView {
+  permissions: SavedViewPermissionChecks!
+}
+
+type SavedViewGroupPermissionChecks {
+  canUpdate: PermissionCheckResult!
+}
+
+extend type SavedViewGroup {
+  permissions: SavedViewGroupPermissionChecks!
+}

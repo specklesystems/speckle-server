@@ -1,4 +1,4 @@
-import { Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import type express from 'express'
 import type http from 'http'
 

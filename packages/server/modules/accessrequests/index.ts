@@ -3,7 +3,7 @@ import { moduleLogger } from '@/observability/logging'
 import { initializeEventListenerFactory } from '@/modules/accessrequests/services/eventListener'
 import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
 import { publishNotification } from '@/modules/notifications/services/publication'
-import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 
 let quitListeners: Optional<() => void> = undefined

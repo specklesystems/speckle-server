@@ -10,19 +10,23 @@ export class CacheWriter implements Queue<Item> {
   #writeQueue: BatchingQueue<Item> | undefined
   #database: Database
   #defermentManager: DefermentManager
+  #requestItem: (id: string) => void
   #logger: CustomLogger
   #options: CacheOptions
   #disposed = false
 
   constructor(
     database: Database,
+    logger: CustomLogger,
     defermentManager: DefermentManager,
-    options: CacheOptions
+    options: CacheOptions,
+    requestItem: (id: string) => void
   ) {
     this.#database = database
-    this.#defermentManager = defermentManager
     this.#options = options
-    this.#logger = options.logger || ((): void => {})
+    this.#logger = logger
+    this.#defermentManager = defermentManager
+    this.#requestItem = requestItem
   }
 
   add(item: Item): void {
@@ -35,20 +39,23 @@ export class CacheWriter implements Queue<Item> {
         }
       })
     }
-    this.#defermentManager.undefer(item)
     this.#writeQueue.add(item.baseId, item)
+    this.#defermentManager.undefer(item, this.#requestItem)
   }
 
   async writeAll(items: Item[]): Promise<void> {
     const start = performance.now()
     await this.#database.saveBatch({ batch: items })
-    this.#logger('writeBatch: left, time', items.length, performance.now() - start)
+    this.#logger(
+      `writeBatch: wrote ${items.length}, time ${
+        performance.now() - start
+      } ms left ${this.#writeQueue?.count()}`
+    )
   }
 
   async disposeAsync(): Promise<void> {
-    this.#writeQueue?.dispose()
     this.#disposed = true
-    return Promise.resolve()
+    await this.#writeQueue?.disposeAsync()
   }
 
   get isDisposed(): boolean {

@@ -43,6 +43,10 @@ input ApiTokenCreateInput {
   scopes: [String!]!
   name: String!
   lifespan: BigInt
+  """
+  Optionally limit the token to only have access to specific resources
+  """
+  limitResources: [TokenResourceIdentifierInput!]
 }
 
 input AppTokenCreateInput {

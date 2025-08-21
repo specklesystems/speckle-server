@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-imports */
 /* istanbul ignore file */
-import { packageRoot } from './bootstrap.js'
+import { packageRoot, isTsMode } from './bootstrap.js'
 import fs from 'fs'
 import path from 'path'
 import {
@@ -10,16 +10,14 @@ import {
   isDevOrTestEnv,
   postgresConnectionAcquireTimeoutMillis,
   postgresConnectionCreateTimeoutMillis,
-  knexAsyncStackTracesEnabled
+  knexAsyncStackTracesEnabled,
+  isDevEnv
 } from '@/modules/shared/helpers/envHelper'
 import { dbLogger as logger } from '@/observability/logging'
-import { Knex } from 'knex'
-import {
-  createKnexConfig,
-  configureKnexClient,
-  KnexConfigArgs,
-  RegionServerConfig
-} from '@speckle/shared/environment/db'
+import type { Knex } from 'knex'
+import type { KnexConfigArgs, RegionServerConfig } from '@speckle/shared/environment/db'
+import { createKnexConfig, configureKnexClient } from '@speckle/shared/environment/db'
+import { SpeckleFsMigrations } from '@/modules/core/configs/knexMigrations'
 
 function walk(dir: string) {
   let results: string[] = []
@@ -35,13 +33,10 @@ function walk(dir: string) {
   return results
 }
 
-// Always read migrations from /dist, otherwise we risk the same migration being applied twice
-// once with the .ts extension and the 2nd time with the .js one
-// The only exception is when running tests in the test DB, cause the stakes are way lower there and we always
-// run them through ts-node anyway, so it doesn't make sense forcing the app to be built
+// when running w/ TS, run migrations from source code, otherwise from dist
 const migrationModulesDir = path.resolve(
   packageRoot,
-  isTestEnv() ? './modules' : './dist/modules'
+  isTsMode ? './modules' : './dist/modules'
 )
 const migrationDirsExist = fs.existsSync(migrationModulesDir)
 if (!migrationDirsExist && !ignoreMissingMigrations()) {
@@ -79,8 +74,10 @@ if (env.POSTGRES_USER && env.POSTGRES_PASSWORD) {
 
 const configArgs: KnexConfigArgs = {
   migrationDirs,
+  migrationSource: new SpeckleFsMigrations({ migrationDirs }),
   isTestEnv: isTestEnv(),
   isDevOrTestEnv: isDevOrTestEnv(),
+  isDevEnv: isDevEnv(),
   applicationName: 'speckle_server',
   logger,
   maxConnections: postgresMaxConnections(),

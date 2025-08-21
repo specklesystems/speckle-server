@@ -1,5 +1,5 @@
 import { AutomationRunEvents } from '@/modules/automate/domain/events'
-import {
+import type {
   GetFunctionRun,
   UpdateAutomationRun,
   UpsertAutomationFunctionRun
@@ -8,12 +8,12 @@ import {
   FunctionRunReportStatusError,
   FunctionRunNotFoundError
 } from '@/modules/automate/errors/runs'
-import {
+import type {
   AutomationFunctionRunRecord,
-  AutomationRunStatus,
-  AutomationRunStatuses
+  AutomationRunStatus
 } from '@/modules/automate/helpers/types'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { AutomationRunStatuses } from '@/modules/automate/helpers/types'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { Automate } from '@speckle/shared'
 
 const AutomationRunStatusOrder: { [key in AutomationRunStatus]: number } = {

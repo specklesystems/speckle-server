@@ -1,11 +1,12 @@
 import bcrypt from 'bcrypt'
 import crs from 'crypto-random-string'
-import {
+import type {
   TokenResourceAccessRecord,
   TokenValidationResult
 } from '@/modules/core/helpers/types'
-import { Optional, Scopes, ServerScope } from '@speckle/shared'
-import {
+import type { Optional, ServerScope } from '@speckle/shared'
+import { Scopes } from '@speckle/shared'
+import type {
   CountProjectEmbedTokens,
   CreateAndStoreAppToken,
   CreateAndStoreEmbedToken,
@@ -23,17 +24,16 @@ import {
   StoreTokenResourceAccessDefinitions,
   StoreTokenScopes,
   StoreUserServerAppToken,
+  TokenResourceIdentifierInput,
   UpdateApiToken,
   ValidateToken
 } from '@/modules/core/domain/tokens/operations'
-import { GetTokenAppInfo } from '@/modules/auth/domain/operations'
-import { GetUserRole } from '@/modules/core/domain/users/operations'
+import type { GetTokenAppInfo } from '@/modules/auth/domain/operations'
+import type { GetUserRole } from '@/modules/core/domain/users/operations'
 import { TokenCreateError } from '@/modules/core/errors/user'
 import cryptoRandomString from 'crypto-random-string'
-import {
-  EmbedApiToken,
-  TokenResourceIdentifierType
-} from '@/modules/core/domain/tokens/types'
+import type { EmbedApiToken } from '@/modules/core/domain/tokens/types'
+import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import {
   createGetParamFromResources,
   parseUrlParameters
@@ -129,13 +129,15 @@ export const createPersonalAccessTokenFactory =
     userId: string,
     name: string,
     scopes: ServerScope[],
-    lifespan?: number | bigint
+    lifespan?: number | bigint,
+    limitResources?: TokenResourceIdentifierInput[] | null
   ) => {
     const { id, token } = await createTokenFactory(deps)({
       userId,
       name,
       scopes,
-      lifespan
+      lifespan,
+      limitResources
     })
 
     // Store the relationship

@@ -17,15 +17,8 @@ import { once } from 'events'
 import type http from 'http'
 import type express from 'express'
 import type net from 'net'
-import {
-  ensureError,
-  MaybeAsync,
-  MaybeNullOrUndefined,
-  Nullable,
-  retry,
-  TIME_MS,
-  wait
-} from '@speckle/shared'
+import type { MaybeAsync, MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import { ensureError, retry, TIME_MS, wait } from '@speckle/shared'
 import {
   getAvailableRegionKeysFactory,
   getFreeRegionKeysFactory
@@ -42,16 +35,18 @@ import {
   getRegisteredRegionClients,
   initializeRegion
 } from '@/modules/multiregion/utils/dbSelector'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-import { ApolloServer } from '@apollo/server'
-import { ReadinessHandler } from '@/healthchecks/types'
+import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import type { ApolloServer } from '@apollo/server'
+import type { ReadinessHandler } from '@/healthchecks/types'
 import { set } from 'lodash-es'
 import { fixStackTrace } from '@/test/speckle-helpers/error'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 import * as mocha from 'mocha'
+import { getStalePreparedTransactionsFactory } from '@/modules/multiregion/repositories/transactions'
+import { rollbackPreparedTransaction } from '@/modules/shared/helpers/dbHelper'
 
 // Register chai plugins
 chai.use(chaiAsPromised)
@@ -264,6 +259,13 @@ const resetSchemaFactory =
 
     const resetPubSub = resetPubSubFactory(deps)
     const truncate = truncateTablesFactory(deps)
+
+    const pendingTransactions = await getStalePreparedTransactionsFactory({
+      db: deps.db
+    })({ interval: '1 second' })
+    await Promise.all(
+      pendingTransactions.map(({ gid }) => rollbackPreparedTransaction(deps.db, gid))
+    )
 
     await unlockFactory(deps)()
     await resetPubSub()

@@ -1,4 +1,4 @@
-{{- if (and .Values.ifc_import_service.enabled .Values.featureFlags.backgroundJobsEnabled) }}
+{{- if .Values.ifc_import_service.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -30,14 +30,33 @@ spec:
           - name: metrics
             containerPort: 9093
             protocol: TCP
+          - name: healthz
+            containerPort: 9080
+            protocol: TCP
 
-        # TODO: Enable health checks
-        # livenessProbe:
-        #   initialDelaySeconds: 60
-        #   periodSeconds: 60
-        #   httpGet:
-        #     path: /healthz
-        #     port: 9080
+        startupProbe:
+          periodSeconds: 10
+          failureThreshold: 18 # 10 * 18 = 180s to startup
+          timeoutSeconds: 3
+          httpGet:
+            path: /healthz
+            port: 9080
+
+        livenessProbe:
+          initialDelaySeconds: 60
+          periodSeconds: 60
+          timeoutSeconds: 3
+          httpGet:
+            path: /healthz
+            port: 9080
+
+        readinessProbe:
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          httpGet:
+            path: /healthz
+            port: 9080
 
         resources:
           {{- with .Values.ifc_import_service.requests }}
@@ -87,10 +106,6 @@ spec:
 
           - name: FILE_IMPORT_TIME_LIMIT_MIN
             value: {{ .Values.file_import_time_limit_min | quote }}
-          {{- if .Values.featureFlags.experimentalIfcImporterEnabled }}
-          - name: FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED
-            value: {{ .Values.featureFlags.experimentalIfcImporterEnabled | quote }}
-          {{- end }}
           {{- with .Values.ifc_import_service.additionalEnvVars }}
           {{- toYaml . | nindent 10}}
           {{- end }}

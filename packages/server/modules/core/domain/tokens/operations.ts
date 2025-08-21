@@ -1,4 +1,4 @@
-import {
+import type {
   ApiToken,
   EmbedApiToken,
   EmbedApiTokenWithMetadata,
@@ -8,9 +8,9 @@ import {
   TokenScope,
   UserServerAppToken
 } from '@/modules/core/domain/tokens/types'
-import { TokenValidationResult } from '@/modules/core/helpers/types'
-import { NullableKeysToOptional, Optional, ServerScope } from '@speckle/shared'
-import { SetOptional } from 'type-fest'
+import type { TokenValidationResult } from '@/modules/core/helpers/types'
+import type { NullableKeysToOptional, Optional, ServerScope } from '@speckle/shared'
+import type { SetOptional } from 'type-fest'
 
 export type StoreApiToken = (
   token: SetOptional<
@@ -104,7 +104,8 @@ export type CreateAndStorePersonalAccessToken = (
   userId: string,
   name: string,
   scopes: ServerScope[],
-  lifespan?: number | bigint
+  lifespan?: number | bigint,
+  limitResources?: TokenResourceIdentifierInput[] | null
 ) => Promise<string>
 
 export type CreateAndStoreEmbedToken = (args: {

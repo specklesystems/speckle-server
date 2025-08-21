@@ -64,7 +64,7 @@
         />
       </template>
       <template #joined="{ item }">
-        <span class="text-foreground-2">
+        <span class="text-foreground">
           {{ formattedFullDate(item.joinDate) }}
         </span>
       </template>
@@ -88,7 +88,7 @@
           {{ item.projectRoles.length }}
           {{ item.projectRoles.length === 1 ? 'project' : 'projects' }}
         </FormButton>
-        <div v-else class="text-foreground-2 max-w-max text-body-2xs select-none">
+        <div v-else class="text-foreground max-w-max text-body-2xs select-none">
           {{ item.projectRoles.length }}
           {{ item.projectRoles.length === 1 ? 'project' : 'projects' }}
         </div>
@@ -133,6 +133,7 @@ const props = defineProps<{
   workspaceSlug: string
 }>()
 
+const { formattedFullDate } = useDateFormatters()
 const { result } = useQuery(settingsWorkspacesMembersTableQuery, () => ({
   slug: props.workspaceSlug
 }))

@@ -1,5 +1,8 @@
-import { GetUserCredits, UpsertUserCredits } from '@/modules/gendo/domain/operations'
-import { UserCredits } from '@/modules/gendo/domain/types'
+import type {
+  GetUserCredits,
+  UpsertUserCredits
+} from '@/modules/gendo/domain/operations'
+import type { UserCredits } from '@/modules/gendo/domain/types'
 import { InsufficientGendoRenderCreditsError } from '@/modules/gendo/errors/main'
 import dayjs from 'dayjs'
 

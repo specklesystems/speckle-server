@@ -7,17 +7,14 @@ import { completeCheckoutSessionFactory } from '@/modules/gatekeeper/services/ch
 import { expectToThrow } from '@/test/assertionHelper'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import {
+import type {
   CheckoutSession,
   SubscriptionData,
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
 import { omit } from 'lodash-es'
-import {
-  PaidWorkspacePlan,
-  PaidWorkspacePlans,
-  WorkspacePlanBillingIntervals
-} from '@speckle/shared'
+import type { PaidWorkspacePlan, WorkspacePlanBillingIntervals } from '@speckle/shared'
+import { PaidWorkspacePlans } from '@speckle/shared'
 import { startCheckoutSessionFactory } from '@/modules/gatekeeper/services/checkout/startCheckoutSession'
 import { NotFoundError } from '@/modules/shared/errors'
 import { buildTestWorkspacePlan } from '@/modules/gatekeeper/tests/helpers/workspacePlan'

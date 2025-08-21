@@ -28,8 +28,9 @@ import {
   updateUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { expectToThrow } from '@/test/assertionHelper'
-import { MaybeNullOrUndefined } from '@speckle/shared'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
 import { UserEmails, Users } from '@/modules/core/dbSchema'
 import { UserEmailPrimaryUnverifiedError } from '@/modules/core/errors/userEmails'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'

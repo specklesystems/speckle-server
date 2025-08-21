@@ -1,20 +1,20 @@
-import { DefaultAppWithUnwrappedScopes } from '@/modules/auth/defaultApps'
-import {
+import type { DefaultAppWithUnwrappedScopes } from '@/modules/auth/defaultApps'
+import type {
   FullServerApp,
   ServerAppListItem,
   UserServerApp
 } from '@/modules/auth/domain/types'
-import { ScopeRecord } from '@/modules/auth/helpers/types'
-import {
+import type { ScopeRecord } from '@/modules/auth/helpers/types'
+import type {
   AuthorizationCodeRecord,
   RefreshTokenRecord
 } from '@/modules/auth/repositories'
-import { ServerAppRecord } from '@/modules/core/helpers/types'
-import { MarkNullableOptional } from '@/modules/shared/helpers/typeHelper'
-import { Optional, ServerScope } from '@speckle/shared'
-import { SetOptional } from 'type-fest'
+import type { ServerAppRecord } from '@/modules/core/helpers/types'
+import type { MarkNullableOptional } from '@/modules/shared/helpers/typeHelper'
+import type { Optional, ServerScope } from '@speckle/shared'
+import type { SetOptional } from 'type-fest'
 import type { Handler } from 'express'
-import { Strategy, AuthenticateOptions } from 'passport'
+import type { Strategy, AuthenticateOptions } from 'passport'
 
 export type GetApp = (params: { id: string }) => Promise<FullServerApp | null>
 

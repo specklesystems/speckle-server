@@ -22,4 +22,4 @@ COPY --link --from=builder /aiven-extras/aiven_extras.so /usr/local/lib/postgres
 
 EXPOSE 5432
 
-CMD ["postgres"]
+CMD ["postgres", "-c", "max_prepared_transactions=150"]

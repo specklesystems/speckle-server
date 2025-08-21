@@ -1,5 +1,5 @@
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
-import { CommentRecord } from '@/modules/comments/helpers/types'
+import type { CommentRecord } from '@/modules/comments/helpers/types'
 import {
   insertCommentLinksFactory,
   insertCommentsFactory,
@@ -8,6 +8,7 @@ import {
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
 import { createCommentThreadAndNotifyFactory } from '@/modules/comments/services/management'
 import {
+  getBranchesByIdsFactory,
   getBranchLatestCommitsFactory,
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
@@ -16,11 +17,15 @@ import {
   getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import {
+  getModelHomeSavedViewFactory,
+  getSavedViewFactory
+} from '@/modules/viewer/repositories/savedViews'
 import {
   getViewerResourceGroupsFactory,
   getViewerResourceItemsUngroupedFactory
-} from '@/modules/core/services/commit/viewerResources'
-import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+} from '@/modules/viewer/services/viewerResources'
 import { resourceBuilder } from '@speckle/shared/viewer/route'
 import cryptoRandomString from 'crypto-random-string'
 
@@ -42,7 +47,10 @@ export const createTestComment = async (
         getBranchLatestCommits: getBranchLatestCommitsFactory({ db: projectDb }),
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDb }),
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
-        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb })
+        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb }),
+        getBranchesByIds: getBranchesByIdsFactory({ db: projectDb }),
+        getSavedView: getSavedViewFactory({ db: projectDb }),
+        getModelHomeSavedView: getModelHomeSavedViewFactory({ db: projectDb })
       })
     }),
     validateInputAttachments: validateInputAttachmentsFactory({

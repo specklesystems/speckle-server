@@ -398,6 +398,10 @@ type LimitedWorkspace {
   """
   description: String
   """
+  Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
+  """
+  role: String
+  """
   Optional base64 encoded workspace logo image
   """
   logo: String
@@ -550,11 +554,7 @@ extend type User {
   """
   The last-visited workspace for the given user
   """
-  activeWorkspace: Workspace
-  """
-  Returns `true` if last visited project was "legacy" "personal project" outside of a workspace
-  """
-  isProjectsActive: Boolean
+  activeWorkspace: LimitedWorkspace @isOwner
 }
 
 extend type Project {
@@ -689,5 +689,8 @@ type AdminMutations {
 }
 
 extend type ActiveUserMutations {
-  setActiveWorkspace(slug: String, isProjectsActive: Boolean): Boolean!
+  """
+  Either workspace slug or id is accepted. If neither are provided, the active workspace will be unset.
+  """
+  setActiveWorkspace(slug: String, id: String): LimitedWorkspace
 }

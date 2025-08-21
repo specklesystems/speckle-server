@@ -1,4 +1,4 @@
-import { CommandModule } from 'yargs'
+import type { CommandModule } from 'yargs'
 import { cliLogger as logger } from '@/observability/logging'
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
@@ -10,6 +10,7 @@ import {
 import {
   createBranchFactory,
   getBranchByIdFactory,
+  getBranchesByIdsFactory,
   getBranchLatestCommitsFactory,
   getStreamBranchByNameFactory,
   getStreamBranchesByNameFactory,
@@ -35,8 +36,6 @@ import {
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
 import {
-  getViewerResourceGroupsFactory,
-  getViewerResourceItemsUngroupedFactory,
   getViewerResourcesForCommentFactory,
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
@@ -70,6 +69,14 @@ import {
 } from '@/modules/core/repositories/projects'
 import { storeModelFactory } from '@/modules/core/repositories/models'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import {
+  getViewerResourceGroupsFactory,
+  getViewerResourceItemsUngroupedFactory
+} from '@/modules/viewer/services/viewerResources'
+import {
+  getModelHomeSavedViewFactory,
+  getSavedViewFactory
+} from '@/modules/viewer/repositories/savedViews'
 
 const command: CommandModule<
   unknown,
@@ -142,7 +149,10 @@ const command: CommandModule<
         getBranchLatestCommits: getBranchLatestCommitsFactory({ db: projectDb }),
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDb }),
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
-        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb })
+        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb }),
+        getBranchesByIds: getBranchesByIdsFactory({ db: projectDb }),
+        getSavedView: getSavedViewFactory({ db: projectDb }),
+        getModelHomeSavedView: getModelHomeSavedViewFactory({ db: projectDb })
       })
     })
     const getViewerResourcesFromLegacyIdentifiers =

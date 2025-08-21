@@ -4,7 +4,7 @@ import {
   initializeRegisteredRegionClients as initDb
 } from '@/modules/multiregion/utils/dbSelector'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import {
   initializeRegisteredRegionClients as initBlobs,
   isMultiRegionBlobStorageEnabled
@@ -14,6 +14,10 @@ import {
   shutdownQueue,
   startQueue
 } from '@/modules/multiregion/services/queue'
+import { scheduleStalePreparedTransactionCleanup } from '@/modules/multiregion/tasks/pendingTransactions'
+import type cron from 'node-cron'
+
+let scheduledTasks: cron.ScheduledTask[] = []
 
 const multiRegion: SpeckleModule = {
   async init({ isInitial }) {
@@ -38,10 +42,14 @@ const multiRegion: SpeckleModule = {
     if (isInitial) {
       await initializeQueue()
       await startQueue()
+      scheduledTasks = [await scheduleStalePreparedTransactionCleanup()]
     }
   },
   async shutdown() {
     await shutdownQueue()
+    scheduledTasks.forEach((task) => {
+      task.stop()
+    })
   }
 }
 

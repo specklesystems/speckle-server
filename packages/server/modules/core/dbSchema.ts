@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import knex from '@/db/knex'
-import { BaseMetaRecord } from '@/modules/core/helpers/meta'
-import { Knex } from 'knex'
+import type { BaseMetaRecord } from '@/modules/core/helpers/meta'
+import type { Knex } from 'knex'
 import { reduce } from 'lodash-es'
 
 type BaseInnerSchemaConfig<T extends string, C extends string> = {
@@ -51,6 +51,12 @@ type BaseSchemaConfig<BC extends BaseInnerSchemaConfig<any, any>> = BC & {
    * Helper with withoutTablePrefix set to true
    */
   withoutTablePrefix: BC
+
+  /**
+   * Alias to withoutTablePrefix - omits table prefixes from final strings. Useful in UPDATE
+   * queries.
+   */
+  short: BC
 }
 
 type InnerSchemaConfig<
@@ -185,7 +191,8 @@ export function buildTableHelper<
   return {
     ...buildInnerConfig(),
     with: buildInnerConfig,
-    withoutTablePrefix: buildInnerConfig({ withoutTablePrefix: true })
+    withoutTablePrefix: buildInnerConfig({ withoutTablePrefix: true }),
+    short: buildInnerConfig({ withoutTablePrefix: true })
   }
 }
 
@@ -232,7 +239,8 @@ export function buildMetaTableHelper<
   return {
     ...buildInnerMetaConfig(),
     with: buildInnerMetaConfig,
-    withoutTablePrefix: buildInnerMetaConfig({ withoutTablePrefix: true })
+    withoutTablePrefix: buildInnerMetaConfig({ withoutTablePrefix: true }),
+    short: buildInnerMetaConfig({ withoutTablePrefix: true })
   }
 }
 
@@ -524,7 +532,8 @@ export const FileUploads = buildTableHelper('file_uploads', [
   'convertedStatus',
   'convertedLastUpdate',
   'convertedMessage',
-  'convertedCommitId'
+  'convertedCommitId',
+  'performanceData'
 ])
 
 export const ServerAppsScopes = buildTableHelper('server_apps_scopes', [

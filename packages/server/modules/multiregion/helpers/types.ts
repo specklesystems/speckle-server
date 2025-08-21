@@ -1,5 +1,5 @@
-import { Nullable, NullableKeysToOptional } from '@speckle/shared'
-import { SetOptional } from 'type-fest'
+import type { Nullable, NullableKeysToOptional } from '@speckle/shared'
+import type { SetOptional } from 'type-fest'
 
 export type RegionRecord = {
   key: string

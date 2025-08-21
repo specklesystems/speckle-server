@@ -1,18 +1,19 @@
 <template>
   <div>
-    <div v-if="attachmentList.length > 0" class="flex flex-col w-full items-start pt-1">
-      <CommonTextLink
+    <div v-if="attachmentList.length > 0" class="flex flex-col gap-y-1 pt-2">
+      <button
         v-for="attachment in attachmentList"
         :key="attachment.id"
-        class="!text-foreground hover:!text-foreground-2"
+        class="text-foreground hover:text-foreground-2 flex items-center gap-x-1"
         @click="() => onAttachmentClick(attachment)"
       >
-        <PaperClipIcon class="w-4 h-4 mr-1" />
-        <span class="truncate relative text-body-2xs">
+        <Paperclip class="size-3" />
+        <span class="truncate relative text-body-3xs">
           {{ attachment.fileName }}
         </span>
-      </CommonTextLink>
+      </button>
     </div>
+
     <LayoutDialog v-model:open="dialogOpen" max-width="lg" :buttons="dialogButtons">
       <template #header>
         {{ dialogAttachment ? dialogAttachment.fileName : 'Attachment' }}
@@ -33,7 +34,7 @@
             </template>
             <template v-else>
               <span class="inline-flex space-x-4 items-center">
-                <ExclamationTriangleIcon class="w-6 h-6" />
+                <TriangleAlert class="w-6 h-6" />
                 <span>
                   Please note: This file is user-uploaded and has not been scanned for
                   security. Download at your own discretion.
@@ -47,11 +48,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  ArrowDownTrayIcon,
-  ExclamationTriangleIcon,
-  PaperClipIcon
-} from '@heroicons/vue/24/outline'
 import type { Get } from 'type-fest'
 import { ensureError } from '@speckle/shared'
 import type { Nullable, Optional } from '@speckle/shared'
@@ -61,6 +57,7 @@ import { prettyFileSize } from '~~/lib/core/helpers/file'
 import { useFileDownload } from '~~/lib/core/composables/fileUpload'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { LayoutDialogButton } from '@speckle/ui-components'
+import { Download, Paperclip, TriangleAlert } from 'lucide-vue-next'
 
 type AttachmentFile = NonNullable<
   Get<ThreadCommentAttachmentFragment, 'text.attachments[0]'>
@@ -134,7 +131,7 @@ const dialogButtons = computed((): Optional<LayoutDialogButton[]> => {
       ? prettyFileSize(dialogAttachment.value.fileSize)
       : 'Download',
     props: {
-      iconLeft: ArrowDownTrayIcon,
+      iconLeft: Download,
       color: 'outline'
     },
     onClick: () => {

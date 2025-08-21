@@ -11,8 +11,8 @@ import {
   getUserFunctionsFactory,
   regenerateFunctionToken
 } from '@/modules/automate/clients/executionEngine'
+import type { GetProjectAutomationsParams } from '@/modules/automate/repositories/automations'
 import {
-  GetProjectAutomationsParams,
   getAutomationFactory,
   getAutomationRunsItemsFactory,
   getAutomationRunsTotalCountFactory,
@@ -53,10 +53,8 @@ import {
   regenerateFunctionTokenFactory,
   updateFunctionFactory
 } from '@/modules/automate/services/functionManagement'
-import {
-  Resolvers,
-  AutomateRunTriggerType
-} from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { AutomateRunTriggerType } from '@/modules/core/graph/generated/graphql'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import {
@@ -81,14 +79,14 @@ import {
   AutomationNotFoundError,
   FunctionNotFoundError
 } from '@/modules/automate/errors/management'
+import type { FunctionReleaseSchemaType } from '@/modules/automate/helpers/executionEngine'
 import {
-  FunctionReleaseSchemaType,
   dbToGraphqlTriggerTypeMap,
   functionTemplateRepos
 } from '@/modules/automate/helpers/executionEngine'
 import { authorizeResolver } from '@/modules/shared'
+import type { AutomationRevisionFunctionForInputRedaction } from '@/modules/automate/services/encryption'
 import {
-  AutomationRevisionFunctionForInputRedaction,
   getEncryptionKeyPair,
   getEncryptionKeyPairFor,
   getEncryptionPublicKey,

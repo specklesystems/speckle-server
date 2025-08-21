@@ -1,8 +1,6 @@
 import { buildTestProject } from '@/modules/core/tests/helpers/creation'
-import {
-  buildMixpanelFake,
-  MixpanelFakeEventRecord
-} from '@/modules/shared/test/helpers/mixpanel'
+import type { MixpanelFakeEventRecord } from '@/modules/shared/test/helpers/mixpanel'
+import { buildMixpanelFake } from '@/modules/shared/test/helpers/mixpanel'
 import { fileuploadTrackingFactory } from '@/modules/fileuploads/events/eventListener'
 import { buildTestUserWithOptionalRole } from '@/test/authHelper'
 import { MixpanelEvents } from '@/modules/shared/utils/mixpanel'

@@ -578,9 +578,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_MOVE_PROJECT_REGION_ENABLED
   value: {{ .Values.featureFlags.moveProjectRegionEnabled | quote }}
 
-- name: FF_BACKGROUND_JOBS_ENABLED
-  value: {{ .Values.featureFlags.backgroundJobsEnabled | quote }}
-
 {{- if .Values.featureFlags.gatekeeperModuleEnabled }}
 - name: LICENSE_TOKEN
   valueFrom:
@@ -604,8 +601,25 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_FORCE_ONBOARDING
   value: {{ .Values.featureFlags.forceOnboarding | quote }}
 
+- name: FF_SAVED_VIEWS_ENABLED
+  value: {{ .Values.featureFlags.savedViewsEnabled | quote }}
+
 - name: FF_RETRY_ERRORED_PREVIEWS_ENABLED
   value: {{ .Values.featureFlags.retryErroredPreviewsEnabled | quote }}
+
+- name: FF_ACC_INTEGRATION_ENABLED
+  value: {{ .Values.featureFlags.accIntegrationEnabled | quote }}
+
+{{- if .Values.featureFlags.accIntegrationEnabled }}
+- name: AUTODESK_INTEGRATION_CLIENT_ID
+  value: {{ .Values.server.accIntegration.client_id }}
+
+- name: AUTODESK_INTEGRATION_CLIENT_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: {{ default .Values.secretName .Values.server.accIntegration.clientSecret.secretName }}
+      key: {{ default "acc_integration_client_secret" .Values.server.accIntegration.clientSecret.secretKey }}
+{{- end }}
 
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
@@ -793,26 +807,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
     secretKeyRef:
       name: {{ default .Values.secretName .Values.redis.previewServiceConnectionString.secretName }}
       key: {{ default "preview_service_redis_url" .Values.redis.previewServiceConnectionString.secretKey }}
-{{- end }}
-
-{{- if (and .Values.featureFlags.nextGenFileImporterEnabled (not .Values.featureFlags.backgroundJobsEnabled)) }}
-- name: FILEIMPORT_SERVICE_RHINO_REDIS_URL
-  valueFrom:
-    secretKeyRef:
-      name: {{ default .Values.secretName .Values.redis.fileImportService.rhino.connectionString.secretName }}
-      key: {{ default "fileimport_service_rhino_redis_url" .Values.redis.fileImportService.rhino.connectionString.secretKey }}
-
-- name: FILEIMPORT_SERVICE_RHINO_QUEUE_NAME
-  value: {{ .Values.redis.fileImportService.rhino.queueName | quote }}
-
-- name: FILEIMPORT_SERVICE_IFC_REDIS_URL
-  valueFrom:
-    secretKeyRef:
-      name: {{ default .Values.secretName .Values.redis.fileImportService.ifc.connectionString.secretName }}
-      key: {{ default "fileimport_service_ifc_redis_url" .Values.redis.fileImportService.ifc.connectionString.secretKey }}
-
-- name: FILEIMPORT_SERVICE_IFC_QUEUE_NAME
-  value: {{ .Values.redis.fileImportService.ifc.queueName | quote }}
 {{- end }}
 
 # *** PostgreSQL Database ***
@@ -1137,6 +1131,10 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.openTelemetry.tracing.value | quote }}
 {{- end }}
 
+{{- if .Values.featureFlags.usersInviteScopeIsPublic }}
+- name: FF_USERS_INVITE_SCOPE_IS_PUBLIC
+  value: {{ .Values.featureFlags.usersInviteScopeIsPublic | quote }}
+{{- end }}
 
 {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
 # Multi-region
@@ -1148,17 +1146,19 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
   value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
 {{- end }}
-{{- if .Values.featureFlags.backgroundJobsEnabled }}
+
+{{- if .Values.featureFlags.rhinoFileImporterEnabled }}
+- name: FF_RHINO_FILE_IMPORTER_ENABLED
+  value: {{ .Values.featureFlags.rhinoFileImporterEnabled  | quote }}
+{{- end }}
+
+{{- if .Values.featureFlags.nextGenFileImporterEnabled }}
 - name: FILEIMPORT_QUEUE_POSTGRES_URL
   valueFrom:
     secretKeyRef:
       name: {{ default .Values.secretName .Values.ifc_import_service.db.connectionString.secretName }}
       key: {{ default "fileimport_queue_postgres_url" .Values.ifc_import_service.db.connectionString.secretKey }}
 {{- end }}
-{{- if .Values.featureFlags.largeFileUploadsEnabled }}
-- name: FF_LARGE_FILE_IMPORTS_ENABLED
-  value: {{ .Values.featureFlags.largeFileUploadsEnabled | quote }}
 - name: FILE_UPLOAD_URL_EXPIRY_MINUTES
   value: {{ .Values.file_upload_url_expiry_minutes | quote }}
-{{- end }}
 {{- end }}

@@ -2,73 +2,73 @@
 <template>
   <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
   <div
-    :class="`p-1.5 pb-1 flex flex-col rounded-md
+    :class="`p-1.5 pt-0.5 flex flex-col rounded-md
       ${isOpenInViewer ? 'bg-highlight-2' : ''}
       ${isLimited ? 'cursor-default' : 'cursor-pointer hover:bg-highlight-3'}
     `"
     @click="isLimited ? null : open(thread.id)"
   >
-    <div class="flex w-full items-center">
-      <div class="flex-1 flex flex-col gap-y-1.5">
-        <div class="flex items-center space-x-1.5 select-none">
-          <UserAvatarGroup :users="threadAuthors" size="sm" />
-          <span class="grow truncate text-body-2xs text-foreground">
-            {{ thread.author.name }}
-            <span v-if="threadAuthors.length !== 1">
-              & {{ thread.replyAuthors.totalCount }} others
-            </span>
-          </span>
-        </div>
-        <div
+    <div class="flex-1 flex flex-col gap-y-1">
+      <div class="flex items-center space-x-1.5 justify-between">
+        <UserAvatarGroup :users="threadAuthors" size="sm" />
+        <FormButton
           v-if="!isLimited"
-          class="text-body-2xs text-foreground dark:text-foreground-2 line-clamp-2"
-        >
-          {{ thread.rawText }}
-        </div>
-        <ViewerResourcesLimitAlert v-else limit-type="comment" :project="project" />
-        <div class="text-body-3xs flex items-center space-x-3 text-foreground-3 mb-1">
-          <div
-            v-if="itemStatus.isDifferentVersion || itemStatus.isFederatedModel"
-            class="flex items-center space-x-1"
-          >
-            <div
-              v-if="itemStatus.isDifferentVersion"
-              v-tippy="'Conversation started in a different version.'"
-            >
-              <ClockIcon class="w-4 h-4" />
-            </div>
-            <div
-              v-if="itemStatus.isFederatedModel"
-              v-tippy="'References models not currently loaded.'"
-            >
-              <ExclamationCircleIcon class="w-4 h-4" />
-            </div>
-          </div>
-          <span>
-            {{ thread.replies.totalCount }}
-            {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
-          </span>
-          <span v-tippy="createdAt.full">
-            {{ createdAt.relative }}
-          </span>
-        </div>
+          v-tippy="thread.archived ? 'Unresolve' : 'Resolve'"
+          :icon-left="thread.archived ? CheckCircleIcon : CheckCircleIconOutlined"
+          text
+          hide-text
+          :disabled="!canArchiveOrUnarchive"
+          @click.stop="toggleCommentResolvedStatus()"
+        />
       </div>
-      <FormButton
+      <div class="flex items-center gap-x-1.5 text-body-3xs">
+        <span class="text-foreground">
+          {{ thread.author.name }}
+          <span v-if="threadAuthors.length !== 1">
+            & {{ thread.replyAuthors.totalCount }} others
+          </span>
+        </span>
+
+        <span v-tippy="createdAt.full" class="text-foreground-3">
+          {{ createdAt.relative }}
+        </span>
+      </div>
+      <div
         v-if="!isLimited"
-        v-tippy="thread.archived ? 'Unresolve' : 'Resolve'"
-        :icon-left="thread.archived ? CheckCircleIcon : CheckCircleIconOutlined"
-        text
-        hide-text
-        :disabled="!canArchiveOrUnarchive"
-        @click.stop="toggleCommentResolvedStatus()"
-      />
+        class="text-body-2xs text-foreground dark:text-foreground-2 line-clamp-2 py-1"
+      >
+        {{ thread.rawText }}
+      </div>
+      <ViewerResourcesLimitAlert v-else limit-type="comment" :project="project" />
+      <div class="text-body-3xs flex items-center space-x-1.5 text-foreground-3">
+        <div
+          v-if="itemStatus.isDifferentVersion || itemStatus.isFederatedModel"
+          class="flex items-center space-x-1"
+        >
+          <div
+            v-if="itemStatus.isDifferentVersion"
+            v-tippy="'Conversation started in a different version.'"
+          >
+            <ClockIcon class="size-3 text-foreground-2" />
+          </div>
+          <div
+            v-if="itemStatus.isFederatedModel"
+            v-tippy="'References models not currently loaded.'"
+          >
+            <IconCircleExclamation class="size-3 text-foreground-2" />
+          </div>
+        </div>
+        <span>
+          {{ thread.replies.totalCount }}
+          {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
+        </span>
+      </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { CheckCircleIcon, ClockIcon } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
-import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import type { LoadedCommentThread } from '~~/lib/viewer/composables/setup'
 import {
   useInjectedViewerInterfaceState,
@@ -119,6 +119,7 @@ const open = (id: string) => {
 
 const { calculateThreadResourceStatus } = useCommentContext()
 const itemStatus = computed(() => calculateThreadResourceStatus(props.thread))
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const createdAt = computed(() => {
   return {

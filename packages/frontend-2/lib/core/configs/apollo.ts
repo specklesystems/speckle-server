@@ -200,6 +200,9 @@ function createCache(): InMemoryCache {
           viewerResources: {
             merge: (_existing, incoming) => [...incoming]
           },
+          viewerResourcesExtended: {
+            merge: true
+          },
           model: {
             read(original, { args, toReference }) {
               if (args?.id) {
@@ -220,6 +223,21 @@ function createCache(): InMemoryCache {
           },
           permissions: {
             merge: mergeAsObjectsFunction
+          },
+          savedViewGroups: {
+            keyArgs: ['input', ['limit', 'search', 'onlyAuthored', 'resourceIdString']],
+            merge: buildAbstractCollectionMergeFunction('SavedViewGroupCollection')
+          }
+        }
+      },
+      SavedViewGroup: {
+        fields: {
+          views: {
+            keyArgs: [
+              'input',
+              ['limit', 'search', 'sortBy', 'sortDirection', 'onlyAuthored']
+            ],
+            merge: buildAbstractCollectionMergeFunction('SavedViewCollection')
           }
         }
       },
@@ -300,7 +318,22 @@ function createCache(): InMemoryCache {
       ServerInfo: {
         merge: true
       },
+      ServerConfiguration: {
+        merge: true
+      },
+      WorkspaceSubscription: {
+        merge: true
+      },
       CommentThreadActivityMessage: {
+        merge: true
+      },
+      SavedViewPermissionChecks: {
+        merge: true
+      },
+      ProjectPermissionChecks: {
+        merge: true
+      },
+      ExtendedViewerResources: {
         merge: true
       },
       AutomateFunction: {
@@ -324,7 +357,7 @@ function createCache(): InMemoryCache {
       Workspace: {
         fields: {
           invitedTeam: {
-            merge: (_existing, incoming) => incoming
+            merge: incomingOverwritesExistingMergeFunction
           },
           team: {
             keyArgs: ['limit', 'filter', ['roles', 'search', 'seatType']],
@@ -333,7 +366,10 @@ function createCache(): InMemoryCache {
             )
           },
           plan: {
-            merge: incomingOverwritesExistingMergeFunction
+            merge: mergeAsObjectsFunction
+          },
+          planPrices: {
+            merge: mergeAsObjectsFunction
           },
           projects: {
             keyArgs: ['filter', 'limit'],

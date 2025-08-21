@@ -1,7 +1,8 @@
 import { emailLogger as logger } from '@/observability/logging'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { isEmailEnabled, isTestEnv } from '@/modules/shared/helpers/envHelper'
-import { createTransport, Transporter } from 'nodemailer'
+import type { Transporter } from 'nodemailer'
+import { createTransport } from 'nodemailer'
 
 let transporter: Transporter | undefined = undefined
 

@@ -4,14 +4,14 @@ import {
   getBlobMetadataFactory
 } from '@/modules/blobstorage/repositories'
 import { getFileSizeLimit } from '@/modules/blobstorage/services/management'
-import {
+import type {
   ProjectBlobArgs,
   ProjectBlobsArgs,
   Resolvers,
   StreamBlobArgs,
   StreamBlobsArgs
 } from '@/modules/core/graph/generated/graphql'
-import { StreamGraphQLReturn } from '@/modules/core/helpers/graphTypes'
+import type { StreamGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
   BadRequestError,

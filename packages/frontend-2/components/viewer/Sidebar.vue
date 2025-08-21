@@ -2,77 +2,43 @@
 <template>
   <div
     ref="resizableElement"
-    class="relative sm:absolute z-10 right-0 overflow-hidden w-screen sm:pr-3 sm:pb-3 sm:pt-0"
-    :style="!isSmallerOrEqualSm ? { maxWidth: width + 'px' } : {}"
-    :class="[
-      open ? '' : 'pointer-events-none',
-      isEmbedEnabled === true
-        ? 'sm:top-2 sm:h-[calc(100dvh-3.8rem)]'
-        : 'sm:top-[3.7rem] sm:h-[calc(100dvh-3.8rem)]'
-    ]"
+    class="relative sm:absolute z-10 right-0 overflow-hidden w-screen bottom-0 sm:bottom-auto sm:top-[3.5rem] lg:top-[3rem] sm:right-2 lg:right-0 h-[40dvh] sm:h-[calc(100dvh-8rem)] lg:h-[calc(100dvh-3rem)] sm:max-w-[264px]"
+    :style="isLgOrLarger ? { maxWidth: width + 'px' } : {}"
+    :class="[open ? '' : 'pointer-events-none']"
   >
-    <div
-      class="flex transition-all h-full"
-      :class="open ? '' : 'sm:translate-x-[100%]'"
-    >
+    <div class="flex h-full" :class="open ? '' : 'sm:translate-x-[100%]'">
       <!-- Resize Handle -->
       <div
         ref="resizeHandle"
-        class="hidden sm:flex group relative z-30 hover:z-50 w-6 h-full items-center overflow-hidden -mr-1"
-      >
-        <div
-          class="w-7 h-8 mr-1 bg-primary group-hover:primary-focus rounded-l translate-x-1 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 transition cursor-ew-resize flex items-center justify-center"
-          @mousedown="startResizing"
-        >
-          <ArrowsRightLeftIcon class="h-3 w-3 transition text-foundation" />
-        </div>
-        <div
-          class="relative z-30 w-1 h-full pt-[2.5rem] -ml-1 bg-transparent group-hover:bg-primary cursor-ew-resize transition rounded-l"
-          @mousedown="startResizing"
-        ></div>
-      </div>
-      <div
-        class="flex flex-col w-full h-full relative z-20 overflow-hidden border border-outline-2 rounded-lg shadow"
-      >
-        <!-- Header -->
-        <div
-          class="h-[6.5rem] absolute z-10 top-0 w-full left-0 bg-foundation border-b border-outline-2 sm:rounded-t-md"
-        >
-          <div
-            class="flex items-center justify-between py-1.5 pl-3 pr-1 border-b border-outline-2"
-          >
-            <div v-if="$slots.title" class="text-body-xs text-foreground font-semibold">
-              <slot name="title"></slot>
-            </div>
+        class="absolute h-full max-h-[calc(100dvh-3rem)] w-4 transition border-l sm:rounded-lg lg:rounded-none hover:border-l-[2px] border-outline-2 hover:border-primary hidden lg:flex items-center cursor-ew-resize z-30"
+        @mousedown="startResizing"
+      />
 
-            <FormButton
-              hide-text
-              :icon-left="XMarkIcon"
-              size="sm"
-              color="subtle"
-              @click="onClose"
-            />
-          </div>
-          <div v-if="$slots.actions" class="w-full">
-            <slot name="actions"></slot>
-          </div>
-        </div>
-        <div class="w-full" :class="$slots.actions ? 'h-[7rem]' : 'h-10'"></div>
+      <div
+        class="flex flex-col w-full h-full relative z-20 overflow-hidden sm:rounded-lg lg:rounded-none border-l border-t sm:border lg:border-0 lg:border-l border-outline-2 bg-foundation"
+      >
         <div
-          class="overflow-y-auto simple-scrollbar h-full bg-foundation w-full pt-2 sm:rounded-b-md max-h-[220px] sm:max-h-none"
+          class="h-10 pl-4 pr-2 flex items-center justify-between border-b border-outline-2"
         >
-          <slot></slot>
+          <div class="text-body-xs text-foreground font-medium leading-none">
+            <slot name="title" />
+          </div>
+          <slot name="actions" />
+        </div>
+        <div class="simple-scrollbar overflow-y-auto h-full flex-1">
+          <slot />
+        </div>
+        <div v-if="$slots.footer" class="py-2 px-4 border-t border-outline-2">
+          <slot name="footer" />
         </div>
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useEventListener } from '@vueuse/core'
-import { XMarkIcon, ArrowsRightLeftIcon } from '@heroicons/vue/24/outline'
-import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
-import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { ref, onMounted } from 'vue'
+import { useEventListener, useBreakpoints } from '@vueuse/core'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 defineProps<{
   open: boolean
@@ -80,17 +46,18 @@ defineProps<{
 
 const emit = defineEmits<{
   (event: 'close'): void
+  (event: 'width-change', width: number): void
 }>()
 
 const resizableElement = ref(null)
 const resizeHandle = ref(null)
 const isResizing = ref(false)
-const width = ref(300)
+const width = ref(280)
 let startWidth = 0
 let startX = 0
 
-const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
-const { isEnabled: isEmbedEnabled } = useEmbed()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isLgOrLarger = breakpoints.greaterOrEqual('lg')
 
 const startResizing = (event: MouseEvent) => {
   event.preventDefault()
@@ -105,10 +72,12 @@ if (import.meta.client) {
   useEventListener(document, 'mousemove', (event) => {
     if (isResizing.value) {
       const diffX = startX - event.clientX
-      width.value = Math.max(
-        300,
-        Math.min(startWidth + diffX, (parseInt('75vw') * window.innerWidth) / 100)
+      const newWidth = Math.max(
+        280,
+        Math.min(startWidth + diffX, Math.min(440, window.innerWidth * 0.5 - 60))
       )
+      width.value = newWidth
+      emit('width-change', newWidth)
     }
   })
 
@@ -119,12 +88,7 @@ if (import.meta.client) {
   })
 }
 
-const minimize = () => {
-  width.value = 300
-}
-
-const onClose = () => {
-  minimize()
-  emit('close')
-}
+onMounted(() => {
+  emit('width-change', width.value)
+})
 </script>

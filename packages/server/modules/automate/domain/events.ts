@@ -1,4 +1,4 @@
-import {
+import type {
   AutomationFunctionRunRecord,
   AutomationRecord,
   AutomationRunRecord,
@@ -7,7 +7,7 @@ import {
   BaseTriggerManifest,
   RunTriggerSource
 } from '@/modules/automate/helpers/types'
-import {
+import type {
   InsertableAutomationRun,
   StoredInsertableAutomationRevision
 } from '@/modules/automate/repositories/automations'

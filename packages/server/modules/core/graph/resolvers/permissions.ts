@@ -1,4 +1,4 @@
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Authz } from '@speckle/shared'
 
 export default {
@@ -19,6 +19,9 @@ export default {
   },
   User: {
     permissions: () => ({})
+  },
+  PermissionCheckResult: {
+    errorMessage: (parent) => (parent.authorized ? undefined : parent.message)
   },
   ProjectPermissionChecks: {
     canCreateModel: async (parent, _args, ctx) => {

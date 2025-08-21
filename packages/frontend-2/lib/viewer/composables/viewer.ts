@@ -6,7 +6,7 @@ import type {
 import { CameraEvent, ViewerEvent } from '@speckle/viewer'
 import { isArray, throttle } from 'lodash-es'
 import { until } from '@vueuse/core'
-import { TIME_MS, TimeoutError, timeoutAt } from '@speckle/shared'
+import { TIME_MS, timeoutAt, TimeoutError } from '@speckle/shared'
 import type { MaybeAsync, Nullable } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
@@ -304,16 +304,16 @@ export function useOnViewerLoadComplete(
      */
     initialOnly: boolean
     /**
-     * If true, will trigger the listener after the next isBusy=false event that comes after LoadComplete. Default: true
+     * If true, will trigger the listener after the next loading=false event that comes after LoadComplete. Default: true
      */
-    waitForBusyOver: boolean
+    waitForLoadingOver: boolean
   }>
 ) {
   const {
-    ui: { viewerBusy }
+    ui: { loading: isLoading }
   } = useInjectedViewerState()
   const logger = useLogger()
-  const { initialOnly, waitForBusyOver = true } = options || {}
+  const { initialOnly, waitForLoadingOver = true } = options || {}
 
   const hasRun = ref(false)
 
@@ -324,13 +324,10 @@ export function useOnViewerLoadComplete(
     }
 
     try {
-      await (waitForBusyOver
+      await (waitForLoadingOver
         ? Promise.race([
-            until(viewerBusy).toBe(false),
-            timeoutAt(
-              TIME_MS.second,
-              'Waiting for viewer business to be over post-LoadComplete timed out'
-            )
+            until(isLoading).toBe(false),
+            timeoutAt(TIME_MS.second, 'Waiting for loading to complete timed out')
           ])
         : Promise.resolve())
     } catch (e) {

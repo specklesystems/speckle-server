@@ -6,9 +6,10 @@ import { getAdminUsersList } from '@/test/graphql/users'
 import { buildApolloServer } from '@/app'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { expect } from 'chai'
-import { Optional } from '@/modules/shared/helpers/typeHelper'
+import type { Optional } from '@/modules/shared/helpers/typeHelper'
 import { wait } from '@speckle/shared'
-import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
+import type { ServerAndContext } from '@/test/graphqlHelper'
+import { createAuthedTestContext } from '@/test/graphqlHelper'
 import {
   createStreamFactory,
   getStreamFactory,

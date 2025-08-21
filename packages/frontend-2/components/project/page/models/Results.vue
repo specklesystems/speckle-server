@@ -21,20 +21,22 @@
         :disable-default-links="false"
         @update:loading="finalLoading = $event"
         @clear-search="clearSearch"
-        @model-clicked="(val) => router.push(modelRoute(projectId, val.id))"
+        @model-clicked="onModelClicked"
       />
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import type { SourceAppDefinition } from '@speckle/shared'
+import type { Optional, SourceAppDefinition } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type {
   FormUsersSelectItemFragment,
-  ProjectModelsPageResults_ProjectFragment
+  ProjectModelsPageResults_ProjectFragment,
+  ProjectPageLatestItemsModelItemFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import { modelRoute } from '~~/lib/common/helpers/route'
+import { getModelItemRoute } from '~/lib/projects/helpers/models'
 
 graphql(`
   fragment ProjectModelsPageResults_Project on Project {
@@ -73,5 +75,17 @@ const finalLoading = computed({
 const clearSearch = () => {
   finalSearch.value = ''
   emit('clear-search')
+}
+
+const onModelClicked = (params: {
+  model: Optional<ProjectPageLatestItemsModelItemFragment>
+  id: string
+}) => {
+  const { model, id: modelId } = params
+  if (!model) {
+    return router.push(modelRoute(props.projectId, modelId))
+  }
+
+  return router.push(getModelItemRoute(model))
 }
 </script>

@@ -1,8 +1,6 @@
-import { ProjectCreateArgs } from '@/modules/core/domain/projects/operations'
-import {
-  ProjectVisibility,
-  StreamCreateInput
-} from '@/modules/core/graph/generated/graphql'
+import type { ProjectCreateArgs } from '@/modules/core/domain/projects/operations'
+import type { StreamCreateInput } from '@/modules/core/graph/generated/graphql'
+import { ProjectVisibility } from '@/modules/core/graph/generated/graphql'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { throwUncoveredError } from '@speckle/shared'
 import { has, get } from 'lodash-es'
@@ -45,5 +43,16 @@ export const mapDbToGqlProjectVisibility = (
       return ProjectVisibility.Workspace
     default:
       throwUncoveredError(visibility)
+  }
+}
+
+export const mapGqlToDbSortDirection = (direction: 'ASC' | 'DESC'): 'asc' | 'desc' => {
+  switch (direction) {
+    case 'ASC':
+      return 'asc'
+    case 'DESC':
+      return 'desc'
+    default:
+      throwUncoveredError(direction)
   }
 }

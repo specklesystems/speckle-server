@@ -1,6 +1,7 @@
 <template>
-  <div :class="`${loadProgress < 1 && viewerBusy ? 'mt-0' : '-mt-5'} transition-all`">
+  <div :class="`${loadProgress < 1 && loading ? 'mt-0' : '-mt-5'} transition-all`">
     <div
+      v-show="loading"
       :class="`absolute w-full max-w-screen flex justify-center ${
         !isEmbedEnabled ? 'mt-14' : 'mt-0'
       }  z-50`"
@@ -25,5 +26,5 @@
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 const { isEnabled: isEmbedEnabled } = useEmbed()
-const { viewerBusy, loadProgress } = useInjectedViewerInterfaceState()
+const { loading, loadProgress } = useInjectedViewerInterfaceState()
 </script>

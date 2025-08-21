@@ -1,6 +1,6 @@
 import { defaultFieldResolver } from 'graphql'
 import { mapSchema, MapperKind, getDirective } from '@graphql-tools/utils'
-import { GraphqlDirectiveBuilder } from '@/modules/core/graph/helpers/directiveHelper'
+import type { GraphqlDirectiveBuilder } from '@/modules/core/graph/helpers/directiveHelper'
 import { validateScopesFactory } from '@/modules/shared/services/auth'
 
 const validateScopes = validateScopesFactory()

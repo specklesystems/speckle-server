@@ -6,24 +6,25 @@ import {
   Users,
   knex
 } from '@/modules/core/dbSchema'
-import {
-  ProjectRecordVisibility,
+import type {
   ServerAclRecord,
   StreamAclRecord,
   StreamRecord,
   UserRecord,
   UserWithRole
 } from '@/modules/core/helpers/types'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import type { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { clamp, isArray, omit } from 'lodash-es'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { UserValidationError } from '@/modules/core/errors/user'
-import { Knex } from 'knex'
-import { Roles, ServerRoles } from '@speckle/shared'
+import type { Knex } from 'knex'
+import type { ServerRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
-import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
-import {
+import type { UserWithOptionalRole } from '@/modules/core/domain/users/types'
+import type {
   BulkLookupUsers,
   CountAdminUsers,
   CountUsers,

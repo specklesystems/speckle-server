@@ -5,14 +5,14 @@ import {
   FunctionNotFoundError
 } from '@/modules/automate/errors/management'
 import { functionTemplateRepos } from '@/modules/automate/helpers/executionEngine'
-import {
+import type {
   AutomationRevisionTriggerDefinitionGraphQLReturn,
   AutomationRunTriggerGraphQLReturn
 } from '@/modules/automate/helpers/graphTypes'
 import { VersionCreationTriggerType } from '@/modules/automate/helpers/types'
 import { BranchCommits, Branches, Commits } from '@/modules/core/dbSchema'
 import { AutomateRunStatus } from '@/modules/core/graph/generated/graphql'
-import { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
+import type { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { faker } from '@faker-js/faker'
 import { Automate, isNullOrUndefined, SourceAppNames } from '@speckle/shared'
@@ -259,7 +259,8 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
           canRegenerateToken: () => ({
             authorized: faker.datatype.boolean(),
             code: faker.string.alphanumeric(10),
-            message: faker.lorem.words(10)
+            message: faker.lorem.words(10),
+            payload: null
           })
         },
         AutomateFunctionRelease: {

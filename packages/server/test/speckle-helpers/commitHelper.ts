@@ -20,8 +20,8 @@ import {
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { BasicTestUser } from '@/test/authHelper'
-import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import cryptoRandomString from 'crypto-random-string'
 
 export type BasicTestCommit = {
@@ -119,7 +119,7 @@ export async function createTestCommits(
   })
 
   await ensureObjects(commits)
-  await Promise.all(
+  const newCommits = await Promise.all(
     commits.map(async (c) => {
       const projectDb = await getProjectDbClient({ projectId: c.streamId })
       const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db: projectDb })
@@ -165,11 +165,14 @@ export async function createTestCommits(
       return c
     })
   )
+
+  return newCommits
 }
 
 export async function createTestCommit(
   commit: BasicTestCommit,
   options?: Partial<{ owner: BasicTestUser; stream: BasicTestStream }>
 ) {
-  await createTestCommits([commit], options)
+  const [newCommit] = await createTestCommits([commit], options)
+  return newCommit
 }

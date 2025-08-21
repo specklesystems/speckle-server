@@ -1,29 +1,30 @@
-import {
+import type {
   ActivitySummary,
   StreamActivitySummary
 } from '@/modules/activitystream/domain/types'
-import {
-  StreamActionTypes,
-  StreamResourceTypes,
+import type {
   StreamScopeActivity,
   AllStreamActivityTypes
 } from '@/modules/activitystream/helpers/types'
 import {
-  ProjectRecordVisibility,
-  ServerInfo,
-  UserRecord
-} from '@/modules/core/helpers/types'
+  StreamActionTypes,
+  StreamResourceTypes
+} from '@/modules/activitystream/helpers/types'
+import type { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
+import type {
+  DigestTopic,
+  Digest
+} from '@/modules/notifications/services/handlers/activityDigest'
 import {
   digestMostActiveStream,
   mostActiveComment,
   digestSummaryData,
-  DigestTopic,
   farewell,
   commentMentionSummary,
   digestActiveStreams,
   closingOverview,
-  Digest,
   prepareSummaryEmailFactory
 } from '@/modules/notifications/services/handlers/activityDigest'
 import { expect } from 'chai'

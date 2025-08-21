@@ -1,0 +1,92 @@
+input SavedViewsLoadSettings {
+  """
+  If true, load versions originally specified in the view, rather than the latest ones
+  or ones already being loaded otherwise
+  """
+  loadOriginal: Boolean
+}
+
+type ViewerResourceGroup {
+  """
+  Resource identifier used to refer to a collection of resource items
+  """
+  identifier: String!
+  """
+  Viewer resources that the identifier refers to
+  """
+  items: [ViewerResourceItem!]!
+}
+
+type ViewerResourceItem {
+  """
+  Null if resource represents an object
+  """
+  modelId: String
+  """
+  Null if resource represents an object
+  """
+  versionId: String
+  objectId: String!
+}
+
+type ExtendedViewerResourcesRequest {
+  """
+  Specific id that was requested or null if loaded implicit (undefined req) or nothing (null req)
+  """
+  savedViewId: ID
+}
+
+type ExtendedViewerResources {
+  """
+  The groups of viewer resources themselves
+  """
+  groups: [ViewerResourceGroup!]!
+  """
+  The saved view that was used, if any. Even if no savedViewId was specified, a home view could
+  have been implicitly loaded.
+  """
+  savedView: SavedView
+  """
+  Final/adjusted/resolved resource id string
+  """
+  resourceIdString: String!
+  """
+  Metadata about the request that was made to resolve this.
+  """
+  request: ExtendedViewerResourcesRequest
+}
+
+extend type Project {
+  """
+  Return metadata about resources being requested in the viewer
+  """
+  viewerResources(
+    resourceIdString: String!
+    """
+    If a saved view ID is specified, the returned resources will be adjusted to return the view's resources instead.
+    Even if no saved view ID is specified - if the resourceIdString refers to a model w/ a home view, that home
+    saved view will be implicitly applied.
+    """
+    savedViewId: ID
+    savedViewSettings: SavedViewsLoadSettings
+    loadedVersionsOnly: Boolean = true
+  ): [ViewerResourceGroup!]!
+    @deprecated(
+      reason: "Use viewerResourcesExtended instead. viewerResources() will be removed soon"
+    )
+
+  """
+  Return extended metadata about resources being requested in the viewer
+  """
+  viewerResourcesExtended(
+    resourceIdString: String!
+    """
+    If a saved view ID is specified, the returned resources will be adjusted to return the view's resources instead.
+    Even if no saved view ID is specified - if the resourceIdString refers to a model w/ a home view, that home
+    saved view will be implicitly applied.
+    """
+    savedViewId: ID
+    savedViewSettings: SavedViewsLoadSettings
+    loadedVersionsOnly: Boolean = true
+  ): ExtendedViewerResources!
+}

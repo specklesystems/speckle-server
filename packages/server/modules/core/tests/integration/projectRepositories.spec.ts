@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { Project } from '@/modules/core/domain/streams/types'
+import type { Project } from '@/modules/core/domain/streams/types'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import {
   deleteProjectFactory,

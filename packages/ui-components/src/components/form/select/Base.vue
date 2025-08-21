@@ -243,7 +243,7 @@ import {
   XMarkIcon,
   ExclamationCircleIcon
 } from '@heroicons/vue/20/solid'
-import { debounce, isArray, isObjectLike } from 'lodash'
+import { debounce, isArray, isObjectLike } from '#lodash'
 import type { CSSProperties, PropType, Ref } from 'vue'
 import { computed, onMounted, ref, unref, watch } from 'vue'
 import type { MaybeAsync, Nullable, Optional } from '@speckle/shared'
@@ -761,13 +761,13 @@ const finalItems = computed(() => {
 
 const listboxOptionsClasses = computed(() => {
   const classParts = [
-    'rounded-md bg-foundation py-1 label label--light border border-outline-3 shadow-md mt-1 '
+    'rounded-md bg-foundation py-1 label label--light border border-outline-3 shadow-md'
   ]
 
   if (props.mountMenuOnBody) {
     classParts.push('fixed z-50')
   } else {
-    classParts.push('absolute top-[100%] w-full z-40')
+    classParts.push('absolute top-[100%] w-full z-40 mt-1')
   }
 
   return classParts.join(' ')

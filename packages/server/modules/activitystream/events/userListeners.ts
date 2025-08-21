@@ -1,11 +1,11 @@
-import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
-import { UserRecord } from '@/modules/core/helpers/types'
+import type { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
+import type { UserRecord } from '@/modules/core/helpers/types'
 import {
   StreamActionTypes,
   StreamResourceTypes
 } from '@/modules/activitystream/helpers/types'
-import { SaveStreamActivity } from '@/modules/activitystream/domain/operations'
-import { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
+import type { SaveStreamActivity } from '@/modules/activitystream/domain/operations'
+import type { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
 import { UserEvents } from '@/modules/core/domain/users/events'
 
 const addUserCreatedActivityFactory =
