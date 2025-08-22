@@ -147,7 +147,6 @@ import type { TestEmailListener } from '@/test/speckle-helpers/email'
 import { createEmailListener } from '@/test/speckle-helpers/email'
 import { buildTestProject } from '@/modules/core/tests/helpers/creation'
 import type { GetCommentsQueryVariables } from '@/modules/core/graph/generated/graphql'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -324,7 +323,7 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
-  storeUser: replicateQuery([db], storeUserFactory),
+  storeUser: storeUserFactory({ db }),
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: validateAndCreateUserEmailFactory({

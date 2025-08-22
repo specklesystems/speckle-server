@@ -1,10 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Knex } from 'knex'
 import { postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
-import {
-  EnvironmentResourceError,
-  RegionalTransactionFatalError
-} from '@/modules/shared/errors'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
 import type { MaybeAsync } from '@speckle/shared'
 import { isNonNullable } from '@speckle/shared'
 import { base64Decode, base64Encode } from '@/modules/shared/helpers/cryptoHelper'
@@ -13,9 +10,6 @@ import dayjs from 'dayjs'
 import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import type { SchemaConfig } from '@/modules/core/dbSchema'
 import { has, isObjectLike, isString, mapValues, pick, times } from 'lodash-es'
-import cryptoRandomString from 'crypto-random-string'
-import { logger } from '@/observability/logging'
-import { PromiseAllSettledResultStatus } from '@/modules/shared/domain/constants'
 
 export type Collection<T> = {
   cursor: string | null
@@ -325,84 +319,4 @@ export const rollbackPreparedTransaction = async (
   gid: string
 ): Promise<void> => {
   await db.raw(`ROLLBACK PREPARED '${gid}';`)
-}
-
-/**
- * Indicates that the service function expects the given operation to be regional. Wrap the
- * factory function in `replicateQuery` to satisfy the constraint.
- */
-export type RegionalOperation<F extends (...args: any[]) => Promise<any>> = F & {
-  readonly regional: unique symbol
-}
-
-// TODO: This is messy because of interactions between how knex internals manage connections and the way we use `knex.raw` to prepare transactions
-export const replicateQuery = <F extends (...args: any[]) => Promise<any>>(
-  dbs: [Knex, ...Knex[]], // TODO: should only allow db instances, not transaction contexts!
-  factory: ({ db }: { db: Knex }) => F
-): RegionalOperation<F> => {
-  return (async (...params: Parameters<F>) => {
-    if (dbs.length === 1) {
-      return factory({ db: dbs[0] })(...params) as Promise<ReturnType<F>>
-    }
-
-    const returnValues: ReturnType<F>[] = []
-    const preparedTransactionId = cryptoRandomString({ length: 10 })
-    const preparedTransactions: {
-      knex: Knex
-      preparedTransactionId: string
-    }[] = []
-    const rollbackPreparedTransactions = async () =>
-      Promise.allSettled(
-        preparedTransactions.map(async ({ knex, preparedTransactionId }) => {
-          await rollbackPreparedTransaction(knex, preparedTransactionId)
-        })
-      )
-
-    try {
-      for (const db of dbs) {
-        await db.transaction(async (trx) => {
-          returnValues.push(await factory({ db: trx })(...params))
-          await prepareTransaction(trx, preparedTransactionId)
-          preparedTransactions.push({ knex: db, preparedTransactionId })
-        })
-      }
-    } catch (e) {
-      await rollbackPreparedTransactions()
-
-      throw e
-    }
-
-    // Commit all prepared transactions
-    const results = await Promise.allSettled(
-      preparedTransactions.map(({ knex, preparedTransactionId }) =>
-        commitPreparedTransaction(knex, preparedTransactionId)
-      )
-    )
-
-    const errors = results.filter((result): result is PromiseRejectedResult => {
-      return result.status === PromiseAllSettledResultStatus.rejected
-    })
-
-    if (errors.length > 0) {
-      // Theoretically, we never should reach this point, as once a transaction is prepared successfully, it will commit.
-      logger.error(
-        {
-          params,
-          errors,
-          errorCount: errors.length,
-          resultCount: results.length
-        },
-        `Failed {errorCount} of {resultCount} transactions in 2PC operation.`
-      )
-
-      await rollbackPreparedTransactions()
-
-      throw new RegionalTransactionFatalError(
-        'Failed some or all transactions in 2PC operation.',
-        { gid: '', clients: [] }
-      )
-    }
-
-    return returnValues.at(0) as F
-  }) as unknown as RegionalOperation<F>
 }

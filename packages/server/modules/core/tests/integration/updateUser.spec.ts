@@ -31,7 +31,6 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 import { buildBasicTestUser } from '@/test/authHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
@@ -47,7 +46,7 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
-  storeUser: replicateQuery([db], storeUserFactory),
+  storeUser: storeUserFactory({ db }),
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: validateAndCreateUserEmailFactory({

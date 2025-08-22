@@ -49,7 +49,6 @@ import type { Parser } from 'csv-parse'
 import { parse } from 'csv-parse'
 import { createReadStream } from 'fs'
 import { createObjectsBatchedAndNoClosuresFactory } from '@/modules/core/services/objects/management'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const IS_NODE_22_OR_ABOVE = process.versions.node.split('.').map(Number)[0] >= 22
 
@@ -79,7 +78,7 @@ const findEmail = findEmailFactory({ db })
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
-  storeUser: replicateQuery([db], storeUserFactory),
+  storeUser: storeUserFactory({ db }),
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: createUserEmail,

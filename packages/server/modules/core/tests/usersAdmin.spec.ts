@@ -47,7 +47,6 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { expect } from 'chai'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
 import { queryAllProjectsFactory } from '@/modules/core/services/projects'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 import { getTestRegionClients } from '@/modules/multiregion/tests/helpers'
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })

@@ -55,7 +55,6 @@ import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
 import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 import { getRegisteredRegionClients } from '@/modules/multiregion/utils/dbSelector'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })

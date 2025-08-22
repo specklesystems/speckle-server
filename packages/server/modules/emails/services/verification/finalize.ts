@@ -6,7 +6,6 @@ import type {
 } from '@/modules/emails/domain/operations'
 import type { MarkUserAsVerified } from '@/modules/core/domain/users/operations'
 import type { MarkUserEmailAsVerified } from '@/modules/core/domain/userEmails/operations'
-import type { RegionalOperation } from '@/modules/shared/helpers/dbHelper'
 
 type InitializeStateDeps = {
   getPendingToken: GetPendingToken
@@ -29,7 +28,7 @@ const initializeState =
 type FinalizationState = Awaited<ReturnType<ReturnType<typeof initializeState>>>
 
 type FinalizeVerificationDeps = {
-  markUserAsVerified: RegionalOperation<MarkUserAsVerified>
+  markUserAsVerified: MarkUserAsVerified
   markUserEmailAsVerified: MarkUserEmailAsVerified
   deleteVerifications: DeleteVerifications
 }

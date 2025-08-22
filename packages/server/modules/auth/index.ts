@@ -61,7 +61,6 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
 import { getRegisteredRegionClients } from '@/modules/multiregion/utils/dbSelector'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
@@ -98,7 +97,7 @@ const buildCreateUser = async () => {
   return createUserFactory({
     getServerInfo: getServerInfoFactory({ db }),
     findEmail,
-    storeUser: replicateQuery([db, ...regionDbs], storeUserFactory),
+    storeUser: replicateQuery([db, ...regionDbs], storeUserFactory), // TODO:
     countAdminUsers: countAdminUsersFactory({ db }),
     storeUserAcl: storeUserAclFactory({ db }),
     validateAndCreateUserEmail: validateAndCreateUserEmailFactory({

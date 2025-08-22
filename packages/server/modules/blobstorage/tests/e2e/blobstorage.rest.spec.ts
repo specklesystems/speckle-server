@@ -44,7 +44,6 @@ import cryptoRandomString from 'crypto-random-string'
 import type { BlobStorageItem } from '@/modules/blobstorage/domain/types'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { fileURLToPath } from 'url'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 
@@ -60,7 +59,7 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
-  storeUser: replicateQuery([db], storeUserFactory),
+  storeUser: storeUserFactory({ db }),
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: validateAndCreateUserEmailFactory({

@@ -63,7 +63,6 @@ import {
 } from '@/modules/serverinvites/services/processing'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { authorizeResolver } from '@/modules/shared'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 
 export const initUploadTestEnvironment = () => {
@@ -84,7 +83,7 @@ export const initUploadTestEnvironment = () => {
   const createUser = createUserFactory({
     getServerInfo,
     findEmail,
-    storeUser: replicateQuery([db], storeUserFactory),
+    storeUser: storeUserFactory({ db }),
     countAdminUsers: countAdminUsersFactory({ db }),
     storeUserAcl: storeUserAclFactory({ db }),
     validateAndCreateUserEmail: validateAndCreateUserEmailFactory({

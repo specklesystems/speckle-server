@@ -9,7 +9,7 @@ import {
 import { changePasswordFactory } from '@/modules/core/services/users/management'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { getRegisteredRegionClients } from '@/modules/multiregion/utils/dbSelector'
+import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
 import {
   createTokenFactory,
   deleteTokensFactory,
@@ -17,8 +17,8 @@ import {
 } from '@/modules/pwdreset/repositories'
 import { finalizePasswordResetFactory } from '@/modules/pwdreset/services/finalize'
 import { requestPasswordRecoveryFactory } from '@/modules/pwdreset/services/request'
+import { asMultiregionalOperation } from '@/modules/shared/command'
 import { BadRequestError } from '@/modules/shared/errors'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { ensureError } from '@speckle/shared'
 import type { Express } from 'express'
@@ -57,28 +57,34 @@ export default function (app: Express) {
   app.post('/auth/pwdreset/finalize', async (req, res) => {
     const logger = req.log
     try {
-      const regionClients = await getRegisteredRegionClients()
-      const regionDbs = Object.values(regionClients)
-
-      const finalizePasswordReset = finalizePasswordResetFactory({
-        getUserByEmail,
-        getPendingToken: getPendingTokenFactory({ db }),
-        deleteTokens: deleteTokensFactory({ db }),
-        updateUserPassword: changePasswordFactory({
-          getUser: getUserFactory({ db }),
-          updateUser: replicateQuery([db, ...regionDbs], updateUserFactory)
-        }),
-        deleteExistingAuthTokens: deleteExistingAuthTokensFactory({ db })
-      })
-
       if (!req.body.tokenId || !req.body.password)
         throw new BadRequestError('Invalid request.')
-      await withOperationLogging(
-        async () => await finalizePasswordReset(req.body.tokenId, req.body.password),
+      await asMultiregionalOperation(
+        async ({ dbTx, txs }) => {
+          const finalizePasswordReset = finalizePasswordResetFactory({
+            getUserByEmail,
+            getPendingToken: getPendingTokenFactory({ db: dbTx }),
+            deleteTokens: deleteTokensFactory({ db: dbTx }),
+            updateUserPassword: changePasswordFactory({
+              getUser: getUserFactory({ db: dbTx }),
+              updateUser: async (...params) => {
+                const [res] = await Promise.all(
+                  txs.map((tx) => updateUserFactory({ db: tx })(...params))
+                )
+
+                return res
+              }
+            }),
+            deleteExistingAuthTokens: deleteExistingAuthTokensFactory({ db: dbTx })
+          })
+
+          return await finalizePasswordReset(req.body.tokenId, req.body.password)
+        },
         {
           logger,
-          operationName: 'finalizePasswordReset',
-          operationDescription: `Finalizing password reset`
+          dbs: await getAllRegisteredDbs(),
+          name: 'finalizePasswordReset',
+          description: `Finalizing password reset`
         }
       )
 

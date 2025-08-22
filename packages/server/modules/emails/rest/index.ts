@@ -7,39 +7,39 @@ import {
   deleteVerificationsFactory,
   getPendingTokenFactory
 } from '@/modules/emails/repositories'
-import { db } from '@/db/knex'
 import { markUserAsVerifiedFactory } from '@/modules/core/repositories/users'
-import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
-import { getRegisteredRegionClients } from '@/modules/multiregion/utils/dbSelector'
+import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
+import { asMultiregionalOperation } from '@/modules/shared/command'
 
 export default (app: Express) => {
   app.get('/auth/verifyemail', async (req, res) => {
     const logger = req.log
     try {
-      const regionClients = await getRegisteredRegionClients()
-      const regionDbs = Object.values(regionClients)
+      await asMultiregionalOperation(
+        async ({ dbTx, txs }) => {
+          const finalizeEmailVerification = finalizeEmailVerificationFactory({
+            getPendingToken: getPendingTokenFactory({ db: dbTx }),
+            markUserAsVerified: async (params) => {
+              const [res] = await Promise.all(
+                txs.map((tx) => markUserAsVerifiedFactory({ db: tx })(params))
+              )
+              return res
+            },
+            deleteVerifications: deleteVerificationsFactory({ db: dbTx }),
+            markUserEmailAsVerified: markUserEmailAsVerifiedFactory({
+              updateUserEmail: updateUserEmailFactory({ db: dbTx })
+            })
+          })
 
-      const finalizeEmailVerification = finalizeEmailVerificationFactory({
-        getPendingToken: getPendingTokenFactory({ db }),
-        markUserAsVerified: replicateQuery(
-          [db, ...regionDbs],
-          markUserAsVerifiedFactory
-        ),
-        deleteVerifications: deleteVerificationsFactory({ db }),
-        markUserEmailAsVerified: markUserEmailAsVerifiedFactory({
-          updateUserEmail: updateUserEmailFactory({ db })
-        })
-      })
-
-      await withOperationLogging(
-        async () => await finalizeEmailVerification(req.query.t as Optional<string>),
+          return await finalizeEmailVerification(req.query.t as Optional<string>)
+        },
         {
           logger,
-          operationName: 'finalizeEmailVerification',
-          operationDescription: 'Finalize email verification'
+          dbs: await getAllRegisteredDbs(),
+          name: 'finalizeEmailVerification',
+          description: 'Finalize email verification'
         }
       )
       return res.redirect(
