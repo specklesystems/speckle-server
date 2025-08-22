@@ -1,10 +1,5 @@
 declare global {
   interface Window {
-    __NUXT__?: {
-      apollo?: {
-        [clientKey: string]: Record<string, unknown>
-      }
-    }
     __APOLLO_CLIENT__?: import('@apollo/client/core').ApolloClient<unknown>
 
     DD_RUM?:

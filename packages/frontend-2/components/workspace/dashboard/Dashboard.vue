@@ -59,7 +59,7 @@ const { finalizeWizard } = useWorkspacesWizard()
 const workspaceTitle = ref<string>('')
 
 useHeadSafe({
-  title: workspaceTitle
+  title: () => workspaceTitle.value
 })
 const hasFinalized = ref(false)
 

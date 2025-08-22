@@ -25,7 +25,7 @@ export default defineNuxtPlugin(async (nuxt) => {
     // Restore cached data from SSR
     for (const [key, config] of Object.entries(keyedConfigs)) {
       const cache = config.cache
-      const restorable = window.__NUXT__?.apollo?.[key] || null
+      const restorable = nuxt.payload.apollo?.[key] || null
 
       if (restorable) {
         // Cache is proxified by Vue, gotta undo all that or all hell breaks loose
