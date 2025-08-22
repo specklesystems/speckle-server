@@ -119,37 +119,39 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       ])
     })
 
-    // Send to consola for SSR log streaming
-    const { consola } = await import('consola')
+    // Send to consola for SSR log streaming in dev mode
+    if (import.meta.dev) {
+      const { consola } = await import('consola')
 
-    // (consola exports are sometimes being stripped from build for some reason, hence the extra checks)
-    if (consola) {
-      // remove print to stdout, pino already handles all that
-      consola.setReporters(
-        consola.options.reporters.filter(
-          (r) => get(r, 'constructor.name') !== 'FancyReporter'
+      // (consola exports are sometimes being stripped from build for some reason, hence the extra checks)
+      if (consola) {
+        // remove print to stdout, pino already handles all that
+        consola.setReporters(
+          consola.options.reporters.filter(
+            (r) => get(r, 'constructor.name') !== 'FancyReporter'
+          )
         )
-      )
-      consola.level = consolaLogLevels[logLevel] || 0
+        consola.level = consolaLogLevels[logLevel] || 0
 
-      const unhandledHandler: AbstractUnhandledErrorHandler = ({
-        error,
-        message,
-        isUnhandledRejection
-      }) => {
-        consola.error({ err: error, isUnhandledRejection }, message)
-      }
-      unhandledErrorHandlers.push(unhandledHandler)
+        const unhandledHandler: AbstractUnhandledErrorHandler = ({
+          error,
+          message,
+          isUnhandledRejection
+        }) => {
+          consola.error({ err: error, isUnhandledRejection }, message)
+        }
+        unhandledErrorHandlers.push(unhandledHandler)
 
-      const errorHandler: AbstractLoggerHandler = ({ args, level }) => {
-        // applying pino-like message templating, cause consola doesnt have it
-        // the arg slice is TS appeasement
-        prettifiedLoggerFactory(consola[level])(args[0], ...args.slice(1), {
-          time: dayjs().format('HH:mm:ss.SSS'),
-          separator: '═══════════════════════════════════════════►'
-        })
+        const errorHandler: AbstractLoggerHandler = ({ args, level }) => {
+          // applying pino-like message templating, cause consola doesnt have it
+          // the arg slice is TS appeasement
+          prettifiedLoggerFactory(consola[level])(args[0], ...args.slice(1), {
+            time: dayjs().format('HH:mm:ss.SSS'),
+            separator: '═══════════════════════════════════════════►'
+          })
+        }
+        logHandlers.push(errorHandler)
       }
-      logHandlers.push(errorHandler)
     }
   } else {
     const localTimeFormat = new Intl.DateTimeFormat('en-GB', {
