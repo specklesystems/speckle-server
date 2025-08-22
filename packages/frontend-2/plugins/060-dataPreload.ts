@@ -3,43 +3,19 @@ import {
   authLoginPanelQuery,
   authLoginPanelWorkspaceInviteQuery
 } from '~/lib/auth/graphql/queries'
-import {
-  activeWorkspacePlanPricesQuery,
-  workspacePlanPricesQuery
-} from '~/lib/billing/composables/prices'
 import { usePreloadApolloQueries } from '~/lib/common/composables/graphql'
-import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
-import { serverInfoBlobSizeLimitQuery } from '~/lib/common/graphql/queries'
-import { useMiddlewareQueryFetchPolicy } from '~/lib/core/composables/navigation'
 import { mainServerInfoDataQuery } from '~/lib/core/composables/server'
-import {
-  navigationProjectInvitesQuery,
-  navigationWorkspaceInvitesQuery,
-  navigationWorkspaceSwitcherQuery,
-  workspaceSwitcherHeaderWorkspaceQuery
-} from '~/lib/navigation/graphql/queries'
-import {
-  discoverableWorkspacesQuery,
-  workspacePlanQuery
-} from '~/lib/workspaces/graphql/queries'
-import {
-  buildActiveUserWorkspaceExistenceCheckQuery,
-  buildWorkspaceAccessCheckQuery
-} from '~/lib/workspaces/helpers/middleware'
+import { navigationWorkspaceSwitcherQuery } from '~/lib/navigation/graphql/queries'
 
 /**
  * Prefetches data for specific routes to avoid the problem of serial API requests
  * (e.g. in the case of multiple middlewares)
- *
- * TODO: Some of these could be merged for even further gains
  */
 export default defineNuxtPlugin(async (ctx) => {
   const logger = useLogger()
   const route = ctx._route
   const preload = usePreloadApolloQueries()
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
-  const isBillingEnabled = useIsBillingIntegrationEnabled()
-  const fetchPolicy = useMiddlewareQueryFetchPolicy()
 
   if (!route) {
     logger.info('No route obj found, skipping data preload...')
@@ -54,35 +30,11 @@ export default defineNuxtPlugin(async (ctx) => {
       queries: [
         { query: activeUserQuery },
         { query: mainServerInfoDataQuery },
-        { query: serverInfoBlobSizeLimitQuery },
-        { query: navigationProjectInvitesQuery },
         ...(isWorkspacesEnabled.value
           ? [
-              ...(isBillingEnabled.value
-                ? [
-                    {
-                      query: workspacePlanPricesQuery
-                    }
-                  ]
-                : []),
-              {
-                query: discoverableWorkspacesQuery
-              },
-              {
-                query: navigationWorkspaceInvitesQuery
-              },
               {
                 query: navigationWorkspaceSwitcherQuery
-              },
-              {
-                query: navigationWorkspaceSwitcherQuery,
-                variables: {
-                  joinRequestFilter: {
-                    status: WorkspaceJoinRequestStatus.Pending
-                  }
-                }
-              },
-              buildActiveUserWorkspaceExistenceCheckQuery()
+              }
             ]
           : [])
       ]
@@ -98,40 +50,6 @@ export default defineNuxtPlugin(async (ctx) => {
           { query: authLoginPanelQuery },
           ...(isWorkspacesEnabled.value
             ? [{ query: authLoginPanelWorkspaceInviteQuery }]
-            : [])
-        ]
-      })
-    )
-  }
-
-  // Preload workspace access check
-  const workspaceSlug = route.params.slug as string
-  if (workspaceSlug && isWorkspacesEnabled.value) {
-    promises.push(
-      preload({
-        queries: [
-          buildWorkspaceAccessCheckQuery(workspaceSlug, fetchPolicy(route)),
-          {
-            query: workspacePlanQuery,
-            variables: {
-              slug: workspaceSlug
-            }
-          },
-          {
-            query: workspaceSwitcherHeaderWorkspaceQuery,
-            variables: {
-              slug: workspaceSlug
-            }
-          },
-          ...(isBillingEnabled.value
-            ? [
-                {
-                  query: activeWorkspacePlanPricesQuery,
-                  variables: {
-                    slug: workspaceSlug
-                  }
-                }
-              ]
             : [])
         ]
       })

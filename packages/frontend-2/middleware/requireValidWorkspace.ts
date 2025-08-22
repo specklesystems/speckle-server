@@ -3,30 +3,31 @@ import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
+import { workspaceAccessCheckQuery } from '~~/lib/workspaces/graphql/queries'
 import { useSetActiveWorkspace } from '~/lib/user/composables/activeWorkspace'
-import { buildWorkspaceAccessCheckQuery } from '~/lib/workspaces/helpers/middleware'
-import { useMiddlewareQueryFetchPolicy } from '~/lib/core/composables/navigation'
 
 /**
  * Used to validate that the workspace ID refers to a valid workspace and redirects to 404 if not
  */
-export default defineNuxtRouteMiddleware(async (to, from) => {
+export default defineNuxtRouteMiddleware(async (to) => {
   const workspaceSlug = to.params.slug as string
 
   const client = useApolloClientFromNuxt()
   const { setActiveWorkspace } = useSetActiveWorkspace()
   const { isLoggedIn } = useActiveUser()
-  const fetchPolicy = useMiddlewareQueryFetchPolicy()
 
   const { data, errors } = await client
-    .query(buildWorkspaceAccessCheckQuery(workspaceSlug, fetchPolicy(to, from)))
+    .query({
+      query: workspaceAccessCheckQuery,
+      variables: { slug: workspaceSlug },
+      context: {
+        skipLoggingErrors: true
+      },
+      fetchPolicy: 'network-only'
+    })
     .catch(convertThrowIntoFetchResult)
 
-  if (
-    data?.workspaceBySlug.id &&
-    isLoggedIn.value &&
-    data.workspaceBySlug?.id !== data.activeUser?.activeWorkspace?.id
-  ) {
+  if (data?.workspaceBySlug.id && isLoggedIn.value) {
     await setActiveWorkspace({ slug: workspaceSlug })
   }
 

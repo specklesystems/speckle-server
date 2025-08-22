@@ -3,7 +3,6 @@
 
 import type { Optional } from '@speckle/shared'
 import type * as Observability from '@speckle/shared/observability'
-import dayjs from 'dayjs'
 import {
   upperFirst,
   get,
@@ -34,15 +33,8 @@ export const prettify = (log: object, msg: string) =>
  * and emits bindings if they are provided
  */
 export const prettifiedLoggerFactory =
-  (
-    logger: (...args: unknown[]) => void,
-    bindings?: () => Record<string, unknown>,
-    options?: Partial<{
-      time: boolean
-    }>
-  ) =>
+  (logger: (...args: unknown[]) => void, bindings?: () => Record<string, unknown>) =>
   (...vals: unknown[]) => {
-    const { time } = options || {}
     const finalVals = vals.slice()
 
     const firstObject = finalVals.find((v) => isObjectLike(v) && !Array.isArray(v))
@@ -61,16 +53,7 @@ export const prettifiedLoggerFactory =
       finalVals.push(boundVals)
     }
 
-    logger(
-      ...finalVals,
-      ...(time
-        ? [
-            {
-              time: dayjs().format('HH:mm:ss.SSS')
-            }
-          ]
-        : [])
-    )
+    logger(...finalVals)
   }
 
 export function buildFakePinoLogger(
@@ -80,19 +63,17 @@ export function buildFakePinoLogger(
      * These will not be sent to seq!
      */
     consoleBindings: () => Record<string, unknown>
-    time: boolean
   }>
 ) {
-  const { time = false } = options || {}
   const bindings = options?.consoleBindings
 
   const logger = {
-    debug: prettifiedLoggerFactory(console.debug, bindings, { time }),
-    info: prettifiedLoggerFactory(console.info, bindings, { time }),
-    warn: prettifiedLoggerFactory(console.warn, bindings, { time }),
-    error: prettifiedLoggerFactory(console.error, bindings, { time }),
-    fatal: prettifiedLoggerFactory(console.error, bindings, { time }),
-    trace: prettifiedLoggerFactory(console.trace, bindings, { time }),
+    debug: prettifiedLoggerFactory(console.debug, bindings),
+    info: prettifiedLoggerFactory(console.info, bindings),
+    warn: prettifiedLoggerFactory(console.warn, bindings),
+    error: prettifiedLoggerFactory(console.error, bindings),
+    fatal: prettifiedLoggerFactory(console.error, bindings),
+    trace: prettifiedLoggerFactory(console.trace, bindings),
     silent: noop
   } as unknown as ReturnType<typeof Observability.getLogger>
 

@@ -5,7 +5,6 @@
   "private": true,
   "scripts": {
     "build": "NODE_OPTIONS=--max-old-space-size=8192 nuxt build",
-    "build:prod": "NODE_ENV=production yarn build",
     "build:postinstall": "nuxt prepare",
     "build:sourcemaps": "BUILD_SOURCEMAPS=true yarn build",
     "dev:nuxt": "nuxt dev",

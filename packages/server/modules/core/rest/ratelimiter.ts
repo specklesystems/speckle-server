@@ -1,5 +1,4 @@
 import type { Request, RequestHandler, Response } from 'express'
-import type { RateLimitSuccess } from '@/modules/core/utils/ratelimiter'
 import {
   getActionForPath,
   throwIfRateLimitedFactory,
@@ -9,7 +8,6 @@ import {
 import { getRequestPath } from '@/modules/core/helpers/server'
 import { getTokenFromRequest } from '@/modules/shared/middleware'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
-import type { Nullable } from '@speckle/shared'
 
 export const createRateLimiterMiddleware = (params: {
   rateLimiterEnabled: boolean
@@ -23,21 +21,11 @@ export const createRateLimiterMiddleware = (params: {
     const path = getRequestPath(req) || ''
     const action = getActionForPath(path, req.method)
     const source = getSourceFromRequest(req)
-
-    // For batched GQL, count each batch entry as 1 hit
-    let hit = 1
-    if (action === 'POST /graphql' && Array.isArray(req.body)) {
-      hit = req.body.length
-    }
-
-    let rateLimitResult: Nullable<RateLimitSuccess> = null
-    for (let i = 0; i < hit; i++) {
-      rateLimitResult = await throwIfRateLimited({
-        action,
-        source,
-        handleRateLimitBreachPriorToThrowing: addRateLimitHeadersToResponseFactory(res)
-      })
-    }
+    const rateLimitResult = await throwIfRateLimited({
+      action,
+      source,
+      handleRateLimitBreachPriorToThrowing: addRateLimitHeadersToResponseFactory(res)
+    })
 
     if (res.headersSent) return res
     if (rateLimitResult)

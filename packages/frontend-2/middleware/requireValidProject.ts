@@ -8,7 +8,6 @@ import {
 import { projectAccessCheckQuery } from '~/lib/projects/graphql/queries'
 import { WorkspaceSsoErrorCodes } from '~/lib/workspaces/helpers/types'
 import { useSetActiveWorkspace } from '~/lib/user/composables/activeWorkspace'
-import { useMiddlewareQueryFetchPolicy } from '~/lib/core/composables/navigation'
 
 /**
  * Used in project page to validate that project ID refers to a valid project and redirects to 404 if not
@@ -28,7 +27,8 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   const { setActiveWorkspace } = useSetActiveWorkspace()
   const { isLoggedIn } = useActiveUser()
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
-  const fetchPolicy = useMiddlewareQueryFetchPolicy()
+
+  const isInPlaceNavigation = checkIfIsInPlaceNavigation(to, from)
 
   const { data, errors } = await client
     .query({
@@ -37,7 +37,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
       context: {
         skipLoggingErrors: true
       },
-      fetchPolicy: fetchPolicy(to, from)
+      fetchPolicy: isInPlaceNavigation ? 'cache-first' : 'network-only'
     })
     .catch(convertThrowIntoFetchResult)
 
@@ -81,11 +81,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     }
   }
 
-  if (
-    isLoggedIn.value &&
-    isWorkspacesEnabled.value &&
-    data?.activeUser?.activeWorkspace?.id !== data?.project.workspaceId
-  ) {
+  if (isLoggedIn.value && isWorkspacesEnabled.value && !isInPlaceNavigation) {
     await setActiveWorkspace({ id: data?.project.workspaceId })
   }
 })

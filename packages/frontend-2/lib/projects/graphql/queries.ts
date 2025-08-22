@@ -11,12 +11,6 @@ export const projectAccessCheckQuery = graphql(`
       }
       workspaceId
     }
-    activeUser {
-      id
-      activeWorkspace {
-        id
-      }
-    }
   }
 `)
 

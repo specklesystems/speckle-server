@@ -38,12 +38,7 @@ export const usePreloadApolloQueries = () => {
     const { queries } = params
 
     const promises = queries.map((q) =>
-      client
-        .query({
-          ...q,
-          errorPolicy: 'all'
-        })
-        .catch(convertThrowIntoFetchResult)
+      client.query(q).catch(convertThrowIntoFetchResult)
     )
     return await Promise.all(promises)
   }

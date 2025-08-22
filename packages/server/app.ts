@@ -293,8 +293,7 @@ export async function buildApolloServer(options?: {
     includeStacktraceInErrorResponses,
     status400ForVariableCoercionErrors: true,
     stopOnTerminationSignals: false, // handled by terminus and shutdown function
-    logger: graphqlLogger,
-    allowBatchedHttpRequests: true
+    logger: graphqlLogger
   })
   await server.start()
 
