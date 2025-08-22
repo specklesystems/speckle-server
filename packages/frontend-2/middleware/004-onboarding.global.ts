@@ -14,10 +14,9 @@ import {
 } from '~/lib/common/helpers/route'
 import { mainServerInfoDataQuery } from '~/lib/core/composables/server'
 import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
+import { activeUserWorkspaceExistenceCheckQuery } from '~/lib/auth/graphql/queries'
 import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
-import { buildActiveUserWorkspaceExistenceCheckQuery } from '~/lib/workspaces/helpers/middleware'
-import { useMiddlewareQueryFetchPolicy } from '~/lib/core/composables/navigation'
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
   const isAuthPage = to.path.startsWith('/authn/')
@@ -25,19 +24,21 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   if (isAuthPage || isSSOPath) return
 
   const client = useApolloClientFromNuxt()
-  const fetchPolicy = useMiddlewareQueryFetchPolicy()
+
+  const isInPlaceNavigation = checkIfIsInPlaceNavigation(to, from)
 
   // Fetch required data
   const [{ data: serverInfoData }, { data: userData }] = await Promise.all([
     client
       .query({
-        query: mainServerInfoDataQuery
+        query: mainServerInfoDataQuery,
+        fetchPolicy: isInPlaceNavigation ? 'cache-first' : undefined
       })
       .catch(convertThrowIntoFetchResult),
     client
       .query({
         query: activeUserQuery,
-        fetchPolicy: fetchPolicy(to, from)
+        fetchPolicy: isInPlaceNavigation ? 'cache-first' : undefined
       })
       .catch(convertThrowIntoFetchResult)
   ])
@@ -87,8 +88,13 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
   const { data: workspaceExistenceData } = await client
     .query({
-      ...buildActiveUserWorkspaceExistenceCheckQuery(),
-      fetchPolicy: fetchPolicy(to, from)
+      query: activeUserWorkspaceExistenceCheckQuery,
+      variables: {
+        filter: {
+          personalOnly: true
+        },
+        limit: 0
+      }
     })
     .catch(convertThrowIntoFetchResult)
 

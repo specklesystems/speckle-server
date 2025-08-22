@@ -52,7 +52,8 @@ const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 const { result: workspacePageResult } = useQuery(
   workspacePageQuery,
   () => ({
-    workspaceSlug: route.params.slug as string
+    workspaceSlug: route.params.slug as string,
+    invitesFilter: {}
   }),
   () => ({
     fetchPolicy: pageFetchPolicy.value
