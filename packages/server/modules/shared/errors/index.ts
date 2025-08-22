@@ -163,15 +163,6 @@ export class TestOnlyLogicError extends BaseError {
   static statusCode = 500
 }
 
-const getErrorInfoFromTransactions = (
-  preparedTransactions: { knex: Knex; preparedTransactionId: string }[]
-) => {
-  return preparedTransactions.map(({ knex, preparedTransactionId: gid }) => ({
-    db: retrieveMetadataFromDatabaseClient(knex),
-    gid
-  }))
-}
-
 // 2PC failed and we failed to rollback. A prepared transaction may have been left behind.
 export class RegionalTransactionFatalError extends BaseError {
   static code = 'REGIONAL_TRANSACTION_FATAL_ERROR'
@@ -179,12 +170,13 @@ export class RegionalTransactionFatalError extends BaseError {
   static statusCode = 500
 
   constructor(
-    message?: string | null,
-    preparedTransactions: { knex: Knex; preparedTransactionId: string }[] = []
+    message: string | null,
+    { gid, clients }: { gid: string; clients: Knex[] }
   ) {
     super(message, {
       info: {
-        clients: getErrorInfoFromTransactions(preparedTransactions)
+        gid,
+        dbs: clients.map(retrieveMetadataFromDatabaseClient)
       }
     })
   }

@@ -35,8 +35,8 @@ import {
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
-import { getEventBus } from '@/modules/shared/services/eventBus'
+import { asMultiregionalOperation } from '@/modules/shared/command'
+import { testLogger } from '@/observability/logging'
 import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { faker } from '@faker-js/faker'
 import type { ServerScope } from '@speckle/shared'
@@ -125,24 +125,39 @@ export async function createTestUser(userObj?: Partial<BasicTestUser>) {
     setVal('createdAt', new Date())
   }
 
-  const createUser = createUserFactory({
-    getServerInfo,
-    findEmail,
-    storeUser: replicateQuery(await getTestRegionClients(), storeUserFactory),
-    countAdminUsers: countAdminUsersFactory({ db }),
-    storeUserAcl: storeUserAclFactory({ db }),
-    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-      createUserEmail: createUserEmailFactory({ db }),
-      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-      findEmail,
-      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-      }),
-      requestNewEmailVerification
-    }),
-    emitEvent: getEventBus().emit
-  })
+  const createUser = await asMultiregionalOperation(
+    await getTestRegionClients(),
+    async ({ dbs, main, emit }) => {
+      return createUserFactory({
+        getServerInfo,
+        findEmail,
+        storeUser: async (args) => {
+          const p = await Promise.all(
+            dbs.map(async (db) => storeUserFactory({ db })(args))
+          )
+
+          return p[0]
+        },
+        countAdminUsers: countAdminUsersFactory({ db: main }),
+        storeUserAcl: storeUserAclFactory({ db: main }),
+        validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+          createUserEmail: createUserEmailFactory({ db: main }),
+          ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db: main }),
+          findEmail,
+          updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+            deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db: main }),
+            updateAllInviteTargets: updateAllInviteTargetsFactory({ db: main })
+          }),
+          requestNewEmailVerification
+        }),
+        emitEvent: emit
+      })
+    },
+    {
+      logger: testLogger,
+      name: 'createUser'
+    }
+  )
 
   const id = await createUser(omit(baseUser, ['id', 'allowPersonalEmail']), {
     skipPropertyValidation: true,

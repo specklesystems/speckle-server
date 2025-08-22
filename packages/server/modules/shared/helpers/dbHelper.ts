@@ -358,13 +358,6 @@ export const replicateQuery = <F extends (...args: any[]) => Promise<any>>(
         })
       )
 
-    // Every transaction is prepared
-    // - if a query won't complete, every preparedTransaction is rollbacked (from prepared or unprepared)
-    // - this applies a lock on the rows to be updated to assure that the commit will succeed.
-    // - the transactions once prepared, gets written to disk db and is no longer scoped to the connection.
-    // - this last part knex does not handle well, so no matter what, we need to rollback/commit
-    // the transaction (the prepared one and the connection transaction) that's why it's wrapped in a transaction block
-
     try {
       for (const db of dbs) {
         await db.transaction(async (trx) => {
@@ -406,7 +399,7 @@ export const replicateQuery = <F extends (...args: any[]) => Promise<any>>(
 
       throw new RegionalTransactionFatalError(
         'Failed some or all transactions in 2PC operation.',
-        preparedTransactions
+        { gid: '', clients: [] }
       )
     }
 

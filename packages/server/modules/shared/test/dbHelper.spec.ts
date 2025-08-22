@@ -2,10 +2,11 @@ import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { Scopes } from '@/modules/core/dbSchema'
 import { expect } from 'chai'
 import type { Knex } from 'knex'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import { db } from '@/db/knex'
 import { sleep } from '@/test/helpers'
+import { asMultiregionalOperation } from '@/modules/shared/command'
+import { testLogger } from '@/observability/logging'
 
 isMultiRegionTestMode()
   ? describe('Prepared transaction utils (2PC) @multiregion', async () => {
@@ -38,7 +39,17 @@ isMultiRegionTestMode()
           public: false
         }
 
-        await replicateQuery(ALL_DBS, testOperationFactory)(testOperationParams)
+        await asMultiregionalOperation(
+          ALL_DBS,
+          ({ dbs }) =>
+            Promise.all(
+              dbs.map((d) => testOperationFactory({ db: d })(testOperationParams))
+            ),
+          {
+            name: 'testing regional success',
+            logger: testLogger
+          }
+        )
 
         const scopeMain = await main
           .table(Scopes.name)
@@ -68,11 +79,17 @@ isMultiRegionTestMode()
 
         await testOperationFactory({ db: region2 })(testOperationParams)
 
-        const promise = replicateQuery(
+        const promise = asMultiregionalOperation(
           ALL_DBS,
-          testOperationFactory
-        )(testOperationParams)
-
+          ({ dbs }) =>
+            Promise.all(
+              dbs.map((d) => testOperationFactory({ db: d })(testOperationParams))
+            ),
+          {
+            name: 'testing regional failure',
+            logger: testLogger
+          }
+        )
         await expect(promise).eventually.to.be.rejected
 
         const scopeMain = await main
@@ -104,10 +121,17 @@ isMultiRegionTestMode()
           transaction: async () => Promise.reject(new Error('Transaction failed'))
         } as unknown as Knex
 
-        const promise = replicateQuery(
+        const promise = asMultiregionalOperation(
           [...ALL_DBS, dbThatFails],
-          testOperationFactory
-        )(testOperationParams)
+          ({ dbs }) =>
+            Promise.all(
+              dbs.map((d) => testOperationFactory({ db: d })(testOperationParams))
+            ),
+          {
+            name: 'testing regional success',
+            logger: testLogger
+          }
+        )
 
         await expect(promise).to.eventually.be.rejected
 
@@ -138,7 +162,7 @@ isMultiRegionTestMode()
           )
 
           const user = buildBasicTestUser()
-          await createTestUsers([user, user])
+          await createTestUsers([user, user]) // This uses the asOperation helper
         }
 
         const manyWeirdKnexInstanceCalls = async () => {

@@ -159,7 +159,7 @@ export const createUserFactory =
   (deps: {
     getServerInfo: GetServerInfo
     findEmail: FindEmail
-    storeUser: RegionalOperation<StoreUser>
+    storeUser: StoreUser
     countAdminUsers: CountAdminUsers
     storeUserAcl: StoreUserAcl
     validateAndCreateUserEmail: ValidateAndCreateUserEmail
