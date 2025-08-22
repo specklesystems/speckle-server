@@ -102,6 +102,7 @@ const finalPreviewTransitioner = ref(
   null as Nullable<{ triggerTransition: () => Promise<void> }>
 )
 
+const { $isAppHydrated } = useNuxtApp()
 const isInViewport = useElementVisibility(parent)
 const basePreviewUrl = computed(() => props.previewUrl)
 const {
@@ -167,7 +168,8 @@ const shouldShowPanoramicPreview = computed(
     hovered.value &&
     panoramaPreviewUrl.value &&
     props.panoramaOnHover &&
-    !isPanoramaPlaceholder.value
+    !isPanoramaPlaceholder.value &&
+    $isAppHydrated.value
 )
 
 onMounted(() => setParentDimensions())
