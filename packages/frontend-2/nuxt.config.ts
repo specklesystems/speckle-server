@@ -36,7 +36,9 @@ export default defineNuxtConfig({
     strict: true,
     tsConfig: {
       compilerOptions: {
-        moduleResolution: 'bundler'
+        moduleResolution: 'bundler',
+        // TODO: More correct, but requires a lot of (minor) changes
+        noUncheckedIndexedAccess: false
       }
     }
   },
@@ -151,6 +153,7 @@ export default defineNuxtConfig({
         // Leave imports as is, they're server-side only
         external: ['jsdom', 'crypto']
       },
+      // TODO: Undo
       // optionally disable minification for debugging
       minify: false,
       // optionally enable sourcemaps for debugging
@@ -266,7 +269,7 @@ export default defineNuxtConfig({
       /^graphql\/.+/,
       'graphql/language/printer',
       'graphql/utilities/getOperationAST',
-      'ioredis'
+      'ioredis' // TODO: Doesn't fully work yet
     ]
   },
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment

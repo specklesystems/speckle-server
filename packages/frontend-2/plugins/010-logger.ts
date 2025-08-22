@@ -1,5 +1,5 @@
 import { collectLongTrace } from '@speckle/shared'
-import type { LogType } from 'consola'
+import type { ConsolaInstance, LogType } from 'consola'
 import dayjs from 'dayjs'
 import { get, omit } from 'lodash-es'
 import type { SetRequired } from 'type-fest'
@@ -121,7 +121,11 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
     // Send to consola for SSR log streaming in dev mode
     if (import.meta.dev) {
-      const { consola } = await import('consola')
+      // TS types seem busted here, hence the hacky import
+      const consolaImport = await import('consola')
+      const consola = get(consolaImport, 'consola') as unknown as
+        | ConsolaInstance
+        | undefined
 
       // (consola exports are sometimes being stripped from build for some reason, hence the extra checks)
       if (consola) {
