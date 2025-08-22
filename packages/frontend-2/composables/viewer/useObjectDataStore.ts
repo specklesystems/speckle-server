@@ -17,6 +17,9 @@ export type QueryCriteria = {
   propertyKey: string
   condition: FilterCondition
   values: string[]
+  // For numeric range filtering
+  minValue?: number
+  maxValue?: number
 }
 
 export type DataSource = {
@@ -170,7 +173,22 @@ export function useObjectDataStore() {
       const propertyIndex = dataSource.propertyIndex[criteria.propertyKey]
       if (!propertyIndex) continue
 
-      if (criteria.condition === FilterCondition.Is) {
+      // Handle numeric range filtering
+      if (criteria.minValue !== undefined || criteria.maxValue !== undefined) {
+        const minValue = criteria.minValue ?? -Infinity
+        const maxValue = criteria.maxValue ?? Infinity
+
+        for (const [value, objectIds] of Object.entries(propertyIndex)) {
+          const numericValue = Number(value)
+          if (
+            !isNaN(numericValue) &&
+            numericValue >= minValue &&
+            numericValue <= maxValue
+          ) {
+            matchingIds.push(...objectIds)
+          }
+        }
+      } else if (criteria.condition === FilterCondition.Is) {
         // "Is" condition: collect objects with matching values
         for (const value of criteria.values) {
           const objectIds = propertyIndex[value]

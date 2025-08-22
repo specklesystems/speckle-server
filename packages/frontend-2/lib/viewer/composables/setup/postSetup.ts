@@ -544,7 +544,6 @@ function useViewerFiltersIntegration() {
   const filterUtils = useFilterUtilities({ state: useInjectedViewerState() })
   const { dataStore: objectDataStore } = filterUtils
 
-  const logger = useLogger()
   const stateKey = 'default'
   let preventFilterWatchers = false
   const withWatchersDisabled = (fn: () => void) => {
@@ -692,9 +691,11 @@ function useViewerFiltersIntegration() {
       condition?: FilterCondition
     }>
   ) => {
+    const filteringExtension = instance.getExtension(FilteringExtension)
+
     if (appliedFilters.length === 0) {
       // No coloring applied - remove colors
-      await instance.removeColorFilter()
+      filteringExtension.removeColorFilter()
       return
     }
 
@@ -713,33 +714,9 @@ function useViewerFiltersIntegration() {
       return
     }
 
-    // Single filter coloring
+    // Single filter coloring - use FilteringExtension's built-in method
     const filterConfig = appliedFilters[0]
-
-    if (filterConfig.selectedValues.length === 0) {
-      // No specific values selected - use traditional color filter
-      await instance.setColorFilter(filterConfig.filter)
-    } else {
-      // Specific values selected - color only those objects
-      const matchingObjectIds = getObjectIdsForFilter({
-        ...filterConfig,
-        condition: filterConfig.condition || FilterCondition.Is
-      })
-      if (matchingObjectIds.length > 0) {
-        try {
-          await instance.setUserObjectColors([
-            {
-              objectIds: matchingObjectIds,
-              color: '#ff6b6b' // Single color for the active filter
-            }
-          ])
-        } catch (error) {
-          logger.error('Color application failed:', error)
-        }
-      } else {
-        await instance.removeColorFilter()
-      }
-    }
+    filteringExtension.setColorFilter(filterConfig.filter)
   }
 
   // Helper function to get object IDs that match a filter configuration
@@ -764,19 +741,44 @@ function useViewerFiltersIntegration() {
         )
 
         if (propertyValue !== undefined && propertyValue !== null) {
-          const valueStr = String(propertyValue)
+          // Check if this is a numeric filter
+          const isNumeric =
+            typeof propertyValue === 'number' || !isNaN(Number(propertyValue))
+          if (
+            isNumeric &&
+            ('passMin' in filter || 'passMax' in filter || 'min' in filter)
+          ) {
+            const numericValue = Number(propertyValue)
+            if (!isNaN(numericValue)) {
+              const numericFilter = filter as PropertyInfo & {
+                passMin?: number
+                passMax?: number
+                min?: number
+                max?: number
+              }
+              const min = numericFilter.passMin ?? numericFilter.min ?? -Infinity
+              const max = numericFilter.passMax ?? numericFilter.max ?? Infinity
 
-          // If no specific values selected, match all objects with this property
-          if (selectedValues.length === 0) {
-            matchingIds.push(nodeData.id)
+              if (numericValue >= min && numericValue <= max) {
+                matchingIds.push(nodeData.id)
+              }
+            }
           } else {
-            // Check if this object's value matches the condition
-            const isInSelectedValues = selectedValues.includes(valueStr)
+            // String-based filtering
+            const valueStr = String(propertyValue)
 
-            if (condition === FilterCondition.Is && isInSelectedValues) {
+            // If no specific values selected, match all objects with this property
+            if (selectedValues.length === 0) {
               matchingIds.push(nodeData.id)
-            } else if (condition === FilterCondition.IsNot && !isInSelectedValues) {
-              matchingIds.push(nodeData.id)
+            } else {
+              // Check if this object's value matches the condition
+              const isInSelectedValues = selectedValues.includes(valueStr)
+
+              if (condition === FilterCondition.Is && isInSelectedValues) {
+                matchingIds.push(nodeData.id)
+              } else if (condition === FilterCondition.IsNot && !isInSelectedValues) {
+                matchingIds.push(nodeData.id)
+              }
             }
           }
         }

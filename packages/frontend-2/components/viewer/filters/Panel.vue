@@ -45,7 +45,7 @@
             @toggle-colors="toggleFilterColors(filter.id)"
             @remove="removeFilter(filter.id)"
             @select-condition="(val) => handleConditionSelect(filter.id, val)"
-            @range-change="(event) => handleNumericRangeChange(filter.id, event)"
+            @range-change="(value) => handleNumericRangeChange(filter.id, value)"
             @toggle-value="(value) => toggleActiveFilterValue(filter.id, value)"
             @select-all="(selected) => handleSelectAll(filter.id, selected)"
           />
@@ -82,6 +82,11 @@ import {
 } from '~~/composables/viewer/useObjectDataStore'
 import { X, Plus } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
+
+// Extended filter type with numeric range data
+type FilterWithNumericRange = {
+  numericRange?: { min: number; max: number }
+}
 
 const {
   filters: { propertyFilters },
@@ -165,26 +170,52 @@ watch(
 
     existingSlices.forEach((slice) => objectDataStore.popSlice(slice))
 
-    // Create new slices for filters with selected values
+    // Create new slices for filters with selected values or numeric ranges
     newFilters.forEach((filter) => {
-      if (filter.filter && filter.selectedValues.length > 0) {
-        const queryCriteria: QueryCriteria = {
-          propertyKey: filter.filter.key,
-          condition: filter.condition,
-          values: filter.selectedValues
+      if (filter.filter) {
+        // Handle numeric filters
+        if (filter.filter.type === 'number' && filter.isApplied) {
+          // For numeric filters, we need the range from the NumericRange component
+          // This will be set by handleNumericRangeChange
+          const numericData = (filter as FilterWithNumericRange).numericRange
+          if (numericData) {
+            const queryCriteria: QueryCriteria = {
+              propertyKey: filter.filter.key,
+              condition: filter.condition,
+              values: [], // Empty for numeric range
+              minValue: numericData.min,
+              maxValue: numericData.max
+            }
+            const matchingObjectIds = objectDataStore.queryObjects(queryCriteria)
+
+            const slice = {
+              id: `filter-panel-${filter.id}`,
+              name: `Filter: ${getPropertyName(filter.filter.key)}`,
+              objectIds: matchingObjectIds
+            }
+            objectDataStore.pushOrReplaceSlice(slice)
+          }
         }
+        // Handle string filters with selected values
+        else if (filter.selectedValues.length > 0) {
+          const queryCriteria: QueryCriteria = {
+            propertyKey: filter.filter.key,
+            condition: filter.condition,
+            values: filter.selectedValues
+          }
 
-        const matchingObjectIds = objectDataStore.queryObjects(queryCriteria)
+          const matchingObjectIds = objectDataStore.queryObjects(queryCriteria)
 
-        const slice = {
-          id: `filter-panel-${filter.id}`,
-          name: `${getPropertyName(filter.filter.key)} ${
-            filter.condition === FilterCondition.Is ? 'is' : 'is not'
-          } ${filter.selectedValues.join(', ')}`,
-          objectIds: matchingObjectIds
+          const slice = {
+            id: `filter-panel-${filter.id}`,
+            name: `${getPropertyName(filter.filter.key)} ${
+              filter.condition === FilterCondition.Is ? 'is' : 'is not'
+            } ${filter.selectedValues.join(', ')}`,
+            objectIds: matchingObjectIds
+          }
+
+          objectDataStore.pushOrReplaceSlice(slice)
         }
-
-        objectDataStore.pushOrReplaceSlice(slice)
       }
     })
   },
@@ -270,12 +301,27 @@ const handleFilterLogicChange = (val: unknown) => {
   }
 }
 
-const handleNumericRangeChange = (filterId: string, event: Event) => {
-  const target = event.target as HTMLInputElement
-  const _value = parseFloat(target.value)
+const handleNumericRangeChange = (
+  filterId: string,
+  value: { min: number; max: number }
+) => {
+  const filter = propertyFilters.value.find((f) => f.id === filterId)
+  if (!filter || !filter.filter) return // Store the numeric range data on the filter
+  ;(filter as FilterWithNumericRange).numericRange = value
 
-  // For now, just update the passMin value
-  // TODO: Implement proper range handling with min/max values
+  // Mark the filter as applied
+  if (!filter.isApplied) {
+    filter.isApplied = true
+  }
+
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'filters',
+    action: 'numeric-range-change',
+    filterId,
+    minValue: value.min,
+    maxValue: value.max
+  })
 }
 
 const handleSelectAll = (filterId: string, selected: boolean) => {

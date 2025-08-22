@@ -1,36 +1,31 @@
 <template>
-  <div class="space-y-2">
+  <div class="flex flex-col p-3">
     <div class="flex justify-between text-body-3xs text-foreground-2">
-      <span>{{ min }}</span>
-      <span>{{ max }}</span>
+      <span>{{ localMin.toFixed(2) }}</span>
+      <span>{{ localMax.toFixed(2) }}</span>
     </div>
-    <label :for="`range-${filterId}`" class="sr-only">
-      Range slider for {{ propertyName }}
-    </label>
-    <input
-      :id="`range-${filterId}`"
-      type="range"
+
+    <FormDualRange
+      v-model:min-value="localMin"
+      v-model:max-value="localMax"
+      :name="`range-${filterId}`"
       :min="min"
       :max="max"
-      :value="currentMin"
-      class="w-full"
-      @input="$emit('rangeChange', $event)"
+      :step="0.01"
     />
-    <div class="flex gap-2 text-body-3xs items-center">
-      <span class="text-foreground-2">Range:</span>
-      <span>{{ currentMin }} - {{ currentMax }}</span>
-      <div v-if="hasColors" class="flex items-center gap-1 ml-2">
-        <div
-          class="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-red-500 border border-outline-3"
-        />
-        <span class="text-foreground-3 text-body-3xs">Colored by value</span>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { ref, watch } from 'vue'
+import { FormDualRange } from '@speckle/ui-components'
+
+interface DualRangeValue {
+  min: number
+  max: number
+}
+
+const props = defineProps<{
   filterId: string
   propertyName: string
   min: number
@@ -40,7 +35,30 @@ defineProps<{
   hasColors: boolean
 }>()
 
-defineEmits<{
-  rangeChange: [event: Event]
+const emit = defineEmits<{
+  rangeChange: [value: DualRangeValue]
 }>()
+
+const localMin = ref(props.currentMin)
+const localMax = ref(props.currentMax)
+
+// Watch for changes and emit (immediate)
+watch([localMin, localMax], ([newMin, newMax]) => {
+  emit('rangeChange', { min: newMin, max: newMax })
+})
+
+// Watch for external prop changes
+watch(
+  () => props.currentMin,
+  (newMin) => {
+    localMin.value = newMin
+  }
+)
+
+watch(
+  () => props.currentMax,
+  (newMax) => {
+    localMax.value = newMax
+  }
+)
 </script>
