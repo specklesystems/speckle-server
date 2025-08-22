@@ -11,7 +11,7 @@ import cryptoRandomString from 'crypto-random-string'
 
 describe('prepared transaction repository functions', () => {
   describe('getStalePreparedTransactionsFactory returns a function, that', () => {
-    let trx: Knex
+    let trx: Knex.Transaction
     let transactionId: string = ''
 
     beforeEach(async () => {
@@ -19,14 +19,20 @@ describe('prepared transaction repository functions', () => {
       transactionId = cryptoRandomString({ length: 10 })
 
       await prepareTransaction(trx, transactionId)
+      try {
+        await trx.commit()
+      } catch {}
     })
 
     afterEach(async () => {
-      await rollbackPreparedTransaction(trx, transactionId)
+      await rollbackPreparedTransaction(db, transactionId)
+      try {
+        await trx.rollback()
+      } catch {}
     })
 
     it('returns prepared transactions older than a given time interval', async () => {
-      await wait(5000)
+      await wait(2000)
       const result = await getStalePreparedTransactionsFactory({ db })({
         interval: '1 second'
       })
