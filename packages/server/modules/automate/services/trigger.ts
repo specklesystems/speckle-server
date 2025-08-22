@@ -279,7 +279,8 @@ export const triggerAutomationRevisionRunFactory =
         Scopes.Profile.Read,
         Scopes.Streams.Read,
         Scopes.Streams.Write,
-        Scopes.Automate.ReportResults
+        Scopes.Automate.ReportResults,
+        Scopes.Tokens.Write
       ],
       limitResources: [
         {
