@@ -126,7 +126,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-vuejs-accessibility": "^2.3.0",
     "mixpanel": "^0.18.0",
-    "nuxt": "^3.15.0",
+    "nuxt": "^4.0.3",
     "pino-pretty": "^10.0.1",
     "postcss": "^8.4.31",
     "postcss-custom-properties": "^12.1.9",
