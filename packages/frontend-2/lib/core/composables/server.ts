@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { H3Event } from 'h3'
 import type { Optional } from '@speckle/shared'
+import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 
 export const mainServerInfoDataQuery = graphql(`
   query MainServerInfoData {
@@ -95,4 +96,32 @@ export function useUserCountry() {
   })
 
   return computed(() => state.value)
+}
+
+/**
+ * Resolve the user's time zone
+ */
+export const useUserTimezone = () => {
+  const nuxt = useNuxtApp()
+  const resolve = () => {
+    // In SSR, try to resolve from cloudflare headers
+    if (import.meta.server) {
+      const cloudflareZone = nuxt.ssrContext?.event.node.req.headers[
+        'cf-timezone'
+      ] as Optional<string>
+      if (cloudflareZone) return cloudflareZone
+    } else {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone
+    }
+  }
+
+  const cookie = useSynchronizedCookie('app_user_timezone', {
+    default: resolve
+  })
+  const resolved = resolve()
+  if (!cookie.value && resolved) {
+    cookie.value = resolved
+  }
+
+  return computed(() => cookie.value)
 }
