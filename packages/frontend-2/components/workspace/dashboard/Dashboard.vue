@@ -58,8 +58,8 @@ const { validateCheckoutSession } = useBillingActions()
 const { finalizeWizard } = useWorkspacesWizard()
 const workspaceTitle = ref<string>('')
 
-useHeadSafe({
-  title: () => workspaceTitle.value
+useHead({
+  title: workspaceTitle
 })
 const hasFinalized = ref(false)
 
