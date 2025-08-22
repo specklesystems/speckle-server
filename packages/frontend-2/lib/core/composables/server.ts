@@ -119,7 +119,7 @@ export const useUserTimezone = () => {
     default: resolve
   })
   const resolved = resolve()
-  if (!cookie.value && resolved) {
+  if (resolved && cookie.value !== resolved) {
     cookie.value = resolved
   }
 
