@@ -1,61 +1,81 @@
 <template>
-  <div class="w-full h-8">
-    <label
-      :for="`${name}-min`"
-      class="sr-only block text-body-2xs mb-1.5"
-      :class="disabled ? 'text-foreground-2' : 'text-foreground'"
-    >
-      {{ name }}
-    </label>
+  <div>
+    <div class="w-full h-5">
+      <div class="relative">
+        <!-- Min range input -->
+        <input
+          :id="`${name}-min`"
+          :name="`${name}-min`"
+          type="range"
+          :min="min"
+          :max="max"
+          :step="step"
+          :value="minValue"
+          :disabled="disabled"
+          class="absolute w-full h-4 outline-none slider slider-min"
+          style="-webkit-appearance: none; appearance: none; pointer-events: none"
+          :class="{ 'disabled:opacity-50 disabled:cursor-not-allowed': disabled }"
+          :aria-label="`${name} minimum`"
+          :aria-valuemin="min"
+          :aria-valuemax="max"
+          :aria-valuenow="minValue"
+          @input="handleMinInput"
+        />
 
-    <div class="relative mt-1.5">
-      <!-- Min range input -->
-      <input
-        :id="`${name}-min`"
+        <!-- Max range input -->
+        <input
+          :id="`${name}-max`"
+          :name="`${name}-max`"
+          type="range"
+          :min="min"
+          :max="max"
+          :step="step"
+          :value="maxValue"
+          :disabled="disabled"
+          class="absolute w-full h-4 outline-none slider slider-max"
+          style="-webkit-appearance: none; appearance: none; pointer-events: none"
+          :class="{ 'disabled:opacity-50 disabled:cursor-not-allowed': disabled }"
+          :aria-label="`${name} maximum`"
+          :aria-valuemin="min"
+          :aria-valuemax="max"
+          :aria-valuenow="maxValue"
+          @input="handleMaxInput"
+        />
+
+        <!-- Visual track highlight between handles -->
+        <div
+          class="absolute top-0.5 h-3 bg-outline-5 rounded-full pointer-events-none z-0"
+          :style="{
+            left: `${minPercentage}%`,
+            width: `${maxPercentage - minPercentage}%`
+          }"
+        />
+      </div>
+    </div>
+    <div v-if="showFields" class="flex justify-between gap-2 mt-1">
+      <FormTextInput
+        v-model="minValueString"
+        size="sm"
+        class="max-w-max"
+        type="number"
         :name="`${name}-min`"
-        type="range"
         :min="min"
         :max="max"
         :step="step"
-        :value="minValue"
         :disabled="disabled"
-        class="absolute w-full h-4 outline-none slider slider-min"
-        style="-webkit-appearance: none; appearance: none; pointer-events: none"
-        :class="{ 'disabled:opacity-50 disabled:cursor-not-allowed': disabled }"
-        :aria-label="`${name} minimum`"
-        :aria-valuemin="min"
-        :aria-valuemax="max"
-        :aria-valuenow="minValue"
-        @input="handleMinInput"
+        placeholder="Min"
       />
-
-      <!-- Max range input -->
-      <input
-        :id="`${name}-max`"
+      <FormTextInput
+        v-model="maxValueString"
+        size="sm"
+        type="number"
+        class="max-w-max"
         :name="`${name}-max`"
-        type="range"
         :min="min"
         :max="max"
         :step="step"
-        :value="maxValue"
         :disabled="disabled"
-        class="absolute w-full h-4 outline-none slider slider-max"
-        style="-webkit-appearance: none; appearance: none; pointer-events: none"
-        :class="{ 'disabled:opacity-50 disabled:cursor-not-allowed': disabled }"
-        :aria-label="`${name} maximum`"
-        :aria-valuemin="min"
-        :aria-valuemax="max"
-        :aria-valuenow="maxValue"
-        @input="handleMaxInput"
-      />
-
-      <!-- Visual track highlight between handles -->
-      <div
-        class="absolute top-0.5 h-3 bg-outline-5 rounded-full pointer-events-none z-0"
-        :style="{
-          left: `${minPercentage}%`,
-          width: `${maxPercentage - minPercentage}%`
-        }"
+        placeholder="Max"
       />
     </div>
   </div>
@@ -63,6 +83,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { FormTextInput } from '~~/src/lib'
 
 const props = defineProps<{
   min: number
@@ -70,6 +91,7 @@ const props = defineProps<{
   step: number
   name: string
   disabled?: boolean
+  showFields?: boolean
 }>()
 
 const minValue = defineModel<number>('minValue', {
@@ -80,6 +102,37 @@ const maxValue = defineModel<number>('maxValue', {
   default: 100
 })
 
+const clampValue = (value: number): number => {
+  return Math.max(props.min, Math.min(props.max, value))
+}
+
+// String versions for FormTextInput compatibility
+const minValueString = computed({
+  get: () => minValue.value.toString(),
+  set: (value: string) => {
+    const numValue = Number(value)
+    if (!isNaN(numValue)) {
+      const clampedValue = clampValue(numValue)
+      // Ensure min doesn't exceed max
+      const finalValue = Math.min(clampedValue, maxValue.value)
+      minValue.value = finalValue
+    }
+  }
+})
+
+const maxValueString = computed({
+  get: () => maxValue.value.toString(),
+  set: (value: string) => {
+    const numValue = Number(value)
+    if (!isNaN(numValue)) {
+      const clampedValue = clampValue(numValue)
+      // Ensure max doesn't go below min
+      const finalValue = Math.max(clampedValue, minValue.value)
+      maxValue.value = finalValue
+    }
+  }
+})
+
 // Computed percentages for visual track
 const minPercentage = computed(() => {
   return ((minValue.value - props.min) / (props.max - props.min)) * 100
@@ -88,10 +141,6 @@ const minPercentage = computed(() => {
 const maxPercentage = computed(() => {
   return ((maxValue.value - props.min) / (props.max - props.min)) * 100
 })
-
-const clampValue = (value: number): number => {
-  return Math.max(props.min, Math.min(props.max, value))
-}
 
 const handleMinInput = (event: Event) => {
   const target = event.target as HTMLInputElement

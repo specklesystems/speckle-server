@@ -28,11 +28,8 @@
             class="w-full h-full py-1.5 px-2 text-foreground rounded hover:bg-highlight-1 text-left flex items-center gap-2"
             @click="$emit('selectProperty', property.value)"
           >
-            <component
-              :is="getPropertyTypeDisplay(property.type).icon"
-              class="h-3 w-3 shrink-0"
-              :class="getPropertyTypeDisplay(property.type).classes"
-            />
+            <Hash v-if="property.type === 'number'" class="h-3 w-3" />
+            <CaseLower v-else class="h-3 w-3" />
             <div class="min-w-0 flex-1">
               <div class="text-body-2xs font-medium text-foreground truncate">
                 {{ property.label }}
@@ -50,7 +47,7 @@
 
 <script setup lang="ts">
 import { useVirtualList } from '@vueuse/core'
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { Hash, CaseLower } from 'lucide-vue-next'
 
 type PropertyOption = {
   value: string
@@ -69,8 +66,6 @@ defineEmits<{
 }>()
 
 const searchQuery = ref('')
-
-const { getPropertyTypeDisplay } = useFilterUtilities()
 
 const filteredOptions = computed(() => {
   if (!searchQuery.value.trim()) {

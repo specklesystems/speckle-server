@@ -23,43 +23,52 @@
 </template>
 
 <script setup lang="ts">
-import { FilterCondition } from '~/lib/viewer/helpers/filters/types'
+import {
+  FilterCondition,
+  type FilterData,
+  type ConditionOption
+} from '~/lib/viewer/helpers/filters/types'
 import { LayoutMenu, FormButton, type LayoutMenuItem } from '@speckle/ui-components'
 
 const props = defineProps<{
-  filterId: string
-  currentCondition: FilterCondition
+  filter: FilterData
 }>()
 
 const emit = defineEmits(['selectCondition'])
 
 const showMenu = ref(false)
 
-const conditionOptions = [
-  { value: FilterCondition.Is, label: 'is' },
-  { value: FilterCondition.IsNot, label: 'is not' }
-]
+const getConditionLabel = (condition: FilterCondition): string => {
+  switch (condition) {
+    case FilterCondition.Is:
+      return 'is'
+    case FilterCondition.IsNot:
+      return 'is not'
+    default:
+      return 'is'
+  }
+}
 
 const menuItems = computed<LayoutMenuItem[][]>(() => [
-  conditionOptions.map((option) => ({
-    id: option.value,
-    title: option.label,
-    active: option.value === (props.currentCondition || FilterCondition.Is)
+  Object.values(FilterCondition).map((condition) => ({
+    id: condition,
+    title: getConditionLabel(condition),
+    active: condition === (props.filter.condition || FilterCondition.Is)
   }))
 ])
 
 const selectedConditionLabel = computed(() => {
-  const selectedOption = conditionOptions.find(
-    (opt) => opt.value === (props.currentCondition || FilterCondition.Is)
-  )
-  return selectedOption?.label || 'is'
+  return getConditionLabel(props.filter.condition || FilterCondition.Is)
 })
 
 const onConditionChosen = ({ item }: { item: LayoutMenuItem }) => {
-  const selectedOption = conditionOptions.find((opt) => opt.value === item.id)
-  if (selectedOption) {
-    emit('selectCondition', selectedOption)
+  // Since we control the menu items, we know item.id is a FilterCondition
+  const condition = item.id as FilterCondition
+  const conditionOption: ConditionOption = {
+    value: condition,
+    label: getConditionLabel(condition)
   }
+  emit('selectCondition', conditionOption)
   showMenu.value = false
 }
 </script>

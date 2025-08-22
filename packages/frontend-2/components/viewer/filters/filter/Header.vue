@@ -1,12 +1,11 @@
 <template>
   <div class="flex items-center justify-between pl-2">
     <div class="flex items-center gap-3">
-      <component
-        :is="propertyTypeDisplay.icon"
-        class="h-3 w-3"
-        :class="propertyTypeDisplay.classes"
-      />
-      <span class="text-body-2xs text-foreground font-medium">{{ propertyName }}</span>
+      <Hash v-if="filter.type === FilterType.Numeric" class="h-3 w-3" />
+      <CaseLower v-else class="h-3 w-3" />
+      <span class="text-body-2xs text-foreground font-medium">
+        {{ getPropertyName(filter.filter?.key) }}
+      </span>
     </div>
     <div class="flex items-center">
       <FormButton
@@ -15,56 +14,43 @@
         size="sm"
         hide-text
         :icon-right="X"
-        @click="$emit('remove')"
+        @click="removeFilter"
       />
       <FormButton
         v-tippy="'Toggle coloring for this property'"
         :color="isColoringActive ? 'primary' : 'subtle'"
         size="sm"
         hide-text
-        :disabled="!hasFilter"
         :icon-right="PaintBucket"
-        @click="$emit('toggleColors')"
+        @click="toggleColors"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { X, PaintBucket } from 'lucide-vue-next'
+import { X, PaintBucket, Hash, CaseLower } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
-import type { PropertyInfo } from '@speckle/viewer'
-import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import type { FilterData } from '~/lib/viewer/helpers/filters/types'
+import { FilterType } from '~/lib/viewer/helpers/filters/types'
 
 const props = defineProps<{
-  propertyName: string
-  hasFilter: boolean
-  isApplied: boolean
-  filterId: string
-  propertyFilter?: PropertyInfo | null
+  filter: FilterData
 }>()
 
-defineEmits<{
-  toggleColors: []
-  remove: []
-}>()
+const { removeActiveFilter, toggleColorFilter, getPropertyName, filters } =
+  useFilterUtilities()
 
-const {
-  filters: { activeColorFilterId }
-} = useInjectedViewerInterfaceState()
-
-const { getPropertyType, getPropertyTypeDisplay } = useFilterUtilities()
-
-const isColoringActive = computed(() => activeColorFilterId.value === props.filterId)
-
-const propertyTypeDisplay = computed(() => {
-  if (!props.propertyFilter) {
-    // Default to string type if no filter is available
-    return getPropertyTypeDisplay('string')
-  }
-
-  const type = getPropertyType(props.propertyFilter)
-  return getPropertyTypeDisplay(type)
+const isColoringActive = computed(() => {
+  return filters.activeColorFilterId.value === props.filter.id
 })
+
+const removeFilter = () => {
+  removeActiveFilter(props.filter.id)
+}
+
+const toggleColors = () => {
+  toggleColorFilter(props.filter.id)
+}
 </script>

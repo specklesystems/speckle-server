@@ -9,8 +9,8 @@ export default {
     max: { control: { type: 'number' } },
     step: { control: { type: 'number' } },
     name: { control: { type: 'text' } },
-    label: { control: { type: 'text' } },
-    disabled: { control: { type: 'boolean' } }
+    disabled: { control: { type: 'boolean' } },
+    showFields: { control: { type: 'boolean' } }
   },
   parameters: {
     docs: {
@@ -48,6 +48,38 @@ export const Default: StoryObj = {
     min: 0,
     max: 100,
     step: 1,
-    disabled: false
+    disabled: false,
+    showFields: false
+  }
+}
+
+export const WithFields: StoryObj = {
+  render: (args) => ({
+    components: { FormDualRange },
+    setup() {
+      const minValue = ref(25)
+      const maxValue = ref(75)
+      return { args, minValue, maxValue }
+    },
+    template: `
+      <div class="flex flex-col">
+        <FormDualRange 
+          v-bind="args" 
+          v-model:min-value="minValue"
+          v-model:max-value="maxValue"
+        />
+        <div class="text-sm text-gray-600 mt-2">
+          Current values: {{ minValue }} - {{ maxValue }}
+        </div>
+      </div>
+    `
+  }),
+  args: {
+    name: 'dual-range-with-fields',
+    min: 0,
+    max: 100,
+    step: 1,
+    disabled: false,
+    showFields: true
   }
 }

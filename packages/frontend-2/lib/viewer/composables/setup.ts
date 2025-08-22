@@ -81,7 +81,7 @@ import {
   type ViewerResource
 } from '@speckle/shared/viewer/route'
 import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
-import type { FilterCondition } from '~/lib/viewer/helpers/filters/types'
+import type { FilterData } from '~/lib/viewer/helpers/filters/types'
 import {
   useBuildSavedViewsUIState,
   type SavedViewsUIState
@@ -301,15 +301,7 @@ export type InjectableViewerState = Readonly<{
       selectedObjectIds: ComputedRef<Set<string>>
 
       // Multi-filter system
-      propertyFilters: Ref<
-        Array<{
-          filter: PropertyInfo | null
-          isApplied: boolean
-          selectedValues: string[]
-          id: string
-          condition: FilterCondition
-        }>
-      >
+      propertyFilters: Ref<FilterData[]>
       hasAnyFiltersApplied: ComputedRef<boolean>
       activeColorFilterId: Ref<string | null>
     }
@@ -1091,15 +1083,7 @@ function setupInterfaceState(
   const hiddenObjectIds = ref([] as string[])
   const selectedObjects = shallowRef<Raw<SpeckleObject>[]>([])
 
-  const propertyFilters = ref<
-    Array<{
-      filter: PropertyInfo | null
-      isApplied: boolean
-      selectedValues: string[]
-      id: string
-      condition: FilterCondition
-    }>
-  >([])
+  const propertyFilters = ref<FilterData[]>([])
 
   // Track which filter is currently applying colors (only one at a time)
   const activeColorFilterId = ref<string | null>(null)

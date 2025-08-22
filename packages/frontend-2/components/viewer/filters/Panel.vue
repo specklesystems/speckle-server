@@ -42,12 +42,7 @@
             v-for="filter in propertyFilters"
             :key="filter.id"
             :filter="filter"
-            @toggle-colors="toggleFilterColors(filter.id)"
-            @remove="removeFilter(filter.id)"
             @select-condition="(val) => handleConditionSelect(filter.id, val)"
-            @range-change="(value) => handleNumericRangeChange(filter.id, value)"
-            @toggle-value="(value) => toggleActiveFilterValue(filter.id, value)"
-            @select-all="(selected) => handleSelectAll(filter.id, selected)"
           />
         </div>
       </div>
@@ -73,26 +68,23 @@ import {
   useInjectedViewerInterfaceState,
   useInjectedViewer
 } from '~~/lib/viewer/composables/setup'
-import type { FilterCondition } from '~/lib/viewer/helpers/filters/types'
+import type {
+  PropertySelectOption,
+  ConditionOption,
+  FilterLogicOption
+} from '~/lib/viewer/helpers/filters/types'
 import { FilterLogic } from '~/lib/viewer/helpers/filters/types'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { X, Plus } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
-// Import from ui.ts following established patterns
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 
 const {
   filters: { propertyFilters },
   getRelevantFilters,
-  getPropertyType,
   addActiveFilter,
-  removeActiveFilter,
-  toggleActiveFilterValue,
   updateFilterCondition,
   resetFilters,
-  toggleColorFilter,
-  getAvailableFilterValues,
-  setNumericRange,
   setFilterLogic
 } = useFilterUtilities()
 
@@ -108,8 +100,8 @@ const relevantFilters = computed(() => {
   return getRelevantFilters(allFilters.value)
 })
 
-const propertySelectOptions = computed(() => {
-  const allOptions = relevantFilters.value.map((filter) => {
+const propertySelectOptions = computed((): PropertySelectOption[] => {
+  const allOptions: PropertySelectOption[] = relevantFilters.value.map((filter) => {
     const pathParts = filter.key.split('.')
     const propertyName = pathParts[pathParts.length - 1] // Last part (e.g., "name")
     const parentPath = pathParts.slice(0, -1).join('.') // Everything except last part (e.g., "ab")
@@ -118,7 +110,7 @@ const propertySelectOptions = computed(() => {
       value: filter.key,
       label: propertyName, // Clean property name for main display
       parentPath, // Full path without the property name
-      type: getPropertyType(filter),
+      type: filter.type,
       hasParent: parentPath.length > 0
     }
   })
@@ -184,93 +176,12 @@ const selectProperty = (propertyKey: string) => {
   })
 }
 
-const removeFilter = (filterId: string) => {
-  removeActiveFilter(filterId)
-
-  mp.track('Viewer Action', {
-    type: 'action',
-    name: 'filters',
-    action: 'remove-active-filter'
-  })
+const handleConditionSelect = (filterId: string, conditionOption: ConditionOption) => {
+  updateFilterCondition(filterId, conditionOption.value)
 }
 
-const toggleFilterColors = (filterId: string) => {
-  toggleColorFilter(filterId)
-
-  mp.track('Viewer Action', {
-    type: 'action',
-    name: 'filters',
-    action: 'toggle-filter-colors'
-  })
-}
-
-const handleConditionSelect = (filterId: string, val: unknown) => {
-  if (
-    val &&
-    !Array.isArray(val) &&
-    typeof val === 'object' &&
-    val !== null &&
-    'value' in val
-  ) {
-    updateFilterCondition(filterId, (val as { value: string }).value as FilterCondition)
-  }
-}
-
-const handleFilterLogicChange = (val: unknown) => {
-  if (
-    val &&
-    !Array.isArray(val) &&
-    typeof val === 'object' &&
-    val !== null &&
-    'value' in val
-  ) {
-    filterLogic.value = (val as { value: string }).value as FilterLogic
-  }
-}
-
-const handleNumericRangeChange = (
-  filterId: string,
-  value: { min: number; max: number }
-) => {
-  setNumericRange(filterId, value.min, value.max)
-
-  mp.track('Viewer Action', {
-    type: 'action',
-    name: 'filters',
-    action: 'numeric-range-change',
-    filterId,
-    minValue: value.min,
-    maxValue: value.max
-  })
-}
-
-const handleSelectAll = (filterId: string, selected: boolean) => {
-  const filter = propertyFilters.value.find((f) => f.id === filterId)
-  if (!filter || !filter.filter) return
-
-  const availableValues = getAvailableFilterValues(filter.filter)
-
-  if (selected) {
-    // Select all available values that aren't already selected
-    availableValues.forEach((value) => {
-      if (!filter.selectedValues.includes(value)) {
-        toggleActiveFilterValue(filterId, value)
-      }
-    })
-  } else {
-    // Deselect all currently selected values
-    const selectedValuesCopy = [...filter.selectedValues]
-    selectedValuesCopy.forEach((value) => {
-      toggleActiveFilterValue(filterId, value)
-    })
-  }
-
-  mp.track('Viewer Action', {
-    type: 'action',
-    name: 'filters',
-    action: selected ? 'select-all-filter-values' : 'deselect-all-filter-values',
-    filterId
-  })
+const handleFilterLogicChange = (logicOption: FilterLogicOption) => {
+  filterLogic.value = logicOption.value
 }
 
 // Watch for filter logic changes

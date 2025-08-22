@@ -1,5 +1,12 @@
 import { TIME_MS, timeoutAt } from '@speckle/shared'
-import type { PropertyInfo, SpeckleObject, TreeNode, Viewer } from '@speckle/viewer'
+import type {
+  PropertyInfo,
+  NumericPropertyInfo,
+  StringPropertyInfo,
+  SpeckleObject,
+  TreeNode,
+  Viewer
+} from '@speckle/viewer'
 import { Hash, CaseLower } from 'lucide-vue-next'
 import { FilteringExtension } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
@@ -13,48 +20,24 @@ import {
   isStringPropertyInfo,
   isNumericPropertyInfo
 } from '~/lib/viewer/helpers/sceneExplorer'
-import { FilterCondition, FilterLogic } from '~/lib/viewer/helpers/filters/types'
+import {
+  FilterCondition,
+  FilterLogic,
+  FilterType,
+  type FilterData,
+  type NumericFilterData,
+  type StringFilterData,
+  type PropertyInfoBase,
+  type DataSlice,
+  type QueryCriteria,
+  type DataSource,
+  type ResourceInfo,
+  type CreateFilterParams,
+  isNumericFilter,
+  isStringFilter
+} from '~/lib/viewer/helpers/filters/types'
 import { useOnViewerLoadComplete } from '~~/lib/viewer/composables/viewer'
 import { arraysEqual } from '~~/lib/common/helpers/utils'
-
-// Filter with numeric range extension
-type FilterWithNumericRange = {
-  numericRange?: { min: number; max: number }
-}
-
-// Internal data store types and implementation
-type PropertyInfoBase = {
-  concatenatedPath: string
-  [key: string]: unknown
-}
-
-type DataSlice = {
-  id: string
-  name: string
-  objectIds: string[]
-  intersectedObjectIds?: string[]
-}
-
-type QueryCriteria = {
-  propertyKey: string
-  condition: FilterCondition
-  values: string[]
-  minValue?: number
-  maxValue?: number
-}
-
-type DataSource = {
-  resourceUrl: string
-  viewerInstance: Viewer
-  rootObject: SpeckleObject | null
-  objectMap: Record<string, SpeckleObject>
-  propertyMap: Record<string, PropertyInfoBase>
-  propertyIndex: Record<string, Record<string, string[]>>
-}
-
-type ResourceInfo = {
-  resourceUrl: string
-}
 
 // Internal data store implementation
 function createFilteringDataStore() {
@@ -456,6 +439,39 @@ export function useFilterUtilities(
   }
 
   /**
+   * Creates a properly typed FilterData object from PropertyInfo
+   */
+  const createFilterData = (params: CreateFilterParams): FilterData => {
+    const { filter, id, availableValues } = params
+
+    const baseData = {
+      id,
+      isApplied: false,
+      selectedValues: [...availableValues],
+      condition: FilterCondition.Is
+    }
+
+    if (isNumericPropertyInfo(filter)) {
+      return {
+        ...baseData,
+        type: FilterType.Numeric,
+        filter: filter as NumericPropertyInfo,
+        numericRange: {
+          min: (filter as NumericPropertyInfo).min,
+          max: (filter as NumericPropertyInfo).max
+        }
+      } satisfies NumericFilterData
+    } else {
+      return {
+        ...baseData,
+        type: FilterType.String,
+        filter: filter as StringPropertyInfo,
+        numericRange: { min: 0, max: 100 } // Default range for consistency
+      } satisfies StringFilterData
+    }
+  }
+
+  /**
    * Adds a new filter or updates existing one
    */
   const addActiveFilter = (filter: PropertyInfo): string => {
@@ -471,13 +487,9 @@ export function useFilterUtilities(
       const id = `filter-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       const availableValues = getAvailableFilterValues(filter)
 
-      filters.propertyFilters.value.push({
-        filter,
-        isApplied: false,
-        selectedValues: [...availableValues], // Start with all values selected
-        id,
-        condition: FilterCondition.Is
-      })
+      const filterData = createFilterData({ filter, id, availableValues })
+      filters.propertyFilters.value.push(filterData)
+
       return id
     }
   }
@@ -532,10 +544,9 @@ export function useFilterUtilities(
    */
   const setNumericRange = (filterId: string, min: number, max: number) => {
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
-    if (filter && filter.filter) {
-      // Store numeric range data on the filter
-      const filterWithRange = filter as typeof filter & FilterWithNumericRange
-      filterWithRange.numericRange = { min, max }
+    if (filter && isNumericFilter(filter)) {
+      // Update numeric range using type-safe access
+      filter.numericRange = { min, max }
 
       // Mark filter as applied
       if (!filter.isApplied) {
@@ -561,32 +572,29 @@ export function useFilterUtilities(
       if (!filter.filter) return
 
       // Handle numeric filters
-      if (filter.filter.type === 'number' && filter.isApplied) {
-        const numericData = (
-          filter as typeof filter & { numericRange?: { min: number; max: number } }
-        ).numericRange
-        if (numericData) {
-          const queryCriteria: QueryCriteria = {
-            propertyKey: filter.filter.key,
-            condition: filter.condition,
-            values: [],
-            minValue: numericData.min,
-            maxValue: numericData.max
-          }
-          const matchingObjectIds = dataStore.queryObjects(queryCriteria)
-
-          const slice: DataSlice = {
-            id: `filter-${filter.id}`,
-            name: `${getPropertyName(filter.filter.key)} (${numericData.min.toFixed(
-              2
-            )} - ${numericData.max.toFixed(2)})`,
-            objectIds: matchingObjectIds
-          }
-          dataStore.pushOrReplaceSlice(slice)
+      if (isNumericFilter(filter) && filter.isApplied) {
+        const queryCriteria: QueryCriteria = {
+          propertyKey: filter.filter.key,
+          condition: filter.condition,
+          values: [],
+          minValue: filter.numericRange.min,
+          maxValue: filter.numericRange.max
         }
+        const matchingObjectIds = dataStore.queryObjects(queryCriteria)
+
+        const slice: DataSlice = {
+          id: `filter-${filter.id}`,
+          name: `${getPropertyName(
+            filter.filter.key
+          )} (${filter.numericRange.min.toFixed(2)} - ${filter.numericRange.max.toFixed(
+            2
+          )})`,
+          objectIds: matchingObjectIds
+        }
+        dataStore.pushOrReplaceSlice(slice)
       }
       // Handle string filters with selected values
-      else if (filter.selectedValues.length > 0) {
+      else if (isStringFilter(filter) && filter.selectedValues.length > 0) {
         const queryCriteria: QueryCriteria = {
           propertyKey: filter.filter.key,
           condition: filter.condition,
@@ -952,16 +960,6 @@ export function useFilterUtilities(
   }
 
   /**
-   * Determine the type of a property
-   */
-  const getPropertyType = (filter: PropertyInfo): 'number' | 'string' => {
-    if (isNumericPropertyInfo(filter)) {
-      return 'number'
-    }
-    return 'string'
-  }
-
-  /**
    * Get the appropriate icon component for a property type
    */
   const getPropertyTypeIcon = (type: 'number' | 'string') => {
@@ -985,6 +983,13 @@ export function useFilterUtilities(
       default:
         return 'text-violet-500'
     }
+  }
+
+  /**
+   * Determine the type of a property from filter data
+   */
+  const getPropertyType = (filterData: FilterData): 'number' | 'string' => {
+    return filterData.type === FilterType.Numeric ? 'number' : 'string'
   }
 
   /**

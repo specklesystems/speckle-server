@@ -3,7 +3,7 @@
     <ViewerFiltersFilterValuesSelectAllCheckbox
       :selected-count="selectedCount"
       :total-count="filteredValues.length"
-      @select-all="emit('selectAll', $event)"
+      @select-all="selectAll"
     />
 
     <div
@@ -24,12 +24,12 @@
         }"
       >
         <ViewerFiltersFilterValuesFilterValueItem
-          :filter-id="filterId"
+          :filter-id="filter.id"
           :value="value"
           :is-selected="isValueSelected(value)"
           :count="getValueCount(value)"
           :color="getValueColor(value)"
-          @toggle="emit('toggleValue', value)"
+          @toggle="() => toggleValue(value)"
         />
       </div>
     </div>
@@ -38,36 +38,83 @@
 
 <script setup lang="ts">
 import { useVirtualList } from '@vueuse/core'
+import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { isStringFilter, type FilterData } from '~/lib/viewer/helpers/filters/types'
 
 const props = defineProps<{
-  filterId: string
-  availableValues: string[]
+  filter: FilterData
   searchQuery?: string
-  isValueSelected: (value: string) => boolean
-  getValueCount: (value: string) => number
-  getValueColor: (value: string) => string | null
 }>()
 
-const emit = defineEmits<{
-  toggleValue: [value: string]
-  selectAll: [selected: boolean]
-}>()
+const {
+  toggleActiveFilterValue,
+  isActiveFilterValueSelected,
+  getFilterValueColor,
+  getAvailableFilterValues
+} = useFilterUtilities()
+
+const isValueSelected = (value: string): boolean => {
+  return isActiveFilterValueSelected(props.filter.id, value)
+}
+
+const getValueCount = (_value: string): number => {
+  return 1
+}
+
+// Get value color
+const getValueColor = (value: string): string | null => {
+  return getFilterValueColor(value)
+}
+
+// Toggle value selection
+const toggleValue = (value: string) => {
+  toggleActiveFilterValue(props.filter.id, value)
+}
+
+// Select all values
+const selectAll = (selected: boolean) => {
+  if (!isStringFilter(props.filter) || !props.filter.filter) return
+
+  const allAvailableValues = getAvailableFilterValues(props.filter.filter)
+  if (selected) {
+    // Select all available values that aren't already selected
+    allAvailableValues.forEach((value) => {
+      if (!props.filter.selectedValues.includes(value)) {
+        toggleActiveFilterValue(props.filter.id, value)
+      }
+    })
+  } else {
+    // Deselect all currently selected values
+    const selectedValuesCopy = [...props.filter.selectedValues]
+    selectedValuesCopy.forEach((value) => {
+      toggleActiveFilterValue(props.filter.id, value)
+    })
+  }
+}
+
+// Get available values from the filter
+const availableValues = computed(() => {
+  if (isStringFilter(props.filter) && props.filter.filter) {
+    return getAvailableFilterValues(props.filter.filter)
+  }
+  return []
+})
 
 // Filter values based on search query
 const filteredValues = computed(() => {
   if (!props.searchQuery?.trim()) {
-    return props.availableValues
+    return availableValues.value
   }
 
   const searchTerm = props.searchQuery.toLowerCase().trim()
-  return props.availableValues.filter((value) =>
+  return availableValues.value.filter((value: string) =>
     value.toLowerCase().includes(searchTerm)
   )
 })
 
 // Select all logic
 const selectedCount = computed(() => {
-  return filteredValues.value.filter((value) => props.isValueSelected(value)).length
+  return filteredValues.value.filter((value) => isValueSelected(value)).length
 })
 
 // Virtual list setup
