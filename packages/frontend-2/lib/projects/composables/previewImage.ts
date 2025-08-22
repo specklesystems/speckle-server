@@ -287,6 +287,10 @@ export function usePreviewImageBlob(
      * Run this at the bottom of the component to fully initialize it
      */
     init: async () => {
+      if (!eagerLoad && import.meta.server) {
+        return // don't do anything - show spinner
+      }
+
       const promise = regeneratePreviews()
       if (eagerLoad) {
         await promise
