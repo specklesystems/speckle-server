@@ -33,7 +33,12 @@ import type { EventBusEmit, EventPayload } from '@/modules/shared/services/event
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import type { MaybeNullOrUndefined, StreamRoles, WorkspaceRoles } from '@speckle/shared'
-import { isPaidPlan, Roles, throwUncoveredError } from '@speckle/shared'
+import {
+  isPaidPlan,
+  Roles,
+  throwUncoveredError,
+  WorkspaceFeatureFlags
+} from '@speckle/shared'
 import type {
   QueryAllProjects,
   UpsertProjectRole
@@ -965,7 +970,8 @@ export const initializeEventListenersFactory =
           status: WorkspacePlanStatuses.Valid,
           workspaceId: payload.workspace.id,
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          featureFlags: WorkspaceFeatureFlags.None
         }
         await upsertUnpaidWorkspacePlanFactory({ db })({ workspacePlan })
         await eventBus.emit({

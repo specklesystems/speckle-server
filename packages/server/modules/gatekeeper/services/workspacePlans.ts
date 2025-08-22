@@ -12,7 +12,11 @@ import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import type { GetWorkspace } from '@/modules/workspaces/domain/operations'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import type { WorkspacePlan } from '@speckle/shared'
-import { throwUncoveredError, WorkspacePlans } from '@speckle/shared'
+import {
+  throwUncoveredError,
+  WorkspaceFeatureFlags,
+  WorkspacePlans
+} from '@speckle/shared'
 
 export const updateWorkspacePlanFactory =
   ({
@@ -59,7 +63,14 @@ export const updateWorkspacePlanFactory =
           case 'cancelationScheduled':
           case 'canceled':
           case 'paymentFailed':
-            workspacePlan = { workspaceId, status, name, createdAt, updatedAt }
+            workspacePlan = {
+              workspaceId,
+              status,
+              name,
+              createdAt,
+              updatedAt,
+              featureFlags: WorkspaceFeatureFlags.None
+            }
             await upsertWorkspacePlan({ workspacePlan })
             break
           default:
@@ -77,7 +88,14 @@ export const updateWorkspacePlanFactory =
           case 'valid':
             if (workspaceSubscription) throw new InvalidWorkspacePlanStatus()
 
-            workspacePlan = { workspaceId, status, name, createdAt, updatedAt }
+            workspacePlan = {
+              workspaceId,
+              status,
+              name,
+              createdAt,
+              updatedAt,
+              featureFlags: WorkspaceFeatureFlags.None
+            }
             await upsertWorkspacePlan({ workspacePlan })
             break
           case 'cancelationScheduled':

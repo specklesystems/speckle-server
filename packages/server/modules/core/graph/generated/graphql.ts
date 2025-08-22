@@ -5297,6 +5297,7 @@ export type WorkspaceEmbedOptions = {
 
 export const WorkspaceFeatureName = {
   AccIntegration: 'accIntegration',
+  Dashboards: 'dashboards',
   DomainBasedSecurityPolicies: 'domainBasedSecurityPolicies',
   ExclusiveMembership: 'exclusiveMembership',
   HideSpeckleBranding: 'hideSpeckleBranding',

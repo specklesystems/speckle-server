@@ -12,7 +12,7 @@ import {
   WorkspaceAlreadyPaidError,
   WorkspacePlanNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
-import { throwUncoveredError } from '@speckle/shared'
+import { throwUncoveredError, WorkspaceFeatureFlags } from '@speckle/shared'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import type { GetWorkspacePlan } from '@speckle/shared/authz'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
@@ -79,7 +79,8 @@ export const completeCheckoutSessionFactory =
       updatedAt: new Date(),
       workspaceId: checkoutSession.workspaceId,
       name: checkoutSession.workspacePlan,
-      status: 'valid'
+      status: 'valid',
+      featureFlags: WorkspaceFeatureFlags.None
     } as const
     await upsertPaidWorkspacePlan({
       workspacePlan
