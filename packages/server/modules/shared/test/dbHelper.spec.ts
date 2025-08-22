@@ -6,7 +6,7 @@ import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import { db } from '@/db/knex'
 import { sleep } from '@/test/helpers'
 import { asMultiregionalOperation } from '@/modules/shared/command'
-import { testLogger } from '@/observability/logging'
+import { logger } from '@/observability/logging'
 
 isMultiRegionTestMode()
   ? describe('Prepared transaction utils (2PC) @multiregion', async () => {
@@ -32,6 +32,10 @@ isMultiRegionTestMode()
         ALL_DBS = [main, region1, region2]
       })
 
+      beforeEach(async () => {
+        await db('users').del()
+      })
+
       it('successfully replicates operation across all specified db instances', async () => {
         const testOperationParams = {
           name: 'test:scope:a',
@@ -40,14 +44,14 @@ isMultiRegionTestMode()
         }
 
         await asMultiregionalOperation(
-          ALL_DBS,
-          ({ dbs }) =>
+          ({ txs }) =>
             Promise.all(
-              dbs.map((d) => testOperationFactory({ db: d })(testOperationParams))
+              txs.map((tx) => testOperationFactory({ db: tx })(testOperationParams))
             ),
           {
+            dbs: ALL_DBS,
             name: 'testing regional success',
-            logger: testLogger
+            logger
           }
         )
 
@@ -80,14 +84,14 @@ isMultiRegionTestMode()
         await testOperationFactory({ db: region2 })(testOperationParams)
 
         const promise = asMultiregionalOperation(
-          ALL_DBS,
-          ({ dbs }) =>
+          ({ txs }) =>
             Promise.all(
-              dbs.map((d) => testOperationFactory({ db: d })(testOperationParams))
+              txs.map((tx) => testOperationFactory({ db: tx })(testOperationParams))
             ),
           {
+            dbs: ALL_DBS,
             name: 'testing regional failure',
-            logger: testLogger
+            logger
           }
         )
         await expect(promise).eventually.to.be.rejected
@@ -122,14 +126,14 @@ isMultiRegionTestMode()
         } as unknown as Knex
 
         const promise = asMultiregionalOperation(
-          [...ALL_DBS, dbThatFails],
-          ({ dbs }) =>
+          ({ txs }) =>
             Promise.all(
-              dbs.map((d) => testOperationFactory({ db: d })(testOperationParams))
+              txs.map((tx) => testOperationFactory({ db: tx })(testOperationParams))
             ),
           {
+            dbs: [...ALL_DBS, dbThatFails],
             name: 'testing regional success',
-            logger: testLogger
+            logger
           }
         )
 
@@ -153,27 +157,30 @@ isMultiRegionTestMode()
         expect(scopeRegion2).to.be.undefined
       })
 
-      it('should not overwhelm the connection pool', async () => {
+      it('does not has visibile perfomance issues using 2PC', async () => {
         const connectionsUsedBefore = main.client.pool.numUsed()
 
         const oneKnexInstanceCall = async () => {
-          const { buildBasicTestUser, createTestUsers } = await import(
+          const { buildBasicTestUser, createTestUser } = await import(
             '@/test/authHelper'
           )
 
           const user = buildBasicTestUser()
-          await createTestUsers([user, user]) // This uses the asOperation helper
+          await createTestUser(user) // This uses the asMultireagionOperation helper          }
         }
 
-        const manyWeirdKnexInstanceCalls = async () => {
-          await Promise.allSettled(Array.from({ length: 100 }, oneKnexInstanceCall))
+        const manyParallelCreates = async () => {
+          await Promise.allSettled(Array.from({ length: 1000 }, oneKnexInstanceCall))
         }
 
-        await manyWeirdKnexInstanceCalls()
+        await manyParallelCreates()
+
+        const c = await db('users').count()
+        expect(c).to.eql(1000)
+
         await sleep(1000) // just in case
 
         const connectionsUsedAfter = main.client.pool.numUsed()
-
         expect(connectionsUsedAfter).to.be.lte(connectionsUsedBefore)
       })
     })

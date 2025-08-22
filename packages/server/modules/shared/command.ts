@@ -1,7 +1,6 @@
-import { db, mainDb } from '@/db/knex'
+import { mainDb } from '@/db/knex'
 import {
   commitPreparedTransaction,
-  numberOfFreeConnections,
   prepareTransaction,
   rollbackPreparedTransaction,
   withTransaction
@@ -131,24 +130,30 @@ export const asOperation = async <T>(
 }
 
 export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
-  [main, ...regions]: K,
   operation: (args: {
-    dbs: Knex[]
-    main: Knex
-    regions: Knex[]
+    txs: Knex.Transaction[]
+    dbTx: Knex.Transaction
+    regionTxs: Knex.Transaction[]
     emit: EventBusEmit
   }) => MaybeAsync<T>,
   params: {
     name: string
     logger: Logger
     description?: string
+    dbs: K
     /**
      * Defaults to main event bus
      */
     eventBus?: EventBus
   }
 ): Promise<T> => {
-  const { eventBus = getEventBus(), logger, name, description } = params
+  const {
+    eventBus = getEventBus(),
+    logger,
+    name,
+    description,
+    dbs: [main, ...regions]
+  } = params
 
   return await withOperationLogging(
     async () => {
@@ -162,35 +167,13 @@ export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
 
       const rollback = async () => {
         await Promise.allSettled(txs.map((tx) => rollbackPreparedTransaction(tx, gid)))
-        const a = await Promise.allSettled(txs.map((tx) => tx.rollback()))
-        console.log('rollback res', a)
-      }
-
-      const printConnections = () => {
-        // DEBUG: DELETE!
-        const a = (k: Knex) => ({
-          free: numberOfFreeConnections(k),
-          pool: {
-            free: k.client.pool.numFree(),
-            used: k.client.pool.numUsed(),
-            aq: k.client.pool.numPendingAcquires(),
-            cr: k.client.pool.numPendingCreates(),
-            val: k.client.pool.numPendingValidations()
-          }
-        })
-
-        const t = {}
-        for (const db of [main, ...regions]) {
-          // @ts-expect-error remove plis
-          t[`${db.client.connectionSettings.connectionString}`] = a(db)
-        }
-        console.log(t)
+        await Promise.allSettled(txs.map((tx) => tx.rollback()))
       }
 
       let result
       try {
-        const mainTx = await main.transaction()
-        txs.push(mainTx)
+        const dbTx = await main.transaction()
+        txs.push(dbTx)
 
         const regionTxs: Knex.Transaction[] = []
         for (const region of regions) {
@@ -200,9 +183,9 @@ export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
         }
 
         result = await operation({
-          dbs: txs,
-          main: mainTx,
-          regions: regionTxs,
+          txs,
+          dbTx,
+          regionTxs,
           emit
         })
 
@@ -213,14 +196,9 @@ export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
         // - the transactions once prepared, gets written to disk db and is no longer scoped to the connection.
         // - this last part knex does not handle well, so no matter what, we need to rollback/commit
         // the transaction (the prepared one and the connection transaction) that's why it's wrapped in a transaction block
-        for (const tx of txs) {
-          await prepareTransaction(tx, gid)
-          await db.client.releaseConnection(tx)
-        }
+        for (const tx of txs) await prepareTransaction(tx, gid)
       } catch (e) {
-        console.log('rollback!')
         await rollback()
-        printConnections()
         throw e
       }
 
@@ -247,20 +225,14 @@ export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
           `Failed to commit transactions in 2PC operation.`
         )
 
-        printConnections()
-
         throw new RegionalTransactionFatalError(
           'Failed some or all transactions in 2PC operation.',
           { clients: txs, gid }
         )
       }
 
-      for (const event of events) {
-        await eventBus.emit(event)
-      }
+      for (const event of events) await eventBus.emit(event)
 
-      console.log('end!')
-      printConnections()
       return result
     },
     {

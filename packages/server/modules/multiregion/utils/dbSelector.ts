@@ -155,6 +155,15 @@ export const getAllRegisteredDbClients = async (): Promise<
   ]
 }
 
+export const getAllRegisteredDbs = async (): Promise<[Knex, ...Knex[]]> => {
+  const mainDb = db
+  const regionDbs: RegionClients = isMultiRegionEnabled()
+    ? await getRegisteredRegionClients()
+    : {}
+
+  return [mainDb, ...Object.entries(regionDbs).map(([, client]) => client)]
+}
+
 /**
  * Idempotently initialize region db
  */
