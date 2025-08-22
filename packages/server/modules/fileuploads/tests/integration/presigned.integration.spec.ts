@@ -32,18 +32,14 @@ import {
 } from '@/modules/blobstorage/errors'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { registerUploadCompleteAndStartFileImportFactory } from '@/modules/fileuploads/services/presigned'
-import {
-  insertNewUploadAndNotifyFactory,
-  insertNewUploadAndNotifyFactoryV2
-} from '@/modules/fileuploads/services/management'
+import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/services/management'
 import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
 import {
   getFileInfoFactoryV2,
-  saveUploadFileFactory,
   saveUploadFileFactoryV2
 } from '@/modules/fileuploads/repositories/fileUploads'
-import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { createAppTokenFactory } from '@/modules/core/services/tokens'
 import {
   storeApiTokenFactory,
@@ -55,8 +51,6 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import type { RegisterUploadCompleteAndStartFileImport } from '@/modules/fileuploads/domain/operations'
 import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
-
-const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
 describe('Presigned integration @fileuploads', async () => {
   const serverAdmin = { id: '', name: 'server admin', role: Roles.Server.Admin }
@@ -116,35 +110,30 @@ describe('Presigned integration @fileuploads', async () => {
           db: projectDb
         })
       })
-      const insertNewUploadAndNotify = FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-        ? insertNewUploadAndNotifyFactoryV2({
-            queues: [
-              {
-                supportedFileTypes: ['stl', 'obj', 'ifc'],
-                scheduleJob: () => Promise.resolve()
-              }
-            ],
-            pushJobToFileImporter: pushJobToFileImporterFactory({
-              getServerOrigin,
-              createAppToken: createAppTokenFactory({
-                storeApiToken: storeApiTokenFactory({ db: projectDb }),
-                storeTokenScopes: storeTokenScopesFactory({ db: projectDb }),
-                storeTokenResourceAccessDefinitions:
-                  storeTokenResourceAccessDefinitionsFactory({
-                    db: projectDb
-                  }),
-                storeUserServerAppToken: storeUserServerAppTokenFactory({
-                  db: projectDb
-                })
-              })
-            }),
-            saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
-            emit: getEventBus().emit
+      const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
+        queues: [
+          {
+            supportedFileTypes: ['stl', 'obj', 'ifc'],
+            scheduleJob: () => Promise.resolve()
+          }
+        ],
+        pushJobToFileImporter: pushJobToFileImporterFactory({
+          getServerOrigin,
+          createAppToken: createAppTokenFactory({
+            storeApiToken: storeApiTokenFactory({ db: projectDb }),
+            storeTokenScopes: storeTokenScopesFactory({ db: projectDb }),
+            storeTokenResourceAccessDefinitions:
+              storeTokenResourceAccessDefinitionsFactory({
+                db: projectDb
+              }),
+            storeUserServerAppToken: storeUserServerAppTokenFactory({
+              db: projectDb
+            })
           })
-        : insertNewUploadAndNotifyFactory({
-            saveUploadFile: saveUploadFileFactory({ db: projectDb }),
-            emit: getEventBus().emit
-          })
+        }),
+        saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
+        emit: getEventBus().emit
+      })
 
       SUT = registerUploadCompleteAndStartFileImportFactory({
         registerCompletedUpload: registerCompletedUploadFactory({

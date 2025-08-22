@@ -578,9 +578,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_MOVE_PROJECT_REGION_ENABLED
   value: {{ .Values.featureFlags.moveProjectRegionEnabled | quote }}
 
-- name: FF_BACKGROUND_JOBS_ENABLED
-  value: {{ .Values.featureFlags.backgroundJobsEnabled | quote }}
-
 {{- if .Values.featureFlags.gatekeeperModuleEnabled }}
 - name: LICENSE_TOKEN
   valueFrom:
@@ -724,7 +721,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.file_size_limit_mb | quote }}
 
 - name: FILE_IMPORT_TIME_LIMIT_MIN
-  value: {{ (or .Values.file_import_time_limit_min .Values.fileimport_service.time_limit_min) | quote }}
+  value: {{ .Values.file_import_time_limit_min | quote }}
 
 - name: MAX_PROJECT_MODELS_PER_PAGE
   value: {{ .Values.server.max_project_models_per_page | quote }}
@@ -810,26 +807,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
     secretKeyRef:
       name: {{ default .Values.secretName .Values.redis.previewServiceConnectionString.secretName }}
       key: {{ default "preview_service_redis_url" .Values.redis.previewServiceConnectionString.secretKey }}
-{{- end }}
-
-{{- if (and .Values.featureFlags.nextGenFileImporterEnabled (not .Values.featureFlags.backgroundJobsEnabled)) }}
-- name: FILEIMPORT_SERVICE_RHINO_REDIS_URL
-  valueFrom:
-    secretKeyRef:
-      name: {{ default .Values.secretName .Values.redis.fileImportService.rhino.connectionString.secretName }}
-      key: {{ default "fileimport_service_rhino_redis_url" .Values.redis.fileImportService.rhino.connectionString.secretKey }}
-
-- name: FILEIMPORT_SERVICE_RHINO_QUEUE_NAME
-  value: {{ .Values.redis.fileImportService.rhino.queueName | quote }}
-
-- name: FILEIMPORT_SERVICE_IFC_REDIS_URL
-  valueFrom:
-    secretKeyRef:
-      name: {{ default .Values.secretName .Values.redis.fileImportService.ifc.connectionString.secretName }}
-      key: {{ default "fileimport_service_ifc_redis_url" .Values.redis.fileImportService.ifc.connectionString.secretKey }}
-
-- name: FILEIMPORT_SERVICE_IFC_QUEUE_NAME
-  value: {{ .Values.redis.fileImportService.ifc.queueName | quote }}
 {{- end }}
 
 # *** PostgreSQL Database ***
@@ -1165,23 +1142,17 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: "/multi-region-config/multi-region-config.json"
 {{- end }}
 
-{{- if .Values.featureFlags.nextGenFileImporterEnabled }}
-- name: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-  value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
-{{- end }}
-
 {{- if .Values.featureFlags.rhinoFileImporterEnabled }}
 - name: FF_RHINO_FILE_IMPORTER_ENABLED
   value: {{ .Values.featureFlags.rhinoFileImporterEnabled  | quote }}
 {{- end }}
 
-{{- if .Values.featureFlags.backgroundJobsEnabled }}
 - name: FILEIMPORT_QUEUE_POSTGRES_URL
   valueFrom:
     secretKeyRef:
       name: {{ default .Values.secretName .Values.ifc_import_service.db.connectionString.secretName }}
       key: {{ default "fileimport_queue_postgres_url" .Values.ifc_import_service.db.connectionString.secretKey }}
-{{- end }}
+
 - name: FILE_UPLOAD_URL_EXPIRY_MINUTES
   value: {{ .Values.file_upload_url_expiry_minutes | quote }}
 {{- end }}

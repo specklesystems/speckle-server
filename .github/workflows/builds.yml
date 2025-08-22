@@ -136,28 +136,6 @@ jobs:
           tags: ${{ inputs.IMAGE_PREFIX }}/speckle-webhook-service:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/webhook-service/Dockerfile
 
-  docker-build-fileimport-service:
-    runs-on: blacksmith
-    name: File import service
-    steps:
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ inputs.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push
-        uses: useblacksmith/build-push-action@v1
-        with:
-          push: true
-          tags: ${{ inputs.IMAGE_PREFIX }}/speckle-fileimport-service:${{ inputs.IMAGE_VERSION_TAG }}
-          file: ./packages/fileimport-service/Dockerfile
-
   docker-build-ifc-import-service:
     runs-on: blacksmith
     name: IFC import service

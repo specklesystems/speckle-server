@@ -9,7 +9,6 @@ import {
   getModelUploadsTotalCountFactory,
   getStreamFileUploadsFactory,
   getStreamPendingModelsFactory,
-  saveUploadFileFactory,
   saveUploadFileFactoryV2,
   updateFileUploadFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
@@ -18,11 +17,7 @@ import {
   filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import {
-  BadRequestError,
-  ForbiddenError,
-  MisconfiguredEnvironmentError
-} from '@/modules/shared/errors'
+import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import {
   fileImportServiceShouldUsePrivateObjectsServerUrl,
@@ -47,10 +42,7 @@ import {
   registerCompletedUploadFactory
 } from '@/modules/blobstorage/services/presigned'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import {
-  insertNewUploadAndNotifyFactory,
-  insertNewUploadAndNotifyFactoryV2
-} from '@/modules/fileuploads/services/management'
+import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/services/management'
 import {
   storeApiTokenFactory,
   storeTokenResourceAccessDefinitionsFactory,
@@ -63,7 +55,6 @@ import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/cre
 import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
 import { getFileSizeLimit } from '@/modules/blobstorage/services/management'
 import cryptoRandomString from 'crypto-random-string'
-import { getFeatureFlags } from '@speckle/shared/environment'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { getModelUploadsFactory } from '@/modules/fileuploads/services/management'
@@ -75,8 +66,6 @@ import { onFileImportResultFactory } from '@/modules/fileuploads/services/result
 import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
 import { JobResultStatus } from '@speckle/shared/workers/fileimport'
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-
-const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
 const getFileUploadModel = async (params: {
   upload: FileUploadRecord | FileUploadRecordV2
@@ -196,11 +185,6 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       emit: getEventBus().emit
     })
 
-    const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-      saveUploadFile: saveUploadFileFactory({ db: projectDb }),
-      emit: getEventBus().emit
-    })
-
     const registerUploadCompleteAndStartFileImport =
       registerUploadCompleteAndStartFileImportFactory({
         registerCompletedUpload: registerCompletedUploadFactory({
@@ -213,9 +197,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
             objectStorage: projectStorage.private
           })
         }),
-        insertNewUploadAndNotify: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-          ? insertNewUploadAndNotifyV2
-          : insertNewUploadAndNotify,
+        insertNewUploadAndNotify: insertNewUploadAndNotifyV2,
         getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
         getModelsByIds: getBranchesByIdsFactory({ db: projectDb })
       })
@@ -239,9 +221,6 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
   },
 
   async finishFileImport(_parent, args, ctx) {
-    if (!FF_NEXT_GEN_FILE_IMPORTER_ENABLED)
-      throw new MisconfiguredEnvironmentError('File import next gen is not enabled')
-
     const { projectId, jobId, status, warnings, reason, result } = args.input
     const userId = ctx.userId
     if (!userId) {

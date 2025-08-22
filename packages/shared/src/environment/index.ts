@@ -113,19 +113,9 @@ export const parseFeatureFlags = (
       description: 'Allows the retrying of previews which have previously failed.',
       defaults: { _: false }
     },
-    FF_NEXT_GEN_FILE_IMPORTER_ENABLED: {
-      schema: z.boolean(),
-      description: 'Enables the new file importer.',
-      defaults: { _: false }
-    },
     FF_RHINO_FILE_IMPORTER_ENABLED: {
       schema: z.boolean(),
       description: 'Enables the Rhino based file importer.',
-      defaults: { _: false }
-    },
-    FF_BACKGROUND_JOBS_ENABLED: {
-      schema: z.boolean(),
-      description: 'Enables the postgres based background job mechanism',
       defaults: { _: false }
     },
     FF_LEGACY_FILE_IMPORTS_ENABLED: {

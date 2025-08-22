@@ -28,10 +28,10 @@ spec:
             - port: http
               protocol: TCP
 {{- end }}
-    # ingress from file import service
+    # ingress from ifc import service
     - fromEndpoints:
         - matchLabels:
-{{ include "fileimport_service.selectorLabels" $ | indent 12 }}
+{{ include "ifc_import_service.selectorLabels" $ | indent 12 }}
       toPorts:
         - ports:
           - port: http

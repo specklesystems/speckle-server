@@ -70,13 +70,6 @@ export const useIsBillingIntegrationEnabled = () => {
   return ref(FF_BILLING_INTEGRATION_ENABLED)
 }
 
-export const useIsNextGenFileImporterEnabled = () => {
-  const {
-    public: { FF_NEXT_GEN_FILE_IMPORTER_ENABLED }
-  } = useRuntimeConfig()
-  return ref(FF_NEXT_GEN_FILE_IMPORTER_ENABLED)
-}
-
 export const useIsRhinoFileImporterEnabled = () => {
   const {
     public: { FF_RHINO_FILE_IMPORTER_ENABLED }
