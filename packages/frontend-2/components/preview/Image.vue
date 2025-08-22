@@ -110,7 +110,8 @@ const {
   shouldLoadPanorama,
   isLoadingPanorama,
   hasDoneFirstLoad,
-  isPanoramaPlaceholder
+  isPanoramaPlaceholder,
+  init
 } = usePreviewImageBlob(basePreviewUrl, {
   enabled: computed(() => props.eagerLoad || isInViewport.value),
   eagerLoad: props.eagerLoad
@@ -192,4 +193,6 @@ if (import.meta.client) {
     finalPreviewTransitioner.value?.triggerTransition()
   })
 }
+
+await init()
 </script>
