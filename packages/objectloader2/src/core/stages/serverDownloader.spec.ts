@@ -16,9 +16,10 @@ describe('downloader', () => {
       streamId: 'streamId',
       objectId: 'objectId',
       token: 'token',
-      fetch: fetchMocker
+      fetch: fetchMocker,
+      logger: (): void => {}
     })
-    downloader.initializePool({
+    downloader.initialize({
       results: gathered,
       total: 1,
       maxDownloadBatchWait: 200
@@ -51,9 +52,10 @@ describe('downloader', () => {
       objectId: 'objectId',
       token: 'token',
 
-      fetch: fetchMocker
+      fetch: fetchMocker,
+      logger: (): void => {}
     })
-    downloader.initializePool({
+    downloader.initialize({
       results: gathered,
       total: 2,
       maxDownloadBatchWait: 200
@@ -95,9 +97,10 @@ describe('downloader', () => {
       objectId: 'objectId',
       token: 'token',
 
-      fetch: fetchMocker
+      fetch: fetchMocker,
+      logger: (): void => {}
     })
-    downloader.initializePool({
+    downloader.initialize({
       results: gathered,
       total: 3,
       maxDownloadBatchWait: 200
@@ -143,9 +146,10 @@ describe('downloader', () => {
       objectId: 'objectId',
       token: 'token',
 
-      fetch: fetchMocker
+      fetch: fetchMocker,
+      logger: (): void => {}
     })
-    downloader.initializePool({
+    downloader.initialize({
       results: gathered,
       total: 3,
       maxDownloadBatchWait: 200
@@ -183,7 +187,8 @@ describe('downloader', () => {
       objectId: i.baseId,
       token: 'token',
 
-      fetch: fetchMocker
+      fetch: fetchMocker,
+      logger: (): void => {}
     })
     await expect(downloader.downloadSingle()).rejects.toThrow()
     await downloader.disposeAsync()
@@ -202,7 +207,8 @@ describe('downloader', () => {
       objectId: i.baseId,
       token: 'token',
 
-      fetch: fetchMocker
+      fetch: fetchMocker,
+      logger: (): void => {}
     })
     const x = await downloader.downloadSingle()
     expect(x).toMatchSnapshot()
@@ -228,7 +234,8 @@ describe('downloader', () => {
       objectId: i.baseId,
       token: 'token',
 
-      fetch: fetchMocker
+      fetch: fetchMocker,
+      logger: (): void => {}
     })
     const x = await downloader.downloadSingle()
     expect(x).toMatchSnapshot()
@@ -245,7 +252,8 @@ describe('downloader', () => {
       objectId: 'objectId',
       token: 'token',
 
-      fetch: fetchMocker
+      fetch: fetchMocker,
+      logger: (): void => {}
     })
     await downloader.disposeAsync()
   })
