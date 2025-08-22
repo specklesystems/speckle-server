@@ -167,7 +167,7 @@ export function useApplySerializedState() {
     },
     urlHashState
   } = useInjectedViewerState()
-  const { resetFilters, hideObjects, isolateObjects } = useFilterUtilities()
+  const { resetFilters, hideObjects } = useFilterUtilities()
   const resetState = useResetUiState()
   const { diffModelVersions, deserializeDiffCommand, endDiff } = useDiffUtilities()
   const { setSelectionFromObjectIds } = useSelectionUtilities()
@@ -244,11 +244,6 @@ export function useApplySerializedState() {
     if (filters.hiddenObjectIds?.length) {
       resetFilters()
       hideObjects(filters.hiddenObjectIds, { replace: true })
-    } else if (filters.isolatedObjectIds?.length) {
-      resetFilters()
-      isolateObjects(filters.isolatedObjectIds, { replace: true })
-    } else {
-      resetFilters()
     }
 
     // Handle resource string updates

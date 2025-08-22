@@ -1,9 +1,10 @@
 import { TIME_MS, timeoutAt } from '@speckle/shared'
-import type { PropertyInfo } from '@speckle/viewer'
+import type { PropertyInfo, SpeckleObject, TreeNode, Viewer } from '@speckle/viewer'
 import { Hash, CaseLower } from 'lucide-vue-next'
 import { FilteringExtension } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, uniq } from 'lodash-es'
+import { nextTick } from 'vue'
 import {
   useInjectedViewerState,
   type InjectableViewerState
@@ -12,9 +13,271 @@ import {
   isStringPropertyInfo,
   isNumericPropertyInfo
 } from '~/lib/viewer/helpers/sceneExplorer'
-import { FilterCondition } from '~/lib/viewer/helpers/filters/types'
-import { useObjectDataStore } from '~~/composables/viewer/useObjectDataStore'
+import { FilterCondition, FilterLogic } from '~/lib/viewer/helpers/filters/types'
 import { useOnViewerLoadComplete } from '~~/lib/viewer/composables/viewer'
+import { arraysEqual } from '~~/lib/common/helpers/utils'
+
+// Filter with numeric range extension
+type FilterWithNumericRange = {
+  numericRange?: { min: number; max: number }
+}
+
+// Internal data store types and implementation
+type PropertyInfoBase = {
+  concatenatedPath: string
+  [key: string]: unknown
+}
+
+type DataSlice = {
+  id: string
+  name: string
+  objectIds: string[]
+  intersectedObjectIds?: string[]
+}
+
+type QueryCriteria = {
+  propertyKey: string
+  condition: FilterCondition
+  values: string[]
+  minValue?: number
+  maxValue?: number
+}
+
+type DataSource = {
+  resourceUrl: string
+  viewerInstance: Viewer
+  rootObject: SpeckleObject | null
+  objectMap: Record<string, SpeckleObject>
+  propertyMap: Record<string, PropertyInfoBase>
+  propertyIndex: Record<string, Record<string, string[]>>
+}
+
+type ResourceInfo = {
+  resourceUrl: string
+}
+
+// Internal data store implementation
+function createFilteringDataStore() {
+  const dataSourcesMap: Ref<Record<string, DataSource>> = ref({})
+  const dataSources = computed(() => Object.values(dataSourcesMap.value))
+  const currentFilterLogic = ref<FilterLogic>(FilterLogic.All)
+  const dataSlices: Ref<DataSlice[]> = ref([])
+
+  const extractNestedProperties = (
+    obj: Record<string, unknown>
+  ): PropertyInfoBase[] => {
+    const properties: PropertyInfoBase[] = []
+
+    function traverse(current: Record<string, unknown>, path: string[] = []) {
+      for (const [key, value] of Object.entries(current)) {
+        const currentPath = [...path, key]
+        const concatenatedPath = currentPath.join('.')
+
+        if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+          traverse(value as Record<string, unknown>, currentPath)
+        } else {
+          properties.push({
+            concatenatedPath,
+            value,
+            type: typeof value
+          } as PropertyInfoBase)
+        }
+      }
+    }
+
+    traverse(obj)
+    return properties
+  }
+
+  const populateDataStore = async (viewer: Viewer, resources: ResourceInfo[]) => {
+    const tree = viewer.getWorldTree()
+    if (!tree) return
+
+    for (const res of resources) {
+      const foundNodes = tree.findId(res.resourceUrl)
+      const subnode = foundNodes?.[0]
+      if (!subnode) {
+        continue
+      }
+
+      const objectMap: Record<string, SpeckleObject> = {}
+      const propertyMap: Record<string, PropertyInfoBase> = {}
+      const propertyIndex: Record<string, Record<string, string[]>> = {}
+
+      await tree.walkAsync((node: TreeNode) => {
+        if (
+          node.model.atomic &&
+          node.model.raw.id &&
+          node.model.raw.id.length === 32 &&
+          !node.model.raw.speckle_type?.includes('Proxy') &&
+          node.model.raw.properties?.builtInCategory !== 'OST_Levels'
+        ) {
+          const objectId = node.model.raw.id
+          objectMap[objectId] = node.model.raw as SpeckleObject
+
+          const props = extractNestedProperties(node.model.raw)
+          for (const p of props) {
+            propertyMap[p.concatenatedPath] = p
+
+            const propertyKey = p.concatenatedPath
+            const value = String(p.value)
+
+            if (!propertyIndex[propertyKey]) {
+              propertyIndex[propertyKey] = {}
+            }
+            if (!propertyIndex[propertyKey][value]) {
+              propertyIndex[propertyKey][value] = []
+            }
+            propertyIndex[propertyKey][value].push(objectId)
+          }
+        }
+        return true
+      }, subnode)
+
+      const rootObject = subnode.model.raw.children?.[0] as SpeckleObject
+
+      dataSourcesMap.value[res.resourceUrl] = {
+        ...res,
+        viewerInstance: markRaw(viewer),
+        rootObject: rootObject ? markRaw(rootObject) : null,
+        objectMap: markRaw(objectMap),
+        propertyMap,
+        propertyIndex: markRaw(propertyIndex)
+      }
+    }
+  }
+
+  const queryObjects = (criteria: QueryCriteria): string[] => {
+    const matchingIds: string[] = []
+
+    for (const dataSource of dataSources.value) {
+      const propertyIndex = dataSource.propertyIndex[criteria.propertyKey]
+
+      if (!propertyIndex) {
+        continue
+      }
+
+      if (criteria.minValue !== undefined || criteria.maxValue !== undefined) {
+        const minValue = criteria.minValue ?? -Infinity
+        const maxValue = criteria.maxValue ?? Infinity
+
+        for (const [value, objectIds] of Object.entries(propertyIndex)) {
+          const numericValue = Number(value)
+          if (
+            !isNaN(numericValue) &&
+            numericValue >= minValue &&
+            numericValue <= maxValue
+          ) {
+            matchingIds.push(...objectIds)
+          }
+        }
+      } else if (criteria.condition === FilterCondition.Is) {
+        for (const value of criteria.values) {
+          const objectIds = propertyIndex[value]
+          if (objectIds) {
+            matchingIds.push(...objectIds)
+          }
+        }
+      } else if (criteria.condition === FilterCondition.IsNot) {
+        const excludeValues = new Set(criteria.values)
+        for (const [value, objectIds] of Object.entries(propertyIndex)) {
+          if (!excludeValues.has(value)) {
+            matchingIds.push(...objectIds)
+          }
+        }
+      }
+    }
+
+    return matchingIds
+  }
+
+  const computeSliceIntersections = () => {
+    if (dataSlices.value.length < 1) return
+
+    if (dataSlices.value.length === 1) {
+      dataSlices.value[0]!.intersectedObjectIds = [...dataSlices.value[0]!.objectIds]
+      return
+    }
+
+    let intersection = new Set(dataSlices.value[0]!.objectIds)
+
+    for (let i = 1; i < dataSlices.value.length; i++) {
+      const currentSliceIds = new Set(dataSlices.value[i]!.objectIds)
+      intersection = new Set([...intersection].filter((id) => currentSliceIds.has(id)))
+    }
+
+    const intersectionArray = Array.from(intersection)
+
+    for (const slice of dataSlices.value) {
+      slice.intersectedObjectIds = intersectionArray
+    }
+  }
+
+  const pushOrReplaceSlice = (dataSlice: DataSlice) => {
+    const existingIndex = dataSlices.value.findIndex(
+      (slice) => slice.id === dataSlice.id
+    )
+    if (existingIndex === -1) {
+      dataSlices.value.push(dataSlice)
+    } else {
+      dataSlices.value[existingIndex] = dataSlice
+    }
+
+    computeSliceIntersections()
+  }
+
+  const popSlice = (dataSlice: DataSlice) => {
+    const existingIndex = dataSlices.value.findIndex(
+      (slice) => slice.id === dataSlice.id
+    )
+    if (existingIndex !== -1) {
+      dataSlices.value.splice(existingIndex, 1)
+      computeSliceIntersections()
+    }
+  }
+
+  const finalObjectIds = computed(() => {
+    if (dataSlices.value.length === 0) return []
+
+    if (currentFilterLogic.value === FilterLogic.Any) {
+      const allObjectIds = new Set<string>()
+      for (const slice of dataSlices.value) {
+        if (slice.objectIds && Array.isArray(slice.objectIds)) {
+          for (const objectId of slice.objectIds) {
+            if (objectId) {
+              allObjectIds.add(objectId)
+            }
+          }
+        }
+      }
+      return Array.from(allObjectIds)
+    } else {
+      const lastSlice = dataSlices.value[dataSlices.value.length - 1]
+      return lastSlice?.intersectedObjectIds || []
+    }
+  })
+
+  const clearDataOnRouteLeave = () => {
+    dataSourcesMap.value = {}
+    dataSlices.value = []
+  }
+
+  const setFilterLogic = (logic: FilterLogic) => {
+    currentFilterLogic.value = logic
+  }
+
+  return {
+    populateDataStore,
+    queryObjects,
+    pushOrReplaceSlice,
+    popSlice,
+    finalObjectIds,
+    clearDataOnRouteLeave,
+    setFilterLogic,
+    currentFilterLogic,
+    dataSlices
+  }
+}
 
 export function useFilterUtilities(
   options?: Partial<{ state: InjectableViewerState }>
@@ -25,17 +288,19 @@ export function useFilterUtilities(
     ui: { filters, explodeFactor }
   } = state
 
-  // Initialize object data store for advanced filtering
-  const dataStore = useObjectDataStore()
+  // Initialize internal data store for filtering
+  const dataStore = createFilteringDataStore()
 
   // Populate data store when viewer loads models
   if (import.meta.client) {
     const { instance } = viewer
     const { resourceItems } = state.resources.response
 
-    const populateDataStore = async () => {
+    const populateInternalDataStore = async () => {
       const tree = instance.getWorldTree()
-      if (!tree || !resourceItems.value.length) return
+      if (!tree || !resourceItems.value.length) {
+        return
+      }
 
       // Check if resources are actually available in the world tree
       const availableResources = resourceItems.value.filter((item) => {
@@ -43,7 +308,9 @@ export function useFilterUtilities(
         return nodes && nodes.length > 0
       })
 
-      if (availableResources.length === 0) return
+      if (availableResources.length === 0) {
+        return
+      }
 
       // Clear and repopulate the entire data store
       dataStore.clearDataOnRouteLeave()
@@ -57,8 +324,67 @@ export function useFilterUtilities(
 
     // Populate whenever a model finishes loading
     useOnViewerLoadComplete(async () => {
-      await populateDataStore()
+      await populateInternalDataStore()
     })
+
+    // Also try to populate immediately if resources are already available
+    nextTick(() => {
+      if (resourceItems.value.length > 0) {
+        populateInternalDataStore()
+      }
+    })
+
+    // Watch for filter changes and apply to viewer
+    let preventFilterWatchers = false
+    const withWatchersDisabled = (fn: () => void) => {
+      const isAlreadyInPreventScope = !!preventFilterWatchers
+      preventFilterWatchers = true
+      fn()
+      if (!isAlreadyInPreventScope) preventFilterWatchers = false
+    }
+
+    watch(
+      dataStore.finalObjectIds,
+      (newObjectIds, oldObjectIds) => {
+        if (preventFilterWatchers) return
+        if (arraysEqual(newObjectIds, oldObjectIds || [])) return
+
+        withWatchersDisabled(() => {
+          const filteringExtension = instance.getExtension(FilteringExtension)
+          if (newObjectIds.length > 0) {
+            filteringExtension.isolateObjects(newObjectIds, 'utilities', true, true)
+            filters.hiddenObjectIds.value = []
+            filters.isolatedObjectIds.value = newObjectIds
+          } else {
+            // Preserve color filter when clearing isolation
+            const currentColorFilterId = filters.activeColorFilterId.value
+            let activeColorFilter = null
+
+            if (currentColorFilterId) {
+              const activeFilter = filters.propertyFilters.value.find(
+                (f) => f.id === currentColorFilterId
+              )
+              if (activeFilter?.filter) {
+                activeColorFilter = activeFilter.filter
+              }
+            }
+
+            // Reset all filters (including isolation)
+            filteringExtension.resetFilters()
+
+            // Restore color filter if it was active
+            if (activeColorFilter && currentColorFilterId) {
+              filteringExtension.setColorFilter(activeColorFilter)
+              filters.activeColorFilterId.value = currentColorFilterId
+            }
+
+            filters.isolatedObjectIds.value = []
+            filters.hiddenObjectIds.value = []
+          }
+        })
+      },
+      { immediate: true, flush: 'sync' }
+    )
   }
 
   const isolateObjects = (
@@ -197,7 +523,87 @@ export function useFilterUtilities(
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
       filter.condition = condition
+      updateDataStoreSlices()
     }
+  }
+
+  /**
+   * Sets numeric range for a filter
+   */
+  const setNumericRange = (filterId: string, min: number, max: number) => {
+    const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
+    if (filter && filter.filter) {
+      // Store numeric range data on the filter
+      const filterWithRange = filter as typeof filter & FilterWithNumericRange
+      filterWithRange.numericRange = { min, max }
+
+      // Mark filter as applied
+      if (!filter.isApplied) {
+        filter.isApplied = true
+      }
+
+      updateDataStoreSlices()
+    }
+  }
+
+  /**
+   * Updates data store slices based on current filter state
+   */
+  const updateDataStoreSlices = () => {
+    // Clear existing filter slices
+    const existingSlices = dataStore.dataSlices.value.filter((slice) =>
+      slice.id.startsWith('filter-')
+    )
+    existingSlices.forEach((slice) => dataStore.popSlice(slice))
+
+    // Create new slices for active filters
+    filters.propertyFilters.value.forEach((filter) => {
+      if (!filter.filter) return
+
+      // Handle numeric filters
+      if (filter.filter.type === 'number' && filter.isApplied) {
+        const numericData = (
+          filter as typeof filter & { numericRange?: { min: number; max: number } }
+        ).numericRange
+        if (numericData) {
+          const queryCriteria: QueryCriteria = {
+            propertyKey: filter.filter.key,
+            condition: filter.condition,
+            values: [],
+            minValue: numericData.min,
+            maxValue: numericData.max
+          }
+          const matchingObjectIds = dataStore.queryObjects(queryCriteria)
+
+          const slice: DataSlice = {
+            id: `filter-${filter.id}`,
+            name: `${getPropertyName(filter.filter.key)} (${numericData.min.toFixed(
+              2
+            )} - ${numericData.max.toFixed(2)})`,
+            objectIds: matchingObjectIds
+          }
+          dataStore.pushOrReplaceSlice(slice)
+        }
+      }
+      // Handle string filters with selected values
+      else if (filter.selectedValues.length > 0) {
+        const queryCriteria: QueryCriteria = {
+          propertyKey: filter.filter.key,
+          condition: filter.condition,
+          values: filter.selectedValues
+        }
+        const matchingObjectIds = dataStore.queryObjects(queryCriteria)
+
+        const slice: DataSlice = {
+          id: `filter-${filter.id}`,
+          name: `${getPropertyName(filter.filter.key)} ${
+            filter.condition === FilterCondition.Is ? 'is' : 'is not'
+          } ${filter.selectedValues.join(', ')}`,
+          objectIds: matchingObjectIds
+        }
+        dataStore.pushOrReplaceSlice(slice)
+      }
+    })
   }
 
   /**
@@ -212,6 +618,7 @@ export function useFilterUtilities(
       } else {
         filter.selectedValues.push(value)
       }
+      updateDataStoreSlices()
     }
   }
 
@@ -630,7 +1037,9 @@ export function useFilterUtilities(
     getPropertyTypeIcon,
     getPropertyTypeIconClasses,
     getPropertyTypeDisplay,
-    // Data store for advanced filtering
-    dataStore
+    // Numeric range filtering
+    setNumericRange,
+    // Filter logic
+    setFilterLogic: dataStore.setFilterLogic
   }
 }

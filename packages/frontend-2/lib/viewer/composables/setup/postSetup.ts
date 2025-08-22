@@ -10,9 +10,7 @@ import {
   ExplodeEvent,
   ExplodeExtension,
   LoaderEvent,
-  type PropertyInfo,
-  type SunLightConfiguration,
-  FilteringExtension
+  type SunLightConfiguration
 } from '@speckle/viewer'
 import {
   ViewerEvent,
@@ -57,7 +55,6 @@ import {
   useViewModeUtilities,
   useFilterUtilities
 } from '~~/lib/viewer/composables/ui'
-import { FilterCondition } from '~/lib/viewer/helpers/filters/types'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -535,67 +532,14 @@ function useViewerCameraIntegration() {
 }
 
 function useViewerFiltersIntegration() {
+  const state = useInjectedViewerState()
   const {
     viewer: { instance },
     ui: { filters, highlightedObjectIds }
-  } = useInjectedViewerState()
+  } = state
 
-  // Get filter utilities (includes data store)
-  const filterUtils = useFilterUtilities({ state: useInjectedViewerState() })
-  const { dataStore: objectDataStore } = filterUtils
-
-  const stateKey = 'default'
-  let preventFilterWatchers = false
-  const withWatchersDisabled = (fn: () => void) => {
-    const isAlreadyInPreventScope = !!preventFilterWatchers
-    preventFilterWatchers = true
-    fn()
-    if (!isAlreadyInPreventScope) preventFilterWatchers = false
-  }
-
-  // Watch data store final object IDs and apply to viewer using FilteringExtension
-  watch(
-    objectDataStore.finalObjectIds,
-    (newObjectIds, oldObjectIds) => {
-      if (preventFilterWatchers) return
-      if (arraysEqual(newObjectIds, oldObjectIds || [])) return
-
-      withWatchersDisabled(() => {
-        const filteringExtension = instance.getExtension(FilteringExtension)
-        if (newObjectIds.length > 0) {
-          filteringExtension.isolateObjects(newObjectIds, stateKey, true, true)
-          filters.hiddenObjectIds.value = []
-          filters.isolatedObjectIds.value = newObjectIds
-        } else {
-          // Preserve color filter when clearing isolation
-          const currentColorFilterId = filters.activeColorFilterId.value
-          let activeColorFilter = null
-
-          if (currentColorFilterId) {
-            const activeFilter = filters.propertyFilters.value.find(
-              (f) => f.id === currentColorFilterId
-            )
-            if (activeFilter?.filter) {
-              activeColorFilter = activeFilter.filter
-            }
-          }
-
-          // Reset all filters (including isolation)
-          filteringExtension.resetFilters()
-
-          // Restore color filter if it was active
-          if (activeColorFilter && currentColorFilterId) {
-            filteringExtension.setColorFilter(activeColorFilter)
-            filters.activeColorFilterId.value = currentColorFilterId
-          }
-
-          filters.isolatedObjectIds.value = []
-          filters.hiddenObjectIds.value = []
-        }
-      })
-    },
-    { immediate: true, flush: 'sync' }
-  )
+  // Initialize filter utilities (handles viewer integration internally)
+  useFilterUtilities({ state })
 
   // state -> viewer
   watch(
@@ -606,221 +550,6 @@ function useViewerFiltersIntegration() {
       instance.highlightObjects(newVal)
     },
     { immediate: true, flush: 'sync' }
-  )
-
-  // New function to handle multiple active filters
-  const applyMultipleFilters = async (
-    activeFilters: Array<{
-      filter: PropertyInfo | null
-      isApplied: boolean
-      selectedValues: string[]
-      id: string
-      condition: FilterCondition
-    }>
-  ) => {
-    // Get filters that have selected values (for isolation)
-    const filtersWithValues = activeFilters.filter(
-      (f) => f.filter !== null && f.selectedValues.length > 0
-    )
-
-    // Get filters that are applied (for coloring - only one should be active)
-    const appliedFilters = activeFilters.filter((f) => f.isApplied && f.filter !== null)
-
-    // Handle isolation based on selected values
-    await applyIsolation(
-      filtersWithValues.map((f) => ({
-        filter: f.filter!,
-        selectedValues: f.selectedValues,
-        id: f.id,
-        condition: f.condition
-      }))
-    )
-
-    // Handle coloring based on applied state (only one filter)
-    await applyColoring(
-      appliedFilters.map((f) => ({
-        filter: f.filter!,
-        selectedValues: f.selectedValues,
-        id: f.id,
-        condition: f.condition
-      }))
-    )
-  }
-
-  // Handle isolation based on selected filter values
-  const applyIsolation = async (
-    filtersWithValues: Array<{
-      filter: PropertyInfo
-      selectedValues: string[]
-      id: string
-      condition?: FilterCondition
-    }>
-  ) => {
-    const worldTree = instance.getWorldTree()
-    if (!worldTree) {
-      return
-    }
-
-    // Collect all matching object IDs from all filters with selected values
-    const allMatchingObjectIds = new Set<string>()
-
-    for (const filterConfig of filtersWithValues) {
-      const matchingObjectIds = getObjectIdsForFilter({
-        ...filterConfig,
-        condition: filterConfig.condition || FilterCondition.Is
-      })
-      matchingObjectIds.forEach((id) => allMatchingObjectIds.add(id))
-    }
-
-    // Update isolation state (don't disable watchers - we want the isolation watcher to trigger)
-    if (allMatchingObjectIds.size > 0) {
-      filters.isolatedObjectIds.value = Array.from(allMatchingObjectIds)
-      filters.hiddenObjectIds.value = []
-    } else {
-      filters.isolatedObjectIds.value = []
-      filters.hiddenObjectIds.value = []
-    }
-  }
-
-  // Handle coloring based on applied filters (only one at a time)
-  const applyColoring = async (
-    appliedFilters: Array<{
-      filter: PropertyInfo
-      selectedValues: string[]
-      id: string
-      condition?: FilterCondition
-    }>
-  ) => {
-    const filteringExtension = instance.getExtension(FilteringExtension)
-
-    if (appliedFilters.length === 0) {
-      // No coloring applied - remove colors
-      filteringExtension.removeColorFilter()
-      return
-    }
-
-    if (appliedFilters.length > 1) {
-      // Multiple filters trying to apply coloring - only allow one
-      // Keep the first one, disable the rest
-      for (let i = 1; i < appliedFilters.length; i++) {
-        const filterId = appliedFilters[i].id
-        const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
-        if (filter) {
-          filter.isApplied = false
-        }
-      }
-      // Apply coloring for the first filter only
-      await applyColoring([appliedFilters[0]])
-      return
-    }
-
-    // Single filter coloring - use FilteringExtension's built-in method
-    const filterConfig = appliedFilters[0]
-    filteringExtension.setColorFilter(filterConfig.filter)
-  }
-
-  // Helper function to get object IDs that match a filter configuration
-  const getObjectIdsForFilter = (filterConfig: {
-    filter: PropertyInfo
-    selectedValues: string[]
-    condition?: FilterCondition
-  }): string[] => {
-    const worldTree = instance.getWorldTree()
-    if (!worldTree) return []
-
-    const matchingIds: string[] = []
-    const { filter, selectedValues, condition = FilterCondition.Is } = filterConfig
-
-    worldTree.walk((node) => {
-      const nodeData = node.model.raw
-      if (nodeData && nodeData.id) {
-        // Get the property value for this object
-        const propertyValue = getObjectPropertyValue(
-          nodeData as Record<string, unknown>,
-          filter.key
-        )
-
-        if (propertyValue !== undefined && propertyValue !== null) {
-          // Check if this is a numeric filter
-          const isNumeric =
-            typeof propertyValue === 'number' || !isNaN(Number(propertyValue))
-          if (
-            isNumeric &&
-            ('passMin' in filter || 'passMax' in filter || 'min' in filter)
-          ) {
-            const numericValue = Number(propertyValue)
-            if (!isNaN(numericValue)) {
-              const numericFilter = filter as PropertyInfo & {
-                passMin?: number
-                passMax?: number
-                min?: number
-                max?: number
-              }
-              const min = numericFilter.passMin ?? numericFilter.min ?? -Infinity
-              const max = numericFilter.passMax ?? numericFilter.max ?? Infinity
-
-              if (numericValue >= min && numericValue <= max) {
-                matchingIds.push(nodeData.id)
-              }
-            }
-          } else {
-            // String-based filtering
-            const valueStr = String(propertyValue)
-
-            // If no specific values selected, match all objects with this property
-            if (selectedValues.length === 0) {
-              matchingIds.push(nodeData.id)
-            } else {
-              // Check if this object's value matches the condition
-              const isInSelectedValues = selectedValues.includes(valueStr)
-
-              if (condition === FilterCondition.Is && isInSelectedValues) {
-                matchingIds.push(nodeData.id)
-              } else if (condition === FilterCondition.IsNot && !isInSelectedValues) {
-                matchingIds.push(nodeData.id)
-              }
-            }
-          }
-        }
-      }
-      return true
-    })
-
-    return matchingIds
-  }
-
-  // Helper function to get property value from object data
-  const getObjectPropertyValue = (
-    objData: Record<string, unknown>,
-    propertyKey: string
-  ): unknown => {
-    const keys = propertyKey.split('.')
-    let value: unknown = objData
-
-    for (const key of keys) {
-      if (
-        value &&
-        typeof value === 'object' &&
-        value !== null &&
-        key in (value as Record<string, unknown>)
-      ) {
-        value = (value as Record<string, unknown>)[key]
-      } else {
-        return undefined
-      }
-    }
-
-    return value
-  }
-
-  useOnViewerLoadComplete(
-    async () => {
-      // Apply property filters on load
-      if (filters.propertyFilters.value.length > 0) {
-        await applyMultipleFilters(filters.propertyFilters.value)
-      }
-    },
-    { initialOnly: true }
   )
 
   watch(

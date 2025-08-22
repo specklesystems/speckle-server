@@ -69,29 +69,21 @@
 </template>
 
 <script setup lang="ts">
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 import {
   useInjectedViewerInterfaceState,
   useInjectedViewer
 } from '~~/lib/viewer/composables/setup'
-import { FilterCondition, FilterLogic } from '~/lib/viewer/helpers/filters/types'
+import type { FilterCondition } from '~/lib/viewer/helpers/filters/types'
+import { FilterLogic } from '~/lib/viewer/helpers/filters/types'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import {
-  useObjectDataStore,
-  type QueryCriteria
-} from '~~/composables/viewer/useObjectDataStore'
 import { X, Plus } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
-
-// Extended filter type with numeric range data
-type FilterWithNumericRange = {
-  numericRange?: { min: number; max: number }
-}
+// Import from ui.ts following established patterns
+import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 
 const {
   filters: { propertyFilters },
   getRelevantFilters,
-  getPropertyName,
   getPropertyType,
   addActiveFilter,
   removeActiveFilter,
@@ -99,7 +91,9 @@ const {
   updateFilterCondition,
   resetFilters,
   toggleColorFilter,
-  getAvailableFilterValues
+  getAvailableFilterValues,
+  setNumericRange,
+  setFilterLogic
 } = useFilterUtilities()
 
 const {
@@ -109,8 +103,6 @@ const {
 const {
   filters: { hasAnyFiltersApplied }
 } = useInjectedViewerInterfaceState()
-
-const objectDataStore = useObjectDataStore()
 
 const relevantFilters = computed(() => {
   return getRelevantFilters(allFilters.value)
@@ -152,75 +144,10 @@ const propertySelectOptions = computed(() => {
 
 const filterLogic = ref<FilterLogic>(FilterLogic.All)
 
-objectDataStore.setFilterLogic(filterLogic.value)
-
 const mp = useMixpanel()
 
 const showPropertySelection = ref(false)
 const propertySelectionRef = ref<HTMLElement>()
-
-// Watch for filter changes and update data store slices
-watch(
-  () => propertyFilters.value,
-  (newFilters) => {
-    // Clear existing slices from this panel
-    const existingSlices = objectDataStore.dataSlices.value.filter((slice) =>
-      slice.id.startsWith('filter-panel-')
-    )
-
-    existingSlices.forEach((slice) => objectDataStore.popSlice(slice))
-
-    // Create new slices for filters with selected values or numeric ranges
-    newFilters.forEach((filter) => {
-      if (filter.filter) {
-        // Handle numeric filters
-        if (filter.filter.type === 'number' && filter.isApplied) {
-          // For numeric filters, we need the range from the NumericRange component
-          // This will be set by handleNumericRangeChange
-          const numericData = (filter as FilterWithNumericRange).numericRange
-          if (numericData) {
-            const queryCriteria: QueryCriteria = {
-              propertyKey: filter.filter.key,
-              condition: filter.condition,
-              values: [], // Empty for numeric range
-              minValue: numericData.min,
-              maxValue: numericData.max
-            }
-            const matchingObjectIds = objectDataStore.queryObjects(queryCriteria)
-
-            const slice = {
-              id: `filter-panel-${filter.id}`,
-              name: `Filter: ${getPropertyName(filter.filter.key)}`,
-              objectIds: matchingObjectIds
-            }
-            objectDataStore.pushOrReplaceSlice(slice)
-          }
-        }
-        // Handle string filters with selected values
-        else if (filter.selectedValues.length > 0) {
-          const queryCriteria: QueryCriteria = {
-            propertyKey: filter.filter.key,
-            condition: filter.condition,
-            values: filter.selectedValues
-          }
-
-          const matchingObjectIds = objectDataStore.queryObjects(queryCriteria)
-
-          const slice = {
-            id: `filter-panel-${filter.id}`,
-            name: `${getPropertyName(filter.filter.key)} ${
-              filter.condition === FilterCondition.Is ? 'is' : 'is not'
-            } ${filter.selectedValues.join(', ')}`,
-            objectIds: matchingObjectIds
-          }
-
-          objectDataStore.pushOrReplaceSlice(slice)
-        }
-      }
-    })
-  },
-  { deep: true, immediate: true }
-)
 
 const addNewEmptyFilter = () => {
   showPropertySelection.value = true
@@ -305,14 +232,7 @@ const handleNumericRangeChange = (
   filterId: string,
   value: { min: number; max: number }
 ) => {
-  const filter = propertyFilters.value.find((f) => f.id === filterId)
-  if (!filter || !filter.filter) return // Store the numeric range data on the filter
-  ;(filter as FilterWithNumericRange).numericRange = value
-
-  // Mark the filter as applied
-  if (!filter.isApplied) {
-    filter.isApplied = true
-  }
+  setNumericRange(filterId, value.min, value.max)
 
   mp.track('Viewer Action', {
     type: 'action',
@@ -353,8 +273,8 @@ const handleSelectAll = (filterId: string, selected: boolean) => {
   })
 }
 
-// Watch for filter logic changes and update data store
+// Watch for filter logic changes
 watch(filterLogic, (newLogic) => {
-  objectDataStore.setFilterLogic(newLogic)
+  setFilterLogic(newLogic)
 })
 </script>
