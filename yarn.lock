@@ -346,17 +346,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@artmizu/nuxt-prometheus@npm:^2.2.1":
-  version: 2.2.1
-  resolution: "@artmizu/nuxt-prometheus@npm:2.2.1"
+"@artmizu/nuxt-prometheus@npm:^2.5.2":
+  version: 2.5.2
+  resolution: "@artmizu/nuxt-prometheus@npm:2.5.2"
   dependencies:
-    "@mswjs/interceptors": "npm:^0.19.2"
-    "@nuxt/kit": "npm:^3.6.5"
+    "@mswjs/interceptors": "npm:^0.36.10"
     consola: "npm:^3.2.3"
     defu: "npm:^6.1.2"
     h3: "npm:^1.7.1"
     prom-client: "npm:^14.2.0"
-  checksum: 10/75852746ce44e36dc847f76c9eafca7a5899fd2997984e0f97bd69baca645a051961e7a1340369b04b326f6c79128f7442fa4841a067fe0a19ef6f7de3e93f17
+  checksum: 10/d96dda27d07b1e4b2c7b985d5d91df8694820b7222731479726afabb5489955059060c2c728767b0c06d361d58e76564df69e0e3936a2e522b5f9fe5400c63bf
   languageName: node
   linkType: hard
 
@@ -7366,19 +7365,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mswjs/interceptors@npm:^0.19.2":
-  version: 0.19.5
-  resolution: "@mswjs/interceptors@npm:0.19.5"
+"@mswjs/interceptors@npm:^0.36.10":
+  version: 0.36.10
+  resolution: "@mswjs/interceptors@npm:0.36.10"
   dependencies:
-    "@open-draft/until": "npm:^1.0.3"
-    "@remix-run/web-fetch": "npm:^4.3.2"
-    "@types/debug": "npm:^4.1.7"
-    debug: "npm:^4.3.3"
-    headers-polyfill: "npm:^3.1.0"
-    outvariant: "npm:^1.2.1"
-    strict-event-emitter: "npm:^0.4.6"
-    web-encoding: "npm:^1.1.5"
-  checksum: 10/1e5fb9315714ab55247fde732ca1124a6a88cd57042107edb3f93a9c0097a48224a9ff52f1c7bccd141183bc688a1c2ff953170de38a7ba2e405a5c1870bdd12
+    "@open-draft/deferred-promise": "npm:^2.2.0"
+    "@open-draft/logger": "npm:^0.3.0"
+    "@open-draft/until": "npm:^2.0.0"
+    is-node-process: "npm:^1.2.0"
+    outvariant: "npm:^1.4.3"
+    strict-event-emitter: "npm:^0.5.1"
+  checksum: 10/e62b478751e9e411a1983eca1a67783d766fa7c0937d8ec695eadb2178e483f3c324ea0333f2b93aca6496a336a54b3f2b5733a593c14197084c522e394fbf25
   languageName: node
   linkType: hard
 
@@ -8126,7 +8123,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nuxt/kit@npm:^3.13.2, @nuxt/kit@npm:^3.15.0, @nuxt/kit@npm:^3.15.4, @nuxt/kit@npm:^3.18.1, @nuxt/kit@npm:^3.6.5, @nuxt/kit@npm:^3.8.2":
+"@nuxt/kit@npm:^3.13.2, @nuxt/kit@npm:^3.15.0, @nuxt/kit@npm:^3.15.4, @nuxt/kit@npm:^3.18.1, @nuxt/kit@npm:^3.8.2":
   version: 3.18.1
   resolution: "@nuxt/kit@npm:3.18.1"
   dependencies:
@@ -8264,10 +8261,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@open-draft/until@npm:^1.0.3":
-  version: 1.0.3
-  resolution: "@open-draft/until@npm:1.0.3"
-  checksum: 10/323e92ebef0150ed0f8caedc7d219b68cdc50784fa4eba0377eef93533d3f46514eb2400ced83dda8c51bddc3d2c7b8e9cf95e5ec85ab7f62dfc015d174f62f2
+"@open-draft/deferred-promise@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "@open-draft/deferred-promise@npm:2.2.0"
+  checksum: 10/bc3bb1668a555bb87b33383cafcf207d9561e17d2ca0d9e61b7ce88e82b66e36a333d3676c1d39eb5848022c03c8145331fcdc828ba297f88cb1de9c5cef6c19
+  languageName: node
+  linkType: hard
+
+"@open-draft/logger@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "@open-draft/logger@npm:0.3.0"
+  dependencies:
+    is-node-process: "npm:^1.2.0"
+    outvariant: "npm:^1.4.0"
+  checksum: 10/7a280f170bcd4e91d3eedbefe628efd10c3bd06dd2461d06a7fdbced89ef457a38785847f88cc630fb4fd7dfa176d6f77aed17e5a9b08000baff647433b5ff78
+  languageName: node
+  linkType: hard
+
+"@open-draft/until@npm:^2.0.0":
+  version: 2.1.0
+  resolution: "@open-draft/until@npm:2.1.0"
+  checksum: 10/622be42950afc8e89715d0fd6d56cbdcd13e36625e23b174bd3d9f06f80e25f9adf75d6698af93bca1e1bf465b9ce00ec05214a12189b671fb9da0f58215b6f4
   languageName: node
   linkType: hard
 
@@ -9455,59 +9469,6 @@ __metadata:
   version: 3.0.0
   resolution: "@remirror/core-constants@npm:3.0.0"
   checksum: 10/de15b1df099a7646739e5fb6bb55195618a8ac4fa938db7c719e867eefd72ebc5a05865591788ade449613141619cc1002fb6c0f824de4468dfefa951fbf19a2
-  languageName: node
-  linkType: hard
-
-"@remix-run/web-blob@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "@remix-run/web-blob@npm:3.1.0"
-  dependencies:
-    "@remix-run/web-stream": "npm:^1.1.0"
-    web-encoding: "npm:1.1.5"
-  checksum: 10/24b95b90e2a5bfb17478c9e88a03c8de8db2cc6cbe744ee845cd8bfc278744f3d0a6f782f63b3361eef59488f544b60172fb98c628f113c936f597b303bc58f3
-  languageName: node
-  linkType: hard
-
-"@remix-run/web-fetch@npm:^4.3.2":
-  version: 4.4.2
-  resolution: "@remix-run/web-fetch@npm:4.4.2"
-  dependencies:
-    "@remix-run/web-blob": "npm:^3.1.0"
-    "@remix-run/web-file": "npm:^3.1.0"
-    "@remix-run/web-form-data": "npm:^3.1.0"
-    "@remix-run/web-stream": "npm:^1.1.0"
-    "@web3-storage/multipart-parser": "npm:^1.0.0"
-    abort-controller: "npm:^3.0.0"
-    data-uri-to-buffer: "npm:^3.0.1"
-    mrmime: "npm:^1.0.0"
-  checksum: 10/46961dae587d1d9eb1c678113cf8fcbe0e5779b3fdedd8b136c7065b47e967056d1508924992a58887b03ab406c44c838bca5d0f7d08a4bbaab9609178c3fe4b
-  languageName: node
-  linkType: hard
-
-"@remix-run/web-file@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "@remix-run/web-file@npm:3.1.0"
-  dependencies:
-    "@remix-run/web-blob": "npm:^3.1.0"
-  checksum: 10/c5ce184fc8e3a8d5736798c9fa784a3416890382be707da927926d173e67227dc60ae2494be680bf0074a00fac5a9a737387ce820349fb2fecdc31be034854a0
-  languageName: node
-  linkType: hard
-
-"@remix-run/web-form-data@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "@remix-run/web-form-data@npm:3.1.0"
-  dependencies:
-    web-encoding: "npm:1.1.5"
-  checksum: 10/4eaa98da8f8827d2fd6e676920c6352679b35e0fd11f83d99f8a1ee009e8e51a0c710e8d228cd481ad00a81b3afe53a1db97321f3c6c16e14a3d67858e238a91
-  languageName: node
-  linkType: hard
-
-"@remix-run/web-stream@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "@remix-run/web-stream@npm:1.1.0"
-  dependencies:
-    web-streams-polyfill: "npm:^3.1.1"
-  checksum: 10/9904b1539feee3a86d667e9803783dfc78e21b665a4e67edfd795bd1acee753fda88f50abbebf7cffa010539ed5287b4a0d09f55101b80f2c891c15db1066eea
   languageName: node
   linkType: hard
 
@@ -10702,7 +10663,7 @@ __metadata:
   resolution: "@speckle/frontend-2@workspace:packages/frontend-2"
   dependencies:
     "@apollo/client": "npm:^3.13.8"
-    "@artmizu/nuxt-prometheus": "npm:^2.2.1"
+    "@artmizu/nuxt-prometheus": "npm:^2.5.2"
     "@datadog/browser-rum": "npm:^5.11.0"
     "@datadog/datadog-ci": "npm:^3.5.0"
     "@eslint/config-inspector": "npm:^0.4.10"
@@ -10776,7 +10737,7 @@ __metadata:
     eslint-config-prettier: "npm:^9.1.0"
     eslint-plugin-vuejs-accessibility: "npm:^2.3.0"
     graphql: "npm:^16.6.0"
-    ioredis: "npm:^5.3.2"
+    ioredis: "npm:^5.7.0"
     js-cookie: "npm:^3.0.1"
     jsdom: "npm:^22.1.0"
     lodash-es: "npm:^4.17.21"
@@ -15297,13 +15258,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@web3-storage/multipart-parser@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "@web3-storage/multipart-parser@npm:1.0.0"
-  checksum: 10/20d7a4330392d83f727586477fc6e709f8fca3b3664365b0d9d3041abe2aeb13f53030a3997a28a39cc74930863ebb625878b8c90789e5c990e4b64d9f22a93d
-  languageName: node
-  linkType: hard
-
 "@whatwg-node/disposablestack@npm:^0.0.6":
   version: 0.0.6
   resolution: "@whatwg-node/disposablestack@npm:0.0.6"
@@ -15585,13 +15539,6 @@ __metadata:
     "@types/emscripten": "npm:^1.39.6"
     tslib: "npm:^1.13.0"
   checksum: 10/0eb147f39eab2830c29120d17e8bfba5aa15dedb940a7378070c67d4de08e9ba8d34068522e15e6b4db94ecaed4ad520e1e517588a36a348d1aa160bc36156ea
-  languageName: node
-  linkType: hard
-
-"@zxing/text-encoding@npm:0.9.0":
-  version: 0.9.0
-  resolution: "@zxing/text-encoding@npm:0.9.0"
-  checksum: 10/268e4ef64b8eaa32b990240bdfd1f7b3e2b501a6ed866a565f7c9747f04ac884fbe0537fe12bb05d9241b98fb111270c0fd0023ef0a02d23a6619b4589e98f6b
   languageName: node
   linkType: hard
 
@@ -19286,13 +19233,6 @@ __metadata:
   version: 2.0.2
   resolution: "data-uri-to-buffer@npm:2.0.2"
   checksum: 10/152bec5e77513ee253a7c686700a1723246f582dad8b614e8eaaaba7fa45a15c8671ae4b8f4843f4f3a002dae1d3e7a20f852f7d7bdc8b4c15cfe7adfdfb07f8
-  languageName: node
-  linkType: hard
-
-"data-uri-to-buffer@npm:^3.0.1":
-  version: 3.0.1
-  resolution: "data-uri-to-buffer@npm:3.0.1"
-  checksum: 10/c59c3009686a78c071806b72f4810856ec28222f0f4e252aa495ec027ed9732298ceea99c50328cf59b151dd34cbc3ad6150bbb43e41fc56fa19f48c99e9fc30
   languageName: node
   linkType: hard
 
@@ -24243,13 +24183,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"headers-polyfill@npm:^3.1.0":
-  version: 3.3.0
-  resolution: "headers-polyfill@npm:3.3.0"
-  checksum: 10/5ada703290e568a46f98410c03603afbcb05f7cd16360f1ae0c2bc7560acd034d0b7f41a4b52a4eb62ef1e45c713f32be6127cf599502f5ec41995a5583dfa70
-  languageName: node
-  linkType: hard
-
 "help-me@npm:^4.0.1":
   version: 4.1.0
   resolution: "help-me@npm:4.1.0"
@@ -25028,7 +24961,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ioredis@npm:>=5, ioredis@npm:^5.2.2, ioredis@npm:^5.3.0, ioredis@npm:^5.3.2, ioredis@npm:^5.6.1":
+"ioredis@npm:>=5, ioredis@npm:^5.2.2, ioredis@npm:^5.3.0, ioredis@npm:^5.3.2, ioredis@npm:^5.6.1, ioredis@npm:^5.7.0":
   version: 5.7.0
   resolution: "ioredis@npm:5.7.0"
   dependencies:
@@ -25436,6 +25369,13 @@ __metadata:
     call-bind: "npm:^1.0.0"
     define-properties: "npm:^1.1.3"
   checksum: 10/1f784d3472c09bc2e47acba7ffd4f6c93b0394479aa613311dc1d70f1bfa72eb0846c81350967722c959ba65811bae222204d6c65856fdce68f31986140c7b0e
+  languageName: node
+  linkType: hard
+
+"is-node-process@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "is-node-process@npm:1.2.0"
+  checksum: 10/930765cdc6d81ab8f1bbecbea4a8d35c7c6d88a3ff61f3630e0fc7f22d624d7661c1df05c58547d0eb6a639dfa9304682c8e342c4113a6ed51472b704cee2928
   languageName: node
   linkType: hard
 
@@ -29298,13 +29238,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mrmime@npm:^1.0.0":
-  version: 1.0.1
-  resolution: "mrmime@npm:1.0.1"
-  checksum: 10/a157e833ffe76648ab2107319deeff024b80b136ec66c60fae9d339009a1bb72c57ec1feecfd6a905dfd3df29e2299e850bff84b69cad790cc9bd9ab075834d1
-  languageName: node
-  linkType: hard
-
 "mrmime@npm:^2.0.0":
   version: 2.0.0
   resolution: "mrmime@npm:2.0.0"
@@ -30655,10 +30588,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"outvariant@npm:^1.2.1":
-  version: 1.4.2
-  resolution: "outvariant@npm:1.4.2"
-  checksum: 10/f16ba035fb65d1cbe7d2e06693dd42183c46bc8456713d9ddb5182d067defa7d78217edab0a2d3e173d3bacd627b2bd692195c7087c225b82548fbf52c677b38
+"outvariant@npm:^1.4.0, outvariant@npm:^1.4.3":
+  version: 1.4.3
+  resolution: "outvariant@npm:1.4.3"
+  checksum: 10/3a7582745850cb344d49641867a4c080858c54f4091afd91b9c0765ba6e471c2bc841348f0fff344845ddd0a4db42fd5d68c6f7ebaf32d4b676a3a9987b2488a
   languageName: node
   linkType: hard
 
@@ -36061,10 +35994,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"strict-event-emitter@npm:^0.4.6":
-  version: 0.4.6
-  resolution: "strict-event-emitter@npm:0.4.6"
-  checksum: 10/abdbf59b6c45b599cc2f227fa473765d1510d155ebd22533e8ecb06110dfacb2ff07aece7fd528dde2b4f9e379d60f2687eee8af3fa2877c3ed88ee5b7ed2707
+"strict-event-emitter@npm:^0.5.1":
+  version: 0.5.1
+  resolution: "strict-event-emitter@npm:0.5.1"
+  checksum: 10/25c84d88be85940d3547db665b871bfecea4ea0bedfeb22aae8db48126820cfb2b0bc2fba695392592a09b1aa36b686d6eede499e1ecd151593c03fe5a50d512
   languageName: node
   linkType: hard
 
@@ -38612,7 +38545,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"util@npm:^0.12.3, util@npm:^0.12.4, util@npm:^0.12.5":
+"util@npm:^0.12.4, util@npm:^0.12.5":
   version: 0.12.5
   resolution: "util@npm:0.12.5"
   dependencies:
@@ -39528,19 +39461,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"web-encoding@npm:1.1.5, web-encoding@npm:^1.1.5":
-  version: 1.1.5
-  resolution: "web-encoding@npm:1.1.5"
-  dependencies:
-    "@zxing/text-encoding": "npm:0.9.0"
-    util: "npm:^0.12.3"
-  dependenciesMeta:
-    "@zxing/text-encoding":
-      optional: true
-  checksum: 10/243518cfa8388ac05eeb4041bd330d38c599476ff9a93239b386d1ba2af130089a2fcefb0cf65b385f989105ff460ae69dca7e42236f4d98dc776b04e558cdb5
-  languageName: node
-  linkType: hard
-
 "web-ifc@npm:^0.0.36":
   version: 0.0.36
   resolution: "web-ifc@npm:0.0.36"
@@ -39562,7 +39482,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"web-streams-polyfill@npm:^3.0.3, web-streams-polyfill@npm:^3.1.1":
+"web-streams-polyfill@npm:^3.0.3":
   version: 3.3.3
   resolution: "web-streams-polyfill@npm:3.3.3"
   checksum: 10/8e7e13501b3834094a50abe7c0b6456155a55d7571312b89570012ef47ec2a46d766934768c50aabad10a9c30dd764a407623e8bfcc74fcb58495c29130edea9

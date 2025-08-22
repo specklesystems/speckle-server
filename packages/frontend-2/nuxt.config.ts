@@ -1,10 +1,11 @@
 import { join } from 'path'
-import { withoutLeadingSlash } from 'ufo'
 import { sanitizeFilePath } from 'mlly'
 import { filename } from 'pathe/utils'
 import * as Environment from '@speckle/shared/environment'
+import { defineNuxtConfig } from 'nuxt/config'
 
 // Copied out from nuxt vite-builder source to correctly build output chunk/entry/asset/etc file names
+const withoutLeadingSlash = (path: string) => path.replace(/^\//, '')
 const buildOutputFileName = (chunkName: string) =>
   withoutLeadingSlash(
     join('/_nuxt/', `${sanitizeFilePath(filename(chunkName))}.[hash].js`)
@@ -148,12 +149,12 @@ export default defineNuxtConfig({
           }
         },
         // Leave imports as is, they're server-side only
-        external: ['jsdom']
-      }
-      // // optionally disable minification for debugging
-      // minify: false,
-      // // optionally enable sourcemaps for debugging
-      // sourcemap: 'inline'
+        external: ['jsdom', 'crypto']
+      },
+      // optionally disable minification for debugging
+      minify: false,
+      // optionally enable sourcemaps for debugging
+      sourcemap: 'inline'
     }
   },
 
@@ -239,9 +240,6 @@ export default defineNuxtConfig({
         to: '/workspaces/actions/create',
         statusCode: 301
       }
-    },
-    '/projects/:id/models/:modelId': {
-      ssr: true // TODO: Should experiment w/ false, but this breaks SSR script injection like for RUM
     }
   },
 
@@ -267,9 +265,12 @@ export default defineNuxtConfig({
       'graphql',
       /^graphql\/.+/,
       'graphql/language/printer',
-      'graphql/utilities/getOperationAST'
+      'graphql/utilities/getOperationAST',
+      'ioredis'
     ]
   },
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error
   prometheus: {
     verbose: false
   },
