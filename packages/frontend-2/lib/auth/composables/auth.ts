@@ -139,65 +139,27 @@ const useResetAuthState = (
   const apollo = options?.deferredApollo ? undefined : useApolloClient().client
   const resolveDistinctId = useResolveUserDistinctId()
   const { cbs } = useOnAuthStateChangeState()
-  const authToken = useAuthCookie()
-  const { logger } = useSafeLogger()
 
-  return async (
-    resetOptions?: Partial<{
-      /**
-       * If true, won't await the full reset and return early after reset has started
-       */
-      lazyReset: boolean
-    }>
-  ) => {
+  return async () => {
     const client = apollo || (await options?.deferredApollo?.())
-    const isLoggedIn = !!authToken.value
 
     let user: MaybeNullOrUndefined<ActiveUserMainMetadataQuery['activeUser']> = null
-    let resetPromise: Promise<unknown> = Promise.resolve()
     if (client) {
-      // evict user early (in case we're not waiting for full reset), as that's what most pages rely on
-      modifyObjectField(
-        client.cache,
-        ROOT_QUERY,
-        'activeUser',
-        ({ helpers: { evict } }) =>
-          isLoggedIn
-            ? // if we just logged in, we want to evict so that activeUser query retriggers
-              evict()
-            : // if we logged out, we don't want to reload activeUser query yet, just
-              // mark it as if it's resolved to be null
-              null
-      )
+      // evict cache
+      client.cache.evict({ id: 'ROOT_QUERY', fieldName: 'activeUser' })
 
-      // evict entire cache (not enough to just evict user, various other fields
-      // also depend on active user (e.g. Workspace.seatType))
-      resetPromise = (async () => {
-        if (import.meta.server) {
-          logger().error('attempting to resetStore from SSR')
-        } else {
-          await client.resetStore()
-        }
-
-        // wait till active user is reloaded
-        const { data: activeUserRes } = await client
-          .query({
-            query: activeUserQuery,
-            fetchPolicy: 'network-only'
-          })
-          .catch(convertThrowIntoFetchResult)
-        user = activeUserRes?.activeUser
-      })()
+      // wait till active user is reloaded
+      const { data: activeUserRes } = await client
+        .query({
+          query: activeUserQuery,
+          fetchPolicy: 'network-only'
+        })
+        .catch(convertThrowIntoFetchResult)
+      user = activeUserRes?.activeUser
     }
 
-    resetPromise = resetPromise.then(() => {
-      // process state change callbacks
-      cbs.forEach((cb) => cb(user, { resolveDistinctId, isReset: true }))
-    })
-
-    if (!resetOptions?.lazyReset) {
-      await resetPromise
-    }
+    // process state change callbacks
+    cbs.forEach((cb) => cb(user, { resolveDistinctId, isReset: true }))
   }
 }
 
@@ -229,7 +191,7 @@ export const useAuthManager = (
   const getMixpanel = useDeferredMixpanel()
   const postAuthRedirect = usePostAuthRedirect()
   const { markLoggedOut } = useJustLoggedOutTracking()
-  const { logger } = useSafeLogger()
+  const logger = useLogger()
 
   /**
    * Invite token, if any
@@ -256,15 +218,8 @@ export const useAuthManager = (
    */
   const saveNewToken = async (
     newToken?: string,
-    options?: Partial<{
-      skipRedirect: boolean
-      skipStateReset: boolean
-      lazyStateReset: boolean
-    }>
+    options?: Partial<{ skipRedirect: boolean }>
   ) => {
-    const skipStateReset = options?.skipStateReset
-    const skipRedirect = skipStateReset ? true : options?.skipRedirect
-
     // write to cookie
     authToken.value = newToken
 
@@ -272,14 +227,10 @@ export const useAuthManager = (
     SafeLocalStorage.remove(LocalStorageKeys.AuthAppChallenge)
 
     // Wipe auth state
-    if (!skipStateReset) {
-      await resetAuthState({
-        lazyReset: options?.lazyStateReset
-      })
-    }
+    await resetAuthState()
 
     // redirect home & wipe access code from querystring
-    if (!skipRedirect) goHome({ query: {} })
+    if (!options?.skipRedirect) goHome({ query: {} })
   }
 
   /**
@@ -379,23 +330,8 @@ export const useAuthManager = (
               title: 'Authentication failed',
               description: err.message
             })
-            logger().error({ err }, 'Failed to finalize login with access code')
+            logger.error({ err }, 'Failed to finalize login with access code')
           }
-        }
-      },
-      { immediate: true }
-    )
-  }
-
-  /**
-   * Watch for embed token in query string and save it
-   */
-  const watchEmbedToken = () => {
-    watch(
-      () => embedToken.value,
-      async (newVal, oldVal) => {
-        if (newVal && newVal !== oldVal) {
-          await resetAuthState()
         }
       },
       { immediate: true }
@@ -408,7 +344,6 @@ export const useAuthManager = (
   const watchAuthQueryString = () => {
     watchLoginAccessCode()
     watchEmailVerificationStatus()
-    watchEmbedToken()
   }
 
   /**
@@ -500,11 +435,7 @@ export const useAuthManager = (
       forceFullReload: boolean
     }>
   ) => {
-    const isServer = import.meta.server
-
-    // lazy reset, we dont need it to finish before we can redirect to login page
-    // (and we wanna avoid flashes of broken content)
-    await saveNewToken(undefined, { skipRedirect: true, lazyStateReset: true })
+    await saveNewToken(undefined, { skipRedirect: true })
 
     if (!options?.skipToast) {
       triggerNotification({
@@ -516,7 +447,7 @@ export const useAuthManager = (
 
     postAuthRedirect.deleteState()
 
-    if (isServer) {
+    if (import.meta.server) {
       markLoggedOut()
     }
 
