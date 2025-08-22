@@ -52,6 +52,7 @@
         v-show="shouldShowPanoramicPreview"
         ref="panorama"
         :style="{
+          display: shouldShowPanoramicPreview ? 'block' : 'none',
           backgroundImage: panoramaPreviewUrl
             ? `url('${panoramaPreviewUrl}')`
             : undefined,
