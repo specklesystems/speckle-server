@@ -1,15 +1,12 @@
 import { beforeEachContext } from '@/test/hooks'
 import { expect } from 'chai'
 import {
-  countAdminUsersFactory,
   getUserByEmailFactory,
   getUserFactory,
   legacyGetPaginatedUsersCountFactory,
   legacyGetPaginatedUsersFactory,
   legacyGetUserByEmailFactory,
-  listUsersFactory,
-  storeUserAclFactory,
-  storeUserFactory
+  listUsersFactory
 } from '@/modules/core/repositories/users'
 import { db } from '@/db/knex'
 import {
@@ -29,7 +26,7 @@ import {
 import { expectToThrow } from '@/test/assertionHelper'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import type { BasicTestUser } from '@/test/authHelper'
-import { createTestUsers } from '@/test/authHelper'
+import { createTestUser, createTestUsers } from '@/test/authHelper'
 import { UserEmails, Users } from '@/modules/core/dbSchema'
 import { UserEmailPrimaryUnverifiedError } from '@/modules/core/errors/userEmails'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
@@ -42,9 +39,7 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 
 const getServerInfo = getServerInfoFactory({ db })
@@ -72,16 +67,6 @@ const createUserEmail = validateAndCreateUserEmailFactory({
   requestNewEmailVerification
 })
 
-const findEmail = findEmailFactory({ db })
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: createUserEmail,
-  emitEvent: getEventBus().emit
-})
 const getUserByEmail = getUserByEmailFactory({ db })
 const legacyGetUserByEmail = legacyGetUserByEmailFactory({ db })
 const listUsers = listUsersFactory({ db })
@@ -102,7 +87,7 @@ describe('Core @user-emails', () => {
   describe('markUserEmailAsVerified', () => {
     it('should mark user email as verified', async () => {
       const email = createRandomEmail()
-      await createUser({
+      await createTestUser({
         name: 'John Doe',
         email,
         password: createRandomPassword()
@@ -118,7 +103,7 @@ describe('Core @user-emails', () => {
   describe('deleteUserEmail', () => {
     it('should throw and error when trying to delete last email', async () => {
       const email = createRandomEmail()
-      const userId = await createUser({
+      const { id: userId } = await createTestUser({
         name: 'John Doe',
         email,
         password: createRandomPassword()
@@ -135,7 +120,7 @@ describe('Core @user-emails', () => {
 
     it('should throw and error when trying to delete primary email', async () => {
       const email = createRandomEmail()
-      const userId = await createUser({
+      const { id: userId } = await createTestUser({
         name: 'John Doe',
         email,
         password: createRandomPassword()
@@ -159,7 +144,7 @@ describe('Core @user-emails', () => {
 
     it('should delete email', async () => {
       const email = createRandomEmail()
-      const userId = await createUser({
+      const { id: userId } = await createTestUser({
         name: 'John Doe',
         email: createRandomEmail(),
         password: createRandomPassword()
@@ -200,7 +185,7 @@ describe('Core @user-emails', () => {
     it('should throw an error if trying to set non verified email as primary', async () => {
       const email1 = createRandomEmail()
       const email2 = createRandomEmail()
-      const userId = await createUser({
+      const { id: userId } = await createTestUser({
         name: 'John Doe',
         email: email1,
         password: createRandomPassword()
@@ -241,7 +226,7 @@ describe('Core @user-emails', () => {
     })
     it('should set primary email', async () => {
       const email = createRandomEmail()
-      const userId = await createUser({
+      const { id: userId } = await createTestUser({
         name: 'John Doe',
         email: createRandomEmail(),
         password: createRandomPassword()
@@ -286,7 +271,7 @@ describe('Core @user-emails', () => {
   describe('validateAndCreateUserEmailFactory', () => {
     it('should throw an error when trying to create a primary email for a user and there is already one for that user', async () => {
       const email = createRandomEmail()
-      const userId = await createUser({
+      const { id: userId } = await createTestUser({
         name: 'John Doe',
         email: createRandomEmail(),
         password: createRandomPassword()
@@ -306,12 +291,12 @@ describe('Core @user-emails', () => {
     })
     it('should throw an error when trying to create an email for a user and the same email is already on the server', async () => {
       const email = createRandomEmail()
-      const userId1 = await createUser({
+      const { id: userId1 } = await createTestUser({
         name: 'John Doe 2',
         email: createRandomEmail(),
         password: createRandomPassword()
       })
-      const userId2 = await createUser({
+      const { id: userId2 } = await createTestUser({
         name: 'John Doe',
         email: createRandomEmail(),
         password: createRandomPassword()
@@ -343,7 +328,7 @@ describe('Core @user-emails', () => {
   describe('updateUserEmail', () => {
     it('should throw an error when trying to mark an email as primary and there is already one for the user', async () => {
       const email = createRandomEmail()
-      const userId = await createUser({
+      const { id: userId } = await createTestUser({
         name: 'John Doe',
         email: createRandomEmail(),
         password: createRandomPassword()
