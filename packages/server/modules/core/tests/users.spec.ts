@@ -133,6 +133,13 @@ import { authorizeResolver } from '@/modules/shared'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
 import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 import { getTestRegionClients } from '@/modules/multiregion/tests/helpers'
+import { asMultiregionalOperation } from '@/modules/shared/command'
+import type {
+  ChangeUserPassword,
+  CreateValidatedUser,
+  DeleteUser,
+  UpdateUserAndNotify
+} from '@/modules/core/domain/users/operations'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -236,66 +243,141 @@ const createStream = legacyCreateStreamFactory({
 })
 const grantPermissionsStream = grantStreamPermissionsFactory({ db })
 
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: replicateQuery(await getTestRegionClients(), storeUserFactory),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
+const createUser: CreateValidatedUser = async (...input) =>
+  asMultiregionalOperation(
+    async ({ dbTx, txs, emit }) => {
+      const createUser = createUserFactory({
+        getServerInfo,
+        findEmail: findEmailFactory({ db: dbTx }),
+        storeUser: async (...params) => {
+          const [user] = await Promise.all(
+            txs.map((tx) => storeUserFactory({ db: tx })(...params))
+          )
+
+          return user
+        },
+        countAdminUsers: countAdminUsersFactory({ db: dbTx }),
+        storeUserAcl: storeUserAclFactory({ db: dbTx }),
+        validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+          createUserEmail: createUserEmailFactory({ db: dbTx }),
+          ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db: dbTx }),
+          findEmail: findEmailFactory({ db: dbTx }),
+          updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+            deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db: dbTx }),
+            updateAllInviteTargets: updateAllInviteTargetsFactory({ db: dbTx })
+          }),
+          requestNewEmailVerification: requestNewEmailVerificationFactory({
+            getServerInfo,
+            findEmail: findEmailFactory({ db: dbTx }),
+            getUser: getUserFactory({ db: dbTx }),
+            deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory(
+              {
+                db: dbTx
+              }
+            ),
+            renderEmail,
+            sendEmail
+          })
+        }),
+        emitEvent: emit
+      })
+
+      return createUser(...input)
+    },
+    {
+      dbs: await getTestRegionClients(),
+      name: 'create user spec',
+      logger: dbLogger
+    }
+  )
+
 const findOrCreateUser = findOrCreateUserFactory({
   createUser,
   findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
 })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
-const updateUser = updateUserAndNotifyFactory({
-  getUser: getUserFactory({ db }),
-  updateUser: replicateQuery(await getTestRegionClients(), updateUserFactory),
-  emitEvent: getEventBus().emit
-})
-const updateUserPassword = changePasswordFactory({
-  getUser: getUserFactory({ db }),
-  updateUser: replicateQuery(await getTestRegionClients(), updateUserFactory)
-})
+const updateUser: UpdateUserAndNotify = async (...input) =>
+  asMultiregionalOperation(
+    ({ dbTx, txs, emit }) => {
+      const updateUserAndNotify = updateUserAndNotifyFactory({
+        getUser: getUserFactory({ db: dbTx }),
+        updateUser: async (...params) => {
+          const [res] = await Promise.all(
+            txs.map((tx) => updateUserFactory({ db: tx })(...params))
+          )
+
+          return res
+        },
+        emitEvent: emit
+      })
+
+      return updateUserAndNotify(...input)
+    },
+    {
+      logger: dbLogger,
+      name: 'update user and notify spec',
+      dbs: await getTestRegionClients()
+    }
+  )
+
+const updateUserPassword: ChangeUserPassword = async (...input) =>
+  asMultiregionalOperation(
+    ({ dbTx, txs }) => {
+      const updateUserPassword = changePasswordFactory({
+        getUser: getUserFactory({ db: dbTx }),
+        updateUser: async (...params) => {
+          const [res] = await Promise.all(
+            txs.map((tx) => updateUserFactory({ db: tx })(...params))
+          )
+
+          return res
+        }
+      })
+
+      return updateUserPassword(...input)
+    },
+    {
+      logger: dbLogger,
+      name: 'update user password spec',
+      dbs: await getTestRegionClients()
+    }
+  )
+
 const validateUserPassword = validateUserPasswordFactory({
   getUserByEmail: getUserByEmailFactory({ db })
 })
-const deleteUser = deleteUserFactory({
-  deleteStream: deleteStreamFactory({ db }),
-  logger: dbLogger,
-  isLastAdminUser: isLastAdminUserFactory({ db }),
-  getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
-  queryAllProjects: queryAllProjectsFactory({
-    getExplicitProjects: getExplicitProjects({ db })
-  }),
-  getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
-  deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
-  deleteUserRecord: replicateQuery(
-    await getTestRegionClients(),
-    deleteUserRecordFactory
-  ),
-  emitEvent: getEventBus().emit
-})
+
+const deleteUser: DeleteUser = async (...input) =>
+  asMultiregionalOperation(
+    ({ dbTx, txs, emit }) => {
+      const deleteUser = deleteUserFactory({
+        deleteStream: deleteStreamFactory({ db: dbTx }),
+        logger: dbLogger,
+        isLastAdminUser: isLastAdminUserFactory({ db: dbTx }),
+        getUserDeletableStreams: getUserDeletableStreamsFactory({ db: dbTx }),
+        queryAllProjects: queryAllProjectsFactory({
+          getExplicitProjects: getExplicitProjects({ db: dbTx })
+        }),
+        getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db: dbTx }),
+        deleteAllUserInvites: deleteAllUserInvitesFactory({ db: dbTx }),
+        deleteUserRecord: async (params) => {
+          const [res] = await Promise.all(
+            txs.map((tx) => deleteUserRecordFactory({ db: tx })(params))
+          )
+
+          return res
+        },
+        emitEvent: emit
+      })
+
+      return deleteUser(...input)
+    },
+    {
+      logger: dbLogger,
+      name: 'delete user spec',
+      dbs: await getTestRegionClients()
+    }
+  )
 
 const changeUserRole = changeUserRoleFactory({
   getServerInfo,

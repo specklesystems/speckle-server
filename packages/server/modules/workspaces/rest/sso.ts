@@ -319,9 +319,9 @@ export const getSsoRouter = (): Router => {
                   createUser: createUserFactory({
                     getServerInfo: getServerInfoFactory({ db: trx }),
                     findEmail: findEmailFactory({ db: trx }),
-                    storeUser: async (props) => {
+                    storeUser: async (...params) => {
                       const [user] = await Promise.all(
-                        txs.map((tx) => storeUserFactory({ db: tx })(props))
+                        txs.map((tx) => storeUserFactory({ db: tx })(...params))
                       )
 
                       return user
