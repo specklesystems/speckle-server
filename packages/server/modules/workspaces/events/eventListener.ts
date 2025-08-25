@@ -971,7 +971,7 @@ export const initializeEventListenersFactory =
           workspaceId: payload.workspace.id,
           createdAt: new Date(),
           updatedAt: new Date(),
-          featureFlags: WorkspaceFeatureFlags.None
+          featureFlags: WorkspaceFeatureFlags.none
         }
         await upsertUnpaidWorkspacePlanFactory({ db })({ workspacePlan })
         await eventBus.emit({

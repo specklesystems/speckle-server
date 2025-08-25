@@ -80,7 +80,7 @@ export const completeCheckoutSessionFactory =
       workspaceId: checkoutSession.workspaceId,
       name: checkoutSession.workspacePlan,
       status: 'valid',
-      featureFlags: WorkspaceFeatureFlags.None
+      featureFlags: WorkspaceFeatureFlags.none
     } as const
     await upsertPaidWorkspacePlan({
       workspacePlan

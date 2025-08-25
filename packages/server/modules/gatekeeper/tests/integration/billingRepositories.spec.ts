@@ -62,7 +62,7 @@ describe('billing repositories @gatekeeper', () => {
           workspaceId,
           createdAt: new Date(),
           updatedAt: new Date(),
-          featureFlags: WorkspaceFeatureFlags.None
+          featureFlags: WorkspaceFeatureFlags.none
         } as const
         await upsertPaidWorkspacePlan({
           workspacePlan
