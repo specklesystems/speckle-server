@@ -41,49 +41,31 @@ spec:
           periodSeconds: 10
           failureThreshold: 18 # 10 * 18 = 180s to startup
           timeoutSeconds: 3
-          {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
-          httpGet:
-            path: /healthz
-            port: 9080
-          {{- else }}
           exec:
             command:
               - /usr/bin/node
               - -e
               - "process.exit((Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 25 * 60 * 1000) ? 1 : 0)"
-          {{- end }}
 
         livenessProbe:
           initialDelaySeconds: 60
           periodSeconds: 60
           timeoutSeconds: 3
-          {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
-          httpGet:
-            path: /healthz
-            port: 9080
-          {{- else }}
           exec:
             command:
               - /usr/bin/node
               - -e
               - "process.exit((Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 25 * 60 * 1000) ? 1 : 0)"
-          {{- end }}
 
         readinessProbe:
           initialDelaySeconds: 60
           periodSeconds: 10
           timeoutSeconds: 3
-          {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
-          httpGet:
-            path: /healthz
-            port: 9080
-          {{- else }}
           exec:
             command:
               - /usr/bin/node
               - -e
               - "process.exit((Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 25 * 60 * 1000) ? 1 : 0)"
-          {{- end }}
 
         resources:
           {{- with .Values.fileimport_service.requests }}
@@ -121,26 +103,9 @@ spec:
         {{- end }}
 
         env:
-          {{- if (not .Values.featureFlags.nextGenFileImporterEnabled) }}
           - name: SPECKLE_SERVER_URL
             value: {{ printf "http://%s:%s" ( include "objects.service.fqdn" $ ) ( include "objects.port" $ ) }}
-          {{- end }}
 
-          {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
-          - name: REDIS_URL
-            valueFrom:
-              secretKeyRef:
-                name: {{ default .Values.secretName .Values.redis.fileImportService.ifc.connectionString.secretName }}
-                key: {{ default "fileimport_service_ifc_redis_url" .Values.redis.fileImportService.ifc.connectionString.secretKey }}
-          - name: QUEUE_NAME
-            value: {{ .Values.redis.fileImportService.ifc.queueName | quote }}
-          {{- else }}
-          # Dummy value for backwards compatibility
-          - name: REDIS_URL
-            value: "redis://redis"
-          {{- end }}
-
-          {{- if (not .Values.featureFlags.nextGenFileImporterEnabled) }}
           - name: PG_CONNECTION_STRING
             valueFrom:
               secretKeyRef:
@@ -157,7 +122,6 @@ spec:
 
           - name: LOG_LEVEL
             value: {{ .Values.fileimport_service.logLevel | quote }}
-
           - name: LOG_PRETTY
             value: {{ .Values.fileimport_service.logPretty | quote }}
 
@@ -165,24 +129,17 @@ spec:
           - name: NODE_EXTRA_CA_CERTS
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
-          {{- end }}
 
           - name: FILE_IMPORT_TIME_LIMIT_MIN
             value: {{ (or .Values.file_import_time_limit_min .Values.fileimport_service.time_limit_min) | quote }}
-          {{- if (not .Values.featureFlags.nextGenFileImporterEnabled) }}
           # DEPRECATED
           - name: MAX_OBJECT_SIZE_MB
             value: {{ .Values.server.max_object_size_mb | quote }}
-          {{- end }}
-          {{- if (and .Values.featureFlags.workspacesMultiRegionEnabled (not .Values.featureFlags.nextGenFileImporterEnabled)) }}
+          {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
           - name: FF_WORKSPACES_MULTI_REGION_ENABLED
             value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
           - name: MULTI_REGION_CONFIG_PATH
             value: "/multi-region-config/multi-region-config.json"
-          {{- end }}
-          {{- if .Values.featureFlags.nextGenFileImporterEnabled }}
-          - name: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-            value: {{ .Values.featureFlags.nextGenFileImporterEnabled | quote }}
           {{- end }}
           {{- with .Values.fileimport_service.additionalEnvVars }}
           {{- toYaml . | nindent 10}}

@@ -23,8 +23,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   expireOldPendingUploadsFactory,
   getFileInfoFactory,
-  updateFileUploadFactory,
-  updateFileStatusFactory
+  updateFileUploadFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
 import { getFileImportTimeLimitMinutes } from '@/modules/shared/helpers/envHelper'
@@ -44,31 +43,19 @@ import {
 } from '@/modules/fileuploads/domain/consts'
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
 import {
-  initializeRhinoQueueFactory,
-  initializeIfcQueueFactory,
   shutdownQueues,
-  initializePostgresQueue,
-  initializeQueueFactory
+  initializePostgresQueue
 } from '@/modules/fileuploads/queues/fileimports'
 import { initializeEventListenersFactory } from '@/modules/fileuploads/events/eventListener'
 import type { ObserveResult } from '@/modules/fileuploads/observability/metrics'
 import { initializeMetrics } from '@/modules/fileuploads/observability/metrics'
 import { reportSubscriptionEventsFactory } from '@/modules/fileuploads/events/subscriptionListeners'
 import { configureClient } from '@/knexfile'
-import {
-  requestActiveHandlerFactory,
-  requestErrorHandlerFactory,
-  requestFailedHandlerFactory
-} from '@/modules/fileuploads/services/requestHandler'
-import type { UpdateFileStatusForProjectFactory } from '@/modules/fileuploads/domain/operations'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { rhinoImporterSupportedFileExtensions } from '@speckle/shared/blobs'
 
-const {
-  FF_NEXT_GEN_FILE_IMPORTER_ENABLED,
-  FF_BACKGROUND_JOBS_ENABLED,
-  FF_RHINO_FILE_IMPORTER_ENABLED
-} = getFeatureFlags()
+const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED, FF_RHINO_FILE_IMPORTER_ENABLED } =
+  getFeatureFlags()
 
 let scheduledTasks: cron.ScheduledTask[] = []
 
@@ -115,12 +102,6 @@ const scheduleFileImportExpiry = async ({
   )
 }
 
-const updateFileStatusBuilder: UpdateFileStatusForProjectFactory = async (params) => {
-  const { projectId } = params
-  const projectDb = await getProjectDbClient({ projectId })
-  return updateFileStatusFactory({ db: projectDb })
-}
-
 export const init: SpeckleModule['init'] = async ({
   app,
   isInitial,
@@ -140,80 +121,37 @@ export const init: SpeckleModule['init'] = async ({
   if (isInitial) {
     // this feature flag is going away soon
     if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
-      // this freature flag is going away soon, it will be on by default
-      // once we switch stabilize the background jobs mechanism
-      if (FF_BACKGROUND_JOBS_ENABLED) {
-        moduleLogger.info('🗳️ Background Jobs are ENABLED')
-        const connectionUri = getFileImporterQueuePostgresUrl()
-        const queueDb = connectionUri
-          ? configureClient({ postgres: { connectionUri } }).public
-          : db
-        const requestQueues = [
+      moduleLogger.info('🗳️ Next Gen File importer is ENABLED')
+      const connectionUri = getFileImporterQueuePostgresUrl()
+      const queueDb = connectionUri
+        ? configureClient({ postgres: { connectionUri } }).public
+        : db
+      const requestQueues = [
+        await initializePostgresQueue({
+          label: 'ifc',
+          supportedFileTypes: ['ifc'],
+          db: queueDb
+        })
+      ]
+      if (FF_RHINO_FILE_IMPORTER_ENABLED) {
+        moduleLogger.info('🦏 Rhino File Importer is ENABLED')
+        if (!connectionUri)
+          throw new MisconfiguredEnvironmentError(
+            'Need a dedicated queue for Rhino based fileimports'
+          )
+        requestQueues.push(
           await initializePostgresQueue({
-            label: 'ifc',
-            supportedFileTypes: ['ifc'],
+            label: 'rhino',
+            supportedFileTypes: [...rhinoImporterSupportedFileExtensions],
+            // using public here, as the private uri is not applicable here
             db: queueDb
           })
-        ]
-        if (FF_RHINO_FILE_IMPORTER_ENABLED) {
-          moduleLogger.info('🦏 Rhino File Importer is ENABLED')
-          if (!connectionUri)
-            throw new MisconfiguredEnvironmentError(
-              'Need a dedicated queue for Rhino based fileimports'
-            )
-          requestQueues.push(
-            await initializePostgresQueue({
-              label: 'rhino',
-              supportedFileTypes: [...rhinoImporterSupportedFileExtensions],
-              // using public here, as the private uri is not applicable here
-              db: queueDb
-            })
-          )
-        }
-        ;({ observeResult } = initializeMetrics({
-          registers: [metricsRegister],
-          requestQueues
-        }))
-      } else {
-        const queueInits = [
-          initializeIfcQueueFactory({
-            initializeQueue: initializeQueueFactory({
-              jobActiveHandler: requestActiveHandlerFactory({
-                logger: moduleLogger,
-                updateFileStatusBuilder
-              }),
-              jobErrorHandler: requestErrorHandlerFactory({ logger: moduleLogger }),
-              jobFailedHandler: requestFailedHandlerFactory({
-                logger: moduleLogger,
-                updateFileStatusForProjectFactory: updateFileStatusBuilder
-              })
-            })
-          })()
-        ]
-        if (FF_RHINO_FILE_IMPORTER_ENABLED) {
-          queueInits.push(
-            initializeRhinoQueueFactory({
-              initializeQueue: initializeQueueFactory({
-                jobActiveHandler: requestActiveHandlerFactory({
-                  logger: moduleLogger,
-                  updateFileStatusBuilder
-                }),
-                jobErrorHandler: requestErrorHandlerFactory({ logger: moduleLogger }),
-                jobFailedHandler: requestFailedHandlerFactory({
-                  logger: moduleLogger,
-                  updateFileStatusForProjectFactory: updateFileStatusBuilder
-                })
-              })
-            })()
-          )
-        }
-        const requestQueues = await Promise.all(queueInits)
-
-        ;({ observeResult } = initializeMetrics({
-          registers: [metricsRegister],
-          requestQueues
-        }))
+        )
       }
+      ;({ observeResult } = initializeMetrics({
+        registers: [metricsRegister],
+        requestQueues
+      }))
     }
 
     const scheduleExecution = scheduleExecutionFactory({
