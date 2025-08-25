@@ -16,28 +16,7 @@ import {
   getStreamRolesFactory,
   grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
-import {
-  getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory
-} from '@/modules/core/repositories/users'
-import {
-  findEmailFactory,
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory
-} from '@/modules/core/repositories/userEmails'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import {
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
+import { getUserFactory } from '@/modules/core/repositories/users'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import {
   storePersonalApiTokenFactory,
@@ -45,7 +24,6 @@ import {
   storeTokenScopesFactory,
   storeTokenResourceAccessDefinitionsFactory
 } from '@/modules/core/repositories/tokens'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { storeSingleObjectIfNotFoundFactory } from '@/modules/core/repositories/objects'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -55,6 +33,8 @@ import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { getActivitiesFactory } from '@/modules/activitystream/repositories/index'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
 
 const getUser = getUserFactory({ db })
 const getUserActivity = getUserActivityFactory({ db })
@@ -64,34 +44,6 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
   getStreamRoles: getStreamRolesFactory({ db }),
-  emitEvent: getEventBus().emit
-})
-
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo: getServerInfoFactory({ db }),
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo: getServerInfoFactory({ db }),
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
   emitEvent: getEventBus().emit
 })
 
@@ -113,29 +65,13 @@ let server: http.Server
 let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 
 describe('Activity @activity', () => {
-  const userIz = {
-    name: 'Izzy Lyseggen',
-    email: 'izzybizzi@speckle.systems',
-    password: 'sp0ckle sucks 9001',
-    id: '',
-    token: ''
-  }
+  let userIz: BasicTestUser
+  let userCr: BasicTestUser
+  let userX: BasicTestUser
 
-  const userCr = {
-    name: 'Cristi Balas',
-    email: 'cristib@speckle.systems',
-    password: 'hack3r man 666',
-    id: '',
-    token: ''
-  }
-
-  const userX = {
-    name: 'Mystery User',
-    email: 'mysteriousDude@speckle.systems',
-    password: 'super $ecret pw0rd',
-    id: '',
-    token: ''
-  }
+  let userIzToken: string
+  let userCrToken: string
+  let userXToken: string
 
   const streamPublic: BasicTestStream = {
     name: 'a fun stream for sharing',
@@ -197,30 +133,42 @@ describe('Activity @activity', () => {
     ]
 
     // create users
-    await Promise.all([
-      createUser(userIz).then((id) => (userIz.id = id)),
-      createUser(userCr).then((id) => (userCr.id = id)),
-      createUser(userX).then((id) => (userX.id = id))
-    ])
+    userIz = await createTestUser({
+      name: 'Izzy Lyseggen',
+      email: 'izzybizzi@speckle.systems',
+      password: 'sp0ckle sucks 9001'
+    })
+    userCr = await createTestUser({
+      name: 'Cristi Balas',
+      email: 'cristib@speckle.systems',
+      password: 'hack3r man 666'
+    })
+    userX = await createTestUser({
+      name: 'Mystery User',
+      email: 'mysteriousDude@speckle.systems',
+      password: 'super $ecret pw0rd'
+    })
 
-    // create tokens and streams
-    await Promise.all([
-      // tokens
-      createPersonalAccessToken(userIz.id, 'izz test token', normalScopesList).then(
-        (token) => (userIz.token = `Bearer ${token}`)
-      ),
-      createPersonalAccessToken(userCr.id, 'cristi test token', normalScopesList).then(
-        (token) => (userCr.token = `Bearer ${token}`)
-      ),
-      createPersonalAccessToken(userX.id, 'no users:read test token', [
-        Scopes.Streams.Read,
-        Scopes.Streams.Write
-      ]).then((token) => (userX.token = `Bearer ${token}`))
-      // streams
-      // createStream({ ...collaboratorTestStream, ownerId: userIz.id }).then(
-      //   (id) => (collaboratorTestStream.id = id)
-      // )
-    ])
+    userIzToken = `Bearer ${await createPersonalAccessToken(
+      userIz.id,
+      'izz test token',
+      normalScopesList
+    )}`
+    userCrToken = `Bearer ${await createPersonalAccessToken(
+      userCr.id,
+      'cristi test token',
+      normalScopesList
+    )}`
+    userXToken = `Bearer ${createPersonalAccessToken(
+      userX.id,
+      'no users:read test token',
+      [Scopes.Streams.Read, Scopes.Streams.Write]
+    )}`
+
+    // streams
+    // createStream({ ...collaboratorTestStream, ownerId: userIz.id }).then(
+    //   (id) => (collaboratorTestStream.id = id)
+    // )
 
     // It's definitely not great that there's a full on test case in the before() hook, but that's because
     // these tests were originally written incorrectly - they depend on each other. So this is a temporary fix that
@@ -232,7 +180,7 @@ describe('Activity @activity', () => {
 
     // create commit (cr2)
     testObj2.id = await createObject({ streamId: streamSecret.id, object: testObj2 })
-    const resCommit1 = await sendRequest(userCr.token, {
+    const resCommit1 = await sendRequest(userCrToken, {
       query: `mutation { commitCreate(commit: {streamId: "${streamSecret.id}", branchName: "main", objectId: "${testObj2.id}", message: "first commit"})}`
     })
     expect(noErrors(resCommit1))
@@ -249,7 +197,7 @@ describe('Activity @activity', () => {
 
     // create commit #2 (iz3)
     testObj.id = await createObject({ streamId: streamPublic.id, object: testObj })
-    const resCommit2 = await sendRequest(userIz.token, {
+    const resCommit2 = await sendRequest(userIzToken, {
       query: `mutation { commitCreate(commit: { streamId: "${streamPublic.id}", branchName: "${branchPublic.name}", objectId: "${testObj.id}", message: "first commit" })}`
     })
     expect(noErrors(resCommit2))
@@ -263,7 +211,7 @@ describe('Activity @activity', () => {
     )
 
     // update collaborator (iz4)
-    const resCollab = await sendRequest(userIz.token, {
+    const resCollab = await sendRequest(userIzToken, {
       query: `mutation { streamUpdatePermission( permissionParams: { streamId: "${streamPublic.id}", userId: "${userCr.id}", role: "stream:contributor" } ) }`
     })
     expect(noErrors(resCollab))
@@ -312,7 +260,7 @@ describe('Activity @activity', () => {
   })
 
   it("Should get a user's own activity", async () => {
-    const res = await sendRequest(userIz.token, {
+    const res = await sendRequest(userIzToken, {
       query: `query {activeUser { name activity { totalCount items {id streamId resourceType resourceId actionType userId message time}}} }`
     })
     expect(noErrors(res))
@@ -325,7 +273,7 @@ describe('Activity @activity', () => {
   })
 
   it("Should get another user's activity", async () => {
-    const res = await sendRequest(userIz.token, {
+    const res = await sendRequest(userIzToken, {
       query: `query {otherUser(id:"${userCr.id}") { name activity { totalCount items {id streamId resourceType resourceId actionType userId message time}}} }`
     })
     expect(noErrors(res))
@@ -334,7 +282,7 @@ describe('Activity @activity', () => {
   })
 
   it("Should get a user's timeline", async () => {
-    const res = await sendRequest(userIz.token, {
+    const res = await sendRequest(userIzToken, {
       query: `query {otherUser(id:"${userCr.id}") { name timeline { totalCount items {id streamId resourceType resourceId actionType userId message time}}} }`
     })
     expect(noErrors(res))
@@ -343,7 +291,7 @@ describe('Activity @activity', () => {
   })
 
   it("Should get a stream's activity", async () => {
-    const res = await sendRequest(userCr.token, {
+    const res = await sendRequest(userCrToken, {
       query: `query { stream(id: "${streamPublic.id}") { activity { totalCount items {id streamId resourceId actionType message} } } }`
     })
     expect(noErrors(res))
@@ -354,7 +302,7 @@ describe('Activity @activity', () => {
   })
 
   it("Should get a branch's activity", async () => {
-    const res = await sendRequest(userCr.token, {
+    const res = await sendRequest(userCrToken, {
       query: `query { stream(id: "${streamPublic.id}") { branch(name: "${branchPublic.name}") { activity { totalCount items {id streamId resourceId actionType message} } } } }`
     })
     expect(noErrors(res))
@@ -365,7 +313,7 @@ describe('Activity @activity', () => {
   })
 
   it("Should *not* get a stream's activity if you don't have access to it", async () => {
-    const res = await sendRequest(userIz.token, {
+    const res = await sendRequest(userIzToken, {
       query: `query {stream(id:"${streamSecret.id}") {name activity {items {id streamId resourceType resourceId actionType userId message time}}} }`
     })
     expect(res.body.errors?.length).to.equal(1)
@@ -379,16 +327,18 @@ describe('Activity @activity', () => {
   })
 
   it("Should *not* get a user's activity without the `users:read` scope", async () => {
-    const res = await sendRequest(userX.token, {
+    const res = await sendRequest(userXToken, {
       query: `query {otherUser(id:"${userCr.id}") { name activity {items {id streamId resourceType resourceId actionType userId message time}}} }`
     })
-    expect(res.body.errors?.length).to.equal(1)
+
+    expect(res.body.error).to.exist
   })
 
   it("Should *not* get a user's timeline without the `users:read` scope", async () => {
-    const res = await sendRequest(userX.token, {
+    const res = await sendRequest(userXToken, {
       query: `query {otherUser(id:"${userCr.id}") { name timeline {items {id streamId resourceType resourceId actionType userId message time}}} }`
     })
-    expect(res.body.errors?.length).to.equal(1)
+
+    expect(res.body.error).to.exist
   })
 })

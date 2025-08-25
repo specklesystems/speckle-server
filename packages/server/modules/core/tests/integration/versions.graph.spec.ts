@@ -5,11 +5,6 @@ import {
   createRandomPassword,
   createRandomString
 } from '@/modules/core/helpers/testHelpers'
-import {
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory,
-  findEmailFactory
-} from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
 import { testApolloServer } from '@/test/graphqlHelper'
 import {
@@ -20,28 +15,10 @@ import {
   GetProjectWithModelVersionsDocument,
   GetProjectWithVersionsDocument
 } from '@/modules/core/graph/generated/graphql'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import {
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import {
-  countAdminUsersFactory,
-  legacyGetUserFactory,
-  storeUserAclFactory,
-  storeUserFactory
-} from '@/modules/core/repositories/users'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { WorkspaceReadOnlyError } from '@/modules/gatekeeper/errors/billing'
 import type { CreateVersionInput } from '@/modules/core/graph/generated/graphql'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-import { getEventBus } from '@/modules/shared/services/eventBus'
+import type { BasicTestUser } from '@/test/authHelper'
 import { buildBasicTestUser, createTestUser, login } from '@/test/authHelper'
 import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
@@ -62,39 +39,6 @@ import {
 } from '@/modules/core/tests/helpers/creation'
 import type { Optional } from '@speckle/shared'
 
-const getServerInfo = getServerInfoFactory({ db })
-const getUser = legacyGetUserFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail: findEmailFactory({ db }),
-  getUser,
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-
-const createUserEmail = validateAndCreateUserEmailFactory({
-  createUserEmail: createUserEmailFactory({ db }),
-  ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-  findEmail: findEmailFactory({ db }),
-  updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-    deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-    updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-  }),
-  requestNewEmailVerification
-})
-
-const findEmail = findEmailFactory({ db })
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: createUserEmail,
-  emitEvent: getEventBus().emit
-})
-
 const { FF_BILLING_INTEGRATION_ENABLED, FF_PERSONAL_PROJECTS_LIMITS_ENABLED } =
   getFeatureFlags()
 
@@ -107,7 +51,7 @@ describe('Versions graphql @core', () => {
     ;(FF_BILLING_INTEGRATION_ENABLED ? it : it.skip)(
       'should return error if project is read-only',
       async () => {
-        const userId = await createUser({
+        const { id: userId } = await createTestUser({
           name: 'emails user',
           email: createRandomEmail(),
           password: createRandomPassword()
@@ -156,7 +100,7 @@ describe('Versions graphql @core', () => {
         createdAt: Date // Make the project read-only
       ) => await db('commits').update({ createdAt }).where({ id })
 
-      const user = buildBasicTestUser()
+      let user: BasicTestUser
       const workspace = buildBasicTestWorkspace()
       const model1 = buildBasicTestModel()
       const model2 = buildBasicTestModel()
@@ -169,7 +113,7 @@ describe('Versions graphql @core', () => {
       let objectId3: Optional<string> = undefined
 
       before(async () => {
-        user.id = await createUser(user)
+        user = await createTestUser(buildBasicTestUser())
         await createTestWorkspace(workspace, user, {
           addPlan: { name: 'free', status: 'valid' }
         })

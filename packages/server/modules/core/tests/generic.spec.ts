@@ -34,13 +34,7 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import {
-  getUsersFactory,
-  getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory
-} from '@/modules/core/repositories/users'
+import { getUsersFactory, getUserFactory } from '@/modules/core/repositories/users'
 import {
   findEmailFactory,
   createUserEmailFactory,
@@ -50,7 +44,6 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import {
   finalizeInvitedServerRegistrationFactory,
@@ -67,6 +60,8 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import type { Request } from 'express'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
 
 const buildFinalizeProjectInvite = () =>
   finalizeResourceInviteFactory({
@@ -147,33 +142,6 @@ const createStream = legacyCreateStreamFactory({
   })
 })
 
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 const adminOverrideMock = mockAdminOverride()
 
 describe('Generic AuthN & AuthZ controller tests', () => {
@@ -293,23 +261,23 @@ describe('Generic AuthN & AuthZ controller tests', () => {
       isPublic: false,
       id: ''
     }
-    const serverOwner = {
-      name: 'Itsa Me',
-      email: 'me@example.org',
-      password: 'sn3aky-1337-b1m',
-      id: ''
-    }
-    const otherGuy = {
-      name: 'Some Other DUde',
-      email: 'otherguy@example.org',
-      password: 'sn3aky-1337-b1m',
-      id: ''
-    }
+    let serverOwner: BasicTestUser
+    let otherGuy: BasicTestUser
 
     before(async function () {
       // Seeding
-      serverOwner.id = await createUser(serverOwner)
-      otherGuy.id = await createUser(otherGuy)
+      serverOwner = await createTestUser({
+        name: 'Itsa Me',
+        email: 'me@example.org',
+        password: 'sn3aky-1337-b1m',
+        id: ''
+      })
+      otherGuy = await createTestUser({
+        name: 'Some Other DUde',
+        email: 'otherguy@example.org',
+        password: 'sn3aky-1337-b1m',
+        id: ''
+      })
 
       await Promise.all([
         createStream({ ...myStream, ownerId: serverOwner.id }).then(

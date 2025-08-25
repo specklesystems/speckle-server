@@ -9,8 +9,9 @@ import { noErrors } from '@/test/helpers'
 import { TIME_MS } from '@speckle/shared'
 import { initUploadTestEnvironment } from '@/modules/fileuploads/tests/helpers/init'
 import { fileURLToPath } from 'url'
+import { createTestUser } from '@/test/authHelper'
 
-const { createStream, createUser, createToken } = initUploadTestEnvironment()
+const { createStream, createToken } = initUploadTestEnvironment()
 const gqlQueryToListFileUploads = `query ($streamId: String!) {
   stream(id: $streamId) {
     id
@@ -54,7 +55,8 @@ describe('FileUploads @fileuploads integration', () => {
     process.env['CANONICAL_URL'] = serverAddress
     process.env['PORT'] = serverPort
 
-    userOneId = await createUser(userOne)
+    const user = await createTestUser(userOne)
+    userOneId = user.id
   })
   beforeEach(async () => {
     createdStreamId = await createStream({ ownerId: userOneId })
@@ -267,7 +269,7 @@ describe('FileUploads @fileuploads integration', () => {
         email: 'user2@example.org',
         password: 'jdsadjsadasfdsa'
       }
-      const userTwoId = await createUser(userTwo)
+      const { id: userTwoId } = await createTestUser(userTwo)
       const streamTwoId = await createStream({ ownerId: userTwoId })
 
       const response = await request(app)

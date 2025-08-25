@@ -31,9 +31,6 @@ import { createBranchFactory } from '@/modules/core/repositories/branches'
 import {
   getUsersFactory,
   getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory,
   legacyGetUserByEmailFactory
 } from '@/modules/core/repositories/users'
 import {
@@ -45,7 +42,6 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import {
   finalizeInvitedServerRegistrationFactory,
@@ -76,6 +72,8 @@ import { UserInputError } from '@/modules/core/errors/userinput'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import cryptoRandomString from 'crypto-random-string'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -159,33 +157,6 @@ const createStream = legacyCreateStreamFactory({
   })
 })
 
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
 const updateServerInfo = updateServerInfoFactory({ db })
 const logger = extendLoggerComponent(baseLogger, 'auth-tests')
@@ -199,20 +170,7 @@ describe('Auth @auth', () => {
   describe('Local authN & authZ (token endpoints)', () => {
     const registeredUserEmail = 'registered@speckle.systems'
 
-    const me: {
-      name: string
-      company: string
-      email: string
-      password: string
-      id?: string
-    } = {
-      name: 'dimitrie stefanescu',
-      company: 'speckle',
-      email: registeredUserEmail,
-      password: 'roll saving throws',
-      id: undefined
-    }
-
+    let me: BasicTestUser
     const myPrivateStream: {
       name: string
       isPublic: boolean
@@ -229,8 +187,13 @@ describe('Auth @auth', () => {
       ;({ sendRequest } = await initializeTestServer(ctx))
 
       // Register a user for testing login flows
-      const meId = await createUser(me)
-      me.id = meId
+      me = await createTestUser({
+        name: 'dimitrie stefanescu',
+        company: 'speckle',
+        email: registeredUserEmail,
+        password: 'roll saving throws',
+        id: undefined
+      })
 
       // Create a test stream for testing stream invites
       const myPrivateStreamId = await createStream({

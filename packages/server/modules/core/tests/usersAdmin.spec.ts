@@ -47,6 +47,8 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { expect } from 'chai'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
 import { queryAllProjectsFactory } from '@/modules/core/services/projects'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 const countUsers = legacyGetPaginatedUsersCountFactory({ db })
@@ -61,6 +63,7 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
   renderEmail,
   sendEmail
 })
+// this does not uses createTestUser as 250 parallel transactions for user creation can timeout some of them
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,
@@ -112,8 +115,8 @@ describe('User admin @user-services', () => {
   before(async () => {
     await beforeEachContext()
 
-    const actorId = await createUser(myTestActor)
-    myTestActor.id = actorId
+    const actor = await createTestUser(myTestActor)
+    myTestActor.id = actor.id
   })
 
   it('First created user should be admin', async () => {
@@ -133,16 +136,16 @@ describe('User admin @user-services', () => {
     newUser.email = 'bill@gates.com'
     newUser.password = 'testthebest'
 
-    const actorId = await createUser(newUser)
+    const actor = await createTestUser(newUser)
 
     expect(await countUsers()).to.equal(2)
 
-    await deleteUser(actorId)
+    await deleteUser(actor.id)
     expect(await countUsers()).to.equal(1)
   })
 
   it('Get users query limit is sanitized to upper limit', async () => {
-    const userInputs = Array(250)
+    const userInputs: BasicTestUser[] = Array(250)
       .fill(undefined)
       .map((v, i) => createNewDroid(i))
 
@@ -191,9 +194,10 @@ describe('User admin @user-services', () => {
       }
     })
     it('modifies role', async () => {
-      const userId = await createUser(
+      const user = await createTestUser(
         createNewDroid(cryptoRandomString({ length: 13 }))
       )
+      const userId = user.id
 
       const oldRole = await getUserRole(userId)
       expect(oldRole).to.equal(Roles.Server.User)
@@ -228,6 +232,7 @@ describe('User admin @user-services', () => {
 
 const createNewDroid = (number: string | number) => {
   return {
+    id: `${number}`,
     name: `${number}`,
     email: `${number}@droidarmy.com`,
     password: 'sn3aky-1337-b1m'

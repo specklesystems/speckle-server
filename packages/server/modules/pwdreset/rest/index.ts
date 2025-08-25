@@ -9,6 +9,7 @@ import {
 import { changePasswordFactory } from '@/modules/core/services/users/management'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
 import {
   createTokenFactory,
   deleteTokensFactory,
@@ -16,6 +17,7 @@ import {
 } from '@/modules/pwdreset/repositories'
 import { finalizePasswordResetFactory } from '@/modules/pwdreset/services/finalize'
 import { requestPasswordRecoveryFactory } from '@/modules/pwdreset/services/request'
+import { asMultiregionalOperation } from '@/modules/shared/command'
 import { BadRequestError } from '@/modules/shared/errors'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { ensureError } from '@speckle/shared'
@@ -55,25 +57,34 @@ export default function (app: Express) {
   app.post('/auth/pwdreset/finalize', async (req, res) => {
     const logger = req.log
     try {
-      const finalizePasswordReset = finalizePasswordResetFactory({
-        getUserByEmail,
-        getPendingToken: getPendingTokenFactory({ db }),
-        deleteTokens: deleteTokensFactory({ db }),
-        updateUserPassword: changePasswordFactory({
-          getUser: getUserFactory({ db }),
-          updateUser: updateUserFactory({ db })
-        }),
-        deleteExistingAuthTokens: deleteExistingAuthTokensFactory({ db })
-      })
-
       if (!req.body.tokenId || !req.body.password)
         throw new BadRequestError('Invalid request.')
-      await withOperationLogging(
-        async () => await finalizePasswordReset(req.body.tokenId, req.body.password),
+      await asMultiregionalOperation(
+        async ({ mainDb, allDbs }) => {
+          const finalizePasswordReset = finalizePasswordResetFactory({
+            getUserByEmail,
+            getPendingToken: getPendingTokenFactory({ db: mainDb }),
+            deleteTokens: deleteTokensFactory({ db: mainDb }),
+            updateUserPassword: changePasswordFactory({
+              getUser: getUserFactory({ db: mainDb }),
+              updateUser: async (...params) => {
+                const [res] = await Promise.all(
+                  allDbs.map((db) => updateUserFactory({ db })(...params))
+                )
+
+                return res
+              }
+            }),
+            deleteExistingAuthTokens: deleteExistingAuthTokensFactory({ db: mainDb })
+          })
+
+          return await finalizePasswordReset(req.body.tokenId, req.body.password)
+        },
         {
           logger,
-          operationName: 'finalizePasswordReset',
-          operationDescription: `Finalizing password reset`
+          dbs: await getAllRegisteredDbs(),
+          name: 'finalizePasswordReset',
+          description: `Finalizing password reset`
         }
       )
 
