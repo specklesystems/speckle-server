@@ -16,19 +16,12 @@ import {
   ensureNoPrimaryEmailForUserFactory,
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
-import {
-  countAdminUsersFactory,
-  getUserFactory,
-  getUsersFactory,
-  storeUserAclFactory,
-  storeUserFactory
-} from '@/modules/core/repositories/users'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import {
   createStreamReturnRecordFactory,
   legacyCreateStreamFactory
 } from '@/modules/core/services/streams/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { createUserFactory } from '@/modules/core/services/users/management'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
@@ -63,7 +56,7 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
+import { createTestUser } from '@/test/authHelper'
 
 const WEBHOOKS_CONFIG_TABLE = 'webhooks_config'
 const WEBHOOKS_EVENTS_TABLE = 'webhooks_events'
@@ -151,33 +144,6 @@ const createStream = legacyCreateStreamFactory({
     emitEvent: getEventBus().emit
   })
 })
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: replicateQuery([db], storeUserFactory),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 
 const countWebhooks = async () => {
   const [{ count }] = await WebhooksConfig().count()
@@ -207,7 +173,7 @@ describe('Webhooks cleanup @webhooks', () => {
   })
 
   it('Cleans orphans, leaves live ones intact', async () => {
-    const ownerId = await createUser({
+    const { id: ownerId } = await createTestUser({
       name: 'User',
       email: createRandomEmail(),
       password: createRandomPassword()

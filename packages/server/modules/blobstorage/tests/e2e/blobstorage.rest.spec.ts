@@ -4,77 +4,21 @@ import { expect } from 'chai'
 import { beforeEachContext, getMainTestRegionKeyIfMultiRegion } from '@/test/hooks'
 import { Scopes } from '@/modules/core/helpers/mainConstants'
 import { db } from '@/db/knex'
-import {
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-
-import {
-  getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory
-} from '@/modules/core/repositories/users'
-import {
-  findEmailFactory,
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory
-} from '@/modules/core/repositories/userEmails'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { createTokenFactory } from '@/modules/core/services/tokens'
 import {
   storeApiTokenFactory,
   storeTokenScopesFactory,
   storeTokenResourceAccessDefinitionsFactory
 } from '@/modules/core/repositories/tokens'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { waitForRegionUser } from '@/test/speckle-helpers/regions'
 import { createTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import { faker } from '@faker-js/faker'
-import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser, type BasicTestUser } from '@/test/authHelper'
 import cryptoRandomString from 'crypto-random-string'
 import type { BlobStorageItem } from '@/modules/blobstorage/domain/types'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import { fileURLToPath } from 'url'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
-
-const getServerInfo = getServerInfoFactory({ db })
-
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: replicateQuery([db], storeUserFactory),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 
 const createRandomUser = async (): Promise<BasicTestUser> => {
   const userDetails = {
@@ -82,10 +26,7 @@ const createRandomUser = async (): Promise<BasicTestUser> => {
     email: `${cryptoRandomString({ length: 10, type: 'url-safe' })}@example.org`,
     password: cryptoRandomString({ length: 12 })
   }
-  return {
-    ...userDetails,
-    id: await createUser(userDetails)
-  }
+  return createTestUser(userDetails)
 }
 const createToken = createTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),

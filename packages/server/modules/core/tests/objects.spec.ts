@@ -32,13 +32,7 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import {
-  getUsersFactory,
-  getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory
-} from '@/modules/core/repositories/users'
+import { getUsersFactory, getUserFactory } from '@/modules/core/repositories/users'
 import {
   findEmailFactory,
   createUserEmailFactory,
@@ -48,7 +42,6 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import {
   finalizeInvitedServerRegistrationFactory,
@@ -79,7 +72,7 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import type { ObjectRecord } from '@/modules/core/helpers/types'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
+import { createTestUser, type BasicTestUser } from '@/test/authHelper'
 
 const sampleCommit = JSON.parse(`{
   "Objects": [
@@ -183,34 +176,6 @@ const createStream = legacyCreateStreamFactory({
     emitEvent: getEventBus().emit
   })
 })
-
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: replicateQuery([db], storeUserFactory),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 const createObject = createObjectFactory({
   storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
@@ -227,13 +192,7 @@ const getObjectChildrenQuery = getObjectChildrenQueryFactory({ db })
 const getObjects = getStreamObjectsFactory({ db })
 
 describe('Objects @core-objects', () => {
-  const userOne = {
-    name: 'Dimitrie Stefanescu',
-    email: 'didimitrie43@example.org',
-    password: 'sn3aky-1337-b1m',
-    id: ''
-  }
-
+  let userOne: BasicTestUser
   const stream = {
     name: 'Test Streams',
     description: 'Whatever goes in here usually...',
@@ -243,7 +202,12 @@ describe('Objects @core-objects', () => {
   before(async () => {
     await beforeEachContext()
 
-    userOne.id = await createUser(userOne)
+    userOne = await createTestUser({
+      name: 'Dimitrie Stefanescu',
+      email: 'didimitrie43@example.org',
+      password: 'sn3aky-1337-b1m',
+      id: ''
+    })
     stream.id = await createStream({ ...stream, isPublic: false, ownerId: userOne.id })
   })
 

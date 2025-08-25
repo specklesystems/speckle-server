@@ -4,73 +4,17 @@ import {
   createRandomEmail,
   createRandomPassword
 } from '@/modules/core/helpers/testHelpers'
-import {
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory,
-  findEmailFactory
-} from '@/modules/core/repositories/userEmails'
+
 import { db } from '@/db/knex'
 import { testApolloServer } from '@/test/graphqlHelper'
 import {
   CreateWorkspaceDocument,
   CreateWorkspaceProjectDocument
 } from '@/modules/core/graph/generated/graphql'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import {
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import {
-  countAdminUsersFactory,
-  legacyGetUserFactory,
-  storeUserAclFactory,
-  storeUserFactory
-} from '@/modules/core/repositories/users'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { WorkspaceReadOnlyError } from '@/modules/gatekeeper/errors/billing'
 import gql from 'graphql-tag'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-import { getEventBus } from '@/modules/shared/services/eventBus'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
-
-const getServerInfo = getServerInfoFactory({ db })
-const getUser = legacyGetUserFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail: findEmailFactory({ db }),
-  getUser,
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-
-const createUserEmail = validateAndCreateUserEmailFactory({
-  createUserEmail: createUserEmailFactory({ db }),
-  ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-  findEmail: findEmailFactory({ db }),
-  updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-    deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-    updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-  }),
-  requestNewEmailVerification
-})
-
-const findEmail = findEmailFactory({ db })
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: replicateQuery([db], storeUserFactory),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: createUserEmail,
-  emitEvent: getEventBus().emit
-})
+import { createTestUser } from '@/test/authHelper'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
@@ -88,7 +32,7 @@ describe('Commits graphql @core', () => {
     ;(FF_BILLING_INTEGRATION_ENABLED ? it : it.skip)(
       'should return error if project is read-only',
       async () => {
-        const userId = await createUser({
+        const { id: userId } = await createTestUser({
           name: 'emails user',
           email: createRandomEmail(),
           password: createRandomPassword()

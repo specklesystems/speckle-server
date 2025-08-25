@@ -2,10 +2,11 @@ import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { Scopes } from '@/modules/core/dbSchema'
 import { expect } from 'chai'
 import type { Knex } from 'knex'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import { db } from '@/db/knex'
 import { sleep } from '@/test/helpers'
+import { asMultiregionalOperation } from '@/modules/shared/command'
+import { logger } from '@/observability/logging'
 
 isMultiRegionTestMode()
   ? describe('Prepared transaction utils (2PC) @multiregion', async () => {
@@ -31,6 +32,10 @@ isMultiRegionTestMode()
         ALL_DBS = [main, region1, region2]
       })
 
+      beforeEach(async () => {
+        await db('users').del()
+      })
+
       it('successfully replicates operation across all specified db instances', async () => {
         const testOperationParams = {
           name: 'test:scope:a',
@@ -38,7 +43,17 @@ isMultiRegionTestMode()
           public: false
         }
 
-        await replicateQuery(ALL_DBS, testOperationFactory)(testOperationParams)
+        await asMultiregionalOperation(
+          ({ txs }) =>
+            Promise.all(
+              txs.map((tx) => testOperationFactory({ db: tx })(testOperationParams))
+            ),
+          {
+            dbs: ALL_DBS,
+            name: 'testing regional success',
+            logger
+          }
+        )
 
         const scopeMain = await main
           .table(Scopes.name)
@@ -68,11 +83,17 @@ isMultiRegionTestMode()
 
         await testOperationFactory({ db: region2 })(testOperationParams)
 
-        const promise = replicateQuery(
-          ALL_DBS,
-          testOperationFactory
-        )(testOperationParams)
-
+        const promise = asMultiregionalOperation(
+          ({ txs }) =>
+            Promise.all(
+              txs.map((tx) => testOperationFactory({ db: tx })(testOperationParams))
+            ),
+          {
+            dbs: ALL_DBS,
+            name: 'testing regional failure',
+            logger
+          }
+        )
         await expect(promise).eventually.to.be.rejected
 
         const scopeMain = await main
@@ -104,10 +125,17 @@ isMultiRegionTestMode()
           transaction: async () => Promise.reject(new Error('Transaction failed'))
         } as unknown as Knex
 
-        const promise = replicateQuery(
-          [...ALL_DBS, dbThatFails],
-          testOperationFactory
-        )(testOperationParams)
+        const promise = asMultiregionalOperation(
+          ({ txs }) =>
+            Promise.all(
+              txs.map((tx) => testOperationFactory({ db: tx })(testOperationParams))
+            ),
+          {
+            dbs: [...ALL_DBS, dbThatFails],
+            name: 'testing regional success',
+            logger
+          }
+        )
 
         await expect(promise).to.eventually.be.rejected
 
@@ -129,27 +157,30 @@ isMultiRegionTestMode()
         expect(scopeRegion2).to.be.undefined
       })
 
-      it('should not overwhelm the connection pool', async () => {
+      it('does not has visibile perfomance issues using 2PC', async () => {
         const connectionsUsedBefore = main.client.pool.numUsed()
 
         const oneKnexInstanceCall = async () => {
-          const { buildBasicTestUser, createTestUsers } = await import(
+          const { buildBasicTestUser, createTestUser } = await import(
             '@/test/authHelper'
           )
 
           const user = buildBasicTestUser()
-          await createTestUsers([user, user])
+          await createTestUser(user) // This uses the asMultireagionOperation helper          }
         }
 
-        const manyWeirdKnexInstanceCalls = async () => {
-          await Promise.allSettled(Array.from({ length: 100 }, oneKnexInstanceCall))
+        const manyParallelCreates = async () => {
+          await Promise.allSettled(Array.from({ length: 1000 }, oneKnexInstanceCall))
         }
 
-        await manyWeirdKnexInstanceCalls()
+        await manyParallelCreates()
+
+        const [{ count }] = await db('users').count()
+        expect(count).to.eql(1000)
+
         await sleep(1000) // just in case
 
         const connectionsUsedAfter = main.client.pool.numUsed()
-
         expect(connectionsUsedAfter).to.be.lte(connectionsUsedBefore)
       })
     })

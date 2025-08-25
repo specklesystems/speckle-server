@@ -34,13 +34,7 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import {
-  getUsersFactory,
-  getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory
-} from '@/modules/core/repositories/users'
+import { getUsersFactory, getUserFactory } from '@/modules/core/repositories/users'
 import {
   findEmailFactory,
   createUserEmailFactory,
@@ -50,7 +44,6 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import {
   finalizeInvitedServerRegistrationFactory,
@@ -75,7 +68,7 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import type Express from 'express'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
+import { createTestUser, type BasicTestUser } from '@/test/authHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -157,33 +150,6 @@ const createStream = legacyCreateStreamFactory({
   })
 })
 
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: replicateQuery([db], storeUserFactory),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
   storeTokenScopes: storeTokenScopesFactory({ db }),
@@ -194,20 +160,10 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
 })
 
 describe('Upload/Download Routes @api-rest', () => {
-  const userA = {
-    name: 'd1',
-    email: 'd.1@speckle.systems',
-    password: 'wowwow8charsplease',
-    id: '',
-    token: ''
-  }
-  const userB = {
-    name: 'd2',
-    email: 'd.2@speckle.systems',
-    password: 'wowwow8charsplease',
-    id: '',
-    token: ''
-  }
+  let userA: BasicTestUser
+  let tokenUserA: string
+  let userB: BasicTestUser
+  let tokenUserB: string
 
   const testStream = {
     name: 'Test Stream 01',
@@ -227,8 +183,13 @@ describe('Upload/Download Routes @api-rest', () => {
   before(async () => {
     ;({ app } = await beforeEachContext())
 
-    userA.id = await createUser(userA)
-    userA.token = `Bearer ${await createPersonalAccessToken(
+    userA = await createTestUser({
+      name: 'd1',
+      email: 'd.1@speckle.systems',
+      password: 'wowwow8charsplease',
+      id: ''
+    })
+    tokenUserA = `Bearer ${await createPersonalAccessToken(
       userA.id,
       'test token user A',
       [
@@ -243,8 +204,13 @@ describe('Upload/Download Routes @api-rest', () => {
       ]
     )}`
 
-    userB.id = await createUser(userB)
-    userB.token = `Bearer ${await createPersonalAccessToken(
+    userB = await createTestUser({
+      name: 'd2',
+      email: 'd.2@speckle.systems',
+      password: 'wowwow8charsplease',
+      id: ''
+    })
+    tokenUserB = `Bearer ${await createPersonalAccessToken(
       userB.id,
       'test token user B',
       [
@@ -288,7 +254,7 @@ describe('Upload/Download Routes @api-rest', () => {
     // invalid streamId
     res = await request(app)
       .get(`/objects/${'thisDoesNotExist'}/null`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
     expect(res).to.have.status(404)
 
     // create some objects
@@ -296,7 +262,7 @@ describe('Upload/Download Routes @api-rest', () => {
 
     await request(app)
       .post(`/objects/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .set('Content-type', 'multipart/form-data')
       .attach('batch1', Buffer.from(JSON.stringify(objBatches[0]), 'utf8'))
       .attach('batch2', Buffer.from(JSON.stringify(objBatches[1]), 'utf8'))
@@ -317,14 +283,14 @@ describe('Upload/Download Routes @api-rest', () => {
     // should not allow user b to access user a's private stream
     res = await request(app)
       .get(`/objects/${privateTestStream.id}/${objBatches[0][0].id}`)
-      .set('Authorization', userB.token)
+      .set('Authorization', tokenUserB)
     expect(res).to.have.status(401)
   })
 
   it('should not allow a non-multipart/form-data request without a boundary', async () => {
     const res = await request(app)
       .post(`/objects/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .set('Content-type', 'multipart/form-data')
       .send(Buffer.from(JSON.stringify(objBatches[0]), 'utf8')) //sent, not attached, so no boundary will be added to Content-type header.
     expect(res).to.have.status(400)
@@ -336,7 +302,7 @@ describe('Upload/Download Routes @api-rest', () => {
   it('should not allow a non-multipart/form-data request, even if it has a valid header', async () => {
     const res = await request(app)
       .post(`/objects/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .set('Content-type', 'application/json')
       .attach(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -353,7 +319,7 @@ describe('Upload/Download Routes @api-rest', () => {
   it('should not allow non-buffered requests', async () => {
     const res = await request(app)
       .post(`/objects/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .set('Content-type', 'multipart/form-data')
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .attach(JSON.stringify(objBatches[0]) as any, undefined as any)
@@ -368,20 +334,20 @@ describe('Upload/Download Routes @api-rest', () => {
 
     await request(app)
       .post(`/objects/${privateTestStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .set('Content-type', 'multipart/form-data')
       .attach('batch1', Buffer.from(JSON.stringify(objBatch), 'utf8'))
 
     // should allow userA to access privateTestStream object
     let res = await request(app)
       .get(`/objects/${privateTestStream.id}/${objBatch[0].id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
     expect(res).to.have.status(200)
 
     // should not allow userB to access privateTestStream object by pretending it's in public stream
     res = await request(app)
       .get(`/objects/${testStream.id}/${objBatch[0].id}`)
-      .set('Authorization', userB.token)
+      .set('Authorization', tokenUserB)
     expect(res).to.have.status(404)
   })
 
@@ -401,7 +367,7 @@ describe('Upload/Download Routes @api-rest', () => {
     // invalid streamId
     res = await request(app)
       .post(`/objects/${'thisDoesNotExist'}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
     expect(res).to.have.status(401)
   })
 
@@ -419,7 +385,7 @@ describe('Upload/Download Routes @api-rest', () => {
 
     const res = await request(app)
       .post(`/objects/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .set('Content-type', 'multipart/form-data')
       .attach('batch1', Buffer.from(JSON.stringify(objectToPost), 'utf8'))
 
@@ -429,7 +395,7 @@ describe('Upload/Download Routes @api-rest', () => {
   it('Should not allow upload with invalid body (invalid json)', async () => {
     const res = await request(app)
       .post(`/objects/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .set('Content-type', 'multipart/form-data')
       .attach('batch1', Buffer.from(JSON.stringify('this is not json'), 'utf8'))
 
@@ -444,7 +410,7 @@ describe('Upload/Download Routes @api-rest', () => {
 
   //   const res = await request(app)
   //     .post(`/objects/${testStream.id}`)
-  //     .set('Authorization', userA.token)
+  //     .set('Authorization', tokenUserA)
   //     .set('Content-type', 'multipart/form-data')
   //     .attach('batch1', Buffer.from(JSON.stringify([objectToPost]), 'utf8'))
 
@@ -465,7 +431,7 @@ describe('Upload/Download Routes @api-rest', () => {
 
     const res = await request(app)
       .post(`/objects/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .set('Content-type', 'multipart/form-data')
       .attach('batch1', Buffer.from(JSON.stringify(objBatches[0]), 'utf8'))
       .attach('batch2', Buffer.from(JSON.stringify(objBatches[1]), 'utf8'))
@@ -485,7 +451,7 @@ describe('Upload/Download Routes @api-rest', () => {
     await new Promise<void>((resolve, reject) => {
       void request(app)
         .get(`/objects/${testStream.id}/${parentId}`)
-        .set('Authorization', userA.token)
+        .set('Authorization', tokenUserA)
         .buffer()
         .parse((res, cb) => {
           const resTyped = res as typeof res & { data: string }
@@ -517,7 +483,7 @@ describe('Upload/Download Routes @api-rest', () => {
     await new Promise<void>((resolve, reject) => {
       void request(app)
         .get(`/objects/${testStream.id}/${parentId}`)
-        .set('Authorization', userA.token)
+        .set('Authorization', tokenUserA)
         .set('Accept', 'text/plain')
         .buffer()
         .parse((res, cb) => {
@@ -556,7 +522,7 @@ describe('Upload/Download Routes @api-rest', () => {
     await new Promise<void>((resolve, reject) => {
       void request(app)
         .post(`/api/getobjects/${testStream.id}`)
-        .set('Authorization', userA.token)
+        .set('Authorization', tokenUserA)
         .set('Accept', 'text/plain')
         .send({ objects: JSON.stringify(objectIds) })
         .buffer()
@@ -593,7 +559,7 @@ describe('Upload/Download Routes @api-rest', () => {
 
     const res = await request(app)
       .post(`/api/getobjects/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .set('Accept', 'text/plain')
       .send({ objects: JSON.stringify(objectIds) })
       .buffer()
@@ -604,7 +570,7 @@ describe('Upload/Download Routes @api-rest', () => {
   it('Should return status code 400 when getting the list of objects and if it is not parseable', async () => {
     const response = await request(app)
       .post(`/api/getobjects/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .send({ objects: ['lolz', 'thisIsBroken', 'shouldHaveBeenJSONStringified'] })
 
     expect(response).to.have.status(400)
@@ -628,7 +594,7 @@ describe('Upload/Download Routes @api-rest', () => {
     await new Promise<void>((resolve, reject) => {
       void request(app)
         .post(`/api/diff/${testStream.id}`)
-        .set('Authorization', userA.token)
+        .set('Authorization', tokenUserA)
         .send({ objects: JSON.stringify(objectIds) })
         .buffer()
         .parse((res, cb) => {
@@ -673,7 +639,7 @@ describe('Upload/Download Routes @api-rest', () => {
   it('Should return status code 400 if the list of objects is not parseable', async () => {
     const response = await request(app)
       .post(`/api/diff/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .send({ objects: ['lolz', 'thisIsBroken', 'shouldHaveBeenJSONStringified'] })
 
     expect(response).to.have.status(400)

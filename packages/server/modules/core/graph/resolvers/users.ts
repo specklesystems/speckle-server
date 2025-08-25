@@ -40,7 +40,6 @@ import { dbLogger } from '@/observability/logging'
 import { getAdminUsersListCollectionFactory } from '@/modules/core/services/users/legacyAdminUsersList'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   getMailchimpStatus,
   getMailchimpOnboardingIds
@@ -48,38 +47,18 @@ import {
 import { updateMailchimpMemberTags } from '@/modules/auth/services/mailchimp'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { metaHelpers } from '@/modules/core/helpers/meta'
-import { asOperation } from '@/modules/shared/command'
+import { asMultiregionalOperation, asOperation } from '@/modules/shared/command'
 import { setUserOnboardingChoicesFactory } from '@/modules/core/services/users/tracking'
 import { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
 import { queryAllProjectsFactory } from '@/modules/core/services/projects'
-import { getRegisteredRegionClients } from '@/modules/multiregion/utils/dbSelector'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
+import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
 
 const getServerInfo = getServerInfoFactory({ db })
-
-const buildDeleteUser = async () => {
-  const regionClients = await getRegisteredRegionClients()
-  const regionDbs = Object.values(regionClients)
-
-  return deleteUserFactory({
-    deleteStream: deleteStreamFactory({ db }),
-    logger: dbLogger,
-    isLastAdminUser: isLastAdminUserFactory({ db }),
-    getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
-    queryAllProjects: queryAllProjectsFactory({
-      getExplicitProjects: getExplicitProjects({ db })
-    }),
-    getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
-    deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
-    deleteUserRecord: replicateQuery([db, ...regionDbs], deleteUserRecordFactory),
-    emitEvent: getEventBus().emit
-  })
-}
 
 const getUserRole = getUserRoleFactory({ db })
 const changeUserRole = changeUserRoleFactory({
@@ -264,23 +243,31 @@ export default {
       const logger = context.log.child({
         userIdToOperateOn: context.userId
       })
-      const regionClients = await getRegisteredRegionClients()
-      const regionDbs = Object.values(regionClients)
 
-      const updateUserAndNotify = updateUserAndNotifyFactory({
-        getUser: getUserFactory({ db }),
-        updateUser: replicateQuery([db, ...regionDbs], updateUserFactory),
-        emitEvent: getEventBus().emit
-      })
+      await asMultiregionalOperation(
+        async ({ dbTx, txs, emit }) => {
+          const updateUserAndNotify = updateUserAndNotifyFactory({
+            getUser: getUserFactory({ db: dbTx }),
+            updateUser: async (...params) => {
+              const [res] = await Promise.all(
+                txs.map((tx) => updateUserFactory({ db: tx })(...params))
+              )
 
-      await withOperationLogging(
-        async () => await updateUserAndNotify(context.userId!, args.user),
+              return res
+            },
+            emitEvent: emit
+          })
+
+          return await updateUserAndNotify(context.userId!, args.user)
+        },
         {
+          dbs: await getAllRegisteredDbs(),
           logger,
-          operationName: 'updateUser',
-          operationDescription: `Update user`
+          name: 'updateUser',
+          description: `Update user`
         }
       )
+
       return true
     },
 
@@ -311,16 +298,39 @@ export default {
       const logger = context.log.child({
         userIdToOperateOn: user.id
       })
-      const deleteUser = await buildDeleteUser()
 
-      await withOperationLogging(
-        async () => await deleteUser(user.id, context.userId),
+      await asMultiregionalOperation(
+        ({ dbTx, txs, emit }) => {
+          const deleteUser = deleteUserFactory({
+            deleteStream: deleteStreamFactory({ db: dbTx }),
+            logger: dbLogger,
+            isLastAdminUser: isLastAdminUserFactory({ db: dbTx }),
+            getUserDeletableStreams: getUserDeletableStreamsFactory({ db: dbTx }),
+            queryAllProjects: queryAllProjectsFactory({
+              getExplicitProjects: getExplicitProjects({ db: dbTx })
+            }),
+            getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db: dbTx }),
+            deleteAllUserInvites: deleteAllUserInvitesFactory({ db: dbTx }),
+            deleteUserRecord: async (params) => {
+              const [res] = await Promise.all(
+                txs.map((tx) => deleteUserRecordFactory({ db: tx })(params))
+              )
+
+              return res
+            },
+            emitEvent: emit
+          })
+
+          return deleteUser(user.id, context.userId)
+        },
         {
           logger,
-          operationName: 'adminDeleteUser',
-          operationDescription: `Admin deletion of an user`
+          name: 'adminDeleteUser',
+          description: 'Admin deletion of an user',
+          dbs: await getAllRegisteredDbs()
         }
       )
+
       return true
     },
 
@@ -339,20 +349,40 @@ export default {
       // Since I am paranoid, I'll leave them here too.
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Profile.Delete)
-      const deleteUser = await buildDeleteUser()
+      await asMultiregionalOperation(
+        ({ dbTx, txs, emit }) => {
+          const deleteUser = deleteUserFactory({
+            deleteStream: deleteStreamFactory({ db: dbTx }),
+            logger: dbLogger,
+            isLastAdminUser: isLastAdminUserFactory({ db: dbTx }),
+            getUserDeletableStreams: getUserDeletableStreamsFactory({ db: dbTx }),
+            queryAllProjects: queryAllProjectsFactory({
+              getExplicitProjects: getExplicitProjects({ db: dbTx })
+            }),
+            getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db: dbTx }),
+            deleteAllUserInvites: deleteAllUserInvitesFactory({ db: dbTx }),
+            deleteUserRecord: async (params) => {
+              const [res] = await Promise.all(
+                txs.map((tx) => deleteUserRecordFactory({ db: tx })(params))
+              )
 
-      await withOperationLogging(
-        async () => await deleteUser(context.userId!, context.userId!),
+              return res
+            },
+            emitEvent: emit
+          })
+
+          return deleteUser(user.id, context.userId)
+        },
         {
           logger,
-          operationName: 'deleteUser',
-          operationDescription: `Delete user`
+          name: 'deleteUser',
+          description: 'Delete user',
+          dbs: await getAllRegisteredDbs()
         }
       )
 
       return true
     },
-
     activeUserMutations: () => ({})
   },
   ActiveUserMutations: {
@@ -409,23 +439,31 @@ export default {
     },
     async update(_parent, args, context) {
       const logger = context.log
-      const regionClients = await getRegisteredRegionClients()
-      const regionDbs = Object.values(regionClients)
 
-      const updateUserAndNotify = updateUserAndNotifyFactory({
-        getUser: getUserFactory({ db }),
-        updateUser: replicateQuery([db, ...regionDbs], updateUserFactory),
-        emitEvent: getEventBus().emit
-      })
+      const newUser = await asMultiregionalOperation(
+        async ({ dbTx, txs, emit }) => {
+          const updateUserAndNotify = updateUserAndNotifyFactory({
+            getUser: getUserFactory({ db: dbTx }),
+            updateUser: async (...params) => {
+              const [res] = await Promise.all(
+                txs.map((tx) => updateUserFactory({ db: tx })(...params))
+              )
 
-      const newUser = await withOperationLogging(
-        async () => await updateUserAndNotify(context.userId!, args.user),
+              return res
+            },
+            emitEvent: emit
+          })
+
+          return await updateUserAndNotify(context.userId!, args.user)
+        },
         {
+          dbs: await getAllRegisteredDbs(),
           logger,
-          operationName: 'updateUser',
-          operationDescription: 'Update user'
+          name: 'updateUser',
+          description: `Update user`
         }
       )
+
       return newUser
     },
     meta: () => ({})

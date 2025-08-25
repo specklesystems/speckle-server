@@ -21,7 +21,8 @@ import {
 import { get, range } from 'lodash-es'
 import { buildApolloServer } from '@/app'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
-import { createAuthTokenForUser } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createAuthTokenForUser, createTestUser } from '@/test/authHelper'
 import type { UploadedBlob } from '@/test/blobHelper'
 import { uploadBlob } from '@/test/blobHelper'
 import { Comments } from '@/modules/core/dbSchema'
@@ -95,13 +96,7 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import {
-  getUsersFactory,
-  getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory
-} from '@/modules/core/repositories/users'
+import { getUsersFactory, getUserFactory } from '@/modules/core/repositories/users'
 import {
   findEmailFactory,
   createUserEmailFactory,
@@ -111,7 +106,6 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import {
   finalizeInvitedServerRegistrationFactory,
@@ -147,7 +141,6 @@ import type { TestEmailListener } from '@/test/speckle-helpers/email'
 import { createEmailListener } from '@/test/speckle-helpers/email'
 import { buildTestProject } from '@/modules/core/tests/helpers/creation'
 import type { GetCommentsQueryVariables } from '@/modules/core/graph/generated/graphql'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -312,33 +305,6 @@ const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord
 })
 
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: replicateQuery([db], storeUserFactory),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 const createObject = createObjectFactory({
   storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
@@ -359,19 +325,8 @@ describe('Comments @comments', () => {
 
   let notificationsState: NotificationsStateManager
 
-  const user = {
-    name: 'The comment wizard',
-    email: 'comment@wizard.ry',
-    password: 'i did not like Rivendel wine :(',
-    id: ''
-  }
-
-  const otherUser = {
-    name: 'Fondalf The Brey',
-    email: 'totalnotfakegandalf87@mordor.com',
-    password: 'what gandalf puts in his pipe stays in his pipe',
-    id: ''
-  }
+  let user: BasicTestUser
+  let otherUser: BasicTestUser
 
   const stream = {
     name: 'Commented stream',
@@ -399,8 +354,18 @@ describe('Comments @comments', () => {
     const { app: express } = await beforeEachContext()
     app = express
 
-    user.id = await createUser(user)
-    otherUser.id = await createUser(otherUser)
+    user = await createTestUser({
+      name: 'The comment wizard',
+      email: 'comment@wizard.ry',
+      password: 'i did not like Rivendel wine :(',
+      id: ''
+    })
+    otherUser = await createTestUser({
+      name: 'Fondalf The Brey',
+      email: 'totalnotfakegandalf87@mordor.com',
+      password: 'what gandalf puts in his pipe stays in his pipe',
+      id: ''
+    })
 
     stream.id = await createStream({ ...stream, ownerId: user.id })
 

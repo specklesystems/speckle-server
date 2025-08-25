@@ -6,63 +6,9 @@ import { beforeEachContext } from '@/test/hooks'
 import { localAuthRestApi } from '@/modules/auth/tests/helpers/registration'
 import { expectToThrow } from '@/test/assertionHelper'
 import { expect } from 'chai'
-import {
-  findEmailFactory,
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory
-} from '@/modules/core/repositories/userEmails'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import {
-  getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory
-} from '@/modules/core/repositories/users'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import {
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { getEventBus } from '@/modules/shared/services/eventBus'
-import type { BasicTestUser } from '@/test/authHelper'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
+import { createTestUser } from '@/test/authHelper'
 
 const ResetTokens = () => knex('pwdreset_tokens')
-const db = knex
-const getServerInfo = getServerInfoFactory({ db })
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: replicateQuery([db], storeUserFactory),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 
 describe('Password reset requests @passwordresets', () => {
   let app: Awaited<ReturnType<typeof beforeEachContext>>['app']
@@ -72,13 +18,12 @@ describe('Password reset requests @passwordresets', () => {
   })
 
   it('Should carefully send a password request email', async () => {
-    const userA: BasicTestUser = {
+    const userA = await createTestUser({
       name: 'd1',
       email: 'd@speckle.systems',
       password: 'wowwow8charsplease',
       id: ''
-    }
-    userA.id = await createUser(userA)
+    })
 
     // invalid request
     await request(app).post('/auth/pwdreset/request').expect(400)
@@ -103,13 +48,12 @@ describe('Password reset requests @passwordresets', () => {
   })
 
   it('Should reset passwords', async () => {
-    const userB: BasicTestUser = {
+    const userB = await createTestUser({
       name: 'd2',
       email: 'd2@speckle.systems',
       password: 'w0ww0w8charsplease',
       id: ''
-    }
-    userB.id = await createUser(userB)
+    })
 
     const authRestApi = localAuthRestApi({ express: app })
     const newPassword = '12345678'

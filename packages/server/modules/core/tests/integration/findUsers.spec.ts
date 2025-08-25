@@ -2,73 +2,22 @@ import {
   createRandomEmail,
   createRandomPassword
 } from '@/modules/core/helpers/testHelpers'
-import {
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory,
-  findEmailFactory,
-  updateUserEmailFactory
-} from '@/modules/core/repositories/userEmails'
+import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
 import { expect } from 'chai'
 import {
   bulkLookupUsersFactory,
-  countAdminUsersFactory,
   getUserByEmailFactory,
-  getUserFactory,
   getUsersFactory,
   listUsersFactory,
-  lookupUsersFactory,
-  storeUserAclFactory,
-  storeUserFactory
+  lookupUsersFactory
 } from '@/modules/core/repositories/users'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import {
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import type { BasicTestUser } from '@/test/authHelper'
 import { buildBasicTestUser, createTestUser } from '@/test/authHelper'
-import { getEventBus } from '@/modules/shared/services/eventBus'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
-const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: replicateQuery([db], storeUserFactory),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 const getUserByEmail = getUserByEmailFactory({ db })
 const listUsers = listUsersFactory({ db })
 const lookupUsers = lookupUsersFactory({ db })
@@ -80,7 +29,7 @@ describe('Find users @core', () => {
       const email = createRandomEmail()
       const password = createRandomPassword()
 
-      const userId = await createUser({
+      const { id: userId } = await createTestUser({
         name: 'John Doe',
         password,
         email
@@ -104,7 +53,7 @@ describe('Find users @core', () => {
       const email = createRandomEmail()
       const password = createRandomPassword()
 
-      const userId = await createUser({
+      const { id: userId } = await createTestUser({
         name: 'John Doe',
         password,
         email
@@ -130,7 +79,7 @@ describe('Find users @core', () => {
       const email = createRandomEmail()
       const password = createRandomPassword()
 
-      const userId = await createUser({
+      const { id: userId } = await createTestUser({
         name: 'John Doe',
         password,
         email
@@ -156,7 +105,7 @@ describe('Find users @core', () => {
   describe('getUserByEmail', () => {
     it('should ignore email casing', async () => {
       const email = 'TeST@ExamPLE.oRg'
-      await createUser(
+      await createTestUser(
         buildBasicTestUser({
           name: 'John Doe',
           password: createRandomPassword(),
@@ -171,7 +120,7 @@ describe('Find users @core', () => {
   describe('lookupUsers', () => {
     it('should find matches by name', async () => {
       const email = createRandomEmail()
-      const userId = await createUser(
+      const { id: userId } = await createTestUser(
         buildBasicTestUser({
           email,
           name: 'John Spackle',
@@ -183,7 +132,7 @@ describe('Find users @core', () => {
     })
     it('should not find matches by name if filtered to emails only', async () => {
       const email = createRandomEmail()
-      const userId = await createUser(
+      const { id: userId } = await createTestUser(
         buildBasicTestUser({
           email,
           name: 'John Spackle',
@@ -195,7 +144,7 @@ describe('Find users @core', () => {
     })
     it('should find matches by email', async () => {
       const email = createRandomEmail()
-      const userId = await createUser(
+      const { id: userId } = await createTestUser(
         buildBasicTestUser({
           email,
           name: 'John Spackle',
@@ -207,7 +156,7 @@ describe('Find users @core', () => {
     })
     it('should find matches by email, case insensitive', async () => {
       const email = 'fooBAR@example.org'
-      const userId = await createUser(
+      const { id: userId } = await createTestUser(
         buildBasicTestUser({
           email,
           name: 'John Spackle',

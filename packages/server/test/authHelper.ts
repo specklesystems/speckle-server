@@ -35,8 +35,8 @@ import {
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
-import { getEventBus } from '@/modules/shared/services/eventBus'
+import { asMultiregionalOperation } from '@/modules/shared/command'
+import { logger } from '@/observability/logging'
 import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { faker } from '@faker-js/faker'
 import type { ServerScope } from '@speckle/shared'
@@ -46,15 +46,6 @@ import { assign, isArray, isNumber, omit, times } from 'lodash-es'
 import { v4 } from 'uuid'
 
 const getServerInfo = getServerInfoFactory({ db })
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
 
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -125,29 +116,54 @@ export async function createTestUser(userObj?: Partial<BasicTestUser>) {
     setVal('createdAt', new Date())
   }
 
-  const createUser = createUserFactory({
-    getServerInfo,
-    findEmail,
-    storeUser: replicateQuery(await getTestRegionClients(), storeUserFactory),
-    countAdminUsers: countAdminUsersFactory({ db }),
-    storeUserAcl: storeUserAclFactory({ db }),
-    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-      createUserEmail: createUserEmailFactory({ db }),
-      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-      findEmail,
-      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-      }),
-      requestNewEmailVerification
-    }),
-    emitEvent: getEventBus().emit
-  })
+  const id = await asMultiregionalOperation(
+    async ({ txs, dbTx, emit }) => {
+      const createUser = createUserFactory({
+        getServerInfo,
+        findEmail: findEmailFactory({ db: dbTx }),
+        storeUser: async (args) => {
+          const p = await Promise.all(
+            txs.map(async (tx) => storeUserFactory({ db: tx })(args))
+          )
 
-  const id = await createUser(omit(baseUser, ['id', 'allowPersonalEmail']), {
-    skipPropertyValidation: true,
-    allowPersonalEmail: baseUser.allowPersonalEmail
-  })
+          return p[0]
+        },
+        countAdminUsers: countAdminUsersFactory({ db: dbTx }),
+        storeUserAcl: storeUserAclFactory({ db: dbTx }),
+        validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+          createUserEmail: createUserEmailFactory({ db: dbTx }),
+          ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db: dbTx }),
+          findEmail: findEmailFactory({ db: dbTx }),
+          updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+            deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db: dbTx }),
+            updateAllInviteTargets: updateAllInviteTargetsFactory({ db: dbTx })
+          }),
+          requestNewEmailVerification: requestNewEmailVerificationFactory({
+            findEmail: findEmailFactory({ db: dbTx }),
+            getUser: getUserFactory({ db: dbTx }),
+            getServerInfo,
+            deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory(
+              { db: dbTx }
+            ),
+            renderEmail,
+            sendEmail
+          })
+        }),
+        emitEvent: emit
+      })
+
+      return await createUser(omit(baseUser, ['id', 'allowPersonalEmail']), {
+        skipPropertyValidation: true,
+        allowPersonalEmail: baseUser.allowPersonalEmail
+      })
+    },
+    {
+      dbs: await getTestRegionClients(),
+      logger,
+      name: 'createUser'
+    }
+  )
+
   setVal('id', id)
 
   return baseUser

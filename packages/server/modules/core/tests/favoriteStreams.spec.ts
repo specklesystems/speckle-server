@@ -37,13 +37,7 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import {
-  getUsersFactory,
-  getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory
-} from '@/modules/core/repositories/users'
+import { getUsersFactory, getUserFactory } from '@/modules/core/repositories/users'
 import {
   findEmailFactory,
   createUserEmailFactory,
@@ -53,7 +47,6 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import {
   finalizeInvitedServerRegistrationFactory,
@@ -69,7 +62,7 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
+import { createTestUser, type BasicTestUser } from '@/test/authHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -149,34 +142,6 @@ const createStream = legacyCreateStreamFactory({
     createBranch: createBranchFactory({ db }),
     emitEvent: getEventBus().emit
   })
-})
-
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: replicateQuery([db], storeUserFactory),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
 })
 
 /**
@@ -273,27 +238,25 @@ describe('Favorite streams', () => {
     isPublic: true,
     id: ''
   }
-  const me = {
-    name: 'Itsa Me',
-    email: 'me@example.org',
-    password: 'sn3aky-1337-b1m',
-    id: ''
-  }
-  const otherGuy = {
-    name: 'Some Other DUde',
-    email: 'otherguy@example.org',
-    password: 'sn3aky-1337-b1m',
-    id: ''
-  }
+  let me: BasicTestUser
+  let otherGuy: BasicTestUser
 
   before(async function () {
     await cleanup()
 
-    // Seeding
-    await Promise.all([
-      createUser(me).then((id) => (me.id = id)),
-      createUser(otherGuy).then((id) => (otherGuy.id = id))
-    ])
+    me = await createTestUser({
+      name: 'Itsa Me',
+      email: 'me@example.org',
+      password: 'sn3aky-1337-b1m',
+      id: ''
+    })
+
+    otherGuy = await createTestUser({
+      name: 'Some Other DUde',
+      email: 'otherguy@example.org',
+      password: 'sn3aky-1337-b1m',
+      id: ''
+    })
 
     await Promise.all([
       createStream({ ...myPubStream, ownerId: me.id }).then(

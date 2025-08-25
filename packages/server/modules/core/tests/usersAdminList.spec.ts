@@ -35,13 +35,7 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import {
-  countAdminUsersFactory,
-  getUserFactory,
-  getUsersFactory,
-  storeUserAclFactory,
-  storeUserFactory
-} from '@/modules/core/repositories/users'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import {
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory,
@@ -51,7 +45,6 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import {
   finalizeInvitedServerRegistrationFactory,
@@ -67,7 +60,8 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
 
 // To ensure that the invites are created in the correct order, we need to wait a bit between each creation
 const WAIT_TIMEOUT = 5
@@ -153,34 +147,6 @@ const createStream = legacyCreateStreamFactory({
 })
 const createInviteDirectly = createStreamInviteDirectly
 
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: replicateQuery([db], storeUserFactory),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
-
 function randomEl<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)]
 }
@@ -203,13 +169,7 @@ async function getOrderedUserIds() {
 }
 
 describe('[Admin users list]', () => {
-  const me = {
-    name: 'Mr Server Admin Dude',
-    email: 'adminuserguy@example.org',
-    password: 'sn3aky-1337-b1m',
-    id: undefined as Optional<string>,
-    verified: false
-  }
+  let me: BasicTestUser
 
   const USER_COUNT = 15
   const SERVER_INVITE_COUNT = 5
@@ -250,7 +210,13 @@ describe('[Admin users list]', () => {
 
     await cleanup()
 
-    await createUser(me).then((id) => (me.id = id))
+    me = await createTestUser({
+      name: 'Mr Server Admin Dude',
+      email: 'adminuserguy@example.org',
+      password: 'sn3aky-1337-b1m',
+      id: undefined as Optional<string>,
+      verified: false
+    })
 
     const userIds: string[] = []
     let remainingSearchQueryUserCount = SEARCH_QUERY_RESULT_COUNT
@@ -259,7 +225,7 @@ describe('[Admin users list]', () => {
     // Create Users
     // count - 1, cause `me` also exists
     for (let i = 0; i < USER_COUNT - 1; i++) {
-      const id = await createUser({
+      const { id } = await createTestUser({
         name: `User #${i} - ${
           remainingSearchQueryUserCount-- >= 1 ? SEARCH_QUERY : ''
         }`,

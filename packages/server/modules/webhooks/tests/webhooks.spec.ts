@@ -46,13 +46,7 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import {
-  getUserFactory,
-  getUsersFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory
-} from '@/modules/core/repositories/users'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import {
   findEmailFactory,
   createUserEmailFactory,
@@ -62,7 +56,6 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import {
   finalizeInvitedServerRegistrationFactory,
@@ -86,7 +79,7 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import { omit } from 'lodash-es'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
+import { createTestUser, type BasicTestUser } from '@/test/authHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -172,33 +165,6 @@ const createStream = legacyCreateStreamFactory({
   })
 })
 const grantPermissionsStream = grantStreamPermissionsFactory({ db })
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: replicateQuery([db], storeUserFactory),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
   storeTokenScopes: storeTokenScopesFactory({ db }),
@@ -212,13 +178,7 @@ describe('Webhooks @webhooks', () => {
   const getWebhook = getWebhookByIdFactory({ db })
   let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 
-  const userOne = {
-    name: 'User',
-    email: 'user@example.org',
-    password: 'jdsadjsadasfdsa',
-    id: '',
-    token: ''
-  }
+  let userOne: BasicTestUser & { token?: string }
 
   const streamOne = {
     name: 'streamOne',
@@ -242,7 +202,12 @@ describe('Webhooks @webhooks', () => {
     const ctx = await beforeEachContext()
     ;({ sendRequest } = await initializeTestServer(ctx))
 
-    userOne.id = await createUser(userOne)
+    userOne = await createTestUser({
+      name: 'User',
+      email: 'user@example.org',
+      password: 'jdsadjsadasfdsa',
+      id: ''
+    })
     streamOne.ownerId = userOne.id
     streamOne.id = await createStream(streamOne)
 
@@ -379,13 +344,7 @@ describe('Webhooks @webhooks', () => {
   })
 
   describe('GraphQL API Webhooks @webhooks-api', () => {
-    const userTwo = {
-      name: 'User2',
-      email: 'user2@example.org',
-      password: 'jdsadjsadasfdsa',
-      id: '',
-      token: ''
-    }
+    let userTwo: BasicTestUser & { token?: string }
 
     const webhookTwo = {
       streamId: '',
@@ -406,7 +365,12 @@ describe('Webhooks @webhooks', () => {
     }
 
     before(async () => {
-      userTwo.id = await createUser(userTwo)
+      userTwo = await createTestUser({
+        name: 'User2',
+        email: 'user2@example.org',
+        password: 'jdsadjsadasfdsa',
+        id: ''
+      })
       streamTwo.ownerId = userTwo.id
       streamTwo.id = await createStream(streamTwo)
       webhookTwo.streamId = streamTwo.id

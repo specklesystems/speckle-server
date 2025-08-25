@@ -57,7 +57,6 @@ import {
   findVerifiedEmailsByUserIdFactory,
   updateUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
-import { replicateQuery, withTransaction } from '@/modules/shared/helpers/dbHelper'
 import type { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
   countAdminUsersFactory,
@@ -142,7 +141,8 @@ import {
   createWorkspaceSeatFactory,
   getWorkspaceUserSeatFactory
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
-import { getRegisteredRegionClients } from '@/modules/multiregion/utils/dbSelector'
+import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
+import { asMultiregionalOperation } from '@/modules/shared/command'
 
 const moveAuthParamsToSessionMiddleware = moveAuthParamsToSessionMiddlewareFactory()
 const sessionMiddleware = sessionMiddlewareFactory()
@@ -276,11 +276,8 @@ export const getSsoRouter = (): Router => {
     }),
     async (req, res, next) => {
       try {
-        await withTransaction(
-          async ({ db: trx }) => {
-            const regionClients = await getRegisteredRegionClients()
-            const regionDbs = Object.values(regionClients)
-
+        await asMultiregionalOperation(
+          async ({ txs, dbTx: trx }) => {
             const handleOidcCallback = handleOidcCallbackFactory({
               getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
               getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: trx }),
@@ -322,7 +319,13 @@ export const getSsoRouter = (): Router => {
                   createUser: createUserFactory({
                     getServerInfo: getServerInfoFactory({ db: trx }),
                     findEmail: findEmailFactory({ db: trx }),
-                    storeUser: replicateQuery([trx, ...regionDbs], storeUserFactory),
+                    storeUser: async (...params) => {
+                      const [user] = await Promise.all(
+                        txs.map((tx) => storeUserFactory({ db: tx })(...params))
+                      )
+
+                      return user
+                    },
                     countAdminUsers: countAdminUsersFactory({ db: trx }),
                     storeUserAcl: storeUserAclFactory({ db: trx }),
                     validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
@@ -394,7 +397,11 @@ export const getSsoRouter = (): Router => {
 
             await handleOidcCallback(req, res, next)
           },
-          { db }
+          {
+            dbs: await getAllRegisteredDbs(),
+            logger: req.log,
+            name: 'oidc callback'
+          }
         )
 
         return next()

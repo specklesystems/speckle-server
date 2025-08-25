@@ -28,19 +28,11 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import {
-  countAdminUsersFactory,
-  legacyGetUserFactory,
-  storeUserAclFactory,
-  storeUserFactory
-} from '@/modules/core/repositories/users'
-import { createUserFactory } from '@/modules/core/services/users/management'
+import { legacyGetUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createTestUser, login } from '@/test/authHelper'
 import { EmailVerificationFinalizationError } from '@/modules/emails/errors'
 import { Roles } from '@speckle/shared'
-import { replicateQuery } from '@/modules/shared/helpers/dbHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -64,17 +56,6 @@ const createUserEmail = validateAndCreateUserEmailFactory({
   requestNewEmailVerification
 })
 
-const findEmail = findEmailFactory({ db })
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: replicateQuery([db], storeUserFactory),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: createUserEmail,
-  emitEvent: getEventBus().emit
-})
-
 describe('User emails graphql @core', () => {
   before(async () => {
     await beforeEachContext()
@@ -86,7 +67,7 @@ describe('User emails graphql @core', () => {
   describe('createUserEmail mutation', () => {
     it('should create new email for user', async () => {
       const firstEmail = createRandomEmail()
-      const userId = await createUser({
+      const { id: userId } = await createTestUser({
         name: 'emails user',
         email: firstEmail,
         password: createRandomPassword()
@@ -118,7 +99,7 @@ describe('User emails graphql @core', () => {
   describe('deleteUserEmail mutation', () => {
     it('should delete email for user', async () => {
       const firstEmail = createRandomEmail()
-      const userId = await createUser({
+      const { id: userId } = await createTestUser({
         name: 'emails user',
         email: firstEmail,
         password: createRandomPassword()
@@ -148,7 +129,7 @@ describe('User emails graphql @core', () => {
 
   describe('setPrimaryUserEmail mutation', () => {
     it('should set primary email for user', async () => {
-      const userId = await createUser({
+      const { id: userId } = await createTestUser({
         name: 'emails user',
         email: createRandomEmail(),
         password: createRandomPassword()
