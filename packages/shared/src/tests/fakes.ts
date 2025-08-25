@@ -9,7 +9,7 @@ import {
   WorkspaceSsoProvider,
   WorkspaceSsoSession
 } from '../authz/domain/workspaces/types.js'
-import { FeatureFlags, parseFeatureFlags } from '../environment/index.js'
+import { parseFeatureFlags } from '../environment/index.js'
 import { mapValues } from 'lodash'
 import { WorkspaceFeatureFlags, WorkspacePlan } from '../workspaces/index.js'
 import { TIME_MS } from '../core/index.js'
@@ -18,6 +18,7 @@ import {
   SavedViewGroup,
   SavedViewVisibility
 } from '../authz/domain/savedViews/types.js'
+import { FeatureFlags } from '../environment/featureFlags.js'
 
 export const fakeGetFactory =
   <T extends Record<string, unknown>>(defaults: () => T) =>

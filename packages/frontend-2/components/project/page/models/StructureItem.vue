@@ -339,6 +339,7 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const importArea = ref(
   null as Nullable<{

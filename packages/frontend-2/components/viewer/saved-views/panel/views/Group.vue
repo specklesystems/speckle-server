@@ -3,6 +3,7 @@
     v-if="!isUngroupedGroup"
     v-model:open="open"
     v-model:edit-title="renameMode"
+    color="subtle"
     :title="group.title"
     lazy-load
     @update:title="onRename"
@@ -10,11 +11,11 @@
     <ViewerSavedViewsPanelViewsGroupInner
       :group="group"
       :search="search"
-      :only-authored="onlyAuthored"
+      :views-type="viewsType"
     />
     <template #title-actions>
       <div
-        class="flex gap-1 items-center opacity-0 group-hover/disclosure:opacity-100"
+        class="flex gap-0.5 items-center opacity-0 group-hover/disclosure:opacity-100"
         @click.stop
       >
         <LayoutMenu
@@ -34,14 +35,14 @@
             @click="showMenu = !showMenu"
           />
         </LayoutMenu>
-        <div v-tippy="canUpdate?.errorMessage">
+        <div v-tippy="canCreateView?.errorMessage">
           <FormButton
             size="sm"
             color="subtle"
             :icon-left="Plus"
             hide-text
             name="addGroupView"
-            :disabled="!canUpdate.authorized || isLoading"
+            :disabled="!canCreateView.authorized || isLoading"
             @click="onAddGroupView"
           />
         </div>
@@ -50,10 +51,10 @@
   </LayoutDisclosure>
   <ViewerSavedViewsPanelViewsGroupInner
     v-else
-    class="mb-2"
+    class="mb-[1px]"
     :group="group"
     :search="search"
-    :only-authored="onlyAuthored"
+    :views-type="viewsType"
   />
 </template>
 <script setup lang="ts">
@@ -62,18 +63,32 @@ import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { Ellipsis, Plus } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
-import type {
-  UseUpdateSavedViewGroup_SavedViewGroupFragment,
-  ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment,
-  ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroupFragment
+import {
+  SavedViewVisibility,
+  type UseUpdateSavedViewGroup_SavedViewGroupFragment,
+  type ViewerSavedViewsPanelViewsGroup_ProjectFragment,
+  type ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment,
+  type ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroupFragment
 } from '~/lib/common/generated/gql/graphql'
 import {
   useCreateSavedView,
   useUpdateSavedViewGroup
 } from '~/lib/viewer/composables/savedViews/management'
+import { ViewsType } from '~/lib/viewer/helpers/savedViews'
 
 const MenuItems = StringEnum(['Delete', 'Rename'])
 type MenuItems = StringEnumValues<typeof MenuItems>
+
+graphql(`
+  fragment ViewerSavedViewsPanelViewsGroup_Project on Project {
+    id
+    permissions {
+      canCreateSavedView {
+        ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
 
 graphql(`
   fragment ViewerSavedViewsPanelViewsGroup_SavedViewGroup on SavedViewGroup {
@@ -113,24 +128,25 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
+  project: ViewerSavedViewsPanelViewsGroup_ProjectFragment
   group: ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment
+  viewsType: ViewsType
   search?: string
-  onlyAuthored?: boolean
 }>()
 
 const { triggerNotification } = useGlobalToast()
 const isLoading = useMutationLoading()
 const createView = useCreateSavedView()
 const updateGroup = useUpdateSavedViewGroup()
-const isSelected = defineModel<boolean>('isSelected')
 const renameMode = defineModel<boolean>('renameMode')
 
-const open = ref(false)
+const open = defineModel<boolean>('open')
 const showMenu = ref(false)
 const menuId = useId()
 
 const isUngroupedGroup = computed(() => props.group.isUngroupedViewsGroup)
 const canUpdate = computed(() => props.group.permissions.canUpdate)
+const canCreateView = computed(() => props.project.permissions.canCreateSavedView)
 
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
@@ -166,9 +182,11 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
 
 const onAddGroupView = async () => {
   await createView({
-    groupId: props.group.id
+    groupId: props.group.id,
+    visibility:
+      props.viewsType === ViewsType.Shared ? SavedViewVisibility.Public : undefined
   })
-  isSelected.value = true
+  open.value = true
 }
 
 const onRename = async (newName: string) => {
@@ -196,14 +214,4 @@ const onRename = async (newName: string) => {
     renameMode.value = false
   }
 }
-
-watch(
-  () => isSelected.value,
-  (isSelected) => {
-    if (isSelected) {
-      open.value = true
-    }
-  },
-  { immediate: true }
-)
 </script>

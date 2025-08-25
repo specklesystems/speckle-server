@@ -78,6 +78,7 @@ const { getErrorMessage } = useFailedFileImportJobUtils()
 
 const { copyReference } = useGenerateErrorReference()
 const navigateToProject = useNavigateToProject()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const open = computed({
   get: () => failedJobs.value.length > 0,

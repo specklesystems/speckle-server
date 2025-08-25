@@ -94,6 +94,7 @@ const resolvers: Resolvers = {
         resourceIdString: input.resourceIdString,
         userId: ctx.userId,
         onlyAuthored: input.onlyAuthored,
+        onlyVisibility: input.onlyVisibility,
         search: input.search,
         limit: input.limit,
         cursor: input.cursor
@@ -249,6 +250,7 @@ const resolvers: Resolvers = {
         userId: ctx.userId,
         groupId: parent.name ? parent.id : null,
         onlyAuthored: input.onlyAuthored,
+        onlyVisibility: input.onlyVisibility,
         search: input.search,
         limit: input.limit,
         cursor: input.cursor,

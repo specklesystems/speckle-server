@@ -176,7 +176,6 @@ export default FF_GATEKEEPER_MODULE_ENABLED
             userId: context.userId
           })
 
-          // Defaults to Editor for old plans that don't have seat types
           return seat?.type || WorkspaceSeatType.Viewer
         },
         seats: async (parent) => {

@@ -7,7 +7,7 @@ import {
   WorkspacePlans
 } from './plans.js'
 import type { MaybeNullOrUndefined } from '../../core/helpers/utilityTypes.js'
-import { FeatureFlags } from '../../environment/index.js'
+import { FeatureFlags } from '../../environment/featureFlags.js'
 
 /**
  * WORKSPACE FEATURES

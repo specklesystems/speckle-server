@@ -1,31 +1,31 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div :class="wrapperClasses" :view-id="view.id">
-    <div class="flex items-center">
-      <div v-keyboard-clickable class="relative cursor-pointer" @click="apply">
+  <div v-keyboard-clickable :class="wrapperClasses" :view-id="view.id" @click="apply">
+    <div class="flex items-center shrink-0">
+      <div class="relative">
         <img
           :src="view.screenshot"
           alt="View screenshot"
-          class="w-20 h-14 object-cover rounded border border-outline-3 bg-foundation-page cursor-pointer"
+          class="w-20 h-[60px] object-cover rounded border border-outline-3 bg-foundation-page cursor-pointer"
         />
         <div
           v-if="isHomeView && !isFederatedView"
-          class="absolute -top-1 -left-1 bg-orange-500 w-4 h-4 flex items-center justify-center rounded-sm"
+          class="absolute -top-1 -left-1 bg-orange-500 w-4 h-4 flex items-center justify-center rounded-[3px]"
         >
-          <Bookmark class="text-white w-3 h-3" fill="currentColor" />
+          <Bookmark class="text-white w-3 h-3" fill="currentColor" stroke-width="0" />
         </div>
       </div>
     </div>
-    <div class="flex flex-col gap-1 min-w-0 grow">
-      <div class="text-body-2xs font-medium text-foreground truncate grow-0">
+    <div class="flex flex-col min-w-0 grow">
+      <div class="text-body-2xs font-medium text-foreground truncate grow-0 pr-1.5">
         {{ view.name }}
       </div>
       <div class="flex gap-1 items-center justify-between">
         <div class="text-body-2xs text-foreground-3 truncate">
           {{ view.author?.name }}
         </div>
-        <div class="flex items-center">
+        <div class="flex gap-0.5 items-center" @click.stop>
           <LayoutMenu
             v-model:open="showMenu"
             :items="menuItems"
@@ -33,6 +33,7 @@
             mount-menu-on-body
             show-ticks="right"
             :size="230"
+            class="shrink-0 opacity-0 group-hover:opacity-100"
             @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
           >
             <FormButton
@@ -41,28 +42,44 @@
               :icon-left="Ellipsis"
               hide-text
               name="viewActions"
-              class="shrink-0 opacity-0 group-hover:opacity-100"
+              class="shrink-0"
               @click="showMenu = !showMenu"
             />
           </LayoutMenu>
-          <div v-tippy="canUpdate?.errorMessage">
+          <div
+            v-tippy="canUpdate?.errorMessage"
+            class="shrink-0 opacity-0 group-hover:opacity-100"
+          >
             <FormButton
               size="sm"
               color="subtle"
               :icon-left="SquarePen"
               hide-text
               name="editView"
-              class="shrink-0 opacity-0 group-hover:opacity-100"
+              class="shrink-0"
               :disabled="!canUpdate?.authorized || isLoading"
               @click="onEdit"
             />
           </div>
         </div>
       </div>
-      <div class="w-full flex">
+      <div class="w-full flex items-center gap-1">
+        <Globe
+          v-if="!isOnlyVisibleToMe"
+          :size="12"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+          class="w-3 h-3 text-foreground-2"
+        />
         <div
-          v-tippy="formattedFullDate(view.updatedAt)"
-          class="text-body-2xs text-foreground-3 truncate"
+          v-tippy="{
+            content: formattedFullDate(view.updatedAt),
+            delay: [700, 100],
+            duration: [120, 150],
+            offset: [0, 2],
+            placement: 'right'
+          }"
+          class="text-body-2xs text-foreground-3 truncate pr-1.5"
         >
           {{ formattedRelativeDate(view.updatedAt) }}
         </div>
@@ -71,10 +88,15 @@
   </div>
 </template>
 <script setup lang="ts">
-import { StringEnum, throwUncoveredError, type StringEnumValues } from '@speckle/shared'
+import {
+  StringEnum,
+  throwUncoveredError,
+  type Optional,
+  type StringEnumValues
+} from '@speckle/shared'
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
-import { Ellipsis, SquarePen, Bookmark } from 'lucide-vue-next'
+import { Ellipsis, SquarePen, Bookmark, Globe } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   SavedViewVisibility,
@@ -136,6 +158,7 @@ const updateView = useUpdateSavedView()
 const isLoading = useMutationLoading()
 const { copyLink, applyView } = useViewerSavedViewsUtils()
 const eventBus = useEventBus()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const showMenu = ref(false)
 const menuId = useId()
@@ -147,6 +170,29 @@ const isOnlyVisibleToMe = computed(
 const isHomeView = computed(() => props.view.isHomeView)
 const isActive = computed(() => props.view.id === savedView.value?.id)
 
+const canSetHomeView = computed(
+  (): { authorized: boolean; message: Optional<string> } => {
+    if (!canUpdate.value?.authorized || isLoading.value) {
+      return { authorized: false, message: canUpdate.value.errorMessage || undefined }
+    }
+
+    if (isFederatedView.value) {
+      return {
+        authorized: false,
+        message: "Home view settings can't be updated while in a federated view"
+      }
+    }
+
+    if (isOnlyVisibleToMe.value) {
+      return {
+        authorized: false,
+        message: 'A view must be shared to be set as home view'
+      }
+    }
+
+    return { authorized: true, message: undefined }
+  }
+)
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
@@ -175,16 +221,13 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
       id: MenuItems.SetAsHomeView,
       title: 'Set as home view',
       active: !!isHomeView.value,
-      disabled:
-        isFederatedView.value || !canUpdate.value?.authorized || isLoading.value,
-      disabledTooltip: isFederatedView
-        ? "Home views can't be updated in a federated view"
-        : canUpdate.value.errorMessage
+      disabled: !canSetHomeView.value.authorized,
+      disabledTooltip: canSetHomeView.value.message
     },
     {
       id: MenuItems.ChangeVisibility,
-      title: 'Only visible to me',
-      active: !!isOnlyVisibleToMe.value,
+      title: 'Share view to workspace',
+      active: !isOnlyVisibleToMe.value,
       disabled: !canUpdate.value?.authorized || isLoading.value,
       disabledTooltip: canUpdate.value.errorMessage
     }
@@ -200,7 +243,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
 ])
 
 const wrapperClasses = computed(() => {
-  const classParts = ['flex gap-2 p-2 w-full group rounded']
+  const classParts = ['flex gap-2 p-2 pr-0.5 w-full group rounded-md cursor-pointer']
 
   if (isActive.value) {
     classParts.push('bg-highlight-2 hover:bg-highlight-3')

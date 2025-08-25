@@ -19,7 +19,7 @@ export type SuccessfullyUploadedFileItem = Merge<
 >
 
 export class BlobRetrievalError extends BaseError {
-  static defaultMessage = 'An error occurred while trying to retrieve the blob'
+  static override defaultMessage = 'An error occurred while trying to retrieve the blob'
 }
 
 export function isSuccessfullyUploaded(
@@ -216,7 +216,7 @@ export function uploadFiles(params: {
 }
 
 export class BlobDeleteFailedError extends BaseError {
-  static defaultMessage = 'Unable to delete the file'
+  static override defaultMessage = 'Unable to delete the file'
 }
 
 export async function deleteBlob(params: {

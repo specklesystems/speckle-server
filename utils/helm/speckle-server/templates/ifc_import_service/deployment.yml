@@ -103,10 +103,6 @@ spec:
 
           - name: FILE_IMPORT_TIME_LIMIT_MIN
             value: {{ .Values.file_import_time_limit_min | quote }}
-          {{- if .Values.featureFlags.experimentalIfcImporterEnabled }}
-          - name: FF_EXPERIMENTAL_IFC_IMPORTER_ENABLED
-            value: {{ .Values.featureFlags.experimentalIfcImporterEnabled | quote }}
-          {{- end }}
           {{- with .Values.ifc_import_service.additionalEnvVars }}
           {{- toYaml . | nindent 10}}
           {{- end }}

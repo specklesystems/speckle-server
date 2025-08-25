@@ -161,6 +161,7 @@ enum WorkspaceFeatureName {
   hideSpeckleBranding
   workspaceDataRegionSpecificity
   exclusiveMembership
+  savedViews
 }
 
 type WorkspacePlanPrice {
