@@ -175,8 +175,8 @@ isMultiRegionTestMode()
 
         await manyParallelCreates()
 
-        const c = await db('users').count()
-        expect(c).to.eql(1000)
+        const [{ count }] = await db('users').count()
+        expect(count).to.eql(1000)
 
         await sleep(1000) // just in case
 

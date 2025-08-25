@@ -129,10 +129,27 @@ export const asOperation = async <T>(
   )
 }
 
+/**
+ * Utility function to execute a command across multiple regions
+ * works similarly to asOperation, but provides references to every db instance in the dbs array provided
+ * It opens a transaction for each db, and uses 2PC to ensure consistency at commit moment
+ * txs represents all the transactions
+ * dbTx represents the main transaction (Knex)
+ * regionTxs represents the transactions that were given as regions (Knex[])
+ */
 export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
   operation: (args: {
+    /**
+     * @description reference to every transaction
+     */
     txs: Knex.Transaction[]
+    /**
+     * @description reference first transaction
+     */
     dbTx: Knex.Transaction
+    /**
+     * @description reference for remaining transaction
+     */
     regionTxs: Knex.Transaction[]
     emit: EventBusEmit
   }) => MaybeAsync<T>,
@@ -140,9 +157,12 @@ export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
     name: string
     logger: Logger
     description?: string
+    /**
+     * @description Dbs to open transactions for the operation
+     */
     dbs: K
     /**
-     * Defaults to main event bus
+     * @description Defaults to main event bus
      */
     eventBus?: EventBus
   }
