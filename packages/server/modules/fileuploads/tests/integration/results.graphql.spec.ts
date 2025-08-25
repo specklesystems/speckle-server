@@ -16,7 +16,7 @@ import type { Server } from 'http'
 import { initUploadTestEnvironment } from '@/modules/fileuploads/tests/helpers/init'
 import { createFileUploadJob } from '@/modules/fileuploads/tests/helpers/creation'
 
-const { createUser, createStream, createToken } = initUploadTestEnvironment()
+const { createStream, createToken } = initUploadTestEnvironment()
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 

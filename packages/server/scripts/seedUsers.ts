@@ -1,6 +1,5 @@
 /* eslint-disable no-restricted-imports */
 import '../bootstrap.js'
-import { db } from '@/db/knex'
 import { logger } from '@/observability/logging'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
@@ -25,40 +24,12 @@ import {
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import axios from 'axios'
-
-const getServerInfo = getServerInfoFactory({ db })
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
+import { asMultiregionalOperation } from '@/modules/shared/command.js'
+import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector.js'
 
 const main = async () => {
-  const userInputs: Array<Parameters<typeof createUser>[0]> = (
+  const userInputs: Array<Parameters<ReturnType<typeof createUserFactory>>[0]> = (
     await axios.get('https://randomuser.me/api/?results=250')
   ).data.results.map(
     (user: {
@@ -74,7 +45,55 @@ const main = async () => {
     }
   )
 
-  await Promise.all(userInputs.map((userInput) => createUser(userInput)))
+  await Promise.all(
+    userInputs.map(async (userInput) =>
+      asMultiregionalOperation(
+        async ({ dbTx, txs, emit }) => {
+          const createUser = createUserFactory({
+            getServerInfo: getServerInfoFactory({ db: dbTx }),
+            findEmail: findEmailFactory({ db: dbTx }),
+            storeUser: async (...params) => {
+              const [user] = await Promise.all(
+                txs.map((tx) => storeUserFactory({ db: tx })(...params))
+              )
+
+              return user
+            },
+            countAdminUsers: countAdminUsersFactory({ db: dbTx }),
+            storeUserAcl: storeUserAclFactory({ db: dbTx }),
+            validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+              createUserEmail: createUserEmailFactory({ db: dbTx }),
+              ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({
+                db: dbTx
+              }),
+              findEmail: findEmailFactory({ db: dbTx }),
+              updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+                deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db: dbTx }),
+                updateAllInviteTargets: updateAllInviteTargetsFactory({ db: dbTx })
+              }),
+              requestNewEmailVerification: requestNewEmailVerificationFactory({
+                findEmail: findEmailFactory({ db: dbTx }),
+                getUser: getUserFactory({ db: dbTx }),
+                getServerInfo: getServerInfoFactory({ db: dbTx }),
+                deleteOldAndInsertNewVerification:
+                  deleteOldAndInsertNewVerificationFactory({ db: dbTx }),
+                renderEmail,
+                sendEmail
+              })
+            }),
+            emitEvent: emit
+          })
+
+          return await createUser(userInput)
+        },
+        {
+          logger,
+          name: 'seedUsers',
+          dbs: await getAllRegisteredDbs()
+        }
+      )
+    )
+  )
 }
 
 void main()
