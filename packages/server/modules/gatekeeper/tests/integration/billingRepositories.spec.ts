@@ -79,7 +79,7 @@ describe('billing repositories @gatekeeper', () => {
           status: 'paymentFailed',
           createdAt: new Date(),
           updatedAt: new Date(),
-          featureFlags: WorkspaceFeatureFlags.None,
+          featureFlags: WorkspaceFeatureFlags.none,
           workspaceId
         } as const
         await upsertPaidWorkspacePlan({
@@ -107,7 +107,7 @@ describe('billing repositories @gatekeeper', () => {
           status: 'paymentFailed',
           createdAt: createdAt1,
           updatedAt: createdAt1,
-          featureFlags: WorkspaceFeatureFlags.None,
+          featureFlags: WorkspaceFeatureFlags.none,
           workspaceId: workspace1.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -121,7 +121,7 @@ describe('billing repositories @gatekeeper', () => {
           status: 'paymentFailed',
           createdAt: createdAt2,
           updatedAt: createdAt2,
-          featureFlags: WorkspaceFeatureFlags.None,
+          featureFlags: WorkspaceFeatureFlags.none,
           workspaceId: workspace2.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -148,7 +148,7 @@ describe('billing repositories @gatekeeper', () => {
           status: 'paymentFailed',
           createdAt: createdAt1,
           updatedAt: createdAt1,
-          featureFlags: WorkspaceFeatureFlags.None,
+          featureFlags: WorkspaceFeatureFlags.none,
           workspaceId: workspace1.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -162,7 +162,7 @@ describe('billing repositories @gatekeeper', () => {
           status: 'paymentFailed',
           createdAt: createdAt2,
           updatedAt: createdAt2,
-          featureFlags: WorkspaceFeatureFlags.None,
+          featureFlags: WorkspaceFeatureFlags.none,
           workspaceId: workspace2.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -186,7 +186,7 @@ describe('billing repositories @gatekeeper', () => {
           status: 'paymentFailed',
           createdAt: createdAt1,
           updatedAt: createdAt1,
-          featureFlags: WorkspaceFeatureFlags.None,
+          featureFlags: WorkspaceFeatureFlags.none,
           workspaceId: workspace1.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -200,7 +200,7 @@ describe('billing repositories @gatekeeper', () => {
           status: 'valid',
           createdAt: createdAt2,
           updatedAt: createdAt2,
-          featureFlags: WorkspaceFeatureFlags.None,
+          featureFlags: WorkspaceFeatureFlags.none,
           workspaceId: workspace2.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -224,7 +224,7 @@ describe('billing repositories @gatekeeper', () => {
           status: 'valid',
           createdAt: createdAt1,
           updatedAt: createdAt1,
-          featureFlags: WorkspaceFeatureFlags.None,
+          featureFlags: WorkspaceFeatureFlags.none,
           workspaceId: workspace1.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -238,7 +238,7 @@ describe('billing repositories @gatekeeper', () => {
           status: 'valid',
           createdAt: createdAt2,
           updatedAt: createdAt2,
-          featureFlags: WorkspaceFeatureFlags.None,
+          featureFlags: WorkspaceFeatureFlags.none,
           workspaceId: workspace2.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -473,7 +473,7 @@ describe('billing repositories @gatekeeper', () => {
             status: 'valid',
             createdAt: new Date(),
             updatedAt: new Date(),
-            featureFlags: WorkspaceFeatureFlags.None
+            featureFlags: WorkspaceFeatureFlags.none
           }
         })
         await upsertWorkspaceSubscription({
