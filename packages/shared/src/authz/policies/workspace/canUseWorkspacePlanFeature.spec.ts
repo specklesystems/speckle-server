@@ -3,7 +3,10 @@ import { Roles } from '../../../core/constants.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
 import { Workspace } from '../../domain/workspaces/types.js'
 import { canUseWorkspacePlanFeature } from './canUseWorkspacePlanFeature.js'
-import { WorkspacePlanFeatures } from '../../../workspaces/index.js'
+import {
+  WorkspaceFeatureFlags,
+  WorkspacePlanFeatures
+} from '../../../workspaces/index.js'
 import { describe, expect, it } from 'vitest'
 import {
   ServerNoAccessError,
@@ -14,6 +17,7 @@ import {
   WorkspaceNotEnoughPermissionsError,
   WorkspaceReadOnlyError
 } from '../../domain/authErrors.js'
+import { getWorkspacePlanFake } from '../../../tests/fakes.js'
 
 const buildSUT = (
   overrides?: Partial<Parameters<typeof canUseWorkspacePlanFeature>[0]>
@@ -35,15 +39,7 @@ const buildSUT = (
     getWorkspaceRole: async () => Roles.Workspace.Admin,
     getWorkspaceSsoProvider: async () => null,
     getWorkspaceSsoSession: async () => null,
-    getWorkspacePlan: async () => {
-      return {
-        workspaceId,
-        name: 'unlimited',
-        status: 'valid',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    },
+    getWorkspacePlan: getWorkspacePlanFake({ workspaceId, name: 'unlimited' }),
     ...overrides
   })
 }
@@ -123,7 +119,8 @@ describe('canUseFeature', () => {
         name: 'proUnlimited',
         status: 'canceled',
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        featureFlags: WorkspaceFeatureFlags.none
       })
     })
 
@@ -141,7 +138,8 @@ describe('canUseFeature', () => {
         name: 'free',
         status: 'valid',
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        featureFlags: WorkspaceFeatureFlags.none
       })
     })
 

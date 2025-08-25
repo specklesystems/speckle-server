@@ -11,7 +11,7 @@ import {
 } from '../authz/domain/workspaces/types.js'
 import { FeatureFlags, parseFeatureFlags } from '../environment/index.js'
 import { mapValues } from 'lodash'
-import { WorkspacePlan } from '../workspaces/index.js'
+import { WorkspaceFeatureFlags, WorkspacePlan } from '../workspaces/index.js'
 import { TIME_MS } from '../core/index.js'
 import {
   SavedView,
@@ -48,7 +48,8 @@ export const getWorkspacePlanFake = fakeGetFactory<WorkspacePlan>(() => ({
   status: 'valid',
   workspaceId: nanoid(10),
   createdAt: new Date(Date.now() - TIME_MS.day),
-  updatedAt: new Date(Date.now() - TIME_MS.day)
+  updatedAt: new Date(Date.now() - TIME_MS.day),
+  featureFlags: WorkspaceFeatureFlags.none
 }))
 
 export const getWorkspaceSsoProviderFake = fakeGetFactory<WorkspaceSsoProvider>(() => ({
