@@ -3,6 +3,7 @@ import type { IncomingMessage } from 'node:http'
 import { get } from 'lodash-es'
 import type { Logger } from 'pino'
 import type express from 'express'
+import { prettifiedLoggerFactory } from '~/lib/core/helpers/observability'
 
 const redactedReqHeaders = ['authorization', 'cookie']
 
@@ -65,3 +66,5 @@ export const getRequestPath = (req: IncomingMessage | express.Request) => {
   )[0] as string
   return path?.length ? path : null
 }
+
+export { prettifiedLoggerFactory }

@@ -128,16 +128,25 @@ async function initRumServer(app: PluginNuxtApp) {
         script: [
           {
             innerHTML: `
+              new PerformanceObserver((list) => {
+                const entries = list.getEntries();
+                const last = entries[entries.length - 1];
+                // last.startTime is your current LCP candidate time
+                console.log('LCP candidate:', last.startTime, last);
+              }).observe({ type: 'largest-contentful-paint', buffered: true });
+            `,
+            type: 'module'
+          },
+          {
+            innerHTML: `
               import {
                 onCLS,
-                onFID,
                 onLCP,
                 onINP,
                 onTTFB
-              } from 'https://cdn.jsdelivr.net/npm/web-vitals@3/dist/web-vitals.attribution.js?module';
+              } from 'https://unpkg.com/web-vitals@5/dist/web-vitals.attribution.js?module';
 
               onCLS(console.log);
-              onFID(console.log);
               onLCP(console.log);
               onINP(console.log);
               onTTFB(console.log);

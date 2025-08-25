@@ -133,6 +133,7 @@ const props = defineProps<{
   workspaceSlug: string
 }>()
 
+const { formattedFullDate } = useDateFormatters()
 const { result } = useQuery(settingsWorkspacesMembersTableQuery, () => ({
   slug: props.workspaceSlug
 }))

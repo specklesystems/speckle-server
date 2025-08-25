@@ -119,6 +119,7 @@ const open = (id: string) => {
 
 const { calculateThreadResourceStatus } = useCommentContext()
 const itemStatus = computed(() => calculateThreadResourceStatus(props.thread))
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const createdAt = computed(() => {
   return {
