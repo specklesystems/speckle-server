@@ -63,7 +63,7 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
   renderEmail,
   sendEmail
 })
-// this does not uses createTestUser as 250 as transactional creation can timeout for parallel 250 users
+// this does not uses createTestUser as 250 parallel transactions for user creation can timeout some of them
 const createUser = createUserFactory({
   getServerInfo,
   findEmail,

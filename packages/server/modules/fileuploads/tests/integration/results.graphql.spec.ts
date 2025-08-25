@@ -15,6 +15,7 @@ import cryptoRandomString from 'crypto-random-string'
 import type { Server } from 'http'
 import { initUploadTestEnvironment } from '@/modules/fileuploads/tests/helpers/init'
 import { createFileUploadJob } from '@/modules/fileuploads/tests/helpers/creation'
+import { createTestUser } from '@/test/authHelper'
 
 const { createStream, createToken } = initUploadTestEnvironment()
 
@@ -52,7 +53,8 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
       process.env['CANONICAL_URL'] = serverAddress
       process.env['PORT'] = serverPort
 
-      userOneId = await createUser(userOne)
+      const user = await createTestUser(userOne)
+      userOneId = user.id
     })
 
     beforeEach(async () => {
@@ -200,7 +202,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
       })
 
       it('should 403 if the token is for a different user', async () => {
-        const userTwoId = await createUser({
+        const { id: userTwoId } = await createTestUser({
           name: createRandomString(),
           email: createRandomEmail(),
           password: createRandomPassword()
