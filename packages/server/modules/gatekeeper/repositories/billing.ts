@@ -35,7 +35,8 @@ const WorkspacePlans = buildTableHelper('workspace_plans', [
   'name',
   'status',
   'createdAt',
-  'updatedAt'
+  'updatedAt',
+  'featureFlags'
 ])
 const WorkspaceSubscriptions = buildTableHelper('workspace_subscriptions', [
   'workspaceId',
@@ -107,7 +108,7 @@ export const upsertWorkspacePlanFactory =
       .workspacePlans(db)
       .insert(workspacePlan)
       .onConflict('workspaceId')
-      .merge(['name', 'status', 'updatedAt'])
+      .merge(['name', 'status', 'updatedAt', 'featureFlags'])
   }
 
 // this is a typed rebrand of the generic workspace plan upsert

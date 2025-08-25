@@ -79,7 +79,8 @@ export const completeCheckoutSessionFactory =
       updatedAt: new Date(),
       workspaceId: checkoutSession.workspaceId,
       name: checkoutSession.workspacePlan,
-      status: 'valid'
+      status: 'valid',
+      featureFlags: previousWorkspacePlan.featureFlags
     } as const
     await upsertPaidWorkspacePlan({
       workspacePlan

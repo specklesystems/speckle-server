@@ -136,6 +136,7 @@ type BaseWorkspacePlan = {
   workspaceId: string
   createdAt: Date
   updatedAt: Date
+  featureFlags: number // this will be a bitwise flag number
 }
 
 export type PaidWorkspacePlan = BaseWorkspacePlan & {

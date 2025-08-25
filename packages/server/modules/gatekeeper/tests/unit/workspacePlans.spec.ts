@@ -9,6 +9,7 @@ import {
   PaidWorkspacePlans,
   PaidWorkspacePlanStatuses,
   UnpaidWorkspacePlans,
+  WorkspaceFeatureFlags,
   WorkspacePlans
 } from '@speckle/shared'
 import { expect } from 'chai'
@@ -215,7 +216,12 @@ describe('workspacePlan services @gatekeeper', () => {
               //@ts-expect-error we need to test the runtime error checks too
               status
             })
-            const expectedPlan = { workspaceId, name: planName, status }
+            const expectedPlan = {
+              workspaceId,
+              name: planName,
+              status,
+              featureFlags: WorkspaceFeatureFlags.none
+            }
             expect(omit(storedWorkspacePlan, 'createdAt', 'updatedAt')).to.deep.equal(
               expectedPlan
             )

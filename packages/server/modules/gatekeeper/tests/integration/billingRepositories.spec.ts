@@ -21,7 +21,7 @@ import {
 import { upsertWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { truncateTables } from '@/test/hooks'
 import { createAndStoreTestWorkspaceFactory } from '@/test/speckle-helpers/workspaces'
-import { PaidWorkspacePlans } from '@speckle/shared'
+import { PaidWorkspacePlans, WorkspaceFeatureFlags } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
@@ -61,7 +61,8 @@ describe('billing repositories @gatekeeper', () => {
           status: 'paymentFailed',
           workspaceId,
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          featureFlags: WorkspaceFeatureFlags.none
         } as const
         await upsertPaidWorkspacePlan({
           workspacePlan
@@ -78,6 +79,7 @@ describe('billing repositories @gatekeeper', () => {
           status: 'paymentFailed',
           createdAt: new Date(),
           updatedAt: new Date(),
+          featureFlags: WorkspaceFeatureFlags.none,
           workspaceId
         } as const
         await upsertPaidWorkspacePlan({
@@ -105,6 +107,7 @@ describe('billing repositories @gatekeeper', () => {
           status: 'paymentFailed',
           createdAt: createdAt1,
           updatedAt: createdAt1,
+          featureFlags: WorkspaceFeatureFlags.none,
           workspaceId: workspace1.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -118,6 +121,7 @@ describe('billing repositories @gatekeeper', () => {
           status: 'paymentFailed',
           createdAt: createdAt2,
           updatedAt: createdAt2,
+          featureFlags: WorkspaceFeatureFlags.none,
           workspaceId: workspace2.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -144,6 +148,7 @@ describe('billing repositories @gatekeeper', () => {
           status: 'paymentFailed',
           createdAt: createdAt1,
           updatedAt: createdAt1,
+          featureFlags: WorkspaceFeatureFlags.none,
           workspaceId: workspace1.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -157,6 +162,7 @@ describe('billing repositories @gatekeeper', () => {
           status: 'paymentFailed',
           createdAt: createdAt2,
           updatedAt: createdAt2,
+          featureFlags: WorkspaceFeatureFlags.none,
           workspaceId: workspace2.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -180,6 +186,7 @@ describe('billing repositories @gatekeeper', () => {
           status: 'paymentFailed',
           createdAt: createdAt1,
           updatedAt: createdAt1,
+          featureFlags: WorkspaceFeatureFlags.none,
           workspaceId: workspace1.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -193,6 +200,7 @@ describe('billing repositories @gatekeeper', () => {
           status: 'valid',
           createdAt: createdAt2,
           updatedAt: createdAt2,
+          featureFlags: WorkspaceFeatureFlags.none,
           workspaceId: workspace2.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -216,6 +224,7 @@ describe('billing repositories @gatekeeper', () => {
           status: 'valid',
           createdAt: createdAt1,
           updatedAt: createdAt1,
+          featureFlags: WorkspaceFeatureFlags.none,
           workspaceId: workspace1.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -229,6 +238,7 @@ describe('billing repositories @gatekeeper', () => {
           status: 'valid',
           createdAt: createdAt2,
           updatedAt: createdAt2,
+          featureFlags: WorkspaceFeatureFlags.none,
           workspaceId: workspace2.id
         } as const
         await upsertPaidWorkspacePlan({
@@ -462,7 +472,8 @@ describe('billing repositories @gatekeeper', () => {
             name: PaidWorkspacePlans.Team,
             status: 'valid',
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
+            featureFlags: WorkspaceFeatureFlags.none
           }
         })
         await upsertWorkspaceSubscription({

@@ -34,7 +34,7 @@
     "console": "integratedTerminal",
     "program": "test",
     "runtimeExecutable": "yarn",
-    "args": ["-t", "forbids creation for users eligible"],
+    "args": [],
     "type": "pwa-node",
     "cwd": "$ZED_WORKTREE_ROOT/packages/shared",
     "skipFiles": ["<node_internals>/**"],

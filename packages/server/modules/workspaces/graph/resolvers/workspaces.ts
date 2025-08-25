@@ -114,6 +114,7 @@ import {
 import type { WorkspaceRoles } from '@speckle/shared'
 import {
   Roles,
+  WorkspaceFeatureFlags,
   WorkspacePlanFeatures,
   WorkspacePlans,
   removeNullOrUndefinedKeys,
@@ -229,6 +230,7 @@ import {
 import { WorkspaceInvitesLimit } from '@/modules/workspaces/domain/constants'
 import { copyWorkspaceFactory } from '@/modules/workspaces/repositories/projectRegions'
 import { queryAllProjectsFactory } from '@/modules/core/services/projects'
+import { WorkspacePlanNotFoundError } from '@/modules/gatekeeper/errors/billing'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -607,6 +609,42 @@ export default FF_WORKSPACES_MODULE_ENABLED
               operationDescription: 'Update workspace plan'
             }
           )
+          return true
+        },
+        giveAccessToWorkspaceFeature: async (_parent, { input }, ctx) => {
+          const { workspaceId, featureFlagName } = input
+          const userId = ctx.userId
+          if (!userId) throw new UnauthorizedError()
+
+          const featureFlag = WorkspaceFeatureFlags[featureFlagName]
+
+          const workspacePlan = await getWorkspacePlanFactory({ db })({ workspaceId })
+          if (!workspacePlan) throw new WorkspacePlanNotFoundError()
+
+          workspacePlan.featureFlags |= featureFlag
+          // not updating updatedAt here deliberately. Feature flags are internal for now
+          await upsertWorkspacePlanFactory({ db })({
+            workspacePlan
+          })
+
+          return true
+        },
+        removeAccessToWorkspaceFeature: async (_parent, { input }, ctx) => {
+          const { workspaceId, featureFlagName } = input
+          const userId = ctx.userId
+          if (!userId) throw new UnauthorizedError()
+
+          const featureFlag = WorkspaceFeatureFlags[featureFlagName]
+
+          const workspacePlan = await getWorkspacePlanFactory({ db })({ workspaceId })
+          if (!workspacePlan) throw new WorkspacePlanNotFoundError()
+
+          workspacePlan.featureFlags ^= featureFlag
+          // not updating updatedAt here deliberately. Feature flags are internal for now
+          await upsertWorkspacePlanFactory({ db })({
+            workspacePlan
+          })
+
           return true
         }
       },

@@ -156,6 +156,11 @@ export type AddDomainToWorkspaceInput = {
   workspaceId: Scalars['ID']['input'];
 };
 
+export type AdminAccessToWorkspaceFeatureInput = {
+  featureFlagName: WorkspaceFeatureFlagName;
+  workspaceId: Scalars['ID']['input'];
+};
+
 export type AdminInviteList = {
   __typename?: 'AdminInviteList';
   cursor?: Maybe<Scalars['String']['output']>;
@@ -165,7 +170,19 @@ export type AdminInviteList = {
 
 export type AdminMutations = {
   __typename?: 'AdminMutations';
+  giveAccessToWorkspaceFeature: Scalars['Boolean']['output'];
+  removeAccessToWorkspaceFeature: Scalars['Boolean']['output'];
   updateWorkspacePlan: Scalars['Boolean']['output'];
+};
+
+
+export type AdminMutationsGiveAccessToWorkspaceFeatureArgs = {
+  input: AdminAccessToWorkspaceFeatureInput;
+};
+
+
+export type AdminMutationsRemoveAccessToWorkspaceFeatureArgs = {
+  input: AdminAccessToWorkspaceFeatureInput;
 };
 
 
@@ -5299,8 +5316,15 @@ export type WorkspaceEmbedOptions = {
   hideSpeckleBranding: Scalars['Boolean']['output'];
 };
 
+export const WorkspaceFeatureFlagName = {
+  AccIntegration: 'accIntegration',
+  Dashboards: 'dashboards'
+} as const;
+
+export type WorkspaceFeatureFlagName = typeof WorkspaceFeatureFlagName[keyof typeof WorkspaceFeatureFlagName];
 export const WorkspaceFeatureName = {
   AccIntegration: 'accIntegration',
+  Dashboards: 'dashboards',
   DomainBasedSecurityPolicies: 'domainBasedSecurityPolicies',
   ExclusiveMembership: 'exclusiveMembership',
   HideSpeckleBranding: 'hideSpeckleBranding',
@@ -5896,6 +5920,7 @@ export type ResolversTypes = {
   Activity: ResolverTypeWrapper<Activity>;
   ActivityCollection: ResolverTypeWrapper<ActivityCollectionGraphQLReturn>;
   AddDomainToWorkspaceInput: AddDomainToWorkspaceInput;
+  AdminAccessToWorkspaceFeatureInput: AdminAccessToWorkspaceFeatureInput;
   AdminInviteList: ResolverTypeWrapper<Omit<AdminInviteList, 'items'> & { items: Array<ResolversTypes['ServerInvite']> }>;
   AdminMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   AdminQueries: ResolverTypeWrapper<GraphQLEmptyReturn>;
@@ -6223,6 +6248,7 @@ export type ResolversTypes = {
   WorkspaceDomain: ResolverTypeWrapper<WorkspaceDomain>;
   WorkspaceDomainDeleteInput: WorkspaceDomainDeleteInput;
   WorkspaceEmbedOptions: ResolverTypeWrapper<WorkspaceEmbedOptions>;
+  WorkspaceFeatureFlagName: WorkspaceFeatureFlagName;
   WorkspaceFeatureName: WorkspaceFeatureName;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
   WorkspaceInviteLookupOptions: WorkspaceInviteLookupOptions;
@@ -6280,6 +6306,7 @@ export type ResolversParentTypes = {
   Activity: Activity;
   ActivityCollection: ActivityCollectionGraphQLReturn;
   AddDomainToWorkspaceInput: AddDomainToWorkspaceInput;
+  AdminAccessToWorkspaceFeatureInput: AdminAccessToWorkspaceFeatureInput;
   AdminInviteList: Omit<AdminInviteList, 'items'> & { items: Array<ResolversParentTypes['ServerInvite']> };
   AdminMutations: MutationsObjectGraphQLReturn;
   AdminQueries: GraphQLEmptyReturn;
@@ -6726,6 +6753,8 @@ export type AdminInviteListResolvers<ContextType = GraphQLContext, ParentType ex
 };
 
 export type AdminMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AdminMutations'] = ResolversParentTypes['AdminMutations']> = {
+  giveAccessToWorkspaceFeature?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<AdminMutationsGiveAccessToWorkspaceFeatureArgs, 'input'>>;
+  removeAccessToWorkspaceFeature?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<AdminMutationsRemoveAccessToWorkspaceFeatureArgs, 'input'>>;
   updateWorkspacePlan?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<AdminMutationsUpdateWorkspacePlanArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

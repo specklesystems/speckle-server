@@ -2,6 +2,7 @@ import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/
 import { PaidWorkspacePlans, WorkspacePlanFeatures } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+import { buildTestWorkspacePlan } from '@/modules/gatekeeper/tests/helpers/workspacePlan'
 
 describe('featureAuthorization @gatekeeper', () => {
   describe('canWorkspaceAccessFeatureFactory creates a function, that', () => {
@@ -34,13 +35,12 @@ describe('featureAuthorization @gatekeeper', () => {
       it(`returns ${expectedResult} for ${plan} @ ${status} for ${workspaceFeature}`, async () => {
         const workspaceId = cryptoRandomString({ length: 10 })
         const canWorkspaceAccessFeature = canWorkspaceAccessFeatureFactory({
-          getWorkspacePlan: async () => ({
-            name: plan,
-            status,
-            workspaceId,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          })
+          getWorkspacePlan: async () =>
+            buildTestWorkspacePlan({
+              name: plan,
+              status,
+              workspaceId
+            })
         })
         const result = await canWorkspaceAccessFeature({
           workspaceId,

@@ -158,7 +158,8 @@ describe('checkout @gatekeeper', () => {
           expect(omit(storedWorkspacePlan, 'createdAt', 'updatedAt')).to.deep.equal({
             workspaceId,
             name: storedCheckoutSession.workspacePlan,
-            status: 'valid'
+            status: 'valid',
+            featureFlags: 0
           })
           expect(emittedEventName).to.equal('gatekeeper.workspace-subscription-updated')
           expect(emittedEventPayload).to.nested.include({
@@ -236,13 +237,12 @@ describe('checkout @gatekeeper', () => {
       const userId = cryptoRandomString({ length: 10 })
       const err = await expectToThrow(() =>
         startCheckoutSessionFactory({
-          getWorkspacePlan: async () => ({
-            name: 'team',
-            status: 'valid',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            workspaceId
-          }),
+          getWorkspacePlan: async () =>
+            buildTestWorkspacePlan({
+              name: 'team',
+              status: 'valid',
+              workspaceId
+            }),
           getWorkspaceCheckoutSession: () => {
             expect.fail()
           },
@@ -275,13 +275,12 @@ describe('checkout @gatekeeper', () => {
       const userId = cryptoRandomString({ length: 10 })
       const err = await expectToThrow(() =>
         startCheckoutSessionFactory({
-          getWorkspacePlan: async () => ({
-            name: 'team',
-            status: 'paymentFailed',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            workspaceId
-          }),
+          getWorkspacePlan: async () =>
+            buildTestWorkspacePlan({
+              name: 'team',
+              status: 'paymentFailed',
+              workspaceId
+            }),
           getWorkspaceCheckoutSession: () => {
             expect.fail()
           },
@@ -314,13 +313,12 @@ describe('checkout @gatekeeper', () => {
       const userId = cryptoRandomString({ length: 10 })
       const err = await expectToThrow(() =>
         startCheckoutSessionFactory({
-          getWorkspacePlan: async () => ({
-            name: 'free',
-            status: 'valid',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            workspaceId
-          }),
+          getWorkspacePlan: async () =>
+            buildTestWorkspacePlan({
+              name: 'free',
+              status: 'valid',
+              workspaceId
+            }),
           getWorkspaceCheckoutSession: async () => ({
             billingInterval: 'monthly',
             id: cryptoRandomString({ length: 10 }),
@@ -380,13 +378,12 @@ describe('checkout @gatekeeper', () => {
       }
       let storedCheckoutSession: CheckoutSession | undefined = undefined
       const createdCheckoutSession = await startCheckoutSessionFactory({
-        getWorkspacePlan: async () => ({
-          workspaceId,
-          name: 'free',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          status: 'valid'
-        }),
+        getWorkspacePlan: async () =>
+          buildTestWorkspacePlan({
+            workspaceId,
+            name: 'free',
+            status: 'valid'
+          }),
         getWorkspaceCheckoutSession: async () => null,
         countSeatsByTypeInWorkspace: async () => 1,
         deleteCheckoutSession: () => {
@@ -440,13 +437,12 @@ describe('checkout @gatekeeper', () => {
       }
       let storedCheckoutSession: CheckoutSession | undefined = undefined
       const createdCheckoutSession = await startCheckoutSessionFactory({
-        getWorkspacePlan: async () => ({
-          workspaceId,
-          name: 'free',
-          status: 'valid',
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }),
+        getWorkspacePlan: async () =>
+          buildTestWorkspacePlan({
+            workspaceId,
+            name: 'free',
+            status: 'valid'
+          }),
         getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
         countSeatsByTypeInWorkspace: async () => 1,
         deleteCheckoutSession: async () => {
@@ -489,13 +485,12 @@ describe('checkout @gatekeeper', () => {
       }
       const err = await expectToThrow(async () => {
         await startCheckoutSessionFactory({
-          getWorkspacePlan: async () => ({
-            workspaceId,
-            name: 'free',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            status: 'valid'
-          }),
+          getWorkspacePlan: async () =>
+            buildTestWorkspacePlan({
+              workspaceId,
+              name: 'free',
+              status: 'valid'
+            }),
           getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
           countSeatsByTypeInWorkspace: async () => 1,
           deleteCheckoutSession: async () => {
@@ -549,13 +544,12 @@ describe('checkout @gatekeeper', () => {
       }
       let storedCheckoutSession: CheckoutSession | undefined = undefined
       const createdCheckoutSession = await startCheckoutSessionFactory({
-        getWorkspacePlan: async () => ({
-          name: 'team',
-          workspaceId,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          status: 'canceled'
-        }),
+        getWorkspacePlan: async () =>
+          buildTestWorkspacePlan({
+            name: 'team',
+            workspaceId,
+            status: 'canceled'
+          }),
         getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
         countSeatsByTypeInWorkspace: async () => 1,
         deleteCheckoutSession: async () => {
