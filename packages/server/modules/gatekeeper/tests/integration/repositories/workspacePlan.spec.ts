@@ -92,14 +92,38 @@ describe('Module @gatekeeper', () => {
           in5days = new Date()
           in5days.setDate(in5days.getDate() + 7)
 
-          await upsertWorkspacePlan({
-            workspacePlan: buildTestWorkspacePlan({
-              workspaceId: workspace2.id,
-              name: PaidWorkspacePlans.ProUnlimited
-            })
+          const now = new Date()
+
+          const workspacePlan = buildTestWorkspacePlan({
+            workspaceId: workspace2.id,
+            name: PaidWorkspacePlans.Pro,
+            updatedAt: now
           })
 
-          const result = (
+          await upsertWorkspacePlan({
+            workspacePlan
+          })
+
+          let result = (
+            await getWorkspacePlansByWorkspaceId({
+              workspaceIds: [workspace2.id]
+            })
+          )[workspace2.id]
+
+          expect(result.workspaceId).to.equal(workspace2.id)
+          expect(result.name).to.equal(PaidWorkspacePlans.Pro)
+          expect(result.updatedAt).to.be.deep.eq(now)
+
+          await upsertWorkspacePlan({
+            workspacePlan: {
+              ...workspacePlan,
+              name: PaidWorkspacePlans.ProUnlimited,
+              updatedAt: in5days,
+              status: PaidWorkspacePlanStatuses.Canceled
+            }
+          })
+
+          result = (
             await getWorkspacePlansByWorkspaceId({
               workspaceIds: [workspace2.id]
             })
