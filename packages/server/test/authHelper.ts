@@ -45,8 +45,6 @@ import cryptoRandomString from 'crypto-random-string'
 import { assign, isArray, isNumber, omit, times } from 'lodash-es'
 import { v4 } from 'uuid'
 
-const getServerInfo = getServerInfoFactory({ db })
-
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
   storeTokenScopes: storeTokenScopesFactory({ db }),
@@ -117,33 +115,35 @@ export async function createTestUser(userObj?: Partial<BasicTestUser>) {
   }
 
   const id = await asMultiregionalOperation(
-    async ({ txs, dbTx, emit }) => {
+    async ({ mainDb, allDbs, emit }) => {
       const createUser = createUserFactory({
-        getServerInfo,
-        findEmail: findEmailFactory({ db: dbTx }),
+        getServerInfo: getServerInfoFactory({ db: mainDb }),
+        findEmail: findEmailFactory({ db: mainDb }),
         storeUser: async (args) => {
           const p = await Promise.all(
-            txs.map(async (tx) => storeUserFactory({ db: tx })(args))
+            allDbs.map(async (db) => storeUserFactory({ db })(args))
           )
 
           return p[0]
         },
-        countAdminUsers: countAdminUsersFactory({ db: dbTx }),
-        storeUserAcl: storeUserAclFactory({ db: dbTx }),
+        countAdminUsers: countAdminUsersFactory({ db: mainDb }),
+        storeUserAcl: storeUserAclFactory({ db: mainDb }),
         validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-          createUserEmail: createUserEmailFactory({ db: dbTx }),
-          ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db: dbTx }),
-          findEmail: findEmailFactory({ db: dbTx }),
+          createUserEmail: createUserEmailFactory({ db: mainDb }),
+          ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({
+            db: mainDb
+          }),
+          findEmail: findEmailFactory({ db: mainDb }),
           updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-            deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db: dbTx }),
-            updateAllInviteTargets: updateAllInviteTargetsFactory({ db: dbTx })
+            deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db: mainDb }),
+            updateAllInviteTargets: updateAllInviteTargetsFactory({ db: mainDb })
           }),
           requestNewEmailVerification: requestNewEmailVerificationFactory({
-            findEmail: findEmailFactory({ db: dbTx }),
-            getUser: getUserFactory({ db: dbTx }),
-            getServerInfo,
+            findEmail: findEmailFactory({ db: mainDb }),
+            getUser: getUserFactory({ db: mainDb }),
+            getServerInfo: getServerInfoFactory({ db: mainDb }),
             deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory(
-              { db: dbTx }
+              { db: mainDb }
             ),
             renderEmail,
             sendEmail

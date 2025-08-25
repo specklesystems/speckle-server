@@ -1,8 +1,8 @@
 import { mainDb } from '@/db/knex'
 import {
-  commitPreparedTransaction,
+  commitPreparedTransaction as commitPrepared,
   prepareTransaction,
-  rollbackPreparedTransaction,
+  rollbackPreparedTransaction as rollbackPrepared,
   withTransaction
 } from '@/modules/shared/helpers/dbHelper'
 import type {
@@ -140,17 +140,21 @@ export const asOperation = async <T>(
 export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
   operation: (args: {
     /**
-     * @description reference to every transaction
+     * @description reference to all dbs involved in the operation
      */
-    txs: Knex.Transaction[]
+    allDbs: Knex[]
     /**
-     * @description reference first transaction
+     * @description reference to the main db (first one passed in the array)
      */
-    dbTx: Knex.Transaction
+    mainDb: Knex
     /**
-     * @description reference for remaining transaction
+     * @description reference for second db (first one not main)
      */
-    regionTxs: Knex.Transaction[]
+    regionDb: Knex
+    /**
+     * @description reference for all regions (all dbs except the main one)
+     */
+    regionDbs: Knex[]
     emit: EventBusEmit
   }) => MaybeAsync<T>,
   params: {
@@ -172,7 +176,7 @@ export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
     logger,
     name,
     description,
-    dbs: [main, ...regions]
+    dbs: [mainDb, ...regionDbs]
   } = params
 
   return await withOperationLogging(
@@ -183,29 +187,30 @@ export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
       }
 
       const gid = cryptoRandomString({ length: 10 })
-      const txs: Knex.Transaction[] = []
+      const trxs: Knex.Transaction[] = []
 
       const rollback = async () => {
-        await Promise.allSettled(txs.map((tx) => rollbackPreparedTransaction(tx, gid)))
-        await Promise.allSettled(txs.map((tx) => tx.rollback()))
+        await Promise.allSettled(trxs.map((trx) => rollbackPrepared(trx, gid)))
+        await Promise.allSettled(trxs.map((trx) => trx.rollback()))
       }
 
       let result
       try {
-        const dbTx = await main.transaction()
-        txs.push(dbTx)
+        const mainDbTx = await mainDb.transaction()
+        trxs.push(mainDbTx)
 
-        const regionTxs: Knex.Transaction[] = []
-        for (const region of regions) {
-          const regionTx = await region.transaction()
-          txs.push(regionTx)
-          regionTxs.push(regionTx)
+        const regionDbsTx: Knex.Transaction[] = []
+        for (const regionDb of regionDbs) {
+          const regionTx = await regionDb.transaction()
+          trxs.push(regionTx)
+          regionDbsTx.push(regionTx)
         }
 
         result = await operation({
-          txs,
-          dbTx,
-          regionTxs,
+          mainDb: mainDbTx,
+          allDbs: trxs,
+          regionDb: regionDbsTx[0],
+          regionDbs: regionDbsTx,
           emit
         })
 
@@ -216,17 +221,17 @@ export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
         // - the transactions once prepared, gets written to disk db and is no longer scoped to the connection.
         // - this last part knex does not handle well, so no matter what, we need to rollback/commit
         // the transaction (the prepared one and the connection transaction) that's why it's wrapped in a transaction block
-        for (const tx of txs) await prepareTransaction(tx, gid)
+        for (const tx of trxs) await prepareTransaction(tx, gid)
       } catch (e) {
         await rollback()
         throw e
       }
 
       const commits = await Promise.allSettled(
-        txs.map(async (tx) => {
-          await commitPreparedTransaction(tx, gid)
+        trxs.map(async (trx) => {
+          await commitPrepared(trx, gid)
           try {
-            await tx.commit()
+            await trx.commit()
           } catch {
             // forcing knex to release connection
             // for the db this tx is gone already as its in a prepared state unbinded from the connection
@@ -247,7 +252,7 @@ export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
 
         throw new RegionalTransactionFatalError(
           'Failed some or all transactions in 2PC operation.',
-          { clients: txs, gid }
+          { clients: trxs, gid }
         )
       }
 

@@ -18,18 +18,18 @@ export default (app: Express) => {
     const logger = req.log
     try {
       await asMultiregionalOperation(
-        async ({ dbTx, txs }) => {
+        async ({ mainDb, allDbs }) => {
           const finalizeEmailVerification = finalizeEmailVerificationFactory({
-            getPendingToken: getPendingTokenFactory({ db: dbTx }),
+            getPendingToken: getPendingTokenFactory({ db: mainDb }),
             markUserAsVerified: async (params) => {
               const [res] = await Promise.all(
-                txs.map((tx) => markUserAsVerifiedFactory({ db: tx })(params))
+                allDbs.map((db) => markUserAsVerifiedFactory({ db })(params))
               )
               return res
             },
-            deleteVerifications: deleteVerificationsFactory({ db: dbTx }),
+            deleteVerifications: deleteVerificationsFactory({ db: mainDb }),
             markUserEmailAsVerified: markUserEmailAsVerifiedFactory({
-              updateUserEmail: updateUserEmailFactory({ db: dbTx })
+              updateUserEmail: updateUserEmailFactory({ db: mainDb })
             })
           })
 

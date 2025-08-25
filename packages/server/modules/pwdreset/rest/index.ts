@@ -60,22 +60,22 @@ export default function (app: Express) {
       if (!req.body.tokenId || !req.body.password)
         throw new BadRequestError('Invalid request.')
       await asMultiregionalOperation(
-        async ({ dbTx, txs }) => {
+        async ({ mainDb, allDbs }) => {
           const finalizePasswordReset = finalizePasswordResetFactory({
             getUserByEmail,
-            getPendingToken: getPendingTokenFactory({ db: dbTx }),
-            deleteTokens: deleteTokensFactory({ db: dbTx }),
+            getPendingToken: getPendingTokenFactory({ db: mainDb }),
+            deleteTokens: deleteTokensFactory({ db: mainDb }),
             updateUserPassword: changePasswordFactory({
-              getUser: getUserFactory({ db: dbTx }),
+              getUser: getUserFactory({ db: mainDb }),
               updateUser: async (...params) => {
                 const [res] = await Promise.all(
-                  txs.map((tx) => updateUserFactory({ db: tx })(...params))
+                  allDbs.map((db) => updateUserFactory({ db })(...params))
                 )
 
                 return res
               }
             }),
-            deleteExistingAuthTokens: deleteExistingAuthTokensFactory({ db: dbTx })
+            deleteExistingAuthTokens: deleteExistingAuthTokensFactory({ db: mainDb })
           })
 
           return await finalizePasswordReset(req.body.tokenId, req.body.password)

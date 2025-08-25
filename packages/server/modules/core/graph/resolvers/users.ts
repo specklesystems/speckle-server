@@ -245,12 +245,12 @@ export default {
       })
 
       await asMultiregionalOperation(
-        async ({ dbTx, txs, emit }) => {
+        async ({ mainDb, allDbs, emit }) => {
           const updateUserAndNotify = updateUserAndNotifyFactory({
-            getUser: getUserFactory({ db: dbTx }),
+            getUser: getUserFactory({ db: mainDb }),
             updateUser: async (...params) => {
               const [res] = await Promise.all(
-                txs.map((tx) => updateUserFactory({ db: tx })(...params))
+                allDbs.map((db) => updateUserFactory({ db })(...params))
               )
 
               return res
@@ -300,20 +300,20 @@ export default {
       })
 
       await asMultiregionalOperation(
-        ({ dbTx, txs, emit }) => {
+        ({ mainDb, allDbs, emit }) => {
           const deleteUser = deleteUserFactory({
-            deleteStream: deleteStreamFactory({ db: dbTx }),
+            deleteStream: deleteStreamFactory({ db: mainDb }),
             logger: dbLogger,
-            isLastAdminUser: isLastAdminUserFactory({ db: dbTx }),
-            getUserDeletableStreams: getUserDeletableStreamsFactory({ db: dbTx }),
+            isLastAdminUser: isLastAdminUserFactory({ db: mainDb }),
+            getUserDeletableStreams: getUserDeletableStreamsFactory({ db: mainDb }),
             queryAllProjects: queryAllProjectsFactory({
-              getExplicitProjects: getExplicitProjects({ db: dbTx })
+              getExplicitProjects: getExplicitProjects({ db: mainDb })
             }),
-            getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db: dbTx }),
-            deleteAllUserInvites: deleteAllUserInvitesFactory({ db: dbTx }),
+            getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db: mainDb }),
+            deleteAllUserInvites: deleteAllUserInvitesFactory({ db: mainDb }),
             deleteUserRecord: async (params) => {
               const [res] = await Promise.all(
-                txs.map((tx) => deleteUserRecordFactory({ db: tx })(params))
+                allDbs.map((db) => deleteUserRecordFactory({ db })(params))
               )
 
               return res
@@ -350,20 +350,20 @@ export default {
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Profile.Delete)
       await asMultiregionalOperation(
-        ({ dbTx, txs, emit }) => {
+        ({ mainDb, allDbs, emit }) => {
           const deleteUser = deleteUserFactory({
-            deleteStream: deleteStreamFactory({ db: dbTx }),
+            deleteStream: deleteStreamFactory({ db: mainDb }),
             logger: dbLogger,
-            isLastAdminUser: isLastAdminUserFactory({ db: dbTx }),
-            getUserDeletableStreams: getUserDeletableStreamsFactory({ db: dbTx }),
+            isLastAdminUser: isLastAdminUserFactory({ db: mainDb }),
+            getUserDeletableStreams: getUserDeletableStreamsFactory({ db: mainDb }),
             queryAllProjects: queryAllProjectsFactory({
-              getExplicitProjects: getExplicitProjects({ db: dbTx })
+              getExplicitProjects: getExplicitProjects({ db: mainDb })
             }),
-            getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db: dbTx }),
-            deleteAllUserInvites: deleteAllUserInvitesFactory({ db: dbTx }),
+            getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db: mainDb }),
+            deleteAllUserInvites: deleteAllUserInvitesFactory({ db: mainDb }),
             deleteUserRecord: async (params) => {
               const [res] = await Promise.all(
-                txs.map((tx) => deleteUserRecordFactory({ db: tx })(params))
+                allDbs.map((db) => deleteUserRecordFactory({ db })(params))
               )
 
               return res
@@ -441,12 +441,12 @@ export default {
       const logger = context.log
 
       const newUser = await asMultiregionalOperation(
-        async ({ dbTx, txs, emit }) => {
+        async ({ mainDb, allDbs, emit }) => {
           const updateUserAndNotify = updateUserAndNotifyFactory({
-            getUser: getUserFactory({ db: dbTx }),
+            getUser: getUserFactory({ db: mainDb }),
             updateUser: async (...params) => {
               const [res] = await Promise.all(
-                txs.map((tx) => updateUserFactory({ db: tx })(...params))
+                allDbs.map((db) => updateUserFactory({ db })(...params))
               )
 
               return res

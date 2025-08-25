@@ -44,9 +44,9 @@ isMultiRegionTestMode()
         }
 
         await asMultiregionalOperation(
-          ({ txs }) =>
+          ({ allDbs }) =>
             Promise.all(
-              txs.map((tx) => testOperationFactory({ db: tx })(testOperationParams))
+              allDbs.map((db) => testOperationFactory({ db })(testOperationParams))
             ),
           {
             dbs: ALL_DBS,
@@ -84,9 +84,9 @@ isMultiRegionTestMode()
         await testOperationFactory({ db: region2 })(testOperationParams)
 
         const promise = asMultiregionalOperation(
-          ({ txs }) =>
+          ({ allDbs }) =>
             Promise.all(
-              txs.map((tx) => testOperationFactory({ db: tx })(testOperationParams))
+              allDbs.map((db) => testOperationFactory({ db })(testOperationParams))
             ),
           {
             dbs: ALL_DBS,
@@ -126,9 +126,9 @@ isMultiRegionTestMode()
         } as unknown as Knex
 
         const promise = asMultiregionalOperation(
-          ({ txs }) =>
+          ({ allDbs }) =>
             Promise.all(
-              txs.map((tx) => testOperationFactory({ db: tx })(testOperationParams))
+              allDbs.map((db) => testOperationFactory({ db })(testOperationParams))
             ),
           {
             dbs: [...ALL_DBS, dbThatFails],
