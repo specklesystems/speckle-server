@@ -73,7 +73,8 @@ describe('Module @gatekeeper', () => {
         it('inserts a workspace plan if it does not exist', async () => {
           await upsertWorkspacePlan({
             workspacePlan: buildTestWorkspacePlan({
-              workspaceId: workspaceWithoutPlan.id
+              workspaceId: workspaceWithoutPlan.id,
+              name: PaidWorkspacePlans.Team
             })
           })
 
@@ -93,7 +94,8 @@ describe('Module @gatekeeper', () => {
 
           await upsertWorkspacePlan({
             workspacePlan: buildTestWorkspacePlan({
-              workspaceId: workspace2.id
+              workspaceId: workspace2.id,
+              name: PaidWorkspacePlans.ProUnlimited
             })
           })
 
