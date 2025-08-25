@@ -20,7 +20,7 @@ import {
   getMainRegionConfig
 } from '@/modules/multiregion/regionConfig'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import { ensureError } from '@speckle/shared'
+import { ensureError, TIME_MS, wait } from '@speckle/shared'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { migrateDbToLatest } from '@/db/migrations'
 import {
@@ -29,6 +29,7 @@ import {
 } from '@/modules/multiregion/utils/regionSelector'
 import { get, mapValues } from 'lodash-es'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
+import { logger } from '@/observability/logging'
 
 let getter: GetProjectDb | undefined = undefined
 
@@ -189,6 +190,13 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
       ? 'require'
       : 'disable'
 
+    await dropUserReplicationIfExists({
+      from: mainDb,
+      to: regionDb,
+      regionName: regionKey,
+      sslmode
+    })
+
     await setUpProjectReplication({
       from: regionDb,
       to: mainDb,
@@ -209,6 +217,65 @@ interface ReplicationArgs {
   to: { public: Knex; private?: Knex }
   sslmode: string
   regionName: string
+}
+
+const dropUserReplicationIfExists = async ({
+  from,
+  to,
+  regionName
+}: ReplicationArgs): Promise<void> => {
+  const subName = createPubSubName(`userssub_${regionName}`)
+  const pubName = createPubSubName('userspub')
+
+  try {
+    const { rows: pubExist } = await from.public.raw(
+      `SELECT pubname FROM pg_publication WHERE pubname = '${pubName}';`
+    )
+
+    if (pubExist.length > 0) {
+      await from.public.raw(`DROP PUBLICATION ${pubName};`)
+      logger.info({ regionName, pubName }, 'dropped publication')
+    }
+  } catch (error) {
+    logger.warn({ error }, 'while dropping publication')
+    // silent error as
+    // dropping pub can have race conditions (n subs - 1 pub)
+    // and action DROP PUBLICATION does not support if exist for current postgres version
+  }
+
+  try {
+    const { rows: aivenExists } = await to.public.raw(
+      "SELECT * FROM pg_extension WHERE extname = 'aiven_extras';"
+    )
+
+    if (!aivenExists) return
+
+    const {
+      rows: [sub]
+    } = await to.public.raw<{ rows: { subconninfo: string; subslotname: string }[] }>(
+      `SELECT subconninfo, subslotname FROM aiven_extras.pg_list_all_subscriptions() WHERE subname = '${subName}';`
+    )
+
+    if (!sub) return
+
+    await to.public.raw(
+      `SELECT * FROM aiven_extras.pg_alter_subscription_disable('${subName}');`
+    )
+    await wait(TIME_MS.second)
+    await to.public.raw(
+      `SELECT * FROM aiven_extras.pg_drop_subscription('${subName}');`
+    )
+    await wait(TIME_MS.second)
+    await to.public.raw(
+      `SELECT * FROM aiven_extras.dblink_slot_create_or_drop('${sub.subconninfo}', '${sub.subslotname}', 'drop');`
+    )
+    logger.info({ regionName, subName }, 'dropped subscription')
+  } catch (error) {
+    logger.error({ error }, 'Failed to drop subscription')
+    return
+  }
+
+  return
 }
 
 const setUpProjectReplication = async ({
