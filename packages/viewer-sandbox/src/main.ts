@@ -632,6 +632,9 @@ const getStream = () => {
 
     // Circles of different sizes
     // 'https://latest.speckle.systems/projects/4658eb53b9/models/bb726a3764'
+
+    // Half a million circles + others stuff
+    // 'https://app.speckle.systems/projects/18d51359fe/models/9f4c5f5947'
   )
 }
 
