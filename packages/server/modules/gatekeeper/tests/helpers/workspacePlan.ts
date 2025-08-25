@@ -17,7 +17,7 @@ export const buildTestWorkspacePlan = (
       updatedAt: new Date(),
       name: 'free',
       status: 'valid',
-      featureFlags: WorkspaceFeatureFlags.None
+      featureFlags: WorkspaceFeatureFlags.none
     },
     overrides
   )

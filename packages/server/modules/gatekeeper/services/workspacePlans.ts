@@ -69,7 +69,7 @@ export const updateWorkspacePlanFactory =
               name,
               createdAt,
               updatedAt,
-              featureFlags: WorkspaceFeatureFlags.None
+              featureFlags: WorkspaceFeatureFlags.none
             }
             await upsertWorkspacePlan({ workspacePlan })
             break
@@ -94,7 +94,7 @@ export const updateWorkspacePlanFactory =
               name,
               createdAt,
               updatedAt,
-              featureFlags: WorkspaceFeatureFlags.None
+              featureFlags: WorkspaceFeatureFlags.none
             }
             await upsertWorkspacePlan({ workspacePlan })
             break

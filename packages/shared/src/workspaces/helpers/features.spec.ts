@@ -71,5 +71,29 @@ describe('workspace features', () => {
       })
       expect(result).toBe(true)
     })
+    it('feature flag can be turned on and off', () => {
+      let workspaceFeatureFlags = WorkspaceFeatureFlags.none
+      let result = isWorkspaceFeatureFlagOn({
+        workspaceFeatureFlags,
+        feature: WorkspaceFeatureFlags.dashboards
+      })
+      expect(result).toBe(false)
+
+      workspaceFeatureFlags |= WorkspaceFeatureFlags.dashboards
+
+      result = isWorkspaceFeatureFlagOn({
+        workspaceFeatureFlags,
+        feature: WorkspaceFeatureFlags.dashboards
+      })
+      expect(result).toBe(true)
+
+      workspaceFeatureFlags ^= WorkspaceFeatureFlags.dashboards
+
+      result = isWorkspaceFeatureFlagOn({
+        workspaceFeatureFlags,
+        feature: WorkspaceFeatureFlags.dashboards
+      })
+      expect(result).toBe(false)
+    })
   })
 })

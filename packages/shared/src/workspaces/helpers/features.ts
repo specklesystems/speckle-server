@@ -41,6 +41,7 @@ export const WorkspaceFeatureFlags = <const>{
   dashboards: 1,
   accIntegration: 2
 }
+
 export type WorkspaceFeatureFlags =
   (typeof WorkspaceFeatureFlags)[keyof typeof WorkspaceFeatureFlags]
 
