@@ -131,11 +131,12 @@ export default FF_GATEKEEPER_MODULE_ENABLED
                 return WorkspaceFeatureFlags.dashboards
               case 'accIntegration':
               // TODO: move this to be a feature flag, once the feature flags have rolled out.
-              case 'domainBasedSecurityPolicies':
-              case 'exclusiveMembership':
-              case 'hideSpeckleBranding':
-              case 'oidcSso':
-              case 'workspaceDataRegionSpecificity':
+              case WorkspacePlanFeatures.DomainSecurity:
+              case WorkspacePlanFeatures.ExclusiveMembership:
+              case WorkspacePlanFeatures.HideSpeckleBranding:
+              case WorkspacePlanFeatures.SSO:
+              case WorkspacePlanFeatures.CustomDataRegion:
+              case WorkspacePlanFeatures.SavedViews:
                 return args.featureName
               default:
                 throwUncoveredError(args.featureName)
