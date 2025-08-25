@@ -5,7 +5,6 @@ import {
   Roles,
   throwUncoveredError,
   WorkspaceFeatureFlags,
-  type WorkspaceFeatures,
   WorkspacePlanFeatures,
   WorkspacePlans
 } from '@speckle/shared'
@@ -126,20 +125,22 @@ export default FF_GATEKEEPER_MODULE_ENABLED
           })
         },
         hasAccessToFeature: async (parent, args) => {
-          let workspaceFeature: WorkspaceFeatures
-          switch (args.featureName) {
-            case 'dashboards':
-              workspaceFeature = WorkspaceFeatureFlags.dashboards
-              break
-            case 'accIntegration':
-            // TODO: move this to be a feature flag, once the feature flags have rolled out.
-            case 'domainBasedSecurityPolicies':
-            case 'exclusiveMembership':
-            case 'hideSpeckleBranding':
-            case 'oidcSso':
-            case 'workspaceDataRegionSpecificity':
-              workspaceFeature = args.featureName
-          }
+          const workspaceFeature = (() => {
+            switch (args.featureName) {
+              case 'dashboards':
+                return WorkspaceFeatureFlags.dashboards
+              case 'accIntegration':
+              // TODO: move this to be a feature flag, once the feature flags have rolled out.
+              case 'domainBasedSecurityPolicies':
+              case 'exclusiveMembership':
+              case 'hideSpeckleBranding':
+              case 'oidcSso':
+              case 'workspaceDataRegionSpecificity':
+                return args.featureName
+              default:
+                throwUncoveredError(args.featureName)
+            }
+          })()
           const hasAccess = await canWorkspaceAccessFeatureFactory({
             getWorkspacePlan: getWorkspacePlanFactory({ db })
           })({
