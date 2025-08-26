@@ -5,7 +5,6 @@ import type { Logger } from 'pino'
 import type express from 'express'
 import { prettifiedLoggerFactory, prettify } from '~/lib/core/helpers/observability'
 import type { ConsolaInstance, LogType } from 'consola'
-import { AsyncLocalStorage } from 'node:async_hooks'
 
 const redactedReqHeaders = ['authorization', 'cookie']
 
@@ -94,6 +93,7 @@ interface DevLogsServerContext {
 
 export const initSsrDevLogs = async (params: { logLevel: LogType }) => {
   const { getContext } = await import('unctx')
+  const { AsyncLocalStorage } = await import('node:async_hooks')
 
   const asyncContext = getContext<DevLogsServerContext>('nuxt-dev-logs', {
     asyncContext: true,
