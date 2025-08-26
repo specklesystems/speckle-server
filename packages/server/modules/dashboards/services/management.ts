@@ -5,6 +5,7 @@ import type {
   UpsertDashboardRecord
 } from '@/modules/dashboards/domain/operations'
 import type { Dashboard } from '@/modules/dashboards/domain/types'
+import { DashboardNotFoundError } from '@/modules/dashboards/errors/dashboards'
 import type { Collection } from '@/modules/shared/helpers/dbHelper'
 import {
   decodeIsoDateCursor,
@@ -36,6 +37,36 @@ export const createDashboardFactory =
     return dashboard
   }
 
+export type UpdateDashboard = (params: {
+  id: string
+  name?: string
+  projectIds?: string[]
+  state?: string
+}) => Promise<Dashboard>
+
+export const updateDashboardFactory =
+  (deps: {
+    getDashboard: GetDashboardRecord
+    upsertDashboard: UpsertDashboardRecord
+  }): UpdateDashboard =>
+  async ({ id, ...update }) => {
+    const dashboard = await deps.getDashboard({ id })
+
+    if (!dashboard) {
+      throw new DashboardNotFoundError()
+    }
+
+    const nextDashboard: Dashboard = {
+      ...dashboard,
+      ...update,
+      id
+    }
+
+    await deps.upsertDashboard(nextDashboard)
+
+    return nextDashboard
+  }
+
 export type GetDashboard = (params: { id: string }) => Promise<Dashboard>
 
 export const getDashboardFactory =
@@ -44,7 +75,7 @@ export const getDashboardFactory =
     const dashboard = await deps.getDashboard({ id })
 
     if (!dashboard) {
-      throw new Error('Not found!')
+      throw new DashboardNotFoundError()
     }
 
     return dashboard

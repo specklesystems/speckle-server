@@ -39,12 +39,22 @@ export const upsertDashboardFactory =
 
 export const listDashboardsFactory =
   (deps: { db: Knex }): ListDashboardRecords =>
-  async ({ workspaceId }) => {
-    return await tables
+  async ({ workspaceId, filter }) => {
+    const q = tables
       .dashboards(deps.db)
       .select()
       .where(Dashboards.col.workspaceId, workspaceId)
       .orderBy(Dashboards.col.updatedAt, 'desc')
+
+    if (filter?.limit) {
+      q.limit(filter.limit)
+    }
+
+    if (filter?.updatedBefore) {
+      q.andWhere(Dashboards.col.updatedAt, '<', filter.updatedBefore)
+    }
+
+    return await q
   }
 
 export const countDashboardsFactory =

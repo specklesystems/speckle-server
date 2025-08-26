@@ -12,11 +12,18 @@
       <section class="flex items-center gap-2 justify-between">
         <h1 class="text-heading-sm md:text-heading">Dashboards</h1>
 
-        <FormButton color="outline" @click="createDashboard">Add dashboard</FormButton>
+        <FormButton color="outline" @click="showCreateDashboardDialog = true">
+          Add dashboard
+        </FormButton>
       </section>
 
       <DashboardsList />
     </div>
+
+    <DashboardsCreateDialog
+      v-model:open="showCreateDashboardDialog"
+      :workspace-slug="activeWorkspaceSlug"
+    />
   </div>
 </template>
 
@@ -26,7 +33,5 @@ import { useActiveWorkspaceSlug } from '~/lib/user/composables/activeWorkspace'
 
 const activeWorkspaceSlug = useActiveWorkspaceSlug()
 
-const createDashboard = () => {
-  // console.log('createDashboard')
-}
+const showCreateDashboardDialog = ref(false)
 </script>
