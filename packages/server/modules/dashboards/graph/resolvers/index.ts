@@ -98,7 +98,12 @@ const resolvers: Resolvers = {
         throw new Error('One required!')
       }
 
-      const workspaceId = id ?? slug
+      const workspaceId =
+        id ?? (await context.loaders.workspaces?.getWorkspaceBySlug.load(slug))?.id
+
+      if (!workspaceId) {
+        throw new Error('Workspace not found')
+      }
 
       return await createDashboardFactory({
         upsertDashboard: upsertDashboardFactory({ db })

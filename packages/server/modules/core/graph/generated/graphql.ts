@@ -1039,6 +1039,12 @@ export type CreateCommentReplyInput = {
   threadId: Scalars['String']['input'];
 };
 
+export type CreateDashboardTokenReturn = {
+  __typename?: 'CreateDashboardTokenReturn';
+  token: Scalars['String']['output'];
+  tokenMetadata: DashboardToken;
+};
+
 export type CreateEmbedTokenReturn = {
   __typename?: 'CreateEmbedTokenReturn';
   token: Scalars['String']['output'];
@@ -1150,7 +1156,7 @@ export type DashboardMutationsCreateArgs = {
 
 
 export type DashboardMutationsCreateTokenArgs = {
-  id: Scalars['String']['input'];
+  dashboardId: Scalars['String']['input'];
 };
 
 
@@ -1161,6 +1167,29 @@ export type DashboardMutationsDeleteArgs = {
 
 export type DashboardMutationsUpdateArgs = {
   input: DashboardUpdateInput;
+};
+
+export type DashboardToken = {
+  __typename?: 'DashboardToken';
+  createdAt: Scalars['DateTime']['output'];
+  dashboard: Dashboard;
+  lastUsed: Scalars['DateTime']['output'];
+  lifespan: Scalars['BigInt']['output'];
+  projects: Array<Project>;
+  tokenId: Scalars['String']['output'];
+  user?: Maybe<LimitedUser>;
+};
+
+export type DashboardTokenCollection = {
+  __typename?: 'DashboardTokenCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<DashboardToken>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type DashboardTokenCreateInput = {
+  dashboardId: Scalars['String']['input'];
+  lifespan?: InputMaybe<Scalars['BigInt']['input']>;
 };
 
 export type DashboardUpdateInput = {
@@ -2419,6 +2448,7 @@ export type Project = {
   /** All comment threads in this project */
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime']['output'];
+  dashboardTokens: DashboardTokenCollection;
   dashboards: DashboardCollection;
   description?: Maybe<Scalars['String']['output']>;
   /** Public project-level configuration for embedded viewer */
@@ -2524,6 +2554,12 @@ export type ProjectCommentArgs = {
 export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<ProjectCommentsFilter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type ProjectDashboardTokensArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -6077,6 +6113,7 @@ export type ResolversTypes = {
   CreateAutomateFunctionWithoutVersionInput: CreateAutomateFunctionWithoutVersionInput;
   CreateCommentInput: CreateCommentInput;
   CreateCommentReplyInput: CreateCommentReplyInput;
+  CreateDashboardTokenReturn: ResolverTypeWrapper<Omit<CreateDashboardTokenReturn, 'tokenMetadata'> & { tokenMetadata: ResolversTypes['DashboardToken'] }>;
   CreateEmbedTokenReturn: ResolverTypeWrapper<Omit<CreateEmbedTokenReturn, 'tokenMetadata'> & { tokenMetadata: ResolversTypes['EmbedToken'] }>;
   CreateModelInput: CreateModelInput;
   CreateSavedViewGroupInput: CreateSavedViewGroupInput;
@@ -6090,6 +6127,9 @@ export type ResolversTypes = {
   DashboardCollection: ResolverTypeWrapper<Omit<DashboardCollection, 'items'> & { items: Array<ResolversTypes['Dashboard']> }>;
   DashboardCreateInput: DashboardCreateInput;
   DashboardMutations: ResolverTypeWrapper<DashboardMutationsGraphQLReturn>;
+  DashboardToken: ResolverTypeWrapper<Omit<DashboardToken, 'dashboard' | 'projects' | 'user'> & { dashboard: ResolversTypes['Dashboard'], projects: Array<ResolversTypes['Project']>, user?: Maybe<ResolversTypes['LimitedUser']> }>;
+  DashboardTokenCollection: ResolverTypeWrapper<Omit<DashboardTokenCollection, 'items'> & { items: Array<ResolversTypes['DashboardToken']> }>;
+  DashboardTokenCreateInput: DashboardTokenCreateInput;
   DashboardUpdateInput: DashboardUpdateInput;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
   DeleteAccSyncItemInput: DeleteAccSyncItemInput;
@@ -6465,6 +6505,7 @@ export type ResolversParentTypes = {
   CreateAutomateFunctionWithoutVersionInput: CreateAutomateFunctionWithoutVersionInput;
   CreateCommentInput: CreateCommentInput;
   CreateCommentReplyInput: CreateCommentReplyInput;
+  CreateDashboardTokenReturn: Omit<CreateDashboardTokenReturn, 'tokenMetadata'> & { tokenMetadata: ResolversParentTypes['DashboardToken'] };
   CreateEmbedTokenReturn: Omit<CreateEmbedTokenReturn, 'tokenMetadata'> & { tokenMetadata: ResolversParentTypes['EmbedToken'] };
   CreateModelInput: CreateModelInput;
   CreateSavedViewGroupInput: CreateSavedViewGroupInput;
@@ -6477,6 +6518,9 @@ export type ResolversParentTypes = {
   DashboardCollection: Omit<DashboardCollection, 'items'> & { items: Array<ResolversParentTypes['Dashboard']> };
   DashboardCreateInput: DashboardCreateInput;
   DashboardMutations: DashboardMutationsGraphQLReturn;
+  DashboardToken: Omit<DashboardToken, 'dashboard' | 'projects' | 'user'> & { dashboard: ResolversParentTypes['Dashboard'], projects: Array<ResolversParentTypes['Project']>, user?: Maybe<ResolversParentTypes['LimitedUser']> };
+  DashboardTokenCollection: Omit<DashboardTokenCollection, 'items'> & { items: Array<ResolversParentTypes['DashboardToken']> };
+  DashboardTokenCreateInput: DashboardTokenCreateInput;
   DashboardUpdateInput: DashboardUpdateInput;
   DateTime: Scalars['DateTime']['output'];
   DeleteAccSyncItemInput: DeleteAccSyncItemInput;
@@ -7229,6 +7273,12 @@ export type CountOnlyCollectionResolvers<ContextType = GraphQLContext, ParentTyp
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type CreateDashboardTokenReturnResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CreateDashboardTokenReturn'] = ResolversParentTypes['CreateDashboardTokenReturn']> = {
+  token?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  tokenMetadata?: Resolver<ResolversTypes['DashboardToken'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type CreateEmbedTokenReturnResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CreateEmbedTokenReturn'] = ResolversParentTypes['CreateEmbedTokenReturn']> = {
   token?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   tokenMetadata?: Resolver<ResolversTypes['EmbedToken'], ParentType, ContextType>;
@@ -7261,9 +7311,27 @@ export type DashboardCollectionResolvers<ContextType = GraphQLContext, ParentTyp
 
 export type DashboardMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DashboardMutations'] = ResolversParentTypes['DashboardMutations']> = {
   create?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<DashboardMutationsCreateArgs, 'input' | 'workspace'>>;
-  createToken?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<DashboardMutationsCreateTokenArgs, 'id'>>;
+  createToken?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<DashboardMutationsCreateTokenArgs, 'dashboardId'>>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<DashboardMutationsDeleteArgs, 'id'>>;
   update?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<DashboardMutationsUpdateArgs, 'input'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type DashboardTokenResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DashboardToken'] = ResolversParentTypes['DashboardToken']> = {
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  dashboard?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType>;
+  lastUsed?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  lifespan?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+  projects?: Resolver<Array<ResolversTypes['Project']>, ParentType, ContextType>;
+  tokenId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  user?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type DashboardTokenCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DashboardTokenCollection'] = ResolversParentTypes['DashboardTokenCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['DashboardToken']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -7661,6 +7729,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   comment?: Resolver<Maybe<ResolversTypes['Comment']>, ParentType, ContextType, RequireFields<ProjectCommentArgs, 'id'>>;
   commentThreads?: Resolver<ResolversTypes['ProjectCommentCollection'], ParentType, ContextType, Partial<ProjectCommentThreadsArgs>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  dashboardTokens?: Resolver<ResolversTypes['DashboardTokenCollection'], ParentType, ContextType, Partial<ProjectDashboardTokensArgs>>;
   dashboards?: Resolver<ResolversTypes['DashboardCollection'], ParentType, ContextType, RequireFields<ProjectDashboardsArgs, 'limit'>>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   embedOptions?: Resolver<ResolversTypes['ProjectEmbedOptions'], ParentType, ContextType>;
@@ -8851,11 +8920,14 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Commit?: CommitResolvers<ContextType>;
   CommitCollection?: CommitCollectionResolvers<ContextType>;
   CountOnlyCollection?: CountOnlyCollectionResolvers<ContextType>;
+  CreateDashboardTokenReturn?: CreateDashboardTokenReturnResolvers<ContextType>;
   CreateEmbedTokenReturn?: CreateEmbedTokenReturnResolvers<ContextType>;
   CurrencyBasedPrices?: CurrencyBasedPricesResolvers<ContextType>;
   Dashboard?: DashboardResolvers<ContextType>;
   DashboardCollection?: DashboardCollectionResolvers<ContextType>;
   DashboardMutations?: DashboardMutationsResolvers<ContextType>;
+  DashboardToken?: DashboardTokenResolvers<ContextType>;
+  DashboardTokenCollection?: DashboardTokenCollectionResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
   EmbedToken?: EmbedTokenResolvers<ContextType>;
   EmbedTokenCollection?: EmbedTokenCollectionResolvers<ContextType>;

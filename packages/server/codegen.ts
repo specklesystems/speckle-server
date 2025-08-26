@@ -204,7 +204,9 @@ const config: CodegenConfig = {
             '@/modules/viewer/helpers/graphTypes#ExtendedViewerResourcesGraphQLReturn',
           Dashboard: '@/modules/dashboards/helpers/graphTypes#DashboardGraphQLReturn',
           DashboardMutations:
-            '@/modules/dashboards/helpers/graphTypes#DashboardMutationsGraphQLReturn'
+            '@/modules/dashboards/helpers/graphTypes#DashboardMutationsGraphQLReturn',
+          DashboardToken:
+            '@/modules/dashboards/helpers/graphTypes#DashboardTokenGraphQLReturn'
         }
       }
     }

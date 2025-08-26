@@ -10,3 +10,9 @@ export const Dashboards = buildTableHelper('dashboards', [
   'createdAt',
   'updatedAt'
 ])
+
+export const DashboardApiTokens = buildTableHelper('dashboard_api_tokens', [
+  'tokenId',
+  'dashboardId',
+  'userId'
+])
