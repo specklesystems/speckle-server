@@ -88,8 +88,6 @@ jobs:
           file: ./packages/frontend-2/Dockerfile
           build-args: |
             SPECKLE_SERVER_VERSION=${{ inputs.IMAGE_VERSION_TAG }}
-      - name: Setup Docker Builder
-        uses: useblacksmith/setup-docker-builder@v1
       - name: Check frontend-2 build
         uses: useblacksmith/build-push-action@v2
         if: ${{ !inputs.PUBLISH }}
