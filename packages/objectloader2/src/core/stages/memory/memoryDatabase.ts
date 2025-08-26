@@ -22,7 +22,7 @@ export class MemoryDatabase implements Database {
     return Promise.resolve(found)
   }
 
-  saveBatch({ batch }: { batch: Item[] }): Promise<void> {
+  putAll(batch: Item[]): Promise<void> {
     for (const item of batch) {
       if (!item.baseId || !item.base) {
         throw new Error('Item must have a baseId and base')
@@ -32,7 +32,7 @@ export class MemoryDatabase implements Database {
     return Promise.resolve()
   }
 
-  disposeAsync(): Promise<void> {
-    return Promise.resolve()
+  dispose(): void {
+    this.items.clear()
   }
 }

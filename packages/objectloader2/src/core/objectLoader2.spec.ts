@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest'
 import { Base, Item } from '../types/types.js'
 import { ObjectLoader2 } from './objectLoader2.js'
-import IndexedDatabase from './stages/indexedDatabase.js'
+import { IndexedDatabase } from './stages/indexedDatabase.js'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
 import { MemoryDatabase } from './stages/memory/memoryDatabase.js'
 import { MemoryDownloader } from './stages/memory/memoryDownloader.js'
