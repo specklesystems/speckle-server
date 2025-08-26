@@ -74,7 +74,6 @@ import type {
   StreamWithOptionalRole
 } from '@/modules/core/domain/streams/types'
 import type {
-  StoreStream,
   GetCommitStream,
   GetCommitStreams,
   GetStream,
@@ -112,9 +111,9 @@ import type {
   GetStreamsCollaboratorCounts,
   GetImplicitUserProjectsCountFactory,
   GrantProjectPermissions,
-  GetExplicitProjects
+  GetExplicitProjects,
+  SaveStream
 } from '@/modules/core/domain/streams/operations'
-import { generateProjectName } from '@/modules/core/domain/projects/logic'
 import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
@@ -892,11 +891,22 @@ export const getUserStreamsCountFactory =
     return parseInt(res.count)
   }
 
+// TODO: this one
+// const id = generateId()
+// const name = name || generateProjectName()
+// if (ownerId) {
+//  const streamAclQuery = tables.streamAcl(deps.db).insert({
+//    userId: ownerId,
+//    resourceId: id,
+//    role: Roles.Stream.Owner
+//  })
+//  await streamAclQuery
+//}
+
 export const createStreamFactory =
-  (deps: { db: Knex }): StoreStream =>
-  async (input, options) => {
-    const { name, description } = input
-    const { ownerId, trx } = options || {}
+  (deps: { db: Knex }): SaveStream =>
+  async (input) => {
+    const { name, description, updatedAt, createdAt, allowPublicComments, id } = input
 
     let visibility: ProjectRecordVisibility
     if (isProjectCreateInput(input)) {
@@ -913,33 +923,22 @@ export const createStreamFactory =
     const workspaceId = 'workspaceId' in input ? input.workspaceId : null
     const regionKey = 'regionKey' in input ? input.regionKey || null : null
 
-    const id = generateId()
     const stream = {
       id,
-      name: name || generateProjectName(),
-      description: description || '',
+      name,
+      description,
       visibility,
-      updatedAt: knex.fn.now(),
+      updatedAt,
+      createdAt,
       workspaceId: workspaceId || null,
-      regionKey
+      regionKey,
+      allowPublicComments
     }
 
     // Create the stream & set up permissions
     const streamQuery = tables.streams(deps.db).insert(stream, '*')
-    if (trx) streamQuery.transacting(trx)
-
     const insertResults = await streamQuery
     const newStream = insertResults[0] as StreamRecord
-
-    if (ownerId) {
-      const streamAclQuery = tables.streamAcl(deps.db).insert({
-        userId: ownerId,
-        resourceId: id,
-        role: Roles.Stream.Owner
-      })
-      if (trx) streamAclQuery.transacting(trx)
-      await streamAclQuery
-    }
 
     return newStream
   }
