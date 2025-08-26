@@ -30,7 +30,7 @@ import type {
   LegacyUpdateStream,
   PermissionUpdateInput,
   RemoveStreamCollaborator,
-  StoreStream,
+  SaveStream,
   UpdateStream,
   UpdateStreamRecord,
   UpdateStreamRole
@@ -39,10 +39,14 @@ import type { StoreBranch } from '@/modules/core/domain/branches/operations'
 import type { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
+import type { StoreProjectRole } from '@/modules/core/domain/projects/operations'
+import { generateProjectName } from '@/modules/core/domain/projects/logic'
+import cryptoRandomString from 'crypto-random-string'
 
 export const createStreamReturnRecordFactory =
   (deps: {
-    createStream: StoreStream
+    createStream: SaveStream
+    storeProjectRole: StoreProjectRole
     createBranch: StoreBranch
     inviteUsersToProject: ReturnType<typeof inviteUsersToProjectFactory>
     emitEvent: EventBusEmit
@@ -60,8 +64,28 @@ export const createStreamReturnRecordFactory =
       )
     }
 
-    const stream = await deps.createStream(params, { ownerId })
+    const name = params.name ? params.name : generateProjectName()
+    const description = params.description || ''
+    const now = new Date()
+
+    const stream = await deps.createStream({
+      ...params,
+      id: cryptoRandomString({ length: 10 }),
+      name,
+      description,
+      createdAt: now,
+      updatedAt: now,
+      allowPublicComments: false
+    })
     const streamId = stream.id
+
+    if (ownerId) {
+      await deps.storeProjectRole({
+        userId: ownerId,
+        projectId: streamId,
+        role: Roles.Stream.Owner
+      })
+    }
 
     // Create a default main branch
     await deps.createBranch({

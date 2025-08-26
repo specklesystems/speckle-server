@@ -103,6 +103,7 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -183,6 +184,7 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
   }),
   createStream: createStreamFactory({ db }),
   createBranch: createBranchFactory({ db }),
+  storeProjectRole: storeProjectRoleFactory({ db }),
   emitEvent: getEventBus().emit
 })
 const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
