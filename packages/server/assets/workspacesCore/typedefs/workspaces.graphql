@@ -260,6 +260,11 @@ input PendingWorkspaceCollaboratorsFilter {
   search: String
 }
 
+input WorkspaceIdentifier @oneOf {
+  id: String
+  slug: String
+}
+
 type Workspace {
   id: ID!
   name: String!

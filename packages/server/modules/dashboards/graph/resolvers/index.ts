@@ -9,10 +9,12 @@ import { db } from '@/db/knex'
 import {
   createDashboardFactory,
   getPaginatedDasboardsFactory,
-  getDashboardFactory
+  getDashboardFactory,
+  updateDashboardFactory
 } from '@/modules/dashboards/services/management'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { toLimitedWorkspace } from '@/modules/workspaces/domain/logic'
+import { removeNullOrUndefinedKeys } from '@speckle/shared'
 
 const resolvers: Resolvers = {
   Query: {
@@ -83,7 +85,14 @@ const resolvers: Resolvers = {
   },
   DashboardMutations: {
     create: async (_parent, args, context) => {
-      const { name, workspaceId } = args.input
+      const { id, slug } = args.workspace
+      const { name } = args.input
+
+      if (!id && !slug) {
+        throw new Error('One required!')
+      }
+
+      const workspaceId = id ?? slug
 
       return await createDashboardFactory({
         upsertDashboard: upsertDashboardFactory({ db })
@@ -92,6 +101,12 @@ const resolvers: Resolvers = {
         workspaceId,
         ownerId: context.userId!
       })
+    },
+    update: async (_parent, args) => {
+      return await updateDashboardFactory({
+        getDashboard: getDashboardRecordFactory({ db }),
+        upsertDashboard: upsertDashboardFactory({ db })
+      })(removeNullOrUndefinedKeys(args.input))
     }
   }
 }

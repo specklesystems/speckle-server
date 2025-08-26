@@ -1132,7 +1132,6 @@ export type DashboardCollection = {
 
 export type DashboardCreateInput = {
   name: Scalars['String']['input'];
-  workspaceId: Scalars['String']['input'];
 };
 
 export type DashboardMutations = {
@@ -1146,6 +1145,7 @@ export type DashboardMutations = {
 
 export type DashboardMutationsCreateArgs = {
   input: DashboardCreateInput;
+  workspace: WorkspaceIdentifier;
 };
 
 
@@ -5401,6 +5401,10 @@ export const WorkspaceFeatureName = {
 } as const;
 
 export type WorkspaceFeatureName = typeof WorkspaceFeatureName[keyof typeof WorkspaceFeatureName];
+export type WorkspaceIdentifier =
+  { id: Scalars['String']['input']; slug?: never; }
+  |  { id?: never; slug: Scalars['String']['input']; };
+
 export type WorkspaceInviteCreateInput = {
   /** Either this or userId must be filled */
   email?: InputMaybe<Scalars['String']['input']>;
@@ -6322,6 +6326,7 @@ export type ResolversTypes = {
   WorkspaceDomainDeleteInput: WorkspaceDomainDeleteInput;
   WorkspaceEmbedOptions: ResolverTypeWrapper<WorkspaceEmbedOptions>;
   WorkspaceFeatureName: WorkspaceFeatureName;
+  WorkspaceIdentifier: WorkspaceIdentifier;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
   WorkspaceInviteLookupOptions: WorkspaceInviteLookupOptions;
   WorkspaceInviteMutations: ResolverTypeWrapper<WorkspaceInviteMutationsGraphQLReturn>;
@@ -6684,6 +6689,7 @@ export type ResolversParentTypes = {
   WorkspaceDomain: WorkspaceDomain;
   WorkspaceDomainDeleteInput: WorkspaceDomainDeleteInput;
   WorkspaceEmbedOptions: WorkspaceEmbedOptions;
+  WorkspaceIdentifier: WorkspaceIdentifier;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
   WorkspaceInviteLookupOptions: WorkspaceInviteLookupOptions;
   WorkspaceInviteMutations: WorkspaceInviteMutationsGraphQLReturn;
@@ -7254,7 +7260,7 @@ export type DashboardCollectionResolvers<ContextType = GraphQLContext, ParentTyp
 };
 
 export type DashboardMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DashboardMutations'] = ResolversParentTypes['DashboardMutations']> = {
-  create?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<DashboardMutationsCreateArgs, 'input'>>;
+  create?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<DashboardMutationsCreateArgs, 'input' | 'workspace'>>;
   createToken?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<DashboardMutationsCreateTokenArgs, 'id'>>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<DashboardMutationsDeleteArgs, 'id'>>;
   update?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<DashboardMutationsUpdateArgs, 'input'>>;
