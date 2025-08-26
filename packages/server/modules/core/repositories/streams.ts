@@ -890,19 +890,6 @@ export const getUserStreamsCountFactory =
     const [res] = await countQuery
     return parseInt(res.count)
   }
-
-// TODO: this one
-// const id = generateId()
-// const name = name || generateProjectName()
-// if (ownerId) {
-//  const streamAclQuery = tables.streamAcl(deps.db).insert({
-//    userId: ownerId,
-//    resourceId: id,
-//    role: Roles.Stream.Owner
-//  })
-//  await streamAclQuery
-//}
-
 export const createStreamFactory =
   (deps: { db: Knex }): SaveStream =>
   async (input) => {

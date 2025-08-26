@@ -138,8 +138,7 @@ export type CreateProjectRequiredArgs = {
 }
 
 export type SaveStream = (
-  input: CreateProjectRequiredArgs &
-    (Omit<StreamCreateInput, 'name'> | Omit<ProjectCreateArgs, 'name'>)
+  input: CreateProjectRequiredArgs & (StreamCreateInput | ProjectCreateArgs)
 ) => Promise<Stream>
 
 export type SetStreamFavorited = (params: {
