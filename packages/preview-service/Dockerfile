@@ -92,7 +92,7 @@ RUN groupadd -g 30000 -r pptruser && \
     useradd -r -g pptruser -G audio,video -u 800 pptruser && \
     mkdir -p /home/pptruser/Downloads && \
     chown -R pptruser:pptruser /home/pptruser && \
-    chown -R pptruser:pptruser ./node_modules && \
+    if [ -d ./node_modules ]; then chown -R pptruser:pptruser ./node_modules; else true; fi && \
     chown -R pptruser:pptruser ./package.json
 
 # overriding this value via `--build-arg CACHE_BUST=$(date +%s)` will cause the latest google chrome to be fetched

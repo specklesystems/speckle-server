@@ -21,7 +21,7 @@ on:
         required: true
 jobs:
   helm-chart-oci:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Helm chart oci
     container:
       image: speckle/pre-commit-runner:latest
@@ -38,7 +38,7 @@ jobs:
         run: ./.github/workflows/scripts/publish_helm_chart_oci.sh
 
   helm-chart-commit:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Helm chart commit
     container:
       image: bitnami/python:3.12.0
@@ -65,7 +65,7 @@ jobs:
         working-directory: speckle
 
   viewer-sandbox-cloudflare-pages:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Viewer sandbox cloudflare pages
     env:
       CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}

@@ -28,7 +28,7 @@ on:
 
 jobs:
   docker-build-server:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Server
     steps:
       - name: Login to Docker Hub
@@ -50,8 +50,10 @@ jobs:
             TAGS="$TAGS,${{ inputs.IMAGE_PREFIX }}/speckle-server:latest"
           fi
           echo "TAGS=$TAGS" >> "$GITHUB_OUTPUT"
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Build and push
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         with:
           push: true
           tags: ${{ steps.set-tags.outputs.TAGS }}
@@ -75,8 +77,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Build and push w/ version tag
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         if: ${{ inputs.PUBLISH }}
         with:
           push: true
@@ -85,7 +89,7 @@ jobs:
           build-args: |
             SPECKLE_SERVER_VERSION=${{ inputs.IMAGE_VERSION_TAG }}
       - name: Check frontend-2 build
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         if: ${{ !inputs.PUBLISH }}
         with:
           push: true
@@ -93,7 +97,7 @@ jobs:
           file: ./packages/frontend-2/Dockerfile
 
   docker-build-preview-service:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Preview service
     steps:
       - name: Login to Docker Hub
@@ -107,15 +111,17 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Build and push
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         with:
           push: true
           tags: ${{ inputs.IMAGE_PREFIX }}/speckle-preview-service:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/preview-service/Dockerfile
 
   docker-build-webhook-service:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Webhook service
     steps:
       - name: Login to Docker Hub
@@ -129,15 +135,17 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Build and push
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         with:
           push: true
           tags: ${{ inputs.IMAGE_PREFIX }}/speckle-webhook-service:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/webhook-service/Dockerfile
 
   docker-build-fileimport-service:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: File import service
     steps:
       - name: Login to Docker Hub
@@ -151,15 +159,17 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Build and push
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         with:
           push: true
           tags: ${{ inputs.IMAGE_PREFIX }}/speckle-fileimport-service:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/fileimport-service/Dockerfile
 
   docker-build-ifc-import-service:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: IFC import service
     steps:
       - name: Login to Docker Hub
@@ -173,15 +183,17 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Build and push
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         with:
           push: true
           tags: ${{ inputs.IMAGE_PREFIX }}/speckle-ifc-import-service:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/ifc-import-service/Dockerfile
 
   docker-build-test-deploy:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Test deploy util
     steps:
       - name: Login to Docker Hub
@@ -195,15 +207,17 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Build and push
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         with:
           push: true
           tags: ${{ inputs.IMAGE_PREFIX }}/speckle-test-deployment:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./utils/test-deployment/Dockerfile
 
   docker-build-monitor-deployment:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: monitor container
     steps:
       - name: Login to Docker Hub
@@ -217,15 +231,17 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Build and push
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         with:
           push: true
           tags: ${{ inputs.IMAGE_PREFIX }}/speckle-monitor-deployment:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./packages/monitor-deployment/Dockerfile
 
   docker-build-docker-compose-ingress:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Docker compose ingress
     steps:
       - name: Login to Docker Hub
@@ -239,15 +255,17 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Build and push
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         with:
           push: true
           tags: ${{ inputs.IMAGE_PREFIX }}/speckle-docker-compose-ingress:${{ inputs.IMAGE_VERSION_TAG }}
           file: ./utils/docker-compose-ingress/Dockerfile
 
   docker-frontend-2-sourcemaps:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Frontend2 sourcemaps
     if: ${{ inputs.PUBLISH }}
     env:
@@ -258,7 +276,9 @@ jobs:
       - uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
-      - uses: useblacksmith/build-push-action@v1
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
+      - uses: useblacksmith/build-push-action@v2
         with:
           setup-only: true
           cache-from: type=registry,ref=${{ inputs.IMAGE_PREFIX }}/speckle-frontend-2:buildcache-sourcemaps
