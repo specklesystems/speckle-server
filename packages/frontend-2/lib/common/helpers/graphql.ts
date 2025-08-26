@@ -195,7 +195,7 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
 ): boolean {
   const { fragment, query } = filter
   const { ignoreCacheErrors = true, overwrite = true } = options
-  const logger = useStrictLoggerSync()
+  const { logger } = useSafeLogger()
 
   if (!fragment && !query) {
     throw new Error(
@@ -242,7 +242,7 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
     }
 
     if (ignoreCacheErrors) {
-      logger.warn('Failed Apollo cache update:', e)
+      logger().warn('Failed Apollo cache update:', e)
       return false
     }
     throw e
@@ -382,13 +382,13 @@ export function modifyObjectFields<
 ) {
   const { fieldNameWhitelist, debug = false } = options || {}
 
-  const logger = useStrictLoggerSync()
+  const { logger } = useSafeLogger()
   const invocationId = nanoid()
-  const log = (...args: Parameters<typeof logger.debug>) => {
+  const log = (...args: unknown[]) => {
     if (!debug) return
     const [message, ...rest] = args
 
-    logger.debug(`[${invocationId}] ${message}`, ...rest)
+    logger().debug(`[${invocationId}] ${message}`, ...rest)
   }
 
   log(

@@ -2,7 +2,7 @@ import Queue from '../queues/queue.js'
 import { Item } from '../types/types.js'
 
 export interface Downloader extends Queue<string> {
-  initializePool(params: {
+  initialize(params: {
     results: Queue<Item>
     total: number
     maxDownloadBatchWait?: number
@@ -12,7 +12,7 @@ export interface Downloader extends Queue<string> {
 }
 
 export interface Database {
-  getAll(keys: string[]): Promise<(Item | undefined)[]>
-  saveBatch(params: { batch: Item[] }): Promise<void>
-  disposeAsync(): Promise<void>
+  getAll(ids: string[]): Promise<(Item | undefined)[]>
+  putAll(batch: Item[]): Promise<void>
+  dispose(): void
 }

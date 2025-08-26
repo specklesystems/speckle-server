@@ -57,11 +57,12 @@ export function usePreviewImageBlob(
   // Checking if we're allowed to eager load
   const { $isAppHydrated } = useNuxtApp()
   const state = usePreviewsState()
+  const eagerLoadKey = unref(previewUrl) || nanoid()
   const eagerLoad =
     options?.eagerLoad &&
     !$isAppHydrated.value &&
-    state.value.eagerLoadedKeys.size < PREVIEWS_EAGER_LOAD_COUNT
-  const eagerLoadKey = nanoid()
+    (state.value.eagerLoadedKeys.size < PREVIEWS_EAGER_LOAD_COUNT ||
+      state.value.eagerLoadedKeys.has(eagerLoadKey))
 
   if (eagerLoad) {
     state.value.eagerLoadedKeys.add(eagerLoadKey)
@@ -259,8 +260,7 @@ export function usePreviewImageBlob(
       () => unref(previewUrl),
       () => {
         void regeneratePreviews()
-      },
-      { immediate: true }
+      }
     )
 
     watch(
@@ -279,13 +279,24 @@ export function usePreviewImageBlob(
           : [])
       ])
     })
-
-    onServerPrefetch(async () => {
-      await regeneratePreviews()
-    })
   }
 
-  return ret
+  return {
+    ...ret,
+    /**
+     * Run this at the bottom of the component to fully initialize it
+     */
+    init: async () => {
+      if (!eagerLoad && import.meta.server) {
+        return // don't do anything - show spinner
+      }
+
+      const promise = regeneratePreviews()
+      if (eagerLoad) {
+        await promise
+      }
+    }
+  }
 }
 
 export function useCommentScreenshotImage(

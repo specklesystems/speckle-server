@@ -203,7 +203,7 @@ export const doesRouteFitTarget = (fullPathA: string, fullPathB: string) => {
     urlA = new URL(fullPathA, fakeOrigin)
     urlB = new URL(fullPathB, fakeOrigin)
   } catch (e) {
-    useStrictLoggerSync().warn('Failed to parse URLs', e)
+    useSafeLogger().logger().warn('Failed to parse URLs', e)
     return false
   }
 

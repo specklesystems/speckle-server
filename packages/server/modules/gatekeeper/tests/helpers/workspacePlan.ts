@@ -1,4 +1,4 @@
-import type { WorkspacePlan } from '@speckle/shared'
+import { WorkspaceFeatureFlags, type WorkspacePlan } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { assign } from 'lodash-es'
 import type {
@@ -16,7 +16,8 @@ export const buildTestWorkspacePlan = (
       createdAt: new Date(),
       updatedAt: new Date(),
       name: 'free',
-      status: 'valid'
+      status: 'valid',
+      featureFlags: WorkspaceFeatureFlags.none
     },
     overrides
   )

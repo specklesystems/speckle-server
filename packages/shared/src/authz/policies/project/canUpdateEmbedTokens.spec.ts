@@ -1,7 +1,11 @@
 import cryptoRandomString from 'crypto-random-string'
 import { Roles } from '../../../core/constants.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
-import { getProjectFake, getWorkspaceFake } from '../../../tests/fakes.js'
+import {
+  getProjectFake,
+  getWorkspaceFake,
+  getWorkspacePlanFake
+} from '../../../tests/fakes.js'
 import { canUpdateEmbedTokensPolicy } from './canUpdateEmbedTokens.js'
 import { assert, describe, expect, it } from 'vitest'
 import {
@@ -10,6 +14,7 @@ import {
   WorkspacePlanNoFeatureAccessError
 } from '../../domain/authErrors.js'
 import { OverridesOf } from '../../../tests/helpers/types.js'
+import { WorkspaceFeatureFlags } from '../../../workspaces/index.js'
 
 const buildCanUpdateEmbedTokens = (
   overrides?: OverridesOf<typeof canUpdateEmbedTokensPolicy>
@@ -40,15 +45,7 @@ const buildCanUpdateEmbedTokens = (
     getWorkspaceSsoSession: async () => {
       assert.fail()
     },
-    getWorkspacePlan: async () => {
-      return {
-        status: 'valid',
-        workspaceId,
-        name: 'unlimited',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    },
+    getWorkspacePlan: getWorkspacePlanFake({ workspaceId }),
     ...overrides
   })
 }
@@ -118,7 +115,8 @@ describe('canUpdateEmbedTokensArgs returns a function, that', () => {
           workspaceId: 'foo',
           name: 'free',
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          featureFlags: WorkspaceFeatureFlags.none
         }
       }
     })(canUpdateEmbedTokensArgs())

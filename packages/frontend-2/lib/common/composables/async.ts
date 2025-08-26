@@ -13,7 +13,7 @@ export type { AsyncWritableComputedOptions, AsyncWritableComputedRef }
  * @param params
  */
 export const writableAsyncComputed: typeof originalWritableAsyncComputed = (params) => {
-  const logger = useStrictLoggerSync()
+  const { logger } = useSafeLogger()
   return originalWritableAsyncComputed({
     ...params,
     debugging: params.debugging?.log
@@ -21,7 +21,7 @@ export const writableAsyncComputed: typeof originalWritableAsyncComputed = (para
           ...params.debugging,
           log: {
             ...params.debugging.log,
-            logger: logger.debug
+            logger: logger().debug
           }
         }
       : undefined
@@ -34,7 +34,7 @@ export const writableAsyncComputed: typeof originalWritableAsyncComputed = (para
  */
 export const watchAsync = ((...args: Parameters<typeof watch>) => {
   const [source, cb, options] = args
-  const logger = useStrictLoggerSync()
+  const { logger } = useSafeLogger()
 
   const watches = shallowRef<Array<Promise<unknown>>>([])
 
@@ -47,7 +47,7 @@ export const watchAsync = ((...args: Parameters<typeof watch>) => {
       const handlerPromise = Promise.allSettled(watches.value).finally(() =>
         Promise.resolve(cb(newVal, oldVal, onCleanup))
           .catch((e) => {
-            logger.error(e, 'Error occurred in watchAsync callback')
+            logger().error(e, 'Error occurred in watchAsync callback')
             throw e
           })
           .finally(() => {
