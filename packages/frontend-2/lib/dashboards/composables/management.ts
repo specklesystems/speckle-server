@@ -47,7 +47,7 @@ export function useCreateDashboard() {
       })
       .catch(convertThrowIntoFetchResult)
 
-    if (res.data?.workspaceMutations.create.id) {
+    if (res.data?.dashboardMutations.create) {
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Workspace successfully created'
