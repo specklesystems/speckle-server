@@ -67,6 +67,7 @@ import { Ellipsis } from 'lucide-vue-next'
 import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
 import type { KeyValuePair } from '~/components/viewer/selection/types'
+import { isNumericPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
 
 const props = defineProps<{
   kvp: KeyValuePair
@@ -78,7 +79,8 @@ const {
   findFilterByKvp,
   addActiveFilter,
   updateActiveFilterValues,
-  toggleFilterApplied
+  toggleFilterApplied,
+  setNumericRange
 } = useFilterUtilities()
 
 const {
@@ -109,9 +111,20 @@ const handleAddToFilters = (kvp: KeyValuePair) => {
   const filter = findFilterByKvp(kvp, availableFilters.value)
   if (filter && kvp.value !== null && kvp.value !== undefined) {
     const filterId = addActiveFilter(filter)
-    const values = [String(kvp.value)]
-    updateActiveFilterValues(filterId, values)
-    toggleFilterApplied(filterId)
+
+    if (isNumericPropertyInfo(filter)) {
+      // For numeric filters, set the specific numeric value
+      const numericValue =
+        typeof kvp.value === 'number' ? kvp.value : parseFloat(String(kvp.value))
+      if (!isNaN(numericValue)) {
+        setNumericRange(filterId, numericValue, numericValue)
+      }
+    } else {
+      // For string filters, use the selectedValues array
+      const values = [String(kvp.value)]
+      updateActiveFilterValues(filterId, values)
+      toggleFilterApplied(filterId)
+    }
   }
 }
 

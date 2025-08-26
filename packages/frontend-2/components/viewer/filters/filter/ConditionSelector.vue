@@ -1,32 +1,38 @@
 <template>
-  <div class="pl-8 -mb-0.5">
-    <LayoutMenu
-      v-model:open="showMenu"
-      :items="menuItems"
-      show-ticks="right"
-      :custom-menu-items-classes="['!w-24 !text-body-2xs']"
-      @chosen="onConditionChosen"
+  <LayoutMenu
+    v-model:open="showMenu"
+    :items="menuItems"
+    show-ticks="right"
+    :custom-menu-items-classes="[
+      '!text-body-2xs',
+      filter.type === FilterType.Numeric ? '!w-36' : '!w-24'
+    ]"
+    @chosen="onConditionChosen"
+  >
+    <FormButton
+      class="-ml-2"
+      color="subtle"
+      size="sm"
+      :class="showMenu ? '!bg-highlight-2' : ''"
+      @click="showMenu = !showMenu"
     >
-      <FormButton
-        class="-ml-2"
-        color="subtle"
-        size="sm"
-        :class="showMenu ? '!bg-highlight-2' : ''"
-        @click="showMenu = !showMenu"
-      >
-        <span class="text-foreground-2 font-medium text-body-2xs">
-          {{ selectedConditionLabel }}
-        </span>
-      </FormButton>
-    </LayoutMenu>
-  </div>
+      <span class="text-foreground-2 font-medium text-body-2xs">
+        {{ selectedConditionLabel }}
+      </span>
+    </FormButton>
+  </LayoutMenu>
 </template>
 
 <script setup lang="ts">
-import {
+import type {
   FilterCondition,
-  type FilterData,
-  type ConditionOption
+  FilterData,
+  ConditionOption
+} from '~/lib/viewer/helpers/filters/types'
+import {
+  getConditionsForType,
+  getConditionLabel,
+  FilterType
 } from '~/lib/viewer/helpers/filters/types'
 import { LayoutMenu, FormButton, type LayoutMenuItem } from '@speckle/ui-components'
 
@@ -38,37 +44,37 @@ const emit = defineEmits(['selectCondition'])
 
 const showMenu = ref(false)
 
-const getConditionLabel = (condition: FilterCondition): string => {
-  switch (condition) {
-    case FilterCondition.Is:
-      return 'is'
-    case FilterCondition.IsNot:
-      return 'is not'
-    default:
-      return 'is'
-  }
-}
+// Get condition options based on filter type
+const conditionOptions = computed<ConditionOption[]>(() => {
+  const availableConditions = getConditionsForType(props.filter.type)
+  return availableConditions.map((condition) => ({
+    value: condition,
+    label: getConditionLabel(condition)
+  }))
+})
 
 const menuItems = computed<LayoutMenuItem[][]>(() => [
-  Object.values(FilterCondition).map((condition) => ({
-    id: condition,
-    title: getConditionLabel(condition),
-    active: condition === (props.filter.condition || FilterCondition.Is)
+  conditionOptions.value.map((conditionOption) => ({
+    id: conditionOption.value,
+    title: conditionOption.label,
+    active: conditionOption.value === props.filter.condition
   }))
 ])
 
 const selectedConditionLabel = computed(() => {
-  return getConditionLabel(props.filter.condition || FilterCondition.Is)
+  return getConditionLabel(props.filter.condition)
 })
 
-const onConditionChosen = ({ item }: { item: LayoutMenuItem }) => {
+const onConditionChosen = ({ item }: { item: LayoutMenuItem; event: MouseEvent }) => {
   // Since we control the menu items, we know item.id is a FilterCondition
   const condition = item.id as FilterCondition
-  const conditionOption: ConditionOption = {
-    value: condition,
-    label: getConditionLabel(condition)
+  const conditionOption = conditionOptions.value.find(
+    (option) => option.value === condition
+  )
+
+  if (conditionOption) {
+    emit('selectCondition', conditionOption)
   }
-  emit('selectCondition', conditionOption)
   showMenu.value = false
 }
 </script>

@@ -4,9 +4,50 @@ import type {
   StringPropertyInfo
 } from '@speckle/viewer'
 
-export enum FilterCondition {
+export enum NumericFilterCondition {
+  IsBetween = 'is_between',
+  IsEqualTo = 'is_equal_to',
+  IsNotEqualTo = 'is_not_equal_to',
+  IsGreaterThan = 'is_greater_than',
+  IsLessThan = 'is_less_than'
+}
+
+export enum StringFilterCondition {
   Is = 'is',
   IsNot = 'is_not'
+}
+
+export type FilterCondition = NumericFilterCondition | StringFilterCondition
+
+// Centralized condition configuration
+export const CONDITION_CONFIG: Record<FilterCondition, { label: string }> = {
+  // String conditions
+  [StringFilterCondition.Is]: { label: 'is' },
+  [StringFilterCondition.IsNot]: { label: 'is not' },
+  // Numeric conditions
+  [NumericFilterCondition.IsEqualTo]: { label: 'is equal to' },
+  [NumericFilterCondition.IsNotEqualTo]: { label: 'is not equal to' },
+  [NumericFilterCondition.IsGreaterThan]: { label: 'is greater than' },
+  [NumericFilterCondition.IsLessThan]: { label: 'is less than' },
+  [NumericFilterCondition.IsBetween]: { label: 'is between' }
+} as const
+
+// Helper to get available conditions for a filter type
+export const getConditionsForType = (filterType: FilterType): FilterCondition[] => {
+  if (filterType === FilterType.Numeric) {
+    return Object.values(NumericFilterCondition)
+  } else {
+    return Object.values(StringFilterCondition)
+  }
+}
+
+// Helper to get condition label
+export const getConditionLabel = (condition: FilterCondition): string => {
+  return CONDITION_CONFIG[condition]?.label || 'is'
+}
+
+export type FilterConditionLabel = {
+  [key in FilterCondition]: string
 }
 
 export enum FilterLogic {

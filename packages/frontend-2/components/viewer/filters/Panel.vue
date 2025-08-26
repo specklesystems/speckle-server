@@ -25,7 +25,7 @@
     </template>
 
     <!-- Filter Logic Selection -->
-    <ViewerFiltersFilterLogicSelector
+    <ViewerFiltersLogicSelector
       v-if="propertyFilters.length > 0"
       v-model="filterLogic"
       @update:model-value="handleFilterLogicChange"
@@ -43,7 +43,6 @@
             :key="filter.id"
             :filter="filter"
             collapsed
-            @select-condition="(val) => handleConditionSelect(filter.id, val)"
           />
         </div>
       </div>
@@ -71,7 +70,6 @@ import {
 } from '~~/lib/viewer/composables/setup'
 import type {
   PropertySelectOption,
-  ConditionOption,
   FilterLogicOption
 } from '~/lib/viewer/helpers/filters/types'
 import { FilterLogic } from '~/lib/viewer/helpers/filters/types'
@@ -84,7 +82,6 @@ const {
   filters: { propertyFilters },
   getRelevantFilters,
   addActiveFilter,
-  updateFilterCondition,
   resetFilters,
   setFilterLogic
 } = useFilterUtilities()
@@ -175,10 +172,6 @@ const selectProperty = (propertyKey: string) => {
     action: 'add-new-filter',
     value: propertyKey
   })
-}
-
-const handleConditionSelect = (filterId: string, conditionOption: ConditionOption) => {
-  updateFilterCondition(filterId, conditionOption.value)
 }
 
 const handleFilterLogicChange = (logicOption: FilterLogicOption) => {

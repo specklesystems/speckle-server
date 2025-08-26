@@ -1,6 +1,6 @@
 <template>
   <div>
-    <ViewerFiltersFilterValuesSelectAllCheckbox
+    <ViewerFiltersFilterStringSelectAll
       :selected-count="selectedCount"
       :total-count="filteredValues.length"
       @select-all="selectAll"
@@ -23,7 +23,7 @@
           transform: `translateY(${index * itemHeight}px)`
         }"
       >
-        <ViewerFiltersFilterValuesFilterValueItem
+        <ViewerFiltersFilterStringValueItem
           :filter-id="filter.id"
           :value="value"
           :is-selected="isValueSelected(value)"

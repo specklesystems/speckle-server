@@ -1,11 +1,11 @@
 <template>
-  <div class="flex flex-col p-3">
+  <div class="flex flex-col px-2 py-1">
     <FormDualRange
       v-model:min-value="currentMin"
       v-model:max-value="currentMax"
       :name="`range-${filter.id}`"
-      :min="(filter.filter as NumericPropertyInfo).min"
-      :max="(filter.filter as NumericPropertyInfo).max"
+      :min="filterMin"
+      :max="filterMax"
       :step="0.01"
       show-fields
     />
@@ -14,8 +14,7 @@
 
 <script setup lang="ts">
 import { FormDualRange } from '@speckle/ui-components'
-import type { NumericPropertyInfo } from '@speckle/viewer'
-import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 import { isNumericFilter, type FilterData } from '~/lib/viewer/helpers/filters/types'
 
 const props = defineProps<{
@@ -23,6 +22,21 @@ const props = defineProps<{
 }>()
 
 const { setNumericRange } = useFilterUtilities()
+
+// Get the filter's min/max bounds
+const filterMin = computed(() => {
+  if (isNumericFilter(props.filter)) {
+    return props.filter.filter.min
+  }
+  return 0
+})
+
+const filterMax = computed(() => {
+  if (isNumericFilter(props.filter)) {
+    return props.filter.filter.max
+  }
+  return 100
+})
 
 const currentMin = computed({
   get: () => {

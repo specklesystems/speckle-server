@@ -21,7 +21,7 @@ import {
   isNumericPropertyInfo
 } from '~/lib/viewer/helpers/sceneExplorer'
 import {
-  FilterCondition,
+  type FilterCondition,
   FilterLogic,
   FilterType,
   type FilterData,
@@ -34,7 +34,10 @@ import {
   type ResourceInfo,
   type CreateFilterParams,
   isNumericFilter,
-  isStringFilter
+  isStringFilter,
+  NumericFilterCondition,
+  StringFilterCondition,
+  getConditionLabel
 } from '~/lib/viewer/helpers/filters/types'
 import { useOnViewerLoadComplete } from '~~/lib/viewer/composables/viewer'
 import { arraysEqual } from '~~/lib/common/helpers/utils'
@@ -140,28 +143,52 @@ function createFilteringDataStore() {
         continue
       }
 
+      // Handle numeric conditions
       if (criteria.minValue !== undefined || criteria.maxValue !== undefined) {
         const minValue = criteria.minValue ?? -Infinity
         const maxValue = criteria.maxValue ?? Infinity
 
         for (const [value, objectIds] of Object.entries(propertyIndex)) {
           const numericValue = Number(value)
-          if (
-            !isNaN(numericValue) &&
-            numericValue >= minValue &&
-            numericValue <= maxValue
-          ) {
-            matchingIds.push(...objectIds)
+          if (!isNaN(numericValue)) {
+            let shouldInclude = false
+
+            switch (criteria.condition) {
+              case NumericFilterCondition.IsBetween:
+                shouldInclude = numericValue >= minValue && numericValue <= maxValue
+                break
+              case NumericFilterCondition.IsGreaterThan:
+                shouldInclude = numericValue > minValue
+                break
+              case NumericFilterCondition.IsLessThan:
+                shouldInclude = numericValue < maxValue
+                break
+              case NumericFilterCondition.IsEqualTo:
+                // For numeric "is", check if the value is within the range
+                shouldInclude = numericValue >= minValue && numericValue <= maxValue
+                break
+              case NumericFilterCondition.IsNotEqualTo:
+                // For numeric "is not", exclude values within the range
+                shouldInclude = numericValue < minValue || numericValue > maxValue
+                break
+              default:
+                // Default to range behavior for backward compatibility
+                shouldInclude = numericValue >= minValue && numericValue <= maxValue
+            }
+
+            if (shouldInclude) {
+              matchingIds.push(...objectIds)
+            }
           }
         }
-      } else if (criteria.condition === FilterCondition.Is) {
+      } else if (criteria.condition === StringFilterCondition.Is) {
         for (const value of criteria.values) {
           const objectIds = propertyIndex[value]
           if (objectIds) {
             matchingIds.push(...objectIds)
           }
         }
-      } else if (criteria.condition === FilterCondition.IsNot) {
+      } else if (criteria.condition === StringFilterCondition.IsNot) {
         const excludeValues = new Set(criteria.values)
         for (const [value, objectIds] of Object.entries(propertyIndex)) {
           if (!excludeValues.has(value)) {
@@ -330,6 +357,7 @@ export function useFilterUtilities(
       dataStore.finalObjectIds,
       (newObjectIds, oldObjectIds) => {
         if (preventFilterWatchers) return
+
         if (arraysEqual(newObjectIds, oldObjectIds || [])) return
 
         withWatchersDisabled(() => {
@@ -444,16 +472,12 @@ export function useFilterUtilities(
   const createFilterData = (params: CreateFilterParams): FilterData => {
     const { filter, id, availableValues } = params
 
-    const baseData = {
-      id,
-      isApplied: false,
-      selectedValues: [...availableValues],
-      condition: FilterCondition.Is
-    }
-
     if (isNumericPropertyInfo(filter)) {
       return {
-        ...baseData,
+        id,
+        isApplied: false,
+        selectedValues: [...availableValues],
+        condition: NumericFilterCondition.IsEqualTo,
         type: FilterType.Numeric,
         filter: filter as NumericPropertyInfo,
         numericRange: {
@@ -463,7 +487,10 @@ export function useFilterUtilities(
       } satisfies NumericFilterData
     } else {
       return {
-        ...baseData,
+        id,
+        isApplied: false,
+        selectedValues: [...availableValues],
+        condition: StringFilterCondition.Is,
         type: FilterType.String,
         filter: filter as StringPropertyInfo,
         numericRange: { min: 0, max: 100 } // Default range for consistency
@@ -505,6 +532,9 @@ export function useFilterUtilities(
         removeColorFilter()
       }
       filters.propertyFilters.value.splice(index, 1)
+
+      // Update viewer to reflect filter removal
+      updateDataStoreSlices()
     }
   }
 
@@ -515,6 +545,9 @@ export function useFilterUtilities(
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
       filter.isApplied = !filter.isApplied
+
+      // Update viewer to reflect filter state change
+      updateDataStoreSlices()
     }
   }
 
@@ -525,6 +558,9 @@ export function useFilterUtilities(
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
       filter.selectedValues = [...values]
+
+      // Update viewer to reflect filter value changes
+      updateDataStoreSlices()
     }
   }
 
@@ -584,8 +620,8 @@ export function useFilterUtilities(
 
         const slice: DataSlice = {
           id: `filter-${filter.id}`,
-          name: `${getPropertyName(
-            filter.filter.key
+          name: `${getPropertyName(filter.filter.key)} ${getConditionLabel(
+            filter.condition
           )} (${filter.numericRange.min.toFixed(2)} - ${filter.numericRange.max.toFixed(
             2
           )})`,
@@ -605,7 +641,7 @@ export function useFilterUtilities(
         const slice: DataSlice = {
           id: `filter-${filter.id}`,
           name: `${getPropertyName(filter.filter.key)} ${
-            filter.condition === FilterCondition.Is ? 'is' : 'is not'
+            filter.condition === StringFilterCondition.Is ? 'is' : 'is not'
           } ${filter.selectedValues.join(', ')}`,
           objectIds: matchingObjectIds
         }

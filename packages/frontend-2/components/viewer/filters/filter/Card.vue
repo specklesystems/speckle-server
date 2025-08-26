@@ -1,47 +1,23 @@
 <template>
   <div class="border border-outline-2 rounded-lg">
-    <div class="p-1" :class="{ 'border-b border-outline-3 pb-0.5': !collapsed }">
+    <div class="p-1" :class="{ 'border-b border-outline-3': !collapsed }">
       <ViewerFiltersFilterHeader v-model:collapsed="collapsed" :filter="filter" />
-
-      <ViewerFiltersFilterConditionSelector
-        v-if="!collapsed"
-        :filter="filter"
-        @select-condition="$emit('selectCondition', $event)"
-      />
-
-      <ViewerSearchInput
-        v-if="filter.type === FilterType.String && !collapsed"
-        v-model="searchQuery"
-        placeholder="Search for a value..."
-      />
     </div>
 
     <div v-if="filter.filter && !collapsed">
-      <ViewerFiltersFilterValuesNumericRange
-        v-if="isNumericFilter(filter)"
-        :filter="filter"
-      />
-
-      <ViewerFiltersFilterValuesStringCheckboxes
-        v-else
-        :filter="filter"
-        :search-query="searchQuery"
-      />
+      <ViewerFiltersFilterNumeric v-if="isNumericFilter(filter)" :filter="filter" />
+      <ViewerFiltersFilterString v-else :filter="filter" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { FilterData } from '~/lib/viewer/helpers/filters/types'
-import { FilterType, isNumericFilter } from '~/lib/viewer/helpers/filters/types'
+import { isNumericFilter } from '~/lib/viewer/helpers/filters/types'
 
 defineProps<{
   filter: FilterData
 }>()
 
-const collapsed = ref(true)
-
-defineEmits(['selectCondition'])
-
-const searchQuery = ref('')
+const collapsed = ref(false)
 </script>
