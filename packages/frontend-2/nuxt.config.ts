@@ -163,7 +163,11 @@ export default defineNuxtConfig({
       headers: {
         // No search engine indexing on any of the pages anywhere! TODO: Come up with a more appropriate policy
         'X-Robots-Tag': 'noindex, nofollow, noarchive'
-      }
+      },
+      appMiddleware: [
+        // Has to be applied to all pages and as the very last app middleware (hence the 999 prefix)
+        '999-parallel-finalize'
+      ]
     },
     '/functions': {
       redirect: {
