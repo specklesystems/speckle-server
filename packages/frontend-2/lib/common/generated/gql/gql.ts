@@ -42,6 +42,7 @@ type Documents = {
     "\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    role\n    slug\n    plan {\n      name\n      status\n      createdAt\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n": typeof types.BillingAlert_WorkspaceFragmentDoc,
     "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n": typeof types.CommonModelSelectorModelFragmentDoc,
     "\n  query DashboardSidebar {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n  }\n": typeof types.DashboardSidebarDocument,
+    "\n  fragment DashboardsCard_Dashboard on Dashboard {\n    id\n    name\n    createdAt\n    createdBy {\n      id\n      name\n      avatar\n    }\n  }\n": typeof types.DashboardsCard_DashboardFragmentDoc,
     "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n": typeof types.FormSelectModels_ModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": typeof types.FormSelectProjects_ProjectFragmentDoc,
     "\n  fragment FormSelectSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    title\n    isUngroupedViewsGroup\n  }\n": typeof types.FormSelectSavedViewGroup_SavedViewGroupFragmentDoc,
@@ -251,6 +252,8 @@ type Documents = {
     "\n  fragment UseFileImport_Project on Project {\n    id\n  }\n": typeof types.UseFileImport_ProjectFragmentDoc,
     "\n  fragment UseFileImport_Model on Model {\n    id\n    name\n  }\n": typeof types.UseFileImport_ModelFragmentDoc,
     "\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n      configuration {\n        isEmailEnabled\n      }\n    }\n  }\n": typeof types.MainServerInfoDataDocument,
+    "\n  query Dashboard($id: String!) {\n    dashboard(id: $id) {\n      id\n      ...WorkspaceDashboards_Dashboard\n    }\n  }\n": typeof types.DashboardDocument,
+    "\n  query WorkspaceDashboards($workspaceSlug: String!, $cursor: String) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      dashboards(cursor: $cursor) {\n        cursor\n        items {\n          id\n          ...DashboardsCard_Dashboard\n        }\n      }\n    }\n  }\n": typeof types.WorkspaceDashboardsDocument,
     "\n  mutation DeleteAccessToken($token: String!) {\n    apiTokenRevoke(token: $token)\n  }\n": typeof types.DeleteAccessTokenDocument,
     "\n  mutation CreateAccessToken($token: ApiTokenCreateInput!) {\n    apiTokenCreate(token: $token)\n  }\n": typeof types.CreateAccessTokenDocument,
     "\n  mutation DeleteApplication($appId: String!) {\n    appDelete(appId: $appId)\n  }\n": typeof types.DeleteApplicationDocument,
@@ -515,6 +518,7 @@ type Documents = {
     "\n  fragment SettingsWorkspacesRegions_Workspace on Workspace {\n    id\n    role\n    defaultRegion {\n      id\n      ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n    }\n    hasAccessToMultiRegion: hasAccessToFeature(\n      featureName: workspaceDataRegionSpecificity\n    )\n    hasProjects: projects(limit: 0) {\n      totalCount\n    }\n  }\n": typeof types.SettingsWorkspacesRegions_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesRegions_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": typeof types.SettingsWorkspacesRegions_ServerInfoFragmentDoc,
     "\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    ...SettingsWorkspacesSecurityDefaultSeat_Workspace\n    ...SettingsWorkspacesSecurityDomainManagement_Workspace\n    ...SettingsWorkspacesSecurityDiscoverability_Workspace\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    ...SettingsWorkspacesSecurityDomainProtection_Workspace\n    ...SettingsWorkspacesSecurityWorkspaceCreation_Workspace\n    id\n    slug\n  }\n": typeof types.SettingsWorkspacesSecurity_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n    }\n  }\n": typeof types.WorkspaceDashboards_DashboardFragmentDoc,
     "\n  fragment WorkspacePage_Workspace on Workspace {\n    ...WorkspaceDashboard_Workspace\n    ...WorkspaceSidebar_Workspace\n  }\n": typeof types.WorkspacePage_WorkspaceFragmentDoc,
 };
 const documents: Documents = {
@@ -546,6 +550,7 @@ const documents: Documents = {
     "\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    role\n    slug\n    plan {\n      name\n      status\n      createdAt\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n": types.BillingAlert_WorkspaceFragmentDoc,
     "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n": types.CommonModelSelectorModelFragmentDoc,
     "\n  query DashboardSidebar {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n  }\n": types.DashboardSidebarDocument,
+    "\n  fragment DashboardsCard_Dashboard on Dashboard {\n    id\n    name\n    createdAt\n    createdBy {\n      id\n      name\n      avatar\n    }\n  }\n": types.DashboardsCard_DashboardFragmentDoc,
     "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n": types.FormSelectModels_ModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": types.FormSelectProjects_ProjectFragmentDoc,
     "\n  fragment FormSelectSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    title\n    isUngroupedViewsGroup\n  }\n": types.FormSelectSavedViewGroup_SavedViewGroupFragmentDoc,
@@ -755,6 +760,8 @@ const documents: Documents = {
     "\n  fragment UseFileImport_Project on Project {\n    id\n  }\n": types.UseFileImport_ProjectFragmentDoc,
     "\n  fragment UseFileImport_Model on Model {\n    id\n    name\n  }\n": types.UseFileImport_ModelFragmentDoc,
     "\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n      configuration {\n        isEmailEnabled\n      }\n    }\n  }\n": types.MainServerInfoDataDocument,
+    "\n  query Dashboard($id: String!) {\n    dashboard(id: $id) {\n      id\n      ...WorkspaceDashboards_Dashboard\n    }\n  }\n": types.DashboardDocument,
+    "\n  query WorkspaceDashboards($workspaceSlug: String!, $cursor: String) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      dashboards(cursor: $cursor) {\n        cursor\n        items {\n          id\n          ...DashboardsCard_Dashboard\n        }\n      }\n    }\n  }\n": types.WorkspaceDashboardsDocument,
     "\n  mutation DeleteAccessToken($token: String!) {\n    apiTokenRevoke(token: $token)\n  }\n": types.DeleteAccessTokenDocument,
     "\n  mutation CreateAccessToken($token: ApiTokenCreateInput!) {\n    apiTokenCreate(token: $token)\n  }\n": types.CreateAccessTokenDocument,
     "\n  mutation DeleteApplication($appId: String!) {\n    appDelete(appId: $appId)\n  }\n": types.DeleteApplicationDocument,
@@ -1019,6 +1026,7 @@ const documents: Documents = {
     "\n  fragment SettingsWorkspacesRegions_Workspace on Workspace {\n    id\n    role\n    defaultRegion {\n      id\n      ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n    }\n    hasAccessToMultiRegion: hasAccessToFeature(\n      featureName: workspaceDataRegionSpecificity\n    )\n    hasProjects: projects(limit: 0) {\n      totalCount\n    }\n  }\n": types.SettingsWorkspacesRegions_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesRegions_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": types.SettingsWorkspacesRegions_ServerInfoFragmentDoc,
     "\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    ...SettingsWorkspacesSecurityDefaultSeat_Workspace\n    ...SettingsWorkspacesSecurityDomainManagement_Workspace\n    ...SettingsWorkspacesSecurityDiscoverability_Workspace\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    ...SettingsWorkspacesSecurityDomainProtection_Workspace\n    ...SettingsWorkspacesSecurityWorkspaceCreation_Workspace\n    id\n    slug\n  }\n": types.SettingsWorkspacesSecurity_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n    }\n  }\n": types.WorkspaceDashboards_DashboardFragmentDoc,
     "\n  fragment WorkspacePage_Workspace on Workspace {\n    ...WorkspaceDashboard_Workspace\n    ...WorkspaceSidebar_Workspace\n  }\n": types.WorkspacePage_WorkspaceFragmentDoc,
 };
 
@@ -1148,6 +1156,10 @@ export function graphql(source: "\n  fragment CommonModelSelectorModel on Model 
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query DashboardSidebar {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n  }\n"): (typeof documents)["\n  query DashboardSidebar {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment DashboardsCard_Dashboard on Dashboard {\n    id\n    name\n    createdAt\n    createdBy {\n      id\n      name\n      avatar\n    }\n  }\n"): (typeof documents)["\n  fragment DashboardsCard_Dashboard on Dashboard {\n    id\n    name\n    createdAt\n    createdBy {\n      id\n      name\n      avatar\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1984,6 +1996,14 @@ export function graphql(source: "\n  fragment UseFileImport_Model on Model {\n  
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n      configuration {\n        isEmailEnabled\n      }\n    }\n  }\n"): (typeof documents)["\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n      configuration {\n        isEmailEnabled\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query Dashboard($id: String!) {\n    dashboard(id: $id) {\n      id\n      ...WorkspaceDashboards_Dashboard\n    }\n  }\n"): (typeof documents)["\n  query Dashboard($id: String!) {\n    dashboard(id: $id) {\n      id\n      ...WorkspaceDashboards_Dashboard\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query WorkspaceDashboards($workspaceSlug: String!, $cursor: String) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      dashboards(cursor: $cursor) {\n        cursor\n        items {\n          id\n          ...DashboardsCard_Dashboard\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceDashboards($workspaceSlug: String!, $cursor: String) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      dashboards(cursor: $cursor) {\n        cursor\n        items {\n          id\n          ...DashboardsCard_Dashboard\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -3040,6 +3060,10 @@ export function graphql(source: "\n  fragment SettingsWorkspacesRegions_ServerIn
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    ...SettingsWorkspacesSecurityDefaultSeat_Workspace\n    ...SettingsWorkspacesSecurityDomainManagement_Workspace\n    ...SettingsWorkspacesSecurityDiscoverability_Workspace\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    ...SettingsWorkspacesSecurityDomainProtection_Workspace\n    ...SettingsWorkspacesSecurityWorkspaceCreation_Workspace\n    id\n    slug\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    ...SettingsWorkspacesSecurityDefaultSeat_Workspace\n    ...SettingsWorkspacesSecurityDomainManagement_Workspace\n    ...SettingsWorkspacesSecurityDiscoverability_Workspace\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    ...SettingsWorkspacesSecurityDomainProtection_Workspace\n    ...SettingsWorkspacesSecurityWorkspaceCreation_Workspace\n    id\n    slug\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

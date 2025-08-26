@@ -2,13 +2,13 @@
   <div>
     <Portal to="navigation">
       <HeaderNavLink
-        :to="dashboardsRoute('pilsgang2')"
+        :to="dashboardsRoute(workspace?.slug)"
         name="Dashboards"
         :separator="false"
       />
       <HeaderNavLink
-        :to="dashboardRoute('pilsgang2', id as string)"
-        :name="id as string"
+        :to="dashboardRoute(workspace?.slug, id as string)"
+        :name="dashboard?.name"
       />
     </Portal>
     <div class="w-screen h-screen">
@@ -16,7 +16,7 @@
         :src="dashboardUrl"
         class="w-full h-full border-0"
         frameborder="0"
-        title="Dashboard content"
+        :title="dashboard?.name"
       />
     </div>
   </div>
@@ -24,6 +24,28 @@
 
 <script setup lang="ts">
 import { dashboardsRoute, dashboardRoute } from '~/lib/common/helpers/route'
+import { dashboardQuery } from '~/lib/dashboards/graphql/queries'
+import { useQuery } from '@vue/apollo-composable'
+import { graphql } from '~~/lib/common/generated/gql'
+
+graphql(`
+  fragment WorkspaceDashboards_Dashboard on Dashboard {
+    id
+    name
+    createdBy {
+      id
+      name
+      avatar
+    }
+    createdAt
+    updatedAt
+    workspace {
+      id
+      name
+      slug
+    }
+  }
+`)
 
 definePageMeta({
   middleware: ['auth'],
@@ -31,6 +53,10 @@ definePageMeta({
 })
 
 const { id } = useRoute().params
+const { result } = useQuery(dashboardQuery, () => ({ id: id as string }))
+
+const workspace = computed(() => result.value?.dashboard?.workspace)
+const dashboard = computed(() => result.value?.dashboard)
 
 const dashboardUrl = computed(() => {
   return `http://localhost:8083/dashboards/${id}?isEmbed=true`
