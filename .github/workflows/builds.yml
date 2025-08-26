@@ -28,7 +28,7 @@ on:
 
 jobs:
   docker-build-server:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Server
     steps:
       - name: Login to Docker Hub
@@ -99,7 +99,7 @@ jobs:
           file: ./packages/frontend-2/Dockerfile
 
   docker-build-preview-service:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Preview service
     steps:
       - name: Login to Docker Hub
@@ -123,7 +123,7 @@ jobs:
           file: ./packages/preview-service/Dockerfile
 
   docker-build-webhook-service:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Webhook service
     steps:
       - name: Login to Docker Hub
@@ -147,7 +147,7 @@ jobs:
           file: ./packages/webhook-service/Dockerfile
 
   docker-build-fileimport-service:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: File import service
     steps:
       - name: Login to Docker Hub
@@ -171,7 +171,7 @@ jobs:
           file: ./packages/fileimport-service/Dockerfile
 
   docker-build-ifc-import-service:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: IFC import service
     steps:
       - name: Login to Docker Hub
@@ -195,7 +195,7 @@ jobs:
           file: ./packages/ifc-import-service/Dockerfile
 
   docker-build-test-deploy:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Test deploy util
     steps:
       - name: Login to Docker Hub
@@ -219,7 +219,7 @@ jobs:
           file: ./utils/test-deployment/Dockerfile
 
   docker-build-monitor-deployment:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: monitor container
     steps:
       - name: Login to Docker Hub
@@ -243,7 +243,7 @@ jobs:
           file: ./packages/monitor-deployment/Dockerfile
 
   docker-build-docker-compose-ingress:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Docker compose ingress
     steps:
       - name: Login to Docker Hub
@@ -267,7 +267,7 @@ jobs:
           file: ./utils/docker-compose-ingress/Dockerfile
 
   docker-frontend-2-sourcemaps:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Frontend2 sourcemaps
     if: ${{ inputs.PUBLISH }}
     env:
