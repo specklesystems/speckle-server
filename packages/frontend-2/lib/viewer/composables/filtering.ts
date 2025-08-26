@@ -88,7 +88,6 @@ function createFilteringDataStore() {
 
       const objectMap: Record<string, SpeckleObject> = {}
       const propertyMap: Record<string, PropertyInfoBase> = {}
-      const propertyIndex: Record<string, Record<string, string[]>> = {}
 
       await tree.walkAsync((node: TreeNode) => {
         if (
@@ -104,17 +103,6 @@ function createFilteringDataStore() {
           const props = extractNestedProperties(node.model.raw)
           for (const p of props) {
             propertyMap[p.concatenatedPath] = p
-
-            const propertyKey = p.concatenatedPath
-            const value = String(p.value)
-
-            if (!propertyIndex[propertyKey]) {
-              propertyIndex[propertyKey] = {}
-            }
-            if (!propertyIndex[propertyKey][value]) {
-              propertyIndex[propertyKey][value] = []
-            }
-            propertyIndex[propertyKey][value].push(objectId)
           }
         }
         return true
@@ -127,19 +115,59 @@ function createFilteringDataStore() {
         viewerInstance: markRaw(viewer),
         rootObject: rootObject ? markRaw(rootObject) : null,
         objectMap: markRaw(objectMap),
-        propertyMap,
-        propertyIndex: markRaw(propertyIndex)
+        propertyMap
+        // _propertyIndexCache will be built on-demand
       }
     }
+  }
+
+  /**
+   * Build property index on-demand for a specific property key
+   */
+  const buildPropertyIndex = (
+    dataSource: DataSource,
+    propertyKey: string
+  ): Record<string, string[]> => {
+    // Check if already cached
+    if (!dataSource._propertyIndexCache) {
+      dataSource._propertyIndexCache = {}
+    }
+
+    if (dataSource._propertyIndexCache[propertyKey]) {
+      return dataSource._propertyIndexCache[propertyKey]
+    }
+
+    // Build index for this property
+    const propertyIndex: Record<string, string[]> = {}
+
+    for (const [objectId, speckleObject] of Object.entries(dataSource.objectMap)) {
+      const props = extractNestedProperties(speckleObject as SpeckleObject)
+
+      for (const p of props) {
+        if (p.concatenatedPath === propertyKey) {
+          const value = String(p.value)
+
+          if (!propertyIndex[value]) {
+            propertyIndex[value] = []
+          }
+          propertyIndex[value].push(objectId)
+        }
+      }
+    }
+
+    // Cache the result
+    dataSource._propertyIndexCache[propertyKey] = propertyIndex
+    return propertyIndex
   }
 
   const queryObjects = (criteria: QueryCriteria): string[] => {
     const matchingIds: string[] = []
 
     for (const dataSource of dataSources.value) {
-      const propertyIndex = dataSource.propertyIndex[criteria.propertyKey]
+      // Build index on-demand for this specific property
+      const propertyIndex = buildPropertyIndex(dataSource, criteria.propertyKey)
 
-      if (!propertyIndex) {
+      if (!propertyIndex || Object.keys(propertyIndex).length === 0) {
         continue
       }
 
@@ -201,47 +229,60 @@ function createFilteringDataStore() {
     return matchingIds
   }
 
+  // Cascades the intersected object ids from the previous slice to the current slice
   const computeSliceIntersections = () => {
     if (dataSlices.value.length < 1) return
 
-    if (dataSlices.value.length === 1) {
-      dataSlices.value[0]!.intersectedObjectIds = [...dataSlices.value[0]!.objectIds]
-      return
-    }
+    // First slice gets all its objects
+    dataSlices.value[0]!.intersectedObjectIds = [...dataSlices.value[0]!.objectIds]
 
-    let intersection = new Set(dataSlices.value[0]!.objectIds)
-
+    // Each subsequent slice intersects with the previous slice
     for (let i = 1; i < dataSlices.value.length; i++) {
-      const currentSliceIds = new Set(dataSlices.value[i]!.objectIds)
-      intersection = new Set([...intersection].filter((id) => currentSliceIds.has(id)))
-    }
-
-    const intersectionArray = Array.from(intersection)
-
-    for (const slice of dataSlices.value) {
-      slice.intersectedObjectIds = intersectionArray
+      const prevSlice = dataSlices.value[i - 1]!
+      const currentSlice = dataSlices.value[i]!
+      currentSlice.intersectedObjectIds = currentSlice.objectIds.filter((id) =>
+        prevSlice.intersectedObjectIds!.includes(id)
+      )
     }
   }
 
   const pushOrReplaceSlice = (dataSlice: DataSlice) => {
-    const existingIndex = dataSlices.value.findIndex(
-      (slice) => slice.id === dataSlice.id
+    const sliceByWidgetIdIndex = dataSlices.value.findIndex(
+      (slice) => slice.widgetId === dataSlice.widgetId
     )
-    if (existingIndex === -1) {
+    if (sliceByWidgetIdIndex === -1) {
+      // If it's not present, push
       dataSlices.value.push(dataSlice)
     } else {
-      dataSlices.value[existingIndex] = dataSlice
+      // If it's the same name, toggle off (remove slice)
+      if (dataSlices.value[sliceByWidgetIdIndex]!.name === dataSlice.name) {
+        popSlice(dataSlice)
+        return
+      } else {
+        // Replace slice if it's a new slice coming from an existing widget
+        dataSlices.value[sliceByWidgetIdIndex] = dataSlice
+      }
     }
 
     computeSliceIntersections()
   }
 
-  const popSlice = (dataSlice: DataSlice) => {
-    const existingIndex = dataSlices.value.findIndex(
-      (slice) => slice.id === dataSlice.id
+  const replaceExistingSlice = (dataSlice: DataSlice) => {
+    const sliceByWidgetIdIndex = dataSlices.value.findIndex(
+      (slice) => slice.widgetId === dataSlice.widgetId
     )
-    if (existingIndex !== -1) {
-      dataSlices.value.splice(existingIndex, 1)
+    if (sliceByWidgetIdIndex !== -1) {
+      dataSlices.value[sliceByWidgetIdIndex] = dataSlice
+      computeSliceIntersections()
+    }
+  }
+
+  const popSlice = (dataSlice: DataSlice) => {
+    const sliceByWidgetIdIndex = dataSlices.value.findIndex(
+      (slice) => slice.widgetId === dataSlice.widgetId
+    )
+    if (sliceByWidgetIdIndex !== -1) {
+      dataSlices.value.splice(sliceByWidgetIdIndex, 1)
       computeSliceIntersections()
     }
   }
@@ -250,6 +291,7 @@ function createFilteringDataStore() {
     if (dataSlices.value.length === 0) return []
 
     if (currentFilterLogic.value === FilterLogic.Any) {
+      // Union: combine all objects from all slices
       const allObjectIds = new Set<string>()
       for (const slice of dataSlices.value) {
         if (slice.objectIds && Array.isArray(slice.objectIds)) {
@@ -262,6 +304,7 @@ function createFilteringDataStore() {
       }
       return Array.from(allObjectIds)
     } else {
+      // Intersection: use cascading intersections from last slice
       const lastSlice = dataSlices.value[dataSlices.value.length - 1]
       return lastSlice?.intersectedObjectIds || []
     }
@@ -272,6 +315,14 @@ function createFilteringDataStore() {
     dataSlices.value = []
   }
 
+  const clearPropertyIndexCache = () => {
+    for (const dataSource of dataSources.value) {
+      if (dataSource._propertyIndexCache) {
+        dataSource._propertyIndexCache = {}
+      }
+    }
+  }
+
   const setFilterLogic = (logic: FilterLogic) => {
     currentFilterLogic.value = logic
   }
@@ -280,9 +331,12 @@ function createFilteringDataStore() {
     populateDataStore,
     queryObjects,
     pushOrReplaceSlice,
+    replaceExistingSlice,
     popSlice,
+    computeSliceIntersections,
     finalObjectIds,
     clearDataOnRouteLeave,
+    clearPropertyIndexCache,
     setFilterLogic,
     currentFilterLogic,
     dataSlices
@@ -363,9 +417,12 @@ export function useFilterUtilities(
         withWatchersDisabled(() => {
           const filteringExtension = instance.getExtension(FilteringExtension)
           if (newObjectIds.length > 0) {
-            filteringExtension.isolateObjects(newObjectIds, 'utilities', true, true)
-            filters.hiddenObjectIds.value = []
-            filters.isolatedObjectIds.value = newObjectIds
+            filteringExtension.isolateObjects(
+              newObjectIds,
+              'property-filters',
+              true,
+              true
+            )
           } else {
             // Preserve color filter when clearing isolation
             const currentColorFilterId = filters.activeColorFilterId.value
@@ -388,9 +445,6 @@ export function useFilterUtilities(
               filteringExtension.setColorFilter(activeColorFilter)
               filters.activeColorFilterId.value = currentColorFilterId
             }
-
-            filters.isolatedObjectIds.value = []
-            filters.hiddenObjectIds.value = []
           }
         })
       },
@@ -409,7 +463,7 @@ export function useFilterUtilities(
       ...objectIds
     ])
     const filteringExtension = viewer.instance.getExtension(FilteringExtension)
-    filteringExtension.isolateObjects(objectIds, 'utilities', true, true)
+    filteringExtension.isolateObjects(objectIds, 'manual-isolation', true, true)
   }
 
   const unIsolateObjects = (objectIds: string[]) => {
@@ -418,7 +472,7 @@ export function useFilterUtilities(
       objectIds
     )
     const filteringExtension = viewer.instance.getExtension(FilteringExtension)
-    filteringExtension.unIsolateObjects(objectIds, 'utilities', true, true)
+    filteringExtension.unIsolateObjects(objectIds, 'manual-isolation', true, true)
   }
 
   const hideObjects = (
@@ -432,13 +486,13 @@ export function useFilterUtilities(
       ...objectIds
     ])
     const filteringExtension = viewer.instance.getExtension(FilteringExtension)
-    filteringExtension.hideObjects(objectIds, 'utilities', false, false)
+    filteringExtension.hideObjects(objectIds, 'manual-hiding', false, false)
   }
 
   const showObjects = (objectIds: string[]) => {
     filters.hiddenObjectIds.value = difference(filters.hiddenObjectIds.value, objectIds)
     const filteringExtension = viewer.instance.getExtension(FilteringExtension)
-    filteringExtension.showObjects(objectIds, 'utilities', false)
+    filteringExtension.showObjects(objectIds, 'manual-hiding', false)
   }
 
   /**
@@ -597,11 +651,11 @@ export function useFilterUtilities(
    * Updates data store slices based on current filter state
    */
   const updateDataStoreSlices = () => {
-    // Clear existing filter slices
-    const existingSlices = dataStore.dataSlices.value.filter((slice) =>
-      slice.id.startsWith('filter-')
+    // Clear existing filter slices manually to avoid widgetId lookup issues
+    dataStore.dataSlices.value = dataStore.dataSlices.value.filter(
+      (slice) => !slice.id.startsWith('filter-')
     )
-    existingSlices.forEach((slice) => dataStore.popSlice(slice))
+    dataStore.computeSliceIntersections()
 
     // Create new slices for active filters
     filters.propertyFilters.value.forEach((filter) => {
@@ -620,6 +674,7 @@ export function useFilterUtilities(
 
         const slice: DataSlice = {
           id: `filter-${filter.id}`,
+          widgetId: filter.id,
           name: `${getPropertyName(filter.filter.key)} ${getConditionLabel(
             filter.condition
           )} (${filter.numericRange.min.toFixed(2)} - ${filter.numericRange.max.toFixed(
@@ -640,6 +695,7 @@ export function useFilterUtilities(
 
         const slice: DataSlice = {
           id: `filter-${filter.id}`,
+          widgetId: filter.id,
           name: `${getPropertyName(filter.filter.key)} ${
             filter.condition === StringFilterCondition.Is ? 'is' : 'is not'
           } ${filter.selectedValues.join(', ')}`,
@@ -683,15 +739,24 @@ export function useFilterUtilities(
 
   const resetFilters = () => {
     // Clear all filter state
-    filters.hiddenObjectIds.value = []
-    filters.isolatedObjectIds.value = []
     filters.propertyFilters.value = []
     filters.selectedObjects.value = []
     filters.activeColorFilterId.value = null
 
-    // Clear all viewer filters including colors
+    // Clear all filter slices - this will make finalObjectIds = [] and trigger watch
+    const nonFilterSlices = dataStore.dataSlices.value.filter(
+      (slice) => !slice.id.startsWith('filter-')
+    )
+    dataStore.dataSlices.value = nonFilterSlices
+
+    // Only compute intersections if there are slices remaining
+    if (nonFilterSlices.length > 0) {
+      dataStore.computeSliceIntersections()
+    }
+
+    // The watch should handle filteringExtension.resetFilters() when finalObjectIds becomes []
+    // But also clear color filters explicitly since they're handled separately
     const filteringExtension = viewer.instance.getExtension(FilteringExtension)
-    filteringExtension.resetFilters()
     filteringExtension.removeColorFilter()
   }
 

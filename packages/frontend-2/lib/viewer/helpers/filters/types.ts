@@ -46,10 +46,6 @@ export const getConditionLabel = (condition: FilterCondition): string => {
   return CONDITION_CONFIG[condition]?.label || 'is'
 }
 
-export type FilterConditionLabel = {
-  [key in FilterCondition]: string
-}
-
 export enum FilterLogic {
   All = 'all',
   Any = 'any'
@@ -118,6 +114,7 @@ export type PropertyInfoBase = {
 
 export type DataSlice = {
   id: string
+  widgetId: string // Links to filter/widget component
   name: string
   objectIds: string[]
   intersectedObjectIds?: string[]
@@ -137,7 +134,8 @@ export type DataSource = {
   rootObject: unknown | null // Marked as raw in Vue, using unknown instead of any
   objectMap: Record<string, unknown> // Marked as raw in Vue, using unknown instead of any
   propertyMap: Record<string, PropertyInfoBase>
-  propertyIndex: Record<string, Record<string, string[]>> // Property index structure
+  // Lazy property index - built on-demand during filtering
+  _propertyIndexCache?: Record<string, Record<string, string[]>>
 }
 
 export type ResourceInfo = {
@@ -149,18 +147,6 @@ export type CreateFilterParams = {
   filter: PropertyInfo
   id: string
   availableValues: string[]
-}
-
-// Helper type for numeric range updates
-export type NumericRangeUpdate = {
-  min: number
-  max: number
-}
-
-// Helper type for condition selection events
-export type ConditionSelectionEvent = {
-  value: FilterCondition
-  label: string
 }
 
 // Helper type for filter logic selection events
