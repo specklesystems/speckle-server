@@ -48,6 +48,7 @@ const props = defineProps<{
 
 const {
   toggleActiveFilterValue,
+  updateActiveFilterValues,
   isActiveFilterValueSelected,
   getFilterValueColor,
   getAvailableFilterValues
@@ -77,18 +78,11 @@ const selectAll = (selected: boolean) => {
 
   const allAvailableValues = getAvailableFilterValues(props.filter.filter)
   if (selected) {
-    // Select all available values that aren't already selected
-    allAvailableValues.forEach((value) => {
-      if (!props.filter.selectedValues.includes(value)) {
-        toggleActiveFilterValue(props.filter.id, value)
-      }
-    })
+    // Select all available values in one batch operation
+    updateActiveFilterValues(props.filter.id, allAvailableValues)
   } else {
-    // Deselect all currently selected values
-    const selectedValuesCopy = [...props.filter.selectedValues]
-    selectedValuesCopy.forEach((value) => {
-      toggleActiveFilterValue(props.filter.id, value)
-    })
+    // Deselect all - set to empty array in one operation
+    updateActiveFilterValues(props.filter.id, [])
   }
 }
 

@@ -10,7 +10,7 @@
       :model-value="filterLogicOptions.find((opt) => opt.value === modelValue)"
       :items="filterLogicOptions"
       by="value"
-      @update:model-value="$emit('update:modelValue', $event)"
+      @update:model-value="handleLogicChange"
     >
       <template #something-selected="{ value }">
         <span class="text-foreground font-medium text-body-2xs">
@@ -27,6 +27,7 @@
 <script setup lang="ts">
 import { FilterLogic } from '~/lib/viewer/helpers/filters/types'
 import { FormSelectBase } from '@speckle/ui-components'
+import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 
 defineProps<{
   modelValue: FilterLogic
@@ -34,8 +35,21 @@ defineProps<{
 
 defineEmits(['update:modelValue'])
 
+const { setFilterLogicAndUpdate } = useFilterUtilities()
+
 const filterLogicOptions = ref([
   { value: FilterLogic.All, label: 'Match all rules' },
   { value: FilterLogic.Any, label: 'Match any rule' }
 ])
+
+const handleLogicChange = (
+  option:
+    | { value: FilterLogic; label: string }
+    | { value: FilterLogic; label: string }[]
+    | undefined
+) => {
+  if (option && !Array.isArray(option)) {
+    setFilterLogicAndUpdate(option.value)
+  }
+}
 </script>

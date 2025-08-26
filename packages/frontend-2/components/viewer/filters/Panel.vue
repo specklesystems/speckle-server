@@ -28,7 +28,6 @@
     <ViewerFiltersLogicSelector
       v-if="propertyFilters.length > 0"
       v-model="filterLogic"
-      @update:model-value="handleFilterLogicChange"
     />
 
     <div class="h-full flex flex-col select-none">
@@ -68,10 +67,7 @@ import {
   useInjectedViewerInterfaceState,
   useInjectedViewer
 } from '~~/lib/viewer/composables/setup'
-import type {
-  PropertySelectOption,
-  FilterLogicOption
-} from '~/lib/viewer/helpers/filters/types'
+import type { PropertySelectOption } from '~/lib/viewer/helpers/filters/types'
 import { FilterLogic } from '~/lib/viewer/helpers/filters/types'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { X, Plus } from 'lucide-vue-next'
@@ -82,8 +78,7 @@ const {
   filters: { propertyFilters },
   getRelevantFilters,
   addActiveFilter,
-  resetFilters,
-  setFilterLogic
+  resetFilters
 } = useFilterUtilities()
 
 const {
@@ -173,13 +168,4 @@ const selectProperty = (propertyKey: string) => {
     value: propertyKey
   })
 }
-
-const handleFilterLogicChange = (logicOption: FilterLogicOption) => {
-  filterLogic.value = logicOption.value
-}
-
-// Watch for filter logic changes
-watch(filterLogic, (newLogic) => {
-  setFilterLogic(newLogic)
-})
 </script>

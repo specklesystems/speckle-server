@@ -217,10 +217,15 @@ function createFilteringDataStore() {
           }
         }
       } else if (criteria.condition === StringFilterCondition.IsNot) {
-        const excludeValues = new Set(criteria.values)
-        for (const [value, objectIds] of Object.entries(propertyIndex)) {
-          if (!excludeValues.has(value)) {
-            matchingIds.push(...objectIds)
+        // If no values selected, "is not" should return no objects
+        if (criteria.values.length === 0) {
+          // Return empty array - nothing matches "is not" with no exclusions
+        } else {
+          const excludeValues = new Set(criteria.values)
+          for (const [value, objectIds] of Object.entries(propertyIndex)) {
+            if (!excludeValues.has(value)) {
+              matchingIds.push(...objectIds)
+            }
           }
         }
       }
@@ -410,9 +415,13 @@ export function useFilterUtilities(
     watch(
       dataStore.finalObjectIds,
       (newObjectIds, oldObjectIds) => {
-        if (preventFilterWatchers) return
+        if (preventFilterWatchers) {
+          return
+        }
 
-        if (arraysEqual(newObjectIds, oldObjectIds || [])) return
+        if (arraysEqual(newObjectIds, oldObjectIds || [])) {
+          return
+        }
 
         withWatchersDisabled(() => {
           const filteringExtension = instance.getExtension(FilteringExtension)
@@ -524,13 +533,13 @@ export function useFilterUtilities(
    * Creates a properly typed FilterData object from PropertyInfo
    */
   const createFilterData = (params: CreateFilterParams): FilterData => {
-    const { filter, id, availableValues } = params
+    const { filter, id } = params
 
     if (isNumericPropertyInfo(filter)) {
       return {
         id,
-        isApplied: false,
-        selectedValues: [...availableValues],
+        isApplied: true,
+        selectedValues: [],
         condition: NumericFilterCondition.IsEqualTo,
         type: FilterType.Numeric,
         filter: filter as NumericPropertyInfo,
@@ -542,8 +551,8 @@ export function useFilterUtilities(
     } else {
       return {
         id,
-        isApplied: false,
-        selectedValues: [...availableValues],
+        isApplied: true,
+        selectedValues: [],
         condition: StringFilterCondition.Is,
         type: FilterType.String,
         filter: filter as StringPropertyInfo,
@@ -571,6 +580,7 @@ export function useFilterUtilities(
       const filterData = createFilterData({ filter, id, availableValues })
       filters.propertyFilters.value.push(filterData)
 
+      updateDataStoreSlices()
       return id
     }
   }
@@ -579,6 +589,7 @@ export function useFilterUtilities(
    * Removes an active filter by ID
    */
   const removeActiveFilter = (filterId: string) => {
+    const instance = viewer.instance
     const index = filters.propertyFilters.value.findIndex((f) => f.id === filterId)
     if (index !== -1) {
       // If this filter was applying colors, remove the color filter
@@ -589,6 +600,12 @@ export function useFilterUtilities(
 
       // Update viewer to reflect filter removal
       updateDataStoreSlices()
+
+      // If this was the last filter, explicitly reset the viewer
+      if (filters.propertyFilters.value.length === 0) {
+        const filteringExtension = instance.getExtension(FilteringExtension)
+        filteringExtension.resetFilters()
+      }
     }
   }
 
@@ -642,9 +659,16 @@ export function useFilterUtilities(
       if (!filter.isApplied) {
         filter.isApplied = true
       }
-
       updateDataStoreSlices()
     }
+  }
+
+  /**
+   * Sets filter logic and updates slices
+   */
+  const setFilterLogicAndUpdate = (logic: FilterLogic) => {
+    dataStore.setFilterLogic(logic)
+    updateDataStoreSlices()
   }
 
   /**
@@ -659,8 +683,6 @@ export function useFilterUtilities(
 
     // Create new slices for active filters
     filters.propertyFilters.value.forEach((filter) => {
-      if (!filter.filter) return
-
       // Handle numeric filters
       if (isNumericFilter(filter) && filter.isApplied) {
         const queryCriteria: QueryCriteria = {
@@ -743,7 +765,7 @@ export function useFilterUtilities(
     filters.selectedObjects.value = []
     filters.activeColorFilterId.value = null
 
-    // Clear all filter slices - this will make finalObjectIds = [] and trigger watch
+    // Clear all filter slices
     const nonFilterSlices = dataStore.dataSlices.value.filter(
       (slice) => !slice.id.startsWith('filter-')
     )
@@ -754,9 +776,9 @@ export function useFilterUtilities(
       dataStore.computeSliceIntersections()
     }
 
-    // The watch should handle filteringExtension.resetFilters() when finalObjectIds becomes []
-    // But also clear color filters explicitly since they're handled separately
+    // Explicitly reset viewer - don't rely on watch since it might skip
     const filteringExtension = viewer.instance.getExtension(FilteringExtension)
+    filteringExtension.resetFilters()
     filteringExtension.removeColorFilter()
   }
 
@@ -1117,6 +1139,8 @@ export function useFilterUtilities(
     toggleFilterApplied,
     updateActiveFilterValues,
     updateFilterCondition,
+    updateDataStoreSlices,
+    setFilterLogicAndUpdate,
     toggleActiveFilterValue,
     isActiveFilterValueSelected,
     getAppliedFilters,

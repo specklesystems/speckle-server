@@ -20,6 +20,14 @@
     </div>
     <div class="flex items-center">
       <FormButton
+        v-tippy="filter.isApplied ? 'Disable filter' : 'Enable filter'"
+        color="subtle"
+        size="sm"
+        hide-text
+        :icon-right="filter.isApplied ? EyeOff : Eye"
+        @click.stop="toggleVisibility"
+      />
+      <FormButton
         v-tippy="'Toggle coloring for this property'"
         :color="isColoringActive ? 'primary' : 'subtle'"
         size="sm"
@@ -40,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { X, PaintBucket, Hash, CaseLower } from 'lucide-vue-next'
+import { X, PaintBucket, Hash, CaseLower, Eye, EyeOff } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
 import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 import type { FilterData } from '~/lib/viewer/helpers/filters/types'
@@ -52,8 +60,13 @@ const props = defineProps<{
 
 const collapsed = defineModel<boolean>('collapsed', { required: true })
 
-const { removeActiveFilter, toggleColorFilter, getPropertyName, filters } =
-  useFilterUtilities()
+const {
+  removeActiveFilter,
+  toggleColorFilter,
+  toggleFilterApplied,
+  getPropertyName,
+  filters
+} = useFilterUtilities()
 
 const isColoringActive = computed(() => {
   return filters.activeColorFilterId.value === props.filter.id
@@ -61,6 +74,10 @@ const isColoringActive = computed(() => {
 
 const removeFilter = () => {
   removeActiveFilter(props.filter.id)
+}
+
+const toggleVisibility = () => {
+  toggleFilterApplied(props.filter.id)
 }
 
 const toggleColors = () => {
