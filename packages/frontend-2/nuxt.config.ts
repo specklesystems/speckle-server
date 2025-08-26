@@ -27,6 +27,8 @@ const hydrationMismatchReportingEnabled = ['1', 'true', true, 1].includes(
   HYDRATION_MISMATCH_REPORTING
 )
 
+const external = ['ioredis', 'crypto', 'jsdom']
+
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
   ...(buildSourceMaps ? { sourcemap: true } : {}),
@@ -104,9 +106,13 @@ export default defineNuxtConfig({
         : {})
     },
 
+    ssr: {
+      external
+    },
+
     optimizeDeps: {
       // Should only be ran on serverside anyway. W/o this it tries to transpile it unsuccessfully
-      exclude: ['jsdom']
+      exclude: external
     },
 
     vue: {
@@ -247,7 +253,10 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    compressPublicAssets: true
+    compressPublicAssets: true,
+    externals: {
+      external
+    }
   },
 
   build: {
@@ -268,8 +277,7 @@ export default defineNuxtConfig({
       'graphql',
       /^graphql\/.+/,
       'graphql/language/printer',
-      'graphql/utilities/getOperationAST',
-      'ioredis' // TODO: Doesn't fully work yet
+      'graphql/utilities/getOperationAST'
     ]
   },
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
