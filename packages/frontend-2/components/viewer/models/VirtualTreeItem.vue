@@ -19,6 +19,7 @@
 
         <ViewerExpansionTriangle
           v-if="item.hasChildren"
+          class="h-8"
           :is-expanded="item.isExpanded"
           :class="getItemOpacityClass()"
           @click="toggleExpansion()"

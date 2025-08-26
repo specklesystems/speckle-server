@@ -37,11 +37,12 @@
         v-if="propertyFilters.length > 0"
         class="flex-1 overflow-y-scroll simple-scrollbar"
       >
-        <div class="space-y-3 p-3">
+        <div class="flex flex-col gap-3 p-3">
           <ViewerFiltersFilterCard
             v-for="filter in propertyFilters"
             :key="filter.id"
             :filter="filter"
+            collapsed
             @select-condition="(val) => handleConditionSelect(filter.id, val)"
           />
         </div>

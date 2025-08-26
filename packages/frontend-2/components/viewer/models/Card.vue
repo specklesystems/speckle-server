@@ -14,6 +14,7 @@
         @keydown.enter="selectObject"
       >
         <ViewerExpansionTriangle
+          class="h-8"
           :is-expanded="isExpanded"
           @click="emit('toggle-expansion')"
         />
