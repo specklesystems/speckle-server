@@ -5,6 +5,7 @@ import type {
   UpsertDashboardRecord
 } from '@/modules/dashboards/domain/operations'
 import type { Dashboard } from '@/modules/dashboards/domain/types'
+import { DashboardNotFoundError } from '@/modules/dashboards/errors/dashboards'
 import type { Collection } from '@/modules/shared/helpers/dbHelper'
 import {
   decodeIsoDateCursor,
@@ -52,7 +53,7 @@ export const updateDashboardFactory =
     const dashboard = await deps.getDashboard({ id })
 
     if (!dashboard) {
-      throw new Error('Not found!')
+      throw new DashboardNotFoundError()
     }
 
     const nextDashboard: Dashboard = {
@@ -74,7 +75,7 @@ export const getDashboardFactory =
     const dashboard = await deps.getDashboard({ id })
 
     if (!dashboard) {
-      throw new Error('Not found!')
+      throw new DashboardNotFoundError()
     }
 
     return dashboard

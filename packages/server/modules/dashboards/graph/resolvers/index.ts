@@ -15,6 +15,12 @@ import {
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { toLimitedWorkspace } from '@/modules/workspaces/domain/logic'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
+import { getFeatureFlags } from '@speckle/shared/environment'
+import { DashboardsModuleDisabledError } from '@/modules/dashboards/errors/dashboards'
+
+const { FF_WORKSPACES_MODULE_ENABLED, FF_DASHBOARDS_MODULE_ENABLED } = getFeatureFlags()
+
+const isEnabled = FF_WORKSPACES_MODULE_ENABLED && FF_DASHBOARDS_MODULE_ENABLED
 
 const resolvers: Resolvers = {
   Query: {
@@ -111,4 +117,27 @@ const resolvers: Resolvers = {
   }
 }
 
-export default resolvers
+const disabledResolvers: Resolvers = {
+  Query: {
+    dashboard: async () => {
+      throw new DashboardsModuleDisabledError()
+    }
+  },
+  Mutation: {
+    dashboardMutations: async () => {
+      throw new DashboardsModuleDisabledError()
+    }
+  },
+  Project: {
+    dashboards: async () => {
+      throw new DashboardsModuleDisabledError()
+    }
+  },
+  Workspace: {
+    dashboards: async () => {
+      throw new DashboardsModuleDisabledError()
+    }
+  }
+}
+
+export default isEnabled ? resolvers : disabledResolvers

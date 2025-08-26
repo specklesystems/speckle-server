@@ -71,6 +71,8 @@ featureFlags:
   backgroundJobsEnabled: false
   ## @param featureFlags.accIntegrationEnabled Enables the ability to import data from ACC
   accIntegrationEnabled: false
+  ## @param featureFlags.dashboardsModuleEnabled Enables the ability to create and manage dashboards
+  dashboardsModuleEnabled: false
   ## @param featureFlags.rhinoFileImporterEnabled Enables the dedicated Rhino based file importer. This is not part of the deployment.
   rhinoFileImporterEnabled: false
   ## @param featureFlags.savedViewsEnabled Enables the ability to create and manage saved views

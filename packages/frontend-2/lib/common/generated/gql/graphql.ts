@@ -1084,6 +1084,65 @@ export type CurrencyBasedPrices = {
   usd: WorkspacePaidPlanPrices;
 };
 
+export type Dashboard = {
+  __typename?: 'Dashboard';
+  createdAt: Scalars['DateTime']['output'];
+  createdBy?: Maybe<LimitedUser>;
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  /** If null, this is a new dashboard and should be initialized by the client */
+  state?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+  workspace: LimitedWorkspace;
+};
+
+export type DashboardCollection = {
+  __typename?: 'DashboardCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<Dashboard>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type DashboardCreateInput = {
+  name: Scalars['String']['input'];
+};
+
+export type DashboardMutations = {
+  __typename?: 'DashboardMutations';
+  create: Dashboard;
+  createToken: Scalars['String']['output'];
+  delete: Scalars['Boolean']['output'];
+  update: Dashboard;
+};
+
+
+export type DashboardMutationsCreateArgs = {
+  input: DashboardCreateInput;
+  workspace: WorkspaceIdentifier;
+};
+
+
+export type DashboardMutationsCreateTokenArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type DashboardMutationsDeleteArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type DashboardMutationsUpdateArgs = {
+  input: DashboardUpdateInput;
+};
+
+export type DashboardUpdateInput = {
+  id: Scalars['String']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+  projectIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  state?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type DeleteAccSyncItemInput = {
   id: Scalars['ID']['input'];
   projectId: Scalars['String']['input'];
@@ -1756,6 +1815,7 @@ export type Mutation = {
    * @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.moveToModel instead.
    */
   commitsMove: Scalars['Boolean']['output'];
+  dashboardMutations: DashboardMutations;
   fileUploadMutations: FileUploadMutations;
   /**
    * Delete a pending invite
@@ -2332,6 +2392,7 @@ export type Project = {
   /** All comment threads in this project */
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime']['output'];
+  dashboards: DashboardCollection;
   description?: Maybe<Scalars['String']['output']>;
   /** Public project-level configuration for embedded viewer */
   embedOptions: ProjectEmbedOptions;
@@ -2437,6 +2498,13 @@ export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<ProjectCommentsFilter>;
   limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type ProjectDashboardsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<ProjectDashboardsFilter>;
+  limit?: Scalars['Int']['input'];
 };
 
 
@@ -2750,6 +2818,10 @@ export type ProjectCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   visibility?: InputMaybe<ProjectVisibility>;
+};
+
+export type ProjectDashboardsFilter = {
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ProjectEmbedOptions = {
@@ -3160,6 +3232,7 @@ export type Query = {
    * @deprecated Use Project/Version/Model 'commentThreads' fields instead
    */
   comments?: Maybe<CommentCollection>;
+  dashboard: Dashboard;
   /**
    * All of the discoverable streams of the server
    * @deprecated Part of the old API surface and will be removed in the future.
@@ -3298,6 +3371,11 @@ export type QueryCommentsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   resources?: InputMaybe<Array<InputMaybe<ResourceIdentifierInput>>>;
   streamId: Scalars['String']['input'];
+};
+
+
+export type QueryDashboardArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -5091,6 +5169,7 @@ export type Workspace = {
   /** Info about the workspace creation state */
   creationState?: Maybe<WorkspaceCreationState>;
   customerPortalUrl?: Maybe<Scalars['String']['output']>;
+  dashboards: DashboardCollection;
   /**
    * The default role workspace members will receive for workspace projects.
    * @deprecated Always the reviewer role. Will be removed in the future.
@@ -5155,6 +5234,13 @@ export type WorkspaceAdminWorkspacesJoinRequestsArgs = {
 export type WorkspaceAutomateFunctionsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<AutomateFunctionsFilter>;
+  limit?: Scalars['Int']['input'];
+};
+
+
+export type WorkspaceDashboardsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<WorkspaceDashboardsFilter>;
   limit?: Scalars['Int']['input'];
 };
 
@@ -5253,6 +5339,10 @@ export type WorkspaceCreationStateInput = {
   workspaceId: Scalars['ID']['input'];
 };
 
+export type WorkspaceDashboardsFilter = {
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type WorkspaceDismissInput = {
   workspaceId: Scalars['ID']['input'];
 };
@@ -5284,6 +5374,11 @@ export const WorkspaceFeatureName = {
 } as const;
 
 export type WorkspaceFeatureName = typeof WorkspaceFeatureName[keyof typeof WorkspaceFeatureName];
+export type WorkspaceIdentifier = {
+  id?: InputMaybe<Scalars['String']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type WorkspaceInviteCreateInput = {
   /** Either this or userId must be filled */
   email?: InputMaybe<Scalars['String']['input']>;
@@ -8663,6 +8758,9 @@ export type AllObjectTypes = {
   CountOnlyCollection: CountOnlyCollection,
   CreateEmbedTokenReturn: CreateEmbedTokenReturn,
   CurrencyBasedPrices: CurrencyBasedPrices,
+  Dashboard: Dashboard,
+  DashboardCollection: DashboardCollection,
+  DashboardMutations: DashboardMutations,
   EmbedToken: EmbedToken,
   EmbedTokenCollection: EmbedTokenCollection,
   ExtendedViewerResources: ExtendedViewerResources,
@@ -9176,6 +9274,26 @@ export type CurrencyBasedPricesFieldArgs = {
   gbp: {},
   usd: {},
 }
+export type DashboardFieldArgs = {
+  createdAt: {},
+  createdBy: {},
+  id: {},
+  name: {},
+  state: {},
+  updatedAt: {},
+  workspace: {},
+}
+export type DashboardCollectionFieldArgs = {
+  cursor: {},
+  items: {},
+  totalCount: {},
+}
+export type DashboardMutationsFieldArgs = {
+  create: DashboardMutationsCreateArgs,
+  createToken: DashboardMutationsCreateTokenArgs,
+  delete: DashboardMutationsDeleteArgs,
+  update: DashboardMutationsUpdateArgs,
+}
 export type EmbedTokenFieldArgs = {
   createdAt: {},
   lastUsed: {},
@@ -9387,6 +9505,7 @@ export type MutationFieldArgs = {
   commitUpdate: MutationCommitUpdateArgs,
   commitsDelete: MutationCommitsDeleteArgs,
   commitsMove: MutationCommitsMoveArgs,
+  dashboardMutations: {},
   fileUploadMutations: {},
   inviteDelete: MutationInviteDeleteArgs,
   inviteResend: MutationInviteResendArgs,
@@ -9498,6 +9617,7 @@ export type ProjectFieldArgs = {
   comment: ProjectCommentArgs,
   commentThreads: ProjectCommentThreadsArgs,
   createdAt: {},
+  dashboards: ProjectDashboardsArgs,
   description: {},
   embedOptions: {},
   embedTokens: ProjectEmbedTokensArgs,
@@ -9703,6 +9823,7 @@ export type QueryFieldArgs = {
   automateValidateAuthCode: QueryAutomateValidateAuthCodeArgs,
   comment: QueryCommentArgs,
   comments: QueryCommentsArgs,
+  dashboard: QueryDashboardArgs,
   discoverableStreams: QueryDiscoverableStreamsArgs,
   otherUser: QueryOtherUserArgs,
   project: QueryProjectArgs,
@@ -10202,6 +10323,7 @@ export type WorkspaceFieldArgs = {
   createdAt: {},
   creationState: {},
   customerPortalUrl: {},
+  dashboards: WorkspaceDashboardsArgs,
   defaultProjectRole: {},
   defaultRegion: {},
   defaultSeatType: {},
@@ -10452,6 +10574,9 @@ export type AllObjectFieldArgTypes = {
   CountOnlyCollection: CountOnlyCollectionFieldArgs,
   CreateEmbedTokenReturn: CreateEmbedTokenReturnFieldArgs,
   CurrencyBasedPrices: CurrencyBasedPricesFieldArgs,
+  Dashboard: DashboardFieldArgs,
+  DashboardCollection: DashboardCollectionFieldArgs,
+  DashboardMutations: DashboardMutationsFieldArgs,
   EmbedToken: EmbedTokenFieldArgs,
   EmbedTokenCollection: EmbedTokenCollectionFieldArgs,
   ExtendedViewerResources: ExtendedViewerResourcesFieldArgs,
