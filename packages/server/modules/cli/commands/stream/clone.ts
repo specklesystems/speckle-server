@@ -1,4 +1,3 @@
-import { db } from '@/db/knex'
 import { cliLogger as logger } from '@/observability/logging'
 import {
   getBatchedStreamCommentsFactory,
@@ -23,8 +22,9 @@ import {
 } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { cloneStreamFactory } from '@/modules/core/services/streams/clone'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import type { CommandModule } from 'yargs'
+import { asOperation } from '@/modules/shared/command'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 
 const command: CommandModule<
   unknown,
@@ -45,31 +45,41 @@ const command: CommandModule<
   handler: async (argv) => {
     const { sourceStreamId, targetUserId } = argv
 
-    const getUser = getUserFactory({ db })
-    const cloneStream = cloneStreamFactory({
-      getStream: getStreamFactory({ db }),
-      getUser,
-      newProjectDb: db,
-      sourceProjectDb: db,
-      createStream: createStreamFactory({ db }),
-      insertCommits: insertCommitsFactory({ db }),
-      getBatchedStreamCommits: getBatchedStreamCommitsFactory({ db }),
-      insertStreamCommits: insertStreamCommitsFactory({ db }),
-      getBatchedStreamBranches: getBatchedStreamBranchesFactory({ db }),
-      insertBranches: insertBranchesFactory({ db }),
-      getBatchedBranchCommits: getBatchedBranchCommitsFactory({ db }),
-      insertBranchCommits: insertBranchCommitsFactory({ db }),
-      getBatchedStreamComments: getBatchedStreamCommentsFactory({ db }),
-      insertComments: insertCommentsFactory({ db }),
-      getCommentLinks: getCommentLinksFactory({ db }),
-      insertCommentLinks: insertCommentLinksFactory({ db }),
-      emitEvent: getEventBus().emit
-    })
-
     logger.info(
       `Cloning stream ${sourceStreamId} into the account of user ${targetUserId}...`
     )
-    const { id } = await cloneStream(targetUserId, sourceStreamId)
+    const { id } = await asOperation(
+      ({ emit, db }) => {
+        const cloneStream = cloneStreamFactory({
+          getStream: getStreamFactory({ db }),
+          getUser: getUserFactory({ db }),
+          newProjectDb: db,
+          sourceProjectDb: db,
+          createStream: createStreamFactory({ db }),
+          insertCommits: insertCommitsFactory({ db }),
+          getBatchedStreamCommits: getBatchedStreamCommitsFactory({ db }),
+          insertStreamCommits: insertStreamCommitsFactory({ db }),
+          getBatchedStreamBranches: getBatchedStreamBranchesFactory({ db }),
+          insertBranches: insertBranchesFactory({ db }),
+          getBatchedBranchCommits: getBatchedBranchCommitsFactory({ db }),
+          insertBranchCommits: insertBranchCommitsFactory({ db }),
+          getBatchedStreamComments: getBatchedStreamCommentsFactory({ db }),
+          insertComments: insertCommentsFactory({ db }),
+          getCommentLinks: getCommentLinksFactory({ db }),
+          insertCommentLinks: insertCommentLinksFactory({ db }),
+          emitEvent: emit,
+          storeProjectRole: storeProjectRoleFactory({ db })
+        })
+
+        return cloneStream(targetUserId, sourceStreamId)
+      },
+      {
+        transaction: true,
+        name: 'Clone Stream',
+        logger
+      }
+    )
+
     logger.info('Cloning successful! New stream ID: ' + id)
   }
 }

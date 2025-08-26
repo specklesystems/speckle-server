@@ -128,6 +128,19 @@ export type StoreStream = (
   }>
 ) => Promise<Stream>
 
+export type CreateProjectRequiredArgs = {
+  id: string
+  name: string
+  description: string
+  createdAt: Date
+  updatedAt: Date
+  allowPublicComments: boolean
+}
+
+export type SaveStream = (
+  input: CreateProjectRequiredArgs & (StreamCreateInput | ProjectCreateArgs)
+) => Promise<Stream>
+
 export type SetStreamFavorited = (params: {
   streamId: string
   userId: string

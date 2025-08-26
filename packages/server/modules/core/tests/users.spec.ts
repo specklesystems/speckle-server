@@ -132,6 +132,7 @@ import {
 import { authorizeResolver } from '@/modules/shared'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
 import { queryAllProjectsFactory } from '@/modules/core/services/projects'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -229,6 +230,7 @@ const createStream = legacyCreateStreamFactory({
       getUsers
     }),
     createStream: createStreamFactory({ db }),
+    storeProjectRole: storeProjectRoleFactory({ db }),
     createBranch: createBranchFactory({ db }),
     emitEvent: getEventBus().emit
   })
