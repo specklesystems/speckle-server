@@ -17,6 +17,7 @@ import type { GendoAIRenderGraphQLReturn } from '@/modules/gendo/helpers/types/g
 import type { ServerRegionItemGraphQLReturn } from '@/modules/multiregion/helpers/graphTypes';
 import type { AccSyncItemGraphQLReturn, AccSyncItemMutationsGraphQLReturn } from '@/modules/acc/helpers/graphTypes';
 import type { SavedViewGraphQLReturn, SavedViewGroupGraphQLReturn, SavedViewPermissionChecksGraphQLReturn, SavedViewGroupPermissionChecksGraphQLReturn, ExtendedViewerResourcesGraphQLReturn } from '@/modules/viewer/helpers/graphTypes';
+import type { DashboardGraphQLReturn, DashboardMutationsGraphQLReturn } from '@/modules/dashboards/helpers/graphTypes';
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type Maybe<T> = T | null;
@@ -1110,6 +1111,65 @@ export type CurrencyBasedPrices = {
   usd: WorkspacePaidPlanPrices;
 };
 
+export type Dashboard = {
+  __typename?: 'Dashboard';
+  createdAt: Scalars['DateTime']['output'];
+  createdBy?: Maybe<LimitedUser>;
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  /** If null, this is a new dashboard and should be initialized by the client */
+  state?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+  workspace: LimitedWorkspace;
+};
+
+export type DashboardCollection = {
+  __typename?: 'DashboardCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<Dashboard>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type DashboardCreateInput = {
+  name: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
+export type DashboardMutations = {
+  __typename?: 'DashboardMutations';
+  create: Dashboard;
+  createToken: Scalars['String']['output'];
+  delete: Scalars['Boolean']['output'];
+  update: Dashboard;
+};
+
+
+export type DashboardMutationsCreateArgs = {
+  input: DashboardCreateInput;
+};
+
+
+export type DashboardMutationsCreateTokenArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type DashboardMutationsDeleteArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type DashboardMutationsUpdateArgs = {
+  input: DashboardUpdateInput;
+};
+
+export type DashboardUpdateInput = {
+  id: Scalars['String']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+  projectIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  state?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type DeleteAccSyncItemInput = {
   id: Scalars['ID']['input'];
   projectId: Scalars['String']['input'];
@@ -1782,6 +1842,7 @@ export type Mutation = {
    * @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.moveToModel instead.
    */
   commitsMove: Scalars['Boolean']['output'];
+  dashboardMutations: DashboardMutations;
   fileUploadMutations: FileUploadMutations;
   /**
    * Delete a pending invite
@@ -2358,6 +2419,7 @@ export type Project = {
   /** All comment threads in this project */
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime']['output'];
+  dashboards: DashboardCollection;
   description?: Maybe<Scalars['String']['output']>;
   /** Public project-level configuration for embedded viewer */
   embedOptions: ProjectEmbedOptions;
@@ -2463,6 +2525,13 @@ export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<ProjectCommentsFilter>;
   limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type ProjectDashboardsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<ProjectDashboardsFilter>;
+  limit?: Scalars['Int']['input'];
 };
 
 
@@ -2776,6 +2845,10 @@ export type ProjectCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   visibility?: InputMaybe<ProjectVisibility>;
+};
+
+export type ProjectDashboardsFilter = {
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ProjectEmbedOptions = {
@@ -3186,6 +3259,7 @@ export type Query = {
    * @deprecated Use Project/Version/Model 'commentThreads' fields instead
    */
   comments?: Maybe<CommentCollection>;
+  dashboard: Dashboard;
   /**
    * All of the discoverable streams of the server
    * @deprecated Part of the old API surface and will be removed in the future.
@@ -3324,6 +3398,11 @@ export type QueryCommentsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   resources?: InputMaybe<Array<InputMaybe<ResourceIdentifierInput>>>;
   streamId: Scalars['String']['input'];
+};
+
+
+export type QueryDashboardArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -5117,6 +5196,7 @@ export type Workspace = {
   /** Info about the workspace creation state */
   creationState?: Maybe<WorkspaceCreationState>;
   customerPortalUrl?: Maybe<Scalars['String']['output']>;
+  dashboards: DashboardCollection;
   /**
    * The default role workspace members will receive for workspace projects.
    * @deprecated Always the reviewer role. Will be removed in the future.
@@ -5181,6 +5261,13 @@ export type WorkspaceAdminWorkspacesJoinRequestsArgs = {
 export type WorkspaceAutomateFunctionsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<AutomateFunctionsFilter>;
+  limit?: Scalars['Int']['input'];
+};
+
+
+export type WorkspaceDashboardsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<WorkspaceDashboardsFilter>;
   limit?: Scalars['Int']['input'];
 };
 
@@ -5277,6 +5364,10 @@ export type WorkspaceCreationStateInput = {
   completed: Scalars['Boolean']['input'];
   state: Scalars['JSONObject']['input'];
   workspaceId: Scalars['ID']['input'];
+};
+
+export type WorkspaceDashboardsFilter = {
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type WorkspaceDismissInput = {
@@ -5991,6 +6082,11 @@ export type ResolversTypes = {
   CreateVersionInput: CreateVersionInput;
   Currency: Currency;
   CurrencyBasedPrices: ResolverTypeWrapper<Omit<CurrencyBasedPrices, 'gbp' | 'usd'> & { gbp: ResolversTypes['WorkspacePaidPlanPrices'], usd: ResolversTypes['WorkspacePaidPlanPrices'] }>;
+  Dashboard: ResolverTypeWrapper<DashboardGraphQLReturn>;
+  DashboardCollection: ResolverTypeWrapper<Omit<DashboardCollection, 'items'> & { items: Array<ResolversTypes['Dashboard']> }>;
+  DashboardCreateInput: DashboardCreateInput;
+  DashboardMutations: ResolverTypeWrapper<DashboardMutationsGraphQLReturn>;
+  DashboardUpdateInput: DashboardUpdateInput;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
   DeleteAccSyncItemInput: DeleteAccSyncItemInput;
   DeleteModelInput: DeleteModelInput;
@@ -6075,6 +6171,7 @@ export type ResolversTypes = {
   ProjectCommentsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectCommentsUpdatedMessage, 'comment'> & { comment?: Maybe<ResolversTypes['Comment']> }>;
   ProjectCommentsUpdatedMessageType: ProjectCommentsUpdatedMessageType;
   ProjectCreateInput: ProjectCreateInput;
+  ProjectDashboardsFilter: ProjectDashboardsFilter;
   ProjectEmbedOptions: ResolverTypeWrapper<ProjectEmbedOptions>;
   ProjectFileImportUpdatedMessage: ResolverTypeWrapper<Omit<ProjectFileImportUpdatedMessage, 'upload'> & { upload: ResolversTypes['FileUpload'] }>;
   ProjectFileImportUpdatedMessageType: ProjectFileImportUpdatedMessageType;
@@ -6219,6 +6316,7 @@ export type ResolversTypes = {
   WorkspaceCreateInput: WorkspaceCreateInput;
   WorkspaceCreationState: ResolverTypeWrapper<WorkspaceCreationState>;
   WorkspaceCreationStateInput: WorkspaceCreationStateInput;
+  WorkspaceDashboardsFilter: WorkspaceDashboardsFilter;
   WorkspaceDismissInput: WorkspaceDismissInput;
   WorkspaceDomain: ResolverTypeWrapper<WorkspaceDomain>;
   WorkspaceDomainDeleteInput: WorkspaceDomainDeleteInput;
@@ -6370,6 +6468,11 @@ export type ResolversParentTypes = {
   CreateUserEmailInput: CreateUserEmailInput;
   CreateVersionInput: CreateVersionInput;
   CurrencyBasedPrices: Omit<CurrencyBasedPrices, 'gbp' | 'usd'> & { gbp: ResolversParentTypes['WorkspacePaidPlanPrices'], usd: ResolversParentTypes['WorkspacePaidPlanPrices'] };
+  Dashboard: DashboardGraphQLReturn;
+  DashboardCollection: Omit<DashboardCollection, 'items'> & { items: Array<ResolversParentTypes['Dashboard']> };
+  DashboardCreateInput: DashboardCreateInput;
+  DashboardMutations: DashboardMutationsGraphQLReturn;
+  DashboardUpdateInput: DashboardUpdateInput;
   DateTime: Scalars['DateTime']['output'];
   DeleteAccSyncItemInput: DeleteAccSyncItemInput;
   DeleteModelInput: DeleteModelInput;
@@ -6448,6 +6551,7 @@ export type ResolversParentTypes = {
   ProjectCommentsFilter: ProjectCommentsFilter;
   ProjectCommentsUpdatedMessage: Omit<ProjectCommentsUpdatedMessage, 'comment'> & { comment?: Maybe<ResolversParentTypes['Comment']> };
   ProjectCreateInput: ProjectCreateInput;
+  ProjectDashboardsFilter: ProjectDashboardsFilter;
   ProjectEmbedOptions: ProjectEmbedOptions;
   ProjectFileImportUpdatedMessage: Omit<ProjectFileImportUpdatedMessage, 'upload'> & { upload: ResolversParentTypes['FileUpload'] };
   ProjectInviteCreateInput: ProjectInviteCreateInput;
@@ -6575,6 +6679,7 @@ export type ResolversParentTypes = {
   WorkspaceCreateInput: WorkspaceCreateInput;
   WorkspaceCreationState: WorkspaceCreationState;
   WorkspaceCreationStateInput: WorkspaceCreationStateInput;
+  WorkspaceDashboardsFilter: WorkspaceDashboardsFilter;
   WorkspaceDismissInput: WorkspaceDismissInput;
   WorkspaceDomain: WorkspaceDomain;
   WorkspaceDomainDeleteInput: WorkspaceDomainDeleteInput;
@@ -7130,6 +7235,32 @@ export type CurrencyBasedPricesResolvers<ContextType = GraphQLContext, ParentTyp
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type DashboardResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Dashboard'] = ResolversParentTypes['Dashboard']> = {
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  createdBy?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  state?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  workspace?: Resolver<ResolversTypes['LimitedWorkspace'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type DashboardCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DashboardCollection'] = ResolversParentTypes['DashboardCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['Dashboard']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type DashboardMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DashboardMutations'] = ResolversParentTypes['DashboardMutations']> = {
+  create?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<DashboardMutationsCreateArgs, 'input'>>;
+  createToken?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<DashboardMutationsCreateTokenArgs, 'id'>>;
+  delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<DashboardMutationsDeleteArgs, 'id'>>;
+  update?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<DashboardMutationsUpdateArgs, 'input'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['DateTime'], any> {
   name: 'DateTime';
 }
@@ -7395,6 +7526,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   commitUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitUpdateArgs, 'commit'>>;
   commitsDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitsDeleteArgs, 'input'>>;
   commitsMove?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitsMoveArgs, 'input'>>;
+  dashboardMutations?: Resolver<ResolversTypes['DashboardMutations'], ParentType, ContextType>;
   fileUploadMutations?: Resolver<ResolversTypes['FileUploadMutations'], ParentType, ContextType>;
   inviteDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteDeleteArgs, 'inviteId'>>;
   inviteResend?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteResendArgs, 'inviteId'>>;
@@ -7523,6 +7655,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   comment?: Resolver<Maybe<ResolversTypes['Comment']>, ParentType, ContextType, RequireFields<ProjectCommentArgs, 'id'>>;
   commentThreads?: Resolver<ResolversTypes['ProjectCommentCollection'], ParentType, ContextType, Partial<ProjectCommentThreadsArgs>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  dashboards?: Resolver<ResolversTypes['DashboardCollection'], ParentType, ContextType, RequireFields<ProjectDashboardsArgs, 'limit'>>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   embedOptions?: Resolver<ResolversTypes['ProjectEmbedOptions'], ParentType, ContextType>;
   embedTokens?: Resolver<ResolversTypes['EmbedTokenCollection'], ParentType, ContextType, Partial<ProjectEmbedTokensArgs>>;
@@ -7776,6 +7909,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   automateValidateAuthCode?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<QueryAutomateValidateAuthCodeArgs, 'payload'>>;
   comment?: Resolver<Maybe<ResolversTypes['Comment']>, ParentType, ContextType, RequireFields<QueryCommentArgs, 'id' | 'streamId'>>;
   comments?: Resolver<Maybe<ResolversTypes['CommentCollection']>, ParentType, ContextType, RequireFields<QueryCommentsArgs, 'archived' | 'limit' | 'streamId'>>;
+  dashboard?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<QueryDashboardArgs, 'id'>>;
   discoverableStreams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<QueryDiscoverableStreamsArgs, 'limit'>>;
   otherUser?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType, RequireFields<QueryOtherUserArgs, 'id'>>;
   project?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<QueryProjectArgs, 'id'>>;
@@ -8397,6 +8531,7 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   creationState?: Resolver<Maybe<ResolversTypes['WorkspaceCreationState']>, ParentType, ContextType>;
   customerPortalUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dashboards?: Resolver<ResolversTypes['DashboardCollection'], ParentType, ContextType, RequireFields<WorkspaceDashboardsArgs, 'limit'>>;
   defaultProjectRole?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   defaultRegion?: Resolver<Maybe<ResolversTypes['ServerRegionItem']>, ParentType, ContextType>;
   defaultSeatType?: Resolver<ResolversTypes['WorkspaceSeatType'], ParentType, ContextType>;
@@ -8712,6 +8847,9 @@ export type Resolvers<ContextType = GraphQLContext> = {
   CountOnlyCollection?: CountOnlyCollectionResolvers<ContextType>;
   CreateEmbedTokenReturn?: CreateEmbedTokenReturnResolvers<ContextType>;
   CurrencyBasedPrices?: CurrencyBasedPricesResolvers<ContextType>;
+  Dashboard?: DashboardResolvers<ContextType>;
+  DashboardCollection?: DashboardCollectionResolvers<ContextType>;
+  DashboardMutations?: DashboardMutationsResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
   EmbedToken?: EmbedTokenResolvers<ContextType>;
   EmbedTokenCollection?: EmbedTokenCollectionResolvers<ContextType>;
