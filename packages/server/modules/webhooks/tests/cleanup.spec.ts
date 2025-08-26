@@ -57,6 +57,7 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import { createTestUser } from '@/test/authHelper'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 
 const WEBHOOKS_CONFIG_TABLE = 'webhooks_config'
 const WEBHOOKS_EVENTS_TABLE = 'webhooks_events'
@@ -141,6 +142,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
+    storeProjectRole: storeProjectRoleFactory({ db }),
     emitEvent: getEventBus().emit
   })
 })

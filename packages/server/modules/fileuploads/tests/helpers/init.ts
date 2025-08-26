@@ -1,5 +1,6 @@
 import { db } from '@/db/knex'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   createStreamFactory,
@@ -162,6 +163,7 @@ export const initUploadTestEnvironment = () => {
       }),
       createStream: createStreamFactory({ db }),
       createBranch,
+      storeProjectRole: storeProjectRoleFactory({ db }),
       emitEvent: getEventBus().emit
     })
   })

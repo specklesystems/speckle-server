@@ -80,6 +80,7 @@ import {
 import { authorizeResolver } from '@/modules/shared'
 import { omit } from 'lodash-es'
 import { createTestUser, type BasicTestUser } from '@/test/authHelper'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -161,6 +162,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
+    storeProjectRole: storeProjectRoleFactory({ db }),
     emitEvent: getEventBus().emit
   })
 })

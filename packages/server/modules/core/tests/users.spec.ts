@@ -140,6 +140,7 @@ import type {
   DeleteUser,
   UpdateUserAndNotify
 } from '@/modules/core/domain/users/operations'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -237,6 +238,7 @@ const createStream = legacyCreateStreamFactory({
       getUsers
     }),
     createStream: createStreamFactory({ db }),
+    storeProjectRole: storeProjectRoleFactory({ db }),
     createBranch: createBranchFactory({ db }),
     emitEvent: getEventBus().emit
   })

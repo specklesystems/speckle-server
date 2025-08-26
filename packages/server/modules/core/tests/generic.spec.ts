@@ -62,6 +62,7 @@ import {
 import type { Request } from 'express'
 import type { BasicTestUser } from '@/test/authHelper'
 import { createTestUser } from '@/test/authHelper'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 
 const buildFinalizeProjectInvite = () =>
   finalizeResourceInviteFactory({
@@ -138,6 +139,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
+    storeProjectRole: storeProjectRoleFactory({ db }),
     emitEvent: getEventBus().emit
   })
 })

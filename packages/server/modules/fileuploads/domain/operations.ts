@@ -75,10 +75,6 @@ export type UpdateFileStatus = (params: {
   convertedCommitId: string | null
 }) => Promise<FileUploadRecord>
 
-export type UpdateFileStatusForProjectFactory = (params: {
-  projectId: string
-}) => Promise<UpdateFileStatus>
-
 export type UploadedFile = UploadResult & { userId: string }
 
 export type FileImportMessage = Pick<

@@ -23,7 +23,7 @@ import type { SmartTextEditorValueSchema } from '@/modules/core/services/richTex
 import type {
   CloneStream,
   GetStream,
-  StoreStream
+  SaveStream
 } from '@/modules/core/domain/streams/operations'
 import type {
   GetBatchedStreamObjects,
@@ -44,14 +44,13 @@ import type { GetUser } from '@/modules/core/domain/users/operations'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
+import cryptoRandomString from 'crypto-random-string'
+import { Roles } from '@speckle/shared'
+import type { StoreProjectRole } from '@/modules/core/domain/projects/operations'
 
 type CloneStreamInitialState = {
   user: UserWithOptionalRole<UserRecord>
   targetStream: StreamWithOptionalRole
-  /**
-   * Target streeam DB TRX for ensuring everything gets properly inserted
-   */
-  trx: Knex.Transaction
 }
 
 /**
@@ -108,30 +107,35 @@ const prepareStateFactory =
       throw new StreamCloneError('Clone target user not found')
     }
 
-    const trx = await deps.newProjectDb.transaction()
-
-    return { user, targetStream, trx }
+    return { user, targetStream }
   }
 
 type CloneStreamEntityDeps = {
-  createStream: StoreStream
+  createStream: SaveStream
+  storeProjectRole: StoreProjectRole
 }
 
 const cloneStreamEntityFactory =
   (deps: CloneStreamEntityDeps) => async (state: CloneStreamInitialState) => {
-    const { targetStream, user, trx } = state
+    const { targetStream, user } = state
 
-    const newStream = await deps.createStream(
-      {
-        name: targetStream.name,
-        description: targetStream.description,
-        visibility: mapDbToGqlProjectVisibility(targetStream.visibility)
-      },
-      {
-        ownerId: user.id,
-        trx
-      }
-    )
+    const now = new Date()
+
+    const newStream = await deps.createStream({
+      name: targetStream.name,
+      description: targetStream.description || '',
+      visibility: mapDbToGqlProjectVisibility(targetStream.visibility),
+      id: cryptoRandomString({ length: 10 }),
+      createdAt: now,
+      updatedAt: now,
+      allowPublicComments: false
+    })
+
+    await deps.storeProjectRole({
+      userId: user.id,
+      projectId: newStream.id,
+      role: Roles.Stream.Owner
+    })
 
     return newStream
   }
@@ -146,17 +150,14 @@ const cloneStreamObjectsOldFactory =
     const { getNewDate } = incrementingDateGenerator()
 
     for await (const objectsBatch of deps.getBatchedStreamObjects(
-      state.targetStream.id,
-      {
-        trx: state.trx
-      }
+      state.targetStream.id
     )) {
       objectsBatch.forEach((o) => {
         o.streamId = newStreamId
         o.createdAt = getNewDate()
       })
 
-      await deps.insertObjects(objectsBatch, { trx: state.trx })
+      await deps.insertObjects(objectsBatch)
     }
   }
 
@@ -189,7 +190,7 @@ const cloneStreamObjectsFactory =
       `,
         { newStreamId, targetStreamId: state.targetStream.id }
       )
-      .transacting(state.trx)
+
     await query
 
     // TODO: closure
@@ -206,10 +207,7 @@ const cloneCommitsFactory =
     const commitIdMap = new Map<string, string>()
 
     for await (const commitsBatch of deps.getBatchedStreamCommits(
-      state.targetStream.id,
-      {
-        trx: state.trx
-      }
+      state.targetStream.id
     )) {
       commitsBatch.forEach((c) => {
         const oldId = c.id
@@ -219,7 +217,7 @@ const cloneCommitsFactory =
         commitIdMap.set(oldId, c.id)
       })
 
-      await deps.insertCommits(commitsBatch, { trx: state.trx })
+      await deps.insertCommits(commitsBatch)
     }
 
     return commitIdMap
@@ -247,8 +245,7 @@ const createStreamCommitReferencesFactory =
             streamId: newStreamId,
             commitId: id
           })
-        ),
-        { trx: state.trx }
+        )
       )
     }
   }
@@ -266,10 +263,7 @@ const cloneBranchesFactory =
 
     const { getNewDate } = incrementingDateGenerator()
     for await (const branchesBatch of deps.getBatchedStreamBranches(
-      state.targetStream.id,
-      {
-        trx: state.trx
-      }
+      state.targetStream.id
     )) {
       branchesBatch.forEach((b) => {
         const oldId = b.id
@@ -284,7 +278,7 @@ const cloneBranchesFactory =
         branchIdMap.set(oldId, b.id)
       })
 
-      await deps.insertBranches(branchesBatch, { trx: state.trx })
+      await deps.insertBranches(branchesBatch)
     }
 
     return branchIdMap
@@ -304,9 +298,7 @@ const createBranchCommitReferencesFactory =
   ) => {
     const oldBranchIds = [...branchIdMap.keys()]
 
-    for await (const branchCommits of deps.getBatchedBranchCommits(oldBranchIds, {
-      trx: state.trx
-    })) {
+    for await (const branchCommits of deps.getBatchedBranchCommits(oldBranchIds)) {
       const newBranchCommits = branchCommits.map((bc): BranchCommitRecord => {
         const newBranchId = branchIdMap.get(bc.branchId)
         const newCommitId = commitIdMap.get(bc.commitId)
@@ -324,7 +316,7 @@ const createBranchCommitReferencesFactory =
         return { commitId: newCommitId, branchId: newBranchId }
       })
 
-      await deps.insertBranchCommits(newBranchCommits, { trx: state.trx })
+      await deps.insertBranchCommits(newBranchCommits)
     }
   }
 
@@ -379,8 +371,7 @@ const cloneCommentsFactory =
         state.targetStream.id,
         {
           withoutParentCommentOnly: threads,
-          withParentCommentOnly: !threads,
-          trx: state.trx
+          withParentCommentOnly: !threads
         }
       )) {
         const finalBatch = commentsBatch.map((c): InsertCommentPayload => {
@@ -414,7 +405,7 @@ const cloneCommentsFactory =
           }
         })
 
-        await deps.insertComments(finalBatch, { trx: state.trx })
+        await deps.insertComments(finalBatch)
       }
     }
 
@@ -437,8 +428,7 @@ const cloneCommentLinksFactory =
     commentIdMap: Map<string, string>
   ) => {
     const {
-      targetStream: { id: oldStreamId },
-      trx
+      targetStream: { id: oldStreamId }
     } = state
     const { commitIdMap, newStreamId } = coreResult
 
@@ -447,7 +437,7 @@ const cloneCommentLinksFactory =
     const batchedOldCommentIds = chunk(oldCommentIds, batchSize)
 
     for (const oldCommentIdBatch of batchedOldCommentIds) {
-      const commentLinks = await deps.getCommentLinks(oldCommentIdBatch, { trx })
+      const commentLinks = await deps.getCommentLinks(oldCommentIdBatch)
       commentLinks.forEach((cl) => {
         const newCommentId = commentIdMap.get(cl.commentId)
         if (!newCommentId) {
@@ -480,7 +470,7 @@ const cloneCommentLinksFactory =
         }
       })
 
-      await deps.insertCommentLinks(commentLinks, { trx })
+      await deps.insertCommentLinks(commentLinks)
     }
   }
 
@@ -515,28 +505,21 @@ export const cloneStreamFactory =
   async (userId: string, sourceStreamId: string) => {
     const state = await prepareStateFactory(deps)(userId, sourceStreamId)
 
-    try {
-      // Clone stream/commits/branches/objects
-      const coreCloneResult = await cloneStreamCoreFactory(deps)(state)
-      const { newStream } = coreCloneResult
-      // Clone comments
-      await cloneStreamCommentsFactory(deps)(state, coreCloneResult)
+    // Clone stream/commits/branches/objects
+    const coreCloneResult = await cloneStreamCoreFactory(deps)(state)
+    const { newStream } = coreCloneResult
+    // Clone comments
+    await cloneStreamCommentsFactory(deps)(state, coreCloneResult)
 
-      // Commit transaction
-      await state.trx.commit()
+    // Emit event
+    await deps.emitEvent({
+      eventName: ProjectEvents.Cloned,
+      payload: {
+        sourceProject: state.targetStream,
+        newProject: newStream,
+        clonerId: userId
+      }
+    })
 
-      // Emit event
-      await deps.emitEvent({
-        eventName: ProjectEvents.Cloned,
-        payload: {
-          sourceProject: state.targetStream,
-          newProject: newStream,
-          clonerId: userId
-        }
-      })
-      return coreCloneResult.newStream
-    } catch (e) {
-      await state.trx.rollback()
-      throw e
-    }
+    return coreCloneResult.newStream
   }

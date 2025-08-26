@@ -131,7 +131,7 @@ export class ObjectLoader2 {
     )
     const children = sortedClosures.map((x) => x[0])
     const total = children.length + 1 // +1 for the root object
-    this.#downloader.initializePool({
+    this.#downloader.initialize({
       results: new AggregateQueue(this.#gathered, this.#cacheWriter),
       total
     })
@@ -147,7 +147,7 @@ export class ObjectLoader2 {
       }
     }
     if (!this.#isRootStored) {
-      await this.#database.saveBatch({ batch: [rootItem] })
+      await this.#database.putAll([rootItem])
       this.#isRootStored = true
     }
   }
