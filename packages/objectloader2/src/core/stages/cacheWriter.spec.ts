@@ -15,13 +15,13 @@ class MockDatabase implements Database {
     return Promise.resolve([])
   }
 
-  saveBatch({ batch }: { batch: Item[] }): Promise<void> {
+  putAll(batch: Item[]): Promise<void> {
     this.savedItems.push(...batch)
     return Promise.resolve()
   }
 
-  disposeAsync(): Promise<void> {
-    return Promise.resolve()
+  dispose(): void {
+    this.savedItems = []
   }
 }
 
@@ -150,7 +150,7 @@ describe('CacheWriter', () => {
   })
 
   it('should process items in batches according to maxCacheWriteSize', async () => {
-    const spy = vi.spyOn(database, 'saveBatch')
+    const spy = vi.spyOn(database, 'putAll')
     const smallBatchOptions: CacheOptions = {
       ...options,
       maxCacheWriteSize: 2, // Set small batch size

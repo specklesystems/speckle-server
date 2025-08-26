@@ -14,6 +14,7 @@ import { createTestUser } from '@/test/authHelper'
 import type { WorkspacePlan } from '@speckle/shared'
 import { PaidWorkspacePlans, PaidWorkspacePlanStatuses } from '@speckle/shared'
 import { expect } from 'chai'
+import { buildTestWorkspacePlan } from '@/modules/gatekeeper/tests/helpers/workspacePlan'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -25,7 +26,6 @@ describe('Module @gatekeeper', () => {
     'Repositories WorkspacePlan',
     () => {
       let user: BasicTestUser
-      let now: Date
       let in5days: Date
       let workspace1: BasicTestWorkspace
       let workspace2: BasicTestWorkspace
@@ -34,7 +34,6 @@ describe('Module @gatekeeper', () => {
       let plan2: WorkspacePlan
 
       before(async () => {
-        now = new Date()
         user = await createTestUser()
         workspace1 = buildBasicTestWorkspace({ ownerId: user.id })
         workspace2 = buildBasicTestWorkspace({ ownerId: user.id })
@@ -43,21 +42,8 @@ describe('Module @gatekeeper', () => {
         await createTestWorkspace(workspace2, user)
         await createTestWorkspace(workspaceWithoutPlan, user)
 
-        plan1 = {
-          workspaceId: workspace1.id,
-          name: PaidWorkspacePlans.Team,
-          createdAt: now,
-          updatedAt: now,
-          status: PaidWorkspacePlanStatuses.Valid
-        }
-
-        plan2 = {
-          workspaceId: workspace2.id,
-          name: PaidWorkspacePlans.Team,
-          createdAt: now,
-          updatedAt: now,
-          status: PaidWorkspacePlanStatuses.Valid
-        }
+        plan1 = buildTestWorkspacePlan({ workspaceId: workspace1.id })
+        plan2 = buildTestWorkspacePlan({ workspaceId: workspace2.id })
 
         await upsertWorkspacePlan({
           workspacePlan: plan1
@@ -86,13 +72,10 @@ describe('Module @gatekeeper', () => {
       describe('upsertWorkspacePlan should return a function, that', () => {
         it('inserts a workspace plan if it does not exist', async () => {
           await upsertWorkspacePlan({
-            workspacePlan: {
+            workspacePlan: buildTestWorkspacePlan({
               workspaceId: workspaceWithoutPlan.id,
-              name: PaidWorkspacePlans.Team,
-              createdAt: now,
-              updatedAt: now,
-              status: PaidWorkspacePlanStatuses.Valid
-            }
+              name: PaidWorkspacePlans.Team
+            })
           })
 
           const result = (
@@ -109,17 +92,38 @@ describe('Module @gatekeeper', () => {
           in5days = new Date()
           in5days.setDate(in5days.getDate() + 7)
 
+          const now = new Date()
+
+          const workspacePlan = buildTestWorkspacePlan({
+            workspaceId: workspace2.id,
+            name: PaidWorkspacePlans.Pro,
+            updatedAt: now
+          })
+
+          await upsertWorkspacePlan({
+            workspacePlan
+          })
+
+          let result = (
+            await getWorkspacePlansByWorkspaceId({
+              workspaceIds: [workspace2.id]
+            })
+          )[workspace2.id]
+
+          expect(result.workspaceId).to.equal(workspace2.id)
+          expect(result.name).to.equal(PaidWorkspacePlans.Pro)
+          expect(result.updatedAt).to.be.deep.eq(now)
+
           await upsertWorkspacePlan({
             workspacePlan: {
-              workspaceId: workspace2.id,
+              ...workspacePlan,
               name: PaidWorkspacePlans.ProUnlimited,
-              createdAt: in5days,
               updatedAt: in5days,
               status: PaidWorkspacePlanStatuses.Canceled
             }
           })
 
-          const result = (
+          result = (
             await getWorkspacePlansByWorkspaceId({
               workspaceIds: [workspace2.id]
             })
