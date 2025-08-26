@@ -31,7 +31,6 @@ export const defineParallelizedNuxtRouteMiddleware = (
 export const useFinalizeParallelMiddlewares = () => {
   const state = useMiddlewareParallelizationState()
   const logger = useLogger()
-  const nuxt = useNuxtApp()
 
   return {
     finalize: async () => {
@@ -45,7 +44,6 @@ export const useFinalizeParallelMiddlewares = () => {
         middlewares
       })
 
-      nuxt._processingMiddleware = true
       try {
         const results = await Promise.all(middlewares.map((m) => m()))
 
@@ -57,7 +55,6 @@ export const useFinalizeParallelMiddlewares = () => {
         }
       } finally {
         state.middlewares.length = 0
-        nuxt._processingMiddleware = false
       }
     }
   }
