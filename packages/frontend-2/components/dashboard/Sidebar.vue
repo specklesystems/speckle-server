@@ -40,7 +40,7 @@
             <div class="flex flex-col gap-y-2 lg:gap-y-4">
               <LayoutSidebarMenuGroup>
                 <NuxtLink
-                  v-if="showProjectsLink"
+                  v-if="showWorkspaceLinks"
                   :to="projectsLink"
                   @click="isOpenMobile = false"
                 >
@@ -49,6 +49,21 @@
                     :active="
                       route.name === 'workspaces-slug' || isActive(projectsRoute)
                     "
+                  >
+                    <template #icon>
+                      <IconProjects class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
+
+                <NuxtLink
+                  v-if="showWorkspaceLinks"
+                  :to="dashboardsRoute(activeWorkspaceSlug)"
+                  @click="isOpenMobile = false"
+                >
+                  <LayoutSidebarMenuGroupItem
+                    label="Dashboards"
+                    :active="isActive(dashboardsRoute(activeWorkspaceSlug))"
                   >
                     <template #icon>
                       <IconProjects class="size-4 text-foreground-2" />
@@ -168,7 +183,8 @@ import {
   connectorsRoute,
   workspaceRoute,
   tutorialsRoute,
-  docsPageUrl
+  docsPageUrl,
+  dashboardsRoute
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -203,7 +219,7 @@ const isOpenMobile = ref(false)
 const showExplainerVideoDialog = ref(false)
 
 const activeWorkspace = computed(() => result.value?.activeUser?.activeWorkspace)
-const showProjectsLink = computed(() => {
+const showWorkspaceLinks = computed(() => {
   return isWorkspacesEnabled.value
     ? activeWorkspace.value
       ? !!activeWorkspace.value?.role
