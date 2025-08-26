@@ -50,8 +50,10 @@ jobs:
             TAGS="$TAGS,${{ inputs.IMAGE_PREFIX }}/speckle-server:latest"
           fi
           echo "TAGS=$TAGS" >> "$GITHUB_OUTPUT"
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Build and push
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         with:
           push: true
           tags: ${{ steps.set-tags.outputs.TAGS }}
@@ -75,8 +77,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Build and push w/ version tag
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         if: ${{ inputs.PUBLISH }}
         with:
           push: true
@@ -84,8 +88,10 @@ jobs:
           file: ./packages/frontend-2/Dockerfile
           build-args: |
             SPECKLE_SERVER_VERSION=${{ inputs.IMAGE_VERSION_TAG }}
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Check frontend-2 build
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         if: ${{ !inputs.PUBLISH }}
         with:
           push: true
@@ -107,8 +113,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Build and push
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         with:
           push: true
           tags: ${{ inputs.IMAGE_PREFIX }}/speckle-preview-service:${{ inputs.IMAGE_VERSION_TAG }}
@@ -129,8 +137,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Build and push
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         with:
           push: true
           tags: ${{ inputs.IMAGE_PREFIX }}/speckle-webhook-service:${{ inputs.IMAGE_VERSION_TAG }}
@@ -151,8 +161,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Build and push
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         with:
           push: true
           tags: ${{ inputs.IMAGE_PREFIX }}/speckle-fileimport-service:${{ inputs.IMAGE_VERSION_TAG }}
@@ -173,8 +185,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Build and push
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         with:
           push: true
           tags: ${{ inputs.IMAGE_PREFIX }}/speckle-ifc-import-service:${{ inputs.IMAGE_VERSION_TAG }}
@@ -195,8 +209,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Build and push
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         with:
           push: true
           tags: ${{ inputs.IMAGE_PREFIX }}/speckle-test-deployment:${{ inputs.IMAGE_VERSION_TAG }}
@@ -217,8 +233,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Build and push
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         with:
           push: true
           tags: ${{ inputs.IMAGE_PREFIX }}/speckle-monitor-deployment:${{ inputs.IMAGE_VERSION_TAG }}
@@ -239,8 +257,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
       - name: Build and push
-        uses: useblacksmith/build-push-action@v1
+        uses: useblacksmith/build-push-action@v2
         with:
           push: true
           tags: ${{ inputs.IMAGE_PREFIX }}/speckle-docker-compose-ingress:${{ inputs.IMAGE_VERSION_TAG }}
@@ -258,7 +278,9 @@ jobs:
       - uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
-      - uses: useblacksmith/build-push-action@v1
+      - name: Setup Docker Builder
+        uses: useblacksmith/setup-docker-builder@v1
+      - uses: useblacksmith/build-push-action@v2
         with:
           setup-only: true
           cache-from: type=registry,ref=${{ inputs.IMAGE_PREFIX }}/speckle-frontend-2:buildcache-sourcemaps
