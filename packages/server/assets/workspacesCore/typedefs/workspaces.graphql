@@ -684,8 +684,20 @@ input AdminUpdateWorkspacePlanInput {
   status: WorkspacePlanStatuses!
 }
 
+enum WorkspaceFeatureFlagName {
+  dashboards
+  accIntegration
+}
+
+input AdminAccessToWorkspaceFeatureInput {
+  workspaceId: ID!
+  featureFlagName: WorkspaceFeatureFlagName!
+}
+
 type AdminMutations {
   updateWorkspacePlan(input: AdminUpdateWorkspacePlanInput!): Boolean!
+  giveAccessToWorkspaceFeature(input: AdminAccessToWorkspaceFeatureInput!): Boolean!
+  removeAccessToWorkspaceFeature(input: AdminAccessToWorkspaceFeatureInput!): Boolean!
 }
 
 extend type ActiveUserMutations {

@@ -140,7 +140,7 @@ const useResetAuthState = (
   const resolveDistinctId = useResolveUserDistinctId()
   const { cbs } = useOnAuthStateChangeState()
   const authToken = useAuthCookie()
-  const logger = useLogger()
+  const { logger } = useSafeLogger()
 
   return async (
     resetOptions?: Partial<{
@@ -174,7 +174,7 @@ const useResetAuthState = (
       // also depend on active user (e.g. Workspace.seatType))
       resetPromise = (async () => {
         if (import.meta.server) {
-          logger?.error('attempting to resetStore from SSR')
+          logger().error('attempting to resetStore from SSR')
         } else {
           await client.resetStore()
         }
@@ -229,7 +229,7 @@ export const useAuthManager = (
   const getMixpanel = useDeferredMixpanel()
   const postAuthRedirect = usePostAuthRedirect()
   const { markLoggedOut } = useJustLoggedOutTracking()
-  const logger = useLogger()
+  const { logger } = useSafeLogger()
 
   /**
    * Invite token, if any
@@ -379,23 +379,8 @@ export const useAuthManager = (
               title: 'Authentication failed',
               description: err.message
             })
-            logger.error({ err }, 'Failed to finalize login with access code')
+            logger().error({ err }, 'Failed to finalize login with access code')
           }
-        }
-      },
-      { immediate: true }
-    )
-  }
-
-  /**
-   * Watch for embed token in query string and save it
-   */
-  const watchEmbedToken = () => {
-    watch(
-      () => embedToken.value,
-      async (newVal, oldVal) => {
-        if (newVal && newVal !== oldVal) {
-          await resetAuthState()
         }
       },
       { immediate: true }
@@ -408,7 +393,6 @@ export const useAuthManager = (
   const watchAuthQueryString = () => {
     watchLoginAccessCode()
     watchEmailVerificationStatus()
-    watchEmbedToken()
   }
 
   /**
