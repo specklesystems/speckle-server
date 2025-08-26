@@ -17,7 +17,7 @@ import type { GendoAIRenderGraphQLReturn } from '@/modules/gendo/helpers/types/g
 import type { ServerRegionItemGraphQLReturn } from '@/modules/multiregion/helpers/graphTypes';
 import type { AccSyncItemGraphQLReturn, AccSyncItemMutationsGraphQLReturn } from '@/modules/acc/helpers/graphTypes';
 import type { SavedViewGraphQLReturn, SavedViewGroupGraphQLReturn, SavedViewPermissionChecksGraphQLReturn, SavedViewGroupPermissionChecksGraphQLReturn, ExtendedViewerResourcesGraphQLReturn } from '@/modules/viewer/helpers/graphTypes';
-import type { DashboardGraphQLReturn, DashboardMutationsGraphQLReturn } from '@/modules/dashboards/helpers/graphTypes';
+import type { DashboardGraphQLReturn, DashboardMutationsGraphQLReturn, DashboardTokenGraphQLReturn } from '@/modules/dashboards/helpers/graphTypes';
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type Maybe<T> = T | null;
@@ -6127,7 +6127,7 @@ export type ResolversTypes = {
   DashboardCollection: ResolverTypeWrapper<Omit<DashboardCollection, 'items'> & { items: Array<ResolversTypes['Dashboard']> }>;
   DashboardCreateInput: DashboardCreateInput;
   DashboardMutations: ResolverTypeWrapper<DashboardMutationsGraphQLReturn>;
-  DashboardToken: ResolverTypeWrapper<Omit<DashboardToken, 'dashboard' | 'projects' | 'user'> & { dashboard: ResolversTypes['Dashboard'], projects: Array<ResolversTypes['Project']>, user?: Maybe<ResolversTypes['LimitedUser']> }>;
+  DashboardToken: ResolverTypeWrapper<DashboardTokenGraphQLReturn>;
   DashboardTokenCollection: ResolverTypeWrapper<Omit<DashboardTokenCollection, 'items'> & { items: Array<ResolversTypes['DashboardToken']> }>;
   DashboardTokenCreateInput: DashboardTokenCreateInput;
   DashboardUpdateInput: DashboardUpdateInput;
@@ -6518,7 +6518,7 @@ export type ResolversParentTypes = {
   DashboardCollection: Omit<DashboardCollection, 'items'> & { items: Array<ResolversParentTypes['Dashboard']> };
   DashboardCreateInput: DashboardCreateInput;
   DashboardMutations: DashboardMutationsGraphQLReturn;
-  DashboardToken: Omit<DashboardToken, 'dashboard' | 'projects' | 'user'> & { dashboard: ResolversParentTypes['Dashboard'], projects: Array<ResolversParentTypes['Project']>, user?: Maybe<ResolversParentTypes['LimitedUser']> };
+  DashboardToken: DashboardTokenGraphQLReturn;
   DashboardTokenCollection: Omit<DashboardTokenCollection, 'items'> & { items: Array<ResolversParentTypes['DashboardToken']> };
   DashboardTokenCreateInput: DashboardTokenCreateInput;
   DashboardUpdateInput: DashboardUpdateInput;
