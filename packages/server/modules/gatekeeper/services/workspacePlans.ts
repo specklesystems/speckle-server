@@ -59,7 +59,14 @@ export const updateWorkspacePlanFactory =
           case 'cancelationScheduled':
           case 'canceled':
           case 'paymentFailed':
-            workspacePlan = { workspaceId, status, name, createdAt, updatedAt }
+            workspacePlan = {
+              workspaceId,
+              status,
+              name,
+              createdAt,
+              updatedAt,
+              featureFlags: previousWorkspacePlan.featureFlags
+            }
             await upsertWorkspacePlan({ workspacePlan })
             break
           default:
@@ -77,7 +84,14 @@ export const updateWorkspacePlanFactory =
           case 'valid':
             if (workspaceSubscription) throw new InvalidWorkspacePlanStatus()
 
-            workspacePlan = { workspaceId, status, name, createdAt, updatedAt }
+            workspacePlan = {
+              workspaceId,
+              status,
+              name,
+              createdAt,
+              updatedAt,
+              featureFlags: previousWorkspacePlan.featureFlags
+            }
             await upsertWorkspacePlan({ workspacePlan })
             break
           case 'cancelationScheduled':

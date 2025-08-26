@@ -6,7 +6,7 @@ import type {
 import type {
   Optional,
   WorkspacePlan,
-  WorkspacePlanFeatures,
+  WorkspaceFeatures,
   WorkspacePlans,
   WorkspacePlanStatuses,
   WorkspaceRoles
@@ -14,7 +14,7 @@ import type {
 
 export type CanWorkspaceAccessFeature = (args: {
   workspaceId: string
-  workspaceFeature: WorkspacePlanFeatures
+  workspaceFeature: WorkspaceFeatures
 }) => Promise<boolean>
 
 export type WorkspaceFeatureAccessFunction = (args: {
