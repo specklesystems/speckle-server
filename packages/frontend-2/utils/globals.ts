@@ -14,6 +14,7 @@ import {
 } from '~/lib/common/helpers/graphql'
 import { checkIfIsInPlaceNavigation } from '~/lib/common/helpers/navigation'
 import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
+import { withParallelization } from '~/lib/core/helpers/middleware'
 
 /**
  * Debugging helper to ensure variables are available in debugging scope
@@ -40,5 +41,6 @@ export {
   ROOT_QUERY,
   ROOT_MUTATION,
   ROOT_SUBSCRIPTION,
-  ViewerEventBusKeys
+  ViewerEventBusKeys,
+  withParallelization
 }
