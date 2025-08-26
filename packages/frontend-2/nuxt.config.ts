@@ -83,7 +83,8 @@ export default defineNuxtConfig({
   },
 
   experimental: {
-    emitRouteChunkError: 'automatic-immediate'
+    emitRouteChunkError: 'automatic-immediate',
+    asyncContext: true // necessary for parallel middlewares
   },
 
   alias: {

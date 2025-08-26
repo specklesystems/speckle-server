@@ -5,7 +5,7 @@ import { useScopedState } from '~/lib/common/composables/scopedState'
 
 const useMiddlewareParallelizationState = () =>
   useScopedState('middleware_parallelization', () => ({
-    middlewares: [] as Promise<NavigationGuardReturn>[]
+    middlewares: [] as Array<() => Promise<NavigationGuardReturn>>
   }))
 
 /**
@@ -13,14 +13,25 @@ const useMiddlewareParallelizationState = () =>
  */
 export const withParallelization = (middleware: RouteMiddleware): RouteMiddleware => {
   return (...args) => {
+    const app = useNuxtApp()
     const { middlewares } = useMiddlewareParallelizationState()
-    middlewares.push(Promise.resolve(middleware(...args)))
+    middlewares.push(async () => app.runWithContext(() => middleware(...args)))
   }
+}
+
+/**
+ * defineParallelizedNuxtRouteMiddleware() w/ parallelization support
+ */
+export const defineParallelizedNuxtRouteMiddleware = (
+  middleware: RouteMiddleware
+): RouteMiddleware => {
+  return withParallelization(middleware)
 }
 
 export const useFinalizeParallelMiddlewares = () => {
   const state = useMiddlewareParallelizationState()
   const logger = useLogger()
+  const nuxt = useNuxtApp()
 
   return {
     finalize: async () => {
@@ -33,10 +44,21 @@ export const useFinalizeParallelMiddlewares = () => {
         count: middlewares.length,
         middlewares
       })
-      const results = await Promise.all(middlewares).finally(() => {
+
+      nuxt._processingMiddleware = true
+      try {
+        const results = await Promise.all(middlewares.map((m) => m()))
+
+        // Report results
+        for (const resultItem of results) {
+          if (!isUndefinedOrVoid(resultItem) && resultItem !== true) {
+            return resultItem
+          }
+        }
+      } finally {
         state.middlewares.length = 0
-      })
-      return results.find((r) => !isUndefinedOrVoid(r) && r !== true)
+        nuxt._processingMiddleware = false
+      }
     }
   }
 }

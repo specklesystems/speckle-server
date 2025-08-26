@@ -67,7 +67,7 @@ const adminPageRgx = /^\/admin\/?/
  * Setting up all kinds of redirects (e.g. for FE1 backwards compatibility)
  */
 
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineParallelizedNuxtRouteMiddleware(async (to) => {
   const logger = useLogger()
   const path = to.path
   const apollo = useApolloClientFromNuxt()

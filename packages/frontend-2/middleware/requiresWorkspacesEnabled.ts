@@ -1,4 +1,4 @@
-export default defineNuxtRouteMiddleware(() => {
+export default defineParallelizedNuxtRouteMiddleware(() => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
   // If workspaces are enabled, continue as normal
