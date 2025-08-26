@@ -158,12 +158,11 @@ export default defineNuxtConfig({
         },
         // Leave imports as is, they're server-side only
         external: ['jsdom', 'crypto']
-      },
-      // TODO: Undo
-      // optionally disable minification for debugging
-      minify: false,
-      // optionally enable sourcemaps for debugging
-      sourcemap: 'inline'
+      }
+      // // optionally disable minification for debugging
+      // minify: false,
+      // // optionally enable sourcemaps for debugging
+      // sourcemap: 'inline'
     }
   },
 

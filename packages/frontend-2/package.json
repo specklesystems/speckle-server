@@ -12,7 +12,7 @@
     "dev:app": "concurrently \"nuxt dev\" \"yarn gqlgen:watch\"",
     "dev": "yarn dev:app",
     "preview": "nuxt preview",
-    "analyze": "nuxt analyze",
+    "analyze": "NODE_OPTIONS=--max-old-space-size=8192 nuxt analyze",
     "lint:js": "eslint .",
     "lint:tsc": "vue-tsc --noEmit",
     "lint:prettier": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --check .",
