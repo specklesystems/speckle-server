@@ -341,6 +341,9 @@ function createFilteringDataStore() {
     const filteringExtension = instance.getExtension(FilteringExtension)
 
     if (objectIds.length > 0) {
+      // Clear existing property-filter isolation first to prevent accumulation
+      filteringExtension.resetFilters()
+
       filteringExtension.isolateObjects(objectIds, 'property-filters', true, true)
     } else {
       // Preserve color filter when clearing isolation
@@ -648,6 +651,7 @@ export function useFilterUtilities(
    * Updates data store slices based on current filter state (optimized)
    */
   const updateDataStoreSlices = () => {
+    // Clear all existing filter slices
     dataStore.dataSlices.value = dataStore.dataSlices.value.filter(
       (slice) => !slice.id.startsWith('filter-')
     )
@@ -716,11 +720,17 @@ export function useFilterUtilities(
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
       const index = filter.selectedValues.indexOf(value)
-      if (index > -1) {
+      const wasSelected = index > -1
+
+      if (wasSelected) {
         filter.selectedValues.splice(index, 1)
       } else {
         filter.selectedValues.push(value)
       }
+
+      // Ensure filter is marked as applied when values are selected
+      filter.isApplied = filter.selectedValues.length > 0
+
       updateDataStoreSlices()
     }
   }
@@ -1004,6 +1014,11 @@ export function useFilterUtilities(
     if (!filter?.filter) return
 
     const filteringExtension = viewer.instance.getExtension(FilteringExtension)
+
+    // Always remove existing color filter first to ensure clean switch
+    filteringExtension.removeColorFilter()
+
+    // Then set the new color filter
     filteringExtension.setColorFilter(filter.filter)
 
     // Update state to track which filter is applying colors
