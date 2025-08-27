@@ -43,7 +43,13 @@ describe('Viewer State helpers', () => {
             isOrthoProjection: false,
             zoom: 1
           },
-          viewMode: 0,
+          viewMode: {
+            mode: 0,
+            edgesColor: 0,
+            edgesEnabled: true,
+            outlineOpacity: 0,
+            edgesWeight: 0
+          },
           sectionBox: null,
           lightConfig: {},
           explodeFactor: 0,
@@ -149,7 +155,13 @@ describe('Viewer State helpers', () => {
             isOrthoProjection: false,
             zoom: 1
           },
-          viewMode: 0,
+          viewMode: {
+            mode: 0,
+            edgesColor: 0,
+            edgesEnabled: true,
+            outlineOpacity: 0,
+            edgesWeight: 0
+          },
           sectionBox: null,
           lightConfig: {},
           explodeFactor: 0,
@@ -202,7 +214,13 @@ describe('Viewer State helpers', () => {
               isOrthoProjection: false,
               zoom: 1
             },
-            viewMode: 0,
+            viewMode: {
+              mode: 0,
+              edgesColor: 0,
+              edgesEnabled: true,
+              outlineOpacity: 0,
+              edgesWeight: 0
+            },
             sectionBox: null,
             lightConfig: {},
             explodeFactor: 0,
