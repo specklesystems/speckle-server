@@ -4,7 +4,10 @@
       <ViewerFiltersFilterHeader v-model:collapsed="collapsed" :filter="filter" />
     </div>
 
-    <div v-if="filter.filter && !collapsed">
+    <div
+      v-if="filter.filter && !collapsed"
+      :class="{ 'opacity-50': !filter.isApplied }"
+    >
       <ViewerFiltersFilterNumeric v-if="isNumericFilter(filter)" :filter="filter" />
       <ViewerFiltersFilterString v-else :filter="filter" />
     </div>

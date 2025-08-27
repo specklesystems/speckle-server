@@ -117,7 +117,7 @@ const selectedCount = computed(() => {
 })
 
 // Virtual list setup
-const itemHeight = 32 // Height of each checkbox item in pixels
+const itemHeight = 28 // Height of each checkbox item in pixels
 const maxHeight = 144 // 36 * 4px (h-36 equivalent)
 
 const containerHeight = computed(() => {

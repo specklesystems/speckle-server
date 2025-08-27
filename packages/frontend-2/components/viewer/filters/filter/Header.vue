@@ -6,7 +6,7 @@
     :class="{ 'cursor-pointer': collapsed }"
     @click="toggleCollapsed"
   >
-    <div class="flex items-center">
+    <div class="flex items-center" :class="{ 'opacity-50': !filter.isApplied }">
       <ViewerExpansionTriangle
         :is-expanded="!collapsed"
         class="h-6"
@@ -18,15 +18,24 @@
         {{ getPropertyName(filter.filter?.key) }}
       </div>
     </div>
-    <div class="flex items-center">
-      <FormButton
-        v-tippy="filter.isApplied ? 'Disable filter' : 'Enable filter'"
-        color="subtle"
-        size="sm"
-        hide-text
-        :icon-right="filter.isApplied ? EyeOff : Eye"
-        @click.stop="toggleVisibility"
-      />
+    <div class="flex items-center gap-0.5">
+      <LayoutMenu
+        v-model:open="showActionsMenu"
+        :items="actionsItems"
+        :menu-id="menuId"
+        :menu-position="HorizontalDirection.Left"
+        @click.stop.prevent
+        @chosen="onActionChosen"
+      >
+        <FormButton
+          color="subtle"
+          hide-text
+          size="sm"
+          :icon-right="Ellipsis"
+          class="!text-foreground-2"
+          @click="showActionsMenu = !showActionsMenu"
+        ></FormButton>
+      </LayoutMenu>
       <FormButton
         v-tippy="'Toggle coloring for this property'"
         :color="isColoringActive ? 'primary' : 'subtle'"
@@ -35,21 +44,18 @@
         :icon-right="PaintBucket"
         @click.stop="toggleColors"
       />
-      <FormButton
-        v-tippy="'Remove filter'"
-        color="subtle"
-        size="sm"
-        hide-text
-        :icon-right="X"
-        @click.stop="removeFilter"
-      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { X, PaintBucket, Hash, CaseLower, Eye, EyeOff } from 'lucide-vue-next'
-import { FormButton } from '@speckle/ui-components'
+import { PaintBucket, Hash, CaseLower, Ellipsis } from 'lucide-vue-next'
+import {
+  FormButton,
+  LayoutMenu,
+  HorizontalDirection,
+  type LayoutMenuItem
+} from '@speckle/ui-components'
 import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 import type { FilterData } from '~/lib/viewer/helpers/filters/types'
 import { FilterType } from '~/lib/viewer/helpers/filters/types'
@@ -59,6 +65,8 @@ const props = defineProps<{
 }>()
 
 const collapsed = defineModel<boolean>('collapsed', { required: true })
+const showActionsMenu = ref(false)
+const menuId = useId()
 
 const {
   removeActiveFilter,
@@ -87,6 +95,34 @@ const toggleColors = () => {
 const toggleCollapsed = () => {
   if (collapsed.value) {
     collapsed.value = false
+  }
+}
+
+const actionsItems = computed<LayoutMenuItem[][]>(() => [
+  [
+    {
+      title: props.filter.isApplied ? 'Disable filter' : 'Enable filter',
+      id: 'toggle-visibility'
+    }
+  ],
+  [
+    {
+      title: 'Remove filter...',
+      id: 'remove-filter'
+    }
+  ]
+])
+
+const onActionChosen = (params: { item: LayoutMenuItem }) => {
+  const { item } = params
+
+  switch (item.id) {
+    case 'toggle-visibility':
+      toggleVisibility()
+      break
+    case 'remove-filter':
+      removeFilter()
+      break
   }
 }
 </script>
