@@ -38,9 +38,9 @@ import { canCreateSavedViewPolicy } from './project/savedViews/canCreate.js'
 import { canUpdateSavedViewPolicy } from './project/savedViews/canUpdate.js'
 import { canUpdateSavedViewGroupPolicy } from './project/savedViews/canUpdateGroup.js'
 import { canReadSavedViewPolicy } from './project/savedViews/canRead.js'
-import { canReadDashboardsPolicy } from './workspace/dashboard/canRead.js'
+import { canListDashboardsPolicy } from './workspace/canListDashboards.js'
 import { canDeleteDashboardPolicy } from './dashboard/canDelete.js'
-import { canEditDashboardsPolicy } from './workspace/dashboard/canEdit.js'
+import { canCreateDashboardsPolicy } from './workspace/canCreateDashboards.js'
 import { canCreateDashboardTokenPolicy } from './dashboard/canCreateToken.js'
 import { canEditDashboardPolicy } from './dashboard/canEdit.js'
 import { canReadDashboardPolicy } from './dashboard/canRead.js'
@@ -105,17 +105,15 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
     canUpdateAccIntegrationSettings: canReadAccIntegrationSettingsPolicy(loaders)
   },
   workspace: {
-    dashboard: {
-      canCreate: canEditDashboardsPolicy(loaders),
-      canList: canReadDashboardsPolicy(loaders)
-    },
     canCreateProject: canCreateWorkspaceProjectPolicy(loaders),
     canInvite: canInviteToWorkspacePolicy(loaders),
     canReceiveProjectsUpdatedMessage:
       canReceiveWorkspaceProjectsUpdatedMessagePolicy(loaders),
     canUseWorkspacePlanFeature: canUseWorkspacePlanFeature(loaders),
     canReadMemberEmail: canReadMemberEmailPolicy(loaders),
-    canCreateWorkspace: canCreateWorkspacePolicy(loaders)
+    canCreateWorkspace: canCreateWorkspacePolicy(loaders),
+    canCreateDashboards: canCreateDashboardsPolicy(loaders),
+    canListDashboards: canListDashboardsPolicy(loaders)
   }
 })
 

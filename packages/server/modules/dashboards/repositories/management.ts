@@ -1,6 +1,7 @@
 import { Dashboards } from '@/modules/dashboards/dbSchema'
 import type {
   CountDashboardRecords,
+  DeleteDashboardRecord,
   GetDashboardRecord,
   ListDashboardRecords,
   UpsertDashboardRecord
@@ -17,9 +18,15 @@ export const getDashboardRecordFactory =
   async ({ id }) => {
     return await tables
       .dashboards(deps.db)
-      .select()
+      .select('*')
       .where(Dashboards.col.id, id)
       .first()
+  }
+
+export const deleteDashboardRecordFactory =
+  (deps: { db: Knex }): DeleteDashboardRecord =>
+  async ({ id }) => {
+    return await tables.dashboards(deps.db).where(Dashboards.col.id, id).delete()
   }
 
 export const upsertDashboardFactory =

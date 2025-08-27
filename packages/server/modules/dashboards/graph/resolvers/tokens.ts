@@ -17,6 +17,7 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { storeDashboardApiTokenFactory } from '@/modules/dashboards/repositories/tokens'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 
 const { FF_WORKSPACES_MODULE_ENABLED, FF_DASHBOARDS_MODULE_ENABLED } = getFeatureFlags()
 
@@ -25,6 +26,12 @@ const isEnabled = FF_WORKSPACES_MODULE_ENABLED && FF_DASHBOARDS_MODULE_ENABLED
 const resolvers: Resolvers = {
   DashboardMutations: {
     createToken: async (_parent, args, context) => {
+      const authResult = await context.authPolicies.dashboard.canCreateToken({
+        userId: context.userId,
+        dashboardId: args.dashboardId
+      })
+      throwIfAuthNotOk(authResult)
+
       return await createDashboardTokenFactory({
         getDashboard: getDashboardRecordFactory({ db }),
         createToken: createTokenFactory({

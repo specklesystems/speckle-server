@@ -1,23 +1,26 @@
 import { err, ok } from 'true-myth/result'
-import { AuthCheckContextLoaderKeys } from '../../../domain/loaders.js'
-import { MaybeUserContext, WorkspaceContext } from '../../../domain/context.js'
+import { AuthCheckContextLoaderKeys } from '../../domain/loaders.js'
+import { MaybeUserContext, WorkspaceContext } from '../../domain/context.js'
 import {
   DashboardsNotEnabledError,
+  WorkspaceNoEditorSeatError,
   WorkspaceNotEnoughPermissionsError,
   WorkspacePlanNoFeatureAccessError
-} from '../../../domain/authErrors.js'
-import { AuthPolicy } from '../../../domain/policies.js'
+} from '../../domain/authErrors.js'
+import { AuthPolicy } from '../../domain/policies.js'
 import {
   ensureDashboardsEnabledFragment,
   ensureWorkspaceDashboardsFeatureAccessFragment
-} from '../../../fragments/dashboards.js'
-import { hasMinimumWorkspaceRole } from '../../../checks/workspaceRole.js'
-import { Roles } from '../../../../core/constants.js'
+} from '../../fragments/dashboards.js'
+import { hasMinimumWorkspaceRole } from '../../checks/workspaceRole.js'
+import { Roles } from '../../../core/constants.js'
+import { hasEditorSeat } from '../../checks/workspaceSeat.js'
 
 type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getEnv
-  | typeof AuthCheckContextLoaderKeys.getWorkspaceRole
   | typeof AuthCheckContextLoaderKeys.getWorkspacePlan
+  | typeof AuthCheckContextLoaderKeys.getWorkspaceRole
+  | typeof AuthCheckContextLoaderKeys.getWorkspaceSeat
 
 type PolicyArgs = MaybeUserContext & WorkspaceContext
 
@@ -25,9 +28,10 @@ type PolicyErrors = InstanceType<
   | typeof DashboardsNotEnabledError
   | typeof WorkspaceNotEnoughPermissionsError
   | typeof WorkspacePlanNoFeatureAccessError
+  | typeof WorkspaceNoEditorSeatError
 >
 
-export const canReadDashboardsPolicy: AuthPolicy<
+export const canCreateDashboardsPolicy: AuthPolicy<
   PolicyLoaderKeys,
   PolicyArgs,
   PolicyErrors
@@ -48,6 +52,12 @@ export const canReadDashboardsPolicy: AuthPolicy<
       role: Roles.Workspace.Member
     })
     if (!isWorkspaceMember) return err(new WorkspaceNotEnoughPermissionsError())
+
+    const isWorkspaceEditorSeat = await hasEditorSeat(loaders)({
+      userId: userId!,
+      workspaceId
+    })
+    if (!isWorkspaceEditorSeat) return err(new WorkspaceNoEditorSeatError())
 
     return ok()
   }

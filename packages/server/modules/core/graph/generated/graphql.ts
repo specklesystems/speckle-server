@@ -17,7 +17,7 @@ import type { GendoAIRenderGraphQLReturn } from '@/modules/gendo/helpers/types/g
 import type { ServerRegionItemGraphQLReturn } from '@/modules/multiregion/helpers/graphTypes';
 import type { AccSyncItemGraphQLReturn, AccSyncItemMutationsGraphQLReturn } from '@/modules/acc/helpers/graphTypes';
 import type { SavedViewGraphQLReturn, SavedViewGroupGraphQLReturn, SavedViewPermissionChecksGraphQLReturn, SavedViewGroupPermissionChecksGraphQLReturn, ExtendedViewerResourcesGraphQLReturn } from '@/modules/viewer/helpers/graphTypes';
-import type { DashboardGraphQLReturn, DashboardMutationsGraphQLReturn, DashboardTokenGraphQLReturn } from '@/modules/dashboards/helpers/graphTypes';
+import type { DashboardGraphQLReturn, DashboardMutationsGraphQLReturn, DashboardPermissionChecksGraphQLReturn, DashboardTokenGraphQLReturn } from '@/modules/dashboards/helpers/graphTypes';
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type Maybe<T> = T | null;
@@ -1140,6 +1140,7 @@ export type Dashboard = {
   createdBy?: Maybe<LimitedUser>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  permissions: DashboardPermissionChecks;
   /** If null, this is a new dashboard and should be initialized by the client */
   state?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
@@ -1184,6 +1185,14 @@ export type DashboardMutationsDeleteArgs = {
 
 export type DashboardMutationsUpdateArgs = {
   input: DashboardUpdateInput;
+};
+
+export type DashboardPermissionChecks = {
+  __typename?: 'DashboardPermissionChecks';
+  canCreateToken: PermissionCheckResult;
+  canDelete: PermissionCheckResult;
+  canEdit: PermissionCheckResult;
+  canRead: PermissionCheckResult;
 };
 
 export type DashboardToken = {
@@ -5678,9 +5687,11 @@ export const WorkspacePaymentMethod = {
 export type WorkspacePaymentMethod = typeof WorkspacePaymentMethod[keyof typeof WorkspacePaymentMethod];
 export type WorkspacePermissionChecks = {
   __typename?: 'WorkspacePermissionChecks';
+  canCreateDashboards: PermissionCheckResult;
   canCreateProject: PermissionCheckResult;
   canEditEmbedOptions: PermissionCheckResult;
   canInvite: PermissionCheckResult;
+  canListDashboards: PermissionCheckResult;
   canMakeWorkspaceExclusive: PermissionCheckResult;
   canMoveProjectToWorkspace: PermissionCheckResult;
   canReadMemberEmail: PermissionCheckResult;
@@ -6140,6 +6151,7 @@ export type ResolversTypes = {
   DashboardCollection: ResolverTypeWrapper<Omit<DashboardCollection, 'items'> & { items: Array<ResolversTypes['Dashboard']> }>;
   DashboardCreateInput: DashboardCreateInput;
   DashboardMutations: ResolverTypeWrapper<DashboardMutationsGraphQLReturn>;
+  DashboardPermissionChecks: ResolverTypeWrapper<DashboardPermissionChecksGraphQLReturn>;
   DashboardToken: ResolverTypeWrapper<DashboardTokenGraphQLReturn>;
   DashboardTokenCollection: ResolverTypeWrapper<Omit<DashboardTokenCollection, 'items'> & { items: Array<ResolversTypes['DashboardToken']> }>;
   DashboardTokenCreateInput: DashboardTokenCreateInput;
@@ -6532,6 +6544,7 @@ export type ResolversParentTypes = {
   DashboardCollection: Omit<DashboardCollection, 'items'> & { items: Array<ResolversParentTypes['Dashboard']> };
   DashboardCreateInput: DashboardCreateInput;
   DashboardMutations: DashboardMutationsGraphQLReturn;
+  DashboardPermissionChecks: DashboardPermissionChecksGraphQLReturn;
   DashboardToken: DashboardTokenGraphQLReturn;
   DashboardTokenCollection: Omit<DashboardTokenCollection, 'items'> & { items: Array<ResolversParentTypes['DashboardToken']> };
   DashboardTokenCreateInput: DashboardTokenCreateInput;
@@ -7311,6 +7324,7 @@ export type DashboardResolvers<ContextType = GraphQLContext, ParentType extends 
   createdBy?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  permissions?: Resolver<ResolversTypes['DashboardPermissionChecks'], ParentType, ContextType>;
   state?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   workspace?: Resolver<ResolversTypes['LimitedWorkspace'], ParentType, ContextType>;
@@ -7329,6 +7343,14 @@ export type DashboardMutationsResolvers<ContextType = GraphQLContext, ParentType
   createToken?: Resolver<ResolversTypes['CreateDashboardTokenReturn'], ParentType, ContextType, RequireFields<DashboardMutationsCreateTokenArgs, 'dashboardId'>>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<DashboardMutationsDeleteArgs, 'id'>>;
   update?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<DashboardMutationsUpdateArgs, 'input'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type DashboardPermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DashboardPermissionChecks'] = ResolversParentTypes['DashboardPermissionChecks']> = {
+  canCreateToken?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canDelete?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canEdit?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canRead?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -8764,9 +8786,11 @@ export type WorkspacePaidPlanPricesResolvers<ContextType = GraphQLContext, Paren
 };
 
 export type WorkspacePermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspacePermissionChecks'] = ResolversParentTypes['WorkspacePermissionChecks']> = {
+  canCreateDashboards?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canCreateProject?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canEditEmbedOptions?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canInvite?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canListDashboards?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canMakeWorkspaceExclusive?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canMoveProjectToWorkspace?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType, Partial<WorkspacePermissionChecksCanMoveProjectToWorkspaceArgs>>;
   canReadMemberEmail?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
@@ -8940,6 +8964,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Dashboard?: DashboardResolvers<ContextType>;
   DashboardCollection?: DashboardCollectionResolvers<ContextType>;
   DashboardMutations?: DashboardMutationsResolvers<ContextType>;
+  DashboardPermissionChecks?: DashboardPermissionChecksResolvers<ContextType>;
   DashboardToken?: DashboardTokenResolvers<ContextType>;
   DashboardTokenCollection?: DashboardTokenCollectionResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
