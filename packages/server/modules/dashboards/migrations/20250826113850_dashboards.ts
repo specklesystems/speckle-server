@@ -12,7 +12,7 @@ export async function up(knex: Knex): Promise<void> {
       .onDelete('cascade')
     table.text('ownerId')
     table.specificType('projectIds', 'text[]').notNullable().defaultTo('{}')
-    table.text('state').notNullable().defaultTo('{}')
+    table.text('state').notNullable()
     table.timestamp('createdAt', { precision: 3, useTz: true }).notNullable()
     table.timestamp('updatedAt', { precision: 3, useTz: true }).notNullable()
   })
