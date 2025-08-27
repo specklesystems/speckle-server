@@ -233,15 +233,7 @@ describe('ensureUserIsWorkspaceAdminFragment', () => {
       getWorkspaceRole: async () => Roles.Workspace.Admin,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
-      getWorkspacePlan: async () => {
-        return {
-          workspaceId,
-          name: 'unlimited' as const,
-          status: 'valid' as const,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      },
+      getWorkspacePlan: getWorkspacePlanFake({ workspaceId }),
       ...overrides
     })
   }

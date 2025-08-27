@@ -21,7 +21,7 @@ import { useAppErrorState } from '~~/lib/core/composables/error'
 import { isInvalidAuth } from '~~/lib/common/helpers/graphql'
 import { intersection, isArray, isBoolean, omit } from 'lodash-es'
 import { useRequestId } from '~/lib/core/composables/server'
-import { BatchHttpLink } from '@apollo/client/link/batch-http'
+// import { BatchHttpLink } from '@apollo/client/link/batch-http'
 
 const appName = 'frontend-2'
 
@@ -499,47 +499,50 @@ function createLink(params: {
   // TODO: Do we even need upload client?
   // Prepare links
   // Decide between upload link and batch link based on whether variables contain File/Blob/FileList
-  const hasUpload = (val: unknown): boolean => {
-    if (!val) return false
-    // Guard for SSR where File/Blob/FileList may be undefined
-    const isFile =
-      typeof File !== 'undefined' && typeof val === 'object' && val instanceof File
-    const isBlob =
-      typeof Blob !== 'undefined' && typeof val === 'object' && val instanceof Blob
-    const isFileList =
-      typeof FileList !== 'undefined' &&
-      typeof val === 'object' &&
-      val instanceof FileList
-    if (isFile || isBlob) return true
-    if (isFileList) return Array.from(val as FileList).some((v) => hasUpload(v))
-    if (Array.isArray(val)) return val.some((v) => hasUpload(v))
-    if (typeof val === 'object') {
-      for (const k in val as Record<string, unknown>) {
-        if (hasUpload((val as Record<string, unknown>)[k])) return true
-      }
-    }
-    return false
-  }
+  // const hasUpload = (val: unknown): boolean => {
+  //   if (!val) return false
+  //   // Guard for SSR where File/Blob/FileList may be undefined
+  //   const isFile =
+  //     typeof File !== 'undefined' && typeof val === 'object' && val instanceof File
+  //   const isBlob =
+  //     typeof Blob !== 'undefined' && typeof val === 'object' && val instanceof Blob
+  //   const isFileList =
+  //     typeof FileList !== 'undefined' &&
+  //     typeof val === 'object' &&
+  //     val instanceof FileList
+  //   if (isFile || isBlob) return true
+  //   if (isFileList) return Array.from(val as FileList).some((v) => hasUpload(v))
+  //   if (Array.isArray(val)) return val.some((v) => hasUpload(v))
+  //   if (typeof val === 'object') {
+  //     for (const k in val as Record<string, unknown>) {
+  //       if (hasUpload((val as Record<string, unknown>)[k])) return true
+  //     }
+  //   }
+  //   return false
+  // }
 
   const uploadHttpLink = createUploadLink({ uri: httpEndpoint })
-  const batchHttpLink = new BatchHttpLink({
-    uri: httpEndpoint,
-    batchMax: 10,
-    batchInterval: 20,
-    // Keep batches “compatible” (avoid mixing ops with different auth/headers)
-    batchKey: (op) =>
-      JSON.stringify({
-        uri: op.getContext().uri,
-        headers: op.getContext().headers,
-        credentials: op.getContext().credentials
-      })
-  })
-  const httpLink = split(
-    (operation) => hasUpload(operation.variables),
-    // If there's an upload in variables -> use upload link, else batch
-    uploadHttpLink,
-    batchHttpLink
-  )
+  // const batchHttpLink = new BatchHttpLink({
+  //   uri: httpEndpoint,
+  //   batchMax: 10,
+  //   batchInterval: 20,
+  //   // Keep batches "compatible" (avoid mixing ops with different auth/headers)
+  //   batchKey: (op) =>
+  //     JSON.stringify({
+  //       uri: op.getContext().uri,
+  //       headers: op.getContext().headers,
+  //       credentials: op.getContext().credentials
+  //     })
+  // })
+  // const httpLink = split(
+  //   (operation) => hasUpload(operation.variables),
+  //   // If there's an upload in variables -> use upload link, else batch
+  //   uploadHttpLink,
+  //   batchHttpLink
+  // )
+
+  // Temporarily use uploadHttpLink for all operations to benchmark without batching
+  const httpLink = uploadHttpLink
 
   const authLink = setContext((_, ctx) => {
     const { headers } = ctx

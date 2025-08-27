@@ -3,7 +3,7 @@
   Speckle | Server
 </h1>
 
-<p align="center"><a href="https://twitter.com/SpeckleSystems"><img src="https://img.shields.io/twitter/follow/SpeckleSystems?style=social" alt="Twitter Follow"></a> <a href="https://speckle.community"><img src="https://img.shields.io/discourse/users?server=https%3A%2F%2Fspeckle.community&amp;style=flat-square&amp;logo=discourse&amp;logoColor=white" alt="Community forum users"></a> <a href="https://speckle.systems"><img src="https://img.shields.io/badge/https://-speckle.systems-royalblue?style=flat-square" alt="website"></a> <a href="https://speckle.guide/dev/"><img src="https://img.shields.io/badge/docs-speckle.guide-orange?style=flat-square&amp;logo=read-the-docs&amp;logoColor=white" alt="docs"></a></p>
+<p align="center"><a href="https://twitter.com/SpeckleSystems"><img src="https://img.shields.io/twitter/follow/SpeckleSystems?style=social" alt="Twitter Follow"></a> <a href="https://speckle.community"><img src="https://img.shields.io/discourse/users?server=https%3A%2F%2Fspeckle.community&amp;style=flat-square&amp;logo=discourse&amp;logoColor=white" alt="Community forum users"></a> <a href="https://speckle.systems"><img src="https://img.shields.io/badge/https://-speckle.systems-royalblue?style=flat-square" alt="website"></a> <a href="https://docs.speckle.systems/dev/"><img src="https://img.shields.io/badge/docs-docs.speckle.systems-orange?style=flat-square&amp;logo=read-the-docs&amp;logoColor=white" alt="docs"></a></p>
 
 > Speckle is the first AEC data hub that connects with your favorite AEC tools. Speckle exists to overcome the challenges of working in a fragmented industry where communication, creative workflows, and the exchange of data are often hindered by siloed software and processes. It is here to make the industry better.
 
@@ -50,9 +50,9 @@ Make sure to also check and ⭐️ these other Speckle repositories:
 
 # Developing and Debugging
 
-Have you checked our [dev docs](https://speckle.guide/dev/)?
+Have you checked our [dev docs](https://docs.speckle.systems/dev/)?
 
-We have a detailed section on [deploying a Speckle server](https://speckle.guide/dev/server-setup.html). To get started developing locally, you can see the [Local development environment](https://speckle.guide/dev/server-local-dev.html) page.
+We have a detailed section on [deploying a Speckle server](https://docs.speckle.systems/dev/). To get started developing locally, you can see the [Local development environment](https://docs.speckle.systems/dev/) page.
 
 ## TL;DR;
 

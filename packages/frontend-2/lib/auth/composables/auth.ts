@@ -388,27 +388,11 @@ export const useAuthManager = (
   }
 
   /**
-   * Watch for embed token in query string and save it
-   */
-  const watchEmbedToken = () => {
-    watch(
-      () => embedToken.value,
-      async (newVal, oldVal) => {
-        if (newVal && newVal !== oldVal) {
-          await resetAuthState()
-        }
-      },
-      { immediate: true }
-    )
-  }
-
-  /**
    * Sets up querystring watchers that trigger various auth related activities like email verification status reports etc.
    */
   const watchAuthQueryString = () => {
     watchLoginAccessCode()
     watchEmailVerificationStatus()
-    watchEmbedToken()
   }
 
   /**

@@ -17,8 +17,8 @@ import { Loaders } from '../../domain/loaders.js'
 import { AuthPolicy } from '../../domain/policies.js'
 import { ensureImplicitProjectMemberWithReadAccessFragment } from '../../fragments/projects.js'
 import {
-  WorkspacePlanFeatures,
-  workspacePlanHasAccessToFeature
+  isWorkspaceFeatureFlagOn,
+  WorkspaceFeatureFlags
 } from '../../../workspaces/index.js'
 
 type PolicyLoaderKeys =
@@ -77,12 +77,9 @@ export const canReadAccIntegrationSettingsPolicy: AuthPolicy<
       workspaceId: project.workspaceId
     })
     if (!workspacePlan) return err(new WorkspacePlanNoFeatureAccessError())
-    const canUseFeature = workspacePlanHasAccessToFeature({
-      plan: workspacePlan.name,
-      feature: WorkspacePlanFeatures.AccIntegration,
-      featureFlags: {
-        FF_ACC_INTEGRATION_ENABLED: true
-      }
+    const canUseFeature = isWorkspaceFeatureFlagOn({
+      workspaceFeatureFlags: workspacePlan.featureFlags,
+      feature: WorkspaceFeatureFlags.accIntegration
     })
     if (!canUseFeature) return err(new WorkspacePlanNoFeatureAccessError())
 

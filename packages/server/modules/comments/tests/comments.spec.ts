@@ -147,6 +147,7 @@ import type { TestEmailListener } from '@/test/speckle-helpers/email'
 import { createEmailListener } from '@/test/speckle-helpers/email'
 import { buildTestProject } from '@/modules/core/tests/helpers/creation'
 import type { GetCommentsQueryVariables } from '@/modules/core/graph/generated/graphql'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -305,6 +306,7 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
   }),
   createStream: createStreamFactory({ db }),
   createBranch: createBranchFactory({ db }),
+  storeProjectRole: storeProjectRoleFactory({ db }),
   emitEvent: getEventBus().emit
 })
 const createStream = legacyCreateStreamFactory({

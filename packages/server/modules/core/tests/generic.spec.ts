@@ -67,6 +67,7 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import type { Request } from 'express'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 
 const buildFinalizeProjectInvite = () =>
   finalizeResourceInviteFactory({
@@ -143,6 +144,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
+    storeProjectRole: storeProjectRoleFactory({ db }),
     emitEvent: getEventBus().emit
   })
 })

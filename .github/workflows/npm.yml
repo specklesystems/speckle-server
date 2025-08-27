@@ -11,7 +11,7 @@ on:
 jobs:
   publish:
     name: Publish to npm
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     env:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
