@@ -1,11 +1,11 @@
 import type {
   NotifyChangeInFileStatus,
-  SaveUploadFileV2,
+  SaveUploadFile,
   PushJobToFileImporter,
   GetModelUploads,
   GetModelUploadsItems,
   GetModelUploadsTotalCount,
-  InsertNewUploadAndNotifyV2,
+  InsertNewUploadAndNotify,
   FindQueue
 } from '@/modules/fileuploads/domain/operations'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
@@ -16,9 +16,9 @@ export const insertNewUploadAndNotifyFactoryV2 =
   (deps: {
     findQueue: FindQueue
     pushJobToFileImporter: PushJobToFileImporter
-    saveUploadFile: SaveUploadFileV2
+    saveUploadFile: SaveUploadFile
     emit: EventBusEmit
-  }): InsertNewUploadAndNotifyV2 =>
+  }): InsertNewUploadAndNotify =>
   async (upload) => {
     const file = await deps.saveUploadFile(upload)
     const queue = deps.findQueue({ fileType: file.fileType.toLocaleLowerCase() })

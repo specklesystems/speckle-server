@@ -2,7 +2,7 @@ import type { RegisterCompletedUpload } from '@/modules/blobstorage/domain/opera
 import type { GetBranchesByIds } from '@/modules/core/domain/branches/operations'
 import type {
   GetFileInfo,
-  InsertNewUploadAndNotifyV2,
+  InsertNewUploadAndNotify,
   RegisterUploadCompleteAndStartFileImport
 } from '@/modules/fileuploads/domain/operations'
 import { ModelNotFoundError } from '@/modules/core/errors/model'
@@ -12,7 +12,7 @@ import { get, isString } from 'lodash-es'
 
 export const registerUploadCompleteAndStartFileImportFactory = (deps: {
   registerCompletedUpload: RegisterCompletedUpload
-  insertNewUploadAndNotify: InsertNewUploadAndNotifyV2
+  insertNewUploadAndNotify: InsertNewUploadAndNotify
   getModelsByIds: GetBranchesByIds
   getFileInfo: GetFileInfo
 }): RegisterUploadCompleteAndStartFileImport => {

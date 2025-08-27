@@ -16,17 +16,17 @@ export type GetFileInfo = (args: {
   projectId?: string
 }) => Promise<Optional<FileUploadRecordWithProjectId>>
 
-export type SaveUploadFileInputV2 = Pick<
+export type SaveUploadFileInput = Pick<
   FileUploadRecordWithProjectId,
   'projectId' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
 > & { fileId: string; modelId: string; modelName: string }
 
-export type InsertNewUploadAndNotifyV2 = (
-  uploadResults: SaveUploadFileInputV2
+export type InsertNewUploadAndNotify = (
+  uploadResults: SaveUploadFileInput
 ) => Promise<FileUploadRecordWithProjectId>
 
-export type SaveUploadFileV2 = (
-  args: SaveUploadFileInputV2
+export type SaveUploadFile = (
+  args: SaveUploadFileInput
 ) => Promise<FileUploadRecordWithProjectId>
 
 export type UpdateFileUpload = (args: {

@@ -1,8 +1,8 @@
 import { Branches, FileUploads } from '@/modules/core/dbSchema'
 import type {
   GarbageCollectPendingUploadedFiles,
-  SaveUploadFileV2,
-  SaveUploadFileInputV2,
+  SaveUploadFile,
+  SaveUploadFileInput,
   GetFileInfo,
   UpdateFileUpload,
   GetModelUploadsItems,
@@ -94,7 +94,7 @@ const mapFileUploadRecordToV2 = (
 }
 
 export const saveUploadFileFactoryV2 =
-  (deps: { db: Knex }): SaveUploadFileV2 =>
+  (deps: { db: Knex }): SaveUploadFile =>
   async ({
     fileId,
     projectId,
@@ -104,8 +104,8 @@ export const saveUploadFileFactoryV2 =
     fileType,
     fileSize,
     modelName
-  }: SaveUploadFileInputV2) => {
-    const dbFile: Partial<SaveUploadFileV2> = {
+  }: SaveUploadFileInput) => {
+    const dbFile: Partial<SaveUploadFile> = {
       id: fileId,
       streamId: projectId,
       branchName: modelName, // @deprecated
