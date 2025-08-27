@@ -42,7 +42,7 @@ import { reportSubscriptionEventsFactory } from '@/modules/fileuploads/events/su
 import { configureClient } from '@/knexfile'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { rhinoImporterSupportedFileExtensions } from '@speckle/shared/blobs'
-import { scheduleFileImportExpiry } from '@/modules/fileuploads/tasks'
+import { scheduleFileImportExpiry } from '@/modules/fileuploads/tasks/expireFileImports'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED, FF_RHINO_FILE_IMPORTER_ENABLED } =
   getFeatureFlags()
@@ -108,7 +108,7 @@ export const init: SpeckleModule['init'] = async ({
     scheduledTasks = [
       await scheduleFileImportExpiry({
         scheduleExecution,
-        cronExpression: '*/5 * * * *' // every 5 minutes
+        cronExpression: '*/1 * * * *' // every 1 minute
       })
     ]
 

@@ -1,5 +1,6 @@
 import type { Knex } from 'knex'
 import {
+  type GetFilteredBackgroundJobs,
   type BackgroundJob,
   type BackgroundJobPayload,
   type GetBackgroundJob,
@@ -46,6 +47,25 @@ export const getBackgroundJobFactory =
   async ({ jobId }) => {
     const job = await tables.backgroundJobs(db).select('*').where({ id: jobId }).first()
     return job ?? null
+  }
+
+export const getBackgroundJobsFromThisOrigin =
+  ({ db }: { db: Knex }): GetFilteredBackgroundJobs =>
+  async ({ jobType, originServerUrl, limit, updatedAfter, status }) => {
+    const query = tables
+      .backgroundJobs(db)
+      .where(BackgroundJobs.withoutTablePrefix.col.originServerUrl, originServerUrl)
+
+    if (status) query.andWhere(BackgroundJobs.withoutTablePrefix.col.status, status)
+
+    if (jobType) query.andWhere(BackgroundJobs.withoutTablePrefix.col.jobType, jobType)
+
+    if (updatedAfter)
+      query.andWhere(BackgroundJobs.withoutTablePrefix.col.updatedAt, '>', updatedAfter)
+
+    if (limit && limit > 0) query.limit(limit)
+
+    return await query
   }
 
 export const getBackgroundJobCountFactory =

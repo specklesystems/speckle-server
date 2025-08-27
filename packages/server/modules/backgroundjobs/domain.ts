@@ -53,6 +53,16 @@ export type StoreBackgroundJob = (args: {
 export type GetBackgroundJob<T extends BackgroundJobPayload = BackgroundJobPayload> =
   (args: { jobId: string }) => Promise<BackgroundJob<T> | null>
 
+export type GetFilteredBackgroundJobs<
+  T extends BackgroundJobPayload = BackgroundJobPayload
+> = (args: {
+  originServerUrl: string
+  jobType?: BackgroundJobType
+  limit?: number
+  updatedAfter?: Date
+  status?: BackgroundJobStatus
+}) => Promise<BackgroundJob<T>[]>
+
 export type GetBackgroundJobCount<
   T extends BackgroundJobPayload = BackgroundJobPayload
 > = (args: {
