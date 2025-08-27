@@ -3,7 +3,7 @@
     <Portal to="navigation">
       <HeaderNavLink
         :to="dashboardsRoute(workspace?.slug)"
-        name="Dashboards"
+        name="Intelligence"
         :separator="false"
       />
       <HeaderNavLink
@@ -53,13 +53,16 @@ definePageMeta({
   layout: 'dashboard'
 })
 
-const { id } = useRoute().params
+const { id, token: urlToken } = useRoute().params
 const { result } = useQuery(dashboardQuery, () => ({ id: id as string }))
 const { effectiveAuthToken } = useAuthManager()
+
 const workspace = computed(() => result.value?.dashboard?.workspace)
 const dashboard = computed(() => result.value?.dashboard)
 
 const dashboardUrl = computed(() => {
-  return `http://localhost:8083/dashboards/${id}?token=${effectiveAuthToken.value}&isEmbed=true`
+  return `http://localhost:8083/dashboards/${id}?token=${
+    effectiveAuthToken.value || urlToken
+  }&isEmbed=true`
 })
 </script>

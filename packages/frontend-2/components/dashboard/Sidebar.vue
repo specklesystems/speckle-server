@@ -62,7 +62,7 @@
                   @click="isOpenMobile = false"
                 >
                   <LayoutSidebarMenuGroupItem
-                    label="Dashboards"
+                    label="Intelligence"
                     :active="isActive(dashboardsRoute(activeWorkspaceSlug))"
                   >
                     <template #icon>
