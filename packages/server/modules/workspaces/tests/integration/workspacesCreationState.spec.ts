@@ -15,16 +15,18 @@ import { expect } from 'chai'
 import dayjs from 'dayjs'
 import { deleteWorkspacesNonCompleteFactory } from '@/modules/workspaces/services/workspaceCreationState'
 import { logger } from '@/observability/logging'
-import {
-  deleteStreamFactory,
-  getExplicitProjects
-} from '@/modules/core/repositories/streams'
+import { getExplicitProjects } from '@/modules/core/repositories/streams'
 import { deleteSsoProviderFactory } from '@/modules/workspaces/repositories/sso'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { deleteWorkspaceFactory as repoDeleteWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { deleteWorkspaceFactory } from '@/modules/workspaces/services/management'
-import { queryAllProjectsFactory } from '@/modules/core/services/projects'
+import {
+  deleteProjectAndCommitsFactory,
+  queryAllProjectsFactory
+} from '@/modules/core/services/projects'
+import { deleteProjectFactory } from '@/modules/core/repositories/projects'
+import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
 
 const updateAWorkspaceCreatedAt = async (
   workspaceId: string,
@@ -43,7 +45,10 @@ describe('WorkspaceCreationState services', () => {
     getWorkspacesNonComplete,
     deleteWorkspace: deleteWorkspaceFactory({
       deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
-      deleteProject: deleteStreamFactory({ db }),
+      deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+        deleteProject: deleteProjectFactory({ db }),
+        deleteProjectCommits: deleteProjectCommitsFactory({ db })
+      }),
       deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
       queryAllProjects: queryAllProjectsFactory({
         getExplicitProjects: getExplicitProjects({ db })

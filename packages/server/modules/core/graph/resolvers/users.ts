@@ -32,7 +32,6 @@ import {
   changeUserRoleFactory
 } from '@/modules/core/services/users/management'
 import {
-  deleteStreamFactory,
   getExplicitProjects,
   getUserDeletableStreamsFactory
 } from '@/modules/core/repositories/streams'
@@ -52,8 +51,13 @@ import { setUserOnboardingChoicesFactory } from '@/modules/core/services/users/t
 import { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
-import { queryAllProjectsFactory } from '@/modules/core/services/projects'
+import {
+  deleteProjectAndCommitsFactory,
+  queryAllProjectsFactory
+} from '@/modules/core/services/projects'
 import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
+import { deleteProjectFactory } from '@/modules/core/repositories/projects'
+import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -302,7 +306,10 @@ export default {
       await asMultiregionalOperation(
         ({ mainDb, allDbs, emit }) => {
           const deleteUser = deleteUserFactory({
-            deleteStream: deleteStreamFactory({ db: mainDb }),
+            deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+              deleteProject: deleteProjectFactory({ db: mainDb }), // TODO: multiregion bug
+              deleteProjectCommits: deleteProjectCommitsFactory({ db: mainDb })
+            }),
             logger: dbLogger,
             isLastAdminUser: isLastAdminUserFactory({ db: mainDb }),
             getUserDeletableStreams: getUserDeletableStreamsFactory({ db: mainDb }),
@@ -352,7 +359,10 @@ export default {
       await asMultiregionalOperation(
         ({ mainDb, allDbs, emit }) => {
           const deleteUser = deleteUserFactory({
-            deleteStream: deleteStreamFactory({ db: mainDb }),
+            deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+              deleteProject: deleteProjectFactory({ db: mainDb }), // multiregion bug
+              deleteProjectCommits: deleteProjectCommitsFactory({ db: mainDb })
+            }),
             logger: dbLogger,
             isLastAdminUser: isLastAdminUserFactory({ db: mainDb }),
             getUserDeletableStreams: getUserDeletableStreamsFactory({ db: mainDb }),
