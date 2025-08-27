@@ -375,7 +375,7 @@ const setUpProjectReplication = async ({
 
 const sanitizeError = (err: unknown): unknown => {
   if (!err) return err
-  if (get(err, 'where').includes('password='))
+  if ((get(err, 'where') as unknown as string).includes('password='))
     return { ...err, where: '[REDACTED AS IT CONTAINS CONNECTION STRING]' }
 }
 

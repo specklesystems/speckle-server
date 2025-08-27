@@ -1,5 +1,7 @@
 declare global {
   interface Window {
+    __APOLLO_CLIENT__?: import('@apollo/client/core').ApolloClient<unknown>
+
     DD_RUM?:
       | Pick<import('@datadog/browser-rum').RumGlobal, 'onReady'>
       | import('@datadog/browser-rum').RumGlobal

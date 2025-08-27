@@ -1621,7 +1621,13 @@ describe('Comments @comments', () => {
         expect(data?.comments?.items?.length || 0).to.eq(1)
         expect(errors?.length || 0).to.eq(0)
 
-        const textNode = get(data, 'comments.items[0].text.doc.content[0].content[0]')
+        const textNode = get(
+          data,
+          'comments.items[0].text.doc.content[0].content[0]'
+        ) as unknown as {
+          text: string
+          marks: Array<{ type: string; attrs: Record<string, unknown> }>
+        }
         expect(textNode.text).to.eq(item.text)
         expect(textNode.marks).to.deep.equalInAnyOrder([
           {
@@ -1682,7 +1688,13 @@ describe('Comments @comments', () => {
         expect(data?.comments?.items?.length || 0).to.eq(1)
         expect(errors?.length || 0).to.eq(0)
 
-        const textNodes = get(data, 'comments.items[0].text.doc.content[0].content')
+        const textNodes = get(
+          data,
+          'comments.items[0].text.doc.content[0].content'
+        ) as unknown as Array<{
+          text: string
+          marks: Array<{ type: string; attrs: Record<string, unknown> }>
+        }>
         expect(textNodes.length).to.eq(textParts.length)
 
         range(textParts.length).forEach((i) => {

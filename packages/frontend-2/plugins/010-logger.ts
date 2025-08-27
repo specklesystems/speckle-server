@@ -1,7 +1,7 @@
 import { collectLongTrace } from '@speckle/shared'
 import type { LogType } from 'consola'
 import dayjs from 'dayjs'
-import { get, omit } from 'lodash-es'
+import { omit } from 'lodash-es'
 import type { SetRequired } from 'type-fest'
 import { useReadUserId } from '~/lib/auth/composables/activeUser'
 import {
@@ -24,25 +24,6 @@ import {
 } from '~~/lib/core/helpers/observability'
 
 const simpleStripHtml = (str: string) => str.replace(/<[^>]*>?/gm, '')
-
-// i dunno why but importing this returns undefined in server build, it makes no sense to me why it would be stripped out
-// but the solution is to duplicate this here
-const consolaLogLevels = {
-  silent: Number.NEGATIVE_INFINITY,
-  fatal: 0,
-  error: 0,
-  warn: 1,
-  log: 2,
-  info: 3,
-  success: 3,
-  fail: 3,
-  ready: 3,
-  start: 3,
-  box: 3,
-  debug: 4,
-  trace: 5,
-  verbose: Number.POSITIVE_INFINITY
-}
 
 /**
  * - Setting up Pino logger in SSR, basic console.log fallback in CSR
@@ -100,7 +81,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       buildLogger,
       enableDynamicBindings,
       serializeRequest,
-      prettifiedLoggerFactory
+      prettifiedLoggerFactory,
+      initSsrDevLogs
     } = await import('~/server/lib/core/helpers/observability')
     logger = enableDynamicBindings(buildLogger(logLevel, logPretty).child({}), () => ({
       ...collectMainInfo({ isBrowser: false }),
@@ -121,18 +103,10 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
     // Send to consola for SSR log streaming in dev mode
     if (import.meta.dev) {
-      const { consola } = await import('consola')
+      const ssrDevLogs = await initSsrDevLogs({ logLevel })
+      const consola = ssrDevLogs.consola
 
-      // (consola exports are sometimes being stripped from build for some reason, hence the extra checks)
       if (consola) {
-        // remove print to stdout, pino already handles all that
-        consola.setReporters(
-          consola.options.reporters.filter(
-            (r) => get(r, 'constructor.name') !== 'FancyReporter'
-          )
-        )
-        consola.level = consolaLogLevels[logLevel] || 0
-
         const unhandledHandler: AbstractUnhandledErrorHandler = ({
           error,
           message,
