@@ -32,7 +32,9 @@ const isPayload = (payload: unknown): payload is AuthCodePayload =>
     has(payload, 'code') &&
     has(payload, 'userId') &&
     has(payload, 'action') &&
-    Object.values(AuthCodePayloadAction).includes(get(payload, 'action'))
+    Object.values(AuthCodePayloadAction).includes(
+      get(payload, 'action') as unknown as AuthCodePayloadAction
+    )
   )
 
 export const createStoredAuthCodeFactory =
