@@ -227,6 +227,11 @@ function createFilteringDataStore() {
             }
           }
         }
+      } else if (criteria.condition === StringFilterCondition.IsSet) {
+        // "Is Set" returns all objects that have any value for this property
+        for (const objectIds of Object.values(propertyIndex)) {
+          matchingIds.push(...objectIds)
+        }
       }
     }
 
@@ -710,11 +715,12 @@ export function useFilterUtilities(
         }
         dataStore.dataSlices.value.push(slice)
       }
-      // Handle string filters - only create slice if filter is enabled AND has selected values
+      // Handle string filters - create slice if filter is enabled AND (has selected values OR is "is set")
       else if (
         !isNumericFilter(filter) &&
         filter.isApplied &&
-        filter.selectedValues.length > 0
+        (filter.selectedValues.length > 0 ||
+          filter.condition === StringFilterCondition.IsSet)
       ) {
         const queryCriteria: QueryCriteria = {
           propertyKey: filter.filter.key,
@@ -726,9 +732,12 @@ export function useFilterUtilities(
         const slice: DataSlice = {
           id: `filter-${filter.id}`,
           widgetId: filter.id,
-          name: `${getPropertyName(filter.filter.key)} ${
-            filter.condition === StringFilterCondition.Is ? 'is' : 'is not'
-          } ${filter.selectedValues.join(', ')}`,
+          name:
+            filter.condition === StringFilterCondition.IsSet
+              ? `${getPropertyName(filter.filter.key)} is set`
+              : `${getPropertyName(filter.filter.key)} ${
+                  filter.condition === StringFilterCondition.Is ? 'is' : 'is not'
+                } ${filter.selectedValues.join(', ')}`,
           objectIds: matchingObjectIds
         }
         dataStore.dataSlices.value.push(slice)
