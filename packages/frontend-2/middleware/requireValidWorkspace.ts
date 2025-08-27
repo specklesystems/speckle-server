@@ -10,7 +10,7 @@ import { useMiddlewareQueryFetchPolicy } from '~/lib/core/composables/navigation
 /**
  * Used to validate that the workspace ID refers to a valid workspace and redirects to 404 if not
  */
-export default defineNuxtRouteMiddleware(async (to, from) => {
+export default defineParallelizedNuxtRouteMiddleware(async (to, from) => {
   const workspaceSlug = to.params.slug as string
 
   const client = useApolloClientFromNuxt()
