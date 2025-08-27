@@ -1,8 +1,10 @@
-import { has, intersection, isObjectLike } from '#lodash'
+import { has, intersection, isNumber, isObjectLike } from '#lodash'
 import type { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityTypes.js'
 import type { PartialDeep } from 'type-fest'
 import { UnformattableSerializedViewerStateError } from '../errors/index.js'
 import { coerceUndefinedValuesToNull } from '../../core/index.js'
+
+export const defaultViewModeEdgeColorValue = 'DEFAULT_EDGE_COLOR'
 
 /** Redefining these is unfortunate. Especially since they are not part of viewer-core */
 enum MeasurementType {
@@ -35,6 +37,9 @@ export interface SectionBoxData {
  * - ui.diff added
  * v1.2 -> v1.3
  * - ui.filters.selectedObjectIds removed in favor of ui.filters.selectedObjectApplicationIds
+ * v1.3 -> 1.4
+ * - ui.viewMode -> ui.viewMode.mode
+ * - ui.viewMode has new keys: edgesEnabled, edgesWeight, outlineOpacity, edgesColor
  */
 export const SERIALIZED_VIEWER_STATE_VERSION = 1.3
 
@@ -88,7 +93,13 @@ export type SerializedViewerState = {
       isOrthoProjection: boolean
       zoom: number
     }
-    viewMode: number
+    viewMode: {
+      mode: number
+      edgesEnabled: boolean
+      edgesWeight: number
+      outlineOpacity: number
+      edgesColor: typeof defaultViewModeEdgeColorValue | number
+    }
     sectionBox: Nullable<SectionBoxData>
     lightConfig: {
       intensity?: number
@@ -174,6 +185,10 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
     )
   }
 
+  const viewMode = isNumber(state.ui?.viewMode)
+    ? state.ui.viewMode
+    : state.ui?.viewMode?.mode
+
   return {
     projectId: state.projectId || throwInvalidError('projectId'),
     sessionId: state.sessionId || `nullSessionId-${Math.random() * 1000}`,
@@ -236,7 +251,13 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
         isOrthoProjection: state.ui?.camera?.isOrthoProjection || false,
         zoom: state.ui?.camera?.zoom || 1
       },
-      viewMode: state.ui?.viewMode || 0,
+      viewMode: {
+        mode: viewMode || 0,
+        edgesEnabled: state.ui?.viewMode?.edgesEnabled || false,
+        edgesWeight: state.ui?.viewMode?.edgesWeight || 1,
+        outlineOpacity: state.ui?.viewMode?.outlineOpacity || 0.75,
+        edgesColor: state.ui?.viewMode?.edgesColor || defaultViewModeEdgeColorValue
+      },
       sectionBox:
         state.ui?.sectionBox?.min?.length && state.ui?.sectionBox.max?.length
           ? // Complains otherwise
