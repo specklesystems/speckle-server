@@ -36,22 +36,11 @@ export type FileUploadRecord = {
   performanceData: Nullable<FileUploadPerformanceData>
 }
 
-export type FileUploadRecordV2 = {
-  id: string
+export type FileUploadRecordWithProjectId = Omit<
+  FileUploadRecord,
+  'streamId' | 'branchName'
+> & {
   projectId: string
-  modelId: Nullable<string>
-  userId: string
-  fileName: string
-  fileType: string
-  fileSize: Nullable<number>
-  uploadComplete: boolean
-  uploadDate: Date
-  convertedStatus: number | FileUploadConvertedStatus
-  convertedLastUpdate: Date
-  convertedMessage: Nullable<string>
-  convertedCommitId: Nullable<string>
-  metadata: Nullable<FileUploadRecordMetadata>
-  performanceData: Nullable<FileUploadPerformanceData>
 }
 
-export type FileUploadGraphQLReturn = FileUploadRecord | FileUploadRecordV2
+export type FileUploadGraphQLReturn = FileUploadRecord | FileUploadRecordWithProjectId

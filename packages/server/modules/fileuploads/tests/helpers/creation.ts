@@ -6,7 +6,7 @@ import type { FileImportMessage } from '@/modules/fileuploads/domain/operations'
 import { assign } from 'lodash-es'
 import type {
   FileUploadRecord,
-  FileUploadRecordV2
+  FileUploadRecordWithProjectId
 } from '@/modules/fileuploads/helpers/types'
 import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
 
@@ -45,11 +45,11 @@ export const buildFileUploadMessage = (
 }
 
 export const buildFileUploadRecord = (
-  overrides: Partial<FileUploadRecord & FileUploadRecordV2>
-): FileUploadRecord & FileUploadRecordV2 => {
+  overrides: Partial<FileUploadRecord & FileUploadRecordWithProjectId>
+): FileUploadRecord & FileUploadRecordWithProjectId => {
   const id =
     overrides.projectId || overrides.streamId || cryptoRandomString({ length: 10 })
-  const defaults: FileUploadRecord & FileUploadRecordV2 = {
+  const defaults: FileUploadRecord & FileUploadRecordWithProjectId = {
     id: cryptoRandomString({ length: 10 }),
     branchName: cryptoRandomString({ length: 10 }),
     convertedStatus: FileUploadConvertedStatus.Completed,

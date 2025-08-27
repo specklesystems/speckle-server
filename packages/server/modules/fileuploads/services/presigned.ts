@@ -1,7 +1,7 @@
 import type { RegisterCompletedUpload } from '@/modules/blobstorage/domain/operations'
 import type { GetBranchesByIds } from '@/modules/core/domain/branches/operations'
 import type {
-  GetFileInfoV2,
+  GetFileInfo,
   InsertNewUploadAndNotify,
   InsertNewUploadAndNotifyV2,
   RegisterUploadCompleteAndStartFileImport
@@ -15,7 +15,7 @@ export const registerUploadCompleteAndStartFileImportFactory = (deps: {
   registerCompletedUpload: RegisterCompletedUpload
   insertNewUploadAndNotify: InsertNewUploadAndNotifyV2 | InsertNewUploadAndNotify
   getModelsByIds: GetBranchesByIds
-  getFileInfo: GetFileInfoV2
+  getFileInfo: GetFileInfo
 }): RegisterUploadCompleteAndStartFileImport => {
   const {
     registerCompletedUpload,

@@ -1,6 +1,6 @@
 import type {
   FileUploadRecord,
-  FileUploadRecordV2
+  FileUploadRecordWithProjectId
 } from '@/modules/fileuploads/helpers/types'
 import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
 
@@ -16,9 +16,11 @@ export const FileuploadEvents = {
 
 export type FileuploadEvents = (typeof FileuploadEvents)[keyof typeof FileuploadEvents]
 
-type FileuploadStartedPayload = { upload: FileUploadRecordV2 & FileUploadRecord }
+type FileuploadStartedPayload = {
+  upload: FileUploadRecordWithProjectId | FileUploadRecord
+}
 type FileuploadUpdatedPayload = {
-  upload: FileUploadRecordV2
+  upload: FileUploadRecordWithProjectId
   /**
    * Whether the upload represents a new model being created. This is only supported in
    * legacy file uploads, where the model is created as part of the upload process.

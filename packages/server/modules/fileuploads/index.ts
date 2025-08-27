@@ -1,30 +1,17 @@
 import type cron from 'node-cron'
 import { notifyChangeInFileStatus } from '@/modules/fileuploads/services/management'
 import { moduleLogger } from '@/observability/logging'
-import {
-  onFileImportProcessedFactory,
-  onFileProcessingFactory,
-  parseMessagePayload
-} from '@/modules/fileuploads/services/resultListener'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import {
-  getProjectModelByIdFactory,
-  getStreamBranchByNameFactory
-} from '@/modules/core/repositories/branches'
+import { getProjectModelByIdFactory } from '@/modules/core/repositories/branches'
 import {
   getFeatureFlags,
   getFileImporterQueuePostgresUrl,
   isFileUploadsEnabled
 } from '@/modules/shared/helpers/envHelper'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { listenFor } from '@/modules/core/utils/dbNotificationListener'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import {
-  expireOldPendingUploadsFactory,
-  getFileInfoFactory,
-  updateFileUploadFactory
-} from '@/modules/fileuploads/repositories/fileUploads'
+import { expireOldPendingUploadsFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
 import { getFileImportTimeLimitMinutes } from '@/modules/shared/helpers/envHelper'
 import { getRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
@@ -38,7 +25,6 @@ import { manageFileImportExpiryFactory } from '@/modules/fileuploads/services/ta
 import { TIME } from '@speckle/shared'
 import {
   DelayBetweenFileImportRetriesMinutes,
-  FileUploadDatabaseEvents,
   NumberOfFileImportRetries
 } from '@/modules/fileuploads/domain/consts'
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
@@ -153,33 +139,6 @@ export const init: SpeckleModule['init'] = async ({
 
     scheduledTasks = [await scheduleFileImportExpiry({ scheduleExecution })]
 
-    await listenFor(FileUploadDatabaseEvents.Updated, async (msg) => {
-      const parsedMessage = parseMessagePayload(msg.payload)
-      if (!parsedMessage.streamId) return
-      const projectDb = await getProjectDbClient({
-        projectId: parsedMessage.streamId
-      })
-
-      await onFileImportProcessedFactory({
-        getFileInfo: getFileInfoFactory({ db: projectDb }),
-        getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
-        updateFileUpload: updateFileUploadFactory({ db: projectDb }),
-        eventEmit: getEventBus().emit
-      })(parsedMessage)
-    })
-
-    await listenFor(FileUploadDatabaseEvents.Started, async (msg) => {
-      const parsedMessage = parseMessagePayload(msg.payload)
-      if (!parsedMessage.streamId) return
-      const projectDb = await getProjectDbClient({
-        projectId: parsedMessage.streamId
-      })
-      await onFileProcessingFactory({
-        getFileInfo: getFileInfoFactory({ db: projectDb }),
-        emitEvent: getEventBus().emit
-      })(parsedMessage)
-    })
-
     initializeEventListenersFactory({ db, observeResult })()
     reportSubscriptionEventsFactory({
       publish,
@@ -193,7 +152,6 @@ export const init: SpeckleModule['init'] = async ({
     })()
   }
 
-  // the two routers can be used independently and can both be enabled
   app.use(fileuploadRouterFactory())
 }
 

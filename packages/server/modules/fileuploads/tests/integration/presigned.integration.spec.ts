@@ -36,7 +36,7 @@ import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/service
 import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
 import {
-  getFileInfoFactoryV2,
+  getFileInfoFactory,
   saveUploadFileFactoryV2
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
@@ -147,7 +147,7 @@ describe('Presigned integration @fileuploads', async () => {
           logger: testLogger
         }),
         insertNewUploadAndNotify,
-        getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
+        getFileInfo: getFileInfoFactory({ db: projectDb }),
         getModelsByIds: getBranchesByIdsFactory({ db: projectDb })
       })
     })

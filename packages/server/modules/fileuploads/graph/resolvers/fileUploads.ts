@@ -4,7 +4,6 @@ import { db } from '@/db/knex'
 import {
   getBranchPendingVersionsFactory,
   getFileInfoFactory,
-  getFileInfoFactoryV2,
   getModelUploadsItemsFactory,
   getModelUploadsTotalCountFactory,
   getStreamFileUploadsFactory,
@@ -60,7 +59,7 @@ import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { getModelUploadsFactory } from '@/modules/fileuploads/services/management'
 import type {
   FileUploadRecord,
-  FileUploadRecordV2
+  FileUploadRecordWithProjectId
 } from '@/modules/fileuploads/helpers/types'
 import { onFileImportResultFactory } from '@/modules/fileuploads/services/resultHandler'
 import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
@@ -68,7 +67,7 @@ import { JobResultStatus } from '@speckle/shared/workers/fileimport'
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 
 const getFileUploadModel = async (params: {
-  upload: FileUploadRecord | FileUploadRecordV2
+  upload: FileUploadRecord | FileUploadRecordWithProjectId
   ctx: GraphQLContext
 }) => {
   const { upload, ctx } = params
@@ -198,7 +197,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
           })
         }),
         insertNewUploadAndNotify: insertNewUploadAndNotifyV2,
-        getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
+        getFileInfo: getFileInfoFactory({ db: projectDb }),
         getModelsByIds: getBranchesByIdsFactory({ db: projectDb })
       })
 
@@ -272,7 +271,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
     const onFileImportResult = onFileImportResultFactory({
       logger: logger.child({ fileUploadStatus: status }),
       updateFileUpload: updateFileUploadFactory({ db: projectDb }),
-      getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
+      getFileInfo: getFileInfoFactory({ db: projectDb }),
       eventEmit: getEventBus().emit
     })
 

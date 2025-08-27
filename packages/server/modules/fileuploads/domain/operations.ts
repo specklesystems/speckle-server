@@ -1,7 +1,7 @@
 import type {
   FileUploadConvertedStatus,
   FileUploadRecord,
-  FileUploadRecordV2
+  FileUploadRecordWithProjectId
 } from '@/modules/fileuploads/helpers/types'
 import type { Optional } from '@speckle/shared'
 import type { UploadResult } from '@/modules/blobstorage/domain/types'
@@ -12,12 +12,8 @@ import type {
 
 export type GetFileInfo = (args: {
   fileId: string
-}) => Promise<Optional<FileUploadRecord>>
-
-export type GetFileInfoV2 = (args: {
-  fileId: string
   projectId?: string
-}) => Promise<Optional<FileUploadRecordV2>>
+}) => Promise<Optional<FileUploadRecordWithProjectId>>
 
 export type SaveUploadFileInput = Pick<
   FileUploadRecord,
@@ -31,7 +27,7 @@ export type SaveUploadFileInput = Pick<
 > & { fileId: string }
 
 export type SaveUploadFileInputV2 = Pick<
-  FileUploadRecordV2,
+  FileUploadRecordWithProjectId,
   'projectId' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
 > & { fileId: string; modelId: string; modelName: string }
 
@@ -43,11 +39,11 @@ export type InsertNewUploadAndNotify = (
 
 export type InsertNewUploadAndNotifyV2 = (
   uploadResults: SaveUploadFileInputV2
-) => Promise<FileUploadRecordV2>
+) => Promise<FileUploadRecordWithProjectId>
 
 export type SaveUploadFileV2 = (
   args: SaveUploadFileInputV2
-) => Promise<FileUploadRecordV2>
+) => Promise<FileUploadRecordWithProjectId>
 
 export type UpdateFileUpload = (args: {
   id: string
@@ -95,7 +91,7 @@ export type RegisterUploadCompleteAndStartFileImport = (args: {
   userId: string
   expectedETag: string
   maximumFileSize: number
-}) => Promise<FileUploadRecordV2 & { modelName: string }>
+}) => Promise<FileUploadRecordWithProjectId & { modelName: string }>
 
 export type GetModelUploadsBaseArgs = {
   projectId: string

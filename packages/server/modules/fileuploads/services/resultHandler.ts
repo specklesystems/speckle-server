@@ -1,6 +1,6 @@
 import type { Logger } from '@/observability/logging'
 import type {
-  GetFileInfoV2,
+  GetFileInfo,
   ProcessFileImportResult,
   UpdateFileUpload
 } from '@/modules/fileuploads/domain/operations'
@@ -15,7 +15,7 @@ import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 
 type OnFileImportResultDeps = {
-  getFileInfo: GetFileInfoV2
+  getFileInfo: GetFileInfo
   updateFileUpload: UpdateFileUpload
   eventEmit: EventBusEmit
   logger: Logger
