@@ -4,6 +4,7 @@
   <div class="px-1">
     <div
       class="flex items-center justify-between gap-2 text-body-3xs py-0.5 px-2 hover:bg-highlight-1 rounded cursor-pointer"
+      :class="{ 'opacity-50': isDefaultSelected }"
       @click="$emit('toggle')"
     >
       <div class="flex items-center min-w-0">
@@ -41,6 +42,7 @@ defineProps<{
   isSelected: boolean
   count: number
   color?: string | null
+  isDefaultSelected?: boolean
 }>()
 
 defineEmits<{

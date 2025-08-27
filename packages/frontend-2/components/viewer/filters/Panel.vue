@@ -1,5 +1,5 @@
 <template>
-  <ViewerLayoutSidePanel>
+  <ViewerLayoutSidePanel disable-scrollbar>
     <template #title>Filters</template>
     <template #actions>
       <div class="flex gap-x-0.5 items-center">
@@ -34,9 +34,9 @@
       <!-- Active Filters Section -->
       <div
         v-if="propertyFilters.length > 0"
-        class="flex-1 overflow-y-scroll simple-scrollbar"
+        class="flex-1 overflow-y-auto simple-scrollbar"
       >
-        <div class="flex flex-col gap-3 p-3">
+        <div class="flex flex-col gap-3 p-3 pt-0">
           <ViewerFiltersFilterCard
             v-for="filter in propertyFilters"
             :key="filter.id"
@@ -98,19 +98,26 @@ const relevantFilters = computed(() => {
 })
 
 const propertySelectOptions = computed((): PropertySelectOption[] => {
-  const allOptions: PropertySelectOption[] = relevantFilters.value.map((filter) => {
-    const pathParts = filter.key.split('.')
-    const propertyName = pathParts[pathParts.length - 1] // Last part (e.g., "name")
-    const parentPath = pathParts.slice(0, -1).join('.') // Everything except last part (e.g., "ab")
+  // Get keys of already added filters
+  const existingFilterKeys = new Set(
+    propertyFilters.value.map((f) => f.filter?.key).filter(Boolean)
+  )
 
-    return {
-      value: filter.key,
-      label: propertyName, // Clean property name for main display
-      parentPath, // Full path without the property name
-      type: filter.type,
-      hasParent: parentPath.length > 0
-    }
-  })
+  const allOptions: PropertySelectOption[] = relevantFilters.value
+    .filter((filter) => !existingFilterKeys.has(filter.key)) // Exclude already added filters
+    .map((filter) => {
+      const pathParts = filter.key.split('.')
+      const propertyName = pathParts[pathParts.length - 1] // Last part (e.g., "name")
+      const parentPath = pathParts.slice(0, -1).join('.') // Everything except last part (e.g., "ab")
+
+      return {
+        value: filter.key,
+        label: propertyName, // Clean property name for main display
+        parentPath, // Full path without the property name
+        type: filter.type,
+        hasParent: parentPath.length > 0
+      }
+    })
 
   // Sort: root properties first, then grouped by parent
   const sortedOptions = allOptions.sort((a, b) => {

@@ -14,8 +14,8 @@
             : 'bg-foundation border-highlight-3 hover:border-foreground-2'
         ]"
       >
-        <Minus v-if="areAllValuesSelected" class="h-3 w-3" />
-        <Check v-else-if="areSomeValuesSelected" class="h-3 w-3" />
+        <Check v-if="areAllValuesSelected" class="h-3 w-3" />
+        <Minus v-else-if="areSomeValuesSelected" class="h-3 w-3" />
       </div>
       <span class="text-foreground ml-px">Select all</span>
       <div class="text-foreground-2 text-body-3xs ml-1">

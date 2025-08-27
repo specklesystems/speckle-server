@@ -1,5 +1,32 @@
 <template>
   <div>
+    <div
+      v-if="shouldShowAppliedSection"
+      class="bg-highlight-1 rounded-md mx-2 my-1 p-1"
+    >
+      <div class="flex flex-wrap gap-1">
+        <span
+          v-for="value in displayedSelectedValues"
+          :key="value"
+          class="inline-flex items-center gap-1 px-2 py-0.5 bg-highlight-3 text-foreground text-body-3xs rounded"
+        >
+          {{ value }}
+          <button
+            class="text-foreground-2 hover:text-foreground"
+            @click="() => toggleValue(value)"
+          >
+            ×
+          </button>
+        </span>
+        <span
+          v-if="remainingCount > 0"
+          class="inline-flex items-center px-2 py-0.5 bg-highlight-3 text-foreground-2 text-body-3xs rounded"
+        >
+          and {{ remainingCount }} more
+        </span>
+      </div>
+    </div>
+
     <ViewerFiltersFilterStringSelectAll
       :selected-count="selectedCount"
       :total-count="filteredValues.length"
@@ -29,6 +56,11 @@
           :is-selected="isValueSelected(value)"
           :count="getValueCount(value)"
           :color="getValueColor(value)"
+          :is-default-selected="
+            isStringFilter(filter) &&
+            filter.isDefaultAllSelected &&
+            isValueSelected(value)
+          "
           @toggle="() => toggleValue(value)"
         />
       </div>
@@ -89,6 +121,8 @@ const selectAll = (selected: boolean) => {
     // Deselect all - set to empty array in one operation
     updateActiveFilterValues(props.filter.id, [])
   }
+
+  // Note: default state clearing is now handled in updateActiveFilterValues
 }
 
 // Get available values from the filter
@@ -111,6 +145,35 @@ const filteredValues = computed(() => {
   )
 })
 
+// Get selected values
+const selectedValues = computed(() => {
+  return props.filter.selectedValues || []
+})
+
+// Check if we should show the applied section (not when select all is active)
+const shouldShowAppliedSection = computed(() => {
+  return selectedValues.value.length > 0 && !isSelectAllActive.value
+})
+
+// Check if select all is active (when all available values are selected)
+const isSelectAllActive = computed(() => {
+  return (
+    selectedValues.value.length === availableValues.value.length &&
+    availableValues.value.length > 0
+  )
+})
+
+// Limit displayed values to 8 items
+const maxDisplayedItems = 5
+const displayedSelectedValues = computed(() => {
+  return selectedValues.value.slice(0, maxDisplayedItems)
+})
+
+// Count of remaining items not displayed
+const remainingCount = computed(() => {
+  return Math.max(0, selectedValues.value.length - maxDisplayedItems)
+})
+
 // Select all logic
 const selectedCount = computed(() => {
   return filteredValues.value.filter((value) => isValueSelected(value)).length
@@ -118,7 +181,7 @@ const selectedCount = computed(() => {
 
 // Virtual list setup
 const itemHeight = 28 // Height of each checkbox item in pixels
-const maxHeight = 144 // 36 * 4px (h-36 equivalent)
+const maxHeight = 210
 
 const containerHeight = computed(() => {
   const contentHeight = filteredValues.value.length * itemHeight

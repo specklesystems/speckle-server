@@ -1109,7 +1109,9 @@ function setupInterfaceState(
     if (hiddenObjectIds.value.length) return true
     if (
       propertyFilters.value.some(
-        (filter) => filter.selectedValues && filter.selectedValues.length > 0
+        (filter) =>
+          filter.isApplied ||
+          (filter.selectedValues && filter.selectedValues.length > 0)
       )
     )
       return true

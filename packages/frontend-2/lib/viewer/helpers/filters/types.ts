@@ -77,6 +77,7 @@ export type NumericFilterData = BaseFilterData & {
 export type StringFilterData = BaseFilterData & {
   type: FilterType.String
   filter: StringPropertyInfo
+  isDefaultAllSelected?: boolean // Track initial "all selected" state
 }
 
 // Union type for all filter data

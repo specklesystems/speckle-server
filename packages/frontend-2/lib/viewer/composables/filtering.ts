@@ -45,6 +45,7 @@ function createFilteringDataStore() {
   const dataSourcesMap: Ref<Record<string, DataSource>> = ref({})
   const dataSources = computed(() => Object.values(dataSourcesMap.value))
   const currentFilterLogic = ref<FilterLogic>(FilterLogic.All)
+  const ghostMode = ref<boolean>(true) // Default to ghosting enabled
   const dataSlices: Ref<DataSlice[]> = ref([])
 
   const extractNestedProperties = (
@@ -330,6 +331,10 @@ function createFilteringDataStore() {
     currentFilterLogic.value = logic
   }
 
+  const setGhostMode = (enabled: boolean) => {
+    ghostMode.value = enabled
+  }
+
   const updateViewer = (
     instance: Viewer,
     filters: {
@@ -340,32 +345,42 @@ function createFilteringDataStore() {
     const objectIds = getFinalObjectIds()
     const filteringExtension = instance.getExtension(FilteringExtension)
 
+    // Always clear existing filters first to prevent accumulation
+    filteringExtension.resetFilters()
+
+    // Check if there are any applied filters
+    const hasAppliedFilters = filters.propertyFilters.value.some(
+      (filter) => filter.isApplied
+    )
+
     if (objectIds.length > 0) {
-      // Clear existing property-filter isolation first to prevent accumulation
-      filteringExtension.resetFilters()
+      // Isolate the matching objects (ghost parameter controls transparency vs hiding)
+      filteringExtension.isolateObjects(
+        objectIds,
+        'property-filters',
+        true,
+        ghostMode.value
+      )
+    } else if (hasAppliedFilters) {
+      // When no objects match but filters are applied, isolate a fake object ID to ghost/hide everything
+      // This provides better visual feedback than completely hiding everything
+      filteringExtension.isolateObjects(
+        ['no-match-ghost-all'],
+        'property-filters',
+        true,
+        ghostMode.value
+      )
+    }
+    // If no applied filters and no objects match, do nothing - return to unfiltered state
 
-      filteringExtension.isolateObjects(objectIds, 'property-filters', true, true)
-    } else {
-      // Preserve color filter when clearing isolation
-      const currentColorFilterId = filters.activeColorFilterId.value
-      let activeColorFilter = null
-
-      if (currentColorFilterId) {
-        const activeFilter = filters.propertyFilters.value.find(
-          (f: FilterData) => f.id === currentColorFilterId
-        )
-        if (activeFilter?.filter) {
-          activeColorFilter = activeFilter.filter
-        }
-      }
-
-      // Reset all filters (including isolation)
-      filteringExtension.resetFilters()
-
-      // Restore color filter if it was active
-      if (activeColorFilter && currentColorFilterId) {
-        filteringExtension.setColorFilter(activeColorFilter)
-        filters.activeColorFilterId.value = currentColorFilterId
+    // Restore color filter if it was active
+    const currentColorFilterId = filters.activeColorFilterId.value
+    if (currentColorFilterId) {
+      const activeFilter = filters.propertyFilters.value.find(
+        (f: FilterData) => f.id === currentColorFilterId
+      )
+      if (activeFilter?.filter) {
+        filteringExtension.setColorFilter(activeFilter.filter)
       }
     }
   }
@@ -383,6 +398,8 @@ function createFilteringDataStore() {
     clearPropertyIndexCache,
     setFilterLogic,
     currentFilterLogic,
+    setGhostMode,
+    ghostMode,
     dataSlices
   }
 }
@@ -515,7 +532,7 @@ export function useFilterUtilities(
    * Creates a properly typed FilterData object from PropertyInfo
    */
   const createFilterData = (params: CreateFilterParams): FilterData => {
-    const { filter, id } = params
+    const { filter, id, availableValues } = params
 
     if (isNumericPropertyInfo(filter)) {
       return {
@@ -534,11 +551,12 @@ export function useFilterUtilities(
       return {
         id,
         isApplied: true,
-        selectedValues: [],
+        selectedValues: [...availableValues], // Select all values by default
         condition: StringFilterCondition.Is,
         type: FilterType.String,
         filter: filter as StringPropertyInfo,
-        numericRange: { min: 0, max: 100 } // Default range for consistency
+        numericRange: { min: 0, max: 100 }, // Default range for consistency
+        isDefaultAllSelected: true // Track that this is the initial "all selected" state
       } satisfies StringFilterData
     }
   }
@@ -607,6 +625,12 @@ export function useFilterUtilities(
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
       filter.selectedValues = [...values]
+
+      // Clear the default all-selected state when user updates values
+      if (!isNumericFilter(filter) && filter.isDefaultAllSelected) {
+        filter.isDefaultAllSelected = false
+      }
+
       updateDataStoreSlices()
     }
   }
@@ -647,6 +671,11 @@ export function useFilterUtilities(
     updateDataStoreSlices()
   }
 
+  const setGhostModeAndUpdate = (enabled: boolean) => {
+    dataStore.setGhostMode(enabled)
+    updateDataStoreSlices()
+  }
+
   /**
    * Updates data store slices based on current filter state (optimized)
    */
@@ -681,7 +710,7 @@ export function useFilterUtilities(
         }
         dataStore.dataSlices.value.push(slice)
       }
-      // Handle string filters with selected values
+      // Handle string filters - only create slice if filter is enabled AND has selected values
       else if (
         !isNumericFilter(filter) &&
         filter.isApplied &&
@@ -722,14 +751,21 @@ export function useFilterUtilities(
       const index = filter.selectedValues.indexOf(value)
       const wasSelected = index > -1
 
-      if (wasSelected) {
-        filter.selectedValues.splice(index, 1)
+      // Special behavior for default all-selected state: first click selects only that item
+      if (!isNumericFilter(filter) && filter.isDefaultAllSelected) {
+        filter.selectedValues = [value] // Select only this item
+        filter.isDefaultAllSelected = false // Clear default state
       } else {
-        filter.selectedValues.push(value)
+        // Normal toggle behavior
+        if (wasSelected) {
+          filter.selectedValues.splice(index, 1)
+        } else {
+          filter.selectedValues.push(value)
+        }
       }
 
-      // Ensure filter is marked as applied when values are selected
-      filter.isApplied = filter.selectedValues.length > 0
+      // Don't change isApplied here - that's controlled by the visibility toggle
+      // isApplied represents whether the filter is enabled, not whether it has values
 
       updateDataStoreSlices()
     }
@@ -741,6 +777,23 @@ export function useFilterUtilities(
   const isActiveFilterValueSelected = (filterId: string, value: string): boolean => {
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     return filter ? filter.selectedValues.includes(value) : false
+  }
+
+  /**
+   * Checks if a filter has content (selected values or numeric range)
+   */
+  const filterHasContent = (filter: FilterData): boolean => {
+    if (isNumericFilter(filter)) {
+      // For numeric filters, check if range is different from default
+      const defaultMin = filter.filter.min
+      const defaultMax = filter.filter.max
+      return (
+        filter.numericRange.min !== defaultMin || filter.numericRange.max !== defaultMax
+      )
+    } else {
+      // For string filters, check if any values are selected
+      return filter.selectedValues.length > 0
+    }
   }
 
   /**
@@ -1140,9 +1193,11 @@ export function useFilterUtilities(
     updateFilterCondition,
 
     setFilterLogicAndUpdate,
+    setGhostModeAndUpdate,
     updateDataStoreSlices,
     toggleActiveFilterValue,
     isActiveFilterValueSelected,
+    filterHasContent,
     getAppliedFilters,
     resetFilters,
     resetExplode,
@@ -1172,6 +1227,8 @@ export function useFilterUtilities(
     // Filter logic
     setFilterLogic: dataStore.setFilterLogic,
     currentFilterLogic: dataStore.currentFilterLogic,
-    getFinalObjectIds: dataStore.getFinalObjectIds
+    getFinalObjectIds: dataStore.getFinalObjectIds,
+    // Ghost mode
+    ghostMode: dataStore.ghostMode
   }
 }
