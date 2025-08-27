@@ -31,7 +31,7 @@ type PolicyErrors = InstanceType<
   | typeof WorkspaceNoEditorSeatError
 >
 
-export const canCreateDashboardsPolicy: AuthPolicy<
+export const canEditDashboardsPolicy: AuthPolicy<
   PolicyLoaderKeys,
   PolicyArgs,
   PolicyErrors

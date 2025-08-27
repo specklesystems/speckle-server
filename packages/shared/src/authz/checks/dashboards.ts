@@ -1,8 +1,9 @@
 import { DashboardContext, UserContext } from '../domain/context.js'
+import { AuthCheckContextLoaderKeys } from '../domain/loaders.js'
 import { AuthPolicyCheck } from '../domain/policies.js'
 
 export const isDashboardOwner: AuthPolicyCheck<
-  'getDashboard',
+  typeof AuthCheckContextLoaderKeys.getDashboard,
   UserContext & DashboardContext
 > =
   (loaders) =>
