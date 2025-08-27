@@ -1,6 +1,17 @@
 <template>
   <div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div
+      v-if="!isVeryFirstLoading && !result?.workspaceBySlug?.dashboards.items.length"
+      class="flex flex-col items-center justify-center gap-y-4 mx-auto my-14"
+    >
+      <h2 class="text-heading-sm text-foreground-2">
+        This workspace has no dashboards yet
+      </h2>
+      <FormButton color="outline" @click="showCreateDashboardDialog = true">
+        Add dashboard
+      </FormButton>
+    </div>
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <div
         v-for="dashboard in result?.workspaceBySlug?.dashboards.items"
         :key="dashboard.id"
@@ -9,6 +20,11 @@
       </div>
     </div>
     <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
+
+    <DashboardsCreateDialog
+      v-model:open="showCreateDashboardDialog"
+      :workspace-slug="workspaceSlug"
+    />
   </div>
 </template>
 
@@ -22,6 +38,7 @@ const workspaceSlug = computed(() => route.params.slug as string)
 const {
   identifier,
   onInfiniteLoad,
+  isVeryFirstLoading,
   query: { result }
 } = usePaginatedQuery({
   query: workspaceDashboardsQuery,
@@ -46,4 +63,6 @@ const {
   }),
   resolveCursorFromVariables: (vars) => vars.cursor
 })
+
+const showCreateDashboardDialog = ref(false)
 </script>
