@@ -3,7 +3,7 @@ import { AuthCheckContextLoaderKeys } from '../../domain/loaders.js'
 import { DashboardContext, MaybeUserContext } from '../../domain/context.js'
 import {
   DashboardNotFoundError,
-  DashboardProjectsNotEnoughPermissionsError,
+  DashboardNotOwnerError,
   DashboardsNotEnabledError,
   WorkspaceNoEditorSeatError,
   WorkspaceNotEnoughPermissionsError,
@@ -11,13 +11,13 @@ import {
 } from '../../domain/authErrors.js'
 import { AuthPolicy } from '../../domain/policies.js'
 import {
-  ensureDashboardProjectsReadAccess,
   ensureDashboardsEnabledFragment,
   ensureWorkspaceDashboardsFeatureAccessFragment
 } from '../../fragments/dashboards.js'
 import { hasMinimumWorkspaceRole } from '../../checks/workspaceRole.js'
 import { Roles } from '../../../core/constants.js'
 import { hasEditorSeat } from '../../checks/workspaceSeat.js'
+import { isDashboardOwner } from '../../checks/dashboards.js'
 
 type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getEnv
@@ -25,25 +25,19 @@ type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getWorkspacePlan
   | typeof AuthCheckContextLoaderKeys.getWorkspaceRole
   | typeof AuthCheckContextLoaderKeys.getWorkspaceSeat
-  | typeof AuthCheckContextLoaderKeys.getProjectRole
-  | typeof AuthCheckContextLoaderKeys.getProject
-  | typeof AuthCheckContextLoaderKeys.getServerRole
-  | typeof AuthCheckContextLoaderKeys.getWorkspace
-  | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoProvider
-  | typeof AuthCheckContextLoaderKeys.getWorkspaceSsoSession
 
 type PolicyArgs = MaybeUserContext & DashboardContext
 
 type PolicyErrors = InstanceType<
   | typeof DashboardsNotEnabledError
+  | typeof DashboardNotOwnerError
+  | typeof DashboardNotFoundError
   | typeof WorkspaceNotEnoughPermissionsError
   | typeof WorkspacePlanNoFeatureAccessError
   | typeof WorkspaceNoEditorSeatError
-  | typeof DashboardNotFoundError
-  | typeof DashboardProjectsNotEnoughPermissionsError
 >
 
-export const canCreateDashboardTokenPolicy: AuthPolicy<
+export const canDeleteDashboardPolicy: AuthPolicy<
   PolicyLoaderKeys,
   PolicyArgs,
   PolicyErrors
@@ -63,24 +57,20 @@ export const canCreateDashboardTokenPolicy: AuthPolicy<
     )({ workspaceId })
     if (ensuredFeatureAccess.isErr) return err(ensuredFeatureAccess.error)
 
-    const isWorkspaceMember = await hasMinimumWorkspaceRole(loaders)({
-      userId: userId!,
-      workspaceId,
-      role: Roles.Workspace.Member
-    })
-    if (!isWorkspaceMember) return err(new WorkspaceNotEnoughPermissionsError())
-
     const isWorkspaceEditorSeat = await hasEditorSeat(loaders)({
       userId: userId!,
       workspaceId
     })
     if (!isWorkspaceEditorSeat) return err(new WorkspaceNoEditorSeatError())
 
-    const ensuredProjectAccess = await ensureDashboardProjectsReadAccess(loaders)({
+    const isWorkspaceAdmin = await hasMinimumWorkspaceRole(loaders)({
       userId: userId!,
-      dashboardId
+      workspaceId,
+      role: Roles.Workspace.Admin
     })
-    if (ensuredProjectAccess.isErr) return err(ensuredProjectAccess.error)
+    const isOwner = await isDashboardOwner(loaders)({ userId: userId!, dashboardId })
+
+    if (!isWorkspaceAdmin && !isOwner) return err(new DashboardNotOwnerError())
 
     return ok()
   }

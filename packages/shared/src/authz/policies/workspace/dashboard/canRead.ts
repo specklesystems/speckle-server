@@ -27,7 +27,7 @@ type PolicyErrors = InstanceType<
   | typeof WorkspacePlanNoFeatureAccessError
 >
 
-export const canListDashboardsPolicy: AuthPolicy<
+export const canReadDashboardsPolicy: AuthPolicy<
   PolicyLoaderKeys,
   PolicyArgs,
   PolicyErrors
