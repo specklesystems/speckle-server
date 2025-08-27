@@ -94,7 +94,6 @@ import {
   type Optional,
   type StringEnumValues
 } from '@speckle/shared'
-import { ViewerModelResource, ViewerObjectResource } from '@speckle/shared/viewer/route'
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { difference } from 'lodash-es'
@@ -153,7 +152,7 @@ const props = defineProps<{
 
 const {
   resources: {
-    response: { savedView, isFederatedView, resourceItems }
+    response: { savedView, isFederatedView, resourceItemsIds }
   }
 } = useInjectedViewerState()
 const { collect } = useCollectNewSavedViewViewerData()
@@ -175,14 +174,7 @@ const isActive = computed(() => props.view.id === savedView.value?.id)
 
 const isOriginalVersionAlreadyLoaded = computed(() => {
   const viewResources = props.view.resourceIds
-  const currentlyLoadedResources = resourceItems.value.map((i) => {
-    if (i.modelId) {
-      return new ViewerModelResource(i.modelId, i.versionId || undefined).toString()
-    } else if (i.objectId) {
-      return new ViewerObjectResource(i.objectId).toString()
-    }
-  })
-
+  const currentlyLoadedResources = resourceItemsIds.value
   return difference(viewResources, currentlyLoadedResources).length === 0
 })
 
