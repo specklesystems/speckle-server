@@ -7,7 +7,6 @@ import { getProjectDbClientFactory } from '@/modules/multiregion/services/projec
 import type { Knex } from 'knex'
 import { getRegionFactory } from '@/modules/multiregion/repositories'
 import {
-  DatabaseError,
   LogicError,
   MisconfiguredEnvironmentError,
   TestOnlyLogicError
@@ -20,14 +19,14 @@ import {
   getMainRegionConfig
 } from '@/modules/multiregion/regionConfig'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import { ensureError, TIME_MS, wait } from '@speckle/shared'
+import { TIME_MS, wait } from '@speckle/shared'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { migrateDbToLatest } from '@/db/migrations'
 import {
   getProjectRegionKey,
   getRegisteredRegionConfigs
 } from '@/modules/multiregion/utils/regionSelector'
-import { get, mapValues } from 'lodash-es'
+import { mapValues } from 'lodash-es'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import { logger } from '@/observability/logging'
 
@@ -190,18 +189,22 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
       ? 'require'
       : 'disable'
 
-    await dropUserReplicationIfExists({
+    await dropReplicationIfExists({
       from: mainDb,
       to: regionDb,
       regionName: regionKey,
-      sslmode
+      sslmode,
+      subName: createPubSubName(`userssub_${regionKey}`),
+      pubName: createPubSubName('userspub')
     })
 
-    await setUpProjectReplication({
+    await dropReplicationIfExists({
       from: regionDb,
       to: mainDb,
       regionName: regionKey,
-      sslmode
+      sslmode,
+      subName: createPubSubName(`projectsub_${regionKey}`),
+      pubName: createPubSubName('projectpub')
     })
   }
 
@@ -219,14 +222,13 @@ interface ReplicationArgs {
   regionName: string
 }
 
-const dropUserReplicationIfExists = async ({
+const dropReplicationIfExists = async ({
   from,
   to,
-  regionName
-}: ReplicationArgs): Promise<void> => {
-  const subName = createPubSubName(`userssub_${regionName}`)
-  const pubName = createPubSubName('userspub')
-
+  regionName,
+  subName,
+  pubName
+}: ReplicationArgs & { subName: string; pubName: string }): Promise<void> => {
   try {
     const { rows: pubExist } = await from.public.raw(
       `SELECT pubname FROM pg_publication WHERE pubname = '${pubName}';`
@@ -276,107 +278,6 @@ const dropUserReplicationIfExists = async ({
   }
 
   return
-}
-
-const setUpProjectReplication = async ({
-  from,
-  to,
-  regionName,
-  sslmode
-}: ReplicationArgs): Promise<void> => {
-  const subName = createPubSubName(`projectsub_${regionName}`)
-  const pubName = createPubSubName('projectpub')
-
-  try {
-    await from.public.raw(`CREATE PUBLICATION ${pubName} FOR TABLE streams;`)
-  } catch (err) {
-    if (!(err instanceof Error))
-      throw new DatabaseError(
-        'Could not create publication {pubName} when setting up project replication for region {regionName}',
-        from.public,
-        {
-          cause: ensureError(
-            sanitizeError(err),
-            'Unknown database error when creating publication'
-          ),
-          info: { pubName, regionName }
-        }
-      )
-    if (
-      !err.message.includes('already exists') &&
-      !err.message.includes('duplicate key value violates unique constraint')
-    )
-      throw new DatabaseError(
-        'Unknown error while creating publication {pubName} when setting up project replication for region {regionName}',
-        from.public,
-        {
-          cause: ensureError(
-            sanitizeError(err),
-            'Unknown database error when creating publication'
-          ),
-          info: { pubName, regionName }
-        }
-      )
-  }
-
-  const fromUrl = new URL(
-    from.private
-      ? from.private.client.config.connection.connectionString
-      : from.public.client.config.connection.connectionString
-  )
-  const port = fromUrl.port ? fromUrl.port : '5432'
-  const fromDbName = fromUrl.pathname.replace('/', '')
-  const rawSqeel = `SELECT * FROM aiven_extras.pg_create_subscription(
-    ?,
-    ?,
-    ?,
-    ?,
-    TRUE,
-    TRUE
-  );`
-  try {
-    await to.public.raw('CREATE EXTENSION IF NOT EXISTS "aiven_extras"')
-    await to.public.raw(rawSqeel, [
-      subName,
-      `dbname=${fromDbName} host=${fromUrl.hostname} port=${port} sslmode=${sslmode} user=${fromUrl.username} password=${fromUrl.password}`,
-      pubName,
-      subName
-    ])
-  } catch (err) {
-    if (!(err instanceof Error))
-      throw new DatabaseError(
-        'Could not create subscription {subName} to {pubName} when setting up project replication for region {regionName}',
-        to.public,
-        {
-          cause: ensureError(
-            sanitizeError(err),
-            'Unknown database error when creating subscription'
-          ),
-          info: { subName, pubName, regionName }
-        }
-      )
-    if (
-      !err.message.includes('already exists') &&
-      !err.message.includes('duplicate key value violates unique constraint')
-    )
-      throw new DatabaseError(
-        'Unknown error while creating subscription {subName} to {pubName} when setting up project replication for region {regionName}',
-        to.public,
-        {
-          cause: ensureError(
-            sanitizeError(err),
-            'Unknown database error when creating subscription'
-          ),
-          info: { subName, pubName, regionName }
-        }
-      )
-  }
-}
-
-const sanitizeError = (err: unknown): unknown => {
-  if (!err) return err
-  if ((get(err, 'where') as unknown as string).includes('password='))
-    return { ...err, where: '[REDACTED AS IT CONTAINS CONNECTION STRING]' }
 }
 
 export const resetRegisteredRegions = () => {
