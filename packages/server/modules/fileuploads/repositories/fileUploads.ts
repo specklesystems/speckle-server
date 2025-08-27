@@ -89,8 +89,10 @@ const mapFileUploadRecordToV2 = (
     convertedStatus: record.convertedStatus,
     convertedLastUpdate: record.convertedLastUpdate,
     convertedMessage: record.convertedMessage,
-    convertedCommitId: record.convertedCommitId
-  } as FileUploadRecordWithProjectId
+    convertedCommitId: record.convertedCommitId,
+    metadata: record.metadata,
+    performanceData: record.performanceData
+  } satisfies FileUploadRecordWithProjectId
 }
 
 export const saveUploadFileFactory =
