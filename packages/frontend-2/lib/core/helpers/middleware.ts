@@ -11,9 +11,16 @@ const useMiddlewareParallelizationState = () =>
 /**
  * Make the middleware process in parallel with other middlewares and only get fully awaited at the end
  */
-export const withParallelization = (middleware: RouteMiddleware): RouteMiddleware => {
+const withParallelization = (middleware: RouteMiddleware): RouteMiddleware => {
   return (...args) => {
     const app = useNuxtApp()
+    const {
+      public: { parallelMiddlewares }
+    } = useRuntimeConfig()
+    if (!parallelMiddlewares) {
+      return middleware(...args)
+    }
+
     const { middlewares } = useMiddlewareParallelizationState()
     middlewares.push(async () => app.runWithContext(() => middleware(...args)))
   }

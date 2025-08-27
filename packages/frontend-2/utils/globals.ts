@@ -14,10 +14,7 @@ import {
 } from '~/lib/common/helpers/graphql'
 import { checkIfIsInPlaceNavigation } from '~/lib/common/helpers/navigation'
 import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
-import {
-  withParallelization,
-  defineParallelizedNuxtRouteMiddleware
-} from '~/lib/core/helpers/middleware'
+import { defineParallelizedNuxtRouteMiddleware } from '~/lib/core/helpers/middleware'
 
 /**
  * Debugging helper to ensure variables are available in debugging scope
@@ -45,6 +42,5 @@ export {
   ROOT_MUTATION,
   ROOT_SUBSCRIPTION,
   ViewerEventBusKeys,
-  withParallelization,
   defineParallelizedNuxtRouteMiddleware
 }

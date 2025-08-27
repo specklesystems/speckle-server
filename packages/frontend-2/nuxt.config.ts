@@ -83,7 +83,8 @@ export default defineNuxtConfig({
       datadogSite: '',
       datadogService: '',
       datadogEnv: '',
-      intercomAppId: ''
+      intercomAppId: '',
+      parallelMiddlewares: true
     }
   },
 
