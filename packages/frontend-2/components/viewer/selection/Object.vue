@@ -52,17 +52,17 @@
       <div
         v-for="(kvp, index) in categorisedValuePairs.nonPrimitiveArrays"
         :key="index"
-        class="text-xs"
+        class="text-body-3xs"
       >
         <div class="text-foreground-2 grid grid-cols-3 pl-2">
           <div
-            class="col-span-1 truncate text-xs font-medium"
+            class="col-span-1 truncate text-body-3xs font-medium"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
           </div>
           <div
-            class="col-span-2 flex w-full min-w-0 truncate text-xs pl-1 text-foreground"
+            class="col-span-2 flex w-full min-w-0 truncate text-body-3xs pl-1 text-foreground"
           >
             <div class="flex-grow truncate">{{ kvp.innerType }} array</div>
             <div class="text-foreground-2">({{ kvp.arrayLength }})</div>
@@ -72,13 +72,13 @@
       <div v-for="(kvp, index) in categorisedValuePairs.primitiveArrays" :key="index">
         <div class="grid grid-cols-3">
           <div
-            class="col-span-1 truncate text-xs font-medium pl-2 text-foreground-2"
+            class="col-span-1 truncate text-body-3xs font-medium pl-2 text-foreground-2"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
           </div>
           <div
-            class="col-span-2 flex w-full min-w-0 truncate text-xs text-foreground"
+            class="col-span-2 flex w-full min-w-0 truncate text-body-3xs text-foreground"
             :title="(kvp.value as string)"
           >
             <div class="pl-2.5 flex-grow truncate">{{ kvp.arrayPreview }}</div>
