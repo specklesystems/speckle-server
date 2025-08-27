@@ -1,5 +1,4 @@
 import type cron from 'node-cron'
-import { notifyChangeInFileStatus } from '@/modules/fileuploads/services/management'
 import { moduleLogger } from '@/observability/logging'
 import {
   onFileImportProcessedFactory,
@@ -21,26 +20,16 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { listenFor } from '@/modules/core/utils/dbNotificationListener'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
-  expireOldPendingUploadsFactory,
   getFileInfoFactory,
   updateFileUploadFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
-import { getFileImportTimeLimitMinutes } from '@/modules/shared/helpers/envHelper'
-import { getRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
   acquireTaskLockFactory,
   releaseTaskLockFactory
 } from '@/modules/core/repositories/scheduledTasks'
-import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
-import { manageFileImportExpiryFactory } from '@/modules/fileuploads/services/tasks'
-import { TIME } from '@speckle/shared'
-import {
-  DelayBetweenFileImportRetriesMinutes,
-  FileUploadDatabaseEvents,
-  NumberOfFileImportRetries
-} from '@/modules/fileuploads/domain/consts'
+import { FileUploadDatabaseEvents } from '@/modules/fileuploads/domain/consts'
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
 import {
   shutdownQueues,
@@ -53,54 +42,12 @@ import { reportSubscriptionEventsFactory } from '@/modules/fileuploads/events/su
 import { configureClient } from '@/knexfile'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { rhinoImporterSupportedFileExtensions } from '@speckle/shared/blobs'
+import { scheduleFileImportExpiry } from '@/modules/fileuploads/tasks'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED, FF_RHINO_FILE_IMPORTER_ENABLED } =
   getFeatureFlags()
 
 let scheduledTasks: cron.ScheduledTask[] = []
-
-const scheduleFileImportExpiry = async ({
-  scheduleExecution
-}: {
-  scheduleExecution: ScheduleExecution
-}) => {
-  const fileImportExpiryHandlers: ReturnType<typeof manageFileImportExpiryFactory>[] =
-    []
-  const regionClients = await getRegisteredDbClients()
-  for (const projectDb of [db, ...regionClients]) {
-    fileImportExpiryHandlers.push(
-      manageFileImportExpiryFactory({
-        garbageCollectExpiredPendingUploads: expireOldPendingUploadsFactory({
-          db: projectDb
-        }),
-        notifyUploadStatus: notifyChangeInFileStatus({
-          eventEmit: getEventBus().emit
-        })
-      })
-    )
-  }
-
-  const cronExpression = '*/5 * * * *' // every 5 minutes
-  return scheduleExecution(
-    cronExpression,
-    'FileImportExpiry',
-    async (_scheduledTime, { logger }) => {
-      await Promise.all(
-        fileImportExpiryHandlers.map((handler) =>
-          handler({
-            logger,
-            timeoutThresholdSeconds:
-              (NumberOfFileImportRetries *
-                (getFileImportTimeLimitMinutes() +
-                  DelayBetweenFileImportRetriesMinutes) +
-                1) * // additional buffer of 1 minute
-              TIME.minute
-          })
-        )
-      )
-    }
-  )
-}
 
 export const init: SpeckleModule['init'] = async ({
   app,
@@ -119,7 +66,6 @@ export const init: SpeckleModule['init'] = async ({
   let observeResult: ObserveResult | undefined = undefined
 
   if (isInitial) {
-    // this feature flag is going away soon
     if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
       moduleLogger.info('🗳️ Next Gen File importer is ENABLED')
       const connectionUri = getFileImporterQueuePostgresUrl()
@@ -159,7 +105,12 @@ export const init: SpeckleModule['init'] = async ({
       releaseTaskLock: releaseTaskLockFactory({ db })
     })
 
-    scheduledTasks = [await scheduleFileImportExpiry({ scheduleExecution })]
+    scheduledTasks = [
+      await scheduleFileImportExpiry({
+        scheduleExecution,
+        cronExpression: '*/5 * * * *' // every 5 minutes
+      })
+    ]
 
     await listenFor(FileUploadDatabaseEvents.Updated, async (msg) => {
       const parsedMessage = parseMessagePayload(msg.payload)
@@ -201,7 +152,6 @@ export const init: SpeckleModule['init'] = async ({
     })()
   }
 
-  // the two routers can be used independently and can both be enabled
   app.use(fileuploadRouterFactory())
 }
 
