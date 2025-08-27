@@ -145,7 +145,7 @@ export const LoggingExpressMiddleware = HttpLogger({
           headers: Record<string, string>
         }
       }
-      const serverRes = get(res, 'raw.raw') as ServerResponse
+      const serverRes = get(res, 'raw.raw') as unknown as ServerResponse
       const auth = serverRes.req.context
       const statusCode = res.statusCode || res.raw.statusCode || serverRes.statusCode
 

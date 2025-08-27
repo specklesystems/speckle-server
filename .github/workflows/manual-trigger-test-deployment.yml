@@ -4,7 +4,7 @@ on: workflow_dispatch
 
 jobs:
   verify-non-prod:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     if: github.ref != 'refs/heads/main'
     steps:
       - run: echo "This is a non-production deployment."

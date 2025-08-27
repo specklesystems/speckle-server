@@ -1,9 +1,12 @@
-import { Redis } from 'ioredis'
 import type pino from 'pino'
 
 export const createRedis = async (params: { logger: pino.Logger }) => {
-  const { logger } = params
+  // invoke composables sync first
   const { redisUrl } = useRuntimeConfig()
+
+  // doesnt work as a static import for some reason, maybe client build is picking it up
+  const { default: Redis } = await import('ioredis')
+  const { logger } = params
   if (!redisUrl?.length) {
     return undefined
   }

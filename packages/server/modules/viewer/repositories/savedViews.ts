@@ -588,8 +588,9 @@ export const deleteSavedViewRecordFactory =
 
 export const updateSavedViewRecordFactory =
   (deps: { db: Knex }): UpdateSavedViewRecord =>
-  async (params) => {
+  async (params, options) => {
     const { id, projectId, update } = params
+    const { skipUpdatingDate } = options || {}
 
     // Update the saved view
     const [updatedView] = await tables
@@ -598,7 +599,10 @@ export const updateSavedViewRecordFactory =
         [SavedViews.col.id]: id,
         [SavedViews.col.projectId]: projectId
       })
-      .update({ ...update, updatedAt: new Date() }, '*')
+      .update(
+        { ...update, ...(skipUpdatingDate ? {} : { updatedAt: new Date() }) },
+        '*'
+      )
 
     return updatedView || undefined
   }
