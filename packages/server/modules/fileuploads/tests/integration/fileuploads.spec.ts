@@ -9,9 +9,12 @@ import { noErrors } from '@/test/helpers'
 import { TIME_MS } from '@speckle/shared'
 import { initUploadTestEnvironment } from '@/modules/fileuploads/tests/helpers/init'
 import { fileURLToPath } from 'url'
+import type { BasicTestUser } from '@/test/authHelper'
 import { createTestUser } from '@/test/authHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { buildBasicTestProject } from '@/modules/core/tests/helpers/creation'
 
-const { createStream, createToken } = initUploadTestEnvironment()
+const { createToken } = initUploadTestEnvironment()
 const gqlQueryToListFileUploads = `query ($streamId: String!) {
   stream(id: $streamId) {
     id
@@ -27,13 +30,7 @@ describe('FileUploads @fileuploads integration', () => {
   let server: Server
   let app: Express
 
-  const userOne = {
-    name: 'User',
-    email: 'user@example.org',
-    password: 'jdsadjsadasfdsa'
-  }
-
-  let userOneId: string
+  let userOne: BasicTestUser
   let userOneToken: string
   let createdStreamId: string
   let existingCanonicalUrl: string
@@ -55,13 +52,19 @@ describe('FileUploads @fileuploads integration', () => {
     process.env['CANONICAL_URL'] = serverAddress
     process.env['PORT'] = serverPort
 
-    const user = await createTestUser(userOne)
-    userOneId = user.id
+    userOne = await createTestUser({
+      name: 'User',
+      email: 'user@example.org',
+      password: 'jdsadjsadasfdsa'
+    })
   })
   beforeEach(async () => {
-    createdStreamId = await createStream({ ownerId: userOneId })
+    ;({ id: createdStreamId } = await createTestStream(
+      buildBasicTestProject(),
+      userOne
+    ))
     ;({ token: userOneToken } = await createToken({
-      userId: userOneId,
+      userId: userOne.id,
       name: 'test token',
       scopes: [Scopes.Streams.Write]
     }))
@@ -212,7 +215,7 @@ describe('FileUploads @fileuploads integration', () => {
     //TODO test for bad token
     it('Returns 403 for token without stream write permissions', async () => {
       const { token: badToken } = await createToken({
-        userId: userOneId,
+        userId: userOne.id,
         name: 'test token',
         scopes: [Scopes.Streams.Read],
         lifespan: TIME_MS.hour
@@ -264,13 +267,15 @@ describe('FileUploads @fileuploads integration', () => {
     })
 
     it('Should not upload a file to a stream you do not have access to', async () => {
-      const userTwo = {
+      const userTwo = await createTestUser({
         name: 'User Two',
         email: 'user2@example.org',
         password: 'jdsadjsadasfdsa'
-      }
-      const { id: userTwoId } = await createTestUser(userTwo)
-      const streamTwoId = await createStream({ ownerId: userTwoId })
+      })
+      const { id: streamTwoId } = await createTestStream(
+        buildBasicTestProject(),
+        userTwo
+      )
 
       const response = await request(app)
         .post(`/api/file/autodetect/${streamTwoId}/main`)
