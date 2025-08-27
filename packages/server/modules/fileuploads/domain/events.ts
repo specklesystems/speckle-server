@@ -17,7 +17,7 @@ export const FileuploadEvents = {
 export type FileuploadEvents = (typeof FileuploadEvents)[keyof typeof FileuploadEvents]
 
 type FileuploadStartedPayload = {
-  upload: FileUploadRecordWithProjectId | FileUploadRecord
+  upload: FileUploadRecordWithProjectId & FileUploadRecord
 }
 type FileuploadUpdatedPayload = {
   upload: FileUploadRecordWithProjectId
