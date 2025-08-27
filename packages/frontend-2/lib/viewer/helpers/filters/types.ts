@@ -14,7 +14,8 @@ export enum NumericFilterCondition {
 
 export enum StringFilterCondition {
   Is = 'is',
-  IsNot = 'is_not'
+  IsNot = 'is_not',
+  IsSet = 'is_set'
 }
 
 export type FilterCondition = NumericFilterCondition | StringFilterCondition
@@ -24,6 +25,7 @@ export const CONDITION_CONFIG: Record<FilterCondition, { label: string }> = {
   // String conditions
   [StringFilterCondition.Is]: { label: 'is' },
   [StringFilterCondition.IsNot]: { label: 'is not' },
+  [StringFilterCondition.IsSet]: { label: 'is set' },
   // Numeric conditions
   [NumericFilterCondition.IsEqualTo]: { label: 'is equal to' },
   [NumericFilterCondition.IsNotEqualTo]: { label: 'is not equal to' },

@@ -51,7 +51,8 @@ const {
   updateActiveFilterValues,
   isActiveFilterValueSelected,
   getFilterValueColor,
-  getAvailableFilterValues
+  getAvailableFilterValues,
+  filters
 } = useFilterUtilities()
 
 const isValueSelected = (value: string): boolean => {
@@ -62,8 +63,12 @@ const getValueCount = (_value: string): number => {
   return 1
 }
 
-// Get value color
+// Get value color - only show colors if this filter is the active color filter
 const getValueColor = (value: string): string | null => {
+  // Only show colors if this specific filter is the one applying colors
+  if (filters.activeColorFilterId.value !== props.filter.id) {
+    return null
+  }
   return getFilterValueColor(value)
 }
 

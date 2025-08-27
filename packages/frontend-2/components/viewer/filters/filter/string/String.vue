@@ -1,24 +1,33 @@
 <template>
-  <div class="pt-1">
+  <div
+    class="pt-1"
+    :class="{ 'pb-1.5': filter.condition === StringFilterCondition.IsSet }"
+  >
     <ViewerFiltersFilterConditionSelector
       :filter="filter"
       class="pl-9"
       @select-condition="handleConditionSelect"
     />
 
-    <ViewerSearchInput
-      v-if="!collapsed"
-      v-model="searchQuery"
-      placeholder="Search for a value..."
-      class="pl-1 -mt-0.5"
-    />
+    <template v-if="filter.condition !== StringFilterCondition.IsSet">
+      <ViewerSearchInput
+        v-if="!collapsed && filter.condition"
+        v-model="searchQuery"
+        placeholder="Search for a value..."
+        class="pl-1 -mt-0.5"
+      />
 
-    <ViewerFiltersFilterStringCheckboxes :filter="filter" :search-query="searchQuery" />
+      <ViewerFiltersFilterStringCheckboxes
+        :filter="filter"
+        :search-query="searchQuery"
+      />
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { FilterData, ConditionOption } from '~/lib/viewer/helpers/filters/types'
+import { StringFilterCondition } from '~/lib/viewer/helpers/filters/types'
 import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 
 const props = defineProps<{

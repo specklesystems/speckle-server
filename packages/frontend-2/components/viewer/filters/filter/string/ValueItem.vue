@@ -3,7 +3,7 @@
 <template>
   <div class="px-1">
     <div
-      class="flex items-center justify-between gap-2 text-body-2xs pr-2 py-1 px-2 hover:bg-highlight-1 rounded cursor-pointer"
+      class="flex items-center justify-between gap-2 text-body-3xs pr-2 py-1 px-2 hover:bg-highlight-1 rounded cursor-pointer"
       @click="$emit('toggle')"
     >
       <div class="flex items-center min-w-0">
