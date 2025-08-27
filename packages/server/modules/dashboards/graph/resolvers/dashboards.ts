@@ -49,30 +49,6 @@ const resolvers: Resolvers = {
       return toLimitedWorkspace(workspace)
     }
   },
-  Project: {
-    dashboards: async (parent, args) => {
-      const { workspaceId } = parent
-
-      // TODO: Policies
-      if (!workspaceId) {
-        return {
-          items: [],
-          totalCount: 0
-        }
-      }
-
-      return await getPaginatedDasboardsFactory({
-        listDashboards: listDashboardsFactory({ db }),
-        countDashboards: countDashboardsFactory({ db })
-      })({
-        workspaceId: parent.id,
-        filter: {
-          limit: args.limit,
-          cursor: args.cursor ?? null
-        }
-      })
-    }
-  },
   Workspace: {
     dashboards: async (parent, args) => {
       // TODO: Policies
@@ -129,11 +105,6 @@ const disabledResolvers: Resolvers = {
   },
   Mutation: {
     dashboardMutations: async () => {
-      throw new DashboardsModuleDisabledError()
-    }
-  },
-  Project: {
-    dashboards: async () => {
       throw new DashboardsModuleDisabledError()
     }
   },

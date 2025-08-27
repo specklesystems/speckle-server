@@ -2449,7 +2449,6 @@ export type Project = {
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime']['output'];
   dashboardTokens: DashboardTokenCollection;
-  dashboards: DashboardCollection;
   description?: Maybe<Scalars['String']['output']>;
   /** Public project-level configuration for embedded viewer */
   embedOptions: ProjectEmbedOptions;
@@ -2561,13 +2560,6 @@ export type ProjectCommentThreadsArgs = {
 export type ProjectDashboardTokensArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type ProjectDashboardsArgs = {
-  cursor?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<ProjectDashboardsFilter>;
-  limit?: Scalars['Int']['input'];
 };
 
 
@@ -2881,10 +2873,6 @@ export type ProjectCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   visibility?: InputMaybe<ProjectVisibility>;
-};
-
-export type ProjectDashboardsFilter = {
-  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ProjectEmbedOptions = {
@@ -6215,7 +6203,6 @@ export type ResolversTypes = {
   ProjectCommentsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectCommentsUpdatedMessage, 'comment'> & { comment?: Maybe<ResolversTypes['Comment']> }>;
   ProjectCommentsUpdatedMessageType: ProjectCommentsUpdatedMessageType;
   ProjectCreateInput: ProjectCreateInput;
-  ProjectDashboardsFilter: ProjectDashboardsFilter;
   ProjectEmbedOptions: ResolverTypeWrapper<ProjectEmbedOptions>;
   ProjectFileImportUpdatedMessage: ResolverTypeWrapper<Omit<ProjectFileImportUpdatedMessage, 'upload'> & { upload: ResolversTypes['FileUpload'] }>;
   ProjectFileImportUpdatedMessageType: ProjectFileImportUpdatedMessageType;
@@ -6600,7 +6587,6 @@ export type ResolversParentTypes = {
   ProjectCommentsFilter: ProjectCommentsFilter;
   ProjectCommentsUpdatedMessage: Omit<ProjectCommentsUpdatedMessage, 'comment'> & { comment?: Maybe<ResolversParentTypes['Comment']> };
   ProjectCreateInput: ProjectCreateInput;
-  ProjectDashboardsFilter: ProjectDashboardsFilter;
   ProjectEmbedOptions: ProjectEmbedOptions;
   ProjectFileImportUpdatedMessage: Omit<ProjectFileImportUpdatedMessage, 'upload'> & { upload: ResolversParentTypes['FileUpload'] };
   ProjectInviteCreateInput: ProjectInviteCreateInput;
@@ -7730,7 +7716,6 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   commentThreads?: Resolver<ResolversTypes['ProjectCommentCollection'], ParentType, ContextType, Partial<ProjectCommentThreadsArgs>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   dashboardTokens?: Resolver<ResolversTypes['DashboardTokenCollection'], ParentType, ContextType, Partial<ProjectDashboardTokensArgs>>;
-  dashboards?: Resolver<ResolversTypes['DashboardCollection'], ParentType, ContextType, RequireFields<ProjectDashboardsArgs, 'limit'>>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   embedOptions?: Resolver<ResolversTypes['ProjectEmbedOptions'], ParentType, ContextType>;
   embedTokens?: Resolver<ResolversTypes['EmbedTokenCollection'], ParentType, ContextType, Partial<ProjectEmbedTokensArgs>>;

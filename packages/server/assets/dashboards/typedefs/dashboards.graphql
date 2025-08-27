@@ -37,18 +37,6 @@ input WorkspaceDashboardsFilter {
   search: String
 }
 
-extend type Project {
-  dashboards(
-    limit: Int! = 50
-    cursor: String
-    filter: ProjectDashboardsFilter
-  ): DashboardCollection!
-}
-
-input ProjectDashboardsFilter {
-  search: String
-}
-
 type DashboardMutations {
   create(workspace: WorkspaceIdentifier!, input: DashboardCreateInput!): Dashboard!
   delete(id: String!): Boolean!
