@@ -1,7 +1,3 @@
-extend type DashboardMutations {
-  createToken(dashboardId: String!): String!
-}
-
 type DashboardToken {
   tokenId: String!
   dashboard: Dashboard!
@@ -10,6 +6,10 @@ type DashboardToken {
   createdAt: DateTime!
   lifespan: BigInt!
   lastUsed: DateTime!
+}
+
+extend type DashboardMutations {
+  createToken(dashboardId: String!): CreateDashboardTokenReturn!
 }
 
 input DashboardTokenCreateInput {

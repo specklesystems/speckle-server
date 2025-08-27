@@ -54,7 +54,6 @@ const resolvers: Resolvers = {
       const { workspaceId } = parent
 
       // TODO: Policies
-
       if (!workspaceId) {
         return {
           items: [],

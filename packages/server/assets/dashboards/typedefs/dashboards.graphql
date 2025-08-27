@@ -53,7 +53,6 @@ type DashboardMutations {
   create(workspace: WorkspaceIdentifier!, input: DashboardCreateInput!): Dashboard!
   delete(id: String!): Boolean!
   update(input: DashboardUpdateInput!): Dashboard!
-  createToken(dashboardId: String!): String!
 }
 
 input DashboardCreateInput {
