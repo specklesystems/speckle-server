@@ -3,7 +3,6 @@ import { type Registry, Counter, Summary, Gauge } from 'prom-client'
 import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
 import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
 import { JobResultStatus } from '@speckle/shared/workers/fileimport'
-import type Bull from 'bull'
 
 export const FileImportJobDurationStep = {
   TOTAL: 'total',
@@ -21,7 +20,7 @@ export type ObserveResult = (params: { jobResult: FileImportResultPayload }) => 
 
 export const initializeMetrics = (params: {
   registers: Registry[]
-  requestQueues: (FileImportQueue & { queue?: Bull.Queue })[]
+  requestQueues: FileImportQueue[]
 }) => {
   const { registers, requestQueues } = params
 
@@ -98,26 +97,6 @@ export const initializeMetrics = (params: {
     help: 'Total number of file import jobs which have been requested and were not successful (failed).',
     labelNames: ['parser'],
     registers
-  })
-
-  const completedHandlerFactory = (queueLabel: string) => () => {
-    fileImportJobsRequestCompletedCounter.inc({ parser: queueLabel })
-  }
-
-  const failedHandlerFactory = (queueLabel: string) => () => {
-    fileImportJobsRequestFailedCounter.inc({ parser: queueLabel })
-  }
-
-  requestQueues.forEach((requestQueue) => {
-    if (!requestQueue.queue) return
-
-    const completedHandler = completedHandlerFactory(requestQueue.label)
-    const failedHandler = failedHandlerFactory(requestQueue.label)
-
-    requestQueue.queue.removeListener('completed', completedHandler)
-    requestQueue.queue.on('completed', completedHandler)
-    requestQueue.queue.removeListener('failed', failedHandler)
-    requestQueue.queue.on('failed', failedHandler)
   })
 
   // ======= Responses =======

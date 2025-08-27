@@ -97,6 +97,7 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 
 const db = knex
 const Commits = () => knex('commits')
@@ -212,6 +213,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
+    storeProjectRole: storeProjectRoleFactory({ db }),
     emitEvent: getEventBus().emit
   })
 })

@@ -123,11 +123,6 @@ export const parseFeatureFlags = (
       description: 'Enables the Rhino based file importer.',
       defaults: { _: false }
     },
-    FF_BACKGROUND_JOBS_ENABLED: {
-      schema: z.boolean(),
-      description: 'Enables the postgres based background job mechanism',
-      defaults: { _: false }
-    },
     FF_LEGACY_FILE_IMPORTS_ENABLED: {
       schema: z.boolean(),
       description:

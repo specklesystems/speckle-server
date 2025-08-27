@@ -79,6 +79,7 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import type { ObjectRecord } from '@/modules/core/helpers/types'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 
 const sampleCommit = JSON.parse(`{
   "Objects": [
@@ -179,6 +180,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
+    storeProjectRole: storeProjectRoleFactory({ db }),
     emitEvent: getEventBus().emit
   })
 })

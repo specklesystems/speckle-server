@@ -6,7 +6,7 @@ import { Roles } from '@speckle/shared'
 /**
  * Apply this to a page to prevent access by non-admin users
  */
-export default defineNuxtRouteMiddleware(async () => {
+export default defineParallelizedNuxtRouteMiddleware(async () => {
   const client = useApolloClientFromNuxt()
 
   const { data } = await client

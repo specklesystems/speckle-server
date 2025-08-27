@@ -19,7 +19,7 @@ const canViewProjectTokensQuery = graphql(`
 /**
  * Apply this to a page to prevent unauthenticated access to tokens and ensure the user is the owner
  */
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineParallelizedNuxtRouteMiddleware(async (to) => {
   const client = useApolloClientFromNuxt()
 
   const projectId = to.params.id as string

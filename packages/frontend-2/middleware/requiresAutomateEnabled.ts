@@ -1,4 +1,4 @@
-export default defineNuxtRouteMiddleware(() => {
+export default defineParallelizedNuxtRouteMiddleware(() => {
   const isAutomateEnabled = useIsAutomateModuleEnabled()
   if (!isAutomateEnabled.value) {
     return abortNavigation(

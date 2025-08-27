@@ -11,7 +11,7 @@ export class MemoryDownloader implements Downloader {
     this.#rootId = rootId
     this.#items = items
   }
-  initializePool(params: {
+  initialize(params: {
     results: Queue<Item>
     total: number
     maxDownloadBatchWait?: number

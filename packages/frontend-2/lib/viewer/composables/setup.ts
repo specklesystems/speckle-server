@@ -77,6 +77,7 @@ import {
   parseUrlParameters,
   resourceBuilder,
   ViewerModelResource,
+  ViewerObjectResource,
   type ViewerResource
 } from '@speckle/shared/viewer/route'
 import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
@@ -203,6 +204,10 @@ export type InjectableViewerState = Readonly<{
        * Metadata about loaded items
        */
       resourceItems: ComputedRef<ViewerResourceItem[]>
+      /**
+       * Actually loaded resource items but in string id format
+       */
+      resourceItemsIds: ComputedRef<string[]>
       /**
        * Variables used to load resource items identified by URL identifiers. Relevant when making cache updates
        */
@@ -628,6 +633,7 @@ function setupResponseResourceItems(
   | 'savedView'
   | 'isFederatedView'
   | 'resourceItemsExtended'
+  | 'resourceItemsIds'
 > {
   const globalError = useError()
   const {
@@ -770,6 +776,15 @@ function setupResponseResourceItems(
     return finalItems
   })
 
+  const resourceItemsIds = computed(() =>
+    resourceItems.value.map((i) => {
+      if (i.modelId) {
+        return new ViewerModelResource(i.modelId, i.versionId || undefined).toString()
+      } else {
+        return new ViewerObjectResource(i.objectId).toString()
+      }
+    })
+  )
   const resourceItemsLoaded = computed(() => initLoadDone.value)
 
   const savedView = computed(() => {
@@ -790,6 +805,7 @@ function setupResponseResourceItems(
 
   return {
     resourceItemsExtended,
+    resourceItemsIds,
     resourceItems,
     resourceItemsQueryVariables: computed(() => resourceItemsQueryVariables.value),
     resourceItemsLoaded,

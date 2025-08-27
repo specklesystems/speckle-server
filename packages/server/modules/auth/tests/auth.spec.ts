@@ -76,6 +76,7 @@ import { UserInputError } from '@/modules/core/errors/userinput'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import cryptoRandomString from 'crypto-random-string'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -155,6 +156,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
+    storeProjectRole: storeProjectRoleFactory({ db }),
     emitEvent: getEventBus().emit
   })
 })

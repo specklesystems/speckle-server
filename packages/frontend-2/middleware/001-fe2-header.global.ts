@@ -1,4 +1,4 @@
-export default defineNuxtRouteMiddleware(() => {
+export default defineParallelizedNuxtRouteMiddleware(() => {
   // Add response header that shows this is a FE2 request
   const { ssrContext } = useNuxtApp()
   if (ssrContext) {
