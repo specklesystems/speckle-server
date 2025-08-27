@@ -10,7 +10,7 @@ export async function up(knex: Knex): Promise<void> {
       .references('id')
       .inTable('workspaces')
       .onDelete('cascade')
-    table.text('ownerId')
+    table.text('ownerId').references('id').inTable('users').onDelete('set null')
     table.specificType('projectIds', 'text[]').notNullable().defaultTo('{}')
     table.text('state').notNullable()
     table.timestamp('createdAt', { precision: 3, useTz: true }).notNullable()
