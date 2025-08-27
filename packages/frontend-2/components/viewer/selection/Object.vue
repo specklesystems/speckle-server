@@ -81,7 +81,7 @@
             class="col-span-2 flex w-full min-w-0 truncate text-xs text-foreground"
             :title="(kvp.value as string)"
           >
-            <div class="flex-grow truncate">{{ kvp.arrayPreview }}</div>
+            <div class="pl-2.5 flex-grow truncate">{{ kvp.arrayPreview }}</div>
             <div class="text-foreground-2">({{ kvp.arrayLength }})</div>
           </div>
         </div>
