@@ -8,6 +8,9 @@ export const createDashboardMutation = graphql(`
     dashboardMutations {
       create(workspace: $workspace, input: $input) {
         id
+        workspace {
+          id
+        }
       }
     }
   }
