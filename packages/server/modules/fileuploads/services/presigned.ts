@@ -9,7 +9,7 @@ import type {
 import { ModelNotFoundError } from '@/modules/core/errors/model'
 import { ensureError } from '@speckle/shared'
 import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
-import { get } from 'lodash-es'
+import { get, isString } from 'lodash-es'
 
 export const registerUploadCompleteAndStartFileImportFactory = (deps: {
   registerCompletedUpload: RegisterCompletedUpload
@@ -55,10 +55,10 @@ export const registerUploadCompleteAndStartFileImportFactory = (deps: {
         projectId: storedBlob.streamId //backwards compatibility
       }
     } catch (error) {
-      const message = get(error, 'message')
+      const message = get(error, 'message') as unknown as string | undefined
       if (
         message &&
-        typeof message === 'string' &&
+        isString(message) &&
         message.includes(
           'duplicate key value violates unique constraint "file_uploads_pkey"'
         )

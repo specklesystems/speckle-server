@@ -1,6 +1,20 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { trim, isNumber } from '#lodash'
-import type { JSONContent } from '@tiptap/core'
 import type { Optional } from '../../core/helpers/utilityTypes.js'
+
+// TODO: had to copy out of tiptap/core, because of a build issue w/ a type-only import from CJS
+type JSONContent = {
+  [key: string]: any
+  type?: string | undefined
+  attrs?: Record<string, any> | undefined
+  content?: JSONContent[]
+  marks?: {
+    type: string
+    attrs?: Record<string, any>
+    [key: string]: any
+  }[]
+  text?: string
+}
 
 /**
  * Used to match URLs that can appear anywhere in a string, not perfect, but crafting a perfect

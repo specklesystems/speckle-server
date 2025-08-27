@@ -1,10 +1,11 @@
 import { join } from 'path'
-import { withoutLeadingSlash } from 'ufo'
 import { sanitizeFilePath } from 'mlly'
 import { filename } from 'pathe/utils'
 import * as Environment from '@speckle/shared/environment'
+import { defineNuxtConfig } from 'nuxt/config'
 
 // Copied out from nuxt vite-builder source to correctly build output chunk/entry/asset/etc file names
+const withoutLeadingSlash = (path: string) => path.replace(/^\//, '')
 const buildOutputFileName = (chunkName: string) =>
   withoutLeadingSlash(
     join('/_nuxt/', `${sanitizeFilePath(filename(chunkName))}.[hash].js`)
@@ -26,6 +27,8 @@ const hydrationMismatchReportingEnabled = ['1', 'true', true, 1].includes(
   HYDRATION_MISMATCH_REPORTING
 )
 
+const external = ['ioredis', 'crypto', 'jsdom']
+
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
   ...(buildSourceMaps ? { sourcemap: true } : {}),
@@ -35,7 +38,9 @@ export default defineNuxtConfig({
     strict: true,
     tsConfig: {
       compilerOptions: {
-        moduleResolution: 'bundler'
+        moduleResolution: 'bundler',
+        // TODO: More correct, but requires a lot of (minor) changes
+        noUncheckedIndexedAccess: false
       }
     }
   },
@@ -102,9 +107,13 @@ export default defineNuxtConfig({
         : {})
     },
 
+    ssr: {
+      external
+    },
+
     optimizeDeps: {
       // Should only be ran on serverside anyway. W/o this it tries to transpile it unsuccessfully
-      exclude: ['jsdom']
+      exclude: external
     },
 
     vue: {
@@ -149,7 +158,7 @@ export default defineNuxtConfig({
           }
         },
         // Leave imports as is, they're server-side only
-        external: ['jsdom']
+        external: ['jsdom', 'crypto']
       }
       // // optionally disable minification for debugging
       // minify: false,
@@ -244,14 +253,14 @@ export default defineNuxtConfig({
         to: '/workspaces/actions/create',
         statusCode: 301
       }
-    },
-    '/projects/:id/models/:modelId': {
-      ssr: true // TODO: Should experiment w/ false, but this breaks SSR script injection like for RUM
     }
   },
 
   nitro: {
-    compressPublicAssets: true
+    compressPublicAssets: true,
+    externals: {
+      external
+    }
   },
 
   build: {
@@ -275,6 +284,8 @@ export default defineNuxtConfig({
       'graphql/utilities/getOperationAST'
     ]
   },
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error
   prometheus: {
     verbose: false
   },

@@ -113,7 +113,12 @@ export const processNewFileStreamFactory = (): NewFileStreamProcessor => {
 
         file.on('error', (err: unknown) => {
           registerUploadResult(
-            markUploadError(deleteObject, streamId, blobId, get(err, 'message'))
+            markUploadError(
+              deleteObject,
+              streamId,
+              blobId,
+              get(err, 'message') as unknown as string
+            )
           )
         })
       }
