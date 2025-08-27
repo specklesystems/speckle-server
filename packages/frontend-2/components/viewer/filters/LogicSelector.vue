@@ -33,8 +33,6 @@ defineProps<{
   modelValue: FilterLogic
 }>()
 
-defineEmits(['update:modelValue'])
-
 const { setFilterLogicAndUpdate } = useFilterUtilities()
 
 const filterLogicOptions = ref([

@@ -67,18 +67,22 @@ import {
   useInjectedViewerInterfaceState,
   useInjectedViewer
 } from '~~/lib/viewer/composables/setup'
-import type { PropertySelectOption } from '~/lib/viewer/helpers/filters/types'
-import { FilterLogic } from '~/lib/viewer/helpers/filters/types'
+import type {
+  PropertySelectOption,
+  FilterLogic
+} from '~/lib/viewer/helpers/filters/types'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { X, Plus } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
-import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 
 const {
   filters: { propertyFilters },
   getRelevantFilters,
   addActiveFilter,
-  resetFilters
+  resetFilters,
+  currentFilterLogic,
+  setFilterLogicAndUpdate
 } = useFilterUtilities()
 
 const {
@@ -127,7 +131,10 @@ const propertySelectOptions = computed((): PropertySelectOption[] => {
   return sortedOptions
 })
 
-const filterLogic = ref<FilterLogic>(FilterLogic.All)
+const filterLogic = computed({
+  get: () => currentFilterLogic.value,
+  set: (value: FilterLogic) => setFilterLogicAndUpdate(value)
+})
 
 const mp = useMixpanel()
 

@@ -34,7 +34,6 @@ import {
   type ResourceInfo,
   type CreateFilterParams,
   isNumericFilter,
-  isStringFilter,
   NumericFilterCondition,
   StringFilterCondition,
   getConditionLabel
@@ -403,6 +402,8 @@ export function useFilterUtilities(
       }
     })
 
+    // Manual updates only - avoid expensive watchers on filter arrays
+
     // Watch for filter changes and apply to viewer
     let preventFilterWatchers = false
     const withWatchersDisabled = (fn: () => void) => {
@@ -598,9 +599,7 @@ export function useFilterUtilities(
       }
       filters.propertyFilters.value.splice(index, 1)
 
-      // Update viewer to reflect filter removal
       updateDataStoreSlices()
-
       // If this was the last filter, explicitly reset the viewer
       if (filters.propertyFilters.value.length === 0) {
         const filteringExtension = instance.getExtension(FilteringExtension)
@@ -616,8 +615,6 @@ export function useFilterUtilities(
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
       filter.isApplied = !filter.isApplied
-
-      // Update viewer to reflect filter state change
       updateDataStoreSlices()
     }
   }
@@ -629,8 +626,6 @@ export function useFilterUtilities(
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
       filter.selectedValues = [...values]
-
-      // Update viewer to reflect filter value changes
       updateDataStoreSlices()
     }
   }
@@ -672,16 +667,15 @@ export function useFilterUtilities(
   }
 
   /**
-   * Updates data store slices based on current filter state
+   * Updates data store slices based on current filter state (optimized)
    */
   const updateDataStoreSlices = () => {
-    // Clear existing filter slices manually to avoid widgetId lookup issues
+    // Clear existing filter slices manually (boss's pattern: simple operations)
     dataStore.dataSlices.value = dataStore.dataSlices.value.filter(
       (slice) => !slice.id.startsWith('filter-')
     )
-    dataStore.computeSliceIntersections()
 
-    // Create new slices for active filters
+    // Create new slices for active filters (simple forEach)
     filters.propertyFilters.value.forEach((filter) => {
       // Handle numeric filters
       if (isNumericFilter(filter) && filter.isApplied) {
@@ -704,10 +698,10 @@ export function useFilterUtilities(
           )})`,
           objectIds: matchingObjectIds
         }
-        dataStore.pushOrReplaceSlice(slice)
+        dataStore.dataSlices.value.push(slice)
       }
       // Handle string filters with selected values
-      else if (isStringFilter(filter) && filter.selectedValues.length > 0) {
+      else if (!isNumericFilter(filter) && filter.selectedValues.length > 0) {
         const queryCriteria: QueryCriteria = {
           propertyKey: filter.filter.key,
           condition: filter.condition,
@@ -723,9 +717,12 @@ export function useFilterUtilities(
           } ${filter.selectedValues.join(', ')}`,
           objectIds: matchingObjectIds
         }
-        dataStore.pushOrReplaceSlice(slice)
+        dataStore.dataSlices.value.push(slice)
       }
     })
+
+    // Always recompute intersections (boss's pattern)
+    dataStore.computeSliceIntersections()
   }
 
   /**
@@ -764,6 +761,9 @@ export function useFilterUtilities(
     filters.propertyFilters.value = []
     filters.selectedObjects.value = []
     filters.activeColorFilterId.value = null
+
+    // Reset filter logic to default
+    dataStore.setFilterLogic(FilterLogic.All)
 
     // Clear all filter slices
     const nonFilterSlices = dataStore.dataSlices.value.filter(
@@ -1139,8 +1139,9 @@ export function useFilterUtilities(
     toggleFilterApplied,
     updateActiveFilterValues,
     updateFilterCondition,
-    updateDataStoreSlices,
+
     setFilterLogicAndUpdate,
+    updateDataStoreSlices,
     toggleActiveFilterValue,
     isActiveFilterValueSelected,
     getAppliedFilters,
@@ -1170,6 +1171,7 @@ export function useFilterUtilities(
     // Numeric range filtering
     setNumericRange,
     // Filter logic
-    setFilterLogic: dataStore.setFilterLogic
+    setFilterLogic: dataStore.setFilterLogic,
+    currentFilterLogic: dataStore.currentFilterLogic
   }
 }
