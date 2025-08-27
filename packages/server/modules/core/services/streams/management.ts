@@ -23,7 +23,6 @@ import type {
   AddOrUpdateStreamCollaborator,
   CreateStream,
   DeleteStream,
-  DeleteStreamRecord,
   GetStream,
   IsStreamCollaborator,
   LegacyCreateStream,
@@ -39,7 +38,10 @@ import type { StoreBranch } from '@/modules/core/domain/branches/operations'
 import type { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
-import type { StoreProjectRole } from '@/modules/core/domain/projects/operations'
+import type {
+  DeleteProjectAndCommits,
+  StoreProjectRole
+} from '@/modules/core/domain/projects/operations'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
 import cryptoRandomString from 'crypto-random-string'
 
@@ -144,7 +146,7 @@ export const legacyCreateStreamFactory =
  */
 export const deleteStreamAndNotifyFactory =
   (deps: {
-    deleteStream: DeleteStreamRecord
+    deleteProjectAndCommits: DeleteProjectAndCommits
     deleteAllResourceInvites: DeleteAllResourceInvites
     getStream: GetStream
     emitEvent: EventBusEmit
@@ -178,7 +180,7 @@ export const deleteStreamAndNotifyFactory =
         resourceId: streamId,
         resourceType: ProjectInviteResourceType
       }),
-      deps.deleteStream(streamId)
+      deps.deleteProjectAndCommits({ projectId: streamId })
     ])
     return true
   }

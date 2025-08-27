@@ -3,6 +3,7 @@ import { generateProjectName } from '@/modules/core/domain/projects/logic'
 import type {
   CreateProject,
   DeleteProject,
+  DeleteProjectAndCommits,
   GetProject,
   QueryAllProjects,
   StoreModel,
@@ -27,6 +28,7 @@ import { retry } from '@lifeomic/attempt'
 import { Roles, TIME_MS } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import type { GetExplicitProjects } from '@/modules/core/domain/streams/operations'
+import type { DeleteProjectCommits } from '@/modules/core/domain/commits/operations'
 
 export const createNewProjectFactory =
   ({
@@ -162,4 +164,14 @@ export const queryAllProjectsFactory = ({
       currentCursor = cursor
       iterationCount++
     } while (!!currentCursor)
+  }
+
+export const deleteProjectAndCommitsFactory =
+  (deps: {
+    deleteProject: DeleteProject
+    deleteProjectCommits: DeleteProjectCommits
+  }): DeleteProjectAndCommits =>
+  async (project) => {
+    await deps.deleteProjectCommits(project)
+    await deps.deleteProject(project)
   }
