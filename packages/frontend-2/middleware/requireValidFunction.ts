@@ -5,7 +5,7 @@ import {
   getFirstErrorMessage
 } from '~/lib/common/helpers/graphql'
 
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineParallelizedNuxtRouteMiddleware(async (to) => {
   const functionId = to.params.fid as string
 
   const isAutomateEnabled = useIsAutomateModuleEnabled()

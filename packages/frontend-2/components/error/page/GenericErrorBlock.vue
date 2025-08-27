@@ -14,9 +14,10 @@
 
     <div
       v-if="isDev && error.stack"
-      class="max-w-xl text-body-xs text-foreground-2"
-      v-html="error.stack"
-    />
+      class="whitespace-pre-line font-mono max-w-xl text-body-xs text-foreground-2"
+    >
+      {{ error.stack.trim() }}
+    </div>
     <FormButton :to="homeRoute">Go home</FormButton>
   </div>
 </template>
