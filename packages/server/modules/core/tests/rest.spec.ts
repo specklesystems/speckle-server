@@ -48,8 +48,7 @@ describe('Upload/Download Routes @api-rest', () => {
     userA = await createTestUser({
       name: 'd1',
       email: 'd.1@speckle.systems',
-      password: 'wowwow8charsplease',
-      id: ''
+      password: 'wowwow8charsplease'
     })
     tokenUserA = `Bearer ${await createPersonalAccessToken(
       userA.id,
@@ -69,8 +68,7 @@ describe('Upload/Download Routes @api-rest', () => {
     userB = await createTestUser({
       name: 'd2',
       email: 'd.2@speckle.systems',
-      password: 'wowwow8charsplease',
-      id: ''
+      password: 'wowwow8charsplease'
     })
     tokenUserB = `Bearer ${await createPersonalAccessToken(
       userB.id,
@@ -219,7 +217,7 @@ describe('Upload/Download Routes @api-rest', () => {
     res = await request(app)
       .get(`/objects/${testStream.id}/${objBatch[0].id}`)
       .set('Authorization', tokenUserB)
-    expect(res).to.have.status(404)
+    expect(res).to.have.status(401)
   })
 
   it('Should not allow upload requests without an authorization token or valid streamId', async () => {

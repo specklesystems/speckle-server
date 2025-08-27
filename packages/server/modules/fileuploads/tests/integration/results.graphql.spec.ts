@@ -18,7 +18,6 @@ import { createFileUploadJob } from '@/modules/fileuploads/tests/helpers/creatio
 import type { BasicTestUser } from '@/test/authHelper'
 import { buildBasicTestUser, createTestUser } from '@/test/authHelper'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
-import { buildTestProject } from '@/modules/core/tests/helpers/creation'
 
 const { createToken } = initUploadTestEnvironment()
 
@@ -54,12 +53,18 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
     })
 
     beforeEach(async () => {
-      const project = await createTestStream(buildTestProject(), userOne)
+      const project = await createTestStream(
+        {
+          name: 'Test Project',
+          description: 'Test Project Description'
+        },
+        userOne
+      )
       projectOneId = project.id
       ;({ token: userOneToken } = await createToken({
         userId: userOne.id,
         name: createRandomString(),
-        scopes: [Scopes.Streams.Write]
+        scopes: [Scopes.Streams.Read, Scopes.Streams.Write]
       }))
 
       //FIXME currently assuming a 1:1 file to job mapping
