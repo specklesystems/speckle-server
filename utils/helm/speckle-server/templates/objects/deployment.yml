@@ -60,7 +60,7 @@ spec:
           - name: postgres-certificate
             mountPath: /postgres-certificate
         {{- end }}
-        {{- if .Values.featureFlags.automateModuleEnabled }}
+        {{- if (or .Values.featureFlags.automateModuleEnabled .Values.featureFlags.workspacesSSOEnabled) }}
           - name: encryption-keys
             readOnly: true
             mountPath: /encryption-keys
@@ -151,7 +151,7 @@ spec:
           configMap:
             name: postgres-certificate
       {{- end }}
-      {{- if .Values.featureFlags.automateModuleEnabled }}
+      {{- if (or .Values.featureFlags.automateModuleEnabled .Values.featureFlags.workspacesSSOEnabled) }}
         - name: encryption-keys
           secret:
             secretName: encryption-keys
