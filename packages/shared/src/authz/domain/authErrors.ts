@@ -221,6 +221,11 @@ export const UngroupedSavedViewGroupLockError = defineAuthError({
   message: 'The default/ungrouped group cannot be modified.'
 })
 
+export const DashboardsNotEnabledError = defineAuthError({
+  code: 'DashboardsNotEnabled',
+  message: 'Dashboards are not enabled for this server or workspaces.'
+})
+
 // Resolve all exported error types
 export type AllAuthErrors = ValueOf<{
   [key in keyof typeof import('./authErrors.js')]: typeof import('./authErrors.js')[key] extends new (
