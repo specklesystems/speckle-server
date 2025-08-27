@@ -50,8 +50,10 @@
               <span class="underline">connectors</span>
             </NuxtLink>
             to publish a {{ modelName ? '' : 'new model' }} version to
-            {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
-            IFC/OBJ/STL{{ isRhinoFileImporterEnabled ? '/SKP' : '' }} file here.
+            {{ modelName ? 'this model' : 'this project' }}, or drag and drop an IFC{{
+              isRhinoFileImporterEnabled ? 'or SKP' : ''
+            }}
+            file here.
           </p>
           <div v-if="showEmptyState && !isDisabled" :class="buttonsClasses">
             <FormButton :to="connectorsRoute" size="sm" color="outline">
