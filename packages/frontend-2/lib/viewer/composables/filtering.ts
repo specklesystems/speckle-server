@@ -539,7 +539,7 @@ export function useFilterUtilities(
         id,
         isApplied: true,
         selectedValues: [],
-        condition: NumericFilterCondition.IsEqualTo,
+        condition: NumericFilterCondition.IsBetween,
         type: FilterType.Numeric,
         filter: filter as NumericPropertyInfo,
         numericRange: {
