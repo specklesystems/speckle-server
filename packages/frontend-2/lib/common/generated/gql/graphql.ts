@@ -1133,7 +1133,7 @@ export type DashboardCreateInput = {
 export type DashboardMutations = {
   __typename?: 'DashboardMutations';
   create: Dashboard;
-  createToken: Scalars['String']['output'];
+  createToken: CreateDashboardTokenReturn;
   delete: Scalars['Boolean']['output'];
   update: Dashboard;
 };
@@ -2439,7 +2439,6 @@ export type Project = {
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime']['output'];
   dashboardTokens: DashboardTokenCollection;
-  dashboards: DashboardCollection;
   description?: Maybe<Scalars['String']['output']>;
   /** Public project-level configuration for embedded viewer */
   embedOptions: ProjectEmbedOptions;
@@ -2551,13 +2550,6 @@ export type ProjectCommentThreadsArgs = {
 export type ProjectDashboardTokensArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type ProjectDashboardsArgs = {
-  cursor?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<ProjectDashboardsFilter>;
-  limit?: Scalars['Int']['input'];
 };
 
 
@@ -2871,10 +2863,6 @@ export type ProjectCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   visibility?: InputMaybe<ProjectVisibility>;
-};
-
-export type ProjectDashboardsFilter = {
-  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ProjectEmbedOptions = {
@@ -9733,7 +9721,6 @@ export type ProjectFieldArgs = {
   commentThreads: ProjectCommentThreadsArgs,
   createdAt: {},
   dashboardTokens: ProjectDashboardTokensArgs,
-  dashboards: ProjectDashboardsArgs,
   description: {},
   embedOptions: {},
   embedTokens: ProjectEmbedTokensArgs,

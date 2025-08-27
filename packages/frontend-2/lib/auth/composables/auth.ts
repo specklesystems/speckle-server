@@ -203,7 +203,9 @@ const useResetAuthState = (
 
 export const useAuthCookie = () =>
   useSynchronizedCookie<Optional<string>>(CookieKeys.AuthToken, {
-    maxAge: 60 * 60 * 24 * 30 // 30 days
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+    // Don't set domain to allow cookies to work across localhost and 127.0.0.1
+    sameSite: 'lax'
   })
 
 export const useAuthManager = (

@@ -27,6 +27,7 @@ import { dashboardsRoute, dashboardRoute } from '~/lib/common/helpers/route'
 import { dashboardQuery } from '~/lib/dashboards/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~~/lib/common/generated/gql'
+import { useAuthManager } from '~/lib/auth/composables/auth'
 
 graphql(`
   fragment WorkspaceDashboards_Dashboard on Dashboard {
@@ -54,11 +55,11 @@ definePageMeta({
 
 const { id } = useRoute().params
 const { result } = useQuery(dashboardQuery, () => ({ id: id as string }))
-
+const { effectiveAuthToken } = useAuthManager()
 const workspace = computed(() => result.value?.dashboard?.workspace)
 const dashboard = computed(() => result.value?.dashboard)
 
 const dashboardUrl = computed(() => {
-  return `http://localhost:8083/dashboards/${id}?isEmbed=true`
+  return `http://localhost:8083/dashboards/${id}?token=${effectiveAuthToken.value}&isEmbed=true`
 })
 </script>
