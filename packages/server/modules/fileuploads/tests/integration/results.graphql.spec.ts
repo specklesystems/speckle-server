@@ -15,9 +15,12 @@ import cryptoRandomString from 'crypto-random-string'
 import type { Server } from 'http'
 import { initUploadTestEnvironment } from '@/modules/fileuploads/tests/helpers/init'
 import { createFileUploadJob } from '@/modules/fileuploads/tests/helpers/creation'
-import { createTestUser } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { buildBasicTestUser, createTestUser } from '@/test/authHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { buildTestProject } from '@/modules/core/tests/helpers/creation'
 
-const { createStream, createToken } = initUploadTestEnvironment()
+const { createToken } = initUploadTestEnvironment()
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
@@ -27,13 +30,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
     let server: Server
     let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 
-    const userOne = {
-      name: createRandomString(),
-      email: createRandomEmail(),
-      password: createRandomPassword()
-    }
-
-    let userOneId: string
+    let userOne: BasicTestUser
     let userOneToken: string
     let projectOneId: string
     let jobOneId: string
@@ -53,14 +50,14 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
       process.env['CANONICAL_URL'] = serverAddress
       process.env['PORT'] = serverPort
 
-      const user = await createTestUser(userOne)
-      userOneId = user.id
+      userOne = await createTestUser(buildBasicTestUser())
     })
 
     beforeEach(async () => {
-      projectOneId = await createStream({ ownerId: userOneId })
+      const project = await createTestStream(buildTestProject(), userOne)
+      projectOneId = project.id
       ;({ token: userOneToken } = await createToken({
-        userId: userOneId,
+        userId: userOne.id,
         name: createRandomString(),
         scopes: [Scopes.Streams.Write]
       }))
@@ -68,7 +65,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
       //FIXME currently assuming a 1:1 file to job mapping
       ;({ id: jobOneId } = await createFileUploadJob({
         projectId: projectOneId,
-        userId: userOneId
+        userId: userOne.id
       }))
     })
 
@@ -175,7 +172,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
       it('should 403 if the token does not have the correct scopes', async () => {
         const { token: readOnlyToken } = await createToken({
-          userId: userOneId,
+          userId: userOne.id,
           name: createRandomString(),
           scopes: [Scopes.Streams.Read]
         })
