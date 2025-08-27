@@ -14,22 +14,23 @@ import cryptoRandomString from 'crypto-random-string'
 import type { Server } from 'http'
 import { initUploadTestEnvironment } from '@/modules/fileuploads/tests/helpers/init'
 import { createFileUploadJob } from '@/modules/fileuploads/tests/helpers/creation'
+import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
 
-const { createUser, createStream, createToken } = initUploadTestEnvironment()
+const { createToken } = initUploadTestEnvironment()
 
 describe('File import results @fileuploads integration', () => {
   let server: Server
   let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 
-  const userOne = {
-    name: createRandomString(),
-    email: createRandomEmail(),
-    password: createRandomPassword()
-  }
-
-  let userOneId: string
+  let userOne: BasicTestUser
   let userOneToken: string
-  let projectOneId: string
+  let projectOne: BasicTestStream
+  let modelOne: BasicTestBranch
   let jobOneId: string
   let existingCanonicalUrl: string
   let existingPort: string
@@ -47,26 +48,40 @@ describe('File import results @fileuploads integration', () => {
     process.env['CANONICAL_URL'] = serverAddress
     process.env['PORT'] = serverPort
 
-    userOneId = await createUser(userOne)
+    userOne = await createTestUser(userOne)
   })
 
   beforeEach(async () => {
-    projectOneId = await createStream({ ownerId: userOneId })
+    projectOne = await createTestStream(
+      { name: cryptoRandomString({ length: 10 }), id: '', ownerId: userOne.id },
+      userOne
+    )
+    modelOne = await createTestBranch({
+      stream: projectOne,
+      owner: userOne,
+      branch: {
+        name: cryptoRandomString({ length: 10 }),
+        streamId: projectOne.id,
+        authorId: userOne.id,
+        id: ''
+      }
+    })
     ;({ token: userOneToken } = await createToken({
-      userId: userOneId,
-      name: createRandomString(),
-      scopes: [Scopes.Streams.Write]
+      userId: userOne.id,
+      name: cryptoRandomString({ length: 10 }),
+      scopes: [Scopes.Streams.Write, Scopes.Streams.Read]
     }))
 
     //FIXME currently assuming a 1:1 file to job mapping
     ;({ id: jobOneId } = await createFileUploadJob({
-      projectId: projectOneId,
-      userId: userOneId
+      projectId: projectOne.id,
+      modelId: modelOne.id,
+      userId: userOne.id
     }))
   })
 
   afterEach(async () => {
-    projectOneId = ''
+    projectOne = { name: '', id: '', ownerId: '' }
   })
 
   after(async () => {
@@ -122,7 +137,7 @@ describe('File import results @fileuploads integration', () => {
   describe('Receive results from file import service', async () => {
     it('should 403 if no auth token is provided', async () => {
       const sucessPayload = {
-        projectId: projectOneId,
+        projectId: projectOne.id,
         jobId: jobOneId,
         status: 'success',
         result: {
@@ -146,7 +161,7 @@ describe('File import results @fileuploads integration', () => {
     it('should 403 if an invalid auth token is provided', async () => {
       const badToken = cryptoRandomString({ length: 32 })
       const sucessPayload = {
-        projectId: projectOneId,
+        projectId: projectOne.id,
         jobId: jobOneId,
         status: 'success',
         result: {
@@ -168,12 +183,12 @@ describe('File import results @fileuploads integration', () => {
 
     it('should 403 if the token does not have the correct scopes', async () => {
       const { token: readOnlyToken } = await createToken({
-        userId: userOneId,
+        userId: userOne.id,
         name: createRandomString(),
         scopes: [Scopes.Streams.Read]
       })
       const sucessPayload = {
-        projectId: projectOneId,
+        projectId: projectOne.id,
         jobId: jobOneId,
         status: 'success',
         result: {
@@ -195,18 +210,18 @@ describe('File import results @fileuploads integration', () => {
     })
 
     it('should 403 if the token is for a different user', async () => {
-      const userTwoId = await createUser({
+      const userTwo = await createTestUser({
         name: createRandomString(),
         email: createRandomEmail(),
         password: createRandomPassword()
       })
       const { token: userTwoToken } = await createToken({
-        userId: userTwoId,
+        userId: userTwo.id,
         name: createRandomString(),
         scopes: [Scopes.Streams.Read]
       })
       const sucessPayload = {
-        projectId: projectOneId,
+        projectId: projectOne.id,
         jobId: jobOneId,
         status: 'success',
         result: {
@@ -238,7 +253,7 @@ describe('File import results @fileuploads integration', () => {
 
     it('should 404 if the job id cannot be found', async () => {
       const sucessPayload = {
-        projectId: projectOneId,
+        projectId: projectOne.id,
         jobId: cryptoRandomString({ length: 10 }),
         status: 'success',
         result: {
@@ -261,7 +276,7 @@ describe('File import results @fileuploads integration', () => {
 
     it('should 200 if the payload reports a success result', async () => {
       const sucessPayload = {
-        projectId: projectOneId,
+        projectId: projectOne.id,
         jobId: jobOneId,
         status: 'success',
         result: {
@@ -277,7 +292,7 @@ describe('File import results @fileuploads integration', () => {
       expect(noErrors(gqlResponse))
       expect(gqlResponse.status).to.equal(200)
 
-      const fileResponse = await getFileUploads(projectOneId, userOneToken)
+      const fileResponse = await getFileUploads(projectOne.id, userOneToken)
       expect(noErrors(fileResponse))
       expect(fileResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
       expect(fileResponse.body.data.stream.fileUploads[0].convertedStatus).to.equal(
@@ -287,7 +302,7 @@ describe('File import results @fileuploads integration', () => {
 
     it('should 200 if the payload reports an error result', async () => {
       const errorPayload = {
-        projectId: projectOneId,
+        projectId: projectOne.id,
         jobId: jobOneId,
         status: 'error',
         reason: cryptoRandomString({ length: 10 }),
@@ -303,7 +318,7 @@ describe('File import results @fileuploads integration', () => {
       expect(noErrors(gqlResponse))
       expect(gqlResponse.status).to.equal(200)
 
-      const fileResponse = await getFileUploads(projectOneId, userOneToken)
+      const fileResponse = await getFileUploads(projectOne.id, userOneToken)
       expect(noErrors(fileResponse))
       expect(fileResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
       expect(fileResponse.body.data.stream.fileUploads[0].convertedStatus).to.equal(

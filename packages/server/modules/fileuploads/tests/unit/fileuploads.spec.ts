@@ -18,34 +18,52 @@ import { buildFileUploadMessage } from '@/modules/fileuploads/tests/helpers/crea
 import type { JobPayload } from '@speckle/shared/workers/fileimport'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
-import type { BranchRecord } from '@/modules/core/helpers/types'
+import {
+  type BasicTestBranch,
+  createTestBranch
+} from '@/test/speckle-helpers/branchHelper'
+import { type BasicTestUser, createTestUser } from '@/test/authHelper'
+import {
+  type BasicTestStream,
+  createTestStream
+} from '@/test/speckle-helpers/streamHelper'
 
-const { createStream, createBranch, createUser, garbageCollector } =
-  initUploadTestEnvironment()
+const { garbageCollector } = initUploadTestEnvironment()
 
 describe('FileUploads @fileuploads', () => {
-  const userOne = {
-    name: cryptoRandomString({ length: 10 }),
-    email: `${cryptoRandomString({ length: 10 })}@example.org`,
-    password: cryptoRandomString({ length: 10 })
-  }
-
-  let userOneId: string
-  let createdStreamId: string
-  let createdBranch: BranchRecord
+  let userOne: BasicTestUser
+  let createdStream: BasicTestStream
+  let createdBranch: BasicTestBranch
 
   const token = cryptoRandomString({ length: 40 })
   const serverOrigin = `https://${cryptoRandomString({ length: 10 })}`
 
   before(async () => {
-    userOneId = await createUser(userOne)
+    userOne = await createTestUser({
+      name: cryptoRandomString({ length: 10 }),
+      email: `${cryptoRandomString({ length: 10 })}@example.org`,
+      password: cryptoRandomString({ length: 10 })
+    })
   })
 
   beforeEach(async () => {
-    createdStreamId = await createStream({ ownerId: userOneId })
+    createdStream = await createTestStream(
+      { name: cryptoRandomString({ length: 10 }), ownerId: userOne.id, id: '' },
+      userOne
+    )
+    createdBranch = await createTestBranch({
+      branch: {
+        id: '',
+        name: cryptoRandomString({ length: 10 }),
+        streamId: createdStream.id,
+        authorId: userOne.id
+      },
+      owner: userOne,
+      stream: createdStream
+    })
   })
   afterEach(async () => {
-    createdStreamId = ''
+    createdStream.id = ''
   })
 
   describe('Convert files', () => {
@@ -65,18 +83,18 @@ describe('FileUploads @fileuploads', () => {
       const updateFileStatus = updateFileStatusFactory({ db })
       const fileId = cryptoRandomString({ length: 10 })
       await insertNewUploadAndNotify({
-        projectId: createdStreamId,
+        projectId: createdStream.id,
         modelName: 'main',
-        userId: userOneId,
+        userId: userOne.id,
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
         fileType: 'text/plain',
-        modelId: cryptoRandomString({ length: 10 })
+        modelId: createdBranch.id
       })
       await updateFileStatus({
         fileId,
-        projectId: createdStreamId,
+        projectId: createdStream.id,
         status: FileUploadConvertedStatus.Converting,
         convertedMessage: 'Converting started',
         convertedCommitId: null
@@ -108,14 +126,14 @@ describe('FileUploads @fileuploads', () => {
       })
       const fileId = cryptoRandomString({ length: 10 })
       await insertNewUploadAndNotify({
-        projectId: createdStreamId,
+        projectId: createdStream.id,
         modelName: 'main',
-        userId: userOneId,
+        userId: userOne.id,
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
         fileType: 'text/plain',
-        modelId: cryptoRandomString({ length: 10 })
+        modelId: createdBranch.id
       })
       // timeout far in the future, so it won't be garbage collected
       await garbageCollector({ logger, timeoutThresholdSeconds: 1 * TIME.hour })
@@ -150,14 +168,14 @@ describe('FileUploads @fileuploads', () => {
       })
       const fileId = cryptoRandomString({ length: 10 })
       await insertNewUploadAndNotify({
-        projectId: createdStreamId,
+        projectId: createdStream.id,
         modelName: 'main',
-        userId: userOneId,
+        userId: userOne.id,
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
         fileType: 'text/plain',
-        modelId: cryptoRandomString({ length: 10 })
+        modelId: createdBranch.id
       })
 
       const results = await getFileInfoFactory({ db })({
@@ -170,8 +188,8 @@ describe('FileUploads @fileuploads', () => {
       expect(results.convertedStatus).to.be.equal(FileUploadConvertedStatus.Queued)
       expect(emittedEventName).to.be.equal(FileuploadEvents.Started)
       expect(get(emittedEventPayload, 'upload')).to.be.deep.include({
-        userId: userOneId,
-        projectId: createdStreamId,
+        userId: userOne.id,
+        projectId: createdStream.id,
         fileSize: 100,
         fileType: 'text/plain'
       })
@@ -181,11 +199,16 @@ describe('FileUploads @fileuploads', () => {
     const upload = buildFileUploadMessage()
 
     beforeEach(async () => {
-      createdBranch = await createBranch({
-        name: cryptoRandomString({ length: 10 }),
-        description: cryptoRandomString({ length: 10 }),
-        streamId: createdStreamId,
-        authorId: userOneId
+      createdBranch = await createTestBranch({
+        branch: {
+          name: cryptoRandomString({ length: 10 }),
+          description: cryptoRandomString({ length: 10 }),
+          streamId: createdStream.id,
+          authorId: userOne.id,
+          id: ''
+        },
+        stream: createdStream,
+        owner: userOne
       })
     })
 
@@ -245,8 +268,8 @@ describe('FileUploads @fileuploads', () => {
       })
       const fileId = cryptoRandomString({ length: 10 })
       await insertNewUploadAndNotify({
-        projectId: createdStreamId,
-        userId: userOneId,
+        projectId: createdStream.id,
+        userId: userOne.id,
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
@@ -265,8 +288,8 @@ describe('FileUploads @fileuploads', () => {
       expect(results.convertedStatus).to.be.equal(FileUploadConvertedStatus.Queued)
       expect(emittedEventName).to.be.equal(FileuploadEvents.Started)
       expect(get(emittedEventPayload, 'upload')).to.be.deep.include({
-        userId: userOneId,
-        projectId: createdStreamId,
+        userId: userOne.id,
+        projectId: createdStream.id,
         fileSize: 100,
         fileType: 'txt'
       })

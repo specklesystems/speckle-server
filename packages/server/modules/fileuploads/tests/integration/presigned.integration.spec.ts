@@ -111,12 +111,10 @@ describe('Presigned integration @fileuploads', async () => {
         })
       })
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-        queues: [
-          {
-            supportedFileTypes: ['stl', 'obj', 'ifc'],
-            scheduleJob: () => Promise.resolve()
-          }
-        ],
+        findQueue: () => ({
+          supportedFileTypes: ['stl', 'obj', 'ifc'],
+          scheduleJob: () => Promise.resolve()
+        }),
         pushJobToFileImporter: pushJobToFileImporterFactory({
           getServerOrigin,
           createAppToken: createAppTokenFactory({
