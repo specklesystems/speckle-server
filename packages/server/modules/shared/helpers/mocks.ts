@@ -25,7 +25,7 @@ export const mockStoreHelpers = (store: IMockStore) => {
    * for the existence of a field in the mock store.
    */
   const hasField = (type: string, key: string, field: string) => {
-    const internalStore = get(store, 'store') as {
+    const internalStore = get(store, 'store') as unknown as {
       [type: string]: {
         [key: string]: {
           [field: string]: unknown

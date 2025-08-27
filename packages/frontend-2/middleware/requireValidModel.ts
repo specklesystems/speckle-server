@@ -1,3 +1,4 @@
+import { useMiddlewareQueryFetchPolicy } from '~/lib/core/composables/navigation'
 import {
   castToSupportedVisibility,
   SupportedProjectVisibility
@@ -13,16 +14,18 @@ import { projectModelCheckQuery } from '~~/lib/projects/graphql/queries'
 /**
  * Used in project page to validate that project ID refers to a valid project and redirects to 404 if not
  */
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineParallelizedNuxtRouteMiddleware(async (to, from) => {
   const projectId = to.params.id as string
   const modelId = to.params.modelId as string
 
   const client = useApolloClientFromNuxt()
+  const fetchPolicy = useMiddlewareQueryFetchPolicy()
 
   const { data, errors } = await client
     .query({
       query: projectModelCheckQuery,
-      variables: { projectId, modelId }
+      variables: { projectId, modelId },
+      fetchPolicy: fetchPolicy(to, from)
     })
     .catch(convertThrowIntoFetchResult)
 

@@ -1021,6 +1021,32 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(updatedView).to.be.ok
         expect(updatedView!.id).to.equal(testView.id)
         expect(updatedView!.name).to.equal(newName)
+
+        const initUpdatedAt = dayjs(testView.updatedAt)
+        const newUpdatedAt = dayjs(updatedView!.updatedAt)
+        expect(newUpdatedAt.isAfter(initUpdatedAt)).to.be.true
+      })
+
+      it('just updating visibility does not update updatedAt', async () => {
+        expect(testView.visibility).to.equal(SavedViewVisibility.public)
+
+        const res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            visibility: SavedViewVisibility.authorOnly
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        const updatedView = res.data?.projectMutations.savedViewMutations.updateView
+        expect(updatedView).to.be.ok
+        expect(updatedView!.id).to.equal(testView.id)
+        expect(updatedView!.visibility).to.equal(SavedViewVisibility.authorOnly)
+
+        const initUpdatedAt = dayjs(testView.updatedAt)
+        const newUpdatedAt = dayjs(updatedView!.updatedAt)
+        expect(newUpdatedAt.isSame(initUpdatedAt)).to.be.true
       })
 
       it('successfully updated everyting in a saved view', async () => {

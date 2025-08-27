@@ -19,7 +19,7 @@ const canViewProjectWebhooksQuery = graphql(`
 /**
  * Apply this to a page to prevent unauthenticated access to webhooks and ensure the user is the owner
  */
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineParallelizedNuxtRouteMiddleware(async (to) => {
   const client = useApolloClientFromNuxt()
 
   // Fetch project role data to check if the user is the owner
