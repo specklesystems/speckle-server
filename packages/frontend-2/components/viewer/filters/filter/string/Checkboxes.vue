@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import { useVirtualList } from '@vueuse/core'
-import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 import { isStringFilter, type FilterData } from '~/lib/viewer/helpers/filters/types'
 
 const props = defineProps<{

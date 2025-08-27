@@ -39,7 +39,6 @@ import {
   getConditionLabel
 } from '~/lib/viewer/helpers/filters/types'
 import { useOnViewerLoadComplete } from '~~/lib/viewer/composables/viewer'
-import { arraysEqual } from '~~/lib/common/helpers/utils'
 
 // Internal data store implementation
 function createFilteringDataStore() {
@@ -291,7 +290,7 @@ function createFilteringDataStore() {
     }
   }
 
-  const finalObjectIds = computed(() => {
+  const getFinalObjectIds = (): string[] => {
     if (dataSlices.value.length === 0) return []
 
     if (currentFilterLogic.value === FilterLogic.Any) {
@@ -312,7 +311,7 @@ function createFilteringDataStore() {
       const lastSlice = dataSlices.value[dataSlices.value.length - 1]
       return lastSlice?.intersectedObjectIds || []
     }
-  })
+  }
 
   const clearDataOnRouteLeave = () => {
     dataSourcesMap.value = {}
@@ -331,6 +330,43 @@ function createFilteringDataStore() {
     currentFilterLogic.value = logic
   }
 
+  const updateViewer = (
+    instance: Viewer,
+    filters: {
+      activeColorFilterId: Ref<string | null>
+      propertyFilters: Ref<FilterData[]>
+    }
+  ) => {
+    const objectIds = getFinalObjectIds()
+    const filteringExtension = instance.getExtension(FilteringExtension)
+
+    if (objectIds.length > 0) {
+      filteringExtension.isolateObjects(objectIds, 'property-filters', true, true)
+    } else {
+      // Preserve color filter when clearing isolation
+      const currentColorFilterId = filters.activeColorFilterId.value
+      let activeColorFilter = null
+
+      if (currentColorFilterId) {
+        const activeFilter = filters.propertyFilters.value.find(
+          (f: FilterData) => f.id === currentColorFilterId
+        )
+        if (activeFilter?.filter) {
+          activeColorFilter = activeFilter.filter
+        }
+      }
+
+      // Reset all filters (including isolation)
+      filteringExtension.resetFilters()
+
+      // Restore color filter if it was active
+      if (activeColorFilter && currentColorFilterId) {
+        filteringExtension.setColorFilter(activeColorFilter)
+        filters.activeColorFilterId.value = currentColorFilterId
+      }
+    }
+  }
+
   return {
     populateDataStore,
     queryObjects,
@@ -338,7 +374,8 @@ function createFilteringDataStore() {
     replaceExistingSlice,
     popSlice,
     computeSliceIntersections,
-    finalObjectIds,
+    getFinalObjectIds,
+    updateViewer,
     clearDataOnRouteLeave,
     clearPropertyIndexCache,
     setFilterLogic,
@@ -401,65 +438,6 @@ export function useFilterUtilities(
         populateInternalDataStore()
       }
     })
-
-    // Manual updates only - avoid expensive watchers on filter arrays
-
-    // Watch for filter changes and apply to viewer
-    let preventFilterWatchers = false
-    const withWatchersDisabled = (fn: () => void) => {
-      const isAlreadyInPreventScope = !!preventFilterWatchers
-      preventFilterWatchers = true
-      fn()
-      if (!isAlreadyInPreventScope) preventFilterWatchers = false
-    }
-
-    watch(
-      dataStore.finalObjectIds,
-      (newObjectIds, oldObjectIds) => {
-        if (preventFilterWatchers) {
-          return
-        }
-
-        if (arraysEqual(newObjectIds, oldObjectIds || [])) {
-          return
-        }
-
-        withWatchersDisabled(() => {
-          const filteringExtension = instance.getExtension(FilteringExtension)
-          if (newObjectIds.length > 0) {
-            filteringExtension.isolateObjects(
-              newObjectIds,
-              'property-filters',
-              true,
-              true
-            )
-          } else {
-            // Preserve color filter when clearing isolation
-            const currentColorFilterId = filters.activeColorFilterId.value
-            let activeColorFilter = null
-
-            if (currentColorFilterId) {
-              const activeFilter = filters.propertyFilters.value.find(
-                (f) => f.id === currentColorFilterId
-              )
-              if (activeFilter?.filter) {
-                activeColorFilter = activeFilter.filter
-              }
-            }
-
-            // Reset all filters (including isolation)
-            filteringExtension.resetFilters()
-
-            // Restore color filter if it was active
-            if (activeColorFilter && currentColorFilterId) {
-              filteringExtension.setColorFilter(activeColorFilter)
-              filters.activeColorFilterId.value = currentColorFilterId
-            }
-          }
-        })
-      },
-      { immediate: true, flush: 'sync' }
-    )
   }
 
   const isolateObjects = (
@@ -670,7 +648,6 @@ export function useFilterUtilities(
    * Updates data store slices based on current filter state (optimized)
    */
   const updateDataStoreSlices = () => {
-    // Clear existing filter slices manually (boss's pattern: simple operations)
     dataStore.dataSlices.value = dataStore.dataSlices.value.filter(
       (slice) => !slice.id.startsWith('filter-')
     )
@@ -701,7 +678,11 @@ export function useFilterUtilities(
         dataStore.dataSlices.value.push(slice)
       }
       // Handle string filters with selected values
-      else if (!isNumericFilter(filter) && filter.selectedValues.length > 0) {
+      else if (
+        !isNumericFilter(filter) &&
+        filter.isApplied &&
+        filter.selectedValues.length > 0
+      ) {
         const queryCriteria: QueryCriteria = {
           propertyKey: filter.filter.key,
           condition: filter.condition,
@@ -721,8 +702,11 @@ export function useFilterUtilities(
       }
     })
 
-    // Always recompute intersections (boss's pattern)
     dataStore.computeSliceIntersections()
+
+    if (import.meta.client) {
+      dataStore.updateViewer(viewer.instance, filters)
+    }
   }
 
   /**
@@ -1172,6 +1156,7 @@ export function useFilterUtilities(
     setNumericRange,
     // Filter logic
     setFilterLogic: dataStore.setFilterLogic,
-    currentFilterLogic: dataStore.currentFilterLogic
+    currentFilterLogic: dataStore.currentFilterLogic,
+    getFinalObjectIds: dataStore.getFinalObjectIds
   }
 }
