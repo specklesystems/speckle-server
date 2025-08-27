@@ -3,13 +3,9 @@ import { db } from '@/db/knex'
 import {
   getFileInfoFactory,
   saveUploadFileFactory,
-  saveUploadFileFactoryV2,
   updateFileStatusFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
-import {
-  insertNewUploadAndNotifyFactory,
-  insertNewUploadAndNotifyFactoryV2
-} from '@/modules/fileuploads/services/management'
+import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/management'
 import { testLogger as logger } from '@/observability/logging'
 import { sleep } from '@/test/helpers'
 import { expect } from 'chai'
@@ -38,6 +34,9 @@ describe('FileUploads @fileuploads', () => {
   let createdStreamId: string
   let createdBranch: BranchRecord
 
+  const token = cryptoRandomString({ length: 40 })
+  const serverOrigin = `https://${cryptoRandomString({ length: 10 })}`
+
   before(async () => {
     userOneId = await createUser(userOne)
   })
@@ -52,20 +51,28 @@ describe('FileUploads @fileuploads', () => {
   describe('Convert files', () => {
     it('Should garbage collect expired files', async () => {
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
+        findQueue: () => ({
+          scheduleJob: async () => {},
+          supportedFileTypes: ['txt']
+        }),
+        pushJobToFileImporter: pushJobToFileImporterFactory({
+          getServerOrigin: () => serverOrigin,
+          createAppToken: async () => token
+        }),
         saveUploadFile: saveUploadFileFactory({ db }),
         emit: async () => {}
       })
       const updateFileStatus = updateFileStatusFactory({ db })
       const fileId = cryptoRandomString({ length: 10 })
       await insertNewUploadAndNotify({
-        streamId: createdStreamId,
-        branchName: 'main',
+        projectId: createdStreamId,
+        modelName: 'main',
         userId: userOneId,
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
         fileType: 'text/plain',
-        modelId: null
+        modelId: cryptoRandomString({ length: 10 })
       })
       await updateFileStatus({
         fileId,
@@ -88,19 +95,27 @@ describe('FileUploads @fileuploads', () => {
 
     it('Should not garbage collect files that are not expired', async () => {
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
+        findQueue: () => ({
+          scheduleJob: async () => {},
+          supportedFileTypes: ['txt']
+        }),
+        pushJobToFileImporter: pushJobToFileImporterFactory({
+          getServerOrigin: () => serverOrigin,
+          createAppToken: async () => token
+        }),
         saveUploadFile: saveUploadFileFactory({ db }),
         emit: async () => {}
       })
       const fileId = cryptoRandomString({ length: 10 })
       await insertNewUploadAndNotify({
-        streamId: createdStreamId,
-        branchName: 'main',
+        projectId: createdStreamId,
+        modelName: 'main',
         userId: userOneId,
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
         fileType: 'text/plain',
-        modelId: null
+        modelId: cryptoRandomString({ length: 10 })
       })
       // timeout far in the future, so it won't be garbage collected
       await garbageCollector({ logger, timeoutThresholdSeconds: 1 * TIME.hour })
@@ -122,19 +137,27 @@ describe('FileUploads @fileuploads', () => {
         emittedEventPayload = payload
       }
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
+        findQueue: () => ({
+          scheduleJob: async () => {},
+          supportedFileTypes: ['txt']
+        }),
+        pushJobToFileImporter: pushJobToFileImporterFactory({
+          getServerOrigin: () => serverOrigin,
+          createAppToken: async () => token
+        }),
         saveUploadFile: saveUploadFileFactory({ db }),
         emit
       })
       const fileId = cryptoRandomString({ length: 10 })
       await insertNewUploadAndNotify({
-        streamId: createdStreamId,
-        branchName: 'main',
+        projectId: createdStreamId,
+        modelName: 'main',
         userId: userOneId,
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
         fileType: 'text/plain',
-        modelId: null
+        modelId: cryptoRandomString({ length: 10 })
       })
 
       const results = await getFileInfoFactory({ db })({
@@ -155,8 +178,6 @@ describe('FileUploads @fileuploads', () => {
     })
   })
   describe('how file upload pushes a message to file-import service', () => {
-    const token = cryptoRandomString({ length: 40 })
-    const serverOrigin = `https://${cryptoRandomString({ length: 10 })}`
     const upload = buildFileUploadMessage()
 
     beforeEach(async () => {
@@ -210,18 +231,16 @@ describe('FileUploads @fileuploads', () => {
         emittedEventName = eventName
         emittedEventPayload = payload
       }
-      const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
-        queues: [
-          {
-            scheduleJob: async () => {},
-            supportedFileTypes: ['txt']
-          }
-        ],
+      const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
+        findQueue: () => ({
+          scheduleJob: async () => {},
+          supportedFileTypes: ['txt']
+        }),
         pushJobToFileImporter: pushJobToFileImporterFactory({
           getServerOrigin: () => serverOrigin,
           createAppToken: async () => token
         }),
-        saveUploadFile: saveUploadFileFactoryV2({ db }),
+        saveUploadFile: saveUploadFileFactory({ db }),
         emit
       })
       const fileId = cryptoRandomString({ length: 10 })

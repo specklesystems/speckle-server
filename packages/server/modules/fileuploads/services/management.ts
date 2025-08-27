@@ -12,7 +12,7 @@ import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 import { UnsupportedFileTypeError } from '@/modules/fileuploads/helpers/errors'
 
-export const insertNewUploadAndNotifyFactoryV2 =
+export const insertNewUploadAndNotifyFactory =
   (deps: {
     findQueue: FindQueue
     pushJobToFileImporter: PushJobToFileImporter

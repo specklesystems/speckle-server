@@ -93,7 +93,7 @@ const mapFileUploadRecordToV2 = (
   } as FileUploadRecordWithProjectId
 }
 
-export const saveUploadFileFactoryV2 =
+export const saveUploadFileFactory =
   (deps: { db: Knex }): SaveUploadFile =>
   async ({
     fileId,

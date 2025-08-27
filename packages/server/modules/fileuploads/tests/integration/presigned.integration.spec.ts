@@ -32,12 +32,12 @@ import {
 } from '@/modules/blobstorage/errors'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { registerUploadCompleteAndStartFileImportFactory } from '@/modules/fileuploads/services/presigned'
-import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/services/management'
+import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/management'
 import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
 import {
   getFileInfoFactory,
-  saveUploadFileFactoryV2
+  saveUploadFileFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { createAppTokenFactory } from '@/modules/core/services/tokens'
@@ -110,7 +110,7 @@ describe('Presigned integration @fileuploads', async () => {
           db: projectDb
         })
       })
-      const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
+      const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
         queues: [
           {
             supportedFileTypes: ['stl', 'obj', 'ifc'],
@@ -131,7 +131,7 @@ describe('Presigned integration @fileuploads', async () => {
             })
           })
         }),
-        saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
+        saveUploadFile: saveUploadFileFactory({ db: projectDb }),
         emit: getEventBus().emit
       })
 

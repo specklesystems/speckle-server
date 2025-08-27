@@ -8,7 +8,7 @@ import {
   getModelUploadsTotalCountFactory,
   getStreamFileUploadsFactory,
   getStreamPendingModelsFactory,
-  saveUploadFileFactoryV2,
+  saveUploadFileFactory,
   updateFileUploadFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import {
@@ -41,7 +41,7 @@ import {
   registerCompletedUploadFactory
 } from '@/modules/blobstorage/services/presigned'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/services/management'
+import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/management'
 import {
   storeApiTokenFactory,
   storeTokenResourceAccessDefinitionsFactory,
@@ -49,7 +49,7 @@ import {
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
 import { createAppTokenFactory } from '@/modules/core/services/tokens'
-import { filterQueues } from '@/modules/fileuploads/queues/fileimports'
+import { findQueue } from '@/modules/fileuploads/queues/fileimports'
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
 import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
 import { getFileSizeLimit } from '@/modules/blobstorage/services/management'
@@ -177,10 +177,10 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       })
     })
 
-    const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
-      findQueue: filterQueues,
+    const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
+      findQueue,
       pushJobToFileImporter,
-      saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
+      saveUploadFile: saveUploadFileFactory({ db: projectDb }),
       emit: getEventBus().emit
     })
 

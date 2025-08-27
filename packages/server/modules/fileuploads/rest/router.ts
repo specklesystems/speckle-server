@@ -1,7 +1,7 @@
 import { Router } from 'express'
-import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/services/management'
+import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/management'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
-import { saveUploadFileFactoryV2 } from '@/modules/fileuploads/repositories/fileUploads'
+import { saveUploadFileFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
 import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
@@ -27,7 +27,7 @@ import {
   storeTokenScopesFactory,
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
-import { filterQueues } from '@/modules/fileuploads/queues/fileimports'
+import { findQueue } from '@/modules/fileuploads/queues/fileimports'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 
 const pushJobToFileImporter = pushJobToFileImporterFactory({
@@ -83,10 +83,10 @@ export const fileuploadRouterFactory = (): Router => {
         )
       }
 
-      const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
-        findQueue: filterQueues,
+      const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
+        findQueue,
         pushJobToFileImporter,
-        saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
+        saveUploadFile: saveUploadFileFactory({ db: projectDb }),
         emit: getEventBus().emit
       })
       const saveFileUploads = async ({

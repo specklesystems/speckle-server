@@ -22,7 +22,7 @@ import type { FindQueue } from '@/modules/fileuploads/domain/operations'
 
 const fileImportQueues: FileImportQueue[] = []
 
-export const filterQueues: FindQueue = (filter) => {
+export const findQueue: FindQueue = (filter) => {
   return fileImportQueues.find((q) =>
     q.supportedFileTypes.includes(filter.fileType.toLocaleLowerCase())
   )
