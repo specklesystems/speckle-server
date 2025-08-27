@@ -17,7 +17,11 @@ import {
   getBackgroundJobCountFactory,
   storeBackgroundJobFactory
 } from '@/modules/backgroundjobs/repositories'
-import { BackgroundJobStatus, BackgroundJobType } from '@/modules/backgroundjobs/domain'
+import {
+  BackgroundJobPayloadVersion,
+  BackgroundJobStatus,
+  BackgroundJobType
+} from '@/modules/backgroundjobs/domain'
 
 export const fileImportQueues: FileImportQueue[] = []
 
@@ -55,7 +59,11 @@ export const initializePostgresQueue = async ({
     shutdown: async () => {},
     scheduleJob: async (jobData: JobPayload) => {
       await createBackgroundJob({
-        jobPayload: { jobType: 'fileImport', payloadVersion: 1, ...jobData }
+        jobPayload: {
+          jobType: BackgroundJobType.FileImport,
+          payloadVersion: BackgroundJobPayloadVersion.v1,
+          ...jobData
+        }
       })
     },
     metrics: {

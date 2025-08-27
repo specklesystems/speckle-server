@@ -17,9 +17,16 @@ export type BackgroundJobStatus =
 export type BackgroundJobType =
   (typeof BackgroundJobType)[keyof typeof BackgroundJobType]
 
+export const BackgroundJobPayloadVersion = {
+  v1: 1
+} as const
+
+export type BackgroundJobPayloadVersion =
+  (typeof BackgroundJobPayloadVersion)[keyof typeof BackgroundJobPayloadVersion]
+
 export const BackgroundJobPayload = z.object({
   jobType: z.nativeEnum(BackgroundJobType),
-  payloadVersion: z.number()
+  payloadVersion: z.nativeEnum(BackgroundJobPayloadVersion)
 })
 
 export type BackgroundJobPayload = z.infer<typeof BackgroundJobPayload>
