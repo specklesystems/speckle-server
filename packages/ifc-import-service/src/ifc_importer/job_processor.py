@@ -162,11 +162,7 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
                             ),
                         )
                     )
-                # if the reporting of the failure does not succeed, we're requeueing
-                # unless we've reached the max attempts
+                # if the reporting of the failure does not succeed, we're requeueing. The client won't pick it up if it has exceeded max attempts
                 except Exception as ex:
-                    if attempt >= job.max_attempt:
-                        job_status = JobStatus.FAILED
-                    else:
-                        job_status = JobStatus.QUEUED
+                    job_status = JobStatus.QUEUED
             await set_job_status(connection, job_id, job_status)

@@ -33,6 +33,7 @@ async def get_next_job(connection: Connection) -> FileimportJob | None:
                 WHERE ( --queued job
                     payload ->> 'fileType' = 'ifc'
                     AND status = $2
+                    AND "attempt" < "maxAttempt"
                 )
                 OR ( --timed job left on processing state
                     payload ->> 'fileType' = 'ifc'
