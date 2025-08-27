@@ -1,5 +1,4 @@
 import type {
-  SaveUploadFile,
   NotifyChangeInFileStatus,
   SaveUploadFileV2,
   PushJobToFileImporter,
@@ -7,46 +6,22 @@ import type {
   GetModelUploadsItems,
   GetModelUploadsTotalCount,
   InsertNewUploadAndNotifyV2,
-  InsertNewUploadAndNotify
+  FindQueue
 } from '@/modules/fileuploads/domain/operations'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
-import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
 import { UnsupportedFileTypeError } from '@/modules/fileuploads/helpers/errors'
-
-export const insertNewUploadAndNotifyFactory =
-  (deps: {
-    saveUploadFile: SaveUploadFile
-    emit: EventBusEmit
-  }): InsertNewUploadAndNotify =>
-  async (upload) => {
-    const file = await deps.saveUploadFile(upload)
-
-    await deps.emit({
-      eventName: FileuploadEvents.Started,
-      payload: {
-        upload: {
-          ...file,
-          projectId: upload.streamId
-        }
-      }
-    })
-
-    return file
-  }
 
 export const insertNewUploadAndNotifyFactoryV2 =
   (deps: {
-    queues: Pick<FileImportQueue, 'scheduleJob' | 'supportedFileTypes'>[]
+    findQueue: FindQueue
     pushJobToFileImporter: PushJobToFileImporter
     saveUploadFile: SaveUploadFileV2
     emit: EventBusEmit
   }): InsertNewUploadAndNotifyV2 =>
   async (upload) => {
     const file = await deps.saveUploadFile(upload)
-    const queue = deps.queues.find((q) =>
-      q.supportedFileTypes.includes(file.fileType.toLocaleLowerCase())
-    )
+    const queue = deps.findQueue({ fileType: file.fileType.toLocaleLowerCase() })
     if (!queue) {
       throw new UnsupportedFileTypeError()
     }

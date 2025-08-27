@@ -2,7 +2,6 @@ import type { RegisterCompletedUpload } from '@/modules/blobstorage/domain/opera
 import type { GetBranchesByIds } from '@/modules/core/domain/branches/operations'
 import type {
   GetFileInfo,
-  InsertNewUploadAndNotify,
   InsertNewUploadAndNotifyV2,
   RegisterUploadCompleteAndStartFileImport
 } from '@/modules/fileuploads/domain/operations'
@@ -13,7 +12,7 @@ import { get, isString } from 'lodash-es'
 
 export const registerUploadCompleteAndStartFileImportFactory = (deps: {
   registerCompletedUpload: RegisterCompletedUpload
-  insertNewUploadAndNotify: InsertNewUploadAndNotifyV2 | InsertNewUploadAndNotify
+  insertNewUploadAndNotify: InsertNewUploadAndNotifyV2
   getModelsByIds: GetBranchesByIds
   getFileInfo: GetFileInfo
 }): RegisterUploadCompleteAndStartFileImport => {
@@ -38,15 +37,13 @@ export const registerUploadCompleteAndStartFileImportFactory = (deps: {
     try {
       const storedFile = await insertNewUploadAndNotify({
         projectId: storedBlob.streamId,
-        streamId: storedBlob.streamId, //backwards compatibility
         userId,
         fileName: storedBlob.fileName,
         fileType: storedBlob.fileType,
         fileSize: storedBlob.fileSize,
         fileId: storedBlob.id,
         modelId,
-        modelName: model.name,
-        branchName: model.name //backwards compatibility
+        modelName: model.name
       })
 
       return {

@@ -18,8 +18,15 @@ import {
   storeBackgroundJobFactory
 } from '@/modules/backgroundjobs/repositories'
 import { BackgroundJobStatus, BackgroundJobType } from '@/modules/backgroundjobs/domain'
+import type { FindQueue } from '@/modules/fileuploads/domain/operations'
 
-export const fileImportQueues: FileImportQueue[] = []
+const fileImportQueues: FileImportQueue[] = []
+
+export const filterQueues: FindQueue = (filter) => {
+  return fileImportQueues.find((q) =>
+    q.supportedFileTypes.includes(filter.fileType.toLocaleLowerCase())
+  )
+}
 
 const timeout =
   NumberOfFileImportRetries *

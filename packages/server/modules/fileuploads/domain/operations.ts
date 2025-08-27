@@ -9,33 +9,17 @@ import type {
   FileImportResultPayload,
   JobPayload
 } from '@speckle/shared/workers/fileimport'
+import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
 
 export type GetFileInfo = (args: {
   fileId: string
   projectId?: string
 }) => Promise<Optional<FileUploadRecordWithProjectId>>
 
-export type SaveUploadFileInput = Pick<
-  FileUploadRecord,
-  | 'streamId'
-  | 'branchName'
-  | 'userId'
-  | 'fileName'
-  | 'fileType'
-  | 'fileSize'
-  | 'modelId'
-> & { fileId: string }
-
 export type SaveUploadFileInputV2 = Pick<
   FileUploadRecordWithProjectId,
   'projectId' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
 > & { fileId: string; modelId: string; modelName: string }
-
-export type SaveUploadFile = (args: SaveUploadFileInput) => Promise<FileUploadRecord>
-
-export type InsertNewUploadAndNotify = (
-  uploadResults: SaveUploadFileInput
-) => Promise<FileUploadRecord>
 
 export type InsertNewUploadAndNotifyV2 = (
   uploadResults: SaveUploadFileInputV2
@@ -117,3 +101,7 @@ export type GetModelUploads = (params: GetModelUploadsArgs) => Promise<{
   totalCount: number
   cursor: string | null
 }>
+
+export type FindQueue = (filter: {
+  fileType: string
+}) => Pick<FileImportQueue, 'scheduleJob' | 'supportedFileTypes'> | undefined

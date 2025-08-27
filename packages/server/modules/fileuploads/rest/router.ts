@@ -1,7 +1,7 @@
 import { Router } from 'express'
-import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/management'
+import { insertNewUploadAndNotifyFactoryV2 } from '@/modules/fileuploads/services/management'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
-import { saveUploadFileFactory } from '@/modules/fileuploads/repositories/fileUploads'
+import { saveUploadFileFactoryV2 } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
 import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
@@ -14,6 +14,35 @@ import type { Nullable } from '@speckle/shared'
 import { ensureError } from '@speckle/shared'
 import { UploadRequestErrorMessage } from '@/modules/fileuploads/helpers/rest'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
+import {
+  fileImportServiceShouldUsePrivateObjectsServerUrl,
+  getPrivateObjectsServerOrigin,
+  getServerOrigin
+} from '@/modules/shared/helpers/envHelper'
+import { createAppTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory,
+  storeUserServerAppTokenFactory
+} from '@/modules/core/repositories/tokens'
+import { filterQueues } from '@/modules/fileuploads/queues/fileimports'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
+
+const pushJobToFileImporter = pushJobToFileImporterFactory({
+  getServerOrigin: fileImportServiceShouldUsePrivateObjectsServerUrl()
+    ? getPrivateObjectsServerOrigin
+    : getServerOrigin,
+  createAppToken: createAppTokenFactory({
+    storeApiToken: storeApiTokenFactory({ db }),
+    storeTokenScopes: storeTokenScopesFactory({ db }),
+    storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+      db
+    }),
+    storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+  })
+})
 
 export const fileuploadRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -48,9 +77,16 @@ export const fileuploadRouterFactory = (): Router => {
       const projectDb = await getProjectDbClient({ projectId })
       const getStreamBranchByName = getStreamBranchByNameFactory({ db: projectDb })
       const branch = await getStreamBranchByName(projectId, branchName)
+      if (!branch) {
+        throw new BranchNotFoundError(
+          'The branch was not found. The client is now expected to create the branch before attempting to upload files to a branch.'
+        )
+      }
 
-      const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-        saveUploadFile: saveUploadFileFactory({ db: projectDb }),
+      const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
+        findQueue: filterQueues,
+        pushJobToFileImporter,
+        saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
         emit: getEventBus().emit
       })
       const saveFileUploads = async ({
@@ -66,13 +102,13 @@ export const fileuploadRouterFactory = (): Router => {
           uploadResults.map(async (upload) => {
             await insertNewUploadAndNotify({
               fileId: upload.blobId,
-              streamId: projectId,
-              branchName: branch?.name || branchName,
+              projectId,
               userId,
               fileName: upload.fileName,
               fileType: upload.fileName?.split('.').pop() || '', //FIXME
               fileSize: upload.fileSize,
-              modelId: branch?.id || null
+              modelId: branch.id,
+              modelName: branchName
             })
           })
         )

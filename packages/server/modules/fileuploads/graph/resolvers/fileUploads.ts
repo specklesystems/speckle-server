@@ -49,7 +49,7 @@ import {
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
 import { createAppTokenFactory } from '@/modules/core/services/tokens'
-import { fileImportQueues } from '@/modules/fileuploads/queues/fileimports'
+import { filterQueues } from '@/modules/fileuploads/queues/fileimports'
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
 import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
 import { getFileSizeLimit } from '@/modules/blobstorage/services/management'
@@ -177,8 +177,8 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       })
     })
 
-    const insertNewUploadAndNotifyV2 = insertNewUploadAndNotifyFactoryV2({
-      queues: fileImportQueues,
+    const insertNewUploadAndNotify = insertNewUploadAndNotifyFactoryV2({
+      findQueue: filterQueues,
       pushJobToFileImporter,
       saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
       emit: getEventBus().emit
@@ -196,7 +196,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
             objectStorage: projectStorage.private
           })
         }),
-        insertNewUploadAndNotify: insertNewUploadAndNotifyV2,
+        insertNewUploadAndNotify,
         getFileInfo: getFileInfoFactory({ db: projectDb }),
         getModelsByIds: getBranchesByIdsFactory({ db: projectDb })
       })
