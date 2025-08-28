@@ -43,7 +43,7 @@ import { inputToVersionedState } from '@speckle/shared/viewer/state'
 import { isValidBase64Image } from '@speckle/shared/images/base64'
 import type { GetViewerResourceGroups } from '@/modules/viewer/domain/operations/resources'
 import { formatResourceIdsForGroup } from '@/modules/viewer/helpers/savedViews'
-import { isUndefined, omit } from 'lodash-es'
+import { difference, isUndefined, omit } from 'lodash-es'
 import type { DependenciesOf } from '@/modules/shared/helpers/factory'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
@@ -196,7 +196,7 @@ export const createSavedViewFactory =
   }): CreateSavedView =>
   async ({ input, authorId }) => {
     const { resourceIdString, projectId } = input
-    const visibility = input.visibility || SavedViewVisibility.authorOnly
+    const visibility = input.visibility || SavedViewVisibility.public // default to public
     const position = 0 // TODO: Resolve based on existing views
     const groupId = input.groupId?.trim() || null
     const description = input.description?.trim() || null
@@ -485,7 +485,6 @@ export const updateSavedViewFactory =
       }
     }
 
-    // Check if there's any actual changes
     const changes = {
       ...removeNullOrUndefinedKeys(omit(input, ['id', 'projectId'])),
       ...(!isUndefined(input.groupId)
@@ -605,7 +604,10 @@ export const updateSavedViewFactory =
           }
         : {})
     }
-    if (Object.keys(update).length === 0) {
+
+    // Check if there's any actual changes
+    const updateKeys = Object.keys(update) as Array<keyof typeof update>
+    if (updateKeys.length === 0) {
       throw new SavedViewUpdateValidationError('No changes submitted with the input.', {
         info: {
           input,
@@ -614,11 +616,19 @@ export const updateSavedViewFactory =
       })
     }
 
-    const updatedView = await deps.updateSavedViewRecord({
-      id,
-      projectId,
-      update
-    })
+    const skipUpdatingDate =
+      difference<keyof typeof update>(updateKeys, ['visibility']).length === 0
+
+    const updatedView = await deps.updateSavedViewRecord(
+      {
+        id,
+        projectId,
+        update
+      },
+      {
+        skipUpdatingDate
+      }
+    )
 
     await Promise.all([
       ...(updatedView?.groupId !== view.groupId

@@ -696,7 +696,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 
 {{- end }}
 
-{{- if (or .Values.featureFlags.automateModuleEnabled .Values.featureFlags.workspacesSsoEnabled) }}
+{{- if (or .Values.featureFlags.automateModuleEnabled .Values.featureFlags.workspacesSSOEnabled) }}
 - name: ENCRYPTION_KEYS_PATH
   value: {{ .Values.server.encryptionKeys.path }}
 {{- end }}
