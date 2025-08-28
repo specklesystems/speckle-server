@@ -54,9 +54,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     text: 'Create',
     props: {
       submit: true
-    },
-    onClick: () => {
-      open.value = false
     }
   }
 ])
