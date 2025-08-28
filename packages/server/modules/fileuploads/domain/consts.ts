@@ -5,3 +5,16 @@ export const FileUploadDatabaseEvents = {
 
 export const DelayBetweenFileImportRetriesMinutes = 5
 export const NumberOfFileImportRetries = 5
+export const BackgroundJobType = {
+  FileImport: 'fileImport'
+} as const
+
+export type BackgroundJobType =
+  (typeof BackgroundJobType)[keyof typeof BackgroundJobType]
+
+export const BackgroundJobPayloadVersion = {
+  v1: 1
+} as const
+
+export type BackgroundJobPayloadVersion =
+  (typeof BackgroundJobPayloadVersion)[keyof typeof BackgroundJobPayloadVersion]

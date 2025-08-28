@@ -5,10 +5,10 @@ import type {
   NotifyChangeInFileStatus
 } from '@/modules/fileuploads/domain/operations'
 import type { FailQueuedBackgroundJobsWhichExceedMaximumAttempts } from '@/modules/backgroundjobs/domain'
-import { BackgroundJobType } from '@/modules/backgroundjobs/domain'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import type { FileImportJobPayloadV1 } from '@speckle/shared/workers/fileimport'
-import { get } from 'lodash'
+import { get } from 'lodash-es'
+import { BackgroundJobType } from '@/modules/fileuploads/domain/consts'
 
 export const manageFileImportExpiryFactory = (deps: {
   garbageCollectExpiredPendingUploads: GarbageCollectPendingUploadedFiles
