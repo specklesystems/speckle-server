@@ -24,30 +24,31 @@ import type { JobPayload } from '@speckle/shared/workers/fileimport'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 import type { BranchRecord } from '@/modules/core/helpers/types'
+import type { BasicTestUser } from '@/test/authHelper'
 import { createTestUser } from '@/test/authHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { buildBasicTestProject } from '@/modules/core/tests/helpers/creation'
 
-const { createStream, createBranch, garbageCollector } = initUploadTestEnvironment()
+const { createBranch, garbageCollector } = initUploadTestEnvironment()
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
 describe('FileUploads @fileuploads', () => {
-  const userOne = {
-    name: cryptoRandomString({ length: 10 }),
-    email: `${cryptoRandomString({ length: 10 })}@example.org`,
-    password: cryptoRandomString({ length: 10 })
-  }
-
-  let userOneId: string
+  let userOne: BasicTestUser
   let createdStreamId: string
   let createdBranch: BranchRecord
 
   before(async () => {
-    const user = await createTestUser(userOne)
-    userOneId = user.id
+    userOne = await createTestUser({
+      name: cryptoRandomString({ length: 10 }),
+      email: `${cryptoRandomString({ length: 10 })}@example.org`,
+      password: cryptoRandomString({ length: 10 })
+    })
   })
 
   beforeEach(async () => {
-    createdStreamId = await createStream({ ownerId: userOneId })
+    const stream = await createTestStream(buildBasicTestProject(), userOne)
+    createdStreamId = stream.id
   })
   afterEach(async () => {
     createdStreamId = ''
@@ -64,7 +65,7 @@ describe('FileUploads @fileuploads', () => {
       await insertNewUploadAndNotify({
         streamId: createdStreamId,
         branchName: 'main',
-        userId: userOneId,
+        userId: userOne.id,
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
@@ -99,7 +100,7 @@ describe('FileUploads @fileuploads', () => {
       await insertNewUploadAndNotify({
         streamId: createdStreamId,
         branchName: 'main',
-        userId: userOneId,
+        userId: userOne.id,
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
@@ -133,7 +134,7 @@ describe('FileUploads @fileuploads', () => {
       await insertNewUploadAndNotify({
         streamId: createdStreamId,
         branchName: 'main',
-        userId: userOneId,
+        userId: userOne.id,
         fileId,
         fileName: 'testfile.txt',
         fileSize: 100,
@@ -151,7 +152,7 @@ describe('FileUploads @fileuploads', () => {
       expect(results.convertedStatus).to.be.equal(FileUploadConvertedStatus.Queued)
       expect(emittedEventName).to.be.equal(FileuploadEvents.Started)
       expect(get(emittedEventPayload, 'upload')).to.be.deep.include({
-        userId: userOneId,
+        userId: userOne.id,
         projectId: createdStreamId,
         fileSize: 100,
         fileType: 'text/plain'
@@ -170,7 +171,7 @@ describe('FileUploads @fileuploads', () => {
           name: cryptoRandomString({ length: 10 }),
           description: cryptoRandomString({ length: 10 }),
           streamId: createdStreamId,
-          authorId: userOneId
+          authorId: userOne.id
         })
       })
 
@@ -233,7 +234,7 @@ describe('FileUploads @fileuploads', () => {
         const fileId = cryptoRandomString({ length: 10 })
         await insertNewUploadAndNotify({
           projectId: createdStreamId,
-          userId: userOneId,
+          userId: userOne.id,
           fileId,
           fileName: 'testfile.txt',
           fileSize: 100,
@@ -252,7 +253,7 @@ describe('FileUploads @fileuploads', () => {
         expect(results.convertedStatus).to.be.equal(FileUploadConvertedStatus.Queued)
         expect(emittedEventName).to.be.equal(FileuploadEvents.Started)
         expect(get(emittedEventPayload, 'upload')).to.be.deep.include({
-          userId: userOneId,
+          userId: userOne.id,
           projectId: createdStreamId,
           fileSize: 100,
           fileType: 'txt'
