@@ -541,7 +541,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           resourceIds.toResources().map((r) => r.toString())
         )
         expect(view!.isHomeView).to.be.false
-        expect(view!.visibility).to.equal(SavedViewVisibility.authorOnly) // default
+        expect(view!.visibility).to.equal(SavedViewVisibility.public) // default
         expect(view!.viewerState).to.deep.equalInAnyOrder(viewerState)
         expect(view!.screenshot).to.equal(fakeScreenshot)
         expect(view!.position).to.equal(0) // default position
@@ -1221,6 +1221,32 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           code: SavedViewInvalidHomeViewSettingsError.code
         })
         expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+
+      it('fails if updating already home view to be private view', async () => {
+        await updateView(
+          {
+            input: {
+              id: testView.id,
+              projectId: updatablesProject.id,
+              isHomeView: true
+            }
+          },
+          { assertNoErrors: true }
+        )
+
+        const res2 = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            visibility: SavedViewVisibility.authorOnly
+          }
+        })
+
+        expect(res2).to.haveGraphQLErrors({
+          code: SavedViewInvalidHomeViewSettingsError.code
+        })
+        expect(res2.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
       })
 
       it('fails if updating view to be a federated home view', async () => {

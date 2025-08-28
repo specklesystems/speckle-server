@@ -240,7 +240,7 @@ export const useUpdateSavedView = () => {
     const { input } = params
 
     const oldGroupId = params.view.group.id
-    const oldVisibility = params.view.visibility
+    // const oldVisibility = params.view.visibility
 
     const result = await mutate(
       { input },
@@ -267,17 +267,18 @@ export const useUpdateSavedView = () => {
             })
           }
 
-          const newVisibility = update.visibility
-          const visibilityChanged = oldVisibility !== newVisibility
-          if (visibilityChanged) {
-            // Update all SavedViewGroup.views to see if it now should appear in there or not
-            modifyObjectField(
-              cache,
-              getCacheId('SavedViewGroup', newGroupId),
-              'views',
-              ({ helpers: { evict } }) => evict()
-            )
-          }
+          // W/ current filter setup, if u can change visibility, you're gonna see it in all filtered groups
+          // const newVisibility = update.visibility
+          // const visibilityChanged = oldVisibility !== newVisibility
+          // if (visibilityChanged) {
+          //   // Update all SavedViewGroup.views to see if it now should appear in there or not
+          //   modifyObjectField(
+          //     cache,
+          //     getCacheId('SavedViewGroup', newGroupId),
+          //     'views',
+          //     ({ helpers: { evict } }) => evict()
+          //   )
+          // }
         }
       }
     ).catch(convertThrowIntoFetchResult)
