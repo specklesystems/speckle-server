@@ -44,6 +44,8 @@ type Documents = {
     "\n  query DashboardSidebar($slug: String!) {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canListDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": typeof types.DashboardSidebarDocument,
     "\n  fragment DashboardsCard_Dashboard on Dashboard {\n    id\n    name\n    createdAt\n    createdBy {\n      id\n      name\n      avatar\n    }\n  }\n": typeof types.DashboardsCard_DashboardFragmentDoc,
     "\n  query DashboardsListCanCreateDashboards($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canCreateDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": typeof types.DashboardsListCanCreateDashboardsDocument,
+    "\n  query DashboardsSharePermissions($id: String!) {\n    dashboard(id: $id) {\n      id\n      permissions {\n        canCreateToken {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": typeof types.DashboardsSharePermissionsDocument,
+    "\n  mutation DashboardsShareToken($dashboardId: String!) {\n    dashboardMutations {\n      createToken(dashboardId: $dashboardId) {\n        token\n      }\n    }\n  }\n": typeof types.DashboardsShareTokenDocument,
     "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n": typeof types.FormSelectModels_ModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": typeof types.FormSelectProjects_ProjectFragmentDoc,
     "\n  fragment FormSelectSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    title\n    isUngroupedViewsGroup\n  }\n": typeof types.FormSelectSavedViewGroup_SavedViewGroupFragmentDoc,
@@ -554,6 +556,8 @@ const documents: Documents = {
     "\n  query DashboardSidebar($slug: String!) {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canListDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": types.DashboardSidebarDocument,
     "\n  fragment DashboardsCard_Dashboard on Dashboard {\n    id\n    name\n    createdAt\n    createdBy {\n      id\n      name\n      avatar\n    }\n  }\n": types.DashboardsCard_DashboardFragmentDoc,
     "\n  query DashboardsListCanCreateDashboards($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canCreateDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": types.DashboardsListCanCreateDashboardsDocument,
+    "\n  query DashboardsSharePermissions($id: String!) {\n    dashboard(id: $id) {\n      id\n      permissions {\n        canCreateToken {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": types.DashboardsSharePermissionsDocument,
+    "\n  mutation DashboardsShareToken($dashboardId: String!) {\n    dashboardMutations {\n      createToken(dashboardId: $dashboardId) {\n        token\n      }\n    }\n  }\n": types.DashboardsShareTokenDocument,
     "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n": types.FormSelectModels_ModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": types.FormSelectProjects_ProjectFragmentDoc,
     "\n  fragment FormSelectSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    title\n    isUngroupedViewsGroup\n  }\n": types.FormSelectSavedViewGroup_SavedViewGroupFragmentDoc,
@@ -1168,6 +1172,14 @@ export function graphql(source: "\n  fragment DashboardsCard_Dashboard on Dashbo
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query DashboardsListCanCreateDashboards($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canCreateDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query DashboardsListCanCreateDashboards($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canCreateDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query DashboardsSharePermissions($id: String!) {\n    dashboard(id: $id) {\n      id\n      permissions {\n        canCreateToken {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query DashboardsSharePermissions($id: String!) {\n    dashboard(id: $id) {\n      id\n      permissions {\n        canCreateToken {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation DashboardsShareToken($dashboardId: String!) {\n    dashboardMutations {\n      createToken(dashboardId: $dashboardId) {\n        token\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation DashboardsShareToken($dashboardId: String!) {\n    dashboardMutations {\n      createToken(dashboardId: $dashboardId) {\n        token\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
