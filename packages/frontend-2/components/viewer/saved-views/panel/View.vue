@@ -108,6 +108,7 @@ import {
   useCollectNewSavedViewViewerData,
   useUpdateSavedView
 } from '~/lib/viewer/composables/savedViews/management'
+import { useSavedViewValidationHelpers } from '~/lib/viewer/composables/savedViews/validation'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 
 const MenuItems = StringEnum([
@@ -143,6 +144,7 @@ graphql(`
     ...UseDeleteSavedView_SavedView
     ...UseUpdateSavedView_SavedView
     ...ViewerSavedViewsPanelViewEditDialog_SavedView
+    ...UseSavedViewValidationHelpers_SavedView
   }
 `)
 
@@ -161,15 +163,19 @@ const isLoading = useMutationLoading()
 const { copyLink, applyView } = useViewerSavedViewsUtils()
 const eventBus = useEventBus()
 const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
+const {
+  canUpdate,
+  isOnlyVisibleToMe,
+  canSetHomeView,
+  isHomeView,
+  canToggleVisibility
+} = useSavedViewValidationHelpers({
+  view: computed(() => props.view)
+})
 
 const showMenu = ref(false)
 const menuId = useId()
 
-const canUpdate = computed(() => props.view.permissions.canUpdate)
-const isOnlyVisibleToMe = computed(
-  () => props.view.visibility === SavedViewVisibility.AuthorOnly
-)
-const isHomeView = computed(() => props.view.isHomeView)
 const isActive = computed(() => props.view.id === savedView.value?.id)
 
 const isOriginalVersionAlreadyLoaded = computed(() => {
@@ -188,29 +194,6 @@ const canLoadOriginal = computed(
   }
 )
 
-const canSetHomeView = computed(
-  (): { authorized: boolean; message: Optional<string> } => {
-    if (!canUpdate.value?.authorized || isLoading.value) {
-      return { authorized: false, message: canUpdate.value.errorMessage || undefined }
-    }
-
-    if (isFederatedView.value) {
-      return {
-        authorized: false,
-        message: "Home view settings can't be updated while in a federated view"
-      }
-    }
-
-    if (isOnlyVisibleToMe.value) {
-      return {
-        authorized: false,
-        message: 'A view must be shared to be set as home view'
-      }
-    }
-
-    return { authorized: true, message: undefined }
-  }
-)
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
@@ -223,13 +206,13 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
       id: MenuItems.ReplaceView,
       title: 'Replace view',
       disabled: !canUpdate.value?.authorized || isLoading.value,
-      disabledTooltip: canUpdate.value.errorMessage
+      disabledTooltip: canUpdate.value?.errorMessage
     },
     {
       id: MenuItems.MoveToGroup,
       title: 'Move to group',
       disabled: !canUpdate.value?.authorized || isLoading.value,
-      disabledTooltip: canUpdate.value.errorMessage
+      disabledTooltip: canUpdate.value?.errorMessage
     },
     {
       id: MenuItems.CopyLink,
@@ -247,8 +230,8 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
     {
       id: MenuItems.ChangeVisibility,
       title: isOnlyVisibleToMe.value ? 'Make view shared' : 'Make view private',
-      disabled: !canUpdate.value?.authorized || isLoading.value,
-      disabledTooltip: canUpdate.value.errorMessage
+      disabled: !canToggleVisibility.value.authorized,
+      disabledTooltip: canToggleVisibility.value.message
     }
   ],
   [
@@ -256,7 +239,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
       id: MenuItems.Delete,
       title: 'Delete',
       disabled: !canUpdate.value?.authorized || isLoading.value,
-      disabledTooltip: canUpdate.value.errorMessage
+      disabledTooltip: canUpdate.value?.errorMessage
     }
   ]
 ])
