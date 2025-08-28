@@ -189,10 +189,10 @@ export const failPendingUploadedFilesFactory =
     const updatedRows = await deps
       .db(FileUploads.name)
       .whereIn(FileUploads.withoutTablePrefix.col.id, params.uploadIds)
-      .andWhere(
-        FileUploads.withoutTablePrefix.col.convertedStatus,
-        FileUploadConvertedStatus.Queued
-      ) // and/or Converting?
+      .whereIn(FileUploads.withoutTablePrefix.col.convertedStatus, [
+        FileUploadConvertedStatus.Queued,
+        FileUploadConvertedStatus.Converting
+      ])
       .update({
         [FileUploads.withoutTablePrefix.col.convertedStatus]:
           FileUploadConvertedStatus.Error,

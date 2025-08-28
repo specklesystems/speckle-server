@@ -70,7 +70,7 @@ export const failQueuedBackgroundJobsWhichExceedMaximumAttemptsFactory =
       .andWhere(BackgroundJobs.withoutTablePrefix.col.jobType, jobType)
       .andWhere(
         BackgroundJobs.withoutTablePrefix.col.attempt,
-        '>',
+        '>=',
         BackgroundJobs.withoutTablePrefix.col.maxAttempt
       )
       .orderBy(BackgroundJobs.withoutTablePrefix.col.createdAt, 'desc')

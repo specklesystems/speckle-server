@@ -7,7 +7,6 @@ import type {
 import type { FailQueuedBackgroundJobsWhichExceedMaximumAttempts } from '@/modules/backgroundjobs/domain'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import type { FileImportJobPayloadV1 } from '@speckle/shared/workers/fileimport'
-import { get } from 'lodash-es'
 import { BackgroundJobType } from '@/modules/fileuploads/domain/consts'
 
 export const manageFileImportExpiryFactory = (deps: {
@@ -52,7 +51,7 @@ export const garbageCollectAttemptedFileImportBackgroundJobs = (deps: {
     )
 
     const updatedUploads = await failPendingUploadedFiles({
-      uploadIds: failedBackgroundJobs.map((job) => get(job.payload, 'blobId'))
+      uploadIds: failedBackgroundJobs.map((job) => job.payload.blobId)
     })
 
     for (const upload of updatedUploads) {
