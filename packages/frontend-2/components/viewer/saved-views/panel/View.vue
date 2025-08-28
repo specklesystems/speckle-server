@@ -64,8 +64,8 @@
         </div>
       </div>
       <div class="w-full flex items-center gap-1">
-        <Globe
-          v-if="!isOnlyVisibleToMe"
+        <Component
+          :is="isOnlyVisibleToMe ? User : Globe"
           :size="12"
           :stroke-width="1.5"
           :absolute-stroke-width="true"
@@ -96,7 +96,8 @@ import {
 } from '@speckle/shared'
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
-import { Ellipsis, SquarePen, Bookmark, Globe } from 'lucide-vue-next'
+import { difference } from 'lodash-es'
+import { Ellipsis, SquarePen, Bookmark, Globe, User } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   SavedViewVisibility,
@@ -128,6 +129,7 @@ graphql(`
     screenshot
     visibility
     isHomeView
+    resourceIds
     author {
       id
       name
@@ -150,7 +152,7 @@ const props = defineProps<{
 
 const {
   resources: {
-    response: { savedView, isFederatedView }
+    response: { savedView, isFederatedView, resourceItemsIds }
   }
 } = useInjectedViewerState()
 const { collect } = useCollectNewSavedViewViewerData()
@@ -169,6 +171,22 @@ const isOnlyVisibleToMe = computed(
 )
 const isHomeView = computed(() => props.view.isHomeView)
 const isActive = computed(() => props.view.id === savedView.value?.id)
+
+const isOriginalVersionAlreadyLoaded = computed(() => {
+  const viewResources = props.view.resourceIds
+  const currentlyLoadedResources = resourceItemsIds.value
+  return difference(viewResources, currentlyLoadedResources).length === 0
+})
+
+const canLoadOriginal = computed(
+  (): { authorized: boolean; message: Optional<string> } => {
+    if (isOriginalVersionAlreadyLoaded.value) {
+      return { authorized: false, message: 'Original version is already loaded' }
+    }
+
+    return { authorized: true, message: undefined }
+  }
+)
 
 const canSetHomeView = computed(
   (): { authorized: boolean; message: Optional<string> } => {
@@ -197,7 +215,9 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
       id: MenuItems.LoadOriginalVersions,
-      title: 'Load with original model version'
+      title: 'Load with original model version',
+      disabled: !canLoadOriginal.value.authorized || isLoading.value,
+      disabledTooltip: canLoadOriginal.value.message
     },
     {
       id: MenuItems.ReplaceView,
@@ -226,8 +246,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
     },
     {
       id: MenuItems.ChangeVisibility,
-      title: 'Share view to workspace',
-      active: !isOnlyVisibleToMe.value,
+      title: isOnlyVisibleToMe.value ? 'Make view shared' : 'Make view private',
       disabled: !canUpdate.value?.authorized || isLoading.value,
       disabledTooltip: canUpdate.value.errorMessage
     }

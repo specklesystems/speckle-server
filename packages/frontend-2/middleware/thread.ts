@@ -14,7 +14,7 @@ const resolveLinkQuery = graphql(`
   }
 `)
 
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineParallelizedNuxtRouteMiddleware(async (to) => {
   const client = useApolloClientFromNuxt()
   const threadId = to.params.threadId as string
   const projectId = to.params.id as string

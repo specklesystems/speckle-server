@@ -88,7 +88,8 @@ describe('Upload/Download Routes @api-rest', () => {
     testStream = await createTestStream(
       {
         name: 'Test Stream 01',
-        description: 'wonderful test stream'
+        description: 'wonderful test stream',
+        isPublic: true
       },
       userA
     )
@@ -217,7 +218,7 @@ describe('Upload/Download Routes @api-rest', () => {
     res = await request(app)
       .get(`/objects/${testStream.id}/${objBatch[0].id}`)
       .set('Authorization', tokenUserB)
-    expect(res).to.have.status(401)
+    expect(res).to.have.status(404)
   })
 
   it('Should not allow upload requests without an authorization token or valid streamId', async () => {

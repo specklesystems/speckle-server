@@ -132,13 +132,19 @@ export type DeleteSavedViewRecord = (params: {
   savedViewId: string
 }) => Promise<boolean>
 
-export type UpdateSavedViewRecord = <
-  Update extends Exact<Partial<SavedView>, Update>
->(params: {
-  id: string
-  projectId: string
-  update: Update
-}) => Promise<SavedView | undefined>
+export type UpdateSavedViewRecord = <Update extends Exact<Partial<SavedView>, Update>>(
+  params: {
+    id: string
+    projectId: string
+    update: Update
+  },
+  options?: Partial<{
+    /**
+     * Skip updating updatedAt
+     */
+    skipUpdatingDate: boolean
+  }>
+) => Promise<SavedView | undefined>
 
 export type DeleteSavedViewGroupRecord = (params: {
   groupId: string

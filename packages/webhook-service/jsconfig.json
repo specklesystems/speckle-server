@@ -1,4 +1,8 @@
 {
-  "extends": "../../jsconfig.base.json",
+  "compilerOptions": {
+    "target": "es2021",
+    "module": "commonJS"
+  },
+  "exclude": ["node_modules"],
   "include": ["src"]
 }

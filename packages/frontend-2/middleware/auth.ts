@@ -7,7 +7,7 @@ import { loginRoute } from '~~/lib/common/helpers/route'
 /**
  * Apply this to a page to prevent unauthenticated access
  */
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineParallelizedNuxtRouteMiddleware(async (to) => {
   const nuxt = useNuxtApp()
   const client = useApolloClientFromNuxt()
   const postAuthRedirect = usePostAuthRedirect({ route: to })

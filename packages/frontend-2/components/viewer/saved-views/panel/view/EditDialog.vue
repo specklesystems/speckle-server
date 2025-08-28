@@ -111,7 +111,7 @@ const buttons = computed((): LayoutDialogButton[] => [
 const radioOptions = computed((): FormRadioGroupItem<SavedViewVisibility>[] => [
   {
     value: SavedViewVisibility.Public,
-    title: 'Public',
+    title: 'Shared',
     introduction: 'Visible to anyone with access to the model.',
     icon: Globe
   },

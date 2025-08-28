@@ -163,7 +163,6 @@ describe('Commits @core-commits', () => {
       },
       user
     )
-
     const testObjectId = await createObject({ streamId: stream.id, object: testObject })
     const testObject2Id = await createObject({
       streamId: stream.id,
