@@ -541,7 +541,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           resourceIds.toResources().map((r) => r.toString())
         )
         expect(view!.isHomeView).to.be.false
-        expect(view!.visibility).to.equal(SavedViewVisibility.authorOnly) // default
+        expect(view!.visibility).to.equal(SavedViewVisibility.public) // default
         expect(view!.viewerState).to.deep.equalInAnyOrder(viewerState)
         expect(view!.screenshot).to.equal(fakeScreenshot)
         expect(view!.position).to.equal(0) // default position
