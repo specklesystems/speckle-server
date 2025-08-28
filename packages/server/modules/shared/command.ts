@@ -181,8 +181,7 @@ export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
 
   const totalDbs = [mainDb, ...regionDbs]
   if (totalDbs.length === 1) {
-    // defaulting to asOperation when asMultiregion operator
-    // is used with a single database
+    // no need for 2pc, normal transaction is applied
     return await asOperation(
       ({ db, emit }) =>
         operation({
