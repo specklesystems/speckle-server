@@ -2,7 +2,7 @@ import {
   useInjectedViewerState,
   useResetUiState
 } from '~~/lib/viewer/composables/setup'
-import { SpeckleViewer, TimeoutError } from '@speckle/shared'
+import { isUndefinedOrVoid, SpeckleViewer, TimeoutError } from '@speckle/shared'
 import { get } from 'lodash-es'
 import { Vector3 } from 'three'
 import {
@@ -10,7 +10,7 @@ import {
   useFilterUtilities,
   useSelectionUtilities
 } from '~~/lib/viewer/composables/ui'
-import { CameraController, ViewMode, VisualDiffMode } from '@speckle/viewer'
+import { CameraController, VisualDiffMode } from '@speckle/viewer'
 import type { NumericPropertyInfo } from '@speckle/viewer'
 import type { Merge, PartialDeep } from 'type-fest'
 import type { SectionBoxData } from '@speckle/shared/viewer/state'
@@ -117,7 +117,13 @@ export function useStateSerialization() {
           isOrthoProjection: state.ui.camera.isOrthoProjection.value,
           zoom: (get(camControls, '_zoom') as unknown as number) || 1 // kinda hacky, _zoom is a protected prop
         },
-        viewMode: state.ui.viewMode.value,
+        viewMode: {
+          mode: state.ui.viewMode.mode.value,
+          edgesEnabled: state.ui.viewMode.edgesEnabled.value,
+          edgesWeight: state.ui.viewMode.edgesWeight.value,
+          outlineOpacity: state.ui.viewMode.outlineOpacity.value,
+          edgesColor: state.ui.viewMode.edgesColor.value
+        },
         sectionBox: state.ui.sectionBox.value ? box : null,
         lightConfig: { ...state.ui.lightConfig.value },
         explodeFactor: state.ui.explodeFactor.value,
@@ -361,11 +367,16 @@ export function useApplySerializedState() {
     }
 
     // Restore view mode
-    if (state.ui?.viewMode) {
-      viewMode.value = state.ui.viewMode
-    } else {
-      viewMode.value = ViewMode.DEFAULT
-    }
+    if (!isUndefinedOrVoid(state.ui?.viewMode?.mode))
+      viewMode.mode.value = state.ui!.viewMode!.mode
+    if (!isUndefinedOrVoid(state.ui?.viewMode?.edgesEnabled))
+      viewMode.edgesEnabled.value = state.ui!.viewMode!.edgesEnabled
+    if (!isUndefinedOrVoid(state.ui?.viewMode?.edgesWeight))
+      viewMode.edgesWeight.value = state.ui!.viewMode!.edgesWeight
+    if (!isUndefinedOrVoid(state.ui?.viewMode?.outlineOpacity))
+      viewMode.outlineOpacity.value = state.ui!.viewMode!.outlineOpacity
+    if (!isUndefinedOrVoid(state.ui?.viewMode?.edgesColor))
+      viewMode.edgesColor.value = state.ui!.viewMode!.edgesColor
 
     explodeFactor.value = state.ui?.explodeFactor || 0
     lightConfig.value = {
