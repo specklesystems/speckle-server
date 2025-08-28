@@ -43,11 +43,14 @@ import { configureClient } from '@/knexfile'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { rhinoImporterSupportedFileExtensions } from '@speckle/shared/blobs'
 import { scheduleFileImportExpiry } from '@/modules/fileuploads/tasks/expireFileImports'
+import { scheduleBackgroundJobGarbageCollection } from '@/modules/fileuploads/tasks/garbageCollectBackgroundJobs'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED, FF_RHINO_FILE_IMPORTER_ENABLED } =
   getFeatureFlags()
 
-let scheduledTasks: cron.ScheduledTask[] = []
+const EveryMinute = '*/1 * * * *'
+
+const scheduledTasks: cron.ScheduledTask[] = []
 
 export const init: SpeckleModule['init'] = async ({
   app,
@@ -62,6 +65,11 @@ export const init: SpeckleModule['init'] = async ({
 
   if (FF_NEXT_GEN_FILE_IMPORTER_ENABLED)
     moduleLogger.info('📄 Next Gen File Importer is ENABLED')
+
+  const scheduleExecution = scheduleExecutionFactory({
+    acquireTaskLock: acquireTaskLockFactory({ db }),
+    releaseTaskLock: releaseTaskLockFactory({ db })
+  })
 
   let observeResult: ObserveResult | undefined = undefined
 
@@ -98,19 +106,22 @@ export const init: SpeckleModule['init'] = async ({
         registers: [metricsRegister],
         requestQueues
       }))
+
+      scheduledTasks.push(
+        await scheduleBackgroundJobGarbageCollection({
+          queueDb,
+          scheduleExecution,
+          cronExpression: EveryMinute
+        })
+      )
     }
 
-    const scheduleExecution = scheduleExecutionFactory({
-      acquireTaskLock: acquireTaskLockFactory({ db }),
-      releaseTaskLock: releaseTaskLockFactory({ db })
-    })
-
-    scheduledTasks = [
+    scheduledTasks.push(
       await scheduleFileImportExpiry({
         scheduleExecution,
-        cronExpression: '*/1 * * * *' // every 1 minute
+        cronExpression: EveryMinute
       })
-    ]
+    )
 
     await listenFor(FileUploadDatabaseEvents.Updated, async (msg) => {
       const parsedMessage = parseMessagePayload(msg.payload)

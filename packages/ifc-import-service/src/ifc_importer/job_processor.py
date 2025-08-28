@@ -16,7 +16,7 @@ from specklepy.core.api.inputs.file_import_inputs import (
 from specklepy.core.api.models import Version
 
 from ifc_importer.domain import FileimportPayload, JobStatus
-from ifc_importer.repository import get_next_job, set_job_status, setup_connection
+from ifc_importer.repository import get_next_job, return_job_to_queued, setup_connection
 
 IDLE_TIMEOUT = 1
 
@@ -125,7 +125,8 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
                     ),
                 )
             )
-
+            # the server is responsible for moving successful jobs to the succeeded state
+            # mark it as succeeded so we do not enter any error handling routines on finalisation
             job_status = JobStatus.SUCCEEDED
 
         except TimeoutError as te:
@@ -142,7 +143,9 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
             ex = e
             job_status = JobStatus.FAILED
         finally:
-            if job_status == JobStatus.FAILED:
+            if job_status == JobStatus.QUEUED:
+                await return_job_to_queued(connection, job_id)
+            elif job_status == JobStatus.FAILED:
                 # we should be reporting the failure to the server
                 logger.error("job processing failed", exc_info=ex)
                 try:
@@ -162,7 +165,13 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
                             ),
                         )
                     )
-                # if the reporting of the failure does not succeed, we're requeueing. The client won't pick it up if it has exceeded max attempts
+                    # the server is responsible for moving failed jobs to the failed state, so the worker does not have to do anything further
                 except Exception as ex:
-                    job_status = JobStatus.QUEUED
-            await set_job_status(connection, job_id, job_status)
+                    logger.error("failed to report job failure", exc_info=ex)
+                    await return_job_to_queued(connection, job_id)
+                    # The client will not pick up a queued job if it now has exceeded max attempts.
+                    # The server is responsible for moving queued jobs which have exceeded maximum attempts to failed status.
+            elif job_status == JobStatus.SUCCEEDED:
+                # do nothing
+                # we expect the job to already be marked as succeeded in the database by the server (when the worker reported the results back to the server)
+                continue

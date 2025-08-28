@@ -75,6 +75,7 @@ import { onFileImportResultFactory } from '@/modules/fileuploads/services/result
 import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
 import { JobResultStatus } from '@speckle/shared/workers/fileimport'
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import { updateBackgroundJobFactory } from '@/modules/backgroundjobs/repositories'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
@@ -294,6 +295,9 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       logger: logger.child({ fileUploadStatus: status }),
       updateFileUpload: updateFileUploadFactory({ db: projectDb }),
       getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
+      updateBackgroundJob: updateBackgroundJobFactory({
+        db: projectDb
+      }),
       eventEmit: getEventBus().emit
     })
 
