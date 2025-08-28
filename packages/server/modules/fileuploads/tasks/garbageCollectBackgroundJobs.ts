@@ -3,10 +3,11 @@ import { db } from '@/db/knex'
 import { getRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { garbageCollectAttemptedFileImportBackgroundJobs } from '@/modules/fileuploads/services/tasks'
+import { garbageCollectAttemptedFileImportBackgroundJobsFactory } from '@/modules/fileuploads/services/tasks'
 import { failPendingUploadedFilesFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { failQueuedBackgroundJobsWhichExceedMaximumAttemptsFactory } from '@/modules/backgroundjobs/repositories'
 import type { Knex } from 'knex'
+import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 
 export const scheduleBackgroundJobGarbageCollection = async ({
   queueDb,
@@ -18,12 +19,12 @@ export const scheduleBackgroundJobGarbageCollection = async ({
   cronExpression: string
 }) => {
   const perDbTask: ReturnType<
-    typeof garbageCollectAttemptedFileImportBackgroundJobs
+    typeof garbageCollectAttemptedFileImportBackgroundJobsFactory
   >[] = []
   const regionClients = await getRegisteredDbClients()
   for (const projectDb of [db, ...regionClients]) {
     perDbTask.push(
-      garbageCollectAttemptedFileImportBackgroundJobs({
+      garbageCollectAttemptedFileImportBackgroundJobsFactory({
         failQueuedBackgroundJobsWhichExceedMaximumAttempts:
           failQueuedBackgroundJobsWhichExceedMaximumAttemptsFactory({
             db: queueDb
@@ -43,7 +44,8 @@ export const scheduleBackgroundJobGarbageCollection = async ({
       await Promise.all(
         perDbTask.map((task) =>
           task({
-            logger
+            logger,
+            originServerUrl: getServerOrigin()
           })
         )
       )
