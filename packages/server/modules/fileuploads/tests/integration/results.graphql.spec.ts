@@ -49,7 +49,9 @@ describe('File import results @fileuploads integration', () => {
     process.env['PORT'] = serverPort
 
     userOne = await createTestUser(userOne)
+  })
 
+  beforeEach(async () => {
     projectOne = await createTestStream(
       {
         name: cryptoRandomString({ length: 10 }),
@@ -69,12 +71,6 @@ describe('File import results @fileuploads integration', () => {
       owner: userOne,
       stream: projectOne
     })
-
-    //TODO does mocha have a nicer way of temporarily swapping an environment variable, like vitest?
-    existingCanonicalUrl = process.env['CANONICAL_URL'] || ''
-    existingPort = process.env['PORT'] || ''
-    process.env['CANONICAL_URL'] = serverAddress
-    process.env['PORT'] = serverPort
     ;({ token: userOneToken } = await createToken({
       userId: userOne.id,
       name: cryptoRandomString({ length: 10 }),
@@ -86,40 +82,6 @@ describe('File import results @fileuploads integration', () => {
       projectId: projectOne.id,
       modelId: modelOne.id,
       userId: userOne.id
-    }))
-  })
-
-  beforeEach(async () => {
-    projectOne = await createTestStream(
-      {
-        name: 'Test Project',
-        description: 'Test Project Description'
-      },
-      userOne
-    )
-    ;({ token: userOneToken } = await createToken({
-      userId: userOne.id,
-      name: createRandomString(),
-      scopes: [Scopes.Streams.Read, Scopes.Streams.Write]
-    }))
-
-    modelOne = await createTestBranch({
-      branch: {
-        name: 'Test Model',
-        description: 'Test Model Description',
-        id: '',
-        streamId: projectOne.id,
-        authorId: userOne.id
-      },
-      owner: userOne,
-      stream: projectOne
-    })
-
-    //FIXME currently assuming a 1:1 file to job mapping
-    ;({ id: jobOneId } = await createFileUploadJob({
-      projectId: projectOne.id,
-      userId: userOne.id,
-      modelId: modelOne.id
     }))
   })
 
