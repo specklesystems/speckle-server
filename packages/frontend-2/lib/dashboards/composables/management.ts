@@ -11,7 +11,8 @@ import type {
 } from '~/lib/common/generated/gql/graphql'
 import {
   createDashboardMutation,
-  updateDashboardMutation
+  updateDashboardMutation,
+  deleteDashboardMutation
 } from '~/lib/dashboards/graphql/mutations'
 
 export function useCreateDashboard() {
@@ -90,6 +91,40 @@ export function useUpdateDashboard() {
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: 'Dashboard update failed',
+        description: err
+      })
+    }
+  }
+}
+
+export function useDeleteDashboard() {
+  const apollo = useApolloClient().client
+
+  const { triggerNotification } = useGlobalToast()
+
+  return async (id: string) => {
+    const res = await apollo
+      .mutate({
+        mutation: deleteDashboardMutation,
+        variables: { id },
+        update: (cache, { data }) => {
+          if (!data?.dashboardMutations?.delete) return
+
+          cache.evict({ id: getCacheId('Dashboard', id) })
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (res.data?.dashboardMutations.delete) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Dashboard successfully deleted'
+      })
+    } else {
+      const err = getFirstErrorMessage(res.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Dashboard deletion failed',
         description: err
       })
     }

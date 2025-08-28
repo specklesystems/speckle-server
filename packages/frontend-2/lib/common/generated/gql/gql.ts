@@ -43,7 +43,6 @@ type Documents = {
     "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n": typeof types.CommonModelSelectorModelFragmentDoc,
     "\n  query DashboardSidebar($slug: String!) {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canListDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": typeof types.DashboardSidebarDocument,
     "\n  fragment DashboardsCard_Dashboard on Dashboard {\n    id\n    name\n    createdAt\n    workspace {\n      id\n    }\n    createdBy {\n      id\n      name\n      avatar\n    }\n    permissions {\n      canDelete {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.DashboardsCard_DashboardFragmentDoc,
-    "\n  mutation DashboardsCardDelete($id: String!) {\n    dashboardMutations {\n      delete(id: $id)\n    }\n  }\n": typeof types.DashboardsCardDeleteDocument,
     "\n  query DashboardsListCanCreateDashboards($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canCreateDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": typeof types.DashboardsListCanCreateDashboardsDocument,
     "\n  query DashboardsSharePermissions($id: String!) {\n    dashboard(id: $id) {\n      id\n      permissions {\n        canCreateToken {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": typeof types.DashboardsSharePermissionsDocument,
     "\n  mutation DashboardsShareToken($dashboardId: String!) {\n    dashboardMutations {\n      createToken(dashboardId: $dashboardId) {\n        token\n      }\n    }\n  }\n": typeof types.DashboardsShareTokenDocument,
@@ -258,6 +257,7 @@ type Documents = {
     "\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n      configuration {\n        isEmailEnabled\n      }\n    }\n  }\n": typeof types.MainServerInfoDataDocument,
     "\n  mutation CreateDashboard(\n    $workspace: WorkspaceIdentifier!\n    $input: DashboardCreateInput!\n  ) {\n    dashboardMutations {\n      create(workspace: $workspace, input: $input) {\n        id\n        workspace {\n          id\n        }\n      }\n    }\n  }\n": typeof types.CreateDashboardDocument,
     "\n  mutation UpdateDashboard($input: DashboardUpdateInput!) {\n    dashboardMutations {\n      update(input: $input) {\n        id\n        name\n      }\n    }\n  }\n": typeof types.UpdateDashboardDocument,
+    "\n  mutation DeleteDashboard($id: String!) {\n    dashboardMutations {\n      delete(id: $id)\n    }\n  }\n": typeof types.DeleteDashboardDocument,
     "\n  query Dashboard($id: String!) {\n    dashboard(id: $id) {\n      id\n      ...WorkspaceDashboards_Dashboard\n    }\n  }\n": typeof types.DashboardDocument,
     "\n  query WorkspaceDashboards($workspaceSlug: String!, $cursor: String) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      dashboards(cursor: $cursor) {\n        cursor\n        items {\n          id\n          ...DashboardsCard_Dashboard\n        }\n      }\n    }\n  }\n": typeof types.WorkspaceDashboardsDocument,
     "\n  mutation DeleteAccessToken($token: String!) {\n    apiTokenRevoke(token: $token)\n  }\n": typeof types.DeleteAccessTokenDocument,
@@ -557,7 +557,6 @@ const documents: Documents = {
     "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n": types.CommonModelSelectorModelFragmentDoc,
     "\n  query DashboardSidebar($slug: String!) {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canListDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": types.DashboardSidebarDocument,
     "\n  fragment DashboardsCard_Dashboard on Dashboard {\n    id\n    name\n    createdAt\n    workspace {\n      id\n    }\n    createdBy {\n      id\n      name\n      avatar\n    }\n    permissions {\n      canDelete {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.DashboardsCard_DashboardFragmentDoc,
-    "\n  mutation DashboardsCardDelete($id: String!) {\n    dashboardMutations {\n      delete(id: $id)\n    }\n  }\n": types.DashboardsCardDeleteDocument,
     "\n  query DashboardsListCanCreateDashboards($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canCreateDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": types.DashboardsListCanCreateDashboardsDocument,
     "\n  query DashboardsSharePermissions($id: String!) {\n    dashboard(id: $id) {\n      id\n      permissions {\n        canCreateToken {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": types.DashboardsSharePermissionsDocument,
     "\n  mutation DashboardsShareToken($dashboardId: String!) {\n    dashboardMutations {\n      createToken(dashboardId: $dashboardId) {\n        token\n      }\n    }\n  }\n": types.DashboardsShareTokenDocument,
@@ -772,6 +771,7 @@ const documents: Documents = {
     "\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n      configuration {\n        isEmailEnabled\n      }\n    }\n  }\n": types.MainServerInfoDataDocument,
     "\n  mutation CreateDashboard(\n    $workspace: WorkspaceIdentifier!\n    $input: DashboardCreateInput!\n  ) {\n    dashboardMutations {\n      create(workspace: $workspace, input: $input) {\n        id\n        workspace {\n          id\n        }\n      }\n    }\n  }\n": types.CreateDashboardDocument,
     "\n  mutation UpdateDashboard($input: DashboardUpdateInput!) {\n    dashboardMutations {\n      update(input: $input) {\n        id\n        name\n      }\n    }\n  }\n": types.UpdateDashboardDocument,
+    "\n  mutation DeleteDashboard($id: String!) {\n    dashboardMutations {\n      delete(id: $id)\n    }\n  }\n": types.DeleteDashboardDocument,
     "\n  query Dashboard($id: String!) {\n    dashboard(id: $id) {\n      id\n      ...WorkspaceDashboards_Dashboard\n    }\n  }\n": types.DashboardDocument,
     "\n  query WorkspaceDashboards($workspaceSlug: String!, $cursor: String) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      dashboards(cursor: $cursor) {\n        cursor\n        items {\n          id\n          ...DashboardsCard_Dashboard\n        }\n      }\n    }\n  }\n": types.WorkspaceDashboardsDocument,
     "\n  mutation DeleteAccessToken($token: String!) {\n    apiTokenRevoke(token: $token)\n  }\n": types.DeleteAccessTokenDocument,
@@ -1172,10 +1172,6 @@ export function graphql(source: "\n  query DashboardSidebar($slug: String!) {\n 
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment DashboardsCard_Dashboard on Dashboard {\n    id\n    name\n    createdAt\n    workspace {\n      id\n    }\n    createdBy {\n      id\n      name\n      avatar\n    }\n    permissions {\n      canDelete {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment DashboardsCard_Dashboard on Dashboard {\n    id\n    name\n    createdAt\n    workspace {\n      id\n    }\n    createdBy {\n      id\n      name\n      avatar\n    }\n    permissions {\n      canDelete {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  mutation DashboardsCardDelete($id: String!) {\n    dashboardMutations {\n      delete(id: $id)\n    }\n  }\n"): (typeof documents)["\n  mutation DashboardsCardDelete($id: String!) {\n    dashboardMutations {\n      delete(id: $id)\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -2032,6 +2028,10 @@ export function graphql(source: "\n  mutation CreateDashboard(\n    $workspace: 
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation UpdateDashboard($input: DashboardUpdateInput!) {\n    dashboardMutations {\n      update(input: $input) {\n        id\n        name\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateDashboard($input: DashboardUpdateInput!) {\n    dashboardMutations {\n      update(input: $input) {\n        id\n        name\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation DeleteDashboard($id: String!) {\n    dashboardMutations {\n      delete(id: $id)\n    }\n  }\n"): (typeof documents)["\n  mutation DeleteDashboard($id: String!) {\n    dashboardMutations {\n      delete(id: $id)\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

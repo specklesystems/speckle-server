@@ -26,3 +26,11 @@ export const updateDashboardMutation = graphql(`
     }
   }
 `)
+
+export const deleteDashboardMutation = graphql(`
+  mutation DeleteDashboard($id: String!) {
+    dashboardMutations {
+      delete(id: $id)
+    }
+  }
+`)

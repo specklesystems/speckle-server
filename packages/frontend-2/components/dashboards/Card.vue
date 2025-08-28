@@ -36,6 +36,7 @@
         </div>
       </div>
     </CommonCard>
+
     <CommonConfirmDialog
       v-model:open="isDeleteDialogOpen"
       title="Delete dashboard"
@@ -52,8 +53,7 @@ import type { DashboardsCard_DashboardFragment } from '~~/lib/common/generated/g
 import { dashboardRoute } from '~/lib/common/helpers/route'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { Trash } from 'lucide-vue-next'
-import { useMutation } from '@vue/apollo-composable'
-import { getCacheId } from '~/lib/common/helpers/graphql'
+import { useDeleteDashboard } from '~/lib/dashboards/composables/management'
 
 graphql(`
   fragment DashboardsCard_Dashboard on Dashboard {
@@ -76,28 +76,13 @@ graphql(`
   }
 `)
 
-const dashboardsCardDeleteMutation = graphql(`
-  mutation DashboardsCardDelete($id: String!) {
-    dashboardMutations {
-      delete(id: $id)
-    }
-  }
-`)
-
 const props = defineProps<{
   dashboard: DashboardsCard_DashboardFragment
   activeWorkspaceSlug: MaybeNullOrUndefined<string>
 }>()
 
-const { mutate: deleteDashboard } = useMutation(dashboardsCardDeleteMutation, {
-  update: (cache, { data }) => {
-    if (!data?.dashboardMutations?.delete) return
-
-    cache.evict({ id: getCacheId('Dashboard', props.dashboard.id) })
-  }
-})
+const deleteDashboard = useDeleteDashboard()
 const { formattedFullDate } = useDateFormatters()
-const { triggerNotification } = useGlobalToast()
 
 const isDeleteDialogOpen = ref(false)
 
@@ -114,22 +99,6 @@ const toggleDeleteDialog = () => {
 const handleDelete = async () => {
   if (!props.dashboard.permissions?.canDelete?.authorized) return
 
-  const result = await deleteDashboard({ id: props.dashboard.id }).catch(
-    convertThrowIntoFetchResult
-  )
-
-  if (result?.data?.dashboardMutations?.delete) {
-    triggerNotification({
-      title: `Dashboard ${props.dashboard.name} deleted`,
-      type: ToastNotificationType.Success
-    })
-  } else {
-    const err = getFirstGqlErrorMessage(result?.errors)
-    triggerNotification({
-      title: "Couldn't delete dashboard",
-      description: err,
-      type: ToastNotificationType.Danger
-    })
-  }
+  await deleteDashboard(props.dashboard.id)
 }
 </script>
