@@ -1,18 +1,20 @@
 <template>
   <div>
-    <HeaderNavBar />
-    <Portal to="primary-actions">
-      <FormButton
-        v-tippy="'Toggle fullscreen'"
-        size="sm"
-        color="outline"
-        :icon-right="Fullscreen"
-        hide-text
-        @click="toggleFullScreen()"
-      >
-        Fullscreen
-      </FormButton>
-    </Portal>
+    <HeaderEmpty>
+      <template #header-left>
+        <div class="w-64">
+          <PortalTarget name="header-left"></PortalTarget>
+        </div>
+      </template>
+      <template #header-center>
+        <PortalTarget name="header-center"></PortalTarget>
+      </template>
+      <template #header-right>
+        <div class="w-64 flex justify-end">
+          <PortalTarget name="header-right"></PortalTarget>
+        </div>
+      </template>
+    </HeaderEmpty>
     <div class="h-dvh w-dvh overflow-hidden flex flex-col">
       <!-- Static Spacer to allow for absolutely positioned HeaderNavBar  -->
       <div class="h-12 w-full shrink-0"></div>
@@ -27,21 +29,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { Fullscreen } from 'lucide-vue-next'
-
-const logger = useLogger()
-
-const toggleFullScreen = () => {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch((err) => {
-      logger.warn(`Error attempting to enable fullscreen: ${err.message}`)
-    })
-  } else {
-    document.exitFullscreen().catch((err) => {
-      logger.warn(`Error attempting to exit fullscreen: ${err.message}`)
-    })
-  }
-}
-</script>

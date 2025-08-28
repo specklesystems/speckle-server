@@ -249,9 +249,16 @@ export const useAuthManager = (
   const embedToken = computed(() => route.query.embedToken as Optional<string>)
 
   /**
-   * Get the effective auth token (embed token takes precedence)
+   * Token used for dashboard sharing
    */
-  const effectiveAuthToken = computed(() => embedToken.value || authToken.value)
+  const dashboardToken = computed(() => route.query.token as Optional<string>)
+
+  /**
+   * Get the effective auth token
+   */
+  const effectiveAuthToken = computed(
+    () => dashboardToken.value || embedToken.value || authToken.value
+  )
 
   /**
    * Set/clear new token value and redirect to home

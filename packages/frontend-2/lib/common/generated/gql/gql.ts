@@ -520,7 +520,7 @@ type Documents = {
     "\n  fragment SettingsWorkspacesRegions_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": typeof types.SettingsWorkspacesRegions_ServerInfoFragmentDoc,
     "\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    ...SettingsWorkspacesSecurityDefaultSeat_Workspace\n    ...SettingsWorkspacesSecurityDomainManagement_Workspace\n    ...SettingsWorkspacesSecurityDiscoverability_Workspace\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    ...SettingsWorkspacesSecurityDomainProtection_Workspace\n    ...SettingsWorkspacesSecurityWorkspaceCreation_Workspace\n    id\n    slug\n  }\n": typeof types.SettingsWorkspacesSecurity_WorkspaceFragmentDoc,
     "\n  fragment WorkspacePage_Workspace on Workspace {\n    ...WorkspaceDashboard_Workspace\n    ...WorkspaceSidebar_Workspace\n  }\n": typeof types.WorkspacePage_WorkspaceFragmentDoc,
-    "\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n    }\n  }\n": typeof types.WorkspaceDashboards_DashboardFragmentDoc,
+    "\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n      logo\n    }\n  }\n": typeof types.WorkspaceDashboards_DashboardFragmentDoc,
 };
 const documents: Documents = {
     "\n  fragment AuthLoginWithEmailBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    email\n    user {\n      id\n    }\n  }\n": types.AuthLoginWithEmailBlock_PendingWorkspaceCollaboratorFragmentDoc,
@@ -1029,7 +1029,7 @@ const documents: Documents = {
     "\n  fragment SettingsWorkspacesRegions_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": types.SettingsWorkspacesRegions_ServerInfoFragmentDoc,
     "\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    ...SettingsWorkspacesSecurityDefaultSeat_Workspace\n    ...SettingsWorkspacesSecurityDomainManagement_Workspace\n    ...SettingsWorkspacesSecurityDiscoverability_Workspace\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    ...SettingsWorkspacesSecurityDomainProtection_Workspace\n    ...SettingsWorkspacesSecurityWorkspaceCreation_Workspace\n    id\n    slug\n  }\n": types.SettingsWorkspacesSecurity_WorkspaceFragmentDoc,
     "\n  fragment WorkspacePage_Workspace on Workspace {\n    ...WorkspaceDashboard_Workspace\n    ...WorkspaceSidebar_Workspace\n  }\n": types.WorkspacePage_WorkspaceFragmentDoc,
-    "\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n    }\n  }\n": types.WorkspaceDashboards_DashboardFragmentDoc,
+    "\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n      logo\n    }\n  }\n": types.WorkspaceDashboards_DashboardFragmentDoc,
 };
 
 /**
@@ -3073,7 +3073,7 @@ export function graphql(source: "\n  fragment WorkspacePage_Workspace on Workspa
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n    }\n  }\n"];
+export function graphql(source: "\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n      logo\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n      logo\n    }\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};
