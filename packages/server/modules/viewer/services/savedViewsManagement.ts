@@ -46,7 +46,7 @@ import { formatResourceIdsForGroup } from '@/modules/viewer/helpers/savedViews'
 import { difference, isUndefined, omit } from 'lodash-es'
 import type { DependenciesOf } from '@/modules/shared/helpers/factory'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import { removeNullOrUndefinedKeys } from '@speckle/shared'
+import { removeNullOrUndefinedKeys, firstDefinedValue } from '@speckle/shared'
 import { isUngroupedGroup } from '@speckle/shared/saved-views'
 import { NotFoundError } from '@/modules/shared/errors'
 
@@ -580,8 +580,8 @@ export const updateSavedViewFactory =
 
     // Validate home view settings
     const { homeViewModel } = validateHomeViewSettingsFactory()({
-      isHomeView: changes.isHomeView,
-      visibility: changes.visibility || view.visibility,
+      isHomeView: firstDefinedValue(changes.isHomeView, view.isHomeView),
+      visibility: firstDefinedValue(changes.visibility, view.visibility),
       errorMetadata: {
         input,
         userId
