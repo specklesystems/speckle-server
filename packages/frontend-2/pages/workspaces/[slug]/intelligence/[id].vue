@@ -1,17 +1,6 @@
 <template>
   <div>
-    <Portal to="header-left">
-      <div class="flex items-center gap-2">
-        <WorkspaceAvatar
-          :name="workspace?.name || 'Personal projects'"
-          :logo="workspace?.logo"
-        />
-        <p class="text-body-xs text-foreground truncate max-w-40">
-          {{ workspace?.name }}
-        </p>
-      </div>
-    </Portal>
-    <Portal to="header-center">
+    <Portal to="navigation">
       <div class="flex items-center">
         <HeaderNavLink
           :to="dashboardsRoute(workspace?.slug)"
@@ -24,7 +13,7 @@
         />
       </div>
     </Portal>
-    <Portal to="header-right">
+    <Portal to="primary-actions">
       <div class="flex items-center gap-2">
         <DashboardsShare :id="dashboard?.id" />
         <FormButton

@@ -20,7 +20,7 @@
       leave-to-class="transform opacity-0 scale-95"
     >
       <MenuItems
-        class="absolute z-50 flex flex-col gap-1 right-0 top-11 min-w-max w-full sm:w-32 py-1 origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden mt-1"
+        class="absolute z-50 flex flex-col gap-1 right-0 top-7 min-w-max w-full sm:w-32 py-1 origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden mt-1"
       >
         <MenuItem v-slot="{ active }">
           <div
