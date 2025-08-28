@@ -1,5 +1,6 @@
 import type {
   CountDashboardRecords,
+  DeleteDashboardRecord,
   GetDashboardRecord,
   ListDashboardRecords,
   UpsertDashboardRecord
@@ -66,6 +67,18 @@ export const updateDashboardFactory =
     await deps.upsertDashboard(nextDashboard)
 
     return nextDashboard
+  }
+
+export type DeleteDashboard = (params: { id: string }) => Promise<void>
+
+export const deleteDashboardFactory =
+  (deps: { deleteDashboard: DeleteDashboardRecord }): DeleteDashboard =>
+  async ({ id }) => {
+    const itemCount = await deps.deleteDashboard({ id })
+
+    if (itemCount === 0) {
+      throw new DashboardNotFoundError()
+    }
   }
 
 export type GetDashboard = (params: { id: string }) => Promise<Dashboard>

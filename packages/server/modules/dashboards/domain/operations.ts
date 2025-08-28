@@ -5,6 +5,8 @@ export type GetDashboardRecord = (args: {
   id: string
 }) => Promise<Dashboard | undefined>
 
+export type DeleteDashboardRecord = (args: { id: string }) => Promise<number>
+
 export type UpsertDashboardRecord = <T extends Exact<Dashboard, T>>(
   item: T
 ) => Promise<void>
