@@ -246,8 +246,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
     },
     {
       id: MenuItems.ChangeVisibility,
-      title: 'Share view to workspace',
-      active: !isOnlyVisibleToMe.value,
+      title: isOnlyVisibleToMe.value ? 'Make view shared' : 'Make view private',
       disabled: !canUpdate.value?.authorized || isLoading.value,
       disabledTooltip: canUpdate.value.errorMessage
     }
