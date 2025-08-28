@@ -160,10 +160,10 @@ export const workspaceRoute = (slug: MaybeNullOrUndefined<string>) =>
 export const workspaceSsoRoute = (slug: string) => `/workspaces/${slug}/sso`
 
 export const dashboardsRoute = (slug?: MaybeNullOrUndefined<string>) =>
-  `/workspaces/${slug}/intelligence`
+  `/workspaces/${slug}/dashboards`
 
 export const dashboardRoute = (slug?: MaybeNullOrUndefined<string>, id?: string) =>
-  `/workspaces/${slug}/intelligence/${id}`
+  `/workspaces/${slug}/dashboards/${id}`
 
 export const workspaceCreateRoute = '/workspaces/actions/create'
 
