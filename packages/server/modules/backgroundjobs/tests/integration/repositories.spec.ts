@@ -16,13 +16,13 @@ import { createRandomString } from '@/modules/core/helpers/testHelpers'
 
 const originServerUrl = 'http://example.org'
 
-export type TestJobPayload = BackgroundJobPayload & {
+type TestJobPayload = BackgroundJobPayload & {
   jobType: 'fileImport'
   payloadVersion: 1
   testData: string
 }
 
-export const createTestJob = (
+const createTestJob = (
   overrides: Partial<BackgroundJob<TestJobPayload>> = {}
 ): BackgroundJob<TestJobPayload> => ({
   id: createRandomString(10),
