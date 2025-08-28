@@ -7,7 +7,7 @@ import {
 } from '~/lib/common/helpers/graphql'
 import { projectAutomationAccessCheckQuery } from '~/lib/projects/graphql/queries'
 
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineParallelizedNuxtRouteMiddleware(async (to) => {
   const projectId = to.params.id as string
   // const automationId = to.params.aid as string
 

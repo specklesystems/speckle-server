@@ -25,10 +25,10 @@ const props = defineProps<{
   isGenericErrorPage?: boolean
 }>()
 
-const route = useRoute()
+const route = useCurrentRouteTillNavigated()
 
-const isProjectRoute = computed(() => route.path.match(/\/projects\/[^/]+/))
-const isWorkspaceRoute = computed(() => route.path.match(/\/workspaces\/[^/]+/))
+const isProjectRoute = computed(() => route.value.path.match(/\/projects\/[^/]+/))
+const isWorkspaceRoute = computed(() => route.value.path.match(/\/workspaces\/[^/]+/))
 
 const finalError = computed(() => formatAppError(props.error))
 const isNoProjectAccessError = computed(
