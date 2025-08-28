@@ -26,6 +26,7 @@ import {
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import {
   fileImportServiceShouldUsePrivateObjectsServerUrl,
+  getFileImporterQueuePostgresUrl,
   getFileUploadUrlExpiryMinutes,
   getPrivateObjectsServerOrigin,
   getServerOrigin,
@@ -76,6 +77,7 @@ import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport
 import { JobResultStatus } from '@speckle/shared/workers/fileimport'
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { updateBackgroundJobFactory } from '@/modules/backgroundjobs/repositories'
+import { configureClient } from '@/knexfile'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
@@ -102,6 +104,11 @@ const getFileUploadModel = async (params: {
 
   return null
 }
+
+const fileImporterConnectionUri = getFileImporterQueuePostgresUrl()
+const queueDb = fileImporterConnectionUri
+  ? configureClient({ postgres: { connectionUri: fileImporterConnectionUri } }).public
+  : db
 
 const fileUploadMutations: Resolvers['FileUploadMutations'] = {
   async generateUploadUrl(_parent, args, ctx) {
@@ -296,7 +303,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       updateFileUpload: updateFileUploadFactory({ db: projectDb }),
       getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
       updateBackgroundJob: updateBackgroundJobFactory({
-        db: projectDb
+        db: queueDb
       }),
       eventEmit: getEventBus().emit
     })
