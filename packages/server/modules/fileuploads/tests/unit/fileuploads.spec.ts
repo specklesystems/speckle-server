@@ -24,9 +24,9 @@ import type { JobPayload } from '@speckle/shared/workers/fileimport'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 import type { BranchRecord } from '@/modules/core/helpers/types'
+import { createTestUser } from '@/test/authHelper'
 
-const { createStream, createBranch, createUser, garbageCollector } =
-  initUploadTestEnvironment()
+const { createStream, createBranch, garbageCollector } = initUploadTestEnvironment()
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
@@ -42,7 +42,8 @@ describe('FileUploads @fileuploads', () => {
   let createdBranch: BranchRecord
 
   before(async () => {
-    userOneId = await createUser(userOne)
+    const user = await createTestUser(userOne)
+    userOneId = user.id
   })
 
   beforeEach(async () => {
