@@ -1,0 +1,23 @@
+{
+  /* load each package separately, rather than as one giant progream */
+  "files": [],
+  "references": [
+    { "path": "packages/fileimport-service" },
+    { "path": "packages/frontend-2" },
+    { "path": "packages/monitor-deployment" },
+    { "path": "packages/objectloader" },
+    { "path": "packages/objectloader2" },
+    { "path": "packages/objectsender" },
+    { "path": "packages/preview-frontend" },
+    { "path": "packages/preview-service" },
+    { "path": "packages/server" },
+    { "path": "packages/shared" },
+    { "path": "packages/tailwind-theme" },
+    { "path": "packages/ui-components" },
+    { "path": "packages/ui-components-nuxt" },
+    { "path": "packages/viewer" },
+    { "path": "packages/viewer-sandbox" },
+    { "path": "packages/webhook-service" }
+    /* …add all other packages listed in workspace.code-workspace */
+  ]
+}

@@ -40,7 +40,7 @@ const azureAdStrategyBuilderFactory =
   (deps: {
     getServerInfo: GetServerInfo
     getUserByEmail: LegacyGetUserByEmail
-    findOrCreateUser: FindOrCreateValidatedUser
+    buildFindOrCreateUser: () => Promise<FindOrCreateValidatedUser>
     validateServerInvite: ValidateServerInvite
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
@@ -102,6 +102,8 @@ const azureAdStrategyBuilderFactory =
           serverVersion: serverInfo.version
         })
 
+        const findOrCreateUser = await deps.buildFindOrCreateUser()
+
         try {
           // This is the only strategy that does its own type for req.user - easier to force type cast for now
           // than to refactor everything
@@ -130,7 +132,7 @@ const azureAdStrategyBuilderFactory =
           // if there is an existing user, go ahead and log them in (regardless of
           // whether the server is invite only or not).
           if (existingUser) {
-            const myUser = await deps.findOrCreateUser({
+            const myUser = await findOrCreateUser({
               user
             })
             // ID is used later for verifying access token
@@ -156,7 +158,7 @@ const azureAdStrategyBuilderFactory =
           }
 
           // create the user
-          const myUser = await deps.findOrCreateUser({
+          const myUser = await findOrCreateUser({
             user: {
               ...user,
               role: invite

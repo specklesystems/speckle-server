@@ -31,13 +31,7 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import {
-  getUsersFactory,
-  getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory
-} from '@/modules/core/repositories/users'
+import { getUsersFactory, getUserFactory } from '@/modules/core/repositories/users'
 import {
   findEmailFactory,
   createUserEmailFactory,
@@ -47,7 +41,6 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import {
   finalizeInvitedServerRegistrationFactory,
@@ -63,6 +56,8 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
 import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 
 const getServerInfo = getServerInfoFactory({ db })
@@ -146,47 +141,18 @@ const createStream = legacyCreateStreamFactory({
   })
 })
 
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
-
 describe('Blobs graphql @blobstorage', () => {
   let graphqlServer: ServerAndContext
-
-  const user = {
-    name: 'Baron Von Blubba',
-    email: 'zebarron@bubble.bobble',
-    password: 'bubblesAreMyBlobs',
-    id: ''
-  }
+  let user: BasicTestUser
 
   before(async () => {
     await truncateTables(['blob_storage', Users.name, Streams.name])
-    user.id = await createUser(user)
+    user = await createTestUser({
+      name: 'Baron Von Blubba',
+      email: 'zebarron@bubble.bobble',
+      password: 'bubblesAreMyBlobs',
+      id: ''
+    })
     graphqlServer = {
       apollo: await buildApolloServer(),
       context: await createAuthedTestContext(user.id)

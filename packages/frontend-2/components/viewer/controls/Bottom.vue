@@ -93,7 +93,10 @@ const {
 const { getActiveMeasurement, removeMeasurement, enableMeasurements, hasMeasurements } =
   useMeasurementUtilities()
 const { resetExplode } = useFilterUtilities()
-const { currentViewMode, setViewMode } = useViewModeUtilities()
+const {
+  viewMode: { mode: currentViewMode },
+  setViewMode
+} = useViewModeUtilities()
 const {
   ui: { explodeFactor }
 } = useInjectedViewerState()
