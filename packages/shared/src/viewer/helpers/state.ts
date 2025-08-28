@@ -29,10 +29,10 @@ export interface MeasurementData {
   endPoint: [number, number, number] // vec3
   startNormal: [number, number, number] // vec3
   endNormal: [number, number, number] // vec3
-  innerPoints: [number, number, number][] // array of vec3
+  innerPoints?: [number, number, number][] // array of vec3
   value: number
   units: string
-  precision: number
+  precision?: number
 }
 
 export interface SectionBoxData {

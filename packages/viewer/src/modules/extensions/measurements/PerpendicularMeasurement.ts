@@ -12,6 +12,7 @@ import { getConversionFactor } from '../../converter/Units.js'
 import { Measurement, MeasurementState } from './Measurement.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
+import { MeasurementData, MeasurementType } from '@speckle/shared/viewer/state'
 
 const vec3Buff0: Vector3 = new Vector3()
 const vec3Buff1: Vector3 = new Vector3()
@@ -239,5 +240,36 @@ export class PerpendicularMeasurement extends Measurement {
   public updateClippingPlanes(planes: Plane[]) {
     if (this.startGizmo) this.startGizmo.updateClippingPlanes(planes)
     if (this.endGizmo) this.endGizmo.updateClippingPlanes(planes)
+  }
+
+  public toMeasurementData(): MeasurementData {
+    return {
+      type: MeasurementType.PERPENDICULAR,
+      startPoint: [this.startPoint.x, this.startPoint.y, this.startPoint.z],
+      endPoint: [this.endPoint.x, this.endPoint.y, this.endPoint.z],
+      startNormal: [this.startNormal.x, this.startNormal.y, this.startNormal.z],
+      endNormal: [this.endNormal.x, this.endNormal.y, this.endNormal.z],
+      innerPoints: [[this.midPoint.x, this.midPoint.y, this.midPoint.z]],
+      value: this.value,
+      units: this.units,
+      precision: this.precision
+    } as MeasurementData
+  }
+
+  public fromMeasurementData(data: MeasurementData): void {
+    this.startPoint.set(data.startPoint[0], data.startPoint[1], data.startPoint[2])
+    this.endPoint.set(data.endPoint[0], data.endPoint[1], data.endPoint[2])
+    this.startNormal.set(data.startNormal[0], data.startNormal[1], data.startNormal[2])
+    this.endNormal.set(data.endNormal[0], data.endNormal[1], data.endNormal[2])
+    if (data.innerPoints)
+      this.midPoint.set(
+        data.innerPoints[0][0],
+        data.innerPoints[0][1],
+        data.innerPoints[0][2]
+      )
+    this.value = data.value
+    this.units = data.units
+    this.precision = data.precision || 1
+    this._state = MeasurementState.COMPLETE
   }
 }

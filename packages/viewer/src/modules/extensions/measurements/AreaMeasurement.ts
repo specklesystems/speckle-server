@@ -29,12 +29,20 @@ import polylabel from 'polylabel'
 import SpeckleBasicMaterial from '../../materials/SpeckleBasicMaterial.js'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
 import { ExtendedMeshIntersection } from '../../objects/SpeckleRaycaster.js'
+import { MeasurementData } from '@speckle/shared/viewer/state'
 
 const _vec30 = new Vector3()
 const _vec31 = new Vector3()
 const _vec32 = new Vector3()
 
 export class AreaMeasurement extends Measurement {
+  public toMeasurementData(): MeasurementData {
+    throw new Error('Method not implemented.')
+  }
+  public fromMeasurementData(data: MeasurementData): void {
+    data
+    throw new Error('Method not implemented.')
+  }
   /** We store all gizmos here */
   private pointGizmos: MeasurementPointGizmo[] = []
 
@@ -126,6 +134,8 @@ export class AreaMeasurement extends Measurement {
     if (this.pointIndex === 0) {
       this.planeOrigin.copy(this.surfacePoint)
       this.planeNormal.copy(this.surfaceNormal)
+      this.startPoint.copy(this.surfacePoint)
+      this.startNormal.copy(this.startNormal)
     }
 
     this.addPoint()

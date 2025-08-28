@@ -11,12 +11,9 @@ import { getConversionFactor } from '../../converter/Units.js'
 import { Measurement, MeasurementState } from './Measurement.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
+import { MeasurementData, MeasurementType } from '@speckle/shared/viewer/state'
 
-const vec3Buff0: Vector3 = new Vector3()
-const vec3Buff1: Vector3 = new Vector3()
-const vec3Buff2: Vector3 = new Vector3()
 const vec3Buff3: Vector3 = new Vector3()
-const vec3Buff4: Vector3 = new Vector3()
 
 export class PointToPointMeasurement extends Measurement {
   private startGizmo: MeasurementPointGizmo | null = null
@@ -61,54 +58,51 @@ export class PointToPointMeasurement extends Measurement {
   }
 
   public update(): Promise<void> {
-    let ret: Promise<void> = Promise.resolve()
+    let ret: Promise<void> | undefined
     this.startGizmo?.updateNormalIndicator(this.startPoint, this.startNormal)
     this.startGizmo?.updatePoint(this.startPoint)
     this.endGizmo?.updateNormalIndicator(this.endPoint, this.endNormal)
 
+    this.startLineLength = this.startPoint.distanceTo(this.endPoint)
+    this.value = this.startLineLength
+
+    const textPos = vec3Buff3
+      .copy(this.startPoint)
+      .add(this.endPoint)
+      .multiplyScalar(0.5)
+
     if (this._state === MeasurementState.DANGLING_START) {
-      const startLine0 = vec3Buff0.copy(this.startPoint)
-      const startLine1 = vec3Buff1
-        .copy(this.startPoint)
-        .add(vec3Buff2.copy(this.startNormal).multiplyScalar(this.startLineLength))
-      this.startGizmo?.updateLine([startLine0, startLine1])
+      this.startGizmo?.enable(true, false, true, false)
       this.endGizmo?.enable(false, false, false, false)
     }
     if (this._state === MeasurementState.DANGLING_END) {
-      this.startLineLength = this.startPoint.distanceTo(this.endPoint)
-      this.value = this.startLineLength
+      this.startGizmo?.enable(true, true, true, true)
+      this.endGizmo?.enable(true, false, true, false)
 
-      const endStartDir = vec3Buff0.copy(this.endPoint).sub(this.startPoint).normalize()
-      const lineEndPoint = vec3Buff1
-        .copy(this.startPoint)
-        .add(vec3Buff2.copy(endStartDir).multiplyScalar(this.startLineLength))
+      this.startGizmo?.updateLine([this.startPoint, this.endPoint])
+      this.endGizmo?.updatePoint(this.endPoint)
 
-      const textPos = vec3Buff3
-        .copy(this.startPoint)
-        .add(vec3Buff4.copy(endStartDir).multiplyScalar(this.startLineLength * 0.5))
-
-      this.startGizmo?.updateLine([this.startPoint, lineEndPoint])
-      this.endGizmo?.updatePoint(lineEndPoint)
-      if (this.startGizmo)
-        ret = this.startGizmo.updateText(
-          `${(this.value * getConversionFactor('m', this.units)).toFixed(
-            this.precision
-          )} ${this.units}`,
-          textPos
-        )
-      this.endGizmo?.enable(true, true, true, true)
+      ret = this.startGizmo?.updateText(
+        `${(this.value * getConversionFactor('m', this.units)).toFixed(
+          this.precision
+        )} ${this.units}`,
+        textPos
+      )
     }
     if (this._state === MeasurementState.COMPLETE) {
       this.startGizmo?.enable(false, true, true, true)
       this.endGizmo?.enable(false, false, true, false)
-      if (this.startGizmo)
-        ret = this.startGizmo.updateText(
-          `${(this.value * getConversionFactor('m', this.units)).toFixed(
-            this.precision
-          )} ${this.units}`
-        )
+
+      this.startGizmo?.updateLine([this.startPoint, this.endPoint])
+      this.endGizmo?.updatePoint(this.endPoint)
+      ret = this.startGizmo?.updateText(
+        `${(this.value * getConversionFactor('m', this.units)).toFixed(
+          this.precision
+        )} ${this.units}`,
+        textPos
+      )
     }
-    return ret
+    return ret ?? Promise.resolve()
   }
 
   public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
@@ -135,5 +129,29 @@ export class PointToPointMeasurement extends Measurement {
   public updateClippingPlanes(planes: Plane[]) {
     if (this.startGizmo) this.startGizmo.updateClippingPlanes(planes)
     if (this.endGizmo) this.endGizmo.updateClippingPlanes(planes)
+  }
+
+  public toMeasurementData(): MeasurementData {
+    return {
+      type: MeasurementType.POINTTOPOINT,
+      startPoint: [this.startPoint.x, this.startPoint.y, this.startPoint.z],
+      endPoint: [this.endPoint.x, this.endPoint.y, this.endPoint.z],
+      startNormal: [this.startNormal.x, this.startNormal.y, this.startNormal.z],
+      endNormal: [this.endNormal.x, this.endNormal.y, this.endNormal.z],
+      value: this.value,
+      units: this.units,
+      precision: this.precision
+    } as MeasurementData
+  }
+
+  public fromMeasurementData(data: MeasurementData): void {
+    this.startPoint.set(data.startPoint[0], data.startPoint[1], data.startPoint[2])
+    this.endPoint.set(data.endPoint[0], data.endPoint[1], data.endPoint[2])
+    this.startNormal.set(data.startNormal[0], data.startNormal[1], data.startNormal[2])
+    this.endNormal.set(data.endNormal[0], data.endNormal[1], data.endNormal[2])
+    this.value = data.value
+    this.units = data.units
+    this.precision = data.precision || 1
+    this._state = MeasurementState.COMPLETE
   }
 }

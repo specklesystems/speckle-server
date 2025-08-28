@@ -28,7 +28,6 @@ import {
   ViewerEvent,
   BatchObject,
   VisualDiffMode,
-  MeasurementType,
   ExplodeExtension,
   DiffExtension,
   SpeckleLoader,
@@ -60,6 +59,7 @@ import {
   ObjectLoader2Factory
 } from '@speckle/objectloader2'
 import { SectionCaps } from './Extensions/SectionCaps.ts/SectionCaps'
+import { MeasurementType } from '@speckle/shared/viewer/state'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -496,7 +496,34 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      console.warn(await this.viewer.screenshot())
+      // console.warn(await this.viewer.screenshot())
+      // console.log(this.viewer.getExtension(MeasurementsExtension).toMeasurementData())
+      const pointToPoint = {
+        type: 1,
+        startPoint: [-6.438068628311157, -0.08159396797417884, 9.198678016662612],
+        endPoint: [10.06193161010742, -14.001593589782717, 6.109999626874924],
+        startNormal: [4.5859214289392356e-8, 0.7206585498862377, 0.6932901661468042],
+        endNormal: [0, 0, 1],
+        value: 21.807254103497407,
+        units: 'm',
+        precision: 2
+      }
+      // const measurementData = [
+      //   {
+      //     type: 0,
+      //     startPoint: [-11.894835121975106, 14.309056491253557, 3.096496633844019],
+      //     endPoint: [-3.823834926959492, 0.867271026847547, 8.212355370701474],
+      //     startNormal: [-0.061822886024946413, -0.1693932592567402, 0.9836075713829805],
+      //     endNormal: [4.5859214289392356e-8, 0.7206585498862377, 0.6932901661468042],
+      //     innerPoints: [[-12.315847288817972, 13.155493018020065, 9.794837354849793]],
+      //     value: 6.809972712580602,
+      //     units: 'm',
+      //     precision: 2
+      //   }
+      // ]
+      await this.viewer
+        .getExtension(MeasurementsExtension)
+        .fromMeasurementData(pointToPoint)
       /** Read depth */
       // const pass = [
       //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),
@@ -505,7 +532,6 @@ export default class Sandbox {
       // const [depthData, width, height] = await this.viewer
       //   .getExtension(PassReader)
       //   .read(pass)
-
       // console.log(PassReader.toBase64(PassReader.decodeDepth(depthData), width, height))
     })
 

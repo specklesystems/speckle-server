@@ -13,7 +13,11 @@ import { CameraController } from '../CameraController.js'
 import Logger from '../../utils/Logger.js'
 import { AreaMeasurement } from './AreaMeasurement.js'
 import { PointMeasurement } from './PointMeasurement.js'
-import { MeasurementOptions, MeasurementType } from '@speckle/shared/viewer/state'
+import {
+  MeasurementData,
+  MeasurementOptions,
+  MeasurementType
+} from '@speckle/shared/viewer/state'
 
 export enum MeasurementEvent {
   CountChanged = 'measurement-count-changed'
@@ -516,19 +520,27 @@ export class MeasurementsExtension extends Extension {
     })
   }
 
-  public async fromMeasurementData(startPoint: Vector3, endPoint: Vector3) {
+  public async fromMeasurementData(measurementData: MeasurementData) {
     /** Only point to point programatic measurements for now */
-    const cacheType = this._options.type
-    this._options.type = MeasurementType.POINTTOPOINT
-    this._activeMeasurement = this.startMeasurement()
-    this._activeMeasurement.isVisible = true
-    this._activeMeasurement.startPoint.copy(startPoint)
-    this._activeMeasurement.startNormal.copy(new Vector3(0, 0, 1))
-    await this._activeMeasurement.update()
-    this._activeMeasurement.state = MeasurementState.DANGLING_END
-    this._activeMeasurement.endPoint.copy(endPoint)
-    this._activeMeasurement.endNormal.copy(new Vector3(0, 0, 1))
-    await this._activeMeasurement.update()
-    this._options.type = cacheType
+    const cacheOptions = this._options
+    this._options.type = measurementData.type
+    this._options.chain = false
+    this._options.vertexSnap = false
+
+    const measurement = this.startMeasurement()
+    measurement.fromMeasurementData(measurementData)
+    measurement.visible = true
+    await measurement.update().then(() => {
+      this.viewer.requestRender()
+    })
+    this.finishMeasurement()
+
+    this._options.type = cacheOptions.type
+    this._options.chain = cacheOptions.chain
+    this._options.vertexSnap = cacheOptions.vertexSnap
+  }
+
+  public toMeasurementData(): MeasurementData[] {
+    return this.measurements.map((val) => val.toMeasurementData())
   }
 }
