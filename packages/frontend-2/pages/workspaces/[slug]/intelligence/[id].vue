@@ -11,6 +11,14 @@
           :to="dashboardRoute(workspace?.slug, id as string)"
           :name="dashboard?.name"
         />
+        <FormButton
+          v-tippy="'Edit name'"
+          size="sm"
+          color="subtle"
+          hide-text
+          :icon-right="Pencil"
+          @click="toggleEditDialog"
+        />
       </div>
     </Portal>
     <Portal to="primary-actions">
@@ -36,6 +44,12 @@
         :title="dashboard?.name"
       />
     </div>
+
+    <DashboardsEditDialog
+      v-model:open="editDialogOpen"
+      :dashboard-id="dashboard?.id"
+      :name="dashboard?.name"
+    />
   </div>
 </template>
 
@@ -45,7 +59,7 @@ import { dashboardQuery } from '~/lib/dashboards/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useAuthManager } from '~/lib/auth/composables/auth'
-import { Fullscreen } from 'lucide-vue-next'
+import { Fullscreen, Pencil } from 'lucide-vue-next'
 
 graphql(`
   fragment WorkspaceDashboards_Dashboard on Dashboard {
@@ -77,9 +91,10 @@ const { result } = useQuery(dashboardQuery, () => ({ id: id as string }))
 const { effectiveAuthToken } = useAuthManager()
 const logger = useLogger()
 
+const editDialogOpen = ref(false)
+
 const workspace = computed(() => result.value?.dashboard?.workspace)
 const dashboard = computed(() => result.value?.dashboard)
-
 const dashboardUrl = computed(() => {
   return urlToken
     ? `http://localhost:8083/view/${id}?token=${urlToken}&isEmbed=true`
@@ -96,5 +111,9 @@ const toggleFullScreen = () => {
       logger.warn(`Error attempting to exit fullscreen: ${err.message}`)
     })
   }
+}
+
+const toggleEditDialog = () => {
+  editDialogOpen.value = !editDialogOpen.value
 }
 </script>

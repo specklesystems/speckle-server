@@ -1,4 +1,4 @@
-import { useApolloClient } from '@vue/apollo-composable'
+import { useApolloClient, useMutation } from '@vue/apollo-composable'
 import {
   getFirstErrorMessage,
   modifyObjectField,
@@ -6,9 +6,13 @@ import {
 } from '~/lib/common/helpers/graphql'
 import type {
   DashboardCreateInput,
+  DashboardUpdateInput,
   WorkspaceIdentifier
 } from '~/lib/common/generated/gql/graphql'
-import { createDashboardMutation } from '~/lib/dashboards/graphql/mutations'
+import {
+  createDashboardMutation,
+  updateDashboardMutation
+} from '~/lib/dashboards/graphql/mutations'
 
 export function useCreateDashboard() {
   const apollo = useApolloClient().client
@@ -66,5 +70,28 @@ export function useCreateDashboard() {
     }
 
     return res
+  }
+}
+
+export function useUpdateDashboard() {
+  const { mutate } = useMutation(updateDashboardMutation)
+  const { triggerNotification } = useGlobalToast()
+
+  return async (input: DashboardUpdateInput) => {
+    const result = await mutate({ input }).catch(convertThrowIntoFetchResult)
+
+    if (result?.data?.dashboardMutations.update) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Dashboard successfully updated'
+      })
+    } else {
+      const err = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Dashboard update failed',
+        description: err
+      })
+    }
   }
 }

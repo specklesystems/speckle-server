@@ -15,3 +15,14 @@ export const createDashboardMutation = graphql(`
     }
   }
 `)
+
+export const updateDashboardMutation = graphql(`
+  mutation UpdateDashboard($input: DashboardUpdateInput!) {
+    dashboardMutations {
+      update(input: $input) {
+        id
+        name
+      }
+    }
+  }
+`)
