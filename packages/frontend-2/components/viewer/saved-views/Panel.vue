@@ -22,7 +22,7 @@
             hide-text
             name="addGroup"
             :disabled="!canCreateViewOrGroup?.authorized || isLoading"
-            @click="onAddGroup"
+            @click="() => (showCreateGroupDialog = true)"
           />
         </div>
         <div v-tippy="canCreateViewOrGroup?.errorMessage" class="flex items-center">
@@ -95,6 +95,10 @@
       </div>
     </template>
     <ViewerSavedViewsPlanUpsell v-else />
+    <ViewerSavedViewsPanelGroupsCreateDialog
+      v-model:open="showCreateGroupDialog"
+      @success="onAddGroup"
+    />
   </ViewerLayoutSidePanel>
 </template>
 <script setup lang="ts">
@@ -106,10 +110,7 @@ import {
   SavedViewVisibility,
   WorkspaceSeatType
 } from '~/lib/common/generated/gql/graphql'
-import {
-  useCreateSavedView,
-  useCreateSavedViewGroup
-} from '~/lib/viewer/composables/savedViews/management'
+import { useCreateSavedView } from '~/lib/viewer/composables/savedViews/management'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { ViewsType, viewsTypeLabels } from '~/lib/viewer/helpers/savedViews'
 import { useDebouncedTextInput } from '@speckle/ui-components'
@@ -135,16 +136,13 @@ defineEmits<{
 }>()
 
 const {
-  projectId,
   resources: {
-    request: { resourceIdString },
     response: { project }
   },
   ui: {
     savedViews: { openedGroupState }
   }
 } = useInjectedViewerState()
-const createGroup = useCreateSavedViewGroup()
 const createSavedView = useCreateSavedView()
 const isLoading = useMutationLoading()
 const { on, bind, value: search } = useDebouncedTextInput()
@@ -157,6 +155,7 @@ const hideViewerSeatDisclaimer = useSynchronizedCookie<boolean>(
   }
 )
 const searchMode = ref(false)
+const showCreateGroupDialog = ref(false)
 
 const canCreateViewOrGroup = computed(
   () => project.value?.permissions.canCreateSavedView
@@ -180,16 +179,8 @@ const onAddView = async () => {
   }
 }
 
-const onAddGroup = async () => {
-  if (isLoading.value) return
-  const group = await createGroup({
-    projectId: projectId.value,
-    resourceIdString: resourceIdString.value
-  })
-  if (group) {
-    // Auto-open the group
-    openedGroupState.value.set(group.id, true)
-  }
+const onAddGroup = async (group: { id: string }) => {
+  openedGroupState.value.set(group.id, true)
 }
 
 const setSearchMode = (val: boolean) => {
