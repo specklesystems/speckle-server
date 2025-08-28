@@ -111,7 +111,6 @@
       "Prorotation"
     ],
     "typescript.tsserver.maxTsServerMemory": 8192,
-    "typescript.disableAutomaticTypeAcquisition": true,
     "tailwindCSS.experimental.configFile": {
       "packages/frontend-2/tailwind.config.cjs": "packages/frontend-2/**"
     },
