@@ -13,7 +13,7 @@ import { ObjectLayers } from '../../../IViewer.js'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
 import { MeasurementData, MeasurementType } from '@speckle/shared/viewer/state'
 
-const vec3Buff3: Vector3 = new Vector3()
+const vec3Buff0: Vector3 = new Vector3()
 
 export class PointToPointMeasurement extends Measurement {
   private startGizmo: MeasurementPointGizmo | null = null
@@ -66,7 +66,7 @@ export class PointToPointMeasurement extends Measurement {
     this.startLineLength = this.startPoint.distanceTo(this.endPoint)
     this.value = this.startLineLength
 
-    const textPos = vec3Buff3
+    const textPos = vec3Buff0
       .copy(this.startPoint)
       .add(this.endPoint)
       .multiplyScalar(0.5)

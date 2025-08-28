@@ -508,22 +508,20 @@ export default class Sandbox {
         units: 'm',
         precision: 2
       }
-      // const measurementData = [
-      //   {
-      //     type: 0,
-      //     startPoint: [-11.894835121975106, 14.309056491253557, 3.096496633844019],
-      //     endPoint: [-3.823834926959492, 0.867271026847547, 8.212355370701474],
-      //     startNormal: [-0.061822886024946413, -0.1693932592567402, 0.9836075713829805],
-      //     endNormal: [4.5859214289392356e-8, 0.7206585498862377, 0.6932901661468042],
-      //     innerPoints: [[-12.315847288817972, 13.155493018020065, 9.794837354849793]],
-      //     value: 6.809972712580602,
-      //     units: 'm',
-      //     precision: 2
-      //   }
-      // ]
+      const perpendicular = {
+        type: 0,
+        startPoint: [-7.70197271094375, 15.700296421207298, 3.5211651490639184],
+        endPoint: [-6.438068628311143, -0.08159396797417884, 9.198678016662601],
+        startNormal: [-0.03447796535675464, -0.1804744980199695, 0.982975190668258],
+        endNormal: [4.5859214289392356e-8, 0.7206585498862377, 0.6932901661468042],
+        innerPoints: [[-7.991087903143028, 14.186926399449632, 11.763909703057713]],
+        value: 8.38550619816774,
+        units: 'm',
+        precision: 2
+      }
       await this.viewer
         .getExtension(MeasurementsExtension)
-        .fromMeasurementData(pointToPoint)
+        .fromMeasurementData(perpendicular)
       /** Read depth */
       // const pass = [
       //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),
