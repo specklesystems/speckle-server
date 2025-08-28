@@ -18,13 +18,7 @@ import {
   ensureNoPrimaryEmailForUserFactory,
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
-import {
-  countAdminUsersFactory,
-  getUserFactory,
-  getUsersFactory,
-  storeUserAclFactory,
-  storeUserFactory
-} from '@/modules/core/repositories/users'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import {
   addOrUpdateStreamCollaboratorFactory,
   validateStreamAccessFactory
@@ -35,7 +29,6 @@ import {
 } from '@/modules/core/services/streams/management'
 import { createTokenFactory } from '@/modules/core/services/tokens'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { createUserFactory } from '@/modules/core/services/users/management'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
@@ -79,25 +72,6 @@ export const initUploadTestEnvironment = () => {
     deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
     renderEmail,
     sendEmail
-  })
-
-  const createUser = createUserFactory({
-    getServerInfo,
-    findEmail,
-    storeUser: storeUserFactory({ db }),
-    countAdminUsers: countAdminUsersFactory({ db }),
-    storeUserAcl: storeUserAclFactory({ db }),
-    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-      createUserEmail: createUserEmailFactory({ db }),
-      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-      findEmail,
-      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-      }),
-      requestNewEmailVerification
-    }),
-    emitEvent: getEventBus().emit
   })
 
   const createToken = createTokenFactory({
@@ -197,7 +171,6 @@ export const initUploadTestEnvironment = () => {
   return {
     findEmail,
     requestNewEmailVerification,
-    createUser,
     createToken,
     createStream,
     getUser,
