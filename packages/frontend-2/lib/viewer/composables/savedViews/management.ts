@@ -22,7 +22,6 @@ import { isUngroupedGroup } from '@speckle/shared/saved-views'
 import type { Optional } from '@speckle/shared'
 import {
   getCachedObjectKeys,
-  getCacheKey,
   type CacheObjectReference
 } from '~/lib/common/helpers/graphql'
 
@@ -290,14 +289,18 @@ export const useUpdateSavedView = () => {
             const modelId = update.groupResourceIds[0]
 
             for (const savedViewKey of allSavedViewKeys) {
-              if (getCacheKey('SavedView', update.id) === savedViewKey) continue
-
               modifyObjectField(
                 cache,
                 savedViewKey,
                 'isHomeView',
-                ({ value: isHomeView, helpers: { readField, keyToRef } }) => {
-                  const groupIds = readField(keyToRef(savedViewKey), 'groupResourceIds')
+                ({ value: isHomeView, helpers: { readObject } }) => {
+                  const view = readObject()
+                  const groupIds = view.groupResourceIds
+                  const viewId = view.id
+                  const projectId = view.projectId
+                  if (viewId === update.id) return
+                  if (update.projectId !== projectId) return
+
                   if (isHomeView && groupIds?.length === 1 && groupIds[0] === modelId) {
                     return false
                   }

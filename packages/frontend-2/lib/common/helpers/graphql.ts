@@ -666,7 +666,15 @@ export const modifyObjectField = <
       >(
         ref: CacheObjectReference<ReadFieldType>,
         fieldName: ReadFieldName
-      ) => Optional<AllObjectTypes[ReadFieldType][ReadFieldName]>
+      ) => Optional<ModifyFnCacheData<AllObjectTypes[ReadFieldType][ReadFieldName]>>
+      /**
+       * Get the object we're modifying as a readable object
+       */
+      readObject: () => Partial<{
+        [prop in keyof AllObjectTypes[Type]]: ModifyFnCacheData<
+          AllObjectTypes[Type][prop]
+        >
+      }>
       /**
        * Build a reference object for a specific object in the cache
        */
@@ -762,6 +770,7 @@ export const modifyObjectField = <
         path: Path
       ) => getFromPathIfExists<ModifyObjectFieldValue<Type, Field>, Path>(value, path)
       const evict = () => details.DELETE
+
       const readField = <
         ReadFieldType extends keyof AllObjectTypes,
         ReadFieldName extends keyof AllObjectTypes[ReadFieldType] & string
@@ -769,10 +778,26 @@ export const modifyObjectField = <
         ref: CacheObjectReference<ReadFieldType>,
         fieldName: ReadFieldName
       ) =>
-        details.readField(
-          fieldName,
-          ref
-        ) as AllObjectTypes[ReadFieldType][ReadFieldName]
+        details.readField(fieldName, ref) as Optional<
+          ModifyFnCacheData<AllObjectTypes[ReadFieldType][ReadFieldName]>
+        >
+
+      const readObject = () =>
+        new Proxy(
+          {} as Partial<{
+            [prop in keyof AllObjectTypes[Type]]: ModifyFnCacheData<
+              AllObjectTypes[Type][prop]
+            >
+          }>,
+          {
+            get(_target, prop) {
+              if (!isString(prop)) return undefined
+
+              const ref = keyToRef(key)
+              return details.readField(prop, ref)
+            }
+          }
+        )
 
       return updater({
         fieldName: field,
@@ -785,7 +810,8 @@ export const modifyObjectField = <
           readField,
           ref: getObjectReference,
           fromRef: parseObjectReference,
-          keyToRef
+          keyToRef,
+          readObject
         }
       })
     },
@@ -830,7 +856,15 @@ export const iterateObjectField = <
       >(
         ref: CacheObjectReference<ReadFieldType>,
         fieldName: ReadFieldName
-      ) => Optional<AllObjectTypes[ReadFieldType][ReadFieldName]>
+      ) => Optional<ModifyFnCacheData<AllObjectTypes[ReadFieldType][ReadFieldName]>>
+      /**
+       * Get the object we're modifying as a readable object
+       */
+      readObject: () => Partial<{
+        [prop in keyof AllObjectTypes[Type]]: ModifyFnCacheData<
+          AllObjectTypes[Type][prop]
+        >
+      }>
       /**
        * Build a reference object for a specific object in the cache
        */
