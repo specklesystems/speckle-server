@@ -20,7 +20,11 @@ import {
 } from '~/lib/viewer/helpers/savedViews/cache'
 import { isUngroupedGroup } from '@speckle/shared/saved-views'
 import type { Optional } from '@speckle/shared'
-import type { CacheObjectReference } from '~/lib/common/helpers/graphql'
+import {
+  getCachedObjectKeys,
+  getCacheKey,
+  type CacheObjectReference
+} from '~/lib/common/helpers/graphql'
 
 const createSavedViewMutation = graphql(`
   mutation CreateSavedView($input: CreateSavedViewInput!) {
@@ -220,7 +224,8 @@ graphql(`
   fragment UseUpdateSavedView_SavedView on SavedView {
     id
     projectId
-    visibility
+    isHomeView
+    groupResourceIds
     group {
       id
     }
@@ -240,7 +245,6 @@ export const useUpdateSavedView = () => {
     const { input } = params
 
     const oldGroupId = params.view.group.id
-    // const oldVisibility = params.view.visibility
 
     const result = await mutate(
       { input },
@@ -279,6 +283,28 @@ export const useUpdateSavedView = () => {
           //     ({ helpers: { evict } }) => evict()
           //   )
           // }
+
+          // If set to home view, clear home view on all other views related to the same resourceIdString
+          if (update.isHomeView && update.groupResourceIds.length === 1) {
+            const allSavedViewKeys = getCachedObjectKeys(cache, 'SavedView')
+            const modelId = update.groupResourceIds[0]
+
+            for (const savedViewKey of allSavedViewKeys) {
+              if (getCacheKey('SavedView', update.id) === savedViewKey) continue
+
+              modifyObjectField(
+                cache,
+                savedViewKey,
+                'isHomeView',
+                ({ value: isHomeView, helpers: { readField, keyToRef } }) => {
+                  const groupIds = readField(keyToRef(savedViewKey), 'groupResourceIds')
+                  if (isHomeView && groupIds?.length === 1 && groupIds[0] === modelId) {
+                    return false
+                  }
+                }
+              )
+            }
+          }
         }
       }
     ).catch(convertThrowIntoFetchResult)

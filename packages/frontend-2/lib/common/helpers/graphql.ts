@@ -90,6 +90,8 @@ export function getCacheId<Type extends keyof AllObjectTypes>(
   return cachedId as ApolloCacheObjectKey<Type>
 }
 
+export const getCacheKey = getCacheId
+
 export function isInvalidAuth(error: ApolloError | NetworkError) {
   const networkError = error instanceof ApolloError ? error.networkError : error
   if (
@@ -308,6 +310,14 @@ export function getObjectReference<Type extends keyof AllObjectTypes>(
 ): CacheObjectReference<Type> {
   return {
     __ref: getCacheId(typeName, id)
+  } as CacheObjectReference<Type>
+}
+
+export const keyToRef = <Type extends keyof AllObjectTypes>(
+  key: ApolloCacheObjectKey<Type>
+): CacheObjectReference<Type> => {
+  return {
+    __ref: key
   } as CacheObjectReference<Type>
 }
 
@@ -585,6 +595,18 @@ type ModifyObjectFieldValue<
 > = ModifyFnCacheData<AllObjectTypes[Type][Field]>
 
 /**
+ * Get keys of all cached objects by type
+ */
+export const getCachedObjectKeys = <Type extends keyof AllObjectTypes>(
+  cache: ApolloCache<unknown>,
+  type: Type
+): ApolloCacheObjectKey<Type>[] => {
+  const data = cache.extract() as Record<string, unknown>
+  const objectIds = Object.keys(data).filter((k) => k.startsWith(`${type}:`))
+  return objectIds as ApolloCacheObjectKey<Type>[]
+}
+
+/**
  * Simplified & improved version of modifyObjectFields, just targetting a single field for a cache modification
  * @see modifyObjectFields
  */
@@ -649,6 +671,10 @@ export const modifyObjectField = <
        * Build a reference object for a specific object in the cache
        */
       ref: typeof getObjectReference
+      /**
+       * Build a reference object from a key
+       */
+      keyToRef: typeof keyToRef
       /**
        * Parse a reference object to get its type and id separately
        */
@@ -758,7 +784,8 @@ export const modifyObjectField = <
           evict,
           readField,
           ref: getObjectReference,
-          fromRef: parseObjectReference
+          fromRef: parseObjectReference,
+          keyToRef
         }
       })
     },
