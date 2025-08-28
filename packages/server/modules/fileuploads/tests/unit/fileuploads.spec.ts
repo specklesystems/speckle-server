@@ -293,6 +293,18 @@ describe('FileUploads @fileuploads', () => {
         fileSize: 100,
         fileType: 'txt'
       })
+      if (!results) {
+        expect(results).to.not.be.undefined
+        return //HACK to appease typescript
+      }
+      expect(results.convertedStatus).to.be.equal(FileUploadConvertedStatus.Queued)
+      expect(emittedEventName).to.be.equal(FileuploadEvents.Started)
+      expect(get(emittedEventPayload, 'upload')).to.be.deep.include({
+        userId: userOne.id,
+        projectId: createdStream.id,
+        fileSize: 100,
+        fileType: 'txt'
+      })
     })
   })
 })

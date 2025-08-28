@@ -89,6 +89,40 @@ describe('File import results @fileuploads integration', () => {
     }))
   })
 
+  beforeEach(async () => {
+    projectOne = await createTestStream(
+      {
+        name: 'Test Project',
+        description: 'Test Project Description'
+      },
+      userOne
+    )
+    ;({ token: userOneToken } = await createToken({
+      userId: userOne.id,
+      name: createRandomString(),
+      scopes: [Scopes.Streams.Read, Scopes.Streams.Write]
+    }))
+
+    modelOne = await createTestBranch({
+      branch: {
+        name: 'Test Model',
+        description: 'Test Model Description',
+        id: '',
+        streamId: projectOne.id,
+        authorId: userOne.id
+      },
+      owner: userOne,
+      stream: projectOne
+    })
+
+    //FIXME currently assuming a 1:1 file to job mapping
+    ;({ id: jobOneId } = await createFileUploadJob({
+      projectId: projectOne.id,
+      userId: userOne.id,
+      modelId: modelOne.id
+    }))
+  })
+
   afterEach(async () => {
     projectOne = { name: '', id: '', ownerId: '' }
   })
@@ -334,173 +368,341 @@ describe('File import results @fileuploads integration', () => {
         FileUploadConvertedStatus.Error
       )
     })
-  })
 
-  it('should 403 if an invalid auth token is provided', async () => {
-    const badToken = cryptoRandomString({ length: 32 })
-    const sucessPayload = {
-      projectId: projectOne.id,
-      jobId: jobOneId,
-      status: 'success',
-      result: {
-        versionId: cryptoRandomString({ length: 10 }),
-        durationSeconds: randomInt(1, 3600),
-        downloadDurationSeconds: randomInt(1, 3600),
-        parseDurationSeconds: randomInt(1, 3600),
-        parser: 'ifc'
+    it('should 403 if an invalid auth token is provided', async () => {
+      const badToken = cryptoRandomString({ length: 32 })
+      const sucessPayload = {
+        projectId: projectOne.id,
+        jobId: jobOneId,
+        status: 'success',
+        result: {
+          versionId: cryptoRandomString({ length: 10 }),
+          durationSeconds: randomInt(1, 3600),
+          downloadDurationSeconds: randomInt(1, 3600),
+          parseDurationSeconds: randomInt(1, 3600),
+          parser: 'ifc'
+        }
       }
-    }
 
-    const gqlResponse = await finishFileUpload(badToken, sucessPayload)
+      const gqlResponse = await finishFileUpload(badToken, sucessPayload)
 
-    expect(haveErrors(gqlResponse))
-    expect(gqlResponse.body).to.nested.include({
-      error: 'Your token is not valid.'
+      expect(haveErrors(gqlResponse))
+      expect(gqlResponse.body).to.nested.include({
+        error: 'Your token is not valid.'
+      })
     })
-  })
 
-  it('should 403 if the token does not have the correct scopes', async () => {
-    const { token: readOnlyToken } = await createToken({
-      userId: userOne.id,
-      name: createRandomString(),
-      scopes: [Scopes.Streams.Read]
-    })
-    const sucessPayload = {
-      projectId: projectOne.id,
-      jobId: jobOneId,
-      status: 'success',
-      result: {
-        versionId: cryptoRandomString({ length: 10 }),
-        durationSeconds: randomInt(1, 3600),
-        downloadDurationSeconds: randomInt(1, 3600),
-        parseDurationSeconds: randomInt(1, 3600),
-        parser: 'ifc'
+    it('should 403 if the token does not have the correct scopes', async () => {
+      const { token: readOnlyToken } = await createToken({
+        userId: userOne.id,
+        name: createRandomString(),
+        scopes: [Scopes.Streams.Read]
+      })
+      const sucessPayload = {
+        projectId: projectOne.id,
+        jobId: jobOneId,
+        status: 'success',
+        result: {
+          versionId: cryptoRandomString({ length: 10 }),
+          durationSeconds: randomInt(1, 3600),
+          downloadDurationSeconds: randomInt(1, 3600),
+          parseDurationSeconds: randomInt(1, 3600),
+          parser: 'ifc'
+        }
       }
-    }
 
-    const gqlResponse = await finishFileUpload(readOnlyToken, sucessPayload)
+      const gqlResponse = await finishFileUpload(readOnlyToken, sucessPayload)
 
-    expect(haveErrors(gqlResponse))
-    expect(gqlResponse.body).to.nested.include({
-      'errors[0].extensions.code': 'FORBIDDEN',
-      'errors[0].extensions.statusCode': 403
+      expect(haveErrors(gqlResponse))
+      expect(gqlResponse.body).to.nested.include({
+        'errors[0].extensions.code': 'FORBIDDEN',
+        'errors[0].extensions.statusCode': 403
+      })
     })
-  })
 
-  it('should 403 if the token is for a different user', async () => {
-    const userTwo = await createTestUser({
-      name: createRandomString(),
-      email: createRandomEmail(),
-      password: createRandomPassword()
-    })
-    const { token: userTwoToken } = await createToken({
-      userId: userTwo.id,
-      name: createRandomString(),
-      scopes: [Scopes.Streams.Read]
-    })
-    const sucessPayload = {
-      projectId: projectOne.id,
-      jobId: jobOneId,
-      status: 'success',
-      result: {
-        versionId: cryptoRandomString({ length: 10 }),
-        durationSeconds: randomInt(1, 3600),
-        downloadDurationSeconds: randomInt(1, 3600),
-        parseDurationSeconds: randomInt(1, 3600),
-        parser: 'ifc'
+    it('should 403 if the token is for a different user', async () => {
+      const { id: userTwoId } = await createTestUser({
+        name: createRandomString(),
+        email: createRandomEmail(),
+        password: createRandomPassword()
+      })
+      const { token: userTwoToken } = await createToken({
+        userId: userTwoId,
+        name: createRandomString(),
+        scopes: [Scopes.Streams.Read]
+      })
+      const sucessPayload = {
+        projectId: projectOne.id,
+        jobId: jobOneId,
+        status: 'success',
+        result: {
+          versionId: cryptoRandomString({ length: 10 }),
+          durationSeconds: randomInt(1, 3600),
+          downloadDurationSeconds: randomInt(1, 3600),
+          parseDurationSeconds: randomInt(1, 3600),
+          parser: 'ifc'
+        }
       }
-    }
 
-    const gqlResponse = await finishFileUpload(userTwoToken, sucessPayload)
+      const gqlResponse = await finishFileUpload(userTwoToken, sucessPayload)
 
-    expect(haveErrors(gqlResponse))
-    expect(gqlResponse.body).to.nested.include({
-      'errors[0].extensions.code': 'FORBIDDEN',
-      'errors[0].extensions.statusCode': 403
-    })
-  })
-
-  it('should 400 if the payload is invalid', async () => {
-    const gqlResponse = await finishFileUpload(userOneToken, {
-      wrongContent: 'bad mutation'
+      expect(haveErrors(gqlResponse))
+      expect(gqlResponse.body).to.nested.include({
+        'errors[0].extensions.code': 'FORBIDDEN',
+        'errors[0].extensions.statusCode': 403
+      })
     })
 
-    expect(haveErrors(gqlResponse))
-    expect(gqlResponse.status).to.eq(400)
-  })
+    it('should 400 if the payload is invalid', async () => {
+      const gqlResponse = await finishFileUpload(userOneToken, {
+        wrongContent: 'bad mutation'
+      })
 
-  it('should 404 if the job id cannot be found', async () => {
-    const sucessPayload = {
-      projectId: projectOne.id,
-      jobId: cryptoRandomString({ length: 10 }),
-      status: 'success',
-      result: {
-        versionId: cryptoRandomString({ length: 10 }),
-        durationSeconds: randomInt(1, 3600),
-        downloadDurationSeconds: randomInt(1, 3600),
-        parseDurationSeconds: randomInt(1, 3600),
-        parser: 'ifc'
-      }
-    }
-
-    const gqlResponse = await finishFileUpload(userOneToken, sucessPayload)
-
-    expect(haveErrors(gqlResponse))
-    expect(gqlResponse.body).to.nested.include({
-      'errors[0].extensions.code': 'FILE_IMPORT_JOB_NOT_FOUND',
-      'errors[0].extensions.statusCode': 404
+      expect(haveErrors(gqlResponse))
+      expect(gqlResponse.status).to.eq(400)
     })
-  })
 
-  it('should 200 if the payload reports a success result', async () => {
-    const sucessPayload = {
-      projectId: projectOne.id,
-      jobId: jobOneId,
-      status: 'success',
-      result: {
-        versionId: cryptoRandomString({ length: 10 }),
-        durationSeconds: randomInt(1, 3600),
-        downloadDurationSeconds: randomInt(1, 3600),
-        parseDurationSeconds: randomInt(1, 3600),
-        parser: 'ifc'
+    it('should 404 if the job id cannot be found', async () => {
+      const sucessPayload = {
+        projectId: projectOne.id,
+        jobId: cryptoRandomString({ length: 10 }),
+        status: 'success',
+        result: {
+          versionId: cryptoRandomString({ length: 10 }),
+          durationSeconds: randomInt(1, 3600),
+          downloadDurationSeconds: randomInt(1, 3600),
+          parseDurationSeconds: randomInt(1, 3600),
+          parser: 'ifc'
+        }
       }
-    }
 
-    const gqlResponse = await finishFileUpload(userOneToken, sucessPayload)
-    expect(noErrors(gqlResponse))
-    expect(gqlResponse.status).to.equal(200)
+      const gqlResponse = await finishFileUpload(userOneToken, sucessPayload)
 
-    const fileResponse = await getFileUploads(projectOne.id, userOneToken)
-    expect(noErrors(fileResponse))
-    expect(fileResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
-    expect(fileResponse.body.data.stream.fileUploads[0].convertedStatus).to.equal(
-      FileUploadConvertedStatus.Completed
-    )
-  })
+      expect(haveErrors(gqlResponse))
+      expect(gqlResponse.body).to.nested.include({
+        'errors[0].extensions.code': 'FILE_IMPORT_JOB_NOT_FOUND',
+        'errors[0].extensions.statusCode': 404
+      })
+    })
 
-  it('should 200 if the payload reports an error result', async () => {
-    const errorPayload = {
-      projectId: projectOne.id,
-      jobId: jobOneId,
-      status: 'error',
-      reason: cryptoRandomString({ length: 10 }),
-      result: {
-        durationSeconds: randomInt(0, 3600),
-        downloadDurationSeconds: randomInt(0, 3600),
-        parseDurationSeconds: randomInt(1, 3600),
-        parser: 'ifc'
+    it('should 200 if the payload reports a success result', async () => {
+      const sucessPayload = {
+        projectId: projectOne.id,
+        jobId: jobOneId,
+        status: 'success',
+        result: {
+          versionId: cryptoRandomString({ length: 10 }),
+          durationSeconds: randomInt(1, 3600),
+          downloadDurationSeconds: randomInt(1, 3600),
+          parseDurationSeconds: randomInt(1, 3600),
+          parser: 'ifc'
+        }
       }
-    }
 
-    const gqlResponse = await finishFileUpload(userOneToken, errorPayload)
-    expect(noErrors(gqlResponse))
-    expect(gqlResponse.status).to.equal(200)
+      const gqlResponse = await finishFileUpload(userOneToken, sucessPayload)
+      expect(noErrors(gqlResponse))
+      expect(gqlResponse.status).to.equal(200)
 
-    const fileResponse = await getFileUploads(projectOne.id, userOneToken)
-    expect(noErrors(fileResponse))
-    expect(fileResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
-    expect(fileResponse.body.data.stream.fileUploads[0].convertedStatus).to.equal(
-      FileUploadConvertedStatus.Error
-    )
+      const fileResponse = await getFileUploads(projectOne.id, userOneToken)
+      expect(noErrors(fileResponse))
+      expect(fileResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
+      expect(fileResponse.body.data.stream.fileUploads[0].convertedStatus).to.equal(
+        FileUploadConvertedStatus.Completed
+      )
+    })
+
+    it('should 200 if the payload reports an error result', async () => {
+      const errorPayload = {
+        projectId: projectOne.id,
+        jobId: jobOneId,
+        status: 'error',
+        reason: cryptoRandomString({ length: 10 }),
+        result: {
+          durationSeconds: randomInt(0, 3600),
+          downloadDurationSeconds: randomInt(0, 3600),
+          parseDurationSeconds: randomInt(1, 3600),
+          parser: 'ifc'
+        }
+      }
+
+      const gqlResponse = await finishFileUpload(userOneToken, errorPayload)
+      expect(noErrors(gqlResponse))
+      expect(gqlResponse.status).to.equal(200)
+
+      const fileResponse = await getFileUploads(projectOne.id, userOneToken)
+      expect(noErrors(fileResponse))
+      expect(fileResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
+      expect(fileResponse.body.data.stream.fileUploads[0].convertedStatus).to.equal(
+        FileUploadConvertedStatus.Error
+      )
+    })
+
+    it('should 403 if an invalid auth token is provided', async () => {
+      const badToken = cryptoRandomString({ length: 32 })
+      const sucessPayload = {
+        projectId: projectOne.id,
+        jobId: jobOneId,
+        status: 'success',
+        result: {
+          versionId: cryptoRandomString({ length: 10 }),
+          durationSeconds: randomInt(1, 3600),
+          downloadDurationSeconds: randomInt(1, 3600),
+          parseDurationSeconds: randomInt(1, 3600),
+          parser: 'ifc'
+        }
+      }
+
+      const gqlResponse = await finishFileUpload(badToken, sucessPayload)
+
+      expect(haveErrors(gqlResponse))
+      expect(gqlResponse.body).to.nested.include({
+        error: 'Your token is not valid.'
+      })
+    })
+
+    it('should 403 if the token does not have the correct scopes', async () => {
+      const { token: readOnlyToken } = await createToken({
+        userId: userOne.id,
+        name: createRandomString(),
+        scopes: [Scopes.Streams.Read]
+      })
+      const sucessPayload = {
+        projectId: projectOne.id,
+        jobId: jobOneId,
+        status: 'success',
+        result: {
+          versionId: cryptoRandomString({ length: 10 }),
+          durationSeconds: randomInt(1, 3600),
+          downloadDurationSeconds: randomInt(1, 3600),
+          parseDurationSeconds: randomInt(1, 3600),
+          parser: 'ifc'
+        }
+      }
+
+      const gqlResponse = await finishFileUpload(readOnlyToken, sucessPayload)
+
+      expect(haveErrors(gqlResponse))
+      expect(gqlResponse.body).to.nested.include({
+        'errors[0].extensions.code': 'FORBIDDEN',
+        'errors[0].extensions.statusCode': 403
+      })
+    })
+
+    it('should 403 if the token is for a different user', async () => {
+      const userTwo = await createTestUser({
+        name: createRandomString(),
+        email: createRandomEmail(),
+        password: createRandomPassword()
+      })
+      const { token: userTwoToken } = await createToken({
+        userId: userTwo.id,
+        name: createRandomString(),
+        scopes: [Scopes.Streams.Read]
+      })
+      const sucessPayload = {
+        projectId: projectOne.id,
+        jobId: jobOneId,
+        status: 'success',
+        result: {
+          versionId: cryptoRandomString({ length: 10 }),
+          durationSeconds: randomInt(1, 3600),
+          downloadDurationSeconds: randomInt(1, 3600),
+          parseDurationSeconds: randomInt(1, 3600),
+          parser: 'ifc'
+        }
+      }
+
+      const gqlResponse = await finishFileUpload(userTwoToken, sucessPayload)
+
+      expect(haveErrors(gqlResponse))
+      expect(gqlResponse.body).to.nested.include({
+        'errors[0].extensions.code': 'FORBIDDEN',
+        'errors[0].extensions.statusCode': 403
+      })
+    })
+
+    it('should 400 if the payload is invalid', async () => {
+      const gqlResponse = await finishFileUpload(userOneToken, {
+        wrongContent: 'bad mutation'
+      })
+
+      expect(haveErrors(gqlResponse))
+      expect(gqlResponse.status).to.eq(400)
+    })
+
+    it('should 404 if the job id cannot be found', async () => {
+      const sucessPayload = {
+        projectId: projectOne.id,
+        jobId: cryptoRandomString({ length: 10 }),
+        status: 'success',
+        result: {
+          versionId: cryptoRandomString({ length: 10 }),
+          durationSeconds: randomInt(1, 3600),
+          downloadDurationSeconds: randomInt(1, 3600),
+          parseDurationSeconds: randomInt(1, 3600),
+          parser: 'ifc'
+        }
+      }
+
+      const gqlResponse = await finishFileUpload(userOneToken, sucessPayload)
+
+      expect(haveErrors(gqlResponse))
+      expect(gqlResponse.body).to.nested.include({
+        'errors[0].extensions.code': 'FILE_IMPORT_JOB_NOT_FOUND',
+        'errors[0].extensions.statusCode': 404
+      })
+    })
+
+    it('should 200 if the payload reports a success result', async () => {
+      const sucessPayload = {
+        projectId: projectOne.id,
+        jobId: jobOneId,
+        status: 'success',
+        result: {
+          versionId: cryptoRandomString({ length: 10 }),
+          durationSeconds: randomInt(1, 3600),
+          downloadDurationSeconds: randomInt(1, 3600),
+          parseDurationSeconds: randomInt(1, 3600),
+          parser: 'ifc'
+        }
+      }
+
+      const gqlResponse = await finishFileUpload(userOneToken, sucessPayload)
+      expect(noErrors(gqlResponse))
+      expect(gqlResponse.status).to.equal(200)
+
+      const fileResponse = await getFileUploads(projectOne.id, userOneToken)
+      expect(noErrors(fileResponse))
+      expect(fileResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
+      expect(fileResponse.body.data.stream.fileUploads[0].convertedStatus).to.equal(
+        FileUploadConvertedStatus.Completed
+      )
+    })
+
+    it('should 200 if the payload reports an error result', async () => {
+      const errorPayload = {
+        projectId: projectOne.id,
+        jobId: jobOneId,
+        status: 'error',
+        reason: cryptoRandomString({ length: 10 }),
+        result: {
+          durationSeconds: randomInt(0, 3600),
+          downloadDurationSeconds: randomInt(0, 3600),
+          parseDurationSeconds: randomInt(1, 3600),
+          parser: 'ifc'
+        }
+      }
+
+      const gqlResponse = await finishFileUpload(userOneToken, errorPayload)
+      expect(noErrors(gqlResponse))
+      expect(gqlResponse.status).to.equal(200)
+
+      const fileResponse = await getFileUploads(projectOne.id, userOneToken)
+      expect(noErrors(fileResponse))
+      expect(fileResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
+      expect(fileResponse.body.data.stream.fileUploads[0].convertedStatus).to.equal(
+        FileUploadConvertedStatus.Error
+      )
+    })
   })
 })

@@ -63,18 +63,17 @@ import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { Ellipsis, Plus } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
-import {
-  SavedViewVisibility,
-  type UseUpdateSavedViewGroup_SavedViewGroupFragment,
-  type ViewerSavedViewsPanelViewsGroup_ProjectFragment,
-  type ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment,
-  type ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroupFragment
+import type {
+  UseUpdateSavedViewGroup_SavedViewGroupFragment,
+  ViewerSavedViewsPanelViewsGroup_ProjectFragment,
+  ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment,
+  ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroupFragment
 } from '~/lib/common/generated/gql/graphql'
 import {
   useCreateSavedView,
   useUpdateSavedViewGroup
 } from '~/lib/viewer/composables/savedViews/management'
-import { ViewsType } from '~/lib/viewer/helpers/savedViews'
+import type { ViewsType } from '~/lib/viewer/helpers/savedViews'
 
 const MenuItems = StringEnum(['Delete', 'Rename'])
 type MenuItems = StringEnumValues<typeof MenuItems>
@@ -182,9 +181,7 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
 
 const onAddGroupView = async () => {
   await createView({
-    groupId: props.group.id,
-    visibility:
-      props.viewsType === ViewsType.Shared ? SavedViewVisibility.Public : undefined
+    groupId: props.group.id
   })
   open.value = true
 }

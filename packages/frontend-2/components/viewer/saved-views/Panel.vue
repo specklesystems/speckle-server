@@ -106,10 +106,7 @@ import { useMutationLoading } from '@vue/apollo-composable'
 import { Search, FolderPlus, Plus, X } from 'lucide-vue-next'
 import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 import { graphql } from '~/lib/common/generated/gql'
-import {
-  SavedViewVisibility,
-  WorkspaceSeatType
-} from '~/lib/common/generated/gql/graphql'
+import { WorkspaceSeatType } from '~/lib/common/generated/gql/graphql'
 import { useCreateSavedView } from '~/lib/viewer/composables/savedViews/management'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { ViewsType, viewsTypeLabels } from '~/lib/viewer/helpers/savedViews'
@@ -147,7 +144,7 @@ const createSavedView = useCreateSavedView()
 const isLoading = useMutationLoading()
 const { on, bind, value: search } = useDebouncedTextInput()
 
-const selectedViewsType = ref<ViewsType>(ViewsType.Personal)
+const selectedViewsType = ref<ViewsType>(ViewsType.All)
 const hideViewerSeatDisclaimer = useSynchronizedCookie<boolean>(
   'hideViewerSeatSavedViewsDisclaimer',
   {
@@ -167,12 +164,7 @@ const isLowerPlan = computed(() => !project.value?.workspace?.planSupportsSavedV
 
 const onAddView = async () => {
   if (isLoading.value) return
-  const view = await createSavedView({
-    visibility:
-      selectedViewsType.value === ViewsType.Shared
-        ? SavedViewVisibility.Public
-        : undefined
-  })
+  const view = await createSavedView({})
   if (view) {
     // Auto-open the group that the view created to
     openedGroupState.value.set(view.group.id, true)
