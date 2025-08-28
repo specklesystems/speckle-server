@@ -13,13 +13,7 @@ import { CameraController } from '../CameraController.js'
 import Logger from '../../utils/Logger.js'
 import { AreaMeasurement } from './AreaMeasurement.js'
 import { PointMeasurement } from './PointMeasurement.js'
-
-export enum MeasurementType {
-  PERPENDICULAR,
-  POINTTOPOINT,
-  AREA,
-  POINT
-}
+import { MeasurementOptions, MeasurementType } from '@speckle/shared/viewer/state'
 
 export enum MeasurementEvent {
   CountChanged = 'measurement-count-changed'
@@ -27,15 +21,6 @@ export enum MeasurementEvent {
 
 export interface MeasurementEventPayload {
   [MeasurementEvent.CountChanged]: number
-}
-
-export interface MeasurementOptions {
-  visible: boolean
-  type?: MeasurementType
-  vertexSnap?: boolean
-  units?: string
-  precision?: number
-  chain?: boolean
 }
 
 const DefaultMeasurementsOptions = {

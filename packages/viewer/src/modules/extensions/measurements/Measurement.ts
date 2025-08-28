@@ -9,6 +9,7 @@ import {
   type Intersection
 } from 'three'
 import { ExtendedMeshIntersection } from '../../objects/SpeckleRaycaster.js'
+import { MeasurementData } from '@speckle/shared/viewer/state'
 
 export enum MeasurementState {
   HIDDEN,
@@ -72,4 +73,6 @@ export abstract class Measurement extends Object3D {
     outPoint: Vector3,
     outNormal: Vector3
   ): boolean
+  public abstract toMeasurementData(): MeasurementData
+  public abstract fromMeasurementData(data: MeasurementData): void
 }
