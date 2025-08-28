@@ -38,7 +38,7 @@ const oidcStrategyBuilderFactory =
   (deps: {
     getServerInfo: GetServerInfo
     getUserByEmail: LegacyGetUserByEmail
-    findOrCreateUser: FindOrCreateValidatedUser
+    buildFindOrCreateUser: () => Promise<FindOrCreateValidatedUser>
     validateServerInvite: ValidateServerInvite
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
@@ -78,6 +78,8 @@ const oidcStrategyBuilderFactory =
             serverVersion: serverInfo.version
           })
 
+          const findOrCreateUser = await deps.buildFindOrCreateUser()
+
           // TODO: req.session.inviteId doesn't appear to exist, but i'm not removing it to not break things
           const token: Optional<string> =
             get(req.session, 'inviteId') || req.session.token
@@ -107,7 +109,7 @@ const oidcStrategyBuilderFactory =
             // if there is an existing user, go ahead and log them in (regardless of
             // whether the server is invite only or not).
             if (existingUser) {
-              const myUser = await deps.findOrCreateUser({
+              const myUser = await findOrCreateUser({
                 user
               })
 
@@ -128,7 +130,7 @@ const oidcStrategyBuilderFactory =
             }
 
             // create the user
-            const myUser = await deps.findOrCreateUser({
+            const myUser = await findOrCreateUser({
               user: {
                 ...user,
                 role: invite

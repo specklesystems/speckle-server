@@ -18,15 +18,15 @@ import { buildFileUploadMessage } from '@/modules/fileuploads/tests/helpers/crea
 import type { JobPayload } from '@speckle/shared/workers/fileimport'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
-import {
-  type BasicTestBranch,
-  createTestBranch
-} from '@/test/speckle-helpers/branchHelper'
 import { type BasicTestUser, createTestUser } from '@/test/authHelper'
 import {
   type BasicTestStream,
   createTestStream
 } from '@/test/speckle-helpers/streamHelper'
+import {
+  type BasicTestBranch,
+  createTestBranch
+} from '@/test/speckle-helpers/branchHelper'
 
 const { garbageCollector } = initUploadTestEnvironment()
 

@@ -42,10 +42,16 @@ function useDebugViewer() {
   // Get current viewer state
   window.VIEWER_STATE = () => fullViewerState
 
-  // Get serialized version of current state
+  // Get serialized version of current state as string
   window.VIEWER_SERIALIZED_STATE = (...args: Parameters<typeof serialize>) => {
     const serialized = serialize(...args)
     return JSON.stringify(serialized)
+  }
+
+  // Get serialized version of current state as object
+  window.VIEWER_SERIALIZED_STATE_OBJECT = (...args: Parameters<typeof serialize>) => {
+    const serialized = serialize(...args)
+    return serialized
   }
 
   // Apply viewer state
