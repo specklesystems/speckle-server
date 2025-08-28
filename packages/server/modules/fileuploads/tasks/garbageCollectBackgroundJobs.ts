@@ -38,7 +38,7 @@ export const scheduleBackgroundJobGarbageCollection = async ({
 
   return scheduleExecution(
     cronExpression,
-    'FileImportAndBackgroundJobsConsolidation',
+    'GarbageCollectBackgroundJobs',
     async (_scheduledTime, { logger }) => {
       await Promise.all(
         perDbTask.map((task) =>

@@ -71,7 +71,7 @@ export const failQueuedBackgroundJobsWhichExceedMaximumAttemptsFactory =
       .andWhere(
         BackgroundJobs.withoutTablePrefix.col.attempt,
         '>=',
-        BackgroundJobs.withoutTablePrefix.col.maxAttempt
+        db.raw('maxAttempt')
       )
       .orderBy(BackgroundJobs.withoutTablePrefix.col.createdAt, 'desc')
       .update({
