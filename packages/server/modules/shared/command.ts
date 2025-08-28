@@ -179,6 +179,30 @@ export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
     dbs: [mainDb, ...regionDbs]
   } = params
 
+  const totalDbs = [mainDb, ...regionDbs]
+  if (totalDbs.length === 1) {
+    // defaulting to asOperation when asMultiregion operator
+    // is used with a single database
+    return await asOperation(
+      ({ db, emit }) =>
+        operation({
+          allDbs: [db],
+          mainDb: db,
+          regionDb: db,
+          regionDbs: [],
+          emit
+        }),
+      {
+        name,
+        description,
+        logger,
+        eventBus,
+        db: totalDbs[0],
+        transaction: true
+      }
+    )
+  }
+
   return await withOperationLogging(
     async () => {
       const events: EmitArg[] = []
