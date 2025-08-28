@@ -1,5 +1,13 @@
 <template>
-  <div>
+  <div class="flex flex-col gap-y-6">
+    <section class="flex items-center gap-2 justify-between">
+      <h1 class="text-heading-sm md:text-heading">Intelligence</h1>
+
+      <FormButton color="outline" @click="showCreateDashboardDialog = true">
+        Add dashboard
+      </FormButton>
+    </section>
+
     <div
       v-if="!isVeryFirstLoading && !result?.workspaceBySlug?.dashboards.items.length"
       class="flex flex-col items-center justify-center gap-y-4 mx-auto my-14"
@@ -7,7 +15,11 @@
       <h2 class="text-heading-sm text-foreground-2">
         This workspace has no dashboards yet
       </h2>
-      <FormButton color="outline" @click="showCreateDashboardDialog = true">
+      <FormButton
+        v-if="canCreateDashboards"
+        color="outline"
+        @click="showCreateDashboardDialog = true"
+      >
         Add dashboard
       </FormButton>
     </div>
@@ -32,9 +44,29 @@
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { workspaceDashboardsQuery } from '~/lib/dashboards/graphql/queries'
 import type { Nullable } from '@speckle/shared'
+import { graphql } from '~~/lib/common/generated/gql'
+import { useQuery } from '@vue/apollo-composable'
+
+const canCreateDashboardsQuery = graphql(`
+  query DashboardsListCanCreateDashboards($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      permissions {
+        canCreateDashboards {
+          ...FullPermissionCheckResult
+        }
+      }
+    }
+  }
+`)
 
 const route = useRoute()
 const workspaceSlug = computed(() => route.params.slug as string)
+const { result: canCreateDashboardsResult } = useQuery(
+  canCreateDashboardsQuery,
+  () => ({
+    slug: workspaceSlug.value
+  })
+)
 const {
   identifier,
   onInfiniteLoad,
@@ -65,4 +97,9 @@ const {
 })
 
 const showCreateDashboardDialog = ref(false)
+const canCreateDashboards = computed(
+  () =>
+    canCreateDashboardsResult.value?.workspaceBySlug?.permissions?.canCreateDashboards
+      ?.authorized
+)
 </script>

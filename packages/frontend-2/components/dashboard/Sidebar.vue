@@ -57,7 +57,7 @@
                 </NuxtLink>
 
                 <NuxtLink
-                  v-if="showWorkspaceLinks"
+                  v-if="showWorkspaceLinks && canListDashboards"
                   :to="dashboardsRoute(activeWorkspaceSlug)"
                   @click="isOpenMobile = false"
                 >
@@ -186,12 +186,19 @@ import { graphql } from '~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 
 const dashboardSidebarQuery = graphql(`
-  query DashboardSidebar {
+  query DashboardSidebar($slug: String!) {
     activeUser {
       id
       activeWorkspace {
         id
         role
+      }
+    }
+    workspaceBySlug(slug: $slug) {
+      permissions {
+        canListDashboards {
+          ...FullPermissionCheckResult
+        }
       }
     }
   }
@@ -203,14 +210,24 @@ const route = useRoute()
 const activeWorkspaceSlug = useActiveWorkspaceSlug()
 const { $intercom } = useNuxtApp()
 const mixpanel = useMixpanel()
-const { result } = useQuery(dashboardSidebarQuery, () => ({}), {
-  enabled: isWorkspacesEnabled.value
-})
+const { result } = useQuery(
+  dashboardSidebarQuery,
+  () => ({
+    slug: activeWorkspaceSlug.value || ''
+  }),
+  () => ({
+    enabled: isWorkspacesEnabled.value && !!activeWorkspaceSlug.value
+  })
+)
 
 const isOpenMobile = ref(false)
 const showExplainerVideoDialog = ref(false)
 
 const activeWorkspace = computed(() => result.value?.activeUser?.activeWorkspace)
+const canListDashboards = computed(() => {
+  return result.value?.workspaceBySlug?.permissions?.canListDashboards?.authorized
+})
+
 const showWorkspaceLinks = computed(() => {
   return isWorkspacesEnabled.value
     ? activeWorkspace.value

@@ -8,15 +8,7 @@
       />
     </Portal>
 
-    <div class="flex flex-col gap-y-6">
-      <section class="flex items-center gap-2 justify-between">
-        <h1 class="text-heading-sm md:text-heading">Intelligence</h1>
-
-        <FormButton color="outline" @click="showCreateDashboardDialog = true">
-          Add dashboard
-        </FormButton>
-      </section>
-
+    <div>
       <DashboardsList />
     </div>
 
