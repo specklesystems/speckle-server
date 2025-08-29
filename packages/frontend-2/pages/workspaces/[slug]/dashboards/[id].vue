@@ -97,10 +97,10 @@ const workspace = computed(() => result.value?.dashboard?.workspace)
 const dashboard = computed(() => result.value?.dashboard)
 const dashboardUrl = computed(() => {
   return urlToken
-    ? `http://127.0.0.1:8083/view/${id}?token=${urlToken}&isEmbed=true&theme=${
+    ? `https://deploy-preview-36--bashboards.netlify.app/view/${id}?token=${urlToken}&isEmbed=true&theme=${
         isDarkTheme.value ? 'dark' : 'light'
       }`
-    : `http://127.0.0.1:8083/dashboards/${id}?token=${
+    : `https://deploy-preview-36--bashboards.netlify.app/dashboards/${id}?token=${
         effectiveAuthToken.value
       }&isEmbed=true&theme=${isDarkTheme.value ? 'dark' : 'light'}`
 })
