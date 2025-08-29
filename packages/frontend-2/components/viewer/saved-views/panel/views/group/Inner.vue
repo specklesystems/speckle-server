@@ -24,7 +24,7 @@
       </template>
       <template v-else>
         <span
-          class="min-w-full flex justify-center items-center bg-foundation-page text-body-xs rounded-md text-foreground-2 border border-dashed border-outline-2 w-full text-center mx-auto my-2 px-4 h-10"
+          class="min-w-full flex justify-center items-center bg-foundation-page text-body-xs rounded-md text-foreground-2 border border-dashed border-outline-2 w-full text-center my-2 mx-1.5 px-4 h-10"
         >
           No views in group
         </span>

@@ -245,7 +245,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
 ])
 
 const wrapperClasses = computed(() => {
-  const classParts = ['flex gap-2 p-2 pr-0.5 w-full group rounded-md cursor-pointer']
+  const classParts = ['flex gap-2 p-1.5 w-full group rounded-md cursor-pointer']
 
   if (isActive.value) {
     classParts.push('bg-highlight-2 hover:bg-highlight-3')

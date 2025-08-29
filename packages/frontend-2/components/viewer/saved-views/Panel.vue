@@ -61,7 +61,7 @@
       </div>
     </template>
     <template v-if="!isLowerPlan">
-      <div class="px-4 pt-2">
+      <div class="px-3 pt-3">
         <ViewerButtonGroup>
           <ViewerButtonGroupButton
             v-for="viewsType in Object.values(ViewsType)"
