@@ -19,10 +19,7 @@ import {
 } from '@/modules/core/repositories/scheduledTasks'
 import { getWorkspacesNonCompleteFactory } from '@/modules/workspaces/repositories/workspaces'
 import { deleteWorkspacesNonCompleteFactory } from '@/modules/workspaces/services/workspaceCreationState'
-import {
-  deleteStreamFactory,
-  getExplicitProjects
-} from '@/modules/core/repositories/streams'
+import { getExplicitProjects } from '@/modules/core/repositories/streams'
 import { deleteSsoProviderFactory } from '@/modules/workspaces/repositories/sso'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
@@ -30,7 +27,12 @@ import { deleteWorkspaceFactory as repoDeleteWorkspaceFactory } from '@/modules/
 import { deleteWorkspaceFactory } from '@/modules/workspaces/services/management'
 import { scheduleUpdateAllWorkspacesTracking } from '@/modules/workspaces/services/tracking'
 import { getClient } from '@/modules/shared/utils/mixpanel'
-import { queryAllProjectsFactory } from '@/modules/core/services/projects'
+import {
+  deleteProjectAndCommitsFactory,
+  queryAllProjectsFactory
+} from '@/modules/core/services/projects'
+import { deleteProjectFactory } from '@/modules/core/repositories/projects'
+import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
 
 const {
   FF_WORKSPACES_MODULE_ENABLED,
@@ -60,7 +62,10 @@ const scheduleDeleteWorkspacesNonComplete = ({
     getWorkspacesNonComplete: getWorkspacesNonCompleteFactory({ db }),
     deleteWorkspace: deleteWorkspaceFactory({
       deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
-      deleteProject: deleteStreamFactory({ db }),
+      deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+        deleteProject: deleteProjectFactory({ db }),
+        deleteProjectCommits: deleteProjectCommitsFactory({ db })
+      }),
       deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
       queryAllProjects: queryAllProjectsFactory({
         getExplicitProjects: getExplicitProjects({ db })

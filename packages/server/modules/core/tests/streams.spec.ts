@@ -16,7 +16,6 @@ import {
 } from '@/test/speckle-helpers/streamHelper'
 import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
 import {
-  deleteStreamFactory,
   getStreamFactory,
   getStreamRolesFactory,
   getStreamsCollaboratorsFactory,
@@ -55,6 +54,7 @@ import {
 } from '@/modules/core/services/commit/management'
 import {
   createCommitFactory,
+  deleteProjectCommitsFactory,
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
@@ -82,6 +82,8 @@ import {
 import { changeUserRoleFactory } from '@/modules/core/services/users/management'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
+import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
+import { deleteProjectFactory } from '@/modules/core/repositories/projects'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -116,7 +118,10 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getBranchById: getBranchByIdFactory({ db })
 })
 const deleteStream = deleteStreamAndNotifyFactory({
-  deleteStream: deleteStreamFactory({ db }),
+  deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+    deleteProject: deleteProjectFactory({ db }),
+    deleteProjectCommits: deleteProjectCommitsFactory({ db })
+  }),
   getStream,
   emitEvent: getEventBus().emit,
   deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })

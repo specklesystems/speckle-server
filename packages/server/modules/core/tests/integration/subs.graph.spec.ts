@@ -10,6 +10,7 @@ import {
 } from '@/modules/core/repositories/branches'
 import {
   deleteCommitsFactory,
+  deleteProjectCommitsFactory,
   getCommitBranchFactory,
   getCommitFactory,
   getCommitsFactory,
@@ -17,7 +18,6 @@ import {
   updateCommitFactory
 } from '@/modules/core/repositories/commits'
 import {
-  deleteStreamFactory,
   getCommitStreamFactory,
   getStreamFactory,
   getStreamRolesFactory,
@@ -97,6 +97,8 @@ import { faker } from '@faker-js/faker'
 import type { Optional, ServerScope } from '@speckle/shared'
 import { Roles, Scopes, WorkspacePlans } from '@speckle/shared'
 import { expect } from 'chai'
+import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
+import { deleteProjectFactory } from '@/modules/core/repositories/projects'
 
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
@@ -107,8 +109,9 @@ const buildDeleteProject = async (params: { projectId: string; ownerId: string }
   const { projectId, ownerId } = params
   const projectDb = await getProjectDbClient({ projectId })
   const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
-    deleteStream: deleteStreamFactory({
-      db: projectDb
+    deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+      deleteProject: deleteProjectFactory({ db: projectDb }),
+      deleteProjectCommits: deleteProjectCommitsFactory({ db: projectDb })
     }),
     emitEvent: getEventBus().emit,
     deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),

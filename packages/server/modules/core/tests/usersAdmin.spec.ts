@@ -37,7 +37,6 @@ import {
   deleteAllUserInvitesFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import {
-  deleteStreamFactory,
   getExplicitProjects,
   getUserDeletableStreamsFactory
 } from '@/modules/core/repositories/streams'
@@ -46,9 +45,14 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { expect } from 'chai'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
-import { queryAllProjectsFactory } from '@/modules/core/services/projects'
+import {
+  deleteProjectAndCommitsFactory,
+  queryAllProjectsFactory
+} from '@/modules/core/services/projects'
 import type { BasicTestUser } from '@/test/authHelper'
 import { createTestUser } from '@/test/authHelper'
+import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
+import { deleteProjectFactory } from '@/modules/core/repositories/projects'
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 const countUsers = legacyGetPaginatedUsersCountFactory({ db })
@@ -83,7 +87,10 @@ const createUser = createUserFactory({
   emitEvent: getEventBus().emit
 })
 const deleteUser = deleteUserFactory({
-  deleteStream: deleteStreamFactory({ db }),
+  deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+    deleteProject: deleteProjectFactory({ db }),
+    deleteProjectCommits: deleteProjectCommitsFactory({ db })
+  }),
   logger: dbLogger,
   isLastAdminUser: isLastAdminUserFactory({ db }),
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),

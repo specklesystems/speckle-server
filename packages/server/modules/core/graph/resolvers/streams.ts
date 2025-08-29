@@ -13,7 +13,6 @@ import { get } from 'lodash-es'
 import {
   getStreamFactory,
   createStreamFactory,
-  deleteStreamFactory,
   updateStreamFactory,
   revokeStreamPermissionsFactory,
   grantStreamPermissionsFactory,
@@ -103,7 +102,12 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
-import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
+import {
+  deleteProjectFactory,
+  storeProjectRoleFactory
+} from '@/modules/core/repositories/projects'
+import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
+import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -188,7 +192,10 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
   emitEvent: getEventBus().emit
 })
 const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
-  deleteStream: deleteStreamFactory({ db }),
+  deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+    deleteProject: deleteProjectFactory({ db }),
+    deleteProjectCommits: deleteProjectCommitsFactory({ db })
+  }),
   emitEvent: getEventBus().emit,
   deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
   getStream

@@ -58,12 +58,14 @@ import { chunk, isEmpty, omit } from 'lodash-es'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
 import { workspaceRoles as workspaceRoleDefinitions } from '@/modules/workspaces/roles'
 import { blockedDomains } from '@speckle/shared'
-import type { DeleteStreamRecord } from '@/modules/core/domain/streams/operations'
 import type {
   DeleteSsoProvider,
   GetWorkspaceSsoProviderRecord
 } from '@/modules/workspaces/domain/sso/operations'
-import type { QueryAllProjects } from '@/modules/core/domain/projects/operations'
+import type {
+  DeleteProjectAndCommits,
+  QueryAllProjects
+} from '@/modules/core/domain/projects/operations'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -288,14 +290,14 @@ type WorkspaceDeleteArgs = {
 export const deleteWorkspaceFactory =
   ({
     deleteWorkspace,
-    deleteProject,
+    deleteProjectAndCommits,
     queryAllProjects,
     deleteAllResourceInvites,
     deleteSsoProvider,
     emitWorkspaceEvent
   }: {
     deleteWorkspace: DeleteWorkspace
-    deleteProject: DeleteStreamRecord
+    deleteProjectAndCommits: DeleteProjectAndCommits
     queryAllProjects: QueryAllProjects
     deleteAllResourceInvites: DeleteAllResourceInvites
     deleteSsoProvider: DeleteSsoProvider
@@ -328,7 +330,9 @@ export const deleteWorkspaceFactory =
     // Workspace delete cascades-deletes stream table rows, but some manual cleanup is required
     // We re-use `deleteStream` (and re-delete the project) to DRY this manual cleanup
     for (const projectIdsChunk of chunk(projectIds, 25)) {
-      await Promise.all(projectIdsChunk.map((projectId) => deleteProject(projectId)))
+      await Promise.all(
+        projectIdsChunk.map((projectId) => deleteProjectAndCommits({ projectId }))
+      )
     }
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.Deleted,

@@ -79,7 +79,6 @@ import type {
   GetStream,
   GetStreamCollaborators,
   GetStreams,
-  DeleteStreamRecord,
   UpdateStreamRecord,
   RevokeStreamPermissions,
   GrantStreamPermissions,
@@ -959,23 +958,6 @@ export const getUserStreamCountsFactory =
 
     const results = await q
     return mapValues(keyBy(results, 'userId'), (r) => parseInt(r.count))
-  }
-
-export const deleteStreamFactory =
-  (deps: { db: Knex }): DeleteStreamRecord =>
-  async (streamId: string) => {
-    // Delete stream commits (not automatically cascaded)
-    await deps.db.raw(
-      `
-      DELETE FROM commits WHERE id IN (
-        SELECT sc."commitId" FROM streams s
-        INNER JOIN stream_commits sc ON s.id = sc."streamId"
-        WHERE s.id = ?
-      )
-      `,
-      [streamId]
-    )
-    return await tables.streams(deps.db).where(Streams.col.id, streamId).del()
   }
 
 export const getStreamsSourceAppsFactory =

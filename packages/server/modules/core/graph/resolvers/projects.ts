@@ -21,6 +21,7 @@ import {
   insertBranchesFactory
 } from '@/modules/core/repositories/branches'
 import {
+  deleteProjectCommitsFactory,
   getBatchedBranchCommitsFactory,
   getBatchedStreamCommitsFactory,
   insertBranchCommitsFactory,
@@ -38,7 +39,6 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   getStreamFactory,
   createStreamFactory,
-  deleteStreamFactory,
   updateStreamFactory,
   revokeStreamPermissionsFactory,
   grantStreamPermissionsFactory,
@@ -50,6 +50,7 @@ import {
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import {
   createNewProjectFactory,
+  deleteProjectAndCommitsFactory,
   waitForRegionProjectFactory
 } from '@/modules/core/services/projects'
 import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
@@ -274,8 +275,9 @@ const resolvers: Resolvers = {
             args.ids.map(async (id) => {
               const projectDb = await getProjectDbClient({ projectId: id })
               const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
-                deleteStream: deleteStreamFactory({
-                  db: projectDb
+                deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+                  deleteProject: deleteProjectFactory({ db: projectDb }),
+                  deleteProjectCommits: deleteProjectCommitsFactory({ db: projectDb })
                 }),
                 emitEvent: getEventBus().emit,
                 deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
@@ -316,8 +318,9 @@ const resolvers: Resolvers = {
 
       const projectDb = await getProjectDbClient({ projectId })
       const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
-        deleteStream: deleteStreamFactory({
-          db: projectDb
+        deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+          deleteProject: deleteProjectFactory({ db: projectDb }),
+          deleteProjectCommits: deleteProjectCommitsFactory({ db: projectDb })
         }),
         emitEvent: getEventBus().emit,
         deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),

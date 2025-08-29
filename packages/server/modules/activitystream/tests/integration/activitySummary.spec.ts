@@ -21,12 +21,12 @@ import {
   saveStreamActivityFactory
 } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
-import {
-  deleteStreamFactory,
-  getStreamFactory
-} from '@/modules/core/repositories/streams'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
+import { deleteProjectFactory } from '@/modules/core/repositories/projects'
+import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
 
 const cleanup = async () => {
   await truncateTables([StreamActivity.name, Users.name])
@@ -40,7 +40,10 @@ const createActivitySummary = createActivitySummaryFactory({
   getActivity: geUserStreamActivityFactory({ db }),
   getUser
 })
-const deleteStream = deleteStreamFactory({ db })
+const deleteStreamAndCommits = deleteProjectAndCommitsFactory({
+  deleteProject: deleteProjectFactory({ db }),
+  deleteProjectCommits: deleteProjectCommitsFactory({ db })
+})
 
 describe('Activity summary @activity', () => {
   const userA: BasicTestUser = {
@@ -113,7 +116,7 @@ describe('Activity summary @activity', () => {
         info: {},
         message: 'foo'
       })
-      await deleteStream(streamId)
+      await deleteStreamAndCommits({ projectId: streamId })
       const summary = await createActivitySummary({
         userId: userA.id,
         streamIds: [streamId],

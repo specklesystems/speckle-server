@@ -5,7 +5,6 @@ import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   updateProjectFactory,
   getStreamFactory,
-  deleteStreamFactory,
   revokeStreamPermissionsFactory,
   grantStreamPermissionsFactory,
   getStreamCollaboratorsFactory,
@@ -193,6 +192,7 @@ import {
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import { sendWorkspaceJoinRequestReceivedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/received'
 import {
+  deleteProjectFactory,
   getProjectFactory,
   getUserProjectRolesFactory
 } from '@/modules/core/repositories/projects'
@@ -229,8 +229,12 @@ import {
 } from '@/modules/serverinvites/services/coreFinalization'
 import { WorkspaceInvitesLimit } from '@/modules/workspaces/domain/constants'
 import { copyWorkspaceFactory } from '@/modules/workspaces/repositories/projectRegions'
-import { queryAllProjectsFactory } from '@/modules/core/services/projects'
+import {
+  deleteProjectAndCommitsFactory,
+  queryAllProjectsFactory
+} from '@/modules/core/services/projects'
 import { WorkspacePlanNotFoundError } from '@/modules/gatekeeper/errors/billing'
+import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -808,7 +812,10 @@ export default FF_WORKSPACES_MODULE_ENABLED
           const deleteWorkspaceFrom = (db: Knex) =>
             deleteWorkspaceFactory({
               deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
-              deleteProject: deleteStreamFactory({ db }),
+              deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+                deleteProject: deleteProjectFactory({ db }),
+                deleteProjectCommits: deleteProjectCommitsFactory({ db })
+              }),
               deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
               queryAllProjects: queryAllProjectsFactory({
                 getExplicitProjects: getExplicitProjects({ db })
