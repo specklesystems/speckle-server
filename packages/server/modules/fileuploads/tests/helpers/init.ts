@@ -1,9 +1,7 @@
 import { db } from '@/db/knex'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
-  createStreamFactory,
   getStreamFactory,
   getStreamRolesFactory,
   grantStreamPermissionsFactory
@@ -23,10 +21,6 @@ import {
   addOrUpdateStreamCollaboratorFactory,
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
-import {
-  createStreamReturnRecordFactory,
-  legacyCreateStreamFactory
-} from '@/modules/core/services/streams/management'
 import { createTokenFactory } from '@/modules/core/services/tokens'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
@@ -40,22 +34,18 @@ import {
   deleteInvitesByTargetFactory,
   deleteServerOnlyInvitesFactory,
   findInviteFactory,
-  findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
-import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import {
   processFinalizedProjectInviteFactory,
   validateProjectInviteBeforeFinalizationFactory
 } from '@/modules/serverinvites/services/coreFinalization'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import {
   finalizeInvitedServerRegistrationFactory,
   finalizeResourceInviteFactory
 } from '@/modules/serverinvites/services/processing'
-import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { authorizeResolver } from '@/modules/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 
@@ -138,41 +128,11 @@ export const initUploadTestEnvironment = () => {
     })
 
   const createBranch = createBranchFactory({ db })
-  const createStream = legacyCreateStreamFactory({
-    createStreamReturnRecord: createStreamReturnRecordFactory({
-      inviteUsersToProject: inviteUsersToProjectFactory({
-        createAndSendInvite: createAndSendInviteFactory({
-          findUserByTarget: findUserByTargetFactory({ db }),
-          insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-          collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-            getStream
-          }),
-          buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-            getStream
-          }),
-          emitEvent: ({ eventName, payload }) =>
-            getEventBus().emit({
-              eventName,
-              payload
-            }),
-          getUser,
-          getServerInfo,
-          finalizeInvite: buildFinalizeProjectInvite()
-        }),
-        getUsers
-      }),
-      createStream: createStreamFactory({ db }),
-      createBranch,
-      storeProjectRole: storeProjectRoleFactory({ db }),
-      emitEvent: getEventBus().emit
-    })
-  })
 
   return {
     findEmail,
     requestNewEmailVerification,
     createToken,
-    createStream,
     getUser,
     getUsers,
     getStream,

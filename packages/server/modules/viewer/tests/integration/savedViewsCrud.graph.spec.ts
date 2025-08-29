@@ -541,7 +541,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           resourceIds.toResources().map((r) => r.toString())
         )
         expect(view!.isHomeView).to.be.false
-        expect(view!.visibility).to.equal(SavedViewVisibility.authorOnly) // default
+        expect(view!.visibility).to.equal(SavedViewVisibility.public) // default
         expect(view!.viewerState).to.deep.equalInAnyOrder(viewerState)
         expect(view!.screenshot).to.equal(fakeScreenshot)
         expect(view!.position).to.equal(0) // default position
@@ -1223,6 +1223,32 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
       })
 
+      it('fails if updating already home view to be private view', async () => {
+        await updateView(
+          {
+            input: {
+              id: testView.id,
+              projectId: updatablesProject.id,
+              isHomeView: true
+            }
+          },
+          { assertNoErrors: true }
+        )
+
+        const res2 = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            visibility: SavedViewVisibility.authorOnly
+          }
+        })
+
+        expect(res2).to.haveGraphQLErrors({
+          code: SavedViewInvalidHomeViewSettingsError.code
+        })
+        expect(res2.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+
       it('fails if updating view to be a federated home view', async () => {
         const resourceIdString = resourceBuilder()
           .addModel(models.at(-1)!.id)
@@ -1778,8 +1804,9 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     })
 
     describe('reading groups', () => {
-      const NAMED_GROUP_COUNT = 14
-      const GROUP_COUNT = NAMED_GROUP_COUNT + 2 // + ungrouped group + search string group
+      const NAMED_GROUP_COUNT = 13
+      const SPECIAL_GROUP_COUNT = 3 // +1 ungrouped/+1 search string/+1 my empty (should not show other guys empty)
+      const GROUP_COUNT = NAMED_GROUP_COUNT + SPECIAL_GROUP_COUNT
 
       const PAGE_COUNT = 3
 
@@ -1846,6 +1873,37 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
             owner: me
           })
         ])
+
+        const createEmptyGroup = async (params: {
+          groupName: string
+          userId?: string
+        }) => {
+          const { groupName, userId } = params
+          const model = await createTestBranch({
+            branch: buildBasicTestModel({
+              name: `empty model of group ${groupName}`
+            }),
+            stream: readTestProject,
+            owner: me
+          })
+          modelIds.push(model.id)
+
+          const group = await createSavedViewGroup(
+            {
+              input: {
+                projectId: readTestProject.id,
+                resourceIdString: model.id,
+                groupName
+              }
+            },
+            {
+              assertNoErrors: true,
+              ...(userId ? { authUserId: userId } : {})
+            }
+          )
+
+          return group.data?.projectMutations.savedViewMutations.createGroup
+        }
 
         // Create a bunch of groups (views w/ groupNames), each w/ a different model
         let includedSearchString = 0
@@ -1914,15 +1972,21 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           (i) => `group-${i + 1}`
         )
 
-        // add one group to have a custom search string in its name
+        // + 1 group to have a custom search string in its name
         groupNames.push(SEARCHABLE_GROUP_NAME_STRING)
 
-        // one view without a group at the end
+        // + 1 view without a group at the end
         groupNames.push(null)
 
         await Promise.all(
           groupNames.map((groupName, idx) => createGroupView(groupName, idx))
         )
+        await Promise.all([
+          // + 1 empty group owned by me
+          createEmptyGroup({ groupName: 'my empty' }),
+          // + 1 empty group owned by other guy
+          createEmptyGroup({ groupName: 'other empty', userId: otherReader.id })
+        ])
       })
 
       it('should get NotFoundError if trying to get nonexistant group', async () => {
@@ -2488,8 +2552,8 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
           const data = res.data?.project.savedViewGroup.views
           expect(data).to.be.ok
-          expect(data!.totalCount).to.equal(OTHER_USER_VIEW_COUNT)
-          expect(data!.items.length).to.equal(OTHER_USER_VIEW_COUNT)
+          expect(data!.totalCount).to.equal(OTHER_USER_VIEW_COUNT + 1) // +1 otherReader empty group
+          expect(data!.items.length).to.equal(OTHER_USER_VIEW_COUNT + 1)
           expect(data!.items.every((v) => v.author?.id === otherReader.id)).to.be.true
         })
 

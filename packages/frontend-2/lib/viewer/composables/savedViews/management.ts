@@ -20,7 +20,10 @@ import {
 } from '~/lib/viewer/helpers/savedViews/cache'
 import { isUngroupedGroup } from '@speckle/shared/saved-views'
 import type { Optional } from '@speckle/shared'
-import type { CacheObjectReference } from '~/lib/common/helpers/graphql'
+import {
+  getCachedObjectKeys,
+  type CacheObjectReference
+} from '~/lib/common/helpers/graphql'
 
 const createSavedViewMutation = graphql(`
   mutation CreateSavedView($input: CreateSavedViewInput!) {
@@ -220,7 +223,8 @@ graphql(`
   fragment UseUpdateSavedView_SavedView on SavedView {
     id
     projectId
-    visibility
+    isHomeView
+    groupResourceIds
     group {
       id
     }
@@ -240,7 +244,6 @@ export const useUpdateSavedView = () => {
     const { input } = params
 
     const oldGroupId = params.view.group.id
-    const oldVisibility = params.view.visibility
 
     const result = await mutate(
       { input },
@@ -267,16 +270,43 @@ export const useUpdateSavedView = () => {
             })
           }
 
-          const newVisibility = update.visibility
-          const visibilityChanged = oldVisibility !== newVisibility
-          if (visibilityChanged) {
-            // Update all SavedViewGroup.views to see if it now should appear in there or not
-            modifyObjectField(
-              cache,
-              getCacheId('SavedViewGroup', newGroupId),
-              'views',
-              ({ helpers: { evict } }) => evict()
-            )
+          // W/ current filter setup, if u can change visibility, you're gonna see it in all filtered groups
+          // const newVisibility = update.visibility
+          // const visibilityChanged = oldVisibility !== newVisibility
+          // if (visibilityChanged) {
+          //   // Update all SavedViewGroup.views to see if it now should appear in there or not
+          //   modifyObjectField(
+          //     cache,
+          //     getCacheId('SavedViewGroup', newGroupId),
+          //     'views',
+          //     ({ helpers: { evict } }) => evict()
+          //   )
+          // }
+
+          // If set to home view, clear home view on all other views related to the same resourceIdString
+          if (update.isHomeView && update.groupResourceIds.length === 1) {
+            const allSavedViewKeys = getCachedObjectKeys(cache, 'SavedView')
+            const modelId = update.groupResourceIds[0]
+
+            for (const savedViewKey of allSavedViewKeys) {
+              modifyObjectField(
+                cache,
+                savedViewKey,
+                'isHomeView',
+                ({ value: isHomeView, helpers: { readObject } }) => {
+                  const view = readObject()
+                  const groupIds = view.groupResourceIds
+                  const viewId = view.id
+                  const projectId = view.projectId
+                  if (viewId === update.id) return
+                  if (update.projectId !== projectId) return
+
+                  if (isHomeView && groupIds?.length === 1 && groupIds[0] === modelId) {
+                    return false
+                  }
+                }
+              )
+            }
           }
         }
       }
@@ -291,7 +321,7 @@ export const useUpdateSavedView = () => {
     } else {
       const err = getFirstGqlErrorMessage(result?.errors)
       triggerNotification({
-        title: "Couldn't update saved view",
+        title: "Couldn't update view",
         description: err,
         type: ToastNotificationType.Danger
       })

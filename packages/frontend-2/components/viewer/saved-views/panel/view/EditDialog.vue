@@ -31,28 +31,28 @@
         :rules="[isRequired]"
       />
       <FormRadioGroup
-        :options="radioOptions"
+        :options="visibilityOptions"
         size="sm"
         name="visibility"
-        :rules="[isRequired]"
+        :rules="[isRequired, validateVisibility]"
       />
     </div>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import type { FormRadioGroupItem, LayoutDialogButton } from '@speckle/ui-components'
-import { Globe, Lock } from 'lucide-vue-next'
+import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useForm } from 'vee-validate'
 import { graphql } from '~/lib/common/generated/gql'
-import {
-  SavedViewVisibility,
-  type FormSelectSavedViewGroup_SavedViewGroupFragment,
-  type ViewerSavedViewsPanelViewEditDialog_SavedViewFragment
-} from '~/lib/common/generated/gql/graphql'
 import { isRequired, isStringOfLength } from '~/lib/common/helpers/validation'
 import { useUpdateSavedView } from '~/lib/viewer/composables/savedViews/management'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { isUndefined } from 'lodash-es'
+import { useSavedViewValidationHelpers } from '~/lib/viewer/composables/savedViews/validation'
+import type {
+  FormSelectSavedViewGroup_SavedViewGroupFragment,
+  SavedViewVisibility,
+  ViewerSavedViewsPanelViewEditDialog_SavedViewFragment
+} from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment ViewerSavedViewsPanelViewEditDialog_SavedView on SavedView {
@@ -64,6 +64,7 @@ graphql(`
       ...FormSelectSavedViewGroup_SavedViewGroup
     }
     ...UseUpdateSavedView_SavedView
+    ...UseSavedViewValidationHelpers_SavedView
   }
 `)
 
@@ -89,6 +90,9 @@ const {
   }
 } = useInjectedViewerState()
 const updateView = useUpdateSavedView()
+const { validateVisibility, visibilityOptions } = useSavedViewValidationHelpers({
+  view: computed(() => props.view)
+})
 
 const buttons = computed((): LayoutDialogButton[] => [
   {
@@ -105,21 +109,6 @@ const buttons = computed((): LayoutDialogButton[] => [
     id: 'save',
     text: 'Save',
     submit: true
-  }
-])
-
-const radioOptions = computed((): FormRadioGroupItem<SavedViewVisibility>[] => [
-  {
-    value: SavedViewVisibility.Public,
-    title: 'Public',
-    introduction: 'Visible to anyone with access to the model.',
-    icon: Globe
-  },
-  {
-    value: SavedViewVisibility.AuthorOnly,
-    title: 'Private',
-    introduction: 'Visible only to the view author.',
-    icon: Lock
   }
 ])
 

@@ -7,7 +7,7 @@
       v-if="!hasGroups || !project"
       :type="emptyStateType"
     />
-    <div v-else class="p-2">
+    <div v-else class="p-1.5 pt-2">
       <ViewerSavedViewsPanelViewsGroup
         v-for="group in groups"
         :key="group.id"

@@ -33,6 +33,7 @@ async def get_next_job(connection: Connection) -> FileimportJob | None:
                 WHERE ( --queued job
                     payload ->> 'fileType' = 'ifc'
                     AND status = $2
+                    AND "attempt" < "maxAttempt"
                 )
                 OR ( --timed job left on processing state
                     payload ->> 'fileType' = 'ifc'
@@ -53,6 +54,11 @@ async def get_next_job(connection: Connection) -> FileimportJob | None:
     if not job:
         return None
     return FileimportJob.model_validate(dict(job))
+
+
+async def return_job_to_queued(connection: Connection, job_id: str) -> None:
+    print(f"returning job: {job_id} to queued")
+    return await set_job_status(connection, job_id, JobStatus.QUEUED)
 
 
 async def set_job_status(

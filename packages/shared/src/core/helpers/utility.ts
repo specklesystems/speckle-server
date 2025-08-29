@@ -186,3 +186,15 @@ export const StringEnum = <T extends string>(args: T[]) => {
 export type StringEnumValues<T extends Record<string, string>> = {
   [K in keyof T]: T[K] extends string ? T[K] : never
 }[keyof T]
+
+/**
+ * Get first non-undefined/null value, or undefined if none found
+ */
+export const firstDefinedValue = <T>(
+  ...args: (T | undefined | null)[]
+): T | undefined => {
+  for (const arg of args) {
+    if (!isNullOrUndefined(arg)) return arg
+  }
+  return undefined
+}

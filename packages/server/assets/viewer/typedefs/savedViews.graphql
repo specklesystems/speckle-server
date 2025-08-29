@@ -27,6 +27,11 @@ type SavedView {
   Same as resourceIdString, but split into an array of resource IDs.
   """
   resourceIds: [String!]!
+  """
+  Truncated resourceIds w/o specific version data that is used to associate the view w/
+  specific groups
+  """
+  groupResourceIds: [String!]!
   isHomeView: Boolean!
   visibility: SavedViewVisibility!
   """

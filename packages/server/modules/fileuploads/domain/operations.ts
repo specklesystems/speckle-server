@@ -58,6 +58,10 @@ export type GarbageCollectPendingUploadedFiles = (args: {
   timeoutThresholdSeconds: number
 }) => Promise<FileUploadRecord[]>
 
+export type FailPendingUploadedFiles = (args: {
+  uploadIds: string[]
+}) => Promise<FileUploadRecord[]>
+
 export type NotifyChangeInFileStatus = (params: {
   file: FileUploadRecord
 }) => Promise<void>

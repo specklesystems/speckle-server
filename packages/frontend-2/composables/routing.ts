@@ -4,9 +4,10 @@ import type {
   RouteLocationAsPathGeneric
 } from '#vue-router'
 import { buildManualPromise } from '@speckle/shared'
+import { useScopedState } from '~/lib/common/composables/scopedState'
 
 const useRouterNavigatingState = () =>
-  useState('use_router_navigating_state', () => ({
+  useScopedState('use_router_navigating_state', () => ({
     allActiveWaits: <Array<Promise<unknown>>>[],
     /**
      * Used for debugging to assign an incrementing id to each invocation
@@ -20,8 +21,8 @@ const useRouterNavigatingDevUtils = () => {
 
   const ret = {
     getLogId: () => {
-      const newVal = state.value.logId + 1
-      state.value.logId = newVal
+      const newVal = state.logId + 1
+      state.logId = newVal
 
       return newVal + ''
     },
@@ -40,6 +41,16 @@ const useRouterNavigatingDevUtils = () => {
         devTrace(...args)
       })
     },
+    waitForNavigationsClear: async () =>
+      await until($isNavigating)
+        .toBe(false, {
+          throwOnTimeout: true,
+          timeout: 500
+        })
+        .catch((err) => {
+          // Swallow throw, just log and continue
+          $logger.error({ err }, 'Waiting for nuxt navigations to clear timed out')
+        }),
     isNuxtNavigating: $isNavigating,
     logger: $logger
   }
@@ -69,7 +80,7 @@ type SafeRouterNavigationOptions<
  * Supports debugRoutes=1 query param for debug logs
  */
 export const useSafeRouter = () => {
-  const { getLogId, debugLog, debugTrace, isNuxtNavigating, logger } =
+  const { getLogId, debugLog, debugTrace, waitForNavigationsClear } =
     useRouterNavigatingDevUtils()
   const router = useRouter()
   const state = useRouterNavigatingState()
@@ -87,27 +98,16 @@ export const useSafeRouter = () => {
     const waitPromise = buildManualPromise<void>()
     const logId = getLogId()
 
-    const waitForNavigationsClear = async () =>
-      await until(isNuxtNavigating)
-        .toBe(false, {
-          throwOnTimeout: true,
-          timeout: 500
-        })
-        .catch((err) => {
-          // Swallow throw, just log and continue
-          logger.error({ err }, 'Waiting for nuxt navigations to clear timed out')
-        })
-
     debugTrace(`[{logId}] Safe router ${action} registered`, {
       initialTo: to(),
       logId
     })
 
     try {
-      const activeWaits = state.value.allActiveWaits.slice()
+      const activeWaits = state.allActiveWaits.slice()
 
       // Queue up another wait
-      state.value.allActiveWaits = [...state.value.allActiveWaits, waitPromise.promise]
+      state.allActiveWaits = [...state.allActiveWaits, waitPromise.promise]
 
       // Wait for all previously queued up waits
       await Promise.allSettled(activeWaits)
@@ -150,7 +150,7 @@ export const useSafeRouter = () => {
         logId,
         navResult
       })
-      state.value.allActiveWaits = state.value.allActiveWaits.filter(
+      state.allActiveWaits = state.allActiveWaits.filter(
         (p) => p !== waitPromise.promise
       )
       waitPromise.resolve()
@@ -160,7 +160,7 @@ export const useSafeRouter = () => {
       waitPromise.reject(e)
       throw e
     } finally {
-      state.value.allActiveWaits = state.value.allActiveWaits.filter(
+      state.allActiveWaits = state.allActiveWaits.filter(
         (p) => p !== waitPromise.promise
       )
     }
@@ -185,4 +185,21 @@ export const useSafeRouter = () => {
   }
 
   return { ...router, push, replace }
+}
+
+/**
+ * Similar to useRoute, but will not change the value until the new/incoming route has fully finished navigating
+ */
+export const useCurrentRouteTillNavigated = () => {
+  const baseRoute = useRoute()
+  const { $isNavigating } = useNuxtApp()
+  const route = shallowRef({ ...toRaw(baseRoute) })
+
+  watch($isNavigating, (newVal, oldVal) => {
+    if (!newVal && oldVal) {
+      route.value = { ...toRaw(baseRoute) }
+    }
+  })
+
+  return route
 }

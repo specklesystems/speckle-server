@@ -71,7 +71,7 @@ export const canCreateSavedViewPolicy: AuthPolicy<
         return err(
           new ProjectNotEnoughPermissionsError({
             message:
-              "Your role on this project doesn't give you permission to create saved views. You need the Can edit or Project owner role."
+              "Your role on this project doesn't give you permission to save views. You need the Can edit or Project owner role."
           })
         )
       return err(ensuredWriteAccess.error)

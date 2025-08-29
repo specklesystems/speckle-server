@@ -192,9 +192,11 @@ export const useProcessWorkspaceInvite = () => {
               'workspaceInvite',
               ({ value, variables, helpers: { readField } }) => {
                 if (value) {
-                  const workspace = readField(value, 'workspace')
-                  if (workspace) {
-                    const inviteWorkspaceId = workspace.id
+                  const workspaceRef = readField(value, 'workspace')
+
+                  if (workspaceRef) {
+                    const workspaceId = readField(workspaceRef, 'id')
+                    const inviteWorkspaceId = workspaceId
                     if (inviteWorkspaceId === workspaceId) return null
                   }
                 } else {
