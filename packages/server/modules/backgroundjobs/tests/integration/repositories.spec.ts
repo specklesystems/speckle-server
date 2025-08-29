@@ -4,7 +4,7 @@ import {
   getBackgroundJobFactory,
   BackgroundJobs,
   getBackgroundJobCountFactory,
-  failQueuedBackgroundJobsWhichExceedMaximumAttemptsFactory
+  failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory
 } from '@/modules/backgroundjobs/repositories'
 import type {
   BackgroundJob,
@@ -182,9 +182,12 @@ describe('Background Jobs repositories @backgroundjobs', () => {
       })
       await storeBackgroundJob({ job })
 
-      const SUT = failQueuedBackgroundJobsWhichExceedMaximumAttemptsFactory({
-        db
-      })
+      const SUT =
+        failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory(
+          {
+            db
+          }
+        )
 
       await SUT({ originServerUrl, jobType: 'fileImport' })
 

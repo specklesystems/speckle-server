@@ -4,13 +4,9 @@ import type {
   GarbageCollectPendingUploadedFiles,
   NotifyChangeInFileStatus
 } from '@/modules/fileuploads/domain/operations'
-import type {
-  FailQueueAndProcessingBackgroundJobWithNoRemainingComputeBudget,
-  FailQueuedBackgroundJobsWhichExceedMaximumAttempts
-} from '@/modules/backgroundjobs/domain'
+import type { FailQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget } from '@/modules/backgroundjobs/domain'
 import type { FileImportJobPayloadV2 } from '@speckle/shared/workers/fileimport'
 import { BackgroundJobType } from '@/modules/fileuploads/domain/consts'
-import { concat } from 'lodash-es'
 
 export const manageFileImportExpiryFactory = (deps: {
   garbageCollectExpiredPendingUploads: GarbageCollectPendingUploadedFiles
@@ -32,36 +28,25 @@ export const manageFileImportExpiryFactory = (deps: {
 }
 
 export const garbageCollectAttemptedFileImportBackgroundJobsFactory = (deps: {
-  failQueuedBackgroundJobsWhichExceedMaximumAttempts: FailQueuedBackgroundJobsWhichExceedMaximumAttempts<FileImportJobPayloadV2>
-  failQueueAndProcessingBackgroundJobWithNoRemainingComputeBudget: FailQueueAndProcessingBackgroundJobWithNoRemainingComputeBudget<FileImportJobPayloadV2>
+  failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget: FailQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget<FileImportJobPayloadV2>
   failPendingUploadedFiles: FailPendingUploadedFiles
   notifyUploadStatus: NotifyChangeInFileStatus
 }): ((params: { logger: Logger; originServerUrl: string }) => Promise<void>) => {
   const {
-    failQueuedBackgroundJobsWhichExceedMaximumAttempts,
-    failQueueAndProcessingBackgroundJobWithNoRemainingComputeBudget,
+    failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget,
     failPendingUploadedFiles,
     notifyUploadStatus
   } = deps
   return async (params) => {
     const { logger, originServerUrl } = params
 
-    const exceededMaximumAttemptsBackgroundJobs =
-      await failQueuedBackgroundJobsWhichExceedMaximumAttempts({
-        originServerUrl,
-        jobType: BackgroundJobType.FileImport
-      })
-
-    const outOfComputeBudgetJobs =
-      await failQueueAndProcessingBackgroundJobWithNoRemainingComputeBudget({
-        originServerUrl,
-        jobType: BackgroundJobType.FileImport
-      })
-
-    const failedBackgroundJobs = concat(
-      exceededMaximumAttemptsBackgroundJobs,
-      outOfComputeBudgetJobs
-    )
+    const failedBackgroundJobs =
+      await failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget(
+        {
+          originServerUrl,
+          jobType: BackgroundJobType.FileImport
+        }
+      )
 
     logger.info(
       `Found ${failedBackgroundJobs.length} background jobs which have exceeded maximum number of attempts or exceeded their compute budget`

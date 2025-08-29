@@ -1,7 +1,6 @@
 import type { Knex } from 'knex'
 import type {
-  FailQueueAndProcessingBackgroundJobWithNoRemainingComputeBudget,
-  FailQueuedBackgroundJobsWhichExceedMaximumAttempts,
+  FailQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget,
   UpdateBackgroundJob
 } from '@/modules/backgroundjobs/domain'
 import {
@@ -54,62 +53,44 @@ export const getBackgroundJobFactory =
     return job ?? null
   }
 
-export const failQueuedBackgroundJobsWhichExceedMaximumAttemptsFactory =
-  <T extends BackgroundJobPayload = BackgroundJobPayload>({
-    db
-  }: {
-    db: Knex
-  }): FailQueuedBackgroundJobsWhichExceedMaximumAttempts<T> =>
-  async ({ jobType, originServerUrl }) => {
-    const query = tables
-      .backgroundJobs(db)
-      .where(BackgroundJobs.withoutTablePrefix.col.originServerUrl, originServerUrl)
-      .andWhere(
-        BackgroundJobs.withoutTablePrefix.col.status,
-        BackgroundJobStatus.Queued
-      )
-      .andWhere(BackgroundJobs.withoutTablePrefix.col.jobType, jobType)
-      .andWhere(
-        BackgroundJobs.withoutTablePrefix.col.attempt,
-        '>=',
-        db.raw('"maxAttempt"') // camel-case requires the column name to be wrapped in double quotes
-      )
-      .orderBy(BackgroundJobs.withoutTablePrefix.col.createdAt, 'desc')
-      .update({
-        [BackgroundJobs.withoutTablePrefix.col.status]: BackgroundJobStatus.Failed
-      })
-      .returning<BackgroundJob<T>[]>('*')
+export const failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory =
 
-    return await query
-  }
+    <T extends BackgroundJobPayload = BackgroundJobPayload>({
+      db
+    }: {
+      db: Knex
+    }): FailQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget<T> =>
+    async ({ jobType, originServerUrl }) => {
+      const query = tables
+        .backgroundJobs(db)
+        .where(BackgroundJobs.withoutTablePrefix.col.originServerUrl, originServerUrl)
+        .andWhere(
+          BackgroundJobs.withoutTablePrefix.col.status,
+          BackgroundJobStatus.Queued
+        )
+        .andWhere(BackgroundJobs.withoutTablePrefix.col.jobType, jobType)
+        .andWhere(
+          db
+            .orWhere(
+              BackgroundJobs.withoutTablePrefix.col.attempt,
+              '>=',
+              db.raw('"maxAttempt"') // camel-case requires the column name to be wrapped in double quotes
+            )
+            .orWhere(
+              db
+                .whereJsonPath('payload', '$.payloadVersion', '>=', 2)
+                .whereJsonPath('payload', '$.remainingComputeBudgetSeconds', '<=', 0)
+                .orderBy(BackgroundJobs.withoutTablePrefix.col.createdAt, 'desc')
+            )
+        )
+        .orderBy(BackgroundJobs.withoutTablePrefix.col.createdAt, 'desc')
+        .update({
+          [BackgroundJobs.withoutTablePrefix.col.status]: BackgroundJobStatus.Failed
+        })
+        .returning<BackgroundJob<T>[]>('*')
 
-export const failQueueAndProcessingBackgroundJobWithNoRemainingComputeBudgetFactory = <
-  T extends BackgroundJobPayload = BackgroundJobPayload
->({
-  db
-}: {
-  db: Knex
-}): FailQueueAndProcessingBackgroundJobWithNoRemainingComputeBudget<T> => {
-  return async ({ originServerUrl, jobType }) => {
-    const query = tables
-      .backgroundJobs(db)
-      .where(BackgroundJobs.withoutTablePrefix.col.originServerUrl, originServerUrl)
-      .whereIn(BackgroundJobs.withoutTablePrefix.col.status, [
-        BackgroundJobStatus.Queued,
-        BackgroundJobStatus.Processing
-      ])
-      .andWhere(BackgroundJobs.withoutTablePrefix.col.jobType, jobType)
-      .whereJsonPath('payload', '$.payloadVersion', '>=', 2)
-      .whereJsonPath('payload', '$.remainingComputeBudgetSeconds', '<=', 0)
-      .orderBy(BackgroundJobs.withoutTablePrefix.col.createdAt, 'desc')
-      .update({
-        [BackgroundJobs.withoutTablePrefix.col.status]: BackgroundJobStatus.Failed
-      })
-      .returning<BackgroundJob<T>[]>('*')
-
-    return await query
-  }
-}
+      return await query
+    }
 
 export const updateBackgroundJobFactory =
   ({ db }: { db: Knex }): UpdateBackgroundJob =>
