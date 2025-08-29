@@ -15,6 +15,7 @@
           v-tippy="'Edit name'"
           size="sm"
           color="subtle"
+          class="ml-2"
           hide-text
           :icon-right="Pencil"
           @click="toggleEditDialog"
@@ -45,12 +46,7 @@
       />
     </div>
 
-    <DashboardsEditDialog
-      v-model:open="editDialogOpen"
-      :dashboard-id="dashboard?.id"
-      :workspace-id="workspace?.id"
-      :name="dashboard?.name"
-    />
+    <DashboardsEditDialog v-model:open="editDialogOpen" :dashboard="dashboard" />
   </div>
 </template>
 
