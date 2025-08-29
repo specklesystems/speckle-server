@@ -39,7 +39,7 @@
       </div>
     </template>
     <template v-if="searchMode" #fullTitle>
-      <div class="self-center w-full pr-2 flex gap-2 items-center">
+      <div class="self-center w-full pr-1 flex gap-2 items-center">
         <FormTextInput
           v-bind="bind"
           name="search"
@@ -47,10 +47,10 @@
           color="foundation"
           auto-focus
           size="sm"
+          wrapper-classes="flex-1 -ml-1"
           v-on="on"
         />
         <FormButton
-          v-tippy="'Exit search'"
           size="sm"
           color="subtle"
           :icon-left="X"
