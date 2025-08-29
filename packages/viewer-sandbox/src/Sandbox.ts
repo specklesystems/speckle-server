@@ -497,7 +497,7 @@ export default class Sandbox {
     })
     screenshot.on('click', async () => {
       // console.warn(await this.viewer.screenshot())
-      // console.log(this.viewer.getExtension(MeasurementsExtension).toMeasurementData())
+      console.log(this.viewer.getExtension(MeasurementsExtension).toMeasurementData())
       const pointToPoint = {
         type: 1,
         startPoint: [-6.438068628311157, -0.08159396797417884, 9.198678016662612],
@@ -519,9 +519,24 @@ export default class Sandbox {
         units: 'm',
         precision: 2
       }
+
+      const point = {
+        startPoint: [-1.4789237983476085, 1.7161050907403421, 7.330012503335212],
+        endPoint: [0, 0, 0],
+        startNormal: [4.5859214289392356e-8, 0.7206585498862377, 0.6932901661468042],
+        endNormal: [0, 0, 0],
+        value: 7.6721128499804,
+        units: 'm',
+        precision: 2,
+        type: 3
+      }
       await this.viewer
         .getExtension(MeasurementsExtension)
         .fromMeasurementData(perpendicular)
+      await this.viewer
+        .getExtension(MeasurementsExtension)
+        .fromMeasurementData(pointToPoint)
+      await this.viewer.getExtension(MeasurementsExtension).fromMeasurementData(point)
       /** Read depth */
       // const pass = [
       //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),

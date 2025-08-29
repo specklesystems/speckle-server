@@ -364,13 +364,7 @@ export class MeasurementsExtension extends Extension {
     if (!this._activeMeasurement) return
 
     void this._activeMeasurement.update()
-    if (this._activeMeasurement.value > 0) {
-      this.measurements.push(this._activeMeasurement)
-      this.emitMeasurementCountChanged()
-    } else {
-      this.renderer.scene.remove(this._activeMeasurement)
-      Logger.error('Ignoring zero value measurement!')
-    }
+    this.pushMeasurement(this._activeMeasurement)
 
     if (this._options.chain) {
       const startPoint = new Vector3()
@@ -394,6 +388,16 @@ export class MeasurementsExtension extends Extension {
     } else this._activeMeasurement = null
 
     this.viewer.requestRender()
+  }
+
+  protected pushMeasurement(measurement: Measurement) {
+    if (measurement.value > 0) {
+      this.measurements.push(measurement)
+      this.emitMeasurementCountChanged()
+    } else {
+      this.renderer.scene.remove(measurement)
+      Logger.error('Ignoring zero value measurement!')
+    }
   }
 
   public removeMeasurement() {
@@ -533,7 +537,7 @@ export class MeasurementsExtension extends Extension {
     await measurement.update().then(() => {
       this.viewer.requestRender()
     })
-    this.finishMeasurement()
+    this.pushMeasurement(measurement)
 
     this._options.type = cacheOptions.type
     this._options.chain = cacheOptions.chain

@@ -18,7 +18,7 @@ import { Measurement, MeasurementState } from './Measurement.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import { TextLabel } from '../../objects/TextLabel.js'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
-import { MeasurementData } from '@speckle/shared/viewer/state'
+import { MeasurementData, MeasurementType } from '@speckle/shared/viewer/state'
 
 const _vec40 = new Vector4()
 const _vec41 = new Vector4()
@@ -28,13 +28,6 @@ const _mat40 = new Matrix4()
 const _mat41 = new Matrix4()
 
 export class PointMeasurement extends Measurement {
-  public toMeasurementData(): MeasurementData {
-    throw new Error('Method not implemented.')
-  }
-  public fromMeasurementData(data: MeasurementData): void {
-    data
-    throw new Error('Method not implemented.')
-  }
   protected gizmo: MeasurementPointGizmo
   protected xLabel: TextLabel
   protected yLabel: TextLabel
@@ -249,5 +242,15 @@ export class PointMeasurement extends Measurement {
     if (this.zLabel.textMesh) {
       ;(this.zLabel.textMesh?.material as Material).clippingPlanes = planes
     }
+  }
+
+  public toMeasurementData(): MeasurementData {
+    const data = super.toMeasurementData()
+    data.type = MeasurementType.POINT
+    return data
+  }
+
+  public fromMeasurementData(data: MeasurementData): void {
+    super.fromMeasurementData(data)
   }
 }

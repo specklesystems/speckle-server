@@ -203,33 +203,19 @@ export class PerpendicularMeasurement extends Measurement {
   }
 
   public toMeasurementData(): MeasurementData {
-    return {
-      type: MeasurementType.PERPENDICULAR,
-      startPoint: [this.startPoint.x, this.startPoint.y, this.startPoint.z],
-      endPoint: [this.endPoint.x, this.endPoint.y, this.endPoint.z],
-      startNormal: [this.startNormal.x, this.startNormal.y, this.startNormal.z],
-      endNormal: [this.endNormal.x, this.endNormal.y, this.endNormal.z],
-      innerPoints: [[this.midPoint.x, this.midPoint.y, this.midPoint.z]],
-      value: this.value,
-      units: this.units,
-      precision: this.precision
-    } as MeasurementData
+    const data = super.toMeasurementData()
+    data.type = MeasurementType.PERPENDICULAR
+    data.innerPoints = [[this.midPoint.x, this.midPoint.y, this.midPoint.z]]
+    return data
   }
 
   public fromMeasurementData(data: MeasurementData): void {
-    this.startPoint.set(data.startPoint[0], data.startPoint[1], data.startPoint[2])
-    this.endPoint.set(data.endPoint[0], data.endPoint[1], data.endPoint[2])
-    this.startNormal.set(data.startNormal[0], data.startNormal[1], data.startNormal[2])
-    this.endNormal.set(data.endNormal[0], data.endNormal[1], data.endNormal[2])
+    super.fromMeasurementData(data)
     if (data.innerPoints)
       this.midPoint.set(
         data.innerPoints[0][0],
         data.innerPoints[0][1],
         data.innerPoints[0][2]
       )
-    this.value = data.value
-    this.units = data.units
-    this.precision = data.precision || 1
-    this._state = MeasurementState.COMPLETE
   }
 }
