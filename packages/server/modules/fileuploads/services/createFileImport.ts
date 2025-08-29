@@ -52,6 +52,8 @@ export const pushJobToFileImporterFactory =
       fileType,
       projectId,
       timeOutSeconds: getFileImportTimeLimitMinutes() * TIME.minute,
+      remainingComputeBudgetSeconds:
+        getFileImportTimeLimitMinutes() * TIME.minute * NumberOfFileImportRetries,
       blobId
     })
   }

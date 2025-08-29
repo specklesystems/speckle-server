@@ -15,7 +15,7 @@ import {
   storeBackgroundJobFactory
 } from '@/modules/backgroundjobs/repositories'
 import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain'
-import { calculateTotalFileImportTimeoutMs } from '@/modules/fileuploads/services/createFileImport'
+import { TIME_MS } from '@speckle/shared'
 
 export const fileImportQueues: FileImportQueue[] = []
 
@@ -34,7 +34,7 @@ export const initializePostgresQueue = async ({
   const createBackgroundJob = createBackgroundJobFactory({
     jobConfig: {
       maxAttempt: NumberOfFileImportRetries,
-      timeoutMs: calculateTotalFileImportTimeoutMs()
+      timeoutMs: 1 * TIME_MS.day // some arbitrarily large number, will be ignored by file imports in favour of compute time budgets
     },
     storeBackgroundJob: storeBackgroundJobFactory({
       db,
@@ -53,7 +53,7 @@ export const initializePostgresQueue = async ({
       await createBackgroundJob({
         jobPayload: {
           jobType: BackgroundJobType.FileImport,
-          payloadVersion: BackgroundJobPayloadVersion.v1,
+          payloadVersion: BackgroundJobPayloadVersion.v2,
           ...jobData
         }
       })

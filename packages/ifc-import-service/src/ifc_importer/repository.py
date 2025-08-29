@@ -30,15 +30,23 @@ async def get_next_job(connection: Connection) -> FileimportJob | None:
                 "updatedAt" = NOW()
             WHERE id = (
                 SELECT id FROM background_jobs
-                WHERE ( --queued job
+                WHERE ( --v1 queued job which has not yet exceeded maximum attempts
                     payload ->> 'fileType' = 'ifc'
                     AND status = $2
+                    AND payload ->> 'payloadVersion' = '1'
                     AND "attempt" < "maxAttempt"
                 )
-                OR ( --timed job left on processing state
+                OR ( --any job left in a PROCESSING state which has timed out
                     payload ->> 'fileType' = 'ifc'
                     AND status = $1
-                    AND "updatedAt" < NOW() - ("timeoutMs" * interval '1 millisecond')
+                    AND "updatedAt" < NOW() - (payload ->> 'timeOutSeconds' * interval '1 second')
+                )
+                OR ( --v2 queued job which has not yet exceeded maximum attempts and has remaining compute budget
+                    payload ->> 'fileType' = 'ifc'
+                    AND payload ->> 'payloadVersion' = '2'
+                    AND status = $2
+                    AND "attempt" < "maxAttempt"
+                    AND "remainingComputeBudgetSeconds" > 0
                 )
                 ORDER BY "createdAt"
                 FOR UPDATE SKIP LOCKED
@@ -72,5 +80,23 @@ async def set_job_status(
         WHERE id = $2
         """,
         job_status.value,
+        job_id,
+    )
+
+
+async def deduct_from_compute_budget(
+    connection: Connection, job_id: str, used_compute_time_seconds: int
+) -> None:
+    print(
+        f"updating job: {job_id}'s remaining compute budget by deducting {used_compute_time_seconds} seconds"
+    )
+    _ = await connection.execute(
+        """
+        UPDATE background_jobs
+        SET payload ->> 'remainingComputeBudgetSeconds' = payload ->> 'remainingComputeBudgetSeconds'::int - $1, "updatedAt" = NOW()
+        WHERE id = $2
+        AND payload ->> 'payloadVersion' = '2'
+        """,
+        used_compute_time_seconds,
         job_id,
     )

@@ -13,7 +13,8 @@ export type BackgroundJobType =
   (typeof BackgroundJobType)[keyof typeof BackgroundJobType]
 
 export const BackgroundJobPayloadVersion = {
-  v1: 1
+  v1: 1,
+  v2: 2
 } as const
 
 export type BackgroundJobPayloadVersion =

@@ -1,6 +1,7 @@
 import asyncio
 import tempfile
 import time
+from math import floor
 from pathlib import Path
 
 import structlog
@@ -16,7 +17,12 @@ from specklepy.core.api.inputs.file_import_inputs import (
 from specklepy.core.api.models import Version
 
 from ifc_importer.domain import FileimportPayload, JobStatus
-from ifc_importer.repository import get_next_job, return_job_to_queued, setup_connection
+from ifc_importer.repository import (
+    deduct_from_compute_budget,
+    get_next_job,
+    return_job_to_queued,
+    setup_connection,
+)
 
 IDLE_TIMEOUT = 1
 
@@ -80,6 +86,12 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
             continue
 
         start = time.time()
+        duration = 0
+        job_timeout = job.payload.time_out_seconds
+        if job.payload.remaining_compute_budget_seconds > 0:
+            # respect the remaining compute budget
+            job_timeout = min(job_timeout, job.payload.remaining_compute_budget_seconds)
+
         speckle_client = setup_client(job.payload)
 
         job_id = job.id
@@ -100,13 +112,13 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
             handler = job_handler(speckle_client, job.payload, logger)
             # this will raise a TimeoutError if handler does not complete in time
             version, download_duration, parse_duration = await asyncio.wait_for(
-                handler, timeout=job.payload.time_out_seconds
+                handler, timeout=job_timeout
             )
             version_id = version.id
 
             duration = time.time() - start
             logger.info(
-                "Finished job after {duration} created version {version_id}",
+                "Finished parsing job after {duration}s, creating version {version_id}",
                 duration=duration,
                 version_id=version_id,
             )
@@ -130,9 +142,13 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
             job_status = JobStatus.SUCCEEDED
 
         except TimeoutError as te:
-            # if it times out we won't try again
             ex = te
+            # if it times out we won't automatically try again
             job_status = JobStatus.FAILED
+
+            if job_timeout != job.payload.time_out_seconds:
+                # it timed out because it exceeded its remaining compute budget
+                ex = TimeoutError("Job exceeded remaining compute budget")
 
         # raised if the task is canceled
         except Exception as e:
@@ -140,6 +156,11 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
             ex = e
             job_status = JobStatus.FAILED
         finally:
+            if duration == 0:
+                # it probably failed before we calculated the duration, so calculate it now
+                duration = time.time() - start
+            await deduct_from_compute_budget(connection, job_id, floor(duration))
+
             if job_status == JobStatus.QUEUED:
                 await return_job_to_queued(connection, job_id)
             elif job_status == JobStatus.FAILED:
