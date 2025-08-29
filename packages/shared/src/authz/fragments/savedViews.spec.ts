@@ -20,8 +20,7 @@ import {
   SavedViewNoAccessError,
   SavedViewNotFoundError,
   UngroupedSavedViewGroupLockError,
-  WorkspaceNoAccessError,
-  WorkspacePlanNoFeatureAccessError
+  WorkspaceNoAccessError
 } from '../domain/authErrors.js'
 import { nanoid } from 'nanoid'
 
@@ -191,11 +190,17 @@ describe('ensureCanAccessSavedViewFragment', () => {
     )
 
     it.each(<const>['read', 'write'])(
-      'fails when workspace plan is too cheap (%s)',
+      'succeeds to %s even on free plan',
       async (access) => {
         const sut = buildWorkspaceSUT({
           getWorkspacePlan: getWorkspacePlanFake({
-            name: 'team'
+            name: 'free'
+          }),
+          getSavedView: getSavedViewFake({
+            id: savedViewId,
+            projectId,
+            visibility: SavedViewVisibility.public,
+            authorId: userId
           })
         })
 
@@ -205,9 +210,7 @@ describe('ensureCanAccessSavedViewFragment', () => {
           savedViewId,
           access
         })
-        expect(result).toBeAuthErrorResult({
-          code: WorkspacePlanNoFeatureAccessError.code
-        })
+        expect(result).toBeAuthOKResult()
       }
     )
 
@@ -412,27 +415,6 @@ describe('ensureCanAccessSavedViewGroupFragment', () => {
         code: UngroupedSavedViewGroupLockError.code
       })
     })
-
-    it.each(<const>['read', 'write'])(
-      'fails when workspace plan is too cheap (%s)',
-      async (access) => {
-        const sut = buildWorkspaceSUT({
-          getWorkspacePlan: getWorkspacePlanFake({
-            name: 'team'
-          })
-        })
-
-        const result = await sut({
-          userId,
-          projectId,
-          savedViewGroupId,
-          access
-        })
-        expect(result).toBeAuthErrorResult({
-          code: WorkspacePlanNoFeatureAccessError.code
-        })
-      }
-    )
 
     it.each(<const>['read', 'write'])(
       'fails if view doesnt exist (%s)',

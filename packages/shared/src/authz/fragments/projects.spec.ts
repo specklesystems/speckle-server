@@ -977,7 +977,7 @@ describe('ensureCanUseProjectWorkspacePlanFeatureFragment', () => {
 
     const result = await sut({
       projectId: 'project-id',
-      feature: WorkspacePlanFeatures.SavedViews
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
     })
 
     expect(result).toBeAuthOKResult()
@@ -990,7 +990,7 @@ describe('ensureCanUseProjectWorkspacePlanFeatureFragment', () => {
 
     const result = await sut({
       projectId: 'project-id',
-      feature: WorkspacePlanFeatures.SavedViews
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
     })
 
     expect(result).toBeAuthErrorResult({
@@ -1008,7 +1008,7 @@ describe('ensureCanUseProjectWorkspacePlanFeatureFragment', () => {
 
     const result = await sut({
       projectId: 'project-id',
-      feature: WorkspacePlanFeatures.SavedViews
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
     })
 
     expect(result).toBeAuthErrorResult({
@@ -1026,7 +1026,7 @@ describe('ensureCanUseProjectWorkspacePlanFeatureFragment', () => {
 
     const result = await sut({
       projectId: 'project-id',
-      feature: WorkspacePlanFeatures.SavedViews,
+      feature: WorkspacePlanFeatures.HideSpeckleBranding,
       allowUnworkspaced: true
     })
 
@@ -1044,7 +1044,7 @@ describe('ensureCanUseProjectWorkspacePlanFeatureFragment', () => {
 
     const result = await sut({
       projectId: 'project-id',
-      feature: WorkspacePlanFeatures.SavedViews
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
     })
 
     expect(result).toBeAuthErrorResult({
