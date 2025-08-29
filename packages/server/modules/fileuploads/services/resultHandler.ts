@@ -25,6 +25,7 @@ type OnFileImportResultDeps = {
   updateBackgroundJob: UpdateBackgroundJob
   eventEmit: EventBusEmit
   logger: Logger
+  FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
 }
 
 export const onFileImportResultFactory =
@@ -81,19 +82,21 @@ export const onFileImportResultFactory =
     const status = jobResultStatusToFileUploadStatus(jobResult.status)
     const convertedMessage = jobResultToConvertedMessage(jobResult)
 
-    try {
-      await deps.updateBackgroundJob({
-        jobId,
-        status: newStatusForBackgroundJob
-      })
-    } catch (e) {
-      const err = ensureError(e)
-      logger.error(
-        { err },
-        'Error updating background job status in database. Job ID: %s',
-        jobId
-      )
-      throw err
+    if (deps.FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
+      try {
+        await deps.updateBackgroundJob({
+          jobId,
+          status: newStatusForBackgroundJob
+        })
+      } catch (e) {
+        const err = ensureError(e)
+        logger.error(
+          { err },
+          'Error updating background job status in database. Job ID: %s',
+          jobId
+        )
+        throw err
+      }
     }
 
     let updatedFile: FileUploadRecord

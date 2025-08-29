@@ -305,7 +305,8 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       updateBackgroundJob: updateBackgroundJobFactory({
         db: queueDb
       }),
-      eventEmit: getEventBus().emit
+      eventEmit: getEventBus().emit,
+      FF_NEXT_GEN_FILE_IMPORTER_ENABLED
     })
 
     await onFileImportResult({
