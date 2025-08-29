@@ -153,7 +153,8 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   asMultiregionalOperation,
   asOperation,
-  commandFactory
+  commandFactory,
+  replicateFactory
 } from '@/modules/shared/command'
 import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
@@ -823,28 +824,13 @@ export default FF_WORKSPACES_MODULE_ENABLED
           await asMultiregionalOperation(
             async ({ mainDb, allDbs, emit }) => {
               deleteWorkspaceFactory({
-                deleteWorkspace: async (...input) => {
-                  const [res] = await Promise.all(
-                    allDbs.map((db) => repoDeleteWorkspaceFactory({ db })(...input))
-                  )
-
-                  return res
-                },
+                deleteWorkspace: replicateFactory(allDbs, repoDeleteWorkspaceFactory),
                 deleteProjectAndCommits: deleteProjectAndCommitsFactory({
-                  deleteProject: async (...input) => {
-                    const [res] = await Promise.all(
-                      allDbs.map((db) => deleteProjectFactory({ db })(...input))
-                    )
-
-                    return res
-                  },
-                  deleteProjectCommits: async (...input) => {
-                    const [res] = await Promise.all(
-                      allDbs.map((db) => deleteProjectCommitsFactory({ db })(...input))
-                    )
-
-                    return res
-                  }
+                  deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+                  deleteProjectCommits: replicateFactory(
+                    allDbs,
+                    deleteProjectCommitsFactory
+                  )
                 }),
                 deleteAllResourceInvites: deleteAllResourceInvitesFactory({
                   db: mainDb

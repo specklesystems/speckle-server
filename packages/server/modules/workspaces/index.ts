@@ -33,7 +33,7 @@ import {
 } from '@/modules/core/services/projects'
 import { deleteProjectFactory } from '@/modules/core/repositories/projects'
 import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
-import { asMultiregionalOperation } from '@/modules/shared/command'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
 
 const {
@@ -66,28 +66,13 @@ const scheduleDeleteWorkspacesNonComplete = ({
         const deleteWorkspacesNonComplete = deleteWorkspacesNonCompleteFactory({
           getWorkspacesNonComplete: getWorkspacesNonCompleteFactory({ db: mainDb }),
           deleteWorkspace: deleteWorkspaceFactory({
-            deleteWorkspace: async (...input) => {
-              const [res] = await Promise.all(
-                allDbs.map((db) => repoDeleteWorkspaceFactory({ db })(...input))
-              )
-
-              return res
-            },
+            deleteWorkspace: replicateFactory(allDbs, repoDeleteWorkspaceFactory),
             deleteProjectAndCommits: deleteProjectAndCommitsFactory({
-              deleteProject: async (...input) => {
-                const [res] = await Promise.all(
-                  allDbs.map((db) => deleteProjectFactory({ db })(...input))
-                )
-
-                return res
-              },
-              deleteProjectCommits: async (...input) => {
-                const [res] = await Promise.all(
-                  allDbs.map((db) => deleteProjectCommitsFactory({ db })(...input))
-                )
-
-                return res
-              }
+              deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+              deleteProjectCommits: replicateFactory(
+                allDbs,
+                deleteProjectCommitsFactory
+              )
             }),
             deleteAllResourceInvites: deleteAllResourceInvitesFactory({
               db: mainDb
