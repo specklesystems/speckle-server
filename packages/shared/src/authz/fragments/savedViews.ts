@@ -109,7 +109,7 @@ export const ensureCanAccessSavedViewFragment: AuthPolicyEnsureFragment<
             return err(
               new ProjectNotEnoughPermissionsError({
                 message:
-                  "Your role on this project doesn't give you permission to update saved views."
+                  "Your role on this project doesn't give you permission to update views."
               })
             )
           return err(ensuredWriteAccess.error)
@@ -122,8 +122,8 @@ export const ensureCanAccessSavedViewFragment: AuthPolicyEnsureFragment<
       new SavedViewNoAccessError({
         message:
           access === 'write'
-            ? 'You do not have write access for this saved view'
-            : 'You do not have read access for this saved view'
+            ? 'You do not have permission to edit this view'
+            : 'You do not have read access for this view'
       })
     )
   }
@@ -205,7 +205,7 @@ export const ensureCanAccessSavedViewGroupFragment: AuthPolicyEnsureFragment<
         return err(
           new ProjectNotEnoughPermissionsError({
             message:
-              "Your role on this project doesn't give you permission to update saved view groups."
+              "Your role on this project doesn't give you permission to update view groups."
           })
         )
       return err(ensuredWriteAccess.error)

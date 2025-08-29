@@ -43,7 +43,7 @@
         <FormTextInput
           v-bind="bind"
           name="search"
-          placeholder="Search"
+          placeholder="Search views..."
           color="foundation"
           auto-focus
           v-on="on"
@@ -87,8 +87,7 @@
       >
         <CommonPromoAlert
           title="Save your views"
-          text="With an editor seat, unlock the option to save your own views."
-          :button="{ title: 'Learn more' }"
+          text="With an Editor seat, unlock the option to save views. A workspace admin can update your seat type."
           show-closer
           @close="hideViewerSeatDisclaimer = true"
         />

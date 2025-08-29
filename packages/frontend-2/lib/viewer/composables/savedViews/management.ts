@@ -292,7 +292,7 @@ export const useUpdateSavedView = () => {
     } else {
       const err = getFirstGqlErrorMessage(result?.errors)
       triggerNotification({
-        title: "Couldn't update saved view",
+        title: "Couldn't update view",
         description: err,
         type: ToastNotificationType.Danger
       })
