@@ -37,6 +37,7 @@
         </LayoutMenu>
         <div v-tippy="canCreateView?.errorMessage">
           <FormButton
+            v-tippy="getTooltipProps('Create view in group')"
             size="sm"
             color="subtle"
             :icon-left="Plus"
@@ -74,6 +75,8 @@ import {
   useUpdateSavedViewGroup
 } from '~/lib/viewer/composables/savedViews/management'
 import type { ViewsType } from '~/lib/viewer/helpers/savedViews'
+
+const { getTooltipProps } = useSmartTooltipDelay()
 
 const MenuItems = StringEnum(['Delete', 'Rename'])
 type MenuItems = StringEnumValues<typeof MenuItems>

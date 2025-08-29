@@ -47,7 +47,11 @@
             />
           </LayoutMenu>
           <div
-            v-tippy="canUpdate?.errorMessage"
+            v-tippy="
+              getTooltipProps(
+                canUpdate?.authorized ? 'Edit view' : canUpdate?.errorMessage
+              )
+            "
             class="shrink-0 opacity-0 group-hover:opacity-100"
           >
             <FormButton

@@ -8,6 +8,7 @@
     <template #actions>
       <div v-if="!isLowerPlan" class="flex items-center gap-0.5">
         <FormButton
+          v-tippy="getTooltipProps('Search views')"
           size="sm"
           color="subtle"
           :icon-left="Search"
@@ -16,6 +17,7 @@
         />
         <div v-tippy="canCreateViewOrGroup?.errorMessage" class="flex items-center">
           <FormButton
+            v-tippy="getTooltipProps('Create group')"
             size="sm"
             color="subtle"
             :icon-left="FolderPlus"
@@ -27,6 +29,7 @@
         </div>
         <div v-tippy="canCreateViewOrGroup?.errorMessage" class="flex items-center">
           <FormButton
+            v-tippy="getTooltipProps('Create view')"
             size="sm"
             color="subtle"
             :icon-left="Plus"
@@ -153,6 +156,8 @@ const hideViewerSeatDisclaimer = useSynchronizedCookie<boolean>(
 )
 const searchMode = ref(false)
 const showCreateGroupDialog = ref(false)
+
+const { getTooltipProps } = useSmartTooltipDelay()
 
 const canCreateViewOrGroup = computed(
   () => project.value?.permissions.canCreateSavedView
