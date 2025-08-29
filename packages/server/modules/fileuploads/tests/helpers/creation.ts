@@ -6,23 +6,27 @@ import type { FileImportMessage } from '@/modules/fileuploads/domain/operations'
 import { assign } from 'lodash-es'
 import type {
   FileUploadRecord,
-  FileUploadRecordV2
+  FileUploadRecordWithProjectId
 } from '@/modules/fileuploads/helpers/types'
 import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
 
 const saveUploadFile = saveUploadFileFactory({ db })
-export const createFileUploadJob = (params: { projectId: string; userId: string }) => {
-  const { projectId, userId } = params
+export const createFileUploadJob = (params: {
+  projectId: string
+  modelId: string
+  userId: string
+}) => {
+  const { projectId, modelId, userId } = params
   const jobId = cryptoRandomString({ length: 10 })
   const data = {
     fileId: jobId,
-    streamId: projectId,
-    branchName: cryptoRandomString({ length: 10 }),
+    projectId,
+    modelName: cryptoRandomString({ length: 10 }),
     userId,
     fileName: cryptoRandomString({ length: 10 }),
     fileType: cryptoRandomString({ length: 3 }),
     fileSize: randomInt(1, 1e6),
-    modelId: null
+    modelId
   }
 
   return saveUploadFile(data)
@@ -45,11 +49,11 @@ export const buildFileUploadMessage = (
 }
 
 export const buildFileUploadRecord = (
-  overrides: Partial<FileUploadRecord & FileUploadRecordV2>
-): FileUploadRecord & FileUploadRecordV2 => {
+  overrides: Partial<FileUploadRecord & FileUploadRecordWithProjectId>
+): FileUploadRecord & FileUploadRecordWithProjectId => {
   const id =
     overrides.projectId || overrides.streamId || cryptoRandomString({ length: 10 })
-  const defaults: FileUploadRecord & FileUploadRecordV2 = {
+  const defaults: FileUploadRecord & FileUploadRecordWithProjectId = {
     id: cryptoRandomString({ length: 10 }),
     branchName: cryptoRandomString({ length: 10 }),
     convertedStatus: FileUploadConvertedStatus.Completed,

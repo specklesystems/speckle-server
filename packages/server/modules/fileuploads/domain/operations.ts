@@ -1,7 +1,7 @@
 import type {
   FileUploadConvertedStatus,
   FileUploadRecord,
-  FileUploadRecordV2
+  FileUploadRecordWithProjectId
 } from '@/modules/fileuploads/helpers/types'
 import type { Optional } from '@speckle/shared'
 import type { UploadResult } from '@/modules/blobstorage/domain/types'
@@ -9,45 +9,25 @@ import type {
   FileImportResultPayload,
   JobPayload
 } from '@speckle/shared/workers/fileimport'
+import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
 
 export type GetFileInfo = (args: {
   fileId: string
-}) => Promise<Optional<FileUploadRecord>>
-
-export type GetFileInfoV2 = (args: {
-  fileId: string
   projectId?: string
-}) => Promise<Optional<FileUploadRecordV2>>
+}) => Promise<Optional<FileUploadRecordWithProjectId>>
 
 export type SaveUploadFileInput = Pick<
-  FileUploadRecord,
-  | 'streamId'
-  | 'branchName'
-  | 'userId'
-  | 'fileName'
-  | 'fileType'
-  | 'fileSize'
-  | 'modelId'
-> & { fileId: string }
-
-export type SaveUploadFileInputV2 = Pick<
-  FileUploadRecordV2,
+  FileUploadRecordWithProjectId,
   'projectId' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
 > & { fileId: string; modelId: string; modelName: string }
 
-export type SaveUploadFile = (args: SaveUploadFileInput) => Promise<FileUploadRecord>
-
 export type InsertNewUploadAndNotify = (
   uploadResults: SaveUploadFileInput
-) => Promise<FileUploadRecord>
+) => Promise<FileUploadRecordWithProjectId>
 
-export type InsertNewUploadAndNotifyV2 = (
-  uploadResults: SaveUploadFileInputV2
-) => Promise<FileUploadRecordV2>
-
-export type SaveUploadFileV2 = (
-  args: SaveUploadFileInputV2
-) => Promise<FileUploadRecordV2>
+export type SaveUploadFile = (
+  args: SaveUploadFileInput
+) => Promise<FileUploadRecordWithProjectId>
 
 export type UpdateFileUpload = (args: {
   id: string
@@ -95,7 +75,7 @@ export type RegisterUploadCompleteAndStartFileImport = (args: {
   userId: string
   expectedETag: string
   maximumFileSize: number
-}) => Promise<FileUploadRecordV2 & { modelName: string }>
+}) => Promise<FileUploadRecordWithProjectId & { modelName: string }>
 
 export type GetModelUploadsBaseArgs = {
   projectId: string
@@ -121,3 +101,7 @@ export type GetModelUploads = (params: GetModelUploadsArgs) => Promise<{
   totalCount: number
   cursor: string | null
 }>
+
+export type FindQueue = (filter: {
+  fileType: string
+}) => Pick<FileImportQueue, 'scheduleJob' | 'supportedFileTypes'> | undefined

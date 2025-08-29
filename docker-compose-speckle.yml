@@ -80,7 +80,6 @@ services:
       PREVIEW_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL: 'true'
       PREVIEW_SERVICE_REDIS_URL: 'redis://redis'
       FILEIMPORT_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL: 'true'
-      FILEIMPORT_SERVICE_REDIS_URL: 'redis://redis'
 
       S3_ENDPOINT: 'http://minio:9000'
       S3_PUBLIC_ENDPOINT: 'http://127.0.0.1:9000'
@@ -134,20 +133,20 @@ services:
       - speckle-server
       # - postgres
 
-  fileimport-service:
+  ifc-import-service:
     build:
       context: .
-      dockerfile: packages/fileimport-service/Dockerfile
+      dockerfile: packages/ifc-import-service/Dockerfile
     platform: linux/amd64
-    image: speckle/speckle-fileimport-service:local
+    image: speckle/speckle-ifc-import-service:local
     restart: always
     environment:
       LOG_LEVEL: 'info'
       LOG_PRETTY: 'true'
-      PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
-      SPECKLE_SERVER_URL: 'http://speckle-server:3000'
       FILE_IMPORT_TIME_LIMIT_MIN: 10
-      REDIS_URL: 'redis://redis'
+      FILEIMPORT_QUEUE_POSTGRES_URL: 'postgres://speckle:speckle@postgres/speckle'
+      # EXTRA_CA_CERTS
+
     depends_on:
       - speckle-server
       # - postgres

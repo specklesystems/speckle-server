@@ -1,12 +1,9 @@
 import { Branches, FileUploads } from '@/modules/core/dbSchema'
 import type {
   GarbageCollectPendingUploadedFiles,
-  GetFileInfo,
   SaveUploadFile,
-  SaveUploadFileV2,
   SaveUploadFileInput,
-  SaveUploadFileInputV2,
-  GetFileInfoV2,
+  GetFileInfo,
   UpdateFileUpload,
   GetModelUploadsItems,
   GetModelUploadsBaseArgs,
@@ -15,7 +12,7 @@ import type {
 } from '@/modules/fileuploads/domain/operations'
 import type {
   FileUploadRecord,
-  FileUploadRecordV2
+  FileUploadRecordWithProjectId
 } from '@/modules/fileuploads/helpers/types'
 import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
 import type { Knex } from 'knex'
@@ -36,18 +33,6 @@ const getCursorTools = () =>
 export const getFileInfoFactory =
   (deps: { db: Knex }): GetFileInfo =>
   async (params) => {
-    const { fileId } = params
-    const fileInfo = await tables
-      .fileUploads(deps.db)
-      .where({ [FileUploads.col.id]: fileId })
-      .select<FileUploadRecord[]>('*')
-      .first()
-    return fileInfo
-  }
-
-export const getFileInfoFactoryV2 =
-  (deps: { db: Knex }): GetFileInfoV2 =>
-  async (params) => {
     const { fileId, projectId } = params
     const q = tables
       .fileUploads(deps.db)
@@ -58,7 +43,10 @@ export const getFileInfoFactoryV2 =
     const fileInfo = await q.first()
     if (!fileInfo) return undefined
 
-    return { ...fileInfo, projectId: fileInfo.streamId } satisfies FileUploadRecordV2
+    return {
+      ...fileInfo,
+      projectId: fileInfo.streamId
+    } satisfies FileUploadRecordWithProjectId
   }
 
 export const getStreamFileUploadsFactory =
@@ -85,7 +73,9 @@ export const getStreamFileUploadsFactory =
   }
 
 // While we haven't fully migrated to new endpoint
-const mapFileUploadRecordToV2 = (record: FileUploadRecord): FileUploadRecordV2 => {
+const mapFileUploadRecordToV2 = (
+  record: FileUploadRecord
+): FileUploadRecordWithProjectId => {
   return {
     id: record.id,
     projectId: record.streamId,
@@ -99,39 +89,14 @@ const mapFileUploadRecordToV2 = (record: FileUploadRecord): FileUploadRecordV2 =
     convertedStatus: record.convertedStatus,
     convertedLastUpdate: record.convertedLastUpdate,
     convertedMessage: record.convertedMessage,
-    convertedCommitId: record.convertedCommitId
-  } as FileUploadRecordV2
+    convertedCommitId: record.convertedCommitId,
+    metadata: record.metadata,
+    performanceData: record.performanceData
+  } satisfies FileUploadRecordWithProjectId
 }
 
 export const saveUploadFileFactory =
   (deps: { db: Knex }): SaveUploadFile =>
-  async ({
-    fileId,
-    streamId,
-    branchName,
-    userId,
-    fileName,
-    fileType,
-    fileSize,
-    modelId
-  }: SaveUploadFileInput) => {
-    const dbFile: Partial<FileUploadRecord> = {
-      id: fileId,
-      streamId,
-      branchName,
-      userId,
-      fileName,
-      fileType: fileType.toLowerCase(),
-      fileSize,
-      uploadComplete: true,
-      modelId
-    }
-    const [newRecord] = await tables.fileUploads(deps.db).insert(dbFile, '*')
-    return newRecord as FileUploadRecord
-  }
-
-export const saveUploadFileFactoryV2 =
-  (deps: { db: Knex }): SaveUploadFileV2 =>
   async ({
     fileId,
     projectId,
@@ -141,8 +106,8 @@ export const saveUploadFileFactoryV2 =
     fileType,
     fileSize,
     modelName
-  }: SaveUploadFileInputV2) => {
-    const dbFile: Partial<SaveUploadFileV2> = {
+  }: SaveUploadFileInput) => {
+    const dbFile: Partial<SaveUploadFile> = {
       id: fileId,
       streamId: projectId,
       branchName: modelName, // @deprecated

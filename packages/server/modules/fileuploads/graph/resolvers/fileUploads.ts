@@ -4,13 +4,11 @@ import { db } from '@/db/knex'
 import {
   getBranchPendingVersionsFactory,
   getFileInfoFactory,
-  getFileInfoFactoryV2,
   getModelUploadsItemsFactory,
   getModelUploadsTotalCountFactory,
   getStreamFileUploadsFactory,
   getStreamPendingModelsFactory,
   saveUploadFileFactory,
-  saveUploadFileFactoryV2,
   updateFileUploadFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import {
@@ -18,11 +16,7 @@ import {
   filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import {
-  BadRequestError,
-  ForbiddenError,
-  MisconfiguredEnvironmentError
-} from '@/modules/shared/errors'
+import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import {
   fileImportServiceShouldUsePrivateObjectsServerUrl,
@@ -47,10 +41,7 @@ import {
   registerCompletedUploadFactory
 } from '@/modules/blobstorage/services/presigned'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import {
-  insertNewUploadAndNotifyFactory,
-  insertNewUploadAndNotifyFactoryV2
-} from '@/modules/fileuploads/services/management'
+import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/management'
 import {
   storeApiTokenFactory,
   storeTokenResourceAccessDefinitionsFactory,
@@ -58,28 +49,25 @@ import {
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
 import { createAppTokenFactory } from '@/modules/core/services/tokens'
-import { fileImportQueues } from '@/modules/fileuploads/queues/fileimports'
+import { findQueue } from '@/modules/fileuploads/queues/fileimports'
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
 import { getBranchesByIdsFactory } from '@/modules/core/repositories/branches'
 import { getFileSizeLimit } from '@/modules/blobstorage/services/management'
 import cryptoRandomString from 'crypto-random-string'
-import { getFeatureFlags } from '@speckle/shared/environment'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { getModelUploadsFactory } from '@/modules/fileuploads/services/management'
 import type {
   FileUploadRecord,
-  FileUploadRecordV2
+  FileUploadRecordWithProjectId
 } from '@/modules/fileuploads/helpers/types'
 import { onFileImportResultFactory } from '@/modules/fileuploads/services/resultHandler'
 import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
 import { JobResultStatus } from '@speckle/shared/workers/fileimport'
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 
-const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
-
 const getFileUploadModel = async (params: {
-  upload: FileUploadRecord | FileUploadRecordV2
+  upload: FileUploadRecord | FileUploadRecordWithProjectId
   ctx: GraphQLContext
 }) => {
   const { upload, ctx } = params
@@ -189,14 +177,9 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       })
     })
 
-    const insertNewUploadAndNotifyV2 = insertNewUploadAndNotifyFactoryV2({
-      queues: fileImportQueues,
-      pushJobToFileImporter,
-      saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
-      emit: getEventBus().emit
-    })
-
     const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
+      findQueue,
+      pushJobToFileImporter,
       saveUploadFile: saveUploadFileFactory({ db: projectDb }),
       emit: getEventBus().emit
     })
@@ -213,10 +196,8 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
             objectStorage: projectStorage.private
           })
         }),
-        insertNewUploadAndNotify: FF_NEXT_GEN_FILE_IMPORTER_ENABLED
-          ? insertNewUploadAndNotifyV2
-          : insertNewUploadAndNotify,
-        getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
+        insertNewUploadAndNotify,
+        getFileInfo: getFileInfoFactory({ db: projectDb }),
         getModelsByIds: getBranchesByIdsFactory({ db: projectDb })
       })
 
@@ -239,9 +220,6 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
   },
 
   async finishFileImport(_parent, args, ctx) {
-    if (!FF_NEXT_GEN_FILE_IMPORTER_ENABLED)
-      throw new MisconfiguredEnvironmentError('File import next gen is not enabled')
-
     const { projectId, jobId, status, warnings, reason, result } = args.input
     const userId = ctx.userId
     if (!userId) {
@@ -293,7 +271,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
     const onFileImportResult = onFileImportResultFactory({
       logger: logger.child({ fileUploadStatus: status }),
       updateFileUpload: updateFileUploadFactory({ db: projectDb }),
-      getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
+      getFileInfo: getFileInfoFactory({ db: projectDb }),
       eventEmit: getEventBus().emit
     })
 
