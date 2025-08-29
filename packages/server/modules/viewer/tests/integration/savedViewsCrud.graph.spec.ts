@@ -29,6 +29,8 @@ import {
   GetProjectSavedViewGroupsDocument,
   GetProjectSavedViewIfExistsDocument,
   GetProjectUngroupedViewGroupDocument,
+  OnProjectSavedViewGroupsUpdatedDocument,
+  ProjectSavedViewsUpdatedMessageType,
   UpdateSavedViewDocument,
   UpdateSavedViewGroupDocument
 } from '@/modules/core/graph/generated/graphql'
@@ -63,8 +65,13 @@ import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import { itEach } from '@/test/assertionHelper'
 import type { BasicTestUser } from '@/test/authHelper'
 import { buildBasicTestUser, createTestUser } from '@/test/authHelper'
-import type { ExecuteOperationOptions, TestApolloServer } from '@/test/graphqlHelper'
-import { testApolloServer } from '@/test/graphqlHelper'
+import type {
+  ExecuteOperationOptions,
+  TestApolloServer,
+  TestApolloSubscriptionClient,
+  TestApolloSubscriptionServer
+} from '@/test/graphqlHelper'
+import { testApolloServer, testApolloSubscriptionServer } from '@/test/graphqlHelper'
 import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { createTestObject } from '@/test/speckle-helpers/commitHelper'
@@ -115,7 +122,6 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
  */
 
 ;(FF_SAVED_VIEWS_ENABLED ? describe : describe.skip)('Saved Views GraphQL CRUD', () => {
-  let apollo: TestApolloServer
   let me: BasicTestUser
   let guest: BasicTestUser
   let otherGuy: BasicTestUser
@@ -126,6 +132,10 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
   let myModel1: BasicTestBranch
   let myModel2: BasicTestBranch
   let testGroup1: BasicSavedViewGroupFragment
+
+  let subServer: TestApolloSubscriptionServer
+  let apollo: TestApolloServer
+  let meSubClient: TestApolloSubscriptionClient
 
   const buildCreateInput = (params: {
     resourceIdString: string
@@ -303,7 +313,10 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     ])
     myModel1 = modelCreate[0]
     myModel2 = modelCreate[1]
+
     apollo = await testApolloServer({ authUserId: me.id })
+    subServer = await testApolloSubscriptionServer()
+    meSubClient = await subServer.buildClient({ authUserId: me.id })
 
     // We only run a small subset of tests if the module is disabled, and we dont need this stuff:
     if (FF_WORKSPACES_MODULE_ENABLED) {
@@ -320,6 +333,10 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         )
       )?.data?.projectMutations.savedViewMutations.createGroup!
     }
+  })
+
+  after(async () => {
+    subServer.quit()
   })
 
   if (FF_WORKSPACES_MODULE_ENABLED) {
@@ -427,6 +444,12 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         const resourceIds = model1ResourceIds()
         const resourceIdString = resourceIds.toString()
 
+        const onGroupsUpdated = await meSubClient.subscribe(
+          OnProjectSavedViewGroupsUpdatedDocument,
+          { projectId: myProject.id }
+        )
+        await meSubClient.waitForReadiness()
+
         const res = await createSavedViewGroup({
           input: {
             projectId: myProject.id,
@@ -446,6 +469,21 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         )
         expect(group!.title).to.equal('Test Group')
         expect(group!.isUngroupedViewsGroup).to.be.false
+
+        await onGroupsUpdated.waitForMessage()
+        expect(onGroupsUpdated.getMessages()).to.have.length(1)
+
+        const groupUpdatedMsg = onGroupsUpdated.getMessages()[0]
+        expect(groupUpdatedMsg).to.not.haveGraphQLErrors()
+        expect(groupUpdatedMsg.data?.projectSavedViewGroupsUpdated.type).to.eq(
+          ProjectSavedViewsUpdatedMessageType.Created
+        )
+        expect(groupUpdatedMsg.data?.projectSavedViewGroupsUpdated.id).to.be.ok
+        expect(groupUpdatedMsg.data?.projectSavedViewGroupsUpdated.project.id).to.equal(
+          myProject.id
+        )
+        expect(groupUpdatedMsg.data?.projectSavedViewGroupsUpdated.savedViewGroup?.id)
+          .to.be.ok
       })
 
       it('should successfully create a group w/o a name', async () => {

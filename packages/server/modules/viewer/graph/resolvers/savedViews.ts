@@ -57,6 +57,10 @@ import {
 } from '@/modules/viewer/repositories/dataLoaders/savedViews'
 import type { RequestDataLoaders } from '@/modules/core/loaders'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import {
+  filteredSubscribe,
+  SavedViewSubscriptions
+} from '@/modules/shared/utils/subscriptions'
 
 const buildGetViewerResourceGroups = (params: {
   projectDb: Knex
@@ -495,6 +499,77 @@ const resolvers: Resolvers = {
       })
       return Authz.toGraphqlResult(canCreate)
     }
+  },
+  ProjectSavedViewsUpdatedMessage: {
+    project: async (parent, _args, ctx) => {
+      const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+      const project = await ctx.loaders
+        .forRegion({ db: projectDb })
+        .streams.getStream.load(parent.projectId)
+      return project!
+    }
+  },
+  ProjectSavedViewGroupsUpdatedMessage: {
+    project: async (parent, _args, ctx) => {
+      const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+      const project = await ctx.loaders
+        .forRegion({ db: projectDb })
+        .streams.getStream.load(parent.projectId)
+      return project!
+    }
+  },
+  Subscription: {
+    projectSavedViewsUpdated: {
+      subscribe: filteredSubscribe(
+        SavedViewSubscriptions.ProjectSavedViewsUpdated,
+        async (payload, args, ctx) => {
+          const payloadProjectId = payload.projectSavedViewsUpdated.projectId
+          const savedViewId = payload.projectSavedViewsUpdated.id
+
+          if (payloadProjectId !== args.projectId) return false
+
+          throwIfResourceAccessNotAllowed({
+            resourceId: payloadProjectId,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: ctx.resourceAccessRules
+          })
+
+          const canRead = await ctx.authPolicies.project.savedViews.canRead({
+            projectId: payloadProjectId,
+            userId: ctx.userId,
+            savedViewId,
+            allowNonExistent: true
+          })
+          throwIfAuthNotOk(canRead)
+
+          return true
+        }
+      )
+    },
+    projectSavedViewGroupsUpdated: {
+      subscribe: filteredSubscribe(
+        SavedViewSubscriptions.ProjectSavedViewGroupsUpdated,
+        async (payload, args, ctx) => {
+          const payloadProjectId = payload.projectSavedViewGroupsUpdated.projectId
+          if (payloadProjectId !== args.projectId) return false
+
+          throwIfResourceAccessNotAllowed({
+            resourceId: payloadProjectId,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: ctx.resourceAccessRules
+          })
+
+          // Groups are public, just check for general project access
+          const canRead = await ctx.authPolicies.project.canRead({
+            projectId: payloadProjectId,
+            userId: ctx.userId
+          })
+          throwIfAuthNotOk(canRead)
+
+          return true
+        }
+      )
+    }
   }
 }
 
@@ -523,6 +598,20 @@ const disabledResolvers: Resolvers = {
   ProjectMutations: {
     savedViewMutations: () => {
       throw new NotImplementedError(disabledMessage)
+    }
+  },
+  Subscription: {
+    projectSavedViewsUpdated: {
+      subscribe: filteredSubscribe(
+        SavedViewSubscriptions.ProjectSavedViewsUpdated,
+        () => false
+      )
+    },
+    projectSavedViewGroupsUpdated: {
+      subscribe: filteredSubscribe(
+        SavedViewSubscriptions.ProjectSavedViewGroupsUpdated,
+        () => false
+      )
     }
   }
 }
