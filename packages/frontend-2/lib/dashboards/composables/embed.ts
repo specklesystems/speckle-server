@@ -33,7 +33,20 @@ export function useDashboardEmbed() {
     return false
   })
 
+  const isCrossOriginEmbed = computed(() => {
+    if (!isEmbedEnabled.value || !import.meta.client) return false
+
+    try {
+      return window.location.origin !== window.top?.location.origin
+    } catch {
+      // If we can't access window.top.location.origin due to cross-origin restrictions,
+      // it's definitely a cross-origin embed
+      return true
+    }
+  })
+
   return {
-    isEmbedEnabled
+    isEmbedEnabled,
+    isCrossOriginEmbed
   }
 }

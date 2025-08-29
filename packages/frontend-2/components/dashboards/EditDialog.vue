@@ -26,7 +26,8 @@ import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useUpdateDashboard } from '~/lib/dashboards/composables/management'
 import { graphql } from '~~/lib/common/generated/gql'
-import type { DashboardsEditDialog_DashboardFragment } from '~~/lib/common/generated/graphql'
+import type { DashboardsEditDialog_DashboardFragment } from '~~/lib/common/generated/gql/graphql'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 graphql(`
   fragment DashboardsEditDialog_Dashboard on Dashboard {
@@ -39,7 +40,7 @@ graphql(`
 `)
 
 const props = defineProps<{
-  dashboard: DashboardsEditDialog_DashboardFragment
+  dashboard: MaybeNullOrUndefined<DashboardsEditDialog_DashboardFragment>
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
@@ -50,7 +51,7 @@ const dashboardName = ref()
 
 watch(open, (newValue, oldValue) => {
   if (newValue && !oldValue) {
-    dashboardName.value = props.dashboard.name
+    dashboardName.value = props.dashboard?.name || ''
   }
 })
 
@@ -69,7 +70,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
 ])
 
 const onSubmit = async () => {
-  if (!props.dashboard.id || !props.dashboard.workspace.id) return
+  if (!props.dashboard || !props.dashboard.id || !props.dashboard.workspace.id) return
 
   await updateDashboard(
     {
@@ -78,6 +79,7 @@ const onSubmit = async () => {
     },
     props.dashboard.workspace.id
   )
+
   open.value = false
 }
 </script>

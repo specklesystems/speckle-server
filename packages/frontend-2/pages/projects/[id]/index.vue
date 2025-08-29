@@ -267,13 +267,6 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
     })
   }
 
-  if (isWorkspacesEnabled.value && project.value?.workspace?.id) {
-    items.push({
-      title: 'Dashboards',
-      id: 'dashboards'
-    })
-  }
-
   if (canReadSettings.value?.authorized) {
     items.push({
       title: 'Collaborators',
@@ -306,7 +299,6 @@ const activePageTab = computed({
     if (/\/discussions\/?$/i.test(path)) return findTabById('discussions')
     if (/\/automations\/?.*$/i.test(path)) return findTabById('automations')
     if (/\/acc\/?.*$/i.test(path)) return findTabById('acc')
-    if (/\/dashboards\/?.*$/i.test(path)) return findTabById('dashboards')
     if (/\/collaborators\/?/i.test(path) && canReadSettings.value?.authorized)
       return findTabById('collaborators')
     if (/\/settings\/?/i.test(path) && canReadSettings.value?.authorized)
@@ -327,9 +319,6 @@ const activePageTab = computed({
         break
       case 'automations':
         router.push({ path: projectRoute(projectId.value, 'automations') })
-        break
-      case 'dashboards':
-        router.push({ path: projectRoute(projectId.value, 'dashboards') })
         break
       case 'collaborators':
         if (canReadSettings.value?.authorized) {

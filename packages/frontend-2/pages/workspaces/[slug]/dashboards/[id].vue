@@ -4,7 +4,7 @@
       <div class="flex items-center">
         <HeaderNavLink
           :to="dashboardsRoute(workspace?.slug)"
-          name="Intelligence"
+          name="Dashboard"
           :separator="false"
         />
         <HeaderNavLink
@@ -57,6 +57,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useAuthManager } from '~/lib/auth/composables/auth'
 import { Fullscreen, Pencil } from 'lucide-vue-next'
+import { useTheme } from '~/lib/core/composables/theme'
 
 graphql(`
   fragment WorkspaceDashboards_Dashboard on Dashboard {
@@ -88,6 +89,7 @@ const { token: urlToken } = useRoute().query
 const { result } = useQuery(dashboardQuery, () => ({ id: id as string }))
 const { effectiveAuthToken } = useAuthManager()
 const logger = useLogger()
+const { isDarkTheme } = useTheme()
 
 const editDialogOpen = ref(false)
 
@@ -95,8 +97,12 @@ const workspace = computed(() => result.value?.dashboard?.workspace)
 const dashboard = computed(() => result.value?.dashboard)
 const dashboardUrl = computed(() => {
   return urlToken
-    ? `http://localhost:8083/view/${id}?token=${urlToken}&isEmbed=true`
-    : `http://localhost:8083/dashboards/${id}?token=${effectiveAuthToken.value}&isEmbed=true`
+    ? `http://127.0.0.1:8083/view/${id}?token=${urlToken}&isEmbed=true&theme=${
+        isDarkTheme.value ? 'dark' : 'light'
+      }`
+    : `http://127.0.0.1:8083/dashboards/${id}?token=${
+        effectiveAuthToken.value
+      }&isEmbed=true&theme=${isDarkTheme.value ? 'dark' : 'light'}`
 })
 
 const toggleFullScreen = () => {

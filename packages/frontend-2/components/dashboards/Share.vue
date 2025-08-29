@@ -35,6 +35,18 @@
               Copy link
             </div>
           </MenuItem>
+          <MenuItem v-slot="{ active }">
+            <div
+              :class="[
+                active ? 'bg-highlight-1' : '',
+                'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
+              ]"
+              @click="handleCopyEmbedLink"
+              @keypress="keyboardClick(handleCopyEmbedLink)"
+            >
+              Copy embed link
+            </div>
+          </MenuItem>
         </MenuItems>
       </Transition>
     </Menu>
@@ -95,12 +107,27 @@ const handleCopyLink = async () => {
 
     if (result?.data?.dashboardMutations?.createToken?.token) {
       const token = result.data.dashboardMutations.createToken.token
-      const url = `${route.path}?token=${token}`
+      const url = `${window.location.origin}${route.path}?token=${token}`
       copy(url, { successMessage: 'Link copied to clipboard' })
     }
   } else {
-    const url = route.path
+    const url = `${window.location.origin}${route.path}`
     copy(url, { successMessage: 'Link copied to clipboard' })
+  }
+}
+
+const handleCopyEmbedLink = async () => {
+  if (!urlToken && canShare.value) {
+    const result = await createToken({ dashboardId: props.id || '' })
+
+    if (result?.data?.dashboardMutations?.createToken?.token) {
+      const token = result.data.dashboardMutations.createToken.token
+      const url = `${window.location.origin}${route.path}?token=${token}&embed=true`
+      copy(url, { successMessage: 'Embed link copied to clipboard' })
+    }
+  } else {
+    const url = `${window.location.origin}${route.path}?embed=true`
+    copy(url, { successMessage: 'Embed link copied to clipboard' })
   }
 }
 </script>
