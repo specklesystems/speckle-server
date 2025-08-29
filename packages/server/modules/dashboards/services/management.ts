@@ -29,7 +29,6 @@ export const createDashboardFactory =
       workspaceId,
       ownerId,
       projectIds: [],
-      state: '[]',
       createdAt: new Date(),
       updatedAt: new Date()
     }
