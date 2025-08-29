@@ -498,7 +498,7 @@ export default class Sandbox {
     screenshot.on('click', async () => {
       // console.warn(await this.viewer.screenshot())
       console.log(this.viewer.getExtension(MeasurementsExtension).toMeasurementData())
-      const pointToPoint = {
+      const ptp = {
         type: 1,
         startPoint: [-6.438068628311157, -0.08159396797417884, 9.198678016662612],
         endPoint: [10.06193161010742, -14.001593589782717, 6.109999626874924],
@@ -508,7 +508,7 @@ export default class Sandbox {
         units: 'm',
         precision: 2
       }
-      const perpendicular = {
+      const perp = {
         type: 0,
         startPoint: [-7.70197271094375, 15.700296421207298, 3.5211651490639184],
         endPoint: [-6.438068628311143, -0.08159396797417884, 9.198678016662601],
@@ -530,13 +530,27 @@ export default class Sandbox {
         precision: 2,
         type: 3
       }
-      await this.viewer
-        .getExtension(MeasurementsExtension)
-        .fromMeasurementData(perpendicular)
-      await this.viewer
-        .getExtension(MeasurementsExtension)
-        .fromMeasurementData(pointToPoint)
+
+      const area = {
+        startPoint: [-14.244984626770048, -41.7167253494263, -4.094999790191665],
+        endPoint: [0, 0, 0],
+        startNormal: [-0.038932399389501146, 0.13259830381594825, 0.9904049465258692],
+        endNormal: [0, 0, 0],
+        value: 335.6354144873832,
+        units: 'm',
+        precision: 2,
+        type: 2,
+        innerPoints: [
+          [-14.244984626770048, -41.7167253494263, -4.094999790191665],
+          [-9.229758129055796, -15.699751261429569, -2.190000057220459],
+          [14.743157927440471, -28.460273583979955, -1.1278896002544627],
+          [-14.244984626770048, -41.7167253494263, -4.094999790191665]
+        ]
+      }
+      await this.viewer.getExtension(MeasurementsExtension).fromMeasurementData(perp)
+      await this.viewer.getExtension(MeasurementsExtension).fromMeasurementData(ptp)
       await this.viewer.getExtension(MeasurementsExtension).fromMeasurementData(point)
+      await this.viewer.getExtension(MeasurementsExtension).fromMeasurementData(area)
       /** Read depth */
       // const pass = [
       //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),
