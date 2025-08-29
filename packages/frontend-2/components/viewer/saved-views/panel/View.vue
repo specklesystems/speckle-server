@@ -82,7 +82,7 @@
           }"
           class="text-body-2xs text-foreground-3 truncate pr-1.5"
         >
-          {{ formattedRelativeDate(view.updatedAt) }}
+          {{ formattedRelativeDate(view.updatedAt, { capitalize: true }) }}
         </div>
       </div>
     </div>
