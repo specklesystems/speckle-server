@@ -46,6 +46,7 @@
           placeholder="Search views..."
           color="foundation"
           auto-focus
+          size="sm"
           v-on="on"
         />
         <FormButton
