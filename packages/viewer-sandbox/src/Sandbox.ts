@@ -547,10 +547,10 @@ export default class Sandbox {
           [-14.244984626770048, -41.7167253494263, -4.094999790191665]
         ]
       }
-      await this.viewer.getExtension(MeasurementsExtension).fromMeasurementData(perp)
-      await this.viewer.getExtension(MeasurementsExtension).fromMeasurementData(ptp)
-      await this.viewer.getExtension(MeasurementsExtension).fromMeasurementData(point)
-      await this.viewer.getExtension(MeasurementsExtension).fromMeasurementData(area)
+      this.viewer.getExtension(MeasurementsExtension).addMeasurement(perp)
+      this.viewer.getExtension(MeasurementsExtension).addMeasurement(ptp)
+      this.viewer.getExtension(MeasurementsExtension).addMeasurement(point)
+      this.viewer.getExtension(MeasurementsExtension).addMeasurement(area)
       /** Read depth */
       // const pass = [
       //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),

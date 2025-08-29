@@ -20,11 +20,13 @@ import {
 } from '@speckle/shared/viewer/state'
 
 export enum MeasurementEvent {
-  CountChanged = 'measurement-count-changed'
+  CountChanged = 'measurement-count-changed',
+  MeasurementsChanged = 'measurements-changed'
 }
 
 export interface MeasurementEventPayload {
   [MeasurementEvent.CountChanged]: number
+  [MeasurementEvent.MeasurementsChanged]: Measurement[]
 }
 
 const DefaultMeasurementsOptions = {
@@ -102,6 +104,7 @@ export class MeasurementsExtension extends Extension {
 
   private emitMeasurementCountChanged() {
     this.emit(MeasurementEvent.CountChanged, this.measurements.length)
+    this.emit(MeasurementEvent.MeasurementsChanged, this.measurements)
   }
 
   public constructor(viewer: IViewer, protected cameraProvider: CameraController) {
@@ -524,8 +527,7 @@ export class MeasurementsExtension extends Extension {
     })
   }
 
-  public async fromMeasurementData(measurementData: MeasurementData) {
-    /** Only point to point programatic measurements for now */
+  public addMeasurement(measurementData: MeasurementData) {
     const cacheOptions = this._options
     this._options.type = measurementData.type
     this._options.chain = false
@@ -533,8 +535,8 @@ export class MeasurementsExtension extends Extension {
 
     const measurement = this.startMeasurement()
     measurement.fromMeasurementData(measurementData)
-    measurement.visible = true
-    await measurement.update().then(() => {
+    measurement.isVisible = true
+    void measurement.update().then(() => {
       this.viewer.requestRender()
     })
     this.pushMeasurement(measurement)

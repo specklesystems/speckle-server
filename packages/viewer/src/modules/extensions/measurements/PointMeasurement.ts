@@ -18,7 +18,7 @@ import { Measurement, MeasurementState } from './Measurement.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import { TextLabel } from '../../objects/TextLabel.js'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
-import { MeasurementData, MeasurementType } from '@speckle/shared/viewer/state'
+import { MeasurementType } from '@speckle/shared/viewer/state'
 
 const _vec40 = new Vector4()
 const _vec41 = new Vector4()
@@ -43,6 +43,10 @@ export class PointMeasurement extends Measurement {
     this.xLabel.visible = value
     this.yLabel.visible = value
     this.zLabel.visible = value
+  }
+
+  public get measurementType(): MeasurementType {
+    return MeasurementType.POINT
   }
 
   public constructor() {
@@ -242,15 +246,5 @@ export class PointMeasurement extends Measurement {
     if (this.zLabel.textMesh) {
       ;(this.zLabel.textMesh?.material as Material).clippingPlanes = planes
     }
-  }
-
-  public toMeasurementData(): MeasurementData {
-    const data = super.toMeasurementData()
-    data.type = MeasurementType.POINT
-    return data
-  }
-
-  public fromMeasurementData(data: MeasurementData): void {
-    super.fromMeasurementData(data)
   }
 }

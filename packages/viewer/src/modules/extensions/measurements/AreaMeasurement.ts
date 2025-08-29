@@ -76,6 +76,10 @@ export class AreaMeasurement extends Measurement {
     return box
   }
 
+  public get measurementType(): MeasurementType {
+    return MeasurementType.AREA
+  }
+
   public constructor() {
     super()
 
@@ -491,7 +495,6 @@ export class AreaMeasurement extends Measurement {
 
   public toMeasurementData(): MeasurementData {
     const data = super.toMeasurementData()
-    data.type = MeasurementType.AREA
     data.startPoint = [this.planeOrigin.x, this.planeOrigin.y, this.planeOrigin.z]
     data.startNormal = [this.planeNormal.x, this.planeNormal.y, this.planeNormal.z]
     data.innerPoints = this.points.map((value) => [value.x, value.y, value.z])

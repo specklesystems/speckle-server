@@ -11,7 +11,7 @@ import { getConversionFactor } from '../../converter/Units.js'
 import { Measurement, MeasurementState } from './Measurement.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
-import { MeasurementData, MeasurementType } from '@speckle/shared/viewer/state'
+import { MeasurementType } from '@speckle/shared/viewer/state'
 
 const vec3Buff0: Vector3 = new Vector3()
 
@@ -22,6 +22,10 @@ export class PointToPointMeasurement extends Measurement {
   public set isVisible(value: boolean) {
     this.startGizmo?.enable(value, value, value, value)
     this.endGizmo?.enable(value, value, value, value)
+  }
+
+  public get measurementType(): MeasurementType {
+    return MeasurementType.POINTTOPOINT
   }
 
   public constructor() {
@@ -129,15 +133,5 @@ export class PointToPointMeasurement extends Measurement {
   public updateClippingPlanes(planes: Plane[]) {
     if (this.startGizmo) this.startGizmo.updateClippingPlanes(planes)
     if (this.endGizmo) this.endGizmo.updateClippingPlanes(planes)
-  }
-
-  public toMeasurementData(): MeasurementData {
-    const data = super.toMeasurementData()
-    data.type = MeasurementType.POINTTOPOINT
-    return data
-  }
-
-  public fromMeasurementData(data: MeasurementData): void {
-    super.fromMeasurementData(data)
   }
 }

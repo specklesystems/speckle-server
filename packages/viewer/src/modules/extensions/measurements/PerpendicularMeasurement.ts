@@ -35,6 +35,10 @@ export class PerpendicularMeasurement extends Measurement {
     return new Box3().expandByPoint(this.startPoint).expandByPoint(this.midPoint)
   }
 
+  public get measurementType(): MeasurementType {
+    return MeasurementType.PERPENDICULAR
+  }
+
   public constructor() {
     super()
     this.type = 'PerpendicularMeasurement'
@@ -204,7 +208,6 @@ export class PerpendicularMeasurement extends Measurement {
 
   public toMeasurementData(): MeasurementData {
     const data = super.toMeasurementData()
-    data.type = MeasurementType.PERPENDICULAR
     data.innerPoints = [[this.midPoint.x, this.midPoint.y, this.midPoint.z]]
     return data
   }
