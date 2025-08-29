@@ -200,10 +200,10 @@ const canLoadOriginal = computed(
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
-      id: MenuItems.LoadOriginalVersions,
-      title: 'Load with original model version',
-      disabled: !canLoadOriginal.value.authorized || isLoading.value,
-      disabledTooltip: canLoadOriginal.value.message
+      id: MenuItems.MoveToGroup,
+      title: 'Move to group',
+      disabled: !canUpdate.value?.authorized || isLoading.value,
+      disabledTooltip: canUpdate.value?.errorMessage
     },
     {
       id: MenuItems.ReplaceView,
@@ -212,14 +212,14 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
       disabledTooltip: canUpdate.value?.errorMessage
     },
     {
-      id: MenuItems.MoveToGroup,
-      title: 'Move to group',
-      disabled: !canUpdate.value?.authorized || isLoading.value,
-      disabledTooltip: canUpdate.value?.errorMessage
-    },
-    {
       id: MenuItems.CopyLink,
       title: 'Copy link'
+    },
+    {
+      id: MenuItems.LoadOriginalVersions,
+      title: 'Load with original model version',
+      disabled: !canLoadOriginal.value.authorized || isLoading.value,
+      disabledTooltip: canLoadOriginal.value.message
     }
   ],
   [
@@ -240,7 +240,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
       id: MenuItems.Delete,
-      title: 'Delete',
+      title: 'Delete view...',
       disabled: !canUpdate.value?.authorized || isLoading.value,
       disabledTooltip: canUpdate.value?.errorMessage
     }
