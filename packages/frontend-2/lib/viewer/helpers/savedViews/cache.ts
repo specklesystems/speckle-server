@@ -48,12 +48,19 @@ export const onNewGroupViewCacheUpdates = (
     { autoEvictFiltered: filterKeys }
   )
 
+  // TODO: Not foolproof, if there are multiple ungrouped groups
   // SavedViewGroup.views + 1
   modifyObjectField(
     cache,
     getCacheId('SavedViewGroup', groupId),
     'views',
-    ({ helpers: { createUpdatedValue, ref } }) => {
+    ({ helpers: { createUpdatedValue, ref, readField }, value }) => {
+      // Return if update already done (subscription?)
+      const hasItemAlready = value.items?.some(
+        (item) => readField(item, 'id') === viewId
+      )
+      if (hasItemAlready) return
+
       return createUpdatedValue(({ update }) => {
         update('totalCount', (count) => count + 1)
         update('items', (items) => [ref('SavedView', viewId), ...items])
@@ -64,6 +71,7 @@ export const onNewGroupViewCacheUpdates = (
 }
 
 /**
+ * TODO: What if removed from multiple ungrouped groups?
  * Cache mutations for when a view is removed from a group:
  * - If default group and it is now empty, remove it entirely - evict and remove from Project.savedViewGroups
  * - Otherwise just: SavedViewGroup.views - 1

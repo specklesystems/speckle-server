@@ -421,6 +421,7 @@ type Documents = {
     "\n  fragment UseDeleteSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    groupId\n    projectId\n    isUngroupedViewsGroup\n  }\n": typeof types.UseDeleteSavedViewGroup_SavedViewGroupFragmentDoc,
     "\n  mutation UpdateSavedViewGroup($input: UpdateSavedViewGroupInput!) {\n    projectMutations {\n      savedViewMutations {\n        updateGroup(input: $input) {\n          id\n          ...UseUpdateSavedViewGroup_SavedViewGroup\n        }\n      }\n    }\n  }\n": typeof types.UpdateSavedViewGroupDocument,
     "\n  fragment UseUpdateSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    projectId\n    groupId\n    title\n    isUngroupedViewsGroup\n  }\n": typeof types.UseUpdateSavedViewGroup_SavedViewGroupFragmentDoc,
+    "\n  subscription OnProjectSavedViewsUpdated($projectId: ID!) {\n    projectSavedViewsUpdated(projectId: $projectId) {\n      type\n      id\n      savedView {\n        id\n        group {\n          id\n        }\n        ...ViewerSavedViewsPanelView_SavedView\n      }\n    }\n  }\n": typeof types.OnProjectSavedViewsUpdatedDocument,
     "\n  fragment UseSavedViewValidationHelpers_SavedView on SavedView {\n    id\n    isHomeView\n    visibility\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.UseSavedViewValidationHelpers_SavedViewFragmentDoc,
     "\n  fragment UseViewerSavedViewSetup_SavedView on SavedView {\n    id\n    viewerState\n  }\n": typeof types.UseViewerSavedViewSetup_SavedViewFragmentDoc,
     "\n  fragment ViewerCommentThread on Comment {\n    ...ViewerCommentsListItem\n    ...ViewerCommentBubblesData\n    ...ViewerCommentsReplyItem\n    ...ViewerCommentThreadData\n  }\n": typeof types.ViewerCommentThreadFragmentDoc,
@@ -926,6 +927,7 @@ const documents: Documents = {
     "\n  fragment UseDeleteSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    groupId\n    projectId\n    isUngroupedViewsGroup\n  }\n": types.UseDeleteSavedViewGroup_SavedViewGroupFragmentDoc,
     "\n  mutation UpdateSavedViewGroup($input: UpdateSavedViewGroupInput!) {\n    projectMutations {\n      savedViewMutations {\n        updateGroup(input: $input) {\n          id\n          ...UseUpdateSavedViewGroup_SavedViewGroup\n        }\n      }\n    }\n  }\n": types.UpdateSavedViewGroupDocument,
     "\n  fragment UseUpdateSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    projectId\n    groupId\n    title\n    isUngroupedViewsGroup\n  }\n": types.UseUpdateSavedViewGroup_SavedViewGroupFragmentDoc,
+    "\n  subscription OnProjectSavedViewsUpdated($projectId: ID!) {\n    projectSavedViewsUpdated(projectId: $projectId) {\n      type\n      id\n      savedView {\n        id\n        group {\n          id\n        }\n        ...ViewerSavedViewsPanelView_SavedView\n      }\n    }\n  }\n": types.OnProjectSavedViewsUpdatedDocument,
     "\n  fragment UseSavedViewValidationHelpers_SavedView on SavedView {\n    id\n    isHomeView\n    visibility\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.UseSavedViewValidationHelpers_SavedViewFragmentDoc,
     "\n  fragment UseViewerSavedViewSetup_SavedView on SavedView {\n    id\n    viewerState\n  }\n": types.UseViewerSavedViewSetup_SavedViewFragmentDoc,
     "\n  fragment ViewerCommentThread on Comment {\n    ...ViewerCommentsListItem\n    ...ViewerCommentBubblesData\n    ...ViewerCommentsReplyItem\n    ...ViewerCommentThreadData\n  }\n": types.ViewerCommentThreadFragmentDoc,
@@ -2666,6 +2668,10 @@ export function graphql(source: "\n  mutation UpdateSavedViewGroup($input: Updat
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment UseUpdateSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    projectId\n    groupId\n    title\n    isUngroupedViewsGroup\n  }\n"): (typeof documents)["\n  fragment UseUpdateSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    projectId\n    groupId\n    title\n    isUngroupedViewsGroup\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  subscription OnProjectSavedViewsUpdated($projectId: ID!) {\n    projectSavedViewsUpdated(projectId: $projectId) {\n      type\n      id\n      savedView {\n        id\n        group {\n          id\n        }\n        ...ViewerSavedViewsPanelView_SavedView\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription OnProjectSavedViewsUpdated($projectId: ID!) {\n    projectSavedViewsUpdated(projectId: $projectId) {\n      type\n      id\n      savedView {\n        id\n        group {\n          id\n        }\n        ...ViewerSavedViewsPanelView_SavedView\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

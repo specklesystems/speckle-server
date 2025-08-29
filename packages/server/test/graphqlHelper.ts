@@ -343,7 +343,7 @@ export const testApolloSubscriptionServer = async () => {
     >(
       query: TypedDocumentNode<R, V>,
       variables: V,
-      handler: (res: FormattedExecutionResult<R>) => MaybeAsync<void>
+      handler?: (res: FormattedExecutionResult<R>) => MaybeAsync<void>
     ) => {
       const name = getOperationName(query)
       const buildLogMsg = (msg: string) => (name ? `[${name}] ${msg}` : msg)
@@ -365,7 +365,7 @@ export const testApolloSubscriptionServer = async () => {
       const sub = observable.subscribe(
         async (eventData) => {
           const res = eventData as FormattedExecutionResult<R>
-          const asyncHandler = async () => handler(res)
+          const asyncHandler = async () => handler?.(res)
 
           // Invoke handler
           try {
