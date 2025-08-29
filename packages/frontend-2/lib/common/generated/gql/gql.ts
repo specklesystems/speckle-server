@@ -415,7 +415,7 @@ type Documents = {
     "\n  mutation DeleteSavedView($input: DeleteSavedViewInput!) {\n    projectMutations {\n      savedViewMutations {\n        deleteView(input: $input)\n      }\n    }\n  }\n": typeof types.DeleteSavedViewDocument,
     "\n  fragment UseDeleteSavedView_SavedView on SavedView {\n    id\n    projectId\n    group {\n      id\n    }\n  }\n": typeof types.UseDeleteSavedView_SavedViewFragmentDoc,
     "\n  mutation UpdateSavedView($input: UpdateSavedViewInput!) {\n    projectMutations {\n      savedViewMutations {\n        updateView(input: $input) {\n          id\n          ...ViewerSavedViewsPanelView_SavedView\n          group {\n            id\n            ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup\n          }\n        }\n      }\n    }\n  }\n": typeof types.UpdateSavedViewDocument,
-    "\n  fragment UseUpdateSavedView_SavedView on SavedView {\n    id\n    projectId\n    visibility\n    group {\n      id\n    }\n  }\n": typeof types.UseUpdateSavedView_SavedViewFragmentDoc,
+    "\n  fragment UseUpdateSavedView_SavedView on SavedView {\n    id\n    projectId\n    isHomeView\n    groupResourceIds\n    group {\n      id\n    }\n  }\n": typeof types.UseUpdateSavedView_SavedViewFragmentDoc,
     "\n  mutation CreateSavedViewGroup($input: CreateSavedViewGroupInput!) {\n    projectMutations {\n      savedViewMutations {\n        createGroup(input: $input) {\n          id\n          ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup\n        }\n      }\n    }\n  }\n": typeof types.CreateSavedViewGroupDocument,
     "\n  mutation DeleteSavedViewGroup($input: DeleteSavedViewGroupInput!) {\n    projectMutations {\n      savedViewMutations {\n        deleteGroup(input: $input)\n      }\n    }\n  }\n": typeof types.DeleteSavedViewGroupDocument,
     "\n  fragment UseDeleteSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    groupId\n    projectId\n    isUngroupedViewsGroup\n  }\n": typeof types.UseDeleteSavedViewGroup_SavedViewGroupFragmentDoc,
@@ -921,7 +921,7 @@ const documents: Documents = {
     "\n  mutation DeleteSavedView($input: DeleteSavedViewInput!) {\n    projectMutations {\n      savedViewMutations {\n        deleteView(input: $input)\n      }\n    }\n  }\n": types.DeleteSavedViewDocument,
     "\n  fragment UseDeleteSavedView_SavedView on SavedView {\n    id\n    projectId\n    group {\n      id\n    }\n  }\n": types.UseDeleteSavedView_SavedViewFragmentDoc,
     "\n  mutation UpdateSavedView($input: UpdateSavedViewInput!) {\n    projectMutations {\n      savedViewMutations {\n        updateView(input: $input) {\n          id\n          ...ViewerSavedViewsPanelView_SavedView\n          group {\n            id\n            ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup\n          }\n        }\n      }\n    }\n  }\n": types.UpdateSavedViewDocument,
-    "\n  fragment UseUpdateSavedView_SavedView on SavedView {\n    id\n    projectId\n    visibility\n    group {\n      id\n    }\n  }\n": types.UseUpdateSavedView_SavedViewFragmentDoc,
+    "\n  fragment UseUpdateSavedView_SavedView on SavedView {\n    id\n    projectId\n    isHomeView\n    groupResourceIds\n    group {\n      id\n    }\n  }\n": types.UseUpdateSavedView_SavedViewFragmentDoc,
     "\n  mutation CreateSavedViewGroup($input: CreateSavedViewGroupInput!) {\n    projectMutations {\n      savedViewMutations {\n        createGroup(input: $input) {\n          id\n          ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup\n        }\n      }\n    }\n  }\n": types.CreateSavedViewGroupDocument,
     "\n  mutation DeleteSavedViewGroup($input: DeleteSavedViewGroupInput!) {\n    projectMutations {\n      savedViewMutations {\n        deleteGroup(input: $input)\n      }\n    }\n  }\n": types.DeleteSavedViewGroupDocument,
     "\n  fragment UseDeleteSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    groupId\n    projectId\n    isUngroupedViewsGroup\n  }\n": types.UseDeleteSavedViewGroup_SavedViewGroupFragmentDoc,
@@ -2647,7 +2647,7 @@ export function graphql(source: "\n  mutation UpdateSavedView($input: UpdateSave
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment UseUpdateSavedView_SavedView on SavedView {\n    id\n    projectId\n    visibility\n    group {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment UseUpdateSavedView_SavedView on SavedView {\n    id\n    projectId\n    visibility\n    group {\n      id\n    }\n  }\n"];
+export function graphql(source: "\n  fragment UseUpdateSavedView_SavedView on SavedView {\n    id\n    projectId\n    isHomeView\n    groupResourceIds\n    group {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment UseUpdateSavedView_SavedView on SavedView {\n    id\n    projectId\n    isHomeView\n    groupResourceIds\n    group {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

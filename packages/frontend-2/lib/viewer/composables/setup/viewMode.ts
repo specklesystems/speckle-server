@@ -19,11 +19,11 @@ export const useViewModesSetup = () => {
   const edgesColor = ref<typeof defaultEdgeColorValue | number>(defaultEdgeColorValue)
 
   const defaultEdgesColor = computed(() => {
-    if (mode.value === ViewMode.PEN) {
-      return isLightTheme.value ? edgeColorDark : edgeColorLight
-    } else {
-      return isLightTheme.value ? edgeColorLight : edgeColorDark
+    // Always default to dark edges, only use light edges in PEN mode + dark theme
+    if (mode.value === ViewMode.PEN && !isLightTheme.value) {
+      return edgeColorLight
     }
+    return edgeColorDark
   })
 
   const finalEdgesColor = computed(() => {
