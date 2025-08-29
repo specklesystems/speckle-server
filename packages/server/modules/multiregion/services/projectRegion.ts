@@ -88,21 +88,21 @@ export const updateProjectRegionKeyFactory =
   }
 
 export type GetRegionDb = (args: { regionKey: string }) => Promise<Knex>
-type GetDefaultDb = () => Knex
-
-export type GetProjectDb = (args: { projectId: string }) => Promise<Knex>
+export type GetProjectDb<T extends Knex | undefined = Knex> = (args: {
+  projectId: string
+}) => T | Promise<T>
 export const getProjectDbClientFactory =
-  ({
+  <T extends Knex | undefined>({
     getProjectRegionKey,
     getDefaultDb,
     getRegionDb
   }: {
     getProjectRegionKey: GetProjectRegionKey
-    getDefaultDb: GetDefaultDb
+    getDefaultDb: () => T
     getRegionDb: GetRegionDb
-  }): GetProjectDb =>
+  }): GetProjectDb<T> =>
   async ({ projectId }) => {
     const regionKey = await getProjectRegionKey({ projectId })
     if (!regionKey) return getDefaultDb()
-    return getRegionDb({ regionKey })
+    return getRegionDb({ regionKey }) as Promise<T>
   }

@@ -81,13 +81,20 @@ export const getProjectDbClient: GetProjectDb = async ({ projectId }) => {
   return await getter({ projectId })
 }
 
-// helper for multiregion replication
+// helper for replication logic
+// returns project replication logic instead of the target db
 export const getProjectReplicationDbClients = async ({
   projectId
 }: {
   projectId: string
 }): Promise<[Knex, ...Knex[]]> => {
-  const projectDb = (await getProjectDbClient({ projectId })) as Knex | null
+  const getDefaultDb = () => undefined
+  const projectDb = await getProjectDbClientFactory({
+    getDefaultDb,
+    getRegionDb,
+    getProjectRegionKey
+  })({ projectId })
+
   return [mainDb, ...(projectDb ? [projectDb] : [])]
 }
 

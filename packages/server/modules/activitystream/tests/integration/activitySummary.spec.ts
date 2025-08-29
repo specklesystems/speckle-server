@@ -123,6 +123,7 @@ describe('Activity summary @activity', () => {
           async (stream) => (await createTestStream(stream, userA)).id
         )
       )
+
       await saveActivity({
         streamId,
         resourceType: StreamResourceTypes.Stream,
