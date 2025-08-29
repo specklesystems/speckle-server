@@ -66,6 +66,7 @@
       <div class="w-full flex items-center gap-1">
         <Component
           :is="isOnlyVisibleToMe ? User : Globe"
+          v-tippy="getTooltipProps(isOnlyVisibleToMe ? 'Private' : 'Shared')"
           :size="12"
           :stroke-width="1.5"
           :absolute-stroke-width="true"
@@ -121,6 +122,8 @@ const MenuItems = StringEnum([
   'SetAsHomeView'
 ])
 type MenuItems = StringEnumValues<typeof MenuItems>
+
+const { getTooltipProps } = useSmartTooltipDelay()
 
 graphql(`
   fragment ViewerSavedViewsPanelView_SavedView on SavedView {
