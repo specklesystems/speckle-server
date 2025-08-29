@@ -51,4 +51,8 @@ const onCTAClick = () => {
 const dismissBanner = async () => {
   await updateIntelligenceCommunityStandUpBannerDismissed(true)
 }
+
+onMounted(() => {
+  mixpanel.track('Intelligence Community StandUp Banner Shown')
+})
 </script>
