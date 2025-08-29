@@ -5,7 +5,6 @@ import {
   Raycaster,
   Vector2,
   Vector3,
-  Vector4,
   type Intersection
 } from 'three'
 import { getConversionFactor } from '../../converter/Units.js'
@@ -20,15 +19,10 @@ const vec3Buff2: Vector3 = new Vector3()
 const vec3Buff3: Vector3 = new Vector3()
 const vec3Buff4: Vector3 = new Vector3()
 const vec3Buff5: Vector3 = new Vector3()
-const vec4Buff0: Vector4 = new Vector4()
-const vec4Buff1: Vector4 = new Vector4()
-const vec4Buff2: Vector4 = new Vector4()
-const vec2Buff0: Vector2 = new Vector2()
 
 export class PerpendicularMeasurement extends Measurement {
   private startGizmo: MeasurementPointGizmo | null = null
   private endGizmo: MeasurementPointGizmo | null = null
-  private normalIndicatorPixelSize = 15 * window.devicePixelRatio
   public flipStartNormal: boolean = false
   public midPoint: Vector3 = new Vector3()
 
@@ -121,46 +115,6 @@ export class PerpendicularMeasurement extends Measurement {
       .multiplyScalar(0.5)
 
     if (this._state === MeasurementState.DANGLING_START) {
-      const startLine0 = vec3Buff0.copy(this.startPoint)
-
-      // Compute start point in clip space
-      const startNDC = vec4Buff0
-        .set(this.startPoint.x, this.startPoint.y, this.startPoint.z, 1)
-        .applyMatrix4(this.renderingCamera.matrixWorldInverse)
-        .applyMatrix4(this.renderingCamera.projectionMatrix)
-      // Move to NDC
-      const startpDiv = startNDC.w
-      startNDC.multiplyScalar(1 / startpDiv)
-
-      // Compute start point normal in clip space
-      const normalNDC = vec4Buff1
-        .set(this.startNormal.x, this.startNormal.y, this.startNormal.z, 0)
-        .applyMatrix4(this.renderingCamera.matrixWorldInverse)
-        .applyMatrix4(this.renderingCamera.projectionMatrix)
-        .normalize()
-
-      const pixelScale = vec2Buff0.set(
-        (this.normalIndicatorPixelSize / this.renderingSize.x) * 2,
-        (this.normalIndicatorPixelSize / this.renderingSize.y) * 2
-      )
-
-      // Add the scaled NDC normal to the NDC start point, we get the end point in NDC
-      const endNDC = vec4Buff2
-        .set(startNDC.x, startNDC.y, startNDC.z, 1)
-        .add(
-          vec4Buff1.set(normalNDC.x * pixelScale.x, normalNDC.y * pixelScale.y, 0, 0)
-        )
-      // Back to clip
-      endNDC.multiplyScalar(startpDiv)
-      // Back to world
-      endNDC
-        .applyMatrix4(this.renderingCamera.projectionMatrixInverse)
-        .applyMatrix4(this.renderingCamera.matrixWorld)
-      this.startGizmo?.updateLine([
-        startLine0,
-        vec3Buff1.set(endNDC.x, endNDC.y, endNDC.z)
-      ])
-
       this.endGizmo?.enable(false, false, false, false)
     }
 
