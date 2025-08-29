@@ -48,6 +48,7 @@
     <DashboardsEditDialog
       v-model:open="editDialogOpen"
       :dashboard-id="dashboard?.id"
+      :workspace-id="workspace?.id"
       :name="dashboard?.name"
     />
   </div>
@@ -63,6 +64,7 @@ import { Fullscreen, Pencil } from 'lucide-vue-next'
 
 graphql(`
   fragment WorkspaceDashboards_Dashboard on Dashboard {
+    ...DashboardsEditDialog_Dashboard
     id
     name
     createdBy {

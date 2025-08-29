@@ -43,6 +43,7 @@ type Documents = {
     "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n": typeof types.CommonModelSelectorModelFragmentDoc,
     "\n  query DashboardSidebar($slug: String!) {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canListDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": typeof types.DashboardSidebarDocument,
     "\n  fragment DashboardsCard_Dashboard on Dashboard {\n    id\n    name\n    createdAt\n    workspace {\n      id\n    }\n    createdBy {\n      id\n      name\n      avatar\n    }\n    permissions {\n      canDelete {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.DashboardsCard_DashboardFragmentDoc,
+    "\n  fragment DashboardsEditDialog_Dashboard on Dashboard {\n    id\n    name\n    workspace {\n      id\n    }\n  }\n": typeof types.DashboardsEditDialog_DashboardFragmentDoc,
     "\n  query DashboardsListCanCreateDashboards($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canCreateDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": typeof types.DashboardsListCanCreateDashboardsDocument,
     "\n  query DashboardsSharePermissions($id: String!) {\n    dashboard(id: $id) {\n      id\n      permissions {\n        canCreateToken {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": typeof types.DashboardsSharePermissionsDocument,
     "\n  mutation DashboardsShareToken($dashboardId: String!) {\n    dashboardMutations {\n      createToken(dashboardId: $dashboardId) {\n        token\n      }\n    }\n  }\n": typeof types.DashboardsShareTokenDocument,
@@ -524,7 +525,7 @@ type Documents = {
     "\n  fragment SettingsWorkspacesRegions_Workspace on Workspace {\n    id\n    role\n    defaultRegion {\n      id\n      ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n    }\n    hasAccessToMultiRegion: hasAccessToFeature(\n      featureName: workspaceDataRegionSpecificity\n    )\n    hasProjects: projects(limit: 0) {\n      totalCount\n    }\n  }\n": typeof types.SettingsWorkspacesRegions_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesRegions_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": typeof types.SettingsWorkspacesRegions_ServerInfoFragmentDoc,
     "\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    ...SettingsWorkspacesSecurityDefaultSeat_Workspace\n    ...SettingsWorkspacesSecurityDomainManagement_Workspace\n    ...SettingsWorkspacesSecurityDiscoverability_Workspace\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    ...SettingsWorkspacesSecurityDomainProtection_Workspace\n    ...SettingsWorkspacesSecurityWorkspaceCreation_Workspace\n    id\n    slug\n  }\n": typeof types.SettingsWorkspacesSecurity_WorkspaceFragmentDoc,
-    "\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n      logo\n    }\n  }\n": typeof types.WorkspaceDashboards_DashboardFragmentDoc,
+    "\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    ...DashboardsEditDialog_Dashboard\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n      logo\n    }\n  }\n": typeof types.WorkspaceDashboards_DashboardFragmentDoc,
     "\n  fragment WorkspacePage_Workspace on Workspace {\n    ...WorkspaceDashboard_Workspace\n    ...WorkspaceSidebar_Workspace\n  }\n": typeof types.WorkspacePage_WorkspaceFragmentDoc,
 };
 const documents: Documents = {
@@ -557,6 +558,7 @@ const documents: Documents = {
     "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n": types.CommonModelSelectorModelFragmentDoc,
     "\n  query DashboardSidebar($slug: String!) {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canListDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": types.DashboardSidebarDocument,
     "\n  fragment DashboardsCard_Dashboard on Dashboard {\n    id\n    name\n    createdAt\n    workspace {\n      id\n    }\n    createdBy {\n      id\n      name\n      avatar\n    }\n    permissions {\n      canDelete {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.DashboardsCard_DashboardFragmentDoc,
+    "\n  fragment DashboardsEditDialog_Dashboard on Dashboard {\n    id\n    name\n    workspace {\n      id\n    }\n  }\n": types.DashboardsEditDialog_DashboardFragmentDoc,
     "\n  query DashboardsListCanCreateDashboards($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canCreateDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": types.DashboardsListCanCreateDashboardsDocument,
     "\n  query DashboardsSharePermissions($id: String!) {\n    dashboard(id: $id) {\n      id\n      permissions {\n        canCreateToken {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": types.DashboardsSharePermissionsDocument,
     "\n  mutation DashboardsShareToken($dashboardId: String!) {\n    dashboardMutations {\n      createToken(dashboardId: $dashboardId) {\n        token\n      }\n    }\n  }\n": types.DashboardsShareTokenDocument,
@@ -1038,7 +1040,7 @@ const documents: Documents = {
     "\n  fragment SettingsWorkspacesRegions_Workspace on Workspace {\n    id\n    role\n    defaultRegion {\n      id\n      ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n    }\n    hasAccessToMultiRegion: hasAccessToFeature(\n      featureName: workspaceDataRegionSpecificity\n    )\n    hasProjects: projects(limit: 0) {\n      totalCount\n    }\n  }\n": types.SettingsWorkspacesRegions_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesRegions_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": types.SettingsWorkspacesRegions_ServerInfoFragmentDoc,
     "\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    ...SettingsWorkspacesSecurityDefaultSeat_Workspace\n    ...SettingsWorkspacesSecurityDomainManagement_Workspace\n    ...SettingsWorkspacesSecurityDiscoverability_Workspace\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    ...SettingsWorkspacesSecurityDomainProtection_Workspace\n    ...SettingsWorkspacesSecurityWorkspaceCreation_Workspace\n    id\n    slug\n  }\n": types.SettingsWorkspacesSecurity_WorkspaceFragmentDoc,
-    "\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n      logo\n    }\n  }\n": types.WorkspaceDashboards_DashboardFragmentDoc,
+    "\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    ...DashboardsEditDialog_Dashboard\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n      logo\n    }\n  }\n": types.WorkspaceDashboards_DashboardFragmentDoc,
     "\n  fragment WorkspacePage_Workspace on Workspace {\n    ...WorkspaceDashboard_Workspace\n    ...WorkspaceSidebar_Workspace\n  }\n": types.WorkspacePage_WorkspaceFragmentDoc,
 };
 
@@ -1172,6 +1174,10 @@ export function graphql(source: "\n  query DashboardSidebar($slug: String!) {\n 
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment DashboardsCard_Dashboard on Dashboard {\n    id\n    name\n    createdAt\n    workspace {\n      id\n    }\n    createdBy {\n      id\n      name\n      avatar\n    }\n    permissions {\n      canDelete {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment DashboardsCard_Dashboard on Dashboard {\n    id\n    name\n    createdAt\n    workspace {\n      id\n    }\n    createdBy {\n      id\n      name\n      avatar\n    }\n    permissions {\n      canDelete {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment DashboardsEditDialog_Dashboard on Dashboard {\n    id\n    name\n    workspace {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment DashboardsEditDialog_Dashboard on Dashboard {\n    id\n    name\n    workspace {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -3099,7 +3105,7 @@ export function graphql(source: "\n  fragment SettingsWorkspacesSecurity_Workspa
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n      logo\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n      logo\n    }\n  }\n"];
+export function graphql(source: "\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    ...DashboardsEditDialog_Dashboard\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n      logo\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceDashboards_Dashboard on Dashboard {\n    ...DashboardsEditDialog_Dashboard\n    id\n    name\n    createdBy {\n      id\n      name\n      avatar\n    }\n    createdAt\n    updatedAt\n    workspace {\n      id\n      name\n      slug\n      logo\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

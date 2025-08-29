@@ -14,11 +14,13 @@ import {
   updateDashboardMutation,
   deleteDashboardMutation
 } from '~/lib/dashboards/graphql/mutations'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 export function useCreateDashboard() {
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
   const { activeUser } = useActiveUser()
+  const { track } = useMixpanel()
 
   return async (options: {
     identifier: WorkspaceIdentifier
@@ -57,6 +59,10 @@ export function useCreateDashboard() {
       .catch(convertThrowIntoFetchResult)
 
     if (res.data?.dashboardMutations.create) {
+      track('Dashboard Created', {
+        // eslint-disable-next-line camelcase
+        workspace_id: res.data.dashboardMutations.create.workspace.id
+      })
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Dashboard successfully created'
@@ -77,11 +83,16 @@ export function useCreateDashboard() {
 export function useUpdateDashboard() {
   const { mutate } = useMutation(updateDashboardMutation)
   const { triggerNotification } = useGlobalToast()
+  const { track } = useMixpanel()
 
-  return async (input: DashboardUpdateInput) => {
+  return async (input: DashboardUpdateInput, workspaceId: string) => {
     const result = await mutate({ input }).catch(convertThrowIntoFetchResult)
 
     if (result?.data?.dashboardMutations.update) {
+      track('Dashboard Updated', {
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
+      })
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Dashboard successfully updated'
@@ -101,8 +112,9 @@ export function useDeleteDashboard() {
   const apollo = useApolloClient().client
 
   const { triggerNotification } = useGlobalToast()
+  const { track } = useMixpanel()
 
-  return async (id: string) => {
+  return async (id: string, workspaceId: string) => {
     const res = await apollo
       .mutate({
         mutation: deleteDashboardMutation,
@@ -116,6 +128,10 @@ export function useDeleteDashboard() {
       .catch(convertThrowIntoFetchResult)
 
     if (res.data?.dashboardMutations.delete) {
+      track('Dashboard Deleted', {
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
+      })
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Dashboard successfully deleted'

@@ -20,14 +20,10 @@
             size="sm"
           />
           <Trash
-            v-tippy="
-              dashboard.permissions?.canDelete?.authorized
-                ? undefined
-                : 'You can only delete your own dashboards'
-            "
+            v-tippy="canDelete ? undefined : 'You can only delete your own dashboards'"
             class="size-3.5"
             :class="
-              dashboard.permissions?.canDelete?.authorized
+              canDelete
                 ? 'cursor-pointer text-foreground-2 hover:text-foreground'
                 : 'cursor-not-allowed text-foreground-3'
             "
@@ -91,14 +87,17 @@ const updatedAt = computed(() => {
     full: formattedFullDate(props.dashboard.createdAt)
   }
 })
+const canDelete = computed(() => {
+  return props.dashboard.permissions?.canDelete?.authorized
+})
 
 const toggleDeleteDialog = () => {
   isDeleteDialogOpen.value = !isDeleteDialogOpen.value
 }
 
 const handleDelete = async () => {
-  if (!props.dashboard.permissions?.canDelete?.authorized) return
+  if (!canDelete.value || !props.dashboard.id) return
 
-  await deleteDashboard(props.dashboard.id)
+  await deleteDashboard(props.dashboard.id, props.dashboard.workspace.id)
 }
 </script>
