@@ -9,6 +9,11 @@ import {
   NumberOfFileImportRetries
 } from '@/modules/fileuploads/domain/consts'
 
+export const calculateTotalFileImportTimeoutMs = () =>
+  NumberOfFileImportRetries *
+  (getFileImportTimeLimitMinutes() + DelayBetweenFileImportRetriesMinutes + 1) *
+  TIME_MS.minute // allowing an extra minute for some buffer
+
 export const pushJobToFileImporterFactory =
   (deps: {
     createAppToken: CreateAndStoreAppToken
@@ -29,10 +34,7 @@ export const pushJobToFileImporterFactory =
       name: `fileimport-${projectId}@${modelId}`,
       userId,
       scopes: [Scopes.Streams.Write, Scopes.Streams.Read, Scopes.Profile.Read],
-      lifespan:
-        NumberOfFileImportRetries *
-        (getFileImportTimeLimitMinutes() + DelayBetweenFileImportRetriesMinutes + 1) *
-        TIME_MS.minute, // allowing an extra minute for some buffer
+      lifespan: calculateTotalFileImportTimeoutMs(),
       limitResources: [
         {
           id: projectId,

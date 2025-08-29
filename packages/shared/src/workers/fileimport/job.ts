@@ -18,6 +18,7 @@ export const jobPayload = job.merge(
       .number()
       .int()
       .default(30 * TIME.minute)
+      .describe('The timeout for a single attempt at parsing the file')
   })
 )
 export type JobPayload = z.infer<typeof jobPayload>

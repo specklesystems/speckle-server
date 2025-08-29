@@ -1,14 +1,9 @@
-import {
-  getFileImportTimeLimitMinutes,
-  getServerOrigin
-} from '@/modules/shared/helpers/envHelper'
+import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import type { Logger } from '@/observability/logging'
-import { TIME_MS } from '@speckle/shared'
 import type { JobPayload } from '@speckle/shared/workers/fileimport'
 import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
 import {
   NumberOfFileImportRetries,
-  DelayBetweenFileImportRetriesMinutes,
   BackgroundJobType,
   BackgroundJobPayloadVersion
 } from '@/modules/fileuploads/domain/consts'
@@ -20,13 +15,9 @@ import {
   storeBackgroundJobFactory
 } from '@/modules/backgroundjobs/repositories'
 import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain'
+import { calculateTotalFileImportTimeoutMs } from '@/modules/fileuploads/services/createFileImport'
 
 export const fileImportQueues: FileImportQueue[] = []
-
-const timeout =
-  NumberOfFileImportRetries *
-  (getFileImportTimeLimitMinutes() + DelayBetweenFileImportRetriesMinutes) *
-  TIME_MS.minute
 
 export const initializePostgresQueue = async ({
   label,
@@ -41,7 +32,10 @@ export const initializePostgresQueue = async ({
   await migrateDbToLatest({ db, region: `Queue DB for ${label}` })
 
   const createBackgroundJob = createBackgroundJobFactory({
-    jobConfig: { maxAttempt: 3, timeoutMs: timeout },
+    jobConfig: {
+      maxAttempt: NumberOfFileImportRetries,
+      timeoutMs: calculateTotalFileImportTimeoutMs()
+    },
     storeBackgroundJob: storeBackgroundJobFactory({
       db,
       originServerUrl: getServerOrigin()
