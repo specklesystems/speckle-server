@@ -889,6 +889,8 @@ export const getUserStreamsCountFactory =
     const [res] = await countQuery
     return parseInt(res.count)
   }
+
+// TODO: this
 export const createStreamFactory =
   (deps: { db: Knex }): SaveStream =>
   async (input) => {
@@ -1277,6 +1279,7 @@ export const markOnboardingBaseStreamFactory =
     if (!stream) {
       throw new StreamNotFoundError(`Stream ${streamId} not found`)
     }
+    //  this happens outside of the a multiregion ctx
     await updateStreamFactory(deps)({
       id: streamId,
       name: 'Onboarding Stream Local Source - Do Not Delete'

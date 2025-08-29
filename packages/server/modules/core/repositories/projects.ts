@@ -16,6 +16,7 @@ const tables = {
   projectAcl: (db: Knex) => db<StreamAclRecord>(StreamAcl.name)
 }
 
+// TODO: this
 export const storeProjectFactory =
   ({ db }: { db: Knex }): StoreProject =>
   async ({ project }) => {
@@ -29,6 +30,7 @@ export const getProjectFactory =
     return project || null
   }
 
+// TODO: this
 export const deleteProjectFactory =
   ({ db }: { db: Knex }): DeleteProject =>
   async ({ projectId }) => {

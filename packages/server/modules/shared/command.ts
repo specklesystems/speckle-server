@@ -147,14 +147,10 @@ export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
      * @description reference to the main db (first one passed in the array)
      */
     mainDb: Knex
-    /**
-     * @description reference for second db (first one not main)
-     */
-    regionDb: Knex
-    /**
-     * @description reference for all regions (all dbs except the main one)
-     */
-    regionDbs: Knex[]
+    // /**
+    //  * @description reference for second db (first one not main)
+    //  */
+    // regionDb: Knex
     emit: EventBusEmit
   }) => MaybeAsync<T>,
   params: {
@@ -209,8 +205,6 @@ export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
         result = await operation({
           mainDb: mainDbTx,
           allDbs: trxs,
-          regionDb: regionDbsTx[0],
-          regionDbs: regionDbsTx,
           emit
         })
 

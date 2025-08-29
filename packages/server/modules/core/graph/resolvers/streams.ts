@@ -108,6 +108,8 @@ import {
 } from '@/modules/core/repositories/projects'
 import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
 import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
+import { asMultiregionalOperation } from '@/modules/shared/command'
+import { getProjectReplicationDbClients } from '@/modules/multiregion/utils/dbSelector'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -199,11 +201,6 @@ const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
   emitEvent: getEventBus().emit,
   deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
   getStream
-})
-const updateStreamAndNotify = updateStreamAndNotifyFactory({
-  getStream,
-  updateStream: updateStreamFactory({ db }),
-  emitEvent: getEventBus().emit
 })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
@@ -556,12 +553,26 @@ export default {
         streamId: projectId //legacy
       })
 
-      await withOperationLogging(
-        async () => await updateStreamAndNotify(args.stream, context.userId!),
+      await asMultiregionalOperation(
+        async ({ mainDb, allDbs, emit }) => {
+          const updateStreamAndNotify = updateStreamAndNotifyFactory({
+            getStream: getStreamFactory({ db: mainDb }),
+            updateStream: async (...input) => {
+              const [res] = await Promise.all(
+                allDbs.map((db) => updateStreamFactory({ db })(...input))
+              )
+
+              return res
+            },
+            emitEvent: emit
+          })
+
+          await updateStreamAndNotify(args.stream, context.userId!)
+        },
         {
           logger,
-          operationName: 'updateStream',
-          operationDescription: `Update a Stream`
+          name: 'updateStream',
+          dbs: await getProjectReplicationDbClients({ projectId })
         }
       )
       return true

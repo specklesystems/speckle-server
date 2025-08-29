@@ -1,14 +1,8 @@
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import type { Project } from '@/modules/core/domain/streams/types'
-import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
-import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
-import {
-  createNewProjectFactory,
-  waitForRegionProjectFactory
-} from '@/modules/core/services/projects'
+import { createNewProjectFactory } from '@/modules/core/services/projects'
 import { isSpecificEventPayload } from '@/modules/shared/services/eventBus'
-import { expectToThrow } from '@/test/assertionHelper'
 import type { StreamRoles } from '@speckle/shared'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
@@ -25,9 +19,6 @@ describe('project services @core', () => {
         },
         storeProjectRole: async () => {},
         storeModel: async () => {},
-        waitForRegionProject: async () => {
-          expect.fail()
-        },
         emitEvent: async () => {}
       })
       const project = await createNewProject({ ownerId })
@@ -48,9 +39,6 @@ describe('project services @core', () => {
         },
         storeProjectRole: async () => {},
         storeModel: async () => {},
-        waitForRegionProject: async () => {
-          expect.fail()
-        },
         emitEvent: async () => {}
       })
 
@@ -72,9 +60,6 @@ describe('project services @core', () => {
         },
         storeProjectRole: async () => {},
         storeModel: async () => {},
-        waitForRegionProject: async () => {
-          expect.fail()
-        },
         emitEvent: async () => {}
       })
 
@@ -94,9 +79,6 @@ describe('project services @core', () => {
         },
         storeProjectRole: async () => {},
         storeModel: async () => {},
-        waitForRegionProject: async () => {
-          expect.fail()
-        },
         emitEvent: async () => {}
       })
       const project = await createNewProject({ ownerId, visibility: 'PRIVATE' })
@@ -108,7 +90,7 @@ describe('project services @core', () => {
     it('continues if the project is eventually synced', async () => {
       const ownerId = cryptoRandomString({ length: 10 })
 
-      let queriedProjectId: string | undefined = undefined
+      const queriedProjectId: string | undefined = undefined
       let storedProject: Project | undefined = undefined
       let storedProjectRole:
         | {
@@ -136,9 +118,6 @@ describe('project services @core', () => {
         },
         storeModel: async (args) => {
           storedModel = args
-        },
-        waitForRegionProject: async ({ projectId }) => {
-          queriedProjectId = projectId
         },
         emitEvent: async (payload) => {
           if (isSpecificEventPayload(payload, ProjectEvents.Created)) {
@@ -202,9 +181,6 @@ describe('project services @core', () => {
         storeModel: async (args) => {
           storedModel = args
         },
-        waitForRegionProject: async () => {
-          expect.fail()
-        },
         emitEvent: async (payload) => {
           if (isSpecificEventPayload(payload, ProjectEvents.Created)) {
             emitedEvent = payload.eventName
@@ -231,51 +207,6 @@ describe('project services @core', () => {
         project,
         input: { description: '', name: project.name, visibility: 'PRIVATE' }
       })
-    })
-  })
-  describe('waitForRegionProject creates a function, that', () => {
-    it('deletes the created project if getProject throws StreamNotFoundError', async () => {
-      const storedProjectId = cryptoRandomString({ length: 10 })
-      let deletedProjectId: string | undefined = undefined
-
-      const waitForRegionProject = waitForRegionProjectFactory({
-        getProject: async () => {
-          throw new StreamNotFoundError()
-        },
-        deleteProject: async ({ projectId }) => {
-          deletedProjectId = projectId
-        }
-      })
-      const err = await expectToThrow(async () => {
-        await waitForRegionProject({
-          projectId: storedProjectId,
-          regionKey: cryptoRandomString({ length: 10 })
-        })
-      })
-      expect(storedProjectId).to.equal(deletedProjectId)
-      expect(err.message).to.equal(new RegionalProjectCreationError().message)
-    })
-    it('just throws the error from the project getter', async () => {
-      const projectId = cryptoRandomString({ length: 10 })
-      let deletedProjectId: string | undefined = undefined
-      const kabumm = 'kabumm'
-
-      const waitForRegionProject = waitForRegionProjectFactory({
-        getProject: async () => {
-          throw new Error(kabumm)
-        },
-        deleteProject: async ({ projectId }) => {
-          deletedProjectId = projectId
-        }
-      })
-      const err = await expectToThrow(async () => {
-        await waitForRegionProject({
-          projectId,
-          regionKey: cryptoRandomString({ length: 10 })
-        })
-      })
-      expect(deletedProjectId).to.be.undefined
-      expect(err.message).to.equal(kabumm)
     })
   })
 })

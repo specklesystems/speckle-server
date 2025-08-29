@@ -84,6 +84,10 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
 import { deleteProjectFactory } from '@/modules/core/repositories/projects'
+import { asMultiregionalOperation } from '@/modules/shared/command'
+import { logger } from '@/observability/logging'
+import { getProjectReplicationDbClients } from '@/modules/multiregion/utils/dbSelector'
+import type { UpdateStream } from '@/modules/core/domain/streams/operations'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -127,11 +131,29 @@ const deleteStream = deleteStreamAndNotifyFactory({
   deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
 })
 
-const updateStream = updateStreamAndNotifyFactory({
-  getStream,
-  updateStream: updateStreamFactory({ db }),
-  emitEvent: getEventBus().emit
-})
+const updateStream: UpdateStream = async (stream, projectId) =>
+  asMultiregionalOperation(
+    async ({ mainDb, allDbs, emit }) => {
+      const updateStreamAndNotify = updateStreamAndNotifyFactory({
+        getStream: getStreamFactory({ db: mainDb }),
+        updateStream: async (...input) => {
+          const [res] = await Promise.all(
+            allDbs.map((db) => updateStreamFactory({ db })(...input))
+          )
+
+          return res
+        },
+        emitEvent: emit
+      })
+
+      return updateStreamAndNotify(stream, projectId)
+    },
+    {
+      logger,
+      name: 'updateStream',
+      dbs: await getProjectReplicationDbClients({ projectId })
+    }
+  )
 
 const revokeStreamPermissions = revokeStreamPermissionsFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({

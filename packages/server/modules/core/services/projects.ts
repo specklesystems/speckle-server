@@ -4,28 +4,20 @@ import type {
   CreateProject,
   DeleteProject,
   DeleteProjectAndCommits,
-  GetProject,
   QueryAllProjects,
   StoreModel,
   StoreProject,
-  StoreProjectRole,
-  WaitForRegionProject
+  StoreProjectRole
 } from '@/modules/core/domain/projects/operations'
 import type {
   Project,
   StreamWithOptionalRole
 } from '@/modules/core/domain/streams/types'
-import {
-  ProjectQueryError,
-  RegionalProjectCreationError
-} from '@/modules/core/errors/projects'
-import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { ProjectQueryError } from '@/modules/core/errors/projects'
 import { ProjectVisibility } from '@/modules/core/graph/generated/graphql'
 import { mapGqlToDbProjectVisibility } from '@/modules/core/helpers/project'
-import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
-import { retry } from '@lifeomic/attempt'
-import { Roles, TIME_MS } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import type { GetExplicitProjects } from '@/modules/core/domain/streams/operations'
 import type { DeleteProjectCommits } from '@/modules/core/domain/commits/operations'
@@ -35,13 +27,11 @@ export const createNewProjectFactory =
     storeProject,
     storeProjectRole,
     storeModel,
-    waitForRegionProject,
     emitEvent
   }: {
     storeProject: StoreProject
     storeProjectRole: StoreProjectRole
     storeModel: StoreModel
-    waitForRegionProject: WaitForRegionProject
     emitEvent: EventBusEmit
   }): CreateProject =>
   async ({ description, name, regionKey, visibility, workspaceId, ownerId }) => {
@@ -64,13 +54,7 @@ export const createNewProjectFactory =
 
     await storeProject({ project })
     const projectId = project.id
-    // if regionKey, we need to make sure it is actually written and synced
-    if (regionKey) {
-      await waitForRegionProject({
-        projectId,
-        regionKey
-      })
-    }
+
     await storeProjectRole({ projectId, userId: ownerId, role: Roles.Stream.Owner })
     await storeModel({
       name: 'main',
@@ -103,33 +87,6 @@ export const createNewProjectFactory =
       }
     })
     return project
-  }
-
-export const waitForRegionProjectFactory =
-  (deps: {
-    getProject: GetProject
-    deleteProject: DeleteProject
-  }): WaitForRegionProject =>
-  async ({ projectId, regionKey, maxAttempts = 10 }) => {
-    try {
-      await retry(
-        async () => {
-          const replicatedProject = await deps.getProject({ projectId })
-          if (!replicatedProject) throw new StreamNotFoundError()
-        },
-        { maxAttempts, delay: isTestEnv() ? TIME_MS.second : undefined }
-      )
-    } catch (err) {
-      if (err instanceof StreamNotFoundError) {
-        // delete from region
-        await deps.deleteProject({ projectId })
-        throw new RegionalProjectCreationError(undefined, {
-          info: { projectId, regionKey }
-        })
-      }
-      // else throw as is
-      throw err
-    }
   }
 
 export const queryAllProjectsFactory = ({

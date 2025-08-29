@@ -1,4 +1,4 @@
-import { db } from '@/db/knex'
+import { db, mainDb } from '@/db/knex'
 import type {
   GetProjectDb,
   GetRegionDb
@@ -81,6 +81,16 @@ export const getProjectDbClient: GetProjectDb = async ({ projectId }) => {
   return await getter({ projectId })
 }
 
+// helper for multiregion replication
+export const getProjectReplicationDbClients = async ({
+  projectId
+}: {
+  projectId: string
+}): Promise<[Knex, ...Knex[]]> => {
+  const projectDb = (await getProjectDbClient({ projectId })) as Knex | null
+  return [mainDb, ...(projectDb ? [projectDb] : [])]
+}
+
 // the default region key is a config value, we're caching this globally
 let defaultRegionKeyCache: string | null | undefined = undefined
 
@@ -101,6 +111,7 @@ export const getValidDefaultProjectRegionKey = async (): Promise<string | null> 
 
 type RegionClients = Record<string, Knex>
 let registeredRegionClients: RegionClients | undefined = undefined
+export type DatabaseClient = { client: Knex; isMain: boolean; regionKey: string }
 
 /**
  * Idempotently initialize registered region (in db) Knex clients
@@ -134,9 +145,7 @@ export const getRegisteredRegionClients = async (): Promise<RegionClients> => {
 export const getRegisteredDbClients = async (): Promise<Knex[]> =>
   Object.values(await getRegisteredRegionClients())
 
-export const getAllRegisteredDbClients = async (): Promise<
-  Array<{ client: Knex; isMain: boolean; regionKey: string }>
-> => {
+export const getAllRegisteredDbClients = async (): Promise<Array<DatabaseClient>> => {
   const mainDb = db
   const regionDbs: RegionClients = isMultiRegionEnabled()
     ? await getRegisteredRegionClients()

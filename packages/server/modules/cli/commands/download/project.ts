@@ -57,13 +57,8 @@ import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
+import { createNewProjectFactory } from '@/modules/core/services/projects'
 import {
-  createNewProjectFactory,
-  waitForRegionProjectFactory
-} from '@/modules/core/services/projects'
-import {
-  deleteProjectFactory,
-  getProjectFactory,
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
@@ -206,10 +201,6 @@ const command: CommandModule<
       storeModel: storeModelFactory({ db: projectDb }),
       // THIS MUST GO TO THE MAIN DB
       storeProjectRole: storeProjectRoleFactory({ db }),
-      waitForRegionProject: waitForRegionProjectFactory({
-        getProject: getProjectFactory({ db: projectDb }),
-        deleteProject: deleteProjectFactory({ db: projectDb })
-      }),
       emitEvent: getEventBus().emit
     })
 

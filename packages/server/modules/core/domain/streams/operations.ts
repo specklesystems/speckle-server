@@ -358,10 +358,6 @@ export type UpdateStream = (
   updaterId: string
 ) => Promise<Stream>
 
-export type LegacyUpdateStream = (
-  update: StreamUpdateInput
-) => Promise<Nullable<string>>
-
 export type PermissionUpdateInput =
   | StreamUpdatePermissionInput
   | StreamRevokePermissionInput

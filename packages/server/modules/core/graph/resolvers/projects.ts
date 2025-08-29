@@ -31,7 +31,6 @@ import {
 import { storeModelFactory } from '@/modules/core/repositories/models'
 import {
   deleteProjectFactory,
-  getProjectFactory,
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
@@ -50,8 +49,7 @@ import {
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import {
   createNewProjectFactory,
-  deleteProjectAndCommitsFactory,
-  waitForRegionProjectFactory
+  deleteProjectAndCommitsFactory
 } from '@/modules/core/services/projects'
 import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
@@ -72,6 +70,7 @@ import { getOnboardingBaseProjectFactory } from '@/modules/cross-server-sync/ser
 import {
   getDb,
   getProjectDbClient,
+  getProjectReplicationDbClients,
   getValidDefaultProjectRegionKey
 } from '@/modules/multiregion/utils/dbSelector'
 import {
@@ -120,7 +119,7 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { asOperation } from '@/modules/shared/command'
+import { asMultiregionalOperation, asOperation } from '@/modules/shared/command'
 import type { Knex } from 'knex'
 
 const getUser = getUserFactory({ db })
@@ -390,6 +389,7 @@ const resolvers: Resolvers = {
               emitEvent: emit
             }),
             getUser: getUserFactory({ db: mainDb }),
+            // not in mutliregion ctx
             updateStream: updateStreamFactory({ db: mainDb })
           })
 
@@ -429,18 +429,27 @@ const resolvers: Resolvers = {
       })
       throwIfAuthNotOk(canUpdate)
 
-      const projectDB = await getProjectDbClient({ projectId })
-      const updateStreamAndNotify = updateStreamAndNotifyFactory({
-        getStream: getStreamFactory({ db: projectDB }),
-        updateStream: updateStreamFactory({ db: projectDB }),
-        emitEvent: getEventBus().emit
-      })
-      const res = await withOperationLogging(
-        async () => await updateStreamAndNotify(update, userId!),
+      const res = await asMultiregionalOperation(
+        async ({ mainDb, allDbs, emit }) => {
+          const updateStreamAndNotify = updateStreamAndNotifyFactory({
+            getStream: getStreamFactory({ db: mainDb }),
+            updateStream: async (...input) => {
+              const [res] = await Promise.all(
+                allDbs.map((regionDb) =>
+                  updateStreamFactory({ db: regionDb })(...input)
+                )
+              )
+              return res
+            },
+            emitEvent: emit
+          })
+
+          return await updateStreamAndNotify(update, userId!)
+        },
         {
           logger,
-          operationName: 'projectUpdate',
-          operationDescription: `Update a project`
+          name: 'Update Project',
+          dbs: await getProjectReplicationDbClients({ projectId })
         }
       )
 
@@ -475,13 +484,10 @@ const resolvers: Resolvers = {
         storeModel: storeModelFactory({ db: projectDb }),
         // THIS MUST GO TO THE MAIN DB
         storeProjectRole: storeProjectRoleFactory({ db }),
-        waitForRegionProject: waitForRegionProjectFactory({
-          getProject: getProjectFactory({ db }),
-          deleteProject: deleteProjectFactory({ db: projectDb })
-        }),
         emitEvent: getEventBus().emit
       })
 
+      // TODO: this
       const project = await withOperationLogging(
         async () =>
           await createNewProject({
