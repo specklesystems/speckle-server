@@ -68,3 +68,8 @@ export const fileImportResultPayload = z.discriminatedUnion('status', [
 ])
 
 export type FileImportResultPayload = z.infer<typeof fileImportResultPayload>
+
+export type FileImportJobPayloadV1 = JobPayload & {
+  jobType: 'fileImport'
+  payloadVersion: 1
+}
