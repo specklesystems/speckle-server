@@ -84,4 +84,12 @@ export const useIsRhinoFileImporterEnabled = () => {
   return ref(FF_RHINO_FILE_IMPORTER_ENABLED)
 }
 
+export const useIsNoPersonalEmailsEnabled = () => {
+  const {
+    public: { FF_NO_PERSONAL_EMAILS_ENABLED }
+  } = useRuntimeConfig()
+
+  return ref(FF_NO_PERSONAL_EMAILS_ENABLED)
+}
+
 export { useGlobalToast, useActiveUser, usePageQueryStandardFetchPolicy, useEventBus }
