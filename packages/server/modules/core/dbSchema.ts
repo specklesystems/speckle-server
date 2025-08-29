@@ -308,6 +308,7 @@ export const UsersMeta = buildMetaTableHelper(
     'isProjectsActive',
     'newWorkspaceExplainerDismissed',
     'speckleConBannerDismissed',
+    'intelligenceCommunityStandUpBannerDismissed',
     'legacyProjectsExplainerCollapsed',
     // Used in tests
     'foo',
