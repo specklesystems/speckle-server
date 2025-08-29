@@ -45,9 +45,7 @@ const mixpanel = useMixpanel()
 const { updateIntelligenceCommunityStandUpBannerDismissed } = useActiveUserMeta()
 
 const onCTAClick = () => {
-  mixpanel.track('SpeckleCON CTA Clicked', {
-    location: 'sidebar'
-  })
+  mixpanel.track('Intelligence Community StandUp CTA Clicked')
 }
 
 const dismissBanner = async () => {
