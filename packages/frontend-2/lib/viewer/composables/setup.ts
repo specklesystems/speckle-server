@@ -3,7 +3,6 @@ import {
   ViewerEvent,
   DefaultLightConfiguration,
   LegacyViewer,
-  MeasurementType,
   FilteringExtension
 } from '@speckle/viewer'
 import type {
@@ -12,7 +11,6 @@ import type {
   PropertyInfo,
   SunLightConfiguration,
   SpeckleView,
-  MeasurementOptions,
   DiffResult,
   Viewer,
   WorldTree,
@@ -67,7 +65,11 @@ import {
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { buildManualPromise } from '@speckle/ui-components'
 import { PassReader } from '../extensions/PassReader'
-import type { SectionBoxData } from '@speckle/shared/viewer/state'
+import {
+  MeasurementType,
+  type MeasurementOptions,
+  type SectionBoxData
+} from '@speckle/shared/viewer/state'
 import {
   createGetParamFromResources,
   isAllModelsResource,

@@ -13,29 +13,20 @@ import { CameraController } from '../CameraController.js'
 import Logger from '../../utils/Logger.js'
 import { AreaMeasurement } from './AreaMeasurement.js'
 import { PointMeasurement } from './PointMeasurement.js'
-
-export enum MeasurementType {
-  PERPENDICULAR,
-  POINTTOPOINT,
-  AREA,
-  POINT
-}
+import {
+  MeasurementData,
+  MeasurementOptions,
+  MeasurementType
+} from '@speckle/shared/viewer/state'
 
 export enum MeasurementEvent {
-  CountChanged = 'measurement-count-changed'
+  CountChanged = 'measurement-count-changed',
+  MeasurementsChanged = 'measurements-changed'
 }
 
 export interface MeasurementEventPayload {
   [MeasurementEvent.CountChanged]: number
-}
-
-export interface MeasurementOptions {
-  visible: boolean
-  type?: MeasurementType
-  vertexSnap?: boolean
-  units?: string
-  precision?: number
-  chain?: boolean
+  [MeasurementEvent.MeasurementsChanged]: Measurement[]
 }
 
 const DefaultMeasurementsOptions = {
@@ -113,6 +104,7 @@ export class MeasurementsExtension extends Extension {
 
   private emitMeasurementCountChanged() {
     this.emit(MeasurementEvent.CountChanged, this.measurements.length)
+    this.emit(MeasurementEvent.MeasurementsChanged, this.measurements)
   }
 
   public constructor(viewer: IViewer, protected cameraProvider: CameraController) {
@@ -375,13 +367,7 @@ export class MeasurementsExtension extends Extension {
     if (!this._activeMeasurement) return
 
     void this._activeMeasurement.update()
-    if (this._activeMeasurement.value > 0) {
-      this.measurements.push(this._activeMeasurement)
-      this.emitMeasurementCountChanged()
-    } else {
-      this.renderer.scene.remove(this._activeMeasurement)
-      Logger.error('Ignoring zero value measurement!')
-    }
+    this.pushMeasurement(this._activeMeasurement)
 
     if (this._options.chain) {
       const startPoint = new Vector3()
@@ -405,6 +391,16 @@ export class MeasurementsExtension extends Extension {
     } else this._activeMeasurement = null
 
     this.viewer.requestRender()
+  }
+
+  protected pushMeasurement(measurement: Measurement) {
+    if (measurement.value > 0) {
+      this.measurements.push(measurement)
+      this.emitMeasurementCountChanged()
+    } else {
+      this.renderer.scene.remove(measurement)
+      Logger.error('Ignoring zero value measurement!')
+    }
   }
 
   public removeMeasurement() {
@@ -531,19 +527,26 @@ export class MeasurementsExtension extends Extension {
     })
   }
 
-  public async fromMeasurementData(startPoint: Vector3, endPoint: Vector3) {
-    /** Only point to point programatic measurements for now */
-    const cacheType = this._options.type
-    this._options.type = MeasurementType.POINTTOPOINT
-    this._activeMeasurement = this.startMeasurement()
-    this._activeMeasurement.isVisible = true
-    this._activeMeasurement.startPoint.copy(startPoint)
-    this._activeMeasurement.startNormal.copy(new Vector3(0, 0, 1))
-    await this._activeMeasurement.update()
-    this._activeMeasurement.state = MeasurementState.DANGLING_END
-    this._activeMeasurement.endPoint.copy(endPoint)
-    this._activeMeasurement.endNormal.copy(new Vector3(0, 0, 1))
-    await this._activeMeasurement.update()
-    this._options.type = cacheType
+  public addMeasurement(measurementData: MeasurementData) {
+    const cacheOptions = this._options
+    this._options.type = measurementData.type
+    this._options.chain = false
+    this._options.vertexSnap = false
+
+    const measurement = this.startMeasurement()
+    measurement.fromMeasurementData(measurementData)
+    measurement.isVisible = true
+    void measurement.update().then(() => {
+      this.viewer.requestRender()
+    })
+    this.pushMeasurement(measurement)
+
+    this._options.type = cacheOptions.type
+    this._options.chain = cacheOptions.chain
+    this._options.vertexSnap = cacheOptions.vertexSnap
+  }
+
+  public toMeasurementData(): MeasurementData[] {
+    return this.measurements.map((val) => val.toMeasurementData())
   }
 }

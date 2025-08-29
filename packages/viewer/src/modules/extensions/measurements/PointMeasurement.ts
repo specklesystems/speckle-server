@@ -18,6 +18,7 @@ import { Measurement, MeasurementState } from './Measurement.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import { TextLabel } from '../../objects/TextLabel.js'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
+import { MeasurementType } from '@speckle/shared/viewer/state'
 
 const _vec40 = new Vector4()
 const _vec41 = new Vector4()
@@ -42,6 +43,10 @@ export class PointMeasurement extends Measurement {
     this.xLabel.visible = value
     this.yLabel.visible = value
     this.zLabel.visible = value
+  }
+
+  public get measurementType(): MeasurementType {
+    return MeasurementType.POINT
   }
 
   public constructor() {

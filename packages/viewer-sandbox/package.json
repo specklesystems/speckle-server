@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@speckle/objectloader2": "workspace:^",
+    "@speckle/shared": "workspace:^",
     "@speckle/viewer": "workspace:^",
     "tweakpane": "^3.0.8"
   },

@@ -14,10 +14,10 @@ import {
   GeometryType,
   SpeckleStandardMaterial,
   Assets,
-  AssetType
+  AssetType,
+  SpeckleMesh
 } from '@speckle/viewer'
 import SnowMaterial from './SnowMaterial'
-import SpeckleMesh from '@speckle/viewer/dist/modules/objects/SpeckleMesh'
 import { RepeatWrapping, NearestFilter } from 'three'
 import snowTex from '../../../assets/snow.png'
 import { SnowFallPass } from './SnowFallPass'

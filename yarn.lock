@@ -11321,6 +11321,7 @@ __metadata:
   resolution: "@speckle/viewer-sandbox@workspace:packages/viewer-sandbox"
   dependencies:
     "@speckle/objectloader2": "workspace:^"
+    "@speckle/shared": "workspace:^"
     "@speckle/viewer": "workspace:^"
     "@tweakpane/core": "npm:^1.0.9"
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"

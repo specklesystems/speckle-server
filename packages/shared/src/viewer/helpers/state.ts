@@ -7,20 +7,32 @@ import { coerceUndefinedValuesToNull } from '../../core/index.js'
 export const defaultViewModeEdgeColorValue = 'DEFAULT_EDGE_COLOR'
 
 /** Redefining these is unfortunate. Especially since they are not part of viewer-core */
-enum MeasurementType {
+export enum MeasurementType {
   PERPENDICULAR = 0,
   POINTTOPOINT = 1,
   AREA = 2,
   POINT = 3
 }
 
-interface MeasurementOptions {
+export interface MeasurementOptions {
   visible: boolean
   type?: MeasurementType
   vertexSnap?: boolean
   units?: string
   precision?: number
   chain?: boolean
+}
+
+export interface MeasurementData {
+  type: MeasurementType
+  startPoint: readonly [number, number, number] // vec3
+  endPoint: readonly [number, number, number] // vec3
+  startNormal: readonly [number, number, number] // vec3
+  endNormal: readonly [number, number, number] // vec3
+  value: number
+  innerPoints?: (readonly [number, number, number])[] // array of vec3
+  units?: string
+  precision?: number
 }
 
 export interface SectionBoxData {

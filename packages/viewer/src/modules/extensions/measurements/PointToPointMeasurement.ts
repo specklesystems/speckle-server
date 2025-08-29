@@ -11,12 +11,9 @@ import { getConversionFactor } from '../../converter/Units.js'
 import { Measurement, MeasurementState } from './Measurement.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
+import { MeasurementType } from '@speckle/shared/viewer/state'
 
 const vec3Buff0: Vector3 = new Vector3()
-const vec3Buff1: Vector3 = new Vector3()
-const vec3Buff2: Vector3 = new Vector3()
-const vec3Buff3: Vector3 = new Vector3()
-const vec3Buff4: Vector3 = new Vector3()
 
 export class PointToPointMeasurement extends Measurement {
   private startGizmo: MeasurementPointGizmo | null = null
@@ -25,6 +22,10 @@ export class PointToPointMeasurement extends Measurement {
   public set isVisible(value: boolean) {
     this.startGizmo?.enable(value, value, value, value)
     this.endGizmo?.enable(value, value, value, value)
+  }
+
+  public get measurementType(): MeasurementType {
+    return MeasurementType.POINTTOPOINT
   }
 
   public constructor() {
@@ -61,54 +62,51 @@ export class PointToPointMeasurement extends Measurement {
   }
 
   public update(): Promise<void> {
-    let ret: Promise<void> = Promise.resolve()
+    let ret: Promise<void> | undefined
     this.startGizmo?.updateNormalIndicator(this.startPoint, this.startNormal)
     this.startGizmo?.updatePoint(this.startPoint)
     this.endGizmo?.updateNormalIndicator(this.endPoint, this.endNormal)
 
+    this.startLineLength = this.startPoint.distanceTo(this.endPoint)
+    this.value = this.startLineLength
+
+    const textPos = vec3Buff0
+      .copy(this.startPoint)
+      .add(this.endPoint)
+      .multiplyScalar(0.5)
+
     if (this._state === MeasurementState.DANGLING_START) {
-      const startLine0 = vec3Buff0.copy(this.startPoint)
-      const startLine1 = vec3Buff1
-        .copy(this.startPoint)
-        .add(vec3Buff2.copy(this.startNormal).multiplyScalar(this.startLineLength))
-      this.startGizmo?.updateLine([startLine0, startLine1])
+      this.startGizmo?.enable(true, false, true, false)
       this.endGizmo?.enable(false, false, false, false)
     }
     if (this._state === MeasurementState.DANGLING_END) {
-      this.startLineLength = this.startPoint.distanceTo(this.endPoint)
-      this.value = this.startLineLength
+      this.startGizmo?.enable(true, true, true, true)
+      this.endGizmo?.enable(true, false, true, false)
 
-      const endStartDir = vec3Buff0.copy(this.endPoint).sub(this.startPoint).normalize()
-      const lineEndPoint = vec3Buff1
-        .copy(this.startPoint)
-        .add(vec3Buff2.copy(endStartDir).multiplyScalar(this.startLineLength))
+      this.startGizmo?.updateLine([this.startPoint, this.endPoint])
+      this.endGizmo?.updatePoint(this.endPoint)
 
-      const textPos = vec3Buff3
-        .copy(this.startPoint)
-        .add(vec3Buff4.copy(endStartDir).multiplyScalar(this.startLineLength * 0.5))
-
-      this.startGizmo?.updateLine([this.startPoint, lineEndPoint])
-      this.endGizmo?.updatePoint(lineEndPoint)
-      if (this.startGizmo)
-        ret = this.startGizmo.updateText(
-          `${(this.value * getConversionFactor('m', this.units)).toFixed(
-            this.precision
-          )} ${this.units}`,
-          textPos
-        )
-      this.endGizmo?.enable(true, true, true, true)
+      ret = this.startGizmo?.updateText(
+        `${(this.value * getConversionFactor('m', this.units)).toFixed(
+          this.precision
+        )} ${this.units}`,
+        textPos
+      )
     }
     if (this._state === MeasurementState.COMPLETE) {
       this.startGizmo?.enable(false, true, true, true)
       this.endGizmo?.enable(false, false, true, false)
-      if (this.startGizmo)
-        ret = this.startGizmo.updateText(
-          `${(this.value * getConversionFactor('m', this.units)).toFixed(
-            this.precision
-          )} ${this.units}`
-        )
+
+      this.startGizmo?.updateLine([this.startPoint, this.endPoint])
+      this.endGizmo?.updatePoint(this.endPoint)
+      ret = this.startGizmo?.updateText(
+        `${(this.value * getConversionFactor('m', this.units)).toFixed(
+          this.precision
+        )} ${this.units}`,
+        textPos
+      )
     }
-    return ret
+    return ret ?? Promise.resolve()
   }
 
   public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
