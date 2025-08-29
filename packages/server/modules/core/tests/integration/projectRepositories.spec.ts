@@ -14,6 +14,10 @@ import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { assign } from 'lodash-es'
+import type { DeleteProject } from '@/modules/core/domain/projects/operations'
+import { asMultiregionalOperation } from '@/modules/shared/command'
+import { logger } from '@/observability/logging'
+import { getProjectReplicationDbClients } from '@/modules/multiregion/utils/dbSelector'
 
 const createTestProject = (overrides?: Partial<Project>): Project => {
   const defaults: Project = {
@@ -33,7 +37,20 @@ const createTestProject = (overrides?: Partial<Project>): Project => {
 
 const storeProject = storeProjectFactory({ db })
 const getProject = getProjectFactory({ db })
-const deleteProject = deleteProjectFactory({ db })
+const deleteProject: DeleteProject = async ({ projectId }) =>
+  asMultiregionalOperation(
+    async ({ allDbs }) => {
+      const [res] = await Promise.all(
+        allDbs.map(async (db) => await deleteProjectFactory({ db })({ projectId }))
+      )
+      return res
+    },
+    {
+      name: 'delete spec',
+      logger,
+      dbs: await getProjectReplicationDbClients({ projectId })
+    }
+  )
 const storeProjectRole = storeProjectRoleFactory({ db })
 
 describe('project repositories @core', () => {

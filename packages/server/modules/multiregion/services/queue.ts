@@ -20,9 +20,7 @@ import {
 } from '@/modules/workspaces/services/projectRegions'
 import { db } from '@/db/knex'
 import {
-  deleteProjectFactory,
   getProjectFactory,
-  storeProjectFactory,
   storeProjectRolesFactory
 } from '@/modules/core/repositories/projects'
 import { getAvailableRegionsFactory } from '@/modules/workspaces/services/regions'
@@ -56,7 +54,6 @@ import {
 } from '@/modules/workspaces/repositories/projectRegions'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
-import { waitForRegionProjectFactory } from '@/modules/core/services/projects'
 import { chunk } from 'lodash-es'
 import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
 
@@ -234,7 +231,7 @@ export const startQueue = async () => {
               updateProjectRegionKey: updateProjectRegionKeyFactory({
                 upsertProjectRegionKey: upsertProjectRegionKeyFactory({
                   db: targetDbTrx
-                }),
+                }), // here
                 cacheDeleteRegionKey: deleteRegionKeyFromCacheFactory({
                   redis: getGenericRedis()
                 }),
@@ -242,6 +239,7 @@ export const startQueue = async () => {
               })
             })
 
+            // TODO: this -->
             return updateProjectRegion({ projectId, regionKey })
           },
           { db: targetDb }
@@ -249,25 +247,6 @@ export const startQueue = async () => {
 
         // Grab project roles for later reinstating
         const projectRoles = await getStreamCollaboratorsFactory({ db })(project.id)
-
-        // Delete project in main db to "unblock" replication
-        await deleteProjectFactory({ db })({ projectId: project.id })
-
-        try {
-          // Wait for replication from regional db
-          await waitForRegionProjectFactory({
-            getProject: getProjectFactory({ db }),
-            deleteProject: deleteProjectFactory({ db: targetDb })
-          })({
-            projectId: project.id,
-            regionKey,
-            maxAttempts: 100
-          })
-        } catch (err) {
-          // Failed to delete project or await replication, reset project state in main db
-          await storeProjectFactory({ db })({ project })
-          throw err
-        }
 
         // Reinstate project acl records
         for (const roles of chunk(projectRoles, 10_000)) {

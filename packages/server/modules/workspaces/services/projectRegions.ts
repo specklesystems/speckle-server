@@ -122,6 +122,8 @@ export const updateProjectRegionFactory =
     }
 
     // Update project region in db and update relevant caches
+
+    // TODO: this is the only thing multiregion operation
     return await deps.updateProjectRegionKey({ projectId, regionKey })
   }
 

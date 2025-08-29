@@ -80,6 +80,7 @@ export const getRegionKeyFromStorageFactory =
     return projectRegion.regionKey
   }
 
+// TODO: this
 export const upsertProjectRegionKeyFactory =
   ({ db }: { db: Knex }): StorageRegionKeyUpdate =>
   async ({ projectId, regionKey }) => {

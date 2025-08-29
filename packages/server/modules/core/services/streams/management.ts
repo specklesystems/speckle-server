@@ -26,7 +26,6 @@ import type {
   GetStream,
   IsStreamCollaborator,
   LegacyCreateStream,
-  LegacyUpdateStream,
   PermissionUpdateInput,
   RemoveStreamCollaborator,
   SaveStream,
@@ -218,16 +217,6 @@ export const updateStreamAndNotifyFactory =
     })
 
     return newStream
-  }
-
-/**
- * @deprecated Use updateStreamAndNotifyFactory() or the repo fn directly
- */
-export const legacyUpdateStreamFactory =
-  (deps: { updateStream: UpdateStreamRecord }): LegacyUpdateStream =>
-  async (update) => {
-    const updatedStream = await deps.updateStream(update)
-    return updatedStream?.id || null
   }
 
 const isProjectUpdateRoleInput = (

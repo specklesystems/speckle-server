@@ -257,9 +257,23 @@ const deleteUser: DeleteUser = async (...input) =>
     ({ mainDb, allDbs, emit }) => {
       const deleteUser = deleteUserFactory({
         deleteProjectAndCommits: deleteProjectAndCommitsFactory({
-          deleteProject: deleteProjectFactory({ db: mainDb }),
-          // TODO: this is a multiregion bug!
-          deleteProjectCommits: deleteProjectCommitsFactory({ db: mainDb })
+          // this is a bit of an overhead, we are issuing delete queries to all regions,
+          // instead of being selective and clever about figuring out the project DB and only
+          // deleting from main and the project db
+          deleteProject: async (...input) => {
+            const [res] = await Promise.all(
+              allDbs.map((db) => deleteProjectFactory({ db })(...input))
+            )
+
+            return res
+          },
+          deleteProjectCommits: async (...input) => {
+            const [res] = await Promise.all(
+              allDbs.map((db) => deleteProjectCommitsFactory({ db })(...input))
+            )
+
+            return res
+          }
         }),
         logger: dbLogger,
         isLastAdminUser: isLastAdminUserFactory({ db: mainDb }),

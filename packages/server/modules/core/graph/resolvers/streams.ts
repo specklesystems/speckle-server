@@ -108,6 +108,9 @@ import {
 } from '@/modules/core/repositories/projects'
 import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
 import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
+import { asMultiregionalOperation } from '@/modules/shared/command'
+import { getProjectReplicationDbClients } from '@/modules/multiregion/utils/dbSelector'
+import type { Logger } from '@/observability/logging'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -191,20 +194,44 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
   storeProjectRole: storeProjectRoleFactory({ db }),
   emitEvent: getEventBus().emit
 })
-const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
-  deleteProjectAndCommits: deleteProjectAndCommitsFactory({
-    deleteProject: deleteProjectFactory({ db }),
-    deleteProjectCommits: deleteProjectCommitsFactory({ db })
-  }),
-  emitEvent: getEventBus().emit,
-  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-  getStream
-})
-const updateStreamAndNotify = updateStreamAndNotifyFactory({
-  getStream,
-  updateStream: updateStreamFactory({ db }),
-  emitEvent: getEventBus().emit
-})
+
+const deleteStreamAndNotify = async (
+  projectId: string,
+  userId: string,
+  ctxLogger: Logger
+) =>
+  asMultiregionalOperation(
+    ({ allDbs, mainDb, emit }) => {
+      const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+        deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+          deleteProject: (...input) => {
+            const [res] = allDbs.map((db) => deleteProjectFactory({ db })(...input))
+
+            return res
+          },
+          deleteProjectCommits: async (...input) => {
+            // some regions might not have commits
+            const [res] = await Promise.all(
+              allDbs.map((db) => deleteProjectCommitsFactory({ db })(...input))
+            )
+
+            return res
+          }
+        }),
+        emitEvent: emit,
+        deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db: mainDb }),
+        getStream: getStreamFactory({ db: mainDb })
+      })
+      return deleteStreamAndNotify(projectId, userId)
+    },
+    {
+      logger: ctxLogger,
+      name: 'delete project',
+      description: `Cascade deleting a project`,
+      dbs: await getProjectReplicationDbClients({ projectId })
+    }
+  )
+
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream
@@ -556,12 +583,26 @@ export default {
         streamId: projectId //legacy
       })
 
-      await withOperationLogging(
-        async () => await updateStreamAndNotify(args.stream, context.userId!),
+      await asMultiregionalOperation(
+        async ({ mainDb, allDbs, emit }) => {
+          const updateStreamAndNotify = updateStreamAndNotifyFactory({
+            getStream: getStreamFactory({ db: mainDb }),
+            updateStream: async (...input) => {
+              const [res] = await Promise.all(
+                allDbs.map((db) => updateStreamFactory({ db })(...input))
+              )
+
+              return res
+            },
+            emitEvent: emit
+          })
+
+          await updateStreamAndNotify(args.stream, context.userId!)
+        },
         {
           logger,
-          operationName: 'updateStream',
-          operationDescription: `Update a Stream`
+          name: 'updateStream',
+          dbs: await getProjectReplicationDbClients({ projectId })
         }
       )
       return true
@@ -586,43 +627,29 @@ export default {
         streamId: projectId //legacy
       })
 
-      return await withOperationLogging(
-        async () => await deleteStreamAndNotify(args.id, context.userId!),
-        {
-          logger,
-          operationName: 'deleteStream',
-          operationDescription: `Delete a Stream`
-        }
-      )
+      return await deleteStreamAndNotify(args.id, context.userId!, logger)
     },
 
     async streamsDelete(_, args, context) {
       const logger = context.log
 
-      const results = await withOperationLogging(
-        async () =>
-          await Promise.all(
-            (args.ids || []).map(async (id) => {
-              throwIfResourceAccessNotAllowed({
-                resourceId: id,
-                resourceType: TokenResourceIdentifierType.Project,
-                resourceAccessRules: context.resourceAccessRules
-              })
-              const canDelete = await context.authPolicies.project.canDelete({
-                userId: context.userId!,
-                projectId: id
-              })
-              throwIfAuthNotOk(canDelete)
+      const results = await Promise.all(
+        (args.ids || []).map(async (id) => {
+          throwIfResourceAccessNotAllowed({
+            resourceId: id,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: context.resourceAccessRules
+          })
+          const canDelete = await context.authPolicies.project.canDelete({
+            userId: context.userId!,
+            projectId: id
+          })
+          throwIfAuthNotOk(canDelete)
 
-              return await deleteStreamAndNotify(id, context.userId!)
-            })
-          ),
-        {
-          logger,
-          operationName: 'deleteStreams',
-          operationDescription: `Delete one or more Streams`
-        }
+          return await deleteStreamAndNotify(id, context.userId!, logger)
+        })
       )
+
       return results.every((res) => res === true)
     },
 

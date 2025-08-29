@@ -2,12 +2,7 @@ import { db } from '@/db/knex'
 import { StreamAcl, Streams } from '@/modules/core/dbSchema'
 import type { StreamRecord } from '@/modules/core/helpers/types'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
-import {
-  deleteProjectFactory,
-  getProjectFactory
-} from '@/modules/core/repositories/projects'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
-import { waitForRegionProjectFactory } from '@/modules/core/services/projects'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { getWorkspaceUserSeatsFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { getRegionDb } from '@/modules/multiregion/utils/dbSelector'
@@ -1010,13 +1005,6 @@ describe('Workspace project GQL CRUD', () => {
             // Simulate non-main default db region
             const regionDb = await getRegionDb({ regionKey: 'region1' })
             await tables.streams(regionDb).insert(regionalProject)
-            await waitForRegionProjectFactory({
-              getProject: getProjectFactory({ db }),
-              deleteProject: deleteProjectFactory({ db: regionDb })
-            })({
-              projectId: regionalProject.id,
-              regionKey: 'region1'
-            })
             await grantStreamPermissions({
               streamId: regionalProject.id,
               userId: serverAdminUser.id,

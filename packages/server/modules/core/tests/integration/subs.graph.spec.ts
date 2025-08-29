@@ -45,7 +45,10 @@ import {
   deleteStreamAndNotifyFactory,
   updateStreamAndNotifyFactory
 } from '@/modules/core/services/streams/management'
-import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import {
+  getProjectDbClient,
+  getProjectReplicationDbClients
+} from '@/modules/multiregion/utils/dbSelector'
 import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { authorizeResolver } from '@/modules/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -99,37 +102,71 @@ import { Roles, Scopes, WorkspacePlans } from '@speckle/shared'
 import { expect } from 'chai'
 import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
 import { deleteProjectFactory } from '@/modules/core/repositories/projects'
+import { asMultiregionalOperation } from '@/modules/shared/command'
+import type { UpdateStream } from '@/modules/core/domain/streams/operations'
+import { logger } from '@/observability/logging'
 
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream: getStreamFactory({ db })
 })
 
-const buildDeleteProject = async (params: { projectId: string; ownerId: string }) => {
-  const { projectId, ownerId } = params
-  const projectDb = await getProjectDbClient({ projectId })
-  const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
-    deleteProjectAndCommits: deleteProjectAndCommitsFactory({
-      deleteProject: deleteProjectFactory({ db: projectDb }),
-      deleteProjectCommits: deleteProjectCommitsFactory({ db: projectDb })
-    }),
-    emitEvent: getEventBus().emit,
-    deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-    getStream: getStreamFactory({ db: projectDb })
-  })
-  return async () => deleteStreamAndNotify(projectId, ownerId)
-}
+const deleteStreamAndNotify = async (projectId: string, userId: string) =>
+  asMultiregionalOperation(
+    ({ allDbs, mainDb, emit }) => {
+      const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+        deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+          deleteProject: (...input) => {
+            const [res] = allDbs.map((db) => deleteProjectFactory({ db })(...input))
 
-const buildUpdateProject = async (params: { projectId: string }) => {
-  const { projectId } = params
-  const projectDB = await getProjectDbClient({ projectId })
-  const updateStreamAndNotify = updateStreamAndNotifyFactory({
-    getStream: getStreamFactory({ db: projectDB }),
-    updateStream: updateStreamFactory({ db: projectDB }),
-    emitEvent: getEventBus().emit
-  })
-  return updateStreamAndNotify
-}
+            return res
+          },
+          deleteProjectCommits: async (...input) => {
+            // some regions might not have commits
+            const [res] = await Promise.all(
+              allDbs.map((db) => deleteProjectCommitsFactory({ db })(...input))
+            )
+
+            return res
+          }
+        }),
+        emitEvent: emit,
+        deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db: mainDb }),
+        getStream: getStreamFactory({ db: mainDb })
+      })
+      return deleteStreamAndNotify(projectId, userId)
+    },
+    {
+      logger,
+      name: 'delete project spec',
+      description: `Cascade deleting a project in all regions`,
+      dbs: await getProjectReplicationDbClients({ projectId })
+    }
+  )
+
+const updateProject: UpdateStream = async (stream, projectId) =>
+  asMultiregionalOperation(
+    async ({ mainDb, allDbs, emit }) => {
+      const updateStreamAndNotify = updateStreamAndNotifyFactory({
+        getStream: getStreamFactory({ db: mainDb }),
+        updateStream: async (...input) => {
+          const [res] = await Promise.all(
+            allDbs.map((db) => updateStreamFactory({ db })(...input))
+          )
+
+          return res
+        },
+        emitEvent: emit
+      })
+
+      return updateStreamAndNotify(stream, projectId)
+    },
+    {
+      logger,
+      name: 'updateStream',
+      dbs: await getProjectReplicationDbClients({ projectId })
+    }
+  )
 
 const buildUpdateModel = async (params: { projectId: string }) => {
   const { projectId } = params
@@ -287,7 +324,6 @@ describe('Core GraphQL Subscriptions (New)', () => {
 
         const triggerProjectUpdate = async () => {
           const projectId = randomProject.id
-          const updateProject = await buildUpdateProject({ projectId })
           await updateProject({ id: projectId, name: new Date().toISOString() }, me.id)
         }
 
@@ -500,10 +536,6 @@ describe('Core GraphQL Subscriptions (New)', () => {
           workspaceId: myMainWorkspace.id
         }
         await createTestStreams([[myProj, me]])
-        const deleteProject = await buildDeleteProject({
-          projectId: myProj.id,
-          ownerId: me.id
-        })
 
         const onUserProjectsUpdated = await meSubClient.subscribe(
           OnUserProjectsUpdatedDocument,
@@ -525,7 +557,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
           }
         )
         await meSubClient.waitForReadiness()
-        await deleteProject()
+        await deleteStreamAndNotify(myProj.id, me.id)
 
         await Promise.all([
           onUserProjectsUpdated.waitForMessage(),
@@ -592,7 +624,6 @@ describe('Core GraphQL Subscriptions (New)', () => {
           workspaceId: myMainWorkspace.id
         }
         await createTestStreams([[myProj, me]])
-        const updateProject = await buildUpdateProject({ projectId: myProj.id })
 
         const onUserProjectsUpdated = await meSubClient.subscribe(
           OnProjectUpdatedDocument,
@@ -634,7 +665,6 @@ describe('Core GraphQL Subscriptions (New)', () => {
           workspaceId: myMainWorkspace.id
         }
         await createTestStreams([[myProj, me]])
-        const updateProject = await buildUpdateProject({ projectId: myProj.id })
 
         const onUserProjectsUpdated = await meSubClient.subscribe(
           OnProjectUpdatedDocument,
