@@ -130,12 +130,9 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
             job_status = JobStatus.SUCCEEDED
 
         except TimeoutError as te:
-            # if it times out we allow re-queueing until it reaches max tries
+            # if it times out we won't try again
             ex = te
-            if attempt >= job.max_attempt:
-                job_status = JobStatus.FAILED
-            else:
-                job_status = JobStatus.QUEUED
+            job_status = JobStatus.FAILED
 
         # raised if the task is canceled
         except Exception as e:
