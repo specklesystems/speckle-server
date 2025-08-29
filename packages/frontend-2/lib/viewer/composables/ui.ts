@@ -1,10 +1,5 @@
 import { SpeckleViewer, TIME_MS, timeoutAt } from '@speckle/shared'
-import type {
-  TreeNode,
-  MeasurementOptions,
-  PropertyInfo,
-  ViewMode
-} from '@speckle/viewer'
+import type { TreeNode, PropertyInfo, ViewMode } from '@speckle/viewer'
 import { MeasurementsExtension, MeasurementEvent } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { useActiveElement } from '@vueuse/core'
@@ -28,6 +23,7 @@ import type {
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { isStringPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
 import type { defaultEdgeColorValue } from '~/lib/viewer/composables/setup/viewMode'
+import type { MeasurementOptions } from '@speckle/shared/viewer/state'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()

@@ -496,61 +496,8 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      // console.warn(await this.viewer.screenshot())
-      console.log(this.viewer.getExtension(MeasurementsExtension).toMeasurementData())
-      const ptp = {
-        type: 1,
-        startPoint: [-6.438068628311157, -0.08159396797417884, 9.198678016662612],
-        endPoint: [10.06193161010742, -14.001593589782717, 6.109999626874924],
-        startNormal: [4.5859214289392356e-8, 0.7206585498862377, 0.6932901661468042],
-        endNormal: [0, 0, 1],
-        value: 21.807254103497407,
-        units: 'm',
-        precision: 2
-      }
-      const perp = {
-        type: 0,
-        startPoint: [-7.70197271094375, 15.700296421207298, 3.5211651490639184],
-        endPoint: [-6.438068628311143, -0.08159396797417884, 9.198678016662601],
-        startNormal: [-0.03447796535675464, -0.1804744980199695, 0.982975190668258],
-        endNormal: [4.5859214289392356e-8, 0.7206585498862377, 0.6932901661468042],
-        innerPoints: [[-7.991087903143028, 14.186926399449632, 11.763909703057713]],
-        value: 8.38550619816774,
-        units: 'm',
-        precision: 2
-      }
+      console.warn(await this.viewer.screenshot())
 
-      const point = {
-        startPoint: [-1.4789237983476085, 1.7161050907403421, 7.330012503335212],
-        endPoint: [0, 0, 0],
-        startNormal: [4.5859214289392356e-8, 0.7206585498862377, 0.6932901661468042],
-        endNormal: [0, 0, 0],
-        value: 7.6721128499804,
-        units: 'm',
-        precision: 2,
-        type: 3
-      }
-
-      const area = {
-        startPoint: [-14.244984626770048, -41.7167253494263, -4.094999790191665],
-        endPoint: [0, 0, 0],
-        startNormal: [-0.038932399389501146, 0.13259830381594825, 0.9904049465258692],
-        endNormal: [0, 0, 0],
-        value: 335.6354144873832,
-        units: 'm',
-        precision: 2,
-        type: 2,
-        innerPoints: [
-          [-14.244984626770048, -41.7167253494263, -4.094999790191665],
-          [-9.229758129055796, -15.699751261429569, -2.190000057220459],
-          [14.743157927440471, -28.460273583979955, -1.1278896002544627],
-          [-14.244984626770048, -41.7167253494263, -4.094999790191665]
-        ]
-      }
-      this.viewer.getExtension(MeasurementsExtension).addMeasurement(perp)
-      this.viewer.getExtension(MeasurementsExtension).addMeasurement(ptp)
-      this.viewer.getExtension(MeasurementsExtension).addMeasurement(point)
-      this.viewer.getExtension(MeasurementsExtension).addMeasurement(area)
       /** Read depth */
       // const pass = [
       //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),

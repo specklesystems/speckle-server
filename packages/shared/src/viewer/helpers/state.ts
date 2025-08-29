@@ -25,13 +25,13 @@ export interface MeasurementOptions {
 
 export interface MeasurementData {
   type: MeasurementType
-  startPoint: [number, number, number] // vec3
-  endPoint: [number, number, number] // vec3
-  startNormal: [number, number, number] // vec3
-  endNormal: [number, number, number] // vec3
-  innerPoints?: [number, number, number][] // array of vec3
+  startPoint: readonly [number, number, number] // vec3
+  endPoint: readonly [number, number, number] // vec3
+  startNormal: readonly [number, number, number] // vec3
+  endNormal: readonly [number, number, number] // vec3
   value: number
-  units: string
+  innerPoints?: (readonly [number, number, number])[] // array of vec3
+  units?: string
   precision?: number
 }
 
