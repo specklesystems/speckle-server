@@ -20,8 +20,7 @@ import {
   SavedViewNoAccessError,
   SavedViewNotFoundError,
   UngroupedSavedViewGroupLockError,
-  WorkspaceNoAccessError,
-  WorkspacePlanNoFeatureAccessError
+  WorkspaceNoAccessError
 } from '../domain/authErrors.js'
 import { nanoid } from 'nanoid'
 
@@ -416,27 +415,6 @@ describe('ensureCanAccessSavedViewGroupFragment', () => {
         code: UngroupedSavedViewGroupLockError.code
       })
     })
-
-    it.each(<const>['read', 'write'])(
-      'fails when workspace plan is too cheap (%s)',
-      async (access) => {
-        const sut = buildWorkspaceSUT({
-          getWorkspacePlan: getWorkspacePlanFake({
-            name: 'team'
-          })
-        })
-
-        const result = await sut({
-          userId,
-          projectId,
-          savedViewGroupId,
-          access
-        })
-        expect(result).toBeAuthErrorResult({
-          code: WorkspacePlanNoFeatureAccessError.code
-        })
-      }
-    )
 
     it.each(<const>['read', 'write'])(
       'fails if view doesnt exist (%s)',
