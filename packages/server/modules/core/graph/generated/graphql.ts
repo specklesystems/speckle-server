@@ -16,7 +16,7 @@ import type { ServerAppGraphQLReturn, ServerAppListItemGraphQLReturn } from '@/m
 import type { GendoAIRenderGraphQLReturn } from '@/modules/gendo/helpers/types/graphTypes';
 import type { ServerRegionItemGraphQLReturn } from '@/modules/multiregion/helpers/graphTypes';
 import type { AccSyncItemGraphQLReturn, AccSyncItemMutationsGraphQLReturn } from '@/modules/acc/helpers/graphTypes';
-import type { SavedViewGraphQLReturn, SavedViewGroupGraphQLReturn, SavedViewPermissionChecksGraphQLReturn, SavedViewGroupPermissionChecksGraphQLReturn, ExtendedViewerResourcesGraphQLReturn } from '@/modules/viewer/helpers/graphTypes';
+import type { SavedViewGraphQLReturn, SavedViewGroupGraphQLReturn, SavedViewPermissionChecksGraphQLReturn, SavedViewGroupPermissionChecksGraphQLReturn, ProjectSavedViewsUpdatedMessageGraphQLReturn, ProjectSavedViewGroupsUpdatedMessageGraphQLReturn, ExtendedViewerResourcesGraphQLReturn } from '@/modules/viewer/helpers/graphTypes';
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type Maybe<T> = T | null;
@@ -3073,6 +3073,35 @@ export type ProjectRole = {
   role: Scalars['String']['output'];
 };
 
+export type ProjectSavedViewGroupsUpdatedMessage = {
+  __typename?: 'ProjectSavedViewGroupsUpdatedMessage';
+  /** SavedViewGroup ID */
+  id: Scalars['ID']['output'];
+  /** The project that the update belongs to */
+  project: Project;
+  /** Null if group was deleted */
+  savedViewGroup?: Maybe<SavedViewGroup>;
+  type: ProjectSavedViewsUpdatedMessageType;
+};
+
+export type ProjectSavedViewsUpdatedMessage = {
+  __typename?: 'ProjectSavedViewsUpdatedMessage';
+  /** SavedView ID */
+  id: Scalars['ID']['output'];
+  /** The project that the update belongs to */
+  project: Project;
+  /** Null if view was deleted */
+  savedView?: Maybe<SavedView>;
+  type: ProjectSavedViewsUpdatedMessageType;
+};
+
+export const ProjectSavedViewsUpdatedMessageType = {
+  Created: 'CREATED',
+  Deleted: 'DELETED',
+  Updated: 'UPDATED'
+} as const;
+
+export type ProjectSavedViewsUpdatedMessageType = typeof ProjectSavedViewsUpdatedMessageType[keyof typeof ProjectSavedViewsUpdatedMessageType];
 export type ProjectTestAutomationCreateInput = {
   modelId: Scalars['String']['input'];
   name: Scalars['String']['input'];
@@ -4193,6 +4222,10 @@ export type Subscription = {
   projectPendingModelsUpdated: ProjectPendingModelsUpdatedMessage;
   /** Subscribe to changes to a project's pending versions */
   projectPendingVersionsUpdated: ProjectPendingVersionsUpdatedMessage;
+  /** Subscribe to changes to a project's saved view groups. */
+  projectSavedViewGroupsUpdated: ProjectSavedViewGroupsUpdatedMessage;
+  /** Subscribe to changes to a project's saved views. */
+  projectSavedViewsUpdated: ProjectSavedViewsUpdatedMessage;
   /** Subscribe to updates to any triggered automations statuses in the project */
   projectTriggeredAutomationsStatusUpdated: ProjectTriggeredAutomationsStatusUpdatedMessage;
   /** Track updates to a specific project */
@@ -4325,6 +4358,16 @@ export type SubscriptionProjectPendingModelsUpdatedArgs = {
 
 export type SubscriptionProjectPendingVersionsUpdatedArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type SubscriptionProjectSavedViewGroupsUpdatedArgs = {
+  projectId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionProjectSavedViewsUpdatedArgs = {
+  projectId: Scalars['ID']['input'];
 };
 
 
@@ -6118,6 +6161,9 @@ export type ResolversTypes = {
   ProjectPendingVersionsUpdatedMessageType: ProjectPendingVersionsUpdatedMessageType;
   ProjectPermissionChecks: ResolverTypeWrapper<ProjectPermissionChecksGraphQLReturn>;
   ProjectRole: ResolverTypeWrapper<ProjectRoleGraphQLReturn>;
+  ProjectSavedViewGroupsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectSavedViewGroupsUpdatedMessage, 'project' | 'savedViewGroup'> & { project: ResolversTypes['Project'], savedViewGroup?: Maybe<ResolversTypes['SavedViewGroup']> }>;
+  ProjectSavedViewsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectSavedViewsUpdatedMessage, 'project' | 'savedView'> & { project: ResolversTypes['Project'], savedView?: Maybe<ResolversTypes['SavedView']> }>;
+  ProjectSavedViewsUpdatedMessageType: ProjectSavedViewsUpdatedMessageType;
   ProjectTestAutomationCreateInput: ProjectTestAutomationCreateInput;
   ProjectTriggeredAutomationsStatusUpdatedMessage: ResolverTypeWrapper<ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn>;
   ProjectTriggeredAutomationsStatusUpdatedMessageType: ProjectTriggeredAutomationsStatusUpdatedMessageType;
@@ -6489,6 +6535,8 @@ export type ResolversParentTypes = {
   ProjectPendingVersionsUpdatedMessage: Omit<ProjectPendingVersionsUpdatedMessage, 'version'> & { version: ResolversParentTypes['FileUpload'] };
   ProjectPermissionChecks: ProjectPermissionChecksGraphQLReturn;
   ProjectRole: ProjectRoleGraphQLReturn;
+  ProjectSavedViewGroupsUpdatedMessage: Omit<ProjectSavedViewGroupsUpdatedMessage, 'project' | 'savedViewGroup'> & { project: ResolversParentTypes['Project'], savedViewGroup?: Maybe<ResolversParentTypes['SavedViewGroup']> };
+  ProjectSavedViewsUpdatedMessage: Omit<ProjectSavedViewsUpdatedMessage, 'project' | 'savedView'> & { project: ResolversParentTypes['Project'], savedView?: Maybe<ResolversParentTypes['SavedView']> };
   ProjectTestAutomationCreateInput: ProjectTestAutomationCreateInput;
   ProjectTriggeredAutomationsStatusUpdatedMessage: ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn;
   ProjectUpdateInput: ProjectUpdateInput;
@@ -7760,6 +7808,22 @@ export type ProjectRoleResolvers<ContextType = GraphQLContext, ParentType extend
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type ProjectSavedViewGroupsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectSavedViewGroupsUpdatedMessage'] = ResolversParentTypes['ProjectSavedViewGroupsUpdatedMessage']> = {
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
+  savedViewGroup?: Resolver<Maybe<ResolversTypes['SavedViewGroup']>, ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ProjectSavedViewsUpdatedMessageType'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectSavedViewsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectSavedViewsUpdatedMessage'] = ResolversParentTypes['ProjectSavedViewsUpdatedMessage']> = {
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
+  savedView?: Resolver<Maybe<ResolversTypes['SavedView']>, ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ProjectSavedViewsUpdatedMessageType'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type ProjectTriggeredAutomationsStatusUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectTriggeredAutomationsStatusUpdatedMessage'] = ResolversParentTypes['ProjectTriggeredAutomationsStatusUpdatedMessage']> = {
   model?: Resolver<ResolversTypes['Model'], ParentType, ContextType>;
   project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
@@ -8140,6 +8204,8 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
   projectModelsUpdated?: SubscriptionResolver<ResolversTypes['ProjectModelsUpdatedMessage'], "projectModelsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectModelsUpdatedArgs, 'id'>>;
   projectPendingModelsUpdated?: SubscriptionResolver<ResolversTypes['ProjectPendingModelsUpdatedMessage'], "projectPendingModelsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectPendingModelsUpdatedArgs, 'id'>>;
   projectPendingVersionsUpdated?: SubscriptionResolver<ResolversTypes['ProjectPendingVersionsUpdatedMessage'], "projectPendingVersionsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectPendingVersionsUpdatedArgs, 'id'>>;
+  projectSavedViewGroupsUpdated?: SubscriptionResolver<ResolversTypes['ProjectSavedViewGroupsUpdatedMessage'], "projectSavedViewGroupsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectSavedViewGroupsUpdatedArgs, 'projectId'>>;
+  projectSavedViewsUpdated?: SubscriptionResolver<ResolversTypes['ProjectSavedViewsUpdatedMessage'], "projectSavedViewsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectSavedViewsUpdatedArgs, 'projectId'>>;
   projectTriggeredAutomationsStatusUpdated?: SubscriptionResolver<ResolversTypes['ProjectTriggeredAutomationsStatusUpdatedMessage'], "projectTriggeredAutomationsStatusUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs, 'projectId'>>;
   projectUpdated?: SubscriptionResolver<ResolversTypes['ProjectUpdatedMessage'], "projectUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectUpdatedArgs, 'id'>>;
   projectVersionGendoAIRenderCreated?: SubscriptionResolver<ResolversTypes['GendoAIRender'], "projectVersionGendoAIRenderCreated", ParentType, ContextType, RequireFields<SubscriptionProjectVersionGendoAiRenderCreatedArgs, 'id' | 'versionId'>>;
@@ -8795,6 +8861,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ProjectPendingVersionsUpdatedMessage?: ProjectPendingVersionsUpdatedMessageResolvers<ContextType>;
   ProjectPermissionChecks?: ProjectPermissionChecksResolvers<ContextType>;
   ProjectRole?: ProjectRoleResolvers<ContextType>;
+  ProjectSavedViewGroupsUpdatedMessage?: ProjectSavedViewGroupsUpdatedMessageResolvers<ContextType>;
+  ProjectSavedViewsUpdatedMessage?: ProjectSavedViewsUpdatedMessageResolvers<ContextType>;
   ProjectTriggeredAutomationsStatusUpdatedMessage?: ProjectTriggeredAutomationsStatusUpdatedMessageResolvers<ContextType>;
   ProjectUpdatedMessage?: ProjectUpdatedMessageResolvers<ContextType>;
   ProjectVersionsPreviewGeneratedMessage?: ProjectVersionsPreviewGeneratedMessageResolvers<ContextType>;

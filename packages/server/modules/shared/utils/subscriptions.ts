@@ -56,7 +56,9 @@ import type {
   SubscriptionWorkspaceUpdatedArgs,
   WorkspaceUpdatedMessage,
   ProjectAccSyncItemsUpdatedMessage,
-  SubscriptionProjectAccSyncItemsUpdatedArgs
+  SubscriptionProjectAccSyncItemsUpdatedArgs,
+  SubscriptionProjectSavedViewsUpdatedArgs,
+  SubscriptionProjectSavedViewGroupsUpdatedArgs
 } from '@/modules/core/graph/generated/graphql'
 import type { Merge, OverrideProperties, SetNonNullable } from 'type-fest'
 import type {
@@ -75,6 +77,10 @@ import type { CommitRecord } from '@/modules/core/helpers/types'
 import type { BranchRecord } from '@/modules/core/helpers/types'
 import type { WorkspaceGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 import type { AccSyncItemGraphQLReturn } from '@/modules/acc/helpers/graphTypes'
+import type {
+  ProjectSavedViewGroupsUpdatedMessageGraphQLReturn,
+  ProjectSavedViewsUpdatedMessageGraphQLReturn
+} from '@/modules/viewer/helpers/graphTypes'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -150,6 +156,11 @@ export enum TestSubscriptions {
 export enum WorkspaceSubscriptions {
   WorkspaceProjectsUpdated = 'WORKSPACE_PROJECTS_UPDATED',
   WorkspaceUpdated = 'WORKSPACE_UPDATED'
+}
+
+export enum SavedViewSubscriptions {
+  ProjectSavedViewsUpdated = 'PROJECT_SAVED_VIEWS_UPDATED',
+  ProjectSavedViewGroupsUpdated = 'PROJECT_SAVED_VIEW_GROUPS_UPDATED'
 }
 
 type NoVariables = Record<string, never>
@@ -318,6 +329,18 @@ type SubscriptionTypeMap = {
     }
     variables: SubscriptionCommentActivityArgs
   }
+  [SavedViewSubscriptions.ProjectSavedViewsUpdated]: {
+    payload: {
+      projectSavedViewsUpdated: ProjectSavedViewsUpdatedMessageGraphQLReturn
+    }
+    variables: SubscriptionProjectSavedViewsUpdatedArgs
+  }
+  [SavedViewSubscriptions.ProjectSavedViewGroupsUpdated]: {
+    payload: {
+      projectSavedViewGroupsUpdated: ProjectSavedViewGroupsUpdatedMessageGraphQLReturn
+    }
+    variables: SubscriptionProjectSavedViewGroupsUpdatedArgs
+  }
   /**
    * OLD ONES
    */
@@ -413,6 +436,7 @@ type SubscriptionEvent =
   | BranchSubscriptions
   | TestSubscriptions
   | WorkspaceSubscriptions
+  | SavedViewSubscriptions
 
 /**
  * Publish a GQL subscription event

@@ -56,6 +56,7 @@ import {
   getSavedViewGroupFactory
 } from '@/modules/viewer/repositories/dataLoaders/savedViews'
 import type { RequestDataLoaders } from '@/modules/core/loaders'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const buildGetViewerResourceGroups = (params: {
   projectDb: Knex
@@ -293,7 +294,8 @@ const resolvers: Resolvers = {
         }),
         setNewHomeView: setNewHomeViewFactory({
           db: projectDb
-        })
+        }),
+        emit: getEventBus().emit
       })
       return await createSavedView({ input: args.input, authorId: ctx.userId! })
     },
@@ -321,7 +323,8 @@ const resolvers: Resolvers = {
         }),
         recalculateGroupResourceIds: recalculateGroupResourceIdsFactory({
           db: projectDb
-        })
+        }),
+        emit: getEventBus().emit
       })({
         id: args.input.id,
         projectId,
@@ -362,7 +365,8 @@ const resolvers: Resolvers = {
         }),
         setNewHomeView: setNewHomeViewFactory({
           db: projectDb
-        })
+        }),
+        emit: getEventBus().emit
       })
 
       const updatedView = await updateSavedView({
@@ -410,7 +414,8 @@ const resolvers: Resolvers = {
         }),
         getStoredViewGroupCount: getStoredViewGroupCountFactory({
           db: projectDb
-        })
+        }),
+        emit: getEventBus().emit
       })
       return await createSavedViewGroup({
         input: args.input,
@@ -436,7 +441,9 @@ const resolvers: Resolvers = {
       const deleteSavedViewGroup = deleteSavedViewGroupFactory({
         deleteSavedViewGroupRecord: deleteSavedViewGroupRecordFactory({
           db: projectDb
-        })
+        }),
+        getSavedViewGroup: getSavedViewGroupFactory({ loaders: ctx.loaders }),
+        emit: getEventBus().emit
       })
 
       await deleteSavedViewGroup({
@@ -469,7 +476,8 @@ const resolvers: Resolvers = {
         updateSavedViewGroupRecord: updateSavedViewGroupRecordFactory({
           db: projectDb
         }),
-        getSavedViewGroup: getSavedViewGroupFactory({ loaders: ctx.loaders })
+        getSavedViewGroup: getSavedViewGroupFactory({ loaders: ctx.loaders }),
+        emit: getEventBus().emit
       })
 
       return await updateSavedViewGroup({
