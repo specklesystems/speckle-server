@@ -191,11 +191,17 @@ describe('ensureCanAccessSavedViewFragment', () => {
     )
 
     it.each(<const>['read', 'write'])(
-      'fails when workspace plan is too cheap (%s)',
+      'succeeds to %s even on free plan',
       async (access) => {
         const sut = buildWorkspaceSUT({
           getWorkspacePlan: getWorkspacePlanFake({
-            name: 'team'
+            name: 'free'
+          }),
+          getSavedView: getSavedViewFake({
+            id: savedViewId,
+            projectId,
+            visibility: SavedViewVisibility.public,
+            authorId: userId
           })
         })
 
@@ -205,9 +211,7 @@ describe('ensureCanAccessSavedViewFragment', () => {
           savedViewId,
           access
         })
-        expect(result).toBeAuthErrorResult({
-          code: WorkspacePlanNoFeatureAccessError.code
-        })
+        expect(result).toBeAuthOKResult()
       }
     )
 

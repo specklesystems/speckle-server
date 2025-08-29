@@ -74,7 +74,7 @@ import { Roles, WorkspacePlans } from '@speckle/shared'
 import {
   ProjectNotEnoughPermissionsError,
   SavedViewNoAccessError,
-  WorkspacePlanNoFeatureAccessError
+  WorkspaceNoAccessError
 } from '@speckle/shared/authz'
 import * as ViewerRoute from '@speckle/shared/viewer/route'
 import { resourceBuilder } from '@speckle/shared/viewer/route'
@@ -121,7 +121,6 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
   let otherGuy: BasicTestUser
   let myProject: BasicTestStream
   let myProjectWorkspace: BasicTestWorkspace
-  let myLackingProjectWorkspace: BasicTestWorkspace
   let myLackingProject: BasicTestStream
   let myModel1: BasicTestBranch
   let myModel2: BasicTestBranch
@@ -269,13 +268,13 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         addPlan: WorkspacePlans.Pro
       })
     ])
-    myLackingProjectWorkspace = workspaceCreate[0]
     myProjectWorkspace = workspaceCreate[1]
 
     const projectCreate = await Promise.all([
       createTestStream(
         buildBasicTestProject({
-          workspaceId: myLackingProjectWorkspace.id
+          // non-workspaced project
+          workspaceId: undefined
         }),
         me
       ),
@@ -355,61 +354,6 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
         })
 
-        it('should fail with ForbiddenError if workspace plan does not include SavedViews', async () => {
-          const res = await createSavedView(
-            buildCreateInput({
-              projectId: myLackingProject.id,
-              resourceIdString: 'abc'
-            })
-          )
-          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
-          expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
-        })
-
-        it('should fail with ForbiddenError to create a saved view group if user lacks access (free plan)', async () => {
-          const resourceIds = ViewerRoute.resourceBuilder().addModel(
-            myLackingProject.id
-          )
-          const resourceIdString = resourceIds.toString()
-
-          const res = await createSavedViewGroup({
-            input: {
-              projectId: myLackingProject.id,
-              resourceIdString,
-              groupName: 'Should Not Work'
-            }
-          })
-
-          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
-          expect(res.data?.projectMutations.savedViewMutations.createGroup).to.not.be.ok
-        })
-
-        it('should fail with ForbiddenError to create a saved view if user lacks access (free plan)', async () => {
-          const resourceIds = ViewerRoute.resourceBuilder().addModel(
-            myLackingProject.id
-          )
-          const resourceIdString = resourceIds.toString()
-          const viewerState = fakeViewerState({
-            projectId: myLackingProject.id,
-            resources: {
-              request: {
-                resourceIdString
-              }
-            }
-          })
-
-          const res = await createSavedView(
-            buildCreateInput({
-              projectId: myLackingProject.id,
-              resourceIdString,
-              viewerState
-            })
-          )
-
-          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
-          expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
-        })
-
         it('should support dedicated auth policy check', async () => {
           const res = await canCreateSavedView({
             projectId: myLackingProject.id
@@ -419,7 +363,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
           const data = res.data?.project.permissions.canCreateSavedView
           expect(data?.authorized).to.be.false
-          expect(data?.code).to.equal(WorkspacePlanNoFeatureAccessError.code)
+          expect(data?.code).to.equal(WorkspaceNoAccessError.code)
         })
       })
 

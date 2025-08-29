@@ -94,7 +94,6 @@
         />
       </div>
     </template>
-    <ViewerSavedViewsPlanUpsell v-else />
     <ViewerSavedViewsPanelGroupsCreateDialog
       v-model:open="showCreateGroupDialog"
       @success="onAddGroup"

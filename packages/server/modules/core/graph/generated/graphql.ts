@@ -3502,6 +3502,11 @@ export type SavedView = {
   group: SavedViewGroup;
   /** Empty ID means default/ungrouped view */
   groupId?: Maybe<Scalars['ID']['output']>;
+  /**
+   * Truncated resourceIds w/o specific version data that is used to associate the view w/
+   * specific groups
+   */
+  groupResourceIds: Array<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   isHomeView: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
@@ -7854,6 +7859,7 @@ export type SavedViewResolvers<ContextType = GraphQLContext, ParentType extends 
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   group?: Resolver<ResolversTypes['SavedViewGroup'], ParentType, ContextType>;
   groupId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  groupResourceIds?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   isHomeView?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
