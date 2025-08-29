@@ -17,6 +17,7 @@ const reportSavedViewCreatedFactory =
         type: ProjectSavedViewsUpdatedMessageType.Created,
         projectId: savedView.projectId,
         savedView,
+        deletedSavedView: null,
         id: savedView.id
       }
     })
@@ -32,6 +33,7 @@ const reportSavedViewUpdatedFactory =
         type: ProjectSavedViewsUpdatedMessageType.Updated,
         projectId: savedView.projectId,
         savedView,
+        deletedSavedView: null,
         id: savedView.id
       }
     })
@@ -46,6 +48,7 @@ const reportSavedViewDeletedFactory =
       projectSavedViewsUpdated: {
         type: ProjectSavedViewsUpdatedMessageType.Deleted,
         projectId: savedView.projectId,
+        deletedSavedView: savedView,
         savedView: null,
         id: savedView.id
       }

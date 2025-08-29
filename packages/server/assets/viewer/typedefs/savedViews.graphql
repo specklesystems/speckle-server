@@ -263,12 +263,21 @@ enum ProjectSavedViewsUpdatedMessageType {
   DELETED
 }
 
+type DeletedSavedView {
+  groupId: ID
+  resourceIds: [String!]!
+}
+
 type ProjectSavedViewsUpdatedMessage {
   type: ProjectSavedViewsUpdatedMessageType!
   """
   SavedView ID
   """
   id: ID!
+  """
+  Set if view was deleted, allows some limited access into the view
+  """
+  deletedSavedView: DeletedSavedView
   """
   Null if view was deleted
   """

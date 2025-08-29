@@ -1857,6 +1857,13 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           ProjectSavedViewsUpdatedMessageType.Deleted
         )
         expect(msg.data?.projectSavedViewsUpdated.savedView).to.be.null
+        expect(msg.data?.projectSavedViewsUpdated.deletedSavedView).to.be.ok
+        expect(msg.data?.projectSavedViewsUpdated.deletedSavedView!.groupId).to.eq(
+          deletableView.groupId
+        )
+        expect(
+          msg.data?.projectSavedViewsUpdated.deletedSavedView!.resourceIds
+        ).to.deep.eq(deletableView.resourceIds)
       })
 
       it('should fail to delete a view if not found', async () => {

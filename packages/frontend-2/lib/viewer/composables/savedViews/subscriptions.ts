@@ -2,7 +2,10 @@ import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import { useLock } from '~/lib/common/composables/singleton'
 import { graphql } from '~/lib/common/generated/gql'
 import { ProjectSavedViewsUpdatedMessageType } from '~/lib/common/generated/gql/graphql'
-import { onNewGroupViewCacheUpdates } from '~/lib/viewer/helpers/savedViews/cache'
+import {
+  onGroupViewRemovalCacheUpdates,
+  onNewGroupViewCacheUpdates
+} from '~/lib/viewer/helpers/savedViews/cache'
 
 const onProjectSavedViewsUpdatedSubscription = graphql(`
   subscription OnProjectSavedViewsUpdated($projectId: ID!) {
@@ -11,10 +14,11 @@ const onProjectSavedViewsUpdatedSubscription = graphql(`
       id
       savedView {
         id
-        group {
-          id
-        }
         ...ViewerSavedViewsPanelView_SavedView
+      }
+      deletedSavedView {
+        groupId
+        resourceIds
       }
     }
   }
@@ -48,20 +52,21 @@ const useOnProjectSavedViewsUpdated = (params: { projectId: MaybeRef<string> }) 
       })
 
       // onGroupViewRemovalCacheUpdates(cache, {
-      //   viewId: id,
-      //   groupId,
-      //   projectId
+      //   viewId: event.id,
+      //   groupId: event.groupId || null,
+      //   projectId: unref(projectId)
       // })
     } else if (
       event.type === ProjectSavedViewsUpdatedMessageType.Created &&
       event.savedView
     ) {
-      const groupId = event.savedView.group.id
-      onNewGroupViewCacheUpdates(cache, {
-        viewId: event.id,
-        groupId,
-        projectId: unref(projectId)
-      })
+      // TODO: What if empty group of other person - shouldnt show up
+      // const groupId = event.groupId || null
+      // onNewGroupViewCacheUpdates(cache, {
+      //   viewId: event.id,
+      //   groupId,
+      //   projectId: unref(projectId)
+      // })
     }
   })
 }

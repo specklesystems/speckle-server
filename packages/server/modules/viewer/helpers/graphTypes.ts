@@ -10,6 +10,7 @@ import type {
 import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 
 export type SavedViewGraphQLReturn = SavedView
+export type DeletedSavedViewGraphQLReturn = SavedView
 export type SavedViewGroupGraphQLReturn = SavedViewGroup
 export type SavedViewPermissionChecksGraphQLReturn = { savedView: SavedView }
 export type SavedViewGroupPermissionChecksGraphQLReturn = {
@@ -18,7 +19,7 @@ export type SavedViewGroupPermissionChecksGraphQLReturn = {
 
 export type ExtendedViewerResourcesGraphQLReturn = {
   groups: Array<ViewerResourceGroup>
-  savedView?: MaybeNullOrUndefined<SavedView>
+  savedView?: MaybeNullOrUndefined<SavedViewGraphQLReturn>
   request: ExtendedViewerResourcesRequest
   resourceIdString: string
 }
@@ -27,12 +28,13 @@ export type ProjectSavedViewsUpdatedMessageGraphQLReturn = {
   type: ProjectSavedViewsUpdatedMessageType
   id: string
   projectId: string
-  savedView: Nullable<SavedView>
+  savedView: Nullable<SavedViewGraphQLReturn>
+  deletedSavedView: Nullable<DeletedSavedViewGraphQLReturn>
 }
 
 export type ProjectSavedViewGroupsUpdatedMessageGraphQLReturn = {
   type: ProjectSavedViewsUpdatedMessageType
   id: string
   projectId: string
-  savedViewGroup: Nullable<SavedViewGroup>
+  savedViewGroup: Nullable<SavedViewGroupGraphQLReturn>
 }
