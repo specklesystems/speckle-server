@@ -43,6 +43,10 @@ export type FailQueuedBackgroundJobsWhichExceedMaximumAttempts<
   T extends BackgroundJobPayload = BackgroundJobPayload
 > = (args: { originServerUrl: string; jobType: string }) => Promise<BackgroundJob<T>[]>
 
+export type FailQueueAndProcessingBackgroundJobWithNoRemainingComputeBudget<
+  T extends BackgroundJobPayload = BackgroundJobPayload
+> = (args: { originServerUrl: string; jobType: string }) => Promise<BackgroundJob<T>[]>
+
 export type UpdateBackgroundJob<T extends BackgroundJobPayload = BackgroundJobPayload> =
   (args: {
     jobId: string

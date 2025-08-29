@@ -1,5 +1,6 @@
 import type { Knex } from 'knex'
 import type {
+  FailQueueAndProcessingBackgroundJobWithNoRemainingComputeBudget,
   FailQueuedBackgroundJobsWhichExceedMaximumAttempts,
   UpdateBackgroundJob
 } from '@/modules/backgroundjobs/domain'
@@ -81,6 +82,34 @@ export const failQueuedBackgroundJobsWhichExceedMaximumAttemptsFactory =
 
     return await query
   }
+
+export const failQueueAndProcessingBackgroundJobWithNoRemainingComputeBudgetFactory = <
+  T extends BackgroundJobPayload = BackgroundJobPayload
+>({
+  db
+}: {
+  db: Knex
+}): FailQueueAndProcessingBackgroundJobWithNoRemainingComputeBudget<T> => {
+  return async ({ originServerUrl, jobType }) => {
+    const query = tables
+      .backgroundJobs(db)
+      .where(BackgroundJobs.withoutTablePrefix.col.originServerUrl, originServerUrl)
+      .whereIn(BackgroundJobs.withoutTablePrefix.col.status, [
+        BackgroundJobStatus.Queued,
+        BackgroundJobStatus.Processing
+      ])
+      .andWhere(BackgroundJobs.withoutTablePrefix.col.jobType, jobType)
+      .whereJsonPath('payload', '$.payloadVersion', '>=', 2)
+      .whereJsonPath('payload', '$.remainingComputeBudgetSeconds', '<=', 0)
+      .orderBy(BackgroundJobs.withoutTablePrefix.col.createdAt, 'desc')
+      .update({
+        [BackgroundJobs.withoutTablePrefix.col.status]: BackgroundJobStatus.Failed
+      })
+      .returning<BackgroundJob<T>[]>('*')
+
+    return await query
+  }
+}
 
 export const updateBackgroundJobFactory =
   ({ db }: { db: Knex }): UpdateBackgroundJob =>
