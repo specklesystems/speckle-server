@@ -30,7 +30,6 @@ export const getProjectFactory =
     return project || null
   }
 
-// TODO: this
 export const deleteProjectFactory =
   ({ db }: { db: Knex }): DeleteProject =>
   async ({ projectId }) => {

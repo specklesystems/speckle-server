@@ -27,6 +27,10 @@ import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
 import { deleteProjectFactory } from '@/modules/core/repositories/projects'
 import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
+import type { DeleteProjectAndCommits } from '@/modules/core/domain/projects/operations'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { logger } from '@/observability/logging'
+import { getProjectReplicationDbClients } from '@/modules/multiregion/utils/dbSelector'
 
 const cleanup = async () => {
   await truncateTables([StreamActivity.name, Users.name])
@@ -40,10 +44,22 @@ const createActivitySummary = createActivitySummaryFactory({
   getActivity: geUserStreamActivityFactory({ db }),
   getUser
 })
-const deleteStreamAndCommits = deleteProjectAndCommitsFactory({
-  deleteProject: deleteProjectFactory({ db }),
-  deleteProjectCommits: deleteProjectCommitsFactory({ db })
-})
+const deleteStreamAndCommits: DeleteProjectAndCommits = async ({ projectId }) =>
+  asMultiregionalOperation(
+    async ({ allDbs }) =>
+      // this is a bit of an overhead, we are issuing delete queries to all regions,
+      // instead of being selective and clever about figuring out the project DB and only
+      // deleting from main and the project db
+      deleteProjectAndCommitsFactory({
+        deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+        deleteProjectCommits: replicateFactory(allDbs, deleteProjectCommitsFactory)
+      })({ projectId }),
+    {
+      name: 'deleteStreamAndCommits spec',
+      logger,
+      dbs: await getProjectReplicationDbClients({ projectId })
+    }
+  )
 
 describe('Activity summary @activity', () => {
   const userA: BasicTestUser = {

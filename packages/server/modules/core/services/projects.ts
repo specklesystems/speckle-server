@@ -52,11 +52,15 @@ export const createNewProjectFactory =
       allowPublicComments: false
     }
 
-    await storeProject({ project })
+    await storeProject({ project }) // region
     const projectId = project.id
 
     await storeProjectRole({ projectId, userId: ownerId, role: Roles.Stream.Owner })
+
+    // wait
+
     await storeModel({
+      // Move this away
       name: 'main',
       description: 'default model',
       projectId,

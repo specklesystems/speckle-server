@@ -261,3 +261,20 @@ export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
     }
   )
 }
+
+/**
+ * Helper intended to be used with asMultiregionOperation that returns a curried function to apply to allDbs method
+ * it runs the same function with the same arguments on all databases
+ * @param dbs Knex[]
+ * @param factory a function that recieves a db constructor
+ * @returns the result of the first database
+ */
+export function replicateFactory<Args extends unknown[], ReturnType>(
+  dbs: Knex[],
+  factory: (context: { db: Knex }) => (...args: Args) => Promise<ReturnType>
+): (...args: Args) => Promise<ReturnType> {
+  return async (...args: Args): Promise<ReturnType> => {
+    const [result] = await Promise.all(dbs.map((db) => factory({ db })(...args)))
+    return result
+  }
+}

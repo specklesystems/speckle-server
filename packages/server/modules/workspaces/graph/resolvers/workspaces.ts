@@ -157,9 +157,9 @@ import {
 } from '@/modules/shared/command'
 import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
+  getAllRegisteredDbs,
   getProjectDbClient,
-  getProjectReplicationDbClients,
-  getRegionDb
+  getProjectReplicationDbClients
 } from '@/modules/multiregion/utils/dbSelector'
 import {
   listUserExpiredSsoSessionsFactory,
@@ -187,7 +187,6 @@ import {
   getWorkspaceWithPlanFactory,
   upsertWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
-import type { Knex } from 'knex'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
 import { BadRequestError, UnauthorizedError } from '@/modules/shared/errors'
 import {
@@ -816,41 +815,52 @@ export default FF_WORKSPACES_MODULE_ENABLED
             }
           }
 
-          const deleteWorkspaceFrom = (db: Knex) =>
-            deleteWorkspaceFactory({
-              deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
-              deleteProjectAndCommits: deleteProjectAndCommitsFactory({
-                deleteProject: deleteProjectFactory({ db }),
-                deleteProjectCommits: deleteProjectCommitsFactory({ db })
-              }),
-              deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-              queryAllProjects: queryAllProjectsFactory({
-                getExplicitProjects: getExplicitProjects({ db })
-              }),
-              deleteSsoProvider: deleteSsoProviderFactory({ db }),
-              emitWorkspaceEvent: getEventBus().emit
-            })
+          // this is a bit of an overhead, we are issuing delete queries to all regions,
+          // instead of being selective and clever about figuring out the project DB and only
+          // deleting from main and the project db
+          // while workspace must be deleted from all regions
 
-          // this should be turned into a get all regions and map over the regions...
-          const region = await getDefaultRegionFactory({ db })({ workspaceId })
-          if (region) {
-            const regionDb = await getRegionDb({ regionKey: region.key })
-            await withOperationLogging(
-              async () => await deleteWorkspaceFrom(regionDb)({ workspaceId }),
-              {
-                logger: logger.child({ regionKey: region.key }),
-                operationName: 'deleteWorkspaceFromRegion',
-                operationDescription: 'Delete workspace from region'
-              }
-            )
-          }
+          await asMultiregionalOperation(
+            async ({ mainDb, allDbs, emit }) => {
+              deleteWorkspaceFactory({
+                deleteWorkspace: async (...input) => {
+                  const [res] = await Promise.all(
+                    allDbs.map((db) => repoDeleteWorkspaceFactory({ db })(...input))
+                  )
 
-          await withOperationLogging(
-            async () => await deleteWorkspaceFrom(db)({ workspaceId }),
+                  return res
+                },
+                deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+                  deleteProject: async (...input) => {
+                    const [res] = await Promise.all(
+                      allDbs.map((db) => deleteProjectFactory({ db })(...input))
+                    )
+
+                    return res
+                  },
+                  deleteProjectCommits: async (...input) => {
+                    const [res] = await Promise.all(
+                      allDbs.map((db) => deleteProjectCommitsFactory({ db })(...input))
+                    )
+
+                    return res
+                  }
+                }),
+                deleteAllResourceInvites: deleteAllResourceInvitesFactory({
+                  db: mainDb
+                }),
+                queryAllProjects: queryAllProjectsFactory({
+                  getExplicitProjects: getExplicitProjects({ db: mainDb })
+                }),
+                deleteSsoProvider: deleteSsoProviderFactory({ db: mainDb }),
+                emitWorkspaceEvent: emit
+              })
+            },
             {
               logger,
-              operationName: 'deleteWorkspace',
-              operationDescription: 'Delete workspace'
+              name: 'delete workspace',
+              description: 'Delete workspace',
+              dbs: await getAllRegisteredDbs()
             }
           )
 
@@ -1601,6 +1611,9 @@ export default FF_WORKSPACES_MODULE_ENABLED
         moveToWorkspace: async (_parent, args, context) => {
           const { projectId, workspaceId } = args
 
+          // move project () into workspace (has a region)
+
+          // bug? main / (old one)
           const projectDb = await getProjectDbClient({ projectId })
 
           const logger = context.log.child({
@@ -1649,7 +1662,7 @@ export default FF_WORKSPACES_MODULE_ENABLED
                 getProjectCollaborators: getStreamCollaboratorsFactory({ db: mainDb }),
                 copyWorkspace: copyWorkspaceFactory({
                   sourceDb: db,
-                  targetDb: projectDb // TODO: what is this ???
+                  targetDb: projectDb
                 }),
                 getWorkspaceRolesAndSeats: getWorkspaceRolesAndSeatsFactory({
                   db: mainDb

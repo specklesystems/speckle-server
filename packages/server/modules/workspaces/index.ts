@@ -1,4 +1,5 @@
 import type cron from 'node-cron'
+import type { Logger } from '@/observability/logging'
 import { moduleLogger } from '@/observability/logging'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
@@ -21,7 +22,6 @@ import { getWorkspacesNonCompleteFactory } from '@/modules/workspaces/repositori
 import { deleteWorkspacesNonCompleteFactory } from '@/modules/workspaces/services/workspaceCreationState'
 import { getExplicitProjects } from '@/modules/core/repositories/streams'
 import { deleteSsoProviderFactory } from '@/modules/workspaces/repositories/sso'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { deleteWorkspaceFactory as repoDeleteWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { deleteWorkspaceFactory } from '@/modules/workspaces/services/management'
@@ -33,6 +33,8 @@ import {
 } from '@/modules/core/services/projects'
 import { deleteProjectFactory } from '@/modules/core/repositories/projects'
 import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
+import { asMultiregionalOperation } from '@/modules/shared/command'
+import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
 
 const {
   FF_WORKSPACES_MODULE_ENABLED,
@@ -58,22 +60,54 @@ const scheduleDeleteWorkspacesNonComplete = ({
 }: {
   scheduleExecution: ScheduleExecution
 }) => {
-  const deleteWorkspacesNonComplete = deleteWorkspacesNonCompleteFactory({
-    getWorkspacesNonComplete: getWorkspacesNonCompleteFactory({ db }),
-    deleteWorkspace: deleteWorkspaceFactory({
-      deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
-      deleteProjectAndCommits: deleteProjectAndCommitsFactory({
-        deleteProject: deleteProjectFactory({ db }),
-        deleteProjectCommits: deleteProjectCommitsFactory({ db })
-      }),
-      deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-      queryAllProjects: queryAllProjectsFactory({
-        getExplicitProjects: getExplicitProjects({ db })
-      }),
-      deleteSsoProvider: deleteSsoProviderFactory({ db }),
-      emitWorkspaceEvent: getEventBus().emit
-    })
-  })
+  const deleteWorkspacesNonComplete = async ({ logger }: { logger: Logger }) =>
+    asMultiregionalOperation(
+      ({ allDbs, mainDb, emit }) => {
+        const deleteWorkspacesNonComplete = deleteWorkspacesNonCompleteFactory({
+          getWorkspacesNonComplete: getWorkspacesNonCompleteFactory({ db: mainDb }),
+          deleteWorkspace: deleteWorkspaceFactory({
+            deleteWorkspace: async (...input) => {
+              const [res] = await Promise.all(
+                allDbs.map((db) => repoDeleteWorkspaceFactory({ db })(...input))
+              )
+
+              return res
+            },
+            deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+              deleteProject: async (...input) => {
+                const [res] = await Promise.all(
+                  allDbs.map((db) => deleteProjectFactory({ db })(...input))
+                )
+
+                return res
+              },
+              deleteProjectCommits: async (...input) => {
+                const [res] = await Promise.all(
+                  allDbs.map((db) => deleteProjectCommitsFactory({ db })(...input))
+                )
+
+                return res
+              }
+            }),
+            deleteAllResourceInvites: deleteAllResourceInvitesFactory({
+              db: mainDb
+            }),
+            queryAllProjects: queryAllProjectsFactory({
+              getExplicitProjects: getExplicitProjects({ db: mainDb })
+            }),
+            deleteSsoProvider: deleteSsoProviderFactory({ db: mainDb }),
+            emitWorkspaceEvent: emit
+          })
+        })
+
+        return deleteWorkspacesNonComplete({ logger })
+      },
+      {
+        logger,
+        name: 'deleteWorkspacesNonComplete',
+        dbs: await getAllRegisteredDbs()
+      }
+    )
 
   const every30Mins = '*/30 * * * *'
   return scheduleExecution(

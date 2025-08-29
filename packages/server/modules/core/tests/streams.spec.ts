@@ -121,15 +121,39 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   getBranchById: getBranchByIdFactory({ db })
 })
-const deleteStream = deleteStreamAndNotifyFactory({
-  deleteProjectAndCommits: deleteProjectAndCommitsFactory({
-    deleteProject: deleteProjectFactory({ db }),
-    deleteProjectCommits: deleteProjectCommitsFactory({ db })
-  }),
-  getStream,
-  emitEvent: getEventBus().emit,
-  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
-})
+
+const deleteStream = async (projectId: string, userId: string) =>
+  asMultiregionalOperation(
+    ({ allDbs, mainDb, emit }) => {
+      const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+        deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+          deleteProject: (...input) => {
+            const [res] = allDbs.map((db) => deleteProjectFactory({ db })(...input))
+
+            return res
+          },
+          deleteProjectCommits: async (...input) => {
+            // some regions might not have commits
+            const [res] = await Promise.all(
+              allDbs.map((db) => deleteProjectCommitsFactory({ db })(...input))
+            )
+
+            return res
+          }
+        }),
+        emitEvent: emit,
+        deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db: mainDb }),
+        getStream: getStreamFactory({ db: mainDb })
+      })
+      return deleteStreamAndNotify(projectId, userId)
+    },
+    {
+      logger,
+      name: 'delete project spec',
+      description: `Cascade deleting a project in all regions`,
+      dbs: await getProjectReplicationDbClients({ projectId })
+    }
+  )
 
 const updateStream: UpdateStream = async (stream, projectId) =>
   asMultiregionalOperation(

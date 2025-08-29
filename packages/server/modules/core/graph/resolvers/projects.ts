@@ -121,6 +121,7 @@ import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { asMultiregionalOperation, asOperation } from '@/modules/shared/command'
 import type { Knex } from 'knex'
+import type { Logger } from '@/observability/logging'
 
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -200,6 +201,43 @@ const throwIfRateLimited = throwIfRateLimitedFactory({
   rateLimiterEnabled: isRateLimiterEnabled()
 })
 
+const deleteStreamAndNotify = async (
+  projectId: string,
+  userId: string,
+  ctxLogger: Logger
+) =>
+  asMultiregionalOperation(
+    ({ allDbs, mainDb, emit }) => {
+      const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+        deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+          deleteProject: (...input) => {
+            const [res] = allDbs.map((db) => deleteProjectFactory({ db })(...input))
+
+            return res
+          },
+          deleteProjectCommits: async (...input) => {
+            // some regions might not have commits
+            const [res] = await Promise.all(
+              allDbs.map((db) => deleteProjectCommitsFactory({ db })(...input))
+            )
+
+            return res
+          }
+        }),
+        emitEvent: emit,
+        deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db: mainDb }),
+        getStream: getStreamFactory({ db: mainDb })
+      })
+      return deleteStreamAndNotify(projectId, userId)
+    },
+    {
+      logger: ctxLogger,
+      name: 'delete project',
+      description: `Cascade deleting a project`,
+      dbs: await getProjectReplicationDbClients({ projectId })
+    }
+  )
+
 const resolvers: Resolvers = {
   Query: {
     async project(_parent, args, context) {
@@ -268,28 +306,8 @@ const resolvers: Resolvers = {
         })
       )
 
-      const results = await withOperationLogging(
-        async () =>
-          await Promise.all(
-            args.ids.map(async (id) => {
-              const projectDb = await getProjectDbClient({ projectId: id })
-              const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
-                deleteProjectAndCommits: deleteProjectAndCommitsFactory({
-                  deleteProject: deleteProjectFactory({ db: projectDb }),
-                  deleteProjectCommits: deleteProjectCommitsFactory({ db: projectDb })
-                }),
-                emitEvent: getEventBus().emit,
-                deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-                getStream: getStreamFactory({ db: projectDb })
-              })
-              return deleteStreamAndNotify(id, ctx.userId!)
-            })
-          ),
-        {
-          logger: ctx.log,
-          operationName: 'projectBatchDelete',
-          operationDescription: `Delete multiple projects`
-        }
+      const results = await Promise.all(
+        args.ids.map((id) => deleteStreamAndNotify(id, ctx.userId!, ctx.log))
       )
       return results.every((res) => res === true)
     },
@@ -315,24 +333,7 @@ const resolvers: Resolvers = {
       })
       throwIfAuthNotOk(canDelete)
 
-      const projectDb = await getProjectDbClient({ projectId })
-      const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
-        deleteProjectAndCommits: deleteProjectAndCommitsFactory({
-          deleteProject: deleteProjectFactory({ db: projectDb }),
-          deleteProjectCommits: deleteProjectCommitsFactory({ db: projectDb })
-        }),
-        emitEvent: getEventBus().emit,
-        deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-        getStream: getStreamFactory({ db: projectDb })
-      })
-      return await withOperationLogging(
-        async () => await deleteStreamAndNotify(projectId, userId!),
-        {
-          logger,
-          operationName: 'projectDelete',
-          operationDescription: `Delete a project`
-        }
-      )
+      return deleteStreamAndNotify(projectId, userId!, logger)
     },
     async createForOnboarding(_parent, _args, { userId, resourceAccessRules, log }) {
       return await asOperation(

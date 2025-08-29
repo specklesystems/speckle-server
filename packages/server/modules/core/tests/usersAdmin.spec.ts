@@ -53,6 +53,9 @@ import type { BasicTestUser } from '@/test/authHelper'
 import { createTestUser } from '@/test/authHelper'
 import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
 import { deleteProjectFactory } from '@/modules/core/repositories/projects'
+import type { DeleteUser } from '@/modules/core/domain/users/operations'
+import { asMultiregionalOperation } from '@/modules/shared/command'
+import { getTestRegionClients } from '@/modules/multiregion/tests/helpers'
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 const countUsers = legacyGetPaginatedUsersCountFactory({ db })
@@ -86,22 +89,57 @@ const createUser = createUserFactory({
   }),
   emitEvent: getEventBus().emit
 })
-const deleteUser = deleteUserFactory({
-  deleteProjectAndCommits: deleteProjectAndCommitsFactory({
-    deleteProject: deleteProjectFactory({ db }),
-    deleteProjectCommits: deleteProjectCommitsFactory({ db })
-  }),
-  logger: dbLogger,
-  isLastAdminUser: isLastAdminUserFactory({ db }),
-  getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
-  queryAllProjects: queryAllProjectsFactory({
-    getExplicitProjects: getExplicitProjects({ db })
-  }),
-  getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
-  deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
-  deleteUserRecord: deleteUserRecordFactory({ db }),
-  emitEvent: getEventBus().emit
-})
+
+const deleteUser: DeleteUser = async (...input) =>
+  asMultiregionalOperation(
+    ({ mainDb, allDbs, emit }) => {
+      const deleteUser = deleteUserFactory({
+        deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+          // this is a bit of an overhead, we are issuing delete queries to all regions,
+          // instead of being selective and clever about figuring out the project DB and only
+          // deleting from main and the project db
+          deleteProject: async (...input) => {
+            const [res] = await Promise.all(
+              allDbs.map((db) => deleteProjectFactory({ db })(...input))
+            )
+
+            return res
+          },
+          deleteProjectCommits: async (...input) => {
+            const [res] = await Promise.all(
+              allDbs.map((db) => deleteProjectCommitsFactory({ db })(...input))
+            )
+
+            return res
+          }
+        }),
+        logger: dbLogger,
+        isLastAdminUser: isLastAdminUserFactory({ db: mainDb }),
+        getUserDeletableStreams: getUserDeletableStreamsFactory({ db: mainDb }),
+        queryAllProjects: queryAllProjectsFactory({
+          getExplicitProjects: getExplicitProjects({ db: mainDb })
+        }),
+        getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db: mainDb }),
+        deleteAllUserInvites: deleteAllUserInvitesFactory({ db: mainDb }),
+        deleteUserRecord: async (params) => {
+          const [res] = await Promise.all(
+            allDbs.map((db) => deleteUserRecordFactory({ db })(params))
+          )
+
+          return res
+        },
+        emitEvent: emit
+      })
+
+      return deleteUser(...input)
+    },
+    {
+      logger: dbLogger,
+      name: 'delete user spec',
+      dbs: await getTestRegionClients()
+    }
+  )
+
 const getUserRole = getUserRoleFactory({ db })
 const buildChangeUserRole = (guestModeEnabled = false) =>
   changeUserRoleFactory({
