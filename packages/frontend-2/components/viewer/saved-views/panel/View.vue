@@ -33,7 +33,7 @@
             mount-menu-on-body
             show-ticks="right"
             :size="230"
-            class="shrink-0 hidden group-hover:inline-block"
+            class="shrink-0 opacity-0 group-hover:opacity-100"
             @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
           >
             <FormButton
