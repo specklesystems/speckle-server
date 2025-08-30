@@ -23,6 +23,10 @@
 import { dashboardsRoute } from '~/lib/common/helpers/route'
 import { useActiveWorkspaceSlug } from '~/lib/user/composables/activeWorkspace'
 
+definePageMeta({
+  layout: 'dashboard'
+})
+
 const activeWorkspaceSlug = useActiveWorkspaceSlug()
 
 const showCreateDashboardDialog = ref(false)
