@@ -17,3 +17,10 @@ export class DashboardNotFoundError extends BaseError {
   static code = 'DASHBOARDS_NOT_FOUND'
   static statusCode = 404
 }
+
+export class DashboardMalformedTokenError extends BaseError {
+  static defaultMessage =
+    'Dashboard not associated with any projects. Cannot create token.'
+  static code = 'DASHBOARDS_MALFORMED_TOKEN'
+  static statusCode = 422
+}

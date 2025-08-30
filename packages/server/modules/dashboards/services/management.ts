@@ -60,6 +60,7 @@ export const updateDashboardFactory =
     const nextDashboard: Dashboard = {
       ...dashboard,
       ...update,
+      updatedAt: new Date(),
       id
     }
 
