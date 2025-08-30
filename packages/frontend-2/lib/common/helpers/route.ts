@@ -93,14 +93,7 @@ export const settingsWorkspaceRoutes = {
 
 export const projectRoute = (
   id: string,
-  tab?:
-    | 'models'
-    | 'discussions'
-    | 'automations'
-    | 'collaborators'
-    | 'settings'
-    | 'acc'
-    | 'dashboards'
+  tab?: 'models' | 'discussions' | 'automations' | 'collaborators' | 'settings' | 'acc'
 ) => {
   let res = `/projects/${id}`
   if (tab && tab !== 'models') {

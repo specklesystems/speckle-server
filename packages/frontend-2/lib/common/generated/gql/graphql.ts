@@ -5295,7 +5295,6 @@ export type WorkspaceAutomateFunctionsArgs = {
 
 export type WorkspaceDashboardsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<WorkspaceDashboardsFilter>;
   limit?: Scalars['Int']['input'];
 };
 
@@ -5392,10 +5391,6 @@ export type WorkspaceCreationStateInput = {
   completed: Scalars['Boolean']['input'];
   state: Scalars['JSONObject']['input'];
   workspaceId: Scalars['ID']['input'];
-};
-
-export type WorkspaceDashboardsFilter = {
-  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type WorkspaceDismissInput = {
