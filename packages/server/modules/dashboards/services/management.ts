@@ -60,6 +60,7 @@ export const updateDashboardFactory =
     const nextDashboard: Dashboard = {
       ...dashboard,
       ...update,
+      updatedAt: new Date(),
       id
     }
 
@@ -102,7 +103,7 @@ export type GetPaginatedDashboards = (params: {
   }
 }) => Promise<Collection<Dashboard>>
 
-export const getPaginatedDasboardsFactory =
+export const getPaginatedDashboardsFactory =
   (deps: {
     listDashboards: ListDashboardRecords
     countDashboards: CountDashboardRecords

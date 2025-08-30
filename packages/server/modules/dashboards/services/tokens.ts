@@ -9,7 +9,10 @@ import type {
   DashboardApiToken,
   DashboardApiTokenRecord
 } from '@/modules/dashboards/domain/tokens/types'
-import { DashboardNotFoundError } from '@/modules/dashboards/errors/dashboards'
+import {
+  DashboardMalformedTokenError,
+  DashboardNotFoundError
+} from '@/modules/dashboards/errors/dashboards'
 import { LogicError } from '@/modules/shared/errors'
 import { Scopes } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
@@ -36,6 +39,10 @@ export const createDashboardTokenFactory =
 
     if (!dashboard) {
       throw new DashboardNotFoundError()
+    }
+
+    if (dashboard.projectIds.length === 0) {
+      throw new DashboardMalformedTokenError()
     }
 
     const { id, token } = await deps.createToken({
