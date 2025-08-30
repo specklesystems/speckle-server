@@ -90,6 +90,9 @@ const { result } = useQuery(dashboardQuery, () => ({ id: id as string }))
 const { effectiveAuthToken } = useAuthManager()
 const logger = useLogger()
 const { isDarkTheme } = useTheme()
+const {
+  public: { dashboardsOrigin }
+} = useRuntimeConfig()
 
 const editDialogOpen = ref(false)
 
@@ -97,10 +100,10 @@ const workspace = computed(() => result.value?.dashboard?.workspace)
 const dashboard = computed(() => result.value?.dashboard)
 const dashboardUrl = computed(() => {
   return urlToken
-    ? `http://127.0.0.1:8083/view/${id}?token=${urlToken}&isEmbed=true&theme=${
+    ? `${dashboardsOrigin}/view/${id}?token=${urlToken}&isEmbed=true&theme=${
         isDarkTheme.value ? 'dark' : 'light'
       }`
-    : `http://127.0.0.1:8083/dashboards/${id}?token=${
+    : `${dashboardsOrigin}/dashboards/${id}?token=${
         effectiveAuthToken.value
       }&isEmbed=true&theme=${isDarkTheme.value ? 'dark' : 'light'}`
 })
