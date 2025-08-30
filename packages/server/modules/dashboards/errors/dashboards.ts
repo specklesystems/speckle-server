@@ -1,15 +1,15 @@
 import { BaseError } from '@/modules/shared/errors'
 
-export class AccModuleDisabledError extends BaseError {
-  static defaultMessage = 'ACC integration module is disabled'
-  static code = 'ACC_MODULE_DISABLED'
-  static statusCode = 423
-}
-
 export class DashboardsModuleDisabledError extends BaseError {
   static defaultMessage = 'Dashboards module is disabled'
   static code = 'DASHBOARDS_MODULE_DISABLED'
   static statusCode = 423
+}
+
+export class DashboardsNotYetImplementedError extends BaseError {
+  static defaultMessage = 'This dashboards feature is not yet implemented'
+  static code = 'DASHBOARDS_NOT_YET_IMPLEMENTED'
+  static statusCode = 501
 }
 
 export class DashboardNotFoundError extends BaseError {

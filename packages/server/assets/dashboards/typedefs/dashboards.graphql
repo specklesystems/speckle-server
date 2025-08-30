@@ -26,15 +26,7 @@ type DashboardCollection {
 }
 
 extend type Workspace {
-  dashboards(
-    limit: Int! = 50
-    cursor: String
-    filter: WorkspaceDashboardsFilter
-  ): DashboardCollection!
-}
-
-input WorkspaceDashboardsFilter {
-  search: String
+  dashboards(limit: Int! = 50, cursor: String): DashboardCollection!
 }
 
 type DashboardMutations {

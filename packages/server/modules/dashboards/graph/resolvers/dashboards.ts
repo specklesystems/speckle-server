@@ -9,7 +9,7 @@ import {
 import { db } from '@/db/knex'
 import {
   createDashboardFactory,
-  getPaginatedDasboardsFactory,
+  getPaginatedDashboardsFactory,
   getDashboardFactory,
   updateDashboardFactory,
   deleteDashboardFactory
@@ -20,6 +20,7 @@ import { removeNullOrUndefinedKeys } from '@speckle/shared'
 import { getFeatureFlags } from '@speckle/shared/environment'
 import { DashboardsModuleDisabledError } from '@/modules/dashboards/errors/dashboards'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
+import { parseWorkspaceIdentifier } from '@/modules/workspacesCore/helpers/graphHelpers'
 
 const { FF_WORKSPACES_MODULE_ENABLED, FF_DASHBOARDS_MODULE_ENABLED } = getFeatureFlags()
 
@@ -66,7 +67,7 @@ const resolvers: Resolvers = {
       })
       throwIfAuthNotOk(authResult)
 
-      return await getPaginatedDasboardsFactory({
+      return await getPaginatedDashboardsFactory({
         listDashboards: listDashboardsFactory({ db }),
         countDashboards: countDashboardsFactory({ db })
       })({
@@ -80,19 +81,12 @@ const resolvers: Resolvers = {
   },
   DashboardMutations: {
     create: async (_parent, args, context) => {
-      const { id, slug } = args.workspace
       const { name } = args.input
 
-      if (!id && !slug) {
-        throw new Error('One required!')
-      }
-
-      const workspaceId =
-        id ?? (await context.loaders.workspaces?.getWorkspaceBySlug.load(slug))?.id
-
-      if (!workspaceId) {
-        throw new Error('Workspace not found')
-      }
+      const { id: workspaceId } = await parseWorkspaceIdentifier(
+        args.workspace,
+        context
+      )
 
       const authResult = await context.authPolicies.workspace.canCreateDashboards({
         userId: context.userId,

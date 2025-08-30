@@ -102,7 +102,7 @@ export type GetPaginatedDashboards = (params: {
   }
 }) => Promise<Collection<Dashboard>>
 
-export const getPaginatedDasboardsFactory =
+export const getPaginatedDashboardsFactory =
   (deps: {
     listDashboards: ListDashboardRecords
     countDashboards: CountDashboardRecords

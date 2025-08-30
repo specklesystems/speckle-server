@@ -5322,7 +5322,6 @@ export type WorkspaceAutomateFunctionsArgs = {
 
 export type WorkspaceDashboardsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<WorkspaceDashboardsFilter>;
   limit?: Scalars['Int']['input'];
 };
 
@@ -5419,10 +5418,6 @@ export type WorkspaceCreationStateInput = {
   completed: Scalars['Boolean']['input'];
   state: Scalars['JSONObject']['input'];
   workspaceId: Scalars['ID']['input'];
-};
-
-export type WorkspaceDashboardsFilter = {
-  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type WorkspaceDismissInput = {
@@ -6389,7 +6384,6 @@ export type ResolversTypes = {
   WorkspaceCreateInput: WorkspaceCreateInput;
   WorkspaceCreationState: ResolverTypeWrapper<WorkspaceCreationState>;
   WorkspaceCreationStateInput: WorkspaceCreationStateInput;
-  WorkspaceDashboardsFilter: WorkspaceDashboardsFilter;
   WorkspaceDismissInput: WorkspaceDismissInput;
   WorkspaceDomain: ResolverTypeWrapper<WorkspaceDomain>;
   WorkspaceDomainDeleteInput: WorkspaceDomainDeleteInput;
@@ -6759,7 +6753,6 @@ export type ResolversParentTypes = {
   WorkspaceCreateInput: WorkspaceCreateInput;
   WorkspaceCreationState: WorkspaceCreationState;
   WorkspaceCreationStateInput: WorkspaceCreationStateInput;
-  WorkspaceDashboardsFilter: WorkspaceDashboardsFilter;
   WorkspaceDismissInput: WorkspaceDismissInput;
   WorkspaceDomain: WorkspaceDomain;
   WorkspaceDomainDeleteInput: WorkspaceDomainDeleteInput;
