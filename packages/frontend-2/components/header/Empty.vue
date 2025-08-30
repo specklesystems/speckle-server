@@ -7,6 +7,9 @@
         <slot name="header-left" />
       </div>
       <div>
+        <slot name="header-center" />
+      </div>
+      <div>
         <slot name="header-right" />
       </div>
     </div>

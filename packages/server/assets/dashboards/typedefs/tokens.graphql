@@ -1,0 +1,33 @@
+type DashboardToken {
+  tokenId: String!
+  dashboard: Dashboard!
+  projects: [Project!]!
+  user: LimitedUser
+  createdAt: DateTime!
+  lifespan: BigInt!
+  lastUsed: DateTime!
+}
+
+extend type DashboardMutations {
+  createToken(dashboardId: String!): CreateDashboardTokenReturn!
+}
+
+input DashboardTokenCreateInput {
+  dashboardId: String!
+  lifespan: BigInt
+}
+
+type CreateDashboardTokenReturn {
+  token: String!
+  tokenMetadata: DashboardToken!
+}
+
+extend type Project {
+  dashboardTokens(cursor: String, limit: Int): DashboardTokenCollection!
+}
+
+type DashboardTokenCollection {
+  items: [DashboardToken!]!
+  totalCount: Int!
+  cursor: String
+}

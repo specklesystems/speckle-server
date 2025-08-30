@@ -621,6 +621,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       key: {{ default "acc_integration_client_secret" .Values.server.accIntegration.clientSecret.secretKey }}
 {{- end }}
 
+- name: FF_DASHBOARDS_MODULE_ENABLED
+  value: {{ .Values.featureFlags.dashboardsModuleEnabled | quote }}
+
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
   valueFrom:

@@ -203,7 +203,9 @@ const useResetAuthState = (
 
 export const useAuthCookie = () =>
   useSynchronizedCookie<Optional<string>>(CookieKeys.AuthToken, {
-    maxAge: 60 * 60 * 24 * 30 // 30 days
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+    // Don't set domain to allow cookies to work across localhost and 127.0.0.1
+    sameSite: 'lax'
   })
 
 export const useAuthManager = (
@@ -247,9 +249,16 @@ export const useAuthManager = (
   const embedToken = computed(() => route.query.embedToken as Optional<string>)
 
   /**
-   * Get the effective auth token (embed token takes precedence)
+   * Token used for dashboard sharing
    */
-  const effectiveAuthToken = computed(() => embedToken.value || authToken.value)
+  const dashboardToken = computed(() => route.query.token as Optional<string>)
+
+  /**
+   * Get the effective auth token
+   */
+  const effectiveAuthToken = computed(
+    () => dashboardToken.value || embedToken.value || authToken.value
+  )
 
   /**
    * Set/clear new token value and redirect to home

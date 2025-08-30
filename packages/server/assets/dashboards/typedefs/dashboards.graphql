@@ -1,0 +1,47 @@
+extend type Query {
+  dashboard(id: String!): Dashboard!
+}
+
+extend type Mutation {
+  dashboardMutations: DashboardMutations! @hasServerRole(role: SERVER_GUEST)
+}
+
+type Dashboard {
+  id: String!
+  name: String!
+  workspace: LimitedWorkspace!
+  createdBy: LimitedUser
+  """
+  If null, this is a new dashboard and should be initialized by the client
+  """
+  state: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type DashboardCollection {
+  items: [Dashboard!]!
+  cursor: String
+  totalCount: Int!
+}
+
+extend type Workspace {
+  dashboards(limit: Int! = 50, cursor: String): DashboardCollection!
+}
+
+type DashboardMutations {
+  create(workspace: WorkspaceIdentifier!, input: DashboardCreateInput!): Dashboard!
+  delete(id: String!): Boolean!
+  update(input: DashboardUpdateInput!): Dashboard!
+}
+
+input DashboardCreateInput {
+  name: String!
+}
+
+input DashboardUpdateInput {
+  id: String!
+  name: String
+  projectIds: [String!]
+  state: String
+}

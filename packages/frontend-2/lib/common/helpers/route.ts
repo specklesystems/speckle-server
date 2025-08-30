@@ -93,7 +93,14 @@ export const settingsWorkspaceRoutes = {
 
 export const projectRoute = (
   id: string,
-  tab?: 'models' | 'discussions' | 'automations' | 'collaborators' | 'settings' | 'acc'
+  tab?:
+    | 'models'
+    | 'discussions'
+    | 'automations'
+    | 'collaborators'
+    | 'settings'
+    | 'acc'
+    | 'dashboards'
 ) => {
   let res = `/projects/${id}`
   if (tab && tab !== 'models') {
@@ -152,11 +159,18 @@ export const workspaceRoute = (slug: MaybeNullOrUndefined<string>) =>
   slug ? `/workspaces/${slug}` : '/'
 export const workspaceSsoRoute = (slug: string) => `/workspaces/${slug}/sso`
 
+export const dashboardsRoute = (slug?: MaybeNullOrUndefined<string>) =>
+  `/workspaces/${slug}/dashboards`
+
+export const dashboardRoute = (slug?: MaybeNullOrUndefined<string>, id?: string) =>
+  `/workspaces/${slug}/dashboards/${id}`
+
 export const workspaceCreateRoute = '/workspaces/actions/create'
 
 export const workspaceJoinRoute = '/workspaces/actions/join'
 
-export const workspaceFunctionsRoute = (slug: string) => `/workspaces/${slug}/functions`
+export const workspaceFunctionsRoute = (slug?: string) =>
+  `/workspaces/${slug}/functions`
 
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()

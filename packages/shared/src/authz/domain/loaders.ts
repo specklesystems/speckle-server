@@ -26,6 +26,7 @@ import { GetModel } from './models/operations.js'
 import { GetVersion } from './versions/operations.js'
 import { GetAutomateFunction } from './automate/operations.js'
 import { GetSavedView, GetSavedViewGroup } from './savedViews/operations.js'
+import { GetDashboard } from './dashboards/operations.js'
 
 // utility type that ensures all properties functions that return promises
 type PromiseAll<T> = {
@@ -58,6 +59,7 @@ type AuthContextLoaderMappingDefinition<
 export const AuthCheckContextLoaderKeys = StringEnum([
   'getEnv',
   'getAutomateFunction',
+  'getDashboard',
   'getProject',
   'getProjectRoleCounts',
   'getProjectRole',
@@ -92,6 +94,7 @@ export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getEnv: GetEnv
   getAdminOverrideEnabled: GetAdminOverrideEnabled
   getAutomateFunction: GetAutomateFunction
+  getDashboard: GetDashboard
   getProject: GetProject
   getProjectRole: GetProjectRole
   getProjectRoleCounts: GetProjectRoleCounts

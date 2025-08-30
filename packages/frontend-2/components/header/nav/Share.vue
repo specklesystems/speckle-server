@@ -1,9 +1,13 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <Menu as="div" class="flex items-center relative">
-    <MenuButton :id="menuButtonId" as="div">
+    <MenuButton :id="menuButtonId" v-slot="{ open }" as="div">
       <!-- Desktop Button -->
-      <FormButton class="hidden sm:flex" :icon-right="ChevronDownIcon">
+      <FormButton
+        color="outline"
+        class="hidden sm:flex"
+        :icon-right="open ? ChevronUpIcon : ChevronDownIcon"
+      >
         Share
       </FormButton>
       <!-- Mobile Button -->
@@ -26,13 +30,13 @@
       leave-to-class="transform opacity-0 scale-95"
     >
       <MenuItems
-        class="absolute z-50 flex flex-col gap-1 right-0 sm:right-4 top-8 min-w-max w-full sm:w-32 py-1 origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden mt-1"
+        class="absolute z-50 flex flex-col gap-1 right-0 top-11 min-w-max w-full sm:w-32 py-1 origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden mt-1"
       >
         <MenuItem v-slot="{ active }">
           <div
             :class="[
               active ? 'bg-highlight-1' : '',
-              'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1.5 rounded'
+              'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
             ]"
             @click="handleCopyLink"
             @keypress="keyboardClick(handleCopyLink)"
@@ -44,7 +48,7 @@
           <div
             :class="[
               active ? 'bg-highlight-1' : '',
-              'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1.5 rounded'
+              'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
             ]"
             @click="handleCopyId"
             @keypress="keyboardClick(handleCopyId)"
@@ -56,7 +60,7 @@
           <div
             :class="[
               active ? 'bg-highlight-1' : '',
-              'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1.5 rounded'
+              'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
             ]"
             @click="handleEmbed"
             @keypress="keyboardClick(handleEmbed)"
@@ -72,7 +76,7 @@
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import { ShareIcon } from '@heroicons/vue/24/outline'
-import { ChevronDownIcon } from '@heroicons/vue/20/solid'
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/20/solid'
 import { SpeckleViewer } from '@speckle/shared'
 import { keyboardClick } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql/gql'
