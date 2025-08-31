@@ -45,15 +45,16 @@ export class MeasurementsExtension extends Extension {
 
   protected renderer: SpeckleRenderer
 
-  protected measurements: Measurement[] = []
+  protected _measurements: Measurement[] = []
   protected _activeMeasurement: Measurement | null = null
   protected _selectedMeasurement: Measurement | null = null
-  protected raycaster: Raycaster
   protected _options: MeasurementOptions = Object.assign({}, DefaultMeasurementsOptions)
 
   private _frameLock = false
   private _paused = false
   private _sceneHit = false
+
+  protected raycaster: Raycaster
 
   private pointBuff: Vector3 = new Vector3()
   private normalBuff: Vector3 = new Vector3()
@@ -99,12 +100,16 @@ export class MeasurementsExtension extends Extension {
   }
 
   public get measurementCount(): number {
-    return this.measurements.length
+    return this._measurements.length
+  }
+
+  public get mesurements(): Measurement[] {
+    return this._measurements
   }
 
   private emitMeasurementCountChanged() {
-    this.emit(MeasurementEvent.CountChanged, this.measurements.length)
-    this.emit(MeasurementEvent.MeasurementsChanged, this.measurements)
+    this.emit(MeasurementEvent.CountChanged, this._measurements.length)
+    this.emit(MeasurementEvent.MeasurementsChanged, this._measurements)
   }
 
   public constructor(viewer: IViewer, protected cameraProvider: CameraController) {
@@ -139,7 +144,7 @@ export class MeasurementsExtension extends Extension {
           this.screenBuff0,
           this.renderer.sceneBox
         )
-    this.measurements.forEach((value: Measurement) => {
+    this._measurements.forEach((value: Measurement) => {
       ;(this._enabled || value instanceof PointMeasurement) &&
         value.frameUpdate(camera, this.screenBuff0, this.renderer.sceneBox)
     })
@@ -395,7 +400,7 @@ export class MeasurementsExtension extends Extension {
 
   protected pushMeasurement(measurement: Measurement) {
     if (measurement.value > 0) {
-      this.measurements.push(measurement)
+      this._measurements.push(measurement)
       this.emitMeasurementCountChanged()
     } else {
       this.renderer.scene.remove(measurement)
@@ -405,7 +410,10 @@ export class MeasurementsExtension extends Extension {
 
   public removeMeasurement() {
     if (this._selectedMeasurement) {
-      this.measurements.splice(this.measurements.indexOf(this._selectedMeasurement), 1)
+      this._measurements.splice(
+        this._measurements.indexOf(this._selectedMeasurement),
+        1
+      )
       this.renderer.scene.remove(this._selectedMeasurement)
       this._selectedMeasurement = null
       this.emitMeasurementCountChanged()
@@ -417,10 +425,10 @@ export class MeasurementsExtension extends Extension {
 
   public clearMeasurements(): void {
     this.removeMeasurement()
-    this.measurements.forEach((measurement: Measurement) => {
+    this._measurements.forEach((measurement: Measurement) => {
       this.renderer.scene.remove(measurement)
     })
-    this.measurements = []
+    this._measurements = []
     this.emitMeasurementCountChanged()
     this.viewer.requestRender()
   }
@@ -442,11 +450,11 @@ export class MeasurementsExtension extends Extension {
   protected pickMeasurement(data: Vector2): Measurement | null {
     if (!this.renderer.renderingCamera) return null
 
-    this.measurements.forEach((value) => {
+    this._measurements.forEach((value) => {
       value.highlight(false)
     })
     this.raycaster.setFromCamera(data, this.renderer.renderingCamera)
-    const res = this.raycaster.intersectObjects(this.measurements, false)
+    const res = this.raycaster.intersectObjects(this._measurements, false)
     return res[0]?.object as Measurement
   }
 
@@ -495,13 +503,13 @@ export class MeasurementsExtension extends Extension {
   }
 
   protected updateClippingPlanes(planes: Plane[]): void {
-    this.measurements.forEach((value) => {
+    this._measurements.forEach((value) => {
       value.updateClippingPlanes(planes)
     })
   }
 
   protected applyOptions() {
-    const all = [this._activeMeasurement, ...this.measurements]
+    const all = [this._activeMeasurement, ...this._measurements]
     const updatePromises: Promise<void>[] = []
     all.forEach((value) => {
       if (value) {
@@ -547,6 +555,6 @@ export class MeasurementsExtension extends Extension {
   }
 
   public toMeasurementData(): MeasurementData[] {
-    return this.measurements.map((val) => val.toMeasurementData())
+    return this._measurements.map((val) => val.toMeasurementData())
   }
 }
