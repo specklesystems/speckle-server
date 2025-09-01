@@ -287,7 +287,6 @@ const onDragStart = (event: DragEvent) => {
 
   isDragging.value = true
 
-  // Set drag data with more complete view information
   const dragData = {
     viewId: props.view.id,
     viewName: props.view.name,
@@ -300,7 +299,6 @@ const onDragStart = (event: DragEvent) => {
   event.dataTransfer?.setData('application/json', JSON.stringify(dragData))
   event.dataTransfer!.effectAllowed = 'move'
 
-  // Set drag image (optional - creates a custom drag preview)
   if (event.dataTransfer?.setDragImage) {
     const dragImage = event.target as HTMLElement
     event.dataTransfer.setDragImage(dragImage, 0, 0)

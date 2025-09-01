@@ -175,7 +175,6 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   ]
 ])
 
-// Drag and drop handlers
 const onDragOver = (_event: DragEvent) => {
   _event.preventDefault()
   if (_event.dataTransfer) {
