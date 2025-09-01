@@ -25,9 +25,9 @@
         {{ view.author?.name }}
       </div>
       <div class="w-full flex items-center gap-1">
-        <Component
-          :is="isOnlyVisibleToMe ? User : Globe"
-          v-tippy="getTooltipProps(isOnlyVisibleToMe ? 'Private' : 'Shared')"
+        <User
+          v-if="isOnlyVisibleToMe"
+          v-tippy="getTooltipProps('Only visible to you')"
           :size="12"
           :stroke-width="1.5"
           :absolute-stroke-width="true"
@@ -101,7 +101,7 @@ import {
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { difference } from 'lodash-es'
-import { Ellipsis, SquarePen, Bookmark, Globe, User } from 'lucide-vue-next'
+import { Ellipsis, SquarePen, Bookmark, User } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   SavedViewVisibility,
