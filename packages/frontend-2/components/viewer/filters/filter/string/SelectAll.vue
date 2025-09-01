@@ -26,30 +26,55 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { FormCheckbox } from '@speckle/ui-components'
+import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { isStringFilter, type FilterData } from '~/lib/viewer/helpers/filters/types'
 
 const props = defineProps<{
-  selectedCount: number
-  totalCount: number
+  filter: FilterData
+  searchQuery?: string
 }>()
 
-const emit = defineEmits<{
-  selectAll: [selected: boolean]
-}>()
+const {
+  getFilteredFilterValues,
+  isActiveFilterValueSelected,
+  updateActiveFilterValues
+} = useFilterUtilities()
+
+const filteredValues = computed(() => {
+  if (isStringFilter(props.filter) && props.filter.filter) {
+    return getFilteredFilterValues(props.filter.filter, {
+      searchQuery: props.searchQuery
+    })
+  }
+  return []
+})
+
+const selectedCount = computed(() => {
+  return filteredValues.value.filter((value) =>
+    isActiveFilterValueSelected(props.filter.id, value)
+  ).length
+})
+
+const totalCount = computed(() => filteredValues.value.length)
 
 const areAllValuesSelected = computed(() => {
-  return props.totalCount > 0 && props.selectedCount === props.totalCount
+  return totalCount.value > 0 && selectedCount.value === totalCount.value
 })
 
 const areSomeValuesSelected = computed(() => {
-  return props.selectedCount > 0 && props.selectedCount < props.totalCount
+  return selectedCount.value > 0 && selectedCount.value < totalCount.value
 })
 
 const handleSelectAllChange = () => {
-  // If some are selected (indeterminate state), always select all
-  // If all are selected, deselect all
-  // If none are selected, select all
   const finalSelection = areSomeValuesSelected.value || !areAllValuesSelected.value
 
-  emit('selectAll', finalSelection)
+  if (isStringFilter(props.filter) && props.filter.filter) {
+    const allAvailableValues = getFilteredFilterValues(props.filter.filter)
+    if (finalSelection) {
+      updateActiveFilterValues(props.filter.id, allAvailableValues)
+    } else {
+      updateActiveFilterValues(props.filter.id, [])
+    }
+  }
 }
 </script>

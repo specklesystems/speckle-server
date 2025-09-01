@@ -406,7 +406,9 @@ function createFilteringDataStore() {
     currentFilterLogic,
     setGhostMode,
     ghostMode,
-    dataSlices
+    dataSlices,
+    dataSources,
+    buildPropertyIndex
   }
 }
 
@@ -532,6 +534,43 @@ export function useFilterUtilities(
     }
 
     return []
+  }
+
+  /**
+   * Gets counts for all values of a property at once (performance optimized)
+   */
+  const getPropertyValueCounts = (propertyKey: string): Record<string, number> => {
+    const valueCounts: Record<string, number> = {}
+
+    for (const dataSource of dataStore.dataSources.value) {
+      const propertyIndex = dataStore.buildPropertyIndex(dataSource, propertyKey)
+
+      for (const [value, objectIds] of Object.entries(propertyIndex)) {
+        if (!valueCounts[value]) {
+          valueCounts[value] = 0
+        }
+        valueCounts[value] += objectIds.length
+      }
+    }
+
+    return valueCounts
+  }
+
+  /**
+   * Gets the count of objects that have a specific value for a property
+   * Note: For better performance when getting multiple counts, use getPropertyValueCounts
+   */
+  const getPropertyValueCount = (propertyKey: string, value: string): number => {
+    let totalCount = 0
+
+    for (const dataSource of dataStore.dataSources.value) {
+      const propertyIndex = dataStore.buildPropertyIndex(dataSource, propertyKey)
+      if (propertyIndex && propertyIndex[value]) {
+        totalCount += propertyIndex[value].length
+      }
+    }
+
+    return totalCount
   }
 
   /**
@@ -1204,6 +1243,50 @@ export function useFilterUtilities(
     return color.startsWith('#') ? color : `#${color}`
   }
 
+  /**
+   * Gets filtered and sorted values for a string filter with search and sorting options
+   */
+  const getFilteredFilterValues = (
+    filter: PropertyInfo,
+    options?: {
+      searchQuery?: string
+      sortMode?: 'alphabetical' | 'selected-first'
+      filterId?: string
+    }
+  ): string[] => {
+    const { searchQuery, sortMode = 'alphabetical', filterId } = options || {}
+
+    let values = getAvailableFilterValues(filter)
+
+    // Apply search filtering
+    if (searchQuery?.trim()) {
+      const searchTerm = searchQuery.toLowerCase().trim()
+      values = values.filter((value: string) =>
+        value.toLowerCase().includes(searchTerm)
+      )
+    }
+
+    // Apply sorting
+    if (sortMode === 'selected-first' && filterId) {
+      // Sort: selected first, then alphabetical
+      const selectedValues = values.filter((value: string) =>
+        isActiveFilterValueSelected(filterId, value)
+      )
+      const unselectedValues = values.filter(
+        (value: string) => !isActiveFilterValueSelected(filterId, value)
+      )
+
+      // Sort each group alphabetically
+      const sortedSelectedValues = selectedValues.sort((a, b) => a.localeCompare(b))
+      const sortedUnselectedValues = unselectedValues.sort((a, b) => a.localeCompare(b))
+
+      return [...sortedSelectedValues, ...sortedUnselectedValues]
+    } else {
+      // Sort: pure alphabetical
+      return values.sort((a, b) => a.localeCompare(b))
+    }
+  }
+
   return {
     isolateObjects,
     unIsolateObjects,
@@ -1211,6 +1294,8 @@ export function useFilterUtilities(
     showObjects,
     filters,
     getAvailableFilterValues,
+    getPropertyValueCount,
+    getPropertyValueCounts,
     addActiveFilter,
     updateFilterProperty,
     removeActiveFilter,
@@ -1243,6 +1328,8 @@ export function useFilterUtilities(
     toggleColorFilter,
     getFilterColorGroups,
     getFilterValueColor,
+    // Filtered values
+    getFilteredFilterValues,
     // Numeric range filtering
     setNumericRange,
     // Filter logic

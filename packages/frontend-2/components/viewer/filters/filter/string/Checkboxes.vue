@@ -2,9 +2,8 @@
   <div>
     <div class="flex justify-between items-center pr-1">
       <ViewerFiltersFilterStringSelectAll
-        :selected-count="selectedCount"
-        :total-count="filteredValues.length"
-        @select-all="selectAll"
+        :filter="filter"
+        :search-query="searchQuery"
       />
 
       <!-- Sorting Controls -->
@@ -37,27 +36,13 @@
       <div
         v-for="{ data: value, index } in list"
         :key="`${index}-${value}`"
-        :style="{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: `${itemHeight}px`,
-          transform: `translateY(${index * itemHeight}px)`
-        }"
+        class="absolute top-0 left-0 w-full h-full"
+        :style="{ transform: `translateY(${index * itemHeight}px)` }"
       >
         <ViewerFiltersFilterStringValueItem
-          :filter-id="filter.id"
+          :filter="filter"
           :value="value"
-          :is-selected="isValueSelected(value)"
-          :count="getValueCount(value)"
-          :color="getValueColor(value)"
-          :is-default-selected="
-            isStringFilter(filter) &&
-            filter.isDefaultAllSelected &&
-            isValueSelected(value)
-          "
-          @toggle="() => toggleValue(value)"
+          @toggle="() => toggleActiveFilterValue(filter.id, value)"
         />
       </div>
     </div>
@@ -81,14 +66,7 @@ const props = defineProps<{
   searchQuery?: string
 }>()
 
-const {
-  toggleActiveFilterValue,
-  updateActiveFilterValues,
-  isActiveFilterValueSelected,
-  getFilterValueColor,
-  getAvailableFilterValues,
-  filters
-} = useFilterUtilities()
+const { toggleActiveFilterValue, getFilteredFilterValues } = useFilterUtilities()
 
 const showSortMenu = ref(false)
 const sortMode = ref<'selected-first' | 'alphabetical'>('alphabetical')
@@ -108,87 +86,31 @@ const sortMenuItems = computed<LayoutMenuItem[][]>(() => [
   ]
 ])
 
-// Handle sort option selection
-const onSortOptionChosen = ({ item }: { item: LayoutMenuItem; event: MouseEvent }) => {
-  sortMode.value = item.id as 'selected-first' | 'alphabetical'
-  showSortMenu.value = false
-}
-
-const isValueSelected = (value: string): boolean => {
-  return isActiveFilterValueSelected(props.filter.id, value)
-}
-
-const getValueCount = (_value: string): number => {
-  return 1
-}
-
-const getValueColor = (value: string): string | null => {
-  if (filters.activeColorFilterId.value !== props.filter.id) {
-    return null
-  }
-  return getFilterValueColor(value)
-}
-
-const toggleValue = (value: string) => {
-  toggleActiveFilterValue(props.filter.id, value)
-}
-
-const selectAll = (selected: boolean) => {
-  if (!isStringFilter(props.filter) || !props.filter.filter) return
-
-  const allAvailableValues = getAvailableFilterValues(props.filter.filter)
-  if (selected) {
-    updateActiveFilterValues(props.filter.id, allAvailableValues)
-  } else {
-    updateActiveFilterValues(props.filter.id, [])
-  }
-}
-
-const availableValues = computed(() => {
+const filteredValues = computed(() => {
   if (isStringFilter(props.filter) && props.filter.filter) {
-    return getAvailableFilterValues(props.filter.filter)
+    return getFilteredFilterValues(props.filter.filter, {
+      sortMode: sortMode.value,
+      filterId: props.filter.id
+    })
   }
   return []
 })
 
-const filteredValues = computed(() => {
-  let values = availableValues.value
-
-  if (props.searchQuery?.trim()) {
-    const searchTerm = props.searchQuery.toLowerCase().trim()
-    values = values.filter((value: string) => value.toLowerCase().includes(searchTerm))
-  }
-
-  if (sortMode.value === 'selected-first') {
-    // Sort: selected first, then alphabetical
-    const selectedValues = values.filter((value: string) => isValueSelected(value))
-    const unselectedValues = values.filter((value: string) => !isValueSelected(value))
-
-    // Sort each group alphabetically
-    const sortedSelectedValues = selectedValues.sort((a, b) => a.localeCompare(b))
-    const sortedUnselectedValues = unselectedValues.sort((a, b) => a.localeCompare(b))
-
-    return [...sortedSelectedValues, ...sortedUnselectedValues]
-  } else {
-    // Sort: pure alphabetical
-    return values.sort((a, b) => a.localeCompare(b))
-  }
-})
-
-const selectedCount = computed(() => {
-  return filteredValues.value.filter((value) => isValueSelected(value)).length
-})
-
 const itemHeight = 28 // Height of each checkbox item in pixels
 const maxHeight = 240
+
+const { list, containerProps } = useVirtualList(filteredValues, {
+  itemHeight: 28,
+  overscan: 5
+})
 
 const containerHeight = computed(() => {
   const contentHeight = filteredValues.value.length * itemHeight
   return `${Math.min(contentHeight, maxHeight)}px`
 })
 
-const { list, containerProps } = useVirtualList(filteredValues, {
-  itemHeight,
-  overscan: 5
-})
+const onSortOptionChosen = ({ item }: { item: LayoutMenuItem; event: MouseEvent }) => {
+  sortMode.value = item.id as 'selected-first' | 'alphabetical'
+  showSortMenu.value = false
+}
 </script>

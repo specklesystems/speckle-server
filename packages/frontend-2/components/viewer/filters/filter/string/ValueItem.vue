@@ -15,7 +15,7 @@
             'opacity-50 dark:!bg-transparent !border !border-outline-5 !group-hover:border-outline-5':
               isDefaultSelected
           }"
-          :name="`filter-${filterId}-${value}`"
+          :name="`filter-${filter.id}-${value}`"
           :model-value="isSelected"
           hide-label
         />
@@ -24,7 +24,7 @@
         </span>
       </div>
       <div class="flex items-center">
-        <div class="shrink-0 text-foreground-2 text-body-3xs">
+        <div v-if="count !== null" class="shrink-0 text-foreground-2 text-body-3xs">
           {{ count }}
         </div>
         <div
@@ -39,17 +39,47 @@
 
 <script setup lang="ts">
 import { FormCheckbox } from '@speckle/ui-components'
+import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { isStringFilter, type FilterData } from '~/lib/viewer/helpers/filters/types'
 
-defineProps<{
-  filterId: string
+const props = defineProps<{
+  filter: FilterData
   value: string
-  isSelected: boolean
-  count: number
-  color?: string | null
-  isDefaultSelected?: boolean
 }>()
 
 defineEmits<{
   toggle: []
 }>()
+
+const {
+  isActiveFilterValueSelected,
+  getFilterValueColor,
+  getPropertyValueCounts,
+  filters
+} = useFilterUtilities()
+
+const isSelected = computed(() =>
+  isActiveFilterValueSelected(props.filter.id, props.value)
+)
+
+const count = computed(() => {
+  if (!props.filter.filter?.key) return null
+  const counts = getPropertyValueCounts(props.filter.filter.key)
+  return counts[props.value] || 0
+})
+
+const color = computed(() => {
+  if (filters.activeColorFilterId.value !== props.filter.id) {
+    return null
+  }
+  return getFilterValueColor(props.value)
+})
+
+const isDefaultSelected = computed(() => {
+  return (
+    isStringFilter(props.filter) &&
+    props.filter.isDefaultAllSelected &&
+    isSelected.value
+  )
+})
 </script>
