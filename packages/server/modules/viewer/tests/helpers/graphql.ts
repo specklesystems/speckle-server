@@ -257,3 +257,44 @@ export const createSavedViewFactory =
   (deps: { apollo: TestApolloServer }) =>
   (input: CreateSavedViewMutationVariables, options?: ExecuteOperationOptions) =>
     deps.apollo.execute(CreateSavedViewDocument, input, options)
+
+export const onProjectSavedViewsUpdated = gql`
+  subscription onProjectSavedViewsUpdated($projectId: ID!) {
+    projectSavedViewsUpdated(projectId: $projectId) {
+      type
+      id
+      project {
+        id
+      }
+      savedView {
+        ...BasicSavedView
+      }
+      deletedSavedView {
+        groupId
+        resourceIds
+      }
+    }
+  }
+
+  ${basicSavedViewFragment}
+`
+
+export const onProjectSavedViewGroupsUpdated = gql`
+  subscription onProjectSavedViewGroupsUpdated(
+    $projectId: ID!
+    $viewsInput: SavedViewGroupViewsInput! = { limit: 10 }
+  ) {
+    projectSavedViewGroupsUpdated(projectId: $projectId) {
+      type
+      id
+      project {
+        id
+      }
+      savedViewGroup {
+        ...BasicSavedViewGroup
+      }
+    }
+  }
+
+  ${basicSavedViewGroupFragment}
+`

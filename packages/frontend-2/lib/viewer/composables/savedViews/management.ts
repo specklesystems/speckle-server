@@ -31,6 +31,8 @@ const createSavedViewMutation = graphql(`
       savedViewMutations {
         createView(input: $input) {
           id
+          resourceIds
+          groupId
           ...ViewerSavedViewsPanelView_SavedView
           group {
             id
@@ -97,12 +99,20 @@ export const useCreateSavedView = () => {
           if (!res) return
 
           const viewId = res.id
-          const groupId = res.group.id
 
-          onNewGroupViewCacheUpdates(cache, {
+          onNewGroupViewCacheUpdates({
+            cache,
             viewId,
-            groupId,
-            projectId: projectId.value
+            projectId: projectId.value,
+            ...(res.groupId
+              ? {
+                  groupId: res.groupId
+                }
+              : {
+                  view: {
+                    resourceIds: res.resourceIds
+                  }
+                })
           })
         }
       }

@@ -56,6 +56,11 @@ import {
   getSavedViewGroupFactory
 } from '@/modules/viewer/repositories/dataLoaders/savedViews'
 import type { RequestDataLoaders } from '@/modules/core/loaders'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import {
+  filteredSubscribe,
+  SavedViewSubscriptions
+} from '@/modules/shared/utils/subscriptions'
 
 const buildGetViewerResourceGroups = (params: {
   projectDb: Knex
@@ -293,7 +298,8 @@ const resolvers: Resolvers = {
         }),
         setNewHomeView: setNewHomeViewFactory({
           db: projectDb
-        })
+        }),
+        emit: getEventBus().emit
       })
       return await createSavedView({ input: args.input, authorId: ctx.userId! })
     },
@@ -321,7 +327,8 @@ const resolvers: Resolvers = {
         }),
         recalculateGroupResourceIds: recalculateGroupResourceIdsFactory({
           db: projectDb
-        })
+        }),
+        emit: getEventBus().emit
       })({
         id: args.input.id,
         projectId,
@@ -362,7 +369,8 @@ const resolvers: Resolvers = {
         }),
         setNewHomeView: setNewHomeViewFactory({
           db: projectDb
-        })
+        }),
+        emit: getEventBus().emit
       })
 
       const updatedView = await updateSavedView({
@@ -410,7 +418,8 @@ const resolvers: Resolvers = {
         }),
         getStoredViewGroupCount: getStoredViewGroupCountFactory({
           db: projectDb
-        })
+        }),
+        emit: getEventBus().emit
       })
       return await createSavedViewGroup({
         input: args.input,
@@ -436,7 +445,9 @@ const resolvers: Resolvers = {
       const deleteSavedViewGroup = deleteSavedViewGroupFactory({
         deleteSavedViewGroupRecord: deleteSavedViewGroupRecordFactory({
           db: projectDb
-        })
+        }),
+        getSavedViewGroup: getSavedViewGroupFactory({ loaders: ctx.loaders }),
+        emit: getEventBus().emit
       })
 
       await deleteSavedViewGroup({
@@ -469,7 +480,8 @@ const resolvers: Resolvers = {
         updateSavedViewGroupRecord: updateSavedViewGroupRecordFactory({
           db: projectDb
         }),
-        getSavedViewGroup: getSavedViewGroupFactory({ loaders: ctx.loaders })
+        getSavedViewGroup: getSavedViewGroupFactory({ loaders: ctx.loaders }),
+        emit: getEventBus().emit
       })
 
       return await updateSavedViewGroup({
@@ -486,6 +498,77 @@ const resolvers: Resolvers = {
         projectId
       })
       return Authz.toGraphqlResult(canCreate)
+    }
+  },
+  ProjectSavedViewsUpdatedMessage: {
+    project: async (parent, _args, ctx) => {
+      const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+      const project = await ctx.loaders
+        .forRegion({ db: projectDb })
+        .streams.getStream.load(parent.projectId)
+      return project!
+    }
+  },
+  ProjectSavedViewGroupsUpdatedMessage: {
+    project: async (parent, _args, ctx) => {
+      const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+      const project = await ctx.loaders
+        .forRegion({ db: projectDb })
+        .streams.getStream.load(parent.projectId)
+      return project!
+    }
+  },
+  Subscription: {
+    projectSavedViewsUpdated: {
+      subscribe: filteredSubscribe(
+        SavedViewSubscriptions.ProjectSavedViewsUpdated,
+        async (payload, args, ctx) => {
+          const payloadProjectId = payload.projectSavedViewsUpdated.projectId
+          const savedViewId = payload.projectSavedViewsUpdated.id
+
+          if (payloadProjectId !== args.projectId) return false
+
+          throwIfResourceAccessNotAllowed({
+            resourceId: payloadProjectId,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: ctx.resourceAccessRules
+          })
+
+          const canRead = await ctx.authPolicies.project.savedViews.canRead({
+            projectId: payloadProjectId,
+            userId: ctx.userId,
+            savedViewId,
+            allowNonExistent: true
+          })
+          throwIfAuthNotOk(canRead)
+
+          return true
+        }
+      )
+    },
+    projectSavedViewGroupsUpdated: {
+      subscribe: filteredSubscribe(
+        SavedViewSubscriptions.ProjectSavedViewGroupsUpdated,
+        async (payload, args, ctx) => {
+          const payloadProjectId = payload.projectSavedViewGroupsUpdated.projectId
+          if (payloadProjectId !== args.projectId) return false
+
+          throwIfResourceAccessNotAllowed({
+            resourceId: payloadProjectId,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: ctx.resourceAccessRules
+          })
+
+          // Groups are public, just check for general project access
+          const canRead = await ctx.authPolicies.project.canRead({
+            projectId: payloadProjectId,
+            userId: ctx.userId
+          })
+          throwIfAuthNotOk(canRead)
+
+          return true
+        }
+      )
     }
   }
 }
@@ -515,6 +598,20 @@ const disabledResolvers: Resolvers = {
   ProjectMutations: {
     savedViewMutations: () => {
       throw new NotImplementedError(disabledMessage)
+    }
+  },
+  Subscription: {
+    projectSavedViewsUpdated: {
+      subscribe: filteredSubscribe(
+        SavedViewSubscriptions.ProjectSavedViewsUpdated,
+        () => false
+      )
+    },
+    projectSavedViewGroupsUpdated: {
+      subscribe: filteredSubscribe(
+        SavedViewSubscriptions.ProjectSavedViewGroupsUpdated,
+        () => false
+      )
     }
   }
 }

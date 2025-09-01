@@ -1,5 +1,16 @@
 import type { ApolloCache } from '@apollo/client/cache'
-import { isUngroupedGroup } from '@speckle/shared/saved-views'
+import {
+  decodeDefaultGroupId,
+  formatResourceIdsForGroup,
+  isUngroupedGroup
+} from '@speckle/shared/saved-views'
+import { intersection } from 'lodash-es'
+import {
+  getCachedObjectKeys,
+  getCacheKey,
+  parseObjectKey,
+  type ApolloCacheObjectKey
+} from '~/lib/common/helpers/graphql'
 
 export const filterKeys = [
   'input.search',
@@ -10,57 +21,155 @@ export const filterKeys = [
   'filter.onlyVisibility'
 ]
 
+type GroupIdOrViewInfo =
+  | {
+      group: {
+        id: string
+        resourceIds: string[]
+      }
+    }
+  | {
+      view: {
+        resourceIds: string[]
+      }
+    }
+
+/**
+ * A real group will only have 1 id, but for a null (ungrouped) group we need extra metadata from the view
+ * to find out relevant ones, which may be multiple
+ */
+const resolveCacheGroupKeys = (
+  params: {
+    cache: ApolloCache<unknown>
+    projectId: string
+  } & GroupIdOrViewInfo
+): Array<{
+  key: ApolloCacheObjectKey<'SavedViewGroup'>
+  id: string
+  metadata: {
+    resourceIds: string[]
+  }
+}> => {
+  const { cache, projectId } = params
+  if ('group' in params) {
+    const group = params.group
+    if (isUngroupedGroup(group.id)) {
+      throw new Error('Ungrouped/default group ids are not allowed')
+    }
+    return [
+      {
+        key: getCacheKey('SavedViewGroup', group.id),
+        id: group.id,
+        metadata: { resourceIds: group.resourceIds }
+      }
+    ]
+  }
+
+  const viewResourceIds = params.view.resourceIds
+  const allGroupCacheKeys = getCachedObjectKeys(cache, 'SavedViewGroup')
+  const relevantKeys: Array<{
+    key: ApolloCacheObjectKey<'SavedViewGroup'>
+    id: string
+    metadata: {
+      resourceIds: string[]
+    }
+  }> = []
+  for (const groupKey of allGroupCacheKeys) {
+    const { id } = parseObjectKey(groupKey)
+    const defaultGroup = decodeDefaultGroupId(id)
+    if (!defaultGroup) continue // not default group
+    if (defaultGroup.projectId !== projectId) continue // not in this project
+
+    // See if resourceIds match up
+    const groupResourceIds = defaultGroup.resourceIds
+    const viewGroupResourceIds = formatResourceIdsForGroup(viewResourceIds)
+    const hasMatch = intersection(groupResourceIds, viewGroupResourceIds).length > 0
+    if (hasMatch) {
+      relevantKeys.push({ key: groupKey, metadata: defaultGroup, id })
+    }
+  }
+
+  return relevantKeys
+}
+
 /**
  * Cache mutations for when a group gets a new view:
  * - If new group, Project.savedViewGroups + 1
  * - SavedViewGroup.views + 1
  */
 export const onNewGroupViewCacheUpdates = (
-  cache: ApolloCache<unknown>,
   params: {
+    cache: ApolloCache<unknown>
     /**
      * The ID of the view being added
      */
     viewId: string
-    /**
-     * The ID of the group the view is being added to
-     */
-    groupId: string
     projectId: string
-  }
+  } & GroupIdOrViewInfo
 ) => {
-  const { viewId, groupId, projectId } = params
+  const { viewId, projectId, cache } = params
+  const groupKeys = resolveCacheGroupKeys(params)
 
   // Project.savedViewGroups + 1, if it is a new group
   modifyObjectField(
     cache,
     getCacheId('Project', projectId),
     'savedViewGroups',
-    ({ helpers: { createUpdatedValue, ref, fromRef }, value }) => {
-      const isNewGroup = !value?.items?.some((group) => fromRef(group).id === groupId)
-      if (!isNewGroup) return
+    ({ helpers: { createUpdatedValue, keyToRef }, value, variables }) => {
+      if (!value.items?.length) return // no groups query at all? skip
+
+      /**
+       * - 1. If group already in the list - skip
+       * - 2. If not and vars.resourceIds match w/ new group resourceIds, then add
+       */
+      const existingGroupKeys = value.items!.map((i) => i.__ref)
+      const groupsResourceIds = formatResourceIdsForGroup(
+        variables.input.resourceIdString
+      )
+
+      const newGroupKeys = groupKeys
+        .filter((k) => {
+          if (existingGroupKeys.includes(k.key)) return false // already exists
+          const hasMatch =
+            intersection(groupsResourceIds, k.metadata.resourceIds).length > 0
+          if (!hasMatch) return false // resourceIds don't match
+
+          return true
+        })
+        .map((g) => g.key)
+      if (!newGroupKeys.length) return
 
       return createUpdatedValue(({ update }) => {
-        update('totalCount', (count) => count + 1)
-        update('items', (items) => [...items, ref('SavedViewGroup', groupId)])
+        update('totalCount', (count) => count + newGroupKeys.length)
+        update('items', (items) => [
+          ...items,
+          ...newGroupKeys.map((key) => keyToRef(key))
+        ])
       })
     },
     { autoEvictFiltered: filterKeys }
   )
 
-  // SavedViewGroup.views + 1
-  modifyObjectField(
-    cache,
-    getCacheId('SavedViewGroup', groupId),
-    'views',
-    ({ helpers: { createUpdatedValue, ref } }) => {
-      return createUpdatedValue(({ update }) => {
-        update('totalCount', (count) => count + 1)
-        update('items', (items) => [ref('SavedView', viewId), ...items])
-      })
-    },
-    { autoEvictFiltered: filterKeys }
-  )
+  for (const { key: groupKey } of groupKeys) {
+    // SavedViewGroup.views + 1
+    modifyObjectField(
+      cache,
+      groupKey,
+      'views',
+      ({ helpers: { createUpdatedValue, ref, readField }, value }) => {
+        const hasItemAlready = value.items?.some(
+          (item) => readField(item, 'id') === viewId
+        )
+        if (hasItemAlready) return
+
+        return createUpdatedValue(({ update }) => {
+          update('totalCount', (count) => count + 1)
+          update('items', (items) => [ref('SavedView', viewId), ...items])
+        })
+      },
+      { autoEvictFiltered: filterKeys }
+    )
+  }
 }
 
 /**
@@ -69,80 +178,80 @@ export const onNewGroupViewCacheUpdates = (
  * - Otherwise just: SavedViewGroup.views - 1
  */
 export const onGroupViewRemovalCacheUpdates = (
-  cache: ApolloCache<unknown>,
   params: {
+    cache: ApolloCache<unknown>
     /**
      * The ID of the view being removed
      */
     viewId: string
-    /**
-     * The ID of the group the view is being removed from
-     */
-    groupId: string
     projectId: string
-  }
+  } & GroupIdOrViewInfo
 ) => {
-  const { viewId: id, groupId, projectId } = params
+  const { viewId: id, projectId, cache } = params
+  const groupKeys = resolveCacheGroupKeys(params)
 
-  // Check if default/ungrouped group
-  const isDefaultGroup = isUngroupedGroup(groupId)
+  // TODO: Match up resourceIds
+  for (const { key: groupKey, id: groupId } of groupKeys) {
+    // Check if default/ungrouped group
+    const isDefaultGroup = isUngroupedGroup(groupId)
 
-  // If default group and its now empty - remove it as it doesn't exist otherwise
-  let shouldEvict
-  if (isDefaultGroup) {
-    let viewsRemain = false
-    iterateObjectField(
-      cache,
-      getCacheId('SavedViewGroup', groupId),
-      'views',
-      ({ value, helpers: { fromRef } }) => {
-        const otherItems = value?.items?.filter((item) => fromRef(item).id !== id)
+    // If default group and its now empty - remove it as it doesn't exist otherwise
+    let shouldEvict
+    if (isDefaultGroup) {
+      let viewsRemain = false
+      iterateObjectField(
+        cache,
+        groupKey,
+        'views',
+        ({ value, helpers: { fromRef } }) => {
+          const otherItems = value?.items?.filter((item) => fromRef(item).id !== id)
 
-        if (otherItems?.length) {
-          viewsRemain = true
+          if (otherItems?.length) {
+            viewsRemain = true
+          }
         }
+      )
+
+      if (!viewsRemain) {
+        shouldEvict = true
       }
-    )
-
-    if (!viewsRemain) {
-      shouldEvict = true
     }
-  }
 
-  // Remove default group, if its empty
-  if (shouldEvict) {
-    // Project.savedViewGroups - 1
-    modifyObjectField(
-      cache,
-      getCacheId('Project', projectId),
-      'savedViewGroups',
-      ({ helpers: { createUpdatedValue, fromRef } }) => {
-        return createUpdatedValue(({ update }) => {
-          update('totalCount', (count) => count - 1)
-          update('items', (items) =>
-            items.filter((item) => fromRef(item).id !== groupId)
-          )
-        })
-      },
-      { autoEvictFiltered: filterKeys }
-    )
+    // Remove default group, if its empty
+    if (shouldEvict) {
+      // Project.savedViewGroups - 1
+      modifyObjectField(
+        cache,
+        getCacheId('Project', projectId),
+        'savedViewGroups',
+        ({ helpers: { createUpdatedValue, fromRef } }) => {
+          return createUpdatedValue(({ update }) => {
+            update('totalCount', (count) => count - 1)
+            update('items', (items) =>
+              items.filter((item) => fromRef(item).id !== groupId)
+            )
+          })
+        },
+        { autoEvictFiltered: filterKeys }
+      )
 
-    // Evict entirely
-    cache.evict({ id: getCacheId('SavedViewGroup', groupId) })
-  } else {
-    // Remove view from view lists (in groups)
-    // SavedViewGroup.views - 1
-    modifyObjectField(
-      cache,
-      getCacheId('SavedViewGroup', groupId),
-      'views',
-      ({ helpers: { createUpdatedValue, fromRef } }) => {
-        return createUpdatedValue(({ update }) => {
-          update('totalCount', (count) => count - 1)
-          update('items', (items) => items.filter((item) => fromRef(item).id !== id))
-        })
-      },
-      { autoEvictFiltered: filterKeys }
-    )
+      // Evict entirely
+      cache.evict({ id: getCacheId('SavedViewGroup', groupId) })
+    } else {
+      // Remove view from view lists (in groups)
+      // SavedViewGroup.views - 1
+      modifyObjectField(
+        cache,
+        getCacheId('SavedViewGroup', groupId),
+        'views',
+        ({ helpers: { createUpdatedValue, fromRef } }) => {
+          return createUpdatedValue(({ update }) => {
+            update('totalCount', (count) => count - 1)
+            update('items', (items) => items.filter((item) => fromRef(item).id !== id))
+          })
+        },
+        { autoEvictFiltered: filterKeys }
+      )
+    }
   }
 }

@@ -9,6 +9,7 @@ import {
   getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   SavedViewVisibility,
   type SavedView
@@ -132,7 +133,8 @@ export const createTestSavedView = async (params?: {
     }),
     setNewHomeView: setNewHomeViewFactory({
       db
-    })
+    }),
+    emit: getEventBus().emit
   })
 
   const createdView = await createSavedView({

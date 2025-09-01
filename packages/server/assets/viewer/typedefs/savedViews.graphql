@@ -256,3 +256,61 @@ extend type Model {
   """
   homeView: SavedView
 }
+
+enum ProjectSavedViewsUpdatedMessageType {
+  CREATED
+  UPDATED
+  DELETED
+}
+
+type DeletedSavedView {
+  groupId: ID
+  resourceIds: [String!]!
+}
+
+type ProjectSavedViewsUpdatedMessage {
+  type: ProjectSavedViewsUpdatedMessageType!
+  """
+  SavedView ID
+  """
+  id: ID!
+  """
+  Set if view was deleted, allows some limited access into the view
+  """
+  deletedSavedView: DeletedSavedView
+  """
+  Null if view was deleted
+  """
+  savedView: SavedView
+  """
+  The project that the update belongs to
+  """
+  project: Project!
+}
+
+type ProjectSavedViewGroupsUpdatedMessage {
+  type: ProjectSavedViewsUpdatedMessageType!
+  """
+  SavedViewGroup ID
+  """
+  id: ID!
+  """
+  Null if group was deleted
+  """
+  savedViewGroup: SavedViewGroup
+  """
+  The project that the update belongs to
+  """
+  project: Project!
+}
+
+extend type Subscription {
+  """
+  Subscribe to changes to a project's saved views.
+  """
+  projectSavedViewsUpdated(projectId: ID!): ProjectSavedViewsUpdatedMessage!
+  """
+  Subscribe to changes to a project's saved view groups.
+  """
+  projectSavedViewGroupsUpdated(projectId: ID!): ProjectSavedViewGroupsUpdatedMessage!
+}
