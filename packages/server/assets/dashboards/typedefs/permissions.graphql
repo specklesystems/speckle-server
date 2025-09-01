@@ -1,0 +1,15 @@
+extend type WorkspacePermissionChecks {
+  canCreateDashboards: PermissionCheckResult!
+  canListDashboards: PermissionCheckResult!
+}
+
+extend type Dashboard {
+  permissions: DashboardPermissionChecks!
+}
+
+type DashboardPermissionChecks {
+  canCreateToken: PermissionCheckResult!
+  canDelete: PermissionCheckResult!
+  canEdit: PermissionCheckResult!
+  canRead: PermissionCheckResult!
+}

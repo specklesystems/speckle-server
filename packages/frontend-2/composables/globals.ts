@@ -92,4 +92,11 @@ export const useIsNoPersonalEmailsEnabled = () => {
   return ref(FF_NO_PERSONAL_EMAILS_ENABLED)
 }
 
+export const useIsDashboardsModuleEnabled = () => {
+  const {
+    public: { FF_DASHBOARDS_MODULE_ENABLED }
+  } = useRuntimeConfig()
+  return ref(FF_DASHBOARDS_MODULE_ENABLED)
+}
+
 export { useGlobalToast, useActiveUser, usePageQueryStandardFetchPolicy, useEventBus }

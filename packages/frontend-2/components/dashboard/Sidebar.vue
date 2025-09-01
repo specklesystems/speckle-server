@@ -40,7 +40,7 @@
             <div class="flex flex-col gap-y-2 lg:gap-y-4">
               <LayoutSidebarMenuGroup>
                 <NuxtLink
-                  v-if="showProjectsLink"
+                  v-if="showWorkspaceLinks"
                   :to="projectsLink"
                   @click="isOpenMobile = false"
                 >
@@ -49,6 +49,21 @@
                     :active="
                       route.name === 'workspaces-slug' || isActive(projectsRoute)
                     "
+                  >
+                    <template #icon>
+                      <IconProjects class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
+
+                <NuxtLink
+                  v-if="showWorkspaceLinks && canListDashboards"
+                  :to="dashboardsRoute(activeWorkspaceSlug)"
+                  @click="isOpenMobile = false"
+                >
+                  <LayoutSidebarMenuGroupItem
+                    label="Intelligence"
+                    :active="isActive(dashboardsRoute(activeWorkspaceSlug))"
                   >
                     <template #icon>
                       <IconProjects class="size-4 text-foreground-2" />
@@ -163,7 +178,8 @@ import {
   connectorsRoute,
   workspaceRoute,
   tutorialsRoute,
-  docsPageUrl
+  docsPageUrl,
+  dashboardsRoute
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -186,12 +202,34 @@ const dashboardSidebarQuery = graphql(`
   }
 `)
 
+const sidebarPermissionsQuery = graphql(`
+  query SidebarPermissions($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      permissions {
+        canListDashboards {
+          ...FullPermissionCheckResult
+        }
+      }
+    }
+  }
+`)
+
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const isDashboardsEnabled = useIsDashboardsModuleEnabled()
 const route = useRoute()
 const activeWorkspaceSlug = useActiveWorkspaceSlug()
 const { $intercom } = useNuxtApp()
 const mixpanel = useMixpanel()
+const { result: permissionsResult } = useQuery(
+  sidebarPermissionsQuery,
+  () => ({
+    slug: activeWorkspaceSlug.value || ''
+  }),
+  () => ({
+    enabled: isDashboardsEnabled.value && !!activeWorkspaceSlug.value
+  })
+)
 const { result } = useQuery(dashboardSidebarQuery, () => ({}), {
   enabled: isWorkspacesEnabled.value
 })
@@ -205,7 +243,12 @@ const showIntelligenceCommunityStandUpPromo = computed(() => {
   return dayjs().isBefore('2025-09-10', 'day')
 })
 const activeWorkspace = computed(() => result.value?.activeUser?.activeWorkspace)
-const showProjectsLink = computed(() => {
+const canListDashboards = computed(() => {
+  return permissionsResult.value?.workspaceBySlug?.permissions?.canListDashboards
+    ?.authorized
+})
+
+const showWorkspaceLinks = computed(() => {
   return isWorkspacesEnabled.value
     ? activeWorkspace.value
       ? !!activeWorkspace.value?.role
