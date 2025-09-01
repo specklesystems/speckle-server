@@ -1,6 +1,5 @@
 <template>
   <LayoutDisclosure
-    v-if="!isUngroupedGroup"
     v-model:open="open"
     v-model:edit-title="renameMode"
     color="subtle"
@@ -24,6 +23,7 @@
         @click.stop
       >
         <LayoutMenu
+          v-if="!isUngroupedGroup"
           v-model:open="showMenu"
           :items="menuItems"
           :menu-id="menuId"
@@ -42,7 +42,7 @@
         </LayoutMenu>
         <div v-tippy="canCreateView?.errorMessage">
           <FormButton
-            v-tippy="getTooltipProps('Create view in group')"
+            v-tippy="getTooltipProps('Create view')"
             size="sm"
             color="subtle"
             :icon-left="Plus"
@@ -55,12 +55,6 @@
       </div>
     </template>
   </LayoutDisclosure>
-  <ViewerSavedViewsPanelViewsGroupInner
-    v-else
-    :group="group"
-    :search="search"
-    :views-type="viewsType"
-  />
 </template>
 <script setup lang="ts">
 import { StringEnum, throwUncoveredError, type StringEnumValues } from '@speckle/shared'
@@ -266,7 +260,7 @@ const moveViewToGroup = async (dragData: {
       input: {
         id: dragData.viewId,
         projectId: dragData.projectId,
-        groupId: props.group.id
+        groupId: isUngroupedGroup.value ? null : props.group.id
       }
     })
 
@@ -277,9 +271,7 @@ const moveViewToGroup = async (dragData: {
 }
 
 const dropZoneClasses = computed(() => [
-  isDragOver.value &&
-    !isUngroupedGroup.value &&
-    'rounded-md ring-2 ring-primary ring-opacity-50 bg-primary/5'
+  isDragOver.value && 'rounded-md ring-2 ring-primary ring-opacity-50 bg-primary/5'
 ])
 
 const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
@@ -297,7 +289,7 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
 
 const onAddGroupView = async () => {
   await createView({
-    groupId: props.group.id
+    groupId: isUngroupedGroup.value ? null : props.group.id
   })
   open.value = true
 }
