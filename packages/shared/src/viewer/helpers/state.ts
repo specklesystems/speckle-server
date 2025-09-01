@@ -185,9 +185,11 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
     )
   }
 
-  const viewMode = isNumber(state.ui?.viewMode)
+  const viewModeType = isNumber(state.ui?.viewMode)
     ? state.ui.viewMode
     : state.ui?.viewMode?.mode
+
+  const viewModeSettings = isNumber(state.ui?.viewMode) ? {} : state.ui?.viewMode
 
   return {
     projectId: state.projectId || throwInvalidError('projectId'),
@@ -252,11 +254,11 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
         zoom: state.ui?.camera?.zoom || 1
       },
       viewMode: {
-        mode: viewMode || 0,
-        edgesEnabled: state.ui?.viewMode?.edgesEnabled || false,
-        edgesWeight: state.ui?.viewMode?.edgesWeight || 1,
-        outlineOpacity: state.ui?.viewMode?.outlineOpacity || 0.75,
-        edgesColor: state.ui?.viewMode?.edgesColor || defaultViewModeEdgeColorValue
+        mode: viewModeType ?? 0,
+        edgesEnabled: viewModeSettings?.edgesEnabled ?? true,
+        edgesWeight: viewModeSettings?.edgesWeight ?? 1,
+        outlineOpacity: viewModeSettings?.outlineOpacity ?? 0.75,
+        edgesColor: viewModeSettings?.edgesColor ?? defaultViewModeEdgeColorValue
       },
       sectionBox:
         state.ui?.sectionBox?.min?.length && state.ui?.sectionBox.max?.length
