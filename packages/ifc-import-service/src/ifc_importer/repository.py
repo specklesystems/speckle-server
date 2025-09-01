@@ -30,23 +30,26 @@ async def get_next_job(connection: Connection) -> FileimportJob | None:
                 "updatedAt" = NOW()
             WHERE id = (
                 SELECT id FROM background_jobs
-                WHERE ( --v1 queued job which has not yet exceeded maximum attempts
+                WHERE ( --v1 queued job which has not yet exceeded maximum attempts and not yet timed out
                     payload ->> 'fileType' = 'ifc'
                     AND status = $2
                     AND payload ->> 'payloadVersion' = '1'
                     AND "attempt" < "maxAttempt"
+                    AND "createdAt" < NOW() - ("timeoutMs" * interval '1 millisecond')
                 )
                 OR ( --any job left in a PROCESSING state which has timed out
                     payload ->> 'fileType' = 'ifc'
                     AND status = $1
-                    AND "updatedAt" < NOW() - (payload ->> 'timeOutSeconds' * interval '1 second')
+                    AND ("updatedAt" < NOW() - (payload ->> 'timeOutSeconds' * interval '1 second')
+                          OR "createdAt" < NOW() - ("timeoutMs" * interval '1 millisecond'))
                 )
-                OR ( --v2 queued job which has not yet exceeded maximum attempts and has remaining compute budget
+                OR ( --v2 queued job which has not yet exceeded maximum attempts, has not timed out, and has remaining compute budget
                     payload ->> 'fileType' = 'ifc'
                     AND payload ->> 'payloadVersion' = '2'
                     AND status = $2
                     AND "attempt" < "maxAttempt"
                     AND "remainingComputeBudgetSeconds" > 0
+                    AND "createdAt" < NOW() - ("timeoutMs" * interval '1 millisecond')
                 )
                 ORDER BY "createdAt"
                 FOR UPDATE SKIP LOCKED
