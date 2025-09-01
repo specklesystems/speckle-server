@@ -17,7 +17,10 @@
       <h3 class="text-body-xs font-semibold leading-tight tracking-tight">
         Speckle Intelligence Live
       </h3>
-      <p class="text-body-3xs leading-tight">
+      <p v-if="dateIsSetp9" class="text-body-3xs leading-tight">
+        Community StandUp happening tomorrow!
+      </p>
+      <p v-else class="text-body-3xs leading-tight">
         Tune into our Community
         <br />
         StandUp - Sept 10.
@@ -40,6 +43,7 @@
 import { ArrowUpRightIcon, XMarkIcon } from '@heroicons/vue/24/solid'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useActiveUserMeta } from '~~/lib/user/composables/meta'
+import dayjs from 'dayjs'
 
 const mixpanel = useMixpanel()
 const { updateIntelligenceCommunityStandUpBannerDismissed } = useActiveUserMeta()
@@ -47,6 +51,10 @@ const { updateIntelligenceCommunityStandUpBannerDismissed } = useActiveUserMeta(
 const onCTAClick = () => {
   mixpanel.track('Intelligence Community StandUp CTA Clicked')
 }
+
+const dateIsSetp9 = computed(() => {
+  return dayjs().isSame('2025-09-09', 'day')
+})
 
 const dismissBanner = async () => {
   await updateIntelligenceCommunityStandUpBannerDismissed(true)
