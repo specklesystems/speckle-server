@@ -260,20 +260,23 @@ function createFilteringDataStore() {
     return matchingIds
   }
 
-  // Cascades the intersected object ids from the previous slice to the current slice
   const computeSliceIntersections = () => {
     if (dataSlices.value.length < 1) return
 
-    // First slice gets all its objects
-    dataSlices.value[0]!.intersectedObjectIds = [...dataSlices.value[0]!.objectIds]
+    if (currentFilterLogic.value === FilterLogic.All) {
+      dataSlices.value[0]!.intersectedObjectIds = [...dataSlices.value[0]!.objectIds]
 
-    // Each subsequent slice intersects with the previous slice
-    for (let i = 1; i < dataSlices.value.length; i++) {
-      const prevSlice = dataSlices.value[i - 1]!
-      const currentSlice = dataSlices.value[i]!
-      currentSlice.intersectedObjectIds = currentSlice.objectIds.filter((id) =>
-        prevSlice.intersectedObjectIds!.includes(id)
-      )
+      for (let i = 1; i < dataSlices.value.length; i++) {
+        const prevSlice = dataSlices.value[i - 1]!
+        const currentSlice = dataSlices.value[i]!
+        currentSlice.intersectedObjectIds = currentSlice.objectIds.filter((id) =>
+          prevSlice.intersectedObjectIds!.includes(id)
+        )
+      }
+    } else {
+      for (const slice of dataSlices.value) {
+        slice.intersectedObjectIds = []
+      }
     }
   }
 
@@ -338,6 +341,8 @@ function createFilteringDataStore() {
 
   const setFilterLogic = (logic: FilterLogic) => {
     currentFilterLogic.value = logic
+    // Immediately recompute intersections when logic changes
+    computeSliceIntersections()
   }
 
   const setGhostMode = (enabled: boolean) => {
@@ -612,7 +617,7 @@ export function useFilterUtilities(
     if (isNumericPropertyInfo(filter)) {
       return {
         id,
-        isApplied: true,
+        isApplied: false, // Start as not applied until user modifies range
         selectedValues: [],
         condition: NumericFilterCondition.IsBetween,
         type: FilterType.Numeric,
@@ -750,6 +755,15 @@ export function useFilterUtilities(
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
       filter.condition = condition
+
+      // Mark filter as applied when condition changes to existence conditions
+      if (
+        condition === ExistenceFilterCondition.IsSet ||
+        condition === ExistenceFilterCondition.IsNotSet
+      ) {
+        filter.isApplied = true
+      }
+
       updateDataStoreSlices()
     }
   }
@@ -795,7 +809,7 @@ export function useFilterUtilities(
 
     // Create new slices for active filters (simple forEach)
     filters.propertyFilters.value.forEach((filter) => {
-      // Handle numeric filters - create slice if filter is enabled AND (has numeric range OR is "is set" OR is "is not set")
+      // Handle numeric filters - create slice only if filter has a meaningful constraint
       if (
         isNumericFilter(filter) &&
         filter.isApplied &&

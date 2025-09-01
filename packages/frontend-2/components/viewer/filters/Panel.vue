@@ -45,7 +45,7 @@
             @swap-property="startPropertySwap"
           />
         </div>
-        <div class="px-2">
+        <div class="px-2 pb-6">
           <FormButton
             v-if="propertyFilters.length > 0"
             full-width
