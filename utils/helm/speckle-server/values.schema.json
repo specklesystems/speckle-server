@@ -134,6 +134,11 @@
           "type": "boolean",
           "description": "Enables the ability to create Personal Access Tokens (PAT) with users:invite privileges. WARNING: This can be used by untrusted users to send spam; do not enable on servers which allow public registration or to which untrusted users have been, or will be, invited.",
           "default": false
+        },
+        "noPersonalEmailsEnabled": {
+          "type": "boolean",
+          "description": "Disables personal emails for new accounts",
+          "default": false
         }
       }
     },
