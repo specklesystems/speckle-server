@@ -4769,6 +4769,7 @@ export type UserGendoAiCredits = {
 
 export type UserMeta = {
   __typename?: 'UserMeta';
+  intelligenceCommunityStandUpBannerDismissed: Scalars['Boolean']['output'];
   legacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   newWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
   speckleConBannerDismissed: Scalars['Boolean']['output'];
@@ -4776,9 +4777,15 @@ export type UserMeta = {
 
 export type UserMetaMutations = {
   __typename?: 'UserMetaMutations';
+  setIntelligenceCommunityStandUpBannerDismissed: Scalars['Boolean']['output'];
   setLegacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   setNewWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
   setSpeckleConBannerDismissed: Scalars['Boolean']['output'];
+};
+
+
+export type UserMetaMutationsSetIntelligenceCommunityStandUpBannerDismissedArgs = {
+  value: Scalars['Boolean']['input'];
 };
 
 
@@ -10113,11 +10120,13 @@ export type UserGendoAiCreditsFieldArgs = {
   used: {},
 }
 export type UserMetaFieldArgs = {
+  intelligenceCommunityStandUpBannerDismissed: {},
   legacyProjectsExplainerCollapsed: {},
   newWorkspaceExplainerDismissed: {},
   speckleConBannerDismissed: {},
 }
 export type UserMetaMutationsFieldArgs = {
+  setIntelligenceCommunityStandUpBannerDismissed: UserMetaMutationsSetIntelligenceCommunityStandUpBannerDismissedArgs,
   setLegacyProjectsExplainerCollapsed: UserMetaMutationsSetLegacyProjectsExplainerCollapsedArgs,
   setNewWorkspaceExplainerDismissed: UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs,
   setSpeckleConBannerDismissed: UserMetaMutationsSetSpeckleConBannerDismissedArgs,
