@@ -890,7 +890,6 @@ export const getUserStreamsCountFactory =
     return parseInt(res.count)
   }
 
-// TODO: this
 export const createStreamFactory =
   (deps: { db: Knex }): SaveStream =>
   async (input) => {
