@@ -3,13 +3,16 @@
 <template>
   <div class="px-1">
     <div
-      class="flex items-center justify-between gap-2 text-body-3xs py-0.5 px-2 hover:bg-highlight-1 rounded cursor-pointer"
-      :class="{ 'opacity-50': isDefaultSelected }"
+      class="group flex items-center justify-between gap-2 text-body-3xs py-0.5 px-2 hover:bg-highlight-1 rounded-md cursor-pointer"
       @click="$emit('toggle')"
     >
       <div class="flex items-center min-w-0">
         <FormCheckbox
-          :class="isSelected ? '' : 'border-transparent hover:border-highlight-2'"
+          :class="{
+            'border-transparent group-hover:border-outline-5': !isSelected,
+            'opacity-50 dark:!bg-transparent !border !border-outline-5 !group-hover:border-outline-5':
+              isDefaultSelected
+          }"
           :name="`filter-${filterId}-${value}`"
           :model-value="isSelected"
           hide-label

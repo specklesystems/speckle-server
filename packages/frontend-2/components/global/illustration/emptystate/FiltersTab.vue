@@ -27,7 +27,7 @@
     <g clip-path="url(#clip0_2030_68859)">
       <path
         d="M68.0923 88.3643L101.014 83.7211L85.7 64.0319L57.4709 74.7082L68.0923 88.3643Z"
-        class="fill-foundation-page"
+        class="fill-foundation-page stroke-outline-5"
         stroke-linejoin="round"
       />
       <path
@@ -85,9 +85,22 @@
       width="136.25"
       height="102.5"
       rx="5.5"
+      class="dash-moving stroke-outline-5"
       transform="matrix(0.948683 -0.316228 0.613941 0.789352 0.394859 43.9668)"
-      class="stroke-outline-5"
+      stroke-dashoffset="25"
+      stroke-width="1"
       stroke-dasharray="3 4"
     />
   </svg>
 </template>
+<style scoped>
+.dash-moving {
+  animation: dash 2s ease-in-out 0s 1 normal forwards running;
+}
+
+@keyframes dash {
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+</style>

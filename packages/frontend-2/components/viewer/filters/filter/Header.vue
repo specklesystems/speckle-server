@@ -2,27 +2,47 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div
-    class="flex items-center justify-between"
+    class="flex group items-center justify-between"
     :class="{ 'cursor-pointer': collapsed }"
     @click="toggleCollapsed"
   >
-    <div class="flex items-center" :class="{ 'opacity-50': !filter.isApplied }">
-      <ViewerExpansionTriangle
-        :is-expanded="!collapsed"
-        class="h-6"
-        @click="collapsed = !collapsed"
-      />
-      <Hash v-if="filter.type === FilterType.Numeric" class="h-3 w-3" />
-      <CaseLower v-else class="h-3 w-3" />
-      <div class="text-body-2xs text-foreground font-medium pl-1">
+    <div class="flex items-center pl-0" :class="{ 'opacity-50': !filter.isApplied }">
+      <FormButton color="subtle" class="m-0 gap-3" size="sm">
+        <Hash
+          v-if="filter.type === FilterType.Numeric"
+          class="h-3 w-3 stroke-emerald-700 dark:stroke-emerald-500"
+        />
+        <CaseUpper v-else class="h-3 w-3 stroke-violet-600 dark:stroke-violet-500" />
+
         {{ getPropertyName(filter.filter?.key) }}
-      </div>
+      </FormButton>
+      <!-- <FormButton
+        v-tippy="'Toggle coloring for this property'"
+        color="subtle"
+        size="sm"
+        hide-text
+        class="opacity-0 group-hover:opacity-100 text-foreground-3"
+        :icon-right="ChevronsUpDown"
+        :is-expanded="!collapsed"
+        @click.stop="collapsed = !collapsed"
+      /> -->
     </div>
-    <div class="flex items-center gap-0.5">
+    <div class="flex items-start gap-0.5">
+      <FormButton
+        v-tippy="'Show/hide details'"
+        color="subtle"
+        size="sm"
+        hide-text
+        class="opacity-0 group-hover:opacity-100 text-foreground-3"
+        :icon-right="ChevronsUpDown"
+        :is-expanded="!collapsed"
+        @click.stop="collapsed = !collapsed"
+      />
       <LayoutMenu
         v-model:open="showActionsMenu"
         :items="actionsItems"
         :menu-id="menuId"
+        class="h-6 w-6"
         :menu-position="HorizontalDirection.Left"
         @click.stop.prevent
         @chosen="onActionChosen"
@@ -32,10 +52,19 @@
           hide-text
           size="sm"
           :icon-right="Ellipsis"
-          class="!text-foreground-2"
+          class="!text-foreground"
           @click="showActionsMenu = !showActionsMenu"
         ></FormButton>
       </LayoutMenu>
+      <!-- <FormButton
+        v-tippy="'Toggle coloring for this property'"
+        color="subtle"
+        size="sm"
+        hide-text
+        :icon-right="ChevronsUpDown"
+        :is-expanded="!collapsed"
+        @click.stop="collapsed = !collapsed"
+      /> -->
       <FormButton
         v-tippy="'Toggle coloring for this property'"
         :color="isColoringActive ? 'primary' : 'subtle'"
@@ -45,11 +74,16 @@
         @click.stop="toggleColors"
       />
     </div>
+    <!-- <ViewerExpansionTriangle
+        :is-expanded="!collapsed"
+        class="h-6"
+        @click="collapsed = !collapsed"
+      /> -->
   </div>
 </template>
 
 <script setup lang="ts">
-import { PaintBucket, Hash, CaseLower, Ellipsis } from 'lucide-vue-next'
+import { PaintBucket, Hash, CaseUpper, ChevronsUpDown, Ellipsis } from 'lucide-vue-next'
 import {
   FormButton,
   LayoutMenu,

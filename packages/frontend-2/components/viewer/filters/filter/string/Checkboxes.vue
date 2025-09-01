@@ -1,38 +1,36 @@
 <template>
   <div>
-    <div
-      v-if="shouldShowAppliedSection"
-      class="bg-highlight-1 rounded-md mx-2 my-1 p-1"
-    >
-      <div class="flex flex-wrap gap-1">
-        <span
-          v-for="value in displayedSelectedValues"
-          :key="value"
-          class="inline-flex items-center gap-1 px-2 py-0.5 bg-highlight-3 text-foreground text-body-3xs rounded"
+    <div class="flex w-full flex-row gap-1 justify-between">
+      <ViewerFiltersFilterStringSelectAll
+        :selected-count="selectedCount"
+        :total-count="filteredValues.length"
+        @select-all="selectAll"
+      />
+
+      <!-- Sorting Controls -->
+      <div class="px-1 mb-2">
+        <LayoutMenu
+          v-model:open="showSortMenu"
+          :items="sortMenuItems"
+          show-ticks="right"
+          :menu-position="HorizontalDirection.Left"
+          :custom-menu-items-classes="['!text-body-2xs', '!w-36']"
+          @chosen="onSortOptionChosen"
         >
-          {{ value }}
-          <button
-            class="text-foreground-2 hover:text-foreground"
-            @click="() => toggleValue(value)"
-          >
-            ×
-          </button>
-        </span>
-        <span
-          v-if="remainingCount > 0"
-          class="inline-flex items-center px-2 py-0.5 bg-highlight-3 text-foreground-2 text-body-3xs rounded"
-        >
-          and {{ remainingCount }} more
-        </span>
+          <FormButton
+            size="sm"
+            color="subtle"
+            hide-text
+            :icon-right="ArrowUpDown"
+            :class="[
+              'text-xs transition-colors',
+              showSortMenu ? '!bg-highlight-2 !text-foreground' : 'text-foreground-2'
+            ]"
+            @click="showSortMenu = !showSortMenu"
+          />
+        </LayoutMenu>
       </div>
     </div>
-
-    <ViewerFiltersFilterStringSelectAll
-      :selected-count="selectedCount"
-      :total-count="filteredValues.length"
-      @select-all="selectAll"
-    />
-
     <div
       v-bind="containerProps"
       class="relative simple-scrollbar"
@@ -69,9 +67,17 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import { useVirtualList } from '@vueuse/core'
 import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 import { isStringFilter, type FilterData } from '~/lib/viewer/helpers/filters/types'
+import {
+  LayoutMenu,
+  FormButton,
+  HorizontalDirection,
+  type LayoutMenuItem
+} from '@speckle/ui-components'
+import { ArrowUpDown } from 'lucide-vue-next'
 
 const props = defineProps<{
   filter: FilterData
@@ -86,6 +92,32 @@ const {
   getAvailableFilterValues,
   filters
 } = useFilterUtilities()
+
+// Sorting menu state
+const showSortMenu = ref(false)
+const sortMode = ref<'selected-first' | 'alphabetical'>('alphabetical')
+
+// Sort menu items
+const sortMenuItems = computed<LayoutMenuItem[][]>(() => [
+  [
+    {
+      id: 'alphabetical',
+      title: 'A-Z',
+      active: sortMode.value === 'alphabetical'
+    },
+    {
+      id: 'selected-first',
+      title: 'Selected first',
+      active: sortMode.value === 'selected-first'
+    }
+  ]
+])
+
+// Handle sort option selection
+const onSortOptionChosen = ({ item }: { item: LayoutMenuItem; event: MouseEvent }) => {
+  sortMode.value = item.id as 'selected-first' | 'alphabetical'
+  showSortMenu.value = false
+}
 
 const isValueSelected = (value: string): boolean => {
   return isActiveFilterValueSelected(props.filter.id, value)
@@ -133,45 +165,30 @@ const availableValues = computed(() => {
   return []
 })
 
-// Filter values based on search query
+// Filter values based on search query and apply sorting based on mode
 const filteredValues = computed(() => {
-  if (!props.searchQuery?.trim()) {
-    return availableValues.value
+  let values = availableValues.value
+
+  if (props.searchQuery?.trim()) {
+    const searchTerm = props.searchQuery.toLowerCase().trim()
+    values = values.filter((value: string) => value.toLowerCase().includes(searchTerm))
   }
 
-  const searchTerm = props.searchQuery.toLowerCase().trim()
-  return availableValues.value.filter((value: string) =>
-    value.toLowerCase().includes(searchTerm)
-  )
-})
+  // Apply sorting based on mode
+  if (sortMode.value === 'selected-first') {
+    // Sort: selected first, then alphabetical
+    const selectedValues = values.filter((value: string) => isValueSelected(value))
+    const unselectedValues = values.filter((value: string) => !isValueSelected(value))
 
-// Get selected values
-const selectedValues = computed(() => {
-  return props.filter.selectedValues || []
-})
+    // Sort each group alphabetically
+    const sortedSelectedValues = selectedValues.sort((a, b) => a.localeCompare(b))
+    const sortedUnselectedValues = unselectedValues.sort((a, b) => a.localeCompare(b))
 
-// Check if we should show the applied section (not when select all is active)
-const shouldShowAppliedSection = computed(() => {
-  return selectedValues.value.length > 0 && !isSelectAllActive.value
-})
-
-// Check if select all is active (when all available values are selected)
-const isSelectAllActive = computed(() => {
-  return (
-    selectedValues.value.length === availableValues.value.length &&
-    availableValues.value.length > 0
-  )
-})
-
-// Limit displayed values to 8 items
-const maxDisplayedItems = 5
-const displayedSelectedValues = computed(() => {
-  return selectedValues.value.slice(0, maxDisplayedItems)
-})
-
-// Count of remaining items not displayed
-const remainingCount = computed(() => {
-  return Math.max(0, selectedValues.value.length - maxDisplayedItems)
+    return [...sortedSelectedValues, ...sortedUnselectedValues]
+  } else {
+    // Sort: pure alphabetical
+    return values.sort((a, b) => a.localeCompare(b))
+  }
 })
 
 // Select all logic
@@ -181,7 +198,7 @@ const selectedCount = computed(() => {
 
 // Virtual list setup
 const itemHeight = 28 // Height of each checkbox item in pixels
-const maxHeight = 210
+const maxHeight = 240
 
 const containerHeight = computed(() => {
   const contentHeight = filteredValues.value.length * itemHeight

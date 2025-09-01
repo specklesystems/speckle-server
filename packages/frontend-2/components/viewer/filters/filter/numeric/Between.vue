@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col px-2 py-1">
+  <div class="flex flex-col pl-9 pr-9 pt-1 pb-2 gap-2">
     <FormDualRange
       v-model:min-value="currentMin"
       v-model:max-value="currentMax"

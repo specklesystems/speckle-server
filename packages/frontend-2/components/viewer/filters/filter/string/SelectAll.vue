@@ -3,7 +3,7 @@
 <template>
   <div class="px-1">
     <div
-      class="flex text-body-2xs items-center p-2 w-full hover:bg-highlight-1 rounded cursor-pointer"
+      class="flex text-body-2xs items-center px-2 py-1.5 w-full hover:bg-highlight-1 rounded cursor-pointer"
       @click="handleSelectAllChange"
     >
       <div
@@ -19,7 +19,7 @@
       </div>
       <span class="text-foreground ml-px">Select all</span>
       <div class="text-foreground-2 text-body-3xs ml-1">
-        ({{ selectedCount }} of {{ totalCount }} selected)
+        ({{ selectedCount }} of {{ totalCount }})
       </div>
     </div>
   </div>

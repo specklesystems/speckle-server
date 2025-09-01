@@ -1,8 +1,8 @@
 <template>
-  <div class="p-1">
+  <div class="pt-0.5">
     <ViewerFiltersFilterConditionSelector
       :filter="filter"
-      class="pl-4"
+      class="pl-9"
       @select-condition="handleConditionSelect"
     />
 

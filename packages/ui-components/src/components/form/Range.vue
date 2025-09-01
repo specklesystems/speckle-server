@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full">
+  <div class="w-full flex flex-col gap-1.5">
     <div v-if="!hideHeader" class="flex items-center justify-between">
       <label
         :for="name"
@@ -32,12 +32,28 @@
       :value="currentValue"
       :disabled="disabled"
       class="mt-1.5 w-full h-4 outline-none slider"
-      :class="{ 'disabled:opacity-50 disabled:cursor-not-allowed': disabled }"
+      :class="{
+        'disabled:opacity-50 disabled:cursor-not-allowed': disabled,
+        '!mt-0': inputBelowSlider
+      }"
       :aria-label="label"
       :aria-valuemin="min"
       :aria-valuemax="max"
       :aria-valuenow="currentValue"
       @input="handleInput"
+    />
+    <input
+      v-if="inputBelowSlider"
+      type="number"
+      :min="min"
+      :max="max"
+      :step="step"
+      :value="currentValue"
+      :disabled="disabled"
+      :aria-label="`${label} current value`"
+      class="w-12 text-body-2xs text-foreground bg-transparent border-0 focus:outline-none hover:ring-1 hover:ring-outline-2 focus:ring-1 focus:ring-outline-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:ring-0 rounded !p-1"
+      @input="handleNumberInput"
+      @blur="validateAndClamp"
     />
   </div>
 </template>
@@ -51,6 +67,7 @@ const props = defineProps<{
   label: string
   disabled?: boolean
   hideHeader?: boolean
+  inputBelowSlider?: boolean
 }>()
 
 const emit = defineEmits(['update:modelValue'])

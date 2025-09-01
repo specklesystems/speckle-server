@@ -1,5 +1,5 @@
 <template>
-  <div class="border border-outline-2 rounded-lg">
+  <div class="border border-outline-2 rounded-xl mb-2">
     <div class="p-1" :class="{ 'border-b border-outline-3': !collapsed }">
       <ViewerFiltersFilterHeader v-model:collapsed="collapsed" :filter="filter" />
     </div>

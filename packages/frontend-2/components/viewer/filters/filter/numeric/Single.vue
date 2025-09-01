@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col px-2 py-1 gap-1">
+  <div class="pl-9 pr-9 pt-1 pb-2">
     <FormRange
       v-if="showRangeSlider"
       v-model="singleValueReactive"
@@ -9,22 +9,24 @@
       name="singleValueRange"
       :label="rangeLabel"
       hide-header
-      class="-mt-1.5"
+      input-below-slider
     />
 
     <FormTextInput
+      v-if="!showRangeSlider"
       :model-value="String(singleValue)"
+      type="number"
       name="singleValue"
       size="sm"
-      type="number"
-      placeholder="Enter value"
+      auto-focus
+      class="text-foreground !text-[12px] w-full bg-transparent !px-2 !border !border-outline-2 focus:outline-none hover:ring-1 hover:ring-outline-2 focus:ring-1 focus:ring-outline-4 rounded no-spinner [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       @update:model-value="updateSingleValue"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { FormTextInput, FormRange } from '@speckle/ui-components'
+import { FormRange } from '@speckle/ui-components'
 import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 import {
   isNumericFilter,

@@ -36,7 +36,7 @@
         v-if="propertyFilters.length > 0"
         class="flex-1 overflow-y-auto simple-scrollbar"
       >
-        <div class="flex flex-col gap-3 p-3 pt-0">
+        <div class="flex flex-col gap-1 p-2 pt-0">
           <ViewerFiltersFilterCard
             v-for="filter in propertyFilters"
             :key="filter.id"
