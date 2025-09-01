@@ -409,15 +409,9 @@ export class MeasurementsExtension extends Extension {
     }
   }
 
-  private measurementDataId(measurementData: MeasurementData) {
-    return JSON.stringify(measurementData)
-  }
-
-  private findMeasurementFromData(measurementData: MeasurementData) {
+  protected findMeasurementFromData(measurementData: MeasurementData) {
     return this._measurements.find(
-      (measurement) =>
-        this.measurementDataId(measurement.toMeasurementData()) ===
-        this.measurementDataId(measurementData)
+      (measurement) => measurement.measurementId === measurementData.uuid
     )
   }
 
@@ -452,8 +446,10 @@ export class MeasurementsExtension extends Extension {
     }
 
     const currentMeasurements = this._measurements.map((m) => m.toMeasurementData())
-    const removableMeasurements = differenceBy(currentMeasurements, measurements, (m) =>
-      this.measurementDataId(m)
+    const removableMeasurements = differenceBy(
+      currentMeasurements,
+      measurements,
+      (m) => m.uuid
     )
 
     for (const removableMeasurement of removableMeasurements) {

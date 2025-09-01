@@ -33,6 +33,7 @@ export interface MeasurementData {
   innerPoints?: (readonly [number, number, number])[] // array of vec3
   units?: string
   precision?: number
+  uuid: string
 }
 
 export const defaultMeasurementOptions: Readonly<MeasurementOptions> = Object.freeze({
