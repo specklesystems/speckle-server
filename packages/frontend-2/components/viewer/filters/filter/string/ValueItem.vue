@@ -9,7 +9,7 @@
       <div class="flex items-center min-w-0">
         <!-- Checkbox is purely visual - so pointer-events-none -->
         <FormCheckbox
-          class="pointer-events-none"
+          class="pointer-events-none -mt-1"
           :class="{
             'border-transparent group-hover:border-outline-5': !isSelected,
             'opacity-50 dark:!bg-transparent !border !border-outline-5 !group-hover:border-outline-5':

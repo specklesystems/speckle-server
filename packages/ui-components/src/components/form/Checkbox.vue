@@ -4,7 +4,7 @@
     :class="labelPosition === 'left' ? 'flex-row-reverse items-center' : 'items-start'"
   >
     <div
-      class="flex items-center"
+      class="flex items-center h-6"
       :class="labelPosition === 'left' ? 'w-1/2 justify-end mr-2' : ''"
     >
       <div class="relative w-3.5 h-3.5">

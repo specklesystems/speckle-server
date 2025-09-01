@@ -65,7 +65,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import { useVirtualList } from '@vueuse/core'
 import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 import { isStringFilter, type FilterData } from '~/lib/viewer/helpers/filters/types'
@@ -91,11 +90,9 @@ const {
   filters
 } = useFilterUtilities()
 
-// Sorting menu state
 const showSortMenu = ref(false)
 const sortMode = ref<'selected-first' | 'alphabetical'>('alphabetical')
 
-// Sort menu items
 const sortMenuItems = computed<LayoutMenuItem[][]>(() => [
   [
     {
@@ -125,37 +122,28 @@ const getValueCount = (_value: string): number => {
   return 1
 }
 
-// Get value color - only show colors if this filter is the active color filter
 const getValueColor = (value: string): string | null => {
-  // Only show colors if this specific filter is the one applying colors
   if (filters.activeColorFilterId.value !== props.filter.id) {
     return null
   }
   return getFilterValueColor(value)
 }
 
-// Toggle value selection
 const toggleValue = (value: string) => {
   toggleActiveFilterValue(props.filter.id, value)
 }
 
-// Select all values
 const selectAll = (selected: boolean) => {
   if (!isStringFilter(props.filter) || !props.filter.filter) return
 
   const allAvailableValues = getAvailableFilterValues(props.filter.filter)
   if (selected) {
-    // Select all available values in one batch operation
     updateActiveFilterValues(props.filter.id, allAvailableValues)
   } else {
-    // Deselect all - set to empty array in one operation
     updateActiveFilterValues(props.filter.id, [])
   }
-
-  // Note: default state clearing is now handled in updateActiveFilterValues
 }
 
-// Get available values from the filter
 const availableValues = computed(() => {
   if (isStringFilter(props.filter) && props.filter.filter) {
     return getAvailableFilterValues(props.filter.filter)
@@ -163,7 +151,6 @@ const availableValues = computed(() => {
   return []
 })
 
-// Filter values based on search query and apply sorting based on mode
 const filteredValues = computed(() => {
   let values = availableValues.value
 
@@ -172,7 +159,6 @@ const filteredValues = computed(() => {
     values = values.filter((value: string) => value.toLowerCase().includes(searchTerm))
   }
 
-  // Apply sorting based on mode
   if (sortMode.value === 'selected-first') {
     // Sort: selected first, then alphabetical
     const selectedValues = values.filter((value: string) => isValueSelected(value))
@@ -189,12 +175,10 @@ const filteredValues = computed(() => {
   }
 })
 
-// Select all logic
 const selectedCount = computed(() => {
   return filteredValues.value.filter((value) => isValueSelected(value)).length
 })
 
-// Virtual list setup
 const itemHeight = 28 // Height of each checkbox item in pixels
 const maxHeight = 240
 
