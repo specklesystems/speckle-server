@@ -157,6 +157,9 @@
               </LayoutSidebarMenuGroup>
             </div>
           </LayoutSidebarMenu>
+          <template v-if="showIntelligenceCommunityStandUpPromo" #promo>
+            <DashboardIntelligencePromo />
+          </template>
         </LayoutSidebar>
       </div>
     </template>
@@ -184,9 +187,11 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useActiveWorkspaceSlug } from '~/lib/user/composables/activeWorkspace'
 import { graphql } from '~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
+import dayjs from 'dayjs'
+import { useActiveUserMeta } from '~/lib/user/composables/meta'
 
 const dashboardSidebarQuery = graphql(`
-  query DashboardSidebar($slug: String!) {
+  query DashboardSidebar {
     activeUser {
       id
       activeWorkspace {
@@ -194,6 +199,11 @@ const dashboardSidebarQuery = graphql(`
         role
       }
     }
+  }
+`)
+
+const sidebarPermissionsQuery = graphql(`
+  query SidebarPermissions($slug: String!) {
     workspaceBySlug(slug: $slug) {
       permissions {
         canListDashboards {
@@ -206,26 +216,36 @@ const dashboardSidebarQuery = graphql(`
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const isDashboardsEnabled = useIsDashboardsModuleEnabled()
 const route = useRoute()
 const activeWorkspaceSlug = useActiveWorkspaceSlug()
 const { $intercom } = useNuxtApp()
 const mixpanel = useMixpanel()
-const { result } = useQuery(
-  dashboardSidebarQuery,
+const { result: permissionsResult } = useQuery(
+  sidebarPermissionsQuery,
   () => ({
     slug: activeWorkspaceSlug.value || ''
   }),
   () => ({
-    enabled: isWorkspacesEnabled.value && !!activeWorkspaceSlug.value
+    enabled: isDashboardsEnabled.value && !!activeWorkspaceSlug.value
   })
 )
+const { result } = useQuery(dashboardSidebarQuery, () => ({}), {
+  enabled: isWorkspacesEnabled.value
+})
+const { hasDismissedIntelligenceCommunityStandUpBanner } = useActiveUserMeta()
 
 const isOpenMobile = ref(false)
 const showExplainerVideoDialog = ref(false)
 
+const showIntelligenceCommunityStandUpPromo = computed(() => {
+  if (hasDismissedIntelligenceCommunityStandUpBanner.value) return false
+  return dayjs().isBefore('2025-09-10', 'day')
+})
 const activeWorkspace = computed(() => result.value?.activeUser?.activeWorkspace)
 const canListDashboards = computed(() => {
-  return result.value?.workspaceBySlug?.permissions?.canListDashboards?.authorized
+  return permissionsResult.value?.workspaceBySlug?.permissions?.canListDashboards
+    ?.authorized
 })
 
 const showWorkspaceLinks = computed(() => {

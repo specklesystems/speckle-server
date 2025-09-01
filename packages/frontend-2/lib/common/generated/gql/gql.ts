@@ -41,7 +41,8 @@ type Documents = {
     "\n  fragment AutomateViewerPanelFunctionRunRow_AutomateFunctionRun on AutomateFunctionRun {\n    id\n    results\n    status\n    statusMessage\n    contextView\n    function {\n      id\n      logo\n      name\n    }\n    createdAt\n    updatedAt\n  }\n": typeof types.AutomateViewerPanelFunctionRunRow_AutomateFunctionRunFragmentDoc,
     "\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    role\n    slug\n    plan {\n      name\n      status\n      createdAt\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n": typeof types.BillingAlert_WorkspaceFragmentDoc,
     "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n": typeof types.CommonModelSelectorModelFragmentDoc,
-    "\n  query DashboardSidebar($slug: String!) {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canListDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": typeof types.DashboardSidebarDocument,
+    "\n  query DashboardSidebar {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n  }\n": typeof types.DashboardSidebarDocument,
+    "\n  query SidebarPermissions($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canListDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": typeof types.SidebarPermissionsDocument,
     "\n  fragment DashboardsCard_Dashboard on Dashboard {\n    id\n    name\n    createdAt\n    workspace {\n      id\n    }\n    createdBy {\n      id\n      name\n      avatar\n    }\n    permissions {\n      canDelete {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.DashboardsCard_DashboardFragmentDoc,
     "\n  fragment DashboardsEditDialog_Dashboard on Dashboard {\n    id\n    name\n    workspace {\n      id\n    }\n  }\n": typeof types.DashboardsEditDialog_DashboardFragmentDoc,
     "\n  query DashboardsListCanCreateDashboards($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canCreateDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": typeof types.DashboardsListCanCreateDashboardsDocument,
@@ -406,8 +407,9 @@ type Documents = {
     "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": typeof types.AppAuthorAvatarFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": typeof types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": typeof types.ActiveUserAvatarFragmentDoc,
-    "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        legacyProjectsExplainerCollapsed\n      }\n    }\n  }\n": typeof types.ActiveUserMetaDocument,
+    "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        legacyProjectsExplainerCollapsed\n        intelligenceCommunityStandUpBannerDismissed\n      }\n    }\n  }\n": typeof types.ActiveUserMetaDocument,
     "\n  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setLegacyProjectsExplainerCollapsed(value: $value)\n      }\n    }\n  }\n": typeof types.UpdateLegacyProjectsExplainerDocument,
+    "\n  mutation UpdateIntelligenceCommunityStandUpBannerDismissed($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setIntelligenceCommunityStandUpBannerDismissed(value: $value)\n      }\n    }\n  }\n": typeof types.UpdateIntelligenceCommunityStandUpBannerDismissedDocument,
     "\n      subscription OnUserProjectsUpdate {\n        userProjectsUpdated {\n          type\n          id\n          project {\n            ...ProjectDashboardItem\n            workspaceId\n          }\n        }\n      }\n    ": typeof types.OnUserProjectsUpdateDocument,
     "\n  mutation UpdateUser($input: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $input) {\n        id\n        name\n        bio\n        company\n        avatar\n      }\n    }\n  }\n": typeof types.UpdateUserDocument,
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": typeof types.UpdateNotificationPreferencesDocument,
@@ -557,7 +559,8 @@ const documents: Documents = {
     "\n  fragment AutomateViewerPanelFunctionRunRow_AutomateFunctionRun on AutomateFunctionRun {\n    id\n    results\n    status\n    statusMessage\n    contextView\n    function {\n      id\n      logo\n      name\n    }\n    createdAt\n    updatedAt\n  }\n": types.AutomateViewerPanelFunctionRunRow_AutomateFunctionRunFragmentDoc,
     "\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    role\n    slug\n    plan {\n      name\n      status\n      createdAt\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n": types.BillingAlert_WorkspaceFragmentDoc,
     "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n": types.CommonModelSelectorModelFragmentDoc,
-    "\n  query DashboardSidebar($slug: String!) {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canListDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": types.DashboardSidebarDocument,
+    "\n  query DashboardSidebar {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n  }\n": types.DashboardSidebarDocument,
+    "\n  query SidebarPermissions($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canListDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": types.SidebarPermissionsDocument,
     "\n  fragment DashboardsCard_Dashboard on Dashboard {\n    id\n    name\n    createdAt\n    workspace {\n      id\n    }\n    createdBy {\n      id\n      name\n      avatar\n    }\n    permissions {\n      canDelete {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.DashboardsCard_DashboardFragmentDoc,
     "\n  fragment DashboardsEditDialog_Dashboard on Dashboard {\n    id\n    name\n    workspace {\n      id\n    }\n  }\n": types.DashboardsEditDialog_DashboardFragmentDoc,
     "\n  query DashboardsListCanCreateDashboards($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canCreateDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": types.DashboardsListCanCreateDashboardsDocument,
@@ -922,8 +925,9 @@ const documents: Documents = {
     "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": types.AppAuthorAvatarFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": types.ActiveUserAvatarFragmentDoc,
-    "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        legacyProjectsExplainerCollapsed\n      }\n    }\n  }\n": types.ActiveUserMetaDocument,
+    "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        legacyProjectsExplainerCollapsed\n        intelligenceCommunityStandUpBannerDismissed\n      }\n    }\n  }\n": types.ActiveUserMetaDocument,
     "\n  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setLegacyProjectsExplainerCollapsed(value: $value)\n      }\n    }\n  }\n": types.UpdateLegacyProjectsExplainerDocument,
+    "\n  mutation UpdateIntelligenceCommunityStandUpBannerDismissed($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setIntelligenceCommunityStandUpBannerDismissed(value: $value)\n      }\n    }\n  }\n": types.UpdateIntelligenceCommunityStandUpBannerDismissedDocument,
     "\n      subscription OnUserProjectsUpdate {\n        userProjectsUpdated {\n          type\n          id\n          project {\n            ...ProjectDashboardItem\n            workspaceId\n          }\n        }\n      }\n    ": types.OnUserProjectsUpdateDocument,
     "\n  mutation UpdateUser($input: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $input) {\n        id\n        name\n        bio\n        company\n        avatar\n      }\n    }\n  }\n": types.UpdateUserDocument,
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": types.UpdateNotificationPreferencesDocument,
@@ -1171,7 +1175,11 @@ export function graphql(source: "\n  fragment CommonModelSelectorModel on Model 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query DashboardSidebar($slug: String!) {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canListDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query DashboardSidebar($slug: String!) {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canListDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query DashboardSidebar {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n  }\n"): (typeof documents)["\n  query DashboardSidebar {\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        role\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query SidebarPermissions($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canListDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query SidebarPermissions($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      permissions {\n        canListDashboards {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -2631,11 +2639,15 @@ export function graphql(source: "\n  fragment ActiveUserAvatar on User {\n    id
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        legacyProjectsExplainerCollapsed\n      }\n    }\n  }\n"): (typeof documents)["\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        legacyProjectsExplainerCollapsed\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        legacyProjectsExplainerCollapsed\n        intelligenceCommunityStandUpBannerDismissed\n      }\n    }\n  }\n"): (typeof documents)["\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        legacyProjectsExplainerCollapsed\n        intelligenceCommunityStandUpBannerDismissed\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setLegacyProjectsExplainerCollapsed(value: $value)\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setLegacyProjectsExplainerCollapsed(value: $value)\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateIntelligenceCommunityStandUpBannerDismissed($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setIntelligenceCommunityStandUpBannerDismissed(value: $value)\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateIntelligenceCommunityStandUpBannerDismissed($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setIntelligenceCommunityStandUpBannerDismissed(value: $value)\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
