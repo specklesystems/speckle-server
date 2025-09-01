@@ -28,6 +28,7 @@ import type { MultiRegionConfig } from '@speckle/shared/environment/db'
 import { getConnectionSettings } from '@speckle/shared/environment/db'
 import { expect } from 'chai'
 import { merge } from 'lodash-es'
+import { resetRegisteredRegions } from '@/modules/multiregion/utils/dbSelector'
 
 const isEnabled = isMultiRegionEnabled()
 
@@ -110,6 +111,7 @@ isEnabled
       after(async () => {
         setMultiRegionConfig(originalConfig)
         await truncateRegionsSafely()
+        resetRegisteredRegions()
       })
 
       describe('server config', () => {

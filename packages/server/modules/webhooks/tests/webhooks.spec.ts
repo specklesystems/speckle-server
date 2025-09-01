@@ -24,50 +24,9 @@ import {
 } from '@/modules/webhooks/services/webhooks'
 import {
   getStreamFactory,
-  createStreamFactory,
-  grantStreamPermissionsFactory,
-  getStreamRolesFactory
+  grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
-import {
-  legacyCreateStreamFactory,
-  createStreamReturnRecordFactory
-} from '@/modules/core/services/streams/management'
-import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
-import {
-  findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory,
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory,
-  findInviteFactory,
-  deleteInvitesByTargetFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
-import { getEventBus } from '@/modules/shared/services/eventBus'
-import { createBranchFactory } from '@/modules/core/repositories/branches'
-import {
-  getUserFactory,
-  getUsersFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory
-} from '@/modules/core/repositories/users'
-import {
-  findEmailFactory,
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory
-} from '@/modules/core/repositories/userEmails'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import {
-  finalizeInvitedServerRegistrationFactory,
-  finalizeResourceInviteFactory
-} from '@/modules/serverinvites/services/processing'
+import { getUserFactory } from '@/modules/core/repositories/users'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import {
   storeApiTokenFactory,
@@ -76,130 +35,20 @@ import {
   storePersonalApiTokenFactory
 } from '@/modules/core/repositories/tokens'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import {
-  processFinalizedProjectInviteFactory,
-  validateProjectInviteBeforeFinalizationFactory
-} from '@/modules/serverinvites/services/coreFinalization'
-import {
-  addOrUpdateStreamCollaboratorFactory,
-  validateStreamAccessFactory
-} from '@/modules/core/services/streams/access'
-import { authorizeResolver } from '@/modules/shared'
 import { omit } from 'lodash-es'
-import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
+import { createTestUser, type BasicTestUser } from '@/test/authHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { buildBasicTestProject } from '@/modules/core/tests/helpers/creation'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
-const getUsers = getUsersFactory({ db })
 const getStream = getStreamFactory({ db })
 const updateWebhook = updateWebhookFactory({
   updateWebhookConfig: updateWebhookConfigFactory({ db })
 })
 const getStreamWebhooks = getStreamWebhooksFactory({ db })
-
-const buildFinalizeProjectInvite = () =>
-  finalizeResourceInviteFactory({
-    findInvite: findInviteFactory({ db }),
-    validateInvite: validateProjectInviteBeforeFinalizationFactory({
-      getProject: getStream
-    }),
-    processInvite: processFinalizedProjectInviteFactory({
-      getProject: getStream,
-      addProjectRole: addOrUpdateStreamCollaboratorFactory({
-        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
-        getUser,
-        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-        getStreamRoles: getStreamRolesFactory({ db }),
-        emitEvent: getEventBus().emit
-      })
-    }),
-    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    emitEvent: (...args) => getEventBus().emit(...args),
-    findEmail: findEmailFactory({ db }),
-    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-      createUserEmail: createUserEmailFactory({ db }),
-      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-      findEmail: findEmailFactory({ db }),
-      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-      }),
-      requestNewEmailVerification: requestNewEmailVerificationFactory({
-        findEmail: findEmailFactory({ db }),
-        getUser,
-        getServerInfo,
-        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-          db
-        }),
-        renderEmail,
-        sendEmail
-      })
-    }),
-    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-      getStream
-    }),
-    getUser,
-    getServerInfo
-  })
-
-const createStream = legacyCreateStreamFactory({
-  createStreamReturnRecord: createStreamReturnRecordFactory({
-    inviteUsersToProject: inviteUsersToProjectFactory({
-      createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory({ db }),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-          getStream
-        }),
-        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-          getStream
-        }),
-        emitEvent: ({ eventName, payload }) =>
-          getEventBus().emit({
-            eventName,
-            payload
-          }),
-        getUser,
-        getServerInfo,
-        finalizeInvite: buildFinalizeProjectInvite()
-      }),
-      getUsers
-    }),
-    createStream: createStreamFactory({ db }),
-    createBranch: createBranchFactory({ db }),
-    storeProjectRole: storeProjectRoleFactory({ db }),
-    emitEvent: getEventBus().emit
-  })
-})
 const grantPermissionsStream = grantStreamPermissionsFactory({ db })
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
   storeTokenScopes: storeTokenScopesFactory({ db }),
@@ -213,21 +62,8 @@ describe('Webhooks @webhooks', () => {
   const getWebhook = getWebhookByIdFactory({ db })
   let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 
-  const userOne = {
-    name: 'User',
-    email: 'user@example.org',
-    password: 'jdsadjsadasfdsa',
-    id: '',
-    token: ''
-  }
-
-  const streamOne = {
-    name: 'streamOne',
-    description: 'stream',
-    isPublic: true,
-    ownerId: '',
-    id: ''
-  }
+  let userOne: BasicTestUser & { token?: string }
+  let streamOne: BasicTestStream
 
   const webhookOne = {
     streamId: '', // filled in `before`
@@ -243,9 +79,22 @@ describe('Webhooks @webhooks', () => {
     const ctx = await beforeEachContext()
     ;({ sendRequest } = await initializeTestServer(ctx))
 
-    userOne.id = await createUser(userOne)
-    streamOne.ownerId = userOne.id
-    streamOne.id = await createStream(streamOne)
+    userOne = await createTestUser({
+      name: 'User',
+      email: 'user@example.org',
+      password: 'jdsadjsadasfdsa',
+      id: ''
+    })
+    streamOne = await createTestStream(
+      buildBasicTestProject({
+        name: 'streamOne',
+        description: 'stream',
+        isPublic: true,
+        ownerId: '',
+        id: ''
+      }),
+      userOne
+    )
 
     webhookOne.streamId = streamOne.id
   })
@@ -282,13 +131,15 @@ describe('Webhooks @webhooks', () => {
     })
 
     it('Should delete a webhook', async () => {
-      const stream = {
-        name: 'test stream',
-        description: 'stream',
-        isPublic: true,
-        ownerId: userOne.id
-      }
-      const streamId = await createStream(stream)
+      const { id: streamId } = await createTestStream(
+        {
+          name: 'test stream',
+          description: 'stream',
+          isPublic: true
+        },
+        userOne
+      )
+
       const webhook = {
         streamId,
         url: 'http://localhost:42/non-existent',
@@ -314,10 +165,9 @@ describe('Webhooks @webhooks', () => {
       const stream = {
         name: 'streamOne',
         description: 'stream',
-        isPublic: true,
-        ownerId: userOne.id
+        isPublic: true
       }
-      const streamId = await createStream(stream)
+      const { id: streamId } = await createTestStream(stream, userOne)
       let streamWebhooks = await getStreamWebhooks({ streamId })
       expect(streamWebhooks).to.have.lengthOf(0)
 
@@ -343,10 +193,9 @@ describe('Webhooks @webhooks', () => {
       const stream = {
         name: 'streamOne',
         description: 'stream',
-        isPublic: true,
-        ownerId: userOne.id
+        isPublic: true
       }
-      const streamId = await createStream(stream)
+      const { id: streamId } = await createTestStream(stream, userOne)
       const streamWebhooks = await getStreamWebhooks({ streamId })
       expect(streamWebhooks).to.have.lengthOf(0)
 
@@ -380,13 +229,8 @@ describe('Webhooks @webhooks', () => {
   })
 
   describe('GraphQL API Webhooks @webhooks-api', () => {
-    const userTwo = {
-      name: 'User2',
-      email: 'user2@example.org',
-      password: 'jdsadjsadasfdsa',
-      id: '',
-      token: ''
-    }
+    let userTwo: BasicTestUser & { token?: string }
+    let streamTwo: BasicTestStream
 
     const webhookTwo = {
       streamId: '',
@@ -398,18 +242,23 @@ describe('Webhooks @webhooks', () => {
       id: ''
     }
 
-    const streamTwo = {
-      name: 'streamTwo',
-      description: 'stream',
-      isPublic: true,
-      ownerId: '',
-      id: ''
-    }
-
     before(async () => {
-      userTwo.id = await createUser(userTwo)
-      streamTwo.ownerId = userTwo.id
-      streamTwo.id = await createStream(streamTwo)
+      userTwo = await createTestUser({
+        name: 'User2',
+        email: 'user2@example.org',
+        password: 'jdsadjsadasfdsa',
+        id: ''
+      })
+      streamTwo = await createTestStream(
+        {
+          name: 'streamTwo',
+          description: 'stream',
+          isPublic: true,
+          ownerId: '',
+          id: ''
+        },
+        userTwo
+      )
       webhookTwo.streamId = streamTwo.id
 
       userOne.token = `Bearer ${await createPersonalAccessToken(
@@ -507,13 +356,14 @@ describe('Webhooks @webhooks', () => {
     })
 
     it('Should delete a webhook', async () => {
-      const stream = {
-        name: 'test stream',
-        description: 'stream',
-        isPublic: true,
-        ownerId: userOne.id
-      }
-      const streamId = await createStream(stream)
+      const { id: streamId } = await createTestStream(
+        {
+          name: 'test stream',
+          description: 'stream',
+          isPublic: true
+        },
+        userOne
+      )
       const webhook = {
         streamId,
         url: 'http://localhost:42/non-existent',
@@ -557,13 +407,14 @@ describe('Webhooks @webhooks', () => {
 
     it('Should have a webhook limit for streams', async () => {
       const limit = 100
-      const stream = {
-        name: 'test stream',
-        description: 'stream',
-        isPublic: true,
-        ownerId: userOne.id
-      }
-      const streamId = await createStream(stream)
+      const { id: streamId } = await createTestStream(
+        {
+          name: 'test stream',
+          description: 'stream',
+          isPublic: true
+        },
+        userOne
+      )
       const webhook = {
         streamId,
         url: 'http://localhost:42/non-existent',

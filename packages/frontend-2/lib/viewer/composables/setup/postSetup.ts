@@ -52,7 +52,6 @@ import { SafeLocalStorage } from '@speckle/shared'
 import {
   useCameraUtilities,
   useMeasurementUtilities,
-  useViewModeUtilities,
   useFilterUtilities
 } from '~~/lib/viewer/composables/ui'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
@@ -62,6 +61,7 @@ import type { SectionBoxData } from '@speckle/shared/viewer/state'
 import { graphql } from '~/lib/common/generated/gql'
 import { useTreeManagement } from '~~/lib/viewer/composables/tree'
 import { useViewerSavedViewIntegration } from '~/lib/viewer/composables/savedViews/state'
+import { useViewModesPostSetup } from '~/lib/viewer/composables/setup/viewMode'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -877,14 +877,6 @@ function useViewerCursorIntegration() {
   })
 }
 
-function useViewerViewModesIntegration() {
-  const { resetViewMode } = useViewModeUtilities()
-
-  onBeforeUnmount(() => {
-    resetViewMode()
-  })
-}
-
 export function useViewerPostSetup() {
   if (import.meta.server) return
   useViewerObjectAutoLoading()
@@ -905,6 +897,6 @@ export function useViewerPostSetup() {
   useDisableZoomOnEmbed()
   useViewerCursorIntegration()
   useViewerTreeIntegration()
-  useViewerViewModesIntegration()
+  useViewModesPostSetup()
   setupDebugMode()
 }
