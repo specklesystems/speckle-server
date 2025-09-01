@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="open"
-    title="Edit view details"
+    title="Edit view"
     max-width="sm"
     :buttons="buttons"
     :on-submit="onSubmit"
@@ -9,7 +9,7 @@
     <div class="flex flex-col gap-4">
       <FormTextInput
         name="name"
-        label="View name"
+        label="Name"
         show-label
         color="foundation"
         auto-focus
@@ -125,7 +125,11 @@ const onSubmit = handleSubmit(async (values) => {
       : undefined
   const visibility =
     values.visibility !== props.view.visibility ? values.visibility : undefined
-  const groupId = values.group.id !== props.view.group.id ? values.group.id : undefined
+  const selectedGroupId = values.group.isUngroupedViewsGroup ? null : values.group.id
+  const currentGroupId = props.view.group.isUngroupedViewsGroup
+    ? null
+    : props.view.group.id
+  const groupId = selectedGroupId !== currentGroupId ? selectedGroupId : undefined
 
   const coreInput = {
     ...(isUndefined(name) ? {} : { name }),

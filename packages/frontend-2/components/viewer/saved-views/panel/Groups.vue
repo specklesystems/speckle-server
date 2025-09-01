@@ -238,6 +238,13 @@ eventBus.on(ViewerEventBusKeys.MarkSavedViewForEdit, ({ type, view }) => {
 })
 
 const onMoveSuccess = (groupId: string) => {
-  openedGroupState.value.set(groupId, true)
+  if (groupId === 'ungrouped') {
+    const ungroupedGroup = groups.value.find((g) => g.isUngroupedViewsGroup)
+    if (ungroupedGroup) {
+      openedGroupState.value.set(ungroupedGroup.id, true)
+    }
+  } else {
+    openedGroupState.value.set(groupId, true)
+  }
 }
 </script>
