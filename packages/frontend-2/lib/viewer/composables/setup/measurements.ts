@@ -41,17 +41,16 @@ export const useMeasurementsPostSetup = () => {
     measurement.enabled,
     (newVal, oldVal) => {
       if (newVal !== oldVal) {
-        instance.enableMeasurements(newVal)
+        measurementsInstance().enabled = newVal
       }
-    },
-    { immediate: true }
+    }
   )
 
   const { trigger: triggerOptionsWatch } = watchTriggerable(
     measurement.options,
     (newVal) => {
       if (newVal) {
-        instance.setMeasurementOptions(newVal)
+        measurementsInstance().options = newVal
       }
     },
     { deep: true }
@@ -95,8 +94,9 @@ export const useMeasurementsPostSetup = () => {
       onMeasurementsChanged
     )
 
-    // Clear state
+    // Clear state & viewer instance, incase they dont get to sync
     reset()
+    measurementsInstance().clearMeasurements()
   })
 
   onKeyStroke('Delete', () => {

@@ -36,7 +36,7 @@ export interface MeasurementData {
 }
 
 export const defaultMeasurementOptions: Readonly<MeasurementOptions> = Object.freeze({
-  visible: false,
+  visible: true,
   type: MeasurementType.POINTTOPOINT,
   vertexSnap: false,
   units: 'm',
