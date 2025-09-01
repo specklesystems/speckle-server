@@ -36,6 +36,7 @@ import {
   isNumericFilter,
   NumericFilterCondition,
   StringFilterCondition,
+  ExistenceFilterCondition,
   getConditionLabel
 } from '~/lib/viewer/helpers/filters/types'
 import { useOnViewerLoadComplete } from '~~/lib/viewer/composables/viewer'
@@ -170,8 +171,31 @@ function createFilteringDataStore() {
         continue
       }
 
+      // Handle existence conditions first (work for both string and numeric properties)
+      if (criteria.condition === ExistenceFilterCondition.IsSet) {
+        // "Is Set" returns all objects that have any value for this property
+        for (const objectIds of Object.values(propertyIndex)) {
+          matchingIds.push(...objectIds)
+        }
+      } else if (criteria.condition === ExistenceFilterCondition.IsNotSet) {
+        // "Is Not Set" returns all objects that DON'T have this property
+        // We need to find objects that are not in the propertyIndex
+        const objectsWithProperty = new Set<string>()
+        for (const objectIds of Object.values(propertyIndex)) {
+          for (const objectId of objectIds) {
+            objectsWithProperty.add(objectId)
+          }
+        }
+
+        // Add all objects that don't have this property
+        for (const [objectId] of Object.entries(dataSource.objectMap)) {
+          if (!objectsWithProperty.has(objectId)) {
+            matchingIds.push(objectId)
+          }
+        }
+      }
       // Handle numeric conditions
-      if (criteria.minValue !== undefined || criteria.maxValue !== undefined) {
+      else if (criteria.minValue !== undefined || criteria.maxValue !== undefined) {
         const minValue = criteria.minValue ?? -Infinity
         const maxValue = criteria.maxValue ?? Infinity
 
@@ -208,7 +232,9 @@ function createFilteringDataStore() {
             }
           }
         }
-      } else if (criteria.condition === StringFilterCondition.Is) {
+      }
+      // Handle string conditions
+      else if (criteria.condition === StringFilterCondition.Is) {
         for (const value of criteria.values) {
           const objectIds = propertyIndex[value]
           if (objectIds) {
@@ -226,11 +252,6 @@ function createFilteringDataStore() {
               matchingIds.push(...objectIds)
             }
           }
-        }
-      } else if (criteria.condition === StringFilterCondition.IsSet) {
-        // "Is Set" returns all objects that have any value for this property
-        for (const objectIds of Object.values(propertyIndex)) {
-          matchingIds.push(...objectIds)
         }
       }
     }
@@ -692,8 +713,15 @@ export function useFilterUtilities(
 
     // Create new slices for active filters (simple forEach)
     filters.propertyFilters.value.forEach((filter) => {
-      // Handle numeric filters
-      if (isNumericFilter(filter) && filter.isApplied) {
+      // Handle numeric filters - create slice if filter is enabled AND (has numeric range OR is "is set" OR is "is not set")
+      if (
+        isNumericFilter(filter) &&
+        filter.isApplied &&
+        (filter.condition === ExistenceFilterCondition.IsSet ||
+          filter.condition === ExistenceFilterCondition.IsNotSet ||
+          filter.numericRange.min !== filter.filter.min ||
+          filter.numericRange.max !== filter.filter.max)
+      ) {
         const queryCriteria: QueryCriteria = {
           propertyKey: filter.filter.key,
           condition: filter.condition,
@@ -706,21 +734,27 @@ export function useFilterUtilities(
         const slice: DataSlice = {
           id: `filter-${filter.id}`,
           widgetId: filter.id,
-          name: `${getPropertyName(filter.filter.key)} ${getConditionLabel(
-            filter.condition
-          )} (${filter.numericRange.min.toFixed(2)} - ${filter.numericRange.max.toFixed(
-            2
-          )})`,
+          name:
+            filter.condition === ExistenceFilterCondition.IsSet
+              ? `${getPropertyName(filter.filter.key)} is set`
+              : filter.condition === ExistenceFilterCondition.IsNotSet
+              ? `${getPropertyName(filter.filter.key)} is not set`
+              : `${getPropertyName(filter.filter.key)} ${getConditionLabel(
+                  filter.condition
+                )} (${filter.numericRange.min.toFixed(
+                  2
+                )} - ${filter.numericRange.max.toFixed(2)})`,
           objectIds: matchingObjectIds
         }
         dataStore.dataSlices.value.push(slice)
       }
-      // Handle string filters - create slice if filter is enabled AND (has selected values OR is "is set")
+      // Handle string filters - create slice if filter is enabled AND (has selected values OR is "is set" OR is "is not set")
       else if (
         !isNumericFilter(filter) &&
         filter.isApplied &&
         (filter.selectedValues.length > 0 ||
-          filter.condition === StringFilterCondition.IsSet)
+          filter.condition === ExistenceFilterCondition.IsSet ||
+          filter.condition === ExistenceFilterCondition.IsNotSet)
       ) {
         const queryCriteria: QueryCriteria = {
           propertyKey: filter.filter.key,
@@ -733,8 +767,10 @@ export function useFilterUtilities(
           id: `filter-${filter.id}`,
           widgetId: filter.id,
           name:
-            filter.condition === StringFilterCondition.IsSet
+            filter.condition === ExistenceFilterCondition.IsSet
               ? `${getPropertyName(filter.filter.key)} is set`
+              : filter.condition === ExistenceFilterCondition.IsNotSet
+              ? `${getPropertyName(filter.filter.key)} is not set`
               : `${getPropertyName(filter.filter.key)} ${
                   filter.condition === StringFilterCondition.Is ? 'is' : 'is not'
                 } ${filter.selectedValues.join(', ')}`,
@@ -793,14 +829,26 @@ export function useFilterUtilities(
    */
   const filterHasContent = (filter: FilterData): boolean => {
     if (isNumericFilter(filter)) {
-      // For numeric filters, check if range is different from default
+      // For numeric filters, check if range is different from default OR if it's a special condition that doesn't need values
+      if (
+        filter.condition === ExistenceFilterCondition.IsSet ||
+        filter.condition === ExistenceFilterCondition.IsNotSet
+      ) {
+        return true
+      }
       const defaultMin = filter.filter.min
       const defaultMax = filter.filter.max
       return (
         filter.numericRange.min !== defaultMin || filter.numericRange.max !== defaultMax
       )
     } else {
-      // For string filters, check if any values are selected
+      // For string filters, check if any values are selected OR if it's a special condition that doesn't need values
+      if (
+        filter.condition === ExistenceFilterCondition.IsSet ||
+        filter.condition === ExistenceFilterCondition.IsNotSet
+      ) {
+        return true
+      }
       return filter.selectedValues.length > 0
     }
   }

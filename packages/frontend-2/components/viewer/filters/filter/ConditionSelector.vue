@@ -5,7 +5,7 @@
     show-ticks="right"
     :custom-menu-items-classes="[
       '!text-body-2xs',
-      filter.type === FilterType.Numeric ? '!w-36' : '!w-24'
+      filter.type === FilterType.Numeric ? '!w-36' : '!w-28'
     ]"
     @chosen="onConditionChosen"
   >
@@ -32,7 +32,10 @@ import type {
 import {
   getConditionsForType,
   getConditionLabel,
-  FilterType
+  FilterType,
+  StringFilterCondition,
+  NumericFilterCondition,
+  ExistenceFilterCondition
 } from '~/lib/viewer/helpers/filters/types'
 import { LayoutMenu, FormButton, type LayoutMenuItem } from '@speckle/ui-components'
 
@@ -53,13 +56,62 @@ const conditionOptions = computed<ConditionOption[]>(() => {
   }))
 })
 
-const menuItems = computed<LayoutMenuItem[][]>(() => [
-  conditionOptions.value.map((conditionOption) => ({
-    id: conditionOption.value,
-    title: conditionOption.label,
-    active: conditionOption.value === props.filter.condition
-  }))
-])
+const menuItems = computed<LayoutMenuItem[][]>(() => {
+  if (props.filter.type === FilterType.String) {
+    // Group string conditions: basic conditions first, then special conditions
+    const basicConditions = conditionOptions.value.filter(
+      (option) =>
+        option.value === StringFilterCondition.Is ||
+        option.value === StringFilterCondition.IsNot
+    )
+    const specialConditions = conditionOptions.value.filter(
+      (option) =>
+        option.value === ExistenceFilterCondition.IsSet ||
+        option.value === ExistenceFilterCondition.IsNotSet
+    )
+
+    return [
+      basicConditions.map((conditionOption) => ({
+        id: conditionOption.value,
+        title: conditionOption.label,
+        active: conditionOption.value === props.filter.condition
+      })),
+      specialConditions.map((conditionOption) => ({
+        id: conditionOption.value,
+        title: conditionOption.label,
+        active: conditionOption.value === props.filter.condition
+      }))
+    ]
+  } else {
+    // Group numeric conditions: basic conditions first, then special conditions
+    const basicConditions = conditionOptions.value.filter(
+      (option) =>
+        option.value === NumericFilterCondition.IsEqualTo ||
+        option.value === NumericFilterCondition.IsNotEqualTo ||
+        option.value === NumericFilterCondition.IsGreaterThan ||
+        option.value === NumericFilterCondition.IsLessThan ||
+        option.value === NumericFilterCondition.IsBetween
+    )
+    const specialConditions = conditionOptions.value.filter(
+      (option) =>
+        option.value === ExistenceFilterCondition.IsSet ||
+        option.value === ExistenceFilterCondition.IsNotSet
+    )
+
+    return [
+      basicConditions.map((conditionOption) => ({
+        id: conditionOption.value,
+        title: conditionOption.label,
+        active: conditionOption.value === props.filter.condition
+      })),
+      specialConditions.map((conditionOption) => ({
+        id: conditionOption.value,
+        title: conditionOption.label,
+        active: conditionOption.value === props.filter.condition
+      }))
+    ]
+  }
+})
 
 const selectedConditionLabel = computed(() => {
   return getConditionLabel(props.filter.condition)

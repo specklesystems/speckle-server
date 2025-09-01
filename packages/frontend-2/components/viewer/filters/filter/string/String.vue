@@ -1,7 +1,11 @@
 <template>
   <div
     class="pt-0.5"
-    :class="{ 'pb-1.5': filter.condition === StringFilterCondition.IsSet }"
+    :class="{
+      'pb-1.5':
+        filter.condition === ExistenceFilterCondition.IsSet ||
+        filter.condition === ExistenceFilterCondition.IsNotSet
+    }"
   >
     <ViewerFiltersFilterConditionSelector
       :filter="filter"
@@ -9,7 +13,12 @@
       @select-condition="handleConditionSelect"
     />
 
-    <template v-if="filter.condition !== StringFilterCondition.IsSet">
+    <template
+      v-if="
+        filter.condition !== ExistenceFilterCondition.IsSet &&
+        filter.condition !== ExistenceFilterCondition.IsNotSet
+      "
+    >
       <div class="relative">
         <ViewerSearchInput
           v-if="!collapsed && filter.condition"
@@ -45,7 +54,7 @@
 
 <script setup lang="ts">
 import type { FilterData, ConditionOption } from '~/lib/viewer/helpers/filters/types'
-import { StringFilterCondition } from '~/lib/viewer/helpers/filters/types'
+import { ExistenceFilterCondition } from '~/lib/viewer/helpers/filters/types'
 import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 import { X } from 'lucide-vue-next'
 

@@ -36,13 +36,26 @@
         v-if="propertyFilters.length > 0"
         class="flex-1 overflow-y-auto simple-scrollbar"
       >
-        <div class="flex flex-col gap-1 p-2 pt-0">
+        <div class="flex flex-col gap-1 p-2 py-0">
           <ViewerFiltersFilterCard
             v-for="filter in propertyFilters"
             :key="filter.id"
             :filter="filter"
             collapsed
           />
+        </div>
+        <div class="px-2">
+          <FormButton
+            v-if="propertyFilters.length > 0"
+            full-width
+            color="outline"
+            class="rounded-xl text-foreground-2 hover:text-foreground"
+            :icon-left="Plus"
+            hide-text
+            @click="addNewEmptyFilter"
+          >
+            Add filter
+          </FormButton>
         </div>
       </div>
 

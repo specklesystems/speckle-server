@@ -14,36 +14,48 @@ export enum NumericFilterCondition {
 
 export enum StringFilterCondition {
   Is = 'is',
-  IsNot = 'is_not',
-  IsSet = 'is_set'
+  IsNot = 'is_not'
 }
 
-export type FilterCondition = NumericFilterCondition | StringFilterCondition
+export enum ExistenceFilterCondition {
+  IsSet = 'is_set',
+  IsNotSet = 'is_not_set'
+}
 
-// Centralized condition configuration
+export type FilterCondition =
+  | NumericFilterCondition
+  | StringFilterCondition
+  | ExistenceFilterCondition
+
 export const CONDITION_CONFIG: Record<FilterCondition, { label: string }> = {
   // String conditions
   [StringFilterCondition.Is]: { label: 'is' },
   [StringFilterCondition.IsNot]: { label: 'is not' },
-  [StringFilterCondition.IsSet]: { label: 'is set' },
   // Numeric conditions
   [NumericFilterCondition.IsEqualTo]: { label: 'is equal to' },
   [NumericFilterCondition.IsNotEqualTo]: { label: 'is not equal to' },
   [NumericFilterCondition.IsGreaterThan]: { label: 'is greater than' },
   [NumericFilterCondition.IsLessThan]: { label: 'is less than' },
-  [NumericFilterCondition.IsBetween]: { label: 'is between' }
+  [NumericFilterCondition.IsBetween]: { label: 'is between' },
+  // Existence conditions (work for both string and numeric)
+  [ExistenceFilterCondition.IsSet]: { label: 'is set' },
+  [ExistenceFilterCondition.IsNotSet]: { label: 'is not set' }
 } as const
 
-// Helper to get available conditions for a filter type
 export const getConditionsForType = (filterType: FilterType): FilterCondition[] => {
   if (filterType === FilterType.Numeric) {
-    return Object.values(NumericFilterCondition)
+    return [
+      ...Object.values(NumericFilterCondition),
+      ...Object.values(ExistenceFilterCondition)
+    ]
   } else {
-    return Object.values(StringFilterCondition)
+    return [
+      ...Object.values(StringFilterCondition),
+      ...Object.values(ExistenceFilterCondition)
+    ]
   }
 }
 
-// Helper to get condition label
 export const getConditionLabel = (condition: FilterCondition): string => {
   return CONDITION_CONFIG[condition]?.label || 'is'
 }
@@ -67,33 +79,27 @@ export type BaseFilterData = {
   numericRange: { min: number; max: number }
 }
 
-// Numeric filter with proper typed filter property
 export type NumericFilterData = BaseFilterData & {
   type: FilterType.Numeric
   filter: NumericPropertyInfo
 }
 
-// String filter with proper typed filter property
 export type StringFilterData = BaseFilterData & {
   type: FilterType.String
   filter: StringPropertyInfo
   isDefaultAllSelected?: boolean // Track initial "all selected" state
 }
 
-// Union type for all filter data
 export type FilterData = NumericFilterData | StringFilterData
 
-// Type guard for numeric filters
 export const isNumericFilter = (filter: FilterData): filter is NumericFilterData => {
   return filter.type === FilterType.Numeric
 }
 
-// Type guard for string filters
 export const isStringFilter = (filter: FilterData): filter is StringFilterData => {
   return filter.type === FilterType.String
 }
 
-// Property selection option for UI
 export type PropertySelectOption = {
   value: string
   label: string
@@ -102,13 +108,11 @@ export type PropertySelectOption = {
   hasParent: boolean
 }
 
-// Condition option for UI
 export type ConditionOption = {
   value: FilterCondition
   label: string
 }
 
-// Internal data store types
 export type PropertyInfoBase = {
   concatenatedPath: string
   value: unknown
@@ -145,14 +149,12 @@ export type ResourceInfo = {
   resourceUrl: string
 }
 
-// Helper type for creating filters
 export type CreateFilterParams = {
   filter: PropertyInfo
   id: string
   availableValues: string[]
 }
 
-// Helper type for filter logic selection events
 export type FilterLogicOption = {
   value: FilterLogic
   label: string
