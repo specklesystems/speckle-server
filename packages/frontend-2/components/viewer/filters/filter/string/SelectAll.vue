@@ -1,21 +1,23 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <div class="px-1">
+  <div class="px-1 w-full">
     <div
-      class="flex text-body-2xs items-center px-2 py-1.5 w-full hover:bg-highlight-1 rounded cursor-pointer"
+      class="flex text-body-2xs items-center px-2 py-0.5 w-full hover:bg-highlight-1 rounded cursor-pointer"
       @click="handleSelectAllChange"
     >
       <FormCheckbox
         :name="`select-all-${selectedCount}-${totalCount}`"
         :model-value="areAllValuesSelected"
         :indeterminate="areSomeValuesSelected"
-        class="mr-2.5 pointer-events-none"
+        class="pointer-events-none -mt-1"
         hide-label
       />
-      <span class="text-foreground ml-px">Select all</span>
-      <div class="text-foreground-2 text-body-3xs ml-1">
-        ({{ selectedCount }} of {{ totalCount }})
+      <div class="flex items-center">
+        <div class="text-foreground ml-1">Select all</div>
+        <div class="text-foreground-2 text-body-3xs ml-1">
+          ({{ selectedCount }} of {{ totalCount }})
+        </div>
       </div>
     </div>
   </div>

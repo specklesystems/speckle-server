@@ -43,6 +43,7 @@
           size="sm"
           :icon-right="Ellipsis"
           class="!text-foreground"
+          :class="showActionsMenu ? '!bg-highlight-2' : ''"
           @click="showActionsMenu = !showActionsMenu"
         ></FormButton>
       </LayoutMenu>

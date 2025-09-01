@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="flex w-full flex-row gap-1 justify-between">
+    <div class="flex justify-between items-center pr-1">
       <ViewerFiltersFilterStringSelectAll
         :selected-count="selectedCount"
         :total-count="filteredValues.length"
@@ -8,28 +8,26 @@
       />
 
       <!-- Sorting Controls -->
-      <div class="px-1 mb-2">
-        <LayoutMenu
-          v-model:open="showSortMenu"
-          :items="sortMenuItems"
-          show-ticks="right"
-          :menu-position="HorizontalDirection.Left"
-          :custom-menu-items-classes="['!text-body-2xs', '!w-36']"
-          @chosen="onSortOptionChosen"
-        >
-          <FormButton
-            size="sm"
-            color="subtle"
-            hide-text
-            :icon-right="ArrowUpDown"
-            :class="[
-              'text-xs transition-colors',
-              showSortMenu ? '!bg-highlight-2 !text-foreground' : 'text-foreground-2'
-            ]"
-            @click="showSortMenu = !showSortMenu"
-          />
-        </LayoutMenu>
-      </div>
+      <LayoutMenu
+        v-model:open="showSortMenu"
+        :items="sortMenuItems"
+        show-ticks="right"
+        :menu-position="HorizontalDirection.Left"
+        :custom-menu-items-classes="['!text-body-2xs', '!w-36']"
+        @chosen="onSortOptionChosen"
+      >
+        <FormButton
+          size="sm"
+          color="subtle"
+          hide-text
+          :icon-right="ArrowUpDown"
+          :class="[
+            'text-xs transition-colors hover:text-foreground',
+            showSortMenu ? '!bg-highlight-2 !text-foreground' : 'text-foreground-2'
+          ]"
+          @click="showSortMenu = !showSortMenu"
+        />
+      </LayoutMenu>
     </div>
     <div
       v-bind="containerProps"

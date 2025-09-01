@@ -4,10 +4,10 @@
     :class="labelPosition === 'left' ? 'flex-row-reverse items-center' : 'items-start'"
   >
     <div
-      class="flex h-6 items-center"
+      class="flex items-center"
       :class="labelPosition === 'left' ? 'w-1/2 justify-end mr-2' : ''"
     >
-      <div class="relative">
+      <div class="relative w-3.5 h-3.5">
         <input
           :id="finalId"
           :checked="coreChecked"
@@ -23,22 +23,9 @@
         <!-- Indeterminate state overlay -->
         <div
           v-if="indeterminate"
-          class="absolute inset-0 flex items-center justify-center pointer-events-none"
+          class="absolute w-full h-full top-0 left-0 flex items-center justify-center pointer-events-none"
         >
-          <svg
-            class="h-3 w-3 text-foreground"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M20 12H4"
-            />
-          </svg>
+          <Minus class="w-3 h-3 text-foreground" />
         </div>
       </div>
     </div>
@@ -65,6 +52,7 @@ import type { PropType } from 'vue'
 import type { Optional } from '@speckle/shared'
 import { nanoid } from 'nanoid'
 import type { LabelPosition } from '~~/src/composables/form/input'
+import { Minus } from 'lucide-vue-next'
 
 /**
  * Troubleshooting:
