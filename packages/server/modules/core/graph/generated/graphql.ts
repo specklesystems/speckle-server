@@ -3502,6 +3502,11 @@ export type SavedView = {
   group: SavedViewGroup;
   /** Empty ID means default/ungrouped view */
   groupId?: Maybe<Scalars['ID']['output']>;
+  /**
+   * Truncated resourceIds w/o specific version data that is used to associate the view w/
+   * specific groups
+   */
+  groupResourceIds: Array<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   isHomeView: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
@@ -4790,6 +4795,7 @@ export type UserGendoAiCredits = {
 
 export type UserMeta = {
   __typename?: 'UserMeta';
+  intelligenceCommunityStandUpBannerDismissed: Scalars['Boolean']['output'];
   legacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   newWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
   speckleConBannerDismissed: Scalars['Boolean']['output'];
@@ -4797,9 +4803,15 @@ export type UserMeta = {
 
 export type UserMetaMutations = {
   __typename?: 'UserMetaMutations';
+  setIntelligenceCommunityStandUpBannerDismissed: Scalars['Boolean']['output'];
   setLegacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   setNewWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
   setSpeckleConBannerDismissed: Scalars['Boolean']['output'];
+};
+
+
+export type UserMetaMutationsSetIntelligenceCommunityStandUpBannerDismissedArgs = {
+  value: Scalars['Boolean']['input'];
 };
 
 
@@ -7854,6 +7866,7 @@ export type SavedViewResolvers<ContextType = GraphQLContext, ParentType extends 
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   group?: Resolver<ResolversTypes['SavedViewGroup'], ParentType, ContextType>;
   groupId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  groupResourceIds?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   isHomeView?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -8264,6 +8277,7 @@ export type UserGendoAiCreditsResolvers<ContextType = GraphQLContext, ParentType
 };
 
 export type UserMetaResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserMeta'] = ResolversParentTypes['UserMeta']> = {
+  intelligenceCommunityStandUpBannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   legacyProjectsExplainerCollapsed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   newWorkspaceExplainerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   speckleConBannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -8271,6 +8285,7 @@ export type UserMetaResolvers<ContextType = GraphQLContext, ParentType extends R
 };
 
 export type UserMetaMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserMetaMutations'] = ResolversParentTypes['UserMetaMutations']> = {
+  setIntelligenceCommunityStandUpBannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetIntelligenceCommunityStandUpBannerDismissedArgs, 'value'>>;
   setLegacyProjectsExplainerCollapsed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetLegacyProjectsExplainerCollapsedArgs, 'value'>>;
   setNewWorkspaceExplainerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs, 'value'>>;
   setSpeckleConBannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetSpeckleConBannerDismissedArgs, 'value'>>;
@@ -9062,6 +9077,18 @@ export type SetSpeckleConBannerDismissedMutationVariables = Exact<{
 
 
 export type SetSpeckleConBannerDismissedMutation = { __typename?: 'Mutation', activeUserMutations: { __typename?: 'ActiveUserMutations', meta: { __typename?: 'UserMetaMutations', setSpeckleConBannerDismissed: boolean } } };
+
+export type GetIntelligenceCommunityStandUpBannerDismissedQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetIntelligenceCommunityStandUpBannerDismissedQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', meta: { __typename?: 'UserMeta', intelligenceCommunityStandUpBannerDismissed: boolean } } | null };
+
+export type SetIntelligenceCommunityStandUpBannerDismissedMutationVariables = Exact<{
+  input: Scalars['Boolean']['input'];
+}>;
+
+
+export type SetIntelligenceCommunityStandUpBannerDismissedMutation = { __typename?: 'Mutation', activeUserMutations: { __typename?: 'ActiveUserMutations', meta: { __typename?: 'UserMetaMutations', setIntelligenceCommunityStandUpBannerDismissed: boolean } } };
 
 export type GetLegacyProjectsExplainerCollapsedQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -10401,6 +10428,8 @@ export const GetNewWorkspaceExplainerDismissedDocument = {"kind":"Document","def
 export const SetNewWorkspaceExplainerDismissedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SetNewWorkspaceExplainerDismissed"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUserMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setNewWorkspaceExplainerDismissed"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"value"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]}}]} as unknown as DocumentNode<SetNewWorkspaceExplainerDismissedMutation, SetNewWorkspaceExplainerDismissedMutationVariables>;
 export const GetSpeckleConBannerDismissedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetSpeckleConBannerDismissed"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"speckleConBannerDismissed"}}]}}]}}]}}]} as unknown as DocumentNode<GetSpeckleConBannerDismissedQuery, GetSpeckleConBannerDismissedQueryVariables>;
 export const SetSpeckleConBannerDismissedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SetSpeckleConBannerDismissed"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUserMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setSpeckleConBannerDismissed"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"value"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]}}]} as unknown as DocumentNode<SetSpeckleConBannerDismissedMutation, SetSpeckleConBannerDismissedMutationVariables>;
+export const GetIntelligenceCommunityStandUpBannerDismissedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetIntelligenceCommunityStandUpBannerDismissed"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"intelligenceCommunityStandUpBannerDismissed"}}]}}]}}]}}]} as unknown as DocumentNode<GetIntelligenceCommunityStandUpBannerDismissedQuery, GetIntelligenceCommunityStandUpBannerDismissedQueryVariables>;
+export const SetIntelligenceCommunityStandUpBannerDismissedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SetIntelligenceCommunityStandUpBannerDismissed"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUserMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setIntelligenceCommunityStandUpBannerDismissed"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"value"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]}}]} as unknown as DocumentNode<SetIntelligenceCommunityStandUpBannerDismissedMutation, SetIntelligenceCommunityStandUpBannerDismissedMutationVariables>;
 export const GetLegacyProjectsExplainerCollapsedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetLegacyProjectsExplainerCollapsed"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"legacyProjectsExplainerCollapsed"}}]}}]}}]}}]} as unknown as DocumentNode<GetLegacyProjectsExplainerCollapsedQuery, GetLegacyProjectsExplainerCollapsedQueryVariables>;
 export const SetLegacyProjectsExplainerCollapsedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SetLegacyProjectsExplainerCollapsed"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUserMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setLegacyProjectsExplainerCollapsed"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"value"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]}}]} as unknown as DocumentNode<SetLegacyProjectsExplainerCollapsedMutation, SetLegacyProjectsExplainerCollapsedMutationVariables>;
 export const GetLimitedPersonalProjectVersionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetLimitedPersonalProjectVersions"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"versions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedPersonalProjectVersion"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"LimitedPersonalProjectComment"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"rawText"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"text"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"doc"}},{"kind":"Field","name":{"kind":"Name","value":"type"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"LimitedPersonalProjectVersion"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Version"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}},{"kind":"Field","name":{"kind":"Name","value":"commentThreads"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedPersonalProjectComment"}}]}}]}}]}}]} as unknown as DocumentNode<GetLimitedPersonalProjectVersionsQuery, GetLimitedPersonalProjectVersionsQueryVariables>;

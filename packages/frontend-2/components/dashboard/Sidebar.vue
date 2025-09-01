@@ -142,6 +142,9 @@
               </LayoutSidebarMenuGroup>
             </div>
           </LayoutSidebarMenu>
+          <template v-if="showIntelligenceCommunityStandUpPromo" #promo>
+            <DashboardIntelligencePromo />
+          </template>
         </LayoutSidebar>
       </div>
     </template>
@@ -168,6 +171,8 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useActiveWorkspaceSlug } from '~/lib/user/composables/activeWorkspace'
 import { graphql } from '~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
+import dayjs from 'dayjs'
+import { useActiveUserMeta } from '~/lib/user/composables/meta'
 
 const dashboardSidebarQuery = graphql(`
   query DashboardSidebar {
@@ -190,10 +195,15 @@ const mixpanel = useMixpanel()
 const { result } = useQuery(dashboardSidebarQuery, () => ({}), {
   enabled: isWorkspacesEnabled.value
 })
+const { hasDismissedIntelligenceCommunityStandUpBanner } = useActiveUserMeta()
 
 const isOpenMobile = ref(false)
 const showExplainerVideoDialog = ref(false)
 
+const showIntelligenceCommunityStandUpPromo = computed(() => {
+  if (hasDismissedIntelligenceCommunityStandUpBanner.value) return false
+  return dayjs().isBefore('2025-09-10', 'day')
+})
 const activeWorkspace = computed(() => result.value?.activeUser?.activeWorkspace)
 const showProjectsLink = computed(() => {
   return isWorkspacesEnabled.value

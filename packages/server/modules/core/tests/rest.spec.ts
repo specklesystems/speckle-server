@@ -9,53 +9,7 @@ import { beforeEachContext } from '@/test/hooks'
 import { createManyObjects } from '@/test/helpers'
 
 import { Scopes, wait } from '@speckle/shared'
-import {
-  getStreamFactory,
-  createStreamFactory,
-  grantStreamPermissionsFactory,
-  getStreamRolesFactory
-} from '@/modules/core/repositories/streams'
 import { db } from '@/db/knex'
-import {
-  legacyCreateStreamFactory,
-  createStreamReturnRecordFactory
-} from '@/modules/core/services/streams/management'
-import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
-import {
-  findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory,
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory,
-  findInviteFactory,
-  deleteInvitesByTargetFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
-import { getEventBus } from '@/modules/shared/services/eventBus'
-import { createBranchFactory } from '@/modules/core/repositories/branches'
-import {
-  getUsersFactory,
-  getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory
-} from '@/modules/core/repositories/users'
-import {
-  findEmailFactory,
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory
-} from '@/modules/core/repositories/userEmails'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import {
-  finalizeInvitedServerRegistrationFactory,
-  finalizeResourceInviteFactory
-} from '@/modules/serverinvites/services/processing'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import {
   storeTokenScopesFactory,
@@ -63,128 +17,12 @@ import {
   storeTokenResourceAccessDefinitionsFactory,
   storePersonalApiTokenFactory
 } from '@/modules/core/repositories/tokens'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import cryptoRandomString from 'crypto-random-string'
-import {
-  processFinalizedProjectInviteFactory,
-  validateProjectInviteBeforeFinalizationFactory
-} from '@/modules/serverinvites/services/coreFinalization'
-import {
-  addOrUpdateStreamCollaboratorFactory,
-  validateStreamAccessFactory
-} from '@/modules/core/services/streams/access'
-import { authorizeResolver } from '@/modules/shared'
 import type Express from 'express'
-import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
+import { createTestUser, type BasicTestUser } from '@/test/authHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 
-const getServerInfo = getServerInfoFactory({ db })
-const getUser = getUserFactory({ db })
-const getUsers = getUsersFactory({ db })
-const getStream = getStreamFactory({ db })
-
-const buildFinalizeProjectInvite = () =>
-  finalizeResourceInviteFactory({
-    findInvite: findInviteFactory({ db }),
-    validateInvite: validateProjectInviteBeforeFinalizationFactory({
-      getProject: getStream
-    }),
-    processInvite: processFinalizedProjectInviteFactory({
-      getProject: getStream,
-      addProjectRole: addOrUpdateStreamCollaboratorFactory({
-        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
-        getUser,
-        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-        getStreamRoles: getStreamRolesFactory({ db }),
-        emitEvent: getEventBus().emit
-      })
-    }),
-    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    emitEvent: (...args) => getEventBus().emit(...args),
-    findEmail: findEmailFactory({ db }),
-    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-      createUserEmail: createUserEmailFactory({ db }),
-      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-      findEmail: findEmailFactory({ db }),
-      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-      }),
-      requestNewEmailVerification: requestNewEmailVerificationFactory({
-        findEmail: findEmailFactory({ db }),
-        getUser,
-        getServerInfo,
-        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-          db
-        }),
-        renderEmail,
-        sendEmail
-      })
-    }),
-    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-      getStream
-    }),
-    getUser,
-    getServerInfo
-  })
-
-const createStream = legacyCreateStreamFactory({
-  createStreamReturnRecord: createStreamReturnRecordFactory({
-    inviteUsersToProject: inviteUsersToProjectFactory({
-      createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory({ db }),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-          getStream
-        }),
-        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-          getStream
-        }),
-        emitEvent: ({ eventName, payload }) =>
-          getEventBus().emit({
-            eventName,
-            payload
-          }),
-        getUser,
-        getServerInfo,
-        finalizeInvite: buildFinalizeProjectInvite()
-      }),
-      getUsers
-    }),
-    createStream: createStreamFactory({ db }),
-    createBranch: createBranchFactory({ db }),
-    storeProjectRole: storeProjectRoleFactory({ db }),
-    emitEvent: getEventBus().emit
-  })
-})
-
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
   storeTokenScopes: storeTokenScopesFactory({ db }),
@@ -195,41 +33,24 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
 })
 
 describe('Upload/Download Routes @api-rest', () => {
-  const userA = {
-    name: 'd1',
-    email: 'd.1@speckle.systems',
-    password: 'wowwow8charsplease',
-    id: '',
-    token: ''
-  }
-  const userB = {
-    name: 'd2',
-    email: 'd.2@speckle.systems',
-    password: 'wowwow8charsplease',
-    id: '',
-    token: ''
-  }
+  let userA: BasicTestUser
+  let tokenUserA: string
+  let userB: BasicTestUser
+  let tokenUserB: string
 
-  const testStream = {
-    name: 'Test Stream 01',
-    description: 'wonderful test stream',
-    id: '',
-    ownerId: ''
-  }
-
-  const privateTestStream = {
-    name: 'Private Test Stream',
-    isPublic: false,
-    id: '',
-    ownerId: ''
-  }
+  let testStream: BasicTestStream
+  let privateTestStream: BasicTestStream
 
   let app: Express.Express
   before(async () => {
     ;({ app } = await beforeEachContext())
 
-    userA.id = await createUser(userA)
-    userA.token = `Bearer ${await createPersonalAccessToken(
+    userA = await createTestUser({
+      name: 'd1',
+      email: 'd.1@speckle.systems',
+      password: 'wowwow8charsplease'
+    })
+    tokenUserA = `Bearer ${await createPersonalAccessToken(
       userA.id,
       'test token user A',
       [
@@ -244,8 +65,12 @@ describe('Upload/Download Routes @api-rest', () => {
       ]
     )}`
 
-    userB.id = await createUser(userB)
-    userB.token = `Bearer ${await createPersonalAccessToken(
+    userB = await createTestUser({
+      name: 'd2',
+      email: 'd.2@speckle.systems',
+      password: 'wowwow8charsplease'
+    })
+    tokenUserB = `Bearer ${await createPersonalAccessToken(
       userB.id,
       'test token user B',
       [
@@ -260,11 +85,21 @@ describe('Upload/Download Routes @api-rest', () => {
       ]
     )}`
 
-    testStream.id = await createStream({ ...testStream, ownerId: userA.id })
-    privateTestStream.id = await createStream({
-      ...privateTestStream,
-      ownerId: userA.id
-    })
+    testStream = await createTestStream(
+      {
+        name: 'Test Stream 01',
+        description: 'wonderful test stream',
+        isPublic: true
+      },
+      userA
+    )
+    privateTestStream = await createTestStream(
+      {
+        name: 'Private Test Stream',
+        isPublic: false
+      },
+      userA
+    )
   })
 
   it('Should not allow download requests without an authorization token or valid streamId', async () => {
@@ -289,7 +124,7 @@ describe('Upload/Download Routes @api-rest', () => {
     // invalid streamId
     res = await request(app)
       .get(`/objects/${'thisDoesNotExist'}/null`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
     expect(res).to.have.status(404)
 
     // create some objects
@@ -297,7 +132,7 @@ describe('Upload/Download Routes @api-rest', () => {
 
     await request(app)
       .post(`/objects/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .set('Content-type', 'multipart/form-data')
       .attach('batch1', Buffer.from(JSON.stringify(objBatches[0]), 'utf8'))
       .attach('batch2', Buffer.from(JSON.stringify(objBatches[1]), 'utf8'))
@@ -318,14 +153,14 @@ describe('Upload/Download Routes @api-rest', () => {
     // should not allow user b to access user a's private stream
     res = await request(app)
       .get(`/objects/${privateTestStream.id}/${objBatches[0][0].id}`)
-      .set('Authorization', userB.token)
+      .set('Authorization', tokenUserB)
     expect(res).to.have.status(401)
   })
 
   it('should not allow a non-multipart/form-data request without a boundary', async () => {
     const res = await request(app)
       .post(`/objects/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .set('Content-type', 'multipart/form-data')
       .send(Buffer.from(JSON.stringify(objBatches[0]), 'utf8')) //sent, not attached, so no boundary will be added to Content-type header.
     expect(res).to.have.status(400)
@@ -337,7 +172,7 @@ describe('Upload/Download Routes @api-rest', () => {
   it('should not allow a non-multipart/form-data request, even if it has a valid header', async () => {
     const res = await request(app)
       .post(`/objects/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .set('Content-type', 'application/json')
       .attach(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -354,7 +189,7 @@ describe('Upload/Download Routes @api-rest', () => {
   it('should not allow non-buffered requests', async () => {
     const res = await request(app)
       .post(`/objects/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .set('Content-type', 'multipart/form-data')
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .attach(JSON.stringify(objBatches[0]) as any, undefined as any)
@@ -369,20 +204,20 @@ describe('Upload/Download Routes @api-rest', () => {
 
     await request(app)
       .post(`/objects/${privateTestStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .set('Content-type', 'multipart/form-data')
       .attach('batch1', Buffer.from(JSON.stringify(objBatch), 'utf8'))
 
     // should allow userA to access privateTestStream object
     let res = await request(app)
       .get(`/objects/${privateTestStream.id}/${objBatch[0].id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
     expect(res).to.have.status(200)
 
     // should not allow userB to access privateTestStream object by pretending it's in public stream
     res = await request(app)
       .get(`/objects/${testStream.id}/${objBatch[0].id}`)
-      .set('Authorization', userB.token)
+      .set('Authorization', tokenUserB)
     expect(res).to.have.status(404)
   })
 
@@ -402,7 +237,7 @@ describe('Upload/Download Routes @api-rest', () => {
     // invalid streamId
     res = await request(app)
       .post(`/objects/${'thisDoesNotExist'}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
     expect(res).to.have.status(401)
   })
 
@@ -420,7 +255,7 @@ describe('Upload/Download Routes @api-rest', () => {
 
     const res = await request(app)
       .post(`/objects/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .set('Content-type', 'multipart/form-data')
       .attach('batch1', Buffer.from(JSON.stringify(objectToPost), 'utf8'))
 
@@ -430,7 +265,7 @@ describe('Upload/Download Routes @api-rest', () => {
   it('Should not allow upload with invalid body (invalid json)', async () => {
     const res = await request(app)
       .post(`/objects/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .set('Content-type', 'multipart/form-data')
       .attach('batch1', Buffer.from(JSON.stringify('this is not json'), 'utf8'))
 
@@ -445,7 +280,7 @@ describe('Upload/Download Routes @api-rest', () => {
 
   //   const res = await request(app)
   //     .post(`/objects/${testStream.id}`)
-  //     .set('Authorization', userA.token)
+  //     .set('Authorization', tokenUserA)
   //     .set('Content-type', 'multipart/form-data')
   //     .attach('batch1', Buffer.from(JSON.stringify([objectToPost]), 'utf8'))
 
@@ -466,7 +301,7 @@ describe('Upload/Download Routes @api-rest', () => {
 
     const res = await request(app)
       .post(`/objects/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .set('Content-type', 'multipart/form-data')
       .attach('batch1', Buffer.from(JSON.stringify(objBatches[0]), 'utf8'))
       .attach('batch2', Buffer.from(JSON.stringify(objBatches[1]), 'utf8'))
@@ -486,7 +321,7 @@ describe('Upload/Download Routes @api-rest', () => {
     await new Promise<void>((resolve, reject) => {
       void request(app)
         .get(`/objects/${testStream.id}/${parentId}`)
-        .set('Authorization', userA.token)
+        .set('Authorization', tokenUserA)
         .buffer()
         .parse((res, cb) => {
           const resTyped = res as typeof res & { data: string }
@@ -518,7 +353,7 @@ describe('Upload/Download Routes @api-rest', () => {
     await new Promise<void>((resolve, reject) => {
       void request(app)
         .get(`/objects/${testStream.id}/${parentId}`)
-        .set('Authorization', userA.token)
+        .set('Authorization', tokenUserA)
         .set('Accept', 'text/plain')
         .buffer()
         .parse((res, cb) => {
@@ -557,7 +392,7 @@ describe('Upload/Download Routes @api-rest', () => {
     await new Promise<void>((resolve, reject) => {
       void request(app)
         .post(`/api/getobjects/${testStream.id}`)
-        .set('Authorization', userA.token)
+        .set('Authorization', tokenUserA)
         .set('Accept', 'text/plain')
         .send({ objects: JSON.stringify(objectIds) })
         .buffer()
@@ -594,7 +429,7 @@ describe('Upload/Download Routes @api-rest', () => {
 
     const res = await request(app)
       .post(`/api/getobjects/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .set('Accept', 'text/plain')
       .send({ objects: JSON.stringify(objectIds) })
       .buffer()
@@ -605,7 +440,7 @@ describe('Upload/Download Routes @api-rest', () => {
   it('Should return status code 400 when getting the list of objects and if it is not parseable', async () => {
     const response = await request(app)
       .post(`/api/getobjects/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .send({ objects: ['lolz', 'thisIsBroken', 'shouldHaveBeenJSONStringified'] })
 
     expect(response).to.have.status(400)
@@ -629,7 +464,7 @@ describe('Upload/Download Routes @api-rest', () => {
     await new Promise<void>((resolve, reject) => {
       void request(app)
         .post(`/api/diff/${testStream.id}`)
-        .set('Authorization', userA.token)
+        .set('Authorization', tokenUserA)
         .send({ objects: JSON.stringify(objectIds) })
         .buffer()
         .parse((res, cb) => {
@@ -674,7 +509,7 @@ describe('Upload/Download Routes @api-rest', () => {
   it('Should return status code 400 if the list of objects is not parseable', async () => {
     const response = await request(app)
       .post(`/api/diff/${testStream.id}`)
-      .set('Authorization', userA.token)
+      .set('Authorization', tokenUserA)
       .send({ objects: ['lolz', 'thisIsBroken', 'shouldHaveBeenJSONStringified'] })
 
     expect(response).to.have.status(400)

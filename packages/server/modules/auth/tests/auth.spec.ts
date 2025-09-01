@@ -3,58 +3,9 @@ import chai from 'chai'
 import request from 'supertest'
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 import { createStreamInviteDirectly } from '@/test/speckle-helpers/inviteHelper'
-import {
-  findInviteFactory,
-  findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory,
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory,
-  deleteInvitesByTargetFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
 import { db } from '@/db/knex'
-import {
-  legacyCreateStreamFactory,
-  createStreamReturnRecordFactory
-} from '@/modules/core/services/streams/management'
-import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
-import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import {
-  getStreamFactory,
-  createStreamFactory,
-  grantStreamPermissionsFactory,
-  getStreamRolesFactory
-} from '@/modules/core/repositories/streams'
-import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
-import { getEventBus } from '@/modules/shared/services/eventBus'
-import { createBranchFactory } from '@/modules/core/repositories/branches'
-import {
-  getUsersFactory,
-  getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory,
-  legacyGetUserByEmailFactory
-} from '@/modules/core/repositories/users'
-import {
-  findEmailFactory,
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory
-} from '@/modules/core/repositories/userEmails'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import {
-  finalizeInvitedServerRegistrationFactory,
-  finalizeResourceInviteFactory
-} from '@/modules/serverinvites/services/processing'
-import {
-  getServerInfoFactory,
-  updateServerInfoFactory
-} from '@/modules/core/repositories/server'
+import { legacyGetUserByEmailFactory } from '@/modules/core/repositories/users'
+import { updateServerInfoFactory } from '@/modules/core/repositories/server'
 import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
 import { RATE_LIMITERS, createConsumer } from '@/modules/core/utils/ratelimiter'
 import httpMocks from 'node-mocks-http'
@@ -63,131 +14,22 @@ import { TIME } from '@speckle/shared'
 import type { Application } from 'express'
 import { passportAuthenticationCallbackFactory } from '@/modules/auth/services/passportService'
 import { extendLoggerComponent, logger as baseLogger } from '@/observability/logging'
-import {
-  processFinalizedProjectInviteFactory,
-  validateProjectInviteBeforeFinalizationFactory
-} from '@/modules/serverinvites/services/coreFinalization'
-import {
-  addOrUpdateStreamCollaboratorFactory,
-  validateStreamAccessFactory
-} from '@/modules/core/services/streams/access'
-import { authorizeResolver } from '@/modules/shared'
+
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import cryptoRandomString from 'crypto-random-string'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
+import {
+  type BasicTestStream,
+  createTestStream
+} from '@/test/speckle-helpers/streamHelper'
+import { findInviteFactory } from '@/modules/serverinvites/repositories/serverInvites'
 
-const getServerInfo = getServerInfoFactory({ db })
-const getUser = getUserFactory({ db })
-const getUsers = getUsersFactory({ db })
 const createInviteDirectly = createStreamInviteDirectly
 const findInvite = findInviteFactory({ db })
-const getStream = getStreamFactory({ db })
 
-const buildFinalizeProjectInvite = () =>
-  finalizeResourceInviteFactory({
-    findInvite: findInviteFactory({ db }),
-    validateInvite: validateProjectInviteBeforeFinalizationFactory({
-      getProject: getStream
-    }),
-    processInvite: processFinalizedProjectInviteFactory({
-      getProject: getStream,
-      addProjectRole: addOrUpdateStreamCollaboratorFactory({
-        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
-        getUser,
-        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-        getStreamRoles: getStreamRolesFactory({ db }),
-        emitEvent: getEventBus().emit
-      })
-    }),
-    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    emitEvent: (...args) => getEventBus().emit(...args),
-    findEmail: findEmailFactory({ db }),
-    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-      createUserEmail: createUserEmailFactory({ db }),
-      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-      findEmail: findEmailFactory({ db }),
-      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-      }),
-      requestNewEmailVerification: requestNewEmailVerificationFactory({
-        findEmail: findEmailFactory({ db }),
-        getUser,
-        getServerInfo,
-        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-          db
-        }),
-        renderEmail,
-        sendEmail
-      })
-    }),
-    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-      getStream
-    }),
-    getUser,
-    getServerInfo
-  })
-
-const createStream = legacyCreateStreamFactory({
-  createStreamReturnRecord: createStreamReturnRecordFactory({
-    inviteUsersToProject: inviteUsersToProjectFactory({
-      createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory({ db }),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-          getStream
-        }),
-        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-          getStream
-        }),
-        emitEvent: ({ eventName, payload }) =>
-          getEventBus().emit({
-            eventName,
-            payload
-          }),
-        getUser,
-        getServerInfo,
-        finalizeInvite: buildFinalizeProjectInvite()
-      }),
-      getUsers
-    }),
-    createStream: createStreamFactory({ db }),
-    createBranch: createBranchFactory({ db }),
-    storeProjectRole: storeProjectRoleFactory({ db }),
-    emitEvent: getEventBus().emit
-  })
-})
-
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
 const updateServerInfo = updateServerInfoFactory({ db })
 const logger = extendLoggerComponent(baseLogger, 'auth-tests')
@@ -201,29 +43,8 @@ describe('Auth @auth', () => {
   describe('Local authN & authZ (token endpoints)', () => {
     const registeredUserEmail = 'registered@speckle.systems'
 
-    const me: {
-      name: string
-      company: string
-      email: string
-      password: string
-      id?: string
-    } = {
-      name: 'dimitrie stefanescu',
-      company: 'speckle',
-      email: registeredUserEmail,
-      password: 'roll saving throws',
-      id: undefined
-    }
-
-    const myPrivateStream: {
-      name: string
-      isPublic: boolean
-      id?: string
-    } = {
-      name: 'My Private Stream 1',
-      isPublic: false,
-      id: undefined
-    }
+    let me: BasicTestUser
+    let myPrivateStream: BasicTestStream
 
     before(async () => {
       const ctx = await beforeEachContext()
@@ -231,15 +52,23 @@ describe('Auth @auth', () => {
       ;({ sendRequest } = await initializeTestServer(ctx))
 
       // Register a user for testing login flows
-      const meId = await createUser(me)
-      me.id = meId
+      me = await createTestUser({
+        name: 'dimitrie stefanescu',
+        company: 'speckle',
+        email: registeredUserEmail,
+        password: 'roll saving throws',
+        id: undefined
+      })
 
       // Create a test stream for testing stream invites
-      const myPrivateStreamId = await createStream({
-        ...myPrivateStream,
-        ownerId: me.id
-      })
-      myPrivateStream.id = myPrivateStreamId
+      myPrivateStream = await createTestStream(
+        {
+          name: 'My Private Stream 1',
+          isPublic: false,
+          ownerId: me.id
+        },
+        me
+      )
     })
 
     it('Should register a new user (speckle frontend)', async () => {
