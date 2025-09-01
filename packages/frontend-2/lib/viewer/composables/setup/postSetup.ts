@@ -538,7 +538,6 @@ function useViewerFiltersIntegration() {
     ui: { filters, highlightedObjectIds }
   } = state
 
-  // Initialize filter utilities (handles viewer integration internally)
   useFilterUtilities({ state })
 
   // state -> viewer

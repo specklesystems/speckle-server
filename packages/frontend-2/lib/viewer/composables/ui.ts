@@ -21,7 +21,8 @@ import type {
 } from '~/lib/viewer/helpers/shortcuts/types'
 import { useTheme } from '~/lib/core/composables/theme'
 import { useMixpanel } from '~/lib/core/composables/mp'
-// Re-export filtering utilities for backward compatibility
+
+// Re-export filtering utilities
 export { useFilterUtilities } from './filtering'
 
 export function useSectionBoxUtilities() {

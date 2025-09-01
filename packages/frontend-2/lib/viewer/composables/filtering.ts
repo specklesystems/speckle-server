@@ -592,6 +592,39 @@ export function useFilterUtilities(
   }
 
   /**
+   * Updates the property of an existing filter while preserving its position and settings
+   */
+  const updateFilterProperty = (
+    filterId: string,
+    newProperty: PropertyInfo
+  ): boolean => {
+    const filterIndex = filters.propertyFilters.value.findIndex(
+      (f) => f.id === filterId
+    )
+    if (filterIndex === -1) return false
+
+    const availableValues = getAvailableFilterValues(newProperty)
+
+    // Create new filter data with the new property but preserve the filter ID and position
+    const newFilterData = createFilterData({
+      filter: newProperty,
+      id: filterId,
+      availableValues
+    })
+
+    // If this filter was applying colors, remove the color filter since property changed
+    if (filters.activeColorFilterId.value === filterId) {
+      removeColorFilter()
+    }
+
+    // Replace the filter at the same index to preserve order
+    filters.propertyFilters.value[filterIndex] = newFilterData
+
+    updateDataStoreSlices()
+    return true
+  }
+
+  /**
    * Removes an active filter by ID
    */
   const removeActiveFilter = (filterId: string) => {
@@ -1179,6 +1212,7 @@ export function useFilterUtilities(
     filters,
     getAvailableFilterValues,
     addActiveFilter,
+    updateFilterProperty,
     removeActiveFilter,
     toggleFilterApplied,
     updateActiveFilterValues,

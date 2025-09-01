@@ -42,6 +42,7 @@
             :key="filter.id"
             :filter="filter"
             collapsed
+            @swap-property="startPropertySwap"
           />
         </div>
         <div class="px-2">
@@ -93,6 +94,7 @@ const {
   filters: { propertyFilters },
   getRelevantFilters,
   addActiveFilter,
+  updateFilterProperty,
   resetFilters,
   currentFilterLogic,
   setFilterLogic
@@ -160,14 +162,27 @@ const mp = useMixpanel()
 
 const showPropertySelection = ref(false)
 const propertySelectionRef = ref<HTMLElement>()
+const swappingFilterId = ref<string | null>(null)
 
 const addNewEmptyFilter = () => {
+  swappingFilterId.value = null // Ensure we're adding, not swapping
   showPropertySelection.value = true
 
   mp.track('Viewer Action', {
     type: 'action',
     name: 'filters',
     action: 'open-property-selection'
+  })
+}
+
+const startPropertySwap = (filterId: string) => {
+  swappingFilterId.value = filterId
+  showPropertySelection.value = true
+
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'filters',
+    action: 'open-property-swap'
   })
 }
 
@@ -183,16 +198,29 @@ const selectProperty = (propertyKey: string) => {
   const property = relevantFilters.value.find((p) => p.key === propertyKey)
 
   if (property) {
-    addActiveFilter(property)
+    if (swappingFilterId.value) {
+      // Swap property for existing filter
+      updateFilterProperty(swappingFilterId.value, property)
+      mp.track('Viewer Action', {
+        type: 'action',
+        name: 'filters',
+        action: 'swap-filter-property',
+        value: propertyKey
+      })
+    } else {
+      // Add new filter
+      addActiveFilter(property)
+      mp.track('Viewer Action', {
+        type: 'action',
+        name: 'filters',
+        action: 'add-new-filter',
+        value: propertyKey
+      })
+    }
   }
 
+  // Reset state
   showPropertySelection.value = false
-
-  mp.track('Viewer Action', {
-    type: 'action',
-    name: 'filters',
-    action: 'add-new-filter',
-    value: propertyKey
-  })
+  swappingFilterId.value = null
 }
 </script>

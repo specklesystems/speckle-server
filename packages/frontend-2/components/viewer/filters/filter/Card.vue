@@ -1,7 +1,11 @@
 <template>
   <div class="group border border-outline-2 rounded-xl mb-2">
     <div class="p-1" :class="{ 'border-b border-outline-3': !collapsed }">
-      <ViewerFiltersFilterHeader v-model:collapsed="collapsed" :filter="filter" />
+      <ViewerFiltersFilterHeader
+        v-model:collapsed="collapsed"
+        :filter="filter"
+        @swap-property="$emit('swapProperty', $event)"
+      />
     </div>
 
     <div
@@ -20,6 +24,10 @@ import { isNumericFilter } from '~/lib/viewer/helpers/filters/types'
 
 defineProps<{
   filter: FilterData
+}>()
+
+defineEmits<{
+  swapProperty: [filterId: string]
 }>()
 
 const collapsed = ref(false)

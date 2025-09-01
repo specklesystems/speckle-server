@@ -4,6 +4,7 @@ import type {
   StringPropertyInfo
 } from '@speckle/viewer'
 
+// Filter Conditions
 export enum NumericFilterCondition {
   IsBetween = 'is_between',
   IsEqualTo = 'is_equal_to',
@@ -27,21 +28,20 @@ export type FilterCondition =
   | StringFilterCondition
   | ExistenceFilterCondition
 
+// Filter Configuration
 export const CONDITION_CONFIG: Record<FilterCondition, { label: string }> = {
-  // String conditions
   [StringFilterCondition.Is]: { label: 'is' },
   [StringFilterCondition.IsNot]: { label: 'is not' },
-  // Numeric conditions
   [NumericFilterCondition.IsEqualTo]: { label: 'is equal to' },
   [NumericFilterCondition.IsNotEqualTo]: { label: 'is not equal to' },
   [NumericFilterCondition.IsGreaterThan]: { label: 'is greater than' },
   [NumericFilterCondition.IsLessThan]: { label: 'is less than' },
   [NumericFilterCondition.IsBetween]: { label: 'is between' },
-  // Existence conditions (work for both string and numeric)
   [ExistenceFilterCondition.IsSet]: { label: 'is set' },
   [ExistenceFilterCondition.IsNotSet]: { label: 'is not set' }
 } as const
 
+// Utility Functions
 export const getConditionsForType = (filterType: FilterType): FilterCondition[] => {
   if (filterType === FilterType.Numeric) {
     return [
@@ -60,6 +60,7 @@ export const getConditionLabel = (condition: FilterCondition): string => {
   return CONDITION_CONFIG[condition]?.label || 'is'
 }
 
+// Filter Enums
 export enum FilterLogic {
   All = 'all',
   Any = 'any'
@@ -70,8 +71,8 @@ export enum FilterType {
   Numeric = 'numeric'
 }
 
-// Base filter data structure
-export type BaseFilterData = {
+// Filter Data Types
+type BaseFilterData = {
   id: string
   isApplied: boolean
   selectedValues: string[]
@@ -87,11 +88,12 @@ export type NumericFilterData = BaseFilterData & {
 export type StringFilterData = BaseFilterData & {
   type: FilterType.String
   filter: StringPropertyInfo
-  isDefaultAllSelected?: boolean // Track initial "all selected" state
+  isDefaultAllSelected?: boolean
 }
 
 export type FilterData = NumericFilterData | StringFilterData
 
+// Type Guards
 export const isNumericFilter = (filter: FilterData): filter is NumericFilterData => {
   return filter.type === FilterType.Numeric
 }
@@ -100,6 +102,7 @@ export const isStringFilter = (filter: FilterData): filter is StringFilterData =
   return filter.type === FilterType.String
 }
 
+// Component Option Types
 export type PropertySelectOption = {
   value: string
   label: string
@@ -113,6 +116,7 @@ export type ConditionOption = {
   label: string
 }
 
+// Internal Data Types
 export type PropertyInfoBase = {
   concatenatedPath: string
   value: unknown
@@ -121,7 +125,7 @@ export type PropertyInfoBase = {
 
 export type DataSlice = {
   id: string
-  widgetId: string // Links to filter/widget component
+  widgetId: string
   name: string
   objectIds: string[]
   intersectedObjectIds?: string[]
@@ -137,11 +141,10 @@ export type QueryCriteria = {
 
 export type DataSource = {
   resourceUrl: string
-  viewerInstance: unknown // Marked as raw in Vue, using unknown instead of any
-  rootObject: unknown | null // Marked as raw in Vue, using unknown instead of any
-  objectMap: Record<string, unknown> // Marked as raw in Vue, using unknown instead of any
+  viewerInstance: unknown
+  rootObject: unknown | null
+  objectMap: Record<string, unknown>
   propertyMap: Record<string, PropertyInfoBase>
-  // Lazy property index - built on-demand during filtering
   _propertyIndexCache?: Record<string, Record<string, string[]>>
 }
 
@@ -153,9 +156,4 @@ export type CreateFilterParams = {
   filter: PropertyInfo
   id: string
   availableValues: string[]
-}
-
-export type FilterLogicOption = {
-  value: FilterLogic
-  label: string
 }

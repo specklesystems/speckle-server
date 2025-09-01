@@ -7,7 +7,13 @@
     @click="toggleCollapsed"
   >
     <div class="flex items-center pl-0" :class="{ 'opacity-50': !filter.isApplied }">
-      <FormButton color="subtle" class="m-0 gap-3" size="sm">
+      <FormButton
+        v-tippy="'Change filter property'"
+        color="subtle"
+        class="m-0 gap-3"
+        size="sm"
+        @click.stop="handlePropertySwap"
+      >
         <Hash
           v-if="filter.type === FilterType.Numeric"
           class="h-3 w-3 stroke-emerald-700 dark:stroke-emerald-500"
@@ -19,12 +25,13 @@
     </div>
     <div class="flex items-start gap-0.5">
       <FormButton
-        v-tippy="'Show/hide details'"
+        v-tippy="collapsed ? 'Show details' : 'Hide details'"
         color="subtle"
         size="sm"
         hide-text
-        class="opacity-0 group-hover:opacity-100 text-foreground-3"
-        :icon-right="ChevronsUpDown"
+        class="opacity-0 group-hover:opacity-100 hover:text-foreground"
+        :class="collapsed ? 'text-foreground !opacity-100' : 'text-foreground-3'"
+        :icon-right="collapsed ? ChevronsUpDown : ChevronsDownUp"
         :is-expanded="!collapsed"
         @click.stop="collapsed = !collapsed"
       />
@@ -47,15 +54,6 @@
           @click="showActionsMenu = !showActionsMenu"
         ></FormButton>
       </LayoutMenu>
-      <!-- <FormButton
-        v-tippy="'Toggle coloring for this property'"
-        color="subtle"
-        size="sm"
-        hide-text
-        :icon-right="ChevronsUpDown"
-        :is-expanded="!collapsed"
-        @click.stop="collapsed = !collapsed"
-      /> -->
       <FormButton
         v-tippy="'Toggle coloring for this property'"
         :color="isColoringActive ? 'primary' : 'subtle'"
@@ -65,16 +63,18 @@
         @click.stop="toggleColors"
       />
     </div>
-    <!-- <ViewerExpansionTriangle
-        :is-expanded="!collapsed"
-        class="h-6"
-        @click="collapsed = !collapsed"
-      /> -->
   </div>
 </template>
 
 <script setup lang="ts">
-import { PaintBucket, Hash, CaseUpper, ChevronsUpDown, Ellipsis } from 'lucide-vue-next'
+import {
+  PaintBucket,
+  Hash,
+  CaseUpper,
+  ChevronsUpDown,
+  Ellipsis,
+  ChevronsDownUp
+} from 'lucide-vue-next'
 import {
   FormButton,
   LayoutMenu,
@@ -101,6 +101,10 @@ const {
   filters
 } = useFilterUtilities()
 
+const emit = defineEmits<{
+  swapProperty: [filterId: string]
+}>()
+
 const isColoringActive = computed(() => {
   return filters.activeColorFilterId.value === props.filter.id
 })
@@ -115,6 +119,10 @@ const toggleVisibility = () => {
 
 const toggleColors = () => {
   toggleColorFilter(props.filter.id)
+}
+
+const handlePropertySwap = () => {
+  emit('swapProperty', props.filter.id)
 }
 
 const toggleCollapsed = () => {
