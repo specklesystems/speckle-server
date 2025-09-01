@@ -20,7 +20,7 @@ import {
   BackgroundJobStatus,
   type BackgroundJob
 } from '@/modules/backgroundjobs/domain'
-import type { FileImportJobPayloadV1 } from '@speckle/shared/workers/fileimport'
+import type { FileImportJobPayloadV2 } from '@speckle/shared/workers/fileimport'
 import cryptoRandomString from 'crypto-random-string'
 import type { FileUploadRecordV2 } from '@/modules/fileuploads/helpers/types'
 import {
@@ -90,7 +90,7 @@ const createTestFileUpload = (
   }
 }
 
-type StoredBackgroundJob = BackgroundJob<FileImportJobPayloadV1> & {
+type StoredBackgroundJob = BackgroundJob<FileImportJobPayloadV2> & {
   originServerUrl: string
 }
 
