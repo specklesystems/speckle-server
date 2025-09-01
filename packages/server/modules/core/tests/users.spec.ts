@@ -109,7 +109,7 @@ import {
   queryAllProjectsFactory
 } from '@/modules/core/services/projects'
 import { getTestRegionClients } from '@/modules/multiregion/tests/helpers'
-import { asMultiregionalOperation } from '@/modules/shared/command'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import type {
   ChangeUserPassword,
   CreateValidatedUser,
@@ -260,20 +260,8 @@ const deleteUser: DeleteUser = async (...input) =>
           // this is a bit of an overhead, we are issuing delete queries to all regions,
           // instead of being selective and clever about figuring out the project DB and only
           // deleting from main and the project db
-          deleteProject: async (...input) => {
-            const [res] = await Promise.all(
-              allDbs.map((db) => deleteProjectFactory({ db })(...input))
-            )
-
-            return res
-          },
-          deleteProjectCommits: async (...input) => {
-            const [res] = await Promise.all(
-              allDbs.map((db) => deleteProjectCommitsFactory({ db })(...input))
-            )
-
-            return res
-          }
+          deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+          deleteProjectCommits: replicateFactory(allDbs, deleteProjectCommitsFactory)
         }),
         logger: dbLogger,
         isLastAdminUser: isLastAdminUserFactory({ db: mainDb }),

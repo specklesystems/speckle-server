@@ -1622,13 +1622,7 @@ export default FF_WORKSPACES_MODULE_ENABLED
             ({ mainDb, allDbs, emit }) =>
               moveProjectToWorkspaceFactory({
                 getProject: getProjectFactory({ db: mainDb }),
-                updateProject: async (...input) => {
-                  const [res] = await Promise.all(
-                    allDbs.map((db) => updateProjectFactory({ db })(...input))
-                  )
-
-                  return res
-                },
+                updateProject: replicateFactory(allDbs, updateProjectFactory),
                 updateProjectRole: updateStreamRoleAndNotifyFactory({
                   isStreamCollaborator: isStreamCollaboratorFactory({
                     getStream: getStreamFactory({ db: mainDb })

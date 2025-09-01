@@ -39,9 +39,8 @@ const storeProject = storeProjectFactory({ db })
 const getProject = getProjectFactory({ db })
 const deleteProject: DeleteProject = async ({ projectId }) =>
   asMultiregionalOperation(
-    async ({ allDbs }) => {
-      await replicateFactory(allDbs, deleteProjectFactory)({ projectId })
-    },
+    async ({ allDbs }) =>
+      await replicateFactory(allDbs, deleteProjectFactory)({ projectId }),
     {
       name: 'delete spec',
       logger,

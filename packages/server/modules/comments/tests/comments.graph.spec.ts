@@ -63,7 +63,7 @@ import type { BasicTestUser } from '@/test/authHelper'
 import { createTestUser } from '@/test/authHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import type { UpdateStreamRecord } from '@/modules/core/domain/streams/operations'
-import { asMultiregionalOperation } from '@/modules/shared/command'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import { logger } from '@/observability/logging'
 import { getProjectReplicationDbClients } from '@/modules/multiregion/utils/dbSelector'
 
@@ -117,13 +117,7 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
 
 const updateStream: UpdateStreamRecord = async (update) =>
   asMultiregionalOperation(
-    async ({ allDbs }) => {
-      const [res] = await Promise.all(
-        allDbs.map((db) => updateStreamFactory({ db })(update))
-      )
-
-      return res
-    },
+    async ({ allDbs }) => replicateFactory(allDbs, updateStreamFactory)(update),
     {
       logger,
       name: 'updateStream',

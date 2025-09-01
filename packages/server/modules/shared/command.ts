@@ -147,10 +147,6 @@ export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
      * @description reference to the main db (first one passed in the array)
      */
     mainDb: Knex
-    // /**
-    //  * @description reference for second db (first one not main)
-    //  */
-    // regionDb: Knex
     emit: EventBusEmit
   }) => MaybeAsync<T>,
   params: {
@@ -263,8 +259,8 @@ export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
 }
 
 /**
- * Helper intended to be used with asMultiregionOperation that returns a curried function to apply to allDbs method
- * it runs the same function with the same arguments on all databases
+ * Helper intended to be used with asMultiregionOperation that returns a curried function
+ * to apply a factory built with { db: Knex} to multiple dbs, with same input returning the first result.
  * @param dbs Knex[]
  * @param factory a function that recieves a db constructor
  * @returns the result of the first database
