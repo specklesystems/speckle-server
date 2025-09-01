@@ -14,13 +14,7 @@
         show-label
         :disabled="isEmailDisabled"
         auto-focus
-        :help="
-          emailIsBlocked
-            ? 'A work email makes it easier to discover and collaborate with your coworkers on Speckle.'
-            : ''
-        "
         autocomplete="email"
-        @blur="onEmailChange"
       />
       <FormTextInput
         type="text"
@@ -78,7 +72,6 @@ import { loginRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMounted } from '@vueuse/core'
-import { checkIfEmailIsBlocked } from '~~/lib/auth/helpers/checkBlockedDomain'
 import {
   passwordRules,
   doesNotContainBlockedDomain
@@ -103,14 +96,12 @@ const router = useRouter()
 const { signUpWithEmail, inviteToken } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
 const isMounted = useMounted()
-const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const isNoPersonalEmailsEnabled = useIsNoPersonalEmailsEnabled()
 
 const newsletterConsent = defineModel<boolean>('newsletterConsent', { required: true })
 const loading = ref(false)
 const password = ref('')
 const email = ref('')
-const emailIsBlocked = ref(false)
 
 const emailRules = computed(() =>
   inviteToken.value || !isNoPersonalEmailsEnabled.value
@@ -128,11 +119,6 @@ const finalLoginRoute = computed(() => {
   })
   return result.fullPath
 })
-
-const onEmailChange = () => {
-  if (!isWorkspacesEnabled.value) return
-  emailIsBlocked.value = checkIfEmailIsBlocked(email.value)
-}
 
 const onSubmit = handleSubmit(async (fullUser) => {
   try {
