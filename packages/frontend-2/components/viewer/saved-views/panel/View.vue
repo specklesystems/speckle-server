@@ -47,7 +47,11 @@
             />
           </LayoutMenu>
           <div
-            v-tippy="canUpdate?.errorMessage"
+            v-tippy="
+              getTooltipProps(
+                canUpdate?.authorized ? 'Edit view' : canUpdate?.errorMessage
+              )
+            "
             class="shrink-0 opacity-0 group-hover:opacity-100"
           >
             <FormButton
@@ -66,10 +70,11 @@
       <div class="w-full flex items-center gap-1">
         <Component
           :is="isOnlyVisibleToMe ? User : Globe"
+          v-tippy="getTooltipProps(isOnlyVisibleToMe ? 'Private' : 'Shared')"
           :size="12"
           :stroke-width="1.5"
           :absolute-stroke-width="true"
-          class="w-3 h-3 text-foreground-2"
+          class="w-3 h-3 text-foreground-3"
         />
         <div
           v-tippy="{
@@ -81,7 +86,7 @@
           }"
           class="text-body-2xs text-foreground-3 truncate pr-1.5"
         >
-          {{ formattedRelativeDate(view.updatedAt) }}
+          {{ formattedRelativeDate(view.updatedAt, { capitalize: true }) }}
         </div>
       </div>
     </div>
@@ -121,6 +126,8 @@ const MenuItems = StringEnum([
   'SetAsHomeView'
 ])
 type MenuItems = StringEnumValues<typeof MenuItems>
+
+const { getTooltipProps } = useSmartTooltipDelay()
 
 graphql(`
   fragment ViewerSavedViewsPanelView_SavedView on SavedView {
@@ -197,10 +204,10 @@ const canLoadOriginal = computed(
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
-      id: MenuItems.LoadOriginalVersions,
-      title: 'Load with original model version',
-      disabled: !canLoadOriginal.value.authorized || isLoading.value,
-      disabledTooltip: canLoadOriginal.value.message
+      id: MenuItems.MoveToGroup,
+      title: 'Move to group',
+      disabled: !canUpdate.value?.authorized || isLoading.value,
+      disabledTooltip: canUpdate.value?.errorMessage
     },
     {
       id: MenuItems.ReplaceView,
@@ -209,14 +216,14 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
       disabledTooltip: canUpdate.value?.errorMessage
     },
     {
-      id: MenuItems.MoveToGroup,
-      title: 'Move to group',
-      disabled: !canUpdate.value?.authorized || isLoading.value,
-      disabledTooltip: canUpdate.value?.errorMessage
-    },
-    {
       id: MenuItems.CopyLink,
       title: 'Copy link'
+    },
+    {
+      id: MenuItems.LoadOriginalVersions,
+      title: 'Load with original model version',
+      disabled: !canLoadOriginal.value.authorized || isLoading.value,
+      disabledTooltip: canLoadOriginal.value.message
     }
   ],
   [
@@ -237,7 +244,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
       id: MenuItems.Delete,
-      title: 'Delete',
+      title: 'Delete view...',
       disabled: !canUpdate.value?.authorized || isLoading.value,
       disabledTooltip: canUpdate.value?.errorMessage
     }
@@ -245,7 +252,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
 ])
 
 const wrapperClasses = computed(() => {
-  const classParts = ['flex gap-2 p-2 pr-0.5 w-full group rounded-md cursor-pointer']
+  const classParts = ['flex gap-2 p-1.5 w-full group rounded-md cursor-pointer']
 
   if (isActive.value) {
     classParts.push('bg-highlight-2 hover:bg-highlight-3')

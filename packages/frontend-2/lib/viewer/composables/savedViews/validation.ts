@@ -50,13 +50,13 @@ export const useSavedViewValidationHelpers = (params: {
     {
       value: SavedViewVisibility.Public,
       title: 'Shared',
-      introduction: 'Visible to anyone with access to the model.',
+      introduction: 'Visible to anyone with access to the model',
       icon: Globe
     },
     {
       value: SavedViewVisibility.AuthorOnly,
       title: 'Private',
-      introduction: 'Visible only to the view author.',
+      introduction: 'Visible only to the view author',
       icon: Lock,
       ...(params.view.value?.isHomeView
         ? {

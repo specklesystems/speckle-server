@@ -347,7 +347,7 @@ describe('ensureCanUseWorkspacePlanFeatureFragment', () => {
 
     const result = await sut({
       workspaceId: cryptoRandomString({ length: 10 }),
-      feature: WorkspacePlanFeatures.SavedViews
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
     })
 
     expect(result).toBeOKResult()
@@ -362,7 +362,7 @@ describe('ensureCanUseWorkspacePlanFeatureFragment', () => {
 
     const result = await sut({
       workspaceId: cryptoRandomString({ length: 10 }),
-      feature: WorkspacePlanFeatures.SavedViews
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
     })
 
     expect(result).toBeAuthErrorResult({
@@ -380,7 +380,7 @@ describe('ensureCanUseWorkspacePlanFeatureFragment', () => {
 
     const result = await sut({
       workspaceId: cryptoRandomString({ length: 10 }),
-      feature: WorkspacePlanFeatures.SavedViews
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
     })
 
     expect(result).toBeAuthErrorResult({
@@ -395,7 +395,7 @@ describe('ensureCanUseWorkspacePlanFeatureFragment', () => {
 
     const result = await sut({
       workspaceId: cryptoRandomString({ length: 10 }),
-      feature: WorkspacePlanFeatures.SavedViews
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
     })
 
     expect(result).toBeAuthErrorResult({
@@ -413,7 +413,7 @@ describe('ensureCanUseWorkspacePlanFeatureFragment', () => {
 
     const result = await sut({
       workspaceId: cryptoRandomString({ length: 10 }),
-      feature: WorkspacePlanFeatures.SavedViews
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
     })
 
     expect(result).toBeAuthErrorResult({

@@ -74,7 +74,7 @@ import { Roles, WorkspacePlans } from '@speckle/shared'
 import {
   ProjectNotEnoughPermissionsError,
   SavedViewNoAccessError,
-  WorkspacePlanNoFeatureAccessError
+  WorkspaceNoAccessError
 } from '@speckle/shared/authz'
 import * as ViewerRoute from '@speckle/shared/viewer/route'
 import { resourceBuilder } from '@speckle/shared/viewer/route'
@@ -121,7 +121,6 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
   let otherGuy: BasicTestUser
   let myProject: BasicTestStream
   let myProjectWorkspace: BasicTestWorkspace
-  let myLackingProjectWorkspace: BasicTestWorkspace
   let myLackingProject: BasicTestStream
   let myModel1: BasicTestBranch
   let myModel2: BasicTestBranch
@@ -269,13 +268,13 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         addPlan: WorkspacePlans.Pro
       })
     ])
-    myLackingProjectWorkspace = workspaceCreate[0]
     myProjectWorkspace = workspaceCreate[1]
 
     const projectCreate = await Promise.all([
       createTestStream(
         buildBasicTestProject({
-          workspaceId: myLackingProjectWorkspace.id
+          // non-workspaced project
+          workspaceId: undefined
         }),
         me
       ),
@@ -355,61 +354,6 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
         })
 
-        it('should fail with ForbiddenError if workspace plan does not include SavedViews', async () => {
-          const res = await createSavedView(
-            buildCreateInput({
-              projectId: myLackingProject.id,
-              resourceIdString: 'abc'
-            })
-          )
-          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
-          expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
-        })
-
-        it('should fail with ForbiddenError to create a saved view group if user lacks access (free plan)', async () => {
-          const resourceIds = ViewerRoute.resourceBuilder().addModel(
-            myLackingProject.id
-          )
-          const resourceIdString = resourceIds.toString()
-
-          const res = await createSavedViewGroup({
-            input: {
-              projectId: myLackingProject.id,
-              resourceIdString,
-              groupName: 'Should Not Work'
-            }
-          })
-
-          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
-          expect(res.data?.projectMutations.savedViewMutations.createGroup).to.not.be.ok
-        })
-
-        it('should fail with ForbiddenError to create a saved view if user lacks access (free plan)', async () => {
-          const resourceIds = ViewerRoute.resourceBuilder().addModel(
-            myLackingProject.id
-          )
-          const resourceIdString = resourceIds.toString()
-          const viewerState = fakeViewerState({
-            projectId: myLackingProject.id,
-            resources: {
-              request: {
-                resourceIdString
-              }
-            }
-          })
-
-          const res = await createSavedView(
-            buildCreateInput({
-              projectId: myLackingProject.id,
-              resourceIdString,
-              viewerState
-            })
-          )
-
-          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
-          expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
-        })
-
         it('should support dedicated auth policy check', async () => {
           const res = await canCreateSavedView({
             projectId: myLackingProject.id
@@ -419,7 +363,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
           const data = res.data?.project.permissions.canCreateSavedView
           expect(data?.authorized).to.be.false
-          expect(data?.code).to.equal(WorkspacePlanNoFeatureAccessError.code)
+          expect(data?.code).to.equal(WorkspaceNoAccessError.code)
         })
       })
 
@@ -1804,8 +1748,9 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     })
 
     describe('reading groups', () => {
-      const NAMED_GROUP_COUNT = 14
-      const GROUP_COUNT = NAMED_GROUP_COUNT + 2 // + ungrouped group + search string group
+      const NAMED_GROUP_COUNT = 13
+      const SPECIAL_GROUP_COUNT = 3 // +1 ungrouped/+1 search string/+1 my empty (should not show other guys empty)
+      const GROUP_COUNT = NAMED_GROUP_COUNT + SPECIAL_GROUP_COUNT
 
       const PAGE_COUNT = 3
 
@@ -1872,6 +1817,37 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
             owner: me
           })
         ])
+
+        const createEmptyGroup = async (params: {
+          groupName: string
+          userId?: string
+        }) => {
+          const { groupName, userId } = params
+          const model = await createTestBranch({
+            branch: buildBasicTestModel({
+              name: `empty model of group ${groupName}`
+            }),
+            stream: readTestProject,
+            owner: me
+          })
+          modelIds.push(model.id)
+
+          const group = await createSavedViewGroup(
+            {
+              input: {
+                projectId: readTestProject.id,
+                resourceIdString: model.id,
+                groupName
+              }
+            },
+            {
+              assertNoErrors: true,
+              ...(userId ? { authUserId: userId } : {})
+            }
+          )
+
+          return group.data?.projectMutations.savedViewMutations.createGroup
+        }
 
         // Create a bunch of groups (views w/ groupNames), each w/ a different model
         let includedSearchString = 0
@@ -1940,15 +1916,21 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           (i) => `group-${i + 1}`
         )
 
-        // add one group to have a custom search string in its name
+        // + 1 group to have a custom search string in its name
         groupNames.push(SEARCHABLE_GROUP_NAME_STRING)
 
-        // one view without a group at the end
+        // + 1 view without a group at the end
         groupNames.push(null)
 
         await Promise.all(
           groupNames.map((groupName, idx) => createGroupView(groupName, idx))
         )
+        await Promise.all([
+          // + 1 empty group owned by me
+          createEmptyGroup({ groupName: 'my empty' }),
+          // + 1 empty group owned by other guy
+          createEmptyGroup({ groupName: 'other empty', userId: otherReader.id })
+        ])
       })
 
       it('should get NotFoundError if trying to get nonexistant group', async () => {
@@ -2514,8 +2496,8 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
           const data = res.data?.project.savedViewGroup.views
           expect(data).to.be.ok
-          expect(data!.totalCount).to.equal(OTHER_USER_VIEW_COUNT)
-          expect(data!.items.length).to.equal(OTHER_USER_VIEW_COUNT)
+          expect(data!.totalCount).to.equal(OTHER_USER_VIEW_COUNT + 1) // +1 otherReader empty group
+          expect(data!.items.length).to.equal(OTHER_USER_VIEW_COUNT + 1)
           expect(data!.items.every((v) => v.author?.id === otherReader.id)).to.be.true
         })
 
