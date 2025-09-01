@@ -57,7 +57,6 @@
   </LayoutDisclosure>
   <ViewerSavedViewsPanelViewsGroupInner
     v-else
-    class="mb-[1px]"
     :group="group"
     :search="search"
     :views-type="viewsType"
@@ -280,7 +279,7 @@ const moveViewToGroup = async (dragData: {
 const dropZoneClasses = computed(() => [
   isDragOver.value &&
     !isUngroupedGroup.value &&
-    'ring-2 ring-primary ring-opacity-50 bg-primary/5'
+    'rounded-md ring-2 ring-primary ring-opacity-50 bg-primary/5'
 ])
 
 const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {

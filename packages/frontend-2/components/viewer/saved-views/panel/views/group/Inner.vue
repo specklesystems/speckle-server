@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="mb-1.5">
     <div v-if="isVeryFirstLoading" class="flex justify-center">
       <CommonLoadingIcon class="m-4" />
     </div>
