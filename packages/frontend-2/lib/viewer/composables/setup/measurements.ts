@@ -1,5 +1,5 @@
 import {
-  MeasurementType,
+  defaultMeasurementOptions,
   type MeasurementData,
   type MeasurementOptions
 } from '@speckle/shared/viewer/state'
@@ -18,11 +18,7 @@ export const useMeasurementsSetup = () => {
   return {
     enabled: ref(false),
     options: ref<MeasurementOptions>({
-      visible: true,
-      type: MeasurementType.POINTTOPOINT,
-      units: 'm',
-      vertexSnap: true,
-      precision: 2
+      ...defaultMeasurementOptions
     }),
     measurements: ref([] as MeasurementData[])
   }
@@ -66,13 +62,16 @@ export const useMeasurementsPostSetup = () => {
       measurementsInstance().setMeasurements(newVal)
     })
 
-  useOnViewerLoadComplete(({ isInitial }) => {
-    if (!isInitial) return
+  useOnViewerLoadComplete(
+    ({ isInitial }) => {
+      if (!isInitial) return
 
-    triggerEnabledWatch()
-    triggerOptionsWatch()
-    triggerMeasurementsWatch()
-  })
+      triggerEnabledWatch()
+      triggerOptionsWatch()
+      triggerMeasurementsWatch()
+    },
+    { initialOnly: true }
+  )
 
   // viewer -> state
   const onMeasurementsChanged = (data: Measurement[]) => {

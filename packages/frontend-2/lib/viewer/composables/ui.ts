@@ -22,7 +22,10 @@ import type {
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { isStringPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
 import type { defaultEdgeColorValue } from '~/lib/viewer/composables/setup/viewMode'
-import { MeasurementType, type MeasurementOptions } from '@speckle/shared/viewer/state'
+import {
+  defaultMeasurementOptions,
+  type MeasurementOptions
+} from '@speckle/shared/viewer/state'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -656,13 +659,7 @@ export function useMeasurementUtilities() {
   const reset = () => {
     state.ui.measurement.enabled.value = false
     state.ui.measurement.measurements.value = []
-    state.ui.measurement.options.value = {
-      visible: true,
-      type: MeasurementType.POINTTOPOINT,
-      units: 'm',
-      vertexSnap: true,
-      precision: 2
-    }
+    state.ui.measurement.options.value = { ...defaultMeasurementOptions }
   }
 
   return {
