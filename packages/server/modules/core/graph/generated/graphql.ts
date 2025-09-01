@@ -17,6 +17,7 @@ import type { GendoAIRenderGraphQLReturn } from '@/modules/gendo/helpers/types/g
 import type { ServerRegionItemGraphQLReturn } from '@/modules/multiregion/helpers/graphTypes';
 import type { AccSyncItemGraphQLReturn, AccSyncItemMutationsGraphQLReturn } from '@/modules/acc/helpers/graphTypes';
 import type { SavedViewGraphQLReturn, SavedViewGroupGraphQLReturn, SavedViewPermissionChecksGraphQLReturn, SavedViewGroupPermissionChecksGraphQLReturn, ExtendedViewerResourcesGraphQLReturn } from '@/modules/viewer/helpers/graphTypes';
+import type { DashboardGraphQLReturn, DashboardMutationsGraphQLReturn, DashboardPermissionChecksGraphQLReturn, DashboardTokenGraphQLReturn } from '@/modules/dashboards/helpers/graphTypes';
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type Maybe<T> = T | null;
@@ -1055,6 +1056,12 @@ export type CreateCommentReplyInput = {
   threadId: Scalars['String']['input'];
 };
 
+export type CreateDashboardTokenReturn = {
+  __typename?: 'CreateDashboardTokenReturn';
+  token: Scalars['String']['output'];
+  tokenMetadata: DashboardToken;
+};
+
 export type CreateEmbedTokenReturn = {
   __typename?: 'CreateEmbedTokenReturn';
   token: Scalars['String']['output'];
@@ -1125,6 +1132,97 @@ export type CurrencyBasedPrices = {
   __typename?: 'CurrencyBasedPrices';
   gbp: WorkspacePaidPlanPrices;
   usd: WorkspacePaidPlanPrices;
+};
+
+export type Dashboard = {
+  __typename?: 'Dashboard';
+  createdAt: Scalars['DateTime']['output'];
+  createdBy?: Maybe<LimitedUser>;
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  permissions: DashboardPermissionChecks;
+  /** If null, this is a new dashboard and should be initialized by the client */
+  state?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+  workspace: LimitedWorkspace;
+};
+
+export type DashboardCollection = {
+  __typename?: 'DashboardCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<Dashboard>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type DashboardCreateInput = {
+  name: Scalars['String']['input'];
+};
+
+export type DashboardMutations = {
+  __typename?: 'DashboardMutations';
+  create: Dashboard;
+  createToken: CreateDashboardTokenReturn;
+  delete: Scalars['Boolean']['output'];
+  update: Dashboard;
+};
+
+
+export type DashboardMutationsCreateArgs = {
+  input: DashboardCreateInput;
+  workspace: WorkspaceIdentifier;
+};
+
+
+export type DashboardMutationsCreateTokenArgs = {
+  dashboardId: Scalars['String']['input'];
+};
+
+
+export type DashboardMutationsDeleteArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type DashboardMutationsUpdateArgs = {
+  input: DashboardUpdateInput;
+};
+
+export type DashboardPermissionChecks = {
+  __typename?: 'DashboardPermissionChecks';
+  canCreateToken: PermissionCheckResult;
+  canDelete: PermissionCheckResult;
+  canEdit: PermissionCheckResult;
+  canRead: PermissionCheckResult;
+};
+
+export type DashboardToken = {
+  __typename?: 'DashboardToken';
+  createdAt: Scalars['DateTime']['output'];
+  dashboard: Dashboard;
+  lastUsed: Scalars['DateTime']['output'];
+  lifespan: Scalars['BigInt']['output'];
+  projects: Array<Project>;
+  tokenId: Scalars['String']['output'];
+  user?: Maybe<LimitedUser>;
+};
+
+export type DashboardTokenCollection = {
+  __typename?: 'DashboardTokenCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<DashboardToken>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type DashboardTokenCreateInput = {
+  dashboardId: Scalars['String']['input'];
+  lifespan?: InputMaybe<Scalars['BigInt']['input']>;
+};
+
+export type DashboardUpdateInput = {
+  id: Scalars['String']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+  projectIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  state?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type DeleteAccSyncItemInput = {
@@ -1799,6 +1897,7 @@ export type Mutation = {
    * @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.moveToModel instead.
    */
   commitsMove: Scalars['Boolean']['output'];
+  dashboardMutations: DashboardMutations;
   fileUploadMutations: FileUploadMutations;
   /**
    * Delete a pending invite
@@ -2375,6 +2474,7 @@ export type Project = {
   /** All comment threads in this project */
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime']['output'];
+  dashboardTokens: DashboardTokenCollection;
   description?: Maybe<Scalars['String']['output']>;
   /** Public project-level configuration for embedded viewer */
   embedOptions: ProjectEmbedOptions;
@@ -2479,6 +2579,12 @@ export type ProjectCommentArgs = {
 export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<ProjectCommentsFilter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type ProjectDashboardTokensArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -3203,6 +3309,7 @@ export type Query = {
    * @deprecated Use Project/Version/Model 'commentThreads' fields instead
    */
   comments?: Maybe<CommentCollection>;
+  dashboard: Dashboard;
   /**
    * All of the discoverable streams of the server
    * @deprecated Part of the old API surface and will be removed in the future.
@@ -3341,6 +3448,11 @@ export type QueryCommentsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   resources?: InputMaybe<Array<InputMaybe<ResourceIdentifierInput>>>;
   streamId: Scalars['String']['input'];
+};
+
+
+export type QueryDashboardArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -4795,6 +4907,7 @@ export type UserGendoAiCredits = {
 
 export type UserMeta = {
   __typename?: 'UserMeta';
+  intelligenceCommunityStandUpBannerDismissed: Scalars['Boolean']['output'];
   legacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   newWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
   speckleConBannerDismissed: Scalars['Boolean']['output'];
@@ -4802,9 +4915,15 @@ export type UserMeta = {
 
 export type UserMetaMutations = {
   __typename?: 'UserMetaMutations';
+  setIntelligenceCommunityStandUpBannerDismissed: Scalars['Boolean']['output'];
   setLegacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   setNewWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
   setSpeckleConBannerDismissed: Scalars['Boolean']['output'];
+};
+
+
+export type UserMetaMutationsSetIntelligenceCommunityStandUpBannerDismissedArgs = {
+  value: Scalars['Boolean']['input'];
 };
 
 
@@ -5139,6 +5258,7 @@ export type Workspace = {
   /** Info about the workspace creation state */
   creationState?: Maybe<WorkspaceCreationState>;
   customerPortalUrl?: Maybe<Scalars['String']['output']>;
+  dashboards: DashboardCollection;
   /**
    * The default role workspace members will receive for workspace projects.
    * @deprecated Always the reviewer role. Will be removed in the future.
@@ -5203,6 +5323,12 @@ export type WorkspaceAdminWorkspacesJoinRequestsArgs = {
 export type WorkspaceAutomateFunctionsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<AutomateFunctionsFilter>;
+  limit?: Scalars['Int']['input'];
+};
+
+
+export type WorkspaceDashboardsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
 };
 
@@ -5339,6 +5465,10 @@ export const WorkspaceFeatureName = {
 } as const;
 
 export type WorkspaceFeatureName = typeof WorkspaceFeatureName[keyof typeof WorkspaceFeatureName];
+export type WorkspaceIdentifier =
+  { id: Scalars['String']['input']; slug?: never; }
+  |  { id?: never; slug: Scalars['String']['input']; };
+
 export type WorkspaceInviteCreateInput = {
   /** Either this or userId must be filled */
   email?: InputMaybe<Scalars['String']['input']>;
@@ -5564,9 +5694,11 @@ export const WorkspacePaymentMethod = {
 export type WorkspacePaymentMethod = typeof WorkspacePaymentMethod[keyof typeof WorkspacePaymentMethod];
 export type WorkspacePermissionChecks = {
   __typename?: 'WorkspacePermissionChecks';
+  canCreateDashboards: PermissionCheckResult;
   canCreateProject: PermissionCheckResult;
   canEditEmbedOptions: PermissionCheckResult;
   canInvite: PermissionCheckResult;
+  canListDashboards: PermissionCheckResult;
   canMakeWorkspaceExclusive: PermissionCheckResult;
   canMoveProjectToWorkspace: PermissionCheckResult;
   canReadMemberEmail: PermissionCheckResult;
@@ -6012,6 +6144,7 @@ export type ResolversTypes = {
   CreateAutomateFunctionWithoutVersionInput: CreateAutomateFunctionWithoutVersionInput;
   CreateCommentInput: CreateCommentInput;
   CreateCommentReplyInput: CreateCommentReplyInput;
+  CreateDashboardTokenReturn: ResolverTypeWrapper<Omit<CreateDashboardTokenReturn, 'tokenMetadata'> & { tokenMetadata: ResolversTypes['DashboardToken'] }>;
   CreateEmbedTokenReturn: ResolverTypeWrapper<Omit<CreateEmbedTokenReturn, 'tokenMetadata'> & { tokenMetadata: ResolversTypes['EmbedToken'] }>;
   CreateModelInput: CreateModelInput;
   CreateSavedViewGroupInput: CreateSavedViewGroupInput;
@@ -6021,6 +6154,15 @@ export type ResolversTypes = {
   CreateVersionInput: CreateVersionInput;
   Currency: Currency;
   CurrencyBasedPrices: ResolverTypeWrapper<Omit<CurrencyBasedPrices, 'gbp' | 'usd'> & { gbp: ResolversTypes['WorkspacePaidPlanPrices'], usd: ResolversTypes['WorkspacePaidPlanPrices'] }>;
+  Dashboard: ResolverTypeWrapper<DashboardGraphQLReturn>;
+  DashboardCollection: ResolverTypeWrapper<Omit<DashboardCollection, 'items'> & { items: Array<ResolversTypes['Dashboard']> }>;
+  DashboardCreateInput: DashboardCreateInput;
+  DashboardMutations: ResolverTypeWrapper<DashboardMutationsGraphQLReturn>;
+  DashboardPermissionChecks: ResolverTypeWrapper<DashboardPermissionChecksGraphQLReturn>;
+  DashboardToken: ResolverTypeWrapper<DashboardTokenGraphQLReturn>;
+  DashboardTokenCollection: ResolverTypeWrapper<Omit<DashboardTokenCollection, 'items'> & { items: Array<ResolversTypes['DashboardToken']> }>;
+  DashboardTokenCreateInput: DashboardTokenCreateInput;
+  DashboardUpdateInput: DashboardUpdateInput;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
   DeleteAccSyncItemInput: DeleteAccSyncItemInput;
   DeleteModelInput: DeleteModelInput;
@@ -6255,6 +6397,7 @@ export type ResolversTypes = {
   WorkspaceEmbedOptions: ResolverTypeWrapper<WorkspaceEmbedOptions>;
   WorkspaceFeatureFlagName: WorkspaceFeatureFlagName;
   WorkspaceFeatureName: WorkspaceFeatureName;
+  WorkspaceIdentifier: WorkspaceIdentifier;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
   WorkspaceInviteLookupOptions: WorkspaceInviteLookupOptions;
   WorkspaceInviteMutations: ResolverTypeWrapper<WorkspaceInviteMutationsGraphQLReturn>;
@@ -6394,6 +6537,7 @@ export type ResolversParentTypes = {
   CreateAutomateFunctionWithoutVersionInput: CreateAutomateFunctionWithoutVersionInput;
   CreateCommentInput: CreateCommentInput;
   CreateCommentReplyInput: CreateCommentReplyInput;
+  CreateDashboardTokenReturn: Omit<CreateDashboardTokenReturn, 'tokenMetadata'> & { tokenMetadata: ResolversParentTypes['DashboardToken'] };
   CreateEmbedTokenReturn: Omit<CreateEmbedTokenReturn, 'tokenMetadata'> & { tokenMetadata: ResolversParentTypes['EmbedToken'] };
   CreateModelInput: CreateModelInput;
   CreateSavedViewGroupInput: CreateSavedViewGroupInput;
@@ -6402,6 +6546,15 @@ export type ResolversParentTypes = {
   CreateUserEmailInput: CreateUserEmailInput;
   CreateVersionInput: CreateVersionInput;
   CurrencyBasedPrices: Omit<CurrencyBasedPrices, 'gbp' | 'usd'> & { gbp: ResolversParentTypes['WorkspacePaidPlanPrices'], usd: ResolversParentTypes['WorkspacePaidPlanPrices'] };
+  Dashboard: DashboardGraphQLReturn;
+  DashboardCollection: Omit<DashboardCollection, 'items'> & { items: Array<ResolversParentTypes['Dashboard']> };
+  DashboardCreateInput: DashboardCreateInput;
+  DashboardMutations: DashboardMutationsGraphQLReturn;
+  DashboardPermissionChecks: DashboardPermissionChecksGraphQLReturn;
+  DashboardToken: DashboardTokenGraphQLReturn;
+  DashboardTokenCollection: Omit<DashboardTokenCollection, 'items'> & { items: Array<ResolversParentTypes['DashboardToken']> };
+  DashboardTokenCreateInput: DashboardTokenCreateInput;
+  DashboardUpdateInput: DashboardUpdateInput;
   DateTime: Scalars['DateTime']['output'];
   DeleteAccSyncItemInput: DeleteAccSyncItemInput;
   DeleteModelInput: DeleteModelInput;
@@ -6611,6 +6764,7 @@ export type ResolversParentTypes = {
   WorkspaceDomain: WorkspaceDomain;
   WorkspaceDomainDeleteInput: WorkspaceDomainDeleteInput;
   WorkspaceEmbedOptions: WorkspaceEmbedOptions;
+  WorkspaceIdentifier: WorkspaceIdentifier;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
   WorkspaceInviteLookupOptions: WorkspaceInviteLookupOptions;
   WorkspaceInviteMutations: WorkspaceInviteMutationsGraphQLReturn;
@@ -7152,6 +7306,12 @@ export type CountOnlyCollectionResolvers<ContextType = GraphQLContext, ParentTyp
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type CreateDashboardTokenReturnResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CreateDashboardTokenReturn'] = ResolversParentTypes['CreateDashboardTokenReturn']> = {
+  token?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  tokenMetadata?: Resolver<ResolversTypes['DashboardToken'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type CreateEmbedTokenReturnResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CreateEmbedTokenReturn'] = ResolversParentTypes['CreateEmbedTokenReturn']> = {
   token?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   tokenMetadata?: Resolver<ResolversTypes['EmbedToken'], ParentType, ContextType>;
@@ -7161,6 +7321,59 @@ export type CreateEmbedTokenReturnResolvers<ContextType = GraphQLContext, Parent
 export type CurrencyBasedPricesResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CurrencyBasedPrices'] = ResolversParentTypes['CurrencyBasedPrices']> = {
   gbp?: Resolver<ResolversTypes['WorkspacePaidPlanPrices'], ParentType, ContextType>;
   usd?: Resolver<ResolversTypes['WorkspacePaidPlanPrices'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type DashboardResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Dashboard'] = ResolversParentTypes['Dashboard']> = {
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  createdBy?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  permissions?: Resolver<ResolversTypes['DashboardPermissionChecks'], ParentType, ContextType>;
+  state?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  workspace?: Resolver<ResolversTypes['LimitedWorkspace'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type DashboardCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DashboardCollection'] = ResolversParentTypes['DashboardCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['Dashboard']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type DashboardMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DashboardMutations'] = ResolversParentTypes['DashboardMutations']> = {
+  create?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<DashboardMutationsCreateArgs, 'input' | 'workspace'>>;
+  createToken?: Resolver<ResolversTypes['CreateDashboardTokenReturn'], ParentType, ContextType, RequireFields<DashboardMutationsCreateTokenArgs, 'dashboardId'>>;
+  delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<DashboardMutationsDeleteArgs, 'id'>>;
+  update?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<DashboardMutationsUpdateArgs, 'input'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type DashboardPermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DashboardPermissionChecks'] = ResolversParentTypes['DashboardPermissionChecks']> = {
+  canCreateToken?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canDelete?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canEdit?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canRead?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type DashboardTokenResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DashboardToken'] = ResolversParentTypes['DashboardToken']> = {
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  dashboard?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType>;
+  lastUsed?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  lifespan?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+  projects?: Resolver<Array<ResolversTypes['Project']>, ParentType, ContextType>;
+  tokenId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  user?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type DashboardTokenCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DashboardTokenCollection'] = ResolversParentTypes['DashboardTokenCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['DashboardToken']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -7429,6 +7642,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   commitUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitUpdateArgs, 'commit'>>;
   commitsDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitsDeleteArgs, 'input'>>;
   commitsMove?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitsMoveArgs, 'input'>>;
+  dashboardMutations?: Resolver<ResolversTypes['DashboardMutations'], ParentType, ContextType>;
   fileUploadMutations?: Resolver<ResolversTypes['FileUploadMutations'], ParentType, ContextType>;
   inviteDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteDeleteArgs, 'inviteId'>>;
   inviteResend?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteResendArgs, 'inviteId'>>;
@@ -7557,6 +7771,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   comment?: Resolver<Maybe<ResolversTypes['Comment']>, ParentType, ContextType, RequireFields<ProjectCommentArgs, 'id'>>;
   commentThreads?: Resolver<ResolversTypes['ProjectCommentCollection'], ParentType, ContextType, Partial<ProjectCommentThreadsArgs>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  dashboardTokens?: Resolver<ResolversTypes['DashboardTokenCollection'], ParentType, ContextType, Partial<ProjectDashboardTokensArgs>>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   embedOptions?: Resolver<ResolversTypes['ProjectEmbedOptions'], ParentType, ContextType>;
   embedTokens?: Resolver<ResolversTypes['EmbedTokenCollection'], ParentType, ContextType, Partial<ProjectEmbedTokensArgs>>;
@@ -7810,6 +8025,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   automateValidateAuthCode?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<QueryAutomateValidateAuthCodeArgs, 'payload'>>;
   comment?: Resolver<Maybe<ResolversTypes['Comment']>, ParentType, ContextType, RequireFields<QueryCommentArgs, 'id' | 'streamId'>>;
   comments?: Resolver<Maybe<ResolversTypes['CommentCollection']>, ParentType, ContextType, RequireFields<QueryCommentsArgs, 'archived' | 'limit' | 'streamId'>>;
+  dashboard?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<QueryDashboardArgs, 'id'>>;
   discoverableStreams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<QueryDiscoverableStreamsArgs, 'limit'>>;
   otherUser?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType, RequireFields<QueryOtherUserArgs, 'id'>>;
   project?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<QueryProjectArgs, 'id'>>;
@@ -8270,6 +8486,7 @@ export type UserGendoAiCreditsResolvers<ContextType = GraphQLContext, ParentType
 };
 
 export type UserMetaResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserMeta'] = ResolversParentTypes['UserMeta']> = {
+  intelligenceCommunityStandUpBannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   legacyProjectsExplainerCollapsed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   newWorkspaceExplainerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   speckleConBannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -8277,6 +8494,7 @@ export type UserMetaResolvers<ContextType = GraphQLContext, ParentType extends R
 };
 
 export type UserMetaMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserMetaMutations'] = ResolversParentTypes['UserMetaMutations']> = {
+  setIntelligenceCommunityStandUpBannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetIntelligenceCommunityStandUpBannerDismissedArgs, 'value'>>;
   setLegacyProjectsExplainerCollapsed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetLegacyProjectsExplainerCollapsedArgs, 'value'>>;
   setNewWorkspaceExplainerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs, 'value'>>;
   setSpeckleConBannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetSpeckleConBannerDismissedArgs, 'value'>>;
@@ -8432,6 +8650,7 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   creationState?: Resolver<Maybe<ResolversTypes['WorkspaceCreationState']>, ParentType, ContextType>;
   customerPortalUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dashboards?: Resolver<ResolversTypes['DashboardCollection'], ParentType, ContextType, RequireFields<WorkspaceDashboardsArgs, 'limit'>>;
   defaultProjectRole?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   defaultRegion?: Resolver<Maybe<ResolversTypes['ServerRegionItem']>, ParentType, ContextType>;
   defaultSeatType?: Resolver<ResolversTypes['WorkspaceSeatType'], ParentType, ContextType>;
@@ -8575,9 +8794,11 @@ export type WorkspacePaidPlanPricesResolvers<ContextType = GraphQLContext, Paren
 };
 
 export type WorkspacePermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspacePermissionChecks'] = ResolversParentTypes['WorkspacePermissionChecks']> = {
+  canCreateDashboards?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canCreateProject?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canEditEmbedOptions?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canInvite?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canListDashboards?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canMakeWorkspaceExclusive?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canMoveProjectToWorkspace?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType, Partial<WorkspacePermissionChecksCanMoveProjectToWorkspaceArgs>>;
   canReadMemberEmail?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
@@ -8745,8 +8966,15 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Commit?: CommitResolvers<ContextType>;
   CommitCollection?: CommitCollectionResolvers<ContextType>;
   CountOnlyCollection?: CountOnlyCollectionResolvers<ContextType>;
+  CreateDashboardTokenReturn?: CreateDashboardTokenReturnResolvers<ContextType>;
   CreateEmbedTokenReturn?: CreateEmbedTokenReturnResolvers<ContextType>;
   CurrencyBasedPrices?: CurrencyBasedPricesResolvers<ContextType>;
+  Dashboard?: DashboardResolvers<ContextType>;
+  DashboardCollection?: DashboardCollectionResolvers<ContextType>;
+  DashboardMutations?: DashboardMutationsResolvers<ContextType>;
+  DashboardPermissionChecks?: DashboardPermissionChecksResolvers<ContextType>;
+  DashboardToken?: DashboardTokenResolvers<ContextType>;
+  DashboardTokenCollection?: DashboardTokenCollectionResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
   EmbedToken?: EmbedTokenResolvers<ContextType>;
   EmbedTokenCollection?: EmbedTokenCollectionResolvers<ContextType>;
@@ -9068,6 +9296,18 @@ export type SetSpeckleConBannerDismissedMutationVariables = Exact<{
 
 
 export type SetSpeckleConBannerDismissedMutation = { __typename?: 'Mutation', activeUserMutations: { __typename?: 'ActiveUserMutations', meta: { __typename?: 'UserMetaMutations', setSpeckleConBannerDismissed: boolean } } };
+
+export type GetIntelligenceCommunityStandUpBannerDismissedQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetIntelligenceCommunityStandUpBannerDismissedQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', meta: { __typename?: 'UserMeta', intelligenceCommunityStandUpBannerDismissed: boolean } } | null };
+
+export type SetIntelligenceCommunityStandUpBannerDismissedMutationVariables = Exact<{
+  input: Scalars['Boolean']['input'];
+}>;
+
+
+export type SetIntelligenceCommunityStandUpBannerDismissedMutation = { __typename?: 'Mutation', activeUserMutations: { __typename?: 'ActiveUserMutations', meta: { __typename?: 'UserMetaMutations', setIntelligenceCommunityStandUpBannerDismissed: boolean } } };
 
 export type GetLegacyProjectsExplainerCollapsedQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -10407,6 +10647,8 @@ export const GetNewWorkspaceExplainerDismissedDocument = {"kind":"Document","def
 export const SetNewWorkspaceExplainerDismissedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SetNewWorkspaceExplainerDismissed"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUserMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setNewWorkspaceExplainerDismissed"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"value"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]}}]} as unknown as DocumentNode<SetNewWorkspaceExplainerDismissedMutation, SetNewWorkspaceExplainerDismissedMutationVariables>;
 export const GetSpeckleConBannerDismissedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetSpeckleConBannerDismissed"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"speckleConBannerDismissed"}}]}}]}}]}}]} as unknown as DocumentNode<GetSpeckleConBannerDismissedQuery, GetSpeckleConBannerDismissedQueryVariables>;
 export const SetSpeckleConBannerDismissedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SetSpeckleConBannerDismissed"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUserMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setSpeckleConBannerDismissed"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"value"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]}}]} as unknown as DocumentNode<SetSpeckleConBannerDismissedMutation, SetSpeckleConBannerDismissedMutationVariables>;
+export const GetIntelligenceCommunityStandUpBannerDismissedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetIntelligenceCommunityStandUpBannerDismissed"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"intelligenceCommunityStandUpBannerDismissed"}}]}}]}}]}}]} as unknown as DocumentNode<GetIntelligenceCommunityStandUpBannerDismissedQuery, GetIntelligenceCommunityStandUpBannerDismissedQueryVariables>;
+export const SetIntelligenceCommunityStandUpBannerDismissedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SetIntelligenceCommunityStandUpBannerDismissed"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUserMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setIntelligenceCommunityStandUpBannerDismissed"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"value"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]}}]} as unknown as DocumentNode<SetIntelligenceCommunityStandUpBannerDismissedMutation, SetIntelligenceCommunityStandUpBannerDismissedMutationVariables>;
 export const GetLegacyProjectsExplainerCollapsedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetLegacyProjectsExplainerCollapsed"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"legacyProjectsExplainerCollapsed"}}]}}]}}]}}]} as unknown as DocumentNode<GetLegacyProjectsExplainerCollapsedQuery, GetLegacyProjectsExplainerCollapsedQueryVariables>;
 export const SetLegacyProjectsExplainerCollapsedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SetLegacyProjectsExplainerCollapsed"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUserMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setLegacyProjectsExplainerCollapsed"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"value"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]}}]} as unknown as DocumentNode<SetLegacyProjectsExplainerCollapsedMutation, SetLegacyProjectsExplainerCollapsedMutationVariables>;
 export const GetLimitedPersonalProjectVersionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetLimitedPersonalProjectVersions"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"versions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedPersonalProjectVersion"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"LimitedPersonalProjectComment"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"rawText"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"text"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"doc"}},{"kind":"Field","name":{"kind":"Name","value":"type"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"LimitedPersonalProjectVersion"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Version"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}},{"kind":"Field","name":{"kind":"Name","value":"commentThreads"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedPersonalProjectComment"}}]}}]}}]}}]} as unknown as DocumentNode<GetLimitedPersonalProjectVersionsQuery, GetLimitedPersonalProjectVersionsQueryVariables>;

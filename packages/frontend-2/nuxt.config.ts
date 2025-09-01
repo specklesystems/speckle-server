@@ -84,6 +84,7 @@ export default defineNuxtConfig({
       datadogService: '',
       datadogEnv: '',
       intercomAppId: '',
+      dashboardsOrigin: '',
       parallelMiddlewares: true
     }
   },
