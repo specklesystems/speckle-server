@@ -198,13 +198,36 @@ describe('Background Jobs repositories @backgroundjobs', () => {
       expect(updatedJob.status).to.equal(BackgroundJobStatus.Failed)
     })
 
-    it('should fail queued background jobs with zero and negative compute budget', async () => {
+    it('should fail queued background jobs with zero compute budget', async () => {
       const job = createTestJob({
         payload: {
           jobType: 'fileImport',
           payloadVersion: 2,
           testData: 'complex-test-data',
           remainingComputeBudgetSeconds: 0
+        }
+      })
+      await storeBackgroundJob({ job })
+
+      const SUT =
+        failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory(
+          {
+            db
+          }
+        )
+
+      await SUT({ originServerUrl, jobType: 'fileImport' })
+
+      const updatedJob = await db(BackgroundJobs.name).where({ id: job.id }).first()
+      expect(updatedJob.status).to.equal(BackgroundJobStatus.Failed)
+    })
+    it('should fail queued background jobs with negative compute budget', async () => {
+      const job = createTestJob({
+        payload: {
+          jobType: 'fileImport',
+          payloadVersion: 2,
+          testData: 'complex-test-data',
+          remainingComputeBudgetSeconds: -100
         }
       })
       await storeBackgroundJob({ job })

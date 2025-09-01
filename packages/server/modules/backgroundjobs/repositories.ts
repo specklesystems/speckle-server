@@ -69,20 +69,20 @@ export const failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComp
           BackgroundJobStatus.Queued
         )
         .andWhere(BackgroundJobs.withoutTablePrefix.col.jobType, jobType)
-        .andWhere(
-          db
-            .orWhere(
-              BackgroundJobs.withoutTablePrefix.col.attempt,
-              '>=',
-              db.raw('"maxAttempt"') // camel-case requires the column name to be wrapped in double quotes
+        .andWhere(function () {
+          this.where(
+            BackgroundJobs.withoutTablePrefix.col.attempt,
+            '>=',
+            db.raw('"maxAttempt"') // camel-case requires the column name to be wrapped in double quotes
+          ).orWhere(function () {
+            this.whereJsonPath('payload', '$.payloadVersion', '>=', 2).whereJsonPath(
+              'payload',
+              '$.remainingComputeBudgetSeconds',
+              '<=',
+              0
             )
-            .orWhere(
-              db
-                .whereJsonPath('payload', '$.payloadVersion', '>=', 2)
-                .whereJsonPath('payload', '$.remainingComputeBudgetSeconds', '<=', 0)
-                .orderBy(BackgroundJobs.withoutTablePrefix.col.createdAt, 'desc')
-            )
-        )
+          })
+        })
         .orderBy(BackgroundJobs.withoutTablePrefix.col.createdAt, 'desc')
         .update({
           [BackgroundJobs.withoutTablePrefix.col.status]: BackgroundJobStatus.Failed
