@@ -736,9 +736,9 @@ const getOidcProviderUserDataFactory =
       throw new SsoProviderProfileMissingError()
     }
     if (!isValidOidcProfile(oidcProviderUserData)) {
-      req.log.error(
+      req.log.info(
         { providedClaims: Object.keys(oidcProviderUserData) },
-        'Missing required properties on OIDC provider.'
+        'Missing required properties ("email" or "upn") on OIDC provider.'
       )
       throw new SsoProviderProfileMissingPropertiesError(['email'])
     }

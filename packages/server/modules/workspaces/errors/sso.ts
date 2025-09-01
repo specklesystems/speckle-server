@@ -32,6 +32,7 @@ export class SsoProviderProfileMissingError extends BaseError {
 
 export class SsoProviderProfileMissingPropertiesError extends BaseError {
   static code = 'SSO_PROVIDER_PROFILE_MISSING_PROPERTIES_ERROR'
+  static statusCode = 400
   constructor(properties: string[]) {
     super(
       [

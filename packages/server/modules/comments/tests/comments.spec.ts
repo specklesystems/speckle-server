@@ -53,10 +53,7 @@ import { db } from '@/db/knex'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import {
   getStreamFactory,
-  createStreamFactory,
-  markCommitStreamUpdatedFactory,
-  grantStreamPermissionsFactory,
-  getStreamRolesFactory
+  markCommitStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
 import {
   createCommitByBranchIdFactory,
@@ -71,47 +68,14 @@ import {
 import {
   getBranchByIdFactory,
   markCommitBranchUpdatedFactory,
-  getStreamBranchByNameFactory,
-  createBranchFactory
+  getStreamBranchByNameFactory
 } from '@/modules/core/repositories/branches'
 import {
   getObjectFactory,
   storeSingleObjectIfNotFoundFactory,
   getStreamObjectsFactory
 } from '@/modules/core/repositories/objects'
-import {
-  legacyCreateStreamFactory,
-  createStreamReturnRecordFactory
-} from '@/modules/core/services/streams/management'
-import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
-import {
-  findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory,
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory,
-  findInviteFactory,
-  deleteInvitesByTargetFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { getUsersFactory, getUserFactory } from '@/modules/core/repositories/users'
-import {
-  findEmailFactory,
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory
-} from '@/modules/core/repositories/userEmails'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import {
-  finalizeInvitedServerRegistrationFactory,
-  finalizeResourceInviteFactory
-} from '@/modules/serverinvites/services/processing'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import type express from 'express'
 import { ResourceType } from '@/modules/comments/domain/types'
@@ -128,24 +92,16 @@ import {
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
-import {
-  processFinalizedProjectInviteFactory,
-  validateProjectInviteBeforeFinalizationFactory
-} from '@/modules/serverinvites/services/coreFinalization'
-import {
-  addOrUpdateStreamCollaboratorFactory,
-  validateStreamAccessFactory
-} from '@/modules/core/services/streams/access'
-import { authorizeResolver } from '@/modules/shared'
 import type { TestEmailListener } from '@/test/speckle-helpers/email'
 import { createEmailListener } from '@/test/speckle-helpers/email'
-import { buildTestProject } from '@/modules/core/tests/helpers/creation'
+import {
+  buildBasicTestProject,
+  buildTestProject
+} from '@/modules/core/tests/helpers/creation'
 import type { GetCommentsQueryVariables } from '@/modules/core/graph/generated/graphql'
-import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 
-const getServerInfo = getServerInfoFactory({ db })
-const getUser = getUserFactory({ db })
-const getUsers = getUsersFactory({ db })
 const getStream = getStreamFactory({ db })
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
@@ -230,83 +186,6 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getBranchById: getBranchByIdFactory({ db })
 })
 
-const buildFinalizeProjectInvite = () =>
-  finalizeResourceInviteFactory({
-    findInvite: findInviteFactory({ db }),
-    validateInvite: validateProjectInviteBeforeFinalizationFactory({
-      getProject: getStream
-    }),
-    processInvite: processFinalizedProjectInviteFactory({
-      getProject: getStream,
-      addProjectRole: addOrUpdateStreamCollaboratorFactory({
-        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
-        getUser,
-        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-        getStreamRoles: getStreamRolesFactory({ db }),
-        emitEvent: getEventBus().emit
-      })
-    }),
-    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    emitEvent: (...args) => getEventBus().emit(...args),
-    findEmail: findEmailFactory({ db }),
-    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-      createUserEmail: createUserEmailFactory({ db }),
-      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-      findEmail: findEmailFactory({ db }),
-      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-      }),
-      requestNewEmailVerification: requestNewEmailVerificationFactory({
-        findEmail: findEmailFactory({ db }),
-        getUser,
-        getServerInfo,
-        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-          db
-        }),
-        renderEmail,
-        sendEmail
-      })
-    }),
-    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-      getStream
-    }),
-    getUser,
-    getServerInfo
-  })
-
-const createStreamReturnRecord = createStreamReturnRecordFactory({
-  inviteUsersToProject: inviteUsersToProjectFactory({
-    createAndSendInvite: createAndSendInviteFactory({
-      findUserByTarget: findUserByTargetFactory({ db }),
-      insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-      collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-        getStream
-      }),
-      buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-        getStream
-      }),
-      emitEvent: ({ eventName, payload }) =>
-        getEventBus().emit({
-          eventName,
-          payload
-        }),
-      getUser,
-      getServerInfo,
-      finalizeInvite: buildFinalizeProjectInvite()
-    }),
-    getUsers
-  }),
-  createStream: createStreamFactory({ db }),
-  createBranch: createBranchFactory({ db }),
-  storeProjectRole: storeProjectRoleFactory({ db }),
-  emitEvent: getEventBus().emit
-})
-const createStream = legacyCreateStreamFactory({
-  createStreamReturnRecord
-})
-
 const createObject = createObjectFactory({
   storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
@@ -329,12 +208,7 @@ describe('Comments @comments', () => {
 
   let user: BasicTestUser
   let otherUser: BasicTestUser
-
-  const stream = {
-    name: 'Commented stream',
-    description: 'Chit chats over here',
-    id: ''
-  }
+  let stream: BasicTestStream
 
   const testObject1 = {
     foo: 'bar',
@@ -369,7 +243,14 @@ describe('Comments @comments', () => {
       id: ''
     })
 
-    stream.id = await createStream({ ...stream, ownerId: user.id })
+    stream = await createTestStream(
+      {
+        name: 'Commented stream',
+        description: 'Chit chats over here',
+        id: ''
+      },
+      user
+    )
 
     testObject1.id = await createObject({ streamId: stream.id, object: testObject1 })
     testObject2.id = await createObject({ streamId: stream.id, object: testObject2 })
@@ -478,8 +359,10 @@ describe('Comments @comments', () => {
     const throwawayCommentText = buildCommentInputFromString('whatever')
 
     // Stream A belongs to user
-    const streamA = { name: 'Stream A', id: '' }
-    streamA.id = await createStream({ ...streamA, ownerId: user.id })
+    const streamA = await createTestStream(
+      buildBasicTestProject({ name: 'Stream A' }),
+      user
+    )
     const objA = { foo: 'bar', id: '' }
     objA.id = await createObject({ streamId: streamA.id, object: objA })
     const commA = { id: '' }
@@ -494,8 +377,10 @@ describe('Comments @comments', () => {
     ).id
 
     // Stream B belongs to otherUser
-    const streamB = { name: 'Stream B', id: '' }
-    streamB.id = await createStream({ ...streamB, ownerId: otherUser.id })
+    const streamB = await createTestStream(
+      buildBasicTestProject({ name: 'Stream B' }),
+      otherUser
+    )
     const objB = { qux: 'mux', id: '' }
     objB.id = await createObject({ streamId: streamB.id, object: objB })
     const commB = { id: '' }
@@ -595,14 +480,17 @@ describe('Comments @comments', () => {
   })
 
   it('Should return comment counts for streams, commits and objects', async () => {
-    const stream = { name: 'Bean Counter', id: '' }
-    stream.id = await createStream({ ...stream, ownerId: user.id })
+    const newStream = await createTestStream(
+      buildBasicTestProject({ name: 'Bean Counter' }),
+      user
+    )
+
     const obj = { foo: 'bar', id: '' }
-    obj.id = await createObject({ streamId: stream.id, object: obj })
+    obj.id = await createObject({ streamId: newStream.id, object: obj })
     const commit = { id: '' }
     commit.id = (
       await createCommitByBranchName({
-        streamId: stream.id,
+        streamId: newStream.id,
         branchName: 'main',
         message: 'baz',
         objectId: obj.id,
@@ -619,7 +507,7 @@ describe('Comments @comments', () => {
           userId: user.id,
           input: {
             text: buildCommentInputFromString('bar'),
-            streamId: stream.id,
+            streamId: newStream.id,
             resources: [
               { resourceId: commit.id, resourceType: ResourceType.Commit },
               { resourceId: obj.id, resourceType: ResourceType.Object }
@@ -635,7 +523,7 @@ describe('Comments @comments', () => {
           userId: user.id,
           input: {
             text: buildCommentInputFromString('baz'),
-            streamId: stream.id,
+            streamId: newStream.id,
             resources: [{ resourceId: commit.id, resourceType: ResourceType.Commit }],
             blobIds: [],
             data: {}
@@ -648,7 +536,7 @@ describe('Comments @comments', () => {
           userId: user.id,
           input: {
             text: buildCommentInputFromString('qux'),
-            streamId: stream.id,
+            streamId: newStream.id,
             resources: [{ resourceId: obj.id, resourceType: ResourceType.Object }],
             blobIds: [],
             data: {}
@@ -661,7 +549,7 @@ describe('Comments @comments', () => {
     await createCommentReply({
       authorId: user.id,
       parentCommentId: commentIds[0],
-      streamId: stream.id,
+      streamId: newStream.id,
       text: buildCommentInputFromString(),
       data: {},
       blobIds: []
@@ -669,7 +557,7 @@ describe('Comments @comments', () => {
     await createCommentReply({
       authorId: user.id,
       parentCommentId: commentIds[1],
-      streamId: stream.id,
+      streamId: newStream.id,
       text: buildCommentInputFromString(),
       data: {},
       blobIds: []
@@ -677,7 +565,7 @@ describe('Comments @comments', () => {
     await createCommentReply({
       authorId: user.id,
       parentCommentId: commentIds[2],
-      streamId: stream.id,
+      streamId: newStream.id,
       text: buildCommentInputFromString(),
       data: {},
       blobIds: []
@@ -687,11 +575,11 @@ describe('Comments @comments', () => {
     await archiveComment({
       commentId: commentIds[commentIds.length - 1],
       userId: user.id,
-      streamId: stream.id,
+      streamId: newStream.id,
       archived: true
     })
 
-    const count = await getStreamCommentCount(stream.id, { threadsOnly: true }) // should be 30
+    const count = await getStreamCommentCount(newStream.id, { threadsOnly: true }) // should be 30
     expect(count).to.equal(commCount * 3 - 1)
 
     const objCount = await getResourceCommentCount({ resourceId: obj.id })
@@ -700,8 +588,10 @@ describe('Comments @comments', () => {
     const commitCount = await getResourceCommentCount({ resourceId: commit.id })
     expect(commitCount).to.equal(commCount * 2)
 
-    const streamOther = { name: 'Bean Counter', id: '' }
-    streamOther.id = await createStream({ ...streamOther, ownerId: user.id })
+    const streamOther = await createTestStream(
+      buildBasicTestProject({ name: 'Bean Counter' }),
+      user
+    )
     const objOther = { 'are you bored': 'yes', id: '' }
     objOther.id = await createObject({ streamId: streamOther.id, object: objOther })
     const commitOther = { id: '' }
@@ -1524,7 +1414,7 @@ describe('Comments @comments', () => {
         })
 
       it('both legacy (string) comments and new (ProseMirror) documents are formatted as SmartTextEditorValue values', async () => {
-        const streamId = await createStream({ ...buildTestStream(), ownerId: user.id })
+        const { id: streamId } = await createTestStream(buildTestStream(), user)
 
         await Promise.all([
           // Legacy
@@ -1592,7 +1482,7 @@ describe('Comments @comments', () => {
       })
 
       it('legacy comment with a single link is formatted correctly', async () => {
-        const streamId = await createStream({ ...buildTestStream(), ownerId: user.id })
+        const { id: streamId } = await createTestStream(buildTestStream(), user)
 
         // Low-level insert cause all we need are just the main DB entries
         const item = {
@@ -1638,7 +1528,7 @@ describe('Comments @comments', () => {
       })
 
       it('legacy comment with multiple links formats them correctly', async () => {
-        const streamId = await createStream({ ...buildTestStream(), ownerId: user.id })
+        const { id: streamId } = await createTestStream(buildTestStream(), user)
 
         const textParts = [
           "Here's one ",

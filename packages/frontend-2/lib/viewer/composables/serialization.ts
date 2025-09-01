@@ -13,10 +13,7 @@ import {
 import { CameraController, VisualDiffMode } from '@speckle/viewer'
 import type { NumericPropertyInfo } from '@speckle/viewer'
 import type { Merge, PartialDeep } from 'type-fest'
-import {
-  defaultMeasurementOptions,
-  type SectionBoxData
-} from '@speckle/shared/viewer/state'
+import { defaultMeasurementOptions } from '@speckle/shared/viewer/state'
 import { useViewerRealtimeActivityTracker } from '~/lib/viewer/composables/activity'
 import {
   isModelResource,
@@ -171,7 +168,8 @@ export function useApplySerializedState() {
       lightConfig,
       diff,
       viewMode,
-      measurement
+      measurement,
+      sectionBoxContext
     },
     resources: {
       request: { resourceIdString }
@@ -257,9 +255,16 @@ export function useApplySerializedState() {
     isOrthoProjection.value = !!state.ui?.camera?.isOrthoProjection
 
     sectionBox.value = state.ui?.sectionBox
-      ? // It's complaining otherwise
-        (state.ui.sectionBox as SectionBoxData)
+      ? {
+          min: state.ui.sectionBox.min || [],
+          max: state.ui.sectionBox.max || [],
+          rotation: state.ui.sectionBox.rotation || []
+        }
       : null
+    sectionBoxContext.visible.value = false
+    if (!sectionBox.value) {
+      sectionBoxContext.edited.value = false
+    }
 
     const filters = state.ui?.filters || {}
     if (filters.hiddenObjectIds?.length) {

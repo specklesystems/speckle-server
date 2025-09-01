@@ -13,12 +13,19 @@ import type { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
+import {
+  BackgroundJobStatus,
+  type UpdateBackgroundJob
+} from '@/modules/backgroundjobs/domain'
+import { JobResultStatus } from '@speckle/shared/workers/fileimport'
 
 type OnFileImportResultDeps = {
   getFileInfo: GetFileInfoV2
   updateFileUpload: UpdateFileUpload
+  updateBackgroundJob: UpdateBackgroundJob
   eventEmit: EventBusEmit
   logger: Logger
+  FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
 }
 
 export const onFileImportResultFactory =
@@ -46,8 +53,10 @@ export const onFileImportResultFactory =
     })
 
     let convertedCommitId = null
+    let newStatusForBackgroundJob: BackgroundJobStatus = BackgroundJobStatus.Processing
+
     switch (jobResult.status) {
-      case 'error':
+      case JobResultStatus.Error:
         boundLogger.warn(
           {
             duration: jobResult.result.durationSeconds,
@@ -55,9 +64,11 @@ export const onFileImportResultFactory =
           },
           'Processing error result for file upload'
         )
+        newStatusForBackgroundJob = BackgroundJobStatus.Failed
         break
-      case 'success':
+      case JobResultStatus.Success:
         convertedCommitId = jobResult.result.versionId
+        newStatusForBackgroundJob = BackgroundJobStatus.Succeeded
         boundLogger.info(
           {
             duration: jobResult.result.durationSeconds,
@@ -70,6 +81,23 @@ export const onFileImportResultFactory =
 
     const status = jobResultStatusToFileUploadStatus(jobResult.status)
     const convertedMessage = jobResultToConvertedMessage(jobResult)
+
+    if (deps.FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
+      try {
+        await deps.updateBackgroundJob({
+          jobId,
+          status: newStatusForBackgroundJob
+        })
+      } catch (e) {
+        const err = ensureError(e)
+        logger.error(
+          { err },
+          'Error updating background job status in database. Job ID: %s',
+          jobId
+        )
+        throw err
+      }
+    }
 
     let updatedFile: FileUploadRecord
     try {
