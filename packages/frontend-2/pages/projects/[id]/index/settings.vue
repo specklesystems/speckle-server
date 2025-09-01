@@ -31,6 +31,9 @@ graphql(`
       canReadWebhooks {
         ...FullPermissionCheckResult
       }
+      canReadEmbedTokens {
+        ...FullPermissionCheckResult
+      }
     }
   }
 `)
@@ -41,6 +44,7 @@ const attrs = useAttrs() as {
 const route = useRoute()
 const router = useRouter()
 
+const canReadEmbedTokens = computed(() => attrs.project.permissions.canReadEmbedTokens)
 const canReadWebhooks = computed(() => attrs.project.permissions.canReadWebhooks)
 const projectName = computed(() =>
   attrs.project.name.length ? attrs.project.name : ''
@@ -64,8 +68,8 @@ const settingsTabItems = computed((): LayoutPageTabItem[] => [
   {
     title: 'Tokens',
     id: 'tokens',
-    disabled: !canReadWebhooks.value.authorized,
-    disabledMessage: canReadWebhooks.value.message
+    disabled: !canReadEmbedTokens.value.authorized,
+    disabledMessage: canReadEmbedTokens.value.message
   }
 ])
 

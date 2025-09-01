@@ -7,7 +7,7 @@
       <template v-if="views.length">
         <div
           v-if="views.length"
-          class="flex flex-col gap-[1px] overflow-y-auto simple-scrollbar"
+          class="flex flex-col gap-[1px] overflow-y-auto overflow-x-hidden simple-scrollbar"
         >
           <ViewerSavedViewsPanelView
             v-for="view in views"
