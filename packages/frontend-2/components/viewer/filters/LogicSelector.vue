@@ -33,7 +33,7 @@ defineProps<{
   modelValue: FilterLogic
 }>()
 
-const { setFilterLogicAndUpdate } = useFilterUtilities()
+const { setFilterLogic } = useFilterUtilities()
 
 const filterLogicOptions = ref([
   { value: FilterLogic.All, label: 'Match all rules' },
@@ -47,7 +47,7 @@ const handleLogicChange = (
     | undefined
 ) => {
   if (option && !Array.isArray(option)) {
-    setFilterLogicAndUpdate(option.value)
+    setFilterLogic(option.value)
   }
 }
 </script>

@@ -7,7 +7,7 @@ import type {
   TreeNode,
   Viewer
 } from '@speckle/viewer'
-import { Hash, CaseLower } from 'lucide-vue-next'
+
 import { FilteringExtension } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, uniq } from 'lodash-es'
@@ -297,16 +297,6 @@ function createFilteringDataStore() {
     computeSliceIntersections()
   }
 
-  const replaceExistingSlice = (dataSlice: DataSlice) => {
-    const sliceByWidgetIdIndex = dataSlices.value.findIndex(
-      (slice) => slice.widgetId === dataSlice.widgetId
-    )
-    if (sliceByWidgetIdIndex !== -1) {
-      dataSlices.value[sliceByWidgetIdIndex] = dataSlice
-      computeSliceIntersections()
-    }
-  }
-
   const popSlice = (dataSlice: DataSlice) => {
     const sliceByWidgetIdIndex = dataSlices.value.findIndex(
       (slice) => slice.widgetId === dataSlice.widgetId
@@ -343,14 +333,6 @@ function createFilteringDataStore() {
   const clearDataOnRouteLeave = () => {
     dataSourcesMap.value = {}
     dataSlices.value = []
-  }
-
-  const clearPropertyIndexCache = () => {
-    for (const dataSource of dataSources.value) {
-      if (dataSource._propertyIndexCache) {
-        dataSource._propertyIndexCache = {}
-      }
-    }
   }
 
   const setFilterLogic = (logic: FilterLogic) => {
@@ -415,13 +397,11 @@ function createFilteringDataStore() {
     populateDataStore,
     queryObjects,
     pushOrReplaceSlice,
-    replaceExistingSlice,
     popSlice,
     computeSliceIntersections,
     getFinalObjectIds,
     updateViewer,
     clearDataOnRouteLeave,
-    clearPropertyIndexCache,
     setFilterLogic,
     currentFilterLogic,
     setGhostMode,
@@ -692,12 +672,12 @@ export function useFilterUtilities(
   /**
    * Sets filter logic and updates slices
    */
-  const setFilterLogicAndUpdate = (logic: FilterLogic) => {
+  const setFilterLogic = (logic: FilterLogic) => {
     dataStore.setFilterLogic(logic)
     updateDataStoreSlices()
   }
 
-  const setGhostModeAndUpdate = (enabled: boolean) => {
+  const setGhostMode = (enabled: boolean) => {
     dataStore.setGhostMode(enabled)
     updateDataStoreSlices()
   }
@@ -1191,66 +1171,21 @@ export function useFilterUtilities(
     return color.startsWith('#') ? color : `#${color}`
   }
 
-  /**
-   * Get the appropriate icon component for a property type
-   */
-  const getPropertyTypeIcon = (type: 'number' | 'string') => {
-    switch (type) {
-      case 'number':
-        return Hash
-      case 'string':
-      default:
-        return CaseLower
-    }
-  }
-
-  /**
-   * Get the appropriate CSS classes for a property type icon
-   */
-  const getPropertyTypeIconClasses = (type: 'number' | 'string'): string => {
-    switch (type) {
-      case 'number':
-        return 'text-green-300'
-      case 'string':
-      default:
-        return 'text-violet-500'
-    }
-  }
-
-  /**
-   * Determine the type of a property from filter data
-   */
-  const getPropertyType = (filterData: FilterData): 'number' | 'string' => {
-    return filterData.type === FilterType.Numeric ? 'number' : 'string'
-  }
-
-  /**
-   * Get both icon and classes for a property type in one call
-   */
-  const getPropertyTypeDisplay = (type: 'number' | 'string') => {
-    return {
-      icon: getPropertyTypeIcon(type),
-      classes: getPropertyTypeIconClasses(type)
-    }
-  }
-
   return {
     isolateObjects,
     unIsolateObjects,
     hideObjects,
     showObjects,
     filters,
-    // Filter value functions
     getAvailableFilterValues,
-    // Multi-filter functions
     addActiveFilter,
     removeActiveFilter,
     toggleFilterApplied,
     updateActiveFilterValues,
     updateFilterCondition,
 
-    setFilterLogicAndUpdate,
-    setGhostModeAndUpdate,
+    setFilterLogic,
+    setGhostMode,
     updateDataStoreSlices,
     toggleActiveFilterValue,
     isActiveFilterValueSelected,
@@ -1274,15 +1209,9 @@ export function useFilterUtilities(
     toggleColorFilter,
     getFilterColorGroups,
     getFilterValueColor,
-    // Property type functions
-    getPropertyType,
-    getPropertyTypeIcon,
-    getPropertyTypeIconClasses,
-    getPropertyTypeDisplay,
     // Numeric range filtering
     setNumericRange,
     // Filter logic
-    setFilterLogic: dataStore.setFilterLogic,
     currentFilterLogic: dataStore.currentFilterLogic,
     getFinalObjectIds: dataStore.getFinalObjectIds,
     // Ghost mode

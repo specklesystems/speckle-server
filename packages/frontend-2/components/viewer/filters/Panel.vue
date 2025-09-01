@@ -95,7 +95,7 @@ const {
   addActiveFilter,
   resetFilters,
   currentFilterLogic,
-  setFilterLogicAndUpdate
+  setFilterLogic
 } = useFilterUtilities()
 
 const {
@@ -153,7 +153,7 @@ const propertySelectOptions = computed((): PropertySelectOption[] => {
 
 const filterLogic = computed({
   get: () => currentFilterLogic.value,
-  set: (value: FilterLogic) => setFilterLogicAndUpdate(value)
+  set: (value: FilterLogic) => setFilterLogic(value)
 })
 
 const mp = useMixpanel()
