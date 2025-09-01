@@ -24,7 +24,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { FormCheckbox } from '@speckle/ui-components'
 import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 import { isStringFilter, type FilterData } from '~/lib/viewer/helpers/filters/types'

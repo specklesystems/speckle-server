@@ -1,53 +1,66 @@
 <template>
-  <div class="pl-4 pr-2 py-2 flex items-center justify-between gap-3">
-    <FormSelectBase
-      name="filter-logic"
-      label="Filter Logic"
-      button-style="simple"
-      size="sm"
-      :allow-unset="false"
-      class="w-40"
-      :model-value="filterLogicOptions.find((opt) => opt.value === modelValue)"
-      :items="filterLogicOptions"
-      by="value"
-      @update:model-value="handleLogicChange"
+  <div class="p-2 flex items-center justify-between gap-3">
+    <LayoutMenu
+      v-model:open="showMenu"
+      :items="menuItems"
+      show-ticks="right"
+      :custom-menu-items-classes="['!text-body-2xs', '!w-40']"
+      @chosen="onLogicChosen"
     >
-      <template #something-selected="{ value }">
+      <FormButton
+        color="subtle"
+        size="sm"
+        :class="showMenu ? '!bg-highlight-2' : ''"
+        @click="showMenu = !showMenu"
+      >
         <span class="text-foreground font-medium text-body-2xs">
-          {{ Array.isArray(value) ? value[0]?.label : value?.label }}
+          {{ selectedLogicLabel }}
         </span>
-      </template>
-      <template #option="{ item }">
-        <span class="text-foreground text-body-2xs">{{ item.label }}</span>
-      </template>
-    </FormSelectBase>
+      </FormButton>
+    </LayoutMenu>
   </div>
 </template>
 
 <script setup lang="ts">
 import { FilterLogic } from '~/lib/viewer/helpers/filters/types'
-import { FormSelectBase } from '@speckle/ui-components'
+import { LayoutMenu, FormButton, type LayoutMenuItem } from '@speckle/ui-components'
 import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 
-defineProps<{
+const props = defineProps<{
   modelValue: FilterLogic
 }>()
 
 const { setFilterLogic } = useFilterUtilities()
+
+const showMenu = ref(false)
 
 const filterLogicOptions = ref([
   { value: FilterLogic.All, label: 'Match all rules' },
   { value: FilterLogic.Any, label: 'Match any rule' }
 ])
 
-const handleLogicChange = (
-  option:
-    | { value: FilterLogic; label: string }
-    | { value: FilterLogic; label: string }[]
-    | undefined
-) => {
-  if (option && !Array.isArray(option)) {
-    setFilterLogic(option.value)
-  }
+const menuItems = computed<LayoutMenuItem[][]>(() => [
+  filterLogicOptions.value.map((option) => ({
+    id: option.value,
+    title: option.label,
+    active: option.value === props.modelValue
+  }))
+])
+
+const selectedLogicLabel = computed(() => {
+  return (
+    filterLogicOptions.value.find((opt) => opt.value === props.modelValue)?.label || ''
+  )
+})
+
+const emit = defineEmits<{
+  'update:modelValue': [value: FilterLogic]
+}>()
+
+const onLogicChosen = ({ item }: { item: LayoutMenuItem; event: MouseEvent }) => {
+  const logic = item.id as FilterLogic
+  setFilterLogic(logic)
+  emit('update:modelValue', logic)
+  showMenu.value = false
 }
 </script>

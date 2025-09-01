@@ -558,6 +558,35 @@ export function useFilterUtilities(
   }
 
   /**
+   * Gets counts for existence conditions (is set / is not set) - performance optimized
+   */
+  const getPropertyExistenceCounts = (
+    propertyKey: string
+  ): { setCount: number; notSetCount: number } => {
+    let setCount = 0
+    let totalCount = 0
+
+    for (const dataSource of dataStore.dataSources.value) {
+      const propertyIndex = dataStore.buildPropertyIndex(dataSource, propertyKey)
+
+      // Count objects that have this property (is set)
+      for (const objectIds of Object.values(propertyIndex)) {
+        setCount += objectIds.length
+      }
+
+      // Count total objects in this data source
+      totalCount += Object.keys(dataSource.objectMap).length
+    }
+
+    const notSetCount = totalCount - setCount
+
+    return {
+      setCount,
+      notSetCount
+    }
+  }
+
+  /**
    * Gets the count of objects that have a specific value for a property
    * Note: For better performance when getting multiple counts, use getPropertyValueCounts
    */
@@ -1297,6 +1326,7 @@ export function useFilterUtilities(
     getAvailableFilterValues,
     getPropertyValueCount,
     getPropertyValueCounts,
+    getPropertyExistenceCounts,
     addActiveFilter,
     updateFilterProperty,
     removeActiveFilter,

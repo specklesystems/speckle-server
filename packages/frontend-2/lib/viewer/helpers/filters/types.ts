@@ -60,6 +60,28 @@ export const getConditionLabel = (condition: FilterCondition): string => {
   return CONDITION_CONFIG[condition]?.label || 'is'
 }
 
+export const getConditionLabelWithCount = (
+  condition: FilterCondition,
+  counts?: { setCount?: number; notSetCount?: number }
+): string => {
+  const baseLabel = getConditionLabel(condition)
+
+  if (!counts) return baseLabel
+
+  if (condition === ExistenceFilterCondition.IsSet && counts.setCount !== undefined) {
+    return `${baseLabel} (${counts.setCount})`
+  }
+
+  if (
+    condition === ExistenceFilterCondition.IsNotSet &&
+    counts.notSetCount !== undefined
+  ) {
+    return `${baseLabel} (${counts.notSetCount})`
+  }
+
+  return baseLabel
+}
+
 // Filter Enums
 export enum FilterLogic {
   All = 'all',

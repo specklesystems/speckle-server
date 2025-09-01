@@ -14,15 +14,24 @@
     >
       <ViewerFiltersFilterNumeric v-if="isNumericFilter(filter)" :filter="filter" />
       <ViewerFiltersFilterString v-else :filter="filter" />
+      <ViewerFiltersFilterExistenceCount
+        v-if="isExistenceCondition"
+        :filter="filter"
+        @select-condition="handleConditionChange"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { FilterData } from '~/lib/viewer/helpers/filters/types'
-import { isNumericFilter } from '~/lib/viewer/helpers/filters/types'
+import type { FilterData, ConditionOption } from '~/lib/viewer/helpers/filters/types'
+import {
+  isNumericFilter,
+  ExistenceFilterCondition
+} from '~/lib/viewer/helpers/filters/types'
+import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 
-defineProps<{
+const props = defineProps<{
   filter: FilterData
 }>()
 
@@ -30,5 +39,18 @@ defineEmits<{
   swapProperty: [filterId: string]
 }>()
 
+const { updateFilterCondition } = useFilterUtilities()
+
 const collapsed = ref(false)
+
+const isExistenceCondition = computed(() => {
+  return (
+    props.filter.condition === ExistenceFilterCondition.IsSet ||
+    props.filter.condition === ExistenceFilterCondition.IsNotSet
+  )
+})
+
+const handleConditionChange = (conditionOption: ConditionOption) => {
+  updateFilterCondition(props.filter.id, conditionOption.value)
+}
 </script>
