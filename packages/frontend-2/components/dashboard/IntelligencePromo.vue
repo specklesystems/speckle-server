@@ -15,12 +15,12 @@
         Upcoming event
       </span>
       <h3 class="text-body-xs font-semibold leading-tight tracking-tight">
-        See Speckle Intelligence in action
+        Speckle Intelligence Live
       </h3>
       <p class="text-body-3xs leading-tight">
-        Join our online
+        Tune into our Community
         <br />
-        Community StandUp on September 10th.
+        StandUp - Sept 10.
       </p>
       <NuxtLink
         to="https://streamyard.com/watch/RhTZBgkzRcRe"
