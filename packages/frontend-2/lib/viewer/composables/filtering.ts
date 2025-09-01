@@ -37,7 +37,8 @@ import {
   NumericFilterCondition,
   StringFilterCondition,
   ExistenceFilterCondition,
-  getConditionLabel
+  getConditionLabel,
+  SortMode
 } from '~/lib/viewer/helpers/filters/types'
 import { useOnViewerLoadComplete } from '~~/lib/viewer/composables/viewer'
 
@@ -1250,11 +1251,11 @@ export function useFilterUtilities(
     filter: PropertyInfo,
     options?: {
       searchQuery?: string
-      sortMode?: 'alphabetical' | 'selected-first'
+      sortMode?: SortMode
       filterId?: string
     }
   ): string[] => {
-    const { searchQuery, sortMode = 'alphabetical', filterId } = options || {}
+    const { searchQuery, sortMode = SortMode.Alphabetical, filterId } = options || {}
 
     let values = getAvailableFilterValues(filter)
 
@@ -1267,7 +1268,7 @@ export function useFilterUtilities(
     }
 
     // Apply sorting
-    if (sortMode === 'selected-first' && filterId) {
+    if (sortMode === SortMode.SelectedFirst && filterId) {
       // Sort: selected first, then alphabetical
       const selectedValues = values.filter((value: string) =>
         isActiveFilterValueSelected(filterId, value)

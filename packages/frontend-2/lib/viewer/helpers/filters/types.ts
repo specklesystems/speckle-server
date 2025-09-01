@@ -71,6 +71,11 @@ export enum FilterType {
   Numeric = 'numeric'
 }
 
+export enum SortMode {
+  Alphabetical = 'alphabetical',
+  SelectedFirst = 'selected-first'
+}
+
 // Filter Data Types
 type BaseFilterData = {
   id: string
