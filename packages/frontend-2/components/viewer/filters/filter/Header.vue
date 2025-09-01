@@ -2,7 +2,7 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div
-    class="flex group items-center justify-between"
+    class="flex items-center justify-between"
     :class="{ 'cursor-pointer': collapsed }"
     @click="toggleCollapsed"
   >
@@ -16,16 +16,6 @@
 
         {{ getPropertyName(filter.filter?.key) }}
       </FormButton>
-      <!-- <FormButton
-        v-tippy="'Toggle coloring for this property'"
-        color="subtle"
-        size="sm"
-        hide-text
-        class="opacity-0 group-hover:opacity-100 text-foreground-3"
-        :icon-right="ChevronsUpDown"
-        :is-expanded="!collapsed"
-        @click.stop="collapsed = !collapsed"
-      /> -->
     </div>
     <div class="flex items-start gap-0.5">
       <FormButton

@@ -7,18 +7,40 @@
       class="flex h-6 items-center"
       :class="labelPosition === 'left' ? 'w-1/2 justify-end mr-2' : ''"
     >
-      <input
-        :id="finalId"
-        :checked="coreChecked"
-        :aria-describedby="descriptionId"
-        :name="name"
-        :disabled="disabled"
-        :value="checkboxValue"
-        type="checkbox"
-        :class="checkboxClasses"
-        v-bind="$attrs"
-        @change="onChange"
-      />
+      <div class="relative">
+        <input
+          :id="finalId"
+          :checked="coreChecked"
+          :aria-describedby="descriptionId"
+          :name="name"
+          :disabled="disabled"
+          :value="checkboxValue"
+          type="checkbox"
+          :class="checkboxClasses"
+          v-bind="$attrs"
+          @change="onChange"
+        />
+        <!-- Indeterminate state overlay -->
+        <div
+          v-if="indeterminate"
+          class="absolute inset-0 flex items-center justify-center pointer-events-none"
+        >
+          <svg
+            class="h-3 w-3 text-foreground"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M20 12H4"
+            />
+          </svg>
+        </div>
+      </div>
     </div>
     <div class="text-sm" :class="labelPosition === 'left' ? 'w-1/2' : 'ml-2'">
       <label :for="finalId" :class="{ 'sr-only': hideLabel }">
@@ -152,6 +174,10 @@ const props = defineProps({
   labelPosition: {
     type: String as PropType<LabelPosition>,
     default: 'top'
+  },
+  indeterminate: {
+    type: Boolean,
+    default: false
   }
 })
 

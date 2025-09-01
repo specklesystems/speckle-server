@@ -6,17 +6,13 @@
       class="flex text-body-2xs items-center px-2 py-1.5 w-full hover:bg-highlight-1 rounded cursor-pointer"
       @click="handleSelectAllChange"
     >
-      <div
-        class="h-3.5 w-3.5 rounded border cursor-pointer flex items-center justify-center mr-2.5"
-        :class="[
-          areAllValuesSelected || areSomeValuesSelected
-            ? 'border-outline-5 hover:border-foreground-2 text-foreground'
-            : 'bg-foundation border-highlight-3 hover:border-foreground-2'
-        ]"
-      >
-        <Check v-if="areAllValuesSelected" class="h-3 w-3" />
-        <Minus v-else-if="areSomeValuesSelected" class="h-3 w-3" />
-      </div>
+      <FormCheckbox
+        :name="`select-all-${selectedCount}-${totalCount}`"
+        :model-value="areAllValuesSelected"
+        :indeterminate="areSomeValuesSelected"
+        class="mr-2.5 pointer-events-none"
+        hide-label
+      />
       <span class="text-foreground ml-px">Select all</span>
       <div class="text-foreground-2 text-body-3xs ml-1">
         ({{ selectedCount }} of {{ totalCount }})
@@ -26,7 +22,8 @@
 </template>
 
 <script setup lang="ts">
-import { Check, Minus } from 'lucide-vue-next'
+import { computed } from 'vue'
+import { FormCheckbox } from '@speckle/ui-components'
 
 const props = defineProps<{
   selectedCount: number

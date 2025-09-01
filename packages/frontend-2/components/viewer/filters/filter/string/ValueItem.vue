@@ -7,7 +7,9 @@
       @click="$emit('toggle')"
     >
       <div class="flex items-center min-w-0">
+        <!-- Checkbox is purely visual - so pointer-events-none -->
         <FormCheckbox
+          class="pointer-events-none"
           :class="{
             'border-transparent group-hover:border-outline-5': !isSelected,
             'opacity-50 dark:!bg-transparent !border !border-outline-5 !group-hover:border-outline-5':
@@ -16,7 +18,6 @@
           :name="`filter-${filterId}-${value}`"
           :model-value="isSelected"
           hide-label
-          @update:model-value="$emit('toggle')"
         />
         <span class="flex-1 truncate text-foreground ml-1">
           {{ value }}
