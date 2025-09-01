@@ -151,6 +151,7 @@ const crossServerSyncModule: SpeckleModule = {
     })
 
     const createNewProject = createNewProjectFactory({
+      // TODO: this goes as event emmits outside  (default model)
       storeProject: storeProjectFactory({ db }),
       storeModel: storeModelFactory({ db }),
       storeProjectRole: storeProjectRoleFactory({ db }),

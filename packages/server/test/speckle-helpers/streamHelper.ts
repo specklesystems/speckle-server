@@ -65,9 +65,12 @@ import type { StreamRoles } from '@speckle/shared'
 import { ensureError, Roles } from '@speckle/shared'
 import { omit } from 'lodash-es'
 import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { getTestRegionClientsForProject } from '@/modules/multiregion/tests/helpers'
+import { logger } from '@/observability/logging'
+import type { LegacyCreateStream } from '@/modules/core/domain/streams/operations'
 
 const getServerInfo = getServerInfoFactory({ db })
-const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
 
@@ -117,35 +120,43 @@ const buildFinalizeProjectInvite = () =>
     getServerInfo
   })
 
-const createStream = legacyCreateStreamFactory({
-  createStreamReturnRecord: createStreamReturnRecordFactory({
-    inviteUsersToProject: inviteUsersToProjectFactory({
-      createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory({ db }),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-          getStream
-        }),
-        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-          getStream
-        }),
-        emitEvent: ({ eventName, payload }) =>
-          getEventBus().emit({
-            eventName,
-            payload
+const createStream: LegacyCreateStream = async (
+  stream: Parameters<LegacyCreateStream>[0] & { regionKey?: string }
+) =>
+  asMultiregionalOperation(
+    async ({ allDbs, mainDb, emit }) =>
+      legacyCreateStreamFactory({
+        createStreamReturnRecord: createStreamReturnRecordFactory({
+          inviteUsersToProject: inviteUsersToProjectFactory({
+            createAndSendInvite: createAndSendInviteFactory({
+              findUserByTarget: findUserByTargetFactory({ db: mainDb }),
+              insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db: mainDb }),
+              collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+                getStream: getStreamFactory({ db: mainDb })
+              }),
+              buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+                getStream: getStreamFactory({ db: mainDb })
+              }),
+              emitEvent: emit,
+              getUser: getUserFactory({ db: mainDb }),
+              getServerInfo: getServerInfoFactory({ db: mainDb }),
+              finalizeInvite: buildFinalizeProjectInvite()
+            }),
+            getUsers: getUsersFactory({ db: mainDb })
           }),
-        getUser,
-        getServerInfo,
-        finalizeInvite: buildFinalizeProjectInvite()
-      }),
-      getUsers
-    }),
-    createStream: createStreamFactory({ db }),
-    createBranch: createBranchFactory({ db }),
-    storeProjectRole: storeProjectRoleFactory({ db }),
-    emitEvent: getEventBus().emit
-  })
-})
+          createStream: replicateFactory(allDbs, createStreamFactory),
+          createBranch: createBranchFactory({ db: mainDb }),
+          storeProjectRole: storeProjectRoleFactory({ db: mainDb }),
+          emitEvent: emit
+        })
+      })(stream),
+    {
+      name: 'create stream spec',
+      logger,
+      description: 'Creates a new stream',
+      dbs: await getTestRegionClientsForProject(stream)
+    }
+  )
 
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({

@@ -15,7 +15,7 @@ import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { assign } from 'lodash-es'
 import type { DeleteProject } from '@/modules/core/domain/projects/operations'
-import { asMultiregionalOperation } from '@/modules/shared/command'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import { logger } from '@/observability/logging'
 import { getProjectReplicationDbClients } from '@/modules/multiregion/utils/dbSelector'
 
@@ -40,10 +40,7 @@ const getProject = getProjectFactory({ db })
 const deleteProject: DeleteProject = async ({ projectId }) =>
   asMultiregionalOperation(
     async ({ allDbs }) => {
-      const [res] = await Promise.all(
-        allDbs.map(async (db) => await deleteProjectFactory({ db })({ projectId }))
-      )
-      return res
+      await replicateFactory(allDbs, deleteProjectFactory)({ projectId })
     },
     {
       name: 'delete spec',

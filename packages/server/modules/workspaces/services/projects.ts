@@ -334,6 +334,7 @@ export const createWorkspaceProjectFactory =
     // todo, use the command factory here, but for that, we need to migrate to the event bus
     // deps not injected to ensure proper DB injection
     const createNewProject = createNewProjectFactory({
+      // TODO: this goes as event emmits outside  (default model)
       storeProject: storeProjectFactory({ db: projectDb }),
       storeModel: storeModelFactory({ db: projectDb }),
       // THIS MUST GO TO THE MAIN DB

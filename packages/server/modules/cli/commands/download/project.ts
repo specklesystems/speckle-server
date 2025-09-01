@@ -197,6 +197,7 @@ const command: CommandModule<
     const getUser = getUserFactory({ db })
 
     const createNewProject = createNewProjectFactory({
+      // TODO: this goes as event emmits outside  (default model)
       storeProject: storeProjectFactory({ db: projectDb }),
       storeModel: storeModelFactory({ db: projectDb }),
       // THIS MUST GO TO THE MAIN DB
