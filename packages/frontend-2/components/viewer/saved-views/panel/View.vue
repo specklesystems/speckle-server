@@ -1,7 +1,15 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div v-keyboard-clickable :class="wrapperClasses" :view-id="view.id" @click="apply">
+  <div
+    v-keyboard-clickable
+    :class="wrapperClasses"
+    :view-id="view.id"
+    draggable="true"
+    @click="apply"
+    @dragstart="onDragStart"
+    @dragend="onDragEnd"
+  >
     <div class="flex items-center shrink-0">
       <div class="relative">
         <img
@@ -182,6 +190,7 @@ const {
 
 const showMenu = ref(false)
 const menuId = useId()
+const isDragging = ref(false)
 
 const isActive = computed(() => props.view.id === savedView.value?.id)
 
@@ -252,7 +261,9 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
 ])
 
 const wrapperClasses = computed(() => {
-  const classParts = ['flex gap-2 p-1.5 w-full group rounded-md cursor-pointer']
+  const classParts = [
+    'flex gap-2 p-1.5 w-full group rounded-md cursor-pointer relative transition-all'
+  ]
 
   if (isActive.value) {
     classParts.push('bg-highlight-2 hover:bg-highlight-3')
@@ -260,8 +271,45 @@ const wrapperClasses = computed(() => {
     classParts.push('hover:bg-highlight-1')
   }
 
+  // Add dragging styles
+  if (isDragging.value) {
+    classParts.push('opacity-50 scale-95')
+  }
+
   return classParts.join(' ')
 })
+
+const onDragStart = (event: DragEvent) => {
+  if (!canUpdate.value?.authorized || isLoading.value) {
+    event.preventDefault()
+    return
+  }
+
+  isDragging.value = true
+
+  // Set drag data with more complete view information
+  const dragData = {
+    viewId: props.view.id,
+    viewName: props.view.name,
+    sourceGroupId: props.view.group?.id || null,
+    projectId: props.view.projectId,
+    isHomeView: props.view.isHomeView,
+    groupResourceIds: props.view.groupResourceIds || []
+  }
+
+  event.dataTransfer?.setData('application/json', JSON.stringify(dragData))
+  event.dataTransfer!.effectAllowed = 'move'
+
+  // Set drag image (optional - creates a custom drag preview)
+  if (event.dataTransfer?.setDragImage) {
+    const dragImage = event.target as HTMLElement
+    event.dataTransfer.setDragImage(dragImage, 0, 0)
+  }
+}
+
+const onDragEnd = () => {
+  isDragging.value = false
+}
 
 const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
   switch (item.id) {
