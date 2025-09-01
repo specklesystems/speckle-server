@@ -102,7 +102,7 @@ import { Roles, Scopes, WorkspacePlans } from '@speckle/shared'
 import { expect } from 'chai'
 import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
 import { deleteProjectFactory } from '@/modules/core/repositories/projects'
-import { asMultiregionalOperation } from '@/modules/shared/command'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import type { UpdateStream } from '@/modules/core/domain/streams/operations'
 import { logger } from '@/observability/logging'
 
@@ -131,13 +131,7 @@ const updateProject: UpdateStream = async (stream, projectId) =>
     async ({ mainDb, allDbs, emit }) => {
       const updateStreamAndNotify = updateStreamAndNotifyFactory({
         getStream: getStreamFactory({ db: mainDb }),
-        updateStream: async (...input) => {
-          const [res] = await Promise.all(
-            allDbs.map((db) => updateStreamFactory({ db })(...input))
-          )
-
-          return res
-        },
+        updateStream: replicateFactory(allDbs, updateStreamFactory),
         emitEvent: emit
       })
 

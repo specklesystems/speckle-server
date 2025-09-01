@@ -98,6 +98,7 @@ const buildFinalizeProjectInvite = () =>
     getServerInfo
   })
 
+// This is not supporting multiregion
 export const createProject = createStreamReturnRecordFactory({
   inviteUsersToProject: inviteUsersToProjectFactory({
     createAndSendInvite: createAndSendInviteFactory({

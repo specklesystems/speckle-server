@@ -84,7 +84,7 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
 import { deleteProjectFactory } from '@/modules/core/repositories/projects'
-import { asMultiregionalOperation } from '@/modules/shared/command'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import { logger } from '@/observability/logging'
 import { getProjectReplicationDbClients } from '@/modules/multiregion/utils/dbSelector'
 import type { UpdateStream } from '@/modules/core/domain/streams/operations'
@@ -127,19 +127,8 @@ const deleteStream = async (projectId: string, userId: string) =>
     ({ allDbs, mainDb, emit }) => {
       const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
         deleteProjectAndCommits: deleteProjectAndCommitsFactory({
-          deleteProject: (...input) => {
-            const [res] = allDbs.map((db) => deleteProjectFactory({ db })(...input))
-
-            return res
-          },
-          deleteProjectCommits: async (...input) => {
-            // some regions might not have commits
-            const [res] = await Promise.all(
-              allDbs.map((db) => deleteProjectCommitsFactory({ db })(...input))
-            )
-
-            return res
-          }
+          deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+          deleteProjectCommits: replicateFactory(allDbs, deleteProjectCommitsFactory)
         }),
         emitEvent: emit,
         deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db: mainDb }),
@@ -160,13 +149,7 @@ const updateStream: UpdateStream = async (stream, projectId) =>
     async ({ mainDb, allDbs, emit }) => {
       const updateStreamAndNotify = updateStreamAndNotifyFactory({
         getStream: getStreamFactory({ db: mainDb }),
-        updateStream: async (...input) => {
-          const [res] = await Promise.all(
-            allDbs.map((db) => updateStreamFactory({ db })(...input))
-          )
-
-          return res
-        },
+        updateStream: replicateFactory(allDbs, updateStreamFactory),
         emitEvent: emit
       })
 

@@ -119,7 +119,7 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { asMultiregionalOperation, asOperation } from '@/modules/shared/command'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import type { Knex } from 'knex'
 import type { Logger } from '@/observability/logging'
 
@@ -210,19 +210,8 @@ const deleteStreamAndNotify = async (
     ({ allDbs, mainDb, emit }) => {
       const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
         deleteProjectAndCommits: deleteProjectAndCommitsFactory({
-          deleteProject: (...input) => {
-            const [res] = allDbs.map((db) => deleteProjectFactory({ db })(...input))
-
-            return res
-          },
-          deleteProjectCommits: async (...input) => {
-            // some regions might not have commits
-            const [res] = await Promise.all(
-              allDbs.map((db) => deleteProjectCommitsFactory({ db })(...input))
-            )
-
-            return res
-          }
+          deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+          deleteProjectCommits: replicateFactory(allDbs, deleteProjectCommitsFactory)
         }),
         emitEvent: emit,
         deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db: mainDb }),
@@ -336,8 +325,8 @@ const resolvers: Resolvers = {
       return deleteStreamAndNotify(projectId, userId!, logger)
     },
     async createForOnboarding(_parent, _args, { userId, resourceAccessRules, log }) {
-      return await asOperation(
-        async ({ db: mainDb, emit }) => {
+      return await asMultiregionalOperation(
+        async ({ mainDb, emit, allDbs }) => {
           // We want to read & write from main DB - this isn't occurring in a multi region workspace ctx
           const createOnboardingStream = createOnboardingStreamFactory({
             getOnboardingBaseProject: getOnboardingBaseProjectFactory({
@@ -348,7 +337,7 @@ const resolvers: Resolvers = {
               getUser: getUserFactory({ db: mainDb }),
               newProjectDb: mainDb,
               sourceProjectDb: mainDb,
-              createStream: createStreamFactory({ db: mainDb }),
+              createStream: replicateFactory(allDbs, createStreamFactory),
               insertCommits: insertCommitsFactory({ db: mainDb }),
               getBatchedStreamCommits: getBatchedStreamCommitsFactory({ db: mainDb }),
               insertStreamCommits: insertStreamCommitsFactory({ db: mainDb }),
@@ -384,14 +373,13 @@ const resolvers: Resolvers = {
                 }),
                 getUsers: getUsersFactory({ db: mainDb })
               }),
-              createStream: createStreamFactory({ db: mainDb }),
+              createStream: replicateFactory(allDbs, createStreamFactory),
               createBranch: createBranchFactory({ db: mainDb }),
               storeProjectRole: storeProjectRoleFactory({ db: mainDb }),
               emitEvent: emit
             }),
             getUser: getUserFactory({ db: mainDb }),
-            // not in mutliregion ctx
-            updateStream: updateStreamFactory({ db: mainDb })
+            updateStream: replicateFactory(allDbs, updateStreamFactory)
           })
 
           return await createOnboardingStream({
@@ -403,6 +391,7 @@ const resolvers: Resolvers = {
         {
           logger: log,
           name: 'createOnboardingProject',
+          dbs: [db], // Cloning does not support multiregion
           description: `Create a project for onboarding`
         }
       )
@@ -434,14 +423,7 @@ const resolvers: Resolvers = {
         async ({ mainDb, allDbs, emit }) => {
           const updateStreamAndNotify = updateStreamAndNotifyFactory({
             getStream: getStreamFactory({ db: mainDb }),
-            updateStream: async (...input) => {
-              const [res] = await Promise.all(
-                allDbs.map((regionDb) =>
-                  updateStreamFactory({ db: regionDb })(...input)
-                )
-              )
-              return res
-            },
+            updateStream: replicateFactory(allDbs, updateStreamFactory),
             emitEvent: emit
           })
 

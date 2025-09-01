@@ -120,6 +120,7 @@ const buildFinalizeProjectInvite = () =>
     getServerInfo
   })
 
+// This does not support multiregion
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({

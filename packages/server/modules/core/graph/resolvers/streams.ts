@@ -108,7 +108,7 @@ import {
 } from '@/modules/core/repositories/projects'
 import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
 import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
-import { asMultiregionalOperation } from '@/modules/shared/command'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import { getProjectReplicationDbClients } from '@/modules/multiregion/utils/dbSelector'
 import type { Logger } from '@/observability/logging'
 
@@ -167,34 +167,6 @@ const buildFinalizeProjectInvite = () =>
     getServerInfo
   })
 
-const createStreamReturnRecord = createStreamReturnRecordFactory({
-  inviteUsersToProject: inviteUsersToProjectFactory({
-    createAndSendInvite: createAndSendInviteFactory({
-      findUserByTarget: findUserByTargetFactory({ db }),
-      insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-      collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-        getStream
-      }),
-      buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-        getStream
-      }),
-      emitEvent: ({ eventName, payload }) =>
-        getEventBus().emit({
-          eventName,
-          payload
-        }),
-      getUser,
-      getServerInfo,
-      finalizeInvite: buildFinalizeProjectInvite()
-    }),
-    getUsers
-  }),
-  createStream: createStreamFactory({ db }),
-  createBranch: createBranchFactory({ db }),
-  storeProjectRole: storeProjectRoleFactory({ db }),
-  emitEvent: getEventBus().emit
-})
-
 const deleteStreamAndNotify = async (
   projectId: string,
   userId: string,
@@ -204,19 +176,8 @@ const deleteStreamAndNotify = async (
     ({ allDbs, mainDb, emit }) => {
       const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
         deleteProjectAndCommits: deleteProjectAndCommitsFactory({
-          deleteProject: (...input) => {
-            const [res] = allDbs.map((db) => deleteProjectFactory({ db })(...input))
-
-            return res
-          },
-          deleteProjectCommits: async (...input) => {
-            // some regions might not have commits
-            const [res] = await Promise.all(
-              allDbs.map((db) => deleteProjectCommitsFactory({ db })(...input))
-            )
-
-            return res
-          }
+          deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+          deleteProjectCommits: replicateFactory(allDbs, deleteProjectCommitsFactory)
         }),
         emitEvent: emit,
         deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db: mainDb }),
@@ -547,17 +508,44 @@ export default {
       })
       throwIfAuthNotOk(canCreate)
 
-      const { id } = await withOperationLogging(
-        async () =>
-          await createStreamReturnRecord({
+      const { id } = await asMultiregionalOperation(
+        async ({ allDbs, mainDb, emit }) =>
+          createStreamReturnRecordFactory({
+            inviteUsersToProject: inviteUsersToProjectFactory({
+              createAndSendInvite: createAndSendInviteFactory({
+                findUserByTarget: findUserByTargetFactory({ db: mainDb }),
+                insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({
+                  db: mainDb
+                }),
+                collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory(
+                  {
+                    getStream: getStreamFactory({ db: mainDb })
+                  }
+                ),
+                buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+                  getStream: getStreamFactory({ db: mainDb })
+                }),
+                emitEvent: emit,
+                getUser: getUserFactory({ db: mainDb }),
+                getServerInfo: getServerInfoFactory({ db: mainDb }),
+                finalizeInvite: buildFinalizeProjectInvite()
+              }),
+              getUsers: getUsersFactory({ db: mainDb })
+            }),
+            createStream: replicateFactory(allDbs, createStreamFactory),
+            createBranch: createBranchFactory({ db: mainDb }),
+            storeProjectRole: storeProjectRoleFactory({ db: mainDb }),
+            emitEvent: emit
+          })({
             ...args.stream,
             ownerId: context.userId!,
             ownerResourceAccessRules: context.resourceAccessRules
           }),
         {
           logger: context.log,
-          operationName: 'createStream',
-          operationDescription: `Create a new Stream`
+          name: 'createStream',
+          description: `Create a new Stream`,
+          dbs: [db] // legacy; no multiregion ctx
         }
       )
 
