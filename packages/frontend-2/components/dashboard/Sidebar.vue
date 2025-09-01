@@ -202,7 +202,7 @@ const showExplainerVideoDialog = ref(false)
 
 const showIntelligenceCommunityStandUpPromo = computed(() => {
   if (hasDismissedIntelligenceCommunityStandUpBanner.value) return false
-  return dayjs('2025-11-09').isAfter(dayjs())
+  return dayjs('2025-09-10').isAfter(dayjs())
 })
 const activeWorkspace = computed(() => result.value?.activeUser?.activeWorkspace)
 const showProjectsLink = computed(() => {
