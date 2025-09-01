@@ -611,9 +611,11 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.featureFlags.accIntegrationEnabled | quote }}
 
 - name: FF_NO_PERSONAL_EMAILS_ENABLED
-{{- if .Values.featureFlags.noPersonalEmailsEnabled }}
-- name: FF_NO_PERSONAL_EMAILS_ENABLED
   value: {{ .Values.server.noPersonalEmailsEnabled }}
+
+{{- if .Values.featureFlags.accIntegrationEnabled }}
+- name: AUTODESK_INTEGRATION_CLIENT_ID
+  value: {{ .Values.server.accIntegration.client_id }}
 
 - name: AUTODESK_INTEGRATION_CLIENT_SECRET
   valueFrom:
