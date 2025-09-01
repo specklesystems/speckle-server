@@ -30,6 +30,7 @@ import { mapValues } from 'lodash-es'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import { logger } from '@/observability/logging'
 
+const MAIN_REGION_KEY = 'main'
 let getter: GetProjectDb | undefined = undefined
 
 /**
@@ -76,13 +77,15 @@ const initializeDbGetter = async (): Promise<GetProjectDb> => {
 }
 
 // this guy is the star of the show here
+// returns where the project is located
 export const getProjectDbClient: GetProjectDb = async ({ projectId }) => {
   if (!getter) getter = await initializeDbGetter()
   return await getter({ projectId })
 }
 
 // helper for replication logic
-// returns project replication logic instead of the target db
+// returns the replication strategy ( locations where data need to be updated at the same time)
+// instead of just the target db
 export const getProjectReplicationDbClients = async ({
   projectId
 }: {
@@ -97,6 +100,9 @@ export const getProjectReplicationDbClients = async ({
 
   return [mainDb, ...(projectDb ? [projectDb] : [])]
 }
+
+export const isRegionMain = ({ regionKey }: { regionKey: string }) =>
+  regionKey === MAIN_REGION_KEY
 
 // the default region key is a config value, we're caching this globally
 let defaultRegionKeyCache: string | null | undefined = undefined
@@ -161,7 +167,7 @@ export const getAllRegisteredDbClients = async (): Promise<Array<DatabaseClient>
     {
       client: mainDb,
       isMain: true,
-      regionKey: 'main'
+      regionKey: MAIN_REGION_KEY
     },
     ...Object.entries(regionDbs).map(([regionKey, client]) => ({
       client,
