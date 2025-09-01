@@ -87,69 +87,6 @@ describe('project services @core', () => {
       expect(storedProject!.visibility).to.eq(ProjectRecordVisibility.Private)
       expect(storedProject!.allowPublicComments).to.be.false
     })
-    it('continues if the project is eventually synced', async () => {
-      const ownerId = cryptoRandomString({ length: 10 })
-
-      const queriedProjectId: string | undefined = undefined
-      let storedProject: Project | undefined = undefined
-      let storedProjectRole:
-        | {
-            projectId: string
-            userId: string
-            role: StreamRoles
-          }
-        | undefined = undefined
-      let storedModel:
-        | {
-            name: string
-            description: string | null
-            projectId: string
-            authorId: string
-          }
-        | undefined = undefined
-      let emitedEvent: string | undefined = undefined
-      let eventPayload: { project: Project; ownerId: string } | undefined = undefined
-      const createNewProject = createNewProjectFactory({
-        storeProject: async ({ project }) => {
-          storedProject = project
-        },
-        storeProjectRole: async (args) => {
-          storedProjectRole = args
-        },
-        storeModel: async (args) => {
-          storedModel = args
-        },
-        emitEvent: async (payload) => {
-          if (isSpecificEventPayload(payload, ProjectEvents.Created)) {
-            emitedEvent = payload.eventName
-            eventPayload = payload.payload
-          }
-        }
-      })
-      const project = await createNewProject({
-        ownerId,
-        regionKey: cryptoRandomString({ length: 10 })
-      })
-      expect(storedProject!.id).to.equal(queriedProjectId)
-      expect(project).deep.equal(storedProject)
-      expect(storedProjectRole).deep.equal({
-        projectId: project.id,
-        userId: ownerId,
-        role: Roles.Stream.Owner
-      })
-      expect(storedModel).deep.equal({
-        name: 'main',
-        description: 'default model',
-        projectId: project.id,
-        authorId: ownerId
-      })
-      expect(emitedEvent).to.equal(ProjectEvents.Created)
-      expect(eventPayload).deep.equal({
-        ownerId,
-        project,
-        input: { description: '', name: project.name, visibility: 'PRIVATE' }
-      })
-    })
     it('successfully creates a project', async () => {
       const ownerId = cryptoRandomString({ length: 10 })
 

@@ -57,8 +57,6 @@ export const createNewProjectFactory =
 
     await storeProjectRole({ projectId, userId: ownerId, role: Roles.Stream.Owner })
 
-    // wait
-
     await storeModel({
       // Move this away
       name: 'main',

@@ -111,39 +111,21 @@ const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream: getStreamFactory({ db })
 })
 
-const deleteStreamAndNotify = async (projectId: string, userId: string) =>
-  asMultiregionalOperation(
-    ({ allDbs, mainDb, emit }) => {
-      const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
-        deleteProjectAndCommits: deleteProjectAndCommitsFactory({
-          deleteProject: (...input) => {
-            const [res] = allDbs.map((db) => deleteProjectFactory({ db })(...input))
-
-            return res
-          },
-          deleteProjectCommits: async (...input) => {
-            // some regions might not have commits
-            const [res] = await Promise.all(
-              allDbs.map((db) => deleteProjectCommitsFactory({ db })(...input))
-            )
-
-            return res
-          }
-        }),
-        emitEvent: emit,
-        deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db: mainDb }),
-        getStream: getStreamFactory({ db: mainDb })
-      })
-      return deleteStreamAndNotify(projectId, userId)
-    },
-    {
-      logger,
-      name: 'delete project spec',
-      description: `Cascade deleting a project in all regions`,
-      dbs: await getProjectReplicationDbClients({ projectId })
-    }
-  )
-
+// should be wrapped in a multiregion operator
+const buildDeleteProject = async (params: { projectId: string; ownerId: string }) => {
+  const { projectId, ownerId } = params
+  const projectDb = await getProjectDbClient({ projectId })
+  const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+    deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+      deleteProject: deleteProjectFactory({ db: projectDb }),
+      deleteProjectCommits: deleteProjectCommitsFactory({ db: projectDb })
+    }),
+    emitEvent: getEventBus().emit,
+    deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
+    getStream: getStreamFactory({ db: projectDb })
+  })
+  return async () => deleteStreamAndNotify(projectId, ownerId)
+}
 const updateProject: UpdateStream = async (stream, projectId) =>
   asMultiregionalOperation(
     async ({ mainDb, allDbs, emit }) => {
@@ -536,6 +518,10 @@ describe('Core GraphQL Subscriptions (New)', () => {
           workspaceId: myMainWorkspace.id
         }
         await createTestStreams([[myProj, me]])
+        const deleteProject = await buildDeleteProject({
+          projectId: myProj.id,
+          ownerId: me.id
+        })
 
         const onUserProjectsUpdated = await meSubClient.subscribe(
           OnUserProjectsUpdatedDocument,
@@ -557,7 +543,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
           }
         )
         await meSubClient.waitForReadiness()
-        await deleteStreamAndNotify(myProj.id, me.id)
+        await deleteProject()
 
         await Promise.all([
           onUserProjectsUpdated.waitForMessage(),

@@ -822,7 +822,7 @@ export default FF_WORKSPACES_MODULE_ENABLED
           // while workspace must be deleted from all regions
 
           await asMultiregionalOperation(
-            async ({ mainDb, allDbs, emit }) => {
+            async ({ mainDb, allDbs, emit }) =>
               deleteWorkspaceFactory({
                 deleteWorkspace: replicateFactory(allDbs, repoDeleteWorkspaceFactory),
                 deleteProjectAndCommits: deleteProjectAndCommitsFactory({
@@ -840,8 +840,7 @@ export default FF_WORKSPACES_MODULE_ENABLED
                 }),
                 deleteSsoProvider: deleteSsoProviderFactory({ db: mainDb }),
                 emitWorkspaceEvent: emit
-              })
-            },
+              })({ workspaceId }),
             {
               logger,
               name: 'delete workspace',
