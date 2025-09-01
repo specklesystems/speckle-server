@@ -203,6 +203,7 @@ describe('FileUploads @fileuploads', () => {
           serverUrl: serverOrigin,
           modelId: upload.modelId,
           fileType: upload.fileType,
+          remainingComputeBudgetSeconds: 9000,
           projectId: upload.projectId,
           timeOutSeconds: 1800,
           blobId: upload.blobId
