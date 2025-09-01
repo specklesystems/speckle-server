@@ -68,8 +68,7 @@
         </div>
       </div>
       <div class="w-full flex items-center gap-1">
-        <Component
-          :is="User"
+        <User
           v-if="isOnlyVisibleToMe"
           v-tippy="getTooltipProps('Only visible to you')"
           :size="12"
