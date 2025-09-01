@@ -63,7 +63,6 @@ import { createAndSendInviteFactory } from '@/modules/serverinvites/services/cre
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { createBranchFactory } from '@/modules/core/repositories/branches'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -533,7 +532,6 @@ export default {
               getUsers: getUsersFactory({ db: mainDb })
             }),
             createStream: replicateFactory(allDbs, createStreamFactory),
-            createBranch: createBranchFactory({ db: mainDb }),
             storeProjectRole: storeProjectRoleFactory({ db: mainDb }),
             emitEvent: emit
           })({

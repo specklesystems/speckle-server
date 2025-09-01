@@ -2,7 +2,6 @@ import { db } from '@/db/knex'
 import { StreamAcl } from '@/modules/core/dbSchema'
 import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
 import type { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
-import { createBranchFactory } from '@/modules/core/repositories/branches'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   createStreamFactory,
@@ -145,7 +144,6 @@ const createStream: LegacyCreateStream = async (
             getUsers: getUsersFactory({ db: mainDb })
           }),
           createStream: replicateFactory(allDbs, createStreamFactory),
-          createBranch: createBranchFactory({ db: mainDb }),
           storeProjectRole: storeProjectRoleFactory({ db: mainDb }),
           emitEvent: emit
         })

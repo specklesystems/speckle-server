@@ -33,7 +33,6 @@ import type {
   UpdateStreamRecord,
   UpdateStreamRole
 } from '@/modules/core/domain/streams/operations'
-import type { StoreBranch } from '@/modules/core/domain/branches/operations'
 import type { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
@@ -48,7 +47,6 @@ export const createStreamReturnRecordFactory =
   (deps: {
     createStream: SaveStream
     storeProjectRole: StoreProjectRole
-    createBranch: StoreBranch
     inviteUsersToProject: ReturnType<typeof inviteUsersToProjectFactory>
     emitEvent: EventBusEmit
   }): CreateStream =>
@@ -87,14 +85,6 @@ export const createStreamReturnRecordFactory =
         role: Roles.Stream.Owner
       })
     }
-
-    // Create a default main branch
-    await deps.createBranch({
-      name: 'main',
-      description: 'default branch',
-      streamId,
-      authorId: ownerId
-    })
 
     // Invite contributors?
     if (!isProjectCreateInput(params) && params.withContributors?.length) {

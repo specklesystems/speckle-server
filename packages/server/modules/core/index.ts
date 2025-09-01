@@ -45,6 +45,8 @@ import {
 import { getServerTotalModelCountFactory } from '@/modules/core/services/branch/retrieval'
 import { getServerTotalVersionCountFactory } from '@/modules/core/services/commit/retrieval'
 import { bullMonitoringRouterFactory } from '@/modules/core/rest/monitoring'
+import { projectListenersFactory } from '@/modules/core/events/projectListeners'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
 
 let stopTestSubs: (() => void) | undefined = undefined
 
@@ -121,6 +123,12 @@ const coreModule: SpeckleModule<{
           logger: coreLogger
         })
       })()
+
+      projectListenersFactory({
+        eventBus: getEventBus(),
+        logger: coreLogger,
+        createBranch: createBranchFactory({ db })
+      })
     }
   },
   async finalize({ app }) {

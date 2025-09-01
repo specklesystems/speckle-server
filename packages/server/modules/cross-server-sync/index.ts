@@ -151,9 +151,8 @@ const crossServerSyncModule: SpeckleModule = {
     })
 
     const createNewProject = createNewProjectFactory({
-      // TODO: this goes as event emmits outside  (default model)
+      // This happens always outside of multiregion ctx
       storeProject: storeProjectFactory({ db }),
-      storeModel: storeModelFactory({ db }),
       storeProjectRole: storeProjectRoleFactory({ db }),
       emitEvent: getEventBus().emit
     })

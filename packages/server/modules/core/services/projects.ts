@@ -5,7 +5,6 @@ import type {
   DeleteProject,
   DeleteProjectAndCommits,
   QueryAllProjects,
-  StoreModel,
   StoreProject,
   StoreProjectRole
 } from '@/modules/core/domain/projects/operations'
@@ -26,12 +25,10 @@ export const createNewProjectFactory =
   ({
     storeProject,
     storeProjectRole,
-    storeModel,
     emitEvent
   }: {
     storeProject: StoreProject
     storeProjectRole: StoreProjectRole
-    storeModel: StoreModel
     emitEvent: EventBusEmit
   }): CreateProject =>
   async ({ description, name, regionKey, visibility, workspaceId, ownerId }) => {
@@ -56,14 +53,6 @@ export const createNewProjectFactory =
     const projectId = project.id
 
     await storeProjectRole({ projectId, userId: ownerId, role: Roles.Stream.Owner })
-
-    await storeModel({
-      // Move this away
-      name: 'main',
-      description: 'default model',
-      projectId,
-      authorId: ownerId
-    })
 
     await emitEvent({
       eventName: ProjectEvents.Created,

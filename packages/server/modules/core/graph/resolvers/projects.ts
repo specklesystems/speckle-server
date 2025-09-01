@@ -16,7 +16,6 @@ import {
   toProjectIdWhitelist
 } from '@/modules/core/helpers/token'
 import {
-  createBranchFactory,
   getBatchedStreamBranchesFactory,
   insertBranchesFactory
 } from '@/modules/core/repositories/branches'
@@ -374,7 +373,6 @@ const resolvers: Resolvers = {
                 getUsers: getUsersFactory({ db: mainDb })
               }),
               createStream: replicateFactory(allDbs, createStreamFactory),
-              createBranch: createBranchFactory({ db: mainDb }),
               storeProjectRole: storeProjectRoleFactory({ db: mainDb }),
               emitEvent: emit
             }),
