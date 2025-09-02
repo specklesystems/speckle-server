@@ -8,47 +8,30 @@
 
     <div
       v-bind="containerProps"
-      class="relative simple-scrollbar"
-      :style="{ height: containerHeight }"
+      class="simple-scrollbar"
+      :style="{ maxHeight: `${maxHeight}px` }"
     >
-      <div
-        v-for="{ data: property, index } in list"
-        :key="`${index}-${property.value}`"
-        :style="{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: `${getItemHeight(property)}px`,
-          transform: `translateY(${getItemOffset(index)}px)`
-        }"
-      >
-        <div class="px-1 py-1">
-          <button
-            class="w-full h-full px-1.5 text-foreground rounded-md hover:bg-highlight-1 text-left flex items-center gap-3"
-            :class="!property.parentPath ? 'py-1.5' : 'py-1'"
-            @click="$emit('selectProperty', property.value)"
-          >
-            <Hash
-              v-if="property.type === 'number'"
-              class="h-3 w-3 stroke-emerald-700 dark:stroke-emerald-500"
-            />
-            <CaseUpper
-              v-else
-              class="h-3 w-3 stroke-violet-600 dark:stroke-violet-500"
-            />
-            <div class="min-w-0 flex-1">
-              <div class="text-body-2xs font-medium text-foreground truncate">
-                {{ property.label }}
-              </div>
-              <div
-                v-if="property.parentPath"
-                class="text-body-3xs text-foreground-3 truncate -mt-0.5"
-              >
-                {{ property.parentPath }}
-              </div>
-            </div>
-          </button>
+      <div v-bind="wrapperProps" class="relative">
+        <div
+          v-for="{ data: item, index } in list"
+          :key="`${index}-${
+            item.type === 'header' ? item.title : item.property?.value
+          }`"
+          :style="{
+            height: `${itemHeight}px`,
+            overflow: 'hidden'
+          }"
+        >
+          <ViewerFiltersPropertySelectionHeader
+            v-if="item.type === 'header'"
+            :title="item.title!"
+          />
+
+          <ViewerFiltersPropertySelectionItem
+            v-else-if="item.property"
+            :property="item.property"
+            @select-property="$emit('selectProperty', $event)"
+          />
         </div>
       </div>
     </div>
@@ -57,7 +40,6 @@
 
 <script setup lang="ts">
 import { useVirtualList } from '@vueuse/core'
-import { Hash, CaseUpper } from 'lucide-vue-next'
 
 type PropertyOption = {
   value: string
@@ -65,6 +47,12 @@ type PropertyOption = {
   parentPath: string
   type: 'number' | 'string'
   hasParent: boolean
+}
+
+type ListItem = {
+  type: 'header' | 'property'
+  title?: string
+  property?: PropertyOption
 }
 
 const props = defineProps<{
@@ -76,6 +64,23 @@ defineEmits<{
 }>()
 
 const searchQuery = ref('')
+
+const popularFilters = [
+  'speckle_type',
+  'Name',
+  'Category',
+  'Family',
+  'Type',
+  'Level',
+  'Material',
+  'Phase Created',
+  'Phase Demolished',
+  'Area',
+  'Length',
+  'Phase Created',
+  'IFCType',
+  'Layer'
+]
 
 const filteredOptions = computed(() => {
   if (!searchQuery.value.trim()) {
@@ -92,39 +97,45 @@ const filteredOptions = computed(() => {
   )
 })
 
-// Virtual list setup with dynamic heights
-const smallItemHeight = 28 // Height for items without parent
-const largeItemHeight = 38 // Height for items with parent
-const maxHeight = 600 // Maximum height for the container
+const listItems = computed((): ListItem[] => {
+  const items: ListItem[] = []
 
-// Helper function to get height for a specific property
-const getItemHeight = (property: PropertyOption) => {
-  return property.parentPath && property.parentPath !== '-'
-    ? largeItemHeight
-    : smallItemHeight
-}
-
-// Helper function to calculate offset for a specific index
-const getItemOffset = (index: number) => {
-  let offset = 0
-  for (let i = 0; i < index; i++) {
-    const property = filteredOptions.value[i]
-    if (property) {
-      offset += getItemHeight(property)
-    }
+  // If there's a search query, just show filtered results without sections
+  if (searchQuery.value.trim()) {
+    filteredOptions.value.forEach((property) => {
+      items.push({ type: 'property', property })
+    })
+    return items
   }
-  return offset
-}
 
-const containerHeight = computed(() => {
-  const contentHeight = filteredOptions.value.reduce((total, property) => {
-    return total + getItemHeight(property)
-  }, 0)
-  return `${Math.min(contentHeight, maxHeight)}px`
+  // Find popular filters that exist in the options
+  const availablePopular = popularFilters
+    .map((filterKey) => props.options.find((opt) => opt.value === filterKey))
+    .filter(Boolean)
+    .slice(0, 6) // Show max 6 popular filters
+
+  // Add Popular filters section if we have any
+  if (availablePopular.length > 0) {
+    items.push({ type: 'header', title: 'Popular filters' })
+    availablePopular.forEach((property) => {
+      items.push({ type: 'property', property })
+    })
+  }
+
+  // Add All filters section
+  items.push({ type: 'header', title: `All filters (${props.options.length})` })
+  props.options.forEach((property) => {
+    items.push({ type: 'property', property })
+  })
+
+  return items
 })
 
-const { list, containerProps } = useVirtualList(filteredOptions, {
-  itemHeight: largeItemHeight, // Use larger height as base for virtual list calculations
+const itemHeight = 36
+const maxHeight = 600
+
+const { list, containerProps, wrapperProps } = useVirtualList(listItems, {
+  itemHeight,
   overscan: 5
 })
 </script>

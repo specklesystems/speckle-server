@@ -10,20 +10,24 @@
     </div>
     <div
       v-bind="containerProps"
-      class="relative simple-scrollbar"
-      :style="{ height: containerHeight }"
+      class="simple-scrollbar"
+      :style="{ maxHeight: `${maxHeight}px` }"
     >
-      <div
-        v-for="{ data: value, index } in list"
-        :key="`${index}-${value}`"
-        class="absolute top-0 left-0 w-full h-full"
-        :style="{ transform: `translateY(${index * itemHeight}px)` }"
-      >
-        <ViewerFiltersFilterStringValueItem
-          :filter="filter"
-          :value="value"
-          @toggle="() => toggleActiveFilterValue(filter.id, value)"
-        />
+      <div v-bind="wrapperProps" class="relative">
+        <div
+          v-for="{ data: value, index } in list"
+          :key="`${index}-${value}`"
+          :style="{
+            height: `${itemHeight}px`,
+            overflow: 'hidden'
+          }"
+        >
+          <ViewerFiltersFilterStringValueItem
+            :filter="filter"
+            :value="value"
+            @toggle="() => toggleActiveFilterValue(filter.id, value)"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -61,13 +65,8 @@ const filteredValues = computed(() => {
 const itemHeight = 28 // Height of each checkbox item in pixels
 const maxHeight = 240
 
-const { list, containerProps } = useVirtualList(filteredValues, {
+const { list, containerProps, wrapperProps } = useVirtualList(filteredValues, {
   itemHeight: 28,
   overscan: 5
-})
-
-const containerHeight = computed(() => {
-  const contentHeight = filteredValues.value.length * itemHeight
-  return `${Math.min(contentHeight, maxHeight)}px`
 })
 </script>
