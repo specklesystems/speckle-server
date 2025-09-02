@@ -102,5 +102,8 @@
     "commitizen": {
       "path": "cz-conventional-changelog"
     }
+  },
+  "dependencies": {
+    "node-gyp": "^11.4.2"
   }
 }

@@ -119,7 +119,7 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
             )
             if (!requestDropped)
               res
-                .status(400)
+                .status(413)
                 .send(
                   `File size too large (${gzippedBuffer.length} > ${MAX_FILE_SIZE})`
                 )
@@ -143,7 +143,7 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
             )
             if (!requestDropped)
               res
-                .status(400)
+                .status(413)
                 .send(
                   `File size too large (${gunzippedBufferMegabyteSize} > ${MAX_FILE_SIZE})`
                 )
@@ -258,7 +258,7 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
             )
             if (!requestDropped)
               res
-                .status(400)
+                .status(413)
                 .send(`File size too large (${buffer.length} > ${MAX_FILE_SIZE})`)
             requestDropped = true
           }
