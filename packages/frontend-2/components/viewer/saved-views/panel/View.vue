@@ -3,12 +3,11 @@
 <template>
   <div
     v-keyboard-clickable
-    :class="wrapperClasses"
+    :class="[wrapperClasses, draggableClasses]"
     :view-id="view.id"
     draggable="true"
+    v-on="on"
     @click="apply"
-    @dragstart="onDragStart"
-    @dragend="onDragEnd"
   >
     <div class="flex items-center shrink-0">
       <div class="relative">
@@ -120,6 +119,7 @@ import {
   useCollectNewSavedViewViewerData,
   useUpdateSavedView
 } from '~/lib/viewer/composables/savedViews/management'
+import { useDraggableView } from '~/lib/viewer/composables/savedViews/ui'
 import { useSavedViewValidationHelpers } from '~/lib/viewer/composables/savedViews/validation'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 
@@ -159,6 +159,7 @@ graphql(`
     ...UseUpdateSavedView_SavedView
     ...ViewerSavedViewsPanelViewEditDialog_SavedView
     ...UseSavedViewValidationHelpers_SavedView
+    ...UseDraggableView_SavedView
   }
 `)
 
@@ -186,10 +187,12 @@ const {
 } = useSavedViewValidationHelpers({
   view: computed(() => props.view)
 })
+const { classes: draggableClasses, on } = useDraggableView({
+  view: computed(() => props.view)
+})
 
 const showMenu = ref(false)
 const menuId = useId()
-const isDragging = ref(false)
 
 const isActive = computed(() => props.view.id === savedView.value?.id)
 
@@ -270,43 +273,8 @@ const wrapperClasses = computed(() => {
     classParts.push('hover:bg-highlight-1')
   }
 
-  // Add dragging styles
-  if (isDragging.value) {
-    classParts.push('opacity-50 scale-95')
-  }
-
   return classParts.join(' ')
 })
-
-const onDragStart = (event: DragEvent) => {
-  if (!canUpdate.value?.authorized || isLoading.value) {
-    event.preventDefault()
-    return
-  }
-
-  isDragging.value = true
-
-  const dragData = {
-    viewId: props.view.id,
-    viewName: props.view.name,
-    sourceGroupId: props.view.group?.id || null,
-    projectId: props.view.projectId,
-    isHomeView: props.view.isHomeView,
-    groupResourceIds: props.view.groupResourceIds || []
-  }
-
-  event.dataTransfer?.setData('application/json', JSON.stringify(dragData))
-  event.dataTransfer!.effectAllowed = 'move'
-
-  if (event.dataTransfer?.setDragImage) {
-    const dragImage = event.target as HTMLElement
-    event.dataTransfer.setDragImage(dragImage, 0, 0)
-  }
-}
-
-const onDragEnd = () => {
-  isDragging.value = false
-}
 
 const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
   switch (item.id) {

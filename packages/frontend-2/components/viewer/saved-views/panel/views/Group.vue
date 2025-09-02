@@ -1,12 +1,6 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div
-    :class="dropZoneClasses"
-    @dragover="onDragOver"
-    @drop="onDrop"
-    @dragenter="onDragEnter"
-    @dragleave="onDragLeave"
-  >
+  <div :class="dropZoneClasses" v-on="on">
     <LayoutDisclosure
       v-if="!isUngroupedGroup"
       v-model:open="open"
@@ -76,7 +70,6 @@ import { Ellipsis, Plus } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   UseUpdateSavedViewGroup_SavedViewGroupFragment,
-  UseUpdateSavedView_SavedViewFragment,
   ViewerSavedViewsPanelViewsGroup_ProjectFragment,
   ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment,
   ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroupFragment
@@ -84,10 +77,10 @@ import type {
 import { ToastNotificationType } from '~/lib/common/composables/toast'
 import {
   useCreateSavedView,
-  useUpdateSavedViewGroup,
-  useUpdateSavedView
+  useUpdateSavedViewGroup
 } from '~/lib/viewer/composables/savedViews/management'
 import type { ViewsType } from '~/lib/viewer/helpers/savedViews'
+import { useDraggableViewTargetGroup } from '~/lib/viewer/composables/savedViews/ui'
 
 const { getTooltipProps } = useSmartTooltipDelay()
 
@@ -118,6 +111,7 @@ graphql(`
     ...ViewerSavedViewsPanelViewsGroupInner_SavedViewGroup
     ...ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroup
     ...UseUpdateSavedViewGroup_SavedViewGroup
+    ...UseDraggableViewTargetGroup_SavedViewGroup
   }
 `)
 
@@ -153,16 +147,20 @@ const { triggerNotification } = useGlobalToast()
 const isLoading = useMutationLoading()
 const createView = useCreateSavedView()
 const updateGroup = useUpdateSavedViewGroup()
-const updateView = useUpdateSavedView()
-const renameMode = defineModel<boolean>('renameMode')
+const { on, classes: dropZoneClasses } = useDraggableViewTargetGroup({
+  group: computed(() => props.group),
+  onMoved: () => {
+    // Auto-open the group if it was closed
+    if (!open.value) {
+      open.value = true
+    }
+  }
+})
 
+const renameMode = defineModel<boolean>('renameMode')
 const open = defineModel<boolean>('open')
 const showMenu = ref(false)
 const menuId = useId()
-
-// Drag and drop state
-const isDragOver = ref(false)
-const dragCounter = ref(0)
 
 const isUngroupedGroup = computed(() => props.group.isUngroupedViewsGroup)
 const canUpdate = computed(() => props.group.permissions.canUpdate)
@@ -185,104 +183,6 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
       disabledTooltip: canUpdate.value.errorMessage
     }
   ]
-])
-
-const onDragOver = (_event: DragEvent) => {
-  _event.preventDefault()
-  if (_event.dataTransfer) {
-    _event.dataTransfer.dropEffect = 'move'
-  }
-}
-
-const onDragEnter = (_event: DragEvent) => {
-  _event.preventDefault()
-  dragCounter.value++
-  isDragOver.value = true
-}
-
-const onDragLeave = (_event: DragEvent) => {
-  dragCounter.value--
-  if (dragCounter.value === 0) {
-    isDragOver.value = false
-  }
-}
-
-const onDrop = async (event: DragEvent) => {
-  event.preventDefault()
-  isDragOver.value = false
-  dragCounter.value = 0
-
-  try {
-    const dataTransfer = event.dataTransfer
-    if (!dataTransfer) return
-
-    const data = JSON.parse(dataTransfer.getData('application/json'))
-    if (!data.viewId || data.sourceGroupId === props.group.id) {
-      return // Same group, no need to move
-    }
-
-    // Move the view to this group using the enhanced drag data
-    const success = await moveViewToGroup(data)
-
-    if (success) {
-      // Auto-open the group if it was closed
-      if (!open.value) {
-        open.value = true
-      }
-
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: `Moved "${data.viewName}" to "${props.group.title}"`
-      })
-    } else {
-      triggerNotification({
-        type: ToastNotificationType.Danger,
-        title: 'Failed to move view'
-      })
-    }
-  } catch {
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Failed to move view'
-    })
-  }
-}
-
-const moveViewToGroup = async (dragData: {
-  viewId: string
-  viewName: string
-  sourceGroupId: string | null
-  projectId: string
-  isHomeView: boolean
-  groupResourceIds: string[]
-}): Promise<boolean> => {
-  try {
-    // Create a proper view object using the enhanced drag data
-    const viewData: UseUpdateSavedView_SavedViewFragment = {
-      id: dragData.viewId,
-      projectId: dragData.projectId,
-      isHomeView: dragData.isHomeView || false,
-      groupResourceIds: dragData.groupResourceIds || [],
-      group: { id: dragData.sourceGroupId || '' }
-    }
-
-    const result = await updateView({
-      view: viewData,
-      input: {
-        id: dragData.viewId,
-        projectId: dragData.projectId,
-        groupId: isUngroupedGroup.value ? null : props.group.id
-      }
-    })
-
-    return !!result?.id
-  } catch {
-    return false
-  }
-}
-
-const dropZoneClasses = computed(() => [
-  isDragOver.value && 'rounded-md ring-2 ring-primary ring-opacity-50 bg-primary/5'
 ])
 
 const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
