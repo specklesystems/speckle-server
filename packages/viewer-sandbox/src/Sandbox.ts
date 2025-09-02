@@ -28,7 +28,6 @@ import {
   ViewerEvent,
   BatchObject,
   VisualDiffMode,
-  MeasurementType,
   ExplodeExtension,
   DiffExtension,
   SpeckleLoader,
@@ -60,6 +59,7 @@ import {
   ObjectLoader2Factory
 } from '@speckle/objectloader2'
 import { SectionCaps } from './Extensions/SectionCaps.ts/SectionCaps'
+import { MeasurementType } from '@speckle/shared/viewer/state'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -497,6 +497,7 @@ export default class Sandbox {
     })
     screenshot.on('click', async () => {
       console.warn(await this.viewer.screenshot())
+
       /** Read depth */
       // const pass = [
       //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),
@@ -505,7 +506,6 @@ export default class Sandbox {
       // const [depthData, width, height] = await this.viewer
       //   .getExtension(PassReader)
       //   .read(pass)
-
       // console.log(PassReader.toBase64(PassReader.decodeDepth(depthData), width, height))
     })
 

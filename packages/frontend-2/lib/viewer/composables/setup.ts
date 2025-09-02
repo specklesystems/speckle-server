@@ -3,7 +3,6 @@ import {
   ViewerEvent,
   DefaultLightConfiguration,
   LegacyViewer,
-  MeasurementType,
   FilteringExtension
 } from '@speckle/viewer'
 import type {
@@ -12,7 +11,6 @@ import type {
   PropertyInfo,
   SunLightConfiguration,
   SpeckleView,
-  MeasurementOptions,
   DiffResult,
   Viewer,
   WorldTree,
@@ -57,7 +55,11 @@ import { writableAsyncComputed } from '~~/lib/common/composables/async'
 import type { AsyncWritableComputedRef } from '~~/lib/common/composables/async'
 import { setupUiDiffState } from '~~/lib/viewer/composables/setup/diff'
 import type { DiffStateCommand } from '~~/lib/viewer/composables/setup/diff'
-import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useDiffUtilities,
+  useFilterUtilities,
+  useMeasurementUtilities
+} from '~~/lib/viewer/composables/ui'
 import { flatten, isUndefined, reduce } from 'lodash-es'
 import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
 import {
@@ -67,7 +69,11 @@ import {
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { buildManualPromise } from '@speckle/ui-components'
 import { PassReader } from '../extensions/PassReader'
-import type { SectionBoxData } from '@speckle/shared/viewer/state'
+import type {
+  MeasurementData,
+  MeasurementOptions,
+  SectionBoxData
+} from '@speckle/shared/viewer/state'
 import {
   createGetParamFromResources,
   isAllModelsResource,
@@ -87,6 +93,7 @@ import {
 } from '~/lib/viewer/composables/savedViews/state'
 import type { defaultEdgeColorValue } from '~/lib/viewer/composables/setup/viewMode'
 import { useViewModesSetup } from '~/lib/viewer/composables/setup/viewMode'
+import { useMeasurementsSetup } from '~/lib/viewer/composables/setup/measurements'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -347,6 +354,7 @@ export type InjectableViewerState = Readonly<{
     measurement: {
       enabled: Ref<boolean>
       options: Ref<MeasurementOptions>
+      measurements: Ref<Array<MeasurementData>>
     }
     /**
      * Various saved views UI settings
@@ -1197,16 +1205,7 @@ function setupInterfaceState(
         hasAnyFiltersApplied
       },
       highlightedObjectIds,
-      measurement: {
-        enabled: ref(false),
-        options: ref<MeasurementOptions>({
-          visible: true,
-          type: MeasurementType.POINTTOPOINT,
-          units: 'm',
-          vertexSnap: true,
-          precision: 2
-        })
-      },
+      measurement: useMeasurementsSetup(),
       savedViews: useBuildSavedViewsUIState()
     }
   }
@@ -1268,6 +1267,7 @@ export function useResetUiState() {
   } = useInjectedViewerState()
   const { resetFilters } = useFilterUtilities()
   const { endDiff } = useDiffUtilities()
+  const { reset: resetMeasurements } = useMeasurementUtilities()
 
   return () => {
     camera.isOrthoProjection.value = false
@@ -1276,6 +1276,7 @@ export function useResetUiState() {
     lightConfig.value = { ...DefaultLightConfiguration }
     viewMode.resetViewMode()
     resetFilters()
+    resetMeasurements()
     endDiff()
   }
 }
