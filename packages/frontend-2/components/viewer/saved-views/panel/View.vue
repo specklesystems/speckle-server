@@ -31,7 +31,7 @@
           :size="12"
           :stroke-width="1.5"
           :absolute-stroke-width="true"
-          class="w-3 h-3 text-foreground-3"
+          class="w-3 h-3 text-foreground-3 shrink-0"
         />
         <div
           v-tippy="{
