@@ -241,6 +241,7 @@ export const useAuthManager = (
    */
   const authToken = useAuthCookie()
 
+  // NOTE: Refrain from using the name token as it overrides the authToken
   /**
    * Token used for embedding
    */
@@ -249,7 +250,7 @@ export const useAuthManager = (
   /**
    * Token used for dashboard sharing
    */
-  const dashboardToken = computed(() => route.query.token as Optional<string>)
+  const dashboardToken = computed(() => route.query.dashboardToken as Optional<string>)
 
   /**
    * Get the effective auth token
@@ -529,7 +530,8 @@ export const useAuthManager = (
     signInOrSignUpWithSso,
     logout,
     watchAuthQueryString,
-    inviteToken
+    inviteToken,
+    dashboardToken
   }
 }
 
