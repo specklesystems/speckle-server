@@ -274,6 +274,7 @@ jobs:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
+          POSTGRES_INITDB_ARGS: -c max_prepared_transactions=150
         ports:
           - 5432:5432
         options: >-
@@ -281,7 +282,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-          postgres -c max_prepared_transactions=150
       minio:
         image: bitnami/minio
         env:
