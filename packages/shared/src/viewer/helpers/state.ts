@@ -63,8 +63,11 @@ export interface SectionBoxData {
  * - ui.viewMode has new keys: edgesEnabled, edgesWeight, outlineOpacity, edgesColor
  * v1.4 -> 1.5
  * - ui.measurement.measurements added
+ * v1.5 -> 1.6
+ * - ui.filters.propertyFilters unified with propertyFilter (propertyFilter now computed from first propertyFilters item)
+ * - Migration logic added to convert legacy propertyFilter to propertyFilters array format
  */
-export const SERIALIZED_VIEWER_STATE_VERSION = 1.5
+export const SERIALIZED_VIEWER_STATE_VERSION = 1.6
 
 export type SerializedViewerState = {
   projectId: string
@@ -159,6 +162,11 @@ type UnformattedState = PartialDeep<
     ui: {
       filters: {
         selectedObjectIds: string[]
+        // Legacy single propertyFilter for migration
+        propertyFilter?: {
+          key: Nullable<string>
+          isApplied: boolean
+        }
       }
     }
   }
@@ -259,21 +267,61 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
         mode: state.ui?.diff?.mode || 1
       },
       spotlightUserSessionId: state.ui?.spotlightUserSessionId || null,
-      filters: {
-        ...(state.ui?.filters || {}),
-        isolatedObjectIds: state.ui?.filters?.isolatedObjectIds || [],
-        hiddenObjectIds: state.ui?.filters?.hiddenObjectIds || [],
-        selectedObjectApplicationIds,
-        propertyFilter: {
-          ...(state.ui?.filters?.propertyFilter || {}),
-          key: state.ui?.filters?.propertyFilter?.key || null,
-          isApplied: state.ui?.filters?.propertyFilter?.isApplied || false
-        },
-        // Optional new multi-filter system
-        ...(state.ui?.filters?.propertyFilters && {
-          propertyFilters: state.ui.filters.propertyFilters
-        })
-      },
+      filters: (() => {
+        const baseFilters = {
+          ...(state.ui?.filters || {}),
+          isolatedObjectIds: state.ui?.filters?.isolatedObjectIds || [],
+          hiddenObjectIds: state.ui?.filters?.hiddenObjectIds || [],
+          selectedObjectApplicationIds
+        }
+
+        // Migration logic: handle legacy propertyFilter and new propertyFilters
+        let propertyFilters: Array<{
+          key: Nullable<string>
+          isApplied: boolean
+          selectedValues: string[]
+          id: string
+          condition: 'AND' | 'OR'
+        }> = []
+
+        // If new propertyFilters exist, use them
+        if (
+          state.ui?.filters?.propertyFilters &&
+          Array.isArray(state.ui.filters.propertyFilters)
+        ) {
+          propertyFilters = state.ui.filters.propertyFilters
+        }
+        // If legacy propertyFilter exists but no propertyFilters, migrate it
+        else if (state.ui?.filters?.propertyFilter?.key) {
+          propertyFilters = [
+            {
+              key: state.ui.filters.propertyFilter.key,
+              isApplied: state.ui.filters.propertyFilter.isApplied || false,
+              selectedValues: [], // Legacy didn't have selectedValues
+              id: 'legacy-filter', // Generate a consistent ID for legacy filter
+              condition: 'AND' as const
+            }
+          ]
+        }
+
+        // Create legacy-compatible propertyFilter from first item in propertyFilters
+        const propertyFilter =
+          propertyFilters.length > 0
+            ? {
+                key: propertyFilters[0].key,
+                isApplied: propertyFilters[0].isApplied
+              }
+            : {
+                key: null,
+                isApplied: false
+              }
+
+        return {
+          ...baseFilters,
+          propertyFilters,
+          propertyFilter
+        }
+      })(),
       camera: {
         ...(state.ui?.camera || {}),
         position: state.ui?.camera?.position || throwInvalidError('ui.camera.position'),

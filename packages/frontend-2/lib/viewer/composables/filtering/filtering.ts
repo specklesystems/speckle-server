@@ -832,6 +832,53 @@ export function useFilterUtilities(
     explodeFactor.value = 0
   }
 
+  /**
+   * Restores filters from serialized state
+   */
+  const restoreFilters = async (
+    serializedFilters: Array<{
+      key: string | null
+      isApplied: boolean
+      selectedValues: string[]
+      id: string
+      condition: 'AND' | 'OR'
+    }>
+  ) => {
+    if (!serializedFilters?.length) return
+
+    resetFilters() // Clear existing filters first
+
+    // Wait for availableFilters to be loaded if they're not ready
+    if (!viewer.metadata.availableFilters.value) {
+      await until(viewer.metadata.availableFilters).toMatch(
+        (filters) => !!filters && filters.length > 0
+      )
+    }
+
+    for (const serializedFilter of serializedFilters) {
+      if (serializedFilter.key && viewer.metadata.availableFilters.value) {
+        // Find the matching PropertyInfo object
+        const propertyInfo = viewer.metadata.availableFilters.value.find(
+          (f) => f.key === serializedFilter.key
+        )
+        if (propertyInfo) {
+          // Recreate the filter
+          const filterId = addActiveFilter(propertyInfo)
+
+          // Restore the selected values
+          if (serializedFilter.selectedValues?.length) {
+            updateActiveFilterValues(filterId, serializedFilter.selectedValues)
+          }
+
+          // Restore the applied state
+          if (!serializedFilter.isApplied) {
+            toggleFilterApplied(filterId) // Toggle to match the serialized state
+          }
+        }
+      }
+    }
+  }
+
   const waitForAvailableFilter = async (
     key: string,
     options?: Partial<{ timeout: number }>
@@ -1161,6 +1208,7 @@ export function useFilterUtilities(
     toggleActiveFilterValue,
     isActiveFilterValueSelected,
     resetFilters,
+    restoreFilters,
     resetExplode,
     waitForAvailableFilter,
     isRevitProperty,
