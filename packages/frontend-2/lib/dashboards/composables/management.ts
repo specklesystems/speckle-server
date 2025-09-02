@@ -20,7 +20,7 @@ export function useCreateDashboard() {
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
   const { activeUser } = useActiveUser()
-  const { track } = useMixpanel()
+  const mixpanel = useMixpanel()
 
   return async (options: {
     identifier: WorkspaceIdentifier
@@ -59,7 +59,7 @@ export function useCreateDashboard() {
       .catch(convertThrowIntoFetchResult)
 
     if (res.data?.dashboardMutations.create) {
-      track('Dashboard Created', {
+      mixpanel.track('Dashboard Created', {
         // eslint-disable-next-line camelcase
         workspace_id: res.data.dashboardMutations.create.workspace.id
       })
@@ -83,13 +83,13 @@ export function useCreateDashboard() {
 export function useUpdateDashboard() {
   const { mutate } = useMutation(updateDashboardMutation)
   const { triggerNotification } = useGlobalToast()
-  const { track } = useMixpanel()
+  const mixpanel = useMixpanel()
 
   return async (input: DashboardUpdateInput, workspaceId: string) => {
     const result = await mutate({ input }).catch(convertThrowIntoFetchResult)
 
     if (result?.data?.dashboardMutations.update) {
-      track('Dashboard Updated', {
+      mixpanel.track('Dashboard Updated', {
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
       })
@@ -112,7 +112,7 @@ export function useDeleteDashboard() {
   const apollo = useApolloClient().client
 
   const { triggerNotification } = useGlobalToast()
-  const { track } = useMixpanel()
+  const mixpanel = useMixpanel()
 
   return async (id: string, workspaceId: string) => {
     const res = await apollo
@@ -128,7 +128,7 @@ export function useDeleteDashboard() {
       .catch(convertThrowIntoFetchResult)
 
     if (res.data?.dashboardMutations.delete) {
-      track('Dashboard Deleted', {
+      mixpanel.track('Dashboard Deleted', {
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
       })
