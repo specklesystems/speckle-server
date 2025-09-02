@@ -18,58 +18,20 @@
       </div>
     </div>
     <div class="flex flex-col min-w-0 grow">
-      <div class="text-body-2xs font-medium text-foreground truncate grow-0 pr-1.5">
+      <div class="text-body-2xs font-medium text-foreground truncate grow-0">
         {{ view.name }}
       </div>
-      <div class="flex gap-1 items-center justify-between">
-        <div class="text-body-2xs text-foreground-3 truncate">
-          {{ view.author?.name }}
-        </div>
-        <div class="flex gap-0.5 items-center" @click.stop>
-          <LayoutMenu
-            v-model:open="showMenu"
-            :items="menuItems"
-            :menu-id="menuId"
-            mount-menu-on-body
-            show-ticks="right"
-            :size="230"
-            class="shrink-0 opacity-0 group-hover:opacity-100"
-            @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
-          >
-            <FormButton
-              size="sm"
-              color="subtle"
-              :icon-left="Ellipsis"
-              hide-text
-              name="viewActions"
-              class="shrink-0"
-              @click="showMenu = !showMenu"
-            />
-          </LayoutMenu>
-          <div
-            v-tippy="canUpdate?.errorMessage"
-            class="shrink-0 opacity-0 group-hover:opacity-100"
-          >
-            <FormButton
-              size="sm"
-              color="subtle"
-              :icon-left="SquarePen"
-              hide-text
-              name="editView"
-              class="shrink-0"
-              :disabled="!canUpdate?.authorized || isLoading"
-              @click="onEdit"
-            />
-          </div>
-        </div>
+      <div class="text-body-2xs text-foreground-3 truncate">
+        {{ view.author?.name }}
       </div>
       <div class="w-full flex items-center gap-1">
-        <Globe
-          v-if="!isOnlyVisibleToMe"
+        <User
+          v-if="isOnlyVisibleToMe"
+          v-tippy="getTooltipProps('Only visible to you')"
           :size="12"
           :stroke-width="1.5"
           :absolute-stroke-width="true"
-          class="w-3 h-3 text-foreground-2"
+          class="w-3 h-3 text-foreground-3 shrink-0"
         />
         <div
           v-tippy="{
@@ -81,8 +43,50 @@
           }"
           class="text-body-2xs text-foreground-3 truncate pr-1.5"
         >
-          {{ formattedRelativeDate(view.updatedAt) }}
+          {{ formattedRelativeDate(view.updatedAt, { capitalize: true }) }}
         </div>
+      </div>
+    </div>
+    <div
+      class="flex gap-0.5 items-center opacity-0 w-0 group-hover:opacity-100 group-hover:w-auto"
+      @click.stop
+    >
+      <LayoutMenu
+        v-model:open="showMenu"
+        :items="menuItems"
+        :menu-id="menuId"
+        mount-menu-on-body
+        show-ticks="right"
+        :size="230"
+        class="shrink-0"
+        @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
+      >
+        <FormButton
+          size="sm"
+          color="subtle"
+          :icon-left="Ellipsis"
+          hide-text
+          name="viewActions"
+          class="shrink-0"
+          @click="showMenu = !showMenu"
+        />
+      </LayoutMenu>
+      <div
+        v-tippy="
+          getTooltipProps(canUpdate?.authorized ? 'Edit view' : canUpdate?.errorMessage)
+        "
+        class="shrink-0 opacity-0 group-hover:opacity-100"
+      >
+        <FormButton
+          size="sm"
+          color="subtle"
+          :icon-left="SquarePen"
+          hide-text
+          name="editView"
+          class="shrink-0"
+          :disabled="!canUpdate?.authorized || isLoading"
+          @click="onEdit"
+        />
       </div>
     </div>
   </div>
@@ -96,7 +100,8 @@ import {
 } from '@speckle/shared'
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
-import { Ellipsis, SquarePen, Bookmark, Globe } from 'lucide-vue-next'
+import { difference } from 'lodash-es'
+import { Ellipsis, SquarePen, Bookmark, User } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   SavedViewVisibility,
@@ -107,6 +112,7 @@ import {
   useCollectNewSavedViewViewerData,
   useUpdateSavedView
 } from '~/lib/viewer/composables/savedViews/management'
+import { useSavedViewValidationHelpers } from '~/lib/viewer/composables/savedViews/validation'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 
 const MenuItems = StringEnum([
@@ -120,6 +126,8 @@ const MenuItems = StringEnum([
 ])
 type MenuItems = StringEnumValues<typeof MenuItems>
 
+const { getTooltipProps } = useSmartTooltipDelay()
+
 graphql(`
   fragment ViewerSavedViewsPanelView_SavedView on SavedView {
     id
@@ -128,6 +136,7 @@ graphql(`
     screenshot
     visibility
     isHomeView
+    resourceIds
     author {
       id
       name
@@ -141,6 +150,7 @@ graphql(`
     ...UseDeleteSavedView_SavedView
     ...UseUpdateSavedView_SavedView
     ...ViewerSavedViewsPanelViewEditDialog_SavedView
+    ...UseSavedViewValidationHelpers_SavedView
   }
 `)
 
@@ -150,7 +160,7 @@ const props = defineProps<{
 
 const {
   resources: {
-    response: { savedView, isFederatedView }
+    response: { savedView, isFederatedView, resourceItemsIds }
   }
 } = useInjectedViewerState()
 const { collect } = useCollectNewSavedViewViewerData()
@@ -159,61 +169,60 @@ const isLoading = useMutationLoading()
 const { copyLink, applyView } = useViewerSavedViewsUtils()
 const eventBus = useEventBus()
 const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
+const {
+  canUpdate,
+  isOnlyVisibleToMe,
+  canSetHomeView,
+  isHomeView,
+  canToggleVisibility
+} = useSavedViewValidationHelpers({
+  view: computed(() => props.view)
+})
 
 const showMenu = ref(false)
 const menuId = useId()
 
-const canUpdate = computed(() => props.view.permissions.canUpdate)
-const isOnlyVisibleToMe = computed(
-  () => props.view.visibility === SavedViewVisibility.AuthorOnly
-)
-const isHomeView = computed(() => props.view.isHomeView)
 const isActive = computed(() => props.view.id === savedView.value?.id)
 
-const canSetHomeView = computed(
+const isOriginalVersionAlreadyLoaded = computed(() => {
+  const viewResources = props.view.resourceIds
+  const currentlyLoadedResources = resourceItemsIds.value
+  return difference(viewResources, currentlyLoadedResources).length === 0
+})
+
+const canLoadOriginal = computed(
   (): { authorized: boolean; message: Optional<string> } => {
-    if (!canUpdate.value?.authorized || isLoading.value) {
-      return { authorized: false, message: canUpdate.value.errorMessage || undefined }
-    }
-
-    if (isFederatedView.value) {
-      return {
-        authorized: false,
-        message: "Home view settings can't be updated while in a federated view"
-      }
-    }
-
-    if (isOnlyVisibleToMe.value) {
-      return {
-        authorized: false,
-        message: 'A view must be shared to be set as home view'
-      }
+    if (isOriginalVersionAlreadyLoaded.value) {
+      return { authorized: false, message: 'Original version is already loaded' }
     }
 
     return { authorized: true, message: undefined }
   }
 )
+
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
-      id: MenuItems.LoadOriginalVersions,
-      title: 'Load with original model version'
+      id: MenuItems.MoveToGroup,
+      title: 'Move to group',
+      disabled: !canUpdate.value?.authorized || isLoading.value,
+      disabledTooltip: canUpdate.value?.errorMessage
     },
     {
       id: MenuItems.ReplaceView,
       title: 'Replace view',
       disabled: !canUpdate.value?.authorized || isLoading.value,
-      disabledTooltip: canUpdate.value.errorMessage
-    },
-    {
-      id: MenuItems.MoveToGroup,
-      title: 'Move to group',
-      disabled: !canUpdate.value?.authorized || isLoading.value,
-      disabledTooltip: canUpdate.value.errorMessage
+      disabledTooltip: canUpdate.value?.errorMessage
     },
     {
       id: MenuItems.CopyLink,
       title: 'Copy link'
+    },
+    {
+      id: MenuItems.LoadOriginalVersions,
+      title: 'Load with original model version',
+      disabled: !canLoadOriginal.value.authorized || isLoading.value,
+      disabledTooltip: canLoadOriginal.value.message
     }
   ],
   [
@@ -226,24 +235,25 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
     },
     {
       id: MenuItems.ChangeVisibility,
-      title: 'Share view to workspace',
-      active: !isOnlyVisibleToMe.value,
-      disabled: !canUpdate.value?.authorized || isLoading.value,
-      disabledTooltip: canUpdate.value.errorMessage
+      title: isOnlyVisibleToMe.value ? 'Make view shared' : 'Make view private',
+      disabled: !canToggleVisibility.value.authorized,
+      disabledTooltip: canToggleVisibility.value.message
     }
   ],
   [
     {
       id: MenuItems.Delete,
-      title: 'Delete',
+      title: 'Delete view...',
       disabled: !canUpdate.value?.authorized || isLoading.value,
-      disabledTooltip: canUpdate.value.errorMessage
+      disabledTooltip: canUpdate.value?.errorMessage
     }
   ]
 ])
 
 const wrapperClasses = computed(() => {
-  const classParts = ['flex gap-2 p-2 pr-0.5 w-full group rounded-md cursor-pointer']
+  const classParts = [
+    'flex items-center gap-2 p-1.5 w-full group rounded-md cursor-pointer'
+  ]
 
   if (isActive.value) {
     classParts.push('bg-highlight-2 hover:bg-highlight-3')

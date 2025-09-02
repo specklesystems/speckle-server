@@ -148,7 +148,13 @@ export const convertLegacyDataToStateFactory =
           isOrthoProjection: !!data.camPos?.[6],
           zoom: data.camPos?.[7] || 1
         },
-        viewMode: 0,
+        viewMode: {
+          mode: 0,
+          edgesColor: 0,
+          edgesEnabled: true,
+          outlineOpacity: 0.75,
+          edgesWeight: 1
+        },
         sectionBox: sectionBox
           ? {
               min: (sectionBox.min as number[]) || [0, 0, 0],
@@ -171,7 +177,8 @@ export const convertLegacyDataToStateFactory =
         },
         measurement: {
           enabled: false,
-          options: null
+          options: null,
+          measurements: []
         }
       }
     }

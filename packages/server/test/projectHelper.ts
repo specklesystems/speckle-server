@@ -46,6 +46,7 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { grantProjectPermissionsFactory } from '@/modules/core/repositories/streams'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -121,6 +122,7 @@ export const createProject = createStreamReturnRecordFactory({
   }),
   createStream: createStreamFactory({ db }),
   createBranch: createBranchFactory({ db }),
+  storeProjectRole: storeProjectRoleFactory({ db }),
   emitEvent: getEventBus().emit
 })
 

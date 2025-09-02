@@ -16,8 +16,8 @@ const props = withDefaults(
 
 const message = computed(() => {
   if (props.type === 'search') {
-    return 'No saved scenes match your search criteria'
+    return 'No views match your search criteria'
   }
-  return 'There are no saved scenes yet'
+  return 'No saved views yet'
 })
 </script>

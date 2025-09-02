@@ -43,12 +43,18 @@ describe('Viewer State helpers', () => {
             isOrthoProjection: false,
             zoom: 1
           },
-          viewMode: 0,
+          viewMode: {
+            mode: 0,
+            edgesColor: 0,
+            edgesEnabled: true,
+            outlineOpacity: 0,
+            edgesWeight: 0
+          },
           sectionBox: null,
           lightConfig: {},
           explodeFactor: 0,
           selection: null,
-          measurement: { enabled: false, options: null }
+          measurement: { enabled: false, options: null, measurements: [] }
         }
       }
       expect(isSerializedViewerState(valid)).toBe(true)
@@ -149,12 +155,18 @@ describe('Viewer State helpers', () => {
             isOrthoProjection: false,
             zoom: 1
           },
-          viewMode: 0,
+          viewMode: {
+            mode: 0,
+            edgesColor: 0,
+            edgesEnabled: true,
+            outlineOpacity: 0,
+            edgesWeight: 0
+          },
           sectionBox: null,
           lightConfig: {},
           explodeFactor: 0,
           selection: null,
-          measurement: { enabled: false, options: null }
+          measurement: { enabled: false, options: null, measurements: [] }
         }
       }
       const result = inputToVersionedState(valid)
@@ -202,12 +214,18 @@ describe('Viewer State helpers', () => {
               isOrthoProjection: false,
               zoom: 1
             },
-            viewMode: 0,
+            viewMode: {
+              mode: 0,
+              edgesColor: 0,
+              edgesEnabled: true,
+              outlineOpacity: 0,
+              edgesWeight: 0
+            },
             sectionBox: null,
             lightConfig: {},
             explodeFactor: 0,
             selection: null,
-            measurement: { enabled: false, options: null }
+            measurement: { enabled: false, options: null, measurements: [] }
           }
         }
       }

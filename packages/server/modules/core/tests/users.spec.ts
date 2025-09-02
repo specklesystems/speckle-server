@@ -33,12 +33,10 @@ import {
 } from '@/modules/core/services/commit/management'
 import {
   getStreamFactory,
-  createStreamFactory,
   grantStreamPermissionsFactory,
   markCommitStreamUpdatedFactory,
   deleteStreamFactory,
   getUserDeletableStreamsFactory,
-  getStreamRolesFactory,
   getExplicitProjects
 } from '@/modules/core/repositories/streams'
 import {
@@ -46,25 +44,12 @@ import {
   storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
-  legacyCreateStreamFactory,
-  createStreamReturnRecordFactory
-} from '@/modules/core/services/streams/management'
-import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
-import {
-  findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory,
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory,
-  deleteAllUserInvitesFactory,
-  findInviteFactory,
-  deleteInvitesByTargetFactory
+  deleteAllUserInvitesFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
-import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
-  getUsersFactory,
   getUserFactory,
   legacyGetUserFactory,
   storeUserFactory,
@@ -99,10 +84,7 @@ import {
   changeUserRoleFactory
 } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import {
-  finalizeInvitedServerRegistrationFactory,
-  finalizeResourceInviteFactory
-} from '@/modules/serverinvites/services/processing'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { dbLogger } from '@/observability/logging'
 import {
   storeApiTokenFactory,
@@ -121,21 +103,20 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getPaginatedBranchCommitsItemsByNameFactory } from '@/modules/core/services/commit/retrieval'
 import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branch/retrieval'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
-import {
-  processFinalizedProjectInviteFactory,
-  validateProjectInviteBeforeFinalizationFactory
-} from '@/modules/serverinvites/services/coreFinalization'
-import {
-  addOrUpdateStreamCollaboratorFactory,
-  validateStreamAccessFactory
-} from '@/modules/core/services/streams/access'
-import { authorizeResolver } from '@/modules/shared'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
 import { queryAllProjectsFactory } from '@/modules/core/services/projects'
+import { getTestRegionClients } from '@/modules/multiregion/tests/helpers'
+import { asMultiregionalOperation } from '@/modules/shared/command'
+import type {
+  ChangeUserPassword,
+  CreateValidatedUser,
+  DeleteUser,
+  UpdateUserAndNotify
+} from '@/modules/core/domain/users/operations'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
-const getUsers = getUsersFactory({ db })
 const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getStream = getStreamFactory({ db })
 const createBranch = createBranchFactory({ db })
@@ -159,139 +140,146 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getBranchById: getBranchByIdFactory({ db })
 })
 
-const buildFinalizeProjectInvite = () =>
-  finalizeResourceInviteFactory({
-    findInvite: findInviteFactory({ db }),
-    validateInvite: validateProjectInviteBeforeFinalizationFactory({
-      getProject: getStream
-    }),
-    processInvite: processFinalizedProjectInviteFactory({
-      getProject: getStream,
-      addProjectRole: addOrUpdateStreamCollaboratorFactory({
-        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
-        getUser,
-        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-        getStreamRoles: getStreamRolesFactory({ db }),
-        emitEvent: getEventBus().emit
-      })
-    }),
-    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    emitEvent: (...args) => getEventBus().emit(...args),
-    findEmail: findEmailFactory({ db }),
-    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-      createUserEmail: createUserEmailFactory({ db }),
-      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-      findEmail: findEmailFactory({ db }),
-      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-      }),
-      requestNewEmailVerification: requestNewEmailVerificationFactory({
-        findEmail: findEmailFactory({ db }),
-        getUser,
-        getServerInfo,
-        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-          db
-        }),
-        renderEmail,
-        sendEmail
-      })
-    }),
-    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-      getStream
-    }),
-    getUser,
-    getServerInfo
-  })
-
-const createStream = legacyCreateStreamFactory({
-  createStreamReturnRecord: createStreamReturnRecordFactory({
-    inviteUsersToProject: inviteUsersToProjectFactory({
-      createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory({ db }),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-          getStream
-        }),
-        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-          getStream
-        }),
-        emitEvent: ({ eventName, payload }) =>
-          getEventBus().emit({
-            eventName,
-            payload
-          }),
-        getUser: getUserFactory({ db }),
-        getServerInfo,
-        finalizeInvite: buildFinalizeProjectInvite()
-      }),
-      getUsers
-    }),
-    createStream: createStreamFactory({ db }),
-    createBranch: createBranchFactory({ db }),
-    emitEvent: getEventBus().emit
-  })
-})
 const grantPermissionsStream = grantStreamPermissionsFactory({ db })
 
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
+const createUser: CreateValidatedUser = async (...input) =>
+  asMultiregionalOperation(
+    async ({ mainDb, allDbs, emit }) => {
+      const createUser = createUserFactory({
+        getServerInfo,
+        findEmail: findEmailFactory({ db: mainDb }),
+        storeUser: async (...params) => {
+          const [user] = await Promise.all(
+            allDbs.map((db) => storeUserFactory({ db })(...params))
+          )
+
+          return user
+        },
+        countAdminUsers: countAdminUsersFactory({ db: mainDb }),
+        storeUserAcl: storeUserAclFactory({ db: mainDb }),
+        validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+          createUserEmail: createUserEmailFactory({ db: mainDb }),
+          ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({
+            db: mainDb
+          }),
+          findEmail: findEmailFactory({ db: mainDb }),
+          updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+            deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db: mainDb }),
+            updateAllInviteTargets: updateAllInviteTargetsFactory({ db: mainDb })
+          }),
+          requestNewEmailVerification: requestNewEmailVerificationFactory({
+            getServerInfo,
+            findEmail: findEmailFactory({ db: mainDb }),
+            getUser: getUserFactory({ db: mainDb }),
+            deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory(
+              {
+                db: mainDb
+              }
+            ),
+            renderEmail,
+            sendEmail
+          })
+        }),
+        emitEvent: emit
+      })
+
+      return createUser(...input)
+    },
+    {
+      dbs: await getTestRegionClients(),
+      name: 'create user spec',
+      logger: dbLogger
+    }
+  )
+
 const findOrCreateUser = findOrCreateUserFactory({
   createUser,
   findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
 })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
-const updateUser = updateUserAndNotifyFactory({
-  getUser: getUserFactory({ db }),
-  updateUser: updateUserFactory({ db }),
-  emitEvent: getEventBus().emit
-})
-const updateUserPassword = changePasswordFactory({
-  getUser: getUserFactory({ db }),
-  updateUser: updateUserFactory({ db })
-})
+const updateUser: UpdateUserAndNotify = async (...input) =>
+  asMultiregionalOperation(
+    ({ mainDb, allDbs, emit }) => {
+      const updateUserAndNotify = updateUserAndNotifyFactory({
+        getUser: getUserFactory({ db: mainDb }),
+        updateUser: async (...params) => {
+          const [res] = await Promise.all(
+            allDbs.map((db) => updateUserFactory({ db })(...params))
+          )
+
+          return res
+        },
+        emitEvent: emit
+      })
+
+      return updateUserAndNotify(...input)
+    },
+    {
+      logger: dbLogger,
+      name: 'update user and notify spec',
+      dbs: await getTestRegionClients()
+    }
+  )
+
+const updateUserPassword: ChangeUserPassword = async (...input) =>
+  asMultiregionalOperation(
+    ({ mainDb, allDbs }) => {
+      const updateUserPassword = changePasswordFactory({
+        getUser: getUserFactory({ db: mainDb }),
+        updateUser: async (...params) => {
+          const [res] = await Promise.all(
+            allDbs.map((db) => updateUserFactory({ db })(...params))
+          )
+
+          return res
+        }
+      })
+
+      return updateUserPassword(...input)
+    },
+    {
+      logger: dbLogger,
+      name: 'update user password spec',
+      dbs: await getTestRegionClients()
+    }
+  )
+
 const validateUserPassword = validateUserPasswordFactory({
   getUserByEmail: getUserByEmailFactory({ db })
 })
-const deleteUser = deleteUserFactory({
-  deleteStream: deleteStreamFactory({ db }),
-  logger: dbLogger,
-  isLastAdminUser: isLastAdminUserFactory({ db }),
-  getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
-  queryAllProjects: queryAllProjectsFactory({
-    getExplicitProjects: getExplicitProjects({ db })
-  }),
-  getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
-  deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
-  deleteUserRecord: deleteUserRecordFactory({ db }),
-  emitEvent: getEventBus().emit
-})
+
+const deleteUser: DeleteUser = async (...input) =>
+  asMultiregionalOperation(
+    ({ mainDb, allDbs, emit }) => {
+      const deleteUser = deleteUserFactory({
+        deleteStream: deleteStreamFactory({ db: mainDb }),
+        logger: dbLogger,
+        isLastAdminUser: isLastAdminUserFactory({ db: mainDb }),
+        getUserDeletableStreams: getUserDeletableStreamsFactory({ db: mainDb }),
+        queryAllProjects: queryAllProjectsFactory({
+          getExplicitProjects: getExplicitProjects({ db: mainDb })
+        }),
+        getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db: mainDb }),
+        deleteAllUserInvites: deleteAllUserInvitesFactory({ db: mainDb }),
+        deleteUserRecord: async (params) => {
+          const [res] = await Promise.all(
+            allDbs.map((db) => deleteUserRecordFactory({ db })(params))
+          )
+
+          return res
+        },
+        emitEvent: emit
+      })
+
+      return deleteUser(...input)
+    },
+    {
+      logger: dbLogger,
+      name: 'delete user spec',
+      dbs: await getTestRegionClients()
+    }
+  )
+
 const changeUserRole = changeUserRoleFactory({
   getServerInfo,
   isLastAdminUser: isLastAdminUserFactory({ db }),
@@ -332,7 +320,7 @@ const createObject = createObjectFactory({
   storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
-describe('Actors & Tokens @user-services', () => {
+describe('Actors & Tokens @user-services @multiregion', () => {
   const myTestActor = {
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie@example.org',
@@ -364,7 +352,7 @@ describe('Actors & Tokens @user-services', () => {
       )
     })
 
-    let ballmerUserId: null | string = null
+    let ballmerUser: { id: string; email: string }
 
     it('Find or create should create a user', async () => {
       const newUser: { name: string; email: string; password: string } = {
@@ -373,10 +361,9 @@ describe('Actors & Tokens @user-services', () => {
         password: 'testthebest'
       }
 
-      const { id } = await findOrCreateUser({ user: newUser })
-      ballmerUserId = id
-      expect(id).to.be.a('string')
-      const user = await getUser(id)
+      ballmerUser = await findOrCreateUser({ user: newUser })
+      expect(ballmerUser.id).to.be.a('string')
+      const user = await getUser(ballmerUser.id)
       expect(user.verified).to.equal(true)
     })
 
@@ -388,32 +375,33 @@ describe('Actors & Tokens @user-services', () => {
       }
 
       const { id } = await findOrCreateUser({ user: newUser })
-      expect(id).to.equal(ballmerUserId)
+      expect(id).to.equal(ballmerUser.id)
     })
 
     // Note: deletion is more complicated.
-    it('Should delete a user', async () => {
-      const soloOwnerStream = {
-        name: 'Test Stream 01',
-        description: 'wonderful test stream',
-        isPublic: true,
-        id: ''
-      }
-      const multiOwnerStream = {
-        name: 'Test Stream 02',
-        description: 'another test stream',
-        isPublic: true,
-        id: ''
-      }
-
-      soloOwnerStream.id = await createStream({
-        ...soloOwnerStream,
-        ownerId: ballmerUserId!
-      })
-      multiOwnerStream.id = await createStream({
-        ...multiOwnerStream,
-        ownerId: ballmerUserId!
-      })
+    it('Should delete a user @multiregion', async () => {
+      const soloOwnerStream = await createTestStream(
+        {
+          name: 'Test Stream 01',
+          description: 'wonderful test stream',
+          isPublic: true
+        },
+        {
+          ...ballmerUser,
+          name: ''
+        }
+      )
+      const multiOwnerStream = await createTestStream(
+        {
+          name: 'Test Stream 02',
+          description: 'another test stream',
+          isPublic: true
+        },
+        {
+          ...ballmerUser,
+          name: ''
+        }
+      )
 
       await grantPermissionsStream({
         streamId: multiOwnerStream.id,
@@ -427,7 +415,7 @@ describe('Actors & Tokens @user-services', () => {
         await createBranch({
           ...branch,
           streamId: multiOwnerStream.id,
-          authorId: ballmerUserId!
+          authorId: ballmerUser.id!
         })
       ).id
 
@@ -452,11 +440,11 @@ describe('Actors & Tokens @user-services', () => {
           message: 'breakfast commit',
           sourceApplication: 'tests',
           objectId: objId,
-          authorId: ballmerUserId!
+          authorId: ballmerUser.id!
         })
       ).id
 
-      await deleteUser(ballmerUserId!)
+      await deleteUser(ballmerUser.id!)
 
       if ((await getStream({ streamId: soloOwnerStream.id })) !== undefined) {
         assert.fail('user stream not deleted')
@@ -485,7 +473,7 @@ describe('Actors & Tokens @user-services', () => {
       })
       expect(commitsByStreamId.commits.length).to.equal(1)
 
-      const user = await getUser(ballmerUserId!)
+      const user = await getUser(ballmerUser.id!)
       if (user) assert.fail('user not deleted')
     })
 

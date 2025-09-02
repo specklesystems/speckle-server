@@ -8,6 +8,7 @@
     <template #actions>
       <div v-if="!isLowerPlan" class="flex items-center gap-0.5">
         <FormButton
+          v-tippy="getTooltipProps('Search views')"
           size="sm"
           color="subtle"
           :icon-left="Search"
@@ -16,17 +17,19 @@
         />
         <div v-tippy="canCreateViewOrGroup?.errorMessage" class="flex items-center">
           <FormButton
+            v-tippy="getTooltipProps('Create group')"
             size="sm"
             color="subtle"
             :icon-left="FolderPlus"
             hide-text
             name="addGroup"
             :disabled="!canCreateViewOrGroup?.authorized || isLoading"
-            @click="onAddGroup"
+            @click="() => (showCreateGroupDialog = true)"
           />
         </div>
         <div v-tippy="canCreateViewOrGroup?.errorMessage" class="flex items-center">
           <FormButton
+            v-tippy="getTooltipProps('Create view')"
             size="sm"
             color="subtle"
             :icon-left="Plus"
@@ -39,17 +42,18 @@
       </div>
     </template>
     <template v-if="searchMode" #fullTitle>
-      <div class="self-center w-full pr-2 flex gap-2 items-center">
+      <div class="self-center w-full pr-1 flex gap-2 items-center">
         <FormTextInput
           v-bind="bind"
           name="search"
-          placeholder="Search"
+          placeholder="Search views..."
           color="foundation"
           auto-focus
+          size="sm"
+          wrapper-classes="flex-1 -ml-1"
           v-on="on"
         />
         <FormButton
-          v-tippy="'Exit search'"
           size="sm"
           color="subtle"
           :icon-left="X"
@@ -60,7 +64,7 @@
       </div>
     </template>
     <template v-if="!isLowerPlan">
-      <div class="px-4 pt-2">
+      <div class="px-3 pt-3">
         <ViewerButtonGroup>
           <ViewerButtonGroupButton
             v-for="viewsType in Object.values(ViewsType)"
@@ -87,14 +91,16 @@
       >
         <CommonPromoAlert
           title="Save your views"
-          text="With an editor seat, unlock the option to save your own views."
-          :button="{ title: 'Learn more' }"
+          text="With an Editor seat, unlock the option to save views. A workspace admin can update your seat type."
           show-closer
           @close="hideViewerSeatDisclaimer = true"
         />
       </div>
     </template>
-    <ViewerSavedViewsPlanUpsell v-else />
+    <ViewerSavedViewsPanelGroupsCreateDialog
+      v-model:open="showCreateGroupDialog"
+      @success="onAddGroup"
+    />
   </ViewerLayoutSidePanel>
 </template>
 <script setup lang="ts">
@@ -102,14 +108,8 @@ import { useMutationLoading } from '@vue/apollo-composable'
 import { Search, FolderPlus, Plus, X } from 'lucide-vue-next'
 import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 import { graphql } from '~/lib/common/generated/gql'
-import {
-  SavedViewVisibility,
-  WorkspaceSeatType
-} from '~/lib/common/generated/gql/graphql'
-import {
-  useCreateSavedView,
-  useCreateSavedViewGroup
-} from '~/lib/viewer/composables/savedViews/management'
+import { WorkspaceSeatType } from '~/lib/common/generated/gql/graphql'
+import { useCreateSavedView } from '~/lib/viewer/composables/savedViews/management'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { ViewsType, viewsTypeLabels } from '~/lib/viewer/helpers/savedViews'
 import { useDebouncedTextInput } from '@speckle/ui-components'
@@ -135,21 +135,18 @@ defineEmits<{
 }>()
 
 const {
-  projectId,
   resources: {
-    request: { resourceIdString },
     response: { project }
   },
   ui: {
     savedViews: { openedGroupState }
   }
 } = useInjectedViewerState()
-const createGroup = useCreateSavedViewGroup()
 const createSavedView = useCreateSavedView()
 const isLoading = useMutationLoading()
 const { on, bind, value: search } = useDebouncedTextInput()
 
-const selectedViewsType = ref<ViewsType>(ViewsType.Personal)
+const selectedViewsType = ref<ViewsType>(ViewsType.All)
 const hideViewerSeatDisclaimer = useSynchronizedCookie<boolean>(
   'hideViewerSeatSavedViewsDisclaimer',
   {
@@ -157,6 +154,9 @@ const hideViewerSeatDisclaimer = useSynchronizedCookie<boolean>(
   }
 )
 const searchMode = ref(false)
+const showCreateGroupDialog = ref(false)
+
+const { getTooltipProps } = useSmartTooltipDelay()
 
 const canCreateViewOrGroup = computed(
   () => project.value?.permissions.canCreateSavedView
@@ -168,28 +168,15 @@ const isLowerPlan = computed(() => !project.value?.workspace?.planSupportsSavedV
 
 const onAddView = async () => {
   if (isLoading.value) return
-  const view = await createSavedView({
-    visibility:
-      selectedViewsType.value === ViewsType.Shared
-        ? SavedViewVisibility.Public
-        : undefined
-  })
+  const view = await createSavedView({})
   if (view) {
     // Auto-open the group that the view created to
     openedGroupState.value.set(view.group.id, true)
   }
 }
 
-const onAddGroup = async () => {
-  if (isLoading.value) return
-  const group = await createGroup({
-    projectId: projectId.value,
-    resourceIdString: resourceIdString.value
-  })
-  if (group) {
-    // Auto-open the group
-    openedGroupState.value.set(group.id, true)
-  }
+const onAddGroup = async (group: { id: string }) => {
+  openedGroupState.value.set(group.id, true)
 }
 
 const setSearchMode = (val: boolean) => {

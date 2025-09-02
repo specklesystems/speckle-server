@@ -477,12 +477,22 @@ const adjustResourceIdStringWithSavedViewSettingsFactory =
     resourceIdString: string
     savedViewId: MaybeNullOrUndefined<string>
     savedViewSettings: MaybeNullOrUndefined<SavedViewsLoadSettings>
+    applyHomeView: MaybeNullOrUndefined<boolean>
   }): Promise<ResourceIdStringWithSavedView> => {
-    const { savedViewId } = params
+    const { savedViewId, applyHomeView, resourceIdString } = params
 
-    return !isUndefined(savedViewId)
-      ? adjustResourceIdStringWithSpecificSavedViewSettingsFactory(deps)(params)
-      : adjustResourceIdStringWithHomeSavedViewSettingsFactory(deps)(params)
+    if (!isUndefined(savedViewId)) {
+      return adjustResourceIdStringWithSpecificSavedViewSettingsFactory(deps)(params)
+    }
+
+    if (applyHomeView) {
+      return adjustResourceIdStringWithHomeSavedViewSettingsFactory(deps)(params)
+    }
+
+    return {
+      resourceIdString,
+      savedView: undefined
+    }
   }
 
 /**
@@ -501,7 +511,8 @@ export const getViewerResourceGroupsFactory =
       loadedVersionsOnly,
       allowEmptyModels,
       savedViewId,
-      savedViewSettings
+      savedViewSettings,
+      applyHomeView
     } = params
 
     let resourceIdStringWithSavedView: ResourceIdStringWithSavedView = {
@@ -514,7 +525,8 @@ export const getViewerResourceGroupsFactory =
           resourceIdString: params.resourceIdString,
           projectId,
           savedViewId,
-          savedViewSettings
+          savedViewSettings,
+          applyHomeView
         })
     }
 

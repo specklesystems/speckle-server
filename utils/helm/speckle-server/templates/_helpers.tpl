@@ -610,6 +610,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_ACC_INTEGRATION_ENABLED
   value: {{ .Values.featureFlags.accIntegrationEnabled | quote }}
 
+- name: FF_NO_PERSONAL_EMAILS_ENABLED
+  value: {{ .Values.server.noPersonalEmailsEnabled }}
+
 {{- if .Values.featureFlags.accIntegrationEnabled }}
 - name: AUTODESK_INTEGRATION_CLIENT_ID
   value: {{ .Values.server.accIntegration.client_id }}
@@ -620,6 +623,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       name: {{ default .Values.secretName .Values.server.accIntegration.clientSecret.secretName }}
       key: {{ default "acc_integration_client_secret" .Values.server.accIntegration.clientSecret.secretKey }}
 {{- end }}
+
+- name: FF_DASHBOARDS_MODULE_ENABLED
+  value: {{ .Values.featureFlags.dashboardsModuleEnabled | quote }}
 
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
@@ -696,7 +702,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 
 {{- end }}
 
-{{- if (or .Values.featureFlags.automateModuleEnabled .Values.featureFlags.workspacesSsoEnabled) }}
+{{- if (or .Values.featureFlags.automateModuleEnabled .Values.featureFlags.workspacesSSOEnabled) }}
 - name: ENCRYPTION_KEYS_PATH
   value: {{ .Values.server.encryptionKeys.path }}
 {{- end }}

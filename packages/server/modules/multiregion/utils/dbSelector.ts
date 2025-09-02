@@ -9,7 +9,8 @@ import { getRegionFactory } from '@/modules/multiregion/repositories'
 import {
   DatabaseError,
   LogicError,
-  MisconfiguredEnvironmentError
+  MisconfiguredEnvironmentError,
+  TestOnlyLogicError
 } from '@/modules/shared/errors'
 import { configureClient } from '@/knexfile'
 import type { InitializeRegion } from '@/modules/multiregion/domain/operations'
@@ -19,8 +20,8 @@ import {
   getMainRegionConfig
 } from '@/modules/multiregion/regionConfig'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import { ensureError } from '@speckle/shared'
-import { isDevOrTestEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
+import { ensureError, TIME_MS, wait } from '@speckle/shared'
+import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { migrateDbToLatest } from '@/db/migrations'
 import {
   getProjectRegionKey,
@@ -28,6 +29,7 @@ import {
 } from '@/modules/multiregion/utils/regionSelector'
 import { get, mapValues } from 'lodash-es'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
+import { logger } from '@/observability/logging'
 
 let getter: GetProjectDb | undefined = undefined
 
@@ -114,13 +116,10 @@ export const initializeRegisteredRegionClients = async (): Promise<RegionClients
     Object.entries(ret).map(([region, db]) => migrateDbToLatest({ db, region }))
   )
 
-  // (re-)set up pub-sub, if needed
-  // (disabled in prod cause there's too many DBs and connections and the load is too hard to handle)
-  if (isDevOrTestEnv()) {
-    await Promise.all(
-      Object.keys(ret).map((regionKey) => initializeRegion({ regionKey }))
-    )
-  }
+  // initialize regions
+  await Promise.all(
+    Object.keys(ret).map((regionKey) => initializeRegion({ regionKey }))
+  )
 
   registeredRegionClients = ret
   return ret
@@ -129,6 +128,7 @@ export const initializeRegisteredRegionClients = async (): Promise<RegionClients
 export const getRegisteredRegionClients = async (): Promise<RegionClients> => {
   if (!registeredRegionClients)
     registeredRegionClients = await initializeRegisteredRegionClients()
+
   return registeredRegionClients
 }
 
@@ -156,6 +156,15 @@ export const getAllRegisteredDbClients = async (): Promise<
   ]
 }
 
+export const getAllRegisteredDbs = async (): Promise<[Knex, ...Knex[]]> => {
+  const mainDb = db
+  const regionDbs: RegionClients = isMultiRegionEnabled()
+    ? await getRegisteredRegionClients()
+    : {}
+
+  return [mainDb, ...Object.entries(regionDbs).map(([, client]) => client)]
+}
+
 /**
  * Idempotently initialize region db
  */
@@ -181,7 +190,7 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
       ? 'require'
       : 'disable'
 
-    await setUpUserReplication({
+    await dropUserReplicationIfExists({
       from: mainDb,
       to: regionDb,
       regionName: regionKey,
@@ -210,104 +219,63 @@ interface ReplicationArgs {
   regionName: string
 }
 
-const setUpUserReplication = async ({
+const dropUserReplicationIfExists = async ({
   from,
   to,
-  sslmode,
   regionName
 }: ReplicationArgs): Promise<void> => {
   const subName = createPubSubName(`userssub_${regionName}`)
   const pubName = createPubSubName('userspub')
 
   try {
-    await from.public.raw(`CREATE PUBLICATION ${pubName} FOR TABLE users;`)
-  } catch (err) {
-    if (!(err instanceof Error)) {
-      throw new DatabaseError(
-        'Could not create publication {pubName} when setting up user replication for region {regionName}',
-        from.public,
-        {
-          cause: ensureError(
-            sanitizeError(err),
-            'Unknown database error when creating publication'
-          ),
-          info: { pubName, regionName }
-        }
-      )
+    const { rows: pubExist } = await from.public.raw(
+      `SELECT pubname FROM pg_publication WHERE pubname = '${pubName}';`
+    )
+
+    if (pubExist.length > 0) {
+      await from.public.raw(`DROP PUBLICATION ${pubName};`)
+      logger.info({ regionName, pubName }, 'dropped publication')
     }
-
-    const errorMessage = err.message
-
-    if (
-      !['already exists', 'violates unique constraint'].some((message) =>
-        errorMessage.includes(message)
-      )
-    )
-      throw new DatabaseError(
-        'Unknown error while creating publication {pubName} when setting up user replication for region {regionName}',
-        from.public,
-        {
-          cause: ensureError(
-            sanitizeError(err),
-            'Unknown database error when creating publication'
-          ),
-          info: { pubName, regionName }
-        }
-      )
+  } catch (error) {
+    logger.warn({ error }, 'while dropping publication')
+    // silent error as
+    // dropping pub can have race conditions (n subs - 1 pub)
+    // and action DROP PUBLICATION does not support if exist for current postgres version
   }
 
-  const fromUrl = new URL(
-    from.private
-      ? from.private.client.config.connection.connectionString
-      : from.public.client.config.connection.connectionString
-  )
-  const port = fromUrl.port ? fromUrl.port : '5432'
-  const fromDbName = fromUrl.pathname.replace('/', '')
-  const rawSqeel = `SELECT * FROM aiven_extras.pg_create_subscription(
-    ?,
-    ?,
-    ?,
-    ?,
-    TRUE,
-    TRUE
-  );`
   try {
-    await to.public.raw('CREATE EXTENSION IF NOT EXISTS "aiven_extras"')
-    await to.public.raw(rawSqeel, [
-      subName,
-      `dbname=${fromDbName} host=${fromUrl.hostname} port=${port} sslmode=${sslmode} user=${fromUrl.username} password=${fromUrl.password}`,
-      pubName,
-      subName
-    ])
-  } catch (err) {
-    if (!(err instanceof Error))
-      throw new DatabaseError(
-        'Could not create subscription {subName} to {pubName} when setting up user replication for region {regionName}',
-        to.public,
-        {
-          cause: ensureError(
-            sanitizeError(err),
-            'Unknown database error when creating subscription'
-          ),
-          info: { subName, pubName, regionName }
-        }
-      )
-    if (
-      !err.message.includes('already exists') &&
-      !err.message.includes('duplicate key value violates unique constraint')
+    const { rows: aivenExists } = await to.public.raw(
+      "SELECT * FROM pg_extension WHERE extname = 'aiven_extras';"
     )
-      throw new DatabaseError(
-        'Unknown error while creating subscription {subName} to {pubName} when setting up user replication for region {regionName}',
-        to.public,
-        {
-          cause: ensureError(
-            sanitizeError(err),
-            'Unknown database error when creating subscription'
-          ),
-          info: { subName, pubName, regionName }
-        }
-      )
+
+    if (!aivenExists) return
+
+    const {
+      rows: [sub]
+    } = await to.public.raw<{ rows: { subconninfo: string; subslotname: string }[] }>(
+      `SELECT subconninfo, subslotname FROM aiven_extras.pg_list_all_subscriptions() WHERE subname = '${subName}';`
+    )
+
+    if (!sub) return
+
+    await to.public.raw(
+      `SELECT * FROM aiven_extras.pg_alter_subscription_disable('${subName}');`
+    )
+    await wait(TIME_MS.second)
+    await to.public.raw(
+      `SELECT * FROM aiven_extras.pg_drop_subscription('${subName}');`
+    )
+    await wait(TIME_MS.second)
+    await to.public.raw(
+      `SELECT * FROM aiven_extras.dblink_slot_create_or_drop('${sub.subconninfo}', '${sub.subslotname}', 'drop');`
+    )
+    logger.info({ regionName, subName }, 'dropped subscription')
+  } catch (error) {
+    logger.error({ error }, 'Failed to drop subscription')
+    return
   }
+
+  return
 }
 
 const setUpProjectReplication = async ({
@@ -407,6 +375,14 @@ const setUpProjectReplication = async ({
 
 const sanitizeError = (err: unknown): unknown => {
   if (!err) return err
-  if (get(err, 'where').includes('password='))
+  if ((get(err, 'where') as unknown as string).includes('password='))
     return { ...err, where: '[REDACTED AS IT CONTAINS CONNECTION STRING]' }
+}
+
+export const resetRegisteredRegions = () => {
+  if (!isTestEnv()) {
+    throw new TestOnlyLogicError()
+  }
+
+  registeredRegionClients = undefined
 }

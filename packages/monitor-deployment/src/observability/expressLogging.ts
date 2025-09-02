@@ -55,14 +55,12 @@ export const loggingExpressMiddleware = pinoHttp({
 })
 
 const getRequestPath = (req: IncomingMessage | Request) => {
-  const path = ((get(req, 'originalUrl') || get(req, 'url') || '') as string).split(
-    '?'
-  )[0]
+  const path = (get(req, 'originalUrl') || get(req, 'url') || '').split('?')[0]
   return path?.length ? path : null
 }
 
 const getRequestParameters = (req: IncomingMessage | Request) => {
-  const maybeUrl = (get(req, 'originalUrl') as string) || get(req, 'url') || ''
+  const maybeUrl = get(req, 'originalUrl') || get(req, 'url') || ''
   const url = parse(maybeUrl, true)
   return url.query || {}
 }

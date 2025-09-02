@@ -78,7 +78,12 @@ describe('projectRegion repositories @multiregion', () => {
       const key = null
       const { id } = await saveProject({
         name: cryptoRandomString({ length: 10 }),
-        regionKey: key
+        regionKey: key,
+        id: cryptoRandomString({ length: 10 }),
+        description: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        allowPublicComments: false
       })
 
       const regionKey = await getRegionKeyFromStorage({ projectId: id })
@@ -91,7 +96,12 @@ describe('projectRegion repositories @multiregion', () => {
       })
       const { id } = await saveProject({
         name: cryptoRandomString({ length: 10 }),
-        regionKey: key
+        regionKey: key,
+        id: cryptoRandomString({ length: 10 }),
+        description: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        allowPublicComments: false
       })
       const regionKey = await getRegionKeyFromStorage({ projectId: id })
       expect(regionKey).to.equal(key)

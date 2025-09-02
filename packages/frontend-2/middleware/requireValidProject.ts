@@ -13,7 +13,7 @@ import { useMiddlewareQueryFetchPolicy } from '~/lib/core/composables/navigation
 /**
  * Used in project page to validate that project ID refers to a valid project and redirects to 404 if not
  */
-export default defineNuxtRouteMiddleware(async (to, from) => {
+export default defineParallelizedNuxtRouteMiddleware(async (to, from) => {
   const projectId = to.params.id as string
 
   // Check if embed token is present in URL
