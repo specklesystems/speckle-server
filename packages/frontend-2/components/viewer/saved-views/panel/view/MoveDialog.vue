@@ -84,12 +84,8 @@ const buttons = computed((): LayoutDialogButton[] => [
 
 const onSubmit = handleSubmit(async (values) => {
   if (!props.view) return
-  const selectedGroupId = values.group.isUngroupedViewsGroup ? null : values.group.id
-  const currentGroupId = props.view.group.isUngroupedViewsGroup
-    ? null
-    : props.view.group.id
-  const groupId = selectedGroupId !== currentGroupId ? selectedGroupId : null
-  if (groupId === undefined) return
+  const groupId = values.group.id !== props.view.group.id ? values.group.id : null
+  if (!groupId) return
 
   const res = await updateView({
     view: props.view,
@@ -101,7 +97,7 @@ const onSubmit = handleSubmit(async (values) => {
   })
 
   if (res?.id) {
-    emit('success', groupId || 'ungrouped')
+    emit('success', groupId)
     open.value = false
   }
 })

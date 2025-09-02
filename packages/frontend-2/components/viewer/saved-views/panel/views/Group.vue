@@ -288,7 +288,7 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
 
 const onAddGroupView = async () => {
   await createView({
-    groupId: isUngroupedGroup.value ? null : props.group.id
+    groupId: props.group.id
   })
   open.value = true
 }
