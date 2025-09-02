@@ -1,6 +1,7 @@
 import {
   Box3,
   Camera,
+  MathUtils,
   Object3D,
   Plane,
   Raycaster,
@@ -28,10 +29,16 @@ export abstract class Measurement extends Object3D {
   public value = 0
   public units = 'm'
   public precision = 2
+  public measurementId: string
 
   protected _state: MeasurementState = MeasurementState.HIDDEN
   protected renderingCamera: Camera | null
   protected renderingSize: Vector2 = new Vector2()
+
+  constructor() {
+    super()
+    this.measurementId = MathUtils.generateUUID()
+  }
 
   public set state(value: MeasurementState) {
     this._state = value
@@ -76,19 +83,23 @@ export abstract class Measurement extends Object3D {
   ): boolean
 
   public toMeasurementData(): MeasurementData {
-    return {
+    const measurementData: MeasurementData = {
       type: this.measurementType,
       startPoint: [this.startPoint.x, this.startPoint.y, this.startPoint.z],
       endPoint: [this.endPoint.x, this.endPoint.y, this.endPoint.z],
       startNormal: [this.startNormal.x, this.startNormal.y, this.startNormal.z],
       endNormal: [this.endNormal.x, this.endNormal.y, this.endNormal.z],
-      value: this.value
+      value: this.value,
+      uuid: this.measurementId
       // units: this.units, // We don't write units per measurement
       // precision: this.precision // We don't write precision per measurement
-    } as MeasurementData
+    }
+
+    return measurementData
   }
 
   public fromMeasurementData(data: MeasurementData): void {
+    this.measurementId = data.uuid
     this.startPoint.set(data.startPoint[0], data.startPoint[1], data.startPoint[2])
     this.endPoint.set(data.endPoint[0], data.endPoint[1], data.endPoint[2])
     this.startNormal.set(data.startNormal[0], data.startNormal[1], data.startNormal[2])

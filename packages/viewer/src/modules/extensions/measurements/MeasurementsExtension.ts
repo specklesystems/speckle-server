@@ -18,6 +18,7 @@ import {
   MeasurementOptions,
   MeasurementType
 } from '@speckle/shared/viewer/state'
+import { differenceBy } from 'lodash-es'
 
 export enum MeasurementEvent {
   CountChanged = 'measurement-count-changed',
@@ -408,18 +409,57 @@ export class MeasurementsExtension extends Extension {
     }
   }
 
-  public removeMeasurement() {
-    if (this._selectedMeasurement) {
-      this._measurements.splice(
-        this._measurements.indexOf(this._selectedMeasurement),
-        1
-      )
-      this.renderer.scene.remove(this._selectedMeasurement)
+  protected findMeasurementFromData(measurementData: MeasurementData) {
+    return this._measurements.find(
+      (measurement) => measurement.measurementId === measurementData.uuid
+    )
+  }
+
+  public removeMeasurement(measurementData?: MeasurementData) {
+    const targetMeasurement = measurementData
+      ? this.findMeasurementFromData(measurementData)
+      : this._selectedMeasurement
+
+    if (targetMeasurement) {
+      this._measurements.splice(this._measurements.indexOf(targetMeasurement), 1)
+      this.renderer.scene.remove(targetMeasurement)
       this._selectedMeasurement = null
       this.emitMeasurementCountChanged()
       this.viewer.requestRender()
     } else {
       this.cancelMeasurement()
+    }
+  }
+
+  /**
+   * Idempotent way of setting measurements
+   */
+  public setMeasurements(measurements: MeasurementData[]) {
+    if (!measurements.length) {
+      if (this._measurements.length) {
+        this.clearMeasurements()
+      }
+      if (this._activeMeasurement) {
+        this.cancelMeasurement()
+      }
+      return
+    }
+
+    const currentMeasurements = this._measurements.map((m) => m.toMeasurementData())
+    const removableMeasurements = differenceBy(
+      currentMeasurements,
+      measurements,
+      (m) => m.uuid
+    )
+
+    for (const removableMeasurement of removableMeasurements) {
+      this.removeMeasurement(removableMeasurement)
+    }
+
+    for (const measurementData of measurements) {
+      if (!this.findMeasurementFromData(measurementData)) {
+        this.addMeasurement(measurementData)
+      }
     }
   }
 

@@ -13,6 +13,7 @@ import {
 import { CameraController, VisualDiffMode } from '@speckle/viewer'
 import type { NumericPropertyInfo } from '@speckle/viewer'
 import type { Merge, PartialDeep } from 'type-fest'
+import { defaultMeasurementOptions } from '@speckle/shared/viewer/state'
 import { useViewerRealtimeActivityTracker } from '~/lib/viewer/composables/activity'
 import {
   isModelResource,
@@ -129,7 +130,8 @@ export function useStateSerialization() {
         selection: state.ui.selection.value?.toArray() || null,
         measurement: {
           enabled: state.ui.measurement.enabled.value,
-          options: state.ui.measurement.options.value
+          options: state.ui.measurement.options.value,
+          measurements: state.ui.measurement.measurements.value.slice()
         }
       }
     }
@@ -166,6 +168,7 @@ export function useApplySerializedState() {
       lightConfig,
       diff,
       viewMode,
+      measurement,
       sectionBoxContext
     },
     resources: {
@@ -389,6 +392,23 @@ export function useApplySerializedState() {
     lightConfig.value = {
       ...lightConfig.value,
       ...(state.ui?.lightConfig || {})
+    }
+
+    // Apply measurements
+    const incomingMeasurement = state.ui?.measurement
+    if (incomingMeasurement) {
+      if (!isUndefinedOrVoid(incomingMeasurement.enabled)) {
+        measurement.enabled.value = incomingMeasurement.enabled
+      }
+      if (!isUndefinedOrVoid(incomingMeasurement.options)) {
+        measurement.options.value = {
+          ...defaultMeasurementOptions,
+          ...incomingMeasurement.options
+        }
+      }
+      if (!isUndefinedOrVoid(incomingMeasurement.measurements)) {
+        measurement.measurements.value = incomingMeasurement.measurements
+      }
     }
 
     // Trigger activity update
