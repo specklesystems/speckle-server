@@ -28,6 +28,7 @@ import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
 import {
   SavedViewCreationValidationError,
   SavedViewGroupCreationValidationError,
+  SavedViewGroupNotFoundError,
   SavedViewGroupUpdateValidationError,
   SavedViewInvalidHomeViewSettingsError,
   SavedViewInvalidResourceTargetError,
@@ -194,29 +195,28 @@ const resolveViewGroupSettingsFactory =
   }) => {
     const { groupId, projectId, errorMetadata } = params
 
-    // Validate groupId - group is a valid and accessible group in the project
-    if (groupId) {
-      // Check if default group (actually means - null group)
-      const isDefaultGroup = groupId && isUngroupedGroup(groupId)
-      if (isDefaultGroup) {
-        return null
-      } else {
-        const group = await deps.getSavedViewGroup({
-          id: groupId,
-          projectId
-        })
-        if (!group) {
-          throw new SavedViewUpdateValidationError(
-            'Provided groupId does not exist in the project.',
-            {
-              info: errorMetadata
-            }
-          )
-        }
-      }
-    }
+    if (!groupId) return groupId // null or undefined (different meanings)
 
-    return null
+    // Validate groupId - group is a valid and accessible group in the project
+    // Check if default group (actually means - null group)
+    const isDefaultGroup = isUngroupedGroup(groupId)
+    if (isDefaultGroup) {
+      return null
+    } else {
+      const group = await deps.getSavedViewGroup({
+        id: groupId,
+        projectId
+      })
+      if (!group) {
+        throw new SavedViewGroupNotFoundError(
+          'Provided groupId does not exist in the project.',
+          {
+            info: errorMetadata
+          }
+        )
+      }
+      return group.id
+    }
   }
 
 export const createSavedViewFactory =
@@ -271,14 +271,15 @@ export const createSavedViewFactory =
     })
 
     // Validate groupId - group is a valid and accessible group in the project
-    groupId = await resolveViewGroupSettingsFactory(deps)({
-      groupId,
-      projectId,
-      errorMetadata: {
-        input,
-        authorId
-      }
-    })
+    groupId =
+      (await resolveViewGroupSettingsFactory(deps)({
+        groupId,
+        projectId,
+        errorMetadata: {
+          input,
+          authorId
+        }
+      })) || null
 
     // Auto-generate name, if one not set
     let name = input.name?.trim()
@@ -557,6 +558,9 @@ export const updateSavedViewFactory =
         userId
       }
     })
+    if (isUndefined(changes.groupId)) {
+      delete changes.groupId // the key shouldnt even be there
+    }
 
     // Validate screenshot
     if (changes.screenshot && !isValidBase64Image(changes.screenshot)) {
