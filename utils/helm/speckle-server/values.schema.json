@@ -172,7 +172,7 @@
       "properties": {
         "origin": {
           "type": "string",
-          "description": "The origin of the dashboards module",
+          "description": "The origin of the dashboards deployment",
           "default": ""
         }
       }
