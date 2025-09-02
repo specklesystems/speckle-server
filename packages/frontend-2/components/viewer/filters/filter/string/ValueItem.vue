@@ -6,8 +6,6 @@
     <div
       class="group/checkbox flex items-center justify-between gap-2 text-body-3xs py-0.5 px-2 hover:bg-highlight-1 rounded-md cursor-pointer"
       @click="$emit('toggle')"
-      @mouseenter="handleMouseEnter"
-      @mouseleave="handleMouseLeave"
     >
       <div class="flex items-center min-w-0">
         <!-- Checkbox is purely visual - so pointer-events-none -->
@@ -44,7 +42,6 @@
 <script setup lang="ts">
 import { FormCheckbox } from '@speckle/ui-components'
 import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
-import { useHighlightedObjectsUtilities } from '~~/lib/viewer/composables/ui'
 import { isStringFilter, type FilterData } from '~/lib/viewer/helpers/filters/types'
 
 const props = defineProps<{
@@ -62,9 +59,6 @@ const {
   getPropertyValueCounts,
   filters
 } = useFilterUtilities()
-
-const filterUtilities = useFilterUtilities()
-const highlightUtilities = useHighlightedObjectsUtilities()
 
 const isSelected = computed(() =>
   isActiveFilterValueSelected(props.filter.id, props.value)
@@ -90,28 +84,4 @@ const isDefaultSelected = computed(() => {
     isSelected.value
   )
 })
-
-const handleMouseEnter = () => {
-  if (!props.filter.filter?.key) return
-
-  const objectIds = filterUtilities.getObjectIdsForPropertyValue(
-    props.filter.filter.key,
-    props.value
-  )
-  if (objectIds.length > 0) {
-    highlightUtilities.highlightObjects(objectIds)
-  }
-}
-
-const handleMouseLeave = () => {
-  if (!props.filter.filter?.key) return
-
-  const objectIds = filterUtilities.getObjectIdsForPropertyValue(
-    props.filter.filter.key,
-    props.value
-  )
-  if (objectIds.length > 0) {
-    highlightUtilities.unhighlightObjects(objectIds)
-  }
-}
 </script>
