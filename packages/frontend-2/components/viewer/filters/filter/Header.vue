@@ -6,24 +6,30 @@
     :class="{ 'cursor-pointer': collapsed }"
     @click="toggleCollapsed"
   >
-    <div class="flex items-center pl-0" :class="{ 'opacity-50': !filter.isApplied }">
+    <div
+      class="flex items-center pl-0 min-w-0 flex-1"
+      :class="{ 'opacity-50': !filter.isApplied }"
+    >
       <FormButton
         v-tippy="'Change filter property'"
         color="subtle"
-        class="m-0 gap-3"
+        class="m-0 gap-3 min-w-0"
         size="sm"
         @click.stop="handlePropertySwap"
       >
         <Hash
           v-if="filter.type === FilterType.Numeric"
-          class="h-3 w-3 stroke-emerald-700 dark:stroke-emerald-500"
+          class="h-3 w-3 stroke-emerald-700 dark:stroke-emerald-500 shrink-0"
         />
-        <CaseUpper v-else class="h-3 w-3 stroke-violet-600 dark:stroke-violet-500" />
+        <CaseUpper
+          v-else
+          class="h-3 w-3 stroke-violet-600 dark:stroke-violet-500 shrink-0"
+        />
 
-        {{ getPropertyName(filter.filter?.key) }}
+        <span class="truncate">{{ getPropertyName(filter.filter?.key) }}</span>
       </FormButton>
     </div>
-    <div class="flex items-start gap-0.5">
+    <div class="flex items-start gap-0.5 shrink-0">
       <LayoutMenu
         v-model:open="showActionsMenu"
         :items="actionsItems"
