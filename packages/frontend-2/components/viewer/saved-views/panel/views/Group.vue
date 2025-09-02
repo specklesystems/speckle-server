@@ -1,62 +1,66 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <LayoutDisclosure
-    v-if="!isUngroupedGroup"
-    v-model:open="open"
-    v-model:edit-title="renameMode"
-    color="subtle"
-    :title="group.title"
-    lazy-load
-    @update:title="onRename"
-  >
+  <div :class="dropZoneClasses" v-on="on">
+    <LayoutDisclosure
+      v-if="!isUngroupedGroup"
+      v-model:open="open"
+      v-model:edit-title="renameMode"
+      color="subtle"
+      :title="group.title"
+      lazy-load
+      @update:title="onRename"
+    >
+      <ViewerSavedViewsPanelViewsGroupInner
+        :group="group"
+        :search="search"
+        :views-type="viewsType"
+      />
+      <template #title-actions>
+        <div
+          class="flex gap-0.5 items-center opacity-0 group-hover/disclosure:opacity-100"
+          @click.stop
+        >
+          <LayoutMenu
+            v-if="!isUngroupedGroup"
+            v-model:open="showMenu"
+            :items="menuItems"
+            :menu-id="menuId"
+            mount-menu-on-body
+            show-ticks="right"
+            @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
+          >
+            <FormButton
+              name="viewActions"
+              size="sm"
+              color="subtle"
+              :icon-left="Ellipsis"
+              hide-text
+              @click="showMenu = !showMenu"
+            />
+          </LayoutMenu>
+          <div v-tippy="canCreateView?.errorMessage">
+            <FormButton
+              v-tippy="getTooltipProps('Create view')"
+              size="sm"
+              color="subtle"
+              :icon-left="Plus"
+              hide-text
+              name="addGroupView"
+              :disabled="!canCreateView.authorized || isLoading"
+              @click="onAddGroupView"
+            />
+          </div>
+        </div>
+      </template>
+    </LayoutDisclosure>
     <ViewerSavedViewsPanelViewsGroupInner
+      v-else
+      class="mb-[1px]"
       :group="group"
       :search="search"
       :views-type="viewsType"
     />
-    <template #title-actions>
-      <div
-        class="flex gap-0.5 items-center opacity-0 group-hover/disclosure:opacity-100"
-        @click.stop
-      >
-        <LayoutMenu
-          v-model:open="showMenu"
-          :items="menuItems"
-          :menu-id="menuId"
-          mount-menu-on-body
-          show-ticks="right"
-          @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
-        >
-          <FormButton
-            name="viewActions"
-            size="sm"
-            color="subtle"
-            :icon-left="Ellipsis"
-            hide-text
-            @click="showMenu = !showMenu"
-          />
-        </LayoutMenu>
-        <div v-tippy="canCreateView?.errorMessage">
-          <FormButton
-            v-tippy="getTooltipProps('Create view in group')"
-            size="sm"
-            color="subtle"
-            :icon-left="Plus"
-            hide-text
-            name="addGroupView"
-            :disabled="!canCreateView.authorized || isLoading"
-            @click="onAddGroupView"
-          />
-        </div>
-      </div>
-    </template>
-  </LayoutDisclosure>
-  <ViewerSavedViewsPanelViewsGroupInner
-    v-else
-    class="mb-[1px]"
-    :group="group"
-    :search="search"
-    :views-type="viewsType"
-  />
+  </div>
 </template>
 <script setup lang="ts">
 import { StringEnum, throwUncoveredError, type StringEnumValues } from '@speckle/shared'
@@ -70,11 +74,13 @@ import type {
   ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment,
   ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroupFragment
 } from '~/lib/common/generated/gql/graphql'
+import { ToastNotificationType } from '~/lib/common/composables/toast'
 import {
   useCreateSavedView,
   useUpdateSavedViewGroup
 } from '~/lib/viewer/composables/savedViews/management'
 import type { ViewsType } from '~/lib/viewer/helpers/savedViews'
+import { useDraggableViewTargetGroup } from '~/lib/viewer/composables/savedViews/ui'
 
 const { getTooltipProps } = useSmartTooltipDelay()
 
@@ -105,6 +111,7 @@ graphql(`
     ...ViewerSavedViewsPanelViewsGroupInner_SavedViewGroup
     ...ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroup
     ...UseUpdateSavedViewGroup_SavedViewGroup
+    ...UseDraggableViewTargetGroup_SavedViewGroup
   }
 `)
 
@@ -140,8 +147,17 @@ const { triggerNotification } = useGlobalToast()
 const isLoading = useMutationLoading()
 const createView = useCreateSavedView()
 const updateGroup = useUpdateSavedViewGroup()
-const renameMode = defineModel<boolean>('renameMode')
+const { on, classes: dropZoneClasses } = useDraggableViewTargetGroup({
+  group: computed(() => props.group),
+  onMoved: () => {
+    // Auto-open the group if it was closed
+    if (!open.value) {
+      open.value = true
+    }
+  }
+})
 
+const renameMode = defineModel<boolean>('renameMode')
 const open = defineModel<boolean>('open')
 const showMenu = ref(false)
 const menuId = useId()

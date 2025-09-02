@@ -88,6 +88,10 @@ analytics:
   ## @param analytics.mixpanel_api_host The Mixpanel API host to which analytics data will be sent
   mixpanel_api_host: 'https://analytics.speckle.systems'
 
+dashboards:
+  ## @param dashboards.origin The origin of the dashboards deployment
+  origin: ''
+
 ## @section Network Plugin configuration
 ## @descriptionStart
 ## This is used to define the type of network policy that is deployed.
