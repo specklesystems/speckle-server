@@ -101,8 +101,14 @@ export const getProjectReplicationDbClients = async ({
   return [mainDb, ...(projectDb ? [projectDb] : [])]
 }
 
-export const isRegionMain = ({ regionKey }: { regionKey: string }) =>
-  regionKey === MAIN_REGION_KEY
+export const isRegionMain = ({
+  regionKey
+}: {
+  regionKey: MaybeNullOrUndefined<string>
+}) => {
+  if (!regionKey) return true
+  return regionKey === MAIN_REGION_KEY
+}
 
 // the default region key is a config value, we're caching this globally
 let defaultRegionKeyCache: string | null | undefined = undefined

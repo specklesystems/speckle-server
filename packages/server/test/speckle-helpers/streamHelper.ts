@@ -229,6 +229,7 @@ export async function createTestStream<S extends Partial<BasicTestStream>>(
       },
       ownerId: owner.id
     })
+
     id = newProject.id
   } else {
     id = await createStream({

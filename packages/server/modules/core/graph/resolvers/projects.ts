@@ -27,7 +27,6 @@ import {
   insertCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { storeModelFactory } from '@/modules/core/repositories/models'
 import {
   deleteProjectFactory,
   storeProjectFactory,
@@ -70,7 +69,8 @@ import {
   getDb,
   getProjectDbClient,
   getProjectReplicationDbClients,
-  getValidDefaultProjectRegionKey
+  getValidDefaultProjectRegionKey,
+  isRegionMain
 } from '@/modules/multiregion/utils/dbSelector'
 import {
   deleteAllResourceInvitesFactory,
@@ -460,27 +460,25 @@ const resolvers: Resolvers = {
       const regionKey = await getValidDefaultProjectRegionKey()
       const projectDb = await getDb({ regionKey })
 
-      const createNewProject = createNewProjectFactory({
-        // TODO: this goes as event emmits outside (default model)
-        storeProject: storeProjectFactory({ db: projectDb }),
-        storeModel: storeModelFactory({ db: projectDb }),
-        // THIS MUST GO TO THE MAIN DB
-        storeProjectRole: storeProjectRoleFactory({ db }),
-        emitEvent: getEventBus().emit
-      })
+      const project = await asMultiregionalOperation(
+        async ({ allDbs, mainDb, emit }) => {
+          const createNewProject = createNewProjectFactory({
+            storeProject: replicateFactory(allDbs, storeProjectFactory),
+            storeProjectRole: storeProjectRoleFactory({ db: mainDb }),
+            emitEvent: emit
+          })
 
-      // TODO: this
-      const project = await withOperationLogging(
-        async () =>
-          await createNewProject({
+          return createNewProject({
             ...(args.input || {}),
             ownerId: context.userId!,
             regionKey
-          }),
+          })
+        },
         {
           logger,
-          operationName: 'projectCreate',
-          operationDescription: `Create a new project`
+          name: 'projectCreate',
+          dbs: isRegionMain({ regionKey }) ? [db] : [db, projectDb],
+          description: `Create a new project`
         }
       )
 

@@ -31,7 +31,6 @@ import {
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { storeModelFactory } from '@/modules/core/repositories/models'
 import {
   getObjectFactory,
   getStreamObjectsFactory,

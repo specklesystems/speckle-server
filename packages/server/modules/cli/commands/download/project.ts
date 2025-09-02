@@ -62,7 +62,6 @@ import {
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
-import { storeModelFactory } from '@/modules/core/repositories/models'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   getViewerResourceGroupsFactory,
@@ -198,8 +197,8 @@ const command: CommandModule<
 
     const createNewProject = createNewProjectFactory({
       // TODO: this goes as event emmits outside  (default model)
+      // This does not support multiregion
       storeProject: storeProjectFactory({ db: projectDb }),
-      storeModel: storeModelFactory({ db: projectDb }),
       // THIS MUST GO TO THE MAIN DB
       storeProjectRole: storeProjectRoleFactory({ db }),
       emitEvent: getEventBus().emit

@@ -2,18 +2,21 @@ import type { EventBus, EventPayload } from '@/modules/shared/services/eventBus'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import type { Logger } from '@/observability/logging'
 import type { DependenciesOf } from '@/modules/shared/helpers/factory'
-import type { StoreBranch } from '@/modules/core/domain/branches/operations'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { storeModelFactory } from '@/modules/core/repositories/models'
 
-const onUserCreatedFactory =
-  (deps: { createBranch: StoreBranch }) =>
+const onProjectCreatedFactory =
+  () =>
   async ({ payload }: EventPayload<typeof ProjectEvents.Created>) => {
     const { project, ownerId } = payload
+    const projectDb = await getProjectDbClient({ projectId: project.id })
+    const storeModel = storeModelFactory({ db: projectDb })
 
     // Legacy flow for creating a default main branch
-    await deps.createBranch({
+    await storeModel({
       name: 'main',
-      description: 'default branch',
-      streamId: project.id,
+      description: 'default model',
+      projectId: project.id,
       authorId: ownerId
     })
   }
@@ -21,13 +24,13 @@ const onUserCreatedFactory =
 export const projectListenersFactory =
   (
     deps: { eventBus: EventBus; logger: Logger } & DependenciesOf<
-      typeof onUserCreatedFactory
+      typeof onProjectCreatedFactory
     >
   ) =>
   () => {
-    const onUserCreated = onUserCreatedFactory(deps)
+    const onProjectCreated = onProjectCreatedFactory()
 
-    const cbs = [deps.eventBus.listen(ProjectEvents.Created, onUserCreated)]
+    const cbs = [deps.eventBus.listen(ProjectEvents.Created, onProjectCreated)]
 
     return () => cbs.forEach((cb) => cb())
   }

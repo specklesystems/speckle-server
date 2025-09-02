@@ -18,7 +18,6 @@ describe('project services @core', () => {
           storedProject = project
         },
         storeProjectRole: async () => {},
-        storeModel: async () => {},
         emitEvent: async () => {}
       })
       const project = await createNewProject({ ownerId })
@@ -38,7 +37,6 @@ describe('project services @core', () => {
           storedProject = project
         },
         storeProjectRole: async () => {},
-        storeModel: async () => {},
         emitEvent: async () => {}
       })
 
@@ -59,7 +57,6 @@ describe('project services @core', () => {
           storedProject = project
         },
         storeProjectRole: async () => {},
-        storeModel: async () => {},
         emitEvent: async () => {}
       })
 
@@ -78,7 +75,6 @@ describe('project services @core', () => {
           storedProject = project
         },
         storeProjectRole: async () => {},
-        storeModel: async () => {},
         emitEvent: async () => {}
       })
       const project = await createNewProject({ ownerId, visibility: 'PRIVATE' })
@@ -98,14 +94,6 @@ describe('project services @core', () => {
             role: StreamRoles
           }
         | undefined = undefined
-      let storedModel:
-        | {
-            name: string
-            description: string | null
-            projectId: string
-            authorId: string
-          }
-        | undefined = undefined
       let emitedEvent: string | undefined = undefined
       let eventPayload: { project: Project; ownerId: string } | undefined = undefined
       const createNewProject = createNewProjectFactory({
@@ -114,9 +102,6 @@ describe('project services @core', () => {
         },
         storeProjectRole: async (args) => {
           storedProjectRole = args
-        },
-        storeModel: async (args) => {
-          storedModel = args
         },
         emitEvent: async (payload) => {
           if (isSpecificEventPayload(payload, ProjectEvents.Created)) {
@@ -131,12 +116,6 @@ describe('project services @core', () => {
         projectId: project.id,
         userId: ownerId,
         role: Roles.Stream.Owner
-      })
-      expect(storedModel).deep.equal({
-        name: 'main',
-        description: 'default model',
-        projectId: project.id,
-        authorId: ownerId
       })
       expect(emitedEvent).to.equal(ProjectEvents.Created)
       expect(eventPayload).deep.equal({

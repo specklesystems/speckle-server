@@ -1640,6 +1640,7 @@ export default FF_WORKSPACES_MODULE_ENABLED
                 }),
                 getProjectCollaborators: getStreamCollaboratorsFactory({ db: mainDb }),
                 copyWorkspace: copyWorkspaceFactory({
+                  // TODO: what I do with this?
                   sourceDb: db,
                   targetDb: projectDb
                 }),
