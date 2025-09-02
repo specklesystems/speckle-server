@@ -53,18 +53,6 @@
       </div>
     </div>
     <div v-if="showFields" class="flex justify-between gap-2 mt-0.5">
-      <!-- <FormTextInput
-        v-model="minValueString"
-        size="sm"
-        class="mt-0 w-10 text-body-2xs text-foreground-2 bg-transparent border-0 focus:outline-none hover:ring-1 hover:ring-outline-2 focus:ring-1 focus:ring-outline-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:ring-0 rounded !p-0.5 text-right"
-        type="number"
-        :name="`${name}-min`"
-        :min="min"
-        :max="max"
-        :step="step"
-        :disabled="disabled"
-        placeholder="Min"
-      /> -->
       <input
         v-model="minValueString"
         type="number"
@@ -74,20 +62,9 @@
         :disabled="disabled"
         :aria-label="`${name}-min`"
         placeholder="Min"
-        class="mt-0 w-12 text-body-2xs text-foreground-2 bg-transparent border-0 focus:outline-none hover:ring-1 hover:ring-outline-2 focus:ring-1 focus:ring-outline-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:ring-0 rounded !p-1"
+        class="mt-0 w-16 text-body-2xs text-foreground-2 bg-transparent border-0 focus:outline-none hover:ring-1 hover:ring-outline-2 focus:ring-1 focus:ring-outline-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:ring-0 rounded !p-1"
       />
-      <!-- <FormTextInput
-        v-model="maxValueString"
-        size="sm"
-        type="number"
-        class="mt-0 w-10 text-body-2xs text-foreground-2 bg-transparent border-0 focus:outline-none hover:ring-1 hover:ring-outline-2 focus:ring-1 focus:ring-outline-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:ring-0 rounded !p-0.5 text-right"
-        :name="`${name}-max`"
-        :min="min"
-        :max="max"
-        :step="step"
-        :disabled="disabled"
-        placeholder="Max"
-      /> -->
+
       <input
         v-model="maxValueString"
         type="number"
@@ -97,7 +74,7 @@
         :disabled="disabled"
         :aria-label="`${name}-max`"
         placeholder="Max"
-        class="mt-0 w-12 text-body-2xs text-foreground-2 bg-transparent border-0 focus:outline-none hover:ring-1 hover:ring-outline-2 focus:ring-1 focus:ring-outline-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:ring-0 rounded !p-1 text-right"
+        class="mt-0 w-16 text-body-2xs text-foreground-2 bg-transparent border-0 focus:outline-none hover:ring-1 hover:ring-outline-2 focus:ring-1 focus:ring-outline-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:ring-0 rounded !p-1 text-right"
       />
     </div>
   </div>
@@ -105,7 +82,6 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-// import { FormTextInput } from '~~/src/lib'
 
 const props = defineProps<{
   min: number
