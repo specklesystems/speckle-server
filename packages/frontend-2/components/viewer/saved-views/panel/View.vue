@@ -18,58 +18,20 @@
       </div>
     </div>
     <div class="flex flex-col min-w-0 grow">
-      <div class="text-body-2xs font-medium text-foreground truncate grow-0 pr-1.5">
+      <div class="text-body-2xs font-medium text-foreground truncate grow-0">
         {{ view.name }}
       </div>
-      <div class="flex gap-1 items-center justify-between">
-        <div class="text-body-2xs text-foreground-3 truncate">
-          {{ view.author?.name }}
-        </div>
-        <div class="flex gap-0.5 items-center" @click.stop>
-          <LayoutMenu
-            v-model:open="showMenu"
-            :items="menuItems"
-            :menu-id="menuId"
-            mount-menu-on-body
-            show-ticks="right"
-            :size="230"
-            class="shrink-0 opacity-0 group-hover:opacity-100"
-            @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
-          >
-            <FormButton
-              size="sm"
-              color="subtle"
-              :icon-left="Ellipsis"
-              hide-text
-              name="viewActions"
-              class="shrink-0"
-              @click="showMenu = !showMenu"
-            />
-          </LayoutMenu>
-          <div
-            v-tippy="canUpdate?.errorMessage"
-            class="shrink-0 opacity-0 group-hover:opacity-100"
-          >
-            <FormButton
-              size="sm"
-              color="subtle"
-              :icon-left="SquarePen"
-              hide-text
-              name="editView"
-              class="shrink-0"
-              :disabled="!canUpdate?.authorized || isLoading"
-              @click="onEdit"
-            />
-          </div>
-        </div>
+      <div class="text-body-2xs text-foreground-3 truncate">
+        {{ view.author?.name }}
       </div>
       <div class="w-full flex items-center gap-1">
-        <Component
-          :is="isOnlyVisibleToMe ? User : Globe"
+        <User
+          v-if="isOnlyVisibleToMe"
+          v-tippy="getTooltipProps('Only visible to you')"
           :size="12"
           :stroke-width="1.5"
           :absolute-stroke-width="true"
-          class="w-3 h-3 text-foreground-2"
+          class="w-3 h-3 text-foreground-3 shrink-0"
         />
         <div
           v-tippy="{
@@ -81,8 +43,50 @@
           }"
           class="text-body-2xs text-foreground-3 truncate pr-1.5"
         >
-          {{ formattedRelativeDate(view.updatedAt) }}
+          {{ formattedRelativeDate(view.updatedAt, { capitalize: true }) }}
         </div>
+      </div>
+    </div>
+    <div
+      class="flex gap-0.5 items-center opacity-0 w-0 group-hover:opacity-100 group-hover:w-auto"
+      @click.stop
+    >
+      <LayoutMenu
+        v-model:open="showMenu"
+        :items="menuItems"
+        :menu-id="menuId"
+        mount-menu-on-body
+        show-ticks="right"
+        :size="230"
+        class="shrink-0"
+        @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
+      >
+        <FormButton
+          size="sm"
+          color="subtle"
+          :icon-left="Ellipsis"
+          hide-text
+          name="viewActions"
+          class="shrink-0"
+          @click="showMenu = !showMenu"
+        />
+      </LayoutMenu>
+      <div
+        v-tippy="
+          getTooltipProps(canUpdate?.authorized ? 'Edit view' : canUpdate?.errorMessage)
+        "
+        class="shrink-0 opacity-0 group-hover:opacity-100"
+      >
+        <FormButton
+          size="sm"
+          color="subtle"
+          :icon-left="SquarePen"
+          hide-text
+          name="editView"
+          class="shrink-0"
+          :disabled="!canUpdate?.authorized || isLoading"
+          @click="onEdit"
+        />
       </div>
     </div>
   </div>
@@ -97,7 +101,7 @@ import {
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { difference } from 'lodash-es'
-import { Ellipsis, SquarePen, Bookmark, Globe, User } from 'lucide-vue-next'
+import { Ellipsis, SquarePen, Bookmark, User } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   SavedViewVisibility,
@@ -121,6 +125,8 @@ const MenuItems = StringEnum([
   'SetAsHomeView'
 ])
 type MenuItems = StringEnumValues<typeof MenuItems>
+
+const { getTooltipProps } = useSmartTooltipDelay()
 
 graphql(`
   fragment ViewerSavedViewsPanelView_SavedView on SavedView {
@@ -197,10 +203,10 @@ const canLoadOriginal = computed(
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
-      id: MenuItems.LoadOriginalVersions,
-      title: 'Load with original model version',
-      disabled: !canLoadOriginal.value.authorized || isLoading.value,
-      disabledTooltip: canLoadOriginal.value.message
+      id: MenuItems.MoveToGroup,
+      title: 'Move to group',
+      disabled: !canUpdate.value?.authorized || isLoading.value,
+      disabledTooltip: canUpdate.value?.errorMessage
     },
     {
       id: MenuItems.ReplaceView,
@@ -209,14 +215,14 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
       disabledTooltip: canUpdate.value?.errorMessage
     },
     {
-      id: MenuItems.MoveToGroup,
-      title: 'Move to group',
-      disabled: !canUpdate.value?.authorized || isLoading.value,
-      disabledTooltip: canUpdate.value?.errorMessage
-    },
-    {
       id: MenuItems.CopyLink,
       title: 'Copy link'
+    },
+    {
+      id: MenuItems.LoadOriginalVersions,
+      title: 'Load with original model version',
+      disabled: !canLoadOriginal.value.authorized || isLoading.value,
+      disabledTooltip: canLoadOriginal.value.message
     }
   ],
   [
@@ -237,7 +243,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
       id: MenuItems.Delete,
-      title: 'Delete',
+      title: 'Delete view...',
       disabled: !canUpdate.value?.authorized || isLoading.value,
       disabledTooltip: canUpdate.value?.errorMessage
     }
@@ -245,7 +251,9 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
 ])
 
 const wrapperClasses = computed(() => {
-  const classParts = ['flex gap-2 p-2 pr-0.5 w-full group rounded-md cursor-pointer']
+  const classParts = [
+    'flex items-center gap-2 p-1.5 w-full group rounded-md cursor-pointer'
+  ]
 
   if (isActive.value) {
     classParts.push('bg-highlight-2 hover:bg-highlight-3')

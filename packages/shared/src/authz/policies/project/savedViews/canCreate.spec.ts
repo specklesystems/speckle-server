@@ -14,10 +14,9 @@ import {
   ProjectNotEnoughPermissionsError,
   ServerNoAccessError,
   WorkspaceNoAccessError,
-  WorkspacePlanNoFeatureAccessError,
   WorkspaceReadOnlyError
 } from '../../../domain/authErrors.js'
-import { PaidWorkspacePlans } from '../../../../workspaces/index.js'
+import { WorkspacePlans } from '../../../../workspaces/index.js'
 
 const buildSUT = (overrides?: OverridesOf<typeof canCreateSavedViewPolicy>) =>
   canCreateSavedViewPolicy({
@@ -71,7 +70,7 @@ describe('canCreateSavedViewPolicy', () => {
           id: 'workspace-id'
         }),
         getWorkspacePlan: getWorkspacePlanFake({
-          name: PaidWorkspacePlans.Pro
+          name: WorkspacePlans.Pro
         }),
         getWorkspaceSsoProvider: async () => ({
           providerId: 'provider-id'
@@ -153,10 +152,10 @@ describe('canCreateSavedViewPolicy', () => {
       })
     })
 
-    it('fails if not on pro/business plan', async () => {
+    it('succeeds even on free plan', async () => {
       const canCreate = buildWorkspaceSUT({
         getWorkspacePlan: getWorkspacePlanFake({
-          name: PaidWorkspacePlans.Team
+          name: WorkspacePlans.Free
         })
       })
 
@@ -164,15 +163,13 @@ describe('canCreateSavedViewPolicy', () => {
         userId: 'user-id',
         projectId: 'project-id'
       })
-      expect(result).toBeAuthErrorResult({
-        code: WorkspacePlanNoFeatureAccessError.code
-      })
+      expect(result).toBeAuthOKResult()
     })
 
     it('fails if workspace readonly', async () => {
       const canCreate = buildWorkspaceSUT({
         getWorkspacePlan: getWorkspacePlanFake({
-          name: PaidWorkspacePlans.Pro,
+          name: WorkspacePlans.Pro,
           status: 'canceled'
         })
       })

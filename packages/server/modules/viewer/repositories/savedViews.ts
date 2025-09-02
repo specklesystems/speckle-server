@@ -115,7 +115,13 @@ export const storeSavedViewFactory =
     const [insertedItem] = await tables.savedViews(deps.db).insert(
       {
         id: generateId(),
-        ...view
+        ...view,
+        // weird ts error:
+        ...(view.viewerState
+          ? {
+              viewerState: view.viewerState as SavedView['viewerState']
+            }
+          : {})
       },
       '*'
     )
@@ -158,8 +164,6 @@ const getProjectSavedViewGroupsBaseQueryFactory =
       params.onlyVisibility === SavedViewVisibility.authorOnly && !userId
         ? undefined
         : params.onlyVisibility
-
-    const isFiltering = search || onlyVisibility || onlyAuthored
     const resourceIds = formatResourceIdsForGroup(resourceIdString)
 
     /**
@@ -198,7 +202,7 @@ const getProjectSavedViewGroupsBaseQueryFactory =
       }
 
       // checking visibility/authorship but ONLY for view query - groups query should return everything still
-      if ((onlyAuthored || onlyVisibility) && mode === 'view') {
+      if ((onlyAuthored || onlyVisibility) && isViewQuery) {
         if (onlyAuthored || onlyVisibility === SavedViewVisibility.authorOnly) {
           query.andWhere({ [SavedViews.col.authorId]: userId })
         }
@@ -207,7 +211,7 @@ const getProjectSavedViewGroupsBaseQueryFactory =
         if (onlyVisibility) {
           query.andWhere({ [SavedViews.col.visibility]: onlyVisibility })
         }
-      } else if (mode === 'view') {
+      } else if (isViewQuery) {
         query.andWhere((w1) => {
           w1.andWhere(SavedViews.col.visibility, SavedViewVisibility.public)
           if (userId) {
@@ -227,18 +231,23 @@ const getProjectSavedViewGroupsBaseQueryFactory =
         })
       }
 
+      if (isGroupQuery) {
+        // groups must either have views in them OR be owned by the user searching
+        query.andWhere((w1) => {
+          w1.andWhere(SavedViews.col.id, 'is not', null) // has views
+          if (userId) {
+            w1.orWhere(SavedViewGroups.col.authorId, userId) // or owned by user
+          }
+        })
+      }
+
       return query
     }
 
     const q = tables
       .savedViewGroups(deps.db)
       .select<SavedViewGroup[]>(SavedViewGroups.cols)
-
-    if (isFiltering) {
-      // left join cause we may want to find groups by name and they may not
-      // have any views in them
-      q.leftJoin(SavedViews.name, SavedViews.col.groupId, SavedViewGroups.col.id)
-    }
+      .leftJoin(SavedViews.name, SavedViews.col.groupId, SavedViewGroups.col.id)
 
     applyFilters(q, 'group')
 
@@ -247,9 +256,8 @@ const getProjectSavedViewGroupsBaseQueryFactory =
 
     /**
      * Check if default group should be shown
-     * - We wanna show it always unless if we're searching, then check for
-     * specific views
-     * - Unless if there's no views in the default group at all, in which case don't show the default group
+     * - If searching for 'ungrouped'
+     * - If we can find ungrouped views matching the search query
      */
     const ungroupedViewFound = await applyFilters(
       tables.savedViews(deps.db),
@@ -600,7 +608,16 @@ export const updateSavedViewRecordFactory =
         [SavedViews.col.projectId]: projectId
       })
       .update(
-        { ...update, ...(skipUpdatingDate ? {} : { updatedAt: new Date() }) },
+        {
+          ...update,
+          ...(skipUpdatingDate ? {} : { updatedAt: new Date() }),
+          // weird ts error:
+          ...(update.viewerState
+            ? {
+                viewerState: update.viewerState as SavedView['viewerState']
+              }
+            : {})
+        },
         '*'
       )
 

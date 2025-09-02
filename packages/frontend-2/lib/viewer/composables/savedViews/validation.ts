@@ -5,7 +5,7 @@ import {
   SavedViewVisibility,
   type UseSavedViewValidationHelpers_SavedViewFragment
 } from '~/lib/common/generated/gql/graphql'
-import { Globe, Lock } from 'lucide-vue-next'
+import { Globe, User } from 'lucide-vue-next'
 import type { FormRadioGroupItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
@@ -50,14 +50,14 @@ export const useSavedViewValidationHelpers = (params: {
     {
       value: SavedViewVisibility.Public,
       title: 'Shared',
-      introduction: 'Visible to anyone with access to the model.',
+      introduction: 'Visible to anyone with access to the model',
       icon: Globe
     },
     {
       value: SavedViewVisibility.AuthorOnly,
       title: 'Private',
-      introduction: 'Visible only to the view author.',
-      icon: Lock,
+      introduction: 'Visible only to the view author',
+      icon: User,
       ...(params.view.value?.isHomeView
         ? {
             disabled: true,

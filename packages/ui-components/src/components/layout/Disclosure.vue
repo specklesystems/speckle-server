@@ -12,6 +12,7 @@
             color="fully-transparent"
             :input-classes="buttonTextClasses"
             :auto-focus="true"
+            wrapper-classes="flex-1"
             v-on="on"
             @click.stop
             @blur="onTitleInputBlur"

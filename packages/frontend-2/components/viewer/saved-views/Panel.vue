@@ -8,6 +8,7 @@
     <template #actions>
       <div v-if="!isLowerPlan" class="flex items-center gap-0.5">
         <FormButton
+          v-tippy="getTooltipProps('Search views')"
           size="sm"
           color="subtle"
           :icon-left="Search"
@@ -16,6 +17,7 @@
         />
         <div v-tippy="canCreateViewOrGroup?.errorMessage" class="flex items-center">
           <FormButton
+            v-tippy="getTooltipProps('Create group')"
             size="sm"
             color="subtle"
             :icon-left="FolderPlus"
@@ -27,6 +29,7 @@
         </div>
         <div v-tippy="canCreateViewOrGroup?.errorMessage" class="flex items-center">
           <FormButton
+            v-tippy="getTooltipProps('Create view')"
             size="sm"
             color="subtle"
             :icon-left="Plus"
@@ -39,17 +42,18 @@
       </div>
     </template>
     <template v-if="searchMode" #fullTitle>
-      <div class="self-center w-full pr-2 flex gap-2 items-center">
+      <div class="self-center w-full pr-1 flex gap-2 items-center">
         <FormTextInput
           v-bind="bind"
           name="search"
-          placeholder="Search"
+          placeholder="Search views..."
           color="foundation"
           auto-focus
+          size="sm"
+          wrapper-classes="flex-1 -ml-1"
           v-on="on"
         />
         <FormButton
-          v-tippy="'Exit search'"
           size="sm"
           color="subtle"
           :icon-left="X"
@@ -60,7 +64,7 @@
       </div>
     </template>
     <template v-if="!isLowerPlan">
-      <div class="px-4 pt-2">
+      <div class="px-3 pt-3">
         <ViewerButtonGroup>
           <ViewerButtonGroupButton
             v-for="viewsType in Object.values(ViewsType)"
@@ -87,14 +91,12 @@
       >
         <CommonPromoAlert
           title="Save your views"
-          text="With an editor seat, unlock the option to save your own views."
-          :button="{ title: 'Learn more' }"
+          text="With an Editor seat, unlock the option to save views. A workspace admin can update your seat type."
           show-closer
           @close="hideViewerSeatDisclaimer = true"
         />
       </div>
     </template>
-    <ViewerSavedViewsPlanUpsell v-else />
     <ViewerSavedViewsPanelGroupsCreateDialog
       v-model:open="showCreateGroupDialog"
       @success="onAddGroup"
@@ -153,6 +155,8 @@ const hideViewerSeatDisclaimer = useSynchronizedCookie<boolean>(
 )
 const searchMode = ref(false)
 const showCreateGroupDialog = ref(false)
+
+const { getTooltipProps } = useSmartTooltipDelay()
 
 const canCreateViewOrGroup = computed(
   () => project.value?.permissions.canCreateSavedView

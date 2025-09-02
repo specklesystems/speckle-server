@@ -15,7 +15,6 @@ import { AngleDamper } from '../../utils/AngleDamper.js'
 import { TIME_MS } from '@speckle/shared'
 
 const _vectorBuff0 = new Vector3()
-const _changeEvent = { type: 'change' }
 
 const _PI_2 = Math.PI / 2
 type MoveType = 'forward' | 'back' | 'left' | 'right' | 'up' | 'down'
@@ -366,7 +365,7 @@ class FlyControls extends SpeckleControls {
     amount.x = movementY * 0.005 * this._options.lookSpeed
 
     this.rotateBy(amount)
-    this.emit(_changeEvent)
+    this.emit('change')
   }
 
   protected onKeyDown = (event: KeyboardEvent) => {
