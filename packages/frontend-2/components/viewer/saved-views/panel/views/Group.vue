@@ -1,60 +1,72 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <LayoutDisclosure
-    v-model:open="open"
-    v-model:edit-title="renameMode"
-    color="subtle"
-    :title="group.title"
-    lazy-load
+  <div
     :class="dropZoneClasses"
-    @update:title="onRename"
     @dragover="onDragOver"
     @drop="onDrop"
     @dragenter="onDragEnter"
     @dragleave="onDragLeave"
   >
+    <LayoutDisclosure
+      v-if="!isUngroupedGroup"
+      v-model:open="open"
+      v-model:edit-title="renameMode"
+      color="subtle"
+      :title="group.title"
+      lazy-load
+      @update:title="onRename"
+    >
+      <ViewerSavedViewsPanelViewsGroupInner
+        :group="group"
+        :search="search"
+        :views-type="viewsType"
+      />
+      <template #title-actions>
+        <div
+          class="flex gap-0.5 items-center opacity-0 group-hover/disclosure:opacity-100"
+          @click.stop
+        >
+          <LayoutMenu
+            v-if="!isUngroupedGroup"
+            v-model:open="showMenu"
+            :items="menuItems"
+            :menu-id="menuId"
+            mount-menu-on-body
+            show-ticks="right"
+            @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
+          >
+            <FormButton
+              name="viewActions"
+              size="sm"
+              color="subtle"
+              :icon-left="Ellipsis"
+              hide-text
+              @click="showMenu = !showMenu"
+            />
+          </LayoutMenu>
+          <div v-tippy="canCreateView?.errorMessage">
+            <FormButton
+              v-tippy="getTooltipProps('Create view')"
+              size="sm"
+              color="subtle"
+              :icon-left="Plus"
+              hide-text
+              name="addGroupView"
+              :disabled="!canCreateView.authorized || isLoading"
+              @click="onAddGroupView"
+            />
+          </div>
+        </div>
+      </template>
+    </LayoutDisclosure>
     <ViewerSavedViewsPanelViewsGroupInner
+      v-else
+      class="mb-[1px]"
       :group="group"
       :search="search"
       :views-type="viewsType"
     />
-    <template #title-actions>
-      <div
-        class="flex gap-0.5 items-center opacity-0 group-hover/disclosure:opacity-100"
-        @click.stop
-      >
-        <LayoutMenu
-          v-if="!isUngroupedGroup"
-          v-model:open="showMenu"
-          :items="menuItems"
-          :menu-id="menuId"
-          mount-menu-on-body
-          show-ticks="right"
-          @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
-        >
-          <FormButton
-            name="viewActions"
-            size="sm"
-            color="subtle"
-            :icon-left="Ellipsis"
-            hide-text
-            @click="showMenu = !showMenu"
-          />
-        </LayoutMenu>
-        <div v-tippy="canCreateView?.errorMessage">
-          <FormButton
-            v-tippy="getTooltipProps('Create view')"
-            size="sm"
-            color="subtle"
-            :icon-left="Plus"
-            hide-text
-            name="addGroupView"
-            :disabled="!canCreateView.authorized || isLoading"
-            @click="onAddGroupView"
-          />
-        </div>
-      </div>
-    </template>
-  </LayoutDisclosure>
+  </div>
 </template>
 <script setup lang="ts">
 import { StringEnum, throwUncoveredError, type StringEnumValues } from '@speckle/shared'
