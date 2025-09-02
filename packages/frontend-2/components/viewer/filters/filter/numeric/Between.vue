@@ -8,6 +8,14 @@
       :max="filterMax"
       :step="0.01"
       show-fields
+      :style="
+        isColoringActive
+          ? {
+              '--gradient-from': '#3b82f6',
+              '--gradient-to': '#ec4899'
+            }
+          : {}
+      "
     />
   </div>
 </template>
@@ -21,7 +29,7 @@ const props = defineProps<{
   filter: FilterData
 }>()
 
-const { setNumericRange } = useFilterUtilities()
+const { setNumericRange, filters } = useFilterUtilities()
 
 // Get the filter's min/max bounds
 const filterMin = computed(() => {
@@ -64,5 +72,10 @@ const currentMax = computed({
       setNumericRange(props.filter.id, props.filter.numericRange.min, value)
     }
   }
+})
+
+// Check if coloring is active for this filter
+const isColoringActive = computed(() => {
+  return filters.activeColorFilterId.value === props.filter.id
 })
 </script>

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="w-full h-5">
+    <div class="w-full h-5" :style="props.style">
       <div class="relative">
         <!-- Min range input -->
         <input
@@ -44,7 +44,7 @@
 
         <!-- Visual track highlight between handles -->
         <div
-          class="absolute top-0.5 h-3 bg-outline-5 rounded-full pointer-events-none z-0"
+          class="absolute top-0.5 h-3 bg-gray-300/60 dark:bg-gray-200/40 rounded-full pointer-events-none z-0"
           :style="{
             left: `${minPercentage}%`,
             width: `${maxPercentage - minPercentage}%`
@@ -90,6 +90,7 @@ const props = defineProps<{
   name: string
   disabled?: boolean
   showFields?: boolean
+  style?: Record<string, string | number>
 }>()
 
 const minValue = defineModel<number>('minValue', {
@@ -222,5 +223,22 @@ input[type='number'] {
   z-index: 20;
   position: relative;
   pointer-events: auto;
+}
+
+/* Gradient styling for slider inputs when gradient custom properties are set */
+.slider-min::-webkit-slider-runnable-track {
+  background: linear-gradient(
+    to right,
+    var(--gradient-from, var(--highlight-1)),
+    var(--gradient-to, var(--highlight-1))
+  ) !important;
+}
+
+.slider-min::-moz-range-track {
+  background: linear-gradient(
+    to right,
+    var(--gradient-from, var(--highlight-1)),
+    var(--gradient-to, var(--highlight-1))
+  ) !important;
 }
 </style>

@@ -10,6 +10,14 @@
       :label="rangeLabel"
       hide-header
       input-below-slider
+      :style="
+        isColoringActive
+          ? {
+              '--gradient-from': '#3b82f6',
+              '--gradient-to': '#ec4899'
+            }
+          : {}
+      "
     />
 
     <FormTextInput
@@ -38,7 +46,7 @@ const props = defineProps<{
   filter: FilterData
 }>()
 
-const { setNumericRange } = useFilterUtilities()
+const { setNumericRange, filters } = useFilterUtilities()
 
 // Get the filter's min/max bounds for range inputs
 const filterMin = computed(() => {
@@ -84,4 +92,9 @@ const updateSingleValue = (value: string) => {
   // For single value conditions, set both min and max to the same value
   setNumericRange(props.filter.id, numericValue, numericValue)
 }
+
+// Check if coloring is active for this filter
+const isColoringActive = computed(() => {
+  return filters.activeColorFilterId.value === props.filter.id
+})
 </script>
