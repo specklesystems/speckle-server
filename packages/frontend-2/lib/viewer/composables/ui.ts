@@ -1,6 +1,5 @@
 import { SpeckleViewer } from '@speckle/shared'
-import type { TreeNode, MeasurementOptions, ViewMode } from '@speckle/viewer'
-import { MeasurementsExtension, MeasurementEvent } from '@speckle/viewer'
+import type { TreeNode, ViewMode } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { useActiveElement } from '@vueuse/core'
 import { isString } from 'lodash-es'
@@ -21,6 +20,11 @@ import type {
 } from '~/lib/viewer/helpers/shortcuts/types'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import type { defaultEdgeColorValue } from '~/lib/viewer/composables/setup/viewMode'
+import {
+  defaultMeasurementOptions,
+  type MeasurementOptions
+} from '@speckle/shared/viewer/state'
+
 // Re-export filtering utilities
 export { useFilterUtilities } from './filtering'
 
@@ -282,9 +286,10 @@ export function useThreadUtilities() {
 export function useMeasurementUtilities() {
   const state = useInjectedViewerState()
 
-  const measurementCount = ref(0)
-
   const measurementOptions = computed(() => state.ui.measurement.options.value)
+  const hasMeasurements = computed(
+    () => state.ui.measurement.measurements.value.length > 0
+  )
 
   const enableMeasurements = (enabled: boolean) => {
     state.ui.measurement.enabled.value = enabled
@@ -294,52 +299,31 @@ export function useMeasurementUtilities() {
     state.ui.measurement.options.value = options
   }
 
-  const removeMeasurement = () => {
-    state.viewer.instance.getExtension(MeasurementsExtension).removeMeasurement()
+  const removeActiveMeasurement = () => {
+    if (state.viewer.instance?.removeMeasurement) {
+      state.viewer.instance.removeMeasurement()
+    }
   }
 
   const clearMeasurements = () => {
-    state.viewer.instance.getExtension(MeasurementsExtension).clearMeasurements()
+    state.ui.measurement.measurements.value = []
   }
 
-  const getActiveMeasurement = () => {
-    const measurementsExtension =
-      state.viewer.instance.getExtension(MeasurementsExtension)
-    const activeMeasurement = measurementsExtension?.activeMeasurement
-    return activeMeasurement && activeMeasurement.state === 2
-  }
-
-  const hasMeasurements = computed(() => measurementCount.value > 0)
-
-  const setupMeasurementListener = () => {
-    const extension = state.viewer.instance?.getExtension(MeasurementsExtension)
-    if (!extension) return
-
-    const updateCount = () => {
-      measurementCount.value = (
-        extension as unknown as { measurementCount: number }
-      ).measurementCount
-    }
-
-    // Set initial count
-    updateCount()
-
-    // Listen for changes
-    extension.on(MeasurementEvent.CountChanged, updateCount)
-  }
-
-  if (state.viewer.instance) {
-    setupMeasurementListener()
+  const reset = () => {
+    state.ui.measurement.enabled.value = false
+    state.ui.measurement.measurements.value = []
+    state.ui.measurement.options.value = { ...defaultMeasurementOptions }
   }
 
   return {
     measurementOptions,
     enableMeasurements,
     setMeasurementOptions,
-    removeMeasurement,
+    removeActiveMeasurement,
     clearMeasurements,
-    getActiveMeasurement,
-    hasMeasurements
+    hasMeasurements,
+    reset,
+    measurements: state.ui.measurement.measurements
   }
 }
 

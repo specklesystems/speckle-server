@@ -1,17 +1,10 @@
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
 import {
   useThrottleFn,
-  onKeyStroke,
   watchTriggerable,
   useMagicKeys,
   useEventListener
 } from '@vueuse/core'
-import {
-  ExplodeEvent,
-  ExplodeExtension,
-  LoaderEvent,
-  type SunLightConfiguration
-} from '@speckle/viewer'
 import {
   ViewerEvent,
   VisualDiffMode,
@@ -20,7 +13,11 @@ import {
   SectionOutlines,
   SectionToolEvent,
   SectionTool,
-  SpeckleLoader
+  SpeckleLoader,
+  ExplodeEvent,
+  ExplodeExtension,
+  LoaderEvent,
+  type SunLightConfiguration
 } from '@speckle/viewer'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import type { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
@@ -49,11 +46,7 @@ import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import { SafeLocalStorage } from '@speckle/shared'
-import {
-  useCameraUtilities,
-  useMeasurementUtilities,
-  useFilterUtilities
-} from '~~/lib/viewer/composables/ui'
+import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -62,6 +55,8 @@ import { graphql } from '~/lib/common/generated/gql'
 import { useTreeManagement } from '~~/lib/viewer/composables/tree'
 import { useViewerSavedViewIntegration } from '~/lib/viewer/composables/savedViews/state'
 import { useViewModesPostSetup } from '~/lib/viewer/composables/setup/viewMode'
+import { useMeasurementsPostSetup } from '~/lib/viewer/composables/setup/measurements'
+import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -751,46 +746,6 @@ function useDiffingIntegration() {
   })
 }
 
-function useViewerMeasurementIntegration() {
-  const {
-    ui: { measurement },
-    viewer: { instance }
-  } = useInjectedViewerState()
-
-  const { clearMeasurements, removeMeasurement } = useMeasurementUtilities()
-
-  onBeforeUnmount(() => {
-    clearMeasurements()
-  })
-
-  watch(
-    () => measurement.enabled.value,
-    (newVal, oldVal) => {
-      if (newVal !== oldVal) {
-        instance.enableMeasurements(newVal)
-      }
-    },
-    { immediate: true }
-  )
-
-  watch(
-    () => ({ ...measurement.options.value }),
-    (newMeasurementState) => {
-      if (newMeasurementState) {
-        instance.setMeasurementOptions(newMeasurementState)
-      }
-    },
-    { immediate: true, deep: true }
-  )
-
-  onKeyStroke('Delete', () => {
-    removeMeasurement()
-  })
-  onKeyStroke('Backspace', () => {
-    removeMeasurement()
-  })
-}
-
 function useDisableZoomOnEmbed() {
   const { viewer } = useInjectedViewerState()
   const embedOptions = useEmbed()
@@ -893,7 +848,7 @@ export function useViewerPostSetup() {
   useLightConfigIntegration()
   useExplodeFactorIntegration()
   useDiffingIntegration()
-  useViewerMeasurementIntegration()
+  useMeasurementsPostSetup()
   useDisableZoomOnEmbed()
   useViewerCursorIntegration()
   useViewerTreeIntegration()

@@ -7,14 +7,14 @@ import { coerceUndefinedValuesToNull } from '../../core/index.js'
 export const defaultViewModeEdgeColorValue = 'DEFAULT_EDGE_COLOR'
 
 /** Redefining these is unfortunate. Especially since they are not part of viewer-core */
-enum MeasurementType {
+export enum MeasurementType {
   PERPENDICULAR = 0,
   POINTTOPOINT = 1,
   AREA = 2,
   POINT = 3
 }
 
-interface MeasurementOptions {
+export interface MeasurementOptions {
   visible: boolean
   type?: MeasurementType
   vertexSnap?: boolean
@@ -22,6 +22,27 @@ interface MeasurementOptions {
   precision?: number
   chain?: boolean
 }
+
+export interface MeasurementData {
+  type: MeasurementType
+  startPoint: readonly [number, number, number] // vec3
+  endPoint: readonly [number, number, number] // vec3
+  startNormal: readonly [number, number, number] // vec3
+  endNormal: readonly [number, number, number] // vec3
+  value: number
+  innerPoints?: (readonly [number, number, number])[] // array of vec3
+  units?: string
+  precision?: number
+  uuid: string
+}
+
+export const defaultMeasurementOptions: Readonly<MeasurementOptions> = Object.freeze({
+  visible: true,
+  type: MeasurementType.POINTTOPOINT,
+  vertexSnap: false,
+  units: 'm',
+  precision: 2
+})
 
 export interface SectionBoxData {
   min: number[]
@@ -40,8 +61,10 @@ export interface SectionBoxData {
  * v1.3 -> 1.4
  * - ui.viewMode -> ui.viewMode.mode
  * - ui.viewMode has new keys: edgesEnabled, edgesWeight, outlineOpacity, edgesColor
+ * v1.4 -> 1.5
+ * - ui.measurement.measurements added
  */
-export const SERIALIZED_VIEWER_STATE_VERSION = 1.3
+export const SERIALIZED_VIEWER_STATE_VERSION = 1.5
 
 export type SerializedViewerState = {
   projectId: string
@@ -120,6 +143,7 @@ export type SerializedViewerState = {
     measurement: {
       enabled: boolean
       options: Nullable<MeasurementOptions>
+      measurements: Array<MeasurementData>
     }
   }
 }
@@ -166,14 +190,6 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
     throw new UnformattableSerializedViewerStateError(
       'Required data missing from SerializedViewerState: ' + missingPath
     )
-  }
-
-  const defaultMeasurementOptions: MeasurementOptions = {
-    visible: false,
-    type: MeasurementType.POINTTOPOINT,
-    vertexSnap: false,
-    units: 'm',
-    precision: 2
   }
 
   const measurementOptions = {
@@ -288,7 +304,8 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
       selection: state.ui?.selection || null,
       measurement: {
         enabled: state.ui?.measurement?.enabled ?? false,
-        options: measurementOptions
+        options: measurementOptions,
+        measurements: state.ui?.measurement?.measurements || []
       }
     }
   }
