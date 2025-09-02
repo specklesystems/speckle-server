@@ -3,36 +3,35 @@
     <div
       class="text-center bg-highlight-1 rounded-md p-2 text-body-3xs text-foreground font-medium"
     >
-      {{ displayCount?.toLocaleString() }} objects
+      {{ displayCount }} objects
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { FilterData } from '~/lib/viewer/helpers/filters/types'
-import { ExistenceFilterCondition } from '~/lib/viewer/helpers/filters/types'
-import { useFilterCounts } from '~/lib/viewer/composables/filtering/counts'
+import {
+  ExistenceFilterCondition,
+  type FilterData
+} from '~/lib/viewer/helpers/filters/types'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 
 const props = defineProps<{
   filter: FilterData
 }>()
 
-const { getExistenceCounts } = useFilterCounts()
+const { viewer } = useInjectedViewerState()
 
-const existenceCounts = computed(() => {
-  if (!props.filter.filter) return null
-  return getExistenceCounts(props.filter.filter)
+const totalObjectCount = computed(() => {
+  return viewer.metadata.worldTree.value?.nodeCount
 })
 
 const displayCount = computed(() => {
-  if (!existenceCounts.value) return null
-
-  if (props.filter.condition === ExistenceFilterCondition.IsSet) {
-    return existenceCounts.value.setCount
-  } else if (props.filter.condition === ExistenceFilterCondition.IsNotSet) {
-    return existenceCounts.value.notSetCount
+  if (!props.filter.filter) return null
+  if (props.filter.condition === ExistenceFilterCondition.IsNotSet) {
+    return totalObjectCount.value
+      ? totalObjectCount.value - props.filter.filter.objectCount
+      : 0
   }
-
-  return null
+  return props.filter.filter.objectCount
 })
 </script>
