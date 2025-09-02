@@ -30,7 +30,7 @@
       v-model="filterLogic"
     />
 
-    <div class="h-full flex flex-col select-none">
+    <div class="h-full flex flex-col select-none group/panel">
       <!-- Active Filters Section -->
       <div
         v-if="propertyFilters.length > 0"
@@ -45,18 +45,20 @@
             @swap-property="startPropertySwap"
           />
         </div>
-        <div class="px-2 pb-6">
-          <FormButton
-            v-if="propertyFilters.length > 0"
-            full-width
-            color="outline"
-            class="rounded-xl text-foreground-2 hover:text-foreground"
-            :icon-left="Plus"
-            hide-text
-            @click="addNewEmptyFilter"
-          >
-            Add filter
-          </FormButton>
+        <div class="px-2 pb-6 mt-1 h-14">
+          <div class="hidden group-hover/panel:block">
+            <FormButton
+              v-if="propertyFilters.length > 0"
+              full-width
+              color="outline"
+              class="rounded-xl text-foreground-2 hover:text-foreground"
+              :icon-left="Plus"
+              hide-text
+              @click="addNewEmptyFilter"
+            >
+              Add filter
+            </FormButton>
+          </div>
         </div>
       </div>
 

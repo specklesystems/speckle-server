@@ -24,17 +24,6 @@
       </FormButton>
     </div>
     <div class="flex items-start gap-0.5">
-      <FormButton
-        v-tippy="collapsed ? 'Show details' : 'Hide details'"
-        color="subtle"
-        size="sm"
-        hide-text
-        class="opacity-0 group-hover:opacity-100 hover:text-foreground"
-        :class="collapsed ? 'text-foreground !opacity-100' : 'text-foreground-3'"
-        :icon-right="collapsed ? ChevronsUpDown : ChevronsDownUp"
-        :is-expanded="!collapsed"
-        @click.stop="collapsed = !collapsed"
-      />
       <LayoutMenu
         v-model:open="showActionsMenu"
         :items="actionsItems"
@@ -54,6 +43,15 @@
           @click="showActionsMenu = !showActionsMenu"
         ></FormButton>
       </LayoutMenu>
+      <FormButton
+        v-tippy="collapsed ? 'Show details' : 'Hide details'"
+        color="subtle"
+        size="sm"
+        hide-text
+        :icon-right="collapsed ? ChevronsUpDown : ChevronsDownUp"
+        :is-expanded="!collapsed"
+        @click.stop="collapsed = !collapsed"
+      />
       <FormButton
         v-tippy="'Toggle coloring for this property'"
         :color="isColoringActive ? 'primary' : 'subtle'"

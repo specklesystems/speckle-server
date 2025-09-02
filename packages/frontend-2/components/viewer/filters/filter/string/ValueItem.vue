@@ -3,7 +3,7 @@
 <template>
   <div class="px-1">
     <div
-      class="group flex items-center justify-between gap-2 text-body-3xs py-0.5 px-2 hover:bg-highlight-1 rounded-md cursor-pointer"
+      class="group/checkbox flex items-center justify-between gap-2 text-body-3xs py-0.5 px-2 hover:bg-highlight-1 rounded-md cursor-pointer"
       @click="$emit('toggle')"
     >
       <div class="flex items-center min-w-0">
@@ -11,8 +11,8 @@
         <FormCheckbox
           class="pointer-events-none -mt-1"
           :class="{
-            'border-transparent group-hover:border-outline-5': !isSelected,
-            'opacity-50 dark:!bg-transparent !border !border-outline-5 !group-hover:border-outline-5':
+            'border-transparent group-hover/checkbox:border-outline-5': !isSelected,
+            'opacity-50 dark:!bg-transparent !border !border-outline-5 !group-hover/checkbox:border-outline-5':
               isDefaultSelected
           }"
           :name="`filter-${filter.id}-${value}`"
