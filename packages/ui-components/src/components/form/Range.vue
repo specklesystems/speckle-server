@@ -51,7 +51,7 @@
       :value="currentValue"
       :disabled="disabled"
       :aria-label="`${label} current value`"
-      class="w-12 text-body-2xs text-foreground bg-transparent border-0 focus:outline-none hover:ring-1 hover:ring-outline-2 focus:ring-1 focus:ring-outline-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:ring-0 rounded !p-1"
+      class="w-16 text-body-2xs text-foreground-2 bg-transparent border-0 focus:outline-none hover:ring-1 hover:ring-outline-2 focus:ring-1 focus:ring-outline-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:ring-0 rounded !p-1"
       @input="handleNumberInput"
       @blur="validateAndClamp"
     />
