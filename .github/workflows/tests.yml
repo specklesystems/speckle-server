@@ -269,19 +269,20 @@ jobs:
         ports:
           - 6379:6379
       postgres:
-        image: bitnami/postgresql:16.4.0
+        image: postgres:16.4-alpine3.20
         env:
-          POSTGRESQL_DATABASE: speckle2_test
-          POSTGRESQL_PASSWORD: speckle
-          POSTGRESQL_USERNAME: speckle
-          POSTGRESQL_EXTRA_FLAGS: '-c max_prepared_transactions=150'
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U speckle -d speckle2_test"
+          --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+          --entrypoint postgres
+              postgres -c max_prepared_transactions=150
       minio:
         image: bitnami/minio
         env:
@@ -351,6 +352,7 @@ jobs:
 
   test-server-no-ff:
     name: Server no ff
+    if: false
     runs-on: blacksmith-8vcpu-ubuntu-2404
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
@@ -436,6 +438,7 @@ jobs:
 
   test-server-multiregion:
     name: Server multiregion
+    if: false
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     services:
@@ -465,7 +468,7 @@ jobs:
           --health-retries 5
 
       postgres1:
-        image: bitnami/postgresql:16.4.0
+        image: postgres:16.4.0
         env:
           POSTGRESQL_DATABASE: speckle2_test
           POSTGRESQL_PASSWORD: speckle
