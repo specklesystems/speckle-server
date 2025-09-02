@@ -89,7 +89,7 @@ analytics:
   mixpanel_api_host: 'https://analytics.speckle.systems'
 
 dashboards:
-  ## @param dashboards.origin The origin of the dashboards module
+  ## @param dashboards.origin The origin of the dashboards deployment
   origin: ''
 
 ## @section Network Plugin configuration

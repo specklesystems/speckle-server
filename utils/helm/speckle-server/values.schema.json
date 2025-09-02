@@ -167,6 +167,16 @@
         }
       }
     },
+    "dashboards": {
+      "type": "object",
+      "properties": {
+        "origin": {
+          "type": "string",
+          "description": "The origin of the dashboards module",
+          "default": ""
+        }
+      }
+    },
     "networkPlugin": {
       "type": "object",
       "properties": {
