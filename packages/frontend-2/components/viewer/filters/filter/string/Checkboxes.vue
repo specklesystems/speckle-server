@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { useVirtualList } from '@vueuse/core'
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import {
   isStringFilter,
   type FilterData,

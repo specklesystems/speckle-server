@@ -53,7 +53,7 @@
 </template>
 <script setup lang="ts">
 import type { NumericPropertyInfo } from '@speckle/viewer'
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 
 const { addActiveFilter, toggleFilterApplied } = useFilterUtilities()
 

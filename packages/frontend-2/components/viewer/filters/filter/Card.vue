@@ -29,7 +29,7 @@ import {
   isNumericFilter,
   ExistenceFilterCondition
 } from '~/lib/viewer/helpers/filters/types'
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 
 const props = defineProps<{
   filter: FilterData

@@ -11,17 +11,17 @@
 <script setup lang="ts">
 import type { FilterData } from '~/lib/viewer/helpers/filters/types'
 import { ExistenceFilterCondition } from '~/lib/viewer/helpers/filters/types'
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { useFilterCounts } from '~/lib/viewer/composables/filtering/counts'
 
 const props = defineProps<{
   filter: FilterData
 }>()
 
-const { getPropertyExistenceCounts } = useFilterUtilities()
+const { getExistenceCounts } = useFilterCounts()
 
 const existenceCounts = computed(() => {
-  if (!props.filter.filter?.key) return null
-  return getPropertyExistenceCounts(props.filter.filter.key)
+  if (!props.filter.filter) return null
+  return getExistenceCounts(props.filter.filter)
 })
 
 const displayCount = computed(() => {

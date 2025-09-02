@@ -17,7 +17,6 @@ import {
   isEmpty,
   partition,
   compact,
-  mapValues,
   round
 } from 'lodash-es'
 import { nextTick } from 'vue'
@@ -506,46 +505,6 @@ export function useFilterUtilities(
     }
 
     return []
-  }
-
-  const getPropertyValueCounts = (propertyKey: string): Record<string, number> => {
-    const valueCounts: Record<string, number> = {}
-
-    for (const dataSource of dataStore.dataSources.value) {
-      const propertyIndex = dataStore.buildPropertyIndex(dataSource, propertyKey)
-      const counts = mapValues(propertyIndex, (objectIds) => objectIds.length)
-
-      // Merge counts from this data source
-      Object.entries(counts).forEach(([value, count]) => {
-        valueCounts[value] = (valueCounts[value] || 0) + count
-      })
-    }
-
-    return valueCounts
-  }
-
-  const getPropertyExistenceCounts = (
-    propertyKey: string
-  ): { setCount: number; notSetCount: number } => {
-    let setCount = 0
-    let totalCount = 0
-
-    for (const dataSource of dataStore.dataSources.value) {
-      const propertyIndex = dataStore.buildPropertyIndex(dataSource, propertyKey)
-
-      for (const objectIds of Object.values(propertyIndex)) {
-        setCount += objectIds.length
-      }
-
-      totalCount += Object.keys(dataSource.objectMap).length
-    }
-
-    const notSetCount = totalCount - setCount
-
-    return {
-      setCount,
-      notSetCount
-    }
   }
 
   const getObjectIdsForPropertyValue = (
@@ -1191,8 +1150,6 @@ export function useFilterUtilities(
     hideObjects,
     showObjects,
     filters,
-    getPropertyValueCounts,
-    getPropertyExistenceCounts,
     getObjectIdsForPropertyValue,
     addActiveFilter,
     updateFilterProperty,

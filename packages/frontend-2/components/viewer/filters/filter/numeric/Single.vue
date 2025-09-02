@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import type { FilterData } from '~/lib/viewer/helpers/filters/types'
 
 const props = defineProps<{

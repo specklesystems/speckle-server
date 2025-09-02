@@ -14,7 +14,7 @@
 
 <script setup lang="ts">
 import { FormDualRange } from '@speckle/ui-components'
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { isNumericFilter, type FilterData } from '~/lib/viewer/helpers/filters/types'
 
 const props = defineProps<{

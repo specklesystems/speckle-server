@@ -10,7 +10,7 @@
 </template>
 <script setup lang="ts">
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 
 const { resetFilters } = useFilterUtilities()
 

@@ -41,7 +41,8 @@
 
 <script setup lang="ts">
 import { FormCheckbox } from '@speckle/ui-components'
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { useFilterCounts } from '~/lib/viewer/composables/filtering/counts'
 import { isStringFilter, type FilterData } from '~/lib/viewer/helpers/filters/types'
 
 const props = defineProps<{
@@ -53,21 +54,18 @@ defineEmits<{
   toggle: []
 }>()
 
-const {
-  isActiveFilterValueSelected,
-  getFilterValueColor,
-  getPropertyValueCounts,
-  filters
-} = useFilterUtilities()
+const { isActiveFilterValueSelected, getFilterValueColor, filters } =
+  useFilterUtilities()
+
+const { getValueCount } = useFilterCounts()
 
 const isSelected = computed(() =>
   isActiveFilterValueSelected(props.filter.id, props.value)
 )
 
 const count = computed(() => {
-  if (!props.filter.filter?.key) return null
-  const counts = getPropertyValueCounts(props.filter.filter.key)
-  return counts[props.value] || 0
+  if (!props.filter.filter) return null
+  return getValueCount(props.filter.filter, props.value)
 })
 
 const color = computed(() => {
