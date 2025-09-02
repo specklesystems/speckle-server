@@ -92,11 +92,16 @@ export const getProjectReplicationDbClients = async ({
   projectId: string
 }): Promise<[Knex, ...Knex[]]> => {
   const getDefaultDb = () => undefined
-  const projectDb = await getProjectDbClientFactory({
-    getDefaultDb,
-    getRegionDb,
-    getProjectRegionKey
-  })({ projectId })
+  let projectDb = undefined
+  try {
+    projectDb = await getProjectDbClientFactory({
+      getDefaultDb,
+      getRegionDb,
+      getProjectRegionKey
+    })({ projectId })
+  } catch {
+    logger.warn({ projectId }, 'No regionKey found for project')
+  }
 
   return [mainDb, ...(projectDb ? [projectDb] : [])]
 }
