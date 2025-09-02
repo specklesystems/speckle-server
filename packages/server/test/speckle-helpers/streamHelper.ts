@@ -65,9 +65,9 @@ import { ensureError, Roles } from '@speckle/shared'
 import { omit } from 'lodash-es'
 import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
-import { getTestRegionClientsForProject } from '@/modules/multiregion/tests/helpers'
 import { logger } from '@/observability/logging'
 import type { LegacyCreateStream } from '@/modules/core/domain/streams/operations'
+import { getDb, isRegionMain } from '@/modules/multiregion/utils/dbSelector'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -152,7 +152,9 @@ const createStream: LegacyCreateStream = async (
       name: 'create stream spec',
       logger,
       description: 'Creates a new stream',
-      dbs: await getTestRegionClientsForProject(stream)
+      dbs: isRegionMain({ regionKey: stream.regionKey })
+        ? [db]
+        : [db, await getDb({ regionKey: stream.regionKey })]
     }
   )
 

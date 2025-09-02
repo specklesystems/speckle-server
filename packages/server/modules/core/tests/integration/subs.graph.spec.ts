@@ -126,8 +126,9 @@ const buildDeleteProject = async (params: { projectId: string; ownerId: string }
   })
   return async () => deleteStreamAndNotify(projectId, ownerId)
 }
-const updateProject: UpdateStream = async (stream, projectId) =>
-  asMultiregionalOperation(
+
+const updateProject: UpdateStream = async (stream, me) => {
+  return asMultiregionalOperation(
     async ({ mainDb, allDbs, emit }) => {
       const updateStreamAndNotify = updateStreamAndNotifyFactory({
         getStream: getStreamFactory({ db: mainDb }),
@@ -135,14 +136,15 @@ const updateProject: UpdateStream = async (stream, projectId) =>
         emitEvent: emit
       })
 
-      return updateStreamAndNotify(stream, projectId)
+      return updateStreamAndNotify(stream, me)
     },
     {
       logger,
-      name: 'updateStream',
-      dbs: await getProjectReplicationDbClients({ projectId })
+      name: 'updateStream spec',
+      dbs: await getProjectReplicationDbClients({ projectId: stream.id })
     }
   )
+}
 
 const buildUpdateModel = async (params: { projectId: string }) => {
   const { projectId } = params
