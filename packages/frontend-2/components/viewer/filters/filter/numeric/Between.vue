@@ -6,7 +6,7 @@
       :name="`range-${filter.id}`"
       :min="filterMin"
       :max="filterMax"
-      :step="0.01"
+      :step="0.0001"
       show-fields
     />
   </div>

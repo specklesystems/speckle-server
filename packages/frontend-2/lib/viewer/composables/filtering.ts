@@ -17,7 +17,8 @@ import {
   isEmpty,
   partition,
   compact,
-  mapValues
+  mapValues,
+  round
 } from 'lodash-es'
 import { nextTick } from 'vue'
 import {
@@ -174,6 +175,8 @@ function createFilteringDataStore() {
   const queryObjects = (criteria: QueryCriteria): string[] => {
     const matchingIds: string[] = []
 
+    const PRECISION = 4 // matches 0.0001 step
+
     for (const dataSource of dataSources.value) {
       const propertyIndex = buildPropertyIndex(dataSource, criteria.propertyKey)
 
@@ -200,26 +203,31 @@ function createFilteringDataStore() {
         for (const [value, objectIds] of Object.entries(propertyIndex)) {
           const numericValue = Number(value)
           if (!isNaN(numericValue)) {
+            // Round values to match our precision to avoid floating-point issues
+            const roundedValue = round(numericValue, PRECISION)
+            const roundedMin = round(minValue, PRECISION)
+            const roundedMax = round(maxValue, PRECISION)
+
             let shouldInclude = false
 
             switch (criteria.condition) {
               case NumericFilterCondition.IsBetween:
-                shouldInclude = numericValue >= minValue && numericValue <= maxValue
+                shouldInclude = roundedValue >= roundedMin && roundedValue <= roundedMax
                 break
               case NumericFilterCondition.IsGreaterThan:
-                shouldInclude = numericValue > minValue
+                shouldInclude = roundedValue > roundedMin
                 break
               case NumericFilterCondition.IsLessThan:
-                shouldInclude = numericValue < maxValue
+                shouldInclude = roundedValue < roundedMax
                 break
               case NumericFilterCondition.IsEqualTo:
-                shouldInclude = numericValue >= minValue && numericValue <= maxValue
+                shouldInclude = roundedValue >= roundedMin && roundedValue <= roundedMax
                 break
               case NumericFilterCondition.IsNotEqualTo:
-                shouldInclude = numericValue < minValue || numericValue > maxValue
+                shouldInclude = roundedValue < roundedMin || roundedValue > roundedMax
                 break
               default:
-                shouldInclude = numericValue >= minValue && numericValue <= maxValue
+                shouldInclude = roundedValue >= roundedMin && roundedValue <= roundedMax
             }
 
             if (shouldInclude) {
