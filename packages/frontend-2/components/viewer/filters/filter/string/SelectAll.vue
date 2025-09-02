@@ -71,7 +71,7 @@ const selectAllCheckboxClasses = computed(() => {
     props.filter.isDefaultAllSelected &&
     areAllValuesSelected.value
   ) {
-    return 'opacity-50 dark:!bg-transparent !border !border-outline-5 !group-hover:border-outline-5'
+    return 'opacity-50 dark:!bg-transparent !border dark:!border-outline-5 !group-hover:border-outline-5'
   }
   return undefined
 })
