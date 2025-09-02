@@ -40,8 +40,9 @@ async def get_next_job(connection: Connection) -> FileimportJob | None:
                 OR ( --any job left in a PROCESSING state which has timed out
                     payload ->> 'fileType' = 'ifc'
                     AND status = $1
-                    AND ("updatedAt" < NOW() - (payload ->> 'timeOutSeconds' * interval '1 second')
-                          OR "createdAt" < NOW() - ("timeoutMs" * interval '1 millisecond'))
+                    AND (payload ->> 'payloadVersion' = '2'
+                          AND "updatedAt" < NOW() - ((payload ->> 'timeOutSeconds')::int * interval '1 second')
+                        OR "createdAt" < NOW() - ("timeoutMs" * interval '1 millisecond'))
                 )
                 OR ( --v2 queued job which has not yet exceeded maximum attempts, has not timed out, and has remaining compute budget
                     payload ->> 'fileType' = 'ifc'
