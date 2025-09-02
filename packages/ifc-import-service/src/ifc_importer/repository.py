@@ -96,7 +96,11 @@ async def deduct_from_compute_budget(
     _ = await connection.execute(
         """
         UPDATE background_jobs
-        SET payload ->> 'remainingComputeBudgetSeconds' = payload ->> 'remainingComputeBudgetSeconds'::int - $1, "updatedAt" = NOW()
+        SET payload = jsonb_set(
+            payload,
+            '{remainingComputeBudgetSeconds}',
+            ((payload ->> 'remainingComputeBudgetSeconds')::int - $1)::text::jsonb
+        ), "updatedAt" = NOW()
         WHERE id = $2
         AND payload ->> 'payloadVersion' = '2'
         """,
