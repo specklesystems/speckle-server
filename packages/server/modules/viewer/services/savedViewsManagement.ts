@@ -185,6 +185,40 @@ const validateHomeViewSettingsFactory =
     }
   }
 
+const resolveViewGroupSettingsFactory =
+  (deps: { getSavedViewGroup: GetSavedViewGroup }) =>
+  async (params: {
+    groupId: MaybeNullOrUndefined<string>
+    projectId: string
+    errorMetadata: Record<string, unknown>
+  }) => {
+    const { groupId, projectId, errorMetadata } = params
+
+    // Validate groupId - group is a valid and accessible group in the project
+    if (groupId) {
+      // Check if default group (actually means - null group)
+      const isDefaultGroup = groupId && isUngroupedGroup(groupId)
+      if (isDefaultGroup) {
+        return null
+      } else {
+        const group = await deps.getSavedViewGroup({
+          id: groupId,
+          projectId
+        })
+        if (!group) {
+          throw new SavedViewUpdateValidationError(
+            'Provided groupId does not exist in the project.',
+            {
+              info: errorMetadata
+            }
+          )
+        }
+      }
+    }
+
+    return null
+  }
+
 export const createSavedViewFactory =
   (deps: {
     getViewerResourceGroups: GetViewerResourceGroups
@@ -198,7 +232,7 @@ export const createSavedViewFactory =
     const { resourceIdString, projectId } = input
     const visibility = input.visibility || SavedViewVisibility.public // default to public
     const position = 0 // TODO: Resolve based on existing views
-    const groupId = input.groupId?.trim() || null
+    let groupId = input.groupId?.trim() || null
     const description = input.description?.trim() || null
     const isHomeView = input.isHomeView || false
 
@@ -237,23 +271,14 @@ export const createSavedViewFactory =
     })
 
     // Validate groupId - group is a valid and accessible group in the project
-    if (groupId) {
-      const group = await deps.getSavedViewGroup({
-        id: groupId,
-        projectId
-      })
-      if (!group) {
-        throw new SavedViewCreationValidationError(
-          'Provided groupId does not exist in the project.',
-          {
-            info: {
-              input,
-              authorId
-            }
-          }
-        )
+    groupId = await resolveViewGroupSettingsFactory(deps)({
+      groupId,
+      projectId,
+      errorMetadata: {
+        input,
+        authorId
       }
-    }
+    })
 
     // Auto-generate name, if one not set
     let name = input.name?.trim()
@@ -524,29 +549,14 @@ export const updateSavedViewFactory =
     }
 
     // Validate groupId - group is a valid and accessible group in the project
-    if (changes.groupId) {
-      // Check if default group (actually means - null group)
-      const isDefaultGroup = changes.groupId && isUngroupedGroup(changes.groupId)
-      if (isDefaultGroup) {
-        changes.groupId = null
-      } else {
-        const group = await deps.getSavedViewGroup({
-          id: changes.groupId,
-          projectId
-        })
-        if (!group) {
-          throw new SavedViewUpdateValidationError(
-            'Provided groupId does not exist in the project.',
-            {
-              info: {
-                input,
-                userId
-              }
-            }
-          )
-        }
+    changes.groupId = await resolveViewGroupSettingsFactory(deps)({
+      groupId: changes.groupId,
+      projectId,
+      errorMetadata: {
+        input,
+        userId
       }
-    }
+    })
 
     // Validate screenshot
     if (changes.screenshot && !isValidBase64Image(changes.screenshot)) {
