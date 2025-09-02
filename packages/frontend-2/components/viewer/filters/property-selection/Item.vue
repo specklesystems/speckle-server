@@ -11,9 +11,13 @@
       />
       <CaseUpper v-else class="h-3 w-3 stroke-violet-600 dark:stroke-violet-500" />
       <div class="min-w-0 flex-1">
-        <div class="text-body-2xs font-medium text-foreground truncate">
+        <div
+          v-if="property.label"
+          class="text-body-2xs font-medium text-foreground truncate"
+        >
           {{ property.label }}
         </div>
+        <div v-else class="text-body-2xs font-medium text-foreground italic">null</div>
         <div
           v-if="property.parentPath"
           class="text-body-3xs text-foreground-3 truncate -mt-0.5"
