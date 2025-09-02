@@ -351,7 +351,6 @@ jobs:
 
   test-server-no-ff:
     name: Server no ff
-    if: false
     runs-on: blacksmith-8vcpu-ubuntu-2404
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
@@ -365,15 +364,16 @@ jobs:
         ports:
           - 6379:6379
       postgres:
-        image: postgres:16.4-alpine3.20
+        image: bitnami/postgresql:16.4.0
         env:
-          POSTGRES_DB: speckle2_test
-          POSTGRES_PASSWORD: speckle
-          POSTGRES_USER: speckle
+          POSTGRESQL_DATABASE: speckle2_test
+          POSTGRESQL_PASSWORD: speckle
+          POSTGRESQL_USERNAME: speckle
+          POSTGRESQL_EXTRA_FLAGS: '-c max_prepared_transactions=150'
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U speckle -d speckle2_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -437,7 +437,6 @@ jobs:
   test-server-multiregion:
     name: Server multiregion
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
-    if: false # disabled
     runs-on: blacksmith-4vcpu-ubuntu-2404
     services:
       redis:
@@ -451,43 +450,46 @@ jobs:
           - 6379:6379
 
       postgres0:
-        image: postgres:16.4-alpine3.20
+        image: bitnami/postgresql:16.4.0
         env:
-          POSTGRES_DB: speckle2_test
-          POSTGRES_PASSWORD: speckle
-          POSTGRES_USER: speckle
+          POSTGRESQL_DATABASE: speckle2_test
+          POSTGRESQL_PASSWORD: speckle
+          POSTGRESQL_USERNAME: speckle
+          POSTGRESQL_EXTRA_FLAGS: '-c max_prepared_transactions=150'
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U speckle -d speckle2_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
       postgres1:
-        image: postgres:16.4-alpine3.20
+        image: bitnami/postgresql:16.4.0
         env:
-          POSTGRES_DB: speckle2_test
-          POSTGRES_PASSWORD: speckle
-          POSTGRES_USER: speckle
+          POSTGRESQL_DATABASE: speckle2_test
+          POSTGRESQL_PASSWORD: speckle
+          POSTGRESQL_USERNAME: speckle
+          POSTGRESQL_EXTRA_FLAGS: '-c max_prepared_transactions=150'
         ports:
           - 5433:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U speckle -d speckle2_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
       postgres2:
-        image: postgres:16.4-alpine3.20
+        image: bitnami/postgresql:16.4.0
         env:
-          POSTGRES_DB: speckle2_test
-          POSTGRES_PASSWORD: speckle
-          POSTGRES_USER: speckle
+          POSTGRESQL_DATABASE: speckle2_test
+          POSTGRESQL_PASSWORD: speckle
+          POSTGRESQL_USERNAME: speckle
+          POSTGRESQL_EXTRA_FLAGS: '-c max_prepared_transactions=150'
         ports:
           - 5434:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U speckle -d speckle2_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
