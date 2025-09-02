@@ -159,6 +159,10 @@ spec:
           - name: NUXT_PUBLIC_INTERCOM_APP_ID
             value: {{ .Values.analytics.intercom_app_id | quote }}
           {{- end }}
+          {{- if .Values.dashboards.origin }}
+          - name: NUXT_PUBLIC_DASHBOARDS_ORIGIN
+            value: {{ .Values.dashboards.origin | quote }}
+          {{- end }}
           {{- with .Values.frontend_2.additionalEnvVars }}
           {{- toYaml . | nindent 10}}
           {{- end }}
