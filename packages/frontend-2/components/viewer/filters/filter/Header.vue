@@ -138,7 +138,7 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
   ],
   [
     {
-      title: 'Remove filter...',
+      title: 'Remove filter',
       id: 'remove-filter'
     }
   ]
