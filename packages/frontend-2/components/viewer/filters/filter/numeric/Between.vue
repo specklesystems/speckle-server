@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col pl-9 pr-9 pt-1 pb-2 gap-2">
+  <div class="flex flex-col gap-2 px-9 pt-1 pb-2">
     <FormDualRange
       v-model:min-value="currentMin"
       v-model:max-value="currentMax"
@@ -23,7 +23,6 @@ const props = defineProps<{
 
 const { setNumericRange } = useFilterUtilities()
 
-// Get the filter's min/max bounds
 const filterMin = computed(() => {
   if (isNumericFilter(props.filter)) {
     return props.filter.filter.min

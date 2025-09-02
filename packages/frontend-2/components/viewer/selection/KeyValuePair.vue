@@ -79,7 +79,6 @@ const {
   findFilterByKvp,
   addActiveFilter,
   updateActiveFilterValues,
-  toggleFilterApplied,
   setNumericRange
 } = useFilterUtilities()
 
@@ -123,7 +122,6 @@ const handleAddToFilters = (kvp: KeyValuePair) => {
       // For string filters, use the selectedValues array
       const values = [String(kvp.value)]
       updateActiveFilterValues(filterId, values)
-      toggleFilterApplied(filterId)
     }
   }
 }

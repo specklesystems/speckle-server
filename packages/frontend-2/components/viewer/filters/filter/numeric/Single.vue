@@ -1,5 +1,5 @@
 <template>
-  <div class="pl-9 pr-9 pt-1 pb-2">
+  <div class="px-9 pt-1 pb-2">
     <FormTextInput
       :model-value="String(singleValue)"
       type="number"
