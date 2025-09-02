@@ -28,10 +28,12 @@
           />
 
           <ViewerFiltersPropertySelectionItem
-            v-else-if="item.property"
+            v-else-if="item.type === 'property' && item.property"
             :property="item.property"
             @select-property="$emit('selectProperty', $event)"
           />
+
+          <div v-else-if="item.type === 'spacer'" class="h-9" />
         </div>
       </div>
     </div>
@@ -50,7 +52,7 @@ type PropertyOption = {
 }
 
 type ListItem = {
-  type: 'header' | 'property'
+  type: 'header' | 'property' | 'spacer'
   title?: string
   property?: PropertyOption
 }
@@ -126,6 +128,9 @@ const listItems = computed((): ListItem[] => {
   props.options.forEach((property) => {
     items.push({ type: 'property', property })
   })
+
+  // Add spacer at the end for bottom padding
+  items.push({ type: 'spacer' })
 
   return items
 })
