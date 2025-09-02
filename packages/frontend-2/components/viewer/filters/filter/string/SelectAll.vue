@@ -11,6 +11,7 @@
         :model-value="areAllValuesSelected"
         :indeterminate="areSomeValuesSelected"
         class="pointer-events-none -mt-1"
+        :class="selectAllCheckboxClasses"
         hide-label
       />
       <div class="flex items-center">
@@ -62,6 +63,17 @@ const areAllValuesSelected = computed(() => {
 
 const areSomeValuesSelected = computed(() => {
   return selectedCount.value > 0 && selectedCount.value < totalCount.value
+})
+
+const selectAllCheckboxClasses = computed(() => {
+  if (
+    isStringFilter(props.filter) &&
+    props.filter.isDefaultAllSelected &&
+    areAllValuesSelected.value
+  ) {
+    return 'opacity-50 dark:!bg-transparent !border !border-outline-5 !group-hover:border-outline-5'
+  }
+  return undefined
 })
 
 const handleSelectAllChange = () => {
