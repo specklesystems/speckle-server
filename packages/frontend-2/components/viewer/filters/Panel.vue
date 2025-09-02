@@ -51,7 +51,7 @@
               v-if="propertyFilters.length > 0"
               full-width
               color="outline"
-              class="rounded-xl text-foreground-2 hover:text-foreground"
+              class="rounded-xl text-foreground-2 hover:text-foreground !shadow-none"
               :icon-left="Plus"
               hide-text
               @click="addNewEmptyFilter"

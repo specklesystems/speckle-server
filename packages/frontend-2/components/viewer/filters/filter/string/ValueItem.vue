@@ -15,14 +15,14 @@
           class="pointer-events-none -mt-1"
           :class="{
             'border-transparent group-hover/checkbox:border-outline-5': !isSelected,
-            'opacity-50 dark:!bg-transparent !border !border-outline-5 !group-hover/checkbox:border-outline-5':
+            'opacity-50 dark:!bg-transparent !border dark:!border-outline-5 !group-hover/checkbox:border-outline-5':
               isDefaultSelected
           }"
           :name="`filter-${filter.id}-${value}`"
           :model-value="isSelected"
           hide-label
         />
-        <span class="flex-1 truncate text-foreground ml-1">
+        <span class="flex-1 truncate text-foreground ml-0.5">
           {{ value }}
         </span>
       </div>
