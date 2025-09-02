@@ -22,9 +22,10 @@
           :model-value="isSelected"
           hide-label
         />
-        <span class="flex-1 truncate text-foreground ml-0.5">
+        <span v-if="value" class="flex-1 truncate text-foreground ml-0.5">
           {{ value }}
         </span>
+        <span v-else class="flex-1 text-foreground ml-0.5 italic">null</span>
       </div>
       <div class="flex items-center">
         <div v-if="count !== null" class="shrink-0 text-foreground-2 text-body-3xs">

@@ -34,6 +34,7 @@
       <!-- Active Filters Section -->
       <div
         v-if="propertyFilters.length > 0"
+        ref="filtersContainerRef"
         class="flex-1 overflow-y-auto simple-scrollbar"
       >
         <div class="flex flex-col gap-1 p-2 py-0">
@@ -165,6 +166,7 @@ const mp = useMixpanel()
 const showPropertySelection = ref(false)
 const propertySelectionRef = ref<HTMLElement>()
 const swappingFilterId = ref<string | null>(null)
+const filtersContainerRef = ref<HTMLElement>()
 
 const addNewEmptyFilter = () => {
   swappingFilterId.value = null // Ensure we're adding, not swapping
@@ -196,12 +198,22 @@ const handleAddFilterClick = () => {
   }
 }
 
+const scrollToNewFilter = () => {
+  nextTick(() => {
+    if (filtersContainerRef.value) {
+      filtersContainerRef.value.scrollTo({
+        top: filtersContainerRef.value.scrollHeight,
+        behavior: 'smooth'
+      })
+    }
+  })
+}
+
 const selectProperty = (propertyKey: string) => {
   const property = relevantFilters.value.find((p) => p.key === propertyKey)
 
   if (property) {
     if (swappingFilterId.value) {
-      // Swap property for existing filter
       updateFilterProperty(swappingFilterId.value, property)
       mp.track('Viewer Action', {
         type: 'action',
@@ -210,7 +222,6 @@ const selectProperty = (propertyKey: string) => {
         value: propertyKey
       })
     } else {
-      // Add new filter
       addActiveFilter(property)
       mp.track('Viewer Action', {
         type: 'action',
@@ -218,10 +229,11 @@ const selectProperty = (propertyKey: string) => {
         action: 'add-new-filter',
         value: propertyKey
       })
+
+      scrollToNewFilter()
     }
   }
 
-  // Reset state
   showPropertySelection.value = false
   swappingFilterId.value = null
 }
