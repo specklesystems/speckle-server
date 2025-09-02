@@ -27,7 +27,8 @@
     <!-- Filter Logic Selection -->
     <ViewerFiltersLogicSelector
       v-if="propertyFilters.length > 0"
-      v-model="filterLogic"
+      :model-value="currentFilterLogic"
+      @update:model-value="setFilterLogic"
     />
 
     <div class="h-full flex flex-col select-none group/panel">
@@ -84,10 +85,7 @@ import {
   useInjectedViewerInterfaceState,
   useInjectedViewer
 } from '~~/lib/viewer/composables/setup'
-import type {
-  PropertySelectOption,
-  FilterLogic
-} from '~/lib/viewer/helpers/filters/types'
+import type { PropertySelectOption } from '~/lib/viewer/helpers/filters/types'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { X, Plus } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
@@ -154,11 +152,6 @@ const propertySelectOptions = computed((): PropertySelectOption[] => {
   })
 
   return sortedOptions
-})
-
-const filterLogic = computed({
-  get: () => currentFilterLogic.value,
-  set: (value: FilterLogic) => setFilterLogic(value)
 })
 
 const mp = useMixpanel()

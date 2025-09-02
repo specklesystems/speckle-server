@@ -28,7 +28,7 @@
         <span v-else class="flex-1 text-foreground ml-0.5 italic">null</span>
       </div>
       <div class="flex items-center">
-        <div v-if="count !== null" class="shrink-0 text-foreground-2 text-body-3xs">
+        <div v-if="count" class="shrink-0 text-foreground-2 text-body-3xs">
           {{ count }}
         </div>
         <div
