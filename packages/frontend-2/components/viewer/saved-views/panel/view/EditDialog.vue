@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="open"
-    title="Edit view details"
+    title="Edit view"
     max-width="sm"
     :buttons="buttons"
     :on-submit="onSubmit"
@@ -9,7 +9,7 @@
     <div class="flex flex-col gap-4">
       <FormTextInput
         name="name"
-        label="View name"
+        label="Name"
         show-label
         color="foundation"
         auto-focus

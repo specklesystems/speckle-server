@@ -236,10 +236,18 @@ export const useUpdateSavedView = () => {
   const { triggerNotification } = useGlobalToast()
   const { isLoggedIn } = useActiveUser()
 
-  return async (params: {
-    view: UseUpdateSavedView_SavedViewFragment
-    input: UpdateSavedViewInput
-  }) => {
+  return async (
+    params: {
+      view: UseUpdateSavedView_SavedViewFragment
+      input: UpdateSavedViewInput
+    },
+    options?: Partial<{
+      /**
+       * Whether to skip toast notifications
+       */
+      skipToast: boolean
+    }>
+  ) => {
     if (!isLoggedIn.value) return
     const { input } = params
 
@@ -313,18 +321,20 @@ export const useUpdateSavedView = () => {
     ).catch(convertThrowIntoFetchResult)
 
     const res = result?.data?.projectMutations.savedViewMutations.updateView
-    if (res?.id) {
-      triggerNotification({
-        title: 'View updated',
-        type: ToastNotificationType.Success
-      })
-    } else {
-      const err = getFirstGqlErrorMessage(result?.errors)
-      triggerNotification({
-        title: "Couldn't update view",
-        description: err,
-        type: ToastNotificationType.Danger
-      })
+    if (!options?.skipToast) {
+      if (res?.id) {
+        triggerNotification({
+          title: 'View updated',
+          type: ToastNotificationType.Success
+        })
+      } else {
+        const err = getFirstGqlErrorMessage(result?.errors)
+        triggerNotification({
+          title: "Couldn't update view",
+          description: err,
+          type: ToastNotificationType.Danger
+        })
+      }
     }
 
     return res
