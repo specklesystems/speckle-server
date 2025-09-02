@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import { FilterLogic } from '~/lib/viewer/helpers/filters/types'
 import { LayoutMenu, FormButton, type LayoutMenuItem } from '@speckle/ui-components'
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { ChevronDown } from 'lucide-vue-next'
 
 const props = defineProps<{

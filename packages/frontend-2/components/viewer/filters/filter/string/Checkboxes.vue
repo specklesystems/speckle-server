@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { useVirtualList } from '@vueuse/core'
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import {
   isStringFilter,
   type FilterData,
@@ -46,6 +46,9 @@ const props = defineProps<{
   filter: FilterData
   searchQuery?: string
 }>()
+
+const itemHeight = 28
+const maxHeight = 240
 
 const { toggleActiveFilterValue, getFilteredFilterValues } = useFilterUtilities()
 
@@ -62,11 +65,8 @@ const filteredValues = computed(() => {
   return []
 })
 
-const itemHeight = 28 // Height of each checkbox item in pixels
-const maxHeight = 240
-
 const { list, containerProps, wrapperProps } = useVirtualList(filteredValues, {
-  itemHeight: 28,
+  itemHeight,
   overscan: 5
 })
 </script>

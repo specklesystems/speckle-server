@@ -56,7 +56,7 @@ import { useTreeManagement } from '~~/lib/viewer/composables/tree'
 import { useViewerSavedViewIntegration } from '~/lib/viewer/composables/savedViews/state'
 import { useViewModesPostSetup } from '~/lib/viewer/composables/setup/viewMode'
 import { useMeasurementsPostSetup } from '~/lib/viewer/composables/setup/measurements'
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()

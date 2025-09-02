@@ -85,7 +85,7 @@ import {
   HorizontalDirection,
   type LayoutMenuItem
 } from '@speckle/ui-components'
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import type { FilterData } from '~/lib/viewer/helpers/filters/types'
 import { FilterType } from '~/lib/viewer/helpers/filters/types'
 

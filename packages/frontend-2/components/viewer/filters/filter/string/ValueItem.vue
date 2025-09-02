@@ -6,8 +6,6 @@
     <div
       class="group/checkbox flex items-center justify-between gap-2 text-body-3xs py-0.5 px-2 hover:bg-highlight-1 rounded-md cursor-pointer"
       @click="$emit('toggle')"
-      @mouseenter="handleMouseEnter"
-      @mouseleave="handleMouseLeave"
     >
       <div class="flex items-center min-w-0">
         <!-- Checkbox is purely visual - so pointer-events-none -->
@@ -28,7 +26,7 @@
         <span v-else class="flex-1 text-foreground ml-0.5 italic">null</span>
       </div>
       <div class="flex items-center">
-        <div v-if="count !== null" class="shrink-0 text-foreground-2 text-body-3xs">
+        <div v-if="count" class="shrink-0 text-foreground-2 text-body-3xs">
           {{ count }}
         </div>
         <div
@@ -43,8 +41,8 @@
 
 <script setup lang="ts">
 import { FormCheckbox } from '@speckle/ui-components'
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
-import { useHighlightedObjectsUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { getFilterValueCount } from '~/lib/viewer/composables/filtering/counts'
 import { isStringFilter, type FilterData } from '~/lib/viewer/helpers/filters/types'
 
 const props = defineProps<{
@@ -56,24 +54,16 @@ defineEmits<{
   toggle: []
 }>()
 
-const {
-  isActiveFilterValueSelected,
-  getFilterValueColor,
-  getPropertyValueCounts,
-  filters
-} = useFilterUtilities()
-
-const filterUtilities = useFilterUtilities()
-const highlightUtilities = useHighlightedObjectsUtilities()
+const { isActiveFilterValueSelected, getFilterValueColor, filters } =
+  useFilterUtilities()
 
 const isSelected = computed(() =>
   isActiveFilterValueSelected(props.filter.id, props.value)
 )
 
 const count = computed(() => {
-  if (!props.filter.filter?.key) return null
-  const counts = getPropertyValueCounts(props.filter.filter.key)
-  return counts[props.value] || 0
+  if (!props.filter.filter) return null
+  return getFilterValueCount(props.filter.filter, props.value)
 })
 
 const color = computed(() => {
@@ -90,28 +80,4 @@ const isDefaultSelected = computed(() => {
     isSelected.value
   )
 })
-
-const handleMouseEnter = () => {
-  if (!props.filter.filter?.key) return
-
-  const objectIds = filterUtilities.getObjectIdsForPropertyValue(
-    props.filter.filter.key,
-    props.value
-  )
-  if (objectIds.length > 0) {
-    highlightUtilities.highlightObjects(objectIds)
-  }
-}
-
-const handleMouseLeave = () => {
-  if (!props.filter.filter?.key) return
-
-  const objectIds = filterUtilities.getObjectIdsForPropertyValue(
-    props.filter.filter.key,
-    props.value
-  )
-  if (objectIds.length > 0) {
-    highlightUtilities.unhighlightObjects(objectIds)
-  }
-}
 </script>

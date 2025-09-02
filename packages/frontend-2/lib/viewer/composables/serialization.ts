@@ -11,6 +11,7 @@ import {
   useSelectionUtilities
 } from '~~/lib/viewer/composables/ui'
 import { CameraController, VisualDiffMode } from '@speckle/viewer'
+import { StringFilterCondition } from '~/lib/viewer/helpers/filters/types'
 import type { Merge, PartialDeep } from 'type-fest'
 import { defaultMeasurementOptions } from '@speckle/shared/viewer/state'
 import { useViewerRealtimeActivityTracker } from '~/lib/viewer/composables/activity'
@@ -26,6 +27,7 @@ export function useStateSerialization() {
   const state = useInjectedViewerState()
   const { objects: selectedObjects } = useSelectionUtilities()
   const { serializeDiffCommand } = useDiffUtilities()
+  const { filters } = useFilterUtilities()
 
   /**
    * We don't want to save a comment w/ implicit identifiers like ones that only have a model ID or a folder prefix, because
@@ -98,18 +100,42 @@ export function useStateSerialization() {
           mode: state.ui.diff.mode.value
         },
         spotlightUserSessionId: state.ui.spotlightUserSessionId.value,
-        filters: {
-          isolatedObjectIds: state.ui.filters.isolatedObjectIds.value,
-          hiddenObjectIds: state.ui.filters.hiddenObjectIds.value,
-          selectedObjectApplicationIds: selectedObjects.value.reduce((ret, obj) => {
-            ret[obj.id] = obj.applicationId ?? null
-            return ret
-          }, {} as Record<string, string | null>),
-          propertyFilter: {
-            key: null, // Legacy field - not used in new multi-filter system
-            isApplied: false
+        filters: (() => {
+          // Convert current FilterData to serializable format
+          const propertyFilters = filters.propertyFilters.value.map((filterData) => ({
+            key: filterData.filter?.key || null,
+            isApplied: filterData.isApplied,
+            selectedValues: filterData.selectedValues,
+            id: filterData.id,
+            condition:
+              filterData.condition === StringFilterCondition.Is
+                ? ('AND' as const)
+                : ('OR' as const)
+          }))
+
+          // Legacy compatibility - compute from first filter
+          const propertyFilter =
+            propertyFilters.length > 0
+              ? {
+                  key: propertyFilters[0].key,
+                  isApplied: propertyFilters[0].isApplied
+                }
+              : {
+                  key: null,
+                  isApplied: false
+                }
+
+          return {
+            isolatedObjectIds: state.ui.filters.isolatedObjectIds.value,
+            hiddenObjectIds: state.ui.filters.hiddenObjectIds.value,
+            selectedObjectApplicationIds: selectedObjects.value.reduce((ret, obj) => {
+              ret[obj.id] = obj.applicationId ?? null
+              return ret
+            }, {} as Record<string, string | null>),
+            propertyFilters,
+            propertyFilter
           }
-        },
+        })(),
         camera: {
           position: state.ui.camera.position.value.toArray(),
           target: state.ui.camera.target.value.toArray(),
@@ -175,7 +201,7 @@ export function useApplySerializedState() {
     },
     urlHashState
   } = useInjectedViewerState()
-  const { resetFilters, hideObjects } = useFilterUtilities()
+  const { resetFilters, hideObjects, restoreFilters } = useFilterUtilities()
   const resetState = useResetUiState()
   const { diffModelVersions, deserializeDiffCommand, endDiff } = useDiffUtilities()
   const { setSelectionFromObjectIds } = useSelectionUtilities()
@@ -259,6 +285,11 @@ export function useApplySerializedState() {
     if (filters.hiddenObjectIds?.length) {
       resetFilters()
       hideObjects(filters.hiddenObjectIds, { replace: true })
+    }
+
+    // Restore propertyFilters
+    if (filters.propertyFilters?.length) {
+      restoreFilters(filters.propertyFilters)
     }
 
     // Handle resource string updates

@@ -64,7 +64,7 @@
 import { VALID_HTTP_URL } from '~~/lib/common/helpers/validation'
 import { LayoutMenu, type LayoutMenuItem } from '@speckle/ui-components'
 import { Ellipsis } from 'lucide-vue-next'
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
 import type { KeyValuePair } from '~/components/viewer/selection/types'
 import { isNumericPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
@@ -79,7 +79,6 @@ const {
   findFilterByKvp,
   addActiveFilter,
   updateActiveFilterValues,
-  toggleFilterApplied,
   setNumericRange
 } = useFilterUtilities()
 
@@ -123,7 +122,6 @@ const handleAddToFilters = (kvp: KeyValuePair) => {
       // For string filters, use the selectedValues array
       const values = [String(kvp.value)]
       updateActiveFilterValues(filterId, values)
-      toggleFilterApplied(filterId)
     }
   }
 }

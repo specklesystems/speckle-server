@@ -55,7 +55,7 @@
 <script setup lang="ts">
 import type { FilterData, ConditionOption } from '~/lib/viewer/helpers/filters/types'
 import { ExistenceFilterCondition } from '~/lib/viewer/helpers/filters/types'
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { X } from 'lucide-vue-next'
 
 const props = defineProps<{

@@ -1,12 +1,5 @@
 <template>
-  <div
-    class="pt-0.5"
-    :class="{
-      'pb-1.5':
-        filter.condition === ExistenceFilterCondition.IsSet ||
-        filter.condition === ExistenceFilterCondition.IsNotSet
-    }"
-  >
+  <div class="pt-0.5">
     <ViewerFiltersFilterConditionSelector
       :filter="filter"
       class="pl-9"
@@ -19,10 +12,7 @@
     />
 
     <ViewerFiltersFilterNumericSingle
-      v-else-if="
-        filter.condition !== ExistenceFilterCondition.IsSet &&
-        filter.condition !== ExistenceFilterCondition.IsNotSet
-      "
+      v-else-if="!isExistenceCondition"
       :filter="filter"
     />
   </div>
@@ -34,13 +24,20 @@ import {
   NumericFilterCondition,
   ExistenceFilterCondition
 } from '~/lib/viewer/helpers/filters/types'
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 
 const props = defineProps<{
   filter: FilterData
 }>()
 
 const { updateFilterCondition } = useFilterUtilities()
+
+const isExistenceCondition = computed(() => {
+  return (
+    props.filter.condition === ExistenceFilterCondition.IsSet ||
+    props.filter.condition === ExistenceFilterCondition.IsNotSet
+  )
+})
 
 const handleConditionSelect = (conditionOption: ConditionOption) => {
   updateFilterCondition(props.filter.id, conditionOption.value)

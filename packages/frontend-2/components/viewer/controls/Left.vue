@@ -171,7 +171,7 @@
 
 <script setup lang="ts">
 import { useViewerShortcuts } from '~~/lib/viewer/composables/ui'
-import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import {
   useInjectedViewerInterfaceState,
   useInjectedViewerLoadedResources
