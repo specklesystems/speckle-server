@@ -8,7 +8,7 @@
 
     <div
       v-bind="containerProps"
-      class="simple-scrollbar"
+      class="simple-scrollbar py-1"
       :style="{ maxHeight: `${maxHeight}px` }"
     >
       <div v-bind="wrapperProps" class="relative">
