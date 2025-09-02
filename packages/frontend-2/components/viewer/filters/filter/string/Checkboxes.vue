@@ -50,6 +50,7 @@ const sortMode = ref<SortMode>(SortMode.Alphabetical)
 const filteredValues = computed(() => {
   if (isStringFilter(props.filter) && props.filter.filter) {
     return getFilteredFilterValues(props.filter.filter, {
+      searchQuery: props.searchQuery,
       sortMode: sortMode.value,
       filterId: props.filter.id
     })
