@@ -27,7 +27,6 @@ const singleValue = computed(() => props.filter.numericRange.min)
 
 const updateSingleValue = (value: string) => {
   const numericValue = parseFloat(value) || 0
-  // For single value conditions, set both min and max to the same value
   setNumericRange(props.filter.id, numericValue, numericValue)
 }
 </script>
