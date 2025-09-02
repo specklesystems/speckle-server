@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <aside
-    class="absolute left-2 lg:left-0 z-40 flex rounded-lg border border-outline-2 bg-foundation px-1 overflow-visible lg:h-full"
+    class="absolute left-2 lg:left-0 z-50 flex rounded-lg border border-outline-2 bg-foundation px-1 overflow-visible lg:h-full"
     :class="[
       isEmbedEnabled
         ? 'top-[0.5rem]'
@@ -161,7 +161,7 @@
     <!-- Panel Extension - Portal target for additional content -->
     <div
       id="panel-extension"
-      class="absolute max-h-[calc(100dvh-4rem)] empty:hidden z-30 w-64 top-1.5 bg-foundation border border-outline-2 rounded-lg overflow-hidden"
+      class="absolute max-h-[calc(100dvh-4rem)] empty:hidden w-64 top-1.5 bg-foundation border border-outline-2 rounded-lg overflow-hidden"
       :style="`left: ${panelExtensionLeft}px`"
     >
       <PortalTarget name="panel-extension"></PortalTarget>
