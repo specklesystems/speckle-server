@@ -48,7 +48,7 @@ async def get_next_job(connection: Connection) -> FileimportJob | None:
                     AND payload ->> 'payloadVersion' = '2'
                     AND status = $2
                     AND "attempt" < "maxAttempt"
-                    AND "remainingComputeBudgetSeconds" > 0
+                    AND (payload ->> 'remainingComputeBudgetSeconds')::int > 0
                     AND "createdAt" < NOW() - ("timeoutMs" * interval '1 millisecond')
                 )
                 ORDER BY "createdAt"
