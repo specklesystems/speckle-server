@@ -241,15 +241,23 @@ export const useAuthManager = (
    */
   const authToken = useAuthCookie()
 
+  // NOTE: Refrain from using the name token as it overrides the authToken
   /**
    * Token used for embedding
    */
   const embedToken = computed(() => route.query.embedToken as Optional<string>)
 
   /**
-   * Get the effective auth token (embed token takes precedence)
+   * Token used for dashboard sharing
    */
-  const effectiveAuthToken = computed(() => embedToken.value || authToken.value)
+  const dashboardToken = computed(() => route.query.dashboardToken as Optional<string>)
+
+  /**
+   * Get the effective auth token
+   */
+  const effectiveAuthToken = computed(
+    () => dashboardToken.value || embedToken.value || authToken.value
+  )
 
   /**
    * Set/clear new token value and redirect to home
@@ -522,7 +530,8 @@ export const useAuthManager = (
     signInOrSignUpWithSso,
     logout,
     watchAuthQueryString,
-    inviteToken
+    inviteToken,
+    dashboardToken
   }
 }
 

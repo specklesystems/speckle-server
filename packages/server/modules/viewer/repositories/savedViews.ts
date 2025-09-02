@@ -115,7 +115,13 @@ export const storeSavedViewFactory =
     const [insertedItem] = await tables.savedViews(deps.db).insert(
       {
         id: generateId(),
-        ...view
+        ...view,
+        // weird ts error:
+        ...(view.viewerState
+          ? {
+              viewerState: view.viewerState as SavedView['viewerState']
+            }
+          : {})
       },
       '*'
     )
@@ -602,7 +608,16 @@ export const updateSavedViewRecordFactory =
         [SavedViews.col.projectId]: projectId
       })
       .update(
-        { ...update, ...(skipUpdatingDate ? {} : { updatedAt: new Date() }) },
+        {
+          ...update,
+          ...(skipUpdatingDate ? {} : { updatedAt: new Date() }),
+          // weird ts error:
+          ...(update.viewerState
+            ? {
+                viewerState: update.viewerState as SavedView['viewerState']
+              }
+            : {})
+        },
         '*'
       )
 

@@ -1,7 +1,14 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div v-keyboard-clickable :class="wrapperClasses" :view-id="view.id" @click="apply">
+  <div
+    v-keyboard-clickable
+    :class="[wrapperClasses, draggableClasses]"
+    :view-id="view.id"
+    draggable="true"
+    v-on="on"
+    @click="apply"
+  >
     <div class="flex items-center shrink-0">
       <div class="relative">
         <img
@@ -18,63 +25,20 @@
       </div>
     </div>
     <div class="flex flex-col min-w-0 grow">
-      <div class="text-body-2xs font-medium text-foreground truncate grow-0 pr-1.5">
+      <div class="text-body-2xs font-medium text-foreground truncate grow-0">
         {{ view.name }}
       </div>
-      <div class="flex gap-1 items-center justify-between">
-        <div class="text-body-2xs text-foreground-3 truncate">
-          {{ view.author?.name }}
-        </div>
-        <div class="flex gap-0.5 items-center" @click.stop>
-          <LayoutMenu
-            v-model:open="showMenu"
-            :items="menuItems"
-            :menu-id="menuId"
-            mount-menu-on-body
-            show-ticks="right"
-            :size="230"
-            class="shrink-0 opacity-0 group-hover:opacity-100"
-            @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
-          >
-            <FormButton
-              size="sm"
-              color="subtle"
-              :icon-left="Ellipsis"
-              hide-text
-              name="viewActions"
-              class="shrink-0"
-              @click="showMenu = !showMenu"
-            />
-          </LayoutMenu>
-          <div
-            v-tippy="
-              getTooltipProps(
-                canUpdate?.authorized ? 'Edit view' : canUpdate?.errorMessage
-              )
-            "
-            class="shrink-0 opacity-0 group-hover:opacity-100"
-          >
-            <FormButton
-              size="sm"
-              color="subtle"
-              :icon-left="SquarePen"
-              hide-text
-              name="editView"
-              class="shrink-0"
-              :disabled="!canUpdate?.authorized || isLoading"
-              @click="onEdit"
-            />
-          </div>
-        </div>
+      <div class="text-body-2xs text-foreground-3 truncate">
+        {{ view.author?.name }}
       </div>
       <div class="w-full flex items-center gap-1">
-        <Component
-          :is="isOnlyVisibleToMe ? User : Globe"
-          v-tippy="getTooltipProps(isOnlyVisibleToMe ? 'Private' : 'Shared')"
+        <User
+          v-if="isOnlyVisibleToMe"
+          v-tippy="getTooltipProps('Only visible to you')"
           :size="12"
           :stroke-width="1.5"
           :absolute-stroke-width="true"
-          class="w-3 h-3 text-foreground-3"
+          class="w-3 h-3 text-foreground-3 shrink-0"
         />
         <div
           v-tippy="{
@@ -90,6 +54,48 @@
         </div>
       </div>
     </div>
+    <div
+      class="flex gap-0.5 items-center opacity-0 w-0 group-hover:opacity-100 group-hover:w-auto"
+      @click.stop
+    >
+      <LayoutMenu
+        v-model:open="showMenu"
+        :items="menuItems"
+        :menu-id="menuId"
+        mount-menu-on-body
+        show-ticks="right"
+        :size="230"
+        class="shrink-0"
+        @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
+      >
+        <FormButton
+          size="sm"
+          color="subtle"
+          :icon-left="Ellipsis"
+          hide-text
+          name="viewActions"
+          class="shrink-0"
+          @click="showMenu = !showMenu"
+        />
+      </LayoutMenu>
+      <div
+        v-tippy="
+          getTooltipProps(canUpdate?.authorized ? 'Edit view' : canUpdate?.errorMessage)
+        "
+        class="shrink-0 opacity-0 group-hover:opacity-100"
+      >
+        <FormButton
+          size="sm"
+          color="subtle"
+          :icon-left="SquarePen"
+          hide-text
+          name="editView"
+          class="shrink-0"
+          :disabled="!canUpdate?.authorized || isLoading"
+          @click="onEdit"
+        />
+      </div>
+    </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -102,7 +108,7 @@ import {
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { difference } from 'lodash-es'
-import { Ellipsis, SquarePen, Bookmark, Globe, User } from 'lucide-vue-next'
+import { Ellipsis, SquarePen, Bookmark, User } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   SavedViewVisibility,
@@ -113,6 +119,7 @@ import {
   useCollectNewSavedViewViewerData,
   useUpdateSavedView
 } from '~/lib/viewer/composables/savedViews/management'
+import { useDraggableView } from '~/lib/viewer/composables/savedViews/ui'
 import { useSavedViewValidationHelpers } from '~/lib/viewer/composables/savedViews/validation'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 
@@ -152,6 +159,7 @@ graphql(`
     ...UseUpdateSavedView_SavedView
     ...ViewerSavedViewsPanelViewEditDialog_SavedView
     ...UseSavedViewValidationHelpers_SavedView
+    ...UseDraggableView_SavedView
   }
 `)
 
@@ -177,6 +185,9 @@ const {
   isHomeView,
   canToggleVisibility
 } = useSavedViewValidationHelpers({
+  view: computed(() => props.view)
+})
+const { classes: draggableClasses, on } = useDraggableView({
   view: computed(() => props.view)
 })
 
@@ -252,7 +263,9 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
 ])
 
 const wrapperClasses = computed(() => {
-  const classParts = ['flex gap-2 p-1.5 w-full group rounded-md cursor-pointer']
+  const classParts = [
+    'flex items-center gap-2 p-1.5 w-full group rounded-md cursor-pointer relative transition-all'
+  ]
 
   if (isActive.value) {
     classParts.push('bg-highlight-2 hover:bg-highlight-3')

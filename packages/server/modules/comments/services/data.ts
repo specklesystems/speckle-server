@@ -177,7 +177,8 @@ export const convertLegacyDataToStateFactory =
         },
         measurement: {
           enabled: false,
-          options: null
+          options: null,
+          measurements: []
         }
       }
     }
