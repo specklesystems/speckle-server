@@ -265,6 +265,8 @@ export const useAuthManager = (
    * Trigger full redirect that causes a full reload, instead of an in-session navigation
    */
   const sendFullRedirect = async (relativeUrl: string) => {
+    if (isFullRedirectState.value) return
+
     isFullRedirectState.value = true
 
     if (import.meta.client) {
