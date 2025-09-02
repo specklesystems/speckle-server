@@ -116,14 +116,13 @@ const listItems = computed((): ListItem[] => {
 
   // Add Popular filters section if we have any
   if (availablePopular.length > 0) {
-    items.push({ type: 'header', title: 'Popular filters' })
+    items.push({ type: 'header', title: 'Popular properties' })
     availablePopular.forEach((property) => {
       items.push({ type: 'property', property })
     })
   }
 
-  // Add All filters section
-  items.push({ type: 'header', title: `All filters (${props.options.length})` })
+  items.push({ type: 'header', title: `All properties (${props.options.length})` })
   props.options.forEach((property) => {
     items.push({ type: 'property', property })
   })
