@@ -562,7 +562,7 @@ jobs:
       - run: cp .env.test-example .env.test
         working-directory: 'packages/server'
       - name: 'Run test'
-        run: yarn test:report
+        run: yarn test:multiregion
         working-directory: 'packages/server'
         timeout-minutes: 30
       - uses: codecov/codecov-action@v5
