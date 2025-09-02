@@ -90,6 +90,7 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { X, Plus } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
 import { useFilterUtilities } from '~~/lib/viewer/composables/filtering'
+import { onKeyStroke } from '@vueuse/core'
 
 const {
   filters: { propertyFilters },
@@ -230,4 +231,10 @@ const selectProperty = (propertyKey: string) => {
   showPropertySelection.value = false
   swappingFilterId.value = null
 }
+
+onKeyStroke('Escape', () => {
+  if (showPropertySelection.value) {
+    showPropertySelection.value = false
+  }
+})
 </script>

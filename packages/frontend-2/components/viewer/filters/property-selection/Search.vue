@@ -4,7 +4,6 @@
       <ViewerSearchInput
         v-model="searchValue"
         :placeholder="placeholder"
-        auto-focus
         @input="handleInput"
       />
     </div>
