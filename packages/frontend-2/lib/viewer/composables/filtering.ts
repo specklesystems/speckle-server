@@ -609,6 +609,25 @@ export function useFilterUtilities(
   }
 
   /**
+   * Gets the object IDs that have a specific value for a property
+   */
+  const getObjectIdsForPropertyValue = (
+    propertyKey: string,
+    value: string
+  ): string[] => {
+    const objectIds: string[] = []
+
+    for (const dataSource of dataStore.dataSources.value) {
+      const propertyIndex = dataStore.buildPropertyIndex(dataSource, propertyKey)
+      if (propertyIndex && propertyIndex[value]) {
+        objectIds.push(...propertyIndex[value])
+      }
+    }
+
+    return objectIds
+  }
+
+  /**
    * Creates a properly typed FilterData object from PropertyInfo
    */
   const createFilterData = (params: CreateFilterParams): FilterData => {
@@ -617,7 +636,7 @@ export function useFilterUtilities(
     if (isNumericPropertyInfo(filter)) {
       return {
         id,
-        isApplied: false, // Start as not applied until user modifies range
+        isApplied: true,
         selectedValues: [],
         condition: NumericFilterCondition.IsBetween,
         type: FilterType.Numeric,
@@ -1341,6 +1360,7 @@ export function useFilterUtilities(
     getPropertyValueCount,
     getPropertyValueCounts,
     getPropertyExistenceCounts,
+    getObjectIdsForPropertyValue,
     addActiveFilter,
     updateFilterProperty,
     removeActiveFilter,
