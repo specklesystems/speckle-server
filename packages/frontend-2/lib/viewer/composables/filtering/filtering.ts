@@ -54,44 +54,47 @@ export function useFilterUtilities(
   const dataStore = useFilteringDataStore()
   const { removeColorFilter } = useFilterColors({ state })
 
-  if (import.meta.client) {
-    const { instance } = viewer
-    const { resourceItems } = state.resources.response
+  const { instance } = viewer
+  const { resourceItems } = state.resources.response
 
-    const populateInternalDataStore = async () => {
-      const tree = instance.getWorldTree()
-      if (!tree || !resourceItems.value.length) {
-        return
-      }
-
-      const availableResources = resourceItems.value.filter((item) => {
-        const nodes = tree.findId(item.objectId)
-        return nodes && nodes.length > 0
-      })
-
-      if (availableResources.length === 0) {
-        return
-      }
-
-      dataStore.clearDataOnRouteLeave()
-
-      const resources = availableResources.map((item) => ({
-        resourceUrl: item.objectId
-      }))
-
-      await dataStore.populateDataStore(instance, resources)
+  const populateInternalDataStore = async () => {
+    const tree = instance.getWorldTree()
+    if (!tree || !resourceItems.value.length) {
+      return
     }
 
-    useOnViewerLoadComplete(async () => {
-      await populateInternalDataStore()
+    const availableResources = resourceItems.value.filter((item) => {
+      const nodes = tree.findId(item.objectId)
+      return nodes && nodes.length > 0
     })
 
-    nextTick(() => {
-      if (resourceItems.value.length > 0) {
-        populateInternalDataStore()
-      }
-    })
+    if (availableResources.length === 0) {
+      return
+    }
+
+    dataStore.clearDataOnRouteLeave()
+
+    const resources = availableResources.map((item) => ({
+      resourceUrl: item.objectId
+    }))
+
+    await dataStore.populateDataStore(instance, resources)
   }
+
+  useOnViewerLoadComplete(async () => {
+    await populateInternalDataStore()
+  })
+
+  // Watch for resource changes (e.g., when switching versions) and repopulate the data store
+  watch(
+    resourceItems,
+    async (newResourceItems, oldResourceItems) => {
+      if (newResourceItems.length > 0 && newResourceItems !== oldResourceItems) {
+        await populateInternalDataStore()
+      }
+    },
+    { deep: true }
+  )
 
   const isolateObjects = (
     objectIds: string[],
