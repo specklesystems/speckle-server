@@ -13,7 +13,12 @@
       :class="{ 'opacity-50': !filter.isApplied }"
     >
       <ViewerFiltersFilterNumeric v-if="isNumericFilter(filter)" :filter="filter" />
-      <ViewerFiltersFilterString v-else :filter="filter" />
+      <ViewerFiltersFilterString
+        v-else
+        :filter="filter"
+        :sort-mode="sortMode"
+        @update:sort-mode="sortMode = $event"
+      />
       <ViewerFiltersFilterExistenceCount
         v-if="isExistenceCondition"
         :filter="filter"
@@ -27,7 +32,8 @@
 import type { FilterData, ConditionOption } from '~/lib/viewer/helpers/filters/types'
 import {
   isNumericFilter,
-  ExistenceFilterCondition
+  ExistenceFilterCondition,
+  SortMode
 } from '~/lib/viewer/helpers/filters/types'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 
@@ -42,6 +48,7 @@ defineEmits<{
 const { updateFilterCondition } = useFilterUtilities()
 
 const collapsed = ref(false)
+const sortMode = ref<SortMode>(SortMode.Alphabetical)
 
 const isExistenceCondition = computed(() => {
   return (

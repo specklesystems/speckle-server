@@ -6,7 +6,10 @@
         :search-query="searchQuery"
       />
 
-      <ViewerFiltersFilterStringSortButton v-model="sortMode" />
+      <ViewerFiltersFilterStringSortButton
+        :model-value="sortMode"
+        @update:model-value="$emit('update:sortMode', $event)"
+      />
     </div>
     <div
       v-bind="containerProps"
@@ -39,12 +42,17 @@ import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering
 import {
   isStringFilter,
   type FilterData,
-  SortMode
+  type SortMode
 } from '~/lib/viewer/helpers/filters/types'
 
 const props = defineProps<{
   filter: FilterData
   searchQuery?: string
+  sortMode: SortMode
+}>()
+
+defineEmits<{
+  'update:sortMode': [value: SortMode]
 }>()
 
 const itemHeight = 28
@@ -52,13 +60,11 @@ const maxHeight = 240
 
 const { toggleActiveFilterValue, getFilteredFilterValues } = useFilterUtilities()
 
-const sortMode = ref<SortMode>(SortMode.Alphabetical)
-
 const filteredValues = computed(() => {
   if (isStringFilter(props.filter) && props.filter.filter) {
     return getFilteredFilterValues(props.filter.filter, {
       searchQuery: props.searchQuery,
-      sortMode: sortMode.value,
+      sortMode: props.sortMode,
       filterId: props.filter.id
     })
   }

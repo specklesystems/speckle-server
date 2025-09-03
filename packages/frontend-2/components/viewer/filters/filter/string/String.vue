@@ -46,21 +46,30 @@
       <ViewerFiltersFilterStringCheckboxes
         :filter="filter"
         :search-query="searchQuery"
+        :sort-mode="sortMode"
         class="my-1"
+        @update:sort-mode="emit('update:sortMode', $event)"
       />
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { FilterData, ConditionOption } from '~/lib/viewer/helpers/filters/types'
+import type {
+  FilterData,
+  ConditionOption,
+  SortMode
+} from '~/lib/viewer/helpers/filters/types'
 import { ExistenceFilterCondition } from '~/lib/viewer/helpers/filters/types'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { X } from 'lucide-vue-next'
 
 const props = defineProps<{
   filter: FilterData
+  sortMode: SortMode
 }>()
+
+const emit = defineEmits<(e: 'update:sortMode', v: SortMode) => void>()
 
 const collapsed = ref(false)
 const searchQuery = ref('')

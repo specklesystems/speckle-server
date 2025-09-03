@@ -35,6 +35,8 @@ const props = defineProps<{
   modelValue: SortMode
 }>()
 
+// Emit sort mode changes to parent components so it persists
+// state when filter cards are collapsed/expanded.
 const emit = defineEmits<{
   'update:modelValue': [value: SortMode]
 }>()
