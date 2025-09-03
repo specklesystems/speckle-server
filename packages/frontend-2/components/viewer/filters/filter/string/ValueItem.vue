@@ -73,7 +73,6 @@ const {
 } = useInjectedViewerState()
 
 const isSelected = computed(() => {
-  // For lazy-loaded filters with isDefaultAllSelected, all items should appear selected
   if (
     isStringFilter(props.filter) &&
     props.filter.isDefaultAllSelected &&
@@ -89,9 +88,6 @@ const totalCount = computed(() => {
   return getFilterValueCount(props.filter.filter, props.value)
 })
 
-// Use the pre-computed value groups map passed from parent to avoid expensive repeated computations
-
-// Pre-compute isolated objects Set once, outside the per-item computation
 const isolatedObjectsSet = computed(() => {
   const currentlyIsolated = filteringState.value?.isolatedObjects
   if (!currentlyIsolated || currentlyIsolated.length === 0) return null
@@ -106,10 +102,9 @@ const isolatedObjectsSet = computed(() => {
 const availableCount = computed(() => {
   if (!props.filter.filter || !totalCount.value) return null
 
-  // Only show available count when there are multiple filter properties applied
   const appliedFilters = filters.propertyFilters.value.filter((f) => f.isApplied)
   if (appliedFilters.length <= 1) {
-    return totalCount.value // No bracketed view for single property
+    return totalCount.value
   }
 
   const map = props.valueGroupsMap
@@ -117,21 +112,14 @@ const availableCount = computed(() => {
     return totalCount.value
   }
 
-  // Skip expensive intersection calculation for huge datasets
-  if (map.size > 5000) {
-    return totalCount.value // Just show total count for large datasets
-  }
-
   const isolatedSet = isolatedObjectsSet.value
   if (!isolatedSet) {
     return totalCount.value
   }
 
-  // Use O(1) Map lookup instead of O(n) .find() operation
   const valueGroup = map.get(props.value)
   const valueObjectIds = valueGroup?.ids || []
 
-  // Count intersection efficiently
   const availableIds = valueObjectIds.filter((id) => isolatedSet.has(id))
   return availableIds.length
 })
@@ -142,10 +130,8 @@ const count = computed(() => {
 
   if (total === null || available === null) return null
 
-  // Only show available count when there are multiple filter properties applied
   const appliedFilters = filters.propertyFilters.value.filter((f) => f.isApplied)
   if (appliedFilters.length > 1) {
-    // Always show bracketed format when multiple properties are applied
     return `${available} (${total})`
   }
 

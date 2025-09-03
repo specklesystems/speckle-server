@@ -40,7 +40,6 @@ const { updateActiveFilterValues, selectAllFilterValues } = useFilterUtilities()
 const totalCount = computed(() => {
   if (isStringFilter(props.filter) && props.filter.filter) {
     const filter = props.filter.filter
-    // Use valueGroups length directly for performance
     if ('valueGroups' in filter && Array.isArray(filter.valueGroups)) {
       return filter.valueGroups.length
     }
@@ -58,7 +57,6 @@ const isDefaultAllSelected = computed(() => {
 
 const selectedCount = computed(() => {
   if (isStringFilter(props.filter)) {
-    // For lazy-loaded filters with isDefaultAllSelected, show all values as selected
     if (isDefaultAllSelected.value) {
       return totalCount.value
     }
@@ -85,10 +83,8 @@ const selectAllCheckboxClasses = computed(() => {
 const handleSelectAllChange = () => {
   if (isStringFilter(props.filter) && props.filter.filter) {
     if (areAllValuesSelected.value) {
-      // All are selected → deselect all
       updateActiveFilterValues(props.filter.id, [])
     } else {
-      // Not all selected → select all
       selectAllFilterValues(props.filter.id)
     }
   }

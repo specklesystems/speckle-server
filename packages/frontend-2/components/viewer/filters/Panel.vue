@@ -24,7 +24,6 @@
       </div>
     </template>
 
-    <!-- Filter Logic Selection -->
     <ViewerFiltersLogicSelector
       v-if="propertyFilters.length > 0"
       :model-value="currentFilterLogic"
@@ -44,7 +43,6 @@
     </div>
 
     <div class="h-[calc(100vh-10rem)] flex flex-col select-none group/panel">
-      <!-- Active Filters Section -->
       <div
         v-if="propertyFilters.length > 0"
         ref="filtersContainerRef"
@@ -77,11 +75,9 @@
         </div>
       </div>
 
-      <!-- Empty State -->
       <ViewerFiltersFilterEmptyState v-else @add-filter="addNewEmptyFilter" />
     </div>
 
-    <!-- Property Selection Portal -->
     <Portal v-if="showPropertySelection" to="panel-extension">
       <div ref="propertySelectionRef" class="h-full">
         <ViewerFiltersPropertySelectionPanel
@@ -225,7 +221,6 @@ const selectProperty = async (propertyKey: string) => {
       return
     }
 
-    // Use nextTick to ensure state updates are processed in order
     await nextTick()
 
     if (swappingFilterId.value) {

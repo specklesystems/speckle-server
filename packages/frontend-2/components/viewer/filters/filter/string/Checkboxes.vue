@@ -3,19 +3,11 @@
     <div class="flex justify-between items-center pr-1">
       <ViewerFiltersFilterStringSelectAll v-if="!searchQuery" :filter="filter" />
       <div v-else />
-      <div
-        :title="
-          isLargeDataset
-            ? 'Sorting disabled for large datasets (5,000+ values)'
-            : undefined
-        "
-      >
-        <ViewerFiltersFilterStringSortButton
-          :disabled="isLargeDataset"
-          :model-value="sortMode"
-          @update:model-value="$emit('update:sortMode', $event)"
-        />
-      </div>
+
+      <ViewerFiltersFilterStringSortButton
+        :model-value="sortMode"
+        @update:model-value="$emit('update:sortMode', $event)"
+      />
     </div>
 
     <div
@@ -74,7 +66,6 @@ const { toggleActiveFilterValue, getFilteredFilterValues } = useFilterUtilities(
 const filteredValues = computed(() => {
   if (!isStringFilter(props.filter) || !props.filter.filter) return []
 
-  // Use the centralized function that includes proper sorting logic
   return getFilteredFilterValues(props.filter.filter, {
     searchQuery: props.searchQuery,
     sortMode: props.sortMode,
@@ -82,35 +73,8 @@ const filteredValues = computed(() => {
   })
 })
 
-const isLargeDataset = computed(() => {
-  if (!isStringFilter(props.filter) || !props.filter.filter) return false
-  return (
-    'valueGroups' in props.filter.filter &&
-    Array.isArray(props.filter.filter.valueGroups) &&
-    props.filter.filter.valueGroups.length > 5000
-  )
+const { list, containerProps, wrapperProps } = useVirtualList(filteredValues, {
+  itemHeight,
+  overscan: 5
 })
-
-// Optimize virtual list for huge datasets
-const virtualListOptions = computed(() => {
-  const baseOptions = {
-    itemHeight,
-    overscan: 5
-  }
-
-  // For huge datasets, reduce overscan to minimize DOM nodes
-  if (filteredValues.value.length > 10000) {
-    return {
-      ...baseOptions,
-      overscan: 2 // Reduce overscan for huge datasets
-    }
-  }
-
-  return baseOptions
-})
-
-const { list, containerProps, wrapperProps } = useVirtualList(
-  filteredValues,
-  virtualListOptions.value
-)
 </script>

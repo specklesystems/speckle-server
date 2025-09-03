@@ -73,7 +73,6 @@ const currentMax = computed({
   }
 })
 
-// Check if coloring is active for this filter
 const isColoringActive = computed(() => {
   return filters.activeColorFilterId.value === props.filter.id
 })

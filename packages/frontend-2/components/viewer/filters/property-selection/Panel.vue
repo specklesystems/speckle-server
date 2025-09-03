@@ -112,7 +112,6 @@ const listItems = computed((): PropertySelectionListItem[] => {
   }))
   items.push(...allPropertyItems)
 
-  // Add spacer at the end for bottom padding
   items.push({ type: 'spacer' })
 
   return items
