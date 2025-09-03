@@ -43,7 +43,7 @@
       </div>
     </div>
 
-    <div class="h-full flex flex-col select-none group/panel">
+    <div class="h-[calc(100vh-10rem)] flex flex-col select-none group/panel">
       <!-- Active Filters Section -->
       <div
         v-if="propertyFilters.length > 0"
