@@ -28,7 +28,6 @@ import { AuthPolicyEnsureFragment } from '../domain/policies.js'
 import { SavedViewVisibility } from '../domain/savedViews/types.js'
 import {
   ensureCanUseProjectWorkspacePlanFeatureFragment,
-  ensureImplicitProjectMemberWithReadAccessFragment,
   ensureImplicitProjectMemberWithWriteAccessFragment
 } from './projects.js'
 import { Roles } from '../../core/constants.js'
@@ -100,24 +99,6 @@ export const ensureCanAccessSavedViewFragment: AuthPolicyEnsureFragment<
 
     // Validate read access
     if (access === 'read') {
-      // Validate general read access
-      const ensuredReadAccess = await ensureImplicitProjectMemberWithReadAccessFragment(
-        loaders
-      )({
-        userId,
-        projectId
-      })
-      if (ensuredReadAccess.isErr) {
-        if (ensuredReadAccess.error.code === ProjectNotEnoughPermissionsError.code)
-          return err(
-            new ProjectNotEnoughPermissionsError({
-              message:
-                "Your role on this project doesn't give you permission to read saved views."
-            })
-          )
-        return err(ensuredReadAccess.error)
-      }
-
       if (isAuthor || isPublic) {
         return ok()
       } else {

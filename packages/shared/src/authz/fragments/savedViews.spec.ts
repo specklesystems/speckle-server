@@ -16,7 +16,6 @@ import {
 import { SavedViewVisibility } from '../domain/savedViews/types.js'
 import { Roles } from '../../core/constants.js'
 import {
-  ProjectNoAccessError,
   ProjectNotEnoughPermissionsError,
   SavedViewGroupNotFoundError,
   SavedViewNoAccessError,
@@ -25,6 +24,7 @@ import {
   WorkspaceNoAccessError
 } from '../domain/authErrors.js'
 import { nanoid } from 'nanoid'
+import { ProjectVisibility } from '../domain/projects/types.js'
 
 const userId = 'user-id'
 const savedViewId = 'saved-view-id'
@@ -139,6 +139,33 @@ describe('ensureCanAccessSavedViewFragment', () => {
         }
       }
     )
+
+    it('succeeds if asking for read access to public projects public view, even if not a part of the project or workspace', async () => {
+      const sut = buildWorkspaceSUT({
+        getSavedView: getSavedViewFake({
+          id: savedViewId,
+          projectId,
+          visibility: SavedViewVisibility.public,
+          authorId: userId
+        }),
+        getProject: getProjectFake({
+          id: projectId,
+          workspaceId,
+          visibility: ProjectVisibility.Public
+        }),
+        getProjectRole: async () => null,
+        getWorkspaceRole: async () => null
+      })
+
+      const result = await sut({
+        userId,
+        projectId,
+        savedViewId,
+        access: 'read'
+      })
+
+      expect(result).toBeAuthOKResult()
+    })
 
     it.each(<const>[
       { author: 'author', success: 'succeeds', access: WriteTypes.UpdateGeneral },
@@ -278,28 +305,6 @@ describe('ensureCanAccessSavedViewFragment', () => {
         expect(result).toBeAuthOKResult()
       }
     )
-
-    it("can't read w/o project access, even if owner", async () => {
-      const sut = buildWorkspaceSUT({
-        getProjectRole: async () => null,
-        getSavedView: getSavedViewFake({
-          id: savedViewId,
-          projectId,
-          visibility: SavedViewVisibility.public,
-          authorId: userId
-        })
-      })
-
-      const result = await sut({
-        userId,
-        projectId,
-        savedViewId,
-        access: 'read'
-      })
-      expect(result).toBeAuthErrorResult({
-        code: ProjectNoAccessError.code
-      })
-    })
   })
 })
 

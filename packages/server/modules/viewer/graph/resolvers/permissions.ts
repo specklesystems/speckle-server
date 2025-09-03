@@ -32,6 +32,15 @@ const resolvers: Resolvers = {
         savedViewId
       })
       return toGraphqlResult(canUpdate)
+    },
+    canMove: async (parent, _args, ctx) => {
+      const savedViewId = parent.savedView.id
+      const canMove = await ctx.authPolicies.project.savedViews.canMove({
+        userId: ctx.userId,
+        projectId: parent.savedView.projectId,
+        savedViewId
+      })
+      return toGraphqlResult(canMove)
     }
   },
   SavedViewGroupPermissionChecks: {
