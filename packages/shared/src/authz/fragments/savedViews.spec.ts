@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { OverridesOf } from '../../tests/helpers/types.js'
 import {
   ensureCanAccessSavedViewFragment,
-  ensureCanAccessSavedViewGroupFragment
+  ensureCanAccessSavedViewGroupFragment,
+  WriteTypes
 } from './savedViews.js'
 import {
   getEnvFake,
@@ -15,6 +16,7 @@ import {
 import { SavedViewVisibility } from '../domain/savedViews/types.js'
 import { Roles } from '../../core/constants.js'
 import {
+  ProjectNoAccessError,
   ProjectNotEnoughPermissionsError,
   SavedViewGroupNotFoundError,
   SavedViewNoAccessError,
@@ -53,10 +55,11 @@ describe('ensureCanAccessSavedViewFragment', () => {
       getWorkspaceRole: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
+      getAdminOverrideEnabled: async () => false,
       ...overrides
     })
 
-  it.each(<const>['read', 'write'])(
+  it.each(<const>['read', ...Object.values(WriteTypes)])(
     'fails when not workspaced project (%s)',
     async (access) => {
       const sut = buildSUT()
@@ -110,7 +113,6 @@ describe('ensureCanAccessSavedViewFragment', () => {
         const expectSuccess = success === 'succeeds'
 
         const sut = buildWorkspaceSUT({
-          getProjectRole: async () => null,
           getSavedView: getSavedViewFake({
             id: savedViewId,
             projectId,
@@ -139,21 +141,47 @@ describe('ensureCanAccessSavedViewFragment', () => {
     )
 
     it.each(<const>[
-      { author: 'author', success: 'succeeds' },
-      { author: 'not author', success: 'fails', error: SavedViewNoAccessError.code },
+      { author: 'author', success: 'succeeds', access: WriteTypes.UpdateGeneral },
+      { author: 'author', success: 'succeeds', access: WriteTypes.MoveView },
+      {
+        author: 'not author',
+        success: 'fails',
+        error: SavedViewNoAccessError.code,
+        access: WriteTypes.UpdateGeneral
+      },
+      {
+        author: 'not author',
+        success: 'succeeds',
+        error: SavedViewNoAccessError.code,
+        access: WriteTypes.MoveView
+      },
       {
         author: 'author but no longer contributor',
         success: 'fails',
-        error: ProjectNotEnoughPermissionsError.code
+        error: ProjectNotEnoughPermissionsError.code,
+        access: WriteTypes.UpdateGeneral
+      },
+      {
+        author: 'author but no longer contributor',
+        success: 'fails',
+        error: ProjectNotEnoughPermissionsError.code,
+        access: WriteTypes.MoveView
       },
       {
         author: 'not author but is workspace admin',
         success: 'fails',
-        error: SavedViewNoAccessError.code
+        error: SavedViewNoAccessError.code,
+        access: WriteTypes.UpdateGeneral
+      },
+      {
+        author: 'not author but is workspace admin',
+        success: 'succeeds',
+        error: SavedViewNoAccessError.code,
+        access: WriteTypes.MoveView
       }
     ])(
-      '$success if asking for write access to private (as $author)',
-      async ({ author, success, error }) => {
+      '$success if asking for $access type write access to private (as $author)',
+      async ({ author, success, error, access }) => {
         const isAuthor = author.startsWith('author')
         const isNotContributor = author.includes('no longer contributor')
         const isWorkspaceAdmin = author.includes('is workspace admin')
@@ -176,7 +204,7 @@ describe('ensureCanAccessSavedViewFragment', () => {
           userId,
           projectId,
           savedViewId,
-          access: 'write'
+          access
         })
 
         if (expectSuccess) {
@@ -189,7 +217,7 @@ describe('ensureCanAccessSavedViewFragment', () => {
       }
     )
 
-    it.each(<const>['read', 'write'])(
+    it.each(<const>['read', ...Object.values(WriteTypes)])(
       'succeeds to %s even on free plan',
       async (access) => {
         const sut = buildWorkspaceSUT({
@@ -214,7 +242,7 @@ describe('ensureCanAccessSavedViewFragment', () => {
       }
     )
 
-    it.each(<const>['read', 'write'])(
+    it.each(<const>['read', ...Object.values(WriteTypes)])(
       'fails if view doesnt exist (%s)',
       async (access) => {
         const sut = buildWorkspaceSUT({
@@ -233,7 +261,7 @@ describe('ensureCanAccessSavedViewFragment', () => {
       }
     )
 
-    it.each(<const>['read', 'write'])(
+    it.each(<const>['read', ...Object.values(WriteTypes)])(
       `doesn't fail if view doesnt exist and allowNonExistent set (%s)`,
       async (access) => {
         const sut = buildWorkspaceSUT({
@@ -250,6 +278,28 @@ describe('ensureCanAccessSavedViewFragment', () => {
         expect(result).toBeAuthOKResult()
       }
     )
+
+    it("can't read w/o project access, even if owner", async () => {
+      const sut = buildWorkspaceSUT({
+        getProjectRole: async () => null,
+        getSavedView: getSavedViewFake({
+          id: savedViewId,
+          projectId,
+          visibility: SavedViewVisibility.public,
+          authorId: userId
+        })
+      })
+
+      const result = await sut({
+        userId,
+        projectId,
+        savedViewId,
+        access: 'read'
+      })
+      expect(result).toBeAuthErrorResult({
+        code: ProjectNoAccessError.code
+      })
+    })
   })
 })
 
