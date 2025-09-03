@@ -20,7 +20,7 @@ graphql(`
       id
     }
     permissions {
-      canUpdate {
+      canMove {
         ...FullPermissionCheckResult
       }
     }
@@ -47,7 +47,7 @@ export const useDraggableView = (params: {
   const vOn = {
     dragstart: (event: DragEvent) => {
       if (!event.dataTransfer) return
-      if (!params.view.value.permissions.canUpdate.authorized || isLoading.value) {
+      if (!params.view.value.permissions.canMove.authorized || isLoading.value) {
         event.preventDefault()
         return
       }
@@ -109,27 +109,34 @@ export const useDraggableViewTargetGroup = (params: {
           return
         }
 
-        const success = await updateView({
-          view,
-          input: {
-            id: view.id,
-            projectId: view.projectId,
-            groupId: params.group.value.id
+        await updateView(
+          {
+            view,
+            input: {
+              id: view.id,
+              projectId: view.projectId,
+              groupId: params.group.value.id
+            }
+          },
+          {
+            skipToast: true,
+            onFullResult: (res, success) => {
+              if (success) {
+                triggerNotification({
+                  type: ToastNotificationType.Success,
+                  title: `Moved "${view.name}" to "${params.group.value.title}"`
+                })
+                params.onMoved?.()
+              } else {
+                triggerNotification({
+                  type: ToastNotificationType.Danger,
+                  title: 'Failed to move view',
+                  description: getFirstGqlErrorMessage(res?.errors)
+                })
+              }
+            }
           }
-        })
-
-        if (success) {
-          triggerNotification({
-            type: ToastNotificationType.Success,
-            title: `Moved "${view.name}" to "${params.group.value.title}"`
-          })
-          params.onMoved?.()
-        } else {
-          triggerNotification({
-            type: ToastNotificationType.Danger,
-            title: 'Failed to move view'
-          })
-        }
+        )
       } catch (e) {
         triggerNotification({
           type: ToastNotificationType.Danger,

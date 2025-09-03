@@ -19,6 +19,9 @@ graphql(`
       canUpdate {
         ...FullPermissionCheckResult
       }
+      canMove {
+        ...FullPermissionCheckResult
+      }
     }
   }
 `)
@@ -38,6 +41,7 @@ export const useSavedViewValidationHelpers = (params: {
   } = useInjectedViewerState()
 
   const canUpdate = computed(() => params.view.value?.permissions.canUpdate)
+  const canMove = computed(() => params.view.value?.permissions.canMove)
   const isOnlyVisibleToMe = computed(
     () => params.view.value?.visibility === SavedViewVisibility.AuthorOnly
   )
@@ -129,6 +133,7 @@ export const useSavedViewValidationHelpers = (params: {
     isOnlyVisibleToMe,
     canSetHomeView,
     isHomeView,
-    canToggleVisibility
+    canToggleVisibility,
+    canMove
   }
 }

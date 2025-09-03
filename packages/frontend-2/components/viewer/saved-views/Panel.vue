@@ -6,7 +6,7 @@
       </div>
     </template>
     <template #actions>
-      <div v-if="!isLowerPlan" class="flex items-center gap-0.5">
+      <div class="flex items-center gap-0.5">
         <FormButton
           v-tippy="getTooltipProps('Search views')"
           size="sm"
@@ -63,43 +63,41 @@
         />
       </div>
     </template>
-    <template v-if="!isLowerPlan">
-      <div class="px-3 pt-3">
-        <ViewerButtonGroup>
-          <ViewerButtonGroupButton
-            v-for="viewsType in Object.values(ViewsType)"
-            :key="viewsType"
-            :is-active="selectedViewsType === viewsType"
-            class="grow"
-            @click="() => (selectedViewsType = viewsType)"
-          >
-            <span class="text-body-2xs text-foreground px-2 py-1">
-              {{ viewsTypeLabels[viewsType] }}
-            </span>
-          </ViewerButtonGroupButton>
-        </ViewerButtonGroup>
-      </div>
-      <div
-        ref="groupsScrollArea"
-        class="text-body-sm flex-1 min-h-0 overflow-y-auto simple-scrollbar"
-      >
-        <ViewerSavedViewsPanelGroups
-          :views-type="selectedViewsType"
-          :search="searchMode ? search || undefined : undefined"
-        />
-      </div>
-      <div
-        v-if="isViewerSeat && !hideViewerSeatDisclaimer"
-        class="absolute bottom-0 left-0 right-0 p-2"
-      >
-        <CommonPromoAlert
-          title="Save your views"
-          text="With an Editor seat, unlock the option to save views. A workspace admin can update your seat type."
-          show-closer
-          @close="hideViewerSeatDisclaimer = true"
-        />
-      </div>
-    </template>
+    <div class="px-3 pt-3">
+      <ViewerButtonGroup>
+        <ViewerButtonGroupButton
+          v-for="viewsType in Object.values(ViewsType)"
+          :key="viewsType"
+          :is-active="selectedViewsType === viewsType"
+          class="grow"
+          @click="() => (selectedViewsType = viewsType)"
+        >
+          <span class="text-body-2xs text-foreground px-2 py-1">
+            {{ viewsTypeLabels[viewsType] }}
+          </span>
+        </ViewerButtonGroupButton>
+      </ViewerButtonGroup>
+    </div>
+    <div
+      ref="groupsScrollArea"
+      class="text-body-sm flex-1 min-h-0 overflow-y-auto simple-scrollbar"
+    >
+      <ViewerSavedViewsPanelGroups
+        :views-type="selectedViewsType"
+        :search="searchMode ? search || undefined : undefined"
+      />
+    </div>
+    <div
+      v-if="isViewerSeat && !hideViewerSeatDisclaimer"
+      class="absolute bottom-0 left-0 right-0 p-2"
+    >
+      <CommonPromoAlert
+        title="Save your views"
+        text="With an Editor seat, unlock the option to save views. A workspace admin can update your seat type."
+        show-closer
+        @close="hideViewerSeatDisclaimer = true"
+      />
+    </div>
     <ViewerSavedViewsPanelGroupsCreateDialog
       v-model:open="showCreateGroupDialog"
       @success="onAddGroup"
@@ -169,8 +167,6 @@ const canCreateViewOrGroup = computed(
 const isViewerSeat = computed(
   () => project.value?.workspace?.seatType === WorkspaceSeatType.Viewer
 )
-const isLowerPlan = computed(() => !project.value?.workspace?.planSupportsSavedViews)
-
 const onAddView = async () => {
   if (isLoading.value) return
   const view = await createSavedView({})

@@ -33,6 +33,10 @@ import {
 import { Roles } from '../../core/constants.js'
 import { WorkspacePlanFeatures } from '../../workspaces/index.js'
 import { isUngroupedGroup } from '../../saved-views/index.js'
+import { StringEnum, StringEnumValues, throwUncoveredError } from '../../core/index.js'
+
+export const WriteTypes = StringEnum(['UpdateGeneral', 'MoveView'])
+export type WriteTypes = StringEnumValues<typeof WriteTypes>
 
 /**
  * Ensure the user can access the view
@@ -47,11 +51,12 @@ export const ensureCanAccessSavedViewFragment: AuthPolicyEnsureFragment<
   | typeof Loaders.getWorkspacePlan
   | typeof Loaders.getWorkspaceSsoProvider
   | typeof Loaders.getWorkspaceSsoSession
+  | typeof Loaders.getAdminOverrideEnabled
   | typeof Loaders.getProjectRole,
   MaybeUserContext &
     ProjectContext &
     SavedViewContext & {
-      access: 'read' | 'write'
+      access: 'read' | WriteTypes
       /**
        * In some cases we want to just ignore a view being non-existant, instead of throwing
        */
@@ -89,43 +94,59 @@ export const ensureCanAccessSavedViewFragment: AuthPolicyEnsureFragment<
       if (allowNonExistent) return ok()
       return err(new SavedViewNotFoundError())
     }
-
     const isPublic = savedView.visibility === SavedViewVisibility.public
-    if (isPublic && access === 'read') {
-      return ok()
-    }
-
     const isAuthor = savedView.authorId === userId
-    if (isAuthor) {
-      if (access === 'write') {
-        // Check for write access to project first
-        const ensuredWriteAccess =
-          await ensureImplicitProjectMemberWithWriteAccessFragment(loaders)({
-            userId,
-            projectId
+
+    // Validate read access
+    if (access === 'read') {
+      if (isAuthor || isPublic) {
+        return ok()
+      } else {
+        return err(
+          new SavedViewNoAccessError({
+            message: 'You do not have permission to read this saved view.'
           })
-        if (ensuredWriteAccess.isErr) {
-          if (ensuredWriteAccess.error.code === ProjectNotEnoughPermissionsError.code)
-            return err(
-              new ProjectNotEnoughPermissionsError({
-                message:
-                  "Your role on this project doesn't give you permission to update views."
-              })
-            )
-          return err(ensuredWriteAccess.error)
-        }
+        )
       }
+    }
+
+    // Validate write access
+    // Check for write access to project first
+    const ensuredWriteAccess = await ensureImplicitProjectMemberWithWriteAccessFragment(
+      loaders
+    )({
+      userId,
+      projectId
+    })
+    if (ensuredWriteAccess.isErr) {
+      if (ensuredWriteAccess.error.code === ProjectNotEnoughPermissionsError.code)
+        return err(
+          new ProjectNotEnoughPermissionsError({
+            message:
+              "Your role on this project doesn't give you permission to update views."
+          })
+        )
+      return err(ensuredWriteAccess.error)
+    }
+
+    if (isAuthor) {
+      // authors can write whatever
       return ok()
     }
 
-    return err(
-      new SavedViewNoAccessError({
-        message:
-          access === 'write'
-            ? 'You do not have permission to edit this view'
-            : 'You do not have read access for this view'
-      })
-    )
+    // Non-author project writers can make specific changes
+    switch (access) {
+      case WriteTypes.MoveView:
+        return ok()
+      case WriteTypes.UpdateGeneral:
+        return err(
+          new SavedViewNoAccessError({
+            message: 'You do not have permission to edit this view'
+          })
+        )
+      default:
+        throwUncoveredError(access)
+    }
   }
 
 /**
