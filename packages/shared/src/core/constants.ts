@@ -187,6 +187,7 @@ export const isScope = (scope: unknown): scope is ServerScope =>
   !!(scope && (AllScopes as unknown[]).includes(scope))
 
 export const SourceAppNames = [
+  'Advance Steel',
   'Dynamo',
   'Revit',
   'AutoCAD',
@@ -194,6 +195,7 @@ export const SourceAppNames = [
   'Blender',
   'Rhino',
   'Grasshopper',
+  'GSA',
   'Excel',
   'Unity',
   'Unreal',
@@ -243,6 +245,8 @@ export type SourceAppDefinition = {
 }
 
 export const SourceApps: SourceAppDefinition[] = [
+  { searchKey: 'advancesteel', name: 'Advance Steel', short: 'AS', bgColor: '#a438b6' },
+  // deliberately keeping dynamo in front of revit, so it preceeds it when resolving from the host app name
   { searchKey: 'dynamo', name: 'Dynamo', short: 'DYN', bgColor: '#a438b6' },
   { searchKey: 'revit', name: 'Revit', short: 'RVT', bgColor: '#3091e7' },
   { searchKey: 'autocad', name: 'AutoCAD', short: 'ACAD', bgColor: '#f0605e' },
@@ -257,6 +261,7 @@ export const SourceApps: SourceAppDefinition[] = [
   { searchKey: '.net', name: '.NET', short: '.NET', bgColor: '#8531a9' },
   { searchKey: 'ifc', name: 'IFC', short: 'IFC', bgColor: '#bd2e2e' },
   { searchKey: 'qgis', name: 'QGIS', short: 'QGIS', bgColor: '#70e029' },
+  { searchKey: 'gsa', name: 'GSA', short: 'GSA', bgColor: '#70e029' },
   { searchKey: 'arcgis', name: 'ArcGIS', short: 'AGIS', bgColor: '#3a6eff' },
   { searchKey: 'etabs', name: 'ETABS', short: 'EDB', bgColor: '#6d6d6d' },
   { searchKey: 'powerbi', name: 'PowerBI', short: 'PBI', bgColor: '#ffff96' },

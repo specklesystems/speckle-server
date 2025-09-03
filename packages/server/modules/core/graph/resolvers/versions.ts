@@ -100,6 +100,9 @@ export default {
       const path = `/preview/${stream.id}/commits/${parent.id}`
       return new URL(path, getServerOrigin()).toString()
     },
+    sourceApplication: async (parent) => {
+      return parent.sourceApplication
+    },
     referencedObject: async (parent, _args, ctx) => {
       const projectDB = await getProjectDbClient({ projectId: parent.streamId })
       const project = await ctx.loaders
