@@ -53,7 +53,6 @@
             v-for="filter in propertyFilters"
             :key="filter.id"
             :filter="filter"
-            :value-groups-map="sharedValueGroupsMaps.get(filter.id)"
             collapsed
             @swap-property="startPropertySwap"
           />
@@ -111,8 +110,7 @@ const {
   addActiveFilter,
   updateFilterProperty,
   resetFilters,
-  setFilterLogic,
-  getCachedValueGroupsMap
+  setFilterLogic
 } = useFilterUtilities()
 
 const { currentFilterLogic } = useFilteringDataStore()
@@ -126,7 +124,6 @@ const {
   filters: { hasAnyFiltersApplied }
 } = useInjectedViewerInterfaceState()
 
-const sharedValueGroupsMaps = shallowRef(new Map())
 const showPropertySelection = ref(false)
 const propertySelectionRef = ref<HTMLElement>()
 const swappingFilterId = ref<Nullable<string>>(null)
@@ -254,18 +251,4 @@ onKeyStroke('Escape', () => {
     showPropertySelection.value = false
   }
 })
-
-watch(
-  propertyFilters,
-  (filters) => {
-    const maps = new Map()
-    filters.forEach((filter) => {
-      if (filter.filter) {
-        maps.set(filter.id, getCachedValueGroupsMap(filter.filter))
-      }
-    })
-    sharedValueGroupsMaps.value = maps
-  },
-  { immediate: true }
-)
 </script>

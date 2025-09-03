@@ -27,7 +27,6 @@
           <ViewerFiltersFilterStringValueItem
             :filter="filter"
             :value="value"
-            :value-groups-map="valueGroupsMap"
             @toggle="() => toggleActiveFilterValue(filter.id, value)"
           />
         </div>
@@ -39,18 +38,12 @@
 <script setup lang="ts">
 import { useVirtualList } from '@vueuse/core'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
-import type {
-  StringFilterData,
-  SortMode,
-  ValueGroupsMap
-} from '~/lib/viewer/helpers/filters/types'
-import type { Nullable } from '@speckle/shared'
+import type { StringFilterData, SortMode } from '~/lib/viewer/helpers/filters/types'
 
 const props = defineProps<{
   filter: StringFilterData
   searchQuery?: string
   sortMode: SortMode
-  valueGroupsMap?: Nullable<ValueGroupsMap>
 }>()
 
 defineEmits<{

@@ -43,33 +43,31 @@
 import { FormCheckbox } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { getFilterValueCount } from '~/lib/viewer/composables/filtering/counts'
-import type {
-  StringFilterData,
-  ValueGroupsMap
-} from '~/lib/viewer/helpers/filters/types'
+import type { StringFilterData } from '~/lib/viewer/helpers/filters/types'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useFilterColors } from '~/lib/viewer/composables/filtering/coloring'
-import type { Nullable } from '@speckle/shared'
 
 const props = defineProps<{
   filter: StringFilterData
   value: string
-  valueGroupsMap?: Nullable<ValueGroupsMap>
 }>()
 
 defineEmits<{
   toggle: []
 }>()
 
-const { isActiveFilterValueSelected, filters } = useFilterUtilities()
+const { isActiveFilterValueSelected, filters, getCachedValueGroupsMap } =
+  useFilterUtilities()
 
 const { getFilterValueColor } = useFilterColors()
 
-const {
-  viewer: {
-    metadata: { filteringState }
-  }
-} = useInjectedViewerState()
+const { viewer } = useInjectedViewerState()
+
+// Create valueGroupsMap at setup level
+const valueGroupsMap = computed(() => {
+  if (!props.filter.filter) return null
+  return getCachedValueGroupsMap(props.filter.filter)
+})
 
 const isSelected = computed(() => {
   if (props.filter.isDefaultAllSelected && props.filter.selectedValues.length === 0) {
@@ -83,26 +81,30 @@ const totalCount = computed(() => {
   return getFilterValueCount(props.filter.filter, props.value)
 })
 
+// Performance-optimized isolatedObjectsSet
 const isolatedObjectsSet = computed(() => {
-  const currentlyIsolated = filteringState.value?.isolatedObjects
+  const currentlyIsolated = viewer.metadata.filteringState.value?.isolatedObjects
+
   if (!currentlyIsolated || currentlyIsolated.length === 0) return null
 
   const realIsolatedObjects = currentlyIsolated.filter(
-    (id) => id !== 'no-match-ghost-all'
+    (id: string) => id !== 'no-match-ghost-all'
   )
 
-  return realIsolatedObjects.length > 0 ? new Set(realIsolatedObjects) : null
+  return new Set(realIsolatedObjects)
 })
 
 const availableCount = computed(() => {
   if (!props.filter.filter || !totalCount.value) return null
 
   const appliedFilters = filters.propertyFilters.value.filter((f) => f.isApplied)
+
   if (appliedFilters.length <= 1) {
     return totalCount.value
   }
 
-  const map = props.valueGroupsMap
+  const map = valueGroupsMap.value
+
   if (!map) {
     return totalCount.value
   }
@@ -116,7 +118,8 @@ const availableCount = computed(() => {
   const valueObjectIds = valueGroup?.ids || []
 
   const availableIds = valueObjectIds.filter((id) => isolatedSet.has(id))
-  return availableIds.length
+  const result = availableIds.length
+  return result
 })
 
 const count = computed(() => {

@@ -46,7 +46,6 @@
         :filter="filter"
         :search-query="searchQuery"
         :sort-mode="sortMode"
-        :value-groups-map="valueGroupsMap"
         class="my-1"
         @update:sort-mode="emit('update:sortMode', $event)"
       />
@@ -58,18 +57,15 @@
 import type {
   StringFilterData,
   ConditionOption,
-  SortMode,
-  ValueGroupsMap
+  SortMode
 } from '~/lib/viewer/helpers/filters/types'
 import { ExistenceFilterCondition } from '~/lib/viewer/helpers/filters/types'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { X } from 'lucide-vue-next'
-import type { Nullable } from '@speckle/shared'
 
 const props = defineProps<{
   filter: StringFilterData
   sortMode: SortMode
-  valueGroupsMap?: Nullable<ValueGroupsMap>
 }>()
 
 const emit = defineEmits<(e: 'update:sortMode', v: SortMode) => void>()
