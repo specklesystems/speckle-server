@@ -186,16 +186,7 @@ import {
   CircleQuestionMark
 } from 'lucide-vue-next'
 import { useViewerPanelsUtilities } from '~/lib/viewer/composables/setup/panels'
-
-type ActivePanel =
-  | 'none'
-  | 'models'
-  | 'discussions'
-  | 'explorer'
-  | 'automate'
-  | 'filters'
-  | 'devMode'
-  | 'savedViews'
+import type { ActivePanel } from '~/lib/viewer/helpers/sceneExplorer'
 
 // TODO: Refactor all of this event business and just read/write panels state directly
 const emit = defineEmits<{
