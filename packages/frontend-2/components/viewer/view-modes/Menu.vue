@@ -95,19 +95,15 @@ import { ViewMode } from '@speckle/viewer'
 import { useViewModeUtilities } from '~~/lib/viewer/composables/ui'
 import { ViewModeShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
 import { FormSwitch } from '@speckle/ui-components'
-import { useTheme } from '~/lib/core/composables/theme'
+import { defaultEdgeColorValue } from '~/lib/viewer/composables/setup/viewMode'
 
 const {
   setViewMode,
-  currentViewMode,
-  edgesEnabled,
   toggleEdgesEnabled,
   setEdgesWeight,
-  edgesWeight,
   setEdgesColor,
-  edgesColor
+  viewMode: { edgesColor, edgesWeight, edgesEnabled, mode: currentViewMode }
 } = useViewModeUtilities()
-const { isLightTheme } = useTheme()
 
 const showSettings = ref(false)
 
@@ -115,14 +111,17 @@ const isActiveMode = (mode: ViewMode) => mode === currentViewMode.value
 
 const viewModeShortcuts = Object.values(ViewModeShortcuts)
 
-const edgesColorOptions = computed(() => [
-  isLightTheme.value || currentViewMode.value !== ViewMode.PEN ? 0x1a1a1a : 0xffffff, // black or white
-  0x3b82f6, // blue-500
-  0x8b5cf6, // violet-500
-  0x65a30d, // lime-600
-  0xf97316, // orange-500
-  0xf43f5e //rose-500
-])
+const edgesColorOptions = computed(
+  () =>
+    [
+      defaultEdgeColorValue, // black or white
+      0x3b82f6, // blue-500
+      0x8b5cf6, // violet-500
+      0x65a30d, // lime-600
+      0xf97316, // orange-500
+      0xf43f5e //rose-500
+    ] as const
+)
 
 const handleViewModeChange = (mode: ViewMode) => {
   setViewMode(mode)

@@ -4,6 +4,7 @@ extend type ProjectPermissionChecks {
 
 type SavedViewPermissionChecks {
   canUpdate: PermissionCheckResult!
+  canMove: PermissionCheckResult!
 }
 
 extend type SavedView {

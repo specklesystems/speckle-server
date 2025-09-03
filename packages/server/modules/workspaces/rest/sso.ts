@@ -57,7 +57,6 @@ import {
   findVerifiedEmailsByUserIdFactory,
   updateUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
-import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import type { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
   countAdminUsersFactory,
@@ -142,6 +141,8 @@ import {
   createWorkspaceSeatFactory,
   getWorkspaceUserSeatFactory
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
+import { asMultiregionalOperation } from '@/modules/shared/command'
 
 const moveAuthParamsToSessionMiddleware = moveAuthParamsToSessionMiddlewareFactory()
 const sessionMiddleware = sessionMiddlewareFactory()
@@ -275,11 +276,11 @@ export const getSsoRouter = (): Router => {
     }),
     async (req, res, next) => {
       try {
-        await withTransaction(
-          async ({ db: trx }) => {
+        await asMultiregionalOperation(
+          async ({ mainDb, allDbs }) => {
             const handleOidcCallback = handleOidcCallbackFactory({
-              getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-              getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: trx }),
+              getWorkspaceRoles: getWorkspaceRolesFactory({ db: mainDb }),
+              getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: mainDb }),
               createOidcProvider: createOidcProviderFactory({
                 getOIDCProviderValidationRequest:
                   getOIDCProviderValidationRequestFactory({
@@ -288,60 +289,66 @@ export const getSsoRouter = (): Router => {
                   }),
                 saveSsoProviderRegistration: saveSsoProviderRegistrationFactory({
                   getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
-                    db: trx,
+                    db: mainDb,
                     decrypt: getDecryptor()
                   }),
                   storeProviderRecord: storeSsoProviderRecordFactory({
-                    db: trx,
+                    db: mainDb,
                     encrypt: getEncryptor()
                   }),
                   associateSsoProviderWithWorkspace:
                     associateSsoProviderWithWorkspaceFactory({
-                      db: trx
+                      db: mainDb
                     })
                 })
               }),
               getOidcProvider: getOidcProviderFactory({
                 getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
-                  db: trx,
+                  db: mainDb,
                   decrypt: getDecryptor()
                 })
               }),
               getOidcProviderUserData: getOidcProviderUserDataFactory(),
               tryGetSpeckleUserData: tryGetSpeckleUserDataFactory({
-                findEmail: findEmailFactory({ db: trx }),
-                getUser: getUserFactory({ db: trx }),
-                getUserEmails: findEmailsByUserIdFactory({ db: trx })
+                findEmail: findEmailFactory({ db: mainDb }),
+                getUser: getUserFactory({ db: mainDb }),
+                getUserEmails: findEmailsByUserIdFactory({ db: mainDb })
               }),
               createWorkspaceUserFromSsoProfile:
                 createWorkspaceUserFromSsoProfileFactory({
                   createUser: createUserFactory({
-                    getServerInfo: getServerInfoFactory({ db: trx }),
-                    findEmail: findEmailFactory({ db: trx }),
-                    storeUser: storeUserFactory({ db: trx }),
-                    countAdminUsers: countAdminUsersFactory({ db: trx }),
-                    storeUserAcl: storeUserAclFactory({ db: trx }),
+                    getServerInfo: getServerInfoFactory({ db: mainDb }),
+                    findEmail: findEmailFactory({ db: mainDb }),
+                    storeUser: async (...params) => {
+                      const [user] = await Promise.all(
+                        allDbs.map((db) => storeUserFactory({ db })(...params))
+                      )
+
+                      return user
+                    },
+                    countAdminUsers: countAdminUsersFactory({ db: mainDb }),
+                    storeUserAcl: storeUserAclFactory({ db: mainDb }),
                     validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-                      createUserEmail: createUserEmailFactory({ db: trx }),
+                      createUserEmail: createUserEmailFactory({ db: mainDb }),
                       ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({
-                        db: trx
+                        db: mainDb
                       }),
-                      findEmail: findEmailFactory({ db: trx }),
+                      findEmail: findEmailFactory({ db: mainDb }),
                       updateEmailInvites: finalizeInvitedServerRegistrationFactory({
                         deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({
-                          db: trx
+                          db: mainDb
                         }),
                         updateAllInviteTargets: updateAllInviteTargetsFactory({
-                          db: trx
+                          db: mainDb
                         })
                       }),
                       requestNewEmailVerification: requestNewEmailVerificationFactory({
-                        findEmail: findEmailFactory({ db: trx }),
-                        getUser: getUserFactory({ db: trx }),
-                        getServerInfo: getServerInfoFactory({ db: trx }),
+                        findEmail: findEmailFactory({ db: mainDb }),
+                        getUser: getUserFactory({ db: mainDb }),
+                        getServerInfo: getServerInfoFactory({ db: mainDb }),
                         deleteOldAndInsertNewVerification:
                           deleteOldAndInsertNewVerificationFactory({
-                            db: trx
+                            db: mainDb
                           }),
                         renderEmail,
                         sendEmail
@@ -351,46 +358,50 @@ export const getSsoRouter = (): Router => {
                   }),
                   addOrUpdateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
                     getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({
-                      db: trx
+                      db: mainDb
                     }),
                     findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
-                      db: trx
+                      db: mainDb
                     }),
-                    getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-                    upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: trx }),
+                    getWorkspaceRoles: getWorkspaceRolesFactory({ db: mainDb }),
+                    upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: mainDb }),
                     emitWorkspaceEvent: getEventBus().emit,
                     ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
-                      createWorkspaceSeat: createWorkspaceSeatFactory({ db: trx }),
-                      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: trx }),
+                      createWorkspaceSeat: createWorkspaceSeatFactory({ db: mainDb }),
+                      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: mainDb }),
                       getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
-                        getWorkspace: getWorkspaceFactory({ db: trx })
+                        getWorkspace: getWorkspaceFactory({ db: mainDb })
                       }),
                       eventEmit: getEventBus().emit
                     }),
                     assignWorkspaceSeat: assignWorkspaceSeatFactory({
-                      createWorkspaceSeat: createWorkspaceSeatFactory({ db: trx }),
+                      createWorkspaceSeat: createWorkspaceSeatFactory({ db: mainDb }),
                       getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
-                        db: trx
+                        db: mainDb
                       }),
                       eventEmit: getEventBus().emit,
-                      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: trx })
+                      getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: mainDb })
                     })
                   }),
-                  findInvite: findInviteFactory({ db: trx }),
-                  deleteInvite: deleteInviteFactory({ db: trx })
+                  findInvite: findInviteFactory({ db: mainDb }),
+                  deleteInvite: deleteInviteFactory({ db: mainDb })
                 }),
               linkUserWithSsoProvider: linkUserWithSsoProviderFactory({
-                findEmailsByUserId: findEmailsByUserIdFactory({ db: trx }),
-                createUserEmail: createUserEmailFactory({ db: trx }),
-                updateUserEmail: updateUserEmailFactory({ db: trx }),
+                findEmailsByUserId: findEmailsByUserIdFactory({ db: mainDb }),
+                createUserEmail: createUserEmailFactory({ db: mainDb }),
+                updateUserEmail: updateUserEmailFactory({ db: mainDb }),
                 logger: req.log
               }),
-              upsertUserSsoSession: upsertUserSsoSessionFactory({ db: trx })
+              upsertUserSsoSession: upsertUserSsoSessionFactory({ db: mainDb })
             })
 
             await handleOidcCallback(req, res, next)
           },
-          { db }
+          {
+            dbs: await getAllRegisteredDbs(),
+            logger: req.log,
+            name: 'oidc callback'
+          }
         )
 
         return next()
@@ -725,9 +736,9 @@ const getOidcProviderUserDataFactory =
       throw new SsoProviderProfileMissingError()
     }
     if (!isValidOidcProfile(oidcProviderUserData)) {
-      req.log.error(
+      req.log.info(
         { providedClaims: Object.keys(oidcProviderUserData) },
-        'Missing required properties on OIDC provider.'
+        'Missing required properties ("email" or "upn") on OIDC provider.'
       )
       throw new SsoProviderProfileMissingPropertiesError(['email'])
     }

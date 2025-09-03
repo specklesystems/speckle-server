@@ -70,11 +70,10 @@ import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { createTestObject } from '@/test/speckle-helpers/commitHelper'
 import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { addToStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
-import { Roles, WorkspacePlans } from '@speckle/shared'
+import { Roles, SeatTypes, WorkspacePlans } from '@speckle/shared'
 import {
   ProjectNotEnoughPermissionsError,
-  SavedViewNoAccessError,
-  WorkspacePlanNoFeatureAccessError
+  WorkspaceNoAccessError
 } from '@speckle/shared/authz'
 import * as ViewerRoute from '@speckle/shared/viewer/route'
 import { resourceBuilder } from '@speckle/shared/viewer/route'
@@ -107,13 +106,6 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     overrides || {}
   )
 
-/**
- * TODO:
- * - Test that default group can be resolved even if view has more specific resourceIds w/ versions
- * - Test that default group shows up or doesn't depending if there are views in it, regardless of
- * whether there's filtering
- */
-
 ;(FF_SAVED_VIEWS_ENABLED ? describe : describe.skip)('Saved Views GraphQL CRUD', () => {
   let apollo: TestApolloServer
   let me: BasicTestUser
@@ -121,7 +113,6 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
   let otherGuy: BasicTestUser
   let myProject: BasicTestStream
   let myProjectWorkspace: BasicTestWorkspace
-  let myLackingProjectWorkspace: BasicTestWorkspace
   let myLackingProject: BasicTestStream
   let myModel1: BasicTestBranch
   let myModel2: BasicTestBranch
@@ -269,13 +260,13 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         addPlan: WorkspacePlans.Pro
       })
     ])
-    myLackingProjectWorkspace = workspaceCreate[0]
     myProjectWorkspace = workspaceCreate[1]
 
     const projectCreate = await Promise.all([
       createTestStream(
         buildBasicTestProject({
-          workspaceId: myLackingProjectWorkspace.id
+          // non-workspaced project
+          workspaceId: undefined
         }),
         me
       ),
@@ -355,61 +346,6 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
         })
 
-        it('should fail with ForbiddenError if workspace plan does not include SavedViews', async () => {
-          const res = await createSavedView(
-            buildCreateInput({
-              projectId: myLackingProject.id,
-              resourceIdString: 'abc'
-            })
-          )
-          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
-          expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
-        })
-
-        it('should fail with ForbiddenError to create a saved view group if user lacks access (free plan)', async () => {
-          const resourceIds = ViewerRoute.resourceBuilder().addModel(
-            myLackingProject.id
-          )
-          const resourceIdString = resourceIds.toString()
-
-          const res = await createSavedViewGroup({
-            input: {
-              projectId: myLackingProject.id,
-              resourceIdString,
-              groupName: 'Should Not Work'
-            }
-          })
-
-          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
-          expect(res.data?.projectMutations.savedViewMutations.createGroup).to.not.be.ok
-        })
-
-        it('should fail with ForbiddenError to create a saved view if user lacks access (free plan)', async () => {
-          const resourceIds = ViewerRoute.resourceBuilder().addModel(
-            myLackingProject.id
-          )
-          const resourceIdString = resourceIds.toString()
-          const viewerState = fakeViewerState({
-            projectId: myLackingProject.id,
-            resources: {
-              request: {
-                resourceIdString
-              }
-            }
-          })
-
-          const res = await createSavedView(
-            buildCreateInput({
-              projectId: myLackingProject.id,
-              resourceIdString,
-              viewerState
-            })
-          )
-
-          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
-          expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
-        })
-
         it('should support dedicated auth policy check', async () => {
           const res = await canCreateSavedView({
             projectId: myLackingProject.id
@@ -419,7 +355,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
           const data = res.data?.project.permissions.canCreateSavedView
           expect(data?.authorized).to.be.false
-          expect(data?.code).to.equal(WorkspacePlanNoFeatureAccessError.code)
+          expect(data?.code).to.equal(WorkspaceNoAccessError.code)
         })
       })
 
@@ -541,7 +477,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           resourceIds.toResources().map((r) => r.toString())
         )
         expect(view!.isHomeView).to.be.false
-        expect(view!.visibility).to.equal(SavedViewVisibility.authorOnly) // default
+        expect(view!.visibility).to.equal(SavedViewVisibility.public) // default
         expect(view!.viewerState).to.deep.equalInAnyOrder(viewerState)
         expect(view!.screenshot).to.equal(fakeScreenshot)
         expect(view!.position).to.equal(0) // default position
@@ -905,8 +841,19 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
       let testView: BasicSavedViewFragment
       let testView2: BasicSavedViewFragment
       let optionalGroup: BasicSavedViewGroupFragment
+      let notAuthorButContributor: BasicTestUser
 
       before(async () => {
+        notAuthorButContributor = await createTestUser({
+          name: 'not author but contributor'
+        })
+        await assignToWorkspace(
+          myProjectWorkspace,
+          notAuthorButContributor,
+          Roles.Workspace.Member,
+          SeatTypes.Editor
+        )
+
         updatablesProject = await createTestStream(
           buildBasicTestProject({
             name: 'updatables-project',
@@ -914,7 +861,15 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           }),
           me
         )
-        await addToStream(updatablesProject, otherGuy, Roles.Stream.Reviewer)
+
+        await Promise.all([
+          addToStream(updatablesProject, otherGuy, Roles.Stream.Reviewer),
+          addToStream(
+            updatablesProject,
+            notAuthorButContributor,
+            Roles.Stream.Contributor
+          )
+        ])
 
         models = await Promise.all(
           times(3, async (i) => {
@@ -1021,6 +976,32 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(updatedView).to.be.ok
         expect(updatedView!.id).to.equal(testView.id)
         expect(updatedView!.name).to.equal(newName)
+
+        const initUpdatedAt = dayjs(testView.updatedAt)
+        const newUpdatedAt = dayjs(updatedView!.updatedAt)
+        expect(newUpdatedAt.isAfter(initUpdatedAt)).to.be.true
+      })
+
+      it('just updating visibility does not update updatedAt', async () => {
+        expect(testView.visibility).to.equal(SavedViewVisibility.public)
+
+        const res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            visibility: SavedViewVisibility.authorOnly
+          }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        const updatedView = res.data?.projectMutations.savedViewMutations.updateView
+        expect(updatedView).to.be.ok
+        expect(updatedView!.id).to.equal(testView.id)
+        expect(updatedView!.visibility).to.equal(SavedViewVisibility.authorOnly)
+
+        const initUpdatedAt = dayjs(testView.updatedAt)
+        const newUpdatedAt = dayjs(updatedView!.updatedAt)
+        expect(newUpdatedAt.isSame(initUpdatedAt)).to.be.true
       })
 
       it('successfully updated everyting in a saved view', async () => {
@@ -1197,6 +1178,32 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
       })
 
+      it('fails if updating already home view to be private view', async () => {
+        await updateView(
+          {
+            input: {
+              id: testView.id,
+              projectId: updatablesProject.id,
+              isHomeView: true
+            }
+          },
+          { assertNoErrors: true }
+        )
+
+        const res2 = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            visibility: SavedViewVisibility.authorOnly
+          }
+        })
+
+        expect(res2).to.haveGraphQLErrors({
+          code: SavedViewInvalidHomeViewSettingsError.code
+        })
+        expect(res2.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+
       it('fails if updating view to be a federated home view', async () => {
         const resourceIdString = resourceBuilder()
           .addModel(models.at(-1)!.id)
@@ -1257,7 +1264,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
       })
 
-      it('fails if user has no access to update the view', async () => {
+      it('fails if non author contributor is updating the view', async () => {
         const newName = 'Updated View Name'
 
         const res = await updateView(
@@ -1268,11 +1275,30 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
               name: newName
             }
           },
-          { authUserId: otherGuy.id }
+          { authUserId: notAuthorButContributor.id }
         )
 
         expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
         expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+
+      it('succeeds if non author contributor is just moving the view', async () => {
+        const res = await updateView(
+          {
+            input: {
+              id: testView.id,
+              projectId: updatablesProject.id,
+              groupId: optionalGroup.id
+            }
+          },
+          { authUserId: notAuthorButContributor.id }
+        )
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.be.ok
+
+        const update = res.data?.projectMutations.savedViewMutations.updateView
+        expect(update?.groupId).to.equal(optionalGroup.id)
       })
 
       it('fails if view does not exist', async () => {
@@ -1680,7 +1706,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
         const data = res.data?.project.savedView.permissions.canUpdate
         expect(data?.authorized).to.be.false
-        expect(data?.code).to.equal(SavedViewNoAccessError.code)
+        expect(data?.code).to.equal(ProjectNotEnoughPermissionsError.code)
       })
 
       describe('of groups', async () => {
@@ -1752,8 +1778,9 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     })
 
     describe('reading groups', () => {
-      const NAMED_GROUP_COUNT = 14
-      const GROUP_COUNT = NAMED_GROUP_COUNT + 2 // + ungrouped group + search string group
+      const NAMED_GROUP_COUNT = 13
+      const SPECIAL_GROUP_COUNT = 3 // +1 ungrouped/+1 search string/+1 my empty (should not show other guys empty)
+      const GROUP_COUNT = NAMED_GROUP_COUNT + SPECIAL_GROUP_COUNT
 
       const PAGE_COUNT = 3
 
@@ -1820,6 +1847,37 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
             owner: me
           })
         ])
+
+        const createEmptyGroup = async (params: {
+          groupName: string
+          userId?: string
+        }) => {
+          const { groupName, userId } = params
+          const model = await createTestBranch({
+            branch: buildBasicTestModel({
+              name: `empty model of group ${groupName}`
+            }),
+            stream: readTestProject,
+            owner: me
+          })
+          modelIds.push(model.id)
+
+          const group = await createSavedViewGroup(
+            {
+              input: {
+                projectId: readTestProject.id,
+                resourceIdString: model.id,
+                groupName
+              }
+            },
+            {
+              assertNoErrors: true,
+              ...(userId ? { authUserId: userId } : {})
+            }
+          )
+
+          return group.data?.projectMutations.savedViewMutations.createGroup
+        }
 
         // Create a bunch of groups (views w/ groupNames), each w/ a different model
         let includedSearchString = 0
@@ -1888,15 +1946,21 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           (i) => `group-${i + 1}`
         )
 
-        // add one group to have a custom search string in its name
+        // + 1 group to have a custom search string in its name
         groupNames.push(SEARCHABLE_GROUP_NAME_STRING)
 
-        // one view without a group at the end
+        // + 1 view without a group at the end
         groupNames.push(null)
 
         await Promise.all(
           groupNames.map((groupName, idx) => createGroupView(groupName, idx))
         )
+        await Promise.all([
+          // + 1 empty group owned by me
+          createEmptyGroup({ groupName: 'my empty' }),
+          // + 1 empty group owned by other guy
+          createEmptyGroup({ groupName: 'other empty', userId: otherReader.id })
+        ])
       })
 
       it('should get NotFoundError if trying to get nonexistant group', async () => {
@@ -2462,8 +2526,8 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
           const data = res.data?.project.savedViewGroup.views
           expect(data).to.be.ok
-          expect(data!.totalCount).to.equal(OTHER_USER_VIEW_COUNT)
-          expect(data!.items.length).to.equal(OTHER_USER_VIEW_COUNT)
+          expect(data!.totalCount).to.equal(OTHER_USER_VIEW_COUNT + 1) // +1 otherReader empty group
+          expect(data!.items.length).to.equal(OTHER_USER_VIEW_COUNT + 1)
           expect(data!.items.every((v) => v.author?.id === otherReader.id)).to.be.true
         })
 

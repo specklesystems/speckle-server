@@ -42,6 +42,7 @@ describe('canUpdateSavedViewPolicy', () => {
       getWorkspaceSsoProvider: async () => null,
       getWorkspacePlan: async () => null,
       getWorkspaceSsoSession: async () => null,
+      getAdminOverrideEnabled: async () => false,
       ...overrides
     })
 

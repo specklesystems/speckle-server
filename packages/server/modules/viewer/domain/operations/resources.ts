@@ -17,6 +17,13 @@ export type GetViewerResourceGroupsParams = ViewerUpdateTrackingTarget & {
    */
   savedViewId?: MaybeNullOrUndefined<string>
   savedViewSettings?: MaybeNullOrUndefined<SavedViewsLoadSettings>
+  /**
+   * If true and no savedViewId specified, we'll resolve if there's an appropriate home view for
+   * the specified resources and change the resourceIdString accordingly
+   *
+   * Default: false
+   */
+  applyHomeView?: boolean
 }
 
 export type GetViewerResourceGroups = (

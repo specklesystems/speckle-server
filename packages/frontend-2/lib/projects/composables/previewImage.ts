@@ -37,6 +37,8 @@ const usePreviewsState = () =>
 /**
  * Get authenticated preview image URL and subscribes to preview image generation events so that the preview image URL
  * is updated whenever generation finishes
+ *
+ * TODO: Refactor, the internals have gotten very messy and overly complicated
  */
 export function usePreviewImageBlob(
   previewUrl: MaybeRef<string | null | undefined>,
@@ -281,22 +283,16 @@ export function usePreviewImageBlob(
     })
   }
 
-  return {
-    ...ret,
-    /**
-     * Run this at the bottom of the component to fully initialize it
-     */
-    init: async () => {
-      if (!eagerLoad && import.meta.server) {
-        return // don't do anything - show spinner
-      }
-
-      const promise = regeneratePreviews()
-      if (eagerLoad) {
-        await promise
-      }
+  const init = () => {
+    if (!eagerLoad && import.meta.server) {
+      return // don't do anything - show spinner
     }
+
+    void regeneratePreviews()
   }
+  init()
+
+  return ret
 }
 
 export function useCommentScreenshotImage(

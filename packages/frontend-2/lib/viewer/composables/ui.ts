@@ -1,11 +1,5 @@
 import { SpeckleViewer, TIME_MS, timeoutAt } from '@speckle/shared'
-import {
-  type TreeNode,
-  type MeasurementOptions,
-  type PropertyInfo,
-  ViewMode
-} from '@speckle/viewer'
-import { MeasurementsExtension, ViewModes, MeasurementEvent } from '@speckle/viewer'
+import type { TreeNode, PropertyInfo, ViewMode } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { useActiveElement } from '@vueuse/core'
 import { difference, isString, uniq } from 'lodash-es'
@@ -25,9 +19,13 @@ import type {
   ViewerShortcut,
   ViewerShortcutAction
 } from '~/lib/viewer/helpers/shortcuts/types'
-import { useTheme } from '~/lib/core/composables/theme'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { isStringPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
+import type { defaultEdgeColorValue } from '~/lib/viewer/composables/setup/viewMode'
+import {
+  defaultMeasurementOptions,
+  type MeasurementOptions
+} from '@speckle/shared/viewer/state'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -635,9 +633,10 @@ export function useThreadUtilities() {
 export function useMeasurementUtilities() {
   const state = useInjectedViewerState()
 
-  const measurementCount = ref(0)
-
   const measurementOptions = computed(() => state.ui.measurement.options.value)
+  const hasMeasurements = computed(
+    () => state.ui.measurement.measurements.value.length > 0
+  )
 
   const enableMeasurements = (enabled: boolean) => {
     state.ui.measurement.enabled.value = enabled
@@ -647,54 +646,31 @@ export function useMeasurementUtilities() {
     state.ui.measurement.options.value = options
   }
 
-  const removeMeasurement = () => {
+  const removeActiveMeasurement = () => {
     if (state.viewer.instance?.removeMeasurement) {
       state.viewer.instance.removeMeasurement()
     }
   }
 
   const clearMeasurements = () => {
-    state.viewer.instance.getExtension(MeasurementsExtension).clearMeasurements()
+    state.ui.measurement.measurements.value = []
   }
 
-  const getActiveMeasurement = () => {
-    const measurementsExtension =
-      state.viewer.instance.getExtension(MeasurementsExtension)
-    const activeMeasurement = measurementsExtension?.activeMeasurement
-    return activeMeasurement && activeMeasurement.state === 2
-  }
-
-  const hasMeasurements = computed(() => measurementCount.value > 0)
-
-  const setupMeasurementListener = () => {
-    const extension = state.viewer.instance?.getExtension(MeasurementsExtension)
-    if (!extension) return
-
-    const updateCount = () => {
-      measurementCount.value = (
-        extension as unknown as { measurementCount: number }
-      ).measurementCount
-    }
-
-    // Set initial count
-    updateCount()
-
-    // Listen for changes
-    extension.on(MeasurementEvent.CountChanged, updateCount)
-  }
-
-  if (state.viewer.instance) {
-    setupMeasurementListener()
+  const reset = () => {
+    state.ui.measurement.enabled.value = false
+    state.ui.measurement.measurements.value = []
+    state.ui.measurement.options.value = { ...defaultMeasurementOptions }
   }
 
   return {
     measurementOptions,
     enableMeasurements,
     setMeasurementOptions,
-    removeMeasurement,
+    removeActiveMeasurement,
     clearMeasurements,
-    getActiveMeasurement,
-    hasMeasurements
+    hasMeasurements,
+    reset,
+    measurements: state.ui.measurement.measurements
   }
 }
 
@@ -754,49 +730,11 @@ export function useHighlightedObjectsUtilities() {
 }
 
 export function useViewModeUtilities() {
-  const { instance } = useInjectedViewer()
   const { viewMode } = useInjectedViewerInterfaceState()
-  const { isLightTheme } = useTheme()
   const mp = useMixpanel()
 
-  const edgesEnabled = ref(true)
-  const edgesWeight = ref(1)
-  const outlineOpacity = ref(0.75)
-  const defaultColor = ref(0x1a1a1a)
-  const edgesColor = ref(defaultColor.value)
-
-  const currentViewMode = computed(() => viewMode.value)
-
-  const updateViewMode = () => {
-    const viewModes = instance.getExtension(ViewModes)
-    if (viewModes) {
-      viewModes.setViewMode(currentViewMode.value, {
-        edges: edgesEnabled.value,
-        outlineThickness: edgesWeight.value,
-        outlineOpacity: outlineOpacity.value,
-        outlineColor: edgesColor.value
-      })
-    }
-  }
-
   const setViewMode = (mode: ViewMode) => {
-    viewMode.value = mode
-    if (mode === ViewMode.PEN) {
-      outlineOpacity.value = 1
-      edgesEnabled.value = true
-      if (edgesColor.value === defaultColor.value) {
-        if (!isLightTheme.value) {
-          edgesColor.value = 0xffffff
-        }
-      }
-    } else {
-      outlineOpacity.value = 0.75
-      if (edgesColor.value === 0xffffff) {
-        edgesColor.value = isLightTheme.value ? 0xffffff : defaultColor.value
-      }
-    }
-
-    updateViewMode()
+    viewMode.mode.value = mode
     mp.track('Viewer Action', {
       type: 'action',
       name: 'set-view-mode',
@@ -805,28 +743,25 @@ export function useViewModeUtilities() {
   }
 
   const toggleEdgesEnabled = () => {
-    edgesEnabled.value = !edgesEnabled.value
-    updateViewMode()
+    viewMode.edgesEnabled.value = !viewMode.edgesEnabled.value
     mp.track('Viewer Action', {
       type: 'action',
       name: 'toggle-edges',
-      enabled: edgesEnabled.value
+      enabled: viewMode.edgesEnabled.value
     })
   }
 
   const setEdgesWeight = (weight: number) => {
-    edgesWeight.value = Number(weight)
-    updateViewMode()
+    viewMode.edgesWeight.value = Number(weight)
     mp.track('Viewer Action', {
       type: 'action',
       name: 'set-edges-weight',
-      weight: edgesWeight.value
+      weight: viewMode.edgesWeight.value
     })
   }
 
-  const setEdgesColor = (color: number) => {
-    edgesColor.value = color
-    updateViewMode()
+  const setEdgesColor = (color: number | typeof defaultEdgeColorValue) => {
+    viewMode.edgesColor.value = color
     mp.track('Viewer Action', {
       type: 'action',
       name: 'set-edges-color',
@@ -834,24 +769,13 @@ export function useViewModeUtilities() {
     })
   }
 
-  const resetViewMode = () => {
-    setViewMode(ViewMode.DEFAULT)
-    edgesEnabled.value = true
-    edgesWeight.value = 1
-    outlineOpacity.value = 0.75
-    edgesColor.value = defaultColor.value
-  }
-
   return {
-    currentViewMode,
+    viewMode,
     setViewMode,
-    edgesEnabled,
     toggleEdgesEnabled,
-    edgesWeight,
     setEdgesWeight,
     setEdgesColor,
-    edgesColor,
-    resetViewMode
+    resetViewMode: viewMode.resetViewMode
   }
 }
 

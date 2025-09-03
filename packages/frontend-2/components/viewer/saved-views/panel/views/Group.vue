@@ -1,61 +1,66 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <LayoutDisclosure
-    v-if="!isUngroupedGroup"
-    v-model:open="open"
-    v-model:edit-title="renameMode"
-    color="subtle"
-    :title="group.title"
-    lazy-load
-    @update:title="onRename"
-  >
+  <div :class="dropZoneClasses" v-on="on">
+    <LayoutDisclosure
+      v-if="!isUngroupedGroup"
+      v-model:open="open"
+      v-model:edit-title="renameMode"
+      color="subtle"
+      :title="group.title"
+      lazy-load
+      @update:title="onRename"
+    >
+      <ViewerSavedViewsPanelViewsGroupInner
+        :group="group"
+        :search="search"
+        :views-type="viewsType"
+      />
+      <template #title-actions>
+        <div
+          class="flex gap-0.5 items-center opacity-0 group-hover/disclosure:opacity-100"
+          @click.stop
+        >
+          <LayoutMenu
+            v-if="!isUngroupedGroup"
+            v-model:open="showMenu"
+            :items="menuItems"
+            :menu-id="menuId"
+            mount-menu-on-body
+            show-ticks="right"
+            @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
+          >
+            <FormButton
+              name="viewActions"
+              size="sm"
+              color="subtle"
+              :icon-left="Ellipsis"
+              hide-text
+              @click="showMenu = !showMenu"
+            />
+          </LayoutMenu>
+          <div v-tippy="canCreateView?.errorMessage">
+            <FormButton
+              v-tippy="getTooltipProps('Create view')"
+              size="sm"
+              color="subtle"
+              :icon-left="Plus"
+              hide-text
+              name="addGroupView"
+              :disabled="!canCreateView.authorized || isLoading"
+              @click="onAddGroupView"
+            />
+          </div>
+        </div>
+      </template>
+    </LayoutDisclosure>
     <ViewerSavedViewsPanelViewsGroupInner
+      v-else
+      class="mb-[1px]"
       :group="group"
       :search="search"
       :views-type="viewsType"
     />
-    <template #title-actions>
-      <div
-        class="flex gap-0.5 items-center opacity-0 group-hover/disclosure:opacity-100"
-        @click.stop
-      >
-        <LayoutMenu
-          v-model:open="showMenu"
-          :items="menuItems"
-          :menu-id="menuId"
-          mount-menu-on-body
-          show-ticks="right"
-          @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
-        >
-          <FormButton
-            name="viewActions"
-            size="sm"
-            color="subtle"
-            :icon-left="Ellipsis"
-            hide-text
-            @click="showMenu = !showMenu"
-          />
-        </LayoutMenu>
-        <div v-tippy="canCreateView?.errorMessage">
-          <FormButton
-            size="sm"
-            color="subtle"
-            :icon-left="Plus"
-            hide-text
-            name="addGroupView"
-            :disabled="!canCreateView.authorized || isLoading"
-            @click="onAddGroupView"
-          />
-        </div>
-      </div>
-    </template>
-  </LayoutDisclosure>
-  <ViewerSavedViewsPanelViewsGroupInner
-    v-else
-    class="mb-[1px]"
-    :group="group"
-    :search="search"
-    :views-type="viewsType"
-  />
+  </div>
 </template>
 <script setup lang="ts">
 import { StringEnum, throwUncoveredError, type StringEnumValues } from '@speckle/shared'
@@ -63,18 +68,21 @@ import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { Ellipsis, Plus } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
-import {
-  SavedViewVisibility,
-  type UseUpdateSavedViewGroup_SavedViewGroupFragment,
-  type ViewerSavedViewsPanelViewsGroup_ProjectFragment,
-  type ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment,
-  type ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroupFragment
+import type {
+  UseUpdateSavedViewGroup_SavedViewGroupFragment,
+  ViewerSavedViewsPanelViewsGroup_ProjectFragment,
+  ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment,
+  ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroupFragment
 } from '~/lib/common/generated/gql/graphql'
+import { ToastNotificationType } from '~/lib/common/composables/toast'
 import {
   useCreateSavedView,
   useUpdateSavedViewGroup
 } from '~/lib/viewer/composables/savedViews/management'
-import { ViewsType } from '~/lib/viewer/helpers/savedViews'
+import type { ViewsType } from '~/lib/viewer/helpers/savedViews'
+import { useDraggableViewTargetGroup } from '~/lib/viewer/composables/savedViews/ui'
+
+const { getTooltipProps } = useSmartTooltipDelay()
 
 const MenuItems = StringEnum(['Delete', 'Rename'])
 type MenuItems = StringEnumValues<typeof MenuItems>
@@ -103,6 +111,7 @@ graphql(`
     ...ViewerSavedViewsPanelViewsGroupInner_SavedViewGroup
     ...ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroup
     ...UseUpdateSavedViewGroup_SavedViewGroup
+    ...UseDraggableViewTargetGroup_SavedViewGroup
   }
 `)
 
@@ -138,8 +147,17 @@ const { triggerNotification } = useGlobalToast()
 const isLoading = useMutationLoading()
 const createView = useCreateSavedView()
 const updateGroup = useUpdateSavedViewGroup()
-const renameMode = defineModel<boolean>('renameMode')
+const { on, classes: dropZoneClasses } = useDraggableViewTargetGroup({
+  group: computed(() => props.group),
+  onMoved: () => {
+    // Auto-open the group if it was closed
+    if (!open.value) {
+      open.value = true
+    }
+  }
+})
 
+const renameMode = defineModel<boolean>('renameMode')
 const open = defineModel<boolean>('open')
 const showMenu = ref(false)
 const menuId = useId()
@@ -152,7 +170,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
       id: MenuItems.Rename,
-      title: 'Rename',
+      title: 'Rename group',
       disabled: !canUpdate.value?.authorized || isLoading.value,
       disabledTooltip: canUpdate.value.errorMessage
     }
@@ -160,7 +178,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
       id: MenuItems.Delete,
-      title: 'Delete',
+      title: 'Delete group...',
       disabled: !canUpdate.value?.authorized || isLoading.value,
       disabledTooltip: canUpdate.value.errorMessage
     }
@@ -182,9 +200,7 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
 
 const onAddGroupView = async () => {
   await createView({
-    groupId: props.group.id,
-    visibility:
-      props.viewsType === ViewsType.Shared ? SavedViewVisibility.Public : undefined
+    groupId: props.group.id
   })
   open.value = true
 }

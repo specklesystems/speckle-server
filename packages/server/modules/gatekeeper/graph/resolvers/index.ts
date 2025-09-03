@@ -130,7 +130,7 @@ export default FF_GATEKEEPER_MODULE_ENABLED
               case 'dashboards':
                 return WorkspaceFeatureFlags.dashboards
               case 'accIntegration':
-              // TODO: move this to be a feature flag, once the feature flags have rolled out.
+                return WorkspaceFeatureFlags.accIntegration
               case WorkspacePlanFeatures.DomainSecurity:
               case WorkspacePlanFeatures.ExclusiveMembership:
               case WorkspacePlanFeatures.HideSpeckleBranding:

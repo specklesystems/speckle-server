@@ -67,6 +67,7 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -142,6 +143,7 @@ const createStream = legacyCreateStreamFactory({
       }),
       getUsers
     }),
+    storeProjectRole: storeProjectRoleFactory({ db }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
     emitEvent: getEventBus().emit

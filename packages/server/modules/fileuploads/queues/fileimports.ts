@@ -8,7 +8,9 @@ import type { JobPayload } from '@speckle/shared/workers/fileimport'
 import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
 import {
   NumberOfFileImportRetries,
-  DelayBetweenFileImportRetriesMinutes
+  DelayBetweenFileImportRetriesMinutes,
+  BackgroundJobType,
+  BackgroundJobPayloadVersion
 } from '@/modules/fileuploads/domain/consts'
 import type { Knex } from 'knex'
 import { migrateDbToLatest } from '@/db/migrations'
@@ -17,7 +19,7 @@ import {
   getBackgroundJobCountFactory,
   storeBackgroundJobFactory
 } from '@/modules/backgroundjobs/repositories'
-import { BackgroundJobStatus, BackgroundJobType } from '@/modules/backgroundjobs/domain'
+import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain'
 
 export const fileImportQueues: FileImportQueue[] = []
 
@@ -55,7 +57,11 @@ export const initializePostgresQueue = async ({
     shutdown: async () => {},
     scheduleJob: async (jobData: JobPayload) => {
       await createBackgroundJob({
-        jobPayload: { jobType: 'fileImport', payloadVersion: 1, ...jobData }
+        jobPayload: {
+          jobType: BackgroundJobType.FileImport,
+          payloadVersion: BackgroundJobPayloadVersion.v1,
+          ...jobData
+        }
       })
     },
     metrics: {
