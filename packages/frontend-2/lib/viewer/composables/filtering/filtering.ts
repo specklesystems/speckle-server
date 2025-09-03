@@ -685,28 +685,9 @@ export function useFilterUtilities(
   ): string[] => {
     const { searchQuery, sortMode = SortMode.Alphabetical, filterId } = options || {}
 
-    // For extremely large datasets, use ultra-conservative loading to prevent crashes
-    const valueGroupsLength =
-      'valueGroups' in filter &&
-      Array.isArray((filter as unknown as Record<string, unknown>).valueGroups)
-        ? ((filter as unknown as Record<string, unknown>).valueGroups as unknown[])
-            .length
-        : 0
-
-    const isHugeDataset = valueGroupsLength > 10000
-    const isLargeDataset = valueGroupsLength > 1000
-
     let values: string[]
-    if (isHugeDataset) {
-      // For datasets >10K, only load 50 values initially
-      values = getAvailableFilterValues(filter, 50)
-    } else if (isLargeDataset) {
-      // For datasets >1K, load 200 values
-      values = getAvailableFilterValues(filter, 200)
-    } else {
-      // For smaller datasets, load all
-      values = getAvailableFilterValues(filter)
-    }
+
+    values = getAvailableFilterValues(filter)
 
     if (searchQuery?.trim()) {
       const searchTerm = searchQuery.toLowerCase().trim()
