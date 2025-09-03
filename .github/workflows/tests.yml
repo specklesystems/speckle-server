@@ -376,6 +376,7 @@ jobs:
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
+          --health-retries 5
       minio:
         image: bitnami/minio
         env:
@@ -461,7 +462,7 @@ jobs:
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
-
+          --health-retries 5
       postgres1:
         image: postgres:16.4-alpine3.20
         env:
@@ -475,7 +476,7 @@ jobs:
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
-
+          --health-retries 5
       postgres2:
         image: postgres:16.4-alpine3.20
         env:
@@ -489,7 +490,7 @@ jobs:
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
-
+          --health-retries 5
       minio0:
         image: bitnami/minio
         env:
