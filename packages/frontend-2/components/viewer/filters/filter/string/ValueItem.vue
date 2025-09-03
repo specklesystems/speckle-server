@@ -43,17 +43,16 @@
 import { FormCheckbox } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { getFilterValueCount } from '~/lib/viewer/composables/filtering/counts'
-import {
-  isStringFilter,
-  type FilterData,
-  type ValueGroupsMap
+import type {
+  StringFilterData,
+  ValueGroupsMap
 } from '~/lib/viewer/helpers/filters/types'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useFilterColors } from '~/lib/viewer/composables/filtering/coloring'
 import type { Nullable } from '@speckle/shared'
 
 const props = defineProps<{
-  filter: FilterData
+  filter: StringFilterData
   value: string
   valueGroupsMap?: Nullable<ValueGroupsMap>
 }>()
@@ -73,11 +72,7 @@ const {
 } = useInjectedViewerState()
 
 const isSelected = computed(() => {
-  if (
-    isStringFilter(props.filter) &&
-    props.filter.isDefaultAllSelected &&
-    props.filter.selectedValues.length === 0
-  ) {
+  if (props.filter.isDefaultAllSelected && props.filter.selectedValues.length === 0) {
     return true
   }
   return isActiveFilterValueSelected(props.filter.id, props.value)
@@ -146,10 +141,6 @@ const color = computed(() => {
 })
 
 const isDefaultSelected = computed(() => {
-  return (
-    isStringFilter(props.filter) &&
-    props.filter.isDefaultAllSelected &&
-    props.filter.selectedValues.length === 0
-  )
+  return props.filter.isDefaultAllSelected && props.filter.selectedValues.length === 0
 })
 </script>

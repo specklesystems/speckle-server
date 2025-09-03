@@ -29,40 +29,31 @@
 <script setup lang="ts">
 import { FormCheckbox } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
-import { isStringFilter, type FilterData } from '~/lib/viewer/helpers/filters/types'
+import type { StringFilterData } from '~/lib/viewer/helpers/filters/types'
 
 const props = defineProps<{
-  filter: FilterData
+  filter: StringFilterData
 }>()
 
 const { updateActiveFilterValues, selectAllFilterValues } = useFilterUtilities()
 
 const totalCount = computed(() => {
-  if (isStringFilter(props.filter) && props.filter.filter) {
-    const filter = props.filter.filter
-    if ('valueGroups' in filter && Array.isArray(filter.valueGroups)) {
-      return filter.valueGroups.length
-    }
+  const filter = props.filter.filter
+  if ('valueGroups' in filter && Array.isArray(filter.valueGroups)) {
+    return filter.valueGroups.length
   }
   return 0
 })
 
 const isDefaultAllSelected = computed(() => {
-  return (
-    isStringFilter(props.filter) &&
-    props.filter.isDefaultAllSelected &&
-    props.filter.selectedValues.length === 0
-  )
+  return props.filter.isDefaultAllSelected && props.filter.selectedValues.length === 0
 })
 
 const selectedCount = computed(() => {
-  if (isStringFilter(props.filter)) {
-    if (isDefaultAllSelected.value) {
-      return totalCount.value
-    }
-    return props.filter.selectedValues.length
+  if (isDefaultAllSelected.value) {
+    return totalCount.value
   }
-  return 0
+  return props.filter.selectedValues.length
 })
 
 const areAllValuesSelected = computed(() => {
@@ -81,12 +72,10 @@ const selectAllCheckboxClasses = computed(() => {
 })
 
 const handleSelectAllChange = () => {
-  if (isStringFilter(props.filter) && props.filter.filter) {
-    if (areAllValuesSelected.value) {
-      updateActiveFilterValues(props.filter.id, [])
-    } else {
-      selectAllFilterValues(props.filter.id)
-    }
+  if (areAllValuesSelected.value) {
+    updateActiveFilterValues(props.filter.id, [])
+  } else {
+    selectAllFilterValues(props.filter.id)
   }
 }
 </script>

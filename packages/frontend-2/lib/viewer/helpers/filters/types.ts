@@ -72,13 +72,8 @@ export type StringFilterData = BaseFilterData & {
 
 export type FilterData = NumericFilterData | StringFilterData
 
-// Type Guards
 export const isNumericFilter = (filter: FilterData): filter is NumericFilterData => {
   return filter.type === FilterType.Numeric
-}
-
-export const isStringFilter = (filter: FilterData): filter is StringFilterData => {
-  return filter.type === FilterType.String
 }
 
 // Component Option Types

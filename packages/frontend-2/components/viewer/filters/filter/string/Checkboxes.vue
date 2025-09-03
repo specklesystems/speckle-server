@@ -39,16 +39,15 @@
 <script setup lang="ts">
 import { useVirtualList } from '@vueuse/core'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
-import {
-  isStringFilter,
-  type FilterData,
-  type SortMode,
-  type ValueGroupsMap
+import type {
+  StringFilterData,
+  SortMode,
+  ValueGroupsMap
 } from '~/lib/viewer/helpers/filters/types'
 import type { Nullable } from '@speckle/shared'
 
 const props = defineProps<{
-  filter: FilterData
+  filter: StringFilterData
   searchQuery?: string
   sortMode: SortMode
   valueGroupsMap?: Nullable<ValueGroupsMap>
@@ -64,7 +63,7 @@ const maxHeight = 240
 const { toggleActiveFilterValue, getFilteredFilterValues } = useFilterUtilities()
 
 const filteredValues = computed(() => {
-  if (!isStringFilter(props.filter) || !props.filter.filter) return []
+  if (!props.filter.filter) return []
 
   return getFilteredFilterValues(props.filter.filter, {
     searchQuery: props.searchQuery,

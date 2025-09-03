@@ -56,7 +56,7 @@
 
 <script setup lang="ts">
 import type {
-  FilterData,
+  StringFilterData,
   ConditionOption,
   SortMode,
   ValueGroupsMap
@@ -67,23 +67,23 @@ import { X } from 'lucide-vue-next'
 import type { Nullable } from '@speckle/shared'
 
 const props = defineProps<{
-  filter: FilterData
+  filter: StringFilterData
   sortMode: SortMode
   valueGroupsMap?: Nullable<ValueGroupsMap>
 }>()
 
 const emit = defineEmits<(e: 'update:sortMode', v: SortMode) => void>()
 
+const { updateFilterCondition } = useFilterUtilities()
+
 const collapsed = ref(false)
 const searchQuery = ref('')
 
-const { updateFilterCondition } = useFilterUtilities()
+const hasSearchValue = computed(() => searchQuery.value.trim().length > 0)
 
 const handleConditionSelect = (conditionOption: ConditionOption) => {
   updateFilterCondition(props.filter.id, conditionOption.value)
 }
-
-const hasSearchValue = computed(() => searchQuery.value.trim().length > 0)
 
 const clearSearch = () => {
   searchQuery.value = ''
