@@ -18,7 +18,10 @@
 </template>
 
 <script setup lang="ts">
-import type { FilterData, ConditionOption } from '~/lib/viewer/helpers/filters/types'
+import type {
+  NumericFilterData,
+  ConditionOption
+} from '~/lib/viewer/helpers/filters/types'
 import {
   NumericFilterCondition,
   ExistenceFilterCondition
@@ -26,7 +29,7 @@ import {
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 
 const props = defineProps<{
-  filter: FilterData
+  filter: NumericFilterData
 }>()
 
 const { updateFilterCondition } = useFilterUtilities()
