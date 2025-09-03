@@ -22,19 +22,19 @@ export const FILTER_CONDITION_CONFIG: Record<FilterCondition, { label: string }>
 // Popular Filter Properties
 export const POPULAR_FILTERS = [
   'speckle_type',
-  'Name',
-  'Category',
-  'Family',
-  'Type',
-  'Level',
-  'Material',
-  'Phase Created',
-  'Phase Demolished',
-  'Area',
-  'Length',
-  'Phase Created',
-  'IFCType',
-  'Layer'
+  'name',
+  'category',
+  'family',
+  'type',
+  'level',
+  'material',
+  'phaseCreated',
+  'phaseDemolished',
+  'area',
+  'length',
+  'phaseCreated',
+  'ifcType',
+  'layer'
 ] as const
 
 // UI Constants
