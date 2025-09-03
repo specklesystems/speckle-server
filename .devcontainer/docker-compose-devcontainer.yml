@@ -1,6 +1,6 @@
 services:
   devcontainer:
-    image: 'mcr.microsoft.com/devcontainers/typescript-node:1-18-bullseye'
+    image: 'mcr.microsoft.com/devcontainers/typescript-node:2-22-bookworm'
     volumes:
       - ..:/workspaces:cached # mounts our local directory (git root) to the container in /workspaces directory (with access mode of cached)
 
