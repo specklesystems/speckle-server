@@ -58,6 +58,9 @@ export function useFilteredObjectsCount() {
     if (filteringExtension) {
       filteringExtension.removeListener(ViewerEvent.FilteringStateSet, updateCount)
     }
+
+    // WeakMap doesn't have clear(), so we create a new one
+    valueGroupCountCache = new WeakMap()
   })
 
   return {
@@ -65,7 +68,7 @@ export function useFilteredObjectsCount() {
   }
 }
 
-const valueGroupCountCache = new WeakMap<PropertyInfo, Map<string, number>>()
+let valueGroupCountCache = new WeakMap<PropertyInfo, Map<string, number>>()
 
 /**
  * Get count for a specific filter value (optimized for large datasets)
@@ -93,4 +96,12 @@ export function getFilterValueCount(filter: PropertyInfo, value: string): number
 
   valueGroupCountCache.set(filter, countMap)
   return countMap.get(value) ?? 0
+}
+
+/**
+ * Clean up the value group count cache
+ * Call this when cleaning up the filtering system
+ */
+export function cleanupValueGroupCountCache() {
+  valueGroupCountCache = new WeakMap()
 }

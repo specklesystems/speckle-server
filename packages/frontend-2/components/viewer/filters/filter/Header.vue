@@ -86,6 +86,7 @@ import {
   type LayoutMenuItem
 } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { useFilterColors } from '~/lib/viewer/composables/filtering/colors'
 import type { FilterData } from '~/lib/viewer/helpers/filters/types'
 import { FilterType } from '~/lib/viewer/helpers/filters/types'
 
@@ -97,13 +98,10 @@ const collapsed = defineModel<boolean>('collapsed', { required: true })
 const showActionsMenu = ref(false)
 const menuId = useId()
 
-const {
-  removeActiveFilter,
-  toggleColorFilter,
-  toggleFilterApplied,
-  getPropertyName,
-  filters
-} = useFilterUtilities()
+const { removeActiveFilter, toggleFilterApplied, getPropertyName, filters } =
+  useFilterUtilities()
+
+const { toggleColorFilter } = useFilterColors()
 
 const emit = defineEmits<{
   swapProperty: [filterId: string]

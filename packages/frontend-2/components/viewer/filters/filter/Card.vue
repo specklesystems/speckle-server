@@ -30,17 +30,22 @@
 </template>
 
 <script setup lang="ts">
-import type { FilterData, ConditionOption } from '~/lib/viewer/helpers/filters/types'
+import type {
+  FilterData,
+  ConditionOption,
+  ValueGroupsMap
+} from '~/lib/viewer/helpers/filters/types'
 import {
   isNumericFilter,
   ExistenceFilterCondition,
   SortMode
 } from '~/lib/viewer/helpers/filters/types'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import type { Nullable } from '@speckle/shared'
 
 const props = defineProps<{
   filter: FilterData
-  valueGroupsMap?: Map<string, { value: unknown; ids?: string[] }> | null
+  valueGroupsMap?: Nullable<ValueGroupsMap>
 }>()
 
 defineEmits<{

@@ -8,15 +8,11 @@ import type {
 import { FilteringExtension } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, uniq, partition } from 'lodash-es'
-import { nextTick } from 'vue'
 import {
   useInjectedViewerState,
   type InjectableViewerState
 } from '~~/lib/viewer/composables/setup'
-import {
-  isStringPropertyInfo,
-  isNumericPropertyInfo
-} from '~/lib/viewer/helpers/sceneExplorer'
+import { isNumericPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
 import {
   type FilterCondition,
   FilterLogic,
@@ -31,11 +27,21 @@ import {
   ExistenceFilterCondition,
   SortMode,
   type DataSlice,
-  type QueryCriteria
+  type QueryCriteria,
+  type ValueGroupsMap,
+  type ValueGroupMapItem
 } from '~/lib/viewer/helpers/filters/types'
 import { getConditionLabel } from '~/lib/viewer/helpers/filters/constants'
 import { useOnViewerLoadComplete } from '~~/lib/viewer/composables/viewer'
-import { createFilteringDataStore } from './dataStore'
+import { getFilteringDataStore } from './dataStore'
+import {
+  shouldExcludeFromFiltering,
+  getPropertyName,
+  isKvpFilterable,
+  getFilterDisabledReason,
+  findFilterByKvp
+} from './properties'
+import { useFilterColors } from '~/lib/viewer/composables/filtering/colors'
 
 export function useFilterUtilities(
   options?: Partial<{ state: InjectableViewerState }>
@@ -46,7 +52,8 @@ export function useFilterUtilities(
     ui: { filters, explodeFactor }
   } = state
 
-  const dataStore = createFilteringDataStore()
+  const dataStore = getFilteringDataStore()
+  const { removeColorFilter } = useFilterColors({ state })
 
   if (import.meta.client) {
     const { instance } = viewer
@@ -159,25 +166,13 @@ export function useFilterUtilities(
     // Type guard to check if filter has valueGroups property
     const hasValueGroups = (
       f: PropertyInfo
-    ): f is PropertyInfo & { valueGroups: Array<{ value: unknown }> } => {
+    ): f is PropertyInfo & { valueGroups: Array<{ value: string | number }> } => {
       return (
-        'valueGroups' in f &&
-        Array.isArray((f as unknown as Record<string, unknown>).valueGroups)
+        'valueGroups' in f && Array.isArray((f as Record<string, unknown>).valueGroups)
       )
     }
 
     if (hasValueGroups(filter)) {
-      // For very large datasets (>1000 values), use lazy processing
-      if (limit && filter.valueGroups.length > 1000) {
-        return filter.valueGroups
-          .slice(0, limit)
-          .map((vg) => String(vg.value))
-          .filter(
-            (v) => v !== null && v !== undefined && v !== 'null' && v !== 'undefined'
-          )
-      }
-
-      // For smaller datasets, process all values
       const values = filter.valueGroups
         .map((vg) => String(vg.value))
         .filter(
@@ -191,21 +186,28 @@ export function useFilterUtilities(
   }
 
   /**
+   * Type guard to check if filter has valueGroups with proper typing
+   */
+  const hasValueGroupsWithIds = (
+    f: PropertyInfo
+  ): f is PropertyInfo & {
+    valueGroups: Array<ValueGroupMapItem>
+  } => {
+    return (
+      'valueGroups' in f && Array.isArray((f as Record<string, unknown>).valueGroups)
+    )
+  }
+
+  /**
    * Creates a fast lookup map for valueGroups to avoid O(n) .find() operations
    */
-  const createValueGroupsMap = (
-    filter: PropertyInfo
-  ): Map<string, { value: unknown; ids?: string[] }> | null => {
-    if (
-      !('valueGroups' in filter) ||
-      !Array.isArray((filter as unknown as Record<string, unknown>).valueGroups)
-    ) {
+  const createValueGroupsMap = (filter: PropertyInfo): ValueGroupsMap | null => {
+    if (!hasValueGroupsWithIds(filter)) {
       return null
     }
 
-    const valueGroups = (filter as unknown as Record<string, unknown>)
-      .valueGroups as Array<{ value: unknown; ids?: string[] }>
-    const map = new Map<string, { value: unknown; ids?: string[] }>()
+    const valueGroups = filter.valueGroups
+    const map = new Map<string, ValueGroupMapItem>()
 
     for (const vg of valueGroups) {
       map.set(String(vg.value), vg)
@@ -215,17 +217,12 @@ export function useFilterUtilities(
   }
 
   // Cache value group maps to avoid recreating them
-  const valueGroupMapsCache = new WeakMap<
-    PropertyInfo,
-    Map<string, { value: unknown; ids?: string[] }>
-  >()
+  const valueGroupMapsCache = new WeakMap<PropertyInfo, ValueGroupsMap>()
 
   /**
    * Gets cached value groups map for efficient lookups
    */
-  const getCachedValueGroupsMap = (
-    filter: PropertyInfo
-  ): Map<string, { value: unknown; ids?: string[] }> | null => {
+  const getCachedValueGroupsMap = (filter: PropertyInfo): ValueGroupsMap | null => {
     if (valueGroupMapsCache.has(filter)) {
       return valueGroupMapsCache.get(filter)!
     }
@@ -499,10 +496,19 @@ export function useFilterUtilities(
           widgetId: filter.id,
           name:
             filter.condition === ExistenceFilterCondition.IsSet
-              ? `${getPropertyName(filter.filter.key)} is set`
+              ? `${getPropertyName(
+                  filter.filter.key,
+                  viewer.metadata.availableFilters.value
+                )} is set`
               : filter.condition === ExistenceFilterCondition.IsNotSet
-              ? `${getPropertyName(filter.filter.key)} is not set`
-              : `${getPropertyName(filter.filter.key)} ${getConditionLabel(
+              ? `${getPropertyName(
+                  filter.filter.key,
+                  viewer.metadata.availableFilters.value
+                )} is not set`
+              : `${getPropertyName(
+                  filter.filter.key,
+                  viewer.metadata.availableFilters.value
+                )} ${getConditionLabel(
                   filter.condition
                 )} (${filter.numericRange.min.toFixed(
                   2
@@ -683,58 +689,6 @@ export function useFilterUtilities(
     return filter as NonNullable<typeof filter>
   }
 
-  const revitPropertyRegex = /^parameters\./
-  const revitPropertyRegexDui3000InstanceProps = /^properties\.Instance/
-  const revitPropertyRegexDui3000TypeProps = /^properties\.Type/
-
-  /**
-   * Determines if a property key represents a Revit property
-   */
-  const isRevitProperty = (key: string): boolean => {
-    return (
-      revitPropertyRegex.test(key) ||
-      revitPropertyRegexDui3000InstanceProps.test(key) ||
-      revitPropertyRegexDui3000TypeProps.test(key)
-    )
-  }
-
-  /**
-   * Determines if a property should be excluded from filtering based on its key
-   */
-  const shouldExcludeFromFiltering = (key: string): boolean => {
-    if (
-      key.endsWith('.units') ||
-      key.endsWith('.speckle_type') ||
-      key.includes('.parameters.') ||
-      // key.includes('level.') ||
-      key.includes('renderMaterial') ||
-      key.includes('.domain') ||
-      key.includes('plane.') ||
-      key.includes('baseLine') ||
-      key.includes('referenceLine') ||
-      key.includes('end.') ||
-      key.includes('start.') ||
-      key.includes('endPoint.') ||
-      key.includes('midPoint.') ||
-      key.includes('startPoint.') ||
-      key.includes('.materialName') ||
-      key.includes('.materialClass') ||
-      key.includes('.materialCategory') ||
-      key.includes('displayStyle') ||
-      key.includes('displayValue') ||
-      key.includes('displayMesh')
-    ) {
-      return true
-    }
-
-    if (isRevitProperty(key)) {
-      if (key.endsWith('.value')) return false
-      else return true
-    }
-
-    return false
-  }
-
   /**
    * Filters the available filters to only include relevant ones for the filter UI
    */
@@ -747,202 +701,6 @@ export function useFilterUtilities(
       }
       return true
     })
-  }
-
-  /**
-   * Determines if a property key should be filterable
-   * (exists in available filters and is not excluded)
-   */
-  const isPropertyFilterable = (
-    key: string,
-    availableFilters: PropertyInfo[] | null | undefined
-  ): boolean => {
-    const availableFilterKeys = availableFilters?.map((f: PropertyInfo) => f.key) || []
-
-    if (!availableFilterKeys.includes(key)) {
-      return false
-    }
-
-    return !shouldExcludeFromFiltering(key)
-  }
-
-  /**
-   * Gets a user-friendly display name for a property key
-   */
-  const getPropertyName = (key: string): string => {
-    if (!key) return 'Loading'
-
-    if (key === 'level.name') return 'Level Name'
-    if (key === 'speckle_type') return 'Object Type'
-
-    if (isRevitProperty(key) && key.endsWith('.value')) {
-      const correspondingProperty = (viewer.metadata.availableFilters.value || []).find(
-        (f: PropertyInfo) => f.key === key.replace('.value', '.name')
-      )
-      if (correspondingProperty && isStringPropertyInfo(correspondingProperty)) {
-        return (
-          correspondingProperty.valueGroups[0]?.value || key.split('.').pop() || key
-        )
-      }
-    }
-
-    return key.split('.').pop() || key
-  }
-
-  /**
-   * Finds a filter by matching display names (handles complex nested properties)
-   */
-  const findFilterByDisplayName = (
-    displayKey: string,
-    availableFilters: PropertyInfo[] | null | undefined
-  ): PropertyInfo | undefined => {
-    return availableFilters?.find((f) => {
-      const backendDisplayName = getPropertyName(f.key)
-      return backendDisplayName === displayKey || f.key.split('.').pop() === displayKey
-    })
-  }
-
-  /**
-   * Determines if a key-value pair is filterable (with smart matching for nested properties)
-   */
-  const isKvpFilterable = (
-    kvp: { key: string; backendPath?: string },
-    availableFilters: PropertyInfo[] | null | undefined
-  ): boolean => {
-    const backendKey = kvp.backendPath || kvp.key
-
-    const directMatch = availableFilters?.some((f) => f.key === backendKey)
-    if (directMatch) {
-      return isPropertyFilterable(backendKey, availableFilters)
-    }
-
-    const displayKey = kvp.key as string
-    const matchByDisplayName = findFilterByDisplayName(displayKey, availableFilters)
-
-    if (matchByDisplayName) {
-      return isPropertyFilterable(matchByDisplayName.key, availableFilters)
-    }
-
-    return false
-  }
-
-  /**
-   * Gets a detailed reason why a property is disabled for filtering
-   */
-  const getFilterDisabledReason = (
-    kvp: { key: string; backendPath?: string },
-    availableFilters: PropertyInfo[] | null | undefined
-  ): string => {
-    const backendKey = kvp.backendPath || kvp.key
-    const availableKeys = availableFilters?.map((f) => f.key) || []
-
-    if (!availableKeys.includes(backendKey)) {
-      const similarKeys = availableKeys.filter(
-        (key) =>
-          key.toLowerCase().includes('type') ||
-          key.toLowerCase().includes('category') ||
-          key.toLowerCase().includes('class')
-      )
-
-      const debugInfo =
-        similarKeys.length > 0
-          ? ` (Similar available: ${similarKeys.slice(0, 3).join(', ')})`
-          : ''
-
-      return `Property '${backendKey}' is not available in backend filters${debugInfo}`
-    }
-
-    if (shouldExcludeFromFiltering(backendKey)) {
-      return `Property '${backendKey}' is excluded from filtering (technical property)`
-    }
-
-    return 'This property is not available for filtering'
-  }
-
-  /**
-   * Finds a filter for a key-value pair using smart matching logic
-   */
-  const findFilterByKvp = (
-    kvp: { key: string; backendPath?: string },
-    availableFilters: PropertyInfo[] | null | undefined
-  ): PropertyInfo | undefined => {
-    const backendKey = kvp.backendPath || kvp.key
-
-    let filter = availableFilters?.find((f: PropertyInfo) => f.key === backendKey)
-
-    if (!filter) {
-      const displayKey = kvp.key as string
-      filter = findFilterByDisplayName(displayKey, availableFilters)
-    }
-
-    return filter
-  }
-
-  /**
-   * Applies color filtering to objects based on a property filter
-   */
-  const setColorFilter = (filterId: string) => {
-    const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
-    if (!filter?.filter) return
-
-    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
-
-    filteringExtension.removeColorFilter()
-
-    filteringExtension.setColorFilter(filter.filter)
-
-    filters.activeColorFilterId.value = filterId
-  }
-
-  /**
-   * Removes color filtering from all objects
-   */
-  const removeColorFilter = () => {
-    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
-    filteringExtension.removeColorFilter()
-
-    filters.activeColorFilterId.value = null
-  }
-
-  /**
-   * Toggles color filtering for a specific filter
-   */
-  const toggleColorFilter = (filterId: string) => {
-    if (filters.activeColorFilterId.value === filterId) {
-      removeColorFilter()
-    } else {
-      setColorFilter(filterId)
-    }
-  }
-
-  /**
-   * Gets the color groups from the FilteringExtension for the currently active color filter
-   */
-  const getFilterColorGroups = () => {
-    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
-    const filteringState = filteringExtension.filteringState
-
-    if (
-      (!filteringState.colorGroups || filteringState.colorGroups.length === 0) &&
-      filters.activeColorFilterId.value
-    ) {
-      filters.activeColorFilterId.value = null
-    }
-
-    return filteringState.colorGroups || []
-  }
-
-  /**
-   * Gets the color for a specific filter value
-   */
-  const getFilterValueColor = (value: string): string | null => {
-    const colorGroups = getFilterColorGroups()
-    const colorGroup = colorGroups.find((group) => group.value === value)
-
-    if (!colorGroup?.color) return null
-
-    const color = colorGroup.color
-    return color.startsWith('#') ? color : `#${color}`
   }
 
   /**
@@ -1002,6 +760,12 @@ export function useFilterUtilities(
     }
   }
 
+  // Cleanup on unmount to prevent memory leaks
+  onBeforeUnmount(() => {
+    // Clear any component-specific data if needed
+    // The data store itself is a singleton and will be cleaned up elsewhere
+  })
+
   return {
     isolateObjects,
     unIsolateObjects,
@@ -1023,20 +787,13 @@ export function useFilterUtilities(
     restoreFilters,
     resetExplode,
     waitForAvailableFilter,
-    isRevitProperty,
     getRelevantFilters,
     getPropertyName,
     isKvpFilterable,
     getFilterDisabledReason,
     findFilterByKvp,
-    // Color filtering functions
-    setColorFilter,
-    removeColorFilter,
-    toggleColorFilter,
-    getFilterValueColor,
     // Filtered values
     getFilteredFilterValues,
-    getAllPropertyValues,
     getCachedValueGroupsMap,
     // Numeric range filtering
     setNumericRange,

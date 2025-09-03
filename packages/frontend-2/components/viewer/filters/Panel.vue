@@ -106,6 +106,7 @@ import { FormButton } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { onKeyStroke } from '@vueuse/core'
 import { useFilteredObjectsCount } from '~/lib/viewer/composables/filtering/counts'
+import type { Nullable } from '@speckle/shared'
 
 const {
   filters: { propertyFilters },
@@ -130,7 +131,7 @@ const {
 const sharedValueGroupsMaps = shallowRef(new Map())
 const showPropertySelection = ref(false)
 const propertySelectionRef = ref<HTMLElement>()
-const swappingFilterId = ref<string | null>(null)
+const swappingFilterId = ref<Nullable<string>>(null)
 const filtersContainerRef = ref<HTMLElement>()
 
 const relevantFilters = computed(() => {

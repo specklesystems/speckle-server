@@ -43,21 +43,28 @@
 import { FormCheckbox } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { getFilterValueCount } from '~/lib/viewer/composables/filtering/counts'
-import { isStringFilter, type FilterData } from '~/lib/viewer/helpers/filters/types'
+import {
+  isStringFilter,
+  type FilterData,
+  type ValueGroupsMap
+} from '~/lib/viewer/helpers/filters/types'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useFilterColors } from '~/lib/viewer/composables/filtering/colors'
+import type { Nullable } from '@speckle/shared'
 
 const props = defineProps<{
   filter: FilterData
   value: string
-  valueGroupsMap?: Map<string, { value: unknown; ids?: string[] }> | null
+  valueGroupsMap?: Nullable<ValueGroupsMap>
 }>()
 
 defineEmits<{
   toggle: []
 }>()
 
-const { isActiveFilterValueSelected, getFilterValueColor, filters } =
-  useFilterUtilities()
+const { isActiveFilterValueSelected, filters } = useFilterUtilities()
+
+const { getFilterValueColor } = useFilterColors()
 
 const {
   viewer: {

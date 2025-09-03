@@ -50,14 +50,16 @@ import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering
 import {
   isStringFilter,
   type FilterData,
-  type SortMode
+  type SortMode,
+  type ValueGroupsMap
 } from '~/lib/viewer/helpers/filters/types'
+import type { Nullable } from '@speckle/shared'
 
 const props = defineProps<{
   filter: FilterData
   searchQuery?: string
   sortMode: SortMode
-  valueGroupsMap?: Map<string, { value: unknown; ids?: string[] }> | null
+  valueGroupsMap?: Nullable<ValueGroupsMap>
 }>()
 
 defineEmits<{

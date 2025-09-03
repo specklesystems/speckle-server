@@ -57,6 +57,8 @@ import { useViewerSavedViewIntegration } from '~/lib/viewer/composables/savedVie
 import { useViewModesPostSetup } from '~/lib/viewer/composables/setup/viewMode'
 import { useMeasurementsPostSetup } from '~/lib/viewer/composables/setup/measurements'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { cleanupFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
+import { cleanupValueGroupCountCache } from '~/lib/viewer/composables/filtering/counts'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -534,6 +536,12 @@ function useViewerFiltersIntegration() {
   } = state
 
   useFilterUtilities({ state })
+
+  // Cleanup data store when viewer is destroyed
+  onBeforeUnmount(() => {
+    cleanupFilteringDataStore()
+    cleanupValueGroupCountCache()
+  })
 
   // state -> viewer
   watch(

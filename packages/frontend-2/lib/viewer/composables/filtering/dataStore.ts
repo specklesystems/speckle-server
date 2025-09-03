@@ -17,6 +17,9 @@ import type {
   FilterData
 } from '~/lib/viewer/helpers/filters/types'
 
+// Singleton instance
+let globalDataStoreInstance: ReturnType<typeof createFilteringDataStore> | null = null
+
 // Internal data store implementation
 export function createFilteringDataStore() {
   const dataSourcesMap: Ref<Record<string, DataSource>> = ref({})
@@ -354,5 +357,27 @@ export function createFilteringDataStore() {
     dataSlices,
     dataSources,
     buildPropertyIndex
+  }
+}
+
+/**
+ * Get the singleton instance of the filtering data store
+ * This ensures only one data store exists across all components
+ */
+export function getFilteringDataStore() {
+  if (!globalDataStoreInstance) {
+    globalDataStoreInstance = createFilteringDataStore()
+  }
+  return globalDataStoreInstance
+}
+
+/**
+ * Clean up the global data store instance
+ * Call this when the viewer is destroyed or on route changes
+ */
+export function cleanupFilteringDataStore() {
+  if (globalDataStoreInstance) {
+    globalDataStoreInstance.clearDataOnRouteLeave()
+    globalDataStoreInstance = null
   }
 }

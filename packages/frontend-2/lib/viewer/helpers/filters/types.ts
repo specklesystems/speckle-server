@@ -145,3 +145,16 @@ export type DataSource = {
 export type ResourceInfo = {
   resourceUrl: string
 }
+
+// Value Groups Map Types
+export type ValueGroupMapItem = {
+  value: string | number
+  ids?: string[]
+}
+
+export type ValueGroupsMap = Map<string, ValueGroupMapItem>
+
+export type ColorGroup = {
+  value: string
+  color: string
+}

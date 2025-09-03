@@ -58,16 +58,18 @@
 import type {
   FilterData,
   ConditionOption,
-  SortMode
+  SortMode,
+  ValueGroupsMap
 } from '~/lib/viewer/helpers/filters/types'
 import { ExistenceFilterCondition } from '~/lib/viewer/helpers/filters/types'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { X } from 'lucide-vue-next'
+import type { Nullable } from '@speckle/shared'
 
 const props = defineProps<{
   filter: FilterData
   sortMode: SortMode
-  valueGroupsMap?: Map<string, { value: unknown; ids?: string[] }> | null
+  valueGroupsMap?: Nullable<ValueGroupsMap>
 }>()
 
 const emit = defineEmits<(e: 'update:sortMode', v: SortMode) => void>()
