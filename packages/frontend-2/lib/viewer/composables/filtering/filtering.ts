@@ -344,11 +344,12 @@ function createFilteringDataStore() {
     )
 
     if (objectIds.length > 0) {
-      filteringExtension.isolateObjects(objectIds, 'property-filters', true)
+      filteringExtension.isolateObjects(objectIds, 'property-filters', false, true)
     } else if (hasAppliedFilters) {
       filteringExtension.isolateObjects(
         ['no-match-ghost-all'],
         'property-filters',
+        false,
         true
       )
     }
