@@ -53,7 +53,9 @@
             {{ modelName ? 'this model' : 'this project' }}, or drag and drop
             <span
               v-if="isRhinoFileImporterEnabled"
-              v-tippy="Array.from(rhinoImporterSupportedFileExtensions).join(', ')"
+              v-tippy="
+                ['ifc', ...Array.from(rhinoImporterSupportedFileExtensions)].join(', ')
+              "
               class="underline"
             >
               a supported file here.
