@@ -27,6 +27,7 @@ import type { ActiveUserMainMetadataQuery } from '~~/lib/common/generated/gql/gr
 import { useScopedState } from '~/lib/common/composables/scopedState'
 import type { ApolloClient } from '@apollo/client/core'
 import { AuthFailedError } from '~/lib/auth/errors/errors'
+import { useAppErrorState } from '~/lib/core/composables/error'
 
 type UseOnAuthStateChangeCallback = (
   user: MaybeNullOrUndefined<ActiveUserMainMetadataQuery['activeUser']>,
@@ -220,6 +221,7 @@ export const useAuthManager = (
 ) => {
   const { deferredApollo } = options || {}
 
+  const ssrEvent = useRequestEvent()
   const apiOrigin = useApiOrigin()
   const resetAuthState = useResetAuthState({ deferredApollo })
   const route = useRoute()
@@ -230,6 +232,7 @@ export const useAuthManager = (
   const postAuthRedirect = usePostAuthRedirect()
   const { markLoggedOut } = useJustLoggedOutTracking()
   const { logger } = useSafeLogger()
+  const { isFullRedirectState } = useAppErrorState()
 
   /**
    * Invite token, if any
@@ -258,6 +261,24 @@ export const useAuthManager = (
   const effectiveAuthToken = computed(
     () => dashboardToken.value || embedToken.value || authToken.value
   )
+
+  /**
+   * Trigger full redirect that causes a full reload, instead of an in-session navigation
+   */
+  const sendFullRedirect = async (relativeUrl: string) => {
+    if (isFullRedirectState.value) return
+
+    isFullRedirectState.value = true
+
+    if (import.meta.client) {
+      window.location.href = relativeUrl
+    } else if (ssrEvent) {
+      const { sendRedirect } = await import('h3')
+      await sendRedirect(ssrEvent, relativeUrl)
+    } else {
+      logger().fatal('Failed to send full redirect')
+    }
+  }
 
   /**
    * Set/clear new token value and redirect to home
@@ -513,10 +534,10 @@ export const useAuthManager = (
     }
 
     if (!options?.skipRedirect) {
-      if (options?.forceFullReload && import.meta.client) {
-        window.location.href = loginRoute
-      } else {
+      if (!options?.forceFullReload) {
         await goToLogin()
+      } else {
+        await sendFullRedirect(loginRoute)
       }
     }
   }

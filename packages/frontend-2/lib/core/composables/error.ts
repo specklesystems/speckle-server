@@ -15,7 +15,8 @@ const ENTER_STATE_AT_ERRORS_PER_MIN = 100
 export function useAppErrorState() {
   const state = useScopedState('appErrorState', () => ({
     inErrorState: ref(false),
-    errorRpm: Observability.simpleRpmCounter()
+    errorRpm: Observability.simpleRpmCounter(),
+    isFullRedirectState: ref(false)
   }))
   const nuxtApp = useNuxtApp()
 
@@ -32,7 +33,22 @@ export function useAppErrorState() {
         )
         state.inErrorState.value = true
       }
-    }
+    },
+    /**
+     * Similar to error state, except we don't show any UI elements to the user, we just stop processing
+     * API calls etc. because we're redirecting fully away
+     */
+    isFullRedirectState: state.isFullRedirectState,
+    /**
+     * Whether to prevent HTTP API calls
+     */
+    preventHttpCalls: computed(() => state.isFullRedirectState.value),
+    /**
+     * Whether to prevent websocket messaging
+     */
+    preventWebsocketMessaging: computed(
+      () => state.isFullRedirectState.value || state.inErrorState.value
+    )
   }
 }
 

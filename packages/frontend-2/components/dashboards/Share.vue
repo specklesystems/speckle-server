@@ -60,6 +60,11 @@ import { keyboardClick } from '@speckle/ui-components'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery, useMutation } from '@vue/apollo-composable'
+import {
+  convertThrowIntoFetchResult,
+  getFirstErrorMessage
+} from '~~/lib/common/helpers/graphql'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
 const dashboardsSharePermissionsQuery = graphql(`
   query DashboardsSharePermissions($id: String!) {
@@ -96,6 +101,7 @@ const { result } = useQuery(dashboardsSharePermissionsQuery, () => ({
   id: props.id || ''
 }))
 const { mutate: createToken } = useMutation(dashboardsShareTokenMutation)
+const { triggerNotification } = useGlobalToast()
 
 const canShare = computed(
   () => result.value?.dashboard?.permissions?.canCreateToken?.authorized
@@ -118,12 +124,21 @@ const handleCopyLink = async () => {
 
 const handleCopyEmbedLink = async () => {
   if (!urlToken && canShare.value) {
-    const result = await createToken({ dashboardId: props.id || '' })
+    const result = await createToken({ dashboardId: props.id || '' }).catch(
+      convertThrowIntoFetchResult
+    )
 
     if (result?.data?.dashboardMutations?.createToken?.token) {
       const token = result.data.dashboardMutations.createToken.token
       const url = `${window.location.origin}${route.path}?token=${token}&embed=true`
       copy(url, { successMessage: 'Embed link copied to clipboard' })
+    } else {
+      const err = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Dashboard creation failed',
+        description: err
+      })
     }
   } else {
     const url = `${window.location.origin}${route.path}?embed=true`
