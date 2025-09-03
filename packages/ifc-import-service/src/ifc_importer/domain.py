@@ -15,7 +15,7 @@ class JobBase(BaseModel):
 class FileimportPayload(JobBase):
     """Payload for the fileimport job"""
 
-    payload_version: Literal["1", "2"] = "2"
+    payload_version: Literal[1, 2] = 2
     job_type: Literal["fileImport"]
     server_url: str
     project_id: str
