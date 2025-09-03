@@ -521,17 +521,42 @@ export function useFilterUtilities(
     const { filter, id, availableValues } = params
 
     if (isNumericPropertyInfo(filter)) {
+      const numericFilter = filter as NumericPropertyInfo
+      const { min, max } = numericFilter
+      const range = max - min
+
+      // Handle filters with meaningless ranges by defaulting to existence-based filtering
+      const MIN_MEANINGFUL_RANGE = 1e-10
+      const hasConstantValue = range === 0
+      const hasNearZeroRange = range > 0 && range < MIN_MEANINGFUL_RANGE
+
+      if (hasConstantValue || hasNearZeroRange) {
+        const reason = hasConstantValue
+          ? `All objects have the same value (${min})`
+          : `Range too small for meaningful filtering (${range.toExponential()})`
+
+        return {
+          id,
+          isApplied: true,
+          selectedValues: [],
+          condition: ExistenceFilterCondition.IsSet,
+          type: FilterType.Numeric,
+          filter: numericFilter,
+          numericRange: { min, max },
+          hasConstantValue,
+          hasNearZeroRange,
+          rangeDisabledReason: reason
+        } satisfies NumericFilterData
+      }
+
       return {
         id,
         isApplied: true,
         selectedValues: [],
         condition: NumericFilterCondition.IsBetween,
         type: FilterType.Numeric,
-        filter: filter as NumericPropertyInfo,
-        numericRange: {
-          min: (filter as NumericPropertyInfo).min,
-          max: (filter as NumericPropertyInfo).max
-        }
+        filter: numericFilter,
+        numericRange: { min, max }
       } satisfies NumericFilterData
     } else {
       return {
@@ -942,7 +967,10 @@ export function useFilterUtilities(
     allFilters: PropertyInfo[] | null | undefined
   ): PropertyInfo[] => {
     return (allFilters || []).filter((f: PropertyInfo) => {
-      return !shouldExcludeFromFiltering(f.key)
+      if (shouldExcludeFromFiltering(f.key)) {
+        return false
+      }
+      return true
     })
   }
 

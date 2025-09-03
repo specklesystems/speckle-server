@@ -110,6 +110,9 @@ type BaseFilterData = {
 export type NumericFilterData = BaseFilterData & {
   type: FilterType.Numeric
   filter: NumericPropertyInfo
+  hasConstantValue?: boolean
+  hasNearZeroRange?: boolean
+  rangeDisabledReason?: string
 }
 
 export type StringFilterData = BaseFilterData & {

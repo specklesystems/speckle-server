@@ -27,7 +27,8 @@
 import type {
   FilterCondition,
   FilterData,
-  ConditionOption
+  ConditionOption,
+  NumericFilterData
 } from '~/lib/viewer/helpers/filters/types'
 import {
   getConditionsForType,
@@ -35,7 +36,8 @@ import {
   FilterType,
   StringFilterCondition,
   NumericFilterCondition,
-  ExistenceFilterCondition
+  ExistenceFilterCondition,
+  isNumericFilter
 } from '~/lib/viewer/helpers/filters/types'
 import { LayoutMenu, FormButton, type LayoutMenuItem } from '@speckle/ui-components'
 
@@ -46,6 +48,40 @@ const props = defineProps<{
 const emit = defineEmits(['selectCondition'])
 
 const showMenu = ref(false)
+
+// Check if a numeric condition should be disabled for problematic ranges
+const isConditionDisabled = (condition: FilterCondition): boolean => {
+  if (!isNumericFilter(props.filter)) return false
+
+  const numericFilter = props.filter as NumericFilterData
+  const hasProblematicRange =
+    numericFilter.hasConstantValue || numericFilter.hasNearZeroRange
+
+  // Disable range-based conditions for problematic filters
+  if (hasProblematicRange) {
+    return (
+      condition === NumericFilterCondition.IsBetween ||
+      condition === NumericFilterCondition.IsGreaterThan ||
+      condition === NumericFilterCondition.IsLessThan ||
+      condition === NumericFilterCondition.IsEqualTo ||
+      condition === NumericFilterCondition.IsNotEqualTo
+    )
+  }
+
+  return false
+}
+
+// Get disabled reason for tooltips
+const getDisabledReason = (condition: FilterCondition): string | undefined => {
+  if (!isConditionDisabled(condition)) return undefined
+
+  if (isNumericFilter(props.filter)) {
+    const numericFilter = props.filter as NumericFilterData
+    return numericFilter.rangeDisabledReason
+  }
+
+  return undefined
+}
 
 // Get condition options based on filter type
 const conditionOptions = computed<ConditionOption[]>(() => {
@@ -74,12 +110,16 @@ const menuItems = computed<LayoutMenuItem[][]>(() => {
       basicConditions.map((conditionOption) => ({
         id: conditionOption.value,
         title: conditionOption.label,
-        active: conditionOption.value === props.filter.condition
+        active: conditionOption.value === props.filter.condition,
+        disabled: isConditionDisabled(conditionOption.value),
+        disabledTooltip: getDisabledReason(conditionOption.value)
       })),
       specialConditions.map((conditionOption) => ({
         id: conditionOption.value,
         title: conditionOption.label,
-        active: conditionOption.value === props.filter.condition
+        active: conditionOption.value === props.filter.condition,
+        disabled: isConditionDisabled(conditionOption.value),
+        disabledTooltip: getDisabledReason(conditionOption.value)
       }))
     ]
   } else {
@@ -102,12 +142,16 @@ const menuItems = computed<LayoutMenuItem[][]>(() => {
       basicConditions.map((conditionOption) => ({
         id: conditionOption.value,
         title: conditionOption.label,
-        active: conditionOption.value === props.filter.condition
+        active: conditionOption.value === props.filter.condition,
+        disabled: isConditionDisabled(conditionOption.value),
+        disabledTooltip: getDisabledReason(conditionOption.value)
       })),
       specialConditions.map((conditionOption) => ({
         id: conditionOption.value,
         title: conditionOption.label,
-        active: conditionOption.value === props.filter.condition
+        active: conditionOption.value === props.filter.condition,
+        disabled: isConditionDisabled(conditionOption.value),
+        disabledTooltip: getDisabledReason(conditionOption.value)
       }))
     ]
   }
@@ -118,7 +162,10 @@ const selectedConditionLabel = computed(() => {
 })
 
 const onConditionChosen = ({ item }: { item: LayoutMenuItem; event: MouseEvent }) => {
-  // Since we control the menu items, we know item.id is a FilterCondition
+  if (item.disabled) {
+    return
+  }
+
   const condition = item.id as FilterCondition
   const conditionOption = conditionOptions.value.find(
     (option) => option.value === condition
