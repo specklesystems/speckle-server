@@ -26,7 +26,7 @@ import {
   WriteTypes
 } from '../../../fragments/savedViews.js'
 
-export const canUpdateSavedViewPolicy: AuthPolicy<
+export const canMoveSavedViewPolicy: AuthPolicy<
   | typeof Loaders.getSavedView
   | typeof Loaders.getProject
   | typeof Loaders.getEnv
@@ -62,6 +62,6 @@ export const canUpdateSavedViewPolicy: AuthPolicy<
       userId,
       projectId,
       savedViewId,
-      access: WriteTypes.UpdateGeneral
+      access: WriteTypes.MoveView
     })
   }

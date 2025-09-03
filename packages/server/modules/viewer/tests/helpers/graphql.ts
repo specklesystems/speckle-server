@@ -187,6 +187,12 @@ export const canUpdateSavedViewQuery = gql`
             message
             payload
           }
+          canMove {
+            authorized
+            code
+            message
+            payload
+          }
         }
       }
     }
