@@ -154,10 +154,12 @@
         :summary="summary"
       />
       <ViewerDataviewerPanel v-if="activePanel === 'devMode'" />
-      <ViewerSavedViewsPanel
-        v-if="isSavedViewsEnabled && activePanel === 'savedViews'"
-        @close="activePanel = 'none'"
-      />
+      <KeepAlive>
+        <ViewerSavedViewsPanel
+          v-if="isSavedViewsEnabled && activePanel === 'savedViews'"
+          @close="activePanel = 'none'"
+        />
+      </KeepAlive>
     </div>
   </aside>
 </template>
