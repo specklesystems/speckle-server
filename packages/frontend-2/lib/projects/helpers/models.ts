@@ -1,4 +1,3 @@
-import { resourceBuilder } from '@speckle/shared/viewer/route'
 import { has } from 'lodash-es'
 import { graphql } from '~/lib/common/generated/gql'
 import { modelRoute } from '~/lib/common/helpers/route'
@@ -35,6 +34,7 @@ graphql(`
       id
       resourceIds
     }
+    resourceIdString
   }
 `)
 
@@ -45,10 +45,5 @@ export const getModelItemRoute = (
     return modelRoute(i.projectId, i.id)
   }
 
-  return modelRoute(
-    i.projectId,
-    i.homeView?.id
-      ? resourceBuilder().addResources(i.homeView.resourceIds).toString()
-      : i.id
-  )
+  return modelRoute(i.projectId, i.resourceIdString)
 }

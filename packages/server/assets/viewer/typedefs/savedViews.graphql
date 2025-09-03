@@ -255,4 +255,8 @@ extend type Model {
   The model's home view, if any
   """
   homeView: SavedView
+  """
+  The resourceIdString to use when building links to this model in the viewer. Takes home view settings into account.
+  """
+  resourceIdString: String!
 }
