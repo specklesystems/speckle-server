@@ -39,9 +39,16 @@ graphql(`
 `)
 
 export const getModelItemRoute = (
-  i: GetModelItemRoute_ModelFragment | PendingFileUploadFragment
+  i:
+    | GetModelItemRoute_ModelFragment
+    | PendingFileUploadFragment
+    | { projectId: string; id: string }
 ) => {
   if (isPendingModelFragment(i)) {
+    return modelRoute(i.projectId, i.id)
+  }
+
+  if (!('resourceIdString' in i)) {
     return modelRoute(i.projectId, i.id)
   }
 
