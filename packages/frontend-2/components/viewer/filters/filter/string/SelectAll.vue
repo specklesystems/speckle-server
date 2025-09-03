@@ -15,7 +15,9 @@
         hide-label
       />
       <div class="flex items-center">
-        <div class="text-foreground ml-0.5">Select all</div>
+        <div class="text-foreground ml-0.5">
+          {{ areAllValuesSelected ? 'Deselect all' : 'Select all' }}
+        </div>
         <div class="text-foreground-2 text-body-3xs ml-1">
           ({{ selectedCount }} of {{ totalCount }})
         </div>
