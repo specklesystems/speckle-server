@@ -33,21 +33,17 @@ import { isStringFilter, type FilterData } from '~/lib/viewer/helpers/filters/ty
 
 const props = defineProps<{
   filter: FilterData
-  searchQuery?: string
 }>()
 
-const { getAllPropertyValues, updateActiveFilterValues, selectAllFilterValues } =
-  useFilterUtilities()
+const { updateActiveFilterValues, selectAllFilterValues } = useFilterUtilities()
 
 const totalCount = computed(() => {
   if (isStringFilter(props.filter) && props.filter.filter) {
     const filter = props.filter.filter
-    // For performance, use valueGroups length directly for huge datasets
+    // Use valueGroups length directly for performance
     if ('valueGroups' in filter && Array.isArray(filter.valueGroups)) {
       return filter.valueGroups.length
     }
-    // Fallback to getAllPropertyValues for other cases
-    return getAllPropertyValues(filter.key).length
   }
   return 0
 })
@@ -64,9 +60,8 @@ const selectedCount = computed(() => {
   if (isStringFilter(props.filter)) {
     // For lazy-loaded filters with isDefaultAllSelected, show all values as selected
     if (isDefaultAllSelected.value) {
-      return totalCount.value // Use the already computed total count
+      return totalCount.value
     }
-    // Otherwise, count actual selected values
     return props.filter.selectedValues.length
   }
   return 0
@@ -89,12 +84,11 @@ const selectAllCheckboxClasses = computed(() => {
 
 const handleSelectAllChange = () => {
   if (isStringFilter(props.filter) && props.filter.filter) {
-    if (areAllValuesSelected.value && !areSomeValuesSelected.value) {
+    if (areAllValuesSelected.value) {
       // All are selected → deselect all
       updateActiveFilterValues(props.filter.id, [])
     } else {
-      // Either none selected or some selected (indeterminate) → select all
-      // Use the efficient selectAllFilterValues function that handles huge datasets
+      // Not all selected → select all
       selectAllFilterValues(props.filter.id)
     }
   }

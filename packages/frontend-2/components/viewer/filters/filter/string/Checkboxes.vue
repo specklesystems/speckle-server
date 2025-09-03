@@ -1,11 +1,8 @@
 <template>
   <div>
     <div class="flex justify-between items-center pr-1">
-      <ViewerFiltersFilterStringSelectAll
-        :filter="filter"
-        :search-query="searchQuery"
-      />
-
+      <ViewerFiltersFilterStringSelectAll v-if="!searchQuery" :filter="filter" />
+      <div v-else />
       <div
         :title="
           isLargeDataset
