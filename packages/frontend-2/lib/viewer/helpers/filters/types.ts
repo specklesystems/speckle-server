@@ -113,7 +113,7 @@ export type CreateFilterParams = {
 // Internal Data Types
 export type PropertyInfoBase = {
   concatenatedPath: string
-  value: unknown
+  value: string | number
   type: FilterType
 }
 
