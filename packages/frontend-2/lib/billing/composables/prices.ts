@@ -50,7 +50,7 @@ graphql(`
   }
 `)
 
-const workspacePlanPricesQuery = graphql(`
+export const workspacePlanPricesQuery = graphql(`
   query UseWorkspacePlanPrices {
     serverInfo {
       workspaces {
@@ -62,7 +62,7 @@ const workspacePlanPricesQuery = graphql(`
   }
 `)
 
-const activeWorkspacePlanPricesQuery = graphql(`
+export const activeWorkspacePlanPricesQuery = graphql(`
   query UseActiveWorkspacePlanPrices($slug: String!) {
     workspaceBySlug(slug: $slug) {
       id

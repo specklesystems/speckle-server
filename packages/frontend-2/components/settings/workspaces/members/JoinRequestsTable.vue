@@ -99,6 +99,7 @@ const props = defineProps<{
 }>()
 
 const { deny } = useWorkspaceJoinRequest()
+const { formattedFullDate } = useDateFormatters()
 
 const showApproveJoinRequestDialog = ref(false)
 const requestToApprove =

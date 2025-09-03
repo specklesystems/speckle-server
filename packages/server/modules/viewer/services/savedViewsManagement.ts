@@ -16,6 +16,7 @@ import type {
   GetStoredViewCount,
   GetStoredViewGroupCount,
   RecalculateGroupResourceIds,
+  SetNewHomeView,
   StoreSavedView,
   StoreSavedViewGroup,
   UpdateSavedView,
@@ -28,6 +29,7 @@ import {
   SavedViewCreationValidationError,
   SavedViewGroupCreationValidationError,
   SavedViewGroupUpdateValidationError,
+  SavedViewInvalidHomeViewSettingsError,
   SavedViewInvalidResourceTargetError,
   SavedViewUpdateValidationError
 } from '@/modules/viewer/errors/savedViews'
@@ -35,7 +37,7 @@ import type {
   ResourceBuilder,
   ViewerResourcesTarget
 } from '@speckle/shared/viewer/route'
-import { resourceBuilder } from '@speckle/shared/viewer/route'
+import { isModelResource, resourceBuilder } from '@speckle/shared/viewer/route'
 import type { VersionedSerializedViewerState } from '@speckle/shared/viewer/state'
 import { inputToVersionedState } from '@speckle/shared/viewer/state'
 import { isValidBase64Image } from '@speckle/shared/images/base64'
@@ -43,6 +45,7 @@ import type { GetViewerResourceGroups } from '@/modules/viewer/domain/operations
 import { formatResourceIdsForGroup } from '@/modules/viewer/helpers/savedViews'
 import { isUndefined, omit } from 'lodash-es'
 import type { DependenciesOf } from '@/modules/shared/helpers/factory'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
 import { isUngroupedGroup } from '@speckle/shared/saved-views'
 import { NotFoundError } from '@/modules/shared/errors'
@@ -70,7 +73,7 @@ const validateProjectResourceIdStringFactory =
       )
     }
 
-    const resourceGroups = await deps.getViewerResourceGroups({
+    const { groups: resourceGroups } = await deps.getViewerResourceGroups({
       projectId,
       loadedVersionsOnly: true,
       resourceIdString: resourceIds.toString(),
@@ -141,6 +144,47 @@ const validateViewerStateFactory =
     return state
   }
 
+const validateHomeViewSettingsFactory =
+  () =>
+  (params: {
+    isHomeView: MaybeNullOrUndefined<boolean>
+    visibility: MaybeNullOrUndefined<SavedViewVisibility>
+    errorMetadata: Record<string, unknown>
+    resourceIds: ResourceBuilder
+  }) => {
+    const { isHomeView, visibility, errorMetadata, resourceIds } = params
+
+    if (isHomeView) {
+      if (visibility !== SavedViewVisibility.public) {
+        throw new SavedViewInvalidHomeViewSettingsError('Home views must be public.', {
+          info: errorMetadata
+        })
+      }
+
+      const firstResource = resourceIds.toResources().at(0)
+      const modelResource =
+        firstResource && isModelResource(firstResource) ? firstResource : undefined
+
+      const isSingleModelView = resourceIds.length === 1 && modelResource
+      if (!isSingleModelView) {
+        throw new SavedViewInvalidHomeViewSettingsError(
+          `Home views can't be federated and must refer to a single model.`,
+          {
+            info: errorMetadata
+          }
+        )
+      }
+
+      return {
+        homeViewModel: modelResource
+      }
+    }
+
+    return {
+      homeViewModel: undefined
+    }
+  }
+
 export const createSavedViewFactory =
   (deps: {
     getViewerResourceGroups: GetViewerResourceGroups
@@ -148,10 +192,11 @@ export const createSavedViewFactory =
     storeSavedView: StoreSavedView
     getSavedViewGroup: GetSavedViewGroup
     recalculateGroupResourceIds: RecalculateGroupResourceIds
+    setNewHomeView: SetNewHomeView
   }): CreateSavedView =>
   async ({ input, authorId }) => {
     const { resourceIdString, projectId } = input
-    const visibility = input.visibility || SavedViewVisibility.public
+    const visibility = input.visibility || SavedViewVisibility.authorOnly
     const position = 0 // TODO: Resolve based on existing views
     const groupId = input.groupId?.trim() || null
     const description = input.description?.trim() || null
@@ -227,6 +272,17 @@ export const createSavedViewFactory =
       )
     }
 
+    // Validate home view settings
+    const { homeViewModel } = validateHomeViewSettingsFactory()({
+      isHomeView,
+      visibility,
+      errorMetadata: {
+        input,
+        authorId
+      },
+      resourceIds
+    })
+
     const concreteResourceIds = resourceIds.toResources().map((r) => r.toString())
     const ret = await deps.storeSavedView({
       view: {
@@ -244,6 +300,19 @@ export const createSavedViewFactory =
         isHomeView
       }
     })
+
+    await Promise.all([
+      ...(groupId ? [deps.recalculateGroupResourceIds({ groupId })] : []),
+      ...(homeViewModel
+        ? [
+            deps.setNewHomeView({
+              projectId,
+              modelId: homeViewModel.modelId,
+              newHomeViewId: ret.id
+            })
+          ]
+        : [])
+    ])
 
     // If grouped view, recalculate its resourceIds
     if (groupId) {
@@ -374,6 +443,7 @@ export const updateSavedViewFactory =
       getSavedViewGroup: GetSavedViewGroup
       updateSavedViewRecord: UpdateSavedViewRecord
       recalculateGroupResourceIds: RecalculateGroupResourceIds
+      setNewHomeView: SetNewHomeView
     } & DependenciesOf<typeof validateProjectResourceIdStringFactory>
   ): UpdateSavedView =>
   async (params) => {
@@ -509,12 +579,23 @@ export const updateSavedViewFactory =
       delete changes['name']
     }
 
+    // Validate home view settings
+    const { homeViewModel } = validateHomeViewSettingsFactory()({
+      isHomeView: changes.isHomeView,
+      visibility: changes.visibility || view.visibility,
+      errorMetadata: {
+        input,
+        userId
+      },
+      resourceIds: resourceIds || resourceBuilder().addResources(view.resourceIds)
+    })
+
     const finalChanges = omit(changes, ['resourceIdString', 'viewerState'])
     const update = {
       ...finalChanges,
       ...(resourceIds
         ? {
-            resourceIds: resourceIds ? resourceIds.map((r) => r.toString()) : undefined,
+            resourceIds: resourceIds ? resourceIds.toResourceIds() : undefined,
             groupResourceIds: formatResourceIdsForGroup(resourceIds)
           }
         : {}),
@@ -539,24 +620,35 @@ export const updateSavedViewFactory =
       update
     })
 
-    if (updatedView?.groupId !== view.groupId) {
-      await Promise.all([
-        ...(updatedView?.groupId
-          ? [
-              deps.recalculateGroupResourceIds({
-                groupId: updatedView.groupId
-              })
-            ]
-          : []),
-        ...(view.groupId
-          ? [
-              deps.recalculateGroupResourceIds({
-                groupId: view.groupId
-              })
-            ]
-          : [])
-      ])
-    }
+    await Promise.all([
+      ...(updatedView?.groupId !== view.groupId
+        ? [
+            ...(updatedView?.groupId
+              ? [
+                  deps.recalculateGroupResourceIds({
+                    groupId: updatedView.groupId
+                  })
+                ]
+              : []),
+            ...(view.groupId
+              ? [
+                  deps.recalculateGroupResourceIds({
+                    groupId: view.groupId
+                  })
+                ]
+              : [])
+          ]
+        : []),
+      ...(homeViewModel
+        ? [
+            deps.setNewHomeView({
+              projectId,
+              newHomeViewId: updatedView!.id,
+              modelId: homeViewModel.modelId
+            })
+          ]
+        : [])
+    ])
 
     return updatedView! // should exist, we checked before
   }

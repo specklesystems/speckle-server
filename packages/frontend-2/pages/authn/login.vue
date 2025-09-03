@@ -11,4 +11,8 @@ useHead({ title: 'Log in' })
 onMounted(() => {
   mixpanel.track('Visit Log In')
 })
+
+definePageMeta({
+  name: 'login'
+})
 </script>

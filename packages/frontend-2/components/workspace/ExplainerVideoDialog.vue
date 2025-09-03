@@ -4,8 +4,8 @@
       vimeo-id="1084612464"
       title="Speckle explained in 5 minutes"
       controls
-      dark-placeholder="/images/workspace/explainer-video-dark.png"
-      light-placeholder="/images/workspace/explainer-video-light.png"
+      dark-placeholder="/images/workspace/explainer-video-dark.webp"
+      light-placeholder="/images/workspace/explainer-video-light.webp"
       placeholder-alt="Play explainer video"
       @on-play="onPlay"
     />

@@ -21,7 +21,6 @@ import {
   CanCreateSavedViewDocument,
   CanUpdateSavedViewDocument,
   CanUpdateSavedViewGroupDocument,
-  CreateSavedViewDocument,
   CreateSavedViewGroupDocument,
   DeleteSavedViewDocument,
   DeleteSavedViewGroupDocument,
@@ -39,14 +38,21 @@ import {
 } from '@/modules/core/tests/helpers/creation'
 import { BadRequestError, ForbiddenError, NotFoundError } from '@/modules/shared/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import type { FactoryResultOf } from '@/modules/shared/helpers/factory'
 import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
 import {
   SavedViewCreationValidationError,
   SavedViewGroupCreationValidationError,
   SavedViewGroupUpdateValidationError,
+  SavedViewInvalidHomeViewSettingsError,
   SavedViewInvalidResourceTargetError,
   SavedViewUpdateValidationError
 } from '@/modules/viewer/errors/savedViews'
+import { createSavedViewFactory } from '@/modules/viewer/tests/helpers/graphql'
+import {
+  fakeScreenshot,
+  fakeScreenshot2
+} from '@/modules/viewer/tests/helpers/savedViews'
 import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   assignToWorkspace,
@@ -61,6 +67,7 @@ import type { ExecuteOperationOptions, TestApolloServer } from '@/test/graphqlHe
 import { testApolloServer } from '@/test/graphqlHelper'
 import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestObject } from '@/test/speckle-helpers/commitHelper'
 import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { addToStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { Roles, WorkspacePlans } from '@speckle/shared'
@@ -70,6 +77,7 @@ import {
   WorkspacePlanNoFeatureAccessError
 } from '@speckle/shared/authz'
 import * as ViewerRoute from '@speckle/shared/viewer/route'
+import { resourceBuilder } from '@speckle/shared/viewer/route'
 import * as ViewerState from '@speckle/shared/viewer/state'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
@@ -78,11 +86,6 @@ import { intersection, merge, times } from 'lodash-es'
 import type { PartialDeep } from 'type-fest'
 
 const { FF_WORKSPACES_MODULE_ENABLED, FF_SAVED_VIEWS_ENABLED } = getFeatureFlags()
-
-const fakeScreenshot =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PiQ2YQAAAABJRU5ErkJggg=='
-const fakeScreenshot2 =
-  'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAICAgICAgICAgICAgICAwUDAwMDAwYEBAMFBQYGBQYGBwcICQoJCQkJCQoMCgsMDAwMDAwP/2wBDAwMDAwQDBAgEBAgQEBAgMCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgP/wAARCAABAAEDAREAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAHEAP/EABQQAQAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAQUCf//EABQRAQAAAAAAAAAAAAAAAAAAAD/2gAIAQMBAT8BP//EABQRAQAAAAAAAAAAAAAAAAAAAD/2gAIAQIBAT8BP//Z'
 
 const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerState>) =>
   merge(
@@ -145,16 +148,15 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
                 resourceIdString: params.resourceIdString
               }
             }
-          })
+          }),
+        visibility: SavedViewVisibility.public
       },
       params.overrides || {}
     )
   })
 
-  const createSavedView = (
-    input: CreateSavedViewMutationVariables,
-    options?: ExecuteOperationOptions
-  ) => apollo.execute(CreateSavedViewDocument, input, options)
+  const createSavedView: FactoryResultOf<typeof createSavedViewFactory> = (...args) =>
+    createSavedViewFactory({ apollo })(...args)
 
   const createSavedViewGroup = (
     input: CreateSavedViewGroupMutationVariables,
@@ -514,7 +516,13 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         })
 
         const res = await createSavedView(
-          buildCreateInput({ resourceIdString, viewerState })
+          buildCreateInput({
+            resourceIdString,
+            viewerState,
+            overrides: {
+              visibility: null // allow default
+            }
+          })
         )
 
         expect(res).to.not.haveGraphQLErrors()
@@ -533,17 +541,67 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           resourceIds.toResources().map((r) => r.toString())
         )
         expect(view!.isHomeView).to.be.false
-        expect(view!.visibility).to.equal('public') // default
+        expect(view!.visibility).to.equal(SavedViewVisibility.authorOnly) // default
         expect(view!.viewerState).to.deep.equalInAnyOrder(viewerState)
         expect(view!.screenshot).to.equal(fakeScreenshot)
         expect(view!.position).to.equal(0) // default position
+      })
+
+      it('setting a new home view unsets home view from old one', async () => {
+        const resourceIds = model1ResourceIds()
+        const resourceIdString = resourceIds.toString()
+        const viewerState = fakeViewerState({
+          projectId: myProject.id,
+          resources: {
+            request: {
+              resourceIdString
+            }
+          }
+        })
+
+        const res1 = await createSavedView(
+          buildCreateInput({
+            resourceIdString,
+            viewerState,
+            overrides: { isHomeView: true }
+          }),
+          { assertNoErrors: true }
+        )
+
+        const view1 = res1.data?.projectMutations.savedViewMutations.createView
+        expect(view1).to.be.ok
+        expect(view1!.isHomeView).to.be.true
+
+        const res2 = await createSavedView(
+          buildCreateInput({
+            resourceIdString,
+            viewerState,
+            overrides: { isHomeView: true }
+          }),
+          { assertNoErrors: true }
+        )
+
+        const view2 = res2.data?.projectMutations.savedViewMutations.createView
+        expect(view2).to.be.ok
+        expect(view2!.isHomeView).to.be.true
+
+        const res3 = await getView(
+          {
+            viewId: view1!.id,
+            projectId: myProject.id
+          },
+          { assertNoErrors: true }
+        )
+        const view1Again = res3.data?.project.savedView
+
+        expect(view1Again).to.be.ok
+        expect(view1Again!.isHomeView).to.be.false
       })
 
       it('should successfully create a saved view w/ non-default input values', async () => {
         const groupId = testGroup1.id
         const name = 'heyooo brodie'
         const description = 'this is a description'
-        const isHomeView = true
         const visibility = SavedViewVisibility.authorOnly
 
         const resourceIds = model1ResourceIds()
@@ -565,7 +623,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
               groupId,
               name,
               description,
-              isHomeView,
+              isHomeView: false,
               visibility
             }
           })
@@ -579,7 +637,6 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(view!.name).to.equal(name)
         expect(view!.description).to.equal(description)
         expect(view!.groupId).to.equal(groupId)
-        expect(view!.isHomeView).to.equal(isHomeView)
         expect(view!.visibility).to.equal(visibility)
       })
 
@@ -607,6 +664,61 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
         expect(res).to.haveGraphQLErrors({
           code: SavedViewCreationValidationError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+      })
+
+      it('should fail to create a private home view', async () => {
+        const resourceIdString = model1ResourceIds().toString()
+        const res = await createSavedView(
+          buildCreateInput({
+            resourceIdString,
+            overrides: { isHomeView: true, visibility: SavedViewVisibility.authorOnly }
+          })
+        )
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewInvalidHomeViewSettingsError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+      })
+
+      it('should fail to create a federated home view', async () => {
+        const resourceIdString = model1ResourceIds()
+          .addResources(model2ResourceIds())
+          .toString()
+        const res = await createSavedView(
+          buildCreateInput({
+            resourceIdString,
+            overrides: {
+              isHomeView: true
+            }
+          })
+        )
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewInvalidHomeViewSettingsError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
+      })
+
+      it('should fail to create an object id targeting home view', async () => {
+        const objectId = await createTestObject({
+          projectId: myProject.id,
+          object: { baba: 'booey' }
+        })
+
+        const res = await createSavedView(
+          buildCreateInput({
+            resourceIdString: resourceBuilder().addObject(objectId).toString(),
+            overrides: {
+              isHomeView: true
+            }
+          })
+        )
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewInvalidHomeViewSettingsError.code
         })
         expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
       })
@@ -791,6 +903,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
       let updatablesProject: BasicTestStream
       let models: BasicTestBranch[]
       let testView: BasicSavedViewFragment
+      let testView2: BasicSavedViewFragment
       let optionalGroup: BasicSavedViewGroupFragment
 
       before(async () => {
@@ -830,28 +943,53 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
       })
 
       beforeEach(async () => {
-        const createRes = await createSavedView(
-          buildCreateInput({
-            projectId: updatablesProject.id,
-            resourceIdString: models[0].id,
-            overrides: { name: 'View to update' }
+        await Promise.all([
+          createSavedView(
+            buildCreateInput({
+              projectId: updatablesProject.id,
+              resourceIdString: models[0].id,
+              overrides: { name: 'View to update' }
+            }),
+            { assertNoErrors: true }
+          ).then((createRes1) => {
+            testView = createRes1.data?.projectMutations.savedViewMutations.createView!
+            expect(testView).to.be.ok
           }),
-          { assertNoErrors: true }
-        )
-        testView = createRes.data?.projectMutations.savedViewMutations.createView!
-        expect(testView).to.be.ok
+          createSavedView(
+            buildCreateInput({
+              projectId: updatablesProject.id,
+              resourceIdString: models[0].id,
+              overrides: { name: 'View to update 2' }
+            }),
+            { assertNoErrors: true }
+          ).then((createRes2) => {
+            testView2 = createRes2.data?.projectMutations.savedViewMutations.createView!
+            expect(testView2).to.be.ok
+          })
+        ])
       })
 
       afterEach(async () => {
-        await deleteView(
-          {
-            input: {
-              id: testView.id,
-              projectId: updatablesProject.id
-            }
-          },
-          { assertNoErrors: true }
-        )
+        await Promise.all([
+          deleteView(
+            {
+              input: {
+                id: testView.id,
+                projectId: updatablesProject.id
+              }
+            },
+            { assertNoErrors: true }
+          ),
+          deleteView(
+            {
+              input: {
+                id: testView2.id,
+                projectId: updatablesProject.id
+              }
+            },
+            { assertNoErrors: true }
+          )
+        ])
       })
 
       const buildValidResourcesUpdate = () => ({
@@ -903,7 +1041,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
             }
           }),
           screenshot: fakeScreenshot2,
-          isHomeView: true,
+          isHomeView: false,
           visibility: SavedViewVisibility.authorOnly
         }
         const res = await updateView({
@@ -997,6 +1135,126 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           message: 'No changes submitted with the input'
         })
         expect(res.data?.projectMutations.savedViewMutations.updateView.id).to.not.be.ok
+      })
+
+      it('setting a new home view unsets home view from old one', async () => {
+        const res1 = await updateView(
+          {
+            input: {
+              id: testView.id,
+              projectId: updatablesProject.id,
+              isHomeView: true
+            }
+          },
+          { assertNoErrors: true }
+        )
+
+        const view1 = res1.data?.projectMutations.savedViewMutations.updateView
+        expect(view1).to.be.ok
+        expect(view1!.isHomeView).to.be.true
+
+        const res2 = await updateView(
+          {
+            input: {
+              id: testView2.id,
+              projectId: updatablesProject.id,
+              isHomeView: true
+            }
+          },
+          { assertNoErrors: true }
+        )
+
+        const view2 = res2.data?.projectMutations.savedViewMutations.updateView
+        expect(view2).to.be.ok
+        expect(view2!.isHomeView).to.be.true
+
+        const res3 = await getView(
+          {
+            viewId: testView.id,
+            projectId: updatablesProject.id
+          },
+          { assertNoErrors: true }
+        )
+        const view1Again = res3.data?.project.savedView
+
+        expect(view1Again).to.be.ok
+        expect(view1Again!.isHomeView).to.be.false
+      })
+
+      it('fails if updating view to be private home view', async () => {
+        const res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            isHomeView: true,
+            visibility: SavedViewVisibility.authorOnly
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewInvalidHomeViewSettingsError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+
+      it('fails if updating view to be a federated home view', async () => {
+        const resourceIdString = resourceBuilder()
+          .addModel(models.at(-1)!.id)
+          .addModel(models.at(-2)!.id)
+          .toString()
+
+        const res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            isHomeView: true,
+            resourceIdString,
+            viewerState: fakeViewerState({
+              projectId: updatablesProject.id,
+              resources: {
+                request: {
+                  resourceIdString
+                }
+              }
+            }),
+            screenshot: fakeScreenshot2
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewInvalidHomeViewSettingsError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+
+      it('fails if updating view to be an object targetting home view', async () => {
+        const objectId = await createTestObject({
+          projectId: updatablesProject.id,
+          object: { aa: 'bb' }
+        })
+
+        const res = await updateView({
+          input: {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            isHomeView: true,
+            resourceIdString: objectId,
+            viewerState: fakeViewerState({
+              projectId: updatablesProject.id,
+              resources: {
+                request: {
+                  resourceIdString: objectId
+                }
+              }
+            }),
+            screenshot: fakeScreenshot2
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors({
+          code: SavedViewInvalidHomeViewSettingsError.code
+        })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
       })
 
       it('fails if user has no access to update the view', async () => {
@@ -1503,8 +1761,14 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
       const SEARCH_STRING_VIEW_COUNT = GROUP_COUNT / 2
       const SEARCH_STRING_ITEM_COUNT = SEARCH_STRING_VIEW_COUNT + 1 // +1 for searchable group
 
-      const OTHER_AUTHOR_ITEM_COUNT = GROUP_COUNT / 4
+      // const OTHER_AUTHOR_ITEM_COUNT = GROUP_COUNT / 4
+      // const MY_ITEM_COUNT = GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT
+
       // const OTHER_AUTHOR_PRIVATE_ITEM_COUNT = OTHER_AUTHOR_ITEM_COUNT / 2
+      // const OTHER_AUTHOR_PUBLIC_ITEM_COUNT =
+      //   OTHER_AUTHOR_ITEM_COUNT - OTHER_AUTHOR_PRIVATE_ITEM_COUNT
+      // const PUBLIC_ITEM_COUNT = MY_ITEM_COUNT + OTHER_AUTHOR_PUBLIC_ITEM_COUNT
+
       const SEARCHABLE_GROUP_NAME_STRING = `${SEARCH_STRING}-you-can-find-me`
 
       const modelIds: string[] = []
@@ -1807,6 +2071,9 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
             limit: GROUP_COUNT, // all in 1 page
             resourceIdString: getAllReadModelResourceIds().toString(),
             onlyAuthored: true
+          },
+          viewsInput: {
+            onlyAuthored: true
           }
         })
 
@@ -1814,9 +2081,56 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
         const data = res.data?.project.savedViewGroups
         expect(data).to.be.ok
-        expect(data!.totalCount).to.equal(GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT)
-        expect(data!.items.length).to.equal(GROUP_COUNT - OTHER_AUTHOR_ITEM_COUNT)
+
+        // all groups are gonna be returned, except default
+        const expectedCount = GROUP_COUNT
+        expect(data!.totalCount).to.equal(expectedCount)
+        expect(data!.items.length).to.equal(expectedCount)
+
+        // but their views are filtered
+        for (const item of data!.items) {
+          const otherAuthor = item.views.items.find((i) => i.author?.id !== me.id)
+          expect(otherAuthor).to.not.be.ok
+        }
       })
+
+      itEach(
+        [SavedViewVisibility.authorOnly, SavedViewVisibility.public],
+        (visibility) => `should respect onlyVisibility === ${visibility}`,
+        async (onlyVisibility) => {
+          const isPrivate = onlyVisibility === SavedViewVisibility.authorOnly
+          const res = await getProjectViewGroups(
+            {
+              projectId: readTestProject.id,
+              input: {
+                limit: GROUP_COUNT, // all in 1 page
+                resourceIdString: getAllReadModelResourceIds().toString(),
+                onlyVisibility
+              },
+              viewsInput: {
+                onlyVisibility
+              }
+            },
+            {
+              authUserId: otherReader.id
+            }
+          )
+
+          expect(res).to.not.haveGraphQLErrors()
+
+          const expectedCount = isPrivate ? GROUP_COUNT - 1 : GROUP_COUNT
+          const data = res.data?.project.savedViewGroups
+          expect(data).to.be.ok
+          expect(data!.totalCount).to.equal(expectedCount)
+          expect(data!.items.length).to.equal(expectedCount)
+
+          expect(
+            data!.items.every((i) =>
+              i.views.items.every((v) => v.visibility === onlyVisibility)
+            )
+          ).to.be.true
+        }
+      )
 
       it('can retrieve default group both by id and also ungroupedViewGroup query', async () => {
         const allGroupsRes = await getProjectViewGroups(

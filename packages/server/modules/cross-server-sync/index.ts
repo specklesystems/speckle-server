@@ -72,7 +72,10 @@ import {
   getViewerResourceGroupsFactory,
   getViewerResourceItemsUngroupedFactory
 } from '@/modules/viewer/services/viewerResources'
-import { getSavedViewFactory } from '@/modules/viewer/repositories/savedViews'
+import {
+  getModelHomeSavedViewFactory,
+  getSavedViewFactory
+} from '@/modules/viewer/repositories/savedViews'
 
 const crossServerSyncModule: SpeckleModule = {
   init() {
@@ -102,7 +105,8 @@ const crossServerSyncModule: SpeckleModule = {
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
         getAllBranchCommits: getAllBranchCommitsFactory({ db }),
         getBranchesByIds: getBranchesByIdsFactory({ db }),
-        getSavedView: getSavedViewFactory({ db })
+        getSavedView: getSavedViewFactory({ db }),
+        getModelHomeSavedView: getModelHomeSavedViewFactory({ db })
       })
     })
     const getViewerResourcesFromLegacyIdentifiers =

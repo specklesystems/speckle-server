@@ -142,6 +142,7 @@ const {
   }
 } = useInjectedViewerState()
 const copyModelLink = useCopyModelLink()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const isLoaded = computed(() => props.isLoadedVersion)
 const isLatest = computed(() => props.isLatestVersion)
@@ -236,7 +237,13 @@ const onActionChosen = (params: { item: LayoutMenuItem }) => {
       break
     case 'copy-link-to-version':
       if (project.value?.id && props.modelId) {
-        copyModelLink(project.value.id, props.modelId, props.version.id)
+        void copyModelLink({
+          model: {
+            projectId: project.value.id,
+            id: props.modelId
+          },
+          versionId: props.version.id
+        })
       }
       break
     case 'remove-version':

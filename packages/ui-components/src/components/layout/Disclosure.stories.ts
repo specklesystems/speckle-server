@@ -15,7 +15,7 @@ export default {
   },
   argTypes: {
     color: {
-      options: ['default', 'danger'],
+      options: ['default', 'danger', 'subtle'],
       control: { type: 'select' }
     },
     icon: {
@@ -68,6 +68,14 @@ export const Warning: StoryObj = {
   args: {
     ...Default.args,
     color: 'warning'
+  }
+}
+
+export const Subtle: StoryObj = {
+  ...Default,
+  args: {
+    ...Default.args,
+    color: 'subtle'
   }
 }
 

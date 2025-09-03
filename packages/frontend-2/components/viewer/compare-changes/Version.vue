@@ -24,6 +24,7 @@ const props = defineProps<{
   version: ViewerModelVersionCardItemFragment
   isNewest: boolean
 }>()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const createdAt = computed(() => {
   return {

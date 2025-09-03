@@ -1,6 +1,15 @@
 import type { ApolloCache } from '@apollo/client/cache'
 import { isUngroupedGroup } from '@speckle/shared/saved-views'
 
+export const filterKeys = [
+  'input.search',
+  'input.onlyAuthored',
+  'input.onlyVisibility',
+  'filter.search',
+  'filter.onlyAuthored',
+  'filter.onlyVisibility'
+]
+
 /**
  * Cache mutations for when a group gets a new view:
  * - If new group, Project.savedViewGroups + 1
@@ -36,7 +45,7 @@ export const onNewGroupViewCacheUpdates = (
         update('items', (items) => [...items, ref('SavedViewGroup', groupId)])
       })
     },
-    { autoEvictFiltered: true }
+    { autoEvictFiltered: filterKeys }
   )
 
   // SavedViewGroup.views + 1
@@ -50,7 +59,7 @@ export const onNewGroupViewCacheUpdates = (
         update('items', (items) => [ref('SavedView', viewId), ...items])
       })
     },
-    { autoEvictFiltered: true }
+    { autoEvictFiltered: filterKeys }
   )
 }
 
@@ -115,7 +124,7 @@ export const onGroupViewRemovalCacheUpdates = (
           )
         })
       },
-      { autoEvictFiltered: true }
+      { autoEvictFiltered: filterKeys }
     )
 
     // Evict entirely
@@ -133,7 +142,7 @@ export const onGroupViewRemovalCacheUpdates = (
           update('items', (items) => items.filter((item) => fromRef(item).id !== id))
         })
       },
-      { autoEvictFiltered: true }
+      { autoEvictFiltered: filterKeys }
     )
   }
 }

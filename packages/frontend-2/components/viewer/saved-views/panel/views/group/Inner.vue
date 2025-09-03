@@ -7,7 +7,7 @@
       <template v-if="views.length">
         <div
           v-if="views.length"
-          class="flex flex-col gap-3 overflow-y-auto simple-scrollbar"
+          class="flex flex-col gap-[1px] overflow-y-auto simple-scrollbar"
         >
           <ViewerSavedViewsPanelView
             v-for="view in views"
@@ -23,7 +23,11 @@
         />
       </template>
       <template v-else>
-        <span>No views in group</span>
+        <span
+          class="min-w-full flex justify-center items-center bg-foundation-page text-body-xs rounded-md text-foreground-2 border border-dashed border-outline-2 w-full text-center mx-auto my-2 px-4 h-10"
+        >
+          No views in group
+        </span>
       </template>
     </div>
   </div>
@@ -34,6 +38,7 @@ import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ViewerSavedViewsPanelViewsGroupInner_SavedViewGroupFragment } from '~/lib/common/generated/gql/graphql'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
+import { viewsTypeToFilters, type ViewsType } from '~/lib/viewer/helpers/savedViews'
 
 graphql(`
   fragment ViewerSavedViewsPanelViewsGroupInner_SavedViewGroup on SavedViewGroup {
@@ -74,8 +79,8 @@ const viewsQuery = graphql(`
 
 const props = defineProps<{
   group: ViewerSavedViewsPanelViewsGroupInner_SavedViewGroupFragment
+  viewsType: ViewsType
   search?: string
-  onlyAuthored?: boolean
 }>()
 
 const { projectId } = useInjectedViewerState()
@@ -94,7 +99,7 @@ const {
       limit: 10,
       cursor: null as null | string,
       search: props.search?.trim() || null,
-      onlyAuthored: props.onlyAuthored
+      ...viewsTypeToFilters(props.viewsType)
     }
   })),
   resolveKey: (vars) => ({

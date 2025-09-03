@@ -115,16 +115,6 @@
           "description": "Enables the legacy file upload mechanism, using REST API to proxy file uploads via the server",
           "default": false
         },
-        "experimentalIfcImporterEnabled": {
-          "type": "boolean",
-          "description": "Enables the ability to parse IFC files using the experimental IFC importer",
-          "default": false
-        },
-        "legacyIfcImporterEnabled": {
-          "type": "boolean",
-          "description": "Enables the ability to parse IFC files using the legacy IFC importer.",
-          "default": false
-        },
         "backgroundJobsEnabled": {
           "type": "boolean",
           "description": "Enables the ability to run background jobs (such as the IFC importer) in Speckle",
@@ -143,6 +133,11 @@
         "savedViewsEnabled": {
           "type": "boolean",
           "description": "Enables the ability to create and manage saved views",
+          "default": false
+        },
+        "usersInviteScopeIsPublic": {
+          "type": "boolean",
+          "description": "Enables the ability to create Personal Access Tokens (PAT) with users:invite privileges. WARNING: This can be used by untrusted users to send spam; do not enable on servers which allow public registration or to which untrusted users have been, or will be, invited.",
           "default": false
         }
       }
@@ -2331,7 +2326,7 @@
       "properties": {
         "enabled": {
           "type": "boolean",
-          "description": "If enabled, the File Import Service will be deployed within the cluster.",
+          "description": "If enabled, the Legacy File Import Service will be deployed within the cluster.",
           "default": true
         },
         "replicas": {

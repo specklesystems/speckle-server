@@ -1,4 +1,4 @@
-import { Page, Browser } from 'puppeteer'
+import { Page, Browser, type ConsoleMessage } from 'puppeteer'
 import type { Logger } from 'pino'
 
 import type {
@@ -28,6 +28,16 @@ type JobArgs = SharedArgs & {
 
 type PageArgs = SharedArgs & {
   page: Page
+}
+
+const serializeConsoleMessage = (msg: ConsoleMessage): Record<string, unknown> => {
+  return {
+    type: msg.type(),
+    text: msg.text(),
+    args: msg.args(),
+    stackTrace: msg.stackTrace(),
+    location: msg.location()
+  }
 }
 
 export const jobProcessor = async ({
@@ -98,13 +108,13 @@ const pageFunction = async ({
       case 'debug':
         logger.debug(msg.text())
       case 'error':
-        logger.warn({ err: msg }, 'Page error')
+        logger.warn({ err: serializeConsoleMessage(msg) }, 'Page error')
         break
       case 'warn':
-        logger.info({ err: msg }, msg.text())
+        logger.info({ err: serializeConsoleMessage(msg) }, msg.text())
         break
       default:
-        logger.debug({ msg }, msg.text())
+        logger.debug({ msg: serializeConsoleMessage(msg) }, msg.text())
         break
     }
   })

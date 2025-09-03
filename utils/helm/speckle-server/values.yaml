@@ -67,10 +67,6 @@ featureFlags:
   nextGenFileImporterEnabled: false
   ## @param featureFlags.legacyFileImportsEnabled Enables the legacy file upload mechanism, using REST API to proxy file uploads via the server
   legacyFileImportsEnabled: false
-  ## @param featureFlags.experimentalIfcImporterEnabled Enables the ability to parse IFC files using the experimental IFC importer
-  experimentalIfcImporterEnabled: false
-  ## @param featureFlags.legacyIfcImporterEnabled Enables the ability to parse IFC files using the legacy IFC importer.
-  legacyIfcImporterEnabled: false
   ## @param featureFlags.backgroundJobsEnabled Enables the ability to run background jobs (such as the IFC importer) in Speckle
   backgroundJobsEnabled: false
   ## @param featureFlags.accIntegrationEnabled Enables the ability to import data from ACC
@@ -79,6 +75,8 @@ featureFlags:
   rhinoFileImporterEnabled: false
   ## @param featureFlags.savedViewsEnabled Enables the ability to create and manage saved views
   savedViewsEnabled: false
+  ## @param featureFlags.usersInviteScopeIsPublic Enables the ability to create Personal Access Tokens (PAT) with users:invite privileges. WARNING: This can be used by untrusted users to send spam; do not enable on servers which allow public registration or to which untrusted users have been, or will be, invited.
+  usersInviteScopeIsPublic: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
@@ -1405,11 +1403,13 @@ webhook_service:
 
 ## @section File Import Service
 ## @descriptionStart
-## Defines parameters related to the File Import Service component of Speckle.
+## DEPRECATED
+## Defines parameters related to the Legacy file Import Service component of Speckle.
+## Use the ifc_import_service instead.
 ## @descriptionEnd
 ##
 fileimport_service:
-  ## @param fileimport_service.enabled If enabled, the File Import Service will be deployed within the cluster.
+  ## @param fileimport_service.enabled If enabled, the Legacy File Import Service will be deployed within the cluster.
   enabled: true
   ## @param fileimport_service.replicas The number of instances of the FileImport Service pod to be deployed within the cluster.
   ##

@@ -203,9 +203,12 @@ export const useProcessWorkspaceInvite = () => {
               }
             )
 
-            // Evict invite itself
+            // Evict invite itself (because of implicit workspace invites, we need to also evict equivalent project invite)
             cache.evict({
               id: getCacheId('PendingWorkspaceCollaborator', inviteId)
+            })
+            cache.evict({
+              id: getCacheId('PendingStreamCollaborator', inviteId)
             })
 
             if (options?.callback) await options.callback()

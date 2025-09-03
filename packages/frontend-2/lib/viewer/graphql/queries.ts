@@ -9,21 +9,27 @@ export const projectViewerResourcesQuery = graphql(`
   ) {
     project(id: $projectId) {
       id
-      viewerResources(
+      viewerResourcesExtended(
         resourceIdString: $resourceUrlString
         savedViewId: $savedViewId
         savedViewSettings: $savedViewSettings
       ) {
-        identifier
-        items {
-          modelId
-          versionId
-          objectId
+        groups {
+          identifier
+          items {
+            modelId
+            versionId
+            objectId
+          }
         }
-      }
-      savedViewIfExists(id: $savedViewId) {
-        id
-        ...UseViewerSavedViewSetup_SavedView
+        savedView {
+          id
+          ...UseViewerSavedViewSetup_SavedView
+        }
+        request {
+          savedViewId
+        }
+        resourceIdString
       }
     }
   }

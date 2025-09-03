@@ -4,17 +4,27 @@
       <HeaderLogoBlock no-link />
     </template>
     <template #header-right>
-      <FormButton
-        v-if="isPrimaryEmail"
-        color="outline"
-        size="sm"
-        @click="() => logout({ skipRedirect: false })"
-      >
-        Sign out
-      </FormButton>
-      <FormButton v-else color="outline" size="sm" @click="showDeleteDialog = true">
-        Cancel
-      </FormButton>
+      <div class="flex items-center gap-2">
+        <FormButton
+          size="sm"
+          text
+          class="pointer-events-auto"
+          @click="() => copyReference()"
+        >
+          <WrenchIcon class="w-4 h-4" />
+        </FormButton>
+        <FormButton
+          v-if="isPrimaryEmail"
+          color="outline"
+          size="sm"
+          @click="() => logout({ skipRedirect: false })"
+        >
+          Sign out
+        </FormButton>
+        <FormButton v-else color="outline" size="sm" @click="showDeleteDialog = true">
+          Cancel
+        </FormButton>
+      </div>
     </template>
 
     <div class="flex flex-col items-center justify-center p-4">
@@ -87,6 +97,8 @@ import { useAuthManager, useRegisteredThisSession } from '~/lib/auth/composables
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { UserEmail } from '~/lib/common/generated/gql/graphql'
 import { TIME_MS } from '@speckle/shared'
+import { useGenerateErrorReference } from '~/lib/core/composables/error'
+import { WrenchIcon } from '@heroicons/vue/24/solid'
 
 useHead({
   title: 'Verify your email'
@@ -108,6 +120,7 @@ const route = useRoute()
 const { logout } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
 const registeredThisSession = useRegisteredThisSession()
+const { copyReference } = useGenerateErrorReference()
 
 const code = ref('')
 const hasError = ref(false)

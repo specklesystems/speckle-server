@@ -47,14 +47,15 @@ const processInvite = async (accept: boolean, token: Optional<string>) => {
 
   loading.value = true
 
-  await useInvite({
+  const success = await useInvite({
     projectId: props.invite.projectId,
     accept,
     token,
     inviteId: props.invite.id
   })
-
-  navigateTo(projectRoute(props.invite.projectId))
+  if (success && accept) {
+    void navigateTo(projectRoute(props.invite.projectId))
+  }
 
   loading.value = false
 }

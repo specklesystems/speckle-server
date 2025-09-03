@@ -171,6 +171,7 @@ const props = defineProps<{
   selected?: boolean
 }>()
 
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 const isAutomateModuleEnabled = useIsAutomateModuleEnabled()
 
 const showActionsMenu = ref(false)

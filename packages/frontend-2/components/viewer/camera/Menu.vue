@@ -17,7 +17,7 @@
       <hr class="w-full border-outline-2" />
       <div class="p-1 flex flex-col gap-1">
         <ViewerMenuItem
-          label="Ortographic projection"
+          label="Orthographic projection"
           :active="isOrthoProjection"
           :shortcut="
             getShortcutDisplayText(shortcuts.ToggleProjection, { hideName: true }) as string

@@ -98,6 +98,8 @@ export const useViewerRealtimeActivityTracker = () => {
   const state = useViewerRealtimeActivityState()
   const getMainMetadata = useCollectMainMetadata()
 
+  const serializer = (val: unknown) => JSON.stringify(val)
+
   const activity = computed({
     get: () => state.value.activity || getMainMetadata(),
     set: (value) => {
@@ -115,13 +117,13 @@ export const useViewerRealtimeActivityTracker = () => {
   const serializedState = computed(() => activity.value.state)
 
   // Ids for easy equality comparisons
-  const serializedStateId = computed(() => JSON.stringify(serializedState.value))
+  const serializedStateId = computed(() => serializer(serializedState.value))
   const activityId = computed(() => {
     const stateId = serializedStateId.value
     const otherActivity: Omit<ViewerActivityMetadata, 'state'> = omit(activity.value, [
       'state'
     ])
-    const otherActivityId = JSON.stringify(otherActivity)
+    const otherActivityId = serializer(otherActivity)
     return `${stateId}-${otherActivityId}-${status.value}`
   })
 
@@ -142,7 +144,15 @@ export const useViewerRealtimeActivityTracker = () => {
     state.value.status = ViewerUserActivityStatus.Viewing
   })
 
-  return { activity, serializedState, status, update, serializedStateId, activityId }
+  return {
+    activity,
+    serializedState,
+    status,
+    update,
+    serializedStateId,
+    activityId,
+    serializer
+  }
 }
 
 export function useViewerUserActivityBroadcasting(
@@ -157,6 +167,7 @@ export function useViewerUserActivityBroadcasting(
       response: { project }
     }
   } = options?.state || useInjectedViewerState()
+  const { activeUser } = useActiveUser()
   const { update, activity, status, activityId } = useViewerRealtimeActivityTracker()
   const apollo = useApolloClient().client
   const { isEnabled: isEmbedEnabled } = useEmbed()
@@ -175,6 +186,8 @@ export function useViewerUserActivityBroadcasting(
   }
 
   const invokeMutation = async () => {
+    if (!activeUser.value?.id) return false
+
     const result = await apollo
       .mutate({
         mutation: broadcastViewerUserActivityMutation,
@@ -182,7 +195,9 @@ export function useViewerUserActivityBroadcasting(
           resourceIdString: resourceIdString.value,
           message: {
             ...activity.value,
-            status: status.value
+            status: status.value,
+            userId: activeUser.value.id,
+            userName: activeUser.value.name
           },
           projectId: projectId.value
         }

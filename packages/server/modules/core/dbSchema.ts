@@ -51,6 +51,12 @@ type BaseSchemaConfig<BC extends BaseInnerSchemaConfig<any, any>> = BC & {
    * Helper with withoutTablePrefix set to true
    */
   withoutTablePrefix: BC
+
+  /**
+   * Alias to withoutTablePrefix - omits table prefixes from final strings. Useful in UPDATE
+   * queries.
+   */
+  short: BC
 }
 
 type InnerSchemaConfig<
@@ -185,7 +191,8 @@ export function buildTableHelper<
   return {
     ...buildInnerConfig(),
     with: buildInnerConfig,
-    withoutTablePrefix: buildInnerConfig({ withoutTablePrefix: true })
+    withoutTablePrefix: buildInnerConfig({ withoutTablePrefix: true }),
+    short: buildInnerConfig({ withoutTablePrefix: true })
   }
 }
 
@@ -232,7 +239,8 @@ export function buildMetaTableHelper<
   return {
     ...buildInnerMetaConfig(),
     with: buildInnerMetaConfig,
-    withoutTablePrefix: buildInnerMetaConfig({ withoutTablePrefix: true })
+    withoutTablePrefix: buildInnerMetaConfig({ withoutTablePrefix: true }),
+    short: buildInnerMetaConfig({ withoutTablePrefix: true })
   }
 }
 
