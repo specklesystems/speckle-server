@@ -10,15 +10,7 @@ import type {
 
 import { FilteringExtension } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
-import {
-  difference,
-  uniq,
-  flatten,
-  isEmpty,
-  partition,
-  compact,
-  round
-} from 'lodash-es'
+import { difference, uniq, flatten, isEmpty, partition, compact } from 'lodash-es'
 import { nextTick } from 'vue'
 import {
   useInjectedViewerState,
@@ -202,31 +194,33 @@ function createFilteringDataStore() {
         for (const [value, objectIds] of Object.entries(propertyIndex)) {
           const numericValue = Number(value)
           if (!isNaN(numericValue)) {
-            // Round values to match our precision to avoid floating-point issues
-            const roundedValue = round(numericValue, PRECISION)
-            const roundedMin = round(minValue, PRECISION)
-            const roundedMax = round(maxValue, PRECISION)
-
+            // Only round for display purposes, not for filtering logic
             let shouldInclude = false
 
             switch (criteria.condition) {
               case NumericFilterCondition.IsBetween:
-                shouldInclude = roundedValue >= roundedMin && roundedValue <= roundedMax
+                shouldInclude = numericValue >= minValue && numericValue <= maxValue
                 break
               case NumericFilterCondition.IsGreaterThan:
-                shouldInclude = roundedValue > roundedMin
+                shouldInclude = numericValue > minValue
                 break
               case NumericFilterCondition.IsLessThan:
-                shouldInclude = roundedValue < roundedMax
+                shouldInclude = numericValue < maxValue
                 break
-              case NumericFilterCondition.IsEqualTo:
-                shouldInclude = roundedValue >= roundedMin && roundedValue <= roundedMax
+              case NumericFilterCondition.IsEqualTo: {
+                // For equality, use a small tolerance to account for floating-point precision
+                const tolerance = Math.pow(10, -PRECISION)
+                shouldInclude = Math.abs(numericValue - minValue) <= tolerance
                 break
-              case NumericFilterCondition.IsNotEqualTo:
-                shouldInclude = roundedValue < roundedMin || roundedValue > roundedMax
+              }
+              case NumericFilterCondition.IsNotEqualTo: {
+                // For inequality, use a small tolerance to account for floating-point precision
+                const tolerance = Math.pow(10, -PRECISION)
+                shouldInclude = Math.abs(numericValue - minValue) > tolerance
                 break
+              }
               default:
-                shouldInclude = roundedValue >= roundedMin && roundedValue <= roundedMax
+                shouldInclude = numericValue >= minValue && numericValue <= maxValue
             }
 
             if (shouldInclude) {
@@ -703,14 +697,7 @@ export function useFilterUtilities(
     const newFilterSlices: DataSlice[] = []
 
     filters.propertyFilters.value.forEach((filter) => {
-      if (
-        isNumericFilter(filter) &&
-        filter.isApplied &&
-        (filter.condition === ExistenceFilterCondition.IsSet ||
-          filter.condition === ExistenceFilterCondition.IsNotSet ||
-          filter.numericRange.min !== filter.filter.min ||
-          filter.numericRange.max !== filter.filter.max)
-      ) {
+      if (isNumericFilter(filter) && filter.isApplied) {
         const queryCriteria: QueryCriteria = {
           propertyKey: filter.filter.key,
           condition: filter.condition,
