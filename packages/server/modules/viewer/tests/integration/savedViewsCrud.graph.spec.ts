@@ -72,10 +72,9 @@ import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { createTestObject } from '@/test/speckle-helpers/commitHelper'
 import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { addToStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
-import { Roles, WorkspacePlans } from '@speckle/shared'
+import { Roles, SeatTypes, WorkspacePlans } from '@speckle/shared'
 import {
   ProjectNotEnoughPermissionsError,
-  SavedViewNoAccessError,
   WorkspaceNoAccessError
 } from '@speckle/shared/authz'
 import * as ViewerRoute from '@speckle/shared/viewer/route'
@@ -108,13 +107,6 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     }),
     overrides || {}
   )
-
-/**
- * TODO:
- * - Test that default group can be resolved even if view has more specific resourceIds w/ versions
- * - Test that default group shows up or doesn't depending if there are views in it, regardless of
- * whether there's filtering
- */
 
 ;(FF_SAVED_VIEWS_ENABLED ? describe : describe.skip)('Saved Views GraphQL CRUD', () => {
   let apollo: TestApolloServer
@@ -857,8 +849,19 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
       let testView: BasicSavedViewFragment
       let testView2: BasicSavedViewFragment
       let optionalGroup: BasicSavedViewGroupFragment
+      let notAuthorButContributor: BasicTestUser
 
       before(async () => {
+        notAuthorButContributor = await createTestUser({
+          name: 'not author but contributor'
+        })
+        await assignToWorkspace(
+          myProjectWorkspace,
+          notAuthorButContributor,
+          Roles.Workspace.Member,
+          SeatTypes.Editor
+        )
+
         updatablesProject = await createTestStream(
           buildBasicTestProject({
             name: 'updatables-project',
@@ -866,7 +869,15 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           }),
           me
         )
-        await addToStream(updatablesProject, otherGuy, Roles.Stream.Reviewer)
+
+        await Promise.all([
+          addToStream(updatablesProject, otherGuy, Roles.Stream.Reviewer),
+          addToStream(
+            updatablesProject,
+            notAuthorButContributor,
+            Roles.Stream.Contributor
+          )
+        ])
 
         models = await Promise.all(
           times(3, async (i) => {
@@ -1304,7 +1315,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
       })
 
-      it('fails if user has no access to update the view', async () => {
+      it('fails if non author contributor is updating the view', async () => {
         const newName = 'Updated View Name'
 
         const res = await updateView(
@@ -1315,11 +1326,30 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
               name: newName
             }
           },
-          { authUserId: otherGuy.id }
+          { authUserId: notAuthorButContributor.id }
         )
 
         expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
         expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+      })
+
+      it('succeeds if non author contributor is just moving the view', async () => {
+        const res = await updateView(
+          {
+            input: {
+              id: testView.id,
+              projectId: updatablesProject.id,
+              groupId: optionalGroup.id
+            }
+          },
+          { authUserId: notAuthorButContributor.id }
+        )
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.be.ok
+
+        const update = res.data?.projectMutations.savedViewMutations.updateView
+        expect(update?.groupId).to.equal(optionalGroup.id)
       })
 
       it('fails if view does not exist', async () => {
@@ -1727,7 +1757,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
         const data = res.data?.project.savedView.permissions.canUpdate
         expect(data?.authorized).to.be.false
-        expect(data?.code).to.equal(SavedViewNoAccessError.code)
+        expect(data?.code).to.equal(ProjectNotEnoughPermissionsError.code)
       })
 
       describe('of groups', async () => {
