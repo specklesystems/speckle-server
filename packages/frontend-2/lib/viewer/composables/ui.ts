@@ -25,9 +25,6 @@ import {
   type MeasurementOptions
 } from '@speckle/shared/viewer/state'
 
-// Re-export filtering utilities
-export { useFilterUtilities } from './filtering/filtering'
-
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
   const {

@@ -32,14 +32,14 @@ import {
 } from '~/lib/viewer/helpers/filters/types'
 import { getConditionLabel } from '~/lib/viewer/helpers/filters/constants'
 import { useOnViewerLoadComplete } from '~~/lib/viewer/composables/viewer'
-import { getFilteringDataStore } from './dataStore'
+import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 import {
   shouldExcludeFromFiltering,
   getPropertyName,
   isKvpFilterable,
   getFilterDisabledReason,
   findFilterByKvp
-} from './properties'
+} from '~/lib/viewer/helpers/filters/utils'
 import { useFilterColors } from '~/lib/viewer/composables/filtering/colors'
 
 export function useFilterUtilities(
@@ -51,7 +51,7 @@ export function useFilterUtilities(
     ui: { filters, explodeFactor }
   } = state
 
-  const dataStore = getFilteringDataStore()
+  const dataStore = useFilteringDataStore()
   const { removeColorFilter } = useFilterColors({ state })
 
   if (import.meta.client) {

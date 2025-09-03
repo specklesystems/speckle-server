@@ -1,10 +1,10 @@
-import type { FilterCondition } from './types'
+import type { FilterCondition } from '~/lib/viewer/helpers/filters/types'
 import {
   NumericFilterCondition,
   StringFilterCondition,
   ExistenceFilterCondition,
   FilterType
-} from './types'
+} from '~/lib/viewer/helpers/filters/types'
 
 // Filter Configuration
 export const FILTER_CONDITION_CONFIG: Record<FilterCondition, { label: string }> = {

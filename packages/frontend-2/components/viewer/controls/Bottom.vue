@@ -58,9 +58,9 @@ import {
   useSectionBoxUtilities,
   useMeasurementUtilities,
   useViewerShortcuts,
-  useFilterUtilities,
   useViewModeUtilities
 } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { ViewMode } from '@speckle/viewer'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { onKeyStroke, useBreakpoints } from '@vueuse/core'

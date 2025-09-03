@@ -107,7 +107,7 @@ import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering
 import { onKeyStroke } from '@vueuse/core'
 import { useFilteredObjectsCount } from '~/lib/viewer/composables/filtering/counts'
 import type { Nullable } from '@speckle/shared'
-import { getFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
+import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 
 const {
   filters: { propertyFilters },
@@ -119,7 +119,7 @@ const {
   getCachedValueGroupsMap
 } = useFilterUtilities()
 
-const { currentFilterLogic } = getFilteringDataStore()
+const { currentFilterLogic } = useFilteringDataStore()
 
 const { filteredObjectsCount } = useFilteredObjectsCount()
 const mp = useMixpanel()

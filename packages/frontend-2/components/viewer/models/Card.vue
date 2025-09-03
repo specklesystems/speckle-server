@@ -101,9 +101,9 @@ import type { Get } from 'type-fest'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import {
   useHighlightedObjectsUtilities,
-  useFilterUtilities,
   useCameraUtilities
 } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import {
   useInjectedViewerState,
   useInjectedViewerRequestedResources,

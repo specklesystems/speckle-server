@@ -5,11 +5,8 @@ import {
 import { isUndefinedOrVoid, SpeckleViewer } from '@speckle/shared'
 import { get } from 'lodash-es'
 import { Vector3 } from 'three'
-import {
-  useDiffUtilities,
-  useFilterUtilities,
-  useSelectionUtilities
-} from '~~/lib/viewer/composables/ui'
+import { useDiffUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { CameraController, VisualDiffMode } from '@speckle/viewer'
 import { StringFilterCondition } from '~/lib/viewer/helpers/filters/types'
 import type { Merge, PartialDeep } from 'type-fest'

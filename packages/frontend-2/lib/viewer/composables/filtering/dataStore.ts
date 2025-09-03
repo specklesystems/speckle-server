@@ -17,10 +17,10 @@ import type {
   FilterData
 } from '~/lib/viewer/helpers/filters/types'
 
-// Singleton instance
+// Singleton instance to prevent multiple data stores
 let globalDataStoreInstance: ReturnType<typeof createFilteringDataStore> | null = null
 
-export function createFilteringDataStore() {
+function createFilteringDataStore() {
   const dataSourcesMap: Ref<Record<string, DataSource>> = ref({})
   const dataSources = computed(() => Object.values(dataSourcesMap.value))
   const currentFilterLogic = ref<FilterLogic>(FilterLogic.All)
@@ -353,11 +353,8 @@ export function createFilteringDataStore() {
   }
 }
 
-/**
- * Get the singleton instance of the filtering data store
- * This ensures only one data store exists across all components
- */
-export function getFilteringDataStore() {
+export function useFilteringDataStore() {
+  // Return the singleton instance
   if (!globalDataStoreInstance) {
     globalDataStoreInstance = createFilteringDataStore()
   }

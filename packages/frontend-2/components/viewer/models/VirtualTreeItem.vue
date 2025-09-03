@@ -66,10 +66,10 @@ import {
 } from '~~/lib/object-sidebar/helpers'
 import {
   useSelectionUtilities,
-  useFilterUtilities,
   useHighlightedObjectsUtilities,
   useCameraUtilities
 } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import type { UnifiedVirtualItem } from '~~/lib/viewer/composables/tree'
 
