@@ -183,7 +183,8 @@ const {
   isOnlyVisibleToMe,
   canSetHomeView,
   isHomeView,
-  canToggleVisibility
+  canToggleVisibility,
+  canMove
 } = useSavedViewValidationHelpers({
   view: computed(() => props.view)
 })
@@ -217,8 +218,8 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
     {
       id: MenuItems.MoveToGroup,
       title: 'Move to group',
-      disabled: !canUpdate.value?.authorized || isLoading.value,
-      disabledTooltip: canUpdate.value?.errorMessage
+      disabled: !canMove.value?.authorized || isLoading.value,
+      disabledTooltip: canMove.value?.errorMessage
     },
     {
       id: MenuItems.ReplaceView,

@@ -56,6 +56,7 @@ import {
   getSavedViewGroupFactory
 } from '@/modules/viewer/repositories/dataLoaders/savedViews'
 import type { RequestDataLoaders } from '@/modules/core/loaders'
+import { omit } from 'lodash-es'
 
 const buildGetViewerResourceGroups = (params: {
   projectDb: Knex
@@ -340,12 +341,23 @@ const resolvers: Resolvers = {
         resourceAccessRules: ctx.resourceAccessRules
       })
 
-      const canUpdate = await ctx.authPolicies.project.savedViews.canUpdate({
-        userId: ctx.userId,
-        projectId,
-        savedViewId: args.input.id
-      })
-      throwIfAuthNotOk(canUpdate)
+      const updates = omit(args.input, 'id', 'projectId')
+      const isJustMove = Object.keys(updates).length === 1 && 'groupId' in updates
+      if (isJustMove) {
+        const canMove = await ctx.authPolicies.project.savedViews.canMove({
+          userId: ctx.userId,
+          projectId,
+          savedViewId: args.input.id
+        })
+        throwIfAuthNotOk(canMove)
+      } else {
+        const canUpdate = await ctx.authPolicies.project.savedViews.canUpdate({
+          userId: ctx.userId,
+          projectId,
+          savedViewId: args.input.id
+        })
+        throwIfAuthNotOk(canUpdate)
+      }
 
       const updateSavedView = updateSavedViewFactory({
         getViewerResourceGroups: buildGetViewerResourceGroups({

@@ -7,7 +7,8 @@ import type { Measurement } from '@speckle/viewer'
 import {
   MeasurementEvent,
   MeasurementsExtension,
-  MeasurementState
+  MeasurementState,
+  SelectionExtension
 } from '@speckle/viewer'
 import { onKeyStroke, watchTriggerable } from '@vueuse/core'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
@@ -35,6 +36,7 @@ export const useMeasurementsPostSetup = () => {
   const { reset, removeActiveMeasurement } = useMeasurementUtilities()
 
   const measurementsInstance = () => instance.getExtension(MeasurementsExtension)
+  const selectionInstance = () => instance.getExtension(SelectionExtension)
 
   // state -> viewer
   const { trigger: triggerEnabledWatch } = watchTriggerable(
@@ -42,6 +44,7 @@ export const useMeasurementsPostSetup = () => {
     (newVal, oldVal) => {
       if (newVal !== oldVal) {
         measurementsInstance().enabled = newVal
+        selectionInstance().enabled = !newVal
       }
     }
   )
