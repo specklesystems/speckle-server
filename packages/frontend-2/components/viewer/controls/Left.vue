@@ -248,7 +248,6 @@ const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources(
 const { registerShortcuts, getShortcutDisplayText, shortcuts } = useViewerShortcuts()
 const { isEnabled: isEmbedEnabled } = useEmbed()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
-const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 const isMobile = breakpoints.smaller('sm')
 const isTablet = breakpoints.smaller('lg')
 const { getTooltipProps } = useSmartTooltipDelay()
@@ -316,15 +315,6 @@ const openIntercomChat = () => {
     $intercom.show()
   }
 }
-
-onMounted(() => {
-  activePanel.value =
-    isSmallerOrEqualSm.value || isEmbedEnabled.value ? 'none' : 'models'
-})
-
-watch(isSmallerOrEqualSm, (newVal) => {
-  activePanel.value = newVal ? 'none' : 'models'
-})
 
 watch(activePanel, (newVal, oldVal) => {
   const wasNone = oldVal === 'none'

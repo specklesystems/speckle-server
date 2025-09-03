@@ -1,7 +1,11 @@
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { ModelsSubView, type ActivePanel } from '~/lib/viewer/helpers/sceneExplorer'
 
 export const useViewerPanelsSetup = () => {
+  const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
+  const { isEnabled: isEmbedEnabled } = useEmbed()
+
   const active = ref<ActivePanel>('none')
   const modelsSubView = ref<ModelsSubView>(ModelsSubView.Main)
 
@@ -11,6 +15,14 @@ export const useViewerPanelsSetup = () => {
         modelsSubView.value = ModelsSubView.Main // reset subview on models open
       }
     }
+  })
+
+  onMounted(() => {
+    active.value = isSmallerOrEqualSm.value || isEmbedEnabled.value ? 'none' : 'models'
+  })
+
+  watch(isSmallerOrEqualSm, (newVal) => {
+    active.value = newVal ? 'none' : 'models'
   })
 
   return {
