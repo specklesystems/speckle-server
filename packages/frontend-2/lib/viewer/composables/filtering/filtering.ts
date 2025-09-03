@@ -1,4 +1,3 @@
-import { TIME_MS, timeoutAt } from '@speckle/shared'
 import type {
   PropertyInfo,
   NumericPropertyInfo,
@@ -232,22 +231,6 @@ export function useFilterUtilities(
       valueGroupMapsCache.set(filter, map)
     }
     return map
-  }
-
-  const getObjectIdsForPropertyValue = (
-    propertyKey: string,
-    value: string
-  ): string[] => {
-    const objectIds: string[] = []
-
-    for (const dataSource of dataStore.dataSources.value) {
-      const propertyIndex = dataStore.buildPropertyIndex(dataSource, propertyKey)
-      if (propertyIndex && propertyIndex[value]) {
-        objectIds.push(...propertyIndex[value])
-      }
-    }
-
-    return objectIds
   }
 
   const createFilterData = (params: CreateFilterParams): FilterData => {
@@ -672,23 +655,6 @@ export function useFilterUtilities(
     }
   }
 
-  const waitForAvailableFilter = async (
-    key: string,
-    options?: Partial<{ timeout: number }>
-  ) => {
-    const timeout = options?.timeout || 10 * TIME_MS.second
-
-    const res = await Promise.race([
-      until(viewer.metadata.availableFilters).toMatch(
-        (filters) => !!filters?.find((p) => p.key === key)
-      ),
-      timeoutAt(timeout, 'Waiting for available filter timed out')
-    ])
-
-    const filter = res?.find((p) => p.key === key)
-    return filter as NonNullable<typeof filter>
-  }
-
   /**
    * Filters the available filters to only include relevant ones for the filter UI
    */
@@ -772,7 +738,6 @@ export function useFilterUtilities(
     hideObjects,
     showObjects,
     filters,
-    getObjectIdsForPropertyValue,
     addActiveFilter,
     updateFilterProperty,
     removeActiveFilter,
@@ -786,18 +751,13 @@ export function useFilterUtilities(
     resetFilters,
     restoreFilters,
     resetExplode,
-    waitForAvailableFilter,
     getRelevantFilters,
     getPropertyName,
     isKvpFilterable,
     getFilterDisabledReason,
     findFilterByKvp,
-    // Filtered values
     getFilteredFilterValues,
     getCachedValueGroupsMap,
-    // Numeric range filtering
-    setNumericRange,
-    // Filter logic
-    currentFilterLogic: dataStore.currentFilterLogic
+    setNumericRange
   }
 }

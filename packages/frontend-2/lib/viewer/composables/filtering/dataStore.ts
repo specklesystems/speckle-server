@@ -20,7 +20,6 @@ import type {
 // Singleton instance
 let globalDataStoreInstance: ReturnType<typeof createFilteringDataStore> | null = null
 
-// Internal data store implementation
 export function createFilteringDataStore() {
   const dataSourcesMap: Ref<Record<string, DataSource>> = ref({})
   const dataSources = computed(() => Object.values(dataSourcesMap.value))
@@ -93,7 +92,6 @@ export function createFilteringDataStore() {
           for (const p of props) {
             propertyMap[p.concatenatedPath] = p
 
-            // Pre-build property indices during extraction (eliminates duplicate work!)
             const propertyKey = p.concatenatedPath
             const value = String(p.value)
 
@@ -128,14 +126,9 @@ export function createFilteringDataStore() {
     dataSource: DataSource,
     propertyKey: string
   ): Record<string, string[]> => {
-    // Property indices are now pre-built during model load!
-    // No more expensive extractNestedProperties calls here
     if (dataSource._propertyIndexCache && dataSource._propertyIndexCache[propertyKey]) {
       return dataSource._propertyIndexCache[propertyKey]
     }
-
-    // Fallback for edge cases - return empty index
-    // This should not happen with pre-built indices
     return {}
   }
 
