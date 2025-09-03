@@ -40,7 +40,7 @@ import {
   getFilterDisabledReason,
   findFilterByKvp
 } from '~/lib/viewer/helpers/filters/utils'
-import { useFilterColors } from '~/lib/viewer/composables/filtering/colors'
+import { useFilterColors } from '~/lib/viewer/composables/filtering/coloring'
 
 export function useFilterUtilities(
   options?: Partial<{ state: InjectableViewerState }>

@@ -49,7 +49,7 @@ import {
   type ValueGroupsMap
 } from '~/lib/viewer/helpers/filters/types'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { useFilterColors } from '~/lib/viewer/composables/filtering/colors'
+import { useFilterColors } from '~/lib/viewer/composables/filtering/coloring'
 import type { Nullable } from '@speckle/shared'
 
 const props = defineProps<{

@@ -86,7 +86,7 @@ import {
   type LayoutMenuItem
 } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
-import { useFilterColors } from '~/lib/viewer/composables/filtering/colors'
+import { useFilterColors } from '~/lib/viewer/composables/filtering/coloring'
 import type { FilterData } from '~/lib/viewer/helpers/filters/types'
 import { FilterType } from '~/lib/viewer/helpers/filters/types'
 
