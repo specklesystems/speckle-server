@@ -1,7 +1,10 @@
+import type { Nullable } from '@speckle/shared'
 import type {
-  PropertyInfo,
   NumericPropertyInfo,
-  StringPropertyInfo
+  StringPropertyInfo,
+  PropertyInfo,
+  Viewer,
+  SpeckleObject
 } from '@speckle/viewer'
 
 // Filter Conditions
@@ -28,60 +31,6 @@ export type FilterCondition =
   | StringFilterCondition
   | ExistenceFilterCondition
 
-// Filter Configuration
-export const CONDITION_CONFIG: Record<FilterCondition, { label: string }> = {
-  [StringFilterCondition.Is]: { label: 'is' },
-  [StringFilterCondition.IsNot]: { label: 'is not' },
-  [NumericFilterCondition.IsEqualTo]: { label: 'is equal to' },
-  [NumericFilterCondition.IsNotEqualTo]: { label: 'is not equal to' },
-  [NumericFilterCondition.IsGreaterThan]: { label: 'is greater than' },
-  [NumericFilterCondition.IsLessThan]: { label: 'is less than' },
-  [NumericFilterCondition.IsBetween]: { label: 'is between' },
-  [ExistenceFilterCondition.IsSet]: { label: 'is set' },
-  [ExistenceFilterCondition.IsNotSet]: { label: 'is not set' }
-} as const
-
-// Utility Functions
-export const getConditionsForType = (filterType: FilterType): FilterCondition[] => {
-  if (filterType === FilterType.Numeric) {
-    return [
-      ...Object.values(NumericFilterCondition),
-      ...Object.values(ExistenceFilterCondition)
-    ]
-  } else {
-    return [
-      ...Object.values(StringFilterCondition),
-      ...Object.values(ExistenceFilterCondition)
-    ]
-  }
-}
-
-export const getConditionLabel = (condition: FilterCondition): string => {
-  return CONDITION_CONFIG[condition]?.label || 'is'
-}
-
-export const getConditionLabelWithCount = (
-  condition: FilterCondition,
-  counts?: { setCount?: number; notSetCount?: number }
-): string => {
-  const baseLabel = getConditionLabel(condition)
-
-  if (!counts) return baseLabel
-
-  if (condition === ExistenceFilterCondition.IsSet && counts.setCount !== undefined) {
-    return `${baseLabel} (${counts.setCount})`
-  }
-
-  if (
-    condition === ExistenceFilterCondition.IsNotSet &&
-    counts.notSetCount !== undefined
-  ) {
-    return `${baseLabel} (${counts.notSetCount})`
-  }
-
-  return baseLabel
-}
-
 // Filter Enums
 export enum FilterLogic {
   All = 'all',
@@ -104,12 +53,12 @@ type BaseFilterData = {
   isApplied: boolean
   selectedValues: string[]
   condition: FilterCondition
-  numericRange: { min: number; max: number }
 }
 
 export type NumericFilterData = BaseFilterData & {
   type: FilterType.Numeric
   filter: NumericPropertyInfo
+  numericRange: { min: number; max: number }
   hasConstantValue?: boolean
   hasNearZeroRange?: boolean
   rangeDisabledReason?: string
@@ -137,7 +86,7 @@ export type PropertySelectOption = {
   value: string
   label: string
   parentPath: string
-  type: 'number' | 'string'
+  type: FilterType
   hasParent: boolean
 }
 
@@ -146,11 +95,26 @@ export type ConditionOption = {
   label: string
 }
 
+// Property Selection Types (extracted from components)
+export type PropertyOption = PropertySelectOption // Alias for backward compatibility
+
+export type PropertySelectionListItem = {
+  type: 'header' | 'property' | 'spacer'
+  title?: string
+  property?: PropertyOption
+}
+
+export type CreateFilterParams = {
+  filter: PropertyInfo
+  id: string
+  availableValues?: string[]
+}
+
 // Internal Data Types
 export type PropertyInfoBase = {
   concatenatedPath: string
   value: unknown
-  type: string
+  type: FilterType
 }
 
 export type DataSlice = {
@@ -171,19 +135,13 @@ export type QueryCriteria = {
 
 export type DataSource = {
   resourceUrl: string
-  viewerInstance: unknown
-  rootObject: unknown | null
-  objectMap: Record<string, unknown>
+  viewerInstance: Viewer
+  rootObject: Nullable<SpeckleObject>
+  objectMap: Record<string, SpeckleObject>
   propertyMap: Record<string, PropertyInfoBase>
   _propertyIndexCache?: Record<string, Record<string, string[]>>
 }
 
 export type ResourceInfo = {
   resourceUrl: string
-}
-
-export type CreateFilterParams = {
-  filter: PropertyInfo
-  id: string
-  availableValues?: string[] // Optional since we now get values from pre-computed indices
 }

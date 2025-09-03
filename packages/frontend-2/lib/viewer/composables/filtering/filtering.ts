@@ -37,9 +37,9 @@ import {
   NumericFilterCondition,
   StringFilterCondition,
   ExistenceFilterCondition,
-  getConditionLabel,
   SortMode
 } from '~/lib/viewer/helpers/filters/types'
+import { getConditionLabel } from '~/lib/viewer/helpers/filters/constants'
 import { useOnViewerLoadComplete } from '~~/lib/viewer/composables/viewer'
 
 // Internal data store implementation
@@ -649,7 +649,6 @@ export function useFilterUtilities(
         condition: StringFilterCondition.Is,
         type: FilterType.String,
         filter: filter as StringPropertyInfo,
-        numericRange: { min: 0, max: 100 },
         isDefaultAllSelected: true // This flag indicates "select all" behavior
       } satisfies StringFilterData
     }

@@ -42,20 +42,16 @@
 
 <script setup lang="ts">
 import { useVirtualList } from '@vueuse/core'
-
-type PropertyOption = {
-  value: string
-  label: string
-  parentPath: string
-  type: 'number' | 'string'
-  hasParent: boolean
-}
-
-type ListItem = {
-  type: 'header' | 'property' | 'spacer'
-  title?: string
-  property?: PropertyOption
-}
+import type {
+  PropertyOption,
+  PropertySelectionListItem
+} from '~/lib/viewer/helpers/filters/types'
+import {
+  POPULAR_FILTERS,
+  PROPERTY_SELECTION_ITEM_HEIGHT,
+  PROPERTY_SELECTION_MAX_HEIGHT,
+  PROPERTY_SELECTION_OVERSCAN
+} from '~/lib/viewer/helpers/filters/constants'
 
 const props = defineProps<{
   options: PropertyOption[]
@@ -66,23 +62,6 @@ defineEmits<{
 }>()
 
 const searchQuery = ref('')
-
-const popularFilters = [
-  'speckle_type',
-  'Name',
-  'Category',
-  'Family',
-  'Type',
-  'Level',
-  'Material',
-  'Phase Created',
-  'Phase Demolished',
-  'Area',
-  'Length',
-  'Phase Created',
-  'IFCType',
-  'Layer'
-]
 
 const filteredOptions = computed(() => {
   if (!searchQuery.value.trim()) {
@@ -99,35 +78,39 @@ const filteredOptions = computed(() => {
   )
 })
 
-const listItems = computed((): ListItem[] => {
-  const items: ListItem[] = []
+const listItems = computed((): PropertySelectionListItem[] => {
+  const items: PropertySelectionListItem[] = []
 
-  // If there's a search query, just show filtered results without sections
   if (searchQuery.value.trim()) {
-    filteredOptions.value.forEach((property) => {
-      items.push({ type: 'property', property })
-    })
-    return items
+    const searchResults = filteredOptions.value.map((property) => ({
+      type: 'property' as const,
+      property
+    }))
+    return searchResults
   }
 
-  // Find popular filters that exist in the options
-  const availablePopular = popularFilters
-    .map((filterKey) => props.options.find((opt) => opt.value === filterKey))
+  const availablePopular = POPULAR_FILTERS.map((filterKey) =>
+    props.options.find((opt) => opt.value === filterKey)
+  )
     .filter(Boolean)
     .slice(0, 6) // Show max 6 popular filters
 
-  // Add Popular filters section if we have any
   if (availablePopular.length > 0) {
     items.push({ type: 'header', title: 'Popular properties' })
-    availablePopular.forEach((property) => {
-      items.push({ type: 'property', property })
-    })
+    const popularItems = availablePopular.map((property) => ({
+      type: 'property' as const,
+      property: property!
+    }))
+    items.push(...popularItems)
   }
 
   items.push({ type: 'header', title: `All properties (${props.options.length})` })
-  props.options.forEach((property) => {
-    items.push({ type: 'property', property })
-  })
+
+  const allPropertyItems = props.options.map((property) => ({
+    type: 'property' as const,
+    property
+  }))
+  items.push(...allPropertyItems)
 
   // Add spacer at the end for bottom padding
   items.push({ type: 'spacer' })
@@ -135,11 +118,11 @@ const listItems = computed((): ListItem[] => {
   return items
 })
 
-const itemHeight = 36
-const maxHeight = 600
+const itemHeight = computed(() => PROPERTY_SELECTION_ITEM_HEIGHT)
+const maxHeight = computed(() => PROPERTY_SELECTION_MAX_HEIGHT)
 
 const { list, containerProps, wrapperProps } = useVirtualList(listItems, {
-  itemHeight,
-  overscan: 5
+  itemHeight: PROPERTY_SELECTION_ITEM_HEIGHT,
+  overscan: PROPERTY_SELECTION_OVERSCAN
 })
 </script>

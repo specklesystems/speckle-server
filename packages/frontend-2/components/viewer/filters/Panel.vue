@@ -99,11 +99,13 @@ import {
   useInjectedViewer
 } from '~~/lib/viewer/composables/setup'
 import type { PropertySelectOption } from '~/lib/viewer/helpers/filters/types'
+import { FilterType } from '~/lib/viewer/helpers/filters/types'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { X, Plus } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { onKeyStroke } from '@vueuse/core'
+import { shallowRef, watch } from 'vue'
 import { useFilteredObjectsCount } from '~/lib/viewer/composables/filtering/counts'
 
 const {
@@ -119,16 +121,21 @@ const {
 
 const { filteredObjectsCount } = useFilteredObjectsCount()
 
-// Pre-compute value groups maps once for all filters to avoid repeated computation in child components
-const sharedValueGroupsMaps = computed(() => {
-  const maps = new Map()
-  propertyFilters.value.forEach((filter) => {
-    if (filter.filter) {
-      maps.set(filter.id, getCachedValueGroupsMap(filter.filter))
-    }
-  })
-  return maps
-})
+const sharedValueGroupsMaps = shallowRef(new Map())
+
+watch(
+  propertyFilters,
+  (filters) => {
+    const maps = new Map()
+    filters.forEach((filter) => {
+      if (filter.filter) {
+        maps.set(filter.id, getCachedValueGroupsMap(filter.filter))
+      }
+    })
+    sharedValueGroupsMaps.value = maps
+  },
+  { immediate: true }
+)
 
 const {
   metadata: { availableFilters: allFilters }
@@ -159,7 +166,7 @@ const propertySelectOptions = computed((): PropertySelectOption[] => {
         value: filter.key,
         label: propertyName, // Clean property name for main display
         parentPath, // Full path without the property name
-        type: filter.type,
+        type: filter.type === 'number' ? FilterType.Numeric : FilterType.String,
         hasParent: parentPath.length > 0
       }
     })
@@ -231,10 +238,17 @@ const scrollToNewFilter = () => {
   })
 }
 
-const selectProperty = (propertyKey: string) => {
-  const property = relevantFilters.value.find((p) => p.key === propertyKey)
+const selectProperty = async (propertyKey: string) => {
+  try {
+    const property = relevantFilters.value.find((p) => p.key === propertyKey)
 
-  if (property) {
+    if (!property) {
+      return
+    }
+
+    // Use nextTick to ensure state updates are processed in order
+    await nextTick()
+
     if (swappingFilterId.value) {
       updateFilterProperty(swappingFilterId.value, property)
       mp.track('Viewer Action', {
@@ -252,12 +266,18 @@ const selectProperty = (propertyKey: string) => {
         value: propertyKey
       })
 
+      // Wait for the filter to be added before scrolling
+      await nextTick()
       scrollToNewFilter()
     }
+  } catch {
+    // Error occurred during property selection
+    // Could add user feedback here in the future
+  } finally {
+    // Always clean up state regardless of success/failure
+    showPropertySelection.value = false
+    swappingFilterId.value = null
   }
-
-  showPropertySelection.value = false
-  swappingFilterId.value = null
 }
 
 onKeyStroke('Escape', () => {

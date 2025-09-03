@@ -16,6 +16,7 @@
 <script setup lang="ts">
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import type { FilterData } from '~/lib/viewer/helpers/filters/types'
+import { isNumericFilter } from '~/lib/viewer/helpers/filters/types'
 
 const props = defineProps<{
   filter: FilterData
@@ -23,9 +24,13 @@ const props = defineProps<{
 
 const { setNumericRange } = useFilterUtilities()
 
-const singleValue = computed(() => props.filter.numericRange.min)
+const singleValue = computed(() => {
+  if (!isNumericFilter(props.filter)) return 0
+  return props.filter.numericRange.min
+})
 
 const updateSingleValue = (value: string) => {
+  if (!isNumericFilter(props.filter)) return
   const numericValue = parseFloat(value) || 0
   setNumericRange(props.filter.id, numericValue, numericValue)
 }

@@ -19,6 +19,10 @@
               :min="props.filter.min"
               :max="props.filter.max"
               step="0.0001"
+              :aria-valuemin="props.filter.min"
+              :aria-valuemax="props.filter.max"
+              :aria-valuenow="passMin"
+              aria-label="Minimum value"
               @change="setFilterPass()"
             />
             <div class="text-xs text-foreground-2 truncate min-w-0">
@@ -40,6 +44,10 @@
               :min="props.filter.min"
               :max="props.filter.max"
               step="0.0001"
+              :aria-valuemin="props.filter.min"
+              :aria-valuemax="props.filter.max"
+              :aria-valuenow="passMax"
+              aria-label="Maximum value"
               @change="setFilterPass()"
             />
             <div class="text-xs text-foreground-2 truncate min-w-0 max-w-12">
@@ -72,11 +80,16 @@ const roundedValues = computed(() => {
 })
 
 const setFilterPass = () => {
-  const propInfo = { ...props.filter }
-  const min = Math.min(passMin.value, passMax.value)
-  const max = Math.max(passMin.value, passMax.value)
-  propInfo.passMin = min
-  propInfo.passMax = max
+  // Ensure we have valid numeric values
+  const min = Math.min(Number(passMin.value), Number(passMax.value))
+  const max = Math.max(Number(passMin.value), Number(passMax.value))
+
+  // Create a new property info object with the updated range
+  const propInfo = {
+    ...props.filter,
+    passMin: min,
+    passMax: max
+  }
 
   // Add filter using new multi-filter system
   const filterId = addActiveFilter(propInfo)

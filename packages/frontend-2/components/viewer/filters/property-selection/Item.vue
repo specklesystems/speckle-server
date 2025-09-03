@@ -6,7 +6,7 @@
       @click="$emit('selectProperty', property.value)"
     >
       <Hash
-        v-if="property.type === 'number'"
+        v-if="property.type === FilterType.Numeric"
         class="h-3 w-3 stroke-emerald-700 dark:stroke-emerald-500"
       />
       <CaseUpper v-else class="h-3 w-3 stroke-violet-600 dark:stroke-violet-500" />
@@ -31,14 +31,8 @@
 
 <script setup lang="ts">
 import { Hash, CaseUpper } from 'lucide-vue-next'
-
-type PropertyOption = {
-  value: string
-  label: string
-  parentPath: string
-  type: 'number' | 'string'
-  hasParent: boolean
-}
+import type { PropertyOption } from '~/lib/viewer/helpers/filters/types'
+import { FilterType } from '~/lib/viewer/helpers/filters/types'
 
 defineProps<{
   property: PropertyOption

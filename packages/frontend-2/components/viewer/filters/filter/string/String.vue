@@ -9,7 +9,6 @@
   >
     <ViewerFiltersFilterConditionSelector
       :filter="filter"
-      class="pl-9"
       @select-condition="handleConditionSelect"
     />
 

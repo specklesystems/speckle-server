@@ -12,7 +12,11 @@
         size="sm"
         :class="showMenu ? '!bg-highlight-2' : ''"
         :icon-right="ChevronDown"
+        role="button"
+        tabindex="0"
         @click="showMenu = !showMenu"
+        @keydown.enter="showMenu = !showMenu"
+        @keydown.space.prevent="showMenu = !showMenu"
       >
         <span class="text-foreground font-medium text-body-2xs">
           {{ selectedLogicLabel }}

@@ -2,7 +2,6 @@
   <div class="pt-0.5">
     <ViewerFiltersFilterConditionSelector
       :filter="filter"
-      class="pl-9"
       @select-condition="handleConditionSelect"
     />
 

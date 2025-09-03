@@ -1,6 +1,7 @@
 <template>
   <LayoutMenu
     v-model:open="showMenu"
+    class="pl-9"
     :items="menuItems"
     show-ticks="right"
     :custom-menu-items-classes="[
@@ -17,7 +18,7 @@
       @click="showMenu = !showMenu"
     >
       <span class="text-foreground-2 font-medium text-body-2xs">
-        {{ selectedConditionLabel }}
+        {{ getConditionLabel(props.filter.condition) }}
       </span>
     </FormButton>
   </LayoutMenu>
@@ -32,7 +33,9 @@ import type {
 } from '~/lib/viewer/helpers/filters/types'
 import {
   getConditionsForType,
-  getConditionLabel,
+  getConditionLabel
+} from '~/lib/viewer/helpers/filters/constants'
+import {
   FilterType,
   StringFilterCondition,
   NumericFilterCondition,
@@ -49,7 +52,6 @@ const emit = defineEmits(['selectCondition'])
 
 const showMenu = ref(false)
 
-// Check if a numeric condition should be disabled for problematic ranges
 const isConditionDisabled = (condition: FilterCondition): boolean => {
   if (!isNumericFilter(props.filter)) return false
 
@@ -57,7 +59,6 @@ const isConditionDisabled = (condition: FilterCondition): boolean => {
   const hasProblematicRange =
     numericFilter.hasConstantValue || numericFilter.hasNearZeroRange
 
-  // Disable range-based conditions for problematic filters
   if (hasProblematicRange) {
     return (
       condition === NumericFilterCondition.IsBetween ||
@@ -71,7 +72,6 @@ const isConditionDisabled = (condition: FilterCondition): boolean => {
   return false
 }
 
-// Get disabled reason for tooltips
 const getDisabledReason = (condition: FilterCondition): string | undefined => {
   if (!isConditionDisabled(condition)) return undefined
 
@@ -83,7 +83,6 @@ const getDisabledReason = (condition: FilterCondition): string | undefined => {
   return undefined
 }
 
-// Get condition options based on filter type
 const conditionOptions = computed<ConditionOption[]>(() => {
   const availableConditions = getConditionsForType(props.filter.type)
   return availableConditions.map((condition) => ({
@@ -94,7 +93,6 @@ const conditionOptions = computed<ConditionOption[]>(() => {
 
 const menuItems = computed<LayoutMenuItem[][]>(() => {
   if (props.filter.type === FilterType.String) {
-    // Group string conditions: basic conditions first, then special conditions
     const basicConditions = conditionOptions.value.filter(
       (option) =>
         option.value === StringFilterCondition.Is ||
@@ -123,7 +121,6 @@ const menuItems = computed<LayoutMenuItem[][]>(() => {
       }))
     ]
   } else {
-    // Group numeric conditions: basic conditions first, then special conditions
     const basicConditions = conditionOptions.value.filter(
       (option) =>
         option.value === NumericFilterCondition.IsEqualTo ||
@@ -157,23 +154,12 @@ const menuItems = computed<LayoutMenuItem[][]>(() => {
   }
 })
 
-const selectedConditionLabel = computed(() => {
-  return getConditionLabel(props.filter.condition)
-})
-
-const onConditionChosen = ({ item }: { item: LayoutMenuItem; event: MouseEvent }) => {
+const onConditionChosen = ({ item }: { item: LayoutMenuItem }) => {
   if (item.disabled) {
     return
   }
 
-  const condition = item.id as FilterCondition
-  const conditionOption = conditionOptions.value.find(
-    (option) => option.value === condition
-  )
-
-  if (conditionOption) {
-    emit('selectCondition', conditionOption)
-  }
+  emit('selectCondition', { value: item.id })
   showMenu.value = false
 }
 </script>
