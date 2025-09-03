@@ -47,7 +47,7 @@ import type {
   PropertySelectionListItem
 } from '~/lib/viewer/helpers/filters/types'
 import {
-  POPULAR_FILTERS,
+  FILTERS_POPULAR_PROPERTIES,
   PROPERTY_SELECTION_ITEM_HEIGHT,
   PROPERTY_SELECTION_MAX_HEIGHT,
   PROPERTY_SELECTION_OVERSCAN
@@ -89,7 +89,7 @@ const listItems = computed((): PropertySelectionListItem[] => {
     return searchResults
   }
 
-  const availablePopular = POPULAR_FILTERS.map((filterKey) =>
+  const availablePopular = FILTERS_POPULAR_PROPERTIES.map((filterKey) =>
     props.options.find((opt) => opt.value === filterKey)
   )
     .filter(Boolean)

@@ -119,85 +119,62 @@ const {
 } = useFilterUtilities()
 
 const { filteredObjectsCount } = useFilteredObjectsCount()
-
-const sharedValueGroupsMaps = shallowRef(new Map())
-
-watch(
-  propertyFilters,
-  (filters) => {
-    const maps = new Map()
-    filters.forEach((filter) => {
-      if (filter.filter) {
-        maps.set(filter.id, getCachedValueGroupsMap(filter.filter))
-      }
-    })
-    sharedValueGroupsMaps.value = maps
-  },
-  { immediate: true }
-)
-
+const mp = useMixpanel()
 const {
   metadata: { availableFilters: allFilters }
 } = useInjectedViewer()
-
 const {
   filters: { hasAnyFiltersApplied }
 } = useInjectedViewerInterfaceState()
+
+const sharedValueGroupsMaps = shallowRef(new Map())
+const showPropertySelection = ref(false)
+const propertySelectionRef = ref<HTMLElement>()
+const swappingFilterId = ref<string | null>(null)
+const filtersContainerRef = ref<HTMLElement>()
 
 const relevantFilters = computed(() => {
   return getRelevantFilters(allFilters.value)
 })
 
 const propertySelectOptions = computed((): PropertySelectOption[] => {
-  // Get keys of already added filters
   const existingFilterKeys = new Set(
     propertyFilters.value.map((f) => f.filter?.key).filter(Boolean)
   )
 
   const allOptions: PropertySelectOption[] = relevantFilters.value
-    .filter((filter) => !existingFilterKeys.has(filter.key)) // Exclude already added filters
+    .filter((filter) => !existingFilterKeys.has(filter.key))
     .map((filter) => {
       const pathParts = filter.key.split('.')
-      const propertyName = pathParts[pathParts.length - 1] // Last part (e.g., "name")
-      const parentPath = pathParts.slice(0, -1).join('.') // Everything except last part (e.g., "ab")
+      const propertyName = pathParts[pathParts.length - 1]
+      const parentPath = pathParts.slice(0, -1).join('.')
 
       return {
         value: filter.key,
-        label: propertyName, // Clean property name for main display
-        parentPath, // Full path without the property name
+        label: propertyName,
+        parentPath,
         type: filter.type === 'number' ? FilterType.Numeric : FilterType.String,
         hasParent: parentPath.length > 0
       }
     })
 
-  // Sort: root properties first, then grouped by parent
   const sortedOptions = allOptions.sort((a, b) => {
-    // Root properties (no parent) come first
     if (!a.hasParent && b.hasParent) return -1
     if (a.hasParent && !b.hasParent) return 1
 
-    // If both have parents, group by parent path
     if (a.hasParent && b.hasParent) {
       const parentComparison = a.parentPath.localeCompare(b.parentPath)
       if (parentComparison !== 0) return parentComparison
     }
 
-    // Within same group, sort by property name
     return a.label.localeCompare(b.label)
   })
 
   return sortedOptions
 })
 
-const mp = useMixpanel()
-
-const showPropertySelection = ref(false)
-const propertySelectionRef = ref<HTMLElement>()
-const swappingFilterId = ref<string | null>(null)
-const filtersContainerRef = ref<HTMLElement>()
-
 const addNewEmptyFilter = () => {
-  swappingFilterId.value = null // Ensure we're adding, not swapping
+  swappingFilterId.value = null
   showPropertySelection.value = true
 
   mp.track('Viewer Action', {
@@ -265,15 +242,10 @@ const selectProperty = async (propertyKey: string) => {
         value: propertyKey
       })
 
-      // Wait for the filter to be added before scrolling
       await nextTick()
       scrollToNewFilter()
     }
-  } catch {
-    // Error occurred during property selection
-    // Could add user feedback here in the future
   } finally {
-    // Always clean up state regardless of success/failure
     showPropertySelection.value = false
     swappingFilterId.value = null
   }
@@ -284,4 +256,18 @@ onKeyStroke('Escape', () => {
     showPropertySelection.value = false
   }
 })
+
+watch(
+  propertyFilters,
+  (filters) => {
+    const maps = new Map()
+    filters.forEach((filter) => {
+      if (filter.filter) {
+        maps.set(filter.id, getCachedValueGroupsMap(filter.filter))
+      }
+    })
+    sharedValueGroupsMaps.value = maps
+  },
+  { immediate: true }
+)
 </script>

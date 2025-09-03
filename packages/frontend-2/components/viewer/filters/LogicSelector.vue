@@ -35,6 +35,9 @@ import { ChevronDown } from 'lucide-vue-next'
 const props = defineProps<{
   modelValue: FilterLogic
 }>()
+const emit = defineEmits<{
+  'update:modelValue': [value: FilterLogic]
+}>()
 
 const { setFilterLogic } = useFilterUtilities()
 
@@ -58,10 +61,6 @@ const selectedLogicLabel = computed(() => {
     filterLogicOptions.value.find((opt) => opt.value === props.modelValue)?.label || ''
   )
 })
-
-const emit = defineEmits<{
-  'update:modelValue': [value: FilterLogic]
-}>()
 
 const onLogicChosen = ({ item }: { item: LayoutMenuItem; event: MouseEvent }) => {
   const logic = item.id as FilterLogic
