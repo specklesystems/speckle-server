@@ -98,6 +98,7 @@ function createFilteringDataStore() {
 
       const objectMap: Record<string, SpeckleObject> = {}
       const propertyMap: Record<string, PropertyInfoBase> = {}
+      const propertyIndexCache: Record<string, Record<string, string[]>> = {}
 
       await tree.walkAsync((node: TreeNode) => {
         if (
@@ -113,6 +114,20 @@ function createFilteringDataStore() {
           const props = extractNestedProperties(node.model.raw)
           for (const p of props) {
             propertyMap[p.concatenatedPath] = p
+
+            // Pre-build property indices during extraction (eliminates duplicate work!)
+            const propertyKey = p.concatenatedPath
+            const value = String(p.value)
+
+            if (!propertyIndexCache[propertyKey]) {
+              propertyIndexCache[propertyKey] = {}
+            }
+
+            if (!propertyIndexCache[propertyKey][value]) {
+              propertyIndexCache[propertyKey][value] = []
+            }
+
+            propertyIndexCache[propertyKey][value].push(objectId)
           }
         }
         return true
@@ -125,7 +140,8 @@ function createFilteringDataStore() {
         viewerInstance: markRaw(viewer),
         rootObject: rootObject ? markRaw(rootObject) : null,
         objectMap: markRaw(objectMap),
-        propertyMap
+        propertyMap,
+        _propertyIndexCache: propertyIndexCache
       }
     }
   }
@@ -134,33 +150,15 @@ function createFilteringDataStore() {
     dataSource: DataSource,
     propertyKey: string
   ): Record<string, string[]> => {
-    if (!dataSource._propertyIndexCache) {
-      dataSource._propertyIndexCache = {}
-    }
-
-    if (dataSource._propertyIndexCache[propertyKey]) {
+    // Property indices are now pre-built during model load!
+    // No more expensive extractNestedProperties calls here
+    if (dataSource._propertyIndexCache && dataSource._propertyIndexCache[propertyKey]) {
       return dataSource._propertyIndexCache[propertyKey]
     }
 
-    const propertyIndex: Record<string, string[]> = {}
-
-    for (const [objectId, speckleObject] of Object.entries(dataSource.objectMap)) {
-      const props = extractNestedProperties(speckleObject as SpeckleObject)
-
-      for (const p of props) {
-        if (p.concatenatedPath === propertyKey) {
-          const value = String(p.value)
-
-          if (!propertyIndex[value]) {
-            propertyIndex[value] = []
-          }
-          propertyIndex[value].push(objectId)
-        }
-      }
-    }
-
-    dataSource._propertyIndexCache[propertyKey] = propertyIndex
-    return propertyIndex
+    // Fallback for edge cases - return empty index
+    // This should not happen with pre-built indices
+    return {}
   }
 
   const queryObjects = (criteria: QueryCriteria): string[] => {
@@ -477,9 +475,31 @@ export function useFilterUtilities(
   }
 
   /**
-   * Gets available values for the current property filter
+   * Gets ALL values for a property from pre-computed indices (used for filtering logic)
    */
-  const getAvailableFilterValues = (filter: PropertyInfo): string[] => {
+  const getAllPropertyValues = (propertyKey: string): string[] => {
+    const allValues: string[] = []
+
+    for (const dataSource of dataStore.dataSources.value) {
+      if (
+        dataSource._propertyIndexCache &&
+        dataSource._propertyIndexCache[propertyKey]
+      ) {
+        const propertyIndex = dataSource._propertyIndexCache[propertyKey]
+        allValues.push(...Object.keys(propertyIndex))
+      }
+    }
+
+    // Remove duplicates and filter out null/undefined values
+    return [...new Set(allValues)].filter(
+      (v) => v !== null && v !== undefined && v !== 'null' && v !== 'undefined'
+    )
+  }
+
+  /**
+   * Gets available values for the current property filter (used for UI display)
+   */
+  const getAvailableFilterValues = (filter: PropertyInfo, limit?: number): string[] => {
     // Type guard to check if filter has valueGroups property
     const hasValueGroups = (
       f: PropertyInfo
@@ -491,14 +511,74 @@ export function useFilterUtilities(
     }
 
     if (hasValueGroups(filter)) {
-      return filter.valueGroups
+      // For very large datasets (>1000 values), use lazy processing
+      if (limit && filter.valueGroups.length > 1000) {
+        return filter.valueGroups
+          .slice(0, limit)
+          .map((vg) => String(vg.value))
+          .filter(
+            (v) => v !== null && v !== undefined && v !== 'null' && v !== 'undefined'
+          )
+      }
+
+      // For smaller datasets, process all values
+      const values = filter.valueGroups
         .map((vg) => String(vg.value))
         .filter(
           (v) => v !== null && v !== undefined && v !== 'null' && v !== 'undefined'
         )
+
+      return limit ? values.slice(0, limit) : values
     }
 
     return []
+  }
+
+  /**
+   * Creates a fast lookup map for valueGroups to avoid O(n) .find() operations
+   */
+  const createValueGroupsMap = (
+    filter: PropertyInfo
+  ): Map<string, { value: unknown; ids?: string[] }> | null => {
+    if (
+      !('valueGroups' in filter) ||
+      !Array.isArray((filter as unknown as Record<string, unknown>).valueGroups)
+    ) {
+      return null
+    }
+
+    const valueGroups = (filter as unknown as Record<string, unknown>)
+      .valueGroups as Array<{ value: unknown; ids?: string[] }>
+    const map = new Map<string, { value: unknown; ids?: string[] }>()
+
+    for (const vg of valueGroups) {
+      map.set(String(vg.value), vg)
+    }
+
+    return map
+  }
+
+  // Cache value group maps to avoid recreating them
+  const valueGroupMapsCache = new WeakMap<
+    PropertyInfo,
+    Map<string, { value: unknown; ids?: string[] }>
+  >()
+
+  /**
+   * Gets cached value groups map for efficient lookups
+   */
+  const getCachedValueGroupsMap = (
+    filter: PropertyInfo
+  ): Map<string, { value: unknown; ids?: string[] }> | null => {
+    if (valueGroupMapsCache.has(filter)) {
+      return valueGroupMapsCache.get(filter)!
+    }
+
+    const map = createValueGroupsMap(filter)
+    if (map) {
+      valueGroupMapsCache.set(filter, map)
+    }
+    return map
   }
 
   const getObjectIdsForPropertyValue = (
@@ -518,7 +598,7 @@ export function useFilterUtilities(
   }
 
   const createFilterData = (params: CreateFilterParams): FilterData => {
-    const { filter, id, availableValues } = params
+    const { filter, id } = params
 
     if (isNumericPropertyInfo(filter)) {
       const numericFilter = filter as NumericPropertyInfo
@@ -559,15 +639,17 @@ export function useFilterUtilities(
         numericRange: { min, max }
       } satisfies NumericFilterData
     } else {
+      // For string filters, start with "select all" flag but lazy-load actual values
+      // This prevents the initial slowdown when adding properties with many values
       return {
         id,
         isApplied: true,
-        selectedValues: [...availableValues],
+        selectedValues: [], // Start empty - will be populated lazily when filtering is applied
         condition: StringFilterCondition.Is,
         type: FilterType.String,
         filter: filter as StringPropertyInfo,
         numericRange: { min: 0, max: 100 },
-        isDefaultAllSelected: true
+        isDefaultAllSelected: true // This flag indicates "select all" behavior
       } satisfies StringFilterData
     }
   }
@@ -581,9 +663,8 @@ export function useFilterUtilities(
       return filters.propertyFilters.value[existingIndex].id
     } else {
       const id = `filter-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      const availableValues = getAvailableFilterValues(filter)
 
-      const filterData = createFilterData({ filter, id, availableValues })
+      const filterData = createFilterData({ filter, id })
       filters.propertyFilters.value.push(filterData)
 
       updateDataStoreSlices()
@@ -603,12 +684,9 @@ export function useFilterUtilities(
     )
     if (filterIndex === -1) return false
 
-    const availableValues = getAvailableFilterValues(newProperty)
-
     const newFilterData = createFilterData({
       filter: newProperty,
-      id: filterId,
-      availableValues
+      id: filterId
     })
 
     if (filters.activeColorFilterId.value === filterId) {
@@ -663,6 +741,35 @@ export function useFilterUtilities(
       if (!isNumericFilter(filter) && filter.isDefaultAllSelected) {
         filter.isDefaultAllSelected = false
       }
+
+      updateDataStoreSlices()
+    }
+  }
+
+  /**
+   * Efficiently selects all values by using valueGroups directly instead of expensive getAllPropertyValues
+   */
+  const selectAllFilterValues = (filterId: string) => {
+    const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
+    if (filter && !isNumericFilter(filter)) {
+      const propertyFilter = filter.filter
+
+      if (
+        'valueGroups' in propertyFilter &&
+        Array.isArray(propertyFilter.valueGroups)
+      ) {
+        filter.selectedValues = propertyFilter.valueGroups
+          .map((vg: { value: unknown }) => String(vg.value))
+          .filter(
+            (v: string) =>
+              v !== null && v !== undefined && v !== 'null' && v !== 'undefined'
+          )
+      } else {
+        // Fallback for edge cases
+        const allValues = getAllPropertyValues(propertyFilter.key)
+        filter.selectedValues = [...allValues]
+      }
+      filter.isDefaultAllSelected = false
 
       updateDataStoreSlices()
     }
@@ -753,13 +860,22 @@ export function useFilterUtilities(
         !isNumericFilter(filter) &&
         filter.isApplied &&
         (filter.selectedValues.length > 0 ||
+          filter.isDefaultAllSelected ||
           filter.condition === ExistenceFilterCondition.IsSet ||
           filter.condition === ExistenceFilterCondition.IsNotSet)
       ) {
+        // Handle lazy loading: if isDefaultAllSelected is true and selectedValues is empty,
+        // use all available values from pre-computed indices
+        const values =
+          filter.isDefaultAllSelected && filter.selectedValues.length === 0
+            ? getAllPropertyValues(filter.filter.key)
+            : filter.selectedValues
+
+        const { condition } = filter
         const queryCriteria: QueryCriteria = {
           propertyKey: filter.filter.key,
-          condition: filter.condition,
-          values: filter.selectedValues
+          condition,
+          values
         }
         const matchingObjectIds = dataStore.queryObjects(queryCriteria)
 
@@ -773,7 +889,11 @@ export function useFilterUtilities(
               ? `${getPropertyName(filter.filter.key)} is not set`
               : `${getPropertyName(filter.filter.key)} ${
                   filter.condition === StringFilterCondition.Is ? 'is' : 'is not'
-                } ${filter.selectedValues.join(', ')}`,
+                } ${
+                  filter.isDefaultAllSelected && filter.selectedValues.length === 0
+                    ? 'all values'
+                    : filter.selectedValues.join(', ')
+                }`,
           objectIds: matchingObjectIds
         }
         newFilterSlices.push(slice)
@@ -1183,7 +1303,28 @@ export function useFilterUtilities(
   ): string[] => {
     const { searchQuery, sortMode = SortMode.Alphabetical, filterId } = options || {}
 
-    let values = getAvailableFilterValues(filter)
+    // For extremely large datasets, use ultra-conservative loading to prevent crashes
+    const valueGroupsLength =
+      'valueGroups' in filter &&
+      Array.isArray((filter as unknown as Record<string, unknown>).valueGroups)
+        ? ((filter as unknown as Record<string, unknown>).valueGroups as unknown[])
+            .length
+        : 0
+
+    const isHugeDataset = valueGroupsLength > 10000
+    const isLargeDataset = valueGroupsLength > 1000
+
+    let values: string[]
+    if (isHugeDataset) {
+      // For datasets >10K, only load 50 values initially
+      values = getAvailableFilterValues(filter, 50)
+    } else if (isLargeDataset) {
+      // For datasets >1K, load 200 values
+      values = getAvailableFilterValues(filter, 200)
+    } else {
+      // For smaller datasets, load all
+      values = getAvailableFilterValues(filter)
+    }
 
     if (searchQuery?.trim()) {
       const searchTerm = searchQuery.toLowerCase().trim()
@@ -1218,6 +1359,7 @@ export function useFilterUtilities(
     removeActiveFilter,
     toggleFilterApplied,
     updateActiveFilterValues,
+    selectAllFilterValues,
     updateFilterCondition,
     setFilterLogic,
     toggleActiveFilterValue,
@@ -1239,6 +1381,8 @@ export function useFilterUtilities(
     getFilterValueColor,
     // Filtered values
     getFilteredFilterValues,
+    getAllPropertyValues,
+    getCachedValueGroupsMap,
     // Numeric range filtering
     setNumericRange,
     // Filter logic

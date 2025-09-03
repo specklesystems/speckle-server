@@ -44,10 +44,12 @@ import { FormCheckbox } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { getFilterValueCount } from '~/lib/viewer/composables/filtering/counts'
 import { isStringFilter, type FilterData } from '~/lib/viewer/helpers/filters/types'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 
 const props = defineProps<{
   filter: FilterData
   value: string
+  valueGroupsMap?: Map<string, { value: unknown; ids?: string[] }> | null
 }>()
 
 defineEmits<{
@@ -57,13 +59,90 @@ defineEmits<{
 const { isActiveFilterValueSelected, getFilterValueColor, filters } =
   useFilterUtilities()
 
-const isSelected = computed(() =>
-  isActiveFilterValueSelected(props.filter.id, props.value)
-)
+const {
+  viewer: {
+    metadata: { filteringState }
+  }
+} = useInjectedViewerState()
 
-const count = computed(() => {
+const isSelected = computed(() => {
+  // For lazy-loaded filters with isDefaultAllSelected, all items should appear selected
+  if (
+    isStringFilter(props.filter) &&
+    props.filter.isDefaultAllSelected &&
+    props.filter.selectedValues.length === 0
+  ) {
+    return true
+  }
+  return isActiveFilterValueSelected(props.filter.id, props.value)
+})
+
+const totalCount = computed(() => {
   if (!props.filter.filter) return null
   return getFilterValueCount(props.filter.filter, props.value)
+})
+
+// Use the pre-computed value groups map passed from parent to avoid expensive repeated computations
+
+// Pre-compute isolated objects Set once, outside the per-item computation
+const isolatedObjectsSet = computed(() => {
+  const currentlyIsolated = filteringState.value?.isolatedObjects
+  if (!currentlyIsolated || currentlyIsolated.length === 0) return null
+
+  const realIsolatedObjects = currentlyIsolated.filter(
+    (id) => id !== 'no-match-ghost-all'
+  )
+
+  return realIsolatedObjects.length > 0 ? new Set(realIsolatedObjects) : null
+})
+
+const availableCount = computed(() => {
+  if (!props.filter.filter || !totalCount.value) return null
+
+  // Only show available count when there are multiple filter properties applied
+  const appliedFilters = filters.propertyFilters.value.filter((f) => f.isApplied)
+  if (appliedFilters.length <= 1) {
+    return totalCount.value // No bracketed view for single property
+  }
+
+  const map = props.valueGroupsMap
+  if (!map) {
+    return totalCount.value
+  }
+
+  // Skip expensive intersection calculation for huge datasets
+  if (map.size > 5000) {
+    return totalCount.value // Just show total count for large datasets
+  }
+
+  const isolatedSet = isolatedObjectsSet.value
+  if (!isolatedSet) {
+    return totalCount.value
+  }
+
+  // Use O(1) Map lookup instead of O(n) .find() operation
+  const valueGroup = map.get(props.value)
+  const valueObjectIds = valueGroup?.ids || []
+
+  // Count intersection efficiently
+  const availableIds = valueObjectIds.filter((id) => isolatedSet.has(id))
+  return availableIds.length
+})
+
+const count = computed(() => {
+  const total = totalCount.value
+  const available = availableCount.value
+
+  if (total === null || available === null) return null
+
+  // Only show available count when there are multiple filter properties applied
+  const appliedFilters = filters.propertyFilters.value.filter((f) => f.isApplied)
+  if (appliedFilters.length > 1) {
+    // Always show bracketed format when multiple properties are applied
+    return `${available} (${total})`
+  }
+
+  return String(total)
 })
 
 const color = computed(() => {
@@ -77,7 +156,7 @@ const isDefaultSelected = computed(() => {
   return (
     isStringFilter(props.filter) &&
     props.filter.isDefaultAllSelected &&
-    isSelected.value
+    props.filter.selectedValues.length === 0
   )
 })
 </script>

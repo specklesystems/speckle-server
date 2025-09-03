@@ -17,6 +17,7 @@
         v-else
         :filter="filter"
         :sort-mode="sortMode"
+        :value-groups-map="valueGroupsMap"
         @update:sort-mode="sortMode = $event"
       />
       <ViewerFiltersFilterExistenceCount
@@ -39,6 +40,7 @@ import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering
 
 const props = defineProps<{
   filter: FilterData
+  valueGroupsMap?: Map<string, { value: unknown; ids?: string[] }> | null
 }>()
 
 defineEmits<{

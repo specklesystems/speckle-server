@@ -36,28 +36,41 @@ const props = defineProps<{
   searchQuery?: string
 }>()
 
-const {
-  getFilteredFilterValues,
-  isActiveFilterValueSelected,
-  updateActiveFilterValues
-} = useFilterUtilities()
+const { getAllPropertyValues, updateActiveFilterValues, selectAllFilterValues } =
+  useFilterUtilities()
 
-const filteredValues = computed(() => {
+const totalCount = computed(() => {
   if (isStringFilter(props.filter) && props.filter.filter) {
-    return getFilteredFilterValues(props.filter.filter, {
-      searchQuery: props.searchQuery
-    })
+    const filter = props.filter.filter
+    // For performance, use valueGroups length directly for huge datasets
+    if ('valueGroups' in filter && Array.isArray(filter.valueGroups)) {
+      return filter.valueGroups.length
+    }
+    // Fallback to getAllPropertyValues for other cases
+    return getAllPropertyValues(filter.key).length
   }
-  return []
+  return 0
+})
+
+const isDefaultAllSelected = computed(() => {
+  return (
+    isStringFilter(props.filter) &&
+    props.filter.isDefaultAllSelected &&
+    props.filter.selectedValues.length === 0
+  )
 })
 
 const selectedCount = computed(() => {
-  return filteredValues.value.filter((value) =>
-    isActiveFilterValueSelected(props.filter.id, value)
-  ).length
+  if (isStringFilter(props.filter)) {
+    // For lazy-loaded filters with isDefaultAllSelected, show all values as selected
+    if (isDefaultAllSelected.value) {
+      return totalCount.value // Use the already computed total count
+    }
+    // Otherwise, count actual selected values
+    return props.filter.selectedValues.length
+  }
+  return 0
 })
-
-const totalCount = computed(() => filteredValues.value.length)
 
 const areAllValuesSelected = computed(() => {
   return totalCount.value > 0 && selectedCount.value === totalCount.value
@@ -68,25 +81,21 @@ const areSomeValuesSelected = computed(() => {
 })
 
 const selectAllCheckboxClasses = computed(() => {
-  if (
-    isStringFilter(props.filter) &&
-    props.filter.isDefaultAllSelected &&
-    areAllValuesSelected.value
-  ) {
-    return 'opacity-50 dark:!bg-transparent !border dark:!border-outline-5 !group-hover:border-outline-5'
+  if (isDefaultAllSelected.value) {
+    return 'opacity-50 !bg-transparent !border !border-outline-3 dark:!border-outline-5'
   }
   return undefined
 })
 
 const handleSelectAllChange = () => {
-  const finalSelection = areSomeValuesSelected.value || !areAllValuesSelected.value
-
   if (isStringFilter(props.filter) && props.filter.filter) {
-    const allAvailableValues = getFilteredFilterValues(props.filter.filter)
-    if (finalSelection) {
-      updateActiveFilterValues(props.filter.id, allAvailableValues)
-    } else {
+    if (areAllValuesSelected.value && !areSomeValuesSelected.value) {
+      // All are selected → deselect all
       updateActiveFilterValues(props.filter.id, [])
+    } else {
+      // Either none selected or some selected (indeterminate) → select all
+      // Use the efficient selectAllFilterValues function that handles huge datasets
+      selectAllFilterValues(props.filter.id)
     }
   }
 }

@@ -185,5 +185,5 @@ export type ResourceInfo = {
 export type CreateFilterParams = {
   filter: PropertyInfo
   id: string
-  availableValues: string[]
+  availableValues?: string[] // Optional since we now get values from pre-computed indices
 }

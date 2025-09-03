@@ -47,6 +47,7 @@
         :filter="filter"
         :search-query="searchQuery"
         :sort-mode="sortMode"
+        :value-groups-map="valueGroupsMap"
         class="my-1"
         @update:sort-mode="emit('update:sortMode', $event)"
       />
@@ -67,6 +68,7 @@ import { X } from 'lucide-vue-next'
 const props = defineProps<{
   filter: FilterData
   sortMode: SortMode
+  valueGroupsMap?: Map<string, { value: unknown; ids?: string[] }> | null
 }>()
 
 const emit = defineEmits<(e: 'update:sortMode', v: SortMode) => void>()

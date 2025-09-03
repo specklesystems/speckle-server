@@ -31,6 +31,18 @@
       @update:model-value="setFilterLogic"
     />
 
+    <div v-if="propertyFilters.length > 0" class="px-2 pb-2">
+      <div
+        class="bg-highlight-1 rounded p-2 text-center text-body-2xs font-medium text-foreground-2 select-none"
+      >
+        <span>
+          {{ filteredObjectsCount }} filtered item{{
+            filteredObjectsCount === 1 ? '' : 's'
+          }}
+        </span>
+      </div>
+    </div>
+
     <div class="h-full flex flex-col select-none group/panel">
       <!-- Active Filters Section -->
       <div
@@ -43,6 +55,7 @@
             v-for="filter in propertyFilters"
             :key="filter.id"
             :filter="filter"
+            :value-groups-map="sharedValueGroupsMaps.get(filter.id)"
             collapsed
             @swap-property="startPropertySwap"
           />
@@ -91,6 +104,7 @@ import { X, Plus } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { onKeyStroke } from '@vueuse/core'
+import { useFilteredObjectsCount } from '~/lib/viewer/composables/filtering/counts'
 
 const {
   filters: { propertyFilters },
@@ -99,8 +113,22 @@ const {
   updateFilterProperty,
   resetFilters,
   currentFilterLogic,
-  setFilterLogic
+  setFilterLogic,
+  getCachedValueGroupsMap
 } = useFilterUtilities()
+
+const { filteredObjectsCount } = useFilteredObjectsCount()
+
+// Pre-compute value groups maps once for all filters to avoid repeated computation in child components
+const sharedValueGroupsMaps = computed(() => {
+  const maps = new Map()
+  propertyFilters.value.forEach((filter) => {
+    if (filter.filter) {
+      maps.set(filter.id, getCachedValueGroupsMap(filter.filter))
+    }
+  })
+  return maps
+})
 
 const {
   metadata: { availableFilters: allFilters }
