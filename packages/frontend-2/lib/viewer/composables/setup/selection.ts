@@ -1,4 +1,4 @@
-import { MeasurementType } from '@speckle/viewer'
+import { MeasurementType } from '@speckle/shared/viewer/state'
 import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'

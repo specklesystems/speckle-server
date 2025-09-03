@@ -5,13 +5,13 @@ import {
   Raycaster,
   Vector2,
   Vector3,
-  Vector4,
   type Intersection
 } from 'three'
 import { getConversionFactor } from '../../converter/Units.js'
 import { Measurement, MeasurementState } from './Measurement.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
+import { MeasurementData, MeasurementType } from '@speckle/shared/viewer/state'
 
 const vec3Buff0: Vector3 = new Vector3()
 const vec3Buff1: Vector3 = new Vector3()
@@ -19,15 +19,10 @@ const vec3Buff2: Vector3 = new Vector3()
 const vec3Buff3: Vector3 = new Vector3()
 const vec3Buff4: Vector3 = new Vector3()
 const vec3Buff5: Vector3 = new Vector3()
-const vec4Buff0: Vector4 = new Vector4()
-const vec4Buff1: Vector4 = new Vector4()
-const vec4Buff2: Vector4 = new Vector4()
-const vec2Buff0: Vector2 = new Vector2()
 
 export class PerpendicularMeasurement extends Measurement {
   private startGizmo: MeasurementPointGizmo | null = null
   private endGizmo: MeasurementPointGizmo | null = null
-  private normalIndicatorPixelSize = 15 * window.devicePixelRatio
   public flipStartNormal: boolean = false
   public midPoint: Vector3 = new Vector3()
 
@@ -38,6 +33,10 @@ export class PerpendicularMeasurement extends Measurement {
 
   public get bounds(): Box3 {
     return new Box3().expandByPoint(this.startPoint).expandByPoint(this.midPoint)
+  }
+
+  public get measurementType(): MeasurementType {
+    return MeasurementType.PERPENDICULAR
   }
 
   public constructor() {
@@ -89,74 +88,41 @@ export class PerpendicularMeasurement extends Measurement {
   }
 
   public update(): Promise<void> {
-    let ret = Promise.resolve()
+    let ret: Promise<void> | undefined
 
-    if (isNaN(this.startPoint.length())) return ret
-    if (!this.renderingCamera) return ret
+    // Not sure this is needed anymore
+    if (isNaN(this.startPoint.length())) return Promise.resolve()
+    if (!this.renderingCamera) return Promise.resolve()
 
     this.startGizmo?.updateNormalIndicator(this.startPoint, this.startNormal)
     this.startGizmo?.updatePoint(this.startPoint)
     this.endGizmo?.updateNormalIndicator(this.endPoint, this.endNormal)
 
+    vec3Buff5.copy(this.startNormal)
+    if (this.flipStartNormal) vec3Buff5.negate()
+
+    const startEndDist = this.startPoint.distanceTo(this.endPoint)
+    const endStartDir = vec3Buff0.copy(this.startPoint).sub(this.endPoint).normalize()
+    let dot = vec3Buff5.dot(endStartDir)
+    const angle = Math.acos(Math.min(Math.max(dot, -1), 1))
+    this.startLineLength = Math.abs(startEndDist * Math.cos(angle))
+
+    this.midPoint.copy(
+      vec3Buff0
+        .copy(this.startPoint)
+        .add(vec3Buff1.copy(vec3Buff5).multiplyScalar(this.startLineLength))
+    )
+
+    const textPos = vec3Buff0
+      .copy(this.startPoint)
+      .add(this.midPoint)
+      .multiplyScalar(0.5)
+
     if (this._state === MeasurementState.DANGLING_START) {
-      const startLine0 = vec3Buff0.copy(this.startPoint)
-
-      // Compute start point in clip space
-      const startNDC = vec4Buff0
-        .set(this.startPoint.x, this.startPoint.y, this.startPoint.z, 1)
-        .applyMatrix4(this.renderingCamera.matrixWorldInverse)
-        .applyMatrix4(this.renderingCamera.projectionMatrix)
-      // Move to NDC
-      const startpDiv = startNDC.w
-      startNDC.multiplyScalar(1 / startpDiv)
-
-      // Compute start point normal in clip space
-      const normalNDC = vec4Buff1
-        .set(this.startNormal.x, this.startNormal.y, this.startNormal.z, 0)
-        .applyMatrix4(this.renderingCamera.matrixWorldInverse)
-        .applyMatrix4(this.renderingCamera.projectionMatrix)
-        .normalize()
-
-      const pixelScale = vec2Buff0.set(
-        (this.normalIndicatorPixelSize / this.renderingSize.x) * 2,
-        (this.normalIndicatorPixelSize / this.renderingSize.y) * 2
-      )
-
-      // Add the scaled NDC normal to the NDC start point, we get the end point in NDC
-      const endNDC = vec4Buff2
-        .set(startNDC.x, startNDC.y, startNDC.z, 1)
-        .add(
-          vec4Buff1.set(normalNDC.x * pixelScale.x, normalNDC.y * pixelScale.y, 0, 0)
-        )
-      // Back to clip
-      endNDC.multiplyScalar(startpDiv)
-      // Back to world
-      endNDC
-        .applyMatrix4(this.renderingCamera.projectionMatrixInverse)
-        .applyMatrix4(this.renderingCamera.matrixWorld)
-      this.startGizmo?.updateLine([
-        startLine0,
-        vec3Buff1.set(endNDC.x, endNDC.y, endNDC.z)
-      ])
-
       this.endGizmo?.enable(false, false, false, false)
     }
 
     if (this._state === MeasurementState.DANGLING_END) {
-      vec3Buff5.copy(this.startNormal)
-      if (this.flipStartNormal) vec3Buff5.negate()
-
-      const startEndDist = this.startPoint.distanceTo(this.endPoint)
-      const endStartDir = vec3Buff0.copy(this.startPoint).sub(this.endPoint).normalize()
-      let dot = vec3Buff5.dot(endStartDir)
-      const angle = Math.acos(Math.min(Math.max(dot, -1), 1))
-      this.startLineLength = Math.abs(startEndDist * Math.cos(angle))
-
-      this.midPoint.copy(
-        vec3Buff0
-          .copy(this.startPoint)
-          .add(vec3Buff1.copy(vec3Buff5).multiplyScalar(this.startLineLength))
-      )
       const endLineNormal = vec3Buff1.copy(this.midPoint).sub(this.endPoint).normalize()
 
       this.endLineLength = this.midPoint.distanceTo(this.endPoint)
@@ -187,10 +153,6 @@ export class PerpendicularMeasurement extends Measurement {
       ])
       this.endGizmo?.updatePoint(this.midPoint)
 
-      const textPos = vec3Buff0
-        .copy(this.startPoint)
-        .add(vec3Buff1.copy(vec3Buff5).multiplyScalar(this.startLineLength * 0.5))
-
       this.value = this.midPoint.distanceTo(this.startPoint)
       if (this.startGizmo)
         ret = this.startGizmo.updateText(
@@ -202,17 +164,20 @@ export class PerpendicularMeasurement extends Measurement {
       this.endGizmo?.enable(true, true, true, true)
     }
     if (this._state === MeasurementState.COMPLETE) {
-      if (this.startGizmo)
-        ret = this.startGizmo.updateText(
-          `${(this.value * getConversionFactor('m', this.units)).toFixed(
-            this.precision
-          )} ${this.units}`
-        )
+      this.startGizmo?.updateLine([this.startPoint, this.midPoint])
+      this.endGizmo?.updatePoint(this.midPoint)
+
+      ret = this.startGizmo?.updateText(
+        `${(this.value * getConversionFactor('m', this.units)).toFixed(
+          this.precision
+        )} ${this.units}`,
+        textPos
+      )
       this.startGizmo?.enable(false, true, true, true)
       this.endGizmo?.enable(false, false, true, false)
     }
 
-    return ret
+    return ret ?? Promise.resolve()
   }
 
   public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
@@ -239,5 +204,21 @@ export class PerpendicularMeasurement extends Measurement {
   public updateClippingPlanes(planes: Plane[]) {
     if (this.startGizmo) this.startGizmo.updateClippingPlanes(planes)
     if (this.endGizmo) this.endGizmo.updateClippingPlanes(planes)
+  }
+
+  public toMeasurementData(): MeasurementData {
+    const data = super.toMeasurementData()
+    data.innerPoints = [[this.midPoint.x, this.midPoint.y, this.midPoint.z]]
+    return data
+  }
+
+  public fromMeasurementData(data: MeasurementData): void {
+    super.fromMeasurementData(data)
+    if (data.innerPoints)
+      this.midPoint.set(
+        data.innerPoints[0][0],
+        data.innerPoints[0][1],
+        data.innerPoints[0][2]
+      )
   }
 }

@@ -4,7 +4,7 @@ import { SubscriptionClient } from 'subscriptions-transport-ws'
 import type { ApolloConfigResolver } from '~~/lib/core/nuxt-modules/apollo/module'
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs'
 import { WebSocketLink } from '@apollo/client/link/ws'
-import { getMainDefinition } from '@apollo/client/utilities'
+import { getMainDefinition, Observable } from '@apollo/client/utilities'
 import { Kind } from 'graphql'
 import type { GraphQLError, OperationDefinitionNode } from 'graphql'
 import type { CookieRef, NuxtApp } from '#app'
@@ -441,7 +441,23 @@ function createLink(params: {
   logout: ReturnType<typeof useAuthManager>['logout']
 }): ApolloLink {
   const { httpEndpoint, wsClient, authToken, nuxtApp, reqId, logout } = params
-  const { registerError, isErrorState } = useAppErrorState()
+  const {
+    registerError,
+    preventHttpCalls,
+    preventWebsocketMessaging,
+    isFullRedirectState
+  } = useAppErrorState()
+
+  const stopLink = new ApolloLink((operation, forward) => {
+    if (preventHttpCalls.value) {
+      // swallow the req, we're blocking them all
+      return new Observable(() => {
+        return () => {}
+      })
+    }
+
+    return forward(operation)
+  })
 
   const errorLink = onError((res) => {
     const logger = nuxtApp.$logger
@@ -487,7 +503,7 @@ function createLink(params: {
     }
 
     const { networkError } = res
-    if (networkError && isInvalidAuth(networkError)) {
+    if (networkError && isInvalidAuth(networkError) && !isFullRedirectState.value) {
       // Reset auth
       // since this may happen mid-routing, a standard router.push call may not work - do full reload
       void logout({ skipToast: true, forceFullReload: true })
@@ -577,7 +593,7 @@ function createLink(params: {
     wsClient.use([
       {
         applyMiddleware: (_opt, next) => {
-          if (isErrorState.value) {
+          if (preventWebsocketMessaging.value) {
             return // never invokes next() - essentially stuck
           }
 
@@ -614,7 +630,7 @@ function createLink(params: {
     })
   })
 
-  return from([...(import.meta.server ? [loggerLink] : []), errorLink, link])
+  return from([stopLink, ...(import.meta.server ? [loggerLink] : []), errorLink, link])
 }
 
 const defaultConfigResolver: ApolloConfigResolver = () => {

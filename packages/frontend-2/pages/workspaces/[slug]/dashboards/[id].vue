@@ -85,9 +85,8 @@ definePageMeta({
 })
 
 const { id } = useRoute().params
-const { token: urlToken } = useRoute().query
 const { result } = useQuery(dashboardQuery, () => ({ id: id as string }))
-const { effectiveAuthToken } = useAuthManager()
+const { effectiveAuthToken, dashboardToken } = useAuthManager()
 const logger = useLogger()
 const { isDarkTheme } = useTheme()
 const {
@@ -98,15 +97,12 @@ const editDialogOpen = ref(false)
 
 const workspace = computed(() => result.value?.dashboard?.workspace)
 const dashboard = computed(() => result.value?.dashboard)
-const dashboardUrl = computed(() => {
-  return urlToken
-    ? `${dashboardsOrigin}/view/${id}?token=${urlToken}&isEmbed=true&theme=${
-        isDarkTheme.value ? 'dark' : 'light'
-      }`
-    : `${dashboardsOrigin}/dashboards/${id}?token=${
-        effectiveAuthToken.value
-      }&isEmbed=true&theme=${isDarkTheme.value ? 'dark' : 'light'}`
-})
+const dashboardUrl = computed(
+  () =>
+    `${dashboardsOrigin}/dashboards/${id}?token=${
+      dashboardToken.value || effectiveAuthToken.value
+    }&isEmbed=true&theme=${isDarkTheme.value ? 'dark' : 'light'}`
+)
 
 const toggleFullScreen = () => {
   if (!document.fullscreenElement) {

@@ -1,7 +1,14 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div v-keyboard-clickable :class="wrapperClasses" :view-id="view.id" @click="apply">
+  <div
+    v-keyboard-clickable
+    :class="[wrapperClasses, draggableClasses]"
+    :view-id="view.id"
+    draggable="true"
+    v-on="on"
+    @click="apply"
+  >
     <div class="flex items-center shrink-0">
       <div class="relative">
         <img
@@ -31,7 +38,7 @@
           :size="12"
           :stroke-width="1.5"
           :absolute-stroke-width="true"
-          class="w-3 h-3 text-foreground-3"
+          class="w-3 h-3 text-foreground-3 shrink-0"
         />
         <div
           v-tippy="{
@@ -112,6 +119,7 @@ import {
   useCollectNewSavedViewViewerData,
   useUpdateSavedView
 } from '~/lib/viewer/composables/savedViews/management'
+import { useDraggableView } from '~/lib/viewer/composables/savedViews/ui'
 import { useSavedViewValidationHelpers } from '~/lib/viewer/composables/savedViews/validation'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 
@@ -151,6 +159,7 @@ graphql(`
     ...UseUpdateSavedView_SavedView
     ...ViewerSavedViewsPanelViewEditDialog_SavedView
     ...UseSavedViewValidationHelpers_SavedView
+    ...UseDraggableView_SavedView
   }
 `)
 
@@ -176,6 +185,9 @@ const {
   isHomeView,
   canToggleVisibility
 } = useSavedViewValidationHelpers({
+  view: computed(() => props.view)
+})
+const { classes: draggableClasses, on } = useDraggableView({
   view: computed(() => props.view)
 })
 
@@ -252,7 +264,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
 
 const wrapperClasses = computed(() => {
   const classParts = [
-    'flex items-center gap-2 p-1.5 w-full group rounded-md cursor-pointer'
+    'flex items-center gap-2 p-1.5 w-full group rounded-md cursor-pointer relative transition-all'
   ]
 
   if (isActive.value) {
