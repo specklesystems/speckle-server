@@ -1,4 +1,4 @@
-import { useMutation } from '@vue/apollo-composable'
+import { useMutation, type MutateResult } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   CreateSavedViewGroupInput,
@@ -6,6 +6,7 @@ import type {
   UpdateSavedViewGroupInput,
   UpdateSavedViewGroupMutationVariables,
   UpdateSavedViewInput,
+  UpdateSavedViewMutation,
   UseDeleteSavedView_SavedViewFragment,
   UseDeleteSavedViewGroup_SavedViewGroupFragment,
   UseUpdateSavedView_SavedViewFragment,
@@ -246,6 +247,13 @@ export const useUpdateSavedView = () => {
        * Whether to skip toast notifications
        */
       skipToast: boolean
+      /**
+       * To get the full response, use this callback
+       */
+      onFullResult?: (
+        res: Awaited<MutateResult<UpdateSavedViewMutation>>,
+        success: boolean
+      ) => void
     }>
   ) => {
     if (!isLoggedIn.value) return
@@ -337,6 +345,7 @@ export const useUpdateSavedView = () => {
       }
     }
 
+    options?.onFullResult?.(result, !!res)
     return res
   }
 }

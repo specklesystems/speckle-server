@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { OverridesOf } from '../../../../tests/helpers/types.js'
-import { canUpdateSavedViewPolicy } from './canUpdate.js'
 import {
   getEnvFake,
   getProjectFake,
@@ -13,16 +12,16 @@ import {
 import { Roles } from '../../../../core/constants.js'
 import {
   ProjectNotEnoughPermissionsError,
-  SavedViewNoAccessError,
   ServerNoAccessError,
   WorkspaceNoAccessError,
   WorkspacePlanNoFeatureAccessError,
   WorkspacesNotEnabledError
 } from '../../../domain/authErrors.js'
+import { canMoveSavedViewPolicy } from './canMove.js'
 
-describe('canUpdateSavedViewPolicy', () => {
-  const buildSUT = (overrides?: OverridesOf<typeof canUpdateSavedViewPolicy>) =>
-    canUpdateSavedViewPolicy({
+describe('canMoveSavedViewPolicy', () => {
+  const buildSUT = (overrides?: OverridesOf<typeof canMoveSavedViewPolicy>) =>
+    canMoveSavedViewPolicy({
       getSavedView: getSavedViewFake({
         projectId: 'project-id',
         authorId: 'user-id'
@@ -62,7 +61,7 @@ describe('canUpdateSavedViewPolicy', () => {
 
   describe('w/ workspaced project', async () => {
     const buildWorkspacedSUT = (
-      overrides?: OverridesOf<typeof canUpdateSavedViewPolicy>
+      overrides?: OverridesOf<typeof canMoveSavedViewPolicy>
     ) =>
       buildSUT({
         getProject: getProjectFake({
@@ -86,7 +85,7 @@ describe('canUpdateSavedViewPolicy', () => {
         ...overrides
       })
 
-    it('doesnt work for non-author even if user is project owner', async () => {
+    it('works for non-author if user is workspace admin', async () => {
       const sut = buildWorkspacedSUT({
         getWorkspaceRole: async () => Roles.Workspace.Admin
       })
@@ -97,7 +96,21 @@ describe('canUpdateSavedViewPolicy', () => {
         savedViewId: 'saved-view-id'
       })
 
-      expect(result).toBeAuthErrorResult({ code: SavedViewNoAccessError.code })
+      expect(result).toBeOKResult()
+    })
+
+    it('works for non-author if user is contributor', async () => {
+      const sut = buildWorkspacedSUT({
+        getProjectRole: async () => Roles.Stream.Contributor
+      })
+
+      const result = await sut({
+        userId: 'user-idx',
+        projectId: 'project-id',
+        savedViewId: 'saved-view-id'
+      })
+
+      expect(result).toBeOKResult()
     })
 
     it('fails if workspaces disabled', async () => {
