@@ -70,128 +70,17 @@ defineEmits<{
 const itemHeight = 28
 const maxHeight = 240
 
-const { toggleActiveFilterValue } = useFilterUtilities()
-
-// Lazy raw values computation for performance - avoids expensive operations on huge datasets
-const rawValues = computed(() => {
-  if (!isStringFilter(props.filter) || !props.filter.filter) return []
-
-  const filter = props.filter.filter
-  if ('valueGroups' in filter && Array.isArray(filter.valueGroups)) {
-    // For huge datasets, return a lazy proxy that computes values on demand
-    if (filter.valueGroups.length > 10000) {
-      return new Proxy([], {
-        get(target, prop) {
-          if (prop === 'length') return filter.valueGroups.length
-          if (prop === Symbol.iterator) {
-            return function* () {
-              for (let i = 0; i < filter.valueGroups.length; i++) {
-                const value = String(filter.valueGroups[i].value)
-                if (
-                  value !== null &&
-                  value !== undefined &&
-                  value !== 'null' &&
-                  value !== 'undefined'
-                ) {
-                  yield value
-                }
-              }
-            }
-          }
-          if (typeof prop === 'string' && /^\d+$/.test(prop)) {
-            const index = parseInt(prop)
-            const value = String(filter.valueGroups[index]?.value)
-            return value !== null &&
-              value !== undefined &&
-              value !== 'null' &&
-              value !== 'undefined'
-              ? value
-              : undefined
-          }
-          if (prop === 'slice') {
-            return function (start: number, end?: number) {
-              return filter.valueGroups
-                .slice(start, end)
-                .map((vg: { value: unknown }) => String(vg.value))
-                .filter(
-                  (v: string) =>
-                    v !== null && v !== undefined && v !== 'null' && v !== 'undefined'
-                )
-            }
-          }
-          if (prop === 'filter') {
-            return function (predicate: (value: string) => boolean) {
-              const filtered: string[] = []
-              for (let i = 0; i < filter.valueGroups.length; i++) {
-                const value = String(filter.valueGroups[i].value)
-                if (
-                  value !== null &&
-                  value !== undefined &&
-                  value !== 'null' &&
-                  value !== 'undefined' &&
-                  predicate(value)
-                ) {
-                  filtered.push(value)
-                }
-              }
-              return filtered
-            }
-          }
-          return target[prop as keyof typeof target]
-        }
-      }) as string[]
-    }
-
-    return filter.valueGroups
-      .map((vg) => String(vg.value))
-      .filter((v) => v !== null && v !== undefined && v !== 'null' && v !== 'undefined')
-  }
-  return []
-})
+const { toggleActiveFilterValue, getFilteredFilterValues } = useFilterUtilities()
 
 const filteredValues = computed(() => {
   if (!isStringFilter(props.filter) || !props.filter.filter) return []
 
-  const values = rawValues.value
-  const totalLength = values.length
-
-  // Conservative limits based on dataset size (following boss's pattern)
-  const isHugeDataset = totalLength > 10000
-  const isLargeDataset = totalLength > 1000
-
-  // If there's a search query, filter efficiently with conservative limits
-  if (props.searchQuery?.trim()) {
-    const searchTerm = props.searchQuery.toLowerCase().trim()
-
-    // Much more aggressive limits to prevent UI freezing
-    const searchLimit = isHugeDataset ? 50 : isLargeDataset ? 100 : 500
-    const filtered: string[] = []
-
-    // Early termination search with conservative limits
-    if (isHugeDataset || isLargeDataset) {
-      // For large datasets, use optimized iteration
-      for (let i = 0; i < totalLength && filtered.length < searchLimit; i++) {
-        const value = values[i]
-        if (value && value.toLowerCase().includes(searchTerm)) {
-          filtered.push(value)
-        }
-        // Yield control every 100 items to prevent blocking
-        if (i % 100 === 0 && i > 0) {
-          // This allows Vue's reactivity to process other updates
-          break
-        }
-      }
-    } else {
-      // For smaller datasets, use standard filter
-      return values.filter((value: string) => value.toLowerCase().includes(searchTerm))
-    }
-
-    return filtered
-  }
-
-  // No search - virtual list handles rendering efficiently, so return all values
-  // The virtual list will only render visible items regardless of total count
-  return values
+  // Use the centralized function that includes proper sorting logic
+  return getFilteredFilterValues(props.filter.filter, {
+    searchQuery: props.searchQuery,
+    sortMode: props.sortMode,
+    filterId: props.filter.id
+  })
 })
 
 const isLargeDataset = computed(() => {
