@@ -25,7 +25,7 @@ class FileimportPayload(JobBase):
     file_type: str
     file_name: str
     time_out_seconds: int
-    remaining_compute_budget_seconds: int
+    remaining_compute_budget_seconds: int = 0
 
 
 class JobStatus(StrEnum):
