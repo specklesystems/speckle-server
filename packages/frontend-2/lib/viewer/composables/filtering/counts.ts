@@ -14,9 +14,10 @@ export function useFilteredObjectsCount() {
 
   const updateCount = () => {
     const filteringExtension = viewer.instance.getExtension(FilteringExtension)
+    if (!filteringExtension) return
+
     const isolatedObjects = filteringExtension.filteringState.isolatedObjects
 
-    // Check if there are any applied filters
     const hasAppliedFilters = filters.propertyFilters.value.some(
       (f) =>
         f.isApplied &&
@@ -39,8 +40,6 @@ export function useFilteredObjectsCount() {
       return
     }
 
-    // For performance with huge datasets, use the viewer's isolated objects count directly
-    // This avoids expensive PropertyInfo traversal that was causing crashes
     const realObjectCount =
       isolatedObjects?.filter((id) => id !== 'no-match-ghost-all').length || 0
     filteredObjectsCount.value = realObjectCount
@@ -49,14 +48,16 @@ export function useFilteredObjectsCount() {
   onMounted(() => {
     const filteringExtension = viewer.instance.getExtension(FilteringExtension)
 
-    // Try listening on the extension directly
     filteringExtension.on(ViewerEvent.FilteringStateSet, updateCount)
 
-    // Also try listening on the viewer instance
-    viewer.instance.on(ViewerEvent.FilteringStateSet, updateCount)
-
-    // Get initial count
     updateCount()
+  })
+
+  onBeforeUnmount(() => {
+    const filteringExtension = viewer.instance?.getExtension(FilteringExtension)
+    if (filteringExtension) {
+      filteringExtension.removeListener(ViewerEvent.FilteringStateSet, updateCount)
+    }
   })
 
   return {
@@ -64,7 +65,6 @@ export function useFilteredObjectsCount() {
   }
 }
 
-// Cache for value group maps to avoid repeated .find() operations
 const valueGroupCountCache = new WeakMap<PropertyInfo, Map<string, number>>()
 
 /**

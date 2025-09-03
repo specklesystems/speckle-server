@@ -105,7 +105,6 @@ import { X, Plus } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { onKeyStroke } from '@vueuse/core'
-import { shallowRef, watch } from 'vue'
 import { useFilteredObjectsCount } from '~/lib/viewer/composables/filtering/counts'
 
 const {
