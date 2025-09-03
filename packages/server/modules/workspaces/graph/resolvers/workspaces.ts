@@ -1596,9 +1596,6 @@ export default FF_WORKSPACES_MODULE_ENABLED
         moveToWorkspace: async (_parent, args, context) => {
           const { projectId, workspaceId } = args
 
-          // move project () into workspace (has a region)
-
-          // bug? main / (old one)
           const projectDb = await getProjectDbClient({ projectId })
 
           const logger = context.log.child({

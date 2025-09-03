@@ -573,13 +573,7 @@ export default {
         async ({ mainDb, allDbs, emit }) => {
           const updateStreamAndNotify = updateStreamAndNotifyFactory({
             getStream: getStreamFactory({ db: mainDb }),
-            updateStream: async (...input) => {
-              const [res] = await Promise.all(
-                allDbs.map((db) => updateStreamFactory({ db })(...input))
-              )
-
-              return res
-            },
+            updateStream: replicateFactory(allDbs, updateStreamFactory),
             emitEvent: emit
           })
 
