@@ -249,6 +249,16 @@ export type SourceAppDefinition = {
 }
 
 export const SourceApps: SourceAppDefinition[] = [
+  // ordering of the list is important.
+  // this will match all acc file importers
+  { searchKey: '-acc', name: 'Acc integration', short: 'ACC', bgColor: '#3091e7' },
+  {
+    // this will match all rhino based file importers
+    searchKey: '-rhino-importer',
+    name: 'File Import',
+    short: '',
+    bgColor: '#3091e7'
+  },
   { searchKey: 'advancesteel', name: 'Advance Steel', short: 'AS', bgColor: '#a438b6' },
   // deliberately keeping dynamo in front of revit, so it preceeds it when resolving from the host app name
   { searchKey: 'dynamo', name: 'Dynamo', short: 'DYN', bgColor: '#a438b6' },
@@ -275,15 +285,6 @@ export const SourceApps: SourceAppDefinition[] = [
   { searchKey: 'safe', name: 'SAFE', short: 'SAFE', bgColor: '#6d6d6d' },
   { searchKey: 'archicad', name: 'Archicad', short: 'ARCHI', bgColor: '#3091e7' },
   { searchKey: 'topsolid', name: 'TopSolid', short: 'TOPS', bgColor: '#3091e7' },
-  // this will match all acc file importers
-  { searchKey: '-acc', name: 'Acc integration', short: 'ACC', bgColor: '#3091e7' },
-  {
-    // this will match all rhino based file importers
-    searchKey: '-rhino-importer',
-    name: 'File Import',
-    short: '',
-    bgColor: '#3091e7'
-  },
   {
     searchKey: 'teklastructures',
     name: 'Tekla Structures',
