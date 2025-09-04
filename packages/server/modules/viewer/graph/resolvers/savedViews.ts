@@ -56,6 +56,7 @@ import {
   getSavedViewGroupFactory
 } from '@/modules/viewer/repositories/dataLoaders/savedViews'
 import type { RequestDataLoaders } from '@/modules/core/loaders'
+import { omit } from 'lodash-es'
 
 const buildGetViewerResourceGroups = (params: {
   projectDb: Knex
@@ -185,6 +186,22 @@ const resolvers: Resolvers = {
           modelId: parent.id,
           projectId
         })
+    },
+    resourceIdString: async (parent, _args, ctx) => {
+      const projectId = parent.streamId
+      const projectDb = await getProjectDbClient({ projectId })
+      const homeView = await ctx.loaders
+        .forRegion({ db: projectDb })
+        .savedViews.getModelHomeSavedView.load({
+          modelId: parent.id,
+          projectId
+        })
+
+      if (!homeView) return parent.id
+      return resourceBuilder()
+        .addResources(homeView.resourceIds)
+        .clearVersions() // just use latest version
+        .toString()
     }
   },
   SavedView: {
@@ -340,12 +357,23 @@ const resolvers: Resolvers = {
         resourceAccessRules: ctx.resourceAccessRules
       })
 
-      const canUpdate = await ctx.authPolicies.project.savedViews.canUpdate({
-        userId: ctx.userId,
-        projectId,
-        savedViewId: args.input.id
-      })
-      throwIfAuthNotOk(canUpdate)
+      const updates = omit(args.input, 'id', 'projectId')
+      const isJustMove = Object.keys(updates).length === 1 && 'groupId' in updates
+      if (isJustMove) {
+        const canMove = await ctx.authPolicies.project.savedViews.canMove({
+          userId: ctx.userId,
+          projectId,
+          savedViewId: args.input.id
+        })
+        throwIfAuthNotOk(canMove)
+      } else {
+        const canUpdate = await ctx.authPolicies.project.savedViews.canUpdate({
+          userId: ctx.userId,
+          projectId,
+          savedViewId: args.input.id
+        })
+        throwIfAuthNotOk(canUpdate)
+      }
 
       const updateSavedView = updateSavedViewFactory({
         getViewerResourceGroups: buildGetViewerResourceGroups({
@@ -510,7 +538,8 @@ const disabledResolvers: Resolvers = {
     }
   },
   Model: {
-    homeView: () => null // intentional - so we dont have to FF guard the query
+    homeView: () => null, // intentional - so we dont have to FF guard the query
+    resourceIdString: (parent) => parent.id
   },
   ProjectMutations: {
     savedViewMutations: () => {

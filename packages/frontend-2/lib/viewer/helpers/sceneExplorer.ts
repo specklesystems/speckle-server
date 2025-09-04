@@ -15,9 +15,6 @@ export const isNumericPropertyInfo = (
   info: MaybeNullOrUndefined<PropertyInfo>
 ): info is NumericPropertyInfo => info?.type === 'number'
 
-// Note: minor typing hacks for less squiggly lines in the explorer.
-// TODO: ask alex re viewer data tree types
-
 export type ExplorerNode = {
   guid?: string
   data?: SpeckleObject
@@ -38,3 +35,13 @@ export enum ModelsSubView {
   Versions = 'versions',
   Diff = 'diff'
 }
+
+export type ActivePanel =
+  | 'none'
+  | 'models'
+  | 'discussions'
+  | 'explorer'
+  | 'automate'
+  | 'filters'
+  | 'devMode'
+  | 'savedViews'

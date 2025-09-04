@@ -12,7 +12,7 @@ import {
 import {
   getProjectDbClient,
   getRegionDb,
-  isRegionMain
+  getReplicationDbs
 } from '@/modules/multiregion/utils/dbSelector'
 import {
   getProjectObjectStorage,
@@ -258,7 +258,7 @@ export const startQueue = async () => {
             name: 'updateProjectRegion',
             description: 'Update project region in db and update relevant caches',
             logger,
-            dbs: isRegionMain({ regionKey }) ? [db] : [db, targetDb]
+            dbs: await getReplicationDbs({ regionKey })
           }
         )
 

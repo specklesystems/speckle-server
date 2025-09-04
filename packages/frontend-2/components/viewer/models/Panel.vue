@@ -126,7 +126,7 @@ import {
   useTreeManagement,
   type UnifiedVirtualItem
 } from '~~/lib/viewer/composables/tree'
-import { useVirtualList, useDebounceFn } from '@vueuse/core'
+import { useVirtualList, useDebounceFn, useThrottleFn } from '@vueuse/core'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
@@ -373,7 +373,7 @@ const handleSelectionChange = useDebounceFn(
 )
 
 // Simple scroll tracking - just switch headers
-const handleScroll = (e: Event) => {
+const handleScroll = useThrottleFn((e: Event) => {
   const container = e.target as HTMLElement
   if (!container) return
 
@@ -400,7 +400,7 @@ const handleScroll = (e: Event) => {
       versionId: currentHeader.versionId
     }
   }
-}
+}, 16)
 
 watch(selectedObjects, handleSelectionChange, { deep: true })
 

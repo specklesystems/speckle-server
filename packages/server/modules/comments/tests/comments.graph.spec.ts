@@ -65,7 +65,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import type { UpdateStreamRecord } from '@/modules/core/domain/streams/operations'
 import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import { logger } from '@/observability/logging'
-import { getProjectReplicationDbClients } from '@/modules/multiregion/utils/dbSelector'
+import { getProjectReplicationDbs } from '@/modules/multiregion/utils/dbSelector'
 
 const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const streamResourceCheck = streamResourceCheckFactory({
@@ -121,7 +121,7 @@ const updateStream: UpdateStreamRecord = async (update) =>
     {
       logger,
       name: 'updateStream',
-      dbs: await getProjectReplicationDbClients({ projectId: update.id })
+      dbs: await getProjectReplicationDbs({ projectId: update.id })
     }
   )
 

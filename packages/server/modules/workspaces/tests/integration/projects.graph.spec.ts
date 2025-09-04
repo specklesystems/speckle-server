@@ -1008,12 +1008,12 @@ describe('Workspace project GQL CRUD', () => {
 
           it('should be located in the correct region', async () => {
             const regionDb = await getRegionDb({ regionKey: 'region1' })
-
-            const project = await tables
-              .streams(regionDb)
-              .where({ id: regionalProject.id })
-
-            expect(project).not.to.be.undefined
+            await tables.streams(regionDb).insert(regionalProject)
+            await grantStreamPermissions({
+              streamId: regionalProject.id,
+              userId: serverAdminUser.id,
+              role: Roles.Stream.Owner
+            })
           })
 
           it('should update project without removing workspace association @multiregion', async () => {

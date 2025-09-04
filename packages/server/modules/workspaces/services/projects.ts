@@ -30,8 +30,8 @@ import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import type { WorkspaceProjectCreateInput } from '@/modules/core/graph/generated/graphql'
 import {
   getDb,
-  getValidDefaultProjectRegionKey,
-  isRegionMain
+  getReplicationDbs,
+  getValidDefaultProjectRegionKey
 } from '@/modules/multiregion/utils/dbSelector'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
 import {
@@ -349,7 +349,7 @@ export const createWorkspaceProjectFactory =
         })
       },
       {
-        dbs: isRegionMain({ regionKey }) ? [mainDb] : [mainDb, projectDb],
+        dbs: await getReplicationDbs({ regionKey }),
         name: 'Create project workspace',
         logger
       }

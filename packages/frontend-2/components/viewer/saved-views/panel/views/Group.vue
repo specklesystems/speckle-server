@@ -1,12 +1,14 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <LayoutDisclosure
-    v-if="!isUngroupedGroup"
     v-model:open="open"
     v-model:edit-title="renameMode"
     color="subtle"
     :title="group.title"
     lazy-load
+    :class="dropZoneClasses"
     @update:title="onRename"
+    v-on="on"
   >
     <ViewerSavedViewsPanelViewsGroupInner
       :group="group"
@@ -19,6 +21,7 @@
         @click.stop
       >
         <LayoutMenu
+          v-if="!isUngroupedGroup"
           v-model:open="showMenu"
           :items="menuItems"
           :menu-id="menuId"
@@ -37,7 +40,7 @@
         </LayoutMenu>
         <div v-tippy="canCreateView?.errorMessage">
           <FormButton
-            v-tippy="getTooltipProps('Create view in group')"
+            v-tippy="getTooltipProps('Create view')"
             size="sm"
             color="subtle"
             :icon-left="Plus"
@@ -50,13 +53,6 @@
       </div>
     </template>
   </LayoutDisclosure>
-  <ViewerSavedViewsPanelViewsGroupInner
-    v-else
-    class="mb-[1px]"
-    :group="group"
-    :search="search"
-    :views-type="viewsType"
-  />
 </template>
 <script setup lang="ts">
 import { StringEnum, throwUncoveredError, type StringEnumValues } from '@speckle/shared'
@@ -70,11 +66,13 @@ import type {
   ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment,
   ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroupFragment
 } from '~/lib/common/generated/gql/graphql'
+import { ToastNotificationType } from '~/lib/common/composables/toast'
 import {
   useCreateSavedView,
   useUpdateSavedViewGroup
 } from '~/lib/viewer/composables/savedViews/management'
 import type { ViewsType } from '~/lib/viewer/helpers/savedViews'
+import { useDraggableViewTargetGroup } from '~/lib/viewer/composables/savedViews/ui'
 
 const { getTooltipProps } = useSmartTooltipDelay()
 
@@ -96,6 +94,7 @@ graphql(`
   fragment ViewerSavedViewsPanelViewsGroup_SavedViewGroup on SavedViewGroup {
     id
     isUngroupedViewsGroup
+    resourceIds
     title
     permissions {
       canUpdate {
@@ -105,6 +104,7 @@ graphql(`
     ...ViewerSavedViewsPanelViewsGroupInner_SavedViewGroup
     ...ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroup
     ...UseUpdateSavedViewGroup_SavedViewGroup
+    ...UseDraggableViewTargetGroup_SavedViewGroup
   }
 `)
 
@@ -140,8 +140,17 @@ const { triggerNotification } = useGlobalToast()
 const isLoading = useMutationLoading()
 const createView = useCreateSavedView()
 const updateGroup = useUpdateSavedViewGroup()
-const renameMode = defineModel<boolean>('renameMode')
+const { on, classes: dropZoneClasses } = useDraggableViewTargetGroup({
+  group: computed(() => props.group),
+  onMoved: () => {
+    // Auto-open the group if it was closed
+    if (!open.value) {
+      open.value = true
+    }
+  }
+})
 
+const renameMode = defineModel<boolean>('renameMode')
 const open = defineModel<boolean>('open')
 const showMenu = ref(false)
 const menuId = useId()

@@ -108,7 +108,7 @@ import {
 import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
 import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
 import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
-import { getProjectReplicationDbClients } from '@/modules/multiregion/utils/dbSelector'
+import { getProjectReplicationDbs } from '@/modules/multiregion/utils/dbSelector'
 import type { Logger } from '@/observability/logging'
 
 const getServerInfo = getServerInfoFactory({ db })
@@ -188,7 +188,7 @@ const deleteStreamAndNotify = async (
       logger: ctxLogger,
       name: 'delete project',
       description: `Cascade deleting a project`,
-      dbs: await getProjectReplicationDbClients({ projectId })
+      dbs: await getProjectReplicationDbs({ projectId })
     }
   )
 
@@ -573,13 +573,7 @@ export default {
         async ({ mainDb, allDbs, emit }) => {
           const updateStreamAndNotify = updateStreamAndNotifyFactory({
             getStream: getStreamFactory({ db: mainDb }),
-            updateStream: async (...input) => {
-              const [res] = await Promise.all(
-                allDbs.map((db) => updateStreamFactory({ db })(...input))
-              )
-
-              return res
-            },
+            updateStream: replicateFactory(allDbs, updateStreamFactory),
             emitEvent: emit
           })
 
@@ -588,7 +582,7 @@ export default {
         {
           logger,
           name: 'updateStream',
-          dbs: await getProjectReplicationDbClients({ projectId })
+          dbs: await getProjectReplicationDbs({ projectId })
         }
       )
       return true
