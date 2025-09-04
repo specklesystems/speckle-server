@@ -57,6 +57,8 @@ import { useViewerSavedViewIntegration } from '~/lib/viewer/composables/savedVie
 import { useViewModesPostSetup } from '~/lib/viewer/composables/setup/viewMode'
 import { useMeasurementsPostSetup } from '~/lib/viewer/composables/setup/measurements'
 import { useFilterColoringPostSetup } from '~/lib/viewer/composables/setup/coloring'
+import { usePropertyFilteringPostSetup } from '~/lib/viewer/composables/setup/propertyFiltering'
+import { useManualFilteringPostSetup } from '~/lib/viewer/composables/setup/manualFiltering'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { cleanupFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 import { cleanupValueGroupCountCache } from '~/lib/viewer/composables/filtering/counts'
@@ -859,6 +861,8 @@ export function useViewerPostSetup() {
   useDiffingIntegration()
   useMeasurementsPostSetup()
   useFilterColoringPostSetup()
+  usePropertyFilteringPostSetup()
+  useManualFilteringPostSetup()
   useDisableZoomOnEmbed()
   useViewerCursorIntegration()
   useViewerTreeIntegration()

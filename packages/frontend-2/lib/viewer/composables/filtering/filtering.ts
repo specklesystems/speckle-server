@@ -3,8 +3,6 @@ import type {
   NumericPropertyInfo,
   StringPropertyInfo
 } from '@speckle/viewer'
-
-import { FilteringExtension } from '@speckle/viewer'
 import { difference, uniq, partition } from 'lodash-es'
 import {
   useInjectedViewerState,
@@ -105,8 +103,6 @@ export function useFilterUtilities(
       ...(options?.replace ? [] : filters.isolatedObjectIds.value),
       ...objectIds
     ])
-    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
-    filteringExtension.isolateObjects(objectIds, 'manual-isolation', true, true)
   }
 
   const unIsolateObjects = (objectIds: string[]) => {
@@ -114,8 +110,6 @@ export function useFilterUtilities(
       filters.isolatedObjectIds.value,
       objectIds
     )
-    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
-    filteringExtension.unIsolateObjects(objectIds, 'manual-isolation', true, true)
   }
 
   const hideObjects = (
@@ -128,14 +122,10 @@ export function useFilterUtilities(
       ...(options?.replace ? [] : filters.hiddenObjectIds.value),
       ...objectIds
     ])
-    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
-    filteringExtension.hideObjects(objectIds, 'manual-hiding', false, false)
   }
 
   const showObjects = (objectIds: string[]) => {
     filters.hiddenObjectIds.value = difference(filters.hiddenObjectIds.value, objectIds)
-    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
-    filteringExtension.showObjects(objectIds, 'manual-hiding', false)
   }
 
   /**
@@ -277,16 +267,14 @@ export function useFilterUtilities(
         numericRange: { min, max }
       } satisfies NumericFilterData
     } else {
-      // For string filters, start with "select all" flag but lazy-load actual values
-      // This prevents the initial slowdown when adding properties with many values
       return {
         id,
         isApplied: true,
-        selectedValues: [], // Start empty - will be populated lazily when filtering is applied
+        selectedValues: [],
         condition: StringFilterCondition.Is,
         type: FilterType.String,
         filter: filter as StringPropertyInfo,
-        isDefaultAllSelected: true // This flag indicates "select all" behavior
+        isDefaultAllSelected: true
       } satisfies StringFilterData
     }
   }
@@ -340,19 +328,13 @@ export function useFilterUtilities(
    * Removes an active filter by ID
    */
   const removeActiveFilter = (filterId: string) => {
-    const instance = viewer.instance
     const index = filters.propertyFilters.value.findIndex((f) => f.id === filterId)
     if (index !== -1) {
       if (filters.activeColorFilterId.value === filterId) {
         removeColorFilter()
       }
       filters.propertyFilters.value.splice(index, 1)
-
       updateDataStoreSlices()
-      if (filters.propertyFilters.value.length === 0) {
-        const filteringExtension = instance.getExtension(FilteringExtension)
-        filteringExtension.resetFilters()
-      }
     }
   }
 
@@ -539,12 +521,6 @@ export function useFilterUtilities(
 
     dataStore.dataSlices.value.push(...newFilterSlices)
     dataStore.computeSliceIntersections()
-
-    if (import.meta.client) {
-      dataStore.updateViewer(viewer.instance, {
-        propertyFilters: filters.propertyFilters
-      })
-    }
   }
 
   /**
@@ -593,10 +569,6 @@ export function useFilterUtilities(
     if (nonFilterSlices.length > 0) {
       dataStore.computeSliceIntersections()
     }
-
-    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
-    filteringExtension.resetFilters()
-    filteringExtension.removeColorFilter()
   }
 
   const resetExplode = () => {
@@ -661,19 +633,16 @@ export function useFilterUtilities(
   const getPropertyOptionsFromDataStore = (): PropertyInfo[] => {
     const allProperties = new Map<string, PropertyInfo>()
 
-    // Collect all unique properties from all data sources
     for (const dataSource of dataStore.dataSources.value) {
       for (const [propertyKey] of Object.entries(dataSource.propertyMap)) {
         if (shouldExcludeFromFiltering(propertyKey)) {
           continue
         }
 
-        // Skip if we already have this property
         if (allProperties.has(propertyKey)) {
           continue
         }
 
-        // Get the property index to determine type and create PropertyInfo
         const propertyIndex = dataSource._propertyIndexCache?.[propertyKey] || {}
         const values = Object.keys(propertyIndex)
 
@@ -681,12 +650,10 @@ export function useFilterUtilities(
           continue
         }
 
-        // Determine if it's numeric or string based on first value
         const firstValue = values[0]
         const isNumeric = !isNaN(Number(firstValue)) && firstValue !== ''
 
         if (isNumeric) {
-          // Create NumericPropertyInfo
           const numericValues = values.map((v) => Number(v)).filter((v) => !isNaN(v))
           const min = Math.min(...numericValues)
           const max = Math.max(...numericValues)
@@ -702,7 +669,6 @@ export function useFilterUtilities(
             passMax: null
           } as NumericPropertyInfo)
         } else {
-          // Create StringPropertyInfo
           allProperties.set(propertyKey, {
             key: propertyKey,
             type: 'string',
@@ -756,12 +722,6 @@ export function useFilterUtilities(
       return values.sort((a, b) => a.localeCompare(b))
     }
   }
-
-  // Cleanup on unmount to prevent memory leaks
-  onBeforeUnmount(() => {
-    // Clear any component-specific data if needed
-    // The data store itself is a singleton and will be cleaned up elsewhere
-  })
 
   return {
     isolateObjects,

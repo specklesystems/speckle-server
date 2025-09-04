@@ -1,6 +1,4 @@
 import type { SpeckleObject, TreeNode, Viewer } from '@speckle/viewer'
-
-import { FilteringExtension } from '@speckle/viewer'
 import { uniq, flatten, isEmpty, compact } from 'lodash-es'
 import {
   FilterLogic,
@@ -13,8 +11,7 @@ import type {
   QueryCriteria,
   DataSource,
   ResourceInfo,
-  PropertyInfoBase,
-  FilterData
+  PropertyInfoBase
 } from '~/lib/viewer/helpers/filters/types'
 
 // Singleton instance to prevent multiple data stores
@@ -298,33 +295,6 @@ function createFilteringDataStore() {
     computeSliceIntersections()
   }
 
-  const updateViewer = (
-    instance: Viewer,
-    filters: {
-      propertyFilters: Ref<FilterData[]>
-    }
-  ) => {
-    const objectIds = getFinalObjectIds()
-    const filteringExtension = instance.getExtension(FilteringExtension)
-
-    filteringExtension.resetFilters()
-
-    const hasAppliedFilters = filters.propertyFilters.value.some(
-      (filter) => filter.isApplied
-    )
-
-    if (objectIds.length > 0) {
-      filteringExtension.isolateObjects(objectIds, 'property-filters', false, true)
-    } else if (hasAppliedFilters) {
-      filteringExtension.isolateObjects(
-        ['no-match-ghost-all'],
-        'property-filters',
-        false,
-        true
-      )
-    }
-  }
-
   return {
     populateDataStore,
     queryObjects,
@@ -332,7 +302,6 @@ function createFilteringDataStore() {
     popSlice,
     computeSliceIntersections,
     getFinalObjectIds,
-    updateViewer,
     clearDataOnRouteLeave,
     setFilterLogic,
     currentFilterLogic,

@@ -69,6 +69,19 @@ export const useFilterColoringPostSetup = () => {
   )
 
   /**
+   * Watch for filter resets - when all property filters are removed, clear color filter
+   */
+  watch(
+    () => filters.propertyFilters.value.length,
+    (filterCount, prevFilterCount) => {
+      if (prevFilterCount > 0 && filterCount === 0) {
+        const extension = filteringExtension()
+        extension.removeColorFilter()
+      }
+    }
+  )
+
+  /**
    * Initialize color filter on viewer load
    */
   useOnViewerLoadComplete(
