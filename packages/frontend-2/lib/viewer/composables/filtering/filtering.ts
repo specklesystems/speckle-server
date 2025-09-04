@@ -148,15 +148,15 @@ export function useFilterUtilities(
         continue
       }
 
-      // Use pre-computed property mapping - no iteration needed!
-      const propertyMapping = dataSource.propertyToObjectIds[propertyKey]
-      if (propertyMapping) {
-        for (const [value, objectIds] of Object.entries(propertyMapping)) {
-          if (valueToObjectIds.has(value)) {
-            valueToObjectIds.get(value)!.push(...objectIds)
-          } else {
-            valueToObjectIds.set(value, [...objectIds])
+      // Collect values and their associated object IDs using pre-computed data
+      for (const [objectId, objProps] of Object.entries(dataSource.objectProperties)) {
+        const value = objProps[propertyKey]
+        if (value !== undefined) {
+          const stringValue = String(value)
+          if (!valueToObjectIds.has(stringValue)) {
+            valueToObjectIds.set(stringValue, [])
           }
+          valueToObjectIds.get(stringValue)!.push(objectId)
         }
       }
     }
@@ -474,7 +474,9 @@ export function useFilterUtilities(
       ) {
         const values =
           filter.isDefaultAllSelected && filter.selectedValues.length === 0
-            ? getAllPropertyValues(filter.filter.key)
+            ? filter.filter.valueGroups
+                ?.map((vg) => String(vg.value))
+                .filter((v) => v !== 'null' && v !== 'undefined') || []
             : filter.selectedValues
 
         const { condition } = filter
