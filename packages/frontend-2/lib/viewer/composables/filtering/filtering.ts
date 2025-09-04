@@ -173,8 +173,8 @@ export function useFilterUtilities(
 
     if (isNumeric) {
       const numericValues = uniqueValues.map((v) => Number(v)).filter((v) => !isNaN(v))
-      const min = Math.min(...numericValues)
-      const max = Math.max(...numericValues)
+      const min = parseFloat(Math.min(...numericValues).toFixed(4))
+      const max = parseFloat(Math.max(...numericValues).toFixed(4))
 
       const numericValueGroups: { value: number; id: string }[] = []
       for (const value of uniqueValues) {
@@ -408,7 +408,10 @@ export function useFilterUtilities(
   const setNumericRange = (filterId: string, min: number, max: number) => {
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter && isNumericFilter(filter)) {
-      filter.numericRange = { min, max }
+      const roundedMin = parseFloat(min.toFixed(4))
+      const roundedMax = parseFloat(max.toFixed(4))
+
+      filter.numericRange = { min: roundedMin, max: roundedMax }
 
       if (!filter.isApplied) {
         filter.isApplied = true
