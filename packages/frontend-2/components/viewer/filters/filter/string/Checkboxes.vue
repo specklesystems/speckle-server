@@ -1,8 +1,10 @@
 <template>
   <div>
     <div class="flex justify-between items-center pr-1">
-      <ViewerFiltersFilterStringSelectAll v-if="!searchQuery" :filter="filter" />
-      <div v-else />
+      <ViewerFiltersFilterStringSelectAll
+        :filter="filter"
+        :disabled="!isEmpty(searchQuery?.trim())"
+      />
 
       <ViewerFiltersFilterStringSortButton v-model="sortMode" />
     </div>
@@ -34,6 +36,7 @@
 
 <script setup lang="ts">
 import { useVirtualList } from '@vueuse/core'
+import { isEmpty } from 'lodash-es'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { SortMode } from '~/lib/viewer/helpers/filters/types'
 import type { StringFilterData } from '~/lib/viewer/helpers/filters/types'

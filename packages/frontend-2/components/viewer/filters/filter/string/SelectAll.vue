@@ -3,8 +3,13 @@
 <template>
   <div class="px-1 w-full">
     <div
-      class="flex text-body-2xs items-center px-2 py-0.5 w-full hover:bg-highlight-1 rounded cursor-pointer"
-      @click="handleSelectAllChange"
+      class="flex text-body-2xs items-center px-2 py-0.5 w-full hover:bg-highlight-1 rounded"
+      :class="
+        disabled
+          ? 'opacity-50 cursor-not-allowed pointer-events-none'
+          : 'cursor-pointer'
+      "
+      @click="disabled ? undefined : handleSelectAllChange()"
     >
       <FormCheckbox
         :name="`select-all-${selectedCount}-${totalCount}`"
@@ -33,6 +38,7 @@ import type { StringFilterData } from '~/lib/viewer/helpers/filters/types'
 
 const props = defineProps<{
   filter: StringFilterData
+  disabled?: boolean
 }>()
 
 const { updateActiveFilterValues, selectAllFilterValues } = useFilterUtilities()
