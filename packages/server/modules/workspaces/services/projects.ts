@@ -187,7 +187,6 @@ export const moveProjectToWorkspaceFactory =
 
     // Assign project to workspace
     return await updateProject({
-      // need to be propagated
       projectUpdate: {
         id: projectId,
         workspaceId,

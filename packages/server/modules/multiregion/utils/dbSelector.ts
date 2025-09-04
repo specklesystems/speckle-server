@@ -30,7 +30,6 @@ import { mapValues } from 'lodash-es'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import { logger } from '@/observability/logging'
 
-const MAIN_REGION_KEY = 'main'
 let getter: GetProjectDb | undefined = undefined
 
 /**
@@ -176,7 +175,7 @@ export const getAllRegisteredDbClients = async (): Promise<Array<DatabaseClient>
     {
       client: mainDb,
       isMain: true,
-      regionKey: MAIN_REGION_KEY
+      regionKey: 'main'
     },
     ...Object.entries(regionDbs).map(([regionKey, client]) => ({
       client,
