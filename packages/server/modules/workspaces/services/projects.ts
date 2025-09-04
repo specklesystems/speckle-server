@@ -328,7 +328,6 @@ export const createWorkspaceProjectFactory =
       })
       if (!workspace) throw new LogicError('Workspace must exist in targeted region')
     }
-
     const project = await asMultiregionalOperation(
       async ({ allDbs, mainDb, emit }) => {
         const createNewProject = createNewProjectFactory({

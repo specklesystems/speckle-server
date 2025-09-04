@@ -457,9 +457,14 @@ describe('Viewer Resources Collection Service', () => {
           expect(homeViewGroup).to.be.ok
           expect(homeViewGroup!.items.length).to.equal(1)
           expect(homeViewGroup!.items[0].modelId).to.equal(homeViewModel().id)
+
+          // expect(homeViewGroup!.items[0].versionId).to.equal(
+          //   getModelVersions(homeViewModel().id)[0].id
+          // ) // version specified in view, not latest one
           expect(homeViewGroup!.items[0].versionId).to.equal(
-            getModelVersions(homeViewModel().id)[0].id
-          ) // version specified in view, not latest one
+            getModelVersions(homeViewModel().id).at(-1)!.id
+          ) // we're doing latest version for now
+
           expect(homeViewGroup!.items[0].objectId).to.be.ok
         })
 

@@ -108,7 +108,7 @@ import {
   deleteProjectAndCommitsFactory,
   queryAllProjectsFactory
 } from '@/modules/core/services/projects'
-import { getAllRegisteredTestDbs } from '@/modules/multiregion/tests/helpers'
+import { getTestRegionClients } from '@/modules/multiregion/tests/helpers'
 import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import type {
   ChangeUserPassword,
@@ -190,7 +190,7 @@ const createUser: CreateValidatedUser = async (...input) =>
       return createUser(...input)
     },
     {
-      dbs: await getAllRegisteredTestDbs(),
+      dbs: await getTestRegionClients(),
       name: 'create user spec',
       logger: dbLogger
     }
@@ -221,7 +221,7 @@ const updateUser: UpdateUserAndNotify = async (...input) =>
     {
       logger: dbLogger,
       name: 'update user and notify spec',
-      dbs: await getAllRegisteredTestDbs()
+      dbs: await getTestRegionClients()
     }
   )
 
@@ -244,7 +244,7 @@ const updateUserPassword: ChangeUserPassword = async (...input) =>
     {
       logger: dbLogger,
       name: 'update user password spec',
-      dbs: await getAllRegisteredTestDbs()
+      dbs: await getTestRegionClients()
     }
   )
 

@@ -55,7 +55,7 @@ import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits
 import { deleteProjectFactory } from '@/modules/core/repositories/projects'
 import type { DeleteUser } from '@/modules/core/domain/users/operations'
 import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
-import { getAllRegisteredTestDbs } from '@/modules/multiregion/tests/helpers'
+import { getTestRegionClients } from '@/modules/multiregion/tests/helpers'
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 const countUsers = legacyGetPaginatedUsersCountFactory({ db })
@@ -124,7 +124,7 @@ const deleteUser: DeleteUser = async (...input) =>
     {
       logger: dbLogger,
       name: 'delete user spec',
-      dbs: await getAllRegisteredTestDbs()
+      dbs: await getTestRegionClients()
     }
   )
 
