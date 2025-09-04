@@ -29,7 +29,6 @@ import type {
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import type { WorkspaceProjectCreateInput } from '@/modules/core/graph/generated/graphql'
 import {
-  getDb,
   getReplicationDbs,
   getValidDefaultProjectRegionKey
 } from '@/modules/multiregion/utils/dbSelector'
@@ -38,8 +37,6 @@ import {
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
-import { mainDb } from '@/db/knex'
-import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import type {
   GetWorkspaceRoleAndSeat,
   GetWorkspaceRolesAndSeats,
@@ -52,7 +49,6 @@ import type { CreateWorkspaceSeat } from '@/modules/gatekeeper/domain/operations
 import type { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import { logger } from '@/observability/logging'
-import { LogicError } from '@/modules/shared/errors'
 
 type MoveProjectToWorkspaceArgs = {
   projectId: string
@@ -315,19 +311,7 @@ export const createWorkspaceProjectFactory =
     })
     const regionKey =
       workspaceDefaultRegion?.key ?? (await getValidDefaultProjectRegionKey())
-    const projectDb = await getDb({ regionKey })
-    const db = mainDb
 
-    const regionalWorkspace = await getWorkspaceFactory({ db: projectDb })({
-      workspaceId: input.workspaceId
-    })
-
-    if (!regionalWorkspace) {
-      const workspace = await getWorkspaceFactory({ db })({
-        workspaceId: input.workspaceId
-      })
-      if (!workspace) throw new LogicError('Workspace must exist in targeted region')
-    }
     const project = await asMultiregionalOperation(
       async ({ allDbs, mainDb, emit }) => {
         const createNewProject = createNewProjectFactory({
