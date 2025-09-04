@@ -10,10 +10,7 @@ import {
 import type { BasicTestUser } from '@/test/authHelper'
 import { createTestUsers } from '@/test/authHelper'
 import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
-import {
-  createTestStream,
-  createTestStreams
-} from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
 import {
   getStreamFactory,
@@ -86,7 +83,7 @@ import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects
 import { deleteProjectFactory } from '@/modules/core/repositories/projects'
 import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import { logger } from '@/observability/logging'
-import { getProjectReplicationDbClients } from '@/modules/multiregion/utils/dbSelector'
+import { getProjectReplicationDbs } from '@/modules/multiregion/utils/dbSelector'
 import type { UpdateStream } from '@/modules/core/domain/streams/operations'
 
 const getServerInfo = getServerInfoFactory({ db })
@@ -140,11 +137,11 @@ const deleteStream = async (projectId: string, userId: string) =>
       logger,
       name: 'delete project spec',
       description: `Cascade deleting a project in all regions`,
-      dbs: await getProjectReplicationDbClients({ projectId })
+      dbs: await getProjectReplicationDbs({ projectId })
     }
   )
 
-const updateStream: UpdateStream = async (stream, projectId) =>
+const updateStream: UpdateStream = async (stream, userId) =>
   asMultiregionalOperation(
     async ({ mainDb, allDbs, emit }) => {
       const updateStreamAndNotify = updateStreamAndNotifyFactory({
@@ -153,12 +150,12 @@ const updateStream: UpdateStream = async (stream, projectId) =>
         emitEvent: emit
       })
 
-      return updateStreamAndNotify(stream, projectId)
+      return updateStreamAndNotify(stream, userId)
     },
     {
       logger,
       name: 'updateStream',
-      dbs: await getProjectReplicationDbClients({ projectId })
+      dbs: await getProjectReplicationDbs({ projectId: stream.id })
     }
   )
 
@@ -197,21 +194,8 @@ describe('Streams @core-streams', () => {
     id: ''
   }
 
-  const testStream: BasicTestStream = {
-    name: 'Test Stream 01',
-    description: 'wonderful test stream',
-    isPublic: true,
-    ownerId: '',
-    id: ''
-  }
-
-  const secondTestStream: BasicTestStream = {
-    name: 'Test Stream 02',
-    description: 'wot',
-    isPublic: false,
-    ownerId: '',
-    id: ''
-  }
+  let testStream: BasicTestStream
+  let secondTestStream: BasicTestStream
 
   let quitters: (() => void)[] = []
 
@@ -224,10 +208,22 @@ describe('Streams @core-streams', () => {
     await beforeEachContext()
 
     await createTestUsers([userOne, userTwo])
-    await createTestStreams([
-      [testStream, userOne],
-      [secondTestStream, userOne]
-    ])
+    testStream = await createTestStream(
+      {
+        name: 'Test Stream 01',
+        description: 'wonderful test stream',
+        isPublic: true
+      },
+      userOne
+    )
+    secondTestStream = await createTestStream(
+      {
+        name: 'Test Stream 02',
+        description: 'wot',
+        isPublic: false
+      },
+      userOne
+    )
   })
 
   afterEach(() => {

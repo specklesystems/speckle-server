@@ -160,7 +160,7 @@ import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
   getAllRegisteredDbs,
   getProjectDbClient,
-  getProjectReplicationDbClients
+  getProjectReplicationDbs
 } from '@/modules/multiregion/utils/dbSelector'
 import {
   listUserExpiredSsoSessionsFactory,
@@ -1684,7 +1684,7 @@ export default FF_WORKSPACES_MODULE_ENABLED
               logger,
               name: 'moveProjectToWorkspace',
               description: 'Move project to workspace',
-              dbs: await getProjectReplicationDbClients({ projectId })
+              dbs: await getProjectReplicationDbs({ projectId })
             }
           )
 

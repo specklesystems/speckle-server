@@ -178,7 +178,7 @@ isMultiRegionTestMode()
         const [{ count }] = await db('users').count()
         expect(count).to.eql('1000')
 
-        await sleep(500) // just in case
+        await sleep(50)
 
         const connectionsUsedAfter = main.client.pool.numUsed()
         expect(connectionsUsedAfter).to.be.lte(connectionsUsedBefore)

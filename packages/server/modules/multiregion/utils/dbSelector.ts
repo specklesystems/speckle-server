@@ -30,7 +30,6 @@ import { mapValues } from 'lodash-es'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import { logger } from '@/observability/logging'
 
-const MAIN_REGION_KEY = 'main'
 let getter: GetProjectDb | undefined = undefined
 
 /**
@@ -86,33 +85,31 @@ export const getProjectDbClient: GetProjectDb = async ({ projectId }) => {
 // helper for replication logic
 // returns the replication strategy ( locations where data need to be updated at the same time)
 // instead of just the target db
-export const getProjectReplicationDbClients = async ({
+export const getProjectReplicationDbs = async ({
   projectId
 }: {
   projectId: string
 }): Promise<[Knex, ...Knex[]]> => {
   const getDefaultDb = () => undefined
-  let projectDb = undefined
-  try {
-    projectDb = await getProjectDbClientFactory({
-      getDefaultDb,
-      getRegionDb,
-      getProjectRegionKey
-    })({ projectId })
-  } catch {
-    logger.warn({ projectId }, 'No regionKey found for project')
-  }
+  const projectDb = await getProjectDbClientFactory({
+    getDefaultDb,
+    getRegionDb,
+    getProjectRegionKey
+  })({ projectId })
 
   return [mainDb, ...(projectDb ? [projectDb] : [])]
 }
 
-export const isRegionMain = ({
+export const getReplicationDbs = async ({
   regionKey
 }: {
-  regionKey: MaybeNullOrUndefined<string>
-}) => {
-  if (!regionKey) return true
-  return regionKey === MAIN_REGION_KEY
+  regionKey: string | null
+}): Promise<[Knex, ...Knex[]]> => {
+  if (!regionKey) {
+    return [mainDb]
+  }
+
+  return [mainDb, await getRegionDb({ regionKey })]
 }
 
 // the default region key is a config value, we're caching this globally
@@ -178,7 +175,7 @@ export const getAllRegisteredDbClients = async (): Promise<Array<DatabaseClient>
     {
       client: mainDb,
       isMain: true,
-      regionKey: MAIN_REGION_KEY
+      regionKey: 'main'
     },
     ...Object.entries(regionDbs).map(([regionKey, client]) => ({
       client,
