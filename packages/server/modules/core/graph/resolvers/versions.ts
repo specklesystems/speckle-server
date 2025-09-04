@@ -52,6 +52,7 @@ import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { isCreatedBeyondHistoryLimitCutoffFactory } from '@/modules/gatekeeperCore/utils/limits'
+import { SourceApps } from '@speckle/shared'
 
 const throwIfRateLimited = throwIfRateLimitedFactory({
   rateLimiterEnabled: isRateLimiterEnabled()
@@ -101,6 +102,16 @@ export default {
       return new URL(path, getServerOrigin()).toString()
     },
     sourceApplication: async (parent) => {
+      const knownSourceApp = SourceApps.find((app) =>
+        parent.sourceApplication?.includes(app.searchKey)
+      )
+      // we map known source apps to their search keys (aka slug)
+      // except for search keys which begin with a "-"
+      // they are partial search key patterns.
+      // those source apps are already sent as slugs by connectors, so no need to remap
+      if (knownSourceApp && !knownSourceApp.searchKey.startsWith('-')) {
+        return knownSourceApp.searchKey
+      }
       return parent.sourceApplication
     },
     referencedObject: async (parent, _args, ctx) => {
