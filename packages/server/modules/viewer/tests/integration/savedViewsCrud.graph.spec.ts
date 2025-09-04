@@ -43,6 +43,7 @@ import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
 import {
   SavedViewCreationValidationError,
   SavedViewGroupCreationValidationError,
+  SavedViewGroupNotFoundError,
   SavedViewGroupUpdateValidationError,
   SavedViewInvalidHomeViewSettingsError,
   SavedViewInvalidResourceTargetError,
@@ -599,7 +600,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         )
 
         expect(res).to.haveGraphQLErrors({
-          code: SavedViewCreationValidationError.code
+          code: SavedViewGroupNotFoundError.code
         })
         expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
       })
@@ -1361,7 +1362,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
             name: 'x'
           }
         })
-        expect(res).to.haveGraphQLErrors({ code: SavedViewUpdateValidationError.code })
+        expect(res).to.haveGraphQLErrors({ code: SavedViewGroupNotFoundError.code })
         expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
       })
 

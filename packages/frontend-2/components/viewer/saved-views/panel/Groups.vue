@@ -218,9 +218,7 @@ watch(
   (newGroups) => {
     if (newGroups.length) {
       // first group should be selected
-      const selectableGroupId = props.search
-        ? newGroups[0].id
-        : newGroups.find((g) => !g.isUngroupedViewsGroup)?.id
+      const selectableGroupId = newGroups[0].id
       if (selectableGroupId) {
         openedGroupState.value.set(selectableGroupId, true)
       }

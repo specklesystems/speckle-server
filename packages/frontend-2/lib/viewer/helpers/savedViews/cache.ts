@@ -40,9 +40,17 @@ export const onNewGroupViewCacheUpdates = (
       const isNewGroup = !value?.items?.some((group) => fromRef(group).id === groupId)
       if (!isNewGroup) return
 
+      const isNewGroupUngrouped = isUngroupedGroup(groupId)
+
       return createUpdatedValue(({ update }) => {
         update('totalCount', (count) => count + 1)
-        update('items', (items) => [...items, ref('SavedViewGroup', groupId)])
+        update('items', (items) => {
+          const newItems = items.slice()
+          newItems[isNewGroupUngrouped ? 'unshift' : 'push'](
+            ref('SavedViewGroup', groupId)
+          )
+          return newItems
+        })
       })
     },
     { autoEvictFiltered: filterKeys }
