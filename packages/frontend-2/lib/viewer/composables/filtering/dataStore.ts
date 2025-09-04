@@ -75,7 +75,7 @@ function createFilteringDataStore() {
 
       const objectMap: Record<string, SpeckleObject> = {}
       const propertyMap: Record<string, PropertyInfoBase> = {}
-      const propertyIndexCache: Record<string, Record<string, string[]>> = {}
+      const propertyKeysSet = new Set<string>()
 
       await tree.walkAsync((node: TreeNode) => {
         if (
@@ -90,20 +90,10 @@ function createFilteringDataStore() {
 
           const props = extractNestedProperties(node.model.raw)
           for (const p of props) {
-            propertyMap[p.concatenatedPath] = p
-
-            const propertyKey = p.concatenatedPath
-            const value = String(p.value)
-
-            if (!propertyIndexCache[propertyKey]) {
-              propertyIndexCache[propertyKey] = {}
+            if (!propertyKeysSet.has(p.concatenatedPath)) {
+              propertyMap[p.concatenatedPath] = p
+              propertyKeysSet.add(p.concatenatedPath)
             }
-
-            if (!propertyIndexCache[propertyKey][value]) {
-              propertyIndexCache[propertyKey][value] = []
-            }
-
-            propertyIndexCache[propertyKey][value].push(objectId)
           }
         }
         return true
@@ -116,8 +106,7 @@ function createFilteringDataStore() {
         viewerInstance: markRaw(viewer),
         rootObject: rootObject ? markRaw(rootObject) : null,
         objectMap: markRaw(objectMap),
-        propertyMap,
-        _propertyIndexCache: propertyIndexCache
+        propertyMap
       }
     }
   }
@@ -126,10 +115,44 @@ function createFilteringDataStore() {
     dataSource: DataSource,
     propertyKey: string
   ): Record<string, string[]> => {
-    if (dataSource._propertyIndexCache && dataSource._propertyIndexCache[propertyKey]) {
+    if (!dataSource._propertyIndexCache) {
+      dataSource._propertyIndexCache = {}
+    }
+
+    if (dataSource._propertyIndexCache[propertyKey]) {
       return dataSource._propertyIndexCache[propertyKey]
     }
-    return {}
+
+    const propertyIndex: Record<string, string[]> = {}
+
+    const propertyInfo = dataSource.propertyMap[propertyKey]
+    if (!propertyInfo) {
+      dataSource._propertyIndexCache[propertyKey] = propertyIndex
+      return propertyIndex
+    }
+
+    for (const [objectId, obj] of Object.entries(dataSource.objectMap)) {
+      let props: PropertyInfoBase[]
+
+      if (propertyExtractionCache.has(obj)) {
+        props = propertyExtractionCache.get(obj)!
+      } else {
+        props = extractNestedProperties(obj)
+      }
+
+      const matchingProp = props.find((p) => p.concatenatedPath === propertyKey)
+
+      if (matchingProp) {
+        const value = String(matchingProp.value)
+        if (!propertyIndex[value]) {
+          propertyIndex[value] = []
+        }
+        propertyIndex[value].push(objectId)
+      }
+    }
+
+    dataSource._propertyIndexCache[propertyKey] = propertyIndex
+    return propertyIndex
   }
 
   const queryObjects = (criteria: QueryCriteria): string[] => {

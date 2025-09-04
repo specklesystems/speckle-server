@@ -235,11 +235,61 @@ export function useFilterUtilities(
     return map
   }
 
+  /**
+   * Builds full property info with indices when a filter is actually created
+   */
+  const buildFullPropertyInfo = (propertyInfo: PropertyInfo): PropertyInfo => {
+    if (
+      'valueGroups' in propertyInfo &&
+      Array.isArray(propertyInfo.valueGroups) &&
+      propertyInfo.valueGroups.length > 0
+    ) {
+      return propertyInfo
+    }
+
+    let allValues: string[] = []
+    const allObjectIds: string[] = []
+
+    for (const dataSource of dataStore.dataSources.value) {
+      const propertyIndex = dataStore.buildPropertyIndex(dataSource, propertyInfo.key)
+      const values = Object.keys(propertyIndex)
+      allValues.push(...values)
+
+      for (const objectIds of Object.values(propertyIndex)) {
+        allObjectIds.push(...objectIds)
+      }
+    }
+
+    allValues = [...new Set(allValues)]
+
+    if (propertyInfo.type === 'number') {
+      const numericValues = allValues.map((v) => Number(v)).filter((v) => !isNaN(v))
+      const min = Math.min(...numericValues)
+      const max = Math.max(...numericValues)
+
+      return {
+        ...propertyInfo,
+        min,
+        max,
+        objectCount: allObjectIds.length,
+        valueGroups: allValues.map((value) => ({ value: Number(value), id: '' }))
+      } as NumericPropertyInfo
+    } else {
+      return {
+        ...propertyInfo,
+        objectCount: allObjectIds.length,
+        valueGroups: allValues.map((value) => ({ value, ids: [] }))
+      } as StringPropertyInfo
+    }
+  }
+
   const createFilterData = (params: CreateFilterParams): FilterData => {
     const { filter, id } = params
 
-    if (isNumericPropertyInfo(filter)) {
-      const numericFilter = filter as NumericPropertyInfo
+    const fullPropertyInfo = buildFullPropertyInfo(filter)
+
+    if (isNumericPropertyInfo(fullPropertyInfo)) {
+      const numericFilter = fullPropertyInfo as NumericPropertyInfo
       const { min, max } = numericFilter
       const range = max - min
 
@@ -285,7 +335,7 @@ export function useFilterUtilities(
         selectedValues: [], // Start empty - will be populated lazily when filtering is applied
         condition: StringFilterCondition.Is,
         type: FilterType.String,
-        filter: filter as StringPropertyInfo,
+        filter: fullPropertyInfo as StringPropertyInfo,
         isDefaultAllSelected: true // This flag indicates "select all" behavior
       } satisfies StringFilterData
     }
@@ -661,7 +711,9 @@ export function useFilterUtilities(
 
     // Collect all unique properties from all data sources
     for (const dataSource of dataStore.dataSources.value) {
-      for (const [propertyKey] of Object.entries(dataSource.propertyMap)) {
+      for (const [propertyKey, propertyInfo] of Object.entries(
+        dataSource.propertyMap
+      )) {
         if (shouldExcludeFromFiltering(propertyKey)) {
           continue
         }
@@ -671,44 +723,30 @@ export function useFilterUtilities(
           continue
         }
 
-        // Get the property index to determine type and create PropertyInfo
-        const propertyIndex = dataSource._propertyIndexCache?.[propertyKey] || {}
-        const values = Object.keys(propertyIndex)
-
-        if (values.length === 0) {
-          continue
-        }
-
-        // Determine if it's numeric or string based on first value
-        const firstValue = values[0]
-        const isNumeric = !isNaN(Number(firstValue)) && firstValue !== ''
+        const sampleValue = propertyInfo.value
+        const isNumeric =
+          typeof sampleValue === 'number' ||
+          (!isNaN(Number(sampleValue)) && sampleValue !== '' && sampleValue !== null)
 
         if (isNumeric) {
-          // Create NumericPropertyInfo
-          const numericValues = values.map((v) => Number(v)).filter((v) => !isNaN(v))
-          const min = Math.min(...numericValues)
-          const max = Math.max(...numericValues)
-
+          // Create minimal NumericPropertyInfo - indices built later when actually filtering
           allProperties.set(propertyKey, {
             key: propertyKey,
             type: 'number',
-            objectCount: values.length,
-            min,
-            max,
-            valueGroups: values.map((value) => ({ value: Number(value), id: '' })), // IDs not needed for selection
+            objectCount: 0, // Will be calculated when filter is actually used
+            min: Number(sampleValue),
+            max: Number(sampleValue),
+            valueGroups: [], // Will be populated when filter is actually used
             passMin: null,
             passMax: null
           } as NumericPropertyInfo)
         } else {
-          // Create StringPropertyInfo
+          // Create minimal StringPropertyInfo - indices built later when actually filtering
           allProperties.set(propertyKey, {
             key: propertyKey,
             type: 'string',
-            objectCount: values.length,
-            valueGroups: values.map((value) => ({
-              value,
-              ids: propertyIndex[value] || []
-            }))
+            objectCount: 0, // Will be calculated when filter is actually used
+            valueGroups: [] // Will be populated when filter is actually used
           } as StringPropertyInfo)
         }
       }
