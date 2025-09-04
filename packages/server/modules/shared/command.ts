@@ -179,8 +179,6 @@ export const asMultiregionalOperation = async <T, K extends [Knex, ...Knex[]]>(
         operation({
           allDbs: [db],
           mainDb: db,
-          regionDb: db,
-          regionDbs: [],
           emit
         }),
       {
