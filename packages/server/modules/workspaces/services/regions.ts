@@ -5,8 +5,7 @@ import type {
   GetAvailableRegions,
   GetDefaultRegion,
   GetWorkspace,
-  UpsertRegionAssignment,
-  UpsertWorkspace
+  UpsertRegionAssignment
 } from '@/modules/workspaces/domain/operations'
 import { WorkspaceRegionAssignmentError } from '@/modules/workspaces/errors/regions'
 
@@ -31,7 +30,6 @@ export const assignWorkspaceRegionFactory =
     upsertRegionAssignment: UpsertRegionAssignment
     getDefaultRegion: GetDefaultRegion
     getWorkspace: GetWorkspace
-    insertRegionWorkspace: UpsertWorkspace
   }): AssignWorkspaceRegion =>
   async (params) => {
     const { workspaceId, regionKey } = params
@@ -65,7 +63,4 @@ export const assignWorkspaceRegionFactory =
 
     // Set up region
     await deps.upsertRegionAssignment({ workspaceId, regionKey })
-
-    // Copy workspace into region db
-    await deps.insertRegionWorkspace({ workspace })
   }

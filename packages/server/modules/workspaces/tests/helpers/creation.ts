@@ -90,7 +90,6 @@ import {
   getDefaultRegionFactory,
   upsertRegionAssignmentFactory
 } from '@/modules/workspaces/repositories/regions'
-import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import {
   assignWorkspaceSeatFactory,
@@ -304,7 +303,6 @@ export const createTestWorkspace = async (
   }
 
   if (useRegion) {
-    const regionDb = await getDb({ regionKey })
     const assignRegion = assignWorkspaceRegionFactory({
       getAvailableRegions: getAvailableRegionsFactory({
         getRegions: getRegionsFactory({ db }),
@@ -314,8 +312,7 @@ export const createTestWorkspace = async (
       }),
       upsertRegionAssignment: upsertRegionAssignmentFactory({ db }),
       getDefaultRegion: getDefaultRegionFactory({ db }),
-      getWorkspace: getWorkspaceFactory({ db }),
-      insertRegionWorkspace: upsertWorkspaceFactory({ db: regionDb })
+      getWorkspace: getWorkspaceFactory({ db })
     })
     await assignRegion({
       workspaceId: newWorkspace.id,

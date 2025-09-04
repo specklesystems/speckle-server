@@ -39,10 +39,7 @@ import {
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
 import { mainDb } from '@/db/knex'
-import {
-  getWorkspaceFactory,
-  upsertWorkspaceFactory
-} from '@/modules/workspaces/repositories/workspaces'
+import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import type {
   GetWorkspaceRoleAndSeat,
   GetWorkspaceRolesAndSeats,
@@ -55,6 +52,7 @@ import type { CreateWorkspaceSeat } from '@/modules/gatekeeper/domain/operations
 import type { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import { logger } from '@/observability/logging'
+import { LogicError } from '@/modules/shared/errors'
 
 type MoveProjectToWorkspaceArgs = {
   projectId: string
@@ -328,9 +326,9 @@ export const createWorkspaceProjectFactory =
       const workspace = await getWorkspaceFactory({ db })({
         workspaceId: input.workspaceId
       })
-      if (!workspace) throw new WorkspaceNotFoundError()
-      await upsertWorkspaceFactory({ db: projectDb })({ workspace })
+      if (!workspace) throw new LogicError('Workspace must exist in targeted region')
     }
+
     const project = await asMultiregionalOperation(
       async ({ allDbs, mainDb, emit }) => {
         const createNewProject = createNewProjectFactory({
