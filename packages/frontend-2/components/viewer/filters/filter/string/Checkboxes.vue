@@ -4,10 +4,7 @@
       <ViewerFiltersFilterStringSelectAll v-if="!searchQuery" :filter="filter" />
       <div v-else />
 
-      <ViewerFiltersFilterStringSortButton
-        :model-value="sortMode"
-        @update:model-value="$emit('update:sortMode', $event)"
-      />
+      <ViewerFiltersFilterStringSortButton v-model="sortMode" />
     </div>
 
     <div
@@ -38,17 +35,17 @@
 <script setup lang="ts">
 import { useVirtualList } from '@vueuse/core'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
-import type { StringFilterData, SortMode } from '~/lib/viewer/helpers/filters/types'
+import { SortMode } from '~/lib/viewer/helpers/filters/types'
+import type { StringFilterData } from '~/lib/viewer/helpers/filters/types'
 
 const props = defineProps<{
   filter: StringFilterData
   searchQuery?: string
-  sortMode: SortMode
 }>()
 
-defineEmits<{
-  'update:sortMode': [value: SortMode]
-}>()
+const sortMode = defineModel<SortMode>('sortMode', {
+  default: SortMode.Alphabetical
+})
 
 const itemHeight = 28
 const maxHeight = 240
@@ -60,7 +57,7 @@ const filteredValues = computed(() => {
 
   return getFilteredFilterValues(props.filter.filter, {
     searchQuery: props.searchQuery,
-    sortMode: props.sortMode,
+    sortMode: sortMode.value,
     filterId: props.filter.id
   })
 })
