@@ -314,6 +314,10 @@ export type InjectableViewerState = Readonly<{
        * For quick object ID lookups
        */
       selectedObjectIds: ComputedRef<Set<string>>
+      /**
+       * Set of currently isolated object IDs for efficient lookups
+       */
+      isolatedObjectsSet: ComputedRef<Set<string> | null>
 
       // Multi-filter system
       propertyFilters: Ref<FilterData[]>
@@ -1162,6 +1166,19 @@ function setupInterfaceState(
       )
   )
 
+  const isolatedObjectsSet = computed(() => {
+    const currentlyIsolated =
+      state.viewer.metadata.filteringState.value?.isolatedObjects
+
+    if (!currentlyIsolated || currentlyIsolated.length === 0) return null
+
+    const realIsolatedObjects = currentlyIsolated.filter(
+      (id: string) => id !== 'no-match-ghost-all'
+    )
+
+    return new Set(realIsolatedObjects)
+  })
+
   /**
    * THREADS
    */
@@ -1219,6 +1236,7 @@ function setupInterfaceState(
         hiddenObjectIds,
         selectedObjects,
         selectedObjectIds,
+        isolatedObjectsSet,
         propertyFilters,
         hasAnyFiltersApplied,
         activeColorFilterId

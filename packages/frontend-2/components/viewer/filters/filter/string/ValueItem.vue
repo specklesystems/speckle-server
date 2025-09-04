@@ -61,7 +61,7 @@ const { isActiveFilterValueSelected, filters, getCachedValueGroupsMap } =
 
 const { getFilterValueColor } = useFilterColors()
 
-const { viewer } = useInjectedViewerState()
+const { ui } = useInjectedViewerState()
 
 // Create valueGroupsMap at setup level
 const valueGroupsMap = computed(() => {
@@ -81,18 +81,8 @@ const totalCount = computed(() => {
   return getFilterValueCount(props.filter.filter, props.value)
 })
 
-// Performance-optimized isolatedObjectsSet
-const isolatedObjectsSet = computed(() => {
-  const currentlyIsolated = viewer.metadata.filteringState.value?.isolatedObjects
-
-  if (!currentlyIsolated || currentlyIsolated.length === 0) return null
-
-  const realIsolatedObjects = currentlyIsolated.filter(
-    (id: string) => id !== 'no-match-ghost-all'
-  )
-
-  return new Set(realIsolatedObjects)
-})
+// Use singleton isolatedObjectsSet from viewer state
+const { isolatedObjectsSet } = ui.filters
 
 const availableCount = computed(() => {
   if (!props.filter.filter || !totalCount.value) return null
