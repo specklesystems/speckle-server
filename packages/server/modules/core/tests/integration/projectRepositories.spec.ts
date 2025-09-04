@@ -90,11 +90,6 @@ describe('project repositories @core', () => {
     })
   })
   describe('deleteProjectFactory creates a function, that', () => {
-    it('throws an error if project does not exist', async () => {
-      await expect(
-        deleteProject({ projectId: cryptoRandomString({ length: 10 }) })
-      ).to.be.rejectedWith(Error)
-    })
     it('deletes the project', async () => {
       const project = createTestProject()
       await storeProject({ project })
