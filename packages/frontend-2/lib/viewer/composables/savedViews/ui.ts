@@ -7,6 +7,7 @@ import type {
 import { ensureError, safeParse } from '@speckle/shared'
 import { has, isObjectLike } from 'lodash-es'
 import { useUpdateSavedView } from '~/lib/viewer/composables/savedViews/management'
+import { isUngroupedGroup } from '@speckle/shared/dist/esm/saved-views/index.js'
 
 const isDraggableView = (view: unknown): view is UseDraggableView_SavedViewFragment =>
   isObjectLike(view) && has(view, 'id') && has(view, 'permissions.canUpdate')
@@ -105,7 +106,14 @@ export const useDraggableViewTargetGroup = (params: {
       try {
         const data = event.dataTransfer.getData('application/json')
         const view = safeParse(data, isDraggableView)
-        if (!view || view.group.id === params.group.value.id) {
+        if (!view) return
+
+        const sameGroupId = view.group.id === params.group.value.id
+        const bothUngrouped =
+          isUngroupedGroup(view.group.id) && isUngroupedGroup(params.group.value.id)
+
+        // "Same" ungrouped group can exist as different cache entries/IDs, due to resourceIds being changed?
+        if (sameGroupId || bothUngrouped) {
           return
         }
 

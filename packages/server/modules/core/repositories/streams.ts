@@ -79,7 +79,6 @@ import type {
   GetStream,
   GetStreamCollaborators,
   GetStreams,
-  DeleteStreamRecord,
   UpdateStreamRecord,
   RevokeStreamPermissions,
   GrantStreamPermissions,
@@ -890,6 +889,7 @@ export const getUserStreamsCountFactory =
     const [res] = await countQuery
     return parseInt(res.count)
   }
+
 export const createStreamFactory =
   (deps: { db: Knex }): SaveStream =>
   async (input) => {
@@ -959,23 +959,6 @@ export const getUserStreamCountsFactory =
 
     const results = await q
     return mapValues(keyBy(results, 'userId'), (r) => parseInt(r.count))
-  }
-
-export const deleteStreamFactory =
-  (deps: { db: Knex }): DeleteStreamRecord =>
-  async (streamId: string) => {
-    // Delete stream commits (not automatically cascaded)
-    await deps.db.raw(
-      `
-      DELETE FROM commits WHERE id IN (
-        SELECT sc."commitId" FROM streams s
-        INNER JOIN stream_commits sc ON s.id = sc."streamId"
-        WHERE s.id = ?
-      )
-      `,
-      [streamId]
-    )
-    return await tables.streams(deps.db).where(Streams.col.id, streamId).del()
   }
 
 export const getStreamsSourceAppsFactory =
@@ -1295,6 +1278,7 @@ export const markOnboardingBaseStreamFactory =
     if (!stream) {
       throw new StreamNotFoundError(`Stream ${streamId} not found`)
     }
+    //  this happens outside of the a multiregion ctx
     await updateStreamFactory(deps)({
       id: streamId,
       name: 'Onboarding Stream Local Source - Do Not Delete'

@@ -1,8 +1,8 @@
 import { expect } from 'chai'
 import { responseHandlerFactory } from '@/modules/previews/services/responses'
-import { testLogger as logger } from '@/observability/logging'
 import { buildConsumePreviewResult } from '@/modules/previews/resultListener'
 import cryptoRandomString from 'crypto-random-string'
+import { logger } from '@/observability/logging'
 
 describe('object preview @previews', () => {
   describe('responseHandlerFactory creates a function, that', () => {

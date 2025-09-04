@@ -94,6 +94,7 @@ graphql(`
   fragment ViewerSavedViewsPanelViewsGroup_SavedViewGroup on SavedViewGroup {
     id
     isUngroupedViewsGroup
+    resourceIds
     title
     permissions {
       canUpdate {
