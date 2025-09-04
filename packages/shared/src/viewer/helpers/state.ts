@@ -112,8 +112,7 @@ export type SerializedViewerState = {
         key: Nullable<string>
         isApplied: boolean
       }
-      // New multi-filter system (optional for backward compatibility)
-      propertyFilters?: Array<{
+      propertyFilters: Array<{
         key: Nullable<string>
         isApplied: boolean
         selectedValues: string[]
