@@ -3,7 +3,13 @@ import type { ColorGroup } from '~/lib/viewer/helpers/filters/types'
 import type { InjectableViewerState } from '~~/lib/viewer/composables/setup'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 
-export function useFilterColors(options?: Partial<{ state: InjectableViewerState }>) {
+/**
+ * Helper composable for filter coloring functionality.
+ * The actual viewer integration is handled by the integration composable via watchers.
+ */
+export function useFilterColoringHelpers(
+  options?: Partial<{ state: InjectableViewerState }>
+) {
   const state = options?.state || useInjectedViewerState()
   const {
     viewer,
@@ -11,29 +17,24 @@ export function useFilterColors(options?: Partial<{ state: InjectableViewerState
   } = state
 
   /**
-   * Applies color filtering to objects based on a property filter
+   * Sets the active color filter by updating the state.
    */
   const setColorFilter = (filterId: string) => {
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (!filter?.filter) return
 
-    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
-    filteringExtension.removeColorFilter()
-    filteringExtension.setColorFilter(filter.filter)
     filters.activeColorFilterId.value = filterId
   }
 
   /**
-   * Removes color filtering from all objects
+   * Removes the active color filter by clearing the state.
    */
   const removeColorFilter = () => {
-    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
-    filteringExtension.removeColorFilter()
     filters.activeColorFilterId.value = null
   }
 
   /**
-   * Toggles color filtering for a specific filter
+   * Toggles color filtering for a specific filter by updating state only.
    */
   const toggleColorFilter = (filterId: string) => {
     if (filters.activeColorFilterId.value === filterId) {
@@ -44,24 +45,17 @@ export function useFilterColors(options?: Partial<{ state: InjectableViewerState
   }
 
   /**
-   * Gets the color groups from the FilteringExtension for the currently active color filter
+   * Gets the color groups from the FilteringExtension for the currently active color filter.
    */
   const getFilterColorGroups = (): ColorGroup[] => {
     const filteringExtension = viewer.instance.getExtension(FilteringExtension)
     const filteringState = filteringExtension.filteringState
 
-    if (
-      (!filteringState.colorGroups || filteringState.colorGroups.length === 0) &&
-      filters.activeColorFilterId.value
-    ) {
-      filters.activeColorFilterId.value = null
-    }
-
     return filteringState.colorGroups || []
   }
 
   /**
-   * Gets the color for a specific filter value
+   * Gets the color for a specific filter value.
    */
   const getFilterValueColor = (value: string): string | null => {
     const colorGroups = getFilterColorGroups()
@@ -74,17 +68,14 @@ export function useFilterColors(options?: Partial<{ state: InjectableViewerState
   }
 
   /**
-   * Checks if a filter is currently being used for color filtering
+   * Checks if a filter is currently being used for color filtering.
    */
   const isColorFilterActive = (filterId: string): boolean => {
     return filters.activeColorFilterId.value === filterId
   }
 
   return {
-    // State
-    activeColorFilterId: filters.activeColorFilterId,
-
-    // Functions
+    activeColorFilterId: readonly(filters.activeColorFilterId),
     setColorFilter,
     removeColorFilter,
     toggleColorFilter,

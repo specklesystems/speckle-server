@@ -56,6 +56,7 @@ import { useTreeManagement } from '~~/lib/viewer/composables/tree'
 import { useViewerSavedViewIntegration } from '~/lib/viewer/composables/savedViews/state'
 import { useViewModesPostSetup } from '~/lib/viewer/composables/setup/viewMode'
 import { useMeasurementsPostSetup } from '~/lib/viewer/composables/setup/measurements'
+import { useFilterColoringPostSetup } from '~/lib/viewer/composables/setup/coloring'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { cleanupFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 import { cleanupValueGroupCountCache } from '~/lib/viewer/composables/filtering/counts'
@@ -857,6 +858,7 @@ export function useViewerPostSetup() {
   useExplodeFactorIntegration()
   useDiffingIntegration()
   useMeasurementsPostSetup()
+  useFilterColoringPostSetup()
   useDisableZoomOnEmbed()
   useViewerCursorIntegration()
   useViewerTreeIntegration()

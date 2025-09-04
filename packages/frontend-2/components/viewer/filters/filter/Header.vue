@@ -86,7 +86,7 @@ import {
   type LayoutMenuItem
 } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
-import { useFilterColors } from '~/lib/viewer/composables/filtering/coloring'
+import { useFilterColoringHelpers } from '~/lib/viewer/composables/filtering/coloringHelpers'
 import type { FilterData } from '~/lib/viewer/helpers/filters/types'
 import { FilterType } from '~/lib/viewer/helpers/filters/types'
 
@@ -101,7 +101,7 @@ const menuId = useId()
 const { removeActiveFilter, toggleFilterApplied, getPropertyName, filters } =
   useFilterUtilities()
 
-const { toggleColorFilter } = useFilterColors()
+const { toggleColorFilter } = useFilterColoringHelpers()
 
 const emit = defineEmits<{
   swapProperty: [filterId: string]

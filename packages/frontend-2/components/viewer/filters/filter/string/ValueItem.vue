@@ -45,7 +45,7 @@ import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering
 import { getFilterValueCount } from '~/lib/viewer/composables/filtering/counts'
 import type { StringFilterData } from '~/lib/viewer/helpers/filters/types'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { useFilterColors } from '~/lib/viewer/composables/filtering/coloring'
+import { useFilterColoringHelpers } from '~/lib/viewer/composables/filtering/coloringHelpers'
 
 const props = defineProps<{
   filter: StringFilterData
@@ -59,7 +59,7 @@ defineEmits<{
 const { isActiveFilterValueSelected, filters, getCachedValueGroupsMap } =
   useFilterUtilities()
 
-const { getFilterValueColor } = useFilterColors()
+const { getFilterValueColor } = useFilterColoringHelpers()
 
 const { ui } = useInjectedViewerState()
 

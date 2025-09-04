@@ -301,7 +301,6 @@ function createFilteringDataStore() {
   const updateViewer = (
     instance: Viewer,
     filters: {
-      activeColorFilterId: Ref<string | null>
       propertyFilters: Ref<FilterData[]>
     }
   ) => {
@@ -323,16 +322,6 @@ function createFilteringDataStore() {
         false,
         true
       )
-    }
-
-    const currentColorFilterId = filters.activeColorFilterId.value
-    if (currentColorFilterId) {
-      const activeFilter = filters.propertyFilters.value.find(
-        (f: FilterData) => f.id === currentColorFilterId
-      )
-      if (activeFilter?.filter) {
-        filteringExtension.setColorFilter(activeFilter.filter)
-      }
     }
   }
 

@@ -39,7 +39,7 @@ import {
   getFilterDisabledReason,
   findFilterByKvp
 } from '~/lib/viewer/helpers/filters/utils'
-import { useFilterColors } from '~/lib/viewer/composables/filtering/coloring'
+import { useFilterColoringHelpers } from '~/lib/viewer/composables/filtering/coloringHelpers'
 
 export function useFilterUtilities(
   options?: Partial<{ state: InjectableViewerState }>
@@ -51,7 +51,7 @@ export function useFilterUtilities(
   } = state
 
   const dataStore = useFilteringDataStore()
-  const { removeColorFilter } = useFilterColors({ state })
+  const { removeColorFilter } = useFilterColoringHelpers({ state })
 
   const { instance } = viewer
   const { resourceItems } = state.resources.response
@@ -541,7 +541,9 @@ export function useFilterUtilities(
     dataStore.computeSliceIntersections()
 
     if (import.meta.client) {
-      dataStore.updateViewer(viewer.instance, filters)
+      dataStore.updateViewer(viewer.instance, {
+        propertyFilters: filters.propertyFilters
+      })
     }
   }
 
