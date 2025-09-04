@@ -1,5 +1,6 @@
 import json
 
+import structlog
 from asyncpg import Connection, connect
 
 from ifc_importer.config import settings
@@ -57,15 +58,24 @@ async def get_next_job(connection: Connection) -> FileimportJob | None:
     return FileimportJob.model_validate(dict(job))
 
 
-async def return_job_to_queued(connection: Connection, job_id: str) -> None:
-    print(f"returning job: {job_id} to queued")
-    return await set_job_status(connection, job_id, JobStatus.QUEUED)
+async def return_job_to_queued(
+    connection: Connection, logger: structlog.stdlib.BoundLogger, job_id: str
+) -> None:
+    logger.info("returning job: {job_id} to queued", job_id=job_id)
+    return await set_job_status(connection, logger, job_id, JobStatus.QUEUED)
 
 
 async def set_job_status(
-    connection: Connection, job_id: str, job_status: JobStatus
+    connection: Connection,
+    logger: structlog.stdlib.BoundLogger,
+    job_id: str,
+    job_status: JobStatus,
 ) -> None:
-    print(f"updating job: {job_id}'s status to {job_status}")
+    logger.info(
+        "updating job: {job_id}'s status to {job_status}",
+        job_id=job_id,
+        job_status=job_status.value,
+    )
     _ = await connection.execute(
         """
         UPDATE background_jobs
@@ -79,7 +89,10 @@ async def set_job_status(
 
 
 async def deduct_from_compute_budget(
-    connection: Connection, job_id: str, used_compute_time_seconds: int
+    connection: Connection,
+    logger: structlog.stdlib.BoundLogger,
+    job_id: str,
+    used_compute_time_seconds: int,
 ) -> None:
     print(
         f"updating job: {job_id}'s remaining compute budget by deducting {used_compute_time_seconds} seconds"
