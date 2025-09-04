@@ -125,6 +125,7 @@ const showPropertySelection = ref(false)
 const propertySelectionRef = ref<HTMLElement>()
 const swappingFilterId = ref<Nullable<string>>(null)
 const filtersContainerRef = ref<HTMLElement>()
+const shouldScrollToNewFilter = ref(false)
 
 const propertySelectOptions = computed((): PropertySelectOption[] => {
   const existingFilterKeys = new Set(
@@ -195,14 +196,12 @@ const handleAddFilterClick = () => {
 }
 
 const scrollToNewFilter = () => {
-  nextTick(() => {
-    if (filtersContainerRef.value) {
-      filtersContainerRef.value.scrollTo({
-        top: filtersContainerRef.value.scrollHeight,
-        behavior: 'smooth'
-      })
-    }
-  })
+  if (filtersContainerRef.value) {
+    filtersContainerRef.value.scrollTo({
+      top: filtersContainerRef.value.scrollHeight,
+      behavior: 'smooth'
+    })
+  }
 }
 
 const selectProperty = async (propertyKey: string) => {
@@ -214,8 +213,6 @@ const selectProperty = async (propertyKey: string) => {
       return
     }
 
-    await nextTick()
-
     if (swappingFilterId.value) {
       updateFilterProperty(swappingFilterId.value, property)
       mp.track('Viewer Action', {
@@ -225,6 +222,8 @@ const selectProperty = async (propertyKey: string) => {
         value: propertyKey
       })
     } else {
+      // Set flag to scroll when new filter is added
+      shouldScrollToNewFilter.value = true
       addActiveFilter(property)
       mp.track('Viewer Action', {
         type: 'action',
@@ -232,9 +231,6 @@ const selectProperty = async (propertyKey: string) => {
         action: 'add-new-filter',
         value: propertyKey
       })
-
-      await nextTick()
-      scrollToNewFilter()
     }
   } finally {
     showPropertySelection.value = false
@@ -267,4 +263,18 @@ onMounted(async () => {
     }
   }
 })
+
+// Watch for new filters being added and scroll when needed
+watch(
+  () => propertyFilters.value.length,
+  (newLength, oldLength) => {
+    if (shouldScrollToNewFilter.value && newLength > oldLength) {
+      // Wait for DOM to update with the new filter before scrolling to it
+      nextTick(() => {
+        scrollToNewFilter()
+        shouldScrollToNewFilter.value = false
+      })
+    }
+  }
+)
 </script>
