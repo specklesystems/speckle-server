@@ -181,7 +181,13 @@ import {
 } from '~~/lib/viewer/composables/setup'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import { useEventListener, useResizeObserver, useBreakpoints } from '@vueuse/core'
+import {
+  useEventListener,
+  useResizeObserver,
+  useBreakpoints,
+  useWindowSize,
+  useThrottleFn
+} from '@vueuse/core'
 import { type Nullable, isNonNullable } from '@speckle/shared'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { useIntercomEnabled } from '~~/lib/intercom/composables/enabled'
@@ -209,6 +215,7 @@ const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
 const height = ref(scrollableControlsContainer.value?.clientHeight)
 const isResizing = ref(false)
 const resizeHandle = ref(null)
+const { width: windowWidth } = useWindowSize()
 let startWidth = 0
 let startX = 0
 
@@ -220,6 +227,17 @@ const startResizing = (event: MouseEvent) => {
   startWidth = width.value
 }
 
+const throttledHandleMouseMove = useThrottleFn((event: MouseEvent) => {
+  if (isResizing.value) {
+    const diffX = event.clientX - startX
+    const newWidth = Math.max(
+      240,
+      Math.min(startWidth + diffX, Math.min(440, windowWidth.value * 0.5 - 60))
+    )
+    width.value = newWidth
+  }
+}, 150)
+
 if (import.meta.client) {
   useResizeObserver(scrollableControlsContainer, (entries) => {
     const { height: newHeight } = entries[0].contentRect
@@ -227,16 +245,7 @@ if (import.meta.client) {
   })
   useEventListener(resizeHandle, 'mousedown', startResizing)
 
-  useEventListener(document, 'mousemove', (event) => {
-    if (isResizing.value) {
-      const diffX = event.clientX - startX
-      const newWidth = Math.max(
-        240,
-        Math.min(startWidth + diffX, Math.min(440, window.innerWidth * 0.5 - 60))
-      )
-      width.value = newWidth
-    }
-  })
+  useEventListener(document, 'mousemove', throttledHandleMouseMove)
 
   useEventListener(document, 'mouseup', () => {
     if (isResizing.value) {
@@ -293,7 +302,7 @@ const widthClass = computed(() => {
 
 const panelExtensionLeft = computed(() => {
   const mainPanelWidth = isMobile.value
-    ? window.innerWidth - 60
+    ? windowWidth.value - 60
     : isTablet.value
     ? 240
     : width.value

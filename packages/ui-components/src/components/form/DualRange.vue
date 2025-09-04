@@ -10,7 +10,7 @@
           :min="min"
           :max="max"
           :step="step"
-          :value="minValue"
+          :value="modelValue.min"
           :disabled="disabled"
           class="absolute w-full h-4 outline-none slider slider-min"
           style="-webkit-appearance: none; appearance: none; pointer-events: none"
@@ -18,7 +18,7 @@
           :aria-label="`${name} minimum`"
           :aria-valuemin="min"
           :aria-valuemax="max"
-          :aria-valuenow="minValue"
+          :aria-valuenow="modelValue.min"
           @input="handleMinInput"
         />
 
@@ -30,7 +30,7 @@
           :min="min"
           :max="max"
           :step="step"
-          :value="maxValue"
+          :value="modelValue.max"
           :disabled="disabled"
           class="absolute w-full h-4 outline-none slider slider-max"
           style="-webkit-appearance: none; appearance: none; pointer-events: none"
@@ -38,7 +38,7 @@
           :aria-label="`${name} maximum`"
           :aria-valuemin="min"
           :aria-valuemax="max"
-          :aria-valuenow="maxValue"
+          :aria-valuenow="modelValue.max"
           @input="handleMaxInput"
         />
 
@@ -93,12 +93,8 @@ const props = defineProps<{
   style?: Record<string, string | number>
 }>()
 
-const minValue = defineModel<number>('minValue', {
-  default: 0
-})
-
-const maxValue = defineModel<number>('maxValue', {
-  default: 100
+const modelValue = defineModel<{ min: number; max: number }>({
+  default: () => ({ min: 0, max: 100 })
 })
 
 const clampValue = (value: number): number => {
@@ -107,54 +103,55 @@ const clampValue = (value: number): number => {
 
 // String versions for FormTextInput compatibility
 const minValueString = computed({
-  get: () => minValue.value.toString(),
+  get: () => modelValue.value.min.toString(),
   set: (value: string) => {
     const numValue = Number(value)
     if (!isNaN(numValue)) {
       const clampedValue = clampValue(numValue)
-      // Ensure min doesn't exceed max
-      const finalValue = Math.min(clampedValue, maxValue.value)
-      minValue.value = finalValue
+      const finalValue = Math.min(clampedValue, modelValue.value.max)
+      modelValue.value = { ...modelValue.value, min: finalValue }
     }
   }
 })
 
 const maxValueString = computed({
-  get: () => maxValue.value.toString(),
+  get: () => modelValue.value.max.toString(),
   set: (value: string) => {
     const numValue = Number(value)
     if (!isNaN(numValue)) {
       const clampedValue = clampValue(numValue)
-      // Ensure max doesn't go below min
-      const finalValue = Math.max(clampedValue, minValue.value)
-      maxValue.value = finalValue
+      const finalValue = Math.max(clampedValue, modelValue.value.min)
+      modelValue.value = { ...modelValue.value, max: finalValue }
     }
   }
 })
 
-// Computed percentages for visual track
 const minPercentage = computed(() => {
-  return ((minValue.value - props.min) / (props.max - props.min)) * 100
+  return ((modelValue.value.min - props.min) / (props.max - props.min)) * 100
 })
 
 const maxPercentage = computed(() => {
-  return ((maxValue.value - props.min) / (props.max - props.min)) * 100
+  return ((modelValue.value.max - props.min) / (props.max - props.min)) * 100
 })
 
 const handleMinInput = (event: Event) => {
   const target = event.target as HTMLInputElement
   const value = clampValue(Number(target.value))
 
-  // Ensure min doesn't exceed max
-  minValue.value = Math.min(value, maxValue.value)
+  modelValue.value = {
+    ...modelValue.value,
+    min: Math.min(value, modelValue.value.max)
+  }
 }
 
 const handleMaxInput = (event: Event) => {
   const target = event.target as HTMLInputElement
   const value = clampValue(Number(target.value))
 
-  // Ensure max doesn't go below min
-  maxValue.value = Math.max(value, minValue.value)
+  modelValue.value = {
+    ...modelValue.value,
+    max: Math.max(value, modelValue.value.min)
+  }
 }
 </script>
 

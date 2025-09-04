@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { useVirtualList } from '@vueuse/core'
+import { useVirtualList, useDebounceFn } from '@vueuse/core'
 import type {
   PropertyOption,
   PropertySelectionListItem
@@ -75,12 +75,18 @@ const isLoading = computed(() => {
   return dataStore.dataSources.value.length === 0
 })
 
+const debouncedSearchQuery = ref('')
+
+const updateDebouncedSearch = useDebounceFn((query: string) => {
+  debouncedSearchQuery.value = query
+}, 200)
+
 const filteredOptions = computed(() => {
-  if (!searchQuery.value.trim()) {
+  if (!debouncedSearchQuery.value.trim()) {
     return props.options
   }
 
-  const searchTerm = searchQuery.value.toLowerCase().trim()
+  const searchTerm = debouncedSearchQuery.value.toLowerCase().trim()
   return props.options.filter(
     (option) =>
       option.label.toLowerCase().includes(searchTerm) ||
@@ -93,7 +99,7 @@ const filteredOptions = computed(() => {
 const listItems = computed((): PropertySelectionListItem[] => {
   const items: PropertySelectionListItem[] = []
 
-  if (searchQuery.value.trim()) {
+  if (debouncedSearchQuery.value.trim()) {
     const searchResults = filteredOptions.value.map((property) => ({
       type: 'property' as const,
       property
@@ -136,4 +142,12 @@ const { list, containerProps, wrapperProps } = useVirtualList(listItems, {
   itemHeight: PROPERTY_SELECTION_ITEM_HEIGHT,
   overscan: PROPERTY_SELECTION_OVERSCAN
 })
+
+watch(
+  searchQuery,
+  (newQuery) => {
+    updateDebouncedSearch(newQuery)
+  },
+  { immediate: true }
+)
 </script>

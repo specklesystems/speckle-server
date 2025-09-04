@@ -1,8 +1,7 @@
 <template>
   <div class="flex flex-col gap-2 px-9 pt-1 pb-2">
     <FormDualRange
-      :min-value="currentMin"
-      :max-value="currentMax"
+      v-model="rangeValues"
       :name="`range-${filter.id}`"
       :min="filterMin"
       :max="filterMax"
@@ -16,8 +15,6 @@
           : {}
       "
       show-fields
-      @update:min-value="updateMinValue"
-      @update:max-value="updateMaxValue"
     />
   </div>
 </template>
@@ -36,16 +33,15 @@ const { setNumericRange, filters } = useFilterUtilities()
 const filterMin = computed(() => props.filter.filter.min)
 const filterMax = computed(() => props.filter.filter.max)
 
-const currentMin = computed(() => props.filter.numericRange.min)
-const currentMax = computed(() => props.filter.numericRange.max)
-
-const updateMinValue = (value: number) => {
-  setNumericRange(props.filter.id, value, props.filter.numericRange.max)
-}
-
-const updateMaxValue = (value: number) => {
-  setNumericRange(props.filter.id, props.filter.numericRange.min, value)
-}
+const rangeValues = computed({
+  get: () => ({
+    min: props.filter.numericRange.min,
+    max: props.filter.numericRange.max
+  }),
+  set: (values: { min: number; max: number }) => {
+    setNumericRange(props.filter.id, values.min, values.max)
+  }
+})
 
 const isColoringActive = computed(() => {
   return filters.activeColorFilterId.value === props.filter.id

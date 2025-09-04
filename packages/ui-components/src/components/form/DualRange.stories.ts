@@ -26,19 +26,17 @@ export const Default: StoryObj = {
   render: (args) => ({
     components: { FormDualRange },
     setup() {
-      const minValue = ref(25)
-      const maxValue = ref(75)
-      return { args, minValue, maxValue }
+      const rangeValue = ref({ min: 25, max: 75 })
+      return { args, rangeValue }
     },
     template: `
       <div class="flex flex-col">
         <FormDualRange 
           v-bind="args" 
-          v-model:min-value="minValue"
-          v-model:max-value="maxValue"
+          v-model="rangeValue"
         />
         <div class="text-sm text-gray-600">
-          Current values: {{ minValue }} - {{ maxValue }}
+          Current values: {{ rangeValue.min }} - {{ rangeValue.max }}
         </div>
       </div>
     `
@@ -57,19 +55,17 @@ export const WithFields: StoryObj = {
   render: (args) => ({
     components: { FormDualRange },
     setup() {
-      const minValue = ref(25)
-      const maxValue = ref(75)
-      return { args, minValue, maxValue }
+      const rangeValue = ref({ min: 25, max: 75 })
+      return { args, rangeValue }
     },
     template: `
       <div class="flex flex-col">
         <FormDualRange 
           v-bind="args" 
-          v-model:min-value="minValue"
-          v-model:max-value="maxValue"
+          v-model="rangeValue"
         />
         <div class="text-sm text-gray-600 mt-2">
-          Current values: {{ minValue }} - {{ maxValue }}
+          Current values: {{ rangeValue.min }} - {{ rangeValue.max }}
         </div>
       </div>
     `
