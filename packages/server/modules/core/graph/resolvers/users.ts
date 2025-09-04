@@ -32,7 +32,6 @@ import {
   changeUserRoleFactory
 } from '@/modules/core/services/users/management'
 import {
-  deleteStreamFactory,
   getExplicitProjects,
   getUserDeletableStreamsFactory
 } from '@/modules/core/repositories/streams'
@@ -47,13 +46,22 @@ import {
 import { updateMailchimpMemberTags } from '@/modules/auth/services/mailchimp'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { metaHelpers } from '@/modules/core/helpers/meta'
-import { asMultiregionalOperation, asOperation } from '@/modules/shared/command'
+import {
+  asMultiregionalOperation,
+  asOperation,
+  replicateFactory
+} from '@/modules/shared/command'
 import { setUserOnboardingChoicesFactory } from '@/modules/core/services/users/tracking'
 import { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
-import { queryAllProjectsFactory } from '@/modules/core/services/projects'
+import {
+  deleteProjectAndCommitsFactory,
+  queryAllProjectsFactory
+} from '@/modules/core/services/projects'
 import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
+import { deleteProjectFactory } from '@/modules/core/repositories/projects'
+import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -309,7 +317,16 @@ export default {
       await asMultiregionalOperation(
         ({ mainDb, allDbs, emit }) => {
           const deleteUser = deleteUserFactory({
-            deleteStream: deleteStreamFactory({ db: mainDb }),
+            deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+              // this is a bit of an overhead, we are issuing delete queries to all regions,
+              // instead of being selective and clever about figuring out the project DB and only
+              // deleting from main and the project db
+              deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+              deleteProjectCommits: replicateFactory(
+                allDbs,
+                deleteProjectCommitsFactory
+              )
+            }),
             logger: dbLogger,
             isLastAdminUser: isLastAdminUserFactory({ db: mainDb }),
             getUserDeletableStreams: getUserDeletableStreamsFactory({ db: mainDb }),
@@ -359,7 +376,16 @@ export default {
       await asMultiregionalOperation(
         ({ mainDb, allDbs, emit }) => {
           const deleteUser = deleteUserFactory({
-            deleteStream: deleteStreamFactory({ db: mainDb }),
+            deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+              // this is a bit of an overhead, we are issuing delete queries to all regions,
+              // instead of being selective and clever about figuring out the project DB and only
+              // deleting from main and the project db
+              deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+              deleteProjectCommits: replicateFactory(
+                allDbs,
+                deleteProjectCommitsFactory
+              )
+            }),
             logger: dbLogger,
             isLastAdminUser: isLastAdminUserFactory({ db: mainDb }),
             getUserDeletableStreams: getUserDeletableStreamsFactory({ db: mainDb }),
