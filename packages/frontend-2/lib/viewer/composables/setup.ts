@@ -321,6 +321,7 @@ export type InjectableViewerState = Readonly<{
 
       // Multi-filter system
       propertyFilters: Ref<FilterData[]>
+      filteredObjectsCount: Ref<number>
       hasAnyFiltersApplied: ComputedRef<boolean>
       activeColorFilterId: Ref<string | null>
     }
@@ -1131,6 +1132,7 @@ function setupInterfaceState(
   const selectedObjects = shallowRef<Raw<SpeckleObject>[]>([])
 
   const propertyFilters = ref<FilterData[]>([])
+  const filteredObjectsCount = ref(0)
 
   // Track which filter is currently applying colors (only one at a time)
   const activeColorFilterId = ref<string | null>(null)
@@ -1238,6 +1240,7 @@ function setupInterfaceState(
         selectedObjectIds,
         isolatedObjectsSet,
         propertyFilters,
+        filteredObjectsCount,
         hasAnyFiltersApplied,
         activeColorFilterId
       },

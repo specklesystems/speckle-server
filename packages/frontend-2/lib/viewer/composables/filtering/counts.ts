@@ -1,4 +1,4 @@
-import { FilteringExtension, type PropertyInfo, ViewerEvent } from '@speckle/viewer'
+import type { PropertyInfo } from '@speckle/viewer'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import {
   ExistenceFilterCondition,
@@ -6,66 +6,15 @@ import {
 } from '~/lib/viewer/helpers/filters/types'
 
 /**
- * Get count of filtered objects directly from the viewer
- * Uses viewer events to stay in sync with the viewer's internal state
+ * Get count of filtered objects from the viewer state.
  */
 export function useFilteredObjectsCount() {
   const {
-    viewer,
     ui: { filters }
   } = useInjectedViewerState()
-  const filteredObjectsCount = ref(0)
-
-  const updateCount = () => {
-    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
-    if (!filteringExtension) return
-
-    const isolatedObjects = filteringExtension.filteringState.isolatedObjects
-
-    const hasAppliedFilters = filters.propertyFilters.value.some(
-      (f) =>
-        f.isApplied &&
-        (f.selectedValues.length > 0 ||
-          ('isDefaultAllSelected' in f && f.isDefaultAllSelected))
-    )
-
-    if (!hasAppliedFilters) {
-      filteredObjectsCount.value = 0
-      return
-    }
-
-    const rawCount = isolatedObjects?.length || 0
-
-    // Ghost object that is used to represent objects that don't match the filter
-    const isGhostOnly = rawCount === 1 && isolatedObjects?.[0] === 'no-match-ghost-all'
-
-    if (isGhostOnly) {
-      filteredObjectsCount.value = 0
-      return
-    }
-
-    const realObjectCount =
-      isolatedObjects?.filter((id) => id !== 'no-match-ghost-all').length || 0
-    filteredObjectsCount.value = realObjectCount
-  }
-
-  onMounted(() => {
-    const filteringExtension = viewer.instance.getExtension(FilteringExtension)
-
-    filteringExtension.on(ViewerEvent.FilteringStateSet, updateCount)
-
-    updateCount()
-  })
-
-  onBeforeUnmount(() => {
-    const filteringExtension = viewer.instance?.getExtension(FilteringExtension)
-    if (filteringExtension) {
-      filteringExtension.removeListener(ViewerEvent.FilteringStateSet, updateCount)
-    }
-  })
 
   return {
-    filteredObjectsCount: readonly(filteredObjectsCount)
+    filteredObjectsCount: readonly(filters.filteredObjectsCount)
   }
 }
 

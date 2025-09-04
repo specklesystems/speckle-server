@@ -59,6 +59,7 @@ import { useMeasurementsPostSetup } from '~/lib/viewer/composables/setup/measure
 import { useFilterColoringPostSetup } from '~/lib/viewer/composables/setup/coloring'
 import { usePropertyFilteringPostSetup } from '~/lib/viewer/composables/setup/propertyFiltering'
 import { useManualFilteringPostSetup } from '~/lib/viewer/composables/setup/manualFiltering'
+import { useFilteredObjectsCountPostSetup } from '~/lib/viewer/composables/setup/filteredObjectsCount'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { cleanupFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 import { cleanupValueGroupCountCache } from '~/lib/viewer/composables/filtering/counts'
@@ -863,6 +864,7 @@ export function useViewerPostSetup() {
   useFilterColoringPostSetup()
   usePropertyFilteringPostSetup()
   useManualFilteringPostSetup()
+  useFilteredObjectsCountPostSetup()
   useDisableZoomOnEmbed()
   useViewerCursorIntegration()
   useViewerTreeIntegration()
