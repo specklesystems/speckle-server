@@ -57,8 +57,10 @@ import { useViewerSavedViewIntegration } from '~/lib/viewer/composables/savedVie
 import { useViewModesPostSetup } from '~/lib/viewer/composables/setup/viewMode'
 import { useMeasurementsPostSetup } from '~/lib/viewer/composables/setup/measurements'
 import { useFilterColoringPostSetup } from '~/lib/viewer/composables/setup/coloring'
-import { usePropertyFilteringPostSetup } from '~/lib/viewer/composables/setup/propertyFiltering'
-import { useManualFilteringPostSetup } from '~/lib/viewer/composables/setup/manualFiltering'
+import {
+  usePropertyFilteringPostSetup,
+  useManualFilteringPostSetup
+} from '~/lib/viewer/composables/setup/filters'
 import { useFilteredObjectsCountPostSetup } from '~/lib/viewer/composables/setup/filteredObjectsCount'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { useFilteringSetup } from '~/lib/viewer/composables/filtering/setup'

@@ -97,6 +97,7 @@ import {
 import type { defaultEdgeColorValue } from '~/lib/viewer/composables/setup/viewMode'
 import { useViewModesSetup } from '~/lib/viewer/composables/setup/viewMode'
 import { useMeasurementsSetup } from '~/lib/viewer/composables/setup/measurements'
+import { useFiltersSetup } from '~/lib/viewer/composables/setup/filters'
 import { useViewerPanelsSetup } from '~/lib/viewer/composables/setup/panels'
 
 export type LoadedModel = NonNullable<
@@ -1132,29 +1133,7 @@ function setupInterfaceState(
 
   const loadProgress = ref(0)
 
-  const isolatedObjectIds = ref([] as string[])
-  const hiddenObjectIds = ref([] as string[])
-  const selectedObjects = shallowRef<Raw<SpeckleObject>[]>([])
-
-  const propertyFilters = ref<FilterData[]>([])
-  const filteredObjectsCount = ref(0)
-
-  // Track which filter is currently applying colors (only one at a time)
-  const activeColorFilterId = ref<string | null>(null)
-
-  const hasAnyFiltersApplied = computed(() => {
-    if (isolatedObjectIds.value.length) return true
-    if (hiddenObjectIds.value.length) return true
-    if (
-      propertyFilters.value.some(
-        (filter) =>
-          filter.isApplied ||
-          (filter.selectedValues && filter.selectedValues.length > 0)
-      )
-    )
-      return true
-    return false
-  })
+  const { filters } = useFiltersSetup()
   const { viewMode } = useViewModesSetup()
 
   const highlightedObjectIds = ref([] as string[])
@@ -1167,24 +1146,11 @@ function setupInterfaceState(
   const selectedObjectIds = computed(
     () =>
       new Set(
-        selectedObjects.value
-          .map((o) => o.id as MaybeNullOrUndefined<string>)
+        filters.selectedObjects.value
+          .map((o: SpeckleObject) => o.id as MaybeNullOrUndefined<string>)
           .filter(isNonNullable)
       )
   )
-
-  const isolatedObjectsSet = computed(() => {
-    const currentlyIsolated =
-      state.viewer.metadata.filteringState.value?.isolatedObjects
-
-    if (!currentlyIsolated || currentlyIsolated.length === 0) return null
-
-    const realIsolatedObjects = currentlyIsolated.filter(
-      (id: string) => id !== 'no-match-ghost-all'
-    )
-
-    return new Set(realIsolatedObjects)
-  })
 
   /**
    * THREADS
@@ -1239,15 +1205,8 @@ function setupInterfaceState(
         edited: ref(false)
       },
       filters: {
-        isolatedObjectIds,
-        hiddenObjectIds,
-        selectedObjects,
-        selectedObjectIds,
-        isolatedObjectsSet,
-        propertyFilters,
-        filteredObjectsCount,
-        hasAnyFiltersApplied,
-        activeColorFilterId
+        ...filters,
+        selectedObjectIds
       },
       highlightedObjectIds,
       measurement: useMeasurementsSetup(),
