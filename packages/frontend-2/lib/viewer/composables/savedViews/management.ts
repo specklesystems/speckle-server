@@ -25,6 +25,7 @@ import {
   getCachedObjectKeys,
   type CacheObjectReference
 } from '~/lib/common/helpers/graphql'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 const createSavedViewMutation = graphql(`
   mutation CreateSavedView($input: CreateSavedViewInput!) {
@@ -32,6 +33,7 @@ const createSavedViewMutation = graphql(`
       savedViewMutations {
         createView(input: $input) {
           id
+          groupId
           ...ViewerSavedViewsPanelView_SavedView
           group {
             id
@@ -76,6 +78,7 @@ export const useCreateSavedView = () => {
   const { projectId } = useInjectedViewerState()
   const { triggerNotification } = useGlobalToast()
   const { collect } = useCollectNewSavedViewViewerData()
+  const mp = useMixpanel()
 
   return async (
     input: Omit<
@@ -121,6 +124,13 @@ export const useCreateSavedView = () => {
         title: "Couldn't create saved view",
         description: err,
         type: ToastNotificationType.Danger
+      })
+    }
+
+    if (res?.id) {
+      mp.track('Saved View Created', {
+        viewId: res.id,
+        groupId: res.groupId
       })
     }
 
@@ -236,6 +246,7 @@ export const useUpdateSavedView = () => {
   const { mutate } = useMutation(updateSavedViewMutation)
   const { triggerNotification } = useGlobalToast()
   const { isLoggedIn } = useActiveUser()
+  const mp = useMixpanel()
 
   return async (
     params: {
@@ -345,6 +356,15 @@ export const useUpdateSavedView = () => {
       }
     }
 
+    if (res?.id) {
+      if ('isHomeView' in input) {
+        mp.track('Saved View Set as Home View', {
+          viewId: res.id,
+          isHomeView: input.isHomeView
+        })
+      }
+    }
+
     options?.onFullResult?.(result, !!res)
     return res
   }
@@ -367,6 +387,7 @@ export const useCreateSavedViewGroup = () => {
   const { mutate } = useMutation(createSavedViewGroupMutation)
   const { triggerNotification } = useGlobalToast()
   const { isLoggedIn } = useActiveUser()
+  const mp = useMixpanel()
 
   return async (input: CreateSavedViewGroupInput) => {
     if (!isLoggedIn.value) return
@@ -417,6 +438,12 @@ export const useCreateSavedViewGroup = () => {
         title: "Couldn't create group",
         description: err,
         type: ToastNotificationType.Danger
+      })
+    }
+
+    if (res?.id) {
+      mp.track('Saved View Group Created', {
+        groupId: res.id
       })
     }
 

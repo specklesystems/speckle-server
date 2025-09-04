@@ -114,6 +114,7 @@ import {
   SavedViewVisibility,
   type ViewerSavedViewsPanelView_SavedViewFragment
 } from '~/lib/common/generated/gql/graphql'
+import { useMixpanel } from '~/lib/core/composables/mp'
 import { useViewerSavedViewsUtils } from '~/lib/viewer/composables/savedViews/general'
 import {
   useCollectNewSavedViewViewerData,
@@ -191,6 +192,7 @@ const {
 const { classes: draggableClasses, on } = useDraggableView({
   view: computed(() => props.view)
 })
+const mp = useMixpanel()
 
 const showMenu = ref(false)
 const menuId = useId()
@@ -291,11 +293,17 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
           id: props.view.id
         }
       })
+      mp.track('Saved View Link Copied', {
+        viewId: props.view.id
+      })
       break
     case MenuItems.LoadOriginalVersions:
       applyView({
         id: props.view.id,
         loadOriginal: true
+      })
+      mp.track('Saved View Original Version Loaded', {
+        viewId: props.view.id
       })
       break
     case MenuItems.ChangeVisibility:
