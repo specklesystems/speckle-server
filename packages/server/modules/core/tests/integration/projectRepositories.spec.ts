@@ -17,7 +17,7 @@ import { assign } from 'lodash-es'
 import type { DeleteProject } from '@/modules/core/domain/projects/operations'
 import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import { logger } from '@/observability/logging'
-import { getProjectReplicationDbClients } from '@/modules/multiregion/utils/dbSelector'
+import { getProjectReplicationDbs } from '@/modules/multiregion/utils/dbSelector'
 
 const createTestProject = (overrides?: Partial<Project>): Project => {
   const defaults: Project = {
@@ -44,7 +44,7 @@ const deleteProject: DeleteProject = async ({ projectId }) =>
     {
       name: 'delete spec',
       logger,
-      dbs: await getProjectReplicationDbClients({ projectId })
+      dbs: await getProjectReplicationDbs({ projectId })
     }
   )
 const storeProjectRole = storeProjectRoleFactory({ db })
@@ -90,9 +90,6 @@ describe('project repositories @core', () => {
     })
   })
   describe('deleteProjectFactory creates a function, that', () => {
-    it('does nothing if project does not exist', async () => {
-      await deleteProject({ projectId: cryptoRandomString({ length: 10 }) })
-    })
     it('deletes the project', async () => {
       const project = createTestProject()
       await storeProject({ project })

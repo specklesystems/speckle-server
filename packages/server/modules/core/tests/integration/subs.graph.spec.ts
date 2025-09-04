@@ -47,7 +47,7 @@ import {
 } from '@/modules/core/services/streams/management'
 import {
   getProjectDbClient,
-  getProjectReplicationDbClients
+  getProjectReplicationDbs
 } from '@/modules/multiregion/utils/dbSelector'
 import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { authorizeResolver } from '@/modules/shared'
@@ -141,7 +141,7 @@ const updateProject: UpdateStream = async (stream, me) => {
     {
       logger,
       name: 'updateStream spec',
-      dbs: await getProjectReplicationDbClients({ projectId: stream.id })
+      dbs: await getProjectReplicationDbs({ projectId: stream.id })
     }
   )
 }

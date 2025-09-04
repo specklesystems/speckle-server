@@ -30,7 +30,7 @@ import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits
 import type { DeleteProjectAndCommits } from '@/modules/core/domain/projects/operations'
 import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import { logger } from '@/observability/logging'
-import { getProjectReplicationDbClients } from '@/modules/multiregion/utils/dbSelector'
+import { getProjectReplicationDbs } from '@/modules/multiregion/utils/dbSelector'
 
 const cleanup = async () => {
   await truncateTables([StreamActivity.name, Users.name])
@@ -57,7 +57,7 @@ const deleteStreamAndCommits: DeleteProjectAndCommits = async ({ projectId }) =>
     {
       name: 'deleteStreamAndCommits spec',
       logger,
-      dbs: await getProjectReplicationDbClients({ projectId })
+      dbs: await getProjectReplicationDbs({ projectId })
     }
   )
 

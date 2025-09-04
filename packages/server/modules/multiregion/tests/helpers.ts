@@ -1,7 +1,7 @@
 import { db } from '@/db/knex'
 import {
   getRegisteredRegionClients,
-  isRegionMain
+  getReplicationDbs
 } from '@/modules/multiregion/utils/dbSelector'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import type { Knex } from 'knex'
@@ -27,7 +27,5 @@ export async function getTestRegionClientsForProject({
   const regionDb = regionClients[regionKey]
   if (!regionDb) return [db]
 
-  if (isRegionMain({ regionKey })) return [db]
-
-  return [db, regionDb]
+  return await getReplicationDbs({ regionKey })
 }

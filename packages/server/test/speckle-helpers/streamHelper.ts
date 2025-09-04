@@ -67,7 +67,7 @@ import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import { logger } from '@/observability/logging'
 import type { LegacyCreateStream } from '@/modules/core/domain/streams/operations'
-import { getDb, isRegionMain } from '@/modules/multiregion/utils/dbSelector'
+import { getReplicationDbs } from '@/modules/multiregion/utils/dbSelector'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -152,9 +152,7 @@ const createStream: LegacyCreateStream = async (
       name: 'create stream spec',
       logger,
       description: 'Creates a new stream',
-      dbs: isRegionMain({ regionKey: stream.regionKey })
-        ? [db]
-        : [db, await getDb({ regionKey: stream.regionKey })]
+      dbs: await getReplicationDbs({ regionKey: stream.regionKey || null })
     }
   )
 

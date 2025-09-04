@@ -66,11 +66,10 @@ import {
 import { createOnboardingStreamFactory } from '@/modules/core/services/streams/onboarding'
 import { getOnboardingBaseProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
 import {
-  getDb,
   getProjectDbClient,
-  getProjectReplicationDbClients,
-  getValidDefaultProjectRegionKey,
-  isRegionMain
+  getProjectReplicationDbs,
+  getReplicationDbs,
+  getValidDefaultProjectRegionKey
 } from '@/modules/multiregion/utils/dbSelector'
 import {
   deleteAllResourceInvitesFactory,
@@ -222,7 +221,7 @@ const deleteStreamAndNotify = async (
       logger: ctxLogger,
       name: 'delete project',
       description: `Cascade deleting a project`,
-      dbs: await getProjectReplicationDbClients({ projectId })
+      dbs: await getProjectReplicationDbs({ projectId })
     }
   )
 
@@ -430,7 +429,7 @@ const resolvers: Resolvers = {
         {
           logger,
           name: 'Update Project',
-          dbs: await getProjectReplicationDbClients({ projectId })
+          dbs: await getProjectReplicationDbs({ projectId })
         }
       )
 
@@ -458,8 +457,6 @@ const resolvers: Resolvers = {
       throwIfAuthNotOk(canCreate)
 
       const regionKey = await getValidDefaultProjectRegionKey()
-      const projectDb = await getDb({ regionKey })
-
       const project = await asMultiregionalOperation(
         async ({ allDbs, mainDb, emit }) => {
           const createNewProject = createNewProjectFactory({
@@ -477,7 +474,7 @@ const resolvers: Resolvers = {
         {
           logger,
           name: 'projectCreate',
-          dbs: isRegionMain({ regionKey }) ? [db] : [db, projectDb],
+          dbs: await getReplicationDbs({ regionKey }),
           description: `Create a new project`
         }
       )
