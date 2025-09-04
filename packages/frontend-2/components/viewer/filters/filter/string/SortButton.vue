@@ -31,13 +31,7 @@ import {
 import { ArrowUpDown } from 'lucide-vue-next'
 import { SortMode } from '~/lib/viewer/helpers/filters/types'
 
-const props = defineProps<{
-  modelValue: SortMode
-}>()
-
-const emit = defineEmits<{
-  'update:modelValue': [value: SortMode]
-}>()
+const modelValue = defineModel<SortMode>()
 
 const showSortMenu = ref(false)
 
@@ -46,18 +40,18 @@ const sortMenuItems = computed<LayoutMenuItem[][]>(() => [
     {
       id: SortMode.Alphabetical,
       title: 'A-Z',
-      active: props.modelValue === SortMode.Alphabetical
+      active: modelValue.value === SortMode.Alphabetical
     },
     {
       id: SortMode.SelectedFirst,
       title: 'Selected first',
-      active: props.modelValue === SortMode.SelectedFirst
+      active: modelValue.value === SortMode.SelectedFirst
     }
   ]
 ])
 
 const onSortOptionChosen = ({ item }: { item: LayoutMenuItem; event: MouseEvent }) => {
-  emit('update:modelValue', item.id as SortMode)
+  modelValue.value = item.id as SortMode
   showSortMenu.value = false
 }
 </script>

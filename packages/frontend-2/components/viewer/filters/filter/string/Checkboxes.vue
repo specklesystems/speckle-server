@@ -14,8 +14,8 @@
     >
       <div v-bind="wrapperProps" class="relative">
         <div
-          v-for="{ data: value, index } in list"
-          :key="`${index}-${value}`"
+          v-for="{ data: value } in list"
+          :key="`${filter.id}-${value}`"
           :style="{
             height: `${itemHeight}px`,
             overflow: 'hidden'
