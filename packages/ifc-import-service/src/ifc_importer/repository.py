@@ -94,8 +94,10 @@ async def deduct_from_compute_budget(
     job_id: str,
     used_compute_time_seconds: int,
 ) -> None:
-    print(
-        f"updating job: {job_id}'s remaining compute budget by deducting {used_compute_time_seconds} seconds"
+    logger.info(
+        "updating job: {job_id}'s remaining compute budget by deducting {used_compute_time_seconds} seconds",
+        job_id=job_id,
+        used_compute_time_seconds=used_compute_time_seconds,
     )
     _ = await connection.execute(
         """
