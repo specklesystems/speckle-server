@@ -62,7 +62,6 @@ import { useManualFilteringPostSetup } from '~/lib/viewer/composables/setup/manu
 import { useFilteredObjectsCountPostSetup } from '~/lib/viewer/composables/setup/filteredObjectsCount'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { cleanupFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
-import { cleanupValueGroupCountCache } from '~/lib/viewer/composables/filtering/counts'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -544,7 +543,6 @@ function useViewerFiltersIntegration() {
   // Cleanup data store when viewer is destroyed
   onBeforeUnmount(() => {
     cleanupFilteringDataStore()
-    cleanupValueGroupCountCache()
   })
 
   // state -> viewer
