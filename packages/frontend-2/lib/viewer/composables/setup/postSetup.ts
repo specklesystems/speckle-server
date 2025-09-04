@@ -859,7 +859,6 @@ export function useViewerPostSetup() {
   useFilterColoringPostSetup()
   usePropertyFilteringPostSetup()
   useManualFilteringPostSetup()
-  // useFilteredObjectsCountPostSetup() // Disabled - managing count manually in applyPropertyFilters
   useDisableZoomOnEmbed()
   useViewerCursorIntegration()
   useViewerTreeIntegration()
