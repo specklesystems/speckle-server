@@ -422,11 +422,11 @@ const adjustResourceIdStringWithHomeSavedViewSettingsFactory =
     if (!modelIds.length) return emptyReturn
 
     const modelId = modelIds[0]
-    const savedView = await deps.getModelHomeSavedView({
+    const homeView = await deps.getModelHomeSavedView({
       modelId: modelId.modelId,
       projectId
     })
-    if (!savedView) {
+    if (!homeView) {
       // no home view found
       return emptyReturn
     }
@@ -436,7 +436,7 @@ const adjustResourceIdStringWithHomeSavedViewSettingsFactory =
       // BUT: if its the same one the home view has, at least return the view too, cause the FE will change the
       // resourceIdString to be more like the view's which will set a specific versionId that would otherwise be ignored
       const viewResource = resourceBuilder()
-        .addResources(savedView.resourceIds)
+        .addResources(homeView.resourceIds)
         .toResources()
         .filter(isModelResource)
         .at(0)
@@ -446,20 +446,25 @@ const adjustResourceIdStringWithHomeSavedViewSettingsFactory =
         savedView:
           viewResource?.modelId === modelId.modelId &&
           viewResource?.versionId === modelId.versionId
-            ? savedView
+            ? homeView
             : undefined
       }
     }
 
-    return adjustResourceIdStringWithSpecificSavedViewSettingsFactory(deps)({
-      projectId,
-      resourceIdString,
-      savedViewId: savedView,
-      savedViewSettings: {
-        // home view means - load that specific version too, otherwise theres no point
-        loadOriginal: true
-      }
-    })
+    // In case we want to move back to loading the view's specific version:
+    // return adjustResourceIdStringWithSpecificSavedViewSettingsFactory(deps)({
+    //   projectId,
+    //   resourceIdString,
+    //   savedViewId: homeView,
+    //   savedViewSettings: {
+    //     // for now, home views just load latest
+    //     loadOriginal: false
+    //   }
+    // })
+    return {
+      ...emptyReturn,
+      savedView: homeView
+    }
   }
 
 /**
