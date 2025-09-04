@@ -103,7 +103,7 @@ export default {
     },
     sourceApplication: async (parent) => {
       const knownSourceApp = SourceApps.find((app) =>
-        parent.sourceApplication?.includes(app.searchKey)
+        parent.sourceApplication?.toLowerCase().includes(app.searchKey)
       )
       // we map known source apps to their search keys (aka slug)
       // except for search keys which begin with a "-"
