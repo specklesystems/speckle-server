@@ -70,10 +70,8 @@ const props = defineProps<{
 
 const {
   projectId,
-  viewer: {
-    instance,
-    metadata: { filteringState }
-  }
+  viewer: { instance },
+  ui: { filters }
 } = useInjectedViewerState()
 
 const { isolateObjects, resetFilters } = useFilterUtilities()
@@ -111,7 +109,7 @@ const selectionLink = computed(() => {
 
 const handleHighlight = () => {
   if (!isDetached.value) return
-  const isIsolated = filteringState.value?.isolatedObjects?.includes(isDetached.value)
+  const isIsolated = filters.isolatedObjectsSet.value?.has(isDetached.value)
   if (isIsolated) return resetFilters()
   instance.zoom([isDetached.value])
   resetFilters()

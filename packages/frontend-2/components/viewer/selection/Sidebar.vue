@@ -100,7 +100,7 @@ const {
   viewer: {
     metadata: { filteringState }
   },
-  ui: { diff, measurement, threads },
+  ui: { diff, measurement, threads, filters },
   urlHashState: { focusedThreadId }
 } = useInjectedViewerState()
 const { objects, clearSelection } = useSelectionUtilities()
@@ -134,7 +134,8 @@ const objectsLimited = computed(() => {
 })
 
 const hiddenObjects = computed(() => filteringState.value?.hiddenObjects)
-const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
+// Use singleton isolatedObjectsSet from viewer state
+const { isolatedObjectsSet } = filters
 
 const allTargetIds = computed(() => {
   const ids = []
@@ -151,8 +152,9 @@ const isHidden = computed(() => {
 })
 
 const isIsolated = computed(() => {
-  if (!isolatedObjects.value) return false
-  return containsAll(allTargetIds.value, isolatedObjects.value)
+  if (!isolatedObjectsSet.value) return false
+  const isolatedObjectsArray = Array.from(isolatedObjectsSet.value)
+  return containsAll(allTargetIds.value, isolatedObjectsArray)
 })
 
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
