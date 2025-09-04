@@ -31,15 +31,12 @@ import {
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { storeModelFactory } from '@/modules/core/repositories/models'
 import {
   getObjectFactory,
   getStreamObjectsFactory,
   storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
-  deleteProjectFactory,
-  getProjectFactory,
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
@@ -59,10 +56,7 @@ import {
   getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
-import {
-  createNewProjectFactory,
-  waitForRegionProjectFactory
-} from '@/modules/core/services/projects'
+import { createNewProjectFactory } from '@/modules/core/services/projects'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { ensureOnboardingProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
@@ -156,13 +150,9 @@ const crossServerSyncModule: SpeckleModule = {
     })
 
     const createNewProject = createNewProjectFactory({
+      // This happens always outside of multiregion ctx
       storeProject: storeProjectFactory({ db }),
-      storeModel: storeModelFactory({ db }),
       storeProjectRole: storeProjectRoleFactory({ db }),
-      waitForRegionProject: waitForRegionProjectFactory({
-        getProject: getProjectFactory({ db }),
-        deleteProject: deleteProjectFactory({ db })
-      }),
       emitEvent: getEventBus().emit
     })
 

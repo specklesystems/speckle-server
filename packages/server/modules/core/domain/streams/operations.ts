@@ -152,8 +152,6 @@ export type CanUserFavoriteStream = (params: {
   streamId: string
 }) => Promise<boolean>
 
-export type DeleteStreamRecord = (streamId: string) => Promise<number>
-
 export type GetOnboardingBaseStream = (version: string) => Promise<Optional<Stream>>
 
 export type UpdateStreamRecord = (
@@ -359,10 +357,6 @@ export type UpdateStream = (
   update: StreamUpdateInput | ProjectUpdateInput,
   updaterId: string
 ) => Promise<Stream>
-
-export type LegacyUpdateStream = (
-  update: StreamUpdateInput
-) => Promise<Nullable<string>>
 
 export type PermissionUpdateInput =
   | StreamUpdatePermissionInput

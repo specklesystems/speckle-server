@@ -30,7 +30,6 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { createBranchFactory } from '@/modules/core/repositories/branches'
 import {
   getUsersFactory,
   getUserFactory,
@@ -120,6 +119,7 @@ const buildFinalizeProjectInvite = () =>
     getServerInfo
   })
 
+// This does not support multiregion
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
@@ -145,7 +145,6 @@ const createStream = legacyCreateStreamFactory({
     }),
     storeProjectRole: storeProjectRoleFactory({ db }),
     createStream: createStreamFactory({ db }),
-    createBranch: createBranchFactory({ db }),
     emitEvent: getEventBus().emit
   })
 })

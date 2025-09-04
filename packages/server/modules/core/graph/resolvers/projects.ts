@@ -16,21 +16,19 @@ import {
   toProjectIdWhitelist
 } from '@/modules/core/helpers/token'
 import {
-  createBranchFactory,
   getBatchedStreamBranchesFactory,
   insertBranchesFactory
 } from '@/modules/core/repositories/branches'
 import {
+  deleteProjectCommitsFactory,
   getBatchedBranchCommitsFactory,
   getBatchedStreamCommitsFactory,
   insertBranchCommitsFactory,
   insertCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { storeModelFactory } from '@/modules/core/repositories/models'
 import {
   deleteProjectFactory,
-  getProjectFactory,
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
@@ -38,7 +36,6 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   getStreamFactory,
   createStreamFactory,
-  deleteStreamFactory,
   updateStreamFactory,
   revokeStreamPermissionsFactory,
   grantStreamPermissionsFactory,
@@ -50,7 +47,7 @@ import {
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import {
   createNewProjectFactory,
-  waitForRegionProjectFactory
+  deleteProjectAndCommitsFactory
 } from '@/modules/core/services/projects'
 import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
@@ -69,8 +66,9 @@ import {
 import { createOnboardingStreamFactory } from '@/modules/core/services/streams/onboarding'
 import { getOnboardingBaseProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
 import {
-  getDb,
   getProjectDbClient,
+  getProjectReplicationDbs,
+  getReplicationDbs,
   getValidDefaultProjectRegionKey
 } from '@/modules/multiregion/utils/dbSelector'
 import {
@@ -119,8 +117,9 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { asOperation } from '@/modules/shared/command'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import type { Knex } from 'knex'
+import type { Logger } from '@/observability/logging'
 
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -200,6 +199,32 @@ const throwIfRateLimited = throwIfRateLimitedFactory({
   rateLimiterEnabled: isRateLimiterEnabled()
 })
 
+const deleteStreamAndNotify = async (
+  projectId: string,
+  userId: string,
+  ctxLogger: Logger
+) =>
+  asMultiregionalOperation(
+    ({ allDbs, mainDb, emit }) => {
+      const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+        deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+          deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+          deleteProjectCommits: replicateFactory(allDbs, deleteProjectCommitsFactory)
+        }),
+        emitEvent: emit,
+        deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db: mainDb }),
+        getStream: getStreamFactory({ db: mainDb })
+      })
+      return deleteStreamAndNotify(projectId, userId)
+    },
+    {
+      logger: ctxLogger,
+      name: 'delete project',
+      description: `Cascade deleting a project`,
+      dbs: await getProjectReplicationDbs({ projectId })
+    }
+  )
+
 const resolvers: Resolvers = {
   Query: {
     async project(_parent, args, context) {
@@ -268,27 +293,8 @@ const resolvers: Resolvers = {
         })
       )
 
-      const results = await withOperationLogging(
-        async () =>
-          await Promise.all(
-            args.ids.map(async (id) => {
-              const projectDb = await getProjectDbClient({ projectId: id })
-              const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
-                deleteStream: deleteStreamFactory({
-                  db: projectDb
-                }),
-                emitEvent: getEventBus().emit,
-                deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-                getStream: getStreamFactory({ db: projectDb })
-              })
-              return deleteStreamAndNotify(id, ctx.userId!)
-            })
-          ),
-        {
-          logger: ctx.log,
-          operationName: 'projectBatchDelete',
-          operationDescription: `Delete multiple projects`
-        }
+      const results = await Promise.all(
+        args.ids.map((id) => deleteStreamAndNotify(id, ctx.userId!, ctx.log))
       )
       return results.every((res) => res === true)
     },
@@ -314,27 +320,11 @@ const resolvers: Resolvers = {
       })
       throwIfAuthNotOk(canDelete)
 
-      const projectDb = await getProjectDbClient({ projectId })
-      const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
-        deleteStream: deleteStreamFactory({
-          db: projectDb
-        }),
-        emitEvent: getEventBus().emit,
-        deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-        getStream: getStreamFactory({ db: projectDb })
-      })
-      return await withOperationLogging(
-        async () => await deleteStreamAndNotify(projectId, userId!),
-        {
-          logger,
-          operationName: 'projectDelete',
-          operationDescription: `Delete a project`
-        }
-      )
+      return deleteStreamAndNotify(projectId, userId!, logger)
     },
     async createForOnboarding(_parent, _args, { userId, resourceAccessRules, log }) {
-      return await asOperation(
-        async ({ db: mainDb, emit }) => {
+      return await asMultiregionalOperation(
+        async ({ mainDb, emit, allDbs }) => {
           // We want to read & write from main DB - this isn't occurring in a multi region workspace ctx
           const createOnboardingStream = createOnboardingStreamFactory({
             getOnboardingBaseProject: getOnboardingBaseProjectFactory({
@@ -345,7 +335,7 @@ const resolvers: Resolvers = {
               getUser: getUserFactory({ db: mainDb }),
               newProjectDb: mainDb,
               sourceProjectDb: mainDb,
-              createStream: createStreamFactory({ db: mainDb }),
+              createStream: replicateFactory(allDbs, createStreamFactory),
               insertCommits: insertCommitsFactory({ db: mainDb }),
               getBatchedStreamCommits: getBatchedStreamCommitsFactory({ db: mainDb }),
               insertStreamCommits: insertStreamCommitsFactory({ db: mainDb }),
@@ -381,13 +371,12 @@ const resolvers: Resolvers = {
                 }),
                 getUsers: getUsersFactory({ db: mainDb })
               }),
-              createStream: createStreamFactory({ db: mainDb }),
-              createBranch: createBranchFactory({ db: mainDb }),
+              createStream: replicateFactory(allDbs, createStreamFactory),
               storeProjectRole: storeProjectRoleFactory({ db: mainDb }),
               emitEvent: emit
             }),
             getUser: getUserFactory({ db: mainDb }),
-            updateStream: updateStreamFactory({ db: mainDb })
+            updateStream: replicateFactory(allDbs, updateStreamFactory)
           })
 
           return await createOnboardingStream({
@@ -399,6 +388,7 @@ const resolvers: Resolvers = {
         {
           logger: log,
           name: 'createOnboardingProject',
+          dbs: [db], // Cloning does not support multiregion
           description: `Create a project for onboarding`
         }
       )
@@ -426,18 +416,20 @@ const resolvers: Resolvers = {
       })
       throwIfAuthNotOk(canUpdate)
 
-      const projectDB = await getProjectDbClient({ projectId })
-      const updateStreamAndNotify = updateStreamAndNotifyFactory({
-        getStream: getStreamFactory({ db: projectDB }),
-        updateStream: updateStreamFactory({ db: projectDB }),
-        emitEvent: getEventBus().emit
-      })
-      const res = await withOperationLogging(
-        async () => await updateStreamAndNotify(update, userId!),
+      const res = await asMultiregionalOperation(
+        async ({ mainDb, allDbs, emit }) => {
+          const updateStreamAndNotify = updateStreamAndNotifyFactory({
+            getStream: getStreamFactory({ db: mainDb }),
+            updateStream: replicateFactory(allDbs, updateStreamFactory),
+            emitEvent: emit
+          })
+
+          return await updateStreamAndNotify(update, userId!)
+        },
         {
           logger,
-          operationName: 'projectUpdate',
-          operationDescription: `Update a project`
+          name: 'Update Project',
+          dbs: await getProjectReplicationDbs({ projectId })
         }
       )
 
@@ -465,31 +457,25 @@ const resolvers: Resolvers = {
       throwIfAuthNotOk(canCreate)
 
       const regionKey = await getValidDefaultProjectRegionKey()
-      const projectDb = await getDb({ regionKey })
+      const project = await asMultiregionalOperation(
+        async ({ allDbs, mainDb, emit }) => {
+          const createNewProject = createNewProjectFactory({
+            storeProject: replicateFactory(allDbs, storeProjectFactory),
+            storeProjectRole: storeProjectRoleFactory({ db: mainDb }),
+            emitEvent: emit
+          })
 
-      const createNewProject = createNewProjectFactory({
-        storeProject: storeProjectFactory({ db: projectDb }),
-        storeModel: storeModelFactory({ db: projectDb }),
-        // THIS MUST GO TO THE MAIN DB
-        storeProjectRole: storeProjectRoleFactory({ db }),
-        waitForRegionProject: waitForRegionProjectFactory({
-          getProject: getProjectFactory({ db }),
-          deleteProject: deleteProjectFactory({ db: projectDb })
-        }),
-        emitEvent: getEventBus().emit
-      })
-
-      const project = await withOperationLogging(
-        async () =>
-          await createNewProject({
+          return createNewProject({
             ...(args.input || {}),
             ownerId: context.userId!,
             regionKey
-          }),
+          })
+        },
         {
           logger,
-          operationName: 'projectCreate',
-          operationDescription: `Create a new project`
+          name: 'projectCreate',
+          dbs: await getReplicationDbs({ regionKey }),
+          description: `Create a new project`
         }
       )
 
