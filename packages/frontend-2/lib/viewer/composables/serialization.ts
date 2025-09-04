@@ -318,6 +318,8 @@ export function useApplySerializedState() {
     // Restore propertyFilters
     if (filters.propertyFilters?.length) {
       restoreFilters(filters.propertyFilters)
+    } else {
+      resetFilters()
     }
 
     if ([StateApplyMode.Spotlight, StateApplyMode.SavedView].includes(mode)) {
