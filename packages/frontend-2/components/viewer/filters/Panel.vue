@@ -23,25 +23,22 @@
         />
       </div>
     </template>
+    <div class="flex items-center justify-between pr-0.5">
+      <ViewerFiltersLogicSelector
+        v-if="propertyFilters.length > 0"
+        :model-value="currentFilterLogic"
+        @update:model-value="setFilterLogic"
+      />
 
-    <ViewerFiltersLogicSelector
-      v-if="propertyFilters.length > 0"
-      :model-value="currentFilterLogic"
-      @update:model-value="setFilterLogic"
-    />
-
-    <div v-if="propertyFilters.length > 0" class="px-2 pb-2">
       <div
-        class="bg-highlight-1 rounded p-2 text-center text-body-2xs font-medium text-foreground-2 select-none"
+        v-if="propertyFilters.length > 0"
+        class="flex items-center pr-4 text-body-3xs text-foreground-2 select-none"
       >
         <span>
-          {{ filteredObjectsCount }} filtered item{{
-            filteredObjectsCount === 1 ? '' : 's'
-          }}
+          {{ filteredObjectsCount }} result{{ filteredObjectsCount === 1 ? '' : 's' }}
         </span>
       </div>
     </div>
-
     <div class="h-[calc(100vh-10rem)] flex flex-col select-none group/panel">
       <div
         v-if="propertyFilters.length > 0"

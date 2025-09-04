@@ -11,7 +11,6 @@
         color="subtle"
         size="sm"
         :class="showMenu ? '!bg-highlight-2' : ''"
-        :icon-right="ChevronDown"
         role="button"
         tabindex="0"
         @click="showMenu = !showMenu"
@@ -30,7 +29,6 @@
 import { FilterLogic } from '~/lib/viewer/helpers/filters/types'
 import { LayoutMenu, FormButton, type LayoutMenuItem } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
-import { ChevronDown } from 'lucide-vue-next'
 
 const props = defineProps<{
   modelValue: FilterLogic
