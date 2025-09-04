@@ -46,7 +46,7 @@
 
       <ViewerFiltersFilterStringCheckboxes
         :filter="filter"
-        :search-query="searchQuery"
+        :search-query="debouncedSearchQuery"
         :sort-mode="sortMode"
         class="my-1"
         @update:sort-mode="emit('update:sortMode', $event)"
@@ -63,6 +63,7 @@ import type {
 } from '~/lib/viewer/helpers/filters/types'
 import { ExistenceFilterCondition } from '~/lib/viewer/helpers/filters/types'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { useDebounceFn } from '@vueuse/core'
 import { X } from 'lucide-vue-next'
 
 const props = defineProps<{
@@ -76,6 +77,11 @@ const { updateFilterCondition } = useFilterUtilities()
 
 const collapsed = ref(false)
 const searchQuery = ref('')
+const debouncedSearchQuery = ref('')
+
+const updateDebouncedSearch = useDebounceFn((query: string) => {
+  debouncedSearchQuery.value = query
+}, 200)
 
 const hasSearchValue = computed(() => searchQuery.value.trim().length > 0)
 
@@ -86,4 +92,12 @@ const handleConditionSelect = (conditionOption: ConditionOption) => {
 const clearSearch = () => {
   searchQuery.value = ''
 }
+
+watch(
+  searchQuery,
+  (newQuery) => {
+    updateDebouncedSearch(newQuery)
+  },
+  { immediate: true }
+)
 </script>

@@ -1,7 +1,7 @@
 <template>
   <div class="group text-body-2xs font-medium">
     <FormTextInput
-      v-bind="bind"
+      v-model="model"
       :custom-icon="Search"
       color="fully-transparent"
       :icon-classes="iconClasses"
@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import { FormTextInput, useDebouncedTextInput } from '@speckle/ui-components'
+import { FormTextInput } from '@speckle/ui-components'
 import { Search } from 'lucide-vue-next'
 
 defineProps<{
@@ -24,8 +24,6 @@ defineProps<{
 }>()
 
 const model = defineModel<string>({ required: true })
-
-const { bind } = useDebouncedTextInput({ model })
 
 const iconClasses = computed(() => {
   const baseClasses = '!h-3 !w-3'

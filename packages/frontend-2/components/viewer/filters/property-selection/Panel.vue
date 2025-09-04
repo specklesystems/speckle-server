@@ -121,8 +121,7 @@ const listItems = computed((): PropertySelectionListItem[] => {
     return searchResults
   }
 
-  // Create a map for O(1) lookup instead of O(n) find operations
-  const optionsMap = new Map(props.options.map((opt) => [opt.value, opt]))
+  const optionsMap = new Map(filteredOptions.value.map((opt) => [opt.value, opt]))
   const availablePopular = FILTERS_POPULAR_PROPERTIES.map((filterKey) =>
     optionsMap.get(filterKey)
   )
@@ -138,9 +137,12 @@ const listItems = computed((): PropertySelectionListItem[] => {
     items.push(...popularItems)
   }
 
-  items.push({ type: 'header', title: `All properties (${props.options.length})` })
+  items.push({
+    type: 'header',
+    title: `All properties (${filteredOptions.value.length})`
+  })
 
-  const allPropertyItems = props.options.map((property) => ({
+  const allPropertyItems = filteredOptions.value.map((property) => ({
     type: 'property' as const,
     property
   }))

@@ -1,11 +1,7 @@
 <template>
   <div class="border-b border-outline-2 flex-shrink-0 relative">
     <div class="py-1">
-      <ViewerSearchInput
-        v-model="searchValue"
-        :placeholder="placeholder"
-        @input="handleInput"
-      />
+      <ViewerSearchInput v-model="modelValue" :placeholder="placeholder" />
     </div>
     <div
       v-if="hasSearchValue"
@@ -34,20 +30,11 @@ defineProps<{
   inputId?: string
 }>()
 
-const emit = defineEmits<{
-  'update:modelValue': [value: string]
-}>()
+const modelValue = defineModel<string>({ required: true })
 
-const searchValue = ref('')
-
-const hasSearchValue = computed(() => searchValue.value.trim().length > 0)
-
-const handleInput = () => {
-  emit('update:modelValue', searchValue.value)
-}
+const hasSearchValue = computed(() => modelValue.value.trim().length > 0)
 
 const clearSearch = () => {
-  searchValue.value = ''
-  emit('update:modelValue', '')
+  modelValue.value = ''
 }
 </script>
