@@ -13,20 +13,15 @@ import type {
   ResourceInfo,
   PropertyInfoBase
 } from '~/lib/viewer/helpers/filters/types'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 
-// Singleton instance to prevent multiple data stores
-let globalDataStoreInstance: ReturnType<typeof createFilteringDataStore> | null = null
-
-function createFilteringDataStore() {
+export function createViewerFilteringDataStore() {
   const dataSourcesMap: Ref<Record<string, DataSource>> = ref({})
   const dataSources = computed(() => Object.values(dataSourcesMap.value))
   const currentFilterLogic = ref<FilterLogic>(FilterLogic.All)
   const dataSlices: Ref<DataSlice[]> = ref([])
 
-  let propertyExtractionCache = new WeakMap<
-    Record<string, unknown>,
-    PropertyInfoBase[]
-  >()
+  const propertyExtractionCache = new Map<Record<string, unknown>, PropertyInfoBase[]>()
 
   const extractNestedProperties = (
     obj: Record<string, unknown>
@@ -287,7 +282,7 @@ function createFilteringDataStore() {
   const clearDataOnRouteLeave = () => {
     dataSourcesMap.value = {}
     dataSlices.value = []
-    propertyExtractionCache = new WeakMap()
+    propertyExtractionCache.clear()
   }
 
   const setFilterLogic = (logic: FilterLogic) => {
@@ -311,21 +306,17 @@ function createFilteringDataStore() {
   }
 }
 
-export function useFilteringDataStore() {
-  // Return the singleton instance
-  if (!globalDataStoreInstance) {
-    globalDataStoreInstance = createFilteringDataStore()
-  }
-  return globalDataStoreInstance
-}
-
 /**
- * Clean up the global data store instance
- * Call this when the viewer is destroyed or on route changes
+ * Get the filtering data store from the current viewer state
  */
-export function cleanupFilteringDataStore() {
-  if (globalDataStoreInstance) {
-    globalDataStoreInstance.clearDataOnRouteLeave()
-    globalDataStoreInstance = null
+export function useFilteringDataStore() {
+  const { viewer } = useInjectedViewerState()
+
+  if (!viewer.metadata.filteringDataStore) {
+    throw new Error(
+      'Filtering data store not initialized. Ensure viewer is properly set up.'
+    )
   }
+
+  return viewer.metadata.filteringDataStore
 }

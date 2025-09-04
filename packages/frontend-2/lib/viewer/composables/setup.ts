@@ -61,6 +61,7 @@ import { setupUiDiffState } from '~~/lib/viewer/composables/setup/diff'
 import type { DiffStateCommand } from '~~/lib/viewer/composables/setup/diff'
 import { useDiffUtilities, useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { createViewerFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 import { flatten, isUndefined, reduce } from 'lodash-es'
 import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
 import {
@@ -152,6 +153,7 @@ export type InjectableViewerState = Readonly<{
       availableFilters: ComputedRef<Optional<PropertyInfo[]>>
       views: ComputedRef<SpeckleView[]>
       filteringState: ComputedRef<Optional<FilteringState>>
+      filteringDataStore: ReturnType<typeof createViewerFilteringDataStore>
     }
     /**
      * Whether the Viewer has finished doing the initial object loading
@@ -457,6 +459,8 @@ function setupViewerMetadata(params: {
   const filteringState = shallowRef(undefined as Optional<FilteringState>)
   const views = ref([] as SpeckleView[])
 
+  const filteringDataStore = createViewerFilteringDataStore()
+
   const refreshWorldTreeAndFilters = async () => {
     worldTree.value = viewer.getWorldTree()
     availableFilters.value = await viewer.getObjectProperties()
@@ -484,7 +488,8 @@ function setupViewerMetadata(params: {
     worldTree: computed(() => worldTree.value),
     availableFilters: computed(() => availableFilters.value),
     filteringState: computed(() => filteringState.value),
-    views: computed(() => views.value)
+    views: computed(() => views.value),
+    filteringDataStore
   }
 }
 

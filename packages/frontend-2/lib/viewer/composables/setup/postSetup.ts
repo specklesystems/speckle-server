@@ -61,7 +61,6 @@ import { usePropertyFilteringPostSetup } from '~/lib/viewer/composables/setup/pr
 import { useManualFilteringPostSetup } from '~/lib/viewer/composables/setup/manualFiltering'
 import { useFilteredObjectsCountPostSetup } from '~/lib/viewer/composables/setup/filteredObjectsCount'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
-import { cleanupFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -539,11 +538,6 @@ function useViewerFiltersIntegration() {
   } = state
 
   useFilterUtilities({ state })
-
-  // Cleanup data store when viewer is destroyed
-  onBeforeUnmount(() => {
-    cleanupFilteringDataStore()
-  })
 
   // state -> viewer
   watch(
