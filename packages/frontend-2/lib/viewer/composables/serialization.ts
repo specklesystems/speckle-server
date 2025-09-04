@@ -209,6 +209,7 @@ export function useApplySerializedState() {
       await projectId.update(state.projectId)
     }
 
+    // Handle loaded resource change
     let newResourceIdString: string | undefined = undefined
     if (
       [StateApplyMode.Spotlight, StateApplyMode.ThreadFullContextOpen].includes(mode)
@@ -241,6 +242,26 @@ export function useApplySerializedState() {
         .addResources(finalItems)
         // .addNew(current) // keeping other federated models around
         .toString()
+    } else if (mode === StateApplyMode.FederatedContext) {
+      // For federated context, append only model IDs (without versions) to show latest
+      const { parseUrlParameters, ViewerModelResource, createGetParamFromResources } =
+        SpeckleViewer.ViewerRoute
+
+      const currentResources = parseUrlParameters(resourceIdString.value)
+      const newResources = parseUrlParameters(
+        state.resources?.request?.resourceIdString ?? ''
+      ).map((resource) => {
+        if (resource instanceof ViewerModelResource) {
+          // Only keep model ID, drop version
+          return new ViewerModelResource(resource.modelId)
+        }
+        return resource
+      })
+
+      if (newResources.length) {
+        const allResources = [...currentResources, ...newResources]
+        newResourceIdString = createGetParamFromResources(allResources)
+      }
     }
 
     // We want to make sure the final resources have been loaded before we continue on
@@ -323,34 +344,6 @@ export function useApplySerializedState() {
             logger.error(e)
           }
         })
-    }
-
-    // Handle resource string updates
-    if (
-      [StateApplyMode.Spotlight, StateApplyMode.ThreadFullContextOpen].includes(mode)
-    ) {
-      await resourceIdString.update(state.resources?.request?.resourceIdString || '')
-    } else if (mode === StateApplyMode.FederatedContext) {
-      // For federated context, append only model IDs (without versions) to show latest
-      const { parseUrlParameters, ViewerModelResource, createGetParamFromResources } =
-        SpeckleViewer.ViewerRoute
-
-      const currentResources = parseUrlParameters(resourceIdString.value)
-      const newResources = parseUrlParameters(
-        state.resources?.request?.resourceIdString ?? ''
-      ).map((resource) => {
-        if (resource instanceof ViewerModelResource) {
-          // Only keep model ID, drop version
-          return new ViewerModelResource(resource.modelId)
-        }
-        return resource
-      })
-
-      if (newResources.length) {
-        const allResources = [...currentResources, ...newResources]
-        const newResourceString = createGetParamFromResources(allResources)
-        await resourceIdString.update(newResourceString)
-      }
     }
 
     if ([StateApplyMode.Spotlight, StateApplyMode.SavedView].includes(mode)) {
