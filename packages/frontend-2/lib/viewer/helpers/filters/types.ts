@@ -142,6 +142,8 @@ export type DataSource = {
   objectMap: Record<string, SpeckleObject>
   propertyMap: Record<string, PropertyInfoBase>
   objectProperties: Record<string, Record<string, unknown>>
+  // Pre-computed property to object IDs mapping for fast filtering
+  propertyToObjectIds: Record<string, Record<string, string[]>>
 }
 
 export type ResourceInfo = {

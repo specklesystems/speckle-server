@@ -36,6 +36,8 @@ export function createViewerFilteringDataStore() {
       const propertyMap: Record<string, PropertyInfoBase> = {}
       // Map from objectId to its property values for efficient filtering
       const objectProperties: Record<string, Record<string, unknown>> = {}
+      // Pre-computed property to object IDs mapping for instant filter creation
+      const propertyToObjectIds: Record<string, Record<string, string[]>> = {}
 
       await tree.walkAsync((node: TreeNode) => {
         if (
@@ -114,6 +116,18 @@ export function createViewerFilteringDataStore() {
           }
 
           objectProperties[objectId] = objProps
+
+          // Build property-to-objectIds mapping for fast filter creation
+          for (const [propKey, propValue] of Object.entries(objProps)) {
+            if (!propertyToObjectIds[propKey]) {
+              propertyToObjectIds[propKey] = {}
+            }
+            const stringValue = String(propValue)
+            if (!propertyToObjectIds[propKey][stringValue]) {
+              propertyToObjectIds[propKey][stringValue] = []
+            }
+            propertyToObjectIds[propKey][stringValue].push(objectId)
+          }
         }
         return true
       }, subnode)
@@ -126,7 +140,8 @@ export function createViewerFilteringDataStore() {
         rootObject: rootObject ? markRaw(rootObject) : null,
         objectMap: markRaw(objectMap),
         propertyMap,
-        objectProperties
+        objectProperties,
+        propertyToObjectIds
       }
     }
   }
@@ -142,76 +157,85 @@ export function createViewerFilteringDataStore() {
         continue
       }
 
+      // Use pre-computed property mapping for instant lookups
+      const propertyMapping = dataSource.propertyToObjectIds[criteria.propertyKey]
+
       if (criteria.condition === ExistenceFilterCondition.IsSet) {
-        // Find all objects that have this property - use pre-computed objectProperties
-        for (const [objectId, objProps] of Object.entries(
-          dataSource.objectProperties
-        )) {
-          const hasProperty = criteria.propertyKey in objProps
-          if (hasProperty) {
-            matchingIds.push(objectId)
+        // Find all objects that have this property - use pre-computed mapping
+        if (propertyMapping) {
+          for (const objectIds of Object.values(propertyMapping)) {
+            matchingIds.push(...objectIds)
           }
         }
       } else if (criteria.condition === ExistenceFilterCondition.IsNotSet) {
         // Find all objects that don't have this property
-        for (const [objectId, objProps] of Object.entries(
-          dataSource.objectProperties
-        )) {
-          const hasProperty = criteria.propertyKey in objProps
-          if (!hasProperty) {
+        const objectsWithProperty = new Set<string>()
+        if (propertyMapping) {
+          for (const objectIds of Object.values(propertyMapping)) {
+            objectIds.forEach((id) => objectsWithProperty.add(id))
+          }
+        }
+
+        for (const objectId of Object.keys(dataSource.objectMap)) {
+          if (!objectsWithProperty.has(objectId)) {
             matchingIds.push(objectId)
           }
         }
-      } else {
-        // For value-based filtering, check each object
-        for (const [objectId, objProps] of Object.entries(
-          dataSource.objectProperties
-        )) {
-          const value = objProps[criteria.propertyKey]
-          if (value === undefined) continue
+      } else if (!propertyMapping) {
+        // Property doesn't exist in this data source
+        continue
+      } else if (criteria.minValue !== undefined || criteria.maxValue !== undefined) {
+        // Numeric filtering - use pre-computed mapping
+        const minValue = criteria.minValue ?? -Infinity
+        const maxValue = criteria.maxValue ?? Infinity
+
+        for (const [value, objectIds] of Object.entries(propertyMapping)) {
+          const numericValue = Number(value)
+          if (isNaN(numericValue)) continue
+
           let shouldInclude = false
-
-          if (criteria.minValue !== undefined || criteria.maxValue !== undefined) {
-            // Numeric filtering
-            const numericValue = Number(value)
-            if (isNaN(numericValue)) continue
-
-            const minValue = criteria.minValue ?? -Infinity
-            const maxValue = criteria.maxValue ?? Infinity
-
-            switch (criteria.condition) {
-              case NumericFilterCondition.IsBetween:
-                shouldInclude = numericValue >= minValue && numericValue <= maxValue
-                break
-              case NumericFilterCondition.IsGreaterThan:
-                shouldInclude = numericValue > minValue
-                break
-              case NumericFilterCondition.IsLessThan:
-                shouldInclude = numericValue < maxValue
-                break
-              case NumericFilterCondition.IsEqualTo: {
-                const tolerance = Math.pow(10, -PRECISION)
-                shouldInclude = Math.abs(numericValue - minValue) <= tolerance
-                break
-              }
-              case NumericFilterCondition.IsNotEqualTo: {
-                const tolerance = Math.pow(10, -PRECISION)
-                shouldInclude = Math.abs(numericValue - minValue) > tolerance
-                break
-              }
-              default:
-                shouldInclude = numericValue >= minValue && numericValue <= maxValue
+          switch (criteria.condition) {
+            case NumericFilterCondition.IsBetween:
+              shouldInclude = numericValue >= minValue && numericValue <= maxValue
+              break
+            case NumericFilterCondition.IsGreaterThan:
+              shouldInclude = numericValue > minValue
+              break
+            case NumericFilterCondition.IsLessThan:
+              shouldInclude = numericValue < maxValue
+              break
+            case NumericFilterCondition.IsEqualTo: {
+              const tolerance = Math.pow(10, -PRECISION)
+              shouldInclude = Math.abs(numericValue - minValue) <= tolerance
+              break
             }
-          } else if (criteria.condition === StringFilterCondition.Is) {
-            // String filtering - exact match
-            shouldInclude = criteria.values.includes(String(value))
-          } else if (criteria.condition === StringFilterCondition.IsNot) {
-            // String filtering - exclude values
-            shouldInclude = !criteria.values.includes(String(value))
+            case NumericFilterCondition.IsNotEqualTo: {
+              const tolerance = Math.pow(10, -PRECISION)
+              shouldInclude = Math.abs(numericValue - minValue) > tolerance
+              break
+            }
+            default:
+              shouldInclude = numericValue >= minValue && numericValue <= maxValue
           }
 
           if (shouldInclude) {
-            matchingIds.push(objectId)
+            matchingIds.push(...objectIds)
+          }
+        }
+      } else if (criteria.condition === StringFilterCondition.Is) {
+        // String filtering - use pre-computed mapping for instant lookup
+        for (const value of criteria.values) {
+          const objectIds = propertyMapping[value]
+          if (objectIds) {
+            matchingIds.push(...objectIds)
+          }
+        }
+      } else if (criteria.condition === StringFilterCondition.IsNot) {
+        // String filtering - exclude values using pre-computed mapping
+        const excludeValues = new Set(criteria.values)
+        for (const [value, objectIds] of Object.entries(propertyMapping)) {
+          if (!excludeValues.has(value)) {
+            matchingIds.push(...objectIds)
           }
         }
       }
