@@ -171,7 +171,10 @@ import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useEventListener, useResizeObserver, useBreakpoints } from '@vueuse/core'
 import { type Nullable, isNonNullable } from '@speckle/shared'
-import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
+import {
+  useInjectedViewerLoadedResources,
+  useInjectedViewerState
+} from '~~/lib/viewer/composables/setup'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { useIntercomEnabled } from '~~/lib/intercom/composables/enabled'
 import { viewerDocsRoute } from '~~/lib/common/helpers/route'
@@ -185,18 +188,10 @@ import {
   MessageSquareText,
   CircleQuestionMark
 } from 'lucide-vue-next'
-import { ModelsSubView } from '~~/lib/viewer/helpers/sceneExplorer'
+import { useViewerPanelsUtilities } from '~/lib/viewer/composables/setup/panels'
+import type { ActivePanel } from '~/lib/viewer/helpers/sceneExplorer'
 
-type ActivePanel =
-  | 'none'
-  | 'models'
-  | 'discussions'
-  | 'explorer'
-  | 'automate'
-  | 'filters'
-  | 'devMode'
-  | 'savedViews'
-
+// TODO: Refactor all of this event business and just read/write panels state directly
 const emit = defineEmits<{
   forceClosePanels: []
 }>()
@@ -247,16 +242,18 @@ const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources(
 const { registerShortcuts, getShortcutDisplayText, shortcuts } = useViewerShortcuts()
 const { isEnabled: isEmbedEnabled } = useEmbed()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
-const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 const isMobile = breakpoints.smaller('sm')
 const isTablet = breakpoints.smaller('lg')
 const { getTooltipProps } = useSmartTooltipDelay()
 const isSavedViewsEnabled = useAreSavedViewsEnabled()
 const { $intercom } = useNuxtApp()
-const { hasActiveFilters, filters } = useFilterUtilities()
-
-const activePanel = ref<ActivePanel>('none')
-const modelsSubView = ref<ModelsSubView>(ModelsSubView.Main)
+const { hasActiveFilters } = useFilterUtilities()
+const {
+  ui: {
+    panels: { active: activePanel, modelsSubView }
+  }
+} = useInjectedViewerState()
+const { onPanelButtonClick } = useViewerPanelsUtilities()
 
 const hasActivePanel = computed(() => activePanel.value !== 'none')
 
@@ -296,34 +293,7 @@ registerShortcuts({
 })
 
 const toggleActivePanel = (panel: ActivePanel) => {
-  const wasNone = activePanel.value === 'none'
-
-  if (panel === 'models') {
-    if (activePanel.value === 'models') {
-      if (
-        modelsSubView.value === ModelsSubView.Versions ||
-        modelsSubView.value === ModelsSubView.Diff
-      ) {
-        // Go back to main models view instead of closing
-        modelsSubView.value = ModelsSubView.Main
-        return
-      } else {
-        activePanel.value = 'none'
-      }
-    } else {
-      // Open models panel and reset to main view
-      activePanel.value = 'models'
-      modelsSubView.value = ModelsSubView.Main
-    }
-  } else {
-    activePanel.value = activePanel.value === panel ? 'none' : panel
-    modelsSubView.value = ModelsSubView.Main
-  }
-
-  // If a panel is being opened (not closed) on mobile, emit event to parent
-  if (wasNone && activePanel.value !== 'none' && isMobile.value) {
-    emit('forceClosePanels')
-  }
+  onPanelButtonClick(panel)
 }
 
 const forceClosePanel = () => {
@@ -340,25 +310,14 @@ const openIntercomChat = () => {
   }
 }
 
-onMounted(() => {
-  activePanel.value =
-    isSmallerOrEqualSm.value || isEmbedEnabled.value ? 'none' : 'models'
-})
+watch(activePanel, (newVal, oldVal) => {
+  const wasNone = oldVal === 'none'
 
-watch(isSmallerOrEqualSm, (newVal) => {
-  activePanel.value = newVal ? 'none' : 'models'
-})
-
-// Auto-open filters panel when a new filter is applied from elsewhere
-watch(
-  () => filters.propertyFilter.isApplied.value && filters.propertyFilter.filter.value,
-  (newFilterApplied, oldFilterApplied) => {
-    // Only trigger if we're going from no filter to having a filter (not when changing filters or removing)
-    if (newFilterApplied && !oldFilterApplied) {
-      activePanel.value = 'filters'
-    }
+  // If a panel is being opened (not closed) on mobile, emit event to parent
+  if (wasNone && newVal !== 'none' && isMobile.value) {
+    emit('forceClosePanels')
   }
-)
+})
 
 defineExpose({
   forceClosePanel,
