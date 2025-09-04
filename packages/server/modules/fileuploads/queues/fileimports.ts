@@ -5,7 +5,8 @@ import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
 import {
   NumberOfFileImportRetries,
   BackgroundJobType,
-  BackgroundJobPayloadVersion
+  BackgroundJobPayloadVersion,
+  maximumAllowedQueuingProcessingAndRetryTimeMs
 } from '@/modules/fileuploads/domain/consts'
 import type { Knex } from 'knex'
 import { migrateDbToLatest } from '@/db/migrations'
@@ -15,7 +16,6 @@ import {
   storeBackgroundJobFactory
 } from '@/modules/backgroundjobs/repositories'
 import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain'
-import { TIME_MS } from '@speckle/shared'
 
 export const fileImportQueues: FileImportQueue[] = []
 
@@ -34,7 +34,7 @@ export const initializePostgresQueue = async ({
   const createBackgroundJob = createBackgroundJobFactory({
     jobConfig: {
       maxAttempt: NumberOfFileImportRetries,
-      timeoutMs: 1 * TIME_MS.day // some arbitrarily large number, will be ignored by file imports in favour of compute time budgets
+      timeoutMs: maximumAllowedQueuingProcessingAndRetryTimeMs()
     },
     storeBackgroundJob: storeBackgroundJobFactory({
       db,

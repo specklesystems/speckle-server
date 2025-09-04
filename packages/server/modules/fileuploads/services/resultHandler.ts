@@ -17,12 +17,15 @@ import {
   BackgroundJobStatus,
   type UpdateBackgroundJob
 } from '@/modules/backgroundjobs/domain'
-import { JobResultStatus } from '@speckle/shared/workers/fileimport'
+import {
+  type FileImportJobPayloadV2,
+  JobResultStatus
+} from '@speckle/shared/workers/fileimport'
 
 type OnFileImportResultDeps = {
   getFileInfo: GetFileInfoV2
   updateFileUpload: UpdateFileUpload
-  updateBackgroundJob: UpdateBackgroundJob
+  updateBackgroundJob: UpdateBackgroundJob<FileImportJobPayloadV2>
   eventEmit: EventBusEmit
   logger: Logger
   FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
@@ -85,15 +88,14 @@ export const onFileImportResultFactory =
     if (deps.FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
       try {
         await deps.updateBackgroundJob({
-          jobId,
+          payloadFilter: { jobId },
           status: newStatusForBackgroundJob
         })
       } catch (e) {
         const err = ensureError(e)
         logger.error(
-          { err },
-          'Error updating background job status in database. Job ID: %s',
-          jobId
+          { err, jobId },
+          'Error updating background job status in database. Job ID: {jobId}'
         )
         throw err
       }

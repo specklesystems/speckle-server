@@ -93,16 +93,18 @@ export const failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComp
     }
 
 export const updateBackgroundJobFactory =
-  ({ db }: { db: Knex }): UpdateBackgroundJob =>
-  async ({ jobId, status }) => {
+  <T extends BackgroundJobPayload = BackgroundJobPayload>({
+    db
+  }: {
+    db: Knex
+  }): UpdateBackgroundJob<T> =>
+  async ({ payloadFilter, status }) => {
     const query = tables
       .backgroundJobs(db)
       .update({ status })
-      .where({ id: jobId })
-      .returning('*')
-    const rows = await query
-    if (rows.length === 0) return null
-    return rows[0]
+      .whereJsonSupersetOf('payload', payloadFilter)
+      .returning<BackgroundJob<T>[]>('*')
+    return await query
   }
 
 export const getBackgroundJobCountFactory =

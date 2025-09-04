@@ -1,18 +1,13 @@
 import type { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
 import { DefaultAppIds } from '@/modules/auth/defaultApps'
-import { Scopes, TIME, TIME_MS } from '@speckle/shared'
+import { Scopes, TIME } from '@speckle/shared'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import type { PushJobToFileImporter } from '@/modules/fileuploads/domain/operations'
 import { getFileImportTimeLimitMinutes } from '@/modules/shared/helpers/envHelper'
 import {
-  DelayBetweenFileImportRetriesMinutes,
+  maximumAllowedQueuingProcessingAndRetryTimeMs,
   NumberOfFileImportRetries
 } from '@/modules/fileuploads/domain/consts'
-
-export const calculateTotalFileImportTimeoutMs = () =>
-  NumberOfFileImportRetries *
-  (getFileImportTimeLimitMinutes() + DelayBetweenFileImportRetriesMinutes + 1) *
-  TIME_MS.minute // allowing an extra minute for some buffer
 
 export const pushJobToFileImporterFactory =
   (deps: {
@@ -34,7 +29,7 @@ export const pushJobToFileImporterFactory =
       name: `fileimport-${projectId}@${modelId}`,
       userId,
       scopes: [Scopes.Streams.Write, Scopes.Streams.Read, Scopes.Profile.Read],
-      lifespan: calculateTotalFileImportTimeoutMs(),
+      lifespan: maximumAllowedQueuingProcessingAndRetryTimeMs(),
       limitResources: [
         {
           id: projectId,

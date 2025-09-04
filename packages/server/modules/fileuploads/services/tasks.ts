@@ -49,7 +49,8 @@ export const garbageCollectAttemptedFileImportBackgroundJobsFactory = (deps: {
       )
 
     logger.info(
-      `Found ${failedBackgroundJobs.length} background jobs which have exceeded maximum number of attempts or exceeded their compute budget`
+      { numberOfFailedBackgroundJobs: failedBackgroundJobs.length },
+      'Found {numberOfFailedBackgroundJobs} background jobs which have exceeded maximum number of attempts or exceeded their compute budget'
     )
 
     if (failedBackgroundJobs.length === 0) {

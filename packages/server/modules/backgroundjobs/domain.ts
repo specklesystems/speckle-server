@@ -45,9 +45,9 @@ export type FailQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingCompu
 
 export type UpdateBackgroundJob<T extends BackgroundJobPayload = BackgroundJobPayload> =
   (args: {
-    jobId: string
+    payloadFilter: Partial<T>
     status: BackgroundJobStatus
-  }) => Promise<BackgroundJob<T> | null>
+  }) => Promise<BackgroundJob<T>[]>
 
 export type GetBackgroundJobCount<
   T extends BackgroundJobPayload = BackgroundJobPayload

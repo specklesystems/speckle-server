@@ -1,3 +1,5 @@
+import { TIME_MS } from '@speckle/shared'
+
 export const FileUploadDatabaseEvents = {
   Updated: 'file_import_update',
   Started: 'file_import_started'
@@ -19,3 +21,8 @@ export const BackgroundJobPayloadVersion = {
 
 export type BackgroundJobPayloadVersion =
   (typeof BackgroundJobPayloadVersion)[keyof typeof BackgroundJobPayloadVersion]
+
+export const maximumAllowedQueuingProcessingAndRetryTimeMs = () => 1 * TIME_MS.day
+// NumberOfFileImportRetries *
+// (getFileImportTimeLimitMinutes() + DelayBetweenFileImportRetriesMinutes + 1) *
+// TIME_MS.minute // allowing an extra minute for some buffer
