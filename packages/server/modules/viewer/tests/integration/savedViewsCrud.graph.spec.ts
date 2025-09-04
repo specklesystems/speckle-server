@@ -8,6 +8,7 @@ import type {
   CreateSavedViewMutationVariables,
   DeleteSavedViewGroupMutationVariables,
   DeleteSavedViewMutationVariables,
+  GetModelHomeViewQueryVariables,
   GetProjectSavedViewGroupQueryVariables,
   GetProjectSavedViewGroupsQueryVariables,
   GetProjectSavedViewIfExistsQueryVariables,
@@ -24,6 +25,7 @@ import {
   CreateSavedViewGroupDocument,
   DeleteSavedViewDocument,
   DeleteSavedViewGroupDocument,
+  GetModelHomeViewDocument,
   GetProjectSavedViewDocument,
   GetProjectSavedViewGroupDocument,
   GetProjectSavedViewGroupsDocument,
@@ -43,6 +45,7 @@ import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
 import {
   SavedViewCreationValidationError,
   SavedViewGroupCreationValidationError,
+  SavedViewGroupNotFoundError,
   SavedViewGroupUpdateValidationError,
   SavedViewInvalidHomeViewSettingsError,
   SavedViewInvalidResourceTargetError,
@@ -213,6 +216,11 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     input: UpdateSavedViewGroupMutationVariables,
     options?: ExecuteOperationOptions
   ) => apollo.execute(UpdateSavedViewGroupDocument, input, options)
+
+  const getModelHomeView = (
+    input: GetModelHomeViewQueryVariables,
+    options?: ExecuteOperationOptions
+  ) => apollo.execute(GetModelHomeViewDocument, input, options)
 
   const getDefaultGroup = async (params: {
     projectId: string
@@ -599,7 +607,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         )
 
         expect(res).to.haveGraphQLErrors({
-          code: SavedViewCreationValidationError.code
+          code: SavedViewGroupNotFoundError.code
         })
         expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
       })
@@ -838,6 +846,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     describe('updates', () => {
       let updatablesProject: BasicTestStream
       let models: BasicTestBranch[]
+      let modelWithoutViews: BasicTestBranch
       let testView: BasicSavedViewFragment
       let testView2: BasicSavedViewFragment
       let optionalGroup: BasicSavedViewGroupFragment
@@ -882,6 +891,13 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
             })
           })
         )
+        modelWithoutViews = await createTestBranch({
+          branch: buildBasicTestModel({
+            name: `Model w/o views`
+          }),
+          stream: updatablesProject,
+          owner: me
+        })
 
         optionalGroup = (
           await createSavedViewGroup(
@@ -1162,6 +1178,42 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(view1Again!.isHomeView).to.be.false
       })
 
+      it('models w/ and w/o saved views resolve resourceIdString correctly', async () => {
+        await updateView(
+          {
+            input: {
+              id: testView.id,
+              projectId: updatablesProject.id,
+              isHomeView: true
+            }
+          },
+          { assertNoErrors: true }
+        )
+
+        const testViewModelId = models[0].id
+        const resWithHomeView = await getModelHomeView(
+          {
+            projectId: updatablesProject.id,
+            modelId: testViewModelId
+          },
+          { assertNoErrors: true }
+        )
+        expect(resWithHomeView.data?.project.model.resourceIdString).to.eq(
+          testViewModelId
+        )
+
+        const resWithoutHomeView = await getModelHomeView(
+          {
+            projectId: updatablesProject.id,
+            modelId: modelWithoutViews.id
+          },
+          { assertNoErrors: true }
+        )
+        expect(resWithoutHomeView.data?.project.model.resourceIdString).to.eq(
+          modelWithoutViews.id
+        )
+      })
+
       it('fails if updating view to be private home view', async () => {
         const res = await updateView({
           input: {
@@ -1361,7 +1413,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
             name: 'x'
           }
         })
-        expect(res).to.haveGraphQLErrors({ code: SavedViewUpdateValidationError.code })
+        expect(res).to.haveGraphQLErrors({ code: SavedViewGroupNotFoundError.code })
         expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
       })
 

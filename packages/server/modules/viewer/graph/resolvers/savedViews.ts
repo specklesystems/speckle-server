@@ -186,6 +186,22 @@ const resolvers: Resolvers = {
           modelId: parent.id,
           projectId
         })
+    },
+    resourceIdString: async (parent, _args, ctx) => {
+      const projectId = parent.streamId
+      const projectDb = await getProjectDbClient({ projectId })
+      const homeView = await ctx.loaders
+        .forRegion({ db: projectDb })
+        .savedViews.getModelHomeSavedView.load({
+          modelId: parent.id,
+          projectId
+        })
+
+      if (!homeView) return parent.id
+      return resourceBuilder()
+        .addResources(homeView.resourceIds)
+        .clearVersions() // just use latest version
+        .toString()
     }
   },
   SavedView: {
@@ -522,7 +538,8 @@ const disabledResolvers: Resolvers = {
     }
   },
   Model: {
-    homeView: () => null // intentional - so we dont have to FF guard the query
+    homeView: () => null, // intentional - so we dont have to FF guard the query
+    resourceIdString: (parent) => parent.id
   },
   ProjectMutations: {
     savedViewMutations: () => {

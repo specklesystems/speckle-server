@@ -65,7 +65,7 @@ import { VALID_HTTP_URL } from '~~/lib/common/helpers/validation'
 import { LayoutMenu, type LayoutMenuItem } from '@speckle/ui-components'
 import { Ellipsis } from 'lucide-vue-next'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
-import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import type { KeyValuePair } from '~/components/viewer/selection/types'
 import { isNumericPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
 
@@ -83,8 +83,13 @@ const {
 } = useFilterUtilities()
 
 const {
-  metadata: { availableFilters }
-} = useInjectedViewer()
+  viewer: {
+    metadata: { availableFilters }
+  },
+  ui: {
+    panels: { active: activePanel }
+  }
+} = useInjectedViewerState()
 
 const showActionsMenu = ref(false)
 
@@ -124,6 +129,7 @@ const handleAddToFilters = (kvp: KeyValuePair) => {
       updateActiveFilterValues(filterId, values)
     }
   }
+  activePanel.value = 'filters'
 }
 
 const handleCopy = async (kvp: KeyValuePair) => {

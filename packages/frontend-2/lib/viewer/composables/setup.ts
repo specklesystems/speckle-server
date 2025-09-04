@@ -49,7 +49,11 @@ import { nanoid } from 'nanoid'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
-import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
+import type {
+  ModelsSubView,
+  ActivePanel,
+  SpeckleObject
+} from '~/lib/viewer/helpers/sceneExplorer'
 import { Vector3 } from 'three'
 import { writableAsyncComputed } from '~~/lib/common/composables/async'
 import type { AsyncWritableComputedRef } from '~~/lib/common/composables/async'
@@ -92,6 +96,7 @@ import {
 import type { defaultEdgeColorValue } from '~/lib/viewer/composables/setup/viewMode'
 import { useViewModesSetup } from '~/lib/viewer/composables/setup/viewMode'
 import { useMeasurementsSetup } from '~/lib/viewer/composables/setup/measurements'
+import { useViewerPanelsSetup } from '~/lib/viewer/composables/setup/panels'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -358,6 +363,13 @@ export type InjectableViewerState = Readonly<{
      * Various saved views UI settings
      */
     savedViews: SavedViewsUIState
+    /**
+     * Opened viewer panel settings
+     */
+    panels: {
+      active: Ref<ActivePanel>
+      modelsSubView: Ref<ModelsSubView>
+    }
   }
   /**
    * State stored in the anchor string of the URL
@@ -1213,7 +1225,8 @@ function setupInterfaceState(
       },
       highlightedObjectIds,
       measurement: useMeasurementsSetup(),
-      savedViews: useBuildSavedViewsUIState()
+      savedViews: useBuildSavedViewsUIState(),
+      panels: useViewerPanelsSetup()
     }
   }
 }

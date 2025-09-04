@@ -17,6 +17,7 @@ import {
   resourceBuilder,
   type ViewerResource
 } from '@speckle/shared/viewer/route'
+import { until } from '@vueuse/core'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 
@@ -191,7 +192,8 @@ export function useApplySerializedState() {
       diff,
       viewMode,
       measurement,
-      sectionBoxContext
+      sectionBoxContext,
+      loading
     },
     resources: {
       request: { resourceIdString }
@@ -219,10 +221,12 @@ export function useApplySerializedState() {
       await projectId.update(state.projectId)
     }
 
+    // Handle loaded resource change
+    let newResourceIdString: string | undefined = undefined
     if (
       [StateApplyMode.Spotlight, StateApplyMode.ThreadFullContextOpen].includes(mode)
     ) {
-      await resourceIdString.update(state.resources?.request?.resourceIdString || '')
+      newResourceIdString = state.resources?.request?.resourceIdString || ''
     } else if (mode === StateApplyMode.SavedView) {
       const { loadOriginal } = options || {}
 
@@ -246,11 +250,38 @@ export function useApplySerializedState() {
               .find((r) => r.modelId === incomingItem.modelId)?.versionId
         finalItems.push(incomingItem)
       }
-      const newResourceIdString = resourceBuilder()
+      newResourceIdString = resourceBuilder()
         .addResources(finalItems)
-        .addNew(current) // keeping other federated models around
+        // .addNew(current) // keeping other federated models around
         .toString()
+    } else if (mode === StateApplyMode.FederatedContext) {
+      // For federated context, append only model IDs (without versions) to show latest
+      const { parseUrlParameters, ViewerModelResource, createGetParamFromResources } =
+        SpeckleViewer.ViewerRoute
+
+      const currentResources = parseUrlParameters(resourceIdString.value)
+      const newResources = parseUrlParameters(
+        state.resources?.request?.resourceIdString ?? ''
+      ).map((resource) => {
+        if (resource instanceof ViewerModelResource) {
+          // Only keep model ID, drop version
+          return new ViewerModelResource(resource.modelId)
+        }
+        return resource
+      })
+
+      if (newResources.length) {
+        const allResources = [...currentResources, ...newResources]
+        newResourceIdString = createGetParamFromResources(allResources)
+      }
+    }
+
+    // We want to make sure the final resources have been loaded before we continue on
+    // with applying the rest of the state
+    if (newResourceIdString) {
+      await until(loading).toBe(false)
       await resourceIdString.update(newResourceIdString)
+      await until(loading).toBe(false)
     }
 
     position.value = new Vector3(
@@ -287,34 +318,6 @@ export function useApplySerializedState() {
     // Restore propertyFilters
     if (filters.propertyFilters?.length) {
       restoreFilters(filters.propertyFilters)
-    }
-
-    // Handle resource string updates
-    if (
-      [StateApplyMode.Spotlight, StateApplyMode.ThreadFullContextOpen].includes(mode)
-    ) {
-      await resourceIdString.update(state.resources?.request?.resourceIdString || '')
-    } else if (mode === StateApplyMode.FederatedContext) {
-      // For federated context, append only model IDs (without versions) to show latest
-      const { parseUrlParameters, ViewerModelResource, createGetParamFromResources } =
-        SpeckleViewer.ViewerRoute
-
-      const currentResources = parseUrlParameters(resourceIdString.value)
-      const newResources = parseUrlParameters(
-        state.resources?.request?.resourceIdString ?? ''
-      ).map((resource) => {
-        if (resource instanceof ViewerModelResource) {
-          // Only keep model ID, drop version
-          return new ViewerModelResource(resource.modelId)
-        }
-        return resource
-      })
-
-      if (newResources.length) {
-        const allResources = [...currentResources, ...newResources]
-        const newResourceString = createGetParamFromResources(allResources)
-        await resourceIdString.update(newResourceString)
-      }
     }
 
     if ([StateApplyMode.Spotlight, StateApplyMode.SavedView].includes(mode)) {
