@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isUngroupedGroup } from './values.js'
+import { isUngroupedGroup } from './defaultGroup.js'
 
 describe('isUngroupedGroup', () => {
   it('should return true for ungrouped groups', () => {

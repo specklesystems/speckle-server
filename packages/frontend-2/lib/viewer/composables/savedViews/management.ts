@@ -20,11 +20,7 @@ import {
   onNewGroupViewCacheUpdates
 } from '~/lib/viewer/helpers/savedViews/cache'
 import { isUngroupedGroup } from '@speckle/shared/saved-views'
-import type { Optional } from '@speckle/shared'
-import {
-  getCachedObjectKeys,
-  type CacheObjectReference
-} from '~/lib/common/helpers/graphql'
+import { getCachedObjectKeys } from '~/lib/common/helpers/graphql'
 
 const createSavedViewMutation = graphql(`
   mutation CreateSavedView($input: CreateSavedViewInput!) {
@@ -462,55 +458,13 @@ export const useDeleteSavedViewGroup = () => {
             res.data?.projectMutations.savedViewMutations.deleteGroup
           if (!deleteSuccessful) return
 
-          // Project.savedViewGroups - 1
+          // Views can be moved around, just easier to evict Project.savedViewGroups
           modifyObjectField(
             cache,
             getCacheId('Project', projectId),
             'savedViewGroups',
-            ({ helpers: { createUpdatedValue, fromRef } }) =>
-              createUpdatedValue(({ update }) => {
-                update('totalCount', (totalCount) => totalCount - 1)
-                update('items', (items) => {
-                  const newItems = items.filter((i) => fromRef(i).id !== groupId)
-                  return newItems
-                })
-              }),
-            { autoEvictFiltered: filterKeys }
+            ({ helpers: { evict } }) => evict()
           )
-
-          // Possibly a bunch of views got moved back to Ungrouped as well
-          // Try to find Ungrouped group first
-          let ungroupedGroupRef = undefined as Optional<
-            CacheObjectReference<'SavedViewGroup'>
-          >
-          iterateObjectField(
-            cache,
-            getCacheId('Project', projectId),
-            'savedViewGroups',
-            ({ value, variables, helpers: { fromRef } }) => {
-              if (variables.input.onlyAuthored || variables.input.onlyAuthored) return
-
-              const candidate = value.items?.find((i) =>
-                isUngroupedGroup(fromRef(i).id)
-              )
-              if (candidate) {
-                ungroupedGroupRef = candidate
-              }
-            }
-          )
-
-          if (ungroupedGroupRef) {
-            // Evict SavedViewGroup.views for ungrouped view
-            modifyObjectField(
-              cache,
-              ungroupedGroupRef.__ref,
-              'views',
-              ({ helpers: { evict } }) => {
-                return evict()
-              }
-            )
-          }
-
           // Evict
           cache.evict({
             id: getCacheId('SavedViewGroup', groupId)
