@@ -7,7 +7,6 @@ import type { CommandModule } from 'yargs'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { BaseError } from '@/modules/shared/errors'
 import { ensureError } from '@speckle/shared'
-import { resetPubSubFactory } from '@/test/hooks'
 import { mainDb } from '@/db/knex'
 
 const command: CommandModule<unknown, CommonDbArgs> = {
@@ -54,13 +53,6 @@ const command: CommandModule<unknown, CommonDbArgs> = {
     for (const db of dbs) {
       logger.info(`Purging test DB ${db.regionKey}...`)
       try {
-        // Attempt to reset pubsub, swallowing issues
-        await resetPubSubFactory({ db: db.client })().catch((err) => {
-          logger.warn(`Failed to reset pubsub for ${db.regionKey}`, {
-            cause: ensureError(err)
-          })
-        })
-
         // Find and drop all tables
         const tables = await db.client.raw(
           'SELECT table_name FROM information_schema.tables WHERE table_schema = ?',
