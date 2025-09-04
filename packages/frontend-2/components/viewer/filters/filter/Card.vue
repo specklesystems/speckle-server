@@ -20,7 +20,7 @@
         @update:sort-mode="sortMode = $event"
       />
       <ViewerFiltersFilterExistenceCount
-        v-if="isExistenceCondition"
+        v-if="isExistenceCondition(filter.condition)"
         :filter="filter"
         @select-condition="handleConditionChange"
       />
@@ -32,7 +32,7 @@
 import type { FilterData, ConditionOption } from '~/lib/viewer/helpers/filters/types'
 import {
   isNumericFilter,
-  ExistenceFilterCondition,
+  isExistenceCondition,
   SortMode
 } from '~/lib/viewer/helpers/filters/types'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
@@ -49,13 +49,6 @@ const { updateFilterCondition } = useFilterUtilities()
 
 const collapsed = ref(false)
 const sortMode = ref<SortMode>(SortMode.Alphabetical)
-
-const isExistenceCondition = computed(() => {
-  return (
-    props.filter.condition === ExistenceFilterCondition.IsSet ||
-    props.filter.condition === ExistenceFilterCondition.IsNotSet
-  )
-})
 
 const handleConditionChange = (conditionOption: ConditionOption) => {
   updateFilterCondition(props.filter.id, conditionOption.value)

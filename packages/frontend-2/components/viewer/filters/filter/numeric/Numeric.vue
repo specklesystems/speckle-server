@@ -11,7 +11,7 @@
     />
 
     <ViewerFiltersFilterNumericSingle
-      v-else-if="!isExistenceCondition"
+      v-else-if="!isExistenceCondition(filter.condition)"
       :filter="filter"
     />
   </div>
@@ -24,7 +24,7 @@ import type {
 } from '~/lib/viewer/helpers/filters/types'
 import {
   NumericFilterCondition,
-  ExistenceFilterCondition
+  isExistenceCondition
 } from '~/lib/viewer/helpers/filters/types'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 
@@ -33,13 +33,6 @@ const props = defineProps<{
 }>()
 
 const { updateFilterCondition } = useFilterUtilities()
-
-const isExistenceCondition = computed(() => {
-  return (
-    props.filter.condition === ExistenceFilterCondition.IsSet ||
-    props.filter.condition === ExistenceFilterCondition.IsNotSet
-  )
-})
 
 const handleConditionSelect = (conditionOption: ConditionOption) => {
   updateFilterCondition(props.filter.id, conditionOption.value)

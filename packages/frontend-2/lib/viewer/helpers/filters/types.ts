@@ -76,6 +76,13 @@ export const isNumericFilter = (filter: FilterData): filter is NumericFilterData
   return filter.type === FilterType.Numeric
 }
 
+export const isExistenceCondition = (condition: FilterCondition): boolean => {
+  return (
+    condition === ExistenceFilterCondition.IsSet ||
+    condition === ExistenceFilterCondition.IsNotSet
+  )
+}
+
 // Component Option Types
 export type PropertySelectOption = {
   value: string
