@@ -2,9 +2,10 @@
   <div
     class="pt-0.5"
     :class="{
-      'pb-1.5':
-        filter.condition === ExistenceFilterCondition.IsSet ||
-        filter.condition === ExistenceFilterCondition.IsNotSet
+      'pb-1.5': [
+        ExistenceFilterCondition.IsSet,
+        ExistenceFilterCondition.IsNotSet
+      ].includes(filter.condition as ExistenceFilterCondition)
     }"
   >
     <ViewerFiltersFilterConditionSelector
@@ -14,8 +15,9 @@
 
     <template
       v-if="
-        filter.condition !== ExistenceFilterCondition.IsSet &&
-        filter.condition !== ExistenceFilterCondition.IsNotSet
+        ![ExistenceFilterCondition.IsSet, ExistenceFilterCondition.IsNotSet].includes(
+          filter.condition as ExistenceFilterCondition
+        )
       "
     >
       <div class="relative">
