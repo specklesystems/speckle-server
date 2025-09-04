@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { FormCheckbox } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
-import { getFilterValueCount } from '~/lib/viewer/composables/filtering/counts'
+import { getFilterValueCount } from '~/lib/viewer/helpers/filters/utils'
 import type { StringFilterData } from '~/lib/viewer/helpers/filters/types'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useFilterColoringHelpers } from '~/lib/viewer/composables/filtering/coloringHelpers'

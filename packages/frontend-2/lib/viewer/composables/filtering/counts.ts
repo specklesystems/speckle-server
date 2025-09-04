@@ -1,9 +1,9 @@
-import type { PropertyInfo } from '@speckle/viewer'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import {
   ExistenceFilterCondition,
   type FilterData
 } from '~/lib/viewer/helpers/filters/types'
+import { getExistenceFilterCount } from '~/lib/viewer/helpers/filters/utils'
 
 /**
  * Get count of filtered objects from the viewer state.
@@ -15,53 +15,6 @@ export function useFilteredObjectsCount() {
 
   return {
     filteredObjectsCount: readonly(filters.filteredObjectsCount)
-  }
-}
-
-/**
- * Get count for a specific filter value
- */
-export function getFilterValueCount(filter: PropertyInfo, value: string): number {
-  if (!('valueGroups' in filter) || !Array.isArray(filter.valueGroups)) {
-    return 0
-  }
-
-  const valueGroups = filter.valueGroups as Array<{ value: unknown; ids?: string[] }>
-
-  for (const vg of valueGroups) {
-    if (String(vg.value) === value) {
-      return vg.ids?.length ?? 0
-    }
-  }
-
-  return 0
-}
-
-/**
- * Get count for existence filters (objects that have/don't have a property set)
- */
-export function getExistenceFilterCount(
-  filter: PropertyInfo,
-  condition: ExistenceFilterCondition,
-  totalObjectCount?: number
-): number {
-  if (!('valueGroups' in filter) || !Array.isArray(filter.valueGroups)) {
-    return filter.objectCount ?? 0
-  }
-
-  const objectsWithProperty = filter.valueGroups.reduce((total, vg) => {
-    if ('ids' in vg && Array.isArray(vg.ids)) {
-      return total + vg.ids.length
-    }
-    return total
-  }, 0)
-
-  if (condition === ExistenceFilterCondition.IsSet) {
-    return objectsWithProperty
-  } else {
-    return totalObjectCount !== undefined
-      ? Math.max(0, totalObjectCount - objectsWithProperty)
-      : 0
   }
 }
 
