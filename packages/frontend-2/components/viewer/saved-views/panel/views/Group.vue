@@ -73,10 +73,11 @@ import {
 } from '~/lib/viewer/composables/savedViews/management'
 import type { ViewsType } from '~/lib/viewer/helpers/savedViews'
 import { useDraggableViewTargetGroup } from '~/lib/viewer/composables/savedViews/ui'
+import { presentationRoute } from '~/lib/common/helpers/route'
 
 const { getTooltipProps } = useSmartTooltipDelay()
 
-const MenuItems = StringEnum(['Delete', 'Rename'])
+const MenuItems = StringEnum(['Delete', 'Rename', 'Presentation'])
 type MenuItems = StringEnumValues<typeof MenuItems>
 
 graphql(`
@@ -162,13 +163,18 @@ const canCreateView = computed(() => props.project.permissions.canCreateSavedVie
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
+      id: MenuItems.Presentation,
+      title: 'Present',
+      disabled: isLoading.value
+    }
+  ],
+  [
+    {
       id: MenuItems.Rename,
       title: 'Rename group',
       disabled: !canUpdate.value?.authorized || isLoading.value,
       disabledTooltip: canUpdate.value.errorMessage
-    }
-  ],
-  [
+    },
     {
       id: MenuItems.Delete,
       title: 'Delete group...',
@@ -185,6 +191,9 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
       break
     case MenuItems.Rename:
       emit('rename-group', props.group)
+      break
+    case MenuItems.Presentation:
+      window.open(presentationRoute(props.project.id, props.group.id), '_blank')
       break
     default:
       throwUncoveredError(item.id)
