@@ -88,7 +88,8 @@
 <script setup lang="ts">
 import {
   useInjectedViewerInterfaceState,
-  useInjectedViewer
+  useInjectedViewer,
+  useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import type { PropertySelectOption } from '~/lib/viewer/helpers/filters/types'
 import { FilterType } from '~/lib/viewer/helpers/filters/types'
@@ -103,20 +104,19 @@ import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataSt
 
 const {
   filters: { propertyFilters },
-  getRelevantFilters,
+  getPropertyOptionsFromDataStore,
   addActiveFilter,
   updateFilterProperty,
   resetFilters,
   setFilterLogic
 } = useFilterUtilities()
 
+const dataStore = useFilteringDataStore()
+const { instance } = useInjectedViewer()
+const { resourceItems } = useInjectedViewerState().resources.response
 const { currentFilterLogic } = useFilteringDataStore()
-
 const { filteredObjectsCount } = useFilteredObjectsCount()
 const mp = useMixpanel()
-const {
-  metadata: { availableFilters: allFilters }
-} = useInjectedViewer()
 const {
   filters: { hasAnyFiltersApplied }
 } = useInjectedViewerInterfaceState()
@@ -126,16 +126,14 @@ const propertySelectionRef = ref<HTMLElement>()
 const swappingFilterId = ref<Nullable<string>>(null)
 const filtersContainerRef = ref<HTMLElement>()
 
-const relevantFilters = computed(() => {
-  return getRelevantFilters(allFilters.value)
-})
-
 const propertySelectOptions = computed((): PropertySelectOption[] => {
   const existingFilterKeys = new Set(
     propertyFilters.value.map((f) => f.filter?.key).filter(Boolean)
   )
 
-  const allOptions: PropertySelectOption[] = relevantFilters.value
+  const relevantFilters = getPropertyOptionsFromDataStore()
+
+  const allOptions: PropertySelectOption[] = relevantFilters
     .filter((filter) => !existingFilterKeys.has(filter.key))
     .map((filter) => {
       const pathParts = filter.key.split('.')
@@ -209,7 +207,8 @@ const scrollToNewFilter = () => {
 
 const selectProperty = async (propertyKey: string) => {
   try {
-    const property = relevantFilters.value.find((p) => p.key === propertyKey)
+    const relevantFilters = getPropertyOptionsFromDataStore()
+    const property = relevantFilters.find((p) => p.key === propertyKey)
 
     if (!property) {
       return
@@ -246,6 +245,26 @@ const selectProperty = async (propertyKey: string) => {
 onKeyStroke('Escape', () => {
   if (showPropertySelection.value) {
     showPropertySelection.value = false
+  }
+})
+
+// Populate data store on mount to avoid delay when clicking plus button
+onMounted(async () => {
+  if (dataStore.dataSources.value.length === 0 && resourceItems.value.length > 0) {
+    const tree = instance.getWorldTree()
+    if (tree) {
+      const availableResources = resourceItems.value.filter((item) => {
+        const nodes = tree.findId(item.objectId)
+        return nodes && nodes.length > 0
+      })
+
+      if (availableResources.length > 0) {
+        const resources = availableResources.map((item) => ({
+          resourceUrl: item.objectId
+        }))
+        await dataStore.populateDataStore(instance, resources)
+      }
+    }
   }
 })
 </script>

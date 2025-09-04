@@ -6,7 +6,13 @@
       input-id="property-search"
     />
 
+    <div v-if="isLoading" class="flex-1 flex items-center justify-center py-8">
+      <CommonLoadingIcon class="h-6 w-6 text-foreground-2" />
+    </div>
+
+    <!-- Property list -->
     <div
+      v-else
       v-bind="containerProps"
       class="simple-scrollbar py-1"
       :style="{ maxHeight: `${maxHeight}px` }"
@@ -52,6 +58,7 @@ import {
   PROPERTY_SELECTION_MAX_HEIGHT,
   PROPERTY_SELECTION_OVERSCAN
 } from '~/lib/viewer/helpers/filters/constants'
+import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 
 const props = defineProps<{
   options: PropertyOption[]
@@ -62,6 +69,11 @@ defineEmits<{
 }>()
 
 const searchQuery = ref('')
+const dataStore = useFilteringDataStore()
+
+const isLoading = computed(() => {
+  return dataStore.dataSources.value.length === 0
+})
 
 const filteredOptions = computed(() => {
   if (!searchQuery.value.trim()) {

@@ -5,7 +5,6 @@ import type {
 } from '@speckle/viewer'
 
 import { FilteringExtension } from '@speckle/viewer'
-import { until } from '@vueuse/shared'
 import { difference, uniq, partition } from 'lodash-es'
 import {
   useInjectedViewerState,
@@ -482,19 +481,10 @@ export function useFilterUtilities(
           widgetId: filter.id,
           name:
             filter.condition === ExistenceFilterCondition.IsSet
-              ? `${getPropertyName(
-                  filter.filter.key,
-                  viewer.metadata.availableFilters.value
-                )} is set`
+              ? `${getPropertyName(filter.filter.key)} is set`
               : filter.condition === ExistenceFilterCondition.IsNotSet
-              ? `${getPropertyName(
-                  filter.filter.key,
-                  viewer.metadata.availableFilters.value
-                )} is not set`
-              : `${getPropertyName(
-                  filter.filter.key,
-                  viewer.metadata.availableFilters.value
-                )} ${getConditionLabel(
+              ? `${getPropertyName(filter.filter.key)} is not set`
+              : `${getPropertyName(filter.filter.key)} ${getConditionLabel(
                   filter.condition
                 )} (${filter.numericRange.min.toFixed(
                   2
@@ -627,31 +617,22 @@ export function useFilterUtilities(
 
     resetFilters() // Clear existing filters first
 
-    // Wait for availableFilters to be loaded if they're not ready
-    if (!viewer.metadata.availableFilters.value) {
-      await until(viewer.metadata.availableFilters).toMatch(
-        (filters) => !!filters && filters.length > 0
-      )
-    }
+    const availableProperties = getPropertyOptionsFromDataStore()
 
     for (const serializedFilter of serializedFilters) {
-      if (serializedFilter.key && viewer.metadata.availableFilters.value) {
-        // Find the matching PropertyInfo object
-        const propertyInfo = viewer.metadata.availableFilters.value.find(
+      if (serializedFilter.key) {
+        const propertyInfo = availableProperties.find(
           (f) => f.key === serializedFilter.key
         )
         if (propertyInfo) {
-          // Recreate the filter
           const filterId = addActiveFilter(propertyInfo)
 
-          // Restore the selected values
           if (serializedFilter.selectedValues?.length) {
             updateActiveFilterValues(filterId, serializedFilter.selectedValues)
           }
 
-          // Restore the applied state
           if (!serializedFilter.isApplied) {
-            toggleFilterApplied(filterId) // Toggle to match the serialized state
+            toggleFilterApplied(filterId)
           }
         }
       }
@@ -670,6 +651,70 @@ export function useFilterUtilities(
       }
       return true
     })
+  }
+
+  /**
+   * Gets property options from the data store
+   */
+  const getPropertyOptionsFromDataStore = (): PropertyInfo[] => {
+    const allProperties = new Map<string, PropertyInfo>()
+
+    // Collect all unique properties from all data sources
+    for (const dataSource of dataStore.dataSources.value) {
+      for (const [propertyKey] of Object.entries(dataSource.propertyMap)) {
+        if (shouldExcludeFromFiltering(propertyKey)) {
+          continue
+        }
+
+        // Skip if we already have this property
+        if (allProperties.has(propertyKey)) {
+          continue
+        }
+
+        // Get the property index to determine type and create PropertyInfo
+        const propertyIndex = dataSource._propertyIndexCache?.[propertyKey] || {}
+        const values = Object.keys(propertyIndex)
+
+        if (values.length === 0) {
+          continue
+        }
+
+        // Determine if it's numeric or string based on first value
+        const firstValue = values[0]
+        const isNumeric = !isNaN(Number(firstValue)) && firstValue !== ''
+
+        if (isNumeric) {
+          // Create NumericPropertyInfo
+          const numericValues = values.map((v) => Number(v)).filter((v) => !isNaN(v))
+          const min = Math.min(...numericValues)
+          const max = Math.max(...numericValues)
+
+          allProperties.set(propertyKey, {
+            key: propertyKey,
+            type: 'number',
+            objectCount: values.length,
+            min,
+            max,
+            valueGroups: values.map((value) => ({ value: Number(value), id: '' })), // IDs not needed for selection
+            passMin: null,
+            passMax: null
+          } as NumericPropertyInfo)
+        } else {
+          // Create StringPropertyInfo
+          allProperties.set(propertyKey, {
+            key: propertyKey,
+            type: 'string',
+            objectCount: values.length,
+            valueGroups: values.map((value) => ({
+              value,
+              ids: propertyIndex[value] || []
+            }))
+          } as StringPropertyInfo)
+        }
+      }
+    }
+
+    return Array.from(allProperties.values())
   }
 
   /**
@@ -736,6 +781,7 @@ export function useFilterUtilities(
     restoreFilters,
     resetExplode,
     getRelevantFilters,
+    getPropertyOptionsFromDataStore,
     getPropertyName,
     isKvpFilterable,
     getFilterDisabledReason,
