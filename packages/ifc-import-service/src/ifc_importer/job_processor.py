@@ -87,10 +87,9 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
 
         start = time.time()
         duration = 0
-        job_timeout = job.payload.time_out_seconds
-        if job.payload.remaining_compute_budget_seconds > 0:
-            # respect the remaining compute budget
-            job_timeout = min(job_timeout, job.payload.remaining_compute_budget_seconds)
+        job_timeout = max(
+            0, min(job.payload.time_out_seconds, job.remaining_compute_budget_seconds)
+        )
 
         speckle_client = setup_client(job.payload)
 
