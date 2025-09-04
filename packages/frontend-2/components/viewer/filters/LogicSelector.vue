@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { FilterLogic } from '~/lib/viewer/helpers/filters/types'
-import { LayoutMenu, FormButton, type LayoutMenuItem } from '@speckle/ui-components'
+import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 
 const props = defineProps<{
@@ -46,7 +46,7 @@ const filterLogicOptions = ref([
   { value: FilterLogic.Any, label: 'Match any rule' }
 ])
 
-const menuItems = computed<LayoutMenuItem[][]>(() => [
+const menuItems = computed<LayoutMenuItem<FilterLogic>[][]>(() => [
   filterLogicOptions.value.map((option) => ({
     id: option.value,
     title: option.label,
@@ -60,8 +60,13 @@ const selectedLogicLabel = computed(() => {
   )
 })
 
-const onLogicChosen = ({ item }: { item: LayoutMenuItem; event: MouseEvent }) => {
-  const logic = item.id as FilterLogic
+const onLogicChosen = ({
+  item
+}: {
+  item: LayoutMenuItem<FilterLogic>
+  event: MouseEvent
+}) => {
+  const logic = item.id
   setFilterLogic(logic)
   emit('update:modelValue', logic)
   showMenu.value = false

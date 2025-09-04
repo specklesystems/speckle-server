@@ -20,9 +20,7 @@
       <div v-bind="wrapperProps" class="relative">
         <div
           v-for="{ data: item, index } in list"
-          :key="`${index}-${
-            item.type === 'header' ? item.title : item.property?.value
-          }`"
+          :key="index"
           :style="{
             height: `${itemHeight}px`,
             overflow: 'hidden'
