@@ -161,7 +161,9 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
                 duration = time.time() - start
             await deduct_from_compute_budget(connection, job_id, floor(duration))
 
-            if job_status == JobStatus.QUEUED:
+            if job_status == JobStatus.QUEUED or job_status == JobStatus.PROCESSING:
+                # somehow we're in a weird state, let's return the job to the queued state
+                # where it will get picked up again until one of total timeout, max attempts, or compute budget is reached
                 await return_job_to_queued(connection, job_id)
             elif job_status == JobStatus.FAILED:
                 # we should be reporting the failure to the server
@@ -186,9 +188,10 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
                     # the server is responsible for moving failed jobs to the failed state, so the worker does not have to do anything further
                 except Exception as ex:
                     logger.error("failed to report job failure", exc_info=ex)
+                    # somehow we're in a weird state, let's return the job to the queued state
+                    # where it will get picked up again until one of total timeout, max attempts, or compute budget is reached
+                    # The server is responsible for moving queued jobs which have reached these error conditions to failed status.
                     await return_job_to_queued(connection, job_id)
-                    # The client will not pick up a queued job if it now has exceeded max attempts.
-                    # The server is responsible for moving queued jobs which have exceeded maximum attempts to failed status.
             elif job_status == JobStatus.SUCCEEDED:
                 # do nothing
                 # we expect the job to already be marked as succeeded in the database by the server (when the worker reported the results back to the server)
