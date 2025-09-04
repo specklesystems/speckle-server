@@ -279,7 +279,7 @@ export const SourceApps: SourceAppDefinition[] = [
   { searchKey: '-acc', name: 'Acc integration', short: 'ACC', bgColor: '#3091e7' },
   {
     // this will match all rhino based file importers
-    searchKey: '-rhino-fileimports',
+    searchKey: '-rhino-importer',
     name: 'File Import',
     short: '',
     bgColor: '#3091e7'
