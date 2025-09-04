@@ -78,7 +78,10 @@
         </ViewerButtonGroupButton>
       </ViewerButtonGroup>
     </div>
-    <div class="text-body-sm flex-1 min-h-0 overflow-y-auto simple-scrollbar">
+    <div
+      ref="groupsScrollArea"
+      class="text-body-sm flex-1 min-h-0 overflow-y-auto simple-scrollbar"
+    >
       <ViewerSavedViewsPanelGroups
         :views-type="selectedViewsType"
         :search="searchMode ? search || undefined : undefined"
@@ -111,6 +114,7 @@ import { useCreateSavedView } from '~/lib/viewer/composables/savedViews/manageme
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { ViewsType, viewsTypeLabels } from '~/lib/viewer/helpers/savedViews'
 import { useDebouncedTextInput } from '@speckle/ui-components'
+import { useKeepAliveScrollState } from '~/lib/common/composables/dom'
 
 graphql(`
   fragment ViewerSavedViewsPanel_Project on Project {
@@ -155,6 +159,7 @@ const searchMode = ref(false)
 const showCreateGroupDialog = ref(false)
 
 const { getTooltipProps } = useSmartTooltipDelay()
+useKeepAliveScrollState(useTemplateRef('groupsScrollArea'))
 
 const canCreateViewOrGroup = computed(
   () => project.value?.permissions.canCreateSavedView

@@ -65,7 +65,7 @@ import { VALID_HTTP_URL } from '~~/lib/common/helpers/validation'
 import { LayoutMenu, type LayoutMenuItem } from '@speckle/ui-components'
 import { Ellipsis } from 'lucide-vue-next'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
-import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import type { KeyValuePair } from '~/components/viewer/selection/types'
 
 const props = defineProps<{
@@ -77,8 +77,13 @@ const showActionsMenu = ref(false)
 const { isKvpFilterable, getFilterDisabledReason, applyKvpFilter } =
   useFilterUtilities()
 const {
-  metadata: { availableFilters }
-} = useInjectedViewer()
+  viewer: {
+    metadata: { availableFilters }
+  },
+  ui: {
+    panels: { active: activePanel }
+  }
+} = useInjectedViewerState()
 
 const isUrlString = (v: unknown) => typeof v === 'string' && VALID_HTTP_URL.test(v)
 
@@ -96,6 +101,7 @@ const getDisabledReason = (kvp: KeyValuePair) => {
 
 const handleFilterByProperty = (kvp: KeyValuePair) => {
   applyKvpFilter(kvp, availableFilters.value)
+  activePanel.value = 'filters'
 }
 
 const handleCopy = async (kvp: KeyValuePair) => {
