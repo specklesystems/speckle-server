@@ -5,7 +5,7 @@ import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/ope
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { garbageCollectAttemptedFileImportBackgroundJobsFactory } from '@/modules/fileuploads/services/tasks'
 import { failPendingUploadedFilesFactory } from '@/modules/fileuploads/repositories/fileUploads'
-import { failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory } from '@/modules/backgroundjobs/repositories'
+import { failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory } from '@/modules/backgroundjobs/repositories/repositories'
 import type { Knex } from 'knex'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 

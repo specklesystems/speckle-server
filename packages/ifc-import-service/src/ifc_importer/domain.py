@@ -15,7 +15,7 @@ class JobBase(BaseModel):
 class FileimportPayload(JobBase):
     """Payload for the fileimport job"""
 
-    payload_version: Literal[1, 2] = 2
+    payload_version: Literal[1]
     job_type: Literal["fileImport"]
     server_url: str
     project_id: str
@@ -25,7 +25,6 @@ class FileimportPayload(JobBase):
     file_type: str
     file_name: str
     time_out_seconds: int
-    remaining_compute_budget_seconds: int = 0
 
 
 class JobStatus(StrEnum):

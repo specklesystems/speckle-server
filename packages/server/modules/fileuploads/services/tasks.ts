@@ -4,8 +4,8 @@ import type {
   GarbageCollectPendingUploadedFiles,
   NotifyChangeInFileStatus
 } from '@/modules/fileuploads/domain/operations'
-import type { FailQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget } from '@/modules/backgroundjobs/domain'
-import type { FileImportJobPayloadV2 } from '@speckle/shared/workers/fileimport'
+import type { FailQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget } from '@/modules/backgroundjobs/domain/domain'
+import type { FileImportJobPayloadV1 } from '@speckle/shared/workers/fileimport'
 import { BackgroundJobType } from '@/modules/fileuploads/domain/consts'
 
 export const manageFileImportExpiryFactory = (deps: {
@@ -28,7 +28,7 @@ export const manageFileImportExpiryFactory = (deps: {
 }
 
 export const garbageCollectAttemptedFileImportBackgroundJobsFactory = (deps: {
-  failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget: FailQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget<FileImportJobPayloadV2>
+  failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget: FailQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget<FileImportJobPayloadV1>
   failPendingUploadedFiles: FailPendingUploadedFiles
   notifyUploadStatus: NotifyChangeInFileStatus
 }): ((params: { logger: Logger; originServerUrl: string }) => Promise<void>) => {

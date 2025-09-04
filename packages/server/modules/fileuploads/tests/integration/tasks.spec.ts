@@ -5,7 +5,7 @@ import {
   failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory,
   getBackgroundJobFactory,
   storeBackgroundJobFactory
-} from '@/modules/backgroundjobs/repositories'
+} from '@/modules/backgroundjobs/repositories/repositories'
 import { db } from '@/db/knex'
 import { notifyChangeInFileStatus } from '@/modules/fileuploads/services/management'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -19,8 +19,8 @@ import {
   type BackgroundJobPayload,
   BackgroundJobStatus,
   type BackgroundJob
-} from '@/modules/backgroundjobs/domain'
-import type { FileImportJobPayloadV2 } from '@speckle/shared/workers/fileimport'
+} from '@/modules/backgroundjobs/domain/domain'
+import type { FileImportJobPayloadV1 } from '@speckle/shared/workers/fileimport'
 import cryptoRandomString from 'crypto-random-string'
 import type { FileUploadRecordV2 } from '@/modules/fileuploads/helpers/types'
 import {
@@ -55,7 +55,7 @@ export const createTestJob = (
   status: BackgroundJobStatus.Queued,
   attempt: 0,
   maxAttempt: 3,
-  timeoutMs: 30000,
+  remainingComputeBudgetSeconds: 300,
   createdAt: new Date(),
   updatedAt: new Date(),
   ...overrides
@@ -90,7 +90,7 @@ const createTestFileUpload = (
   }
 }
 
-type StoredBackgroundJob = BackgroundJob<FileImportJobPayloadV2> & {
+type StoredBackgroundJob = BackgroundJob<FileImportJobPayloadV1> & {
   originServerUrl: string
 }
 

@@ -30,27 +30,16 @@ async def get_next_job(connection: Connection) -> FileimportJob | None:
                 "updatedAt" = NOW()
             WHERE id = (
                 SELECT id FROM background_jobs
-                WHERE ( --v1 queued job which has not yet exceeded maximum attempts and not yet timed out
+                WHERE ( -- job in a QUEUED state which has not yet exceeded maximum attempts and has a positive remaining compute budget
                     payload ->> 'fileType' = 'ifc'
                     AND status = $2
-                    AND payload ->> 'payloadVersion' = '1'
                     AND "attempt" < "maxAttempt"
-                    AND "createdAt" > NOW() - ("timeoutMs" * interval '1 millisecond')
+                    AND "remainingComputeBudgetSeconds"::int > 0
                 )
-                OR ( --any job left in a PROCESSING state which has timed out
+                OR ( -- any job left in a PROCESSING state for more than its timeout period
                     payload ->> 'fileType' = 'ifc'
                     AND status = $1
-                    AND (payload ->> 'payloadVersion' = '2'
-                          AND "updatedAt" < NOW() - ((payload ->> 'timeOutSeconds')::int * interval '1 second')
-                        OR "createdAt" < NOW() - ("timeoutMs" * interval '1 millisecond'))
-                )
-                OR ( --v2 queued job which has not yet exceeded maximum attempts, has not timed out, and has remaining compute budget
-                    payload ->> 'fileType' = 'ifc'
-                    AND payload ->> 'payloadVersion' = '2'
-                    AND status = $2
-                    AND "attempt" < "maxAttempt"
-                    AND (payload ->> 'remainingComputeBudgetSeconds')::int > 0
-                    AND "createdAt" > NOW() - ("timeoutMs" * interval '1 millisecond')
+                    AND "updatedAt" < NOW() - (payload ->> "timeOutSeconds")::int * interval '1 second'
                 )
                 ORDER BY "createdAt"
                 FOR UPDATE SKIP LOCKED
@@ -80,7 +69,8 @@ async def set_job_status(
     _ = await connection.execute(
         """
         UPDATE background_jobs
-        SET status = $1, "updatedAt" = NOW()
+        SET status = $1,
+            "updatedAt" = NOW()
         WHERE id = $2
         """,
         job_status.value,
@@ -97,13 +87,9 @@ async def deduct_from_compute_budget(
     _ = await connection.execute(
         """
         UPDATE background_jobs
-        SET payload = jsonb_set(
-            payload,
-            '{remainingComputeBudgetSeconds}',
-            ((payload ->> 'remainingComputeBudgetSeconds')::int - $1)::text::jsonb
-        ), "updatedAt" = NOW()
+        SET "remainingComputeBudgetSeconds" = "remainingComputeBudgetSeconds"::int - $1,
+            "updatedAt" = NOW()
         WHERE id = $2
-        AND payload ->> 'payloadVersion' = '2'
         """,
         used_compute_time_seconds,
         job_id,

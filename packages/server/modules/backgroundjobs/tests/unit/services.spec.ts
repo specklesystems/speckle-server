@@ -5,13 +5,13 @@ import type {
   BackgroundJobConfig,
   BackgroundJobPayload,
   StoreBackgroundJob
-} from '@/modules/backgroundjobs/domain'
-import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain'
+} from '@/modules/backgroundjobs/domain/domain'
+import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain/domain'
 
 describe('scheduleBackgroundJobFactory', () => {
   const mockJobConfig: BackgroundJobConfig = {
     maxAttempt: 3,
-    timeoutMs: 30000
+    remainingComputeBudgetSeconds: 30
   }
 
   interface TestJobPayload extends BackgroundJobPayload {
@@ -96,7 +96,9 @@ describe('scheduleBackgroundJobFactory', () => {
       const result = await createBackgroundJob({ jobPayload: mockJobPayload })
 
       expect(result.maxAttempt).to.equal(mockJobConfig.maxAttempt)
-      expect(result.timeoutMs).to.equal(mockJobConfig.timeoutMs)
+      expect(result.remainingComputeBudgetSeconds).to.equal(
+        mockJobConfig.remainingComputeBudgetSeconds
+      )
     })
 
     it('should preserve job payload', async () => {

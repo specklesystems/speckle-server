@@ -2,7 +2,7 @@ import type { Knex } from 'knex'
 import type {
   FailQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget,
   UpdateBackgroundJob
-} from '@/modules/backgroundjobs/domain'
+} from '@/modules/backgroundjobs/domain/domain'
 import {
   type BackgroundJob,
   type BackgroundJobPayload,
@@ -10,7 +10,7 @@ import {
   type GetBackgroundJobCount,
   type StoreBackgroundJob,
   BackgroundJobStatus
-} from '@/modules/backgroundjobs/domain'
+} from '@/modules/backgroundjobs/domain/domain'
 import { buildTableHelper } from '@/modules/core/dbSchema'
 
 export const BackgroundJobs = buildTableHelper('background_jobs', [
@@ -19,11 +19,11 @@ export const BackgroundJobs = buildTableHelper('background_jobs', [
   'payload',
   'status',
   'originServerUrl',
-  'timeoutMs',
   'attempt',
   'maxAttempt',
   'createdAt',
-  'updatedAt'
+  'updatedAt',
+  'remainingComputeBudgetSeconds'
 ])
 
 type StoredBackgroundJob = BackgroundJob<BackgroundJobPayload> & {
@@ -73,15 +73,12 @@ export const failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComp
           this.where(
             BackgroundJobs.withoutTablePrefix.col.attempt,
             '>=',
-            db.raw('"maxAttempt"') // camel-case requires the column name to be wrapped in double quotes
-          ).orWhere(function () {
-            this.whereJsonPath('payload', '$.payloadVersion', '>=', 2).whereJsonPath(
-              'payload',
-              '$.remainingComputeBudgetSeconds',
-              '<=',
-              0
-            )
-          })
+            db.raw('"maxAttempt"') // camelCase requires the column name to be wrapped in double quotes
+          ).orWhere(
+            BackgroundJobs.withoutTablePrefix.col.remainingComputeBudgetSeconds,
+            '<=',
+            0
+          )
         })
         .orderBy(BackgroundJobs.withoutTablePrefix.col.createdAt, 'desc')
         .update({

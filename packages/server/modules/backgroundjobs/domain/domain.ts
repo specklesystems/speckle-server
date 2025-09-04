@@ -19,7 +19,7 @@ export type BackgroundJobPayload = z.infer<typeof BackgroundJobPayload>
 
 export type BackgroundJobConfig = {
   maxAttempt: number
-  timeoutMs: number
+  remainingComputeBudgetSeconds: number
 }
 
 export type BackgroundJob<T extends BackgroundJobPayload> = BackgroundJobConfig & {

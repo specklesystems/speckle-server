@@ -1,12 +1,14 @@
-import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import {
+  getFileImportTimeLimitMinutes,
+  getServerOrigin
+} from '@/modules/shared/helpers/envHelper'
 import type { Logger } from '@/observability/logging'
-import type { JobPayload } from '@speckle/shared/workers/fileimport'
+import type { JobPayloadV1 } from '@speckle/shared/workers/fileimport'
 import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
 import {
   NumberOfFileImportRetries,
   BackgroundJobType,
-  BackgroundJobPayloadVersion,
-  maximumAllowedQueuingProcessingAndRetryTimeMs
+  BackgroundJobPayloadVersion
 } from '@/modules/fileuploads/domain/consts'
 import type { Knex } from 'knex'
 import { migrateDbToLatest } from '@/db/migrations'
@@ -14,8 +16,9 @@ import { createBackgroundJobFactory } from '@/modules/backgroundjobs/services/cr
 import {
   getBackgroundJobCountFactory,
   storeBackgroundJobFactory
-} from '@/modules/backgroundjobs/repositories'
-import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain'
+} from '@/modules/backgroundjobs/repositories/repositories'
+import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain/domain'
+import { TIME } from '@speckle/shared'
 
 export const fileImportQueues: FileImportQueue[] = []
 
@@ -34,7 +37,7 @@ export const initializePostgresQueue = async ({
   const createBackgroundJob = createBackgroundJobFactory({
     jobConfig: {
       maxAttempt: NumberOfFileImportRetries,
-      timeoutMs: maximumAllowedQueuingProcessingAndRetryTimeMs()
+      remainingComputeBudgetSeconds: getFileImportTimeLimitMinutes() * TIME.minute
     },
     storeBackgroundJob: storeBackgroundJobFactory({
       db,
@@ -49,11 +52,11 @@ export const initializePostgresQueue = async ({
       (type) => type.toLocaleLowerCase() // Normalize file types to lowercase (this is a safeguard to prevent stupid typos in the future)
     ),
     shutdown: async () => {},
-    scheduleJob: async (jobData: JobPayload) => {
+    scheduleJob: async (jobData: JobPayloadV1) => {
       await createBackgroundJob({
         jobPayload: {
           jobType: BackgroundJobType.FileImport,
-          payloadVersion: BackgroundJobPayloadVersion.v2,
+          payloadVersion: BackgroundJobPayloadVersion.v1,
           ...jobData
         }
       })

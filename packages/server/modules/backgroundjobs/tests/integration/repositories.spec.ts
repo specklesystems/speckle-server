@@ -5,12 +5,12 @@ import {
   BackgroundJobs,
   getBackgroundJobCountFactory,
   failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory
-} from '@/modules/backgroundjobs/repositories'
+} from '@/modules/backgroundjobs/repositories/repositories'
 import type {
   BackgroundJob,
   BackgroundJobPayload
-} from '@/modules/backgroundjobs/domain'
-import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain'
+} from '@/modules/backgroundjobs/domain/domain'
+import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain/domain'
 import { expect } from 'chai'
 import { createRandomString } from '@/modules/core/helpers/testHelpers'
 
@@ -20,7 +20,6 @@ type TestJobPayload = BackgroundJobPayload & {
   jobType: 'fileImport'
   payloadVersion: 2
   testData: string
-  remainingComputeBudgetSeconds: number | undefined
 }
 
 const createTestJob = (
@@ -31,15 +30,14 @@ const createTestJob = (
   payload: {
     jobType: 'fileImport',
     payloadVersion: 2,
-    testData: 'test-data-value',
-    remainingComputeBudgetSeconds: 120
+    testData: 'test-data-value'
   },
   status: BackgroundJobStatus.Queued,
   attempt: 0,
   maxAttempt: 3,
-  timeoutMs: 30000,
   createdAt: new Date(),
   updatedAt: new Date(),
+  remainingComputeBudgetSeconds: 30,
   ...overrides
 })
 
@@ -62,8 +60,7 @@ describe('Background Jobs repositories @backgroundjobs', () => {
         payload: {
           jobType: 'fileImport',
           payloadVersion: 2,
-          testData: 'complex-test-data',
-          remainingComputeBudgetSeconds: 120
+          testData: 'complex-test-data'
         }
       })
 
@@ -203,9 +200,9 @@ describe('Background Jobs repositories @backgroundjobs', () => {
         payload: {
           jobType: 'fileImport',
           payloadVersion: 2,
-          testData: 'complex-test-data',
-          remainingComputeBudgetSeconds: 0
-        }
+          testData: 'complex-test-data'
+        },
+        remainingComputeBudgetSeconds: 0
       })
       await storeBackgroundJob({ job })
 
@@ -226,9 +223,9 @@ describe('Background Jobs repositories @backgroundjobs', () => {
         payload: {
           jobType: 'fileImport',
           payloadVersion: 2,
-          testData: 'complex-test-data',
-          remainingComputeBudgetSeconds: -100
-        }
+          testData: 'complex-test-data'
+        },
+        remainingComputeBudgetSeconds: -100
       })
       await storeBackgroundJob({ job })
 

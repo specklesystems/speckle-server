@@ -16,16 +16,16 @@ import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 import {
   BackgroundJobStatus,
   type UpdateBackgroundJob
-} from '@/modules/backgroundjobs/domain'
+} from '@/modules/backgroundjobs/domain/domain'
 import {
-  type FileImportJobPayloadV2,
+  type FileImportJobPayloadV1,
   JobResultStatus
 } from '@speckle/shared/workers/fileimport'
 
 type OnFileImportResultDeps = {
   getFileInfo: GetFileInfoV2
   updateFileUpload: UpdateFileUpload
-  updateBackgroundJob: UpdateBackgroundJob<FileImportJobPayloadV2>
+  updateBackgroundJob: UpdateBackgroundJob<FileImportJobPayloadV1>
   eventEmit: EventBusEmit
   logger: Logger
   FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean

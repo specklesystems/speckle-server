@@ -22,16 +22,7 @@ export const jobPayloadV1 = job.merge(
   })
 )
 
-export const jobPayloadV2 = jobPayloadV1.extend({
-  remainingComputeBudgetSeconds: z
-    .number()
-    .int()
-    .optional() // optional as it may not be set for all prior jobs
-    .describe(
-      'The remaining compute budget for the job, in seconds. A negative or zero value indicates the compute budget has been exhausted.'
-    )
-})
-export type JobPayload = z.infer<typeof jobPayloadV2>
+export type JobPayloadV1 = z.infer<typeof jobPayloadV1>
 
 const baseFileImportResult = z.object({
   durationSeconds: z
@@ -80,7 +71,7 @@ export const fileImportResultPayload = z.discriminatedUnion('status', [
 
 export type FileImportResultPayload = z.infer<typeof fileImportResultPayload>
 
-export type FileImportJobPayloadV2 = JobPayload & {
+export type FileImportJobPayloadV1 = JobPayloadV1 & {
   jobType: 'fileImport'
-  payloadVersion: 2
+  payloadVersion: 1
 }
