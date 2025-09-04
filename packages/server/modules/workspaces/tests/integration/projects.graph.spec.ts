@@ -988,32 +988,34 @@ describe('Workspace project GQL CRUD', () => {
 
     isMultiRegionTestMode()
       ? describe('when the default server db region is not the main db @multiregion', () => {
-          const regionalProject: StreamRecord = {
-            id: cryptoRandomString({ length: 9 }),
-            name: 'My Special Project',
-            description: null,
-            clonedFrom: null,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            allowPublicComments: false,
-            workspaceId: null,
-            regionKey: 'region1',
-            visibility: ProjectRecordVisibility.Public
-          }
+          let regionalProject: BasicTestStream
 
           before(async () => {
             // Simulate non-main default db region
-            await createTestStream(regionalProject, serverAdminUser)
+            regionalProject = await createTestStream(
+              {
+                name: 'My Special Project',
+                description: null,
+                clonedFrom: null,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                allowPublicComments: false,
+                workspaceId: null,
+                regionKey: 'region1',
+                visibility: ProjectRecordVisibility.Public
+              },
+              serverAdminUser
+            )
           })
 
           it('should be located in the correct region', async () => {
             const regionDb = await getRegionDb({ regionKey: 'region1' })
-            await tables.streams(regionDb).insert(regionalProject)
-            await grantStreamPermissions({
-              streamId: regionalProject.id,
-              userId: serverAdminUser.id,
-              role: Roles.Stream.Owner
-            })
+
+            const [res] = await tables
+              .streams(regionDb)
+              .where({ id: regionalProject.id })
+
+            expect(res).to.exist
           })
 
           it('should update project without removing workspace association @multiregion', async () => {
