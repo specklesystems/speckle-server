@@ -61,6 +61,7 @@ import { usePropertyFilteringPostSetup } from '~/lib/viewer/composables/setup/pr
 import { useManualFilteringPostSetup } from '~/lib/viewer/composables/setup/manualFiltering'
 import { useFilteredObjectsCountPostSetup } from '~/lib/viewer/composables/setup/filteredObjectsCount'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { useFilteringSetup } from '~/lib/viewer/composables/filtering/setup'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -537,6 +538,7 @@ function useViewerFiltersIntegration() {
     ui: { filters, highlightedObjectIds }
   } = state
 
+  useFilteringSetup()
   useFilterUtilities({ state })
 
   // state -> viewer

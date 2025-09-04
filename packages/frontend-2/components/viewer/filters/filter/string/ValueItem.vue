@@ -56,17 +56,20 @@ defineEmits<{
   toggle: []
 }>()
 
-const { isActiveFilterValueSelected, filters, getCachedValueGroupsMap } =
-  useFilterUtilities()
+const { isActiveFilterValueSelected, filters } = useFilterUtilities()
 
 const { getFilterValueColor } = useFilterColoringHelpers()
 
 const { ui } = useInjectedViewerState()
 
-// Create valueGroupsMap at setup level
-const valueGroupsMap = computed(() => {
-  if (!props.filter.filter) return null
-  return getCachedValueGroupsMap(props.filter.filter)
+const valueGroup = computed(() => {
+  if (!props.filter.filter || !('valueGroups' in props.filter.filter)) return null
+
+  const valueGroups = props.filter.filter.valueGroups as Array<{
+    value: unknown
+    ids?: string[]
+  }>
+  return valueGroups.find((vg) => String(vg.value) === props.value)
 })
 
 const isSelected = computed(() => {
@@ -93,19 +96,17 @@ const availableCount = computed(() => {
     return totalCount.value
   }
 
-  const map = valueGroupsMap.value
-
-  if (!map) {
-    return totalCount.value
-  }
-
   const isolatedSet = isolatedObjectsSet.value
   if (!isolatedSet) {
     return totalCount.value
   }
 
-  const valueGroup = map.get(props.value)
-  const valueObjectIds = valueGroup?.ids || []
+  const currentValueGroup = valueGroup.value
+  if (!currentValueGroup) {
+    return totalCount.value
+  }
+
+  const valueObjectIds = currentValueGroup.ids || []
 
   const availableIds = valueObjectIds.filter((id) => isolatedSet.has(id))
   const result = availableIds.length

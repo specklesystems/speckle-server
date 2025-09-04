@@ -23,12 +23,9 @@ import {
   ExistenceFilterCondition,
   SortMode,
   type DataSlice,
-  type QueryCriteria,
-  type ValueGroupsMap,
-  type ValueGroupMapItem
+  type QueryCriteria
 } from '~/lib/viewer/helpers/filters/types'
 import { getConditionLabel } from '~/lib/viewer/helpers/filters/constants'
-import { useOnViewerLoadComplete } from '~~/lib/viewer/composables/viewer'
 import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 import {
   shouldExcludeFromFiltering,
@@ -44,54 +41,11 @@ export function useFilterUtilities(
 ) {
   const state = options?.state || useInjectedViewerState()
   const {
-    viewer,
     ui: { filters, explodeFactor }
   } = state
 
   const dataStore = useFilteringDataStore()
   const { removeColorFilter } = useFilterColoringHelpers({ state })
-
-  const { instance } = viewer
-  const { resourceItems } = state.resources.response
-
-  const populateInternalDataStore = async () => {
-    const tree = instance.getWorldTree()
-    if (!tree || !resourceItems.value.length) {
-      return
-    }
-
-    const availableResources = resourceItems.value.filter((item) => {
-      const nodes = tree.findId(item.objectId)
-      return nodes && nodes.length > 0
-    })
-
-    if (availableResources.length === 0) {
-      return
-    }
-
-    dataStore.clearDataOnRouteLeave()
-
-    const resources = availableResources.map((item) => ({
-      resourceUrl: item.objectId
-    }))
-
-    await dataStore.populateDataStore(instance, resources)
-  }
-
-  useOnViewerLoadComplete(async () => {
-    await populateInternalDataStore()
-  })
-
-  // Watch for resource changes (e.g., when switching versions) and repopulate the data store
-  watch(
-    resourceItems,
-    async (newResourceItems, oldResourceItems) => {
-      if (newResourceItems.length > 0 && newResourceItems !== oldResourceItems) {
-        await populateInternalDataStore()
-      }
-    },
-    { deep: true }
-  )
 
   const isolateObjects = (
     objectIds: string[],
@@ -174,55 +128,6 @@ export function useFilterUtilities(
     }
 
     return []
-  }
-
-  /**
-   * Type guard to check if filter has valueGroups with proper typing
-   */
-  const hasValueGroupsWithIds = (
-    f: PropertyInfo
-  ): f is PropertyInfo & {
-    valueGroups: Array<ValueGroupMapItem>
-  } => {
-    return (
-      'valueGroups' in f && Array.isArray((f as Record<string, unknown>).valueGroups)
-    )
-  }
-
-  /**
-   * Creates a fast lookup map for valueGroups to avoid O(n) .find() operations
-   */
-  const createValueGroupsMap = (filter: PropertyInfo): ValueGroupsMap | null => {
-    if (!hasValueGroupsWithIds(filter)) {
-      return null
-    }
-
-    const valueGroups = filter.valueGroups
-    const map = new Map<string, ValueGroupMapItem>()
-
-    for (const vg of valueGroups) {
-      map.set(String(vg.value), vg)
-    }
-
-    return map
-  }
-
-  // Cache value group maps to avoid recreating them
-  const valueGroupMapsCache = new WeakMap<PropertyInfo, ValueGroupsMap>()
-
-  /**
-   * Gets cached value groups map for efficient lookups
-   */
-  const getCachedValueGroupsMap = (filter: PropertyInfo): ValueGroupsMap | null => {
-    if (valueGroupMapsCache.has(filter)) {
-      return valueGroupMapsCache.get(filter)!
-    }
-
-    const map = createValueGroupsMap(filter)
-    if (map) {
-      valueGroupMapsCache.set(filter, map)
-    }
-    return map
   }
 
   const createFilterData = (params: CreateFilterParams): FilterData => {
@@ -749,7 +654,6 @@ export function useFilterUtilities(
     getFilterDisabledReason,
     findFilterByKvp,
     getFilteredFilterValues,
-    getCachedValueGroupsMap,
     setNumericRange
   }
 }
