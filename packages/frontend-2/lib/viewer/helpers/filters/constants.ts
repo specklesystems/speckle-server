@@ -35,7 +35,7 @@ export const FILTERS_POPULAR_PROPERTIES = [
   'phaseCreated',
   'ifcType',
   'layer'
-] as const
+]
 
 // UI Constants
 export const PROPERTY_SELECTION_ITEM_HEIGHT = 36

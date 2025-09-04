@@ -1,5 +1,5 @@
 import type { SpeckleObject, TreeNode, Viewer } from '@speckle/viewer'
-import { uniq, flatten, isEmpty, compact } from 'lodash-es'
+import { uniq, flatten, compact } from 'lodash-es'
 import {
   FilterLogic,
   NumericFilterCondition,
@@ -21,39 +21,6 @@ export function createViewerFilteringDataStore() {
   const currentFilterLogic = ref<FilterLogic>(FilterLogic.All)
   const dataSlices: Ref<DataSlice[]> = ref([])
 
-  const propertyExtractionCache = new Map<Record<string, unknown>, PropertyInfoBase[]>()
-
-  const extractNestedProperties = (
-    obj: Record<string, unknown>
-  ): PropertyInfoBase[] => {
-    if (propertyExtractionCache.has(obj)) {
-      return propertyExtractionCache.get(obj)!
-    }
-
-    const properties: PropertyInfoBase[] = []
-
-    function traverse(current: Record<string, unknown>, path: string[] = []) {
-      for (const [key, value] of Object.entries(current)) {
-        const currentPath = [...path, key]
-        const concatenatedPath = currentPath.join('.')
-
-        if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-          traverse(value as Record<string, unknown>, currentPath)
-        } else {
-          properties.push({
-            concatenatedPath,
-            value,
-            type: typeof value
-          } as PropertyInfoBase)
-        }
-      }
-    }
-
-    traverse(obj)
-    propertyExtractionCache.set(obj, properties)
-    return properties
-  }
-
   const populateDataStore = async (viewer: Viewer, resources: ResourceInfo[]) => {
     const tree = viewer.getWorldTree()
     if (!tree) return
@@ -67,36 +34,86 @@ export function createViewerFilteringDataStore() {
 
       const objectMap: Record<string, SpeckleObject> = {}
       const propertyMap: Record<string, PropertyInfoBase> = {}
-      const propertyIndexCache: Record<string, Record<string, string[]>> = {}
+      // Map from objectId to its property values for efficient filtering
+      const objectProperties: Record<string, Record<string, unknown>> = {}
 
       await tree.walkAsync((node: TreeNode) => {
         if (
           node.model.atomic &&
-          node.model.raw.id &&
-          node.model.raw.id.length === 32 &&
+          node.model.id &&
+          node.model.id.length === 32 &&
           !node.model.raw.speckle_type?.includes('Proxy') &&
           node.model.raw.properties?.builtInCategory !== 'OST_Levels'
         ) {
-          const objectId = node.model.raw.id
+          const objectId = node.model.id
           objectMap[objectId] = node.model.raw as SpeckleObject
 
-          const props = extractNestedProperties(node.model.raw)
-          for (const p of props) {
-            propertyMap[p.concatenatedPath] = p
+          // Extract only commonly used properties - avoid expensive full traversal
+          const objProps: Record<string, unknown> = {}
 
-            const propertyKey = p.concatenatedPath
-            const value = String(p.value)
-
-            if (!propertyIndexCache[propertyKey]) {
-              propertyIndexCache[propertyKey] = {}
+          // Direct properties
+          for (const [key, value] of Object.entries(node.model.raw)) {
+            if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+              const path = key
+              objProps[path] = value
+              if (!propertyMap[path]) {
+                propertyMap[path] = {
+                  concatenatedPath: path,
+                  value,
+                  type: typeof value
+                } as PropertyInfoBase
+              }
             }
-
-            if (!propertyIndexCache[propertyKey][value]) {
-              propertyIndexCache[propertyKey][value] = []
-            }
-
-            propertyIndexCache[propertyKey][value].push(objectId)
           }
+
+          // Properties.* (one level)
+          const props = node.model.raw.properties
+          if (props && typeof props === 'object' && !Array.isArray(props)) {
+            for (const [key, value] of Object.entries(
+              props as Record<string, unknown>
+            )) {
+              if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+                const path = `properties.${key}`
+                objProps[path] = value
+                if (!propertyMap[path]) {
+                  propertyMap[path] = {
+                    concatenatedPath: path,
+                    value,
+                    type: typeof value
+                  } as PropertyInfoBase
+                }
+              }
+            }
+          }
+
+          // Parameters.*.value (Revit objects)
+          const params = node.model.raw.parameters
+          if (params && typeof params === 'object' && !Array.isArray(params)) {
+            for (const [key, paramObj] of Object.entries(
+              params as Record<string, unknown>
+            )) {
+              if (
+                paramObj &&
+                typeof paramObj === 'object' &&
+                !Array.isArray(paramObj)
+              ) {
+                const param = paramObj as Record<string, unknown>
+                if ('value' in param) {
+                  const path = `parameters.${key}.value`
+                  objProps[path] = param.value
+                  if (!propertyMap[path]) {
+                    propertyMap[path] = {
+                      concatenatedPath: path,
+                      value: param.value,
+                      type: typeof param.value
+                    } as PropertyInfoBase
+                  }
+                }
+              }
+            }
+          }
+
+          objectProperties[objectId] = objProps
         }
         return true
       }, subnode)
@@ -109,54 +126,58 @@ export function createViewerFilteringDataStore() {
         rootObject: rootObject ? markRaw(rootObject) : null,
         objectMap: markRaw(objectMap),
         propertyMap,
-        _propertyIndexCache: propertyIndexCache
+        objectProperties
       }
     }
-  }
-
-  const buildPropertyIndex = (
-    dataSource: DataSource,
-    propertyKey: string
-  ): Record<string, string[]> => {
-    if (dataSource._propertyIndexCache && dataSource._propertyIndexCache[propertyKey]) {
-      return dataSource._propertyIndexCache[propertyKey]
-    }
-    return {}
   }
 
   const queryObjects = (criteria: QueryCriteria): string[] => {
     const matchingIds: string[] = []
-
     const PRECISION = 4 // matches 0.0001 step
 
     for (const dataSource of dataSources.value) {
-      const propertyIndex = buildPropertyIndex(dataSource, criteria.propertyKey)
-
-      if (!propertyIndex || isEmpty(propertyIndex)) {
+      // Check if property exists in propertyMap
+      const propertyInfo = dataSource.propertyMap[criteria.propertyKey]
+      if (!propertyInfo) {
         continue
       }
 
       if (criteria.condition === ExistenceFilterCondition.IsSet) {
-        matchingIds.push(...flatten(Object.values(propertyIndex)))
-      } else if (criteria.condition === ExistenceFilterCondition.IsNotSet) {
-        const objectsWithProperty = new Set<string>(
-          flatten(Object.values(propertyIndex))
-        )
-
-        for (const [objectId] of Object.entries(dataSource.objectMap)) {
-          if (!objectsWithProperty.has(objectId)) {
+        // Find all objects that have this property - use pre-computed objectProperties
+        for (const [objectId, objProps] of Object.entries(
+          dataSource.objectProperties
+        )) {
+          const hasProperty = criteria.propertyKey in objProps
+          if (hasProperty) {
             matchingIds.push(objectId)
           }
         }
-      } else if (criteria.minValue !== undefined || criteria.maxValue !== undefined) {
-        const minValue = criteria.minValue ?? -Infinity
-        const maxValue = criteria.maxValue ?? Infinity
+      } else if (criteria.condition === ExistenceFilterCondition.IsNotSet) {
+        // Find all objects that don't have this property
+        for (const [objectId, objProps] of Object.entries(
+          dataSource.objectProperties
+        )) {
+          const hasProperty = criteria.propertyKey in objProps
+          if (!hasProperty) {
+            matchingIds.push(objectId)
+          }
+        }
+      } else {
+        // For value-based filtering, check each object
+        for (const [objectId, objProps] of Object.entries(
+          dataSource.objectProperties
+        )) {
+          const value = objProps[criteria.propertyKey]
+          if (value === undefined) continue
+          let shouldInclude = false
 
-        for (const [value, objectIds] of Object.entries(propertyIndex)) {
-          const numericValue = Number(value)
-          if (!isNaN(numericValue)) {
-            // Only round for display purposes, not for filtering logic
-            let shouldInclude = false
+          if (criteria.minValue !== undefined || criteria.maxValue !== undefined) {
+            // Numeric filtering
+            const numericValue = Number(value)
+            if (isNaN(numericValue)) continue
+
+            const minValue = criteria.minValue ?? -Infinity
+            const maxValue = criteria.maxValue ?? Infinity
 
             switch (criteria.condition) {
               case NumericFilterCondition.IsBetween:
@@ -169,13 +190,11 @@ export function createViewerFilteringDataStore() {
                 shouldInclude = numericValue < maxValue
                 break
               case NumericFilterCondition.IsEqualTo: {
-                // For equality, use a small tolerance to account for floating-point precision
                 const tolerance = Math.pow(10, -PRECISION)
                 shouldInclude = Math.abs(numericValue - minValue) <= tolerance
                 break
               }
               case NumericFilterCondition.IsNotEqualTo: {
-                // For inequality, use a small tolerance to account for floating-point precision
                 const tolerance = Math.pow(10, -PRECISION)
                 shouldInclude = Math.abs(numericValue - minValue) > tolerance
                 break
@@ -183,28 +202,16 @@ export function createViewerFilteringDataStore() {
               default:
                 shouldInclude = numericValue >= minValue && numericValue <= maxValue
             }
+          } else if (criteria.condition === StringFilterCondition.Is) {
+            // String filtering - exact match
+            shouldInclude = criteria.values.includes(String(value))
+          } else if (criteria.condition === StringFilterCondition.IsNot) {
+            // String filtering - exclude values
+            shouldInclude = !criteria.values.includes(String(value))
+          }
 
-            if (shouldInclude) {
-              matchingIds.push(...objectIds)
-            }
-          }
-        }
-      } else if (criteria.condition === StringFilterCondition.Is) {
-        for (const value of criteria.values) {
-          const objectIds = propertyIndex[value]
-          if (objectIds) {
-            matchingIds.push(...objectIds)
-          }
-        }
-      } else if (criteria.condition === StringFilterCondition.IsNot) {
-        if (criteria.values.length === 0) {
-          // Return empty array - nothing matches "is not" with no exclusions
-        } else {
-          const excludeValues = new Set(criteria.values)
-          for (const [value, objectIds] of Object.entries(propertyIndex)) {
-            if (!excludeValues.has(value)) {
-              matchingIds.push(...objectIds)
-            }
+          if (shouldInclude) {
+            matchingIds.push(objectId)
           }
         }
       }
@@ -272,17 +279,18 @@ export function createViewerFilteringDataStore() {
             .map((slice) => slice.objectIds)
         )
       )
-      return uniq(validObjectIds)
+      const result = uniq(validObjectIds)
+      return result
     } else {
       const lastSlice = dataSlices.value[dataSlices.value.length - 1]
-      return lastSlice?.intersectedObjectIds || []
+      const result = lastSlice?.intersectedObjectIds || []
+      return result
     }
   }
 
   const clearDataOnRouteLeave = () => {
     dataSourcesMap.value = {}
     dataSlices.value = []
-    propertyExtractionCache.clear()
   }
 
   const setFilterLogic = (logic: FilterLogic) => {
@@ -301,8 +309,7 @@ export function createViewerFilteringDataStore() {
     setFilterLogic,
     currentFilterLogic,
     dataSlices,
-    dataSources,
-    buildPropertyIndex
+    dataSources
   }
 }
 

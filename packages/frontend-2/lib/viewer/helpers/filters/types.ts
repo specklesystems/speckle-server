@@ -141,7 +141,7 @@ export type DataSource = {
   rootObject: Nullable<SpeckleObject>
   objectMap: Record<string, SpeckleObject>
   propertyMap: Record<string, PropertyInfoBase>
-  _propertyIndexCache?: Record<string, Record<string, string[]>>
+  objectProperties: Record<string, Record<string, unknown>>
 }
 
 export type ResourceInfo = {

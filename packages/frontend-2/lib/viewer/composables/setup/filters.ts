@@ -153,19 +153,9 @@ export const usePropertyFilteringPostSetup = () => {
    */
   const applyPropertyFilters = () => {
     const objectIds = dataStore.getFinalObjectIds()
-    const extension = filteringExtension()
 
-    extension.resetFilters()
-
-    const hasAppliedFilters = filters.propertyFilters.value.some(
-      (filter) => filter.isApplied
-    )
-
-    if (objectIds.length > 0) {
-      extension.isolateObjects(objectIds, 'property-filters', false, true)
-    } else if (hasAppliedFilters) {
-      extension.isolateObjects(['no-match-ghost-all'], 'property-filters', false, true)
-    }
+    filters.isolatedObjectIds.value = objectIds
+    filters.filteredObjectsCount.value = objectIds.length
   }
 
   /**
@@ -179,6 +169,34 @@ export const usePropertyFilteringPostSetup = () => {
       applyPropertyFilters()
     },
     { deep: true }
+  )
+
+  /**
+   * Watch for property filter results and apply to viewer extension
+   */
+  watchTriggerable(
+    () => filters.filteredObjectsCount.value,
+    () => {
+      const extension = filteringExtension()
+      const objectIds = dataStore.getFinalObjectIds()
+
+      extension.resetFilters()
+
+      const hasAppliedFilters = filters.propertyFilters.value.some(
+        (filter) => filter.isApplied
+      )
+
+      if (objectIds.length > 0) {
+        extension.isolateObjects(objectIds, 'property-filters', false, true)
+      } else if (hasAppliedFilters) {
+        extension.isolateObjects(
+          ['no-match-ghost-all'],
+          'property-filters',
+          false,
+          true
+        )
+      }
+    }
   )
 
   /**

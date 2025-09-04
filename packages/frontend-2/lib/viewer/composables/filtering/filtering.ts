@@ -83,18 +83,24 @@ export function useFilterUtilities(
   }
 
   /**
-   * Gets ALL values for a property from pre-computed indices (used for filtering logic)
+   * Gets ALL values for a property using pre-computed data (used for filtering logic)
    */
   const getAllPropertyValues = (propertyKey: string): string[] => {
     const allValues: string[] = []
 
     for (const dataSource of dataStore.dataSources.value) {
-      if (
-        dataSource._propertyIndexCache &&
-        dataSource._propertyIndexCache[propertyKey]
-      ) {
-        const propertyIndex = dataSource._propertyIndexCache[propertyKey]
-        allValues.push(...Object.keys(propertyIndex))
+      // Check if property exists in propertyMap first (quick check)
+      const propertyInfo = dataSource.propertyMap[propertyKey]
+      if (!propertyInfo) {
+        continue
+      }
+
+      // Collect values from pre-computed object properties
+      for (const [, objProps] of Object.entries(dataSource.objectProperties)) {
+        const value = objProps[propertyKey]
+        if (value !== undefined) {
+          allValues.push(String(value))
+        }
       }
     }
 
@@ -130,11 +136,89 @@ export function useFilterUtilities(
     return []
   }
 
+  /**
+   * Computes full property data for a given property key (min/max, valueGroups)
+   */
+  const computeFullPropertyData = (propertyKey: string): PropertyInfo | null => {
+    const valueToObjectIds = new Map<string, string[]>()
+
+    for (const dataSource of dataStore.dataSources.value) {
+      // Check if property exists in this data source
+      if (!dataSource.propertyMap[propertyKey]) {
+        continue
+      }
+
+      // Collect values and their associated object IDs using pre-computed data
+      for (const [objectId, objProps] of Object.entries(dataSource.objectProperties)) {
+        const value = objProps[propertyKey]
+        if (value !== undefined) {
+          const stringValue = String(value)
+          if (!valueToObjectIds.has(stringValue)) {
+            valueToObjectIds.set(stringValue, [])
+          }
+          valueToObjectIds.get(stringValue)!.push(objectId)
+        }
+      }
+    }
+
+    if (valueToObjectIds.size === 0) {
+      return null
+    }
+
+    const uniqueValues = Array.from(valueToObjectIds.keys())
+    const firstValue = uniqueValues[0]
+    const isNumeric =
+      typeof firstValue === 'number' ||
+      (!isNaN(Number(firstValue)) && String(firstValue) !== '')
+
+    if (isNumeric) {
+      const numericValues = uniqueValues.map((v) => Number(v)).filter((v) => !isNaN(v))
+      const min = Math.min(...numericValues)
+      const max = Math.max(...numericValues)
+
+      const numericValueGroups: { value: number; id: string }[] = []
+      for (const value of uniqueValues) {
+        const objectIds = valueToObjectIds.get(value) || []
+        for (const objectId of objectIds) {
+          numericValueGroups.push({
+            value: Number(value),
+            id: objectId
+          })
+        }
+      }
+
+      return {
+        key: propertyKey,
+        type: 'number',
+        objectCount: valueToObjectIds.size,
+        min,
+        max,
+        valueGroups: numericValueGroups,
+        passMin: null,
+        passMax: null
+      } as NumericPropertyInfo
+    } else {
+      return {
+        key: propertyKey,
+        type: 'string',
+        objectCount: valueToObjectIds.size,
+        valueGroups: uniqueValues.map((value) => ({
+          value: String(value),
+          ids: valueToObjectIds.get(value) || []
+        }))
+      } as StringPropertyInfo
+    }
+  }
+
   const createFilterData = (params: CreateFilterParams): FilterData => {
     const { filter, id } = params
 
-    if (isNumericPropertyInfo(filter)) {
-      const numericFilter = filter as NumericPropertyInfo
+    // If the filter doesn't have full data, compute it now
+    const fullFilter =
+      filter.objectCount === 0 ? computeFullPropertyData(filter.key) || filter : filter
+
+    if (isNumericPropertyInfo(fullFilter)) {
+      const numericFilter = fullFilter as NumericPropertyInfo
       const { min, max } = numericFilter
       const range = max - min
 
@@ -178,7 +262,7 @@ export function useFilterUtilities(
         selectedValues: [],
         condition: StringFilterCondition.Is,
         type: FilterType.String,
-        filter: filter as StringPropertyInfo,
+        filter: fullFilter as StringPropertyInfo,
         isDefaultAllSelected: true
       } satisfies StringFilterData
     }
@@ -388,11 +472,11 @@ export function useFilterUtilities(
           filter.condition === ExistenceFilterCondition.IsSet ||
           filter.condition === ExistenceFilterCondition.IsNotSet)
       ) {
-        // Handle lazy loading: if isDefaultAllSelected is true and selectedValues is empty,
-        // use all available values from pre-computed indices
         const values =
           filter.isDefaultAllSelected && filter.selectedValues.length === 0
-            ? getAllPropertyValues(filter.filter.key)
+            ? filter.filter.valueGroups
+                ?.map((vg) => String(vg.value))
+                .filter((v) => v !== 'null' && v !== 'undefined') || []
             : filter.selectedValues
 
         const { condition } = filter
@@ -533,43 +617,32 @@ export function useFilterUtilities(
   }
 
   /**
-   * Gets property options from the data store
+   * Gets property options from the data store (optimized to use propertyMap)
    */
   const getPropertyOptionsFromDataStore = (): PropertyInfo[] => {
     const allProperties = new Map<string, PropertyInfo>()
 
     for (const dataSource of dataStore.dataSources.value) {
-      for (const [propertyKey] of Object.entries(dataSource.propertyMap)) {
-        if (shouldExcludeFromFiltering(propertyKey)) {
-          continue
-        }
+      const propertyKeys = Object.keys(dataSource.propertyMap)
 
+      for (const propertyKey of propertyKeys) {
         if (allProperties.has(propertyKey)) {
           continue
         }
 
-        const propertyIndex = dataSource._propertyIndexCache?.[propertyKey] || {}
-        const values = Object.keys(propertyIndex)
-
-        if (values.length === 0) {
-          continue
-        }
-
-        const firstValue = values[0]
-        const isNumeric = !isNaN(Number(firstValue)) && firstValue !== ''
+        const propertyInfo = dataSource.propertyMap[propertyKey]
+        const value = propertyInfo.value
+        const isNumeric =
+          typeof value === 'number' || (!isNaN(Number(value)) && String(value) !== '')
 
         if (isNumeric) {
-          const numericValues = values.map((v) => Number(v)).filter((v) => !isNaN(v))
-          const min = Math.min(...numericValues)
-          const max = Math.max(...numericValues)
-
           allProperties.set(propertyKey, {
             key: propertyKey,
             type: 'number',
-            objectCount: values.length,
-            min,
-            max,
-            valueGroups: values.map((value) => ({ value: Number(value), id: '' })), // IDs not needed for selection
+            objectCount: 0,
+            min: 0,
+            max: 0,
+            valueGroups: [],
             passMin: null,
             passMax: null
           } as NumericPropertyInfo)
@@ -577,11 +650,8 @@ export function useFilterUtilities(
           allProperties.set(propertyKey, {
             key: propertyKey,
             type: 'string',
-            objectCount: values.length,
-            valueGroups: values.map((value) => ({
-              value,
-              ids: propertyIndex[value] || []
-            }))
+            objectCount: 0, // Not needed for selection
+            valueGroups: []
           } as StringPropertyInfo)
         }
       }

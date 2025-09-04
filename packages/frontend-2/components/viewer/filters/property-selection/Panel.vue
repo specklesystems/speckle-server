@@ -79,19 +79,35 @@ const updateDebouncedSearch = useDebounceFn((query: string) => {
   debouncedSearchQuery.value = query
 }, 200)
 
+// Pre-compute lowercase versions for efficient searching
+const optionsWithLowercase = computed(() => {
+  return props.options.map((option) => ({
+    ...option,
+    _searchLabel: option.label.toLowerCase(),
+    _searchValue: option.value.toLowerCase(),
+    _searchParentPath: option.parentPath.toLowerCase(),
+    _searchType: option.type.toLowerCase()
+  }))
+})
+
 const filteredOptions = computed(() => {
   if (!debouncedSearchQuery.value.trim()) {
     return props.options
   }
 
   const searchTerm = debouncedSearchQuery.value.toLowerCase().trim()
-  return props.options.filter(
-    (option) =>
-      option.label.toLowerCase().includes(searchTerm) ||
-      option.value.toLowerCase().includes(searchTerm) ||
-      option.parentPath.toLowerCase().includes(searchTerm) ||
-      option.type.toLowerCase().includes(searchTerm)
-  )
+  return optionsWithLowercase.value
+    .filter(
+      (option) =>
+        option._searchLabel.includes(searchTerm) ||
+        option._searchValue.includes(searchTerm) ||
+        option._searchParentPath.includes(searchTerm) ||
+        option._searchType.includes(searchTerm)
+    )
+    .map(
+      ({ _searchLabel, _searchValue, _searchParentPath, _searchType, ...option }) =>
+        option
+    )
 })
 
 const listItems = computed((): PropertySelectionListItem[] => {
@@ -105,8 +121,10 @@ const listItems = computed((): PropertySelectionListItem[] => {
     return searchResults
   }
 
+  // Create a map for O(1) lookup instead of O(n) find operations
+  const optionsMap = new Map(props.options.map((opt) => [opt.value, opt]))
   const availablePopular = FILTERS_POPULAR_PROPERTIES.map((filterKey) =>
-    props.options.find((opt) => opt.value === filterKey)
+    optionsMap.get(filterKey)
   )
     .filter(Boolean)
     .slice(0, 6) // Show max 6 popular filters

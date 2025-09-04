@@ -61,7 +61,6 @@ import {
   usePropertyFilteringPostSetup,
   useManualFilteringPostSetup
 } from '~/lib/viewer/composables/setup/filters'
-import { useFilteredObjectsCountPostSetup } from '~/lib/viewer/composables/setup/filteredObjectsCount'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { useFilteringSetup } from '~/lib/viewer/composables/filtering/setup'
 
@@ -860,7 +859,7 @@ export function useViewerPostSetup() {
   useFilterColoringPostSetup()
   usePropertyFilteringPostSetup()
   useManualFilteringPostSetup()
-  useFilteredObjectsCountPostSetup()
+  // useFilteredObjectsCountPostSetup() // Disabled - managing count manually in applyPropertyFilters
   useDisableZoomOnEmbed()
   useViewerCursorIntegration()
   useViewerTreeIntegration()

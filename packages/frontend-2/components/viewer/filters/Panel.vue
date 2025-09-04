@@ -86,11 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  useInjectedViewerInterfaceState,
-  useInjectedViewer,
-  useInjectedViewerState
-} from '~~/lib/viewer/composables/setup'
+import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 import type { PropertySelectOption } from '~/lib/viewer/helpers/filters/types'
 import { FilterType } from '~/lib/viewer/helpers/filters/types'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -111,9 +107,6 @@ const {
   setFilterLogic
 } = useFilterUtilities()
 
-const dataStore = useFilteringDataStore()
-const { instance } = useInjectedViewer()
-const { resourceItems } = useInjectedViewerState().resources.response
 const { currentFilterLogic } = useFilteringDataStore()
 const { filteredObjectsCount } = useFilteredObjectsCount()
 const mp = useMixpanel()
@@ -128,6 +121,10 @@ const filtersContainerRef = ref<HTMLElement>()
 const shouldScrollToNewFilter = ref(false)
 
 const propertySelectOptions = computed((): PropertySelectOption[] => {
+  if (!showPropertySelection.value) {
+    return []
+  }
+
   const existingFilterKeys = new Set(
     propertyFilters.value.map((f) => f.filter?.key).filter(Boolean)
   )
@@ -137,28 +134,34 @@ const propertySelectOptions = computed((): PropertySelectOption[] => {
   const allOptions: PropertySelectOption[] = relevantFilters
     .filter((filter) => !existingFilterKeys.has(filter.key))
     .map((filter) => {
-      const pathParts = filter.key.split('.')
-      const propertyName = pathParts[pathParts.length - 1]
-      const parentPath = pathParts.slice(0, -1).join('.')
+      const lastDotIndex = filter.key.lastIndexOf('.')
+      const propertyName =
+        lastDotIndex === -1 ? filter.key : filter.key.slice(lastDotIndex + 1)
+      const parentPath = lastDotIndex === -1 ? '' : filter.key.slice(0, lastDotIndex)
 
       return {
         value: filter.key,
         label: propertyName,
         parentPath,
         type: filter.type === 'number' ? FilterType.Numeric : FilterType.String,
-        hasParent: parentPath.length > 0
+        hasParent: lastDotIndex !== -1
       }
     })
 
+  // Use a more efficient sorting approach
   const sortedOptions = allOptions.sort((a, b) => {
-    if (!a.hasParent && b.hasParent) return -1
-    if (a.hasParent && !b.hasParent) return 1
+    // First sort by whether they have parents (no-parent items first)
+    if (a.hasParent !== b.hasParent) {
+      return a.hasParent ? 1 : -1
+    }
 
+    // If both have parents, sort by parent path first
     if (a.hasParent && b.hasParent) {
       const parentComparison = a.parentPath.localeCompare(b.parentPath)
       if (parentComparison !== 0) return parentComparison
     }
 
+    // Finally sort by label
     return a.label.localeCompare(b.label)
   })
 
@@ -241,26 +244,6 @@ const selectProperty = async (propertyKey: string) => {
 onKeyStroke('Escape', () => {
   if (showPropertySelection.value) {
     showPropertySelection.value = false
-  }
-})
-
-// Populate data store on mount to avoid delay when clicking plus button
-onMounted(async () => {
-  if (dataStore.dataSources.value.length === 0 && resourceItems.value.length > 0) {
-    const tree = instance.getWorldTree()
-    if (tree) {
-      const availableResources = resourceItems.value.filter((item) => {
-        const nodes = tree.findId(item.objectId)
-        return nodes && nodes.length > 0
-      })
-
-      if (availableResources.length > 0) {
-        const resources = availableResources.map((item) => ({
-          resourceUrl: item.objectId
-        }))
-        await dataStore.populateDataStore(instance, resources)
-      }
-    }
   }
 })
 
