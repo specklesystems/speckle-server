@@ -139,9 +139,10 @@
       ]"
       :style="`width: ${widthClass};`"
     >
-      <KeepAlive v-show="activePanel === 'models'">
-        <ViewerModelsPanel v-model:sub-view="modelsSubView" />
-      </KeepAlive>
+      <ViewerModelsPanel
+        v-show="activePanel === 'models'"
+        v-model:sub-view="modelsSubView"
+      />
       <KeepAlive v-show="resourceItems.length !== 0 && activePanel === 'filters'">
         <ViewerFiltersPanel />
       </KeepAlive>
@@ -154,10 +155,12 @@
         :summary="summary"
       />
       <ViewerDataviewerPanel v-if="activePanel === 'devMode'" />
-      <ViewerSavedViewsPanel
-        v-if="isSavedViewsEnabled && activePanel === 'savedViews'"
-        @close="activePanel = 'none'"
-      />
+      <KeepAlive>
+        <ViewerSavedViewsPanel
+          v-if="isSavedViewsEnabled && activePanel === 'savedViews'"
+          @close="activePanel = 'none'"
+        />
+      </KeepAlive>
     </div>
   </aside>
 </template>
