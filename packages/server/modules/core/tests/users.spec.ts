@@ -25,7 +25,8 @@ import {
   insertStreamCommitsFactory,
   insertBranchCommitsFactory,
   legacyGetPaginatedStreamCommitsPageFactory,
-  getPaginatedBranchCommitsItemsFactory
+  getPaginatedBranchCommitsItemsFactory,
+  deleteProjectCommitsFactory
 } from '@/modules/core/repositories/commits'
 import {
   createCommitByBranchIdFactory,
@@ -33,12 +34,9 @@ import {
 } from '@/modules/core/services/commit/management'
 import {
   getStreamFactory,
-  createStreamFactory,
   grantStreamPermissionsFactory,
   markCommitStreamUpdatedFactory,
-  deleteStreamFactory,
   getUserDeletableStreamsFactory,
-  getStreamRolesFactory,
   getExplicitProjects
 } from '@/modules/core/repositories/streams'
 import {
@@ -46,25 +44,12 @@ import {
   storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
-  legacyCreateStreamFactory,
-  createStreamReturnRecordFactory
-} from '@/modules/core/services/streams/management'
-import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
-import {
-  findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory,
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory,
-  deleteAllUserInvitesFactory,
-  findInviteFactory,
-  deleteInvitesByTargetFactory
+  deleteAllUserInvitesFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
-import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
-  getUsersFactory,
   getUserFactory,
   legacyGetUserFactory,
   storeUserFactory,
@@ -99,10 +84,7 @@ import {
   changeUserRoleFactory
 } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import {
-  finalizeInvitedServerRegistrationFactory,
-  finalizeResourceInviteFactory
-} from '@/modules/serverinvites/services/processing'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { dbLogger } from '@/observability/logging'
 import {
   storeApiTokenFactory,
@@ -121,30 +103,24 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getPaginatedBranchCommitsItemsByNameFactory } from '@/modules/core/services/commit/retrieval'
 import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branch/retrieval'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
-import {
-  processFinalizedProjectInviteFactory,
-  validateProjectInviteBeforeFinalizationFactory
-} from '@/modules/serverinvites/services/coreFinalization'
-import {
-  addOrUpdateStreamCollaboratorFactory,
-  validateStreamAccessFactory
-} from '@/modules/core/services/streams/access'
-import { authorizeResolver } from '@/modules/shared'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
-import { queryAllProjectsFactory } from '@/modules/core/services/projects'
+import {
+  deleteProjectAndCommitsFactory,
+  queryAllProjectsFactory
+} from '@/modules/core/services/projects'
 import { getTestRegionClients } from '@/modules/multiregion/tests/helpers'
-import { asMultiregionalOperation } from '@/modules/shared/command'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import type {
   ChangeUserPassword,
   CreateValidatedUser,
   DeleteUser,
   UpdateUserAndNotify
 } from '@/modules/core/domain/users/operations'
-import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { deleteProjectFactory } from '@/modules/core/repositories/projects'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
-const getUsers = getUsersFactory({ db })
 const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getStream = getStreamFactory({ db })
 const createBranch = createBranchFactory({ db })
@@ -168,81 +144,6 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getBranchById: getBranchByIdFactory({ db })
 })
 
-const buildFinalizeProjectInvite = () =>
-  finalizeResourceInviteFactory({
-    findInvite: findInviteFactory({ db }),
-    validateInvite: validateProjectInviteBeforeFinalizationFactory({
-      getProject: getStream
-    }),
-    processInvite: processFinalizedProjectInviteFactory({
-      getProject: getStream,
-      addProjectRole: addOrUpdateStreamCollaboratorFactory({
-        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
-        getUser,
-        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-        getStreamRoles: getStreamRolesFactory({ db }),
-        emitEvent: getEventBus().emit
-      })
-    }),
-    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    emitEvent: (...args) => getEventBus().emit(...args),
-    findEmail: findEmailFactory({ db }),
-    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-      createUserEmail: createUserEmailFactory({ db }),
-      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-      findEmail: findEmailFactory({ db }),
-      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-      }),
-      requestNewEmailVerification: requestNewEmailVerificationFactory({
-        findEmail: findEmailFactory({ db }),
-        getUser,
-        getServerInfo,
-        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-          db
-        }),
-        renderEmail,
-        sendEmail
-      })
-    }),
-    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-      getStream
-    }),
-    getUser,
-    getServerInfo
-  })
-
-const createStream = legacyCreateStreamFactory({
-  createStreamReturnRecord: createStreamReturnRecordFactory({
-    inviteUsersToProject: inviteUsersToProjectFactory({
-      createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory({ db }),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-          getStream
-        }),
-        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-          getStream
-        }),
-        emitEvent: ({ eventName, payload }) =>
-          getEventBus().emit({
-            eventName,
-            payload
-          }),
-        getUser: getUserFactory({ db }),
-        getServerInfo,
-        finalizeInvite: buildFinalizeProjectInvite()
-      }),
-      getUsers
-    }),
-    createStream: createStreamFactory({ db }),
-    storeProjectRole: storeProjectRoleFactory({ db }),
-    createBranch: createBranchFactory({ db }),
-    emitEvent: getEventBus().emit
-  })
-})
 const grantPermissionsStream = grantStreamPermissionsFactory({ db })
 
 const createUser: CreateValidatedUser = async (...input) =>
@@ -355,7 +256,13 @@ const deleteUser: DeleteUser = async (...input) =>
   asMultiregionalOperation(
     ({ mainDb, allDbs, emit }) => {
       const deleteUser = deleteUserFactory({
-        deleteStream: deleteStreamFactory({ db: mainDb }),
+        deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+          // this is a bit of an overhead, we are issuing delete queries to all regions,
+          // instead of being selective and clever about figuring out the project DB and only
+          // deleting from main and the project db
+          deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+          deleteProjectCommits: replicateFactory(allDbs, deleteProjectCommitsFactory)
+        }),
         logger: dbLogger,
         isLastAdminUser: isLastAdminUserFactory({ db: mainDb }),
         getUserDeletableStreams: getUserDeletableStreamsFactory({ db: mainDb }),
@@ -455,7 +362,7 @@ describe('Actors & Tokens @user-services @multiregion', () => {
       )
     })
 
-    let ballmerUserId: null | string = null
+    let ballmerUser: { id: string; email: string }
 
     it('Find or create should create a user', async () => {
       const newUser: { name: string; email: string; password: string } = {
@@ -464,10 +371,9 @@ describe('Actors & Tokens @user-services @multiregion', () => {
         password: 'testthebest'
       }
 
-      const { id } = await findOrCreateUser({ user: newUser })
-      ballmerUserId = id
-      expect(id).to.be.a('string')
-      const user = await getUser(id)
+      ballmerUser = await findOrCreateUser({ user: newUser })
+      expect(ballmerUser.id).to.be.a('string')
+      const user = await getUser(ballmerUser.id)
       expect(user.verified).to.equal(true)
     })
 
@@ -479,32 +385,33 @@ describe('Actors & Tokens @user-services @multiregion', () => {
       }
 
       const { id } = await findOrCreateUser({ user: newUser })
-      expect(id).to.equal(ballmerUserId)
+      expect(id).to.equal(ballmerUser.id)
     })
 
     // Note: deletion is more complicated.
     it('Should delete a user @multiregion', async () => {
-      const soloOwnerStream = {
-        name: 'Test Stream 01',
-        description: 'wonderful test stream',
-        isPublic: true,
-        id: ''
-      }
-      const multiOwnerStream = {
-        name: 'Test Stream 02',
-        description: 'another test stream',
-        isPublic: true,
-        id: ''
-      }
-
-      soloOwnerStream.id = await createStream({
-        ...soloOwnerStream,
-        ownerId: ballmerUserId!
-      })
-      multiOwnerStream.id = await createStream({
-        ...multiOwnerStream,
-        ownerId: ballmerUserId!
-      })
+      const soloOwnerStream = await createTestStream(
+        {
+          name: 'Test Stream 01',
+          description: 'wonderful test stream',
+          isPublic: true
+        },
+        {
+          ...ballmerUser,
+          name: ''
+        }
+      )
+      const multiOwnerStream = await createTestStream(
+        {
+          name: 'Test Stream 02',
+          description: 'another test stream',
+          isPublic: true
+        },
+        {
+          ...ballmerUser,
+          name: ''
+        }
+      )
 
       await grantPermissionsStream({
         streamId: multiOwnerStream.id,
@@ -518,7 +425,7 @@ describe('Actors & Tokens @user-services @multiregion', () => {
         await createBranch({
           ...branch,
           streamId: multiOwnerStream.id,
-          authorId: ballmerUserId!
+          authorId: ballmerUser.id!
         })
       ).id
 
@@ -543,11 +450,11 @@ describe('Actors & Tokens @user-services @multiregion', () => {
           message: 'breakfast commit',
           sourceApplication: 'tests',
           objectId: objId,
-          authorId: ballmerUserId!
+          authorId: ballmerUser.id!
         })
       ).id
 
-      await deleteUser(ballmerUserId!)
+      await deleteUser(ballmerUser.id!)
 
       if ((await getStream({ streamId: soloOwnerStream.id })) !== undefined) {
         assert.fail('user stream not deleted')
@@ -576,7 +483,7 @@ describe('Actors & Tokens @user-services @multiregion', () => {
       })
       expect(commitsByStreamId.commits.length).to.equal(1)
 
-      const user = await getUser(ballmerUserId!)
+      const user = await getUser(ballmerUser.id!)
       if (user) assert.fail('user not deleted')
     })
 

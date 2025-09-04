@@ -488,10 +488,10 @@ export type DenyWorkspaceJoinRequest = (
 /**
  * Updates project region and moves all regional data to target regional db
  */
-export type UpdateProjectRegion = (params: {
+export type MoveProjectToRegion = (params: {
   projectId: string
   regionKey: string
-}) => Promise<Stream>
+}) => Promise<void>
 
 /**
  * Given a count of objects successfully copied to another region, confirm that these counts

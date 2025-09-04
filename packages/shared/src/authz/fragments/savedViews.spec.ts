@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { OverridesOf } from '../../tests/helpers/types.js'
 import {
   ensureCanAccessSavedViewFragment,
-  ensureCanAccessSavedViewGroupFragment
+  ensureCanAccessSavedViewGroupFragment,
+  WriteTypes
 } from './savedViews.js'
 import {
   getEnvFake,
@@ -20,10 +21,10 @@ import {
   SavedViewNoAccessError,
   SavedViewNotFoundError,
   UngroupedSavedViewGroupLockError,
-  WorkspaceNoAccessError,
-  WorkspacePlanNoFeatureAccessError
+  WorkspaceNoAccessError
 } from '../domain/authErrors.js'
 import { nanoid } from 'nanoid'
+import { ProjectVisibility } from '../domain/projects/types.js'
 
 const userId = 'user-id'
 const savedViewId = 'saved-view-id'
@@ -54,10 +55,11 @@ describe('ensureCanAccessSavedViewFragment', () => {
       getWorkspaceRole: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
+      getAdminOverrideEnabled: async () => false,
       ...overrides
     })
 
-  it.each(<const>['read', 'write'])(
+  it.each(<const>['read', ...Object.values(WriteTypes)])(
     'fails when not workspaced project (%s)',
     async (access) => {
       const sut = buildSUT()
@@ -111,7 +113,6 @@ describe('ensureCanAccessSavedViewFragment', () => {
         const expectSuccess = success === 'succeeds'
 
         const sut = buildWorkspaceSUT({
-          getProjectRole: async () => null,
           getSavedView: getSavedViewFake({
             id: savedViewId,
             projectId,
@@ -139,22 +140,75 @@ describe('ensureCanAccessSavedViewFragment', () => {
       }
     )
 
+    it('succeeds if asking for read access to public projects public view, even if not a part of the project or workspace', async () => {
+      const sut = buildWorkspaceSUT({
+        getSavedView: getSavedViewFake({
+          id: savedViewId,
+          projectId,
+          visibility: SavedViewVisibility.public,
+          authorId: userId
+        }),
+        getProject: getProjectFake({
+          id: projectId,
+          workspaceId,
+          visibility: ProjectVisibility.Public
+        }),
+        getProjectRole: async () => null,
+        getWorkspaceRole: async () => null
+      })
+
+      const result = await sut({
+        userId,
+        projectId,
+        savedViewId,
+        access: 'read'
+      })
+
+      expect(result).toBeAuthOKResult()
+    })
+
     it.each(<const>[
-      { author: 'author', success: 'succeeds' },
-      { author: 'not author', success: 'fails', error: SavedViewNoAccessError.code },
+      { author: 'author', success: 'succeeds', access: WriteTypes.UpdateGeneral },
+      { author: 'author', success: 'succeeds', access: WriteTypes.MoveView },
+      {
+        author: 'not author',
+        success: 'fails',
+        error: SavedViewNoAccessError.code,
+        access: WriteTypes.UpdateGeneral
+      },
+      {
+        author: 'not author',
+        success: 'succeeds',
+        error: SavedViewNoAccessError.code,
+        access: WriteTypes.MoveView
+      },
       {
         author: 'author but no longer contributor',
         success: 'fails',
-        error: ProjectNotEnoughPermissionsError.code
+        error: ProjectNotEnoughPermissionsError.code,
+        access: WriteTypes.UpdateGeneral
+      },
+      {
+        author: 'author but no longer contributor',
+        success: 'fails',
+        error: ProjectNotEnoughPermissionsError.code,
+        access: WriteTypes.MoveView
       },
       {
         author: 'not author but is workspace admin',
         success: 'fails',
-        error: SavedViewNoAccessError.code
+        error: SavedViewNoAccessError.code,
+        access: WriteTypes.UpdateGeneral
+      },
+      {
+        author: 'not author but is workspace admin',
+        success: 'succeeds',
+        error: SavedViewNoAccessError.code,
+        access: WriteTypes.MoveView
       }
     ])(
-      '$success if asking for write access to private (as $author)',
-      async ({ author, success, error }) => {
+      '$success if asking for $access type write access to private (as $author)',
+      async ({ author, success, error, access }) => {
         const isAuthor = author.startsWith('author')
         const isNotContributor = author.includes('no longer contributor')
         const isWorkspaceAdmin = author.includes('is workspace admin')
@@ -177,7 +231,7 @@ describe('ensureCanAccessSavedViewFragment', () => {
           userId,
           projectId,
           savedViewId,
-          access: 'write'
+          access
         })
 
         if (expectSuccess) {
@@ -190,12 +244,18 @@ describe('ensureCanAccessSavedViewFragment', () => {
       }
     )
 
-    it.each(<const>['read', 'write'])(
-      'fails when workspace plan is too cheap (%s)',
+    it.each(<const>['read', ...Object.values(WriteTypes)])(
+      'succeeds to %s even on free plan',
       async (access) => {
         const sut = buildWorkspaceSUT({
           getWorkspacePlan: getWorkspacePlanFake({
-            name: 'team'
+            name: 'free'
+          }),
+          getSavedView: getSavedViewFake({
+            id: savedViewId,
+            projectId,
+            visibility: SavedViewVisibility.public,
+            authorId: userId
           })
         })
 
@@ -205,13 +265,11 @@ describe('ensureCanAccessSavedViewFragment', () => {
           savedViewId,
           access
         })
-        expect(result).toBeAuthErrorResult({
-          code: WorkspacePlanNoFeatureAccessError.code
-        })
+        expect(result).toBeAuthOKResult()
       }
     )
 
-    it.each(<const>['read', 'write'])(
+    it.each(<const>['read', ...Object.values(WriteTypes)])(
       'fails if view doesnt exist (%s)',
       async (access) => {
         const sut = buildWorkspaceSUT({
@@ -230,7 +288,7 @@ describe('ensureCanAccessSavedViewFragment', () => {
       }
     )
 
-    it.each(<const>['read', 'write'])(
+    it.each(<const>['read', ...Object.values(WriteTypes)])(
       `doesn't fail if view doesnt exist and allowNonExistent set (%s)`,
       async (access) => {
         const sut = buildWorkspaceSUT({
@@ -412,27 +470,6 @@ describe('ensureCanAccessSavedViewGroupFragment', () => {
         code: UngroupedSavedViewGroupLockError.code
       })
     })
-
-    it.each(<const>['read', 'write'])(
-      'fails when workspace plan is too cheap (%s)',
-      async (access) => {
-        const sut = buildWorkspaceSUT({
-          getWorkspacePlan: getWorkspacePlanFake({
-            name: 'team'
-          })
-        })
-
-        const result = await sut({
-          userId,
-          projectId,
-          savedViewGroupId,
-          access
-        })
-        expect(result).toBeAuthErrorResult({
-          code: WorkspacePlanNoFeatureAccessError.code
-        })
-      }
-    )
 
     it.each(<const>['read', 'write'])(
       'fails if view doesnt exist (%s)',

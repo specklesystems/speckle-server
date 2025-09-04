@@ -90,8 +90,7 @@ const {
   isSectionBoxEnabled,
   isSectionBoxVisible
 } = useSectionBoxUtilities()
-const { getActiveMeasurement, removeMeasurement, enableMeasurements, hasMeasurements } =
-  useMeasurementUtilities()
+const { enableMeasurements, hasMeasurements, measurements } = useMeasurementUtilities()
 const { resetExplode } = useFilterUtilities()
 const {
   viewMode: { mode: currentViewMode },
@@ -273,12 +272,9 @@ registerShortcuts({
 })
 
 onKeyStroke('Escape', () => {
-  const isActiveMeasurement = getActiveMeasurement()
+  const hasActiveMeasurements = measurements.value.length > 0
+  if (hasActiveMeasurements) return
 
-  if (isActiveMeasurement) {
-    removeMeasurement()
-    return
-  }
   // Only close panels if there's no active measurement
   if (activePanel.value === ActivePanel.measurements) {
     toggleMeasurements()

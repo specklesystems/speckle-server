@@ -9,20 +9,22 @@ import {
   MultiRegionInvalidJobError,
   MultiRegionNotYetImplementedError
 } from '@/modules/multiregion/errors'
-import { getProjectDbClient, getRegionDb } from '@/modules/multiregion/utils/dbSelector'
+import {
+  getProjectDbClient,
+  getRegionDb,
+  getReplicationDbs
+} from '@/modules/multiregion/utils/dbSelector'
 import {
   getProjectObjectStorage,
   getRegionObjectStorage
 } from '@/modules/multiregion/utils/blobStorageSelector'
 import {
-  updateProjectRegionFactory,
+  moveProjectToRegionFactory,
   validateProjectRegionCopyFactory
 } from '@/modules/workspaces/services/projectRegions'
 import { db } from '@/db/knex'
 import {
-  deleteProjectFactory,
   getProjectFactory,
-  storeProjectFactory,
   storeProjectRolesFactory
 } from '@/modules/core/repositories/projects'
 import { getAvailableRegionsFactory } from '@/modules/workspaces/services/regions'
@@ -36,7 +38,6 @@ import {
 import { updateProjectRegionKeyFactory } from '@/modules/multiregion/services/projectRegion'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { initializeQueue as setupQueue } from '@speckle/shared/queue'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   copyWorkspaceFactory,
   copyProjectsFactory,
@@ -56,9 +57,9 @@ import {
 } from '@/modules/workspaces/repositories/projectRegions'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
-import { waitForRegionProjectFactory } from '@/modules/core/services/projects'
 import { chunk } from 'lodash-es'
 import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 
 const MULTIREGION_QUEUE_NAME = isTestEnv()
   ? `test:multiregion:${cryptoRandomString({ length: 5 })}`
@@ -173,9 +174,9 @@ export const startQueue = async () => {
           .private
 
         // Move project to target region
-        const project = await withTransaction(
+        await withTransaction(
           async ({ db: targetDbTrx }) => {
-            const updateProjectRegion = updateProjectRegionFactory({
+            const moveProjectToRegion = moveProjectToRegionFactory({
               getProject: getProjectFactory({ db: sourceDb }),
               getAvailableRegions: getAvailableRegionsFactory({
                 getRegions: getRegionsFactory({ db }),
@@ -230,44 +231,39 @@ export const startQueue = async () => {
                 }),
                 countProjectComments: countProjectCommentsFactory({ db: sourceDb }),
                 countProjectWebhooks: countProjectWebhooksFactory({ db: sourceDb })
-              }),
-              updateProjectRegionKey: updateProjectRegionKeyFactory({
-                upsertProjectRegionKey: upsertProjectRegionKeyFactory({
-                  db: targetDbTrx
-                }),
-                cacheDeleteRegionKey: deleteRegionKeyFromCacheFactory({
-                  redis: getGenericRedis()
-                }),
-                emitEvent: getEventBus().emit
               })
             })
 
-            return updateProjectRegion({ projectId, regionKey })
+            await moveProjectToRegion({ projectId, regionKey })
           },
-          { db: targetDb }
+          {
+            db: targetDb
+          }
+        )
+
+        // Update project region in dbs and update relevant caches
+        const project = await asMultiregionalOperation(
+          async ({ allDbs, emit }) =>
+            updateProjectRegionKeyFactory({
+              upsertProjectRegionKey: replicateFactory(
+                allDbs,
+                upsertProjectRegionKeyFactory
+              ),
+              cacheDeleteRegionKey: deleteRegionKeyFromCacheFactory({
+                redis: getGenericRedis()
+              }),
+              emitEvent: emit
+            })({ projectId, regionKey }),
+          {
+            name: 'updateProjectRegion',
+            description: 'Update project region in db and update relevant caches',
+            logger,
+            dbs: await getReplicationDbs({ regionKey })
+          }
         )
 
         // Grab project roles for later reinstating
         const projectRoles = await getStreamCollaboratorsFactory({ db })(project.id)
-
-        // Delete project in main db to "unblock" replication
-        await deleteProjectFactory({ db })({ projectId: project.id })
-
-        try {
-          // Wait for replication from regional db
-          await waitForRegionProjectFactory({
-            getProject: getProjectFactory({ db }),
-            deleteProject: deleteProjectFactory({ db: targetDb })
-          })({
-            projectId: project.id,
-            regionKey,
-            maxAttempts: 100
-          })
-        } catch (err) {
-          // Failed to delete project or await replication, reset project state in main db
-          await storeProjectFactory({ db })({ project })
-          throw err
-        }
 
         // Reinstate project acl records
         for (const roles of chunk(projectRoles, 10_000)) {

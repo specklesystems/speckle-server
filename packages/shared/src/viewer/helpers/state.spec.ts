@@ -54,7 +54,7 @@ describe('Viewer State helpers', () => {
           lightConfig: {},
           explodeFactor: 0,
           selection: null,
-          measurement: { enabled: false, options: null }
+          measurement: { enabled: false, options: null, measurements: [] }
         }
       }
       expect(isSerializedViewerState(valid)).toBe(true)
@@ -166,7 +166,7 @@ describe('Viewer State helpers', () => {
           lightConfig: {},
           explodeFactor: 0,
           selection: null,
-          measurement: { enabled: false, options: null }
+          measurement: { enabled: false, options: null, measurements: [] }
         }
       }
       const result = inputToVersionedState(valid)
@@ -225,7 +225,7 @@ describe('Viewer State helpers', () => {
             lightConfig: {},
             explodeFactor: 0,
             selection: null,
-            measurement: { enabled: false, options: null }
+            measurement: { enabled: false, options: null, measurements: [] }
           }
         }
       }

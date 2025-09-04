@@ -1,12 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
 /*
  * https://medium.com/better-programming/how-to-create-your-own-event-emitter-in-javascript-fbd5db2447c4
  */
 export default class EventEmitter {
+  protected _events: Record<string, Function[]>
+
   constructor() {
     this._events = {}
   }
 
-  on(name, listener) {
+  on(name: string, listener: Function) {
     if (!this._events[name]) {
       this._events[name] = []
     }
@@ -14,19 +17,18 @@ export default class EventEmitter {
     this._events[name].push(listener)
   }
 
-  removeListener(name, listenerToRemove) {
+  removeListener(name: string, listenerToRemove: Function) {
     if (!this._events[name]) return
 
-    const filterListeners = (listener) => listener !== listenerToRemove
+    const filterListeners = (listener: Function) => listener !== listenerToRemove
 
     this._events[name] = this._events[name].filter(filterListeners)
   }
 
-  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/rest_parameters
-  emit(name, ...args) {
+  emit(name: string, ...args: unknown[]) {
     if (!this._events[name]) return
 
-    const fireCallbacks = (callback) => {
+    const fireCallbacks = (callback: Function) => {
       callback(...args)
     }
 
@@ -34,6 +36,6 @@ export default class EventEmitter {
   }
 
   dispose() {
-    this._events = null
+    this._events = {}
   }
 }

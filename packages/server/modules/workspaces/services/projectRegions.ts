@@ -1,5 +1,4 @@
 import type { GetProject } from '@/modules/core/domain/projects/operations'
-import type { UpdateProjectRegionKey } from '@/modules/multiregion/services/projectRegion'
 import type {
   CopyProjectAutomations,
   CopyProjectBlobs,
@@ -17,13 +16,13 @@ import type {
   CountProjectVersions,
   CountProjectWebhooks,
   GetAvailableRegions,
-  UpdateProjectRegion,
+  MoveProjectToRegion,
   ValidateProjectRegionCopy
 } from '@/modules/workspaces/domain/operations'
 import { ProjectRegionAssignmentError } from '@/modules/workspaces/errors/regions'
 import { logger } from '@/observability/logging'
 
-export const updateProjectRegionFactory =
+export const moveProjectToRegionFactory =
   (deps: {
     getProject: GetProject
     getAvailableRegions: GetAvailableRegions
@@ -37,8 +36,7 @@ export const updateProjectRegionFactory =
     copyProjectWebhooks: CopyProjectWebhooks
     copyProjectBlobs: CopyProjectBlobs
     validateProjectRegionCopy: ValidateProjectRegionCopy
-    updateProjectRegionKey: UpdateProjectRegionKey
-  }): UpdateProjectRegion =>
+  }): MoveProjectToRegion =>
   async (params) => {
     const { projectId, regionKey } = params
 
@@ -120,9 +118,6 @@ export const updateProjectRegionFactory =
         'Missing data from source project in target region copy after move.'
       )
     }
-
-    // Update project region in db and update relevant caches
-    return await deps.updateProjectRegionKey({ projectId, regionKey })
   }
 
 export const validateProjectRegionCopyFactory =

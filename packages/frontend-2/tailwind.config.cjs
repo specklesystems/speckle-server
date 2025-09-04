@@ -20,7 +20,7 @@ const config = {
     `./plugins/**/*.{js,ts}`,
     './stories/**/*.{js,ts,vue,mdx}',
     './app.vue',
-    './lib/**/composables/*.{js,ts}',
+    './lib/**/composables/**/*.{js,ts}',
     ...themeEntries(),
     ...uiLibEntries()
   ],

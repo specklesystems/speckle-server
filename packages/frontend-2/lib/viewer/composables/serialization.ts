@@ -13,13 +13,14 @@ import {
 import { CameraController, VisualDiffMode } from '@speckle/viewer'
 import type { NumericPropertyInfo } from '@speckle/viewer'
 import type { Merge, PartialDeep } from 'type-fest'
-import type { SectionBoxData } from '@speckle/shared/viewer/state'
+import { defaultMeasurementOptions } from '@speckle/shared/viewer/state'
 import { useViewerRealtimeActivityTracker } from '~/lib/viewer/composables/activity'
 import {
   isModelResource,
   resourceBuilder,
   type ViewerResource
 } from '@speckle/shared/viewer/route'
+import { until } from '@vueuse/core'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 
@@ -130,7 +131,8 @@ export function useStateSerialization() {
         selection: state.ui.selection.value?.toArray() || null,
         measurement: {
           enabled: state.ui.measurement.enabled.value,
-          options: state.ui.measurement.options.value
+          options: state.ui.measurement.options.value,
+          measurements: state.ui.measurement.measurements.value.slice()
         }
       }
     }
@@ -166,7 +168,10 @@ export function useApplySerializedState() {
       explodeFactor,
       lightConfig,
       diff,
-      viewMode
+      viewMode,
+      measurement,
+      sectionBoxContext,
+      loading
     },
     resources: {
       request: { resourceIdString }
@@ -204,10 +209,12 @@ export function useApplySerializedState() {
       await projectId.update(state.projectId)
     }
 
+    // Handle loaded resource change
+    let newResourceIdString: string | undefined = undefined
     if (
       [StateApplyMode.Spotlight, StateApplyMode.ThreadFullContextOpen].includes(mode)
     ) {
-      await resourceIdString.update(state.resources?.request?.resourceIdString || '')
+      newResourceIdString = state.resources?.request?.resourceIdString || ''
     } else if (mode === StateApplyMode.SavedView) {
       const { loadOriginal } = options || {}
 
@@ -231,11 +238,38 @@ export function useApplySerializedState() {
               .find((r) => r.modelId === incomingItem.modelId)?.versionId
         finalItems.push(incomingItem)
       }
-      const newResourceIdString = resourceBuilder()
+      newResourceIdString = resourceBuilder()
         .addResources(finalItems)
-        .addNew(current) // keeping other federated models around
+        // .addNew(current) // keeping other federated models around
         .toString()
+    } else if (mode === StateApplyMode.FederatedContext) {
+      // For federated context, append only model IDs (without versions) to show latest
+      const { parseUrlParameters, ViewerModelResource, createGetParamFromResources } =
+        SpeckleViewer.ViewerRoute
+
+      const currentResources = parseUrlParameters(resourceIdString.value)
+      const newResources = parseUrlParameters(
+        state.resources?.request?.resourceIdString ?? ''
+      ).map((resource) => {
+        if (resource instanceof ViewerModelResource) {
+          // Only keep model ID, drop version
+          return new ViewerModelResource(resource.modelId)
+        }
+        return resource
+      })
+
+      if (newResources.length) {
+        const allResources = [...currentResources, ...newResources]
+        newResourceIdString = createGetParamFromResources(allResources)
+      }
+    }
+
+    // We want to make sure the final resources have been loaded before we continue on
+    // with applying the rest of the state
+    if (newResourceIdString) {
+      await until(loading).toBe(false)
       await resourceIdString.update(newResourceIdString)
+      await until(loading).toBe(false)
     }
 
     position.value = new Vector3(
@@ -252,9 +286,16 @@ export function useApplySerializedState() {
     isOrthoProjection.value = !!state.ui?.camera?.isOrthoProjection
 
     sectionBox.value = state.ui?.sectionBox
-      ? // It's complaining otherwise
-        (state.ui.sectionBox as SectionBoxData)
+      ? {
+          min: state.ui.sectionBox.min || [],
+          max: state.ui.sectionBox.max || [],
+          rotation: state.ui.sectionBox.rotation || []
+        }
       : null
+    sectionBoxContext.visible.value = false
+    if (!sectionBox.value) {
+      sectionBoxContext.edited.value = false
+    }
 
     const filters = state.ui?.filters || {}
     if (filters.hiddenObjectIds?.length) {
@@ -303,34 +344,6 @@ export function useApplySerializedState() {
             logger.error(e)
           }
         })
-    }
-
-    // Handle resource string updates
-    if (
-      [StateApplyMode.Spotlight, StateApplyMode.ThreadFullContextOpen].includes(mode)
-    ) {
-      await resourceIdString.update(state.resources?.request?.resourceIdString || '')
-    } else if (mode === StateApplyMode.FederatedContext) {
-      // For federated context, append only model IDs (without versions) to show latest
-      const { parseUrlParameters, ViewerModelResource, createGetParamFromResources } =
-        SpeckleViewer.ViewerRoute
-
-      const currentResources = parseUrlParameters(resourceIdString.value)
-      const newResources = parseUrlParameters(
-        state.resources?.request?.resourceIdString ?? ''
-      ).map((resource) => {
-        if (resource instanceof ViewerModelResource) {
-          // Only keep model ID, drop version
-          return new ViewerModelResource(resource.modelId)
-        }
-        return resource
-      })
-
-      if (newResources.length) {
-        const allResources = [...currentResources, ...newResources]
-        const newResourceString = createGetParamFromResources(allResources)
-        await resourceIdString.update(newResourceString)
-      }
     }
 
     if ([StateApplyMode.Spotlight, StateApplyMode.SavedView].includes(mode)) {
@@ -382,6 +395,23 @@ export function useApplySerializedState() {
     lightConfig.value = {
       ...lightConfig.value,
       ...(state.ui?.lightConfig || {})
+    }
+
+    // Apply measurements
+    const incomingMeasurement = state.ui?.measurement
+    if (incomingMeasurement) {
+      if (!isUndefinedOrVoid(incomingMeasurement.enabled)) {
+        measurement.enabled.value = incomingMeasurement.enabled
+      }
+      if (!isUndefinedOrVoid(incomingMeasurement.options)) {
+        measurement.options.value = {
+          ...defaultMeasurementOptions,
+          ...incomingMeasurement.options
+        }
+      }
+      if (!isUndefinedOrVoid(incomingMeasurement.measurements)) {
+        measurement.measurements.value = incomingMeasurement.measurements
+      }
     }
 
     // Trigger activity update
