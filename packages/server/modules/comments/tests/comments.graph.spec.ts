@@ -52,7 +52,6 @@ import {
   storeSingleObjectIfNotFoundFactory,
   getStreamObjectsFactory
 } from '@/modules/core/repositories/objects'
-import { legacyUpdateStreamFactory } from '@/modules/core/services/streams/management'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import {
   getViewerResourcesFromLegacyIdentifiersFactory,
@@ -63,6 +62,10 @@ import { createProject } from '@/test/projectHelper'
 import type { BasicTestUser } from '@/test/authHelper'
 import { createTestUser } from '@/test/authHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import type { UpdateStreamRecord } from '@/modules/core/domain/streams/operations'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { logger } from '@/observability/logging'
+import { getProjectReplicationDbs } from '@/modules/multiregion/utils/dbSelector'
 
 const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const streamResourceCheck = streamResourceCheckFactory({
@@ -112,9 +115,16 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getBranchById: getBranchByIdFactory({ db })
 })
 
-const updateStream = legacyUpdateStreamFactory({
-  updateStream: updateStreamFactory({ db })
-})
+const updateStream: UpdateStreamRecord = async (update) =>
+  asMultiregionalOperation(
+    async ({ allDbs }) => replicateFactory(allDbs, updateStreamFactory)(update),
+    {
+      logger,
+      name: 'updateStream',
+      dbs: await getProjectReplicationDbs({ projectId: update.id })
+    }
+  )
+
 const grantPermissionsStream = grantStreamPermissionsFactory({ db })
 
 const createObject = createObjectFactory({

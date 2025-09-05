@@ -25,7 +25,8 @@ import {
   insertStreamCommitsFactory,
   insertBranchCommitsFactory,
   legacyGetPaginatedStreamCommitsPageFactory,
-  getPaginatedBranchCommitsItemsFactory
+  getPaginatedBranchCommitsItemsFactory,
+  deleteProjectCommitsFactory
 } from '@/modules/core/repositories/commits'
 import {
   createCommitByBranchIdFactory,
@@ -35,7 +36,6 @@ import {
   getStreamFactory,
   grantStreamPermissionsFactory,
   markCommitStreamUpdatedFactory,
-  deleteStreamFactory,
   getUserDeletableStreamsFactory,
   getExplicitProjects
 } from '@/modules/core/repositories/streams'
@@ -104,9 +104,12 @@ import { getPaginatedBranchCommitsItemsByNameFactory } from '@/modules/core/serv
 import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branch/retrieval'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
-import { queryAllProjectsFactory } from '@/modules/core/services/projects'
+import {
+  deleteProjectAndCommitsFactory,
+  queryAllProjectsFactory
+} from '@/modules/core/services/projects'
 import { getTestRegionClients } from '@/modules/multiregion/tests/helpers'
-import { asMultiregionalOperation } from '@/modules/shared/command'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import type {
   ChangeUserPassword,
   CreateValidatedUser,
@@ -114,6 +117,7 @@ import type {
   UpdateUserAndNotify
 } from '@/modules/core/domain/users/operations'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { deleteProjectFactory } from '@/modules/core/repositories/projects'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -252,7 +256,13 @@ const deleteUser: DeleteUser = async (...input) =>
   asMultiregionalOperation(
     ({ mainDb, allDbs, emit }) => {
       const deleteUser = deleteUserFactory({
-        deleteStream: deleteStreamFactory({ db: mainDb }),
+        deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+          // this is a bit of an overhead, we are issuing delete queries to all regions,
+          // instead of being selective and clever about figuring out the project DB and only
+          // deleting from main and the project db
+          deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+          deleteProjectCommits: replicateFactory(allDbs, deleteProjectCommitsFactory)
+        }),
         logger: dbLogger,
         isLastAdminUser: isLastAdminUserFactory({ db: mainDb }),
         getUserDeletableStreams: getUserDeletableStreamsFactory({ db: mainDb }),

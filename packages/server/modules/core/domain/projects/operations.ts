@@ -40,6 +40,7 @@ export type DeleteProjectRole = (args: {
 }) => Promise<StreamRecord | undefined>
 
 export type DeleteProject = (args: { projectId: string }) => Promise<void>
+export type DeleteProjectAndCommits = (args: { projectId: string }) => Promise<void>
 
 export type GetUserProjectRoles = ({
   userId,
@@ -61,7 +62,6 @@ export type ProjectCreateArgs = {
 }
 
 export type CreateProject = (params: ProjectCreateArgs) => Promise<Project>
-
 export type StoreProject = (params: { project: Project }) => Promise<void>
 
 export type StoreModel = (params: {

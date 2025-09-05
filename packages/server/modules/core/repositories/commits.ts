@@ -58,7 +58,8 @@ import type {
   LegacyGetPaginatedUserCommitsPage,
   LegacyGetPaginatedUserCommitsTotalCount,
   LegacyGetPaginatedStreamCommitsPage,
-  GetTotalVersionCount
+  GetTotalVersionCount,
+  DeleteProjectCommits
 } from '@/modules/core/domain/commits/operations'
 
 const tables = {
@@ -154,6 +155,21 @@ export const deleteCommitFactory =
   async (commitId: string) => {
     const delCount = await deleteCommitsFactory(deps)([commitId])
     return !!delCount
+  }
+
+export const deleteProjectCommitsFactory =
+  (deps: { db: Knex }): DeleteProjectCommits =>
+  async ({ projectId }) => {
+    await deps.db.raw(
+      `
+      DELETE FROM commits WHERE id IN (
+        SELECT sc."commitId" FROM streams s
+        INNER JOIN stream_commits sc ON s.id = sc."streamId"
+        WHERE s.id = ?
+      )
+      `,
+      [projectId]
+    )
   }
 
 export const getBatchedStreamCommitsFactory =
