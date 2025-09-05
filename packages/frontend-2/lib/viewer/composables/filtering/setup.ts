@@ -45,13 +45,9 @@ export function useFilteringSetup() {
   })
 
   watch(resourceIdString, async (newResourceString, oldResourceString) => {
-    if (newResourceString && oldResourceString) {
-      if (
-        !resourceBuilder().addResources(newResourceString).isEqualTo(oldResourceString)
-      ) {
-        await populateInternalDataStore()
-      }
-    } else if (newResourceString) {
+    const newResources = resourceBuilder().addResources(newResourceString)
+    const oldResources = resourceBuilder().addResources(oldResourceString || '')
+    if (!newResources.isEqualTo(oldResources)) {
       await populateInternalDataStore()
     }
   })
