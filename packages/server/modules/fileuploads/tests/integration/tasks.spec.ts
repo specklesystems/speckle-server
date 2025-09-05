@@ -173,19 +173,19 @@ describe('File import garbage collection @fileuploads integration', () => {
         projectId: projectOne.id,
         modelId: modelOne.id
       })
-      const queuedJobAtMaxAttempts = createTestJob({
+      const queuedJobExceedingMaxAttempts = createTestJob({
         status: BackgroundJobStatus.Queued,
         payload: createTestJobPayload({
           testData: identifiableData,
           blobId: fileTwo.fileId
         }),
-        attempt: 3,
+        attempt: 4,
         maxAttempt: 3
       })
       await saveUploadFile(fileOne)
       await storeBackgroundJob({ job: processingJobAtMaxAttempts })
       await saveUploadFile(fileTwo)
-      await storeBackgroundJob({ job: queuedJobAtMaxAttempts })
+      await storeBackgroundJob({ job: queuedJobExceedingMaxAttempts })
 
       // ensure jobs are in the database and retrievable
       const existing = await db(BackgroundJobs.name)
@@ -210,7 +210,9 @@ describe('File import garbage collection @fileuploads integration', () => {
       expect(resultOne?.status).to.equal(BackgroundJobStatus.Processing)
 
       // queued job should have been garbage collected
-      const resultTwo = await getBackgroundJob({ jobId: queuedJobAtMaxAttempts.id })
+      const resultTwo = await getBackgroundJob({
+        jobId: queuedJobExceedingMaxAttempts.id
+      })
       expect(resultTwo?.status).to.equal(BackgroundJobStatus.Failed)
 
       const fileOneResult = await getUploadFile({ fileId: fileOne.fileId })
