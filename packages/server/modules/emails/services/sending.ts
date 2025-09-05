@@ -71,6 +71,7 @@ export const sendEmail: SendEmail = async ({
     const err = ensureError(error, 'Unknown error when sending email')
     logger.error(err, 'Error sending email')
   }
+  return false
 }
 
 export type { SendEmailParams } from '@/modules/emails/domain/operations'
