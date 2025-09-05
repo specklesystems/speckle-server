@@ -1,6 +1,7 @@
 import { useOnViewerLoadComplete } from '~~/lib/viewer/composables/viewer'
 import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { resourceBuilder } from '@speckle/shared/viewer/route'
 
 /**
  * One-time setup for filtering system
@@ -11,6 +12,7 @@ export function useFilteringSetup() {
     viewer: { instance }
   } = state
   const { resourceItems } = state.resources.response
+  const { resourceIdString } = state.resources.request
 
   const dataStore = useFilteringDataStore()
 
@@ -42,15 +44,17 @@ export function useFilteringSetup() {
     await populateInternalDataStore()
   })
 
-  watch(
-    resourceItems,
-    async (newResourceItems, oldResourceItems) => {
-      if (newResourceItems.length > 0 && newResourceItems !== oldResourceItems) {
+  watch(resourceIdString, async (newResourceString, oldResourceString) => {
+    if (newResourceString && oldResourceString) {
+      if (
+        !resourceBuilder().addResources(newResourceString).isEqualTo(oldResourceString)
+      ) {
         await populateInternalDataStore()
       }
-    },
-    { deep: true }
-  )
+    } else if (newResourceString) {
+      await populateInternalDataStore()
+    }
+  })
 
   return {
     populateInternalDataStore

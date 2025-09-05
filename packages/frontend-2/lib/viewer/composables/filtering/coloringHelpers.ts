@@ -75,7 +75,7 @@ export function useFilterColoringHelpers(
   }
 
   return {
-    activeColorFilterId: readonly(filters.activeColorFilterId),
+    activeColorFilterId: computed(() => filters.activeColorFilterId.value),
     setColorFilter,
     removeColorFilter,
     toggleColorFilter,
