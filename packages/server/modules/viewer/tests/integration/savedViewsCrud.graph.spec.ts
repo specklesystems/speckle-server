@@ -963,14 +963,14 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         ])
       })
 
-      const buildValidResourcesUpdate = () => ({
-        resourceIdString: 'invalid-resource-id',
+      const buildResourcesUpdate = (resourceIdString = 'invalid-resource-id') => ({
+        resourceIdString,
         screenshot: fakeScreenshot,
         viewerState: fakeViewerState({
           projectId: updatablesProject.id,
           resources: {
             request: {
-              resourceIdString: models[0].id
+              resourceIdString
             }
           }
         })
@@ -995,30 +995,74 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
         const initUpdatedAt = dayjs(testView.updatedAt)
         const newUpdatedAt = dayjs(updatedView!.updatedAt)
-        expect(newUpdatedAt.isAfter(initUpdatedAt)).to.be.true
+        expect(newUpdatedAt.isSame(initUpdatedAt)).to.be.true // shouldnt update date
       })
 
-      it('just updating visibility does not update updatedAt', async () => {
-        expect(testView.visibility).to.equal(SavedViewVisibility.public)
+      const noDateUpdateKeys: (keyof Omit<
+        UpdateSavedViewInput,
+        | 'id'
+        | 'projectId'
+        | 'resourceIdString'
+        | 'viewerState'
+        | 'screenshot'
+        | 'groupId'
+      >)[] = ['name', 'description', 'isHomeView', 'visibility']
 
-        const res = await updateView({
-          input: {
+      itEach(
+        noDateUpdateKeys,
+        (updateKey) => `just updating ${updateKey} does not update updatedAt`,
+        async (updateKey) => {
+          const input: UpdateSavedViewInput = {
             id: testView.id,
             projectId: updatablesProject.id,
-            visibility: SavedViewVisibility.authorOnly
+            ...(updateKey === 'visibility'
+              ? { visibility: SavedViewVisibility.authorOnly }
+              : {}),
+            ...(updateKey === 'isHomeView' ? { isHomeView: !testView.isHomeView } : {}),
+            ...(updateKey === 'name' ? { name: 'Updated View Nameeeeee' } : {}),
+            ...(updateKey === 'description'
+              ? { description: 'Updated description :)' }
+              : {})
           }
-        })
 
-        expect(res).to.not.haveGraphQLErrors()
-        const updatedView = res.data?.projectMutations.savedViewMutations.updateView
-        expect(updatedView).to.be.ok
-        expect(updatedView!.id).to.equal(testView.id)
-        expect(updatedView!.visibility).to.equal(SavedViewVisibility.authorOnly)
+          const res = await updateView({ input })
 
-        const initUpdatedAt = dayjs(testView.updatedAt)
-        const newUpdatedAt = dayjs(updatedView!.updatedAt)
-        expect(newUpdatedAt.isSame(initUpdatedAt)).to.be.true
-      })
+          expect(res).to.not.haveGraphQLErrors()
+          const updatedView = res.data?.projectMutations.savedViewMutations.updateView
+          expect(updatedView).to.be.ok
+          expect(updatedView!.id).to.equal(testView.id)
+
+          expect(updatedView![updateKey]).to.equal(input[updateKey])
+
+          const initUpdatedAt = dayjs(testView.updatedAt)
+          const newUpdatedAt = dayjs(updatedView!.updatedAt)
+          expect(newUpdatedAt.isSame(initUpdatedAt)).to.be.true // should not be updated
+        }
+      )
+
+      itEach(
+        ['replace', 'move'],
+        (action) => `invoking a ${action} updates updatedAt`,
+        async (action) => {
+          const input: UpdateSavedViewInput = {
+            id: testView.id,
+            projectId: updatablesProject.id,
+            ...(action === 'replace' ? buildResourcesUpdate(models.at(-1)!.id) : {}),
+            ...(action === 'move' ? { groupId: optionalGroup.id } : {})
+          }
+
+          const res = await updateView({ input })
+
+          expect(res).to.not.haveGraphQLErrors()
+          const updatedView = res.data?.projectMutations.savedViewMutations.updateView
+          expect(updatedView).to.be.ok
+          expect(updatedView!.id).to.equal(testView.id)
+
+          const initUpdatedAt = dayjs(testView.updatedAt)
+          const newUpdatedAt = dayjs(updatedView!.updatedAt)
+          expect(newUpdatedAt.isAfter(initUpdatedAt)).to.be.true // date should be updated
+        }
+      )
 
       it('successfully updated everyting in a saved view', async () => {
         const input: UpdateSavedViewInput = {
@@ -1058,6 +1102,10 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(updatedView!.screenshot).to.equal(input.screenshot)
         expect(updatedView!.isHomeView).to.equal(input.isHomeView)
         expect(updatedView!.visibility).to.equal(input.visibility)
+
+        const initUpdatedAt = dayjs(testView.updatedAt)
+        const newUpdatedAt = dayjs(updatedView!.updatedAt)
+        expect(newUpdatedAt.isAfter(initUpdatedAt)).to.be.true // date should be updated cause of full replace
       })
 
       it('successfully sets and unsets a group', async () => {
@@ -1444,7 +1492,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           input: {
             id: testView.id,
             projectId: updatablesProject.id,
-            ...buildValidResourcesUpdate(),
+            ...buildResourcesUpdate(),
             resourceIdString: 'invalid-resource-id'
           }
         })
@@ -1459,7 +1507,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           input: {
             id: testView.id,
             projectId: updatablesProject.id,
-            ...buildValidResourcesUpdate(),
+            ...buildResourcesUpdate(),
             viewerState: { a: 1 } as unknown as ViewerState.SerializedViewerState // invalid state
           }
         })
