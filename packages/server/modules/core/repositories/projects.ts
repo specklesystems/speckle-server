@@ -66,3 +66,32 @@ export const getUserProjectRolesFactory =
 
     return await query
   }
+
+export const getAllProjectsChecksumFactory =
+  ({
+    db
+  }: {
+    db: Knex
+  }): (({ regionKey }: { regionKey: string | null }) => Promise<string>) =>
+  async ({ regionKey }) => {
+    // Build the row-level hash expression
+    const rowConcatExpr = Streams.cols
+      .map((col) => `COALESCE(${db.raw('??', [col])}::text, '')`)
+      .join(` || '|' || `)
+
+    // filtering by regionKey
+    const rawWhereExpr = regionKey
+      ? db.raw(`"streams"."regionKey" = ?`, [regionKey])
+      : db.raw(`"streams"."regionKey" IS NULL`)
+
+    const result = await db.raw<{ rows: [{ table_checksum: string }] }>(`
+    SELECT md5(string_agg(row_hash, '')) AS table_checksum
+    FROM (
+      SELECT md5(${rowConcatExpr}) AS row_hash
+      FROM ${Streams.name}
+      WHERE ${rawWhereExpr}
+      ORDER BY ${Streams.col.id}
+    ) AS hashed_rows;
+  `)
+    return result.rows[0].table_checksum
+  }

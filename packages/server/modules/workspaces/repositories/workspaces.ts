@@ -916,3 +916,21 @@ export const getPaginatedWorkspaceProjectsFactory =
       totalCount
     }
   }
+
+export const getAllWorkspaceChecksumFactory =
+  ({ db }: { db: Knex }): (() => Promise<string>) =>
+  async () => {
+    // Build the row-level hash expression
+    const rowConcatExpr = Workspaces.cols
+      .map((col) => `COALESCE(${db.raw('??', [col])}::text, '')`)
+      .join(` || '|' || `)
+    const result = await db.raw<{ rows: [{ table_checksum: string }] }>(`
+    SELECT md5(string_agg(row_hash, '')) AS table_checksum
+    FROM (
+      SELECT md5(${rowConcatExpr}) AS row_hash
+      FROM ${Workspaces.name}
+      ORDER BY ${Workspaces.col.id}
+    ) AS hashed_rows;
+  `)
+    return result.rows[0].table_checksum
+  }
