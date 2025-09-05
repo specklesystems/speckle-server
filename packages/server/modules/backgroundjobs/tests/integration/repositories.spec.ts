@@ -4,7 +4,7 @@ import {
   getBackgroundJobFactory,
   BackgroundJobs,
   getBackgroundJobCountFactory,
-  failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory
+  failBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory
 } from '@/modules/backgroundjobs/repositories/backgroundjobs'
 import type {
   BackgroundJob,
@@ -177,17 +177,15 @@ describe('Background Jobs repositories @backgroundjobs', () => {
     it('should fail queued background jobs that exceed maximum attempts', async () => {
       const job = createTestJob({
         status: BackgroundJobStatus.Queued,
-        attempt: 2,
+        attempt: 3,
         maxAttempt: 2
       })
       await storeBackgroundJob({ job })
 
       const SUT =
-        failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory(
-          {
-            db
-          }
-        )
+        failBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory({
+          db
+        })
 
       await SUT({ originServerUrl, jobType: 'fileImport' })
 
@@ -207,11 +205,9 @@ describe('Background Jobs repositories @backgroundjobs', () => {
       await storeBackgroundJob({ job })
 
       const SUT =
-        failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory(
-          {
-            db
-          }
-        )
+        failBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory({
+          db
+        })
 
       await SUT({ originServerUrl, jobType: 'fileImport' })
 
@@ -230,11 +226,9 @@ describe('Background Jobs repositories @backgroundjobs', () => {
       await storeBackgroundJob({ job })
 
       const SUT =
-        failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory(
-          {
-            db
-          }
-        )
+        failBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory({
+          db
+        })
 
       await SUT({ originServerUrl, jobType: 'fileImport' })
 

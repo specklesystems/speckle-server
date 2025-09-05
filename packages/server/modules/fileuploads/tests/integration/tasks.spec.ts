@@ -2,7 +2,7 @@ import { expect } from 'chai'
 import { garbageCollectAttemptedFileImportBackgroundJobsFactory } from '@/modules/fileuploads/services/tasks'
 import {
   BackgroundJobs,
-  failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory,
+  failBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory,
   getBackgroundJobFactory,
   storeBackgroundJobFactory
 } from '@/modules/backgroundjobs/repositories/backgroundjobs'
@@ -141,11 +141,9 @@ describe('File import garbage collection @fileuploads integration', () => {
   describe('garbage collect file import background jobs', () => {
     const SUT = garbageCollectAttemptedFileImportBackgroundJobsFactory({
       failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget:
-        failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory(
-          {
-            db
-          }
-        ),
+        failBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory({
+          db
+        }),
       failPendingUploadedFiles: failPendingUploadedFilesFactory({
         db
       }),

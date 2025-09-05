@@ -53,7 +53,7 @@ export const getBackgroundJobFactory =
     return job ?? null
   }
 
-export const failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory =
+export const failBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory =
 
     <T extends BackgroundJobPayload = BackgroundJobPayload>({
       db
@@ -64,11 +64,11 @@ export const failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComp
       const query = tables
         .backgroundJobs(db)
         .where(BackgroundJobs.withoutTablePrefix.col.originServerUrl, originServerUrl)
+        .andWhere(BackgroundJobs.withoutTablePrefix.col.jobType, jobType)
         .whereIn(BackgroundJobs.withoutTablePrefix.col.status, [
           BackgroundJobStatus.Queued,
           BackgroundJobStatus.Processing
         ])
-        .andWhere(BackgroundJobs.withoutTablePrefix.col.jobType, jobType)
         .andWhere(function () {
           this.where(
             BackgroundJobs.withoutTablePrefix.col.attempt,
@@ -80,10 +80,10 @@ export const failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComp
             0
           )
         })
-        .orderBy(BackgroundJobs.withoutTablePrefix.col.createdAt, 'desc')
         .update({
           [BackgroundJobs.withoutTablePrefix.col.status]: BackgroundJobStatus.Failed
         })
+        .orderBy(BackgroundJobs.withoutTablePrefix.col.createdAt, 'desc')
         .returning<BackgroundJob<T>[]>('*')
 
       return await query
