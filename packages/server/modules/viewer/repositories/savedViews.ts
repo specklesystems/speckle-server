@@ -472,22 +472,26 @@ export const recalculateGroupResourceIdsFactory =
     const RawSavedViews = SavedViews.with({ quoted: true, withCustomTablePrefix: 'v' })
     const RawSavedViewGroups = SavedViewGroups.with({ quoted: true })
 
+    const arraySql = `
+      (
+      SELECT ARRAY(
+        SELECT DISTINCT unnest
+        FROM ${RawSavedViews.name},
+           unnest(${RawSavedViews.col.groupResourceIds}) AS unnest
+        WHERE ${RawSavedViews.col.groupId} = ${RawSavedViewGroups.col.id}
+      )
+      )
+    `
+
     const q = tables
       .savedViewGroups(deps.db)
       .where({ [SavedViewGroups.col.id]: groupId })
+      // Only update if the computed array is non-empty, otherwise we risk getting a group w/o any references
+      .andWhereRaw(`array_length(${arraySql}, 1) > 0`)
       .update(
         {
           // Recalculate the groups resourceIds based on the views in the group
-          [SavedViewGroups.withoutTablePrefix.col.resourceIds]: deps.db.raw(
-            `(
-            SELECT ARRAY(
-              SELECT DISTINCT unnest
-              FROM ${RawSavedViews.name},
-                  unnest(${RawSavedViews.col.groupResourceIds}) AS unnest
-              WHERE ${RawSavedViews.col.groupId} = ${RawSavedViewGroups.col.id}
-            )
-           )`
-          )
+          [SavedViewGroups.withoutTablePrefix.col.resourceIds]: deps.db.raw(arraySql)
         },
         '*'
       )

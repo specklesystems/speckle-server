@@ -35,6 +35,7 @@
     "dev:server": "yarn workspace @speckle/server dev",
     "dev:frontend-2": "yarn workspace @speckle/frontend-2 dev",
     "dev:shared": "yarn workspace @speckle/shared dev",
+    "dev:ifc-import-service": "./packages/ifc-import-service/run.sh",
     "prepare": "husky install",
     "postinstall": "husky install",
     "cm": "cz",
@@ -102,5 +103,8 @@
     "commitizen": {
       "path": "cz-conventional-changelog"
     }
+  },
+  "dependencies": {
+    "node-gyp": "^11.4.2"
   }
 }
