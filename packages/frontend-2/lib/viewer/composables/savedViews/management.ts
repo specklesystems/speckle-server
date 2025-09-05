@@ -73,7 +73,9 @@ export const useCreateSavedView = () => {
   const { userId } = useActiveUser()
   const {
     projectId,
-    resources: { project }
+    resources: {
+      response: { project }
+    }
   } = useInjectedViewerState()
   const { triggerNotification } = useGlobalToast()
   const { collect } = useCollectNewSavedViewViewerData()
@@ -249,7 +251,9 @@ export const useUpdateSavedView = () => {
   const { isLoggedIn } = useActiveUser()
   const mp = useMixpanel()
   const {
-    resources: { project }
+    resources: {
+      response: { project }
+    }
   } = useInjectedViewerState()
 
   return async (
@@ -395,7 +399,9 @@ export const useCreateSavedViewGroup = () => {
   const { isLoggedIn } = useActiveUser()
   const mp = useMixpanel()
   const {
-    resources: { project }
+    resources: {
+      response: { project }
+    }
   } = useInjectedViewerState()
 
   return async (input: CreateSavedViewGroupInput) => {
