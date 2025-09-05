@@ -109,7 +109,13 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
                 )
 
             logger = logger.bind(job_id=job_id, project_id=job.payload.project_id)
-            logger.info("starting job")
+            logger.info(
+                "starting job {job_id} for project {project_id}, attempt {attempt} / {max_attempts} with remaining compute budget {remaining_compute_budget_seconds}s and timeout {job_timeout}s",
+                attempt=attempt,
+                max_attempts=job.max_attempt,
+                remaining_compute_budget_seconds=job.remaining_compute_budget_seconds,
+                job_timeout=job_timeout,
+            )
             handler = job_handler(speckle_client, job.payload, logger)
             # this will raise a TimeoutError if handler does not complete in time
             version, download_duration, parse_duration = await asyncio.wait_for(
