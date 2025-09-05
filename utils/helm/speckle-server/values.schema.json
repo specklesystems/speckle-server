@@ -1284,7 +1284,7 @@
             },
             "from": {
               "type": "string",
-              "description": "The email address from which Speckle will send emails. Defaults to 'no-reply@speckle.systems' if left blank.",
+              "description": "The email address from which Speckle will send emails. If left blank will cause an error when email are sent.",
               "default": ""
             },
             "username": {
