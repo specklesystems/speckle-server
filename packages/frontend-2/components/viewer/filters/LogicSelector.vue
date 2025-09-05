@@ -29,15 +29,10 @@
 import { FilterLogic } from '~/lib/viewer/helpers/filters/types'
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
-
-const props = defineProps<{
-  modelValue: FilterLogic
-}>()
-const emit = defineEmits<{
-  'update:modelValue': [value: FilterLogic]
-}>()
+import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 
 const { setFilterLogic } = useFilterUtilities()
+const { currentFilterLogic } = useFilteringDataStore()
 
 const showMenu = ref(false)
 
@@ -50,13 +45,14 @@ const menuItems = computed<LayoutMenuItem<FilterLogic>[][]>(() => [
   filterLogicOptions.value.map((option) => ({
     id: option.value,
     title: option.label,
-    active: option.value === props.modelValue
+    active: option.value === currentFilterLogic.value
   }))
 ])
 
 const selectedLogicLabel = computed(() => {
   return (
-    filterLogicOptions.value.find((opt) => opt.value === props.modelValue)?.label || ''
+    filterLogicOptions.value.find((opt) => opt.value === currentFilterLogic.value)
+      ?.label || ''
   )
 })
 
@@ -66,9 +62,8 @@ const onLogicChosen = ({
   item: LayoutMenuItem<FilterLogic>
   event: MouseEvent
 }) => {
-  const logic = item.id
-  setFilterLogic(logic)
-  emit('update:modelValue', logic)
+  const selectedLogic = item.id
+  setFilterLogic(selectedLogic)
   showMenu.value = false
 }
 </script>

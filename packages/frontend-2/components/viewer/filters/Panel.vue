@@ -24,11 +24,7 @@
       </div>
     </template>
     <div class="flex items-center justify-between pr-0.5">
-      <ViewerFiltersLogicSelector
-        v-if="propertyFilters.length > 0"
-        :model-value="currentFilterLogic"
-        @update:model-value="setFilterLogic"
-      />
+      <ViewerFiltersLogicSelector v-if="propertyFilters.length > 0" />
 
       <div
         v-if="propertyFilters.length > 0"
@@ -94,18 +90,15 @@ import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering
 import { onKeyStroke } from '@vueuse/core'
 import { useFilteredObjectsCount } from '~/lib/viewer/composables/filtering/counts'
 import type { Nullable } from '@speckle/shared'
-import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 
 const {
   filters: { propertyFilters },
   getPropertyOptionsFromDataStore,
   addActiveFilter,
   updateFilterProperty,
-  resetFilters,
-  setFilterLogic
+  resetFilters
 } = useFilterUtilities()
 
-const { currentFilterLogic } = useFilteringDataStore()
 const { filteredObjectsCount } = useFilteredObjectsCount()
 const mp = useMixpanel()
 const {
