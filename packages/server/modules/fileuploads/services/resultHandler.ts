@@ -35,15 +35,15 @@ export const onFileImportResultFactory =
   (deps: OnFileImportResultDeps): ProcessFileImportResult =>
   async (params) => {
     const { logger } = deps
-    const { jobId, jobResult } = params
+    const { blobId, jobResult } = params
 
-    const fileInfo = await deps.getFileInfo({ fileId: jobId })
+    const fileInfo = await deps.getFileInfo({ fileId: blobId })
     if (!fileInfo) {
-      throw new FileImportJobNotFoundError(`File upload with ID ${jobId} not found`)
+      throw new FileImportJobNotFoundError(`File upload with ID ${blobId} not found`)
     }
 
     const boundLogger = logger.child({
-      jobId,
+      blobId,
       fileId: fileInfo.id,
       fileSize: fileInfo.fileSize,
       fileName: fileInfo.fileName,
@@ -88,14 +88,14 @@ export const onFileImportResultFactory =
     if (deps.FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
       try {
         await deps.updateBackgroundJob({
-          payloadFilter: { jobId },
+          payloadFilter: { blobId },
           status: newStatusForBackgroundJob
         })
       } catch (e) {
         const err = ensureError(e)
         logger.error(
-          { err, jobId },
-          'Error updating background job status in database. Job ID: {jobId}'
+          { err, blobId },
+          'Error updating background jobs status in database. Blob ID: {blobId}'
         )
         throw err
       }
@@ -104,7 +104,7 @@ export const onFileImportResultFactory =
     let updatedFile: FileUploadRecord
     try {
       updatedFile = await deps.updateFileUpload({
-        id: jobId,
+        id: blobId,
         upload: {
           convertedStatus: status,
           convertedLastUpdate: new Date(),
@@ -120,9 +120,8 @@ export const onFileImportResultFactory =
     } catch (e) {
       const err = ensureError(e)
       logger.error(
-        { err },
-        'Error updating imported file status in database. File ID: %s',
-        jobId
+        { err, info: { fileId: blobId } },
+        'Error updating imported file status in database. File ID: {fileId}'
       )
       throw err
     }
@@ -141,7 +140,7 @@ export const onFileImportResultFactory =
     await deps.eventEmit({
       eventName: FileuploadEvents.Finished,
       payload: {
-        jobId,
+        jobId: blobId,
         jobResult
       }
     })

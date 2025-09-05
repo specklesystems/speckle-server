@@ -133,7 +133,7 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
             _ = speckle_client.file_import.finish_file_import_job(
                 FileImportSuccessInput(
                     project_id=job.payload.project_id,
-                    # for some reason, the blob id identifies the job here
+                    # the blob id identifies the "job" here
                     job_id=job.payload.blob_id,
                     result=FileImportResult(
                         parser=parser,
@@ -148,15 +148,6 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
             # mark it as succeeded so we do not enter any error handling routines on finalisation
             job_status = JobStatus.SUCCEEDED
 
-        except TimeoutError as te:
-            ex = te
-            # if it times out we won't automatically try again
-            job_status = JobStatus.FAILED
-
-            if job_timeout != job.payload.time_out_seconds:
-                # it timed out because it exceeded its remaining compute budget
-                ex = TimeoutError("Job exceeded remaining compute budget")
-
         # raised if the task is canceled
         except Exception as e:
             #
@@ -170,20 +161,15 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
                 connection, logger, job_id, floor(duration)
             )
 
-            if job_status == JobStatus.QUEUED or job_status == JobStatus.PROCESSING:
-                # somehow we're in a weird state, let's return the job to the queued state
-                # where it will get picked up again until one of total timeout, max attempts, or compute budget is reached
-                await return_job_to_queued(connection, logger, job_id)
-            elif job_status == JobStatus.FAILED:
+            if job_status == JobStatus.FAILED:
                 # we should be reporting the failure to the server
                 logger.error("job processing failed", exc_info=ex)
                 try:
                     _ = speckle_client.file_import.finish_file_import_job(
                         FileImportErrorInput(
                             project_id=job.payload.project_id,
-                            # for some reason, the blob id identifies the job here
+                            # the blob id identifies the job to the server
                             job_id=job.payload.blob_id,
-                            # job_id=job_id,
                             reason=str(ex),
                             result=FileImportResult(
                                 parser=parser,
@@ -198,8 +184,8 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
                 except Exception as ex:
                     logger.error("failed to report job failure", exc_info=ex)
                     # somehow we're in a weird state, let's return the job to the queued state
-                    # where it will get picked up again until one of total timeout, max attempts, or compute budget is reached
-                    # The server is responsible for moving queued jobs which have reached these error conditions to failed status.
+                    # where it will get picked up again until one of total timeout, max attempts, or exhausted compute budget is reached
+                    # The server is responsible for garbage collecting jobs which have reached these error conditions and moving them to a failed status.
                     await return_job_to_queued(connection, logger, job_id)
             elif job_status == JobStatus.SUCCEEDED:
                 # do nothing

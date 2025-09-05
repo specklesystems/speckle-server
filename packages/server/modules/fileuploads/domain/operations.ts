@@ -67,7 +67,7 @@ export type NotifyChangeInFileStatus = (params: {
 }) => Promise<void>
 
 export type ProcessFileImportResult = (params: {
-  jobId: string
+  blobId: string
   jobResult: FileImportResultPayload
 }) => Promise<void>
 
@@ -84,7 +84,7 @@ export type UploadedFile = UploadResult & { userId: string }
 export type FileImportMessage = Pick<
   JobPayloadV1,
   'modelId' | 'projectId' | 'fileType' | 'fileName' | 'blobId'
-> & { jobId: string; userId: string }
+> & { userId: string }
 
 export type ScheduleFileimportJob = (args: JobPayloadV1) => Promise<void>
 

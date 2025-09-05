@@ -20,8 +20,7 @@ export const pushJobToFileImporterFactory =
     userId,
     fileName,
     fileType,
-    blobId,
-    jobId
+    blobId
   }): Promise<void> => {
     const token = await deps.createAppToken({
       appId: DefaultAppIds.Web,
@@ -38,7 +37,6 @@ export const pushJobToFileImporterFactory =
     })
 
     await scheduleJob({
-      jobId,
       fileName,
       token,
       serverUrl: deps.getServerOrigin(),
