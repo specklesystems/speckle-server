@@ -30,11 +30,9 @@ import Logger from './utils/Logger.js'
 import Stats from './three/stats.js'
 import { TIME_MS } from '@speckle/shared'
 import { PropertyInfo, PropertyManager } from './filtering/PropertyManager.js'
-import {
-  SententizedBase,
-  VectorManager
-} from '@speckle/objectloader2'
-
+import { SententizedBase, VectorManager } from '@speckle/objectloader2'
+import { SelectionExtension } from './extensions/SelectionExtension.js'
+import { chunk } from 'lodash-es';
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
   protected container: HTMLElement
@@ -248,6 +246,7 @@ export class Viewer extends EventEmitter implements IViewer {
     super.on(eventType, listener)
   }
 
+  #chunkSize = 100
   public async getObjectProperties(
     resourceURL: string | null = null
   ): Promise<PropertyInfo[]> {
@@ -255,20 +254,39 @@ export class Viewer extends EventEmitter implements IViewer {
       return Promise.resolve([])
     }
     const newProps = this.sentences[resourceURL]
+    let size = 0
     if (newProps) {
-      for (let i = 0; i < newProps.length; i++) {
-        const prop = newProps[i]
-        await this.vectorManager.insert(prop)
-         if (i % 100 === 0) {
-           console.log(
-             `Inserted ${i} string properties into vector store, out of ${newProps.length}`
-           )
-         }
+      for (let i = 0; i < newProps.length; i += this.#chunkSize) {
+        const chunk = newProps.slice(i, i + this.#chunkSize)
+        const start = performance.now()
+        await this.vectorManager.insert(chunk)
+        size += chunk.length
+        console.log(
+          `Inserted ${size} string properties into vector store, out of ${
+            newProps.length
+          } took ${performance.now() - start}ms`
+        )
       }
+     const q = 'I want to select transparent objects'
       this.vectorManager
-        .query('roof')
+        .query(q, 100)
         .then((res) => {
-          console.log('Vector store query result:', res)
+          const results = new Map<string, [number, string]>(
+            res.map((r) => [r.baseId, [r.similarity, r.value]])
+          )
+          const hits = Array.from(results.values()).filter((x) => x[0] > 0.3)
+          console.log(
+            `Found ${hits.length} hits for query "${q}" with similarity threshold 0.3`
+          )
+          /*for (const x of hits) {
+            const r = results.get(x.baseId)!
+            console.log(
+              `Found match for baseId ${x.baseId} \nwith similarity ${r[0]} and value \n${r[1]} \n`
+            )
+          }*/
+          this.getExtension(SelectionExtension).selectObjects([
+            ...Array.from(results.keys())
+          ])
         })
         .catch((err) => {
           console.error('Vector store query failed:', err)

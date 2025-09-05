@@ -3,7 +3,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export interface VectorEntry {
-  id: number
   baseId: string
   vector: number[]
   prop: string
@@ -57,7 +56,7 @@ export class VectorStore {
         if (db.objectStoreNames.contains(this.#storeName)) {
           db.deleteObjectStore(this.#storeName)
         }
-        db.createObjectStore(this.#storeName, { keyPath: 'id', autoIncrement: true })
+        db.createObjectStore(this.#storeName, { keyPath: 'baseId', autoIncrement: false })
       }
 
       request.onsuccess = (event): any => {

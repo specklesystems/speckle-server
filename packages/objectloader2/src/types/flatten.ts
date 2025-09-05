@@ -43,12 +43,32 @@ export function flattenBase(obj: Base): Record<string, string | number> {
   return flatten
 }
 
+function formatSpecklePath(path: string): string {
+  // Step 1: Replace all dots with spaces.
+  let formattedString = path.replace(/\./g, ' ')
+
+  // Step 2: Find words with only uppercase letters and underscores,
+  // then format them into title case.
+  const regex = /\b([A-Z_]+)\b/g
+
+  formattedString = formattedString.replace(regex, (match) => {
+    // Example match: "DATUM_TEXT"
+    return match
+      .toLowerCase() // -> "datum_text"
+      .split('_') // -> ["datum", "text"]
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // -> ["Datum", "Text"]
+      .join(' ') // -> "Datum Text"
+  })
+
+  return formattedString
+}
+
 export function sententizeBase(obj: Base): string {
   const flattened = flattenBase(obj)
   const propertyStrings = Object.entries(flattened).map(([key, value]) => {
     // Make the key more readable (e.g., "Fire Rating" instead of "FireRating")
-    const formattedKey = key.replace(/([A-Z])/g, ' $1').trim()
-    return `${formattedKey} is ${value}`
+  //  const formattedKey = key.replace(/([A-Z])/g, ' $1').trim()
+    return `${key} is ${value}`
   })
   // Join the individual strings with a comma and a space.
   return `This object has the following properties: ${propertyStrings.join(', ')}.`

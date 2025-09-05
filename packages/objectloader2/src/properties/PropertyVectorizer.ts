@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
-import { SententizedBase, StringPropertyInfo } from './PropertyManager.js'
+import { SententizedBase } from './PropertyManager.js'
 import { CustomLogger } from '../types/functions.js'
 import { VectorEntry, VectorStore } from './VectorStore.js'
 let status: string = 'Loading model...'
@@ -18,15 +20,32 @@ class PipelineSingleton {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { pipeline } = await import('@huggingface/transformers')
     this.instance ??= pipeline(this.task as any, this.model, {
+      device: "webgpu",
       progress_callback
     })
     return this.instance
+  }
+  static async countTokens(text: string): Promise<number> {
+
+    const { AutoTokenizer } = await import('@huggingface/transformers')
+    // Load the tokenizer for the specific model.
+    // The tokenizer will be cached after the first time it's loaded.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    const tokenizer = await AutoTokenizer.from_pretrained(this.model)
+
+    // Encode the text and get the array of token IDs.
+    const tokenized = tokenizer(text)
+
+    // The length of the array is the number of tokens.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return tokenized.input_ids.size
   }
 }
 
 export interface QueryResult {
   baseId: string
   similarity: number
+  value: string
 }
 // Cosine similarity function
 const cosineSimilarity = (vecA: number[], vecB: number[]): number => {
@@ -37,20 +56,18 @@ const cosineSimilarity = (vecA: number[], vecB: number[]): number => {
 }
 const getEmbeddingFromText = async (text: string): Promise<number[]> => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const pipe = await PipelineSingleton.getInstance(
-    ( c: any) => {
-      if (status !== c.status) {
-        status = c.status as string
-        console.log(`Loading model: ${c.status}`)
-      }
+  const pipe = await PipelineSingleton.getInstance((c: any) => {
+    if (status !== c.status) {
+      status = c.status as string
+      console.log(`Loading model: ${c.status}`)
     }
-  )
+  })
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const output = await pipe(text, {
     pooling: 'mean',
     normalize: true
   })
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   return Array.from(output.data)
 }
 
@@ -87,17 +104,28 @@ export class VectorManager {
     this.#vectorDb = await this.#openDatabase()
   }
 
-  // Insert data by generating embeddings from text
-  async insert(data: SententizedBase): Promise<void> {
+  // Insert data by generating embeddings from text for a batch of items
+  async insert(data: SententizedBase[]): Promise<void> {
+    if (data.length === 0) return
+
     await this.#setupCacheDb()
-    const embeddings: VectorEntry[] = []
-    const embedding = await getEmbeddingFromText(data.props)
-      embeddings.push({
-          baseId: data.id,
-          vector: embedding,
-          prop: data.props
-        } as VectorEntry)
-    await this.#vectorDb!.bulkInsert(embeddings)
+
+    // Process embeddings in parallel for better performance
+    const embeddingPromises = data.map((item) =>
+      getEmbeddingFromText(item.props).then(
+        (vector) =>
+          ({
+            baseId: item.id,
+            vector,
+            prop: item.props
+          } as VectorEntry)
+      )
+    )
+
+    const embeddings = await Promise.all(embeddingPromises)
+
+    // Batch insert all embeddings in a single IndexedDB transaction
+    /*await this.#vectorDb!.bulkInsert(embeddings)*/
   }
 
   // Query vectors by cosine similarity (using a text input that will be converted into embeddings)
