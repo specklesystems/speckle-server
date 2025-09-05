@@ -15,7 +15,7 @@ import type {
 } from '~/lib/viewer/helpers/filters/types'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 
-export function createViewerFilteringDataStore() {
+export function useCreateViewerFilteringDataStore() {
   const dataSourcesMap: Ref<Record<string, DataSource>> = ref({})
   const dataSources = computed(() => Object.values(dataSourcesMap.value))
   const currentFilterLogic = ref<FilterLogic>(FilterLogic.All)
