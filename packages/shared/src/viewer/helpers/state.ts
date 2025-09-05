@@ -108,11 +108,11 @@ export type SerializedViewerState = {
       hiddenObjectIds: string[]
       /** Map of object id => application id or null, if no application id */
       selectedObjectApplicationIds: Record<string, string | null>
-      propertyFilter: {
+      propertyFilter?: {
         key: Nullable<string>
         isApplied: boolean
       }
-      propertyFilters: Array<{
+      propertyFilters?: Array<{
         key: Nullable<string>
         isApplied: boolean
         selectedValues: string[]
@@ -162,7 +162,7 @@ type UnformattedState = PartialDeep<
       filters: {
         selectedObjectIds: string[]
         // Legacy single propertyFilter for migration
-        propertyFilter?: {
+        propertyFilter: {
           key: Nullable<string>
           isApplied: boolean
         }
