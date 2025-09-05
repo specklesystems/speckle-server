@@ -146,7 +146,7 @@ services:
       context: .
       dockerfile: packages/ifc-import-service/Dockerfile
     platform: linux/amd64
-    image: speckle/ifc-import-service:Local
+    image: speckle/ifc-import-service:local
     restart: always
     environment:
       LOG_LEVEL: 'info'
