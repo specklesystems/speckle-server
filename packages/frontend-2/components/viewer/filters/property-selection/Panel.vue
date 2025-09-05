@@ -36,8 +36,6 @@
             :property="item.property"
             @select-property="$emit('selectProperty', $event)"
           />
-
-          <div v-else-if="item.type === 'spacer'" class="h-9" />
         </div>
       </div>
     </div>
@@ -148,13 +146,11 @@ const listItems = computed((): PropertySelectionListItem[] => {
   }))
   items.push(...allPropertyItems)
 
-  items.push({ type: 'spacer' })
-
   return items
 })
 
 const itemHeight = computed(() => PROPERTY_SELECTION_ITEM_HEIGHT)
-const maxHeight = computed(() => PROPERTY_SELECTION_MAX_HEIGHT)
+const maxHeight = computed(() => PROPERTY_SELECTION_MAX_HEIGHT - 28)
 
 const { list, containerProps, wrapperProps } = useVirtualList(listItems, {
   itemHeight: PROPERTY_SELECTION_ITEM_HEIGHT,

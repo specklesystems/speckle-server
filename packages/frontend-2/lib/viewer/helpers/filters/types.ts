@@ -101,7 +101,7 @@ export type ConditionOption = {
 export type PropertyOption = PropertySelectOption // Alias for backward compatibility
 
 export type PropertySelectionListItem = {
-  type: 'header' | 'property' | 'spacer'
+  type: 'header' | 'property'
   title?: string
   property?: PropertyOption
 }
