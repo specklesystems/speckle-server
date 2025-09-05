@@ -2,12 +2,24 @@ import { intersection } from 'lodash-es'
 export { isNonNullable } from '@speckle/shared'
 
 /**
- * Checks for inclusion of one array (target) into another (source)
- * @param target the array you want to check that is included in the other one
- * @param source the array you want to check INTO for inclusion of the previous one
+ * Checks for inclusion of one array/set (target) into another (source)
+ * @param target the array/set you want to check that is included in the other one
+ * @param source the array/set you want to check INTO for inclusion of the previous one
  */
-export const containsAll = <T>(target: T[], source: T[]) =>
-  target.every((v) => source.includes(v))
+export const containsAll = <T>(target: T[] | Set<T>, source: T[] | Set<T>) => {
+  // Convert source to Set for O(1) lookup if it's not already a Set
+  const sourceSet = isSet(source) ? source : new Set(source)
+
+  // Iterate through target and check if all elements exist in source
+  if (isSet(target)) {
+    for (const item of target) {
+      if (!sourceSet.has(item)) return false
+    }
+    return true
+  } else {
+    return target.every((v) => sourceSet.has(v))
+  }
+}
 
 /**
  * Whether or not arrays are equal with the order being ignored

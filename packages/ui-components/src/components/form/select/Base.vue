@@ -44,10 +44,16 @@
             v-slot="{ open }"
             :class="buttonClasses"
           >
-            <div class="flex items-center justify-between w-full">
+            <div
+              class="flex items-center w-full"
+              :class="buttonStyle === 'simple' ? 'justify-start' : 'justify-between'"
+            >
               <div
-                class="block truncate grow text-left text-xs sm:text-[13px]"
-                :class="[hasValueSelected ? 'text-foreground' : 'text-foreground-2']"
+                class="block truncate text-left text-xs sm:text-[13px]"
+                :class="[
+                  hasValueSelected ? 'text-foreground' : 'text-foreground-2',
+                  buttonStyle === 'simple' ? '' : 'grow'
+                ]"
               >
                 <template
                   v-if="

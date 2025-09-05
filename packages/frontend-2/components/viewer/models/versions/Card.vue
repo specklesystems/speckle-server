@@ -12,6 +12,7 @@
       @focusout="unhighlightObject"
     >
       <ViewerExpansionTriangle
+        class="h-8"
         :is-expanded="showVersions"
         @click="showVersions = !showVersions"
       />
