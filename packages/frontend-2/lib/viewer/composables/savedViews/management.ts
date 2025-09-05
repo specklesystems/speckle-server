@@ -223,6 +223,7 @@ const updateSavedViewMutation = graphql(`
         updateView(input: $input) {
           id
           ...ViewerSavedViewsPanelView_SavedView
+          ...UseViewerSavedViewSetup_SavedView
           group {
             id
             ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup

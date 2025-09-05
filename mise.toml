@@ -1,2 +1,5 @@
 [tools]
-node = '22'
+node = "22.19.0"
+
+[env]
+SHARP_IGNORE_GLOBAL_LIBVIPS = 1
