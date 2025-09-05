@@ -29,7 +29,8 @@ repos:
         name: ruff checker (python linter)
         args:
           - --ignore=E501 # ignoring error about lines that are too long
-            # Run the linter.
+          # - --fix # uncomment to automatically fix linting errors
+      # Run the linter.
       - id: ruff-format
         name: ruff formatter (python formatter)
 

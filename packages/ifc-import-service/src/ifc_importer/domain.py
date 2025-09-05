@@ -47,3 +47,4 @@ class FileimportJob(JobBase):
     max_attempt: int
     created_at: datetime
     updated_at: datetime
+    remaining_compute_budget_seconds: int

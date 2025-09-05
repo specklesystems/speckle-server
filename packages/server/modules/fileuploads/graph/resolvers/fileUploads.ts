@@ -76,7 +76,7 @@ import { onFileImportResultFactory } from '@/modules/fileuploads/services/result
 import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
 import { JobResultStatus } from '@speckle/shared/workers/fileimport'
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-import { updateBackgroundJobFactory } from '@/modules/backgroundjobs/repositories'
+import { updateBackgroundJobFactory } from '@/modules/backgroundjobs/repositories/backgroundjobs'
 import { configureClient } from '@/knexfile'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
@@ -250,6 +250,8 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
     if (!FF_NEXT_GEN_FILE_IMPORTER_ENABLED)
       throw new MisconfiguredEnvironmentError('File import next gen is not enabled')
 
+    // NOTE: jobId in this context is actually the blobId of the uploaded file
+    // We keep the naming for backwards compatibility reasons
     const { projectId, jobId, status, warnings, reason, result } = args.input
     const userId = ctx.userId
     if (!userId) {
@@ -294,7 +296,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       projectId,
       streamId: projectId, //legacy
       userId,
-      jobId
+      blobId: jobId
     })
 
     const projectDb = await getProjectDbClient({ projectId })
@@ -310,7 +312,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
     })
 
     await onFileImportResult({
-      jobId,
+      blobId: jobId,
       jobResult
     })
 

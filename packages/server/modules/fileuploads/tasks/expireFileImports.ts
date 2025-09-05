@@ -1,15 +1,11 @@
 import { notifyChangeInFileStatus } from '@/modules/fileuploads/services/management'
 import { expireOldPendingUploadsFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
-import { getFileImportTimeLimitMinutes } from '@/modules/shared/helpers/envHelper'
 import { getRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { manageFileImportExpiryFactory } from '@/modules/fileuploads/services/tasks'
-import { TIME } from '@speckle/shared'
-import {
-  DelayBetweenFileImportRetriesMinutes,
-  NumberOfFileImportRetries
-} from '@/modules/fileuploads/domain/consts'
+import { TIME_MS } from '@speckle/shared'
+import { maximumAllowedQueuingProcessingAndRetryTimeMs } from '@/modules/fileuploads/domain/consts'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 
 export const scheduleFileImportExpiry = async ({
@@ -44,11 +40,7 @@ export const scheduleFileImportExpiry = async ({
           handler({
             logger,
             timeoutThresholdSeconds:
-              (NumberOfFileImportRetries *
-                (getFileImportTimeLimitMinutes() +
-                  DelayBetweenFileImportRetriesMinutes) +
-                1) * // additional buffer of 1 minute
-              TIME.minute
+              maximumAllowedQueuingProcessingAndRetryTimeMs() / TIME_MS.second
           })
         )
       )

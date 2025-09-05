@@ -154,6 +154,10 @@ enum JobResultStatus {
 
 input FinishFileImportInput {
   projectId: String!
+  """
+  This is the blob Id of the uploaded file. For legacy reasons it is named jobId.
+  Note: This is the not the background job Id.
+  """
   jobId: String!
   status: JobResultStatus!
   reason: String

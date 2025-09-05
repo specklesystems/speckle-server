@@ -19,7 +19,7 @@ export type BackgroundJobPayload = z.infer<typeof BackgroundJobPayload>
 
 export type BackgroundJobConfig = {
   maxAttempt: number
-  timeoutMs: number
+  remainingComputeBudgetSeconds: number
 }
 
 export type BackgroundJob<T extends BackgroundJobPayload> = BackgroundJobConfig & {
@@ -39,15 +39,15 @@ export type StoreBackgroundJob = (args: {
 export type GetBackgroundJob<T extends BackgroundJobPayload = BackgroundJobPayload> =
   (args: { jobId: string }) => Promise<BackgroundJob<T> | null>
 
-export type FailQueuedBackgroundJobsWhichExceedMaximumAttempts<
+export type FailQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget<
   T extends BackgroundJobPayload = BackgroundJobPayload
 > = (args: { originServerUrl: string; jobType: string }) => Promise<BackgroundJob<T>[]>
 
 export type UpdateBackgroundJob<T extends BackgroundJobPayload = BackgroundJobPayload> =
   (args: {
-    jobId: string
+    payloadFilter: Partial<T>
     status: BackgroundJobStatus
-  }) => Promise<BackgroundJob<T> | null>
+  }) => Promise<BackgroundJob<T>[]>
 
 export type GetBackgroundJobCount<
   T extends BackgroundJobPayload = BackgroundJobPayload
