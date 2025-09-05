@@ -170,7 +170,7 @@ const props = defineProps<{
 
 const {
   resources: {
-    response: { savedView, isFederatedView, resourceItemsIds }
+    response: { savedView, isFederatedView, resourceItemsIds, project }
   }
 } = useInjectedViewerState()
 const { collect } = useCollectNewSavedViewViewerData()
@@ -294,7 +294,9 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
         }
       })
       mp.track('Saved View Link Copied', {
-        viewId: props.view.id
+        viewId: props.view.id,
+        // eslint-disable-next-line camelcase
+        workspace_id: project.value?.workspaceId
       })
       break
     case MenuItems.LoadOriginalVersions:
@@ -303,7 +305,9 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
         loadOriginal: true
       })
       mp.track('Saved View Original Version Loaded', {
-        viewId: props.view.id
+        viewId: props.view.id,
+        // eslint-disable-next-line camelcase
+        workspace_id: project.value?.workspaceId
       })
       break
     case MenuItems.ChangeVisibility:
