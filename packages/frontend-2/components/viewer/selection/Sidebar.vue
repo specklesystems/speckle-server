@@ -153,8 +153,7 @@ const isHidden = computed(() => {
 
 const isIsolated = computed(() => {
   if (!isolatedObjectsSet.value) return false
-  const isolatedObjectsArray = Array.from(isolatedObjectsSet.value)
-  return containsAll(allTargetIds.value, isolatedObjectsArray)
+  return containsAll(allTargetIds.value, isolatedObjectsSet.value)
 })
 
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
