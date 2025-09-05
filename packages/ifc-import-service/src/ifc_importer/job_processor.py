@@ -57,10 +57,12 @@ async def job_handler(
             "Finished source file download after {download_duration}",
             download_duration=download_duration,
         )
+        project = client.project.get(job.project_id)
+
         version = open_and_convert_file(
             file_path=str(file_path),
             client=client,
-            project_id=job.project_id,
+            project=project,
             model_id=job.model_id,
             version_message=f"Created from {job.file_name} upload.",
         )

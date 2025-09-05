@@ -157,7 +157,9 @@
       <ViewerDataviewerPanel v-if="activePanel === 'devMode'" />
       <KeepAlive>
         <ViewerSavedViewsPanel
-          v-if="isSavedViewsEnabled && activePanel === 'savedViews'"
+          v-if="
+            isSavedViewsEnabled && isWorkspacesEnabled && activePanel === 'savedViews'
+          "
           @close="activePanel = 'none'"
         />
       </KeepAlive>
@@ -246,6 +248,7 @@ const isMobile = breakpoints.smaller('sm')
 const isTablet = breakpoints.smaller('lg')
 const { getTooltipProps } = useSmartTooltipDelay()
 const isSavedViewsEnabled = useAreSavedViewsEnabled()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { $intercom } = useNuxtApp()
 const { hasActiveFilters } = useFilterUtilities()
 const {

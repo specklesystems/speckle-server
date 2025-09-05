@@ -21,6 +21,7 @@ import {
 } from '~/lib/viewer/helpers/savedViews/cache'
 import { isUngroupedGroup } from '@speckle/shared/saved-views'
 import { getCachedObjectKeys } from '~/lib/common/helpers/graphql'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 const createSavedViewMutation = graphql(`
   mutation CreateSavedView($input: CreateSavedViewInput!) {
@@ -28,6 +29,7 @@ const createSavedViewMutation = graphql(`
       savedViewMutations {
         createView(input: $input) {
           id
+          groupId
           ...ViewerSavedViewsPanelView_SavedView
           group {
             id
@@ -69,9 +71,15 @@ export const useCollectNewSavedViewViewerData = () => {
 export const useCreateSavedView = () => {
   const { mutate } = useMutation(createSavedViewMutation)
   const { userId } = useActiveUser()
-  const { projectId } = useInjectedViewerState()
+  const {
+    projectId,
+    resources: {
+      response: { project }
+    }
+  } = useInjectedViewerState()
   const { triggerNotification } = useGlobalToast()
   const { collect } = useCollectNewSavedViewViewerData()
+  const mp = useMixpanel()
 
   return async (
     input: Omit<
@@ -117,6 +125,15 @@ export const useCreateSavedView = () => {
         title: "Couldn't create saved view",
         description: err,
         type: ToastNotificationType.Danger
+      })
+    }
+
+    if (res?.id) {
+      mp.track('Saved View Created', {
+        viewId: res.id,
+        groupId: res.groupId,
+        // eslint-disable-next-line camelcase
+        workspace_id: project.value?.workspaceId
       })
     }
 
@@ -206,6 +223,7 @@ const updateSavedViewMutation = graphql(`
         updateView(input: $input) {
           id
           ...ViewerSavedViewsPanelView_SavedView
+          ...UseViewerSavedViewSetup_SavedView
           group {
             id
             ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup
@@ -232,6 +250,12 @@ export const useUpdateSavedView = () => {
   const { mutate } = useMutation(updateSavedViewMutation)
   const { triggerNotification } = useGlobalToast()
   const { isLoggedIn } = useActiveUser()
+  const mp = useMixpanel()
+  const {
+    resources: {
+      response: { project }
+    }
+  } = useInjectedViewerState()
 
   return async (
     params: {
@@ -341,6 +365,17 @@ export const useUpdateSavedView = () => {
       }
     }
 
+    if (res?.id) {
+      if ('isHomeView' in input) {
+        mp.track('Saved View Set as Home View', {
+          viewId: res.id,
+          isHomeView: input.isHomeView,
+          // eslint-disable-next-line camelcase
+          workspace_id: project.value?.workspaceId
+        })
+      }
+    }
+
     options?.onFullResult?.(result, !!res)
     return res
   }
@@ -363,6 +398,12 @@ export const useCreateSavedViewGroup = () => {
   const { mutate } = useMutation(createSavedViewGroupMutation)
   const { triggerNotification } = useGlobalToast()
   const { isLoggedIn } = useActiveUser()
+  const mp = useMixpanel()
+  const {
+    resources: {
+      response: { project }
+    }
+  } = useInjectedViewerState()
 
   return async (input: CreateSavedViewGroupInput) => {
     if (!isLoggedIn.value) return
@@ -413,6 +454,14 @@ export const useCreateSavedViewGroup = () => {
         title: "Couldn't create group",
         description: err,
         type: ToastNotificationType.Danger
+      })
+    }
+
+    if (res?.id) {
+      mp.track('Saved View Group Created', {
+        groupId: res.id,
+        // eslint-disable-next-line camelcase
+        workspace_id: project.value?.workspaceId
       })
     }
 

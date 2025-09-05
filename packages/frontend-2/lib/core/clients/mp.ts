@@ -76,6 +76,7 @@ function useMixpanelUserIdentification() {
         mp.people.set('Identified', true)
         mp.people.set('Theme Web', isDarkTheme.value ? 'dark' : 'light')
         mp.add_group('server_id', serverId)
+        mp.add_group('is_dev', import.meta.dev ? 'true' : 'false')
       }
     }
   }
