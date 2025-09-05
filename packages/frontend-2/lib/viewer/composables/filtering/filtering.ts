@@ -243,7 +243,7 @@ export function useFilterUtilities(
           hasConstantValue,
           hasNearZeroRange,
           rangeDisabledReason: reason
-        } satisfies NumericFilterData
+        } as NumericFilterData
       }
 
       return {
@@ -254,7 +254,7 @@ export function useFilterUtilities(
         type: FilterType.Numeric,
         filter: numericFilter,
         numericRange: { min, max }
-      } satisfies NumericFilterData
+      } as NumericFilterData
     } else {
       return {
         id,
@@ -264,7 +264,7 @@ export function useFilterUtilities(
         type: FilterType.String,
         filter: fullFilter as StringPropertyInfo,
         isDefaultAllSelected: true
-      } satisfies StringFilterData
+      } as StringFilterData
     }
   }
 
