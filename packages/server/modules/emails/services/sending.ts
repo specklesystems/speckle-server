@@ -2,7 +2,7 @@ import { emailLogger } from '@/observability/logging'
 import type { SendEmail, SendEmailParams } from '@/modules/emails/domain/operations'
 import { getTransporter } from '@/modules/emails/utils/transporter'
 import { getEmailFromAddress } from '@/modules/shared/helpers/envHelper'
-import { resolveMixpanelUserId } from '@speckle/shared'
+import { ensureError, resolveMixpanelUserId } from '@speckle/shared'
 import {
   getRequestLogger,
   loggerWithMaybeContext
@@ -68,10 +68,9 @@ export const sendEmail: SendEmail = async ({
     )
     return true
   } catch (error) {
-    logger.error(error)
+    const err = ensureError(error, 'Unknown error when sending email')
+    logger.error(err, 'Error sending email')
   }
-
-  return false
 }
 
 export type { SendEmailParams } from '@/modules/emails/domain/operations'
