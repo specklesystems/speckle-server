@@ -5,12 +5,12 @@ import {
   BackgroundJobs,
   getBackgroundJobCountFactory,
   failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory
-} from '@/modules/backgroundjobs/repositories/repositories'
+} from '@/modules/backgroundjobs/repositories/backgroundjobs'
 import type {
   BackgroundJob,
   BackgroundJobPayload
-} from '@/modules/backgroundjobs/domain/domain'
-import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain/domain'
+} from '@/modules/backgroundjobs/domain/types'
+import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain/types'
 import { expect } from 'chai'
 import { createRandomString } from '@/modules/core/helpers/testHelpers'
 
@@ -18,7 +18,7 @@ const originServerUrl = 'http://example.org'
 
 type TestJobPayload = BackgroundJobPayload & {
   jobType: 'fileImport'
-  payloadVersion: 2
+  payloadVersion: 1
   testData: string
 }
 
@@ -29,7 +29,7 @@ const createTestJob = (
   jobType: 'fileImport',
   payload: {
     jobType: 'fileImport',
-    payloadVersion: 2,
+    payloadVersion: 1,
     testData: 'test-data-value'
   },
   status: BackgroundJobStatus.Queued,
@@ -59,7 +59,7 @@ describe('Background Jobs repositories @backgroundjobs', () => {
       const job = createTestJob({
         payload: {
           jobType: 'fileImport',
-          payloadVersion: 2,
+          payloadVersion: 1,
           testData: 'complex-test-data'
         }
       })
@@ -199,7 +199,7 @@ describe('Background Jobs repositories @backgroundjobs', () => {
       const job = createTestJob({
         payload: {
           jobType: 'fileImport',
-          payloadVersion: 2,
+          payloadVersion: 1,
           testData: 'complex-test-data'
         },
         remainingComputeBudgetSeconds: 0
@@ -222,7 +222,7 @@ describe('Background Jobs repositories @backgroundjobs', () => {
       const job = createTestJob({
         payload: {
           jobType: 'fileImport',
-          payloadVersion: 2,
+          payloadVersion: 1,
           testData: 'complex-test-data'
         },
         remainingComputeBudgetSeconds: -100

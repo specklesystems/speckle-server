@@ -2,7 +2,7 @@ import type { Knex } from 'knex'
 import type {
   FailQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget,
   UpdateBackgroundJob
-} from '@/modules/backgroundjobs/domain/domain'
+} from '@/modules/backgroundjobs/domain/types'
 import {
   type BackgroundJob,
   type BackgroundJobPayload,
@@ -10,7 +10,7 @@ import {
   type GetBackgroundJobCount,
   type StoreBackgroundJob,
   BackgroundJobStatus
-} from '@/modules/backgroundjobs/domain/domain'
+} from '@/modules/backgroundjobs/domain/types'
 import { buildTableHelper } from '@/modules/core/dbSchema'
 
 export const BackgroundJobs = buildTableHelper('background_jobs', [
@@ -64,15 +64,15 @@ export const failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComp
       const query = tables
         .backgroundJobs(db)
         .where(BackgroundJobs.withoutTablePrefix.col.originServerUrl, originServerUrl)
-        .andWhere(
-          BackgroundJobs.withoutTablePrefix.col.status,
-          BackgroundJobStatus.Queued
-        )
+        .whereIn(BackgroundJobs.withoutTablePrefix.col.status, [
+          BackgroundJobStatus.Queued,
+          BackgroundJobStatus.Processing
+        ])
         .andWhere(BackgroundJobs.withoutTablePrefix.col.jobType, jobType)
         .andWhere(function () {
           this.where(
             BackgroundJobs.withoutTablePrefix.col.attempt,
-            '>=',
+            '>', // greater than because processing jobs may currently equal maxAttempt and still be running
             db.raw('"maxAttempt"') // camelCase requires the column name to be wrapped in double quotes
           ).orWhere(
             BackgroundJobs.withoutTablePrefix.col.remainingComputeBudgetSeconds,

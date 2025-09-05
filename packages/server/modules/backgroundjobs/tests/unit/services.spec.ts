@@ -5,8 +5,8 @@ import type {
   BackgroundJobConfig,
   BackgroundJobPayload,
   StoreBackgroundJob
-} from '@/modules/backgroundjobs/domain/domain'
-import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain/domain'
+} from '@/modules/backgroundjobs/domain/types'
+import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain/types'
 
 describe('scheduleBackgroundJobFactory', () => {
   const mockJobConfig: BackgroundJobConfig = {

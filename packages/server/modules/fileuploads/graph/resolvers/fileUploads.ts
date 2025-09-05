@@ -76,7 +76,7 @@ import { onFileImportResultFactory } from '@/modules/fileuploads/services/result
 import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
 import { JobResultStatus } from '@speckle/shared/workers/fileimport'
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-import { updateBackgroundJobFactory } from '@/modules/backgroundjobs/repositories/repositories'
+import { updateBackgroundJobFactory } from '@/modules/backgroundjobs/repositories/backgroundjobs'
 import { configureClient } from '@/knexfile'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()

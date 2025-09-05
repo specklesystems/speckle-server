@@ -16,7 +16,7 @@ import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 import {
   BackgroundJobStatus,
   type UpdateBackgroundJob
-} from '@/modules/backgroundjobs/domain/domain'
+} from '@/modules/backgroundjobs/domain/types'
 import {
   type FileImportJobPayloadV1,
   JobResultStatus

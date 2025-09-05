@@ -157,7 +157,7 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
             ex = e
             job_status = JobStatus.FAILED
         finally:
-            if duration == 0:
+            if duration <= 0:
                 # it probably failed before we calculated the duration, so calculate it now
                 duration = time.time() - start
             await deduct_from_compute_budget(

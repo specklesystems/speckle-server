@@ -5,7 +5,7 @@ import {
   failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory,
   getBackgroundJobFactory,
   storeBackgroundJobFactory
-} from '@/modules/backgroundjobs/repositories/repositories'
+} from '@/modules/backgroundjobs/repositories/backgroundjobs'
 import { db } from '@/db/knex'
 import { notifyChangeInFileStatus } from '@/modules/fileuploads/services/management'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -19,7 +19,7 @@ import {
   type BackgroundJobPayload,
   BackgroundJobStatus,
   type BackgroundJob
-} from '@/modules/backgroundjobs/domain/domain'
+} from '@/modules/backgroundjobs/domain/types'
 import type { FileImportJobPayloadV1 } from '@speckle/shared/workers/fileimport'
 import cryptoRandomString from 'crypto-random-string'
 import type { FileUploadRecordV2 } from '@/modules/fileuploads/helpers/types'

@@ -4,7 +4,7 @@ import type {
   GarbageCollectPendingUploadedFiles,
   NotifyChangeInFileStatus
 } from '@/modules/fileuploads/domain/operations'
-import type { FailQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget } from '@/modules/backgroundjobs/domain/domain'
+import type { FailQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget } from '@/modules/backgroundjobs/domain/types'
 import type { FileImportJobPayloadV1 } from '@speckle/shared/workers/fileimport'
 import { BackgroundJobType } from '@/modules/fileuploads/domain/consts'
 

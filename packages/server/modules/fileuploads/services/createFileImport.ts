@@ -1,10 +1,12 @@
 import type { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
 import { DefaultAppIds } from '@/modules/auth/defaultApps'
-import { Scopes, TIME } from '@speckle/shared'
+import { Scopes } from '@speckle/shared'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import type { PushJobToFileImporter } from '@/modules/fileuploads/domain/operations'
-import { getFileImportTimeLimitMinutes } from '@/modules/shared/helpers/envHelper'
-import { maximumAllowedQueuingProcessingAndRetryTimeMs } from '@/modules/fileuploads/domain/consts'
+import {
+  maximumAllowedQueuingProcessingAndRetryTimeMs,
+  singleAttemptMaximumProcessingTimeSeconds
+} from '@/modules/fileuploads/domain/consts'
 
 export const pushJobToFileImporterFactory =
   (deps: {
@@ -43,7 +45,7 @@ export const pushJobToFileImporterFactory =
       modelId,
       fileType,
       projectId,
-      timeOutSeconds: getFileImportTimeLimitMinutes() * TIME.minute,
+      timeOutSeconds: singleAttemptMaximumProcessingTimeSeconds(),
       blobId
     })
   }
