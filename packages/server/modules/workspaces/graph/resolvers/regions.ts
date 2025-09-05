@@ -2,17 +2,13 @@ import { db } from '@/db/knex'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 import { canWorkspaceUseRegionsFactory } from '@/modules/gatekeeper/services/featureAuthorization'
-import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { getRegionsFactory } from '@/modules/multiregion/repositories'
 import { authorizeResolver } from '@/modules/shared'
 import {
   getDefaultRegionFactory,
   upsertRegionAssignmentFactory
 } from '@/modules/workspaces/repositories/regions'
-import {
-  getWorkspaceFactory,
-  upsertWorkspaceFactory
-} from '@/modules/workspaces/repositories/workspaces'
+import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import {
   assignWorkspaceRegionFactory,
   getAvailableRegionsFactory
@@ -51,8 +47,6 @@ export default {
         regionKey
       })
 
-      const regionDb = await getDb({ regionKey })
-
       const assignRegion = assignWorkspaceRegionFactory({
         getAvailableRegions: getAvailableRegionsFactory({
           getRegions: getRegionsFactory({ db }),
@@ -62,8 +56,7 @@ export default {
         }),
         upsertRegionAssignment: upsertRegionAssignmentFactory({ db }),
         getDefaultRegion: getDefaultRegionFactory({ db }),
-        getWorkspace: getWorkspaceFactory({ db }),
-        insertRegionWorkspace: upsertWorkspaceFactory({ db: regionDb })
+        getWorkspace: getWorkspaceFactory({ db })
       })
       await withOperationLogging(
         async () => await assignRegion({ workspaceId, regionKey }),

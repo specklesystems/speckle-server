@@ -677,62 +677,64 @@ export default FF_WORKSPACES_MODULE_ENABLED
 
           const logger = context.log
 
-          return await asOperation(
-            async ({ db, emit }) => {
+          return await asMultiregionalOperation(
+            async ({ mainDb, allDbs, emit }) => {
               const createWorkspace = createWorkspaceFactory({
                 validateSlug: validateSlugFactory({
-                  getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+                  getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: mainDb })
                 }),
                 generateValidSlug: generateValidSlugFactory({
-                  getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+                  getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: mainDb })
                 }),
-                upsertWorkspace: upsertWorkspaceFactory({ db }),
+                upsertWorkspace: replicateFactory(allDbs, upsertWorkspaceFactory),
                 emitWorkspaceEvent: emit,
                 addOrUpdateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
-                  getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
-                  findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
-                    db
+                  getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({
+                    db: mainDb
                   }),
-                  getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-                  upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+                  findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+                    db: mainDb
+                  }),
+                  getWorkspaceRoles: getWorkspaceRolesFactory({ db: mainDb }),
+                  upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: mainDb }),
                   emitWorkspaceEvent: emit,
                   ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
-                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db: mainDb }),
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: mainDb }),
                     getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
-                      getWorkspace: getWorkspaceFactory({ db })
+                      getWorkspace: getWorkspaceFactory({ db: mainDb })
                     }),
                     eventEmit: emit
                   }),
                   assignWorkspaceSeat: assignWorkspaceSeatFactory({
-                    createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
+                    createWorkspaceSeat: createWorkspaceSeatFactory({ db: mainDb }),
                     getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
-                      db
+                      db: mainDb
                     }),
                     eventEmit: emit,
-                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
+                    getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: mainDb })
                   })
                 })
               })
 
               const updateWorkspace = updateWorkspaceFactory({
                 validateSlug: validateSlugFactory({
-                  getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+                  getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: mainDb })
                 }),
-                getWorkspace: getWorkspaceWithDomainsFactory({ db }),
+                getWorkspace: getWorkspaceWithDomainsFactory({ db: mainDb }),
                 getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderFactory({
-                  db,
+                  db: mainDb,
                   decrypt: getDecryptor()
                 }),
-                upsertWorkspace: upsertWorkspaceFactory({ db }),
+                upsertWorkspace: replicateFactory(allDbs, upsertWorkspaceFactory),
                 emitWorkspaceEvent: emit
               })
 
               const addDomain = addDomainToWorkspaceFactory({
-                getWorkspace: getWorkspaceFactory({ db }),
-                findEmailsByUserId: findEmailsByUserIdFactory({ db }),
-                storeWorkspaceDomain: storeWorkspaceDomainFactory({ db }),
-                getDomains: getWorkspaceDomainsFactory({ db }),
+                getWorkspace: getWorkspaceFactory({ db: mainDb }),
+                findEmailsByUserId: findEmailsByUserIdFactory({ db: mainDb }),
+                storeWorkspaceDomain: storeWorkspaceDomainFactory({ db: mainDb }),
+                getDomains: getWorkspaceDomainsFactory({ db: mainDb }),
                 emitWorkspaceEvent: emit
               })
 
@@ -769,7 +771,7 @@ export default FF_WORKSPACES_MODULE_ENABLED
               logger,
               name: 'createWorkspace',
               description: 'Create workspace',
-              transaction: true
+              dbs: await getAllRegisteredDbs()
             }
           )
         },
@@ -865,19 +867,6 @@ export default FF_WORKSPACES_MODULE_ENABLED
             workspaceId
           })
 
-          const updateWorkspace = updateWorkspaceFactory({
-            validateSlug: validateSlugFactory({
-              getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
-            }),
-            getWorkspace: getWorkspaceWithDomainsFactory({ db }),
-            getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderFactory({
-              db,
-              decrypt: getDecryptor()
-            }),
-            upsertWorkspace: upsertWorkspaceFactory({ db }),
-            emitWorkspaceEvent: getEventBus().emit
-          })
-
           if (workspaceInput.isExclusive) {
             const canMakeWorkspaceExclusive =
               await context.authPolicies.workspace.canUseWorkspacePlanFeature({
@@ -888,18 +877,33 @@ export default FF_WORKSPACES_MODULE_ENABLED
             throwIfAuthNotOk(canMakeWorkspaceExclusive)
           }
 
-          const workspace = await withOperationLogging(
-            async () =>
-              await updateWorkspace({
+          const workspace = await asMultiregionalOperation(
+            async ({ allDbs, mainDb, emit }) => {
+              const updateWorkspace = updateWorkspaceFactory({
+                validateSlug: validateSlugFactory({
+                  getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: mainDb })
+                }),
+                getWorkspace: getWorkspaceWithDomainsFactory({ db: mainDb }),
+                getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderFactory({
+                  db: mainDb,
+                  decrypt: getDecryptor()
+                }),
+                upsertWorkspace: replicateFactory(allDbs, upsertWorkspaceFactory),
+                emitWorkspaceEvent: emit
+              })
+
+              return updateWorkspace({
                 workspaceId,
                 workspaceInput: {
                   ...omit(workspaceInput, ['defaultProjectRole'])
                 }
-              }),
+              })
+            },
             {
               logger,
-              operationName: 'updateWorkspace',
-              operationDescription: 'Update workspace'
+              name: 'updateWorkspace',
+              description: 'Update workspace',
+              dbs: await getAllRegisteredDbs()
             }
           )
 
@@ -1048,32 +1052,34 @@ export default FF_WORKSPACES_MODULE_ENABLED
             workspaceId
           })
 
-          const deleteWorkspaceDomain = deleteWorkspaceDomainFactory({
-            deleteWorkspaceDomain: repoDeleteWorkspaceDomainFactory({ db }),
-            countDomainsByWorkspaceId: countDomainsByWorkspaceIdFactory({
-              db
-            }),
-            updateWorkspace: updateWorkspaceFactory({
-              validateSlug: validateSlugFactory({
-                getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
-              }),
-              getWorkspace: getWorkspaceWithDomainsFactory({ db }),
-              getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderFactory({
-                db,
-                decrypt: getDecryptor()
-              }),
-              upsertWorkspace: upsertWorkspaceFactory({ db }),
-              emitWorkspaceEvent: getEventBus().emit
-            })
-          })
+          await asMultiregionalOperation(
+            async ({ allDbs, mainDb, emit }) => {
+              const deleteWorkspaceDomain = deleteWorkspaceDomainFactory({
+                deleteWorkspaceDomain: repoDeleteWorkspaceDomainFactory({ db: mainDb }),
+                countDomainsByWorkspaceId: countDomainsByWorkspaceIdFactory({
+                  db: mainDb
+                }),
+                updateWorkspace: updateWorkspaceFactory({
+                  validateSlug: validateSlugFactory({
+                    getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: mainDb })
+                  }),
+                  getWorkspace: getWorkspaceWithDomainsFactory({ db: mainDb }),
+                  getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderFactory({
+                    db: mainDb,
+                    decrypt: getDecryptor()
+                  }),
+                  upsertWorkspace: replicateFactory(allDbs, upsertWorkspaceFactory),
+                  emitWorkspaceEvent: emit
+                })
+              })
 
-          await withOperationLogging(
-            async () =>
-              await deleteWorkspaceDomain({ workspaceId, domainId: args.input.id }),
+              return deleteWorkspaceDomain({ workspaceId, domainId: args.input.id })
+            },
             {
               logger,
-              operationName: 'deleteWorkspaceDomain',
-              operationDescription: 'Delete domain from workspace'
+              name: 'deleteWorkspaceDomain',
+              description: 'Delete domain from workspace',
+              dbs: await getAllRegisteredDbs()
             }
           )
 
@@ -1168,18 +1174,18 @@ export default FF_WORKSPACES_MODULE_ENABLED
 
           const logger = context.log.child({ workspaceId })
 
-          return await asOperation(
-            async ({ db, emit }) => {
+          return await asMultiregionalOperation(
+            async ({ mainDb, allDbs, emit }) => {
               const workspace = await updateWorkspaceFactory({
                 validateSlug: validateSlugFactory({
-                  getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+                  getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: mainDb })
                 }),
-                getWorkspace: getWorkspaceWithDomainsFactory({ db }),
+                getWorkspace: getWorkspaceWithDomainsFactory({ db: mainDb }),
                 getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderFactory({
-                  db,
+                  db: mainDb,
                   decrypt: getDecryptor()
                 }),
-                upsertWorkspace: upsertWorkspaceFactory({ db }),
+                upsertWorkspace: replicateFactory(allDbs, upsertWorkspaceFactory),
                 emitWorkspaceEvent: emit
               })({
                 workspaceId,
@@ -1197,7 +1203,7 @@ export default FF_WORKSPACES_MODULE_ENABLED
               name: 'updateWorkspaceEmbedOptions',
               description:
                 'Update workspace-level configuration for the embedded viewer',
-              transaction: true
+              dbs: await getAllRegisteredDbs()
             }
           )
         },
