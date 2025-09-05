@@ -197,7 +197,6 @@ describe('FileUploads @fileuploads', () => {
 
         expect(usedUserId).to.equal(upload.userId)
         const expected: JobPayloadV1 = {
-          jobId: upload.jobId,
           fileName: upload.fileName,
           token,
           serverUrl: serverOrigin,
