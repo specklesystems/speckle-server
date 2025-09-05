@@ -44,7 +44,7 @@ import { inputToVersionedState } from '@speckle/shared/viewer/state'
 import { isValidBase64Image } from '@speckle/shared/images/base64'
 import type { GetViewerResourceGroups } from '@/modules/viewer/domain/operations/resources'
 import { formatResourceIdsForGroup } from '@/modules/viewer/helpers/savedViews'
-import { difference, isUndefined, omit } from 'lodash-es'
+import { isUndefined, omit } from 'lodash-es'
 import type { DependenciesOf } from '@/modules/shared/helpers/factory'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { removeNullOrUndefinedKeys, firstDefinedValue } from '@speckle/shared'
@@ -630,9 +630,8 @@ export const updateSavedViewFactory =
       })
     }
 
-    const skipUpdatingDate =
-      difference<keyof typeof update>(updateKeys, ['visibility']).length === 0
-
+    // Only update date on: replace, group change
+    const shouldUpdateDate = hasViewerState || 'groupId' in update
     const updatedView = await deps.updateSavedViewRecord(
       {
         id,
@@ -640,7 +639,7 @@ export const updateSavedViewFactory =
         update
       },
       {
-        skipUpdatingDate
+        skipUpdatingDate: !shouldUpdateDate
       }
     )
 
