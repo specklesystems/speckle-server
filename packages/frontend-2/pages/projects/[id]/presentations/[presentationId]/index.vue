@@ -1,6 +1,7 @@
 <template>
   <div class="relative">
     <PresentationHeader
+      v-if="!hideUi"
       v-model:is-sidebar-open="isSlidesSidebarOpen"
       class="absolute top-4 left-4"
       :title="presentation?.title"
@@ -8,6 +9,7 @@
       @toggle-sidebar="isSlidesSidebarOpen = !isSlidesSidebarOpen"
     />
     <PresentationActions
+      v-if="!hideUi"
       v-model:is-sidebar-open="isInfoSidebarOpen"
       class="absolute top-4 right-4"
       :class="{ 'right-[21rem]': isInfoSidebarOpen }"
@@ -44,11 +46,15 @@
         v-if="isInfoSidebarOpen"
         class="flex-shrink-0"
         :title="currentView?.name"
+        :description="currentView?.description"
+        :view-id="currentView?.id"
+        :project-id="projectId"
       />
     </div>
 
     <PresentationControls
-      class="absolute bottom-4 right-1/2 -translate-x-1/2"
+      v-if="!hideUi"
+      class="absolute bottom-4 left-1/2 -translate-x-1/2"
       :disable-previous="disablePrevious"
       :disable-next="disableNext"
       @on-previous="onPrevious"
@@ -56,6 +62,7 @@
     />
 
     <div
+      v-if="!hideUi"
       class="bg-foundation border border-outline-3 rounded-xl shadow-md h-10 flex items-center absolute right-4 bottom-4 p-1"
       :class="{ 'right-[21rem]': isInfoSidebarOpen }"
     >
@@ -86,6 +93,7 @@ const projectPresentationPageQuery = graphql(`
     $projectId: String!
   ) {
     project(id: $projectId) {
+      id
       workspace {
         id
         name
@@ -98,9 +106,10 @@ const projectPresentationPageQuery = graphql(`
         views(input: $input) {
           totalCount
           items {
-            name
             id
+            name
             screenshot
+            description
           }
         }
       }
@@ -126,6 +135,7 @@ const { result } = useQuery(projectPresentationPageQuery, () => ({
 const currentViewIndex = ref(0)
 const isInfoSidebarOpen = ref(false)
 const isSlidesSidebarOpen = ref(false)
+const hideUi = ref(false)
 
 const workspace = computed(() => result.value?.project.workspace)
 const currentView = computed(
@@ -144,4 +154,22 @@ const onPrevious = () => {
 const onNext = () => {
   currentViewIndex.value++
 }
+
+const handleKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'i' || event.key === 'I') {
+    hideUi.value = !hideUi.value
+  } else if (event.key === 'ArrowLeft' && !disablePrevious.value) {
+    onPrevious()
+  } else if (event.key === 'ArrowRight' && !disableNext.value) {
+    onNext()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
+})
 </script>

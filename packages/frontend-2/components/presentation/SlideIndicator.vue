@@ -1,5 +1,5 @@
 <template>
-  <ul class="flex flex-col space-y-4">
+  <ul class="flex flex-col space-y-2">
     <li v-for="i in slideCount" :key="i">
       <div
         class="w-2 h-[1px] bg-foreground-3 transition-all duration-200"
