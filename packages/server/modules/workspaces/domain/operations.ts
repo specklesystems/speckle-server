@@ -42,6 +42,7 @@ export type UpsertWorkspaceArgs = {
     >,
     'domains'
   >
+  fullMerge?: boolean
 }
 
 export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>

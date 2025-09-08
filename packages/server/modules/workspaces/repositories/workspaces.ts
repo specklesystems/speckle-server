@@ -360,12 +360,11 @@ export const countWorkspacesFactory =
 
 export const upsertWorkspaceFactory =
   ({ db }: { db: Knex }): UpsertWorkspace =>
-  async ({ workspace }) => {
-    await tables
-      .workspaces(db)
-      .insert(workspace)
-      .onConflict('id')
-      .merge([
+  async ({ workspace, fullMerge = false }) => {
+    const q = tables.workspaces(db).insert(workspace).onConflict('id')
+
+    if (!fullMerge) {
+      await q.merge([
         'description',
         'logo',
         'slug',
@@ -378,6 +377,11 @@ export const upsertWorkspaceFactory =
         'isEmbedSpeckleBrandingHidden',
         'isExclusive'
       ])
+
+      return
+    }
+
+    await q.merge()
   }
 
 export const deleteWorkspaceFactory =

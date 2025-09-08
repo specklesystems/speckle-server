@@ -74,7 +74,9 @@ export const copyAllWorkspacesAcrossRegionsFactory =
       cursor = batchedWorkspaces.cursor
       items = batchedWorkspaces.items
 
-      await Promise.all(items.map((workspace) => deps.upsertWorkspace({ workspace })))
+      await Promise.all(
+        items.map((workspace) => deps.upsertWorkspace({ workspace, fullMerge: true }))
+      )
     } while (cursor && items.length)
 
     logger.info('Finished workspace sync')

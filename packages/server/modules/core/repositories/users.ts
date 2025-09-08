@@ -616,23 +616,7 @@ export const searchUsersFactory =
 export const upsertUserFactory =
   ({ db }: { db: Knex }): UpsertUser =>
   async ({ user }) => {
-    await tables
-      .users(db)
-      .insert(user)
-      .onConflict('id')
-      .merge([
-        'id',
-        'suuid',
-        'createdAt',
-        'name',
-        'bio',
-        'company',
-        'email',
-        'verified',
-        'avatar',
-        'profiles',
-        'passwordDigest'
-      ])
+    await tables.users(db).insert(user).onConflict('id').merge()
   }
 
 export const getAllUsersChecksumFactory =
