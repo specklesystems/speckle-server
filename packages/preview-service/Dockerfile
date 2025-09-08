@@ -43,7 +43,7 @@ RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     --no-install-recommends \
     # up to date ca-certs are required for downloading the google signing key
-    ca-certificates=20230311 \
+    ca-certificates=20230311+deb12u1 \
     tini=0.19.0-1 \
     fonts-ipafont-gothic=00303-23 \
     fonts-wqy-zenhei=0.9.45-8 \
