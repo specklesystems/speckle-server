@@ -1,7 +1,7 @@
 <template>
   <div class="border-b border-outline-2 flex-shrink-0 relative">
     <div class="py-1">
-      <ViewerSearchInput v-model="modelValue" :placeholder="placeholder" />
+      <ViewerSearchInput v-model="modelValue" auto-focus :placeholder="placeholder" />
     </div>
     <div
       v-if="hasSearchValue"
