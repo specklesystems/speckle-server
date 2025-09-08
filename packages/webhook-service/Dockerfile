@@ -9,8 +9,8 @@ ARG TINI_VERSION=v0.19.0
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
-     ca-certificates=20230311 \
-     curl=7.88.1-10+deb12u12 \
+     ca-certificates=20230311+deb12u1 \
+     curl=7.88.1-10+deb12u14 \
     && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /usr/bin/tini \
     && chmod +x /usr/bin/tini \
     && apt-get remove -y curl \
