@@ -4,6 +4,7 @@ import type {
   StringPropertyInfo
 } from '@speckle/viewer'
 import { difference, uniq, partition } from 'lodash-es'
+import { whenever } from '@vueuse/core'
 import {
   useInjectedViewerState,
   type InjectableViewerState
@@ -597,6 +598,15 @@ export function useFilterUtilities(
     explodeFactor.value = 0
   }
 
+  // Store filters that need to be restored once data store is ready
+  const pendingFiltersToRestore = ref<Array<{
+    key: string | null
+    isApplied: boolean
+    selectedValues: string[]
+    id: string
+    condition: 'AND' | 'OR'
+  }> | null>(null)
+
   /**
    * Restores filters from serialized state
    */
@@ -615,6 +625,28 @@ export function useFilterUtilities(
 
     const availableProperties = getPropertyOptionsFromDataStore()
 
+    // If data store is ready, restore immediately
+    if (availableProperties.length > 0) {
+      applyFiltersFromSerialized(serializedFilters, availableProperties)
+    } else {
+      // Store filters to restore later when data store is ready
+      pendingFiltersToRestore.value = serializedFilters
+    }
+  }
+
+  /**
+   * Actually applies the filters once we have the property data
+   */
+  const applyFiltersFromSerialized = (
+    serializedFilters: Array<{
+      key: string | null
+      isApplied: boolean
+      selectedValues: string[]
+      id: string
+      condition: 'AND' | 'OR'
+    }>,
+    availableProperties: PropertyInfo[]
+  ) => {
     for (const serializedFilter of serializedFilters) {
       if (serializedFilter.key) {
         const propertyInfo = availableProperties.find(
@@ -730,6 +762,19 @@ export function useFilterUtilities(
       return values.sort((a, b) => a.localeCompare(b))
     }
   }
+
+  // Watch for data store to become ready and restore pending filters
+  const shouldRestoreFilters = computed(() => {
+    return pendingFiltersToRestore.value && getPropertyOptionsFromDataStore().length > 0
+  })
+
+  whenever(shouldRestoreFilters, () => {
+    if (pendingFiltersToRestore.value) {
+      const availableProperties = getPropertyOptionsFromDataStore()
+      applyFiltersFromSerialized(pendingFiltersToRestore.value, availableProperties)
+      pendingFiltersToRestore.value = null
+    }
+  })
 
   return {
     isolateObjects,
