@@ -166,8 +166,8 @@
     <!-- Panel Extension - Portal target for additional content -->
     <div
       id="panel-extension"
-      class="absolute max-h-[calc(100dvh-4rem)] empty:hidden w-64 top-1.5 bg-foundation border border-outline-2 rounded-lg overflow-hidden"
-      :style="`left: ${panelExtensionLeft}px`"
+      class="absolute z-50 left-[calc(100dvw-20rem)] md:left-72 max-h-[calc(100dvh-6rem)] md:max-h-[calc(100dvh-4rem)] empty:hidden w-64 top-1.5 bg-foundation border border-outline-2 rounded-lg overflow-hidden"
+      :style="`left: ${panelExtensionLeft} !important`"
     >
       <PortalTarget name="panel-extension"></PortalTarget>
     </div>
@@ -304,13 +304,11 @@ const widthClass = computed(() => {
 })
 
 const panelExtensionLeft = computed(() => {
-  const mainPanelWidth = isMobile.value
-    ? windowWidth.value - 60
-    : isTablet.value
-    ? 240
-    : width.value
+  if (isMobile.value || isTablet.value) {
+    return
+  }
   const mainPanelLeft = isEmbedEnabled.value ? 52 : 60
-  return mainPanelLeft + mainPanelWidth
+  return `${mainPanelLeft + width.value}px`
 })
 
 const { summary } = useFunctionRunsStatusSummary({
