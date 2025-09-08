@@ -52,9 +52,7 @@ isMultiRegionTestMode()
 
         await region1Db('workspaces').delete()
         await region1Db('users').delete()
-      })
 
-      it('does not have any workspaces or users in region1', async () => {
         const workspaces = await region1Db('workspaces').select()
         const users = await region1Db('users').select()
 
