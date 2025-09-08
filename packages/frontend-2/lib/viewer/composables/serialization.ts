@@ -2,16 +2,13 @@ import {
   useInjectedViewerState,
   useResetUiState
 } from '~~/lib/viewer/composables/setup'
-import { isUndefinedOrVoid, SpeckleViewer, TimeoutError } from '@speckle/shared'
+import { isUndefinedOrVoid, SpeckleViewer } from '@speckle/shared'
 import { get } from 'lodash-es'
 import { Vector3 } from 'three'
-import {
-  useDiffUtilities,
-  useFilterUtilities,
-  useSelectionUtilities
-} from '~~/lib/viewer/composables/ui'
+import { useDiffUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { CameraController, VisualDiffMode } from '@speckle/viewer'
-import type { NumericPropertyInfo } from '@speckle/viewer'
+import { StringFilterCondition } from '~/lib/viewer/helpers/filters/types'
 import type { Merge, PartialDeep } from 'type-fest'
 import { defaultMeasurementOptions } from '@speckle/shared/viewer/state'
 import { useViewerRealtimeActivityTracker } from '~/lib/viewer/composables/activity'
@@ -28,6 +25,7 @@ export function useStateSerialization() {
   const state = useInjectedViewerState()
   const { objects: selectedObjects } = useSelectionUtilities()
   const { serializeDiffCommand } = useDiffUtilities()
+  const { filters } = useFilterUtilities()
 
   /**
    * We don't want to save a comment w/ implicit identifiers like ones that only have a model ID or a folder prefix, because
@@ -100,18 +98,29 @@ export function useStateSerialization() {
           mode: state.ui.diff.mode.value
         },
         spotlightUserSessionId: state.ui.spotlightUserSessionId.value,
-        filters: {
-          isolatedObjectIds: state.ui.filters.isolatedObjectIds.value,
-          hiddenObjectIds: state.ui.filters.hiddenObjectIds.value,
-          selectedObjectApplicationIds: selectedObjects.value.reduce((ret, obj) => {
-            ret[obj.id] = obj.applicationId ?? null
-            return ret
-          }, {} as Record<string, string | null>),
-          propertyFilter: {
-            key: state.ui.filters.propertyFilter.filter.value?.key || null,
-            isApplied: state.ui.filters.propertyFilter.isApplied.value
+        filters: (() => {
+          // Convert current FilterData to serializable format
+          const propertyFilters = filters.propertyFilters.value.map((filterData) => ({
+            key: filterData.filter?.key || null,
+            isApplied: filterData.isApplied,
+            selectedValues: filterData.selectedValues,
+            id: filterData.id,
+            condition:
+              filterData.condition === StringFilterCondition.Is
+                ? ('AND' as const)
+                : ('OR' as const)
+          }))
+
+          return {
+            isolatedObjectIds: state.ui.filters.isolatedObjectIds.value,
+            hiddenObjectIds: state.ui.filters.hiddenObjectIds.value,
+            selectedObjectApplicationIds: selectedObjects.value.reduce((ret, obj) => {
+              ret[obj.id] = obj.applicationId ?? null
+              return ret
+            }, {} as Record<string, string | null>),
+            propertyFilters
           }
-        },
+        })(),
         camera: {
           position: state.ui.camera.position.value.toArray(),
           target: state.ui.camera.target.value.toArray(),
@@ -178,20 +187,10 @@ export function useApplySerializedState() {
     },
     urlHashState
   } = useInjectedViewerState()
-  const {
-    resetFilters,
-    hideObjects,
-    isolateObjects,
-    removePropertyFilter,
-    setPropertyFilter,
-    applyPropertyFilter,
-    unApplyPropertyFilter,
-    waitForAvailableFilter
-  } = useFilterUtilities()
+  const { resetFilters, hideObjects, restoreFilters } = useFilterUtilities()
   const resetState = useResetUiState()
   const { diffModelVersions, deserializeDiffCommand, endDiff } = useDiffUtilities()
   const { setSelectionFromObjectIds } = useSelectionUtilities()
-  const logger = useLogger()
   const { update } = useViewerRealtimeActivityTracker()
 
   return async <Mode extends StateApplyMode>(
@@ -301,49 +300,13 @@ export function useApplySerializedState() {
     if (filters.hiddenObjectIds?.length) {
       resetFilters()
       hideObjects(filters.hiddenObjectIds, { replace: true })
-    } else if (filters.isolatedObjectIds?.length) {
-      resetFilters()
-      isolateObjects(filters.isolatedObjectIds, { replace: true })
-    } else {
-      resetFilters()
     }
 
-    const propertyFilterApplied = filters.propertyFilter?.isApplied
-    if (propertyFilterApplied) {
-      applyPropertyFilter()
+    // Restore propertyFilters
+    if (filters.propertyFilters?.length) {
+      restoreFilters(filters.propertyFilters)
     } else {
-      unApplyPropertyFilter()
-    }
-
-    const propertyInfoKey = filters.propertyFilter?.key
-    const passMin = state.viewer?.metadata?.filteringState?.passMin
-    const passMax = state.viewer?.metadata?.filteringState?.passMax
-    if (propertyInfoKey) {
-      removePropertyFilter()
-
-      // Setting property filter asynchronously, when it's possible to do so
-      waitForAvailableFilter(propertyInfoKey)
-        .then((filter) => {
-          if (passMin || passMax) {
-            const numericFilter = { ...filter } as NumericPropertyInfo
-            numericFilter.passMin = passMin || numericFilter.min
-            numericFilter.passMax = passMax || numericFilter.max
-            setPropertyFilter(numericFilter)
-            applyPropertyFilter()
-          } else {
-            setPropertyFilter(filter)
-            applyPropertyFilter()
-          }
-        })
-        .catch((e) => {
-          if (e instanceof TimeoutError) {
-            logger.warn(
-              `${e.message} - filter probably comes from a thread context that isn't currently loaded`
-            )
-          } else {
-            logger.error(e)
-          }
-        })
+      resetFilters()
     }
 
     if ([StateApplyMode.Spotlight, StateApplyMode.SavedView].includes(mode)) {
