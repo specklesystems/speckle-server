@@ -48,7 +48,7 @@
           style="background: transparent"
         >
           <div
-            class="absolute inset-0 bg-gray-300/60 dark:bg-gray-200/40 rounded-full transition-all duration-75"
+            class="absolute inset-0 bg-gray-300/60 dark:bg-gray-200/40 rounded-full"
             :style="{
               clipPath: `inset(0 ${100 - maxPercentage}% 0 ${minPercentage}%)`
             }"
