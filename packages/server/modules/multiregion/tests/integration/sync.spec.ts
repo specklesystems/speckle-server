@@ -16,16 +16,16 @@ import {
   copyAllWorkspacesAcrossRegionsFactory
 } from '@/modules/multiregion/tasks/regionSync'
 import {
+  bulkUpsertWorkspacesFactory,
   getAllWorkspaceChecksumFactory,
-  getAllWorkspacesFactory,
-  upsertWorkspaceFactory
+  getAllWorkspacesFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import type { Knex } from 'knex'
 import { logger } from '@/observability/logging'
 import {
+  bulkUpsertUsersFactory,
   getAllUsersChecksumFactory,
-  getAllUsersFactory,
-  upsertUserFactory
+  getAllUsersFactory
 } from '@/modules/core/repositories/users'
 import { truncateTables } from '@/test/hooks'
 import { Workspaces } from '@/modules/workspacesCore/helpers/db'
@@ -63,7 +63,7 @@ isMultiRegionTestMode()
       it('backfills all workspaces from region1 so checksums are identical', async () => {
         const copyAllWorkspacesAcrossRegions = copyAllWorkspacesAcrossRegionsFactory({
           getAllWorkspaces: getAllWorkspacesFactory({ db: mainDb }),
-          upsertWorkspace: upsertWorkspaceFactory({ db: region1Db })
+          bulkUpsertWorkspaces: bulkUpsertWorkspacesFactory({ db: region1Db })
         })
 
         await copyAllWorkspacesAcrossRegions({ logger })
@@ -78,7 +78,7 @@ isMultiRegionTestMode()
       it('backfills all users from region1 so checksums are identical', async () => {
         const copyAllUsersAcressRegions = copyAllUsersAcrossRegionsFactory({
           getAllUsers: getAllUsersFactory({ db: mainDb }),
-          upsertUser: upsertUserFactory({ db: region1Db })
+          bulkUpsertUsers: bulkUpsertUsersFactory({ db: region1Db })
         })
 
         await copyAllUsersAcressRegions({ logger })

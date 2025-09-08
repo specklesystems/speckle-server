@@ -43,7 +43,8 @@ import type {
   StoreWorkspaceDomain,
   UpsertWorkspace,
   UpsertWorkspaceCreationState,
-  UpsertWorkspaceRole
+  UpsertWorkspaceRole,
+  BulkUpsertWorkspaces
 } from '@/modules/workspaces/domain/operations'
 import type { Knex } from 'knex'
 import { isNullOrUndefined, Roles } from '@speckle/shared'
@@ -360,11 +361,12 @@ export const countWorkspacesFactory =
 
 export const upsertWorkspaceFactory =
   ({ db }: { db: Knex }): UpsertWorkspace =>
-  async ({ workspace, fullMerge = false }) => {
-    const q = tables.workspaces(db).insert(workspace).onConflict('id')
-
-    if (!fullMerge) {
-      await q.merge([
+  async ({ workspace }) => {
+    await tables
+      .workspaces(db)
+      .insert(workspace)
+      .onConflict('id')
+      .merge([
         'description',
         'logo',
         'slug',
@@ -377,11 +379,13 @@ export const upsertWorkspaceFactory =
         'isEmbedSpeckleBrandingHidden',
         'isExclusive'
       ])
+  }
 
-      return
-    }
-
-    await q.merge()
+export const bulkUpsertWorkspacesFactory =
+  ({ db }: { db: Knex }): BulkUpsertWorkspaces =>
+  async ({ workspaces }) => {
+    if (!workspaces.length) return
+    await tables.workspaces(db).insert(workspaces).onConflict('id').merge()
   }
 
 export const deleteWorkspaceFactory =

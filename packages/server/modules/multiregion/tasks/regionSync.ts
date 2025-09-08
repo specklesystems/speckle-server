@@ -8,31 +8,36 @@ import type { Logger } from '@/observability/logging'
 import type { Knex } from 'knex'
 import { getAllRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 import {
+  bulkUpsertUsersFactory,
   getAllUsersChecksumFactory,
-  getAllUsersFactory,
-  upsertUserFactory
+  getAllUsersFactory
 } from '@/modules/core/repositories/users'
 import { getAllProjectsChecksumFactory } from '@/modules/core/repositories/projects'
 import {
+  bulkUpsertWorkspacesFactory,
   getAllWorkspaceChecksumFactory,
-  getAllWorkspacesFactory,
-  upsertWorkspaceFactory
+  getAllWorkspacesFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import type {
-  GetAllWorkspaces,
-  UpsertWorkspace
+  BulkUpsertWorkspaces,
+  GetAllWorkspaces
 } from '@/modules/workspaces/domain/operations'
-import type { GetAllUsers, UpsertUser } from '@/modules/core/domain/users/operations'
+import type {
+  BulkUpsertUsers,
+  GetAllUsers
+} from '@/modules/core/domain/users/operations'
+
+const MAX_ITERATIONS = 10_000
+const BATCH_SIZE = 500
 
 export const copyAllUsersAcrossRegionsFactory =
   (deps: {
     getAllUsers: GetAllUsers
-    upsertUser: UpsertUser
+    bulkUpsertUsers: BulkUpsertUsers
   }): (({ logger }: { logger: Logger }) => Promise<void>) =>
   async ({ logger }) => {
     logger.info('Started user sync')
 
-    const MAX_ITERATIONS = 10_000
     let cursor = null
     let items = []
     let iterationCount = 0
@@ -42,11 +47,11 @@ export const copyAllUsersAcrossRegionsFactory =
         break
       }
 
-      const batchedUsers = await deps.getAllUsers({ cursor, limit: 25 })
+      const batchedUsers = await deps.getAllUsers({ cursor, limit: BATCH_SIZE })
       cursor = batchedUsers.cursor
       items = batchedUsers.items
 
-      await Promise.all(items.map((user) => deps.upsertUser({ user })))
+      await deps.bulkUpsertUsers({ users: items })
     } while (cursor && items.length)
 
     logger.info('Finished user sync')
@@ -55,12 +60,11 @@ export const copyAllUsersAcrossRegionsFactory =
 export const copyAllWorkspacesAcrossRegionsFactory =
   (deps: {
     getAllWorkspaces: GetAllWorkspaces
-    upsertWorkspace: UpsertWorkspace
+    bulkUpsertWorkspaces: BulkUpsertWorkspaces
   }): (({ logger }: { logger: Logger }) => Promise<void>) =>
   async ({ logger }) => {
     logger.info('Started workspace sync')
 
-    const MAX_ITERATIONS = 10_000
     let cursor = null
     let items = []
     let iterationCount = 0
@@ -70,13 +74,14 @@ export const copyAllWorkspacesAcrossRegionsFactory =
         break
       }
 
-      const batchedWorkspaces = await deps.getAllWorkspaces({ cursor, limit: 25 })
+      const batchedWorkspaces = await deps.getAllWorkspaces({
+        cursor,
+        limit: BATCH_SIZE
+      })
       cursor = batchedWorkspaces.cursor
       items = batchedWorkspaces.items
 
-      await Promise.all(
-        items.map((workspace) => deps.upsertWorkspace({ workspace, fullMerge: true }))
-      )
+      await deps.bulkUpsertWorkspaces({ workspaces: items })
     } while (cursor && items.length)
 
     logger.info('Finished workspace sync')
@@ -102,12 +107,12 @@ const autoSyncRegions = async ({
 
     logger.error({ regionKey, entity: 'users' }, `Cross-region mismatch`)
 
-    const copyAllUsersAcressRegions = copyAllUsersAcrossRegionsFactory({
+    const copyAllUsersAcrossRegions = copyAllUsersAcrossRegionsFactory({
       getAllUsers: getAllUsersFactory({ db: mainDb }),
-      upsertUser: upsertUserFactory({ db: regionDb })
+      bulkUpsertUsers: bulkUpsertUsersFactory({ db: regionDb })
     })
 
-    await copyAllUsersAcressRegions({ logger })
+    await copyAllUsersAcrossRegions({ logger })
   }
 
   for (const { regionKey, client: regionDb } of allRegions) {
@@ -121,7 +126,7 @@ const autoSyncRegions = async ({
 
     const copyAllWorkspacesAcrossRegions = copyAllWorkspacesAcrossRegionsFactory({
       getAllWorkspaces: getAllWorkspacesFactory({ db: mainDb }),
-      upsertWorkspace: upsertWorkspaceFactory({ db: regionDb })
+      bulkUpsertWorkspaces: bulkUpsertWorkspacesFactory({ db: regionDb })
     })
 
     await copyAllWorkspacesAcrossRegions({ logger })

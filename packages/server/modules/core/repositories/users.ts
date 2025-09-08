@@ -24,6 +24,7 @@ import { isNullOrUndefined, Roles } from '@speckle/shared'
 import type { UserWithOptionalRole } from '@/modules/core/domain/users/types'
 import type {
   BulkLookupUsers,
+  BulkUpsertUsers,
   CountAdminUsers,
   CountUsers,
   DeleteUserRecord,
@@ -47,8 +48,7 @@ import type {
   StoreUser,
   StoreUserAcl,
   UpdateUser,
-  UpdateUserServerRole,
-  UpsertUser
+  UpdateUserServerRole
 } from '@/modules/core/domain/users/operations'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
@@ -613,10 +613,11 @@ export const searchUsersFactory =
     }
   }
 
-export const upsertUserFactory =
-  ({ db }: { db: Knex }): UpsertUser =>
-  async ({ user }) => {
-    await tables.users(db).insert(user).onConflict('id').merge()
+export const bulkUpsertUsersFactory =
+  ({ db }: { db: Knex }): BulkUpsertUsers =>
+  async ({ users }) => {
+    if (!users.length) return
+    await tables.users(db).insert(users).onConflict('id').merge()
   }
 
 export const getAllUsersChecksumFactory =

@@ -42,10 +42,14 @@ export type UpsertWorkspaceArgs = {
     >,
     'domains'
   >
-  fullMerge?: boolean
 }
 
 export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>
+export type BulkUpsertWorkspaces = ({
+  workspaces
+}: {
+  workspaces: Array<NullableKeysToOptional<Workspace>>
+}) => Promise<void>
 
 export type GetUserDiscoverableWorkspaces = (args: {
   domains: string[]

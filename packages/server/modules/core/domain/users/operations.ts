@@ -266,8 +266,8 @@ export type SetUserOnboardingChoices = (params: {
   choices: UserOnboardingChoices
 }) => Promise<void>
 
-export type UpsertUser = (params: {
-  user: NullableKeysToOptional<User>
+export type BulkUpsertUsers = (params: {
+  users: Array<NullableKeysToOptional<User>>
 }) => Promise<void>
 
 export type GetAllUsers = (args: {
