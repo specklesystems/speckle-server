@@ -283,14 +283,15 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
           condition: 'AND' | 'OR'
         }> = []
 
-        // If new propertyFilters exist, use them
+        // If new propertyFilters exist and are not empty, use them
         if (
           state.ui?.filters?.propertyFilters &&
-          Array.isArray(state.ui.filters.propertyFilters)
+          Array.isArray(state.ui.filters.propertyFilters) &&
+          state.ui.filters.propertyFilters.length > 0
         ) {
           propertyFilters = state.ui.filters.propertyFilters
         }
-        // If legacy propertyFilter exists but no propertyFilters, migrate it
+        // If legacy propertyFilter exists but no propertyFilters (or empty propertyFilters), migrate it
         else if (state.ui?.filters?.propertyFilter?.key) {
           propertyFilters = [
             {

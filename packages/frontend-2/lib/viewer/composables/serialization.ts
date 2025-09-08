@@ -10,7 +10,10 @@ import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering
 import { CameraController, VisualDiffMode } from '@speckle/viewer'
 import { StringFilterCondition } from '~/lib/viewer/helpers/filters/types'
 import type { Merge, PartialDeep } from 'type-fest'
-import { defaultMeasurementOptions } from '@speckle/shared/viewer/state'
+import {
+  defaultMeasurementOptions,
+  formatSerializedViewerState
+} from '@speckle/shared/viewer/state'
 import { useViewerRealtimeActivityTracker } from '~/lib/viewer/composables/activity'
 import {
   isModelResource,
@@ -204,8 +207,11 @@ export function useApplySerializedState() {
       return
     }
 
-    if (state.projectId && state.projectId !== projectId.value) {
-      await projectId.update(state.projectId)
+    // Format the state to handle backwards compatibility (e.g., propertyFilter -> propertyFilters)
+    const formattedState = formatSerializedViewerState(state)
+
+    if (formattedState.projectId && formattedState.projectId !== projectId.value) {
+      await projectId.update(formattedState.projectId)
     }
 
     // Handle loaded resource change
@@ -213,13 +219,13 @@ export function useApplySerializedState() {
     if (
       [StateApplyMode.Spotlight, StateApplyMode.ThreadFullContextOpen].includes(mode)
     ) {
-      newResourceIdString = state.resources?.request?.resourceIdString || ''
+      newResourceIdString = formattedState.resources?.request?.resourceIdString || ''
     } else if (mode === StateApplyMode.SavedView) {
       const { loadOriginal } = options || {}
 
       const current = resourceBuilder().addResources(resourceIdString.value)
       const incoming = resourceBuilder().addResources(
-        state.resources?.request?.resourceIdString || ''
+        formattedState.resources?.request?.resourceIdString || ''
       )
 
       const finalItems: ViewerResource[] = []
@@ -248,7 +254,7 @@ export function useApplySerializedState() {
 
       const currentResources = parseUrlParameters(resourceIdString.value)
       const newResources = parseUrlParameters(
-        state.resources?.request?.resourceIdString ?? ''
+        formattedState.resources?.request?.resourceIdString ?? ''
       ).map((resource) => {
         if (resource instanceof ViewerModelResource) {
           // Only keep model ID, drop version
@@ -272,23 +278,23 @@ export function useApplySerializedState() {
     }
 
     position.value = new Vector3(
-      state.ui?.camera?.position?.[0],
-      state.ui?.camera?.position?.[1],
-      state.ui?.camera?.position?.[2]
+      formattedState.ui?.camera?.position?.[0],
+      formattedState.ui?.camera?.position?.[1],
+      formattedState.ui?.camera?.position?.[2]
     )
     target.value = new Vector3(
-      state.ui?.camera?.target?.[0],
-      state.ui?.camera?.target?.[1],
-      state.ui?.camera?.target?.[2]
+      formattedState.ui?.camera?.target?.[0],
+      formattedState.ui?.camera?.target?.[1],
+      formattedState.ui?.camera?.target?.[2]
     )
 
-    isOrthoProjection.value = !!state.ui?.camera?.isOrthoProjection
+    isOrthoProjection.value = !!formattedState.ui?.camera?.isOrthoProjection
 
-    sectionBox.value = state.ui?.sectionBox
+    sectionBox.value = formattedState.ui?.sectionBox
       ? {
-          min: state.ui.sectionBox.min || [],
-          max: state.ui.sectionBox.max || [],
-          rotation: state.ui.sectionBox.rotation || []
+          min: formattedState.ui.sectionBox.min || [],
+          max: formattedState.ui.sectionBox.max || [],
+          rotation: formattedState.ui.sectionBox.rotation || []
         }
       : null
     sectionBoxContext.visible.value = false
@@ -296,13 +302,12 @@ export function useApplySerializedState() {
       sectionBoxContext.edited.value = false
     }
 
-    const filters = state.ui?.filters || {}
+    const filters = formattedState.ui?.filters || {}
     if (filters.hiddenObjectIds?.length) {
       resetFilters()
       hideObjects(filters.hiddenObjectIds, { replace: true })
     }
 
-    // Restore propertyFilters
     if (filters.propertyFilters?.length) {
       restoreFilters(filters.propertyFilters)
     } else {
@@ -311,7 +316,7 @@ export function useApplySerializedState() {
 
     if ([StateApplyMode.Spotlight, StateApplyMode.SavedView].includes(mode)) {
       await urlHashState.focusedThreadId.update(
-        state.ui?.threads?.openThread?.threadId || null
+        formattedState.ui?.threads?.openThread?.threadId || null
       )
     }
 
@@ -324,13 +329,13 @@ export function useApplySerializedState() {
       }
     }
 
-    const command = state.ui?.diff?.command
-      ? deserializeDiffCommand(state.ui.diff.command)
+    const command = formattedState.ui?.diff?.command
+      ? deserializeDiffCommand(formattedState.ui.diff.command)
       : null
     const activeDiffEnabled = !!diff.enabled.value
-    if (command && command.diffs.length && state.ui?.diff) {
-      diff.time.value = state.ui.diff.time || 0.5
-      diff.mode.value = state.ui?.diff.mode || VisualDiffMode.COLORED
+    if (command && command.diffs.length && formattedState.ui?.diff) {
+      diff.time.value = formattedState.ui.diff.time || 0.5
+      diff.mode.value = formattedState.ui?.diff.mode || VisualDiffMode.COLORED
 
       const instruction = command.diffs[0]
       await diffModelVersions(
@@ -343,25 +348,25 @@ export function useApplySerializedState() {
     }
 
     // Restore view mode
-    if (!isUndefinedOrVoid(state.ui?.viewMode?.mode))
-      viewMode.mode.value = state.ui!.viewMode!.mode
-    if (!isUndefinedOrVoid(state.ui?.viewMode?.edgesEnabled))
-      viewMode.edgesEnabled.value = state.ui!.viewMode!.edgesEnabled
-    if (!isUndefinedOrVoid(state.ui?.viewMode?.edgesWeight))
-      viewMode.edgesWeight.value = state.ui!.viewMode!.edgesWeight
-    if (!isUndefinedOrVoid(state.ui?.viewMode?.outlineOpacity))
-      viewMode.outlineOpacity.value = state.ui!.viewMode!.outlineOpacity
-    if (!isUndefinedOrVoid(state.ui?.viewMode?.edgesColor))
-      viewMode.edgesColor.value = state.ui!.viewMode!.edgesColor
+    if (!isUndefinedOrVoid(formattedState.ui?.viewMode?.mode))
+      viewMode.mode.value = formattedState.ui!.viewMode!.mode
+    if (!isUndefinedOrVoid(formattedState.ui?.viewMode?.edgesEnabled))
+      viewMode.edgesEnabled.value = formattedState.ui!.viewMode!.edgesEnabled
+    if (!isUndefinedOrVoid(formattedState.ui?.viewMode?.edgesWeight))
+      viewMode.edgesWeight.value = formattedState.ui!.viewMode!.edgesWeight
+    if (!isUndefinedOrVoid(formattedState.ui?.viewMode?.outlineOpacity))
+      viewMode.outlineOpacity.value = formattedState.ui!.viewMode!.outlineOpacity
+    if (!isUndefinedOrVoid(formattedState.ui?.viewMode?.edgesColor))
+      viewMode.edgesColor.value = formattedState.ui!.viewMode!.edgesColor
 
-    explodeFactor.value = state.ui?.explodeFactor || 0
+    explodeFactor.value = formattedState.ui?.explodeFactor || 0
     lightConfig.value = {
       ...lightConfig.value,
-      ...(state.ui?.lightConfig || {})
+      ...(formattedState.ui?.lightConfig || {})
     }
 
     // Apply measurements
-    const incomingMeasurement = state.ui?.measurement
+    const incomingMeasurement = formattedState.ui?.measurement
     if (incomingMeasurement) {
       if (!isUndefinedOrVoid(incomingMeasurement.enabled)) {
         measurement.enabled.value = incomingMeasurement.enabled
