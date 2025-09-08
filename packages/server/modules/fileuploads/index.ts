@@ -49,6 +49,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED, FF_RHINO_FILE_IMPORTER_ENABLED } =
   getFeatureFlags()
 
 const EveryMinute = '*/1 * * * *'
+const EveryFiveMinutes = '*/5 * * * *'
 
 const scheduledTasks: cron.ScheduledTask[] = []
 
@@ -111,44 +112,45 @@ export const init: SpeckleModule['init'] = async ({
         await scheduleBackgroundJobGarbageCollection({
           queueDb,
           scheduleExecution,
+          cronExpression: EveryFiveMinutes
+        })
+      )
+    } else {
+      // feature flag is not enabled
+      scheduledTasks.push(
+        await scheduleFileImportExpiry({
+          scheduleExecution,
           cronExpression: EveryMinute
         })
       )
+
+      await listenFor(FileUploadDatabaseEvents.Updated, async (msg) => {
+        const parsedMessage = parseMessagePayload(msg.payload)
+        if (!parsedMessage.streamId) return
+        const projectDb = await getProjectDbClient({
+          projectId: parsedMessage.streamId
+        })
+
+        await onFileImportProcessedFactory({
+          getFileInfo: getFileInfoFactory({ db: projectDb }),
+          getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+          updateFileUpload: updateFileUploadFactory({ db: projectDb }),
+          eventEmit: getEventBus().emit
+        })(parsedMessage)
+      })
+
+      await listenFor(FileUploadDatabaseEvents.Started, async (msg) => {
+        const parsedMessage = parseMessagePayload(msg.payload)
+        if (!parsedMessage.streamId) return
+        const projectDb = await getProjectDbClient({
+          projectId: parsedMessage.streamId
+        })
+        await onFileProcessingFactory({
+          getFileInfo: getFileInfoFactory({ db: projectDb }),
+          emitEvent: getEventBus().emit
+        })(parsedMessage)
+      })
     }
-
-    scheduledTasks.push(
-      await scheduleFileImportExpiry({
-        scheduleExecution,
-        cronExpression: EveryMinute
-      })
-    )
-
-    await listenFor(FileUploadDatabaseEvents.Updated, async (msg) => {
-      const parsedMessage = parseMessagePayload(msg.payload)
-      if (!parsedMessage.streamId) return
-      const projectDb = await getProjectDbClient({
-        projectId: parsedMessage.streamId
-      })
-
-      await onFileImportProcessedFactory({
-        getFileInfo: getFileInfoFactory({ db: projectDb }),
-        getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
-        updateFileUpload: updateFileUploadFactory({ db: projectDb }),
-        eventEmit: getEventBus().emit
-      })(parsedMessage)
-    })
-
-    await listenFor(FileUploadDatabaseEvents.Started, async (msg) => {
-      const parsedMessage = parseMessagePayload(msg.payload)
-      if (!parsedMessage.streamId) return
-      const projectDb = await getProjectDbClient({
-        projectId: parsedMessage.streamId
-      })
-      await onFileProcessingFactory({
-        getFileInfo: getFileInfoFactory({ db: projectDb }),
-        emitEvent: getEventBus().emit
-      })(parsedMessage)
-    })
 
     initializeEventListenersFactory({ db, observeResult })()
     reportSubscriptionEventsFactory({

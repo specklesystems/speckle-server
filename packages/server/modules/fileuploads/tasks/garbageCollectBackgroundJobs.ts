@@ -5,7 +5,7 @@ import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/ope
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { garbageCollectAttemptedFileImportBackgroundJobsFactory } from '@/modules/fileuploads/services/tasks'
 import { failPendingUploadedFilesFactory } from '@/modules/fileuploads/repositories/fileUploads'
-import { failQueuedBackgroundJobsWhichExceedMaximumAttemptsFactory } from '@/modules/backgroundjobs/repositories'
+import { failBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory } from '@/modules/backgroundjobs/repositories/backgroundjobs'
 import type { Knex } from 'knex'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 
@@ -25,10 +25,12 @@ export const scheduleBackgroundJobGarbageCollection = async ({
   for (const projectDb of [db, ...regionClients]) {
     perDbTask.push(
       garbageCollectAttemptedFileImportBackgroundJobsFactory({
-        failQueuedBackgroundJobsWhichExceedMaximumAttempts:
-          failQueuedBackgroundJobsWhichExceedMaximumAttemptsFactory({
-            db: queueDb
-          }),
+        failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget:
+          failBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory(
+            {
+              db: queueDb
+            }
+          ),
         failPendingUploadedFiles: failPendingUploadedFilesFactory({ db: projectDb }),
         notifyUploadStatus: notifyChangeInFileStatus({
           eventEmit: getEventBus().emit

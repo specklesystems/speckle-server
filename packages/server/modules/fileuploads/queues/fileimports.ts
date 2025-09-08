@@ -1,16 +1,12 @@
-import {
-  getFileImportTimeLimitMinutes,
-  getServerOrigin
-} from '@/modules/shared/helpers/envHelper'
+import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import type { Logger } from '@/observability/logging'
-import { TIME_MS } from '@speckle/shared'
-import type { JobPayload } from '@speckle/shared/workers/fileimport'
+import type { JobPayloadV1 } from '@speckle/shared/workers/fileimport'
 import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
 import {
   NumberOfFileImportRetries,
-  DelayBetweenFileImportRetriesMinutes,
   BackgroundJobType,
-  BackgroundJobPayloadVersion
+  BackgroundJobPayloadVersion,
+  singleAttemptMaximumProcessingTimeSeconds
 } from '@/modules/fileuploads/domain/consts'
 import type { Knex } from 'knex'
 import { migrateDbToLatest } from '@/db/migrations'
@@ -18,15 +14,10 @@ import { createBackgroundJobFactory } from '@/modules/backgroundjobs/services/cr
 import {
   getBackgroundJobCountFactory,
   storeBackgroundJobFactory
-} from '@/modules/backgroundjobs/repositories'
-import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain'
+} from '@/modules/backgroundjobs/repositories/backgroundjobs'
+import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain/types'
 
 export const fileImportQueues: FileImportQueue[] = []
-
-const timeout =
-  NumberOfFileImportRetries *
-  (getFileImportTimeLimitMinutes() + DelayBetweenFileImportRetriesMinutes) *
-  TIME_MS.minute
 
 export const initializePostgresQueue = async ({
   label,
@@ -41,7 +32,10 @@ export const initializePostgresQueue = async ({
   await migrateDbToLatest({ db, region: `Queue DB for ${label}` })
 
   const createBackgroundJob = createBackgroundJobFactory({
-    jobConfig: { maxAttempt: 3, timeoutMs: timeout },
+    jobConfig: {
+      maxAttempt: NumberOfFileImportRetries,
+      remainingComputeBudgetSeconds: 2 * singleAttemptMaximumProcessingTimeSeconds()
+    },
     storeBackgroundJob: storeBackgroundJobFactory({
       db,
       originServerUrl: getServerOrigin()
@@ -55,7 +49,7 @@ export const initializePostgresQueue = async ({
       (type) => type.toLocaleLowerCase() // Normalize file types to lowercase (this is a safeguard to prevent stupid typos in the future)
     ),
     shutdown: async () => {},
-    scheduleJob: async (jobData: JobPayload) => {
+    scheduleJob: async (jobData: JobPayloadV1) => {
       await createBackgroundJob({
         jobPayload: {
           jobType: BackgroundJobType.FileImport,
