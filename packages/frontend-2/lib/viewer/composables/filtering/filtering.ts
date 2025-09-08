@@ -136,6 +136,37 @@ export function useFilterUtilities(
     return []
   }
 
+  // Threshold for showing large property warning
+  const LARGE_PROPERTY_THRESHOLD = 20000
+
+  /**
+   * Checks if a property has too many unique values and returns count info
+   */
+  const isLargeProperty = (
+    propertyKey: string
+  ): { isLarge: boolean; count: number } => {
+    const uniqueValues = new Set<string>()
+
+    for (const dataSource of dataStore.dataSources.value) {
+      if (!dataSource.propertyMap[propertyKey]) {
+        continue
+      }
+
+      for (const [, objProps] of Object.entries(dataSource.objectProperties)) {
+        const value = objProps[propertyKey]
+        if (value !== undefined) {
+          uniqueValues.add(String(value))
+        }
+      }
+    }
+
+    const count = uniqueValues.size
+    return {
+      isLarge: count > LARGE_PROPERTY_THRESHOLD,
+      count
+    }
+  }
+
   /**
    * Computes full property data for a given property key (min/max, valueGroups)
    */
@@ -143,7 +174,6 @@ export function useFilterUtilities(
     const valueToObjectIds = new Map<string, string[]>()
 
     for (const dataSource of dataStore.dataSources.value) {
-      // Check if property exists in this data source
       if (!dataSource.propertyMap[propertyKey]) {
         continue
       }
@@ -727,6 +757,7 @@ export function useFilterUtilities(
     getFilterDisabledReason,
     findFilterByKvp,
     getFilteredFilterValues,
-    setNumericRange
+    setNumericRange,
+    isLargeProperty
   }
 }

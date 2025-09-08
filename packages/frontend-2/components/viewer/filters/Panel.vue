@@ -76,6 +76,12 @@
         />
       </div>
     </Portal>
+
+    <ViewerFiltersLargePropertyWarningDialog
+      v-model:open="showLargePropertyWarning"
+      :count="pendingProperty?.count"
+      @confirm="confirmLargePropertySelection"
+    />
   </ViewerLayoutSidePanel>
 </template>
 
@@ -83,6 +89,7 @@
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 import type { PropertySelectOption } from '~/lib/viewer/helpers/filters/types'
 import { FilterType } from '~/lib/viewer/helpers/filters/types'
+import type { PropertyInfo } from '@speckle/viewer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { X, Plus } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
@@ -96,7 +103,8 @@ const {
   getPropertyOptionsFromDataStore,
   addActiveFilter,
   updateFilterProperty,
-  resetFilters
+  resetFilters,
+  isLargeProperty
 } = useFilterUtilities()
 
 const { filteredObjectsCount } = useFilteredObjectsCount()
@@ -110,6 +118,9 @@ const propertySelectionRef = ref<HTMLElement>()
 const swappingFilterId = ref<Nullable<string>>(null)
 const filtersContainerRef = ref<HTMLElement>()
 const shouldScrollToNewFilter = ref(false)
+
+const showLargePropertyWarning = ref(false)
+const pendingProperty = ref<Nullable<{ property: PropertyInfo; count: number }>>(null)
 
 const propertySelectOptions = computed((): PropertySelectOption[] => {
   if (!showPropertySelection.value) {
@@ -139,7 +150,6 @@ const propertySelectOptions = computed((): PropertySelectOption[] => {
       }
     })
 
-  // Use a more efficient sorting approach
   const sortedOptions = allOptions.sort((a, b) => {
     // First sort by whether they have parents (no-parent items first)
     if (a.hasParent !== b.hasParent) {
@@ -199,41 +209,67 @@ const scrollToNewFilter = () => {
 }
 
 const selectProperty = async (propertyKey: string) => {
-  try {
-    const relevantFilters = getPropertyOptionsFromDataStore()
-    const property = relevantFilters.find((p) => p.key === propertyKey)
+  const relevantFilters = getPropertyOptionsFromDataStore()
+  const property = relevantFilters.find((p) => p.key === propertyKey)
 
-    if (!property) {
-      return
-    }
-
-    if (swappingFilterId.value) {
-      updateFilterProperty(swappingFilterId.value, property)
-      mp.track('Viewer Action', {
-        type: 'action',
-        name: 'filters',
-        action: 'swap-filter-property',
-        value: propertyKey
-      })
-    } else {
-      // Set flag to scroll when new filter is added
-      shouldScrollToNewFilter.value = true
-      addActiveFilter(property)
-      mp.track('Viewer Action', {
-        type: 'action',
-        name: 'filters',
-        action: 'add-new-filter',
-        value: propertyKey
-      })
-    }
-  } finally {
-    showPropertySelection.value = false
-    swappingFilterId.value = null
+  if (!property) {
+    return
   }
+
+  // Check if this property has too many unique values
+  const { isLarge, count } = isLargeProperty(propertyKey)
+
+  if (isLarge) {
+    // Store the pending property and show warning
+    pendingProperty.value = { property, count }
+    showLargePropertyWarning.value = true
+    return
+  }
+
+  processPropertySelection(property, propertyKey)
+}
+
+const processPropertySelection = (property: PropertyInfo, propertyKey: string) => {
+  if (swappingFilterId.value) {
+    updateFilterProperty(swappingFilterId.value, property)
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'filters',
+      action: 'swap-filter-property',
+      value: propertyKey
+    })
+  } else {
+    // Set flag to scroll when new filter is added
+    shouldScrollToNewFilter.value = true
+    addActiveFilter(property)
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'filters',
+      action: 'add-new-filter',
+      value: propertyKey
+    })
+  }
+  showPropertySelection.value = false
+  swappingFilterId.value = null
+}
+
+const confirmLargePropertySelection = () => {
+  if (!pendingProperty.value) return
+
+  processPropertySelection(
+    pendingProperty.value.property,
+    pendingProperty.value.property.key
+  )
+  pendingProperty.value = null
 }
 
 onKeyStroke('Escape', () => {
-  if (showPropertySelection.value) {
+  if (showLargePropertyWarning.value) {
+    showLargePropertyWarning.value = false
+    showPropertySelection.value = false
+    swappingFilterId.value = null
+    pendingProperty.value = null
+  } else if (showPropertySelection.value) {
     showPropertySelection.value = false
   }
 })
@@ -243,7 +279,6 @@ watch(
   () => propertyFilters.value.length,
   (newLength, oldLength) => {
     if (shouldScrollToNewFilter.value && newLength > oldLength) {
-      // Wait for DOM to update with the new filter before scrolling to it
       nextTick(() => {
         scrollToNewFilter()
         shouldScrollToNewFilter.value = false
