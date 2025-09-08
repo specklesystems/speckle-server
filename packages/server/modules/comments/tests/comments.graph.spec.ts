@@ -1019,7 +1019,8 @@ describe('Graphql @comments', () => {
     await updateStream({
       ...publicStreamWithPublicComments,
       id: publicStreamWithPublicComments.id,
-      allowPublicComments: true
+      allowPublicComments: true,
+      updatedAt: new Date()
     })
   })
 

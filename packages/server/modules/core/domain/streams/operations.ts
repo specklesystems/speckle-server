@@ -155,7 +155,13 @@ export type CanUserFavoriteStream = (params: {
 export type GetOnboardingBaseStream = (version: string) => Promise<Optional<Stream>>
 
 export type UpdateStreamRecord = (
-  update: StreamUpdateInput | ProjectUpdateInput
+  update:
+    | (StreamUpdateInput & {
+        updatedAt: Date
+      })
+    | (ProjectUpdateInput & {
+        updatedAt: Date
+      })
 ) => Promise<Nullable<Stream>>
 
 export type GetDiscoverableStreamsParams = Required<QueryDiscoverableStreamsArgs> & {
@@ -266,7 +272,8 @@ export type MarkCommitStreamUpdated = (commitId: string) => Promise<boolean>
 
 export type MarkOnboardingBaseStream = (
   streamId: string,
-  version: string
+  version: string,
+  updatedAt: Date
 ) => Promise<void>
 
 export type GetBatchUserFavoriteData = (params: {
@@ -315,6 +322,7 @@ export type RevokeStreamPermissions = (
      * Whether to mark project record as updated
      */
     trackProjectUpdate: boolean
+    // TODO: problem
   }>
 ) => Promise<Optional<Stream>>
 
@@ -326,6 +334,7 @@ export type GrantStreamPermissions = (
   },
   options?: {
     trackProjectUpdate?: boolean
+    // TODO: problem
   }
 ) => Promise<Optional<Stream>>
 
@@ -337,6 +346,7 @@ export type GrantProjectPermissions = (
   },
   options?: {
     trackProjectUpdate?: boolean
+    // TODO: problem
   }
 ) => Promise<Optional<Project>>
 

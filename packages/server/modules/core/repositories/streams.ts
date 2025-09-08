@@ -65,7 +65,6 @@ import {
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import type {
-  DeleteProjectRole,
   UpdateProject,
   UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
@@ -1044,8 +1043,7 @@ export const updateStreamFactory =
       .returning('*')
       .where({ id: streamId })
       .update<StreamRecord[]>({
-        ...validUpdate,
-        updatedAt: knex.fn.now()
+        ...validUpdate
       })
 
     return updatedStream
@@ -1060,8 +1058,7 @@ export const updateProjectFactory =
       .returning('*')
       .where({ id: projectUpdate.id })
       .update<StreamRecord[]>({
-        ...omit(projectUpdate, ['id']),
-        updatedAt: knex.fn.now()
+        ...omit(projectUpdate, ['id'])
       })
 
     if (!updatedStream) {
@@ -1170,6 +1167,7 @@ export const grantStreamPermissionsFactory =
     if (options.trackProjectUpdate) {
       // update stream updated at
       streamsQuery.update({ updatedAt: knex.fn.now() }, '*')
+      // TODO: problem
     }
 
     const streams = await streamsQuery.where({ id: streamId })
@@ -1185,15 +1183,6 @@ export const grantProjectPermissionsFactory = (
   const grant = grantStreamPermissionsFactory(deps)
   return async (params) => await grant({ ...params, streamId: params.projectId })
 }
-
-export const deleteProjectRoleFactory =
-  ({ db }: { db: Knex }): DeleteProjectRole =>
-  async ({ projectId, userId }) => {
-    return await revokeStreamPermissionsFactory({ db })({
-      streamId: projectId,
-      userId
-    })
-  }
 
 export const revokeStreamPermissionsFactory =
   (deps: { db: Knex }): RevokeStreamPermissions =>
@@ -1262,6 +1251,7 @@ export const revokeStreamPermissionsFactory =
 
     if (trackProjectUpdate) {
       streamQ.update({ updatedAt: knex.fn.now() }, '*')
+      // TODO: problem
     }
 
     const [stream] = await streamQ
@@ -1273,7 +1263,7 @@ export const revokeStreamPermissionsFactory =
  */
 export const markOnboardingBaseStreamFactory =
   (deps: { db: Knex }): MarkOnboardingBaseStream =>
-  async (streamId: string, version: string) => {
+  async (streamId: string, version: string, updatedAt: Date) => {
     const stream = await getStreamFactory(deps)({ streamId })
     if (!stream) {
       throw new StreamNotFoundError(`Stream ${streamId} not found`)
@@ -1281,7 +1271,8 @@ export const markOnboardingBaseStreamFactory =
     //  this happens outside of the a multiregion ctx
     await updateStreamFactory(deps)({
       id: streamId,
-      name: 'Onboarding Stream Local Source - Do Not Delete'
+      name: 'Onboarding Stream Local Source - Do Not Delete',
+      updatedAt
     })
     const meta = metaHelpers(Streams, deps.db)
     await meta.set(streamId, Streams.meta.metaKey.onboardingBaseStream, version)

@@ -8,7 +8,7 @@ import type { MaybeNullOrUndefined, StreamRoles } from '@speckle/shared'
 export type GetProject = (args: { projectId: string }) => Promise<Project | null>
 
 export type UpdateProject = (args: {
-  projectUpdate: Pick<StreamRecord, 'id'> & Partial<StreamRecord>
+  projectUpdate: Pick<StreamRecord, 'id'> & Partial<StreamRecord> & { updatedAt: Date }
 }) => Promise<StreamRecord>
 
 export type StoreProjectRole = (args: {
@@ -33,11 +33,6 @@ export type UpsertProjectRole = (
   },
   options?: { trackProjectUpdate?: boolean }
 ) => Promise<StreamRecord>
-
-export type DeleteProjectRole = (args: {
-  projectId: string
-  userId: string
-}) => Promise<StreamRecord | undefined>
 
 export type DeleteProject = (args: { projectId: string }) => Promise<void>
 export type DeleteProjectAndCommits = (args: { projectId: string }) => Promise<void>
