@@ -44,12 +44,16 @@
 
         <!-- Visual track highlight between handles -->
         <div
-          class="absolute top-0.5 h-3 bg-gray-300/60 dark:bg-gray-200/40 rounded-full pointer-events-none z-0"
-          :style="{
-            left: `${minPercentage}%`,
-            width: `${maxPercentage - minPercentage}%`
-          }"
-        />
+          class="absolute top-0.5 h-3 w-full pointer-events-none z-0 rounded-full overflow-hidden"
+          style="background: transparent"
+        >
+          <div
+            class="absolute inset-0 bg-gray-300/60 dark:bg-gray-200/40 rounded-full transition-all duration-75"
+            :style="{
+              clipPath: `inset(0 ${100 - maxPercentage}% 0 ${minPercentage}%)`
+            }"
+          />
+        </div>
       </div>
     </div>
     <div v-if="showFields" class="flex justify-between gap-2 mt-0.5">
