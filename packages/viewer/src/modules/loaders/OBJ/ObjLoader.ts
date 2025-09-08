@@ -5,6 +5,7 @@ import { ObjConverter } from './ObjConverter.js'
 import { ObjGeometryConverter } from './ObjGeometryConverter.js'
 import { WorldTree } from '../../../index.js'
 import Logger from '../../utils/Logger.js'
+import { PropertyInfo } from '@speckle/objectloader2'
 
 export class ObjLoader extends Loader {
   protected baseLoader: OBJLoader
@@ -18,6 +19,10 @@ export class ObjLoader extends Loader {
 
   public get finished(): boolean {
     return this.isFinished
+  }
+
+  public get properties(): PropertyInfo[] {
+    return []
   }
 
   public constructor(targetTree: WorldTree, resource: string, resourceData?: unknown) {

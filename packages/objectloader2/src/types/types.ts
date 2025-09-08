@@ -8,6 +8,7 @@ export interface Base {
   id: string
   speckle_type: string
   __closure?: Record<string, number>
+  [x: string]: unknown
 }
 
 export interface Reference {
