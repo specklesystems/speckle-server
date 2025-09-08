@@ -197,18 +197,24 @@ export function getExistenceFilterCount(
     return filter.objectCount ?? 0
   }
 
-  const objectsWithProperty = filter.valueGroups.reduce((total, vg) => {
-    if ('ids' in vg && Array.isArray(vg.ids)) {
-      return total + vg.ids.length
-    }
-    return total
-  }, 0)
+  const hasIndividualIds =
+    filter.valueGroups.length > 0 &&
+    'id' in filter.valueGroups[0] &&
+    !('ids' in filter.valueGroups[0])
+
+  const objectsWithProperty = hasIndividualIds
+    ? filter.valueGroups.length // Each valueGroup = one object
+    : filter.valueGroups.reduce((total, vg) => {
+        if ('ids' in vg && Array.isArray(vg.ids)) {
+          return total + vg.ids.length
+        }
+        return total
+      }, 0)
 
   if (condition === ExistenceFilterCondition.IsSet) {
     return objectsWithProperty
   } else {
-    return totalObjectCount !== undefined
-      ? Math.max(0, totalObjectCount - objectsWithProperty)
-      : 0
+    const relevantObjectCount = filter.objectCount ?? totalObjectCount ?? 0
+    return Math.max(0, relevantObjectCount - objectsWithProperty)
   }
 }
