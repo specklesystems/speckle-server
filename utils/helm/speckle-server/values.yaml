@@ -786,7 +786,7 @@ server:
     ## @param server.email.port The port on the server for the email service.
     ##
     port: ''
-    ## @param server.email.from The email address from which Speckle will send emails. Defaults to 'no-reply@speckle.systems' if left blank.
+    ## @param server.email.from The email address from which Speckle will send emails. If left blank will cause an error when email are sent.
     ##
     from: ''
     ## @param server.email.username The username with which Speckle will authenticate with the email service.
