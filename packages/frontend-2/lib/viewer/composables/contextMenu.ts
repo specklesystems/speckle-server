@@ -5,11 +5,8 @@ import type { Vector3 } from 'three'
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
-import {
-  useSelectionUtilities,
-  useFilterUtilities,
-  useCameraUtilities
-} from '~~/lib/viewer/composables/ui'
+import { useSelectionUtilities, useCameraUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { useEventListener } from '@vueuse/core'
 
 export type ViewerContextMenuModel = {
