@@ -20,13 +20,14 @@ import { metaHelpers } from '@/modules/core/helpers/meta'
 import { UserValidationError } from '@/modules/core/errors/user'
 import type { Knex } from 'knex'
 import type { ServerRoles } from '@speckle/shared'
-import { Roles } from '@speckle/shared'
+import { isNullOrUndefined, Roles } from '@speckle/shared'
 import type { UserWithOptionalRole } from '@/modules/core/domain/users/types'
 import type {
   BulkLookupUsers,
   CountAdminUsers,
   CountUsers,
   DeleteUserRecord,
+  GetAllUsers,
   GetFirstAdmin,
   GetUser,
   GetUserByEmail,
@@ -46,10 +47,12 @@ import type {
   StoreUser,
   StoreUserAcl,
   UpdateUser,
-  UpdateUserServerRole
+  UpdateUserServerRole,
+  UpsertUser
 } from '@/modules/core/domain/users/operations'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
+import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/dbHelper'
 export type { UserWithOptionalRole, GetUserParams }
 
 const tables = {
@@ -610,6 +613,28 @@ export const searchUsersFactory =
     }
   }
 
+export const upsertUserFactory =
+  ({ db }: { db: Knex }): UpsertUser =>
+  async ({ user }) => {
+    await tables
+      .users(db)
+      .insert(user)
+      .onConflict('id')
+      .merge([
+        'id',
+        'suuid',
+        'createdAt',
+        'name',
+        'bio',
+        'company',
+        'email',
+        'verified',
+        'avatar',
+        'profiles',
+        'passwordDigest'
+      ])
+  }
+
 export const getAllUsersChecksumFactory =
   ({ db }: { db: Knex }): (() => Promise<string>) =>
   async () => {
@@ -626,4 +651,24 @@ export const getAllUsersChecksumFactory =
     ) AS hashed_rows;
   `)
     return result.rows[0].table_checksum
+  }
+
+export const getAllUsersFactory =
+  ({ db }: { db: Knex }): GetAllUsers =>
+  async (args) => {
+    const cursor = args.cursor ? decodeCursor(args.cursor) : null
+    const limit = isNullOrUndefined(args.limit) ? 10 : args.limit
+
+    const q = tables.users(db).limit(clamp(limit, 1, 25)).orderBy(Users.col.id, 'asc')
+
+    if (cursor?.length) {
+      q.andWhere(Users.col.id, '>', cursor)
+    }
+
+    const res = await q
+
+    return {
+      items: res,
+      cursor: res.length ? encodeCursor(res[res.length - 1].id) : null
+    }
   }

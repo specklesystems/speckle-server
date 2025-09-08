@@ -265,3 +265,15 @@ export type SetUserOnboardingChoices = (params: {
   userId: string
   choices: UserOnboardingChoices
 }) => Promise<void>
+
+export type UpsertUser = (params: {
+  user: NullableKeysToOptional<User>
+}) => Promise<void>
+
+export type GetAllUsers = (args: {
+  limit: number
+  cursor: Nullable<string>
+}) => Promise<{
+  items: User[]
+  cursor: Nullable<string>
+}>
