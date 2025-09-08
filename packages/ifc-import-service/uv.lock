@@ -251,7 +251,7 @@ requires-dist = [
     { name = "colorful", specifier = ">=0.5.7" },
     { name = "pydantic", specifier = ">=2.11.7" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
-    { name = "specklepy", extras = ["speckleifc"], specifier = ">=3.0.4" },
+    { name = "specklepy", extras = ["speckleifc"], specifier = ">=3.0.5" },
     { name = "structlog", specifier = ">=25.4.0" },
     { name = "structlog-to-seq", specifier = ">=21.0.0" },
     { name = "typed-settings", specifier = ">=24.5.0" },
@@ -632,7 +632,7 @@ wheels = [
 
 [[package]]
 name = "specklepy"
-version = "3.0.4"
+version = "3.0.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "appdirs" },
@@ -644,9 +644,9 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "ujson" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/08/b3/bd60744a1c78a496007305b9f64f1d9142b80ab859dccd2348bca72b3d47/specklepy-3.0.4.tar.gz", hash = "sha256:5e0fb017c4ce793a9a17a9638869fa040df982796dc7374504ffbfabddffa798", size = 94255, upload-time = "2025-09-04T15:54:50.33Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d2/d2/989517884c32a1432b0e72f9647992de38f27ee9e2d63f1ad9896166f4ad/specklepy-3.0.5.tar.gz", hash = "sha256:9641494131deaee4f2b58bc7074a4b08a0a30c00510dcec30d87ad144bfe3379", size = 94263, upload-time = "2025-09-08T14:04:56.343Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cd/0a/6c1c76fc7eea4093dce946cb029853122b3129b8f8258a07519ef0ab414d/specklepy-3.0.4-py3-none-any.whl", hash = "sha256:fe2c2794b7148eeca713c97776ea39f7766b73c9dc7406c4af3a6291fc1ac50b", size = 143226, upload-time = "2025-09-04T15:54:49.311Z" },
+    { url = "https://files.pythonhosted.org/packages/f8/47/a8facb3be657b1a90ec3d465f644a1e75d97a24371621aa9f70b1afffffd/specklepy-3.0.5-py3-none-any.whl", hash = "sha256:2f91e512f2f2e4e77d86b85025e56012b30c18080329202575735b16236383de", size = 143227, upload-time = "2025-09-08T14:04:54.859Z" },
 ]
 
 [package.optional-dependencies]
