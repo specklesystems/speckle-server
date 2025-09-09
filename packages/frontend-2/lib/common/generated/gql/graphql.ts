@@ -1390,6 +1390,10 @@ export type FileUploadMutationsStartFileImportArgs = {
 };
 
 export type FinishFileImportInput = {
+  /**
+   * This is the blob Id of the uploaded file. For legacy reasons it is named jobId.
+   * Note: This is the not the background job Id.
+   */
   jobId: Scalars['String']['input'];
   projectId: Scalars['String']['input'];
   reason?: InputMaybe<Scalars['String']['input']>;

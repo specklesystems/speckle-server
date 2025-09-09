@@ -2,11 +2,11 @@
   <div class="relative">
     <PresentationHeader
       v-if="!hideUi"
-      v-model:is-sidebar-open="isSlidesSidebarOpen"
+      v-model:is-sidebar-open="isLeftSidebarOpen"
       class="absolute top-4 left-4"
       :title="presentation?.title"
-      :class="{ 'left-[15.75rem]': isSlidesSidebarOpen }"
-      @toggle-sidebar="isSlidesSidebarOpen = !isSlidesSidebarOpen"
+      :class="{ 'left-[15.75rem]': isLeftSidebarOpen }"
+      @toggle-sidebar="isLeftSidebarOpen = !isLeftSidebarOpen"
     />
     <PresentationActions
       v-if="!hideUi"
@@ -20,12 +20,12 @@
       class="absolute left-4 top-1/2 -translate-y-1/2"
       :current-slide-index="currentViewIndex"
       :slide-count="viewsCount || 0"
-      :class="{ 'left-[15.75rem]': isSlidesSidebarOpen }"
+      :class="{ 'left-[15.75rem]': isLeftSidebarOpen }"
     />
 
     <div class="h-screen w-screen flex">
-      <PresentationSlidesSidebar
-        v-if="isSlidesSidebarOpen"
+      <PresentationLeftSidebar
+        v-if="isLeftSidebarOpen"
         class="flex-shrink-0"
         :slides="presentation"
         :workspace-logo="workspace?.logo"
@@ -61,7 +61,9 @@
       @on-next="onNext"
     />
 
-    <div
+    <PresentationSpeckleLogo class="absolute bottom-4 right-4 z-20" />
+
+    <!-- <div
       v-if="!hideUi"
       class="bg-foundation border border-outline-3 rounded-xl shadow-md h-10 flex items-center absolute right-4 bottom-4 p-1"
       :class="{ 'right-[21rem]': isInfoSidebarOpen }"
@@ -71,14 +73,13 @@
       >
         <LucideFullscreen class="size-4" />
       </button>
-    </div>
+    </div> -->
   </div>
 </template>
 
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
-import { LucideFullscreen } from 'lucide-vue-next'
 
 graphql(`
   fragment ProjectPresentations_SavedViewGroup on SavedViewGroup {
@@ -134,7 +135,7 @@ const { result } = useQuery(projectPresentationPageQuery, () => ({
 
 const currentViewIndex = ref(0)
 const isInfoSidebarOpen = ref(false)
-const isSlidesSidebarOpen = ref(false)
+const isLeftSidebarOpen = ref(false)
 const hideUi = ref(false)
 
 const workspace = computed(() => result.value?.project.workspace)
