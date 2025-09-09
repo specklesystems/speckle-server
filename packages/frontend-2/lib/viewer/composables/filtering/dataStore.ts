@@ -14,6 +14,26 @@ import type {
   PropertyInfoBase
 } from '~/lib/viewer/helpers/filters/types'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { shouldExcludeFromFiltering } from '~/lib/viewer/helpers/filters/utils'
+import { DEEP_EXTRACTION_CONFIG } from '~/lib/viewer/helpers/filters/constants'
+
+/**
+ * Helper function to batch property map updates for better performance
+ */
+function processBatchedPropertyUpdates(
+  updates: Array<{ path: string; value: unknown; type: string }>,
+  propertyMap: Record<string, PropertyInfoBase>
+) {
+  for (const update of updates) {
+    if (!propertyMap[update.path]) {
+      propertyMap[update.path] = {
+        concatenatedPath: update.path,
+        value: update.value,
+        type: update.type
+      } as PropertyInfoBase
+    }
+  }
+}
 
 export function useCreateViewerFilteringDataStore() {
   const dataSourcesMap: Ref<Record<string, DataSource>> = ref({})
@@ -48,69 +68,119 @@ export function useCreateViewerFilteringDataStore() {
           const objectId = node.model.id
           objectMap[objectId] = node.model.raw as SpeckleObject
 
-          // Extract only commonly used properties - avoid expensive full traversal
+          // Extract all properties with deep traversal
           const objProps: Record<string, unknown> = {}
 
-          // Direct properties
-          for (const [key, value] of Object.entries(node.model.raw)) {
-            if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-              const path = key
-              objProps[path] = value
-              if (!propertyMap[path]) {
-                propertyMap[path] = {
-                  concatenatedPath: path,
+          const pendingPropertyUpdates: Array<{
+            path: string
+            value: unknown
+            type: string
+          }> = []
+
+          const extractionQueue: Array<{
+            obj: Record<string, unknown>
+            basePath: string
+            depth: number
+          }> = [
+            { obj: node.model.raw as Record<string, unknown>, basePath: '', depth: 0 }
+          ]
+
+          while (extractionQueue.length > 0) {
+            const current = extractionQueue.shift()!
+            const { obj, basePath, depth } = current
+
+            if (
+              depth >= DEEP_EXTRACTION_CONFIG.MAX_DEPTH ||
+              !obj ||
+              typeof obj !== 'object'
+            ) {
+              continue
+            }
+
+            for (const [key, value] of Object.entries(obj)) {
+              if (value === null || value === undefined) {
+                continue
+              }
+
+              const fullPath = basePath ? `${basePath}.${key}` : key
+
+              if (shouldExcludeFromFiltering(fullPath)) {
+                continue
+              }
+
+              if (typeof value !== 'object' || Array.isArray(value)) {
+                objProps[fullPath] = value
+
+                pendingPropertyUpdates.push({
+                  path: fullPath,
                   value,
                   type: typeof value
-                } as PropertyInfoBase
-              }
-            }
-          }
+                })
 
-          // Properties.* (one level)
-          const props = node.model.raw.properties
-          if (props && typeof props === 'object' && !Array.isArray(props)) {
-            for (const [key, value] of Object.entries(
-              props as Record<string, unknown>
-            )) {
-              if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-                const path = `properties.${key}`
-                objProps[path] = value
-                if (!propertyMap[path]) {
-                  propertyMap[path] = {
-                    concatenatedPath: path,
-                    value,
-                    type: typeof value
-                  } as PropertyInfoBase
+                if (
+                  pendingPropertyUpdates.length >= DEEP_EXTRACTION_CONFIG.BATCH_SIZE
+                ) {
+                  processBatchedPropertyUpdates(pendingPropertyUpdates, propertyMap)
+                  pendingPropertyUpdates.length = 0
                 }
-              }
-            }
-          }
+              } else {
+                const nestedObj = value as Record<string, unknown>
 
-          // Parameters.*.value (Revit objects)
-          const params = node.model.raw.parameters
-          if (params && typeof params === 'object' && !Array.isArray(params)) {
-            for (const [key, paramObj] of Object.entries(
-              params as Record<string, unknown>
-            )) {
-              if (
-                paramObj &&
-                typeof paramObj === 'object' &&
-                !Array.isArray(paramObj)
-              ) {
-                const param = paramObj as Record<string, unknown>
-                if ('value' in param) {
-                  const path = `parameters.${key}.value`
-                  objProps[path] = param.value
-                  if (!propertyMap[path]) {
-                    propertyMap[path] = {
-                      concatenatedPath: path,
-                      value: param.value,
-                      type: typeof param.value
-                    } as PropertyInfoBase
+                // Skip common non-filterable object types early for performance
+                if (
+                  key === 'displayMesh' ||
+                  key === 'renderMaterial' ||
+                  key === 'geometry' ||
+                  key === 'mesh' ||
+                  key === 'vertices' ||
+                  key === 'faces' ||
+                  key === 'colors' ||
+                  key === 'transform' ||
+                  key === 'bbox' ||
+                  key.startsWith('__')
+                ) {
+                  continue
+                }
+
+                if (key === 'parameters') {
+                  for (const [paramKey, paramObj] of Object.entries(nestedObj)) {
+                    if (
+                      paramObj &&
+                      typeof paramObj === 'object' &&
+                      !Array.isArray(paramObj)
+                    ) {
+                      const param = paramObj as Record<string, unknown>
+                      if ('value' in param) {
+                        const paramPath = `${fullPath}.${paramKey}.value`
+                        if (!shouldExcludeFromFiltering(paramPath)) {
+                          objProps[paramPath] = param.value
+                          pendingPropertyUpdates.push({
+                            path: paramPath,
+                            value: param.value,
+                            type: typeof param.value
+                          })
+                        }
+                      }
+                      extractionQueue.push({
+                        obj: param,
+                        basePath: `${fullPath}.${paramKey}`,
+                        depth: depth + 2
+                      })
+                    }
                   }
+                } else {
+                  extractionQueue.push({
+                    obj: nestedObj,
+                    basePath: fullPath,
+                    depth: depth + 1
+                  })
                 }
               }
             }
+          }
+
+          if (pendingPropertyUpdates.length > 0) {
+            processBatchedPropertyUpdates(pendingPropertyUpdates, propertyMap)
           }
 
           objectProperties[objectId] = objProps

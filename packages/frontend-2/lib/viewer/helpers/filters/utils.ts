@@ -40,7 +40,8 @@ export const shouldExcludeFromFiltering = (key: string): boolean => {
     key.includes('.materialCategory') ||
     key.includes('displayStyle') ||
     key.includes('displayValue') ||
-    key.includes('displayMesh')
+    key.includes('displayMesh') ||
+    key.startsWith('__')
   ) {
     return true
   }
