@@ -60,3 +60,21 @@ export const getConditionsForType = (filterType: FilterType): FilterCondition[] 
 export const getConditionLabel = (condition: FilterCondition): string => {
   return FILTER_CONDITION_CONFIG[condition]?.label || 'is'
 }
+
+export const DEEP_EXTRACTION_CONFIG = {
+  MAX_DEPTH: 10, // Maximum nesting depth
+  BATCH_SIZE: 100 // Batch size for property map updates
+} as const
+
+// Non-filterable object keys (for performance - skip deep traversal)
+export const NON_FILTERABLE_OBJECT_KEYS = [
+  'displayMesh',
+  'renderMaterial',
+  'geometry',
+  'mesh',
+  'vertices',
+  'faces',
+  'colors',
+  'transform',
+  'bbox'
+] as const

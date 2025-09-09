@@ -180,8 +180,6 @@ export const usePropertyFilteringPostSetup = () => {
       const extension = filteringExtension()
       const objectIds = dataStore.getFinalObjectIds()
 
-      extension.resetFilters()
-
       const hasAppliedFilters = filters.propertyFilters.value.some(
         (filter) => filter.isApplied
       )
