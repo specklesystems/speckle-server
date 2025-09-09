@@ -23,7 +23,6 @@ import {
   getStreamBranchByNameFactory,
   markCommitBranchUpdatedFactory
 } from '@/modules/core/repositories/branches'
-import { markCommitStreamUpdatedFactory } from '@/modules/core/repositories/streams'
 import {
   getObjectFactory,
   storeObjectsIfNotFoundFactory
@@ -42,7 +41,6 @@ import { createTestUser } from '@/test/authHelper'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { buildBasicTestProject } from '@/modules/core/tests/helpers/creation'
 
-const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getObject = getObjectFactory({ db })
 const createCommitByBranchId = createCommitByBranchIdFactory({
   createCommit: createCommitFactory({ db }),
@@ -50,7 +48,6 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   getBranchById: getBranchByIdFactory({ db }),
   insertStreamCommits: insertStreamCommitsFactory({ db }),
   insertBranchCommits: insertBranchCommitsFactory({ db }),
-  markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   emitEvent: getEventBus().emit
 })

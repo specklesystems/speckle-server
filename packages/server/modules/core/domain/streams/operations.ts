@@ -266,10 +266,6 @@ export type GetUserStreamsCount = (
   params: UserStreamsQueryCountParams
 ) => Promise<number>
 
-export type MarkBranchStreamUpdated = (branchId: string) => Promise<boolean>
-
-export type MarkCommitStreamUpdated = (commitId: string) => Promise<boolean>
-
 export type MarkOnboardingBaseStream = (
   streamId: string,
   version: string,
@@ -312,43 +308,22 @@ export type GetFavoritedStreamsCount = (
   streamIdWhitelist?: Optional<string[]>
 ) => Promise<number>
 
-export type RevokeStreamPermissions = (
-  params: {
-    streamId: string
-    userId: string
-  },
-  options?: Partial<{
-    /**
-     * Whether to mark project record as updated
-     */
-    trackProjectUpdate: boolean
-    // TODO: problem
-  }>
-) => Promise<Optional<Stream>>
+export type RevokeStreamPermissions = (params: {
+  streamId: string
+  userId: string
+}) => Promise<Optional<Stream>>
 
-export type GrantStreamPermissions = (
-  params: {
-    streamId: string
-    userId: string
-    role: StreamRoles
-  },
-  options?: {
-    trackProjectUpdate?: boolean
-    // TODO: problem
-  }
-) => Promise<Optional<Stream>>
+export type GrantStreamPermissions = (params: {
+  streamId: string
+  userId: string
+  role: StreamRoles
+}) => Promise<Optional<Stream>>
 
-export type GrantProjectPermissions = (
-  params: {
-    projectId: string
-    userId: string
-    role: StreamRoles
-  },
-  options?: {
-    trackProjectUpdate?: boolean
-    // TODO: problem
-  }
-) => Promise<Optional<Project>>
+export type GrantProjectPermissions = (params: {
+  projectId: string
+  userId: string
+  role: StreamRoles
+}) => Promise<Optional<Project>>
 
 export type CreateStream = (
   params: (StreamCreateInput | ProjectCreateArgs) & {
@@ -400,10 +375,6 @@ export type AddOrUpdateStreamCollaborator = (
   options?: Partial<{
     fromInvite: ServerInviteRecord
     /**
-     * Whether to mark project record as updated
-     */
-    trackProjectUpdate: boolean
-    /**
      * Whether to skipp checking if setByUserId has access to the stream
      */
     skipAuthorization: boolean
@@ -416,10 +387,6 @@ export type RemoveStreamCollaborator = (
   removedById: string,
   removerResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>,
   options?: Partial<{
-    /**
-     * Whether to mark project record as updated
-     */
-    trackProjectUpdate: boolean
     /**
      * Whether to skipp checking if setByUserId has access to the stream
      */
@@ -439,10 +406,6 @@ export type SetStreamCollaborator = (
     setterResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
   },
   options?: Partial<{
-    /**
-     * Whether to mark project record as updated
-     */
-    trackProjectUpdate: boolean
     /**
      * Whether to skipp checking if setByUserId has access to the stream
      */

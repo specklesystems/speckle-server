@@ -44,8 +44,7 @@ import {
 } from '@/modules/core/repositories/branches'
 import {
   updateStreamFactory,
-  grantStreamPermissionsFactory,
-  markCommitStreamUpdatedFactory
+  grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import {
   getObjectFactory,
@@ -67,7 +66,6 @@ import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/com
 import { logger } from '@/observability/logging'
 import { getProjectReplicationDbs } from '@/modules/multiregion/utils/dbSelector'
 
-const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
 })
@@ -104,7 +102,6 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   getBranchById: getBranchByIdFactory({ db }),
   insertStreamCommits: insertStreamCommitsFactory({ db }),
   insertBranchCommits: insertBranchCommitsFactory({ db }),
-  markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   emitEvent: getEventBus().emit
 })

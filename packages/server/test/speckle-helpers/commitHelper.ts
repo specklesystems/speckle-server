@@ -12,7 +12,6 @@ import {
   getObjectFactory,
   storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
-import { markCommitStreamUpdatedFactory } from '@/modules/core/repositories/streams'
 import {
   createCommitByBranchIdFactory,
   createCommitByBranchNameFactory
@@ -122,7 +121,6 @@ export async function createTestCommits(
   const newCommits = await Promise.all(
     commits.map(async (c) => {
       const projectDb = await getProjectDbClient({ projectId: c.streamId })
-      const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db: projectDb })
       const getObject = getObjectFactory({ db: projectDb })
       const createCommitByBranchId = createCommitByBranchIdFactory({
         createCommit: createCommitFactory({ db: projectDb }),
@@ -130,7 +128,6 @@ export async function createTestCommits(
         getBranchById: getBranchByIdFactory({ db: projectDb }),
         insertStreamCommits: insertStreamCommitsFactory({ db: projectDb }),
         insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
-        markCommitStreamUpdated,
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
         emitEvent: getEventBus().emit
       })

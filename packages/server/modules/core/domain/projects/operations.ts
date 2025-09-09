@@ -25,14 +25,11 @@ export type StoreProjectRoles = (args: {
   }[]
 }) => Promise<void>
 
-export type UpsertProjectRole = (
-  args: {
-    projectId: string
-    userId: string
-    role: StreamRoles
-  },
-  options?: { trackProjectUpdate?: boolean }
-) => Promise<StreamRecord>
+export type UpsertProjectRole = (args: {
+  projectId: string
+  userId: string
+  role: StreamRoles
+}) => Promise<StreamRecord>
 
 export type DeleteProject = (args: { projectId: string }) => Promise<void>
 export type DeleteProjectAndCommits = (args: { projectId: string }) => Promise<void>

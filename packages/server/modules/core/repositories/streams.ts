@@ -21,7 +21,6 @@ import {
   Users,
   StreamCommits,
   Commits,
-  Branches,
   ServerAcl
 } from '@/modules/core/dbSchema'
 import { InvalidArgumentError, LogicError } from '@/modules/shared/errors'
@@ -101,8 +100,6 @@ import type {
   UserStreamsQueryCountParams,
   GetUserStreamsPage,
   GetUserStreamsCount,
-  MarkBranchStreamUpdated,
-  MarkCommitStreamUpdated,
   MarkOnboardingBaseStream,
   GetUserDeletableStreams,
   GetStreamsCollaborators,
@@ -1068,63 +1065,20 @@ export const updateProjectFactory =
     return updatedStream
   }
 
-export const markBranchStreamUpdatedFactory =
-  (deps: { db: Knex }): MarkBranchStreamUpdated =>
-  async (branchId: string) => {
-    const q = tables
-      .streams(deps.db)
-      .whereIn(Streams.col.id, (w) => {
-        w.select(Branches.col.streamId)
-          .from(Branches.name)
-          .where(Branches.col.id, branchId)
-      })
-      .update(Streams.withoutTablePrefix.col.updatedAt, new Date())
-    const updates = await q
-    return updates > 0
-  }
-
-export const markCommitStreamUpdatedFactory =
-  (deps: { db: Knex }): MarkCommitStreamUpdated =>
-  async (commitId: string) => {
-    const q = tables
-      .streams(deps.db)
-      .whereIn(Streams.col.id, (w) => {
-        w.select(StreamCommits.col.streamId)
-          .from(StreamCommits.name)
-          .where(StreamCommits.col.commitId, commitId)
-      })
-      .update(Streams.withoutTablePrefix.col.updatedAt, new Date())
-    const updates = await q
-    return updates > 0
-  }
-
 export const upsertProjectRoleFactory =
   ({ db }: { db: Knex }): UpsertProjectRole =>
-  async (
-    { projectId, userId, role },
-    { trackProjectUpdate } = { trackProjectUpdate: true }
-  ) => {
-    const res = await grantStreamPermissionsFactory({ db })(
-      {
-        streamId: projectId,
-        userId,
-        role
-      },
-      { trackProjectUpdate }
-    )
+  async ({ projectId, userId, role }) => {
+    const res = await grantStreamPermissionsFactory({ db })({
+      streamId: projectId,
+      userId,
+      role
+    })
     return res! // TODO: stream theoretically can be optional, return type needs fixing
   }
 
 export const grantStreamPermissionsFactory =
   (deps: { db: Knex }): GrantStreamPermissions =>
-  async (
-    params: {
-      streamId: string
-      userId: string
-      role: StreamRoles
-    },
-    options: { trackProjectUpdate?: boolean } = { trackProjectUpdate: true }
-  ) => {
+  async (params: { streamId: string; userId: string; role: StreamRoles }) => {
     const { streamId, userId, role } = params
 
     // assert we are not removing last admin from project
@@ -1164,12 +1118,6 @@ export const grantStreamPermissionsFactory =
     await deps.db.raw(query)
 
     const streamsQuery = tables.streams(deps.db)
-    if (options.trackProjectUpdate) {
-      // update stream updated at
-      streamsQuery.update({ updatedAt: knex.fn.now() }, '*')
-      // TODO: problem
-    }
-
     const streams = await streamsQuery.where({ id: streamId })
     return streams[0] as StreamRecord
   }
@@ -1186,9 +1134,8 @@ export const grantProjectPermissionsFactory = (
 
 export const revokeStreamPermissionsFactory =
   (deps: { db: Knex }): RevokeStreamPermissions =>
-  async (params, options) => {
+  async (params) => {
     const { streamId, userId } = params
-    const { trackProjectUpdate = true } = options || {}
 
     const existingPermission = await tables
       .streamAcl(deps.db)
@@ -1248,11 +1195,6 @@ export const revokeStreamPermissionsFactory =
 
     // update stream updated at, if enabled
     const streamQ = tables.streams(deps.db).where({ id: streamId })
-
-    if (trackProjectUpdate) {
-      streamQ.update({ updatedAt: knex.fn.now() }, '*')
-      // TODO: problem
-    }
 
     const [stream] = await streamQ
     return stream
