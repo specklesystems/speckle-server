@@ -15,7 +15,10 @@ import type {
 } from '~/lib/viewer/helpers/filters/types'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { shouldExcludeFromFiltering } from '~/lib/viewer/helpers/filters/utils'
-import { DEEP_EXTRACTION_CONFIG } from '~/lib/viewer/helpers/filters/constants'
+import {
+  DEEP_EXTRACTION_CONFIG,
+  NON_FILTERABLE_OBJECT_KEYS
+} from '~/lib/viewer/helpers/filters/constants'
 
 /**
  * Helper function to batch property map updates for better performance
@@ -128,15 +131,9 @@ export function useCreateViewerFilteringDataStore() {
 
                 // Skip common non-filterable object types early for performance
                 if (
-                  key === 'displayMesh' ||
-                  key === 'renderMaterial' ||
-                  key === 'geometry' ||
-                  key === 'mesh' ||
-                  key === 'vertices' ||
-                  key === 'faces' ||
-                  key === 'colors' ||
-                  key === 'transform' ||
-                  key === 'bbox' ||
+                  NON_FILTERABLE_OBJECT_KEYS.includes(
+                    key as (typeof NON_FILTERABLE_OBJECT_KEYS)[number]
+                  ) ||
                   key.startsWith('__')
                 ) {
                   continue
