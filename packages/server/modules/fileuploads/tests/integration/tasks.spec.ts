@@ -179,7 +179,7 @@ describe('File import garbage collection @fileuploads integration', () => {
           testData: identifiableData,
           blobId: fileTwo.fileId
         }),
-        attempt: 4,
+        attempt: 3,
         maxAttempt: 3
       })
       await saveUploadFile(fileOne)
