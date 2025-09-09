@@ -1,6 +1,8 @@
 import { StreamAcl, Streams } from '@/modules/core/dbSchema'
 import type {
+  BulkUpsertProjects,
   DeleteProject,
+  GetAllProjects,
   GetProject,
   GetUserProjectRoles,
   StoreProject,
@@ -9,7 +11,10 @@ import type {
 } from '@/modules/core/domain/projects/operations'
 import type { Project } from '@/modules/core/domain/streams/types'
 import type { StreamAclRecord } from '@/modules/core/helpers/types'
+import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/dbHelper'
+import { isNullOrUndefined } from '@speckle/shared'
 import type { Knex } from 'knex'
+import { clamp } from 'lodash-es'
 
 const tables = {
   projects: (db: Knex) => db<Project>(Streams.name),
@@ -94,4 +99,35 @@ export const getAllProjectsChecksumFactory =
     ) AS hashed_rows;
   `)
     return result.rows[0].table_checksum
+  }
+
+export const bulkUpsertProjectsFactory =
+  ({ db }: { db: Knex }): BulkUpsertProjects =>
+  async ({ projects }) => {
+    if (!projects.length) return
+    await tables.projects(db).insert(projects).onConflict('id').merge()
+  }
+
+export const getAllProjectsFactory =
+  ({ db }: { db: Knex }): GetAllProjects =>
+  async (args) => {
+    const cursor = args.cursor ? decodeCursor(args.cursor) : null
+    const limit = isNullOrUndefined(args.limit) ? 10 : args.limit
+
+    const q = tables
+      .projects(db)
+      .limit(clamp(limit, 1, 500))
+      .where(Streams.col.regionKey, '=', args.regionKey)
+      .orderBy(Streams.col.id, 'asc')
+
+    if (cursor?.length) {
+      q.andWhere(Streams.col.id, '>', cursor)
+    }
+
+    const res = await q
+
+    return {
+      items: res,
+      cursor: res.length ? encodeCursor(res[res.length - 1].id) : null
+    }
   }

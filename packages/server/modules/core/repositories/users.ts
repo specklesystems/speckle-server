@@ -644,7 +644,7 @@ export const getAllUsersFactory =
     const cursor = args.cursor ? decodeCursor(args.cursor) : null
     const limit = isNullOrUndefined(args.limit) ? 10 : args.limit
 
-    const q = tables.users(db).limit(clamp(limit, 1, 25)).orderBy(Users.col.id, 'asc')
+    const q = tables.users(db).limit(clamp(limit, 1, 500)).orderBy(Users.col.id, 'asc')
 
     if (cursor?.length) {
       q.andWhere(Users.col.id, '>', cursor)

@@ -12,7 +12,11 @@ import {
   getAllUsersChecksumFactory,
   getAllUsersFactory
 } from '@/modules/core/repositories/users'
-import { getAllProjectsChecksumFactory } from '@/modules/core/repositories/projects'
+import {
+  bulkUpsertProjectsFactory,
+  getAllProjectsChecksumFactory,
+  getAllProjectsFactory
+} from '@/modules/core/repositories/projects'
 import {
   bulkUpsertWorkspacesFactory,
   getAllWorkspaceChecksumFactory,
@@ -26,6 +30,10 @@ import type {
   BulkUpsertUsers,
   GetAllUsers
 } from '@/modules/core/domain/users/operations'
+import type {
+  BulkUpsertProjects,
+  GetAllProjects
+} from '@/modules/core/domain/projects/operations'
 
 const MAX_ITERATIONS = 10_000
 const BATCH_SIZE = 500
@@ -87,6 +95,43 @@ export const copyAllWorkspacesAcrossRegionsFactory =
     logger.info('Finished workspace sync')
   }
 
+export const copyAllProjectsAcrossRegionsFactory =
+  (deps: {
+    getAllProjects: GetAllProjects
+    bulkUpsertProjects: BulkUpsertProjects
+  }): (({
+    logger,
+    regionKey
+  }: {
+    logger: Logger
+    regionKey: string
+  }) => Promise<void>) =>
+  async ({ logger, regionKey }) => {
+    logger.info('Started project sync')
+
+    let cursor = null
+    let items = []
+    let iterationCount = 0
+    do {
+      if (iterationCount++ >= MAX_ITERATIONS) {
+        logger.error(`Reached max iteration limit of ${MAX_ITERATIONS}.`)
+        break
+      }
+
+      const batchedProjects = await deps.getAllProjects({
+        cursor,
+        regionKey,
+        limit: BATCH_SIZE
+      })
+      cursor = batchedProjects.cursor
+      items = batchedProjects.items
+
+      await deps.bulkUpsertProjects({ projects: items })
+    } while (cursor && items.length)
+
+    logger.info('Finished project sync')
+  }
+
 const autoSyncRegions = async ({
   allRegions,
   logger
@@ -108,7 +153,7 @@ const autoSyncRegions = async ({
     logger.error({ regionKey, entity: 'users' }, `Cross-region mismatch`)
 
     const copyAllUsersAcrossRegions = copyAllUsersAcrossRegionsFactory({
-      getAllUsers: getAllUsersFactory({ db: mainDb }),
+      getAllUsers: getAllUsersFactory({ db: mainDb }), // important: main -> region
       bulkUpsertUsers: bulkUpsertUsersFactory({ db: regionDb })
     })
 
@@ -125,7 +170,7 @@ const autoSyncRegions = async ({
     logger.error({ regionKey, entity: 'workspaces' }, `Cross-region mismatch`)
 
     const copyAllWorkspacesAcrossRegions = copyAllWorkspacesAcrossRegionsFactory({
-      getAllWorkspaces: getAllWorkspacesFactory({ db: mainDb }),
+      getAllWorkspaces: getAllWorkspacesFactory({ db: mainDb }), // important: main -> region
       bulkUpsertWorkspaces: bulkUpsertWorkspacesFactory({ db: regionDb })
     })
 
@@ -141,6 +186,13 @@ const autoSyncRegions = async ({
     if (mainDbChecksum === regionDbChecksum) continue
 
     logger.error({ regionKey, entity: 'projects' }, `Cross-region mismatch`)
+
+    const copyAllProjectsAcrossRegions = copyAllProjectsAcrossRegionsFactory({
+      getAllProjects: getAllProjectsFactory({ db: regionDb }), // important: region -> main
+      bulkUpsertProjects: bulkUpsertProjectsFactory({ db: mainDb })
+    })
+
+    await copyAllProjectsAcrossRegions({ logger, regionKey })
   }
 }
 

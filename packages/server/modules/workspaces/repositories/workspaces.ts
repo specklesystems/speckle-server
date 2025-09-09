@@ -266,7 +266,7 @@ export const getAllWorkspacesFactory =
 
     const q = tables
       .workspaces(db)
-      .limit(clamp(limit, 1, 25))
+      .limit(clamp(limit, 1, 500))
       .orderBy(Workspaces.col.id, 'asc')
 
     if (cursor?.length) {
