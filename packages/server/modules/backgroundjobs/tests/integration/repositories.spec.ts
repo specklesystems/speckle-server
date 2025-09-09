@@ -174,10 +174,10 @@ describe('Background Jobs repositories @backgroundjobs', () => {
   })
 
   describe('failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory', () => {
-    it('should fail queued background jobs that exceed maximum attempts', async () => {
+    it('should fail queued background jobs that meet or exceed maximum attempts', async () => {
       const job = createTestJob({
         status: BackgroundJobStatus.Queued,
-        attempt: 3,
+        attempt: 2,
         maxAttempt: 2
       })
       await storeBackgroundJob({ job })
