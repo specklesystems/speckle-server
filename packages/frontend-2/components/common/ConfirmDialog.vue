@@ -1,8 +1,11 @@
 <template>
   <LayoutDialog v-model:open="open" max-width="xs" :buttons="dialogButtons">
     <template #header>{{ title ?? 'Discard changes?' }}</template>
+    <slot />
     <p v-if="text" class="mb-2">{{ text }}</p>
-    <p v-else class="mb-2">You have unsaved changes. Are you sure you want to leave?</p>
+    <p v-else-if="!$slots.default" class="mb-2">
+      You have unsaved changes. Are you sure you want to leave?
+    </p>
   </LayoutDialog>
 </template>
 <script setup lang="ts">

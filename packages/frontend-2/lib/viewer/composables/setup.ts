@@ -59,11 +59,9 @@ import { writableAsyncComputed } from '~~/lib/common/composables/async'
 import type { AsyncWritableComputedRef } from '~~/lib/common/composables/async'
 import { setupUiDiffState } from '~~/lib/viewer/composables/setup/diff'
 import type { DiffStateCommand } from '~~/lib/viewer/composables/setup/diff'
-import {
-  useDiffUtilities,
-  useFilterUtilities,
-  useMeasurementUtilities
-} from '~~/lib/viewer/composables/ui'
+import { useDiffUtilities, useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { useCreateViewerFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 import { flatten, isUndefined, reduce } from 'lodash-es'
 import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
 import {
@@ -91,6 +89,7 @@ import {
   type ViewerResource
 } from '@speckle/shared/viewer/route'
 import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
+import type { FilterData } from '~/lib/viewer/helpers/filters/types'
 import {
   useBuildSavedViewsUIState,
   type SavedViewsUIState
@@ -98,6 +97,7 @@ import {
 import type { defaultEdgeColorValue } from '~/lib/viewer/composables/setup/viewMode'
 import { useViewModesSetup } from '~/lib/viewer/composables/setup/viewMode'
 import { useMeasurementsSetup } from '~/lib/viewer/composables/setup/measurements'
+import { useFiltersSetup } from '~/lib/viewer/composables/setup/filters'
 import { useViewerPanelsSetup } from '~/lib/viewer/composables/setup/panels'
 
 export type LoadedModel = NonNullable<
@@ -154,6 +154,7 @@ export type InjectableViewerState = Readonly<{
       availableFilters: ComputedRef<Optional<PropertyInfo[]>>
       views: ComputedRef<SpeckleView[]>
       filteringState: ComputedRef<Optional<FilteringState>>
+      filteringDataStore: ReturnType<typeof useCreateViewerFilteringDataStore>
     }
     /**
      * Whether the Viewer has finished doing the initial object loading
@@ -316,11 +317,16 @@ export type InjectableViewerState = Readonly<{
        * For quick object ID lookups
        */
       selectedObjectIds: ComputedRef<Set<string>>
-      propertyFilter: {
-        filter: Ref<Nullable<PropertyInfo>>
-        isApplied: Ref<boolean>
-      }
+      /**
+       * Set of currently isolated object IDs for efficient lookups
+       */
+      isolatedObjectsSet: ComputedRef<Set<string> | null>
+
+      // Multi-filter system
+      propertyFilters: Ref<FilterData[]>
+      filteredObjectsCount: Ref<number>
       hasAnyFiltersApplied: ComputedRef<boolean>
+      activeColorFilterId: Ref<string | null>
     }
     camera: {
       position: Ref<Vector3>
@@ -454,6 +460,8 @@ function setupViewerMetadata(params: {
   const filteringState = shallowRef(undefined as Optional<FilteringState>)
   const views = ref([] as SpeckleView[])
 
+  const filteringDataStore = useCreateViewerFilteringDataStore()
+
   const refreshWorldTreeAndFilters = async () => {
     worldTree.value = viewer.getWorldTree()
     availableFilters.value = await viewer.getObjectProperties()
@@ -481,7 +489,8 @@ function setupViewerMetadata(params: {
     worldTree: computed(() => worldTree.value),
     availableFilters: computed(() => availableFilters.value),
     filteringState: computed(() => filteringState.value),
-    views: computed(() => views.value)
+    views: computed(() => views.value),
+    filteringDataStore
   }
 }
 
@@ -1124,17 +1133,7 @@ function setupInterfaceState(
 
   const loadProgress = ref(0)
 
-  const isolatedObjectIds = ref([] as string[])
-  const hiddenObjectIds = ref([] as string[])
-  const selectedObjects = shallowRef<Raw<SpeckleObject>[]>([])
-  const propertyFilter = ref(null as Nullable<PropertyInfo>)
-  const isPropertyFilterApplied = ref(false)
-  const hasAnyFiltersApplied = computed(() => {
-    if (isolatedObjectIds.value.length) return true
-    if (hiddenObjectIds.value.length) return true
-    if (propertyFilter.value || isPropertyFilterApplied.value) return true
-    return false
-  })
+  const { filters } = useFiltersSetup()
   const { viewMode } = useViewModesSetup()
 
   const highlightedObjectIds = ref([] as string[])
@@ -1147,8 +1146,8 @@ function setupInterfaceState(
   const selectedObjectIds = computed(
     () =>
       new Set(
-        selectedObjects.value
-          .map((o) => o.id as MaybeNullOrUndefined<string>)
+        filters.selectedObjects.value
+          .map((o: SpeckleObject) => o.id as MaybeNullOrUndefined<string>)
           .filter(isNonNullable)
       )
   )
@@ -1206,15 +1205,8 @@ function setupInterfaceState(
         edited: ref(false)
       },
       filters: {
-        isolatedObjectIds,
-        hiddenObjectIds,
-        selectedObjects,
-        selectedObjectIds,
-        propertyFilter: {
-          filter: propertyFilter,
-          isApplied: isPropertyFilterApplied
-        },
-        hasAnyFiltersApplied
+        ...filters,
+        selectedObjectIds
       },
       highlightedObjectIds,
       measurement: useMeasurementsSetup(),
