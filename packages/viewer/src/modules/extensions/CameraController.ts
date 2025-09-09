@@ -306,6 +306,12 @@ export class CameraController extends Extension implements SpeckleCamera {
   }
 
   public onLateUpdate(): void {
+    /** A simple way to make sure any potential camera movement is propagated forward as dynamic especially to the rendering pipelines
+     *  Ideally, we'd need something more complicated that keeps track of ongoing animations and such and makes sure the camer is dynamic
+     *  But until we need to complicate ourselves, this will be enough
+     */
+    if (this._lastCameraChanged) this.emit(CameraEvent.Dynamic)
+
     this.emit(CameraEvent.LateFrameUpdate, this._lastCameraChanged)
   }
 
