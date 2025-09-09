@@ -1,8 +1,60 @@
 import { FilteringExtension } from '@speckle/viewer'
-import type { NumericPropertyInfo } from '@speckle/viewer'
+import type { NumericPropertyInfo, StringPropertyInfo } from '@speckle/viewer'
 import { watchTriggerable } from '@vueuse/core'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { useOnViewerLoadComplete } from '~/lib/viewer/composables/viewer'
+import type {
+  ColorGroupWithSource,
+  ColorGroup
+} from '~/lib/viewer/helpers/coloring/types'
+import {
+  createNumericFilterColorGroups,
+  createStringFilterColorGroups
+} from '~/lib/viewer/helpers/coloring/utils'
+
+/**
+ * Setup composable for coloring-related state
+ */
+export const useColoringSetup = () => {
+  // Centralized color state - property colors and highlights
+  const coloredObjectGroups = ref<Array<ColorGroupWithSource>>([])
+
+  // Computed properties for different color sources
+  const propertyColorGroups = computed(() => {
+    return coloredObjectGroups.value
+      .filter((group) => group.source === 'property')
+      .map((group) => ({ objectIds: group.objectIds, color: group.color }))
+  })
+
+  const highlightColorGroups = computed(() => {
+    return coloredObjectGroups.value
+      .filter((group) => group.source === 'highlight')
+      .map((group) => ({ objectIds: group.objectIds, color: group.color }))
+  })
+
+  // Final merged color groups - highlights override property colors
+  const finalColorGroups = computed(() => {
+    const groups: Array<ColorGroup> = []
+
+    // Add property-based colors first (lower priority)
+    groups.push(...propertyColorGroups.value)
+
+    // Add highlights on top (higher priority)
+    // Highlights should override property colors for highlighted objects
+    groups.push(...highlightColorGroups.value)
+
+    return groups
+  })
+
+  return {
+    coloring: {
+      coloredObjectGroups,
+      propertyColorGroups,
+      highlightColorGroups,
+      finalColorGroups
+    }
+  }
+}
 
 /**
  * Integration composable that sets up watchers to sync state with the viewer.
@@ -10,14 +62,69 @@ import { useOnViewerLoadComplete } from '~/lib/viewer/composables/viewer'
  */
 export const useFilterColoringPostSetup = () => {
   const {
-    ui: { filters },
+    ui: { filters, coloring },
     viewer
   } = useInjectedViewerState()
 
   const filteringExtension = () => viewer.instance.getExtension(FilteringExtension)
 
   /**
-   * Sets color filter for numeric filters using setUserObjectColors
+   * Helper to apply colors respecting current isolation state
+   * Property colors respect isolation, but highlights work independently
+   */
+  const applyColorsWithIsolation = (colorGroups: Array<ColorGroup>) => {
+    const extension = filteringExtension()
+    if (colorGroups.length === 0) {
+      extension.removeUserObjectColors()
+    } else {
+      // Separate property colors and highlights from the final color groups
+      const propertyColors = coloring.propertyColorGroups.value
+      const highlightColors = coloring.highlightColorGroups.value
+
+      const currentIsolatedIds = filters.isolatedObjectIds.value
+
+      // Property colors respect isolation - only color visible objects
+      const filteredPropertyColors =
+        currentIsolatedIds.length > 0
+          ? propertyColors
+              .map((group) => ({
+                objectIds: group.objectIds.filter((id) =>
+                  currentIsolatedIds.includes(id)
+                ),
+                color: group.color
+              }))
+              .filter((group) => group.objectIds.length > 0)
+          : propertyColors
+
+      // Highlights work independently - they can highlight any object
+      const allColorGroups = [...filteredPropertyColors, ...highlightColors]
+
+      extension.setUserObjectColors(allColorGroups)
+    }
+  }
+
+  /**
+   * Single watcher for all color updates - watches the final merged color groups
+   */
+  watch(coloring.finalColorGroups, applyColorsWithIsolation, {
+    immediate: true,
+    flush: 'sync'
+  })
+
+  /**
+   * Re-apply colors when isolation state changes
+   */
+  watch(
+    filters.isolatedObjectIds,
+    () => {
+      // Re-apply current colors with new isolation state
+      applyColorsWithIsolation(coloring.finalColorGroups.value)
+    },
+    { flush: 'sync' }
+  )
+
+  /**
+   * Sets color filter for numeric filters by updating the centralized color state
    */
   const setNumericColorFilter = (filterId: string) => {
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
@@ -29,57 +136,55 @@ export const useFilterColoringPostSetup = () => {
     const min = parseFloat(filter.numericRange.min.toFixed(4))
     const max = parseFloat(filter.numericRange.max.toFixed(4))
 
-    const colorGroups =
-      numericFilter.valueGroups
-        ?.filter((vg) => {
-          // Apply the same rounding precision to valueGroup values for consistent comparison
-          const roundedValue = parseFloat(vg.value.toFixed(4))
-          const inRange = roundedValue >= min && roundedValue <= max
-          return inRange
-        })
-        ?.map((vg) => {
-          const normalizedValue = (vg.value - min) / (max - min)
-          const fromColor = { r: 59, g: 130, b: 246 } // #3b82f6
-          const toColor = { r: 236, g: 72, b: 153 } // #ec4899
+    const filteredValueGroups =
+      numericFilter.valueGroups?.filter((vg) => {
+        // Apply the same rounding precision to valueGroup values for consistent comparison
+        const roundedValue = parseFloat(vg.value.toFixed(4))
+        return roundedValue >= min && roundedValue <= max
+      }) || []
 
-          const r = Math.round(
-            fromColor.r + (toColor.r - fromColor.r) * normalizedValue
-          )
-          const g = Math.round(
-            fromColor.g + (toColor.g - fromColor.g) * normalizedValue
-          )
-          const b = Math.round(
-            fromColor.b + (toColor.b - fromColor.b) * normalizedValue
-          )
+    const propertyColorGroups = createNumericFilterColorGroups(
+      filteredValueGroups,
+      min,
+      max
+    )
 
-          return {
-            objectIds: [vg.id],
-            color: `rgb(${r}, ${g}, ${b})`
-          }
-        }) || []
-
-    const extension = filteringExtension()
-    extension.setUserObjectColors(colorGroups)
+    // Update centralized color state - remove existing property colors and add new ones
+    const currentHighlights = coloring.coloredObjectGroups.value.filter(
+      (g) => g.source === 'highlight'
+    )
+    coloring.coloredObjectGroups.value = [...propertyColorGroups, ...currentHighlights]
   }
 
   /**
-   * Sets color filter for string filters using setColorFilter
+   * Sets color filter for string filters by updating the centralized color state
    */
   const setStringColorFilter = (filterId: string) => {
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (!filter?.filter || filter.type !== 'string') return
 
-    const extension = filteringExtension()
-    extension.setColorFilter(filter.filter)
+    const stringFilter = filter.filter as StringPropertyInfo
+
+    const propertyColorGroups = createStringFilterColorGroups(
+      stringFilter.valueGroups || []
+    )
+
+    // Update centralized color state - remove existing property colors and add new ones
+    const currentHighlights = coloring.coloredObjectGroups.value.filter(
+      (g) => g.source === 'highlight'
+    )
+    coloring.coloredObjectGroups.value = [...propertyColorGroups, ...currentHighlights]
   }
 
   /**
-   * Removes the active color filter by calling the viewer extension
+   * Removes the active color filter by clearing property colors from centralized state
    */
   const removeColorFilter = () => {
-    const extension = filteringExtension()
-    extension.removeColorFilter()
-    extension.removeUserObjectColors()
+    // Clear property colors from centralized state, keep highlights
+    const currentHighlights = coloring.coloredObjectGroups.value.filter(
+      (g) => g.source === 'highlight'
+    )
+    coloring.coloredObjectGroups.value = currentHighlights
   }
 
   /**
@@ -167,6 +272,8 @@ export const useFilterColoringPostSetup = () => {
   )
 
   onBeforeUnmount(() => {
+    // Clear all color state
+    coloring.coloredObjectGroups.value = []
     removeColorFilter()
   })
 }

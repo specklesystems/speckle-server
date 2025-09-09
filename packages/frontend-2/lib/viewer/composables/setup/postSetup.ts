@@ -17,7 +17,6 @@ import {
   ExplodeEvent,
   ExplodeExtension,
   LoaderEvent,
-  FilteringExtension,
   type SunLightConfiguration
 } from '@speckle/viewer'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
@@ -537,27 +536,32 @@ function useViewerFiltersIntegration() {
   const state = useInjectedViewerState()
   const {
     viewer: { instance },
-    ui: { filters, highlightedObjectIds }
+    ui: { filters, coloring, highlightedObjectIds }
   } = state
 
   useFilteringSetup()
   useFilterUtilities({ state })
 
-  // state -> viewer
+  // state -> viewer: Update centralized color state for highlights
   watch(
     highlightedObjectIds,
     (newVal, oldVal) => {
       if (arraysEqual(newVal, oldVal || [])) return
 
-      const filteringExtension = instance.getExtension(FilteringExtension)
-      if (!filteringExtension) return
+      // Update centralized color state - remove existing highlights and add new ones
+      const currentPropertyColors = coloring.coloredObjectGroups.value.filter(
+        (g) => g.source === 'property'
+      )
+      const newHighlightGroups = newVal.map((id) => ({
+        objectIds: [id],
+        color: '#04cbfb',
+        source: 'highlight' as const
+      }))
 
-      if (newVal.length === 0) {
-        filteringExtension.removeUserObjectColors()
-      } else {
-        const colorGroups = newVal.map((id) => ({ objectIds: [id], color: '#04cbfb' }))
-        filteringExtension.setUserObjectColors(colorGroups)
-      }
+      coloring.coloredObjectGroups.value = [
+        ...currentPropertyColors,
+        ...newHighlightGroups
+      ]
     },
     { immediate: true, flush: 'sync' }
   )

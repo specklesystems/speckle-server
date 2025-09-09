@@ -90,6 +90,10 @@ import {
 } from '@speckle/shared/viewer/route'
 import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
 import type { FilterData } from '~/lib/viewer/helpers/filters/types'
+import type {
+  ColorGroup,
+  ColorGroupWithSource
+} from '~/lib/viewer/helpers/coloring/types'
 import {
   useBuildSavedViewsUIState,
   type SavedViewsUIState
@@ -98,6 +102,7 @@ import type { defaultEdgeColorValue } from '~/lib/viewer/composables/setup/viewM
 import { useViewModesSetup } from '~/lib/viewer/composables/setup/viewMode'
 import { useMeasurementsSetup } from '~/lib/viewer/composables/setup/measurements'
 import { useFiltersSetup } from '~/lib/viewer/composables/setup/filters'
+import { useColoringSetup } from '~/lib/viewer/composables/setup/coloring'
 import { useViewerPanelsSetup } from '~/lib/viewer/composables/setup/panels'
 
 export type LoadedModel = NonNullable<
@@ -321,12 +326,16 @@ export type InjectableViewerState = Readonly<{
        * Set of currently isolated object IDs for efficient lookups
        */
       isolatedObjectsSet: ComputedRef<Set<string> | null>
-
-      // Multi-filter system
       propertyFilters: Ref<FilterData[]>
       filteredObjectsCount: Ref<number>
       hasAnyFiltersApplied: ComputedRef<boolean>
       activeColorFilterId: Ref<string | null>
+    }
+    coloring: {
+      coloredObjectGroups: Ref<Array<ColorGroupWithSource>>
+      propertyColorGroups: ComputedRef<Array<ColorGroup>>
+      highlightColorGroups: ComputedRef<Array<ColorGroup>>
+      finalColorGroups: ComputedRef<Array<ColorGroup>>
     }
     camera: {
       position: Ref<Vector3>
@@ -1134,6 +1143,7 @@ function setupInterfaceState(
   const loadProgress = ref(0)
 
   const { filters } = useFiltersSetup()
+  const { coloring } = useColoringSetup()
   const { viewMode } = useViewModesSetup()
 
   const highlightedObjectIds = ref([] as string[])
@@ -1208,6 +1218,7 @@ function setupInterfaceState(
         ...filters,
         selectedObjectIds
       },
+      coloring,
       highlightedObjectIds,
       measurement: useMeasurementsSetup(),
       savedViews: useBuildSavedViewsUIState(),

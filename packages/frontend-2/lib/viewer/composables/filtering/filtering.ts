@@ -35,7 +35,7 @@ import {
   getFilterDisabledReason,
   findFilterByKvp
 } from '~/lib/viewer/helpers/filters/utils'
-import { useFilterColoringHelpers } from '~/lib/viewer/composables/filtering/coloringHelpers'
+import { useFilterColoringUtilities } from '~/lib/viewer/composables/filtering/coloring'
 
 export function useFilterUtilities(
   options?: Partial<{ state: InjectableViewerState }>
@@ -46,7 +46,7 @@ export function useFilterUtilities(
   } = state
 
   const dataStore = useFilteringDataStore()
-  const { removeColorFilter } = useFilterColoringHelpers({ state })
+  const { removeColorFilter } = useFilterColoringUtilities({ state })
 
   const isolateObjects = (
     objectIds: string[],
