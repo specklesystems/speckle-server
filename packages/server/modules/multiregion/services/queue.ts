@@ -25,8 +25,7 @@ import {
 import { db } from '@/db/knex'
 import {
   deleteProjectFactory,
-  getProjectFactory,
-  storeProjectRolesFactory
+  getProjectFactory
 } from '@/modules/core/repositories/projects'
 import { getAvailableRegionsFactory } from '@/modules/workspaces/services/regions'
 import { getRegionsFactory } from '@/modules/multiregion/repositories'
@@ -58,8 +57,6 @@ import {
 } from '@/modules/workspaces/repositories/projectRegions'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
-import { chunk } from 'lodash-es'
-import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
 import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
 import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
@@ -251,7 +248,7 @@ export const startQueue = async () => {
         )
 
         // Update project region in dbs and update relevant caches
-        const project = await asMultiregionalOperation(
+        await asMultiregionalOperation(
           async ({ allDbs, emit }) =>
             updateProjectRegionKeyFactory({
               upsertProjectRegionKey: replicateFactory(
@@ -300,20 +297,6 @@ export const startQueue = async () => {
               db: sourceDb
             })
           })({ projectId })
-        }
-
-        // Grab project roles for later reinstating
-        const projectRoles = await getStreamCollaboratorsFactory({ db })(project.id)
-
-        // Reinstate project acl records
-        for (const roles of chunk(projectRoles, 10_000)) {
-          await storeProjectRolesFactory({ db })({
-            roles: roles.map((role) => ({
-              projectId: project.id,
-              userId: role.id,
-              role: role.streamRole
-            }))
-          })
         }
 
         return
