@@ -299,7 +299,7 @@ isMultiRegionTestMode()
         })
         expect(resA).to.not.haveGraphQLErrors()
         // TODO: Change region move order of events to avoid wait
-        await wait(10_000)
+        await wait(500)
         const role = await getUserStreamRole(adminUser.id, emptyProject.id)
         if (!role || role !== Roles.Stream.Owner) {
           expect.fail('Did not preserve roles on project after region move.')

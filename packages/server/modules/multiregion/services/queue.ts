@@ -33,7 +33,8 @@ import { canWorkspaceUseRegionsFactory } from '@/modules/gatekeeper/services/fea
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 import {
   upsertProjectRegionKeyFactory,
-  deleteRegionKeyFromCacheFactory
+  deleteRegionKeyFromCacheFactory,
+  inMemoryRegionKeyStoreFactory
 } from '@/modules/multiregion/repositories/projectRegion'
 import { updateProjectRegionKeyFactory } from '@/modules/multiregion/services/projectRegion'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
@@ -247,6 +248,8 @@ export const startQueue = async () => {
           }
         )
 
+        const { writeRegion } = inMemoryRegionKeyStoreFactory()
+
         // Update project region in dbs and update relevant caches
         await asMultiregionalOperation(
           async ({ allDbs, emit }) =>
@@ -258,6 +261,7 @@ export const startQueue = async () => {
               cacheDeleteRegionKey: deleteRegionKeyFromCacheFactory({
                 redis: getGenericRedis()
               }),
+              writeRegionToMemory: writeRegion,
               emitEvent: emit
             })({ projectId, regionKey: targetRegionKey }),
           {
