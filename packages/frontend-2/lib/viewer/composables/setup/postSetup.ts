@@ -17,6 +17,7 @@ import {
   ExplodeEvent,
   ExplodeExtension,
   LoaderEvent,
+  FilteringExtension,
   type SunLightConfiguration
 } from '@speckle/viewer'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
@@ -548,7 +549,15 @@ function useViewerFiltersIntegration() {
     (newVal, oldVal) => {
       if (arraysEqual(newVal, oldVal || [])) return
 
-      instance.highlightObjects(newVal)
+      const filteringExtension = instance.getExtension(FilteringExtension)
+      if (!filteringExtension) return
+
+      if (newVal.length === 0) {
+        filteringExtension.removeUserObjectColors()
+      } else {
+        const colorGroups = newVal.map((id) => ({ objectIds: [id], color: '#04cbfb' }))
+        filteringExtension.setUserObjectColors(colorGroups)
+      }
     },
     { immediate: true, flush: 'sync' }
   )

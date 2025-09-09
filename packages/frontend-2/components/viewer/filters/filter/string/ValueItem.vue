@@ -6,6 +6,8 @@
     <div
       class="group/checkbox flex items-center justify-between gap-2 text-body-3xs py-0.5 px-2 hover:bg-highlight-1 rounded-md cursor-pointer"
       @click="$emit('toggle')"
+      @mouseenter="handleMouseEnter"
+      @mouseleave="handleMouseLeave"
     >
       <div class="flex items-center min-w-0">
         <!-- Checkbox is purely visual - so pointer-events-none -->
@@ -46,6 +48,7 @@ import { getFilterValueCount } from '~/lib/viewer/helpers/filters/utils'
 import type { StringFilterData } from '~/lib/viewer/helpers/filters/types'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useFilterColoringHelpers } from '~/lib/viewer/composables/filtering/coloringHelpers'
+import { useHighlightedObjectsUtilities } from '~~/lib/viewer/composables/ui'
 
 const props = defineProps<{
   filter: StringFilterData
@@ -59,6 +62,8 @@ defineEmits<{
 const { isActiveFilterValueSelected, filters } = useFilterUtilities()
 
 const { getFilterValueColor } = useFilterColoringHelpers()
+
+const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 
 const { ui } = useInjectedViewerState()
 
@@ -137,4 +142,18 @@ const color = computed(() => {
 const isDefaultSelected = computed(() => {
   return props.filter.isDefaultAllSelected && props.filter.selectedValues.length === 0
 })
+
+const handleMouseEnter = () => {
+  const objectIds = valueGroup.value?.ids
+  if (objectIds && objectIds.length > 0) {
+    highlightObjects(objectIds)
+  }
+}
+
+const handleMouseLeave = () => {
+  const objectIds = valueGroup.value?.ids
+  if (objectIds && objectIds.length > 0) {
+    unhighlightObjects(objectIds)
+  }
+}
 </script>
