@@ -1,23 +1,46 @@
-import { NUMERIC_FILTER_COLORS } from '~/lib/viewer/helpers/coloring/constants'
+import {
+  NUMERIC_FILTER_COLORS,
+  ACCESSIBLE_COLOR_PALETTE
+} from '~/lib/viewer/helpers/coloring/constants'
 import type { ColorGroupWithSource } from '~/lib/viewer/helpers/coloring/types'
 
+// Performance optimization: Cache generated colors to avoid recalculation
+const colorCache = new Map<string, string>()
+const hashCache = new Map<string, number>()
+
 /**
- * Generate a color for a string value using consistent hash-based algorithm
+ * Fast hash function with caching for performance
  */
-export function generateColorForStringValue(value: string): string {
+function fastHash(value: string): number {
+  const cached = hashCache.get(value)
+  if (cached !== undefined) return cached
+
   let hash = 0
   for (let i = 0; i < value.length; i++) {
-    const char = value.charCodeAt(i)
-    hash = (hash << 5) - hash + char
-    hash = hash & hash // Convert to 32bit integer
+    hash = ((hash << 5) - hash + value.charCodeAt(i)) & 0xffffffff
   }
 
-  // Convert hash to HSL color for better distribution
-  const hue = Math.abs(hash) % 360
-  const saturation = 70 + (Math.abs(hash >> 8) % 30) // 70-100%
-  const lightness = 45 + (Math.abs(hash >> 16) % 20) // 45-65%
+  const result = Math.abs(hash)
+  hashCache.set(value, result)
+  return result
+}
 
-  return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+/**
+ * Generate a color for a string value using accessible color palette
+ * First 20 colors use the curated accessible palette, then falls back to HSL generation
+ */
+export function generateColorForStringValue(value: string): string {
+  const cached = colorCache.get(value)
+  if (cached) return cached
+
+  const hash = fastHash(value)
+
+  // Always use accessible palette first, cycling through it
+  const paletteIndex = hash % ACCESSIBLE_COLOR_PALETTE.length
+  const result = ACCESSIBLE_COLOR_PALETTE[paletteIndex]
+
+  colorCache.set(value, result)
+  return result
 }
 
 /**
