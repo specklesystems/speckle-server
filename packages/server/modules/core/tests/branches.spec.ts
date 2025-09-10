@@ -23,11 +23,7 @@ import {
   getPaginatedStreamBranchesPageFactory,
   getStreamBranchCountFactory
 } from '@/modules/core/repositories/branches'
-import {
-  getStreamFactory,
-  markBranchStreamUpdatedFactory,
-  markCommitStreamUpdatedFactory
-} from '@/modules/core/repositories/streams'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 import {
   createCommitByBranchIdFactory,
   createCommitByBranchNameFactory
@@ -56,8 +52,6 @@ import { buildBasicTestProject } from '@/modules/core/tests/helpers/creation'
 
 const db = knex
 const Commits = () => knex('commits')
-const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
-const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db })
 const getStream = getStreamFactory({ db: knex })
 const getBranchById = getBranchByIdFactory({ db: knex })
 const getStreamBranchByName = getStreamBranchByNameFactory({ db: knex })
@@ -71,7 +65,6 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getStream,
   getBranchById: getBranchByIdFactory({ db: knex }),
   emitEvent: getEventBus().emit,
-  markBranchStreamUpdated,
   deleteBranchById: deleteBranchByIdFactory({ db: knex })
 })
 
@@ -82,7 +75,6 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   getBranchById: getBranchByIdFactory({ db }),
   insertStreamCommits: insertStreamCommitsFactory({ db }),
   insertBranchCommits: insertBranchCommitsFactory({ db }),
-  markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   emitEvent: getEventBus().emit
 })

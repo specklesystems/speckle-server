@@ -44,7 +44,6 @@ import {
   getOnboardingBaseStreamFactory,
   getStreamCollaboratorsFactory,
   getStreamFactory,
-  markCommitStreamUpdatedFactory,
   markOnboardingBaseStreamFactory
 } from '@/modules/core/repositories/streams'
 import { getFirstAdminFactory, getUserFactory } from '@/modules/core/repositories/users'
@@ -81,7 +80,6 @@ const crossServerSyncModule: SpeckleModule = {
     // Its fine to use main DB here, none of this is executed in a workspace context
     const getUser = getUserFactory({ db })
     const markOnboardingBaseStream = markOnboardingBaseStreamFactory({ db })
-    const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
     const getStream = getStreamFactory({ db })
     const getObject = getObjectFactory({ db })
     const getStreamObjects = getStreamObjectsFactory({ db })
@@ -140,7 +138,6 @@ const crossServerSyncModule: SpeckleModule = {
       getBranchById: getBranchByIdFactory({ db }),
       insertStreamCommits: insertStreamCommitsFactory({ db }),
       insertBranchCommits: insertBranchCommitsFactory({ db }),
-      markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
       emitEvent: getEventBus().emit
     })

@@ -4,8 +4,7 @@ import { downloadProjectFactory } from '@/modules/cross-server-sync/services/pro
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import {
   getStreamCollaboratorsFactory,
-  getStreamFactory,
-  markCommitStreamUpdatedFactory
+  getStreamFactory
 } from '@/modules/core/repositories/streams'
 import {
   createBranchFactory,
@@ -128,7 +127,6 @@ const command: CommandModule<
 
     const getStream = getStreamFactory({ db: projectDb })
     const getObject = getObjectFactory({ db: projectDb })
-    const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db: projectDb })
 
     const getStreamObjects = getStreamObjectsFactory({ db: projectDb })
     const markCommentViewed = markCommentViewedFactory({ db: projectDb })
@@ -188,7 +186,6 @@ const command: CommandModule<
       getBranchById: getBranchByIdFactory({ db: projectDb }),
       insertStreamCommits: insertStreamCommitsFactory({ db: projectDb }),
       insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
-      markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
       emitEvent: getEventBus().emit
     })
