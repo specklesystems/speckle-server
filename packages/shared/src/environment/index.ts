@@ -123,11 +123,6 @@ export const parseFeatureFlags = (
       description: 'Enables the Rhino based file importer.',
       defaults: { _: false }
     },
-    FF_BACKGROUND_JOBS_ENABLED: {
-      schema: z.boolean(),
-      description: 'Enables the postgres based background job mechanism',
-      defaults: { _: false }
-    },
     FF_LEGACY_FILE_IMPORTS_ENABLED: {
       schema: z.boolean(),
       description:
@@ -138,6 +133,11 @@ export const parseFeatureFlags = (
       schema: z.boolean(),
       description:
         'Enables the integration with ACC. This synchronizes models with specified ACC assets.',
+      defaults: { _: false }
+    },
+    FF_DASHBOARDS_MODULE_ENABLED: {
+      schema: z.boolean(),
+      description: 'Enables the dashboards module.',
       defaults: { _: false }
     },
     FF_SAVED_VIEWS_ENABLED: {

@@ -1,3 +1,4 @@
+/// <reference types="../../type-augmentations/server.d.ts" />
 import { defineEventHandler, fromNodeMiddleware } from 'h3'
 import type { IncomingMessage, ServerResponse, IncomingHttpHeaders } from 'http'
 import pino from 'pino'
@@ -103,7 +104,7 @@ export const LoggingMiddleware = pinoHttp({
           headers: Record<string, string>
         }
       }
-      const realRaw = get(res, 'raw.raw') as typeof res.raw
+      const realRaw = get(res, 'raw.raw') as unknown as typeof res.raw
       const isRequestCompleted = !!realRaw.writableEnded
       const isRequestAborted = !isRequestCompleted
       const statusCode = res.statusCode || res.raw.statusCode || realRaw.statusCode

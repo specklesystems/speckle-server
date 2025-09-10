@@ -107,7 +107,7 @@
         },
         "nextGenFileImporterEnabled": {
           "type": "boolean",
-          "description": "Enables the next generation file importer",
+          "description": "Enables the next generation file importer. Requires ifc_import_service to be enabled and configured.",
           "default": false
         },
         "legacyFileImportsEnabled": {
@@ -115,14 +115,14 @@
           "description": "Enables the legacy file upload mechanism, using REST API to proxy file uploads via the server",
           "default": false
         },
-        "backgroundJobsEnabled": {
-          "type": "boolean",
-          "description": "Enables the ability to run background jobs (such as the IFC importer) in Speckle",
-          "default": false
-        },
         "accIntegrationEnabled": {
           "type": "boolean",
           "description": "Enables the ability to import data from ACC",
+          "default": false
+        },
+        "dashboardsModuleEnabled": {
+          "type": "boolean",
+          "description": "Enables the ability to create and manage dashboards",
           "default": false
         },
         "rhinoFileImporterEnabled": {
@@ -138,6 +138,11 @@
         "usersInviteScopeIsPublic": {
           "type": "boolean",
           "description": "Enables the ability to create Personal Access Tokens (PAT) with users:invite privileges. WARNING: This can be used by untrusted users to send spam; do not enable on servers which allow public registration or to which untrusted users have been, or will be, invited.",
+          "default": false
+        },
+        "noPersonalEmailsEnabled": {
+          "type": "boolean",
+          "description": "Disables personal emails for new accounts",
           "default": false
         }
       }
@@ -159,6 +164,16 @@
           "type": "string",
           "description": "The Mixpanel API host to which analytics data will be sent",
           "default": "https://analytics.speckle.systems"
+        }
+      }
+    },
+    "dashboards": {
+      "type": "object",
+      "properties": {
+        "origin": {
+          "type": "string",
+          "description": "The origin of the dashboards deployment",
+          "default": ""
         }
       }
     },
@@ -568,61 +583,6 @@
               "type": "string",
               "description": "Required. The key within the Kubernetes Secret holding the Redis connection string.",
               "default": ""
-            }
-          }
-        },
-        "fileImportService": {
-          "type": "object",
-          "properties": {
-            "rhino": {
-              "type": "object",
-              "properties": {
-                "connectionString": {
-                  "type": "object",
-                  "properties": {
-                    "secretName": {
-                      "type": "string",
-                      "description": "Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
-                      "default": ""
-                    },
-                    "secretKey": {
-                      "type": "string",
-                      "description": "Required. The key within the Kubernetes Secret holding the Redis connection string.",
-                      "default": ""
-                    }
-                  }
-                },
-                "queueName": {
-                  "type": "string",
-                  "description": "Optional. The name of the queue created within the Redis cluster.",
-                  "default": "fileimport-service-jobs"
-                }
-              }
-            },
-            "ifc": {
-              "type": "object",
-              "properties": {
-                "connectionString": {
-                  "type": "object",
-                  "properties": {
-                    "secretName": {
-                      "type": "string",
-                      "description": "Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
-                      "default": ""
-                    },
-                    "secretKey": {
-                      "type": "string",
-                      "description": "Required. The key within the Kubernetes Secret holding the Redis connection string.",
-                      "default": ""
-                    }
-                  }
-                },
-                "queueName": {
-                  "type": "string",
-                  "description": "Optional. The name of the queue created within the Redis cluster.",
-                  "default": "fileimport-service-jobs"
-                }
-              }
             }
           }
         },

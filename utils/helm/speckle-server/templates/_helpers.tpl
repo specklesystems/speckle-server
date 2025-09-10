@@ -578,9 +578,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_MOVE_PROJECT_REGION_ENABLED
   value: {{ .Values.featureFlags.moveProjectRegionEnabled | quote }}
 
-- name: FF_BACKGROUND_JOBS_ENABLED
-  value: {{ .Values.featureFlags.backgroundJobsEnabled | quote }}
-
 {{- if .Values.featureFlags.gatekeeperModuleEnabled }}
 - name: LICENSE_TOKEN
   valueFrom:
@@ -613,6 +610,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_ACC_INTEGRATION_ENABLED
   value: {{ .Values.featureFlags.accIntegrationEnabled | quote }}
 
+- name: FF_NO_PERSONAL_EMAILS_ENABLED
+  value: {{ .Values.server.noPersonalEmailsEnabled }}
+
 {{- if .Values.featureFlags.accIntegrationEnabled }}
 - name: AUTODESK_INTEGRATION_CLIENT_ID
   value: {{ .Values.server.accIntegration.client_id }}
@@ -623,6 +623,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       name: {{ default .Values.secretName .Values.server.accIntegration.clientSecret.secretName }}
       key: {{ default "acc_integration_client_secret" .Values.server.accIntegration.clientSecret.secretKey }}
 {{- end }}
+
+- name: FF_DASHBOARDS_MODULE_ENABLED
+  value: {{ .Values.featureFlags.dashboardsModuleEnabled | quote }}
 
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
@@ -699,7 +702,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 
 {{- end }}
 
-{{- if (or .Values.featureFlags.automateModuleEnabled .Values.featureFlags.workspacesSsoEnabled) }}
+{{- if (or .Values.featureFlags.automateModuleEnabled .Values.featureFlags.workspacesSSOEnabled) }}
 - name: ENCRYPTION_KEYS_PATH
   value: {{ .Values.server.encryptionKeys.path }}
 {{- end }}
@@ -810,26 +813,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
     secretKeyRef:
       name: {{ default .Values.secretName .Values.redis.previewServiceConnectionString.secretName }}
       key: {{ default "preview_service_redis_url" .Values.redis.previewServiceConnectionString.secretKey }}
-{{- end }}
-
-{{- if (and .Values.featureFlags.nextGenFileImporterEnabled (not .Values.featureFlags.backgroundJobsEnabled)) }}
-- name: FILEIMPORT_SERVICE_RHINO_REDIS_URL
-  valueFrom:
-    secretKeyRef:
-      name: {{ default .Values.secretName .Values.redis.fileImportService.rhino.connectionString.secretName }}
-      key: {{ default "fileimport_service_rhino_redis_url" .Values.redis.fileImportService.rhino.connectionString.secretKey }}
-
-- name: FILEIMPORT_SERVICE_RHINO_QUEUE_NAME
-  value: {{ .Values.redis.fileImportService.rhino.queueName | quote }}
-
-- name: FILEIMPORT_SERVICE_IFC_REDIS_URL
-  valueFrom:
-    secretKeyRef:
-      name: {{ default .Values.secretName .Values.redis.fileImportService.ifc.connectionString.secretName }}
-      key: {{ default "fileimport_service_ifc_redis_url" .Values.redis.fileImportService.ifc.connectionString.secretKey }}
-
-- name: FILEIMPORT_SERVICE_IFC_QUEUE_NAME
-  value: {{ .Values.redis.fileImportService.ifc.queueName | quote }}
 {{- end }}
 
 # *** PostgreSQL Database ***
@@ -1175,7 +1158,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.featureFlags.rhinoFileImporterEnabled  | quote }}
 {{- end }}
 
-{{- if .Values.featureFlags.backgroundJobsEnabled }}
+{{- if .Values.featureFlags.nextGenFileImporterEnabled }}
 - name: FILEIMPORT_QUEUE_POSTGRES_URL
   valueFrom:
     secretKeyRef:

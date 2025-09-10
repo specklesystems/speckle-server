@@ -21,8 +21,6 @@ import { UserValidationError } from '@/modules/core/errors/user'
 import type { Knex } from 'knex'
 import type { ServerRoles } from '@speckle/shared'
 import { Roles } from '@speckle/shared'
-import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
-import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 import type { UserWithOptionalRole } from '@/modules/core/domain/users/types'
 import type {
   BulkLookupUsers,
@@ -228,11 +226,7 @@ export const markUserAsVerifiedFactory =
         [UserCols.verified]: true
       })
 
-    const userEmailsUpdate = await markUserEmailAsVerifiedFactory({
-      updateUserEmail: updateUserEmailFactory({ db: deps.db })
-    })({ email: email.toLowerCase().trim() })
-
-    return !!(usersUpdate || userEmailsUpdate)
+    return !!usersUpdate
   }
 
 export const markOnboardingCompleteFactory =
@@ -284,13 +278,6 @@ export const updateUserFactory =
       .users(deps.db)
       .where(Users.col.id, userId)
       .update(update, '*')
-
-    if (update.email) {
-      await updateUserEmailFactory(deps)({
-        query: { userId, primary: true },
-        update: { email: update.email }
-      })
-    }
 
     return newUser as Nullable<UserRecord>
   }

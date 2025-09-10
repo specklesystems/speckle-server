@@ -233,15 +233,7 @@ describe('ensureUserIsWorkspaceAdminFragment', () => {
       getWorkspaceRole: async () => Roles.Workspace.Admin,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
-      getWorkspacePlan: async () => {
-        return {
-          workspaceId,
-          name: 'unlimited' as const,
-          status: 'valid' as const,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      },
+      getWorkspacePlan: getWorkspacePlanFake({ workspaceId }),
       ...overrides
     })
   }
@@ -355,7 +347,7 @@ describe('ensureCanUseWorkspacePlanFeatureFragment', () => {
 
     const result = await sut({
       workspaceId: cryptoRandomString({ length: 10 }),
-      feature: WorkspacePlanFeatures.SavedViews
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
     })
 
     expect(result).toBeOKResult()
@@ -370,7 +362,7 @@ describe('ensureCanUseWorkspacePlanFeatureFragment', () => {
 
     const result = await sut({
       workspaceId: cryptoRandomString({ length: 10 }),
-      feature: WorkspacePlanFeatures.SavedViews
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
     })
 
     expect(result).toBeAuthErrorResult({
@@ -388,7 +380,7 @@ describe('ensureCanUseWorkspacePlanFeatureFragment', () => {
 
     const result = await sut({
       workspaceId: cryptoRandomString({ length: 10 }),
-      feature: WorkspacePlanFeatures.SavedViews
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
     })
 
     expect(result).toBeAuthErrorResult({
@@ -403,7 +395,7 @@ describe('ensureCanUseWorkspacePlanFeatureFragment', () => {
 
     const result = await sut({
       workspaceId: cryptoRandomString({ length: 10 }),
-      feature: WorkspacePlanFeatures.SavedViews
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
     })
 
     expect(result).toBeAuthErrorResult({
@@ -421,7 +413,7 @@ describe('ensureCanUseWorkspacePlanFeatureFragment', () => {
 
     const result = await sut({
       workspaceId: cryptoRandomString({ length: 10 }),
-      feature: WorkspacePlanFeatures.SavedViews
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
     })
 
     expect(result).toBeAuthErrorResult({

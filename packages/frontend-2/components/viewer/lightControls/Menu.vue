@@ -68,7 +68,9 @@ import { useViewModeUtilities } from '~/lib/viewer/composables/ui'
 import { TIME_MS } from '@speckle/shared'
 
 const mp = useMixpanel()
-const { currentViewMode } = useViewModeUtilities()
+const {
+  viewMode: { mode: currentViewMode }
+} = useViewModeUtilities()
 
 const isLightingSupported = computed(() => {
   const supported = currentViewMode.value === ViewMode.DEFAULT

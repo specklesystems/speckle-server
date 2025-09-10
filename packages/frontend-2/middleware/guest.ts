@@ -8,7 +8,7 @@ const exclusionList = ['authorize-app', 'reset-password']
 /**
  * Apply this to a page to prevent authenticated access
  */
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineParallelizedNuxtRouteMiddleware(async (to) => {
   const nuxt = useNuxtApp()
   const client = useApolloClientFromNuxt()
 

@@ -88,12 +88,12 @@ export default defineNuxtPlugin(() => {
 
 ```typescript
 // middleware/auth.ts (route middleware)
-export default defineNuxtRouteMiddleware((to, from) => {
+export default defineParallelizedNuxtRouteMiddleware((to, from) => {
   // Route protection logic
 })
 
 // middleware/global.global.ts (global middleware)
-export default defineNuxtRouteMiddleware((to, from) => {
+export default defineParallelizedNuxtRouteMiddleware((to, from) => {
   // Runs on every route change
 })
 ```

@@ -38,12 +38,25 @@ import { canCreateSavedViewPolicy } from './project/savedViews/canCreate.js'
 import { canUpdateSavedViewPolicy } from './project/savedViews/canUpdate.js'
 import { canUpdateSavedViewGroupPolicy } from './project/savedViews/canUpdateGroup.js'
 import { canReadSavedViewPolicy } from './project/savedViews/canRead.js'
+import { canListDashboardsPolicy } from './workspace/canListDashboards.js'
+import { canDeleteDashboardPolicy } from './dashboard/canDelete.js'
+import { canCreateDashboardsPolicy } from './workspace/canCreateDashboards.js'
+import { canCreateDashboardTokenPolicy } from './dashboard/canCreateToken.js'
+import { canEditDashboardPolicy } from './dashboard/canEdit.js'
+import { canReadDashboardPolicy } from './dashboard/canRead.js'
+import { canMoveSavedViewPolicy } from './project/savedViews/canMove.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   automate: {
     function: {
       canRegenerateToken: canEditFunctionPolicy(loaders)
     }
+  },
+  dashboard: {
+    canCreateToken: canCreateDashboardTokenPolicy(loaders),
+    canDelete: canDeleteDashboardPolicy(loaders),
+    canEdit: canEditDashboardPolicy(loaders),
+    canRead: canReadDashboardPolicy(loaders)
   },
   project: {
     automation: {
@@ -72,7 +85,8 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
       canCreate: canCreateSavedViewPolicy(loaders),
       canUpdate: canUpdateSavedViewPolicy(loaders),
       canUpdateGroup: canUpdateSavedViewGroupPolicy(loaders),
-      canRead: canReadSavedViewPolicy(loaders)
+      canRead: canReadSavedViewPolicy(loaders),
+      canMove: canMoveSavedViewPolicy(loaders)
     },
     canBroadcastActivity: canBroadcastProjectActivityPolicy(loaders),
     canRead: canReadProjectPolicy(loaders),
@@ -99,7 +113,9 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
       canReceiveWorkspaceProjectsUpdatedMessagePolicy(loaders),
     canUseWorkspacePlanFeature: canUseWorkspacePlanFeature(loaders),
     canReadMemberEmail: canReadMemberEmailPolicy(loaders),
-    canCreateWorkspace: canCreateWorkspacePolicy(loaders)
+    canCreateWorkspace: canCreateWorkspacePolicy(loaders),
+    canCreateDashboards: canCreateDashboardsPolicy(loaders),
+    canListDashboards: canListDashboardsPolicy(loaders)
   }
 })
 

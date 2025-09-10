@@ -376,7 +376,8 @@ describe('Viewer Resources Collection Service', () => {
               resourceIdString,
               savedViewId: secondModelBasicView.id,
               loadedVersionsOnly: true,
-              savedViewSettings: { loadOriginal }
+              savedViewSettings: { loadOriginal },
+              applyHomeView: true
             })
 
             const expectedFinalResourceIdString = resourceBuilder()
@@ -445,7 +446,8 @@ describe('Viewer Resources Collection Service', () => {
             projectId: myProject.id,
             resourceIdString: resources.toString(),
             savedViewId: undefined,
-            loadedVersionsOnly: true
+            loadedVersionsOnly: true,
+            applyHomeView: true
           })
 
           expect(savedView?.id).to.equal(firstModelHomeView.id)
@@ -455,9 +457,39 @@ describe('Viewer Resources Collection Service', () => {
           expect(homeViewGroup).to.be.ok
           expect(homeViewGroup!.items.length).to.equal(1)
           expect(homeViewGroup!.items[0].modelId).to.equal(homeViewModel().id)
+
+          // expect(homeViewGroup!.items[0].versionId).to.equal(
+          //   getModelVersions(homeViewModel().id)[0].id
+          // ) // version specified in view, not latest one
           expect(homeViewGroup!.items[0].versionId).to.equal(
-            getModelVersions(homeViewModel().id)[0].id
-          ) // version specified in view, not latest one
+            getModelVersions(homeViewModel().id).at(-1)!.id
+          ) // we're doing latest version for now
+
+          expect(homeViewGroup!.items[0].objectId).to.be.ok
+        })
+
+        it('dont load model home view, if !applyHomeView', async () => {
+          const sut = buildSUT()
+          const resources = resourceBuilder().addModel(homeViewModel().id)
+
+          const { groups, savedView } = await sut({
+            projectId: myProject.id,
+            resourceIdString: resources.toString(),
+            savedViewId: undefined,
+            loadedVersionsOnly: true,
+            applyHomeView: false
+          })
+
+          expect(savedView).to.not.be.ok
+          expect(groups).to.have.length(1)
+
+          const homeViewGroup = groups[0]
+          expect(homeViewGroup).to.be.ok
+          expect(homeViewGroup!.items.length).to.equal(1)
+          expect(homeViewGroup!.items[0].modelId).to.equal(homeViewModel().id)
+          expect(homeViewGroup!.items[0].versionId).to.equal(
+            getModelVersions(homeViewModel().id).at(-1)!.id
+          ) // default: latest one
           expect(homeViewGroup!.items[0].objectId).to.be.ok
         })
 
@@ -469,7 +501,8 @@ describe('Viewer Resources Collection Service', () => {
             projectId: myProject.id,
             resourceIdString: resources.toString(),
             savedViewId: null,
-            loadedVersionsOnly: true
+            loadedVersionsOnly: true,
+            applyHomeView: true
           })
 
           expect(savedView).to.be.not.ok
@@ -496,7 +529,8 @@ describe('Viewer Resources Collection Service', () => {
             projectId: myProject.id,
             resourceIdString: resources.toString(),
             savedViewId: undefined,
-            loadedVersionsOnly: true
+            loadedVersionsOnly: true,
+            applyHomeView: true
           })
 
           expect(savedView).to.be.not.ok
@@ -523,7 +557,8 @@ describe('Viewer Resources Collection Service', () => {
             projectId: myProject.id,
             resourceIdString: resources.toString(),
             savedViewId: undefined,
-            loadedVersionsOnly: true
+            loadedVersionsOnly: true,
+            applyHomeView: true
           })
 
           expect(request.savedViewId).to.not.be.ok

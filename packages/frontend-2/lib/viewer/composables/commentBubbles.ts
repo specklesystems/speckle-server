@@ -319,7 +319,7 @@ export function useViewerThreadTracking() {
           }
         }
         await refocus(newState)
-      } else if (oldThread) {
+      } else if (oldThread && newThread === null) {
         // Closing a thread - restore old state if available
         if (
           oldState.value &&

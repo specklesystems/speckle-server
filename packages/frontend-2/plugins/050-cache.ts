@@ -119,7 +119,7 @@ const getOrInitInternalCache = async (params: {
       for (let i = 0; i < keys.length; i++) {
         const key = keys[i]
         const val = vals[i]
-        if (!val) continue
+        if (!val || !key) continue
 
         keyVals[key] = JSON.parse(val)
       }
@@ -151,7 +151,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       nuxtApp.ssrContext!.payload.appCache = cacheToSend
     })
   } else if (import.meta.client) {
-    const restorable = window.__NUXT__?.appCache as Optional<Record<string, unknown>>
+    const restorable = nuxtApp.payload?.appCache
     if (restorable) {
       await internalCache.setMultiple(restorable)
     }

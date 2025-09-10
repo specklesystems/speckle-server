@@ -226,6 +226,16 @@ describe('Viewer Route Helpers', () => {
       )
     })
 
+    it('can clear versionIds', () => {
+      const builder = resourceBuilder().addResources('abc,def@ver')
+      expect(builder.length).toBe(2)
+      expect(builder.toString()).toBe('abc,def@ver')
+
+      builder.clearVersions()
+      expect(builder.length).toBe(2)
+      expect(builder.toString()).toBe('abc,def')
+    })
+
     it('can add resources array', () => {
       const resources = [
         parseResourceFromString('abc'),

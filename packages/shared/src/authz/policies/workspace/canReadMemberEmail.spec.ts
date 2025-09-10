@@ -11,7 +11,7 @@ import {
   WorkspacesNotEnabledError
 } from '../../domain/authErrors.js'
 import { canReadMemberEmailPolicy } from './canReadMemberEmail.js'
-import { getWorkspaceFake } from '../../../tests/fakes.js'
+import { getWorkspaceFake, getWorkspacePlanFake } from '../../../tests/fakes.js'
 
 describe('canReadMemberEmailPolicy', () => {
   const workspaceId = cryptoRandomString({ length: 9 })
@@ -32,15 +32,7 @@ describe('canReadMemberEmailPolicy', () => {
       getWorkspaceRole: async () => Roles.Workspace.Admin,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
-      getWorkspacePlan: async () => {
-        return {
-          workspaceId,
-          name: 'unlimited' as const,
-          status: 'valid' as const,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      },
+      getWorkspacePlan: getWorkspacePlanFake({ workspaceId }),
       ...overrides
     })
   }

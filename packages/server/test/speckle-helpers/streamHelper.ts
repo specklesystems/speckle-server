@@ -64,6 +64,7 @@ import { faker } from '@faker-js/faker'
 import type { StreamRoles } from '@speckle/shared'
 import { ensureError, Roles } from '@speckle/shared'
 import { omit } from 'lodash-es'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -141,6 +142,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
+    storeProjectRole: storeProjectRoleFactory({ db }),
     emitEvent: getEventBus().emit
   })
 })
@@ -166,7 +168,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
 })
 
 export type BasicTestStream = {
-  name: string
+  name?: string
   /**
    * @deprecated Use visibility instead
    */
@@ -196,7 +198,7 @@ export async function createTestStreams(
 export async function createTestStream<S extends Partial<BasicTestStream>>(
   streamObj: S,
   owner: BasicTestUser
-): Promise<S> {
+): Promise<BasicTestStream> {
   let id: string
 
   const visibility = streamObj.isPublic
@@ -229,7 +231,11 @@ export async function createTestStream<S extends Partial<BasicTestStream>>(
 
   streamObj.id = id
   streamObj.ownerId = owner.id
-  return streamObj
+  return {
+    ...streamObj,
+    id,
+    ownerId: owner.id
+  }
 }
 
 export async function leaveStream(streamObj: BasicTestStream, user: BasicTestUser) {

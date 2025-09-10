@@ -27,6 +27,11 @@ type SavedView {
   Same as resourceIdString, but split into an array of resource IDs.
   """
   resourceIds: [String!]!
+  """
+  Truncated resourceIds w/o specific version data that is used to associate the view w/
+  specific groups
+  """
+  groupResourceIds: [String!]!
   isHomeView: Boolean!
   visibility: SavedViewVisibility!
   """
@@ -250,4 +255,8 @@ extend type Model {
   The model's home view, if any
   """
   homeView: SavedView
+  """
+  The resourceIdString to use when building links to this model in the viewer. Takes home view settings into account.
+  """
+  resourceIdString: String!
 }

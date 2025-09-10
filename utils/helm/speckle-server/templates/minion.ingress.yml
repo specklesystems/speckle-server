@@ -54,14 +54,8 @@ spec:
             port:
               name: web
       - pathType: Prefix
-        path: "/objects/"
-        backend:
-          service:
-            name: speckle-objects
-            port:
-              name: web
-      - pathType: Prefix
         # for /api/file/ see file.minion.ingress.yml
+        # for /api/objects/, /api/getobjects/, & /api/diff/ see objects.minion.ingress.yml
         path: "/api/"
         backend:
           service:

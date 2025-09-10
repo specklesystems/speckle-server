@@ -58,6 +58,10 @@ export type GarbageCollectPendingUploadedFiles = (args: {
   timeoutThresholdSeconds: number
 }) => Promise<FileUploadRecord[]>
 
+export type FailPendingUploadedFiles = (args: {
+  uploadIds: string[]
+}) => Promise<FileUploadRecord[]>
+
 export type NotifyChangeInFileStatus = (params: {
   file: FileUploadRecord
 }) => Promise<void>
@@ -74,10 +78,6 @@ export type UpdateFileStatus = (params: {
   convertedMessage: string
   convertedCommitId: string | null
 }) => Promise<FileUploadRecord>
-
-export type UpdateFileStatusForProjectFactory = (params: {
-  projectId: string
-}) => Promise<UpdateFileStatus>
 
 export type UploadedFile = UploadResult & { userId: string }
 

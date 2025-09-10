@@ -28,6 +28,7 @@ import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
 import {
   SavedViewCreationValidationError,
   SavedViewGroupCreationValidationError,
+  SavedViewGroupNotFoundError,
   SavedViewGroupUpdateValidationError,
   SavedViewInvalidHomeViewSettingsError,
   SavedViewInvalidResourceTargetError,
@@ -43,10 +44,10 @@ import { inputToVersionedState } from '@speckle/shared/viewer/state'
 import { isValidBase64Image } from '@speckle/shared/images/base64'
 import type { GetViewerResourceGroups } from '@/modules/viewer/domain/operations/resources'
 import { formatResourceIdsForGroup } from '@/modules/viewer/helpers/savedViews'
-import { isUndefined, omit } from 'lodash-es'
+import { difference, isUndefined, omit } from 'lodash-es'
 import type { DependenciesOf } from '@/modules/shared/helpers/factory'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import { removeNullOrUndefinedKeys } from '@speckle/shared'
+import { removeNullOrUndefinedKeys, firstDefinedValue } from '@speckle/shared'
 import { isUngroupedGroup } from '@speckle/shared/saved-views'
 import { NotFoundError } from '@/modules/shared/errors'
 
@@ -185,6 +186,39 @@ const validateHomeViewSettingsFactory =
     }
   }
 
+const resolveViewGroupSettingsFactory =
+  (deps: { getSavedViewGroup: GetSavedViewGroup }) =>
+  async (params: {
+    groupId: MaybeNullOrUndefined<string>
+    projectId: string
+    errorMetadata: Record<string, unknown>
+  }) => {
+    const { groupId, projectId, errorMetadata } = params
+
+    if (!groupId) return groupId // null or undefined (different meanings)
+
+    // Validate groupId - group is a valid and accessible group in the project
+    // Check if default group (actually means - null group)
+    const isDefaultGroup = isUngroupedGroup(groupId)
+    if (isDefaultGroup) {
+      return null
+    } else {
+      const group = await deps.getSavedViewGroup({
+        id: groupId,
+        projectId
+      })
+      if (!group) {
+        throw new SavedViewGroupNotFoundError(
+          'Provided groupId does not exist in the project.',
+          {
+            info: errorMetadata
+          }
+        )
+      }
+      return group.id
+    }
+  }
+
 export const createSavedViewFactory =
   (deps: {
     getViewerResourceGroups: GetViewerResourceGroups
@@ -196,9 +230,9 @@ export const createSavedViewFactory =
   }): CreateSavedView =>
   async ({ input, authorId }) => {
     const { resourceIdString, projectId } = input
-    const visibility = input.visibility || SavedViewVisibility.authorOnly
+    const visibility = input.visibility || SavedViewVisibility.public // default to public
     const position = 0 // TODO: Resolve based on existing views
-    const groupId = input.groupId?.trim() || null
+    let groupId = input.groupId?.trim() || null
     const description = input.description?.trim() || null
     const isHomeView = input.isHomeView || false
 
@@ -237,23 +271,15 @@ export const createSavedViewFactory =
     })
 
     // Validate groupId - group is a valid and accessible group in the project
-    if (groupId) {
-      const group = await deps.getSavedViewGroup({
-        id: groupId,
-        projectId
-      })
-      if (!group) {
-        throw new SavedViewCreationValidationError(
-          'Provided groupId does not exist in the project.',
-          {
-            info: {
-              input,
-              authorId
-            }
-          }
-        )
-      }
-    }
+    groupId =
+      (await resolveViewGroupSettingsFactory(deps)({
+        groupId,
+        projectId,
+        errorMetadata: {
+          input,
+          authorId
+        }
+      })) || null
 
     // Auto-generate name, if one not set
     let name = input.name?.trim()
@@ -485,7 +511,6 @@ export const updateSavedViewFactory =
       }
     }
 
-    // Check if there's any actual changes
     const changes = {
       ...removeNullOrUndefinedKeys(omit(input, ['id', 'projectId'])),
       ...(!isUndefined(input.groupId)
@@ -525,28 +550,16 @@ export const updateSavedViewFactory =
     }
 
     // Validate groupId - group is a valid and accessible group in the project
-    if (changes.groupId) {
-      // Check if default group (actually means - null group)
-      const isDefaultGroup = changes.groupId && isUngroupedGroup(changes.groupId)
-      if (isDefaultGroup) {
-        changes.groupId = null
-      } else {
-        const group = await deps.getSavedViewGroup({
-          id: changes.groupId,
-          projectId
-        })
-        if (!group) {
-          throw new SavedViewUpdateValidationError(
-            'Provided groupId does not exist in the project.',
-            {
-              info: {
-                input,
-                userId
-              }
-            }
-          )
-        }
+    changes.groupId = await resolveViewGroupSettingsFactory(deps)({
+      groupId: changes.groupId,
+      projectId,
+      errorMetadata: {
+        input,
+        userId
       }
+    })
+    if (isUndefined(changes.groupId)) {
+      delete changes.groupId // the key shouldnt even be there
     }
 
     // Validate screenshot
@@ -581,8 +594,8 @@ export const updateSavedViewFactory =
 
     // Validate home view settings
     const { homeViewModel } = validateHomeViewSettingsFactory()({
-      isHomeView: changes.isHomeView,
-      visibility: changes.visibility || view.visibility,
+      isHomeView: firstDefinedValue(changes.isHomeView, view.isHomeView),
+      visibility: firstDefinedValue(changes.visibility, view.visibility),
       errorMetadata: {
         input,
         userId
@@ -605,7 +618,10 @@ export const updateSavedViewFactory =
           }
         : {})
     }
-    if (Object.keys(update).length === 0) {
+
+    // Check if there's any actual changes
+    const updateKeys = Object.keys(update) as Array<keyof typeof update>
+    if (updateKeys.length === 0) {
       throw new SavedViewUpdateValidationError('No changes submitted with the input.', {
         info: {
           input,
@@ -614,11 +630,19 @@ export const updateSavedViewFactory =
       })
     }
 
-    const updatedView = await deps.updateSavedViewRecord({
-      id,
-      projectId,
-      update
-    })
+    const skipUpdatingDate =
+      difference<keyof typeof update>(updateKeys, ['visibility']).length === 0
+
+    const updatedView = await deps.updateSavedViewRecord(
+      {
+        id,
+        projectId,
+        update
+      },
+      {
+        skipUpdatingDate
+      }
+    )
 
     await Promise.all([
       ...(updatedView?.groupId !== view.groupId
