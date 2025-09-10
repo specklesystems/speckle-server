@@ -117,6 +117,18 @@ export class IndexedDatabase implements Database {
    */
   async putAll(data: Item[]): Promise<void> {
     await this.init() // Ensure the database is initialized
+    for (let i = 0; i < data.length; i += this.#chunkSize) {
+      const chunk = data.slice(i, i + this.#chunkSize)
+      await this.#writeChunk(chunk)
+    }
+  }
+
+  /**
+   * Retrieves a chunk of items from the object store.
+   * Processes requests sequentially to avoid memory pressure.
+   * @param ids The array of IDs to retrieve (should be <= chunkSize).
+   */
+  async #writeChunk(data: Item[]): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
         const transaction = this.#getDB().transaction(this.#storeName, 'readwrite', {
