@@ -1,11 +1,8 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { isEmailSandboxMode } from '@/modules/shared/helpers/envHelper'
 import { createTransport } from 'nodemailer'
 import type { EmailTransport } from '@/modules/emails/domain/types'
 import { ensureError } from '@speckle/shared'
 import type { Logger } from '@/observability/logging'
-
-let transporter: EmailTransport | undefined = undefined
 
 const createJsonEchoTransporter = () => createTransport({ jsonTransport: true })
 
@@ -27,11 +24,12 @@ const initSmtpTransporter = async () => {
 }
 
 export async function initializeSMTPTransporter(deps: {
+  isSandboxMode: boolean
   logger: Logger
 }): Promise<EmailTransport | undefined> {
   let newTransporter = undefined
 
-  if (!isEmailSandboxMode()) {
+  if (!deps.isSandboxMode) {
     const errorMessage =
       '📧 Email provider is enabled but transport has not initialized correctly. Please review the email configuration or your email system for problems.'
     try {
@@ -62,10 +60,5 @@ export async function initializeSMTPTransporter(deps: {
     )
   }
 
-  transporter = newTransporter
   return newTransporter
-}
-
-export function getTransporter(): EmailTransport | undefined {
-  return transporter
 }

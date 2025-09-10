@@ -380,7 +380,10 @@ export function isEmailEnabled() {
 }
 
 export function getEmailTransporterType() {
-  return getStringFromEnv('EMAIL_TRANSPORTER_TYPE', { unsafe: true, default: 'smtp' })
+  return getStringFromEnv('EMAIL_TRANSPORT_TYPE', {
+    unsafe: true,
+    default: 'smtp'
+  }).toLocaleLowerCase()
 }
 
 export function isEmailSandboxMode() {

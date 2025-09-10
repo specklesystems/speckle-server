@@ -1,17 +1,11 @@
 import type { EmailTransport } from '@/modules/emails/domain/types'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import {
-  getEmailPassword,
-  getEmailUsername,
-  isEmailSandboxMode
-} from '@/modules/shared/helpers/envHelper'
+import { getEmailPassword, getEmailUsername } from '@/modules/shared/helpers/envHelper'
 import type { Logger } from '@/observability/logging'
 import { ensureError } from '@speckle/shared'
 import Mailjet, { type Client as MailjetClient } from 'node-mailjet'
 import { z } from 'zod'
 import { EmailSendingError } from '@/modules/emails/errors'
-
-let transporter: EmailTransport | undefined = undefined
 
 const initMailjetAPI = async (): Promise<MailjetClient> => {
   const mailjetTransporter = Mailjet.Client.apiConnect(
@@ -24,13 +18,15 @@ const initMailjetAPI = async (): Promise<MailjetClient> => {
 const sendMessageResponseSchema = z.object({
   Messages: z.array(
     z.object({
-      MessageID: z.string()
+      MessageID: z.string().optional(),
+      CustomId: z.string().optional()
     })
   )
 })
 
 export async function initializeMailjetTransporter(deps: {
   logger: Logger
+  isSandboxMode: boolean
 }): Promise<EmailTransport | undefined> {
   let newTransporter: MailjetClient | undefined = undefined
 
@@ -50,7 +46,7 @@ export async function initializeMailjetTransporter(deps: {
   }
 
   // we wrap the mailjet client in our EmailTransport interface
-  transporter = {
+  const transporter: EmailTransport = {
     sendMail: async (options) => {
       const response = await newTransporter.post('send', { version: 'v3.1' }).request({
         Messages: [
@@ -63,26 +59,28 @@ export async function initializeMailjetTransporter(deps: {
               : [{ Email: options.to }],
             Subject: options.subject,
             TextPart: options.text,
-            HTMLPart: options.html
+            HTMLPart: options.html,
+            CustomID: options.speckleEmailId
           }
         ],
-        SandboxMode: isEmailSandboxMode()
+        SandboxMode: deps.isSandboxMode
       })
 
       // validate response is as expected
       const parsedResponse = await sendMessageResponseSchema.safeParseAsync(
-        response.body
+        response.response.data
       )
       if (!parsedResponse.success || parsedResponse.data.Messages.length === 0) {
         throw new EmailSendingError('No messages were sent')
       }
 
-      return { messageId: parsedResponse.data.Messages[0].MessageID }
+      return {
+        messageId:
+          parsedResponse.data.Messages[0].MessageID ||
+          parsedResponse.data.Messages[0].CustomId ||
+          ''
+      }
     }
   }
-  return transporter
-}
-
-export function getTransporter(): EmailTransport | undefined {
   return transporter
 }

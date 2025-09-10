@@ -1,15 +1,13 @@
 /* istanbul ignore file */
 import { emailLogger, moduleLogger } from '@/observability/logging'
-import * as SendingService from '@/modules/emails/services/sending'
-import { initializeSMTPTransporter } from '@/modules/emails/clients/smtpTransporter'
-import { initializeMailjetTransporter } from '@/modules/emails/clients/mailjetApi'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import RestApi from '@/modules/emails/rest/index'
 import {
   getEmailTransporterType,
-  isEmailEnabled
+  isEmailEnabled,
+  isEmailSandboxMode
 } from '@/modules/shared/helpers/envHelper'
-import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+import { initializeEmailTransport } from '@/modules/emails/clients/transportBuilder'
 
 const emailsModule: SpeckleModule = {
   init: async ({ app }) => {
@@ -17,19 +15,11 @@ const emailsModule: SpeckleModule = {
 
     const emailTransportType = getEmailTransporterType()
     if (isEmailEnabled()) {
-      switch (emailTransportType) {
-        case 'smtp':
-          moduleLogger.info('📧 Using SMTP email transporter')
-          await initializeSMTPTransporter({ logger: emailLogger })
-          break
-        case 'mailjet':
-          moduleLogger.info('📧 Using Mailjet email transporter')
-          await initializeMailjetTransporter({ logger: emailLogger })
-        default:
-          throw new MisconfiguredEnvironmentError(
-            `📧 Unsupported email transporter type: ${emailTransportType}`
-          )
-      }
+      await initializeEmailTransport({
+        emailTransportType,
+        isSandboxMode: isEmailSandboxMode(),
+        logger: emailLogger
+      })
     }
 
     // init rest api
@@ -37,26 +27,6 @@ const emailsModule: SpeckleModule = {
   }
 }
 
-/**
- * @deprecated Use `sendEmail` from `@/modules/emails/services/sending` instead
- */
-async function sendEmail({
-  from,
-  to,
-  subject,
-  text,
-  html
-}: {
-  from?: string
-  to: string
-  subject: string
-  text: string
-  html: string
-}) {
-  return SendingService.sendEmail({ from, to, subject, text, html })
-}
-
 export default {
-  ...emailsModule,
-  sendEmail
+  ...emailsModule
 }

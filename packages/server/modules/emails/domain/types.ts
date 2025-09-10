@@ -11,6 +11,7 @@ export type EmailOptions = {
   subject: string
   text: string
   html: string
+  speckleEmailId?: string
 }
 
 export type SentEmailInfo = {
