@@ -1307,6 +1307,11 @@
                 }
               }
             },
+            "secure": {
+              "type": "boolean",
+              "description": "If true, will use TLS when connecting to the email server",
+              "default": true
+            },
             "networkPolicy": {
               "type": "object",
               "properties": {
