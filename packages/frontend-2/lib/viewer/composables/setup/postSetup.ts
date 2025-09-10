@@ -555,6 +555,8 @@ function useViewerFiltersIntegration() {
       ).filter(isNonNullable)
       if (arraysEqual(newIds, oldIds)) return
 
+      state.ui.highlightedObjectIds.value = []
+
       const selectionExtension = instance.getExtension(SelectionExtension)
 
       if (!newVal.length) {
