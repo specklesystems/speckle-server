@@ -30,7 +30,7 @@ export const pushJobToFileImporterFactory =
         Scopes.Streams.Write,
         Scopes.Streams.Read,
         Scopes.Profile.Read,
-        Scopes.Users.Email // for reporting to mixpanel
+        Scopes.Profile.Email
       ],
       lifespan: maximumAllowedQueuingProcessingAndRetryTimeMs(),
       limitResources: [
