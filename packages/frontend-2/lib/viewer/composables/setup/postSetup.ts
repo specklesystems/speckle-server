@@ -17,6 +17,7 @@ import {
   ExplodeEvent,
   ExplodeExtension,
   LoaderEvent,
+  SelectionExtension,
   type SunLightConfiguration
 } from '@speckle/viewer'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
@@ -63,6 +64,7 @@ import {
 } from '~/lib/viewer/composables/setup/filters'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { useFilteringSetup } from '~/lib/viewer/composables/filtering/setup'
+import { useHighlightingPostSetup } from '~/lib/viewer/composables/setup/highlighting'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -536,22 +538,11 @@ function useViewerFiltersIntegration() {
   const state = useInjectedViewerState()
   const {
     viewer: { instance },
-    ui: { filters, highlightedObjectIds }
+    ui: { filters }
   } = state
 
   useFilteringSetup()
   useFilterUtilities({ state })
-
-  // state -> viewer
-  watch(
-    highlightedObjectIds,
-    (newVal, oldVal) => {
-      if (arraysEqual(newVal, oldVal || [])) return
-
-      instance.highlightObjects(newVal)
-    },
-    { immediate: true, flush: 'sync' }
-  )
 
   watch(
     filters.selectedObjects,
@@ -564,12 +555,15 @@ function useViewerFiltersIntegration() {
       ).filter(isNonNullable)
       if (arraysEqual(newIds, oldIds)) return
 
+      state.ui.highlightedObjectIds.value = []
+
+      const selectionExtension = instance.getExtension(SelectionExtension)
+
       if (!newVal.length) {
-        instance.resetSelection()
+        selectionExtension.clearSelection()
         return
       }
-
-      instance.selectObjects(newIds)
+      selectionExtension.selectObjects(newIds)
     },
     { immediate: true, flush: 'sync' }
   )
@@ -863,5 +857,6 @@ export function useViewerPostSetup() {
   useViewerCursorIntegration()
   useViewerTreeIntegration()
   useViewModesPostSetup()
+  useHighlightingPostSetup()
   setupDebugMode()
 }
