@@ -54,7 +54,9 @@ import {
   countProjectObjectsFactory,
   countProjectAutomationsFactory,
   countProjectCommentsFactory,
-  countProjectWebhooksFactory
+  countProjectWebhooksFactory,
+  copyProjectSavedViews,
+  countProjectSavedViewsFactory
 } from '@/modules/workspaces/repositories/projectRegions'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
@@ -229,6 +231,10 @@ export const startQueue = async () => {
                 targetDb: targetDbTrx,
                 targetObjectStorage
               }),
+              copyProjectSavedViews: copyProjectSavedViews({
+                sourceDb,
+                targetDb: targetDbTrx
+              }),
               validateProjectRegionCopy: validateProjectRegionCopyFactory({
                 countProjectModels: countProjectModelsFactory({ db: sourceDb }),
                 countProjectVersions: countProjectVersionsFactory({ db: sourceDb }),
@@ -237,7 +243,8 @@ export const startQueue = async () => {
                   db: sourceDb
                 }),
                 countProjectComments: countProjectCommentsFactory({ db: sourceDb }),
-                countProjectWebhooks: countProjectWebhooksFactory({ db: sourceDb })
+                countProjectWebhooks: countProjectWebhooksFactory({ db: sourceDb }),
+                countProjectSavedViews: countProjectSavedViewsFactory({ db: sourceDb })
               })
             })
 

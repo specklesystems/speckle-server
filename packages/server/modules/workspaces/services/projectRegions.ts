@@ -6,6 +6,7 @@ import type {
   CopyProjectModels,
   CopyProjectObjects,
   CopyProjects,
+  CopyProjectSavedViews,
   CopyProjectVersions,
   CopyProjectWebhooks,
   CopyWorkspace,
@@ -13,6 +14,7 @@ import type {
   CountProjectComments,
   CountProjectModels,
   CountProjectObjects,
+  CountProjectSavedViews,
   CountProjectVersions,
   CountProjectWebhooks,
   GetAvailableRegions,
@@ -35,6 +37,7 @@ export const moveProjectToRegionFactory =
     copyProjectComments: CopyProjectComments
     copyProjectWebhooks: CopyProjectWebhooks
     copyProjectBlobs: CopyProjectBlobs
+    copyProjectSavedViews: CopyProjectSavedViews
     validateProjectRegionCopy: ValidateProjectRegionCopy
   }): MoveProjectToRegion =>
   async (params) => {
@@ -90,6 +93,9 @@ export const moveProjectToRegionFactory =
     // Move file blobs
     await deps.copyProjectBlobs({ projectIds })
 
+    // Move saved views
+    const copiedSavedViewsCount = await deps.copyProjectSavedViews({ projectIds })
+
     // Validate that state after move captures latest state of project
     const targetProjectResources = {
       models: copiedModelCount[projectId] ?? 0,
@@ -97,7 +103,8 @@ export const moveProjectToRegionFactory =
       objects: copiedObjectCount[projectId] ?? 0,
       automations: copiedAutomationCount[projectId] ?? 0,
       comments: copiedCommentCount[projectId] ?? 0,
-      webhooks: copiedWebhookCount[projectId] ?? 0
+      webhooks: copiedWebhookCount[projectId] ?? 0,
+      savedViews: copiedSavedViewsCount[projectId] ?? 0
     }
 
     const [isValidCopy, sourceProjectResources] = await deps.validateProjectRegionCopy({
@@ -128,6 +135,7 @@ export const validateProjectRegionCopyFactory =
     countProjectAutomations: CountProjectAutomations
     countProjectComments: CountProjectComments
     countProjectWebhooks: CountProjectWebhooks
+    countProjectSavedViews: CountProjectSavedViews
   }): ValidateProjectRegionCopy =>
   async ({ projectId, copiedRowCount }) => {
     const sourceProjectModelCount = await deps.countProjectModels({ projectId })
@@ -138,6 +146,9 @@ export const validateProjectRegionCopyFactory =
     })
     const sourceProjectCommentCount = await deps.countProjectComments({ projectId })
     const sourceProjectWebhooksCount = await deps.countProjectWebhooks({ projectId })
+    const sourceProjectSavedViewsCount = await deps.countProjectSavedViews({
+      projectId
+    })
 
     const tests = [
       copiedRowCount.models === sourceProjectModelCount,
@@ -145,7 +156,8 @@ export const validateProjectRegionCopyFactory =
       copiedRowCount.objects === sourceProjectObjectCount,
       copiedRowCount.automations === sourceProjectAutomationCount,
       copiedRowCount.comments === sourceProjectCommentCount,
-      copiedRowCount.webhooks === sourceProjectWebhooksCount
+      copiedRowCount.webhooks === sourceProjectWebhooksCount,
+      copiedRowCount.savedViews === sourceProjectSavedViewsCount
     ]
 
     return [
