@@ -3,15 +3,22 @@ import { createTransport } from 'nodemailer'
 import type { EmailTransport } from '@/modules/emails/domain/types'
 import { ensureError } from '@speckle/shared'
 import type { Logger } from '@/observability/logging'
+import {
+  getEmailHost,
+  getEmailPassword,
+  getEmailPort,
+  getEmailUsername,
+  isSecureEmailEnabled
+} from '@/modules/shared/helpers/envHelper'
 
 const initSmtpTransporter = async () => {
   const smtpTransporter = createTransport({
-    host: process.env.EMAIL_HOST || '127.0.0.1',
-    port: parseInt(process.env.EMAIL_PORT || '587'),
-    secure: process.env.EMAIL_SECURE === 'true',
+    host: getEmailHost(),
+    port: getEmailPort(),
+    secure: isSecureEmailEnabled(),
     auth: {
-      user: process.env.EMAIL_USERNAME,
-      pass: process.env.EMAIL_PASSWORD
+      user: getEmailUsername(),
+      pass: getEmailPassword()
     },
     pool: true,
     maxConnections: 20,

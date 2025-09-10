@@ -189,6 +189,7 @@ export const moveProjectToWorkspaceFactory =
     return await updateProject({
       projectUpdate: {
         id: projectId,
+        updatedAt: new Date(),
         workspaceId,
         visibility:
           // Migrate from Private -> Workspace visibility

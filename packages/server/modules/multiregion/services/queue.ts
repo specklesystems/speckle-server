@@ -24,8 +24,8 @@ import {
 } from '@/modules/workspaces/services/projectRegions'
 import { db } from '@/db/knex'
 import {
-  getProjectFactory,
-  storeProjectRolesFactory
+  deleteProjectFactory,
+  getProjectFactory
 } from '@/modules/core/repositories/projects'
 import { getAvailableRegionsFactory } from '@/modules/workspaces/services/regions'
 import { getRegionsFactory } from '@/modules/multiregion/repositories'
@@ -33,7 +33,8 @@ import { canWorkspaceUseRegionsFactory } from '@/modules/gatekeeper/services/fea
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 import {
   upsertProjectRegionKeyFactory,
-  deleteRegionKeyFromCacheFactory
+  deleteRegionKeyFromCacheFactory,
+  inMemoryRegionKeyStoreFactory
 } from '@/modules/multiregion/repositories/projectRegion'
 import { updateProjectRegionKeyFactory } from '@/modules/multiregion/services/projectRegion'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
@@ -53,13 +54,16 @@ import {
   countProjectObjectsFactory,
   countProjectAutomationsFactory,
   countProjectCommentsFactory,
-  countProjectWebhooksFactory
+  countProjectWebhooksFactory,
+  copyProjectSavedViews,
+  countProjectSavedViewsFactory
 } from '@/modules/workspaces/repositories/projectRegions'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
-import { chunk } from 'lodash-es'
-import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
 import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
+import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
+import { getProjectRegionKey } from '@/modules/multiregion/utils/regionSelector'
 
 const MULTIREGION_QUEUE_NAME = isTestEnv()
   ? `test:multiregion:${cryptoRandomString({ length: 5 })}`
@@ -164,14 +168,19 @@ export const startQueue = async () => {
 
     switch (job.data.type) {
       case 'move-project-region': {
-        const { projectId, regionKey } = job.data.payload
+        const { projectId, regionKey: targetRegionKey } = job.data.payload
+
+        if (targetRegionKey === null)
+          throw new MultiRegionInvalidJobError('Target region cannot be main')
 
         const sourceDb = await getProjectDbClient({ projectId })
+        const sourceRegionKey = await getProjectRegionKey({ projectId })
         const sourceObjectStorage = (await getProjectObjectStorage({ projectId }))
           .private
-        const targetDb = await getRegionDb({ regionKey })
-        const targetObjectStorage = (await getRegionObjectStorage({ regionKey }))
-          .private
+        const targetDb = await getRegionDb({ regionKey: targetRegionKey })
+        const targetObjectStorage = (
+          await getRegionObjectStorage({ regionKey: targetRegionKey })
+        ).private
 
         // Move project to target region
         await withTransaction(
@@ -222,6 +231,10 @@ export const startQueue = async () => {
                 targetDb: targetDbTrx,
                 targetObjectStorage
               }),
+              copyProjectSavedViews: copyProjectSavedViews({
+                sourceDb,
+                targetDb: targetDbTrx
+              }),
               validateProjectRegionCopy: validateProjectRegionCopyFactory({
                 countProjectModels: countProjectModelsFactory({ db: sourceDb }),
                 countProjectVersions: countProjectVersionsFactory({ db: sourceDb }),
@@ -230,19 +243,22 @@ export const startQueue = async () => {
                   db: sourceDb
                 }),
                 countProjectComments: countProjectCommentsFactory({ db: sourceDb }),
-                countProjectWebhooks: countProjectWebhooksFactory({ db: sourceDb })
+                countProjectWebhooks: countProjectWebhooksFactory({ db: sourceDb }),
+                countProjectSavedViews: countProjectSavedViewsFactory({ db: sourceDb })
               })
             })
 
-            await moveProjectToRegion({ projectId, regionKey })
+            await moveProjectToRegion({ projectId, regionKey: targetRegionKey })
           },
           {
             db: targetDb
           }
         )
 
+        const { writeRegion } = inMemoryRegionKeyStoreFactory()
+
         // Update project region in dbs and update relevant caches
-        const project = await asMultiregionalOperation(
+        await asMultiregionalOperation(
           async ({ allDbs, emit }) =>
             updateProjectRegionKeyFactory({
               upsertProjectRegionKey: replicateFactory(
@@ -252,28 +268,46 @@ export const startQueue = async () => {
               cacheDeleteRegionKey: deleteRegionKeyFromCacheFactory({
                 redis: getGenericRedis()
               }),
+              writeRegionToMemory: writeRegion,
               emitEvent: emit
-            })({ projectId, regionKey }),
+            })({ projectId, regionKey: targetRegionKey }),
           {
             name: 'updateProjectRegion',
             description: 'Update project region in db and update relevant caches',
             logger,
-            dbs: await getReplicationDbs({ regionKey })
+            dbs: await getReplicationDbs({ regionKey: targetRegionKey })
           }
         )
 
-        // Grab project roles for later reinstating
-        const projectRoles = await getStreamCollaboratorsFactory({ db })(project.id)
+        // if we got to here, we must delete the project from the region so its not replicated back with the old regionKey
+        // and we only do it if the source region is not main, because:
+        // - we expect the project to exist only in main and in the target region
+        // - as we delete the project, everything cascades down (webhooks, automations ....) and this is okay for sub region
+        // BUT, we can't delete from main because it will cascade down also acls and other entities that must be kept in main.
+        //
+        // if at some point we allow the feature to move back to main region, we will need to tackle this.
+        // As for now, projects can only move between regions this if avoids complexity
 
-        // Reinstate project acl records
-        for (const roles of chunk(projectRoles, 10_000)) {
-          await storeProjectRolesFactory({ db })({
-            roles: roles.map((role) => ({
-              projectId: project.id,
-              userId: role.id,
-              role: role.streamRole
-            }))
-          })
+        if (sourceRegionKey !== null) {
+          logger.info(
+            {
+              jobId: job.id,
+              jobQueue: MULTIREGION_QUEUE_NAME,
+              payload: job.data.payload,
+              type: job.data.type,
+              projectId,
+              sourceRegionKey
+            },
+            'Dropping project from source region {jobId}'
+          )
+          await deleteProjectAndCommitsFactory({
+            deleteProject: deleteProjectFactory({
+              db: sourceDb
+            }),
+            deleteProjectCommits: deleteProjectCommitsFactory({
+              db: sourceDb
+            })
+          })({ projectId })
         }
 
         return

@@ -191,7 +191,10 @@ export const updateStreamAndNotifyFactory =
       })
     }
 
-    const newStream = await deps.updateStream(update)
+    const newStream = await deps.updateStream({
+      ...update,
+      updatedAt: new Date()
+    })
     if (!newStream) {
       return oldStream
     }
