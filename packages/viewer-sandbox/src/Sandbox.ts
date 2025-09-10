@@ -430,12 +430,10 @@ export default class Sandbox {
         this.selectionList.map((val) => val.hits[0].node.model.raw.id) as string[]
       )
       if (!box) {
-        box = this.viewer.getRenderer().sceneBox
+        box = this.viewer.getRenderer().visibleSceneBox
       }
       this.viewer.getExtension(SectionTool).setBox(box)
       this.viewer.getExtension(SectionTool).toggle()
-      const sectionCaps = this.viewer.getExtension(SectionCaps)
-      if (sectionCaps) sectionCaps.enabled = !sectionCaps.enabled
     })
 
     const toggleSectionBoxVisibility = this.tabs.pages[0].addButton({
@@ -496,8 +494,10 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      console.warn(await this.viewer.screenshot())
-
+      // console.warn(await this.viewer.screenshot())
+      this.viewer
+        .getExtension(FilteringExtension)
+        .hideObjects(['931ef43a6d8694c6f9e8b568a49bf04a'])
       /** Read depth */
       // const pass = [
       //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),

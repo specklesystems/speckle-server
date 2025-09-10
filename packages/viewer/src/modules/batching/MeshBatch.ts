@@ -33,36 +33,6 @@ export class MeshBatch extends PrimitiveBatch {
     return this.primitive.TAS.getBoundingBox(new Box3())
   }
 
-  get visibleBounds(): Box3 {
-    const box = new Box3()
-    /** Don't mutate original array. Make a shallow copy */
-    const batchObjects = this.primitive.batchObjects.slice()
-    batchObjects.sort((a, b) => {
-      return a.renderView.batchStart - b.renderView.batchStart
-    })
-
-    const visibleRange = this.getVisibleRange()
-    let lo = 0,
-      hi = batchObjects.length
-    while (lo < hi) {
-      const mid = (lo + hi) >>> 1
-      if (batchObjects[mid].renderView.batchStart < visibleRange.offset) lo = mid + 1
-      else hi = mid
-    }
-
-    const qStart = visibleRange.offset
-    const qEnd = visibleRange.offset + visibleRange.count
-
-    for (; lo < batchObjects.length; lo++) {
-      const s = batchObjects[lo]
-      if (s.renderView.batchStart >= qEnd) break
-      const sEnd = s.renderView.batchStart + s.renderView.batchCount
-      if (s.renderView.batchStart >= qStart && sEnd <= qEnd) box.union(s.aabb)
-    }
-
-    return box
-  }
-
   get minDrawCalls(): number {
     return [...Array.from(new Set(this.groups.map((value) => value.materialIndex)))]
       .length

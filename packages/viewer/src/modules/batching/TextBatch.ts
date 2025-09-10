@@ -144,7 +144,7 @@ export default class TextBatch implements Batch {
 
   /** Text batches are mix between how mesh and line batches work.
    * - They still keep track of various draw groups each with it's material
-   * - However that material is not really being used, bur rather the properies are copied over to the batch fp32 data texture
+   * - However that material is not really being used, but rather the properies are copied over to the batch fp32 data texture
    * - For filtering we cheat and use `SpeckleTextColoredMaterial` only to store the gradient/ramp texture + gradient indices for each text in the batch
    * - The color from the gradient/ramp texture will be used only if the gradient index > 0, otherwise the regular color will be used
    * - The gradient index is stored in each text object in it's `userData` and written to the 27'th float in the batch data texture, where the shader reads if from

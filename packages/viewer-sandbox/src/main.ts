@@ -56,7 +56,6 @@ const createViewer = async (containerName: string, _stream: string) => {
   const boxSelect = viewer.createExtension(BoxSelection)
   boxSelect.realtimeSelection = false
   viewer.createExtension(PassReader)
-  // viewer.createExtension(SectionCaps)
 
   const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 
