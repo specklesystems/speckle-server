@@ -16,9 +16,15 @@ export interface IndexedDatabaseOptions {
     lowerBound: Function
     upperBound: Function
   }
+  /**
+   * Chunk size for batch operations to avoid memory pressure.
+   * Defaults to 500. Lower values use less memory but may be slower.
+   */
+  chunkSize?: number
 }
 export class IndexedDatabase implements Database {
   #options: IndexedDatabaseOptions
+  #chunkSize: number
 
   #db: IDBDatabase | undefined = undefined
   readonly #dbName: string = 'speckle-cache'
@@ -26,6 +32,7 @@ export class IndexedDatabase implements Database {
 
   constructor(options: IndexedDatabaseOptions) {
     this.#options = options
+    this.#chunkSize = options.chunkSize ?? 500
   }
 
   /**
@@ -133,38 +140,69 @@ export class IndexedDatabase implements Database {
 
   /**
    * Retrieves an array of items from the object store based on their IDs.
+   * Uses chunking to avoid memory pressure from creating too many promises at once.
    * @param ids The array of IDs to retrieve.
    */
   async getAll(ids: string[]): Promise<(Item | undefined)[]> {
     await this.init() // Ensure the database is initialized
-    return new Promise((resolve, reject) => {
-      if (ids.length === 0) {
-        return resolve([])
+
+    if (ids.length === 0) {
+      return []
+    }
+
+    // Use chunking to process IDs in smaller batches to reduce memory pressure
+    const results: (Item | undefined)[] = new Array<Item | undefined>(ids.length)
+
+    for (let i = 0; i < ids.length; i += this.#chunkSize) {
+      const chunk = ids.slice(i, i + this.#chunkSize)
+      const chunkResults = await this.#getChunk(chunk)
+
+      // Place results in the correct positions
+      for (let j = 0; j < chunkResults.length; j++) {
+        results[i + j] = chunkResults[j]
       }
+    }
+
+    return results
+  }
+
+  /**
+   * Retrieves a chunk of items from the object store.
+   * @param ids The array of IDs to retrieve (should be <= chunkSize).
+   */
+  async #getChunk(ids: string[]): Promise<(Item | undefined)[]> {
+    return new Promise((resolve, reject) => {
       try {
         const transaction = this.#getDB().transaction(this.#storeName, 'readonly', {
           durability: 'relaxed'
         })
         const store = transaction.objectStore(this.#storeName)
-        const promises: Promise<Item | undefined>[] = []
+        const results: (Item | undefined)[] = new Array<Item | undefined>(ids.length)
+        let completedRequests = 0
 
-        for (const id of ids) {
-          promises.push(
-            new Promise((resolveGet, rejectGet) => {
-              const request = store.get(id)
-              request.onerror = (): void =>
-                rejectGet(`Request error for id ${id}: ${request.error}`)
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-              request.onsuccess = (): void => resolveGet(request.result)
-            })
-          )
+        transaction.onerror = (): void => {
+          reject(`Transaction error: ${transaction.error}`)
         }
 
-        Promise.all(promises)
-          .then((results) => {
-            resolve(results)
-          })
-          .catch(reject)
+        // Process each ID in the chunk
+        for (let i = 0; i < ids.length; i++) {
+          const request = store.get(ids[i])
+          const index = i // Capture the index for the closure
+
+          request.onerror = (): void => {
+            reject(`Request error for id ${ids[index]}: ${request.error}`)
+          }
+
+          request.onsuccess = (): void => {
+            results[index] = request.result as Item | undefined
+            completedRequests++
+
+            // When all requests in this chunk are complete, resolve
+            if (completedRequests === ids.length) {
+              resolve(results)
+            }
+          }
+        }
       } catch (error) {
         reject(error)
       }
