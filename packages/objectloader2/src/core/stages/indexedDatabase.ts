@@ -32,7 +32,7 @@ export class IndexedDatabase implements Database {
 
   constructor(options: IndexedDatabaseOptions) {
     this.#options = options
-    this.#chunkSize = options.chunkSize ?? 500
+    this.#chunkSize = 500
   }
 
   /**
@@ -168,45 +168,35 @@ export class IndexedDatabase implements Database {
 
   /**
    * Retrieves a chunk of items from the object store.
+   * Processes requests sequentially to avoid memory pressure.
    * @param ids The array of IDs to retrieve (should be <= chunkSize).
    */
   async #getChunk(ids: string[]): Promise<(Item | undefined)[]> {
-    return new Promise((resolve, reject) => {
-      try {
-        const transaction = this.#getDB().transaction(this.#storeName, 'readonly', {
-          durability: 'relaxed'
-        })
-        const store = transaction.objectStore(this.#storeName)
-        const results: (Item | undefined)[] = new Array<Item | undefined>(ids.length)
-        let completedRequests = 0
+    const results: (Item | undefined)[] = new Array<Item | undefined>(ids.length)
 
-        transaction.onerror = (): void => {
-          reject(`Transaction error: ${transaction.error}`)
-        }
-
-        // Process each ID in the chunk
-        for (let i = 0; i < ids.length; i++) {
-          const request = store.get(ids[i])
-          const index = i // Capture the index for the closure
-
-          request.onerror = (): void => {
-            reject(`Request error for id ${ids[index]}: ${request.error}`)
-          }
-
-          request.onsuccess = (): void => {
-            results[index] = request.result as Item | undefined
-            completedRequests++
-
-            // When all requests in this chunk are complete, resolve
-            if (completedRequests === ids.length) {
-              resolve(results)
-            }
-          }
-        }
-      } catch (error) {
-        reject(error)
-      }
+    const transaction = this.#getDB().transaction(this.#storeName, 'readonly', {
+      durability: 'relaxed'
     })
+    const store = transaction.objectStore(this.#storeName)
+
+    for (let i = 0; i < ids.length; i++) {
+      try {
+        const result = await new Promise<Item | undefined>((resolve, reject) => {
+          const request = store.get(ids[i])
+          request.onsuccess = (): void => {
+            resolve(request.result as Item | undefined)
+          }
+          request.onerror = (): void => {
+            reject(`Request error for id ${ids[i]}: ${request.error}`)
+          }
+        })
+        results[i] = result
+      } catch (error) {
+        throw error
+      }
+    }
+
+    return results
   }
   dispose(): void {
     if (!this.#db) return
