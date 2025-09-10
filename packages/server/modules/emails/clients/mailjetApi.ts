@@ -1,16 +1,18 @@
 import type { EmailTransport } from '@/modules/emails/domain/types'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { getEmailPassword, getEmailUsername } from '@/modules/shared/helpers/envHelper'
 import type { Logger } from '@/observability/logging'
 import { ensureError } from '@speckle/shared'
 import Mailjet, { type Client as MailjetClient } from 'node-mailjet'
 import { z } from 'zod'
 import { EmailSendingError } from '@/modules/emails/errors'
 
-const initMailjetAPI = async (): Promise<MailjetClient> => {
+const initMailjetAPI = async (params: {
+  apiKeyPublic: string
+  apiKeyPrivate: string
+}): Promise<MailjetClient> => {
   const mailjetTransporter = Mailjet.Client.apiConnect(
-    getEmailUsername(),
-    getEmailPassword()
+    params.apiKeyPublic,
+    params.apiKeyPrivate
   )
   return mailjetTransporter
 }
@@ -24,7 +26,11 @@ const sendMessageResponseSchema = z.object({
   )
 })
 
-export async function initializeMailjetTransporter(deps: {
+export async function initializeMailjetTransporter(params: {
+  config: {
+    apiKeyPublic: string
+    apiKeyPrivate: string
+  }
   logger: Logger
   isSandboxMode: boolean
 }): Promise<EmailTransport | undefined> {
@@ -33,15 +39,18 @@ export async function initializeMailjetTransporter(deps: {
   const errorMessage =
     '📧 Email provider is enabled but transport has not initialized correctly. Please review the email configuration or your email system for problems.'
   try {
-    newTransporter = await initMailjetAPI()
+    newTransporter = await initMailjetAPI({
+      apiKeyPublic: params.config.apiKeyPublic,
+      apiKeyPrivate: params.config.apiKeyPrivate
+    })
   } catch (e) {
     const err = ensureError(e, 'Unknown error while initializing Mailjet transporter')
-    deps.logger.error(err, errorMessage)
+    params.logger.error(err, errorMessage)
     throw new MisconfiguredEnvironmentError(errorMessage, { cause: err })
   }
 
   if (!newTransporter) {
-    deps.logger.error(errorMessage)
+    params.logger.error(errorMessage)
     throw new MisconfiguredEnvironmentError(errorMessage)
   }
 
@@ -63,7 +72,7 @@ export async function initializeMailjetTransporter(deps: {
             CustomID: options.speckleEmailId
           }
         ],
-        SandboxMode: deps.isSandboxMode
+        SandboxMode: params.isSandboxMode
       })
 
       // validate response is as expected

@@ -17,3 +17,9 @@ export class EmailSendingError extends BaseError {
   static defaultMessage = 'Error sending email'
   static statusCode = 500
 }
+
+export class MailchimpClientError extends BaseError {
+  static code = 'MAILCHIMP_CLIENT_ERROR'
+  static defaultMessage = 'Error with Mailchimp client'
+  static statusCode = 500
+}

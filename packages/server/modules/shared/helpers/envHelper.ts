@@ -380,7 +380,7 @@ export function getEmailFromAddress() {
 }
 
 export function getEmailHost() {
-  return process.env.EMAIL_HOST || '127.0.0.1'
+  return getStringFromEnv('EMAIL_HOST', { default: '127.0.0.1' })
 }
 
 export function getEmailPort() {
@@ -389,7 +389,6 @@ export function getEmailPort() {
 
 export function getEmailTransporterType() {
   return getStringFromEnv('EMAIL_TRANSPORT_TYPE', {
-    unsafe: true,
     default: 'smtp'
   }).toLocaleLowerCase()
 }

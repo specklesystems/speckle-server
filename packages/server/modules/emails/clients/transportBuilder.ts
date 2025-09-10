@@ -8,6 +8,8 @@ import { LogicError, MisconfiguredEnvironmentError } from '@/modules/shared/erro
 import { initializeMailjetTransporter } from '@/modules/emails/clients/mailjetApi'
 import { initializeSMTPTransporter } from '@/modules/emails/clients/smtp'
 import { initializeJSONEchoTransporter } from '@/modules/emails/clients/jsonEcho'
+import { initializeMailchimpTransporter } from '@/modules/emails/clients/mailchimp'
+import { getEmailPassword, getEmailUsername } from '@/modules/shared/helpers/envHelper'
 
 let transporter: EmailTransport | undefined = undefined
 
@@ -46,7 +48,19 @@ export const initializeEmailTransport = async (params: {
       break
     case EmailTransportType.Mailjet:
       logger.info('📧🛩️ Using Mailjet email transporter')
-      transporter = await initializeMailjetTransporter({ logger, isSandboxMode })
+      transporter = await initializeMailjetTransporter({
+        config: { apiKeyPublic: getEmailUsername(), apiKeyPrivate: getEmailPassword() },
+        logger,
+        isSandboxMode
+      })
+      break
+    case EmailTransportType.Mailchimp:
+      logger.info('📧🦜 Using Mailchimp email transporter')
+      transporter = await initializeMailchimpTransporter({
+        config: { apiKey: getEmailPassword() },
+        logger,
+        isSandboxMode
+      })
       break
     default:
       throw new LogicError(unsupportedTransportTypeMessage, {

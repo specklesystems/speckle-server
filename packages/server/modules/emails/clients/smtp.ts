@@ -24,7 +24,12 @@ const initSmtpTransporter = async () => {
     maxConnections: 20,
     maxMessages: Infinity
   })
-  await smtpTransporter.verify()
+  const verifyResult = await smtpTransporter.verify()
+  if (!verifyResult) {
+    throw new MisconfiguredEnvironmentError(
+      'SMTP transporter verification failed. Please check your SMTP configuration.'
+    )
+  }
   return smtpTransporter
 }
 

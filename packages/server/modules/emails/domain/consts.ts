@@ -1,7 +1,8 @@
 export const EmailTransportType = {
   SMTP: 'smtp',
   JSONEcho: 'jsonecho',
-  Mailjet: 'mailjet'
+  Mailjet: 'mailjet',
+  Mailchimp: 'mailchimp'
 } as const
 export type EmailTransportType =
   (typeof EmailTransportType)[keyof typeof EmailTransportType]

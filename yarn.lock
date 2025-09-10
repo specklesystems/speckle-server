@@ -7443,6 +7443,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mailchimp/mailchimp_transactional@npm:^1.0.59":
+  version: 1.0.59
+  resolution: "@mailchimp/mailchimp_transactional@npm:1.0.59"
+  dependencies:
+    axios: "npm:^1.6.7"
+  checksum: 10/5dd9c0215ee46bd94f06b0a08857d9eb8658ea8cf314c9c7862eb78138ae1ca9ac50372fbe830fa42815f127fc1c5828a2c4fb9942945583fb8b8a15e9d86562
+  languageName: node
+  linkType: hard
+
 "@mapbox/node-pre-gyp@npm:^1.0.11":
   version: 1.0.11
   resolution: "@mapbox/node-pre-gyp@npm:1.0.11"
@@ -11243,6 +11252,7 @@ __metadata:
     "@isaacs/ttlcache": "npm:^1.4.1"
     "@lifeomic/attempt": "npm:^3.1.0"
     "@mailchimp/mailchimp_marketing": "npm:^3.0.80"
+    "@mailchimp/mailchimp_transactional": "npm:^1.0.59"
     "@opentelemetry/api": "npm:^1.9.0"
     "@opentelemetry/exporter-trace-otlp-proto": "npm:^0.53.0"
     "@opentelemetry/instrumentation-express": "npm:^0.42.0"
@@ -11274,6 +11284,7 @@ __metadata:
     "@types/lodash": "npm:^4.14.180"
     "@types/lodash-es": "npm:^4.17.12"
     "@types/mailchimp__mailchimp_marketing": "npm:^3.0.9"
+    "@types/mailchimp__mailchimp_transactional": "npm:^1"
     "@types/mjml": "npm:^4.7.0"
     "@types/mocha": "npm:^10.0.0"
     "@types/module-alias": "npm:^2.0.1"
@@ -13827,6 +13838,15 @@ __metadata:
   version: 3.0.9
   resolution: "@types/mailchimp__mailchimp_marketing@npm:3.0.9"
   checksum: 10/c8cd28c28a815aaee718e0a038e704db5e1f7fdae59ae138c29774d56b3c9cc5040a094b460c5475011fe183a2841fa81e125c3549753ef1a1457c25c06724ec
+  languageName: node
+  linkType: hard
+
+"@types/mailchimp__mailchimp_transactional@npm:^1":
+  version: 1.0.11
+  resolution: "@types/mailchimp__mailchimp_transactional@npm:1.0.11"
+  dependencies:
+    axios: "npm:^1.8.2"
+  checksum: 10/3483a7b8efb9e2d2d3f7f6255ae14d3dce523690c88c9626a5d52fe04d7d4bc9b97171e724f1484f5a48c3baa92b45bdd9d9bbbd1f1993f252d79836cdc82478
   languageName: node
   linkType: hard
 
@@ -16615,7 +16635,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.8.1":
+"axios@npm:^1.6.7, axios@npm:^1.8.1, axios@npm:^1.8.2":
   version: 1.11.0
   resolution: "axios@npm:1.11.0"
   dependencies:
