@@ -334,6 +334,10 @@ export function getOnboardingStreamCacheBustNumber() {
   return parseInt(val) || 1
 }
 
+export function getEmailFromAddress() {
+  return getStringFromEnv('EMAIL_FROM')
+}
+
 export function getMaximumProjectModelsPerPage() {
   return getIntFromEnv('MAX_PROJECT_MODELS_PER_PAGE', '500')
 }
@@ -367,30 +371,6 @@ export function getLicenseToken(): string | undefined {
 
 export function isEmailEnabled() {
   return getBooleanFromEnv('EMAIL')
-}
-
-export function getEmailFromAddress() {
-  return getStringFromEnv('EMAIL_FROM')
-}
-
-export function getEmailHost() {
-  return process.env.EMAIL_HOST || '127.0.0.1'
-}
-
-export function getEmailPort() {
-  return getIntFromEnv('EMAIL_PORT', '587')
-}
-
-export function isSecureEmailEnabled() {
-  return getBooleanFromEnv('EMAIL_SECURE', true) // default to secure
-}
-
-export function getEmailUsername() {
-  return getStringFromEnv('EMAIL_USERNAME', { unsafe: true }) // can be empty
-}
-
-export function getEmailPassword() {
-  return getStringFromEnv('EMAIL_PASSWORD', { unsafe: true }) // can be empty
 }
 
 export const getFileImporterQueuePostgresUrl = () =>
