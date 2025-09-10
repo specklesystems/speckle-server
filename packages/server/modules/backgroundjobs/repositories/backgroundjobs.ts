@@ -65,20 +65,37 @@ export const failBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBud
         .backgroundJobs(db)
         .where(BackgroundJobs.withoutTablePrefix.col.originServerUrl, originServerUrl)
         .andWhere(BackgroundJobs.withoutTablePrefix.col.jobType, jobType)
-        .whereIn(BackgroundJobs.withoutTablePrefix.col.status, [
-          BackgroundJobStatus.Queued,
-          BackgroundJobStatus.Processing
-        ])
         .andWhere(function () {
-          this.where(
-            BackgroundJobs.withoutTablePrefix.col.attempt,
-            '>', // greater than because processing jobs may currently equal maxAttempt and still be running
-            db.raw('"maxAttempt"') // camelCase requires the column name to be wrapped in double quotes
-          ).orWhere(
-            BackgroundJobs.withoutTablePrefix.col.remainingComputeBudgetSeconds,
-            '<=',
-            0
-          )
+          this.where(function () {
+            this.where(
+              BackgroundJobs.withoutTablePrefix.col.status,
+              BackgroundJobStatus.Processing
+            ).andWhere(
+              BackgroundJobs.withoutTablePrefix.col.attempt,
+              '>', // greater than because processing jobs may currently equal maxAttempt and still be running
+              db.raw('"maxAttempt"') // camelCase requires the column name to be wrapped in double quotes
+            )
+          })
+            .orWhere(function () {
+              this.where(
+                BackgroundJobs.withoutTablePrefix.col.status,
+                BackgroundJobStatus.Queued
+              ).andWhere(
+                BackgroundJobs.withoutTablePrefix.col.attempt,
+                '>=', // greater or equal than because queued jobs cannot be picked up by a worker when they reach maxAttempt
+                db.raw('"maxAttempt"') // camelCase requires the column name to be wrapped in double quotes
+              )
+            })
+            .orWhere(function () {
+              this.whereIn(BackgroundJobs.withoutTablePrefix.col.status, [
+                BackgroundJobStatus.Queued,
+                BackgroundJobStatus.Processing
+              ]).where(
+                BackgroundJobs.withoutTablePrefix.col.remainingComputeBudgetSeconds,
+                '<=',
+                0
+              )
+            })
         })
         .update({
           [BackgroundJobs.withoutTablePrefix.col.status]: BackgroundJobStatus.Failed

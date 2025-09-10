@@ -37,7 +37,7 @@
         </FormButton>
       </div>
     </Portal>
-    <div class="w-screen h-screen">
+    <div class="w-screen h-[calc(100vh-3rem)]">
       <iframe
         :src="dashboardUrl"
         class="w-full h-full border-0"

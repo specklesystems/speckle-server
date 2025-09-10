@@ -10,6 +10,18 @@
       <CommonLoadingIcon class="h-6 w-6 text-foreground-2" />
     </div>
 
+    <!-- Empty state for no search results -->
+    <div
+      v-else-if="hasSearchQuery && filteredOptions.length === 0"
+      class="flex-1 flex flex-col items-center justify-center p-6 gap-2"
+    >
+      <p class="text-body-2xs text-center">No properties found</p>
+
+      <FormButton color="outline" size="sm" @click="clearSearch">
+        Clear search
+      </FormButton>
+    </div>
+
     <!-- Property list -->
     <div
       v-else
@@ -148,6 +160,12 @@ const listItems = computed((): PropertySelectionListItem[] => {
 
   return items
 })
+
+const hasSearchQuery = computed(() => debouncedSearchQuery.value.trim().length > 0)
+
+const clearSearch = () => {
+  searchQuery.value = ''
+}
 
 const itemHeight = computed(() => PROPERTY_SELECTION_ITEM_HEIGHT)
 const maxHeight = computed(() => PROPERTY_SELECTION_MAX_HEIGHT - 28)

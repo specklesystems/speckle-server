@@ -110,10 +110,15 @@ export const useFilterColoringPostSetup = () => {
 
   /**
    * Watch for changes to propertyFilters to validate activeColorFilterId
-   * and re-apply color filter after property filters are updated
+   * Only re-apply colors when filter structure changes, not when values change
    */
   watchTriggerable(
-    filters.propertyFilters,
+    () =>
+      filters.propertyFilters.value.map((f) => ({
+        id: f.id,
+        key: f.filter?.key,
+        type: f.type
+      })),
     () => {
       const activeFilterId = filters.activeColorFilterId.value
       if (!activeFilterId) return

@@ -32,7 +32,7 @@
           :step="step"
           :value="modelValue.max"
           :disabled="disabled"
-          class="absolute w-full h-4 outline-none slider slider-max"
+          class="absolute w-full h-4 outline-none slider slider-max px-0.5"
           style="-webkit-appearance: none; appearance: none; pointer-events: none"
           :class="{ 'disabled:opacity-50 disabled:cursor-not-allowed': disabled }"
           :aria-label="`${name} maximum`"
@@ -131,11 +131,17 @@ const maxValueString = computed({
 })
 
 const minPercentage = computed(() => {
-  return ((modelValue.value.min - props.min) / (props.max - props.min)) * 100
+  const basePercentage =
+    ((modelValue.value.min - props.min) / (props.max - props.min)) * 100
+  const thumbOffset = 0.5
+  return Math.max(0, basePercentage - thumbOffset)
 })
 
 const maxPercentage = computed(() => {
-  return ((modelValue.value.max - props.min) / (props.max - props.min)) * 100
+  const basePercentage =
+    ((modelValue.value.max - props.min) / (props.max - props.min)) * 100
+  const thumbOffset = 0.5
+  return Math.min(100, basePercentage + thumbOffset)
 })
 
 const handleMinInput = (event: Event) => {
