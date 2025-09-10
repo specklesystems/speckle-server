@@ -32,7 +32,9 @@ const initSmtpTransporter = async () => {
     })
     const transporterVerified = await smtpTransporter.verify()
     if (!transporterVerified) {
-      throw new MisconfiguredEnvironmentError('Email transporter verification failed')
+      logger.error(
+        '📧 Email provider is likely misconfigured as validation failed, check config variables'
+      )
     }
     return smtpTransporter
   } catch (e) {
