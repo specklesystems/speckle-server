@@ -1,15 +1,15 @@
 import { emailLogger } from '@/observability/logging'
 import type { SendEmail, SendEmailParams } from '@/modules/emails/domain/operations'
-import { getTransporter } from '@/modules/emails/utils/transporter'
+import { getTransporter } from '@/modules/emails/clients/smtpTransporter'
 import { getEmailFromAddress } from '@/modules/shared/helpers/envHelper'
 import { ensureError, resolveMixpanelUserId } from '@speckle/shared'
 import {
   getRequestLogger,
   loggerWithMaybeContext
 } from '@/observability/utils/requestContext'
-import type Mail from 'nodemailer/lib/mailer'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { EmailsEvents } from '@/modules/emails/domain/events'
+import type { EmailOptions } from '@/modules/emails/domain/types'
 
 /**
  * Send out an e-mail
@@ -44,7 +44,7 @@ export const sendEmail: SendEmail = async ({
     }
 
     const emailFrom = getEmailFromAddress()
-    const options: Mail.Options = {
+    const options: EmailOptions = {
       ...baseOptions,
       from: from || `"Speckle" <${emailFrom}>`
     }

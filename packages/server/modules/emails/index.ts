@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 import { moduleLogger } from '@/observability/logging'
 import * as SendingService from '@/modules/emails/services/sending'
-import { initializeTransporter } from '@/modules/emails/utils/transporter'
+import { initializeTransporter } from '@/modules/emails/clients/smtpTransporter'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import RestApi from '@/modules/emails/rest/index'
 

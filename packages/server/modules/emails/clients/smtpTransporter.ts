@@ -1,10 +1,10 @@
 import { emailLogger as logger } from '@/observability/logging'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { isEmailEnabled, isTestEnv } from '@/modules/shared/helpers/envHelper'
-import type { Transporter } from 'nodemailer'
 import { createTransport } from 'nodemailer'
+import type { EmailTransport } from '@/modules/emails/domain/types'
 
-let transporter: Transporter | undefined = undefined
+let transporter: EmailTransport | undefined = undefined
 
 const createJsonEchoTransporter = () => createTransport({ jsonTransport: true })
 
@@ -29,7 +29,7 @@ const initSmtpTransporter = async () => {
   }
 }
 
-export async function initializeTransporter(): Promise<Transporter | undefined> {
+export async function initializeTransporter(): Promise<EmailTransport | undefined> {
   let newTransporter = undefined
 
   if (isEmailEnabled()) {
@@ -63,6 +63,6 @@ export async function initializeTransporter(): Promise<Transporter | undefined> 
   return newTransporter
 }
 
-export function getTransporter(): Transporter | undefined {
+export function getTransporter(): EmailTransport | undefined {
   return transporter
 }
