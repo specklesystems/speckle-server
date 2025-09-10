@@ -176,6 +176,18 @@ export const getObjectsStreamFactory =
     return res.stream({ highWaterMark: 500 })
   }
 
+export const getProjectObjectStreamFactory =
+  (deps: { db: Knex }) =>
+  ({ projectId, objectIds }: { projectId: string; objectIds: string[] }) => {
+    const res = tables
+      .objects(deps.db)
+      .whereIn('id', objectIds)
+      .andWhere({ streamId: projectId })
+      .orderBy('id')
+      .select(knex.raw('"id", data::text as "dataText"'))
+    return res.stream({})
+  }
+
 export const hasObjectsFactory =
   (deps: { db: Knex }): HasObjects =>
   async ({ streamId, objectIds }) => {

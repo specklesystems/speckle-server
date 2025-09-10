@@ -1,5 +1,6 @@
 [tools]
 node = "22.19.0"
+python = "3.12.11"
 
 [env]
 SHARP_IGNORE_GLOBAL_LIBVIPS = 1
