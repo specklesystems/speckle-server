@@ -1,5 +1,4 @@
 import type cron from 'node-cron'
-import { notifyChangeInFileStatus } from '@/modules/fileuploads/services/management'
 import { moduleLogger } from '@/observability/logging'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
@@ -11,22 +10,12 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { expireOldPendingUploadsFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
-import { getFileImportTimeLimitMinutes } from '@/modules/shared/helpers/envHelper'
-import { getRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
   acquireTaskLockFactory,
   releaseTaskLockFactory
 } from '@/modules/core/repositories/scheduledTasks'
-import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
-import { manageFileImportExpiryFactory } from '@/modules/fileuploads/services/tasks'
-import { TIME } from '@speckle/shared'
-import {
-  DelayBetweenFileImportRetriesMinutes,
-  NumberOfFileImportRetries
-} from '@/modules/fileuploads/domain/consts'
 import { fileuploadRouterFactory } from '@/modules/fileuploads/rest/router'
 import {
   shutdownQueues,
@@ -39,53 +28,13 @@ import { reportSubscriptionEventsFactory } from '@/modules/fileuploads/events/su
 import { configureClient } from '@/knexfile'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { rhinoImporterSupportedFileExtensions } from '@speckle/shared/blobs'
+import { scheduleBackgroundJobGarbageCollection } from '@/modules/fileuploads/tasks/garbageCollectBackgroundJobs'
 
 const { FF_RHINO_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
-let scheduledTasks: cron.ScheduledTask[] = []
+const EveryFiveMinutes = '*/5 * * * *'
 
-const scheduleFileImportExpiry = async ({
-  scheduleExecution
-}: {
-  scheduleExecution: ScheduleExecution
-}) => {
-  const fileImportExpiryHandlers: ReturnType<typeof manageFileImportExpiryFactory>[] =
-    []
-  const regionClients = await getRegisteredDbClients()
-  for (const projectDb of [db, ...regionClients]) {
-    fileImportExpiryHandlers.push(
-      manageFileImportExpiryFactory({
-        garbageCollectExpiredPendingUploads: expireOldPendingUploadsFactory({
-          db: projectDb
-        }),
-        notifyUploadStatus: notifyChangeInFileStatus({
-          eventEmit: getEventBus().emit
-        })
-      })
-    )
-  }
-
-  const cronExpression = '*/5 * * * *' // every 5 minutes
-  return scheduleExecution(
-    cronExpression,
-    'FileImportExpiry',
-    async (_scheduledTime, { logger }) => {
-      await Promise.all(
-        fileImportExpiryHandlers.map((handler) =>
-          handler({
-            logger,
-            timeoutThresholdSeconds:
-              (NumberOfFileImportRetries *
-                (getFileImportTimeLimitMinutes() +
-                  DelayBetweenFileImportRetriesMinutes) +
-                1) * // additional buffer of 1 minute
-              TIME.minute
-          })
-        )
-      )
-    }
-  )
-}
+const scheduledTasks: cron.ScheduledTask[] = []
 
 export const init: SpeckleModule['init'] = async ({
   app,
@@ -137,7 +86,13 @@ export const init: SpeckleModule['init'] = async ({
       releaseTaskLock: releaseTaskLockFactory({ db })
     })
 
-    scheduledTasks = [await scheduleFileImportExpiry({ scheduleExecution })]
+    scheduledTasks.push(
+      await scheduleBackgroundJobGarbageCollection({
+        queueDb,
+        scheduleExecution,
+        cronExpression: EveryFiveMinutes
+      })
+    )
 
     initializeEventListenersFactory({ db, observeResult })()
     reportSubscriptionEventsFactory({

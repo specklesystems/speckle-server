@@ -17,7 +17,7 @@ export const buildTestProject = (overrides?: Partial<Project>): Project =>
       updatedAt: new Date(),
       allowPublicComments: false,
       workspaceId: cryptoRandomString({ length: 10 }),
-      regionKey: cryptoRandomString({ length: 4 }),
+      regionKey: null,
       visibility: ProjectRecordVisibility.Private
     },
     overrides

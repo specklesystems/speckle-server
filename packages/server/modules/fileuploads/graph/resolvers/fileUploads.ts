@@ -20,6 +20,7 @@ import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import {
   fileImportServiceShouldUsePrivateObjectsServerUrl,
+  getFileImporterQueuePostgresUrl,
   getFileUploadUrlExpiryMinutes,
   getPrivateObjectsServerOrigin,
   getServerOrigin,
@@ -65,6 +66,8 @@ import { onFileImportResultFactory } from '@/modules/fileuploads/services/result
 import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
 import { JobResultStatus } from '@speckle/shared/workers/fileimport'
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import { updateBackgroundJobFactory } from '@/modules/backgroundjobs/repositories/backgroundjobs'
+import { configureClient } from '@/knexfile'
 
 const getFileUploadModel = async (params: {
   upload: FileUploadRecord | FileUploadRecordWithProjectId
@@ -89,6 +92,11 @@ const getFileUploadModel = async (params: {
 
   return null
 }
+
+const fileImporterConnectionUri = getFileImporterQueuePostgresUrl()
+const queueDb = fileImporterConnectionUri
+  ? configureClient({ postgres: { connectionUri: fileImporterConnectionUri } }).public
+  : db
 
 const fileUploadMutations: Resolvers['FileUploadMutations'] = {
   async generateUploadUrl(_parent, args, ctx) {
@@ -264,7 +272,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       projectId,
       streamId: projectId, //legacy
       userId,
-      jobId
+      blobId: jobId
     })
 
     const projectDb = await getProjectDbClient({ projectId })
@@ -272,11 +280,14 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       logger: logger.child({ fileUploadStatus: status }),
       updateFileUpload: updateFileUploadFactory({ db: projectDb }),
       getFileInfo: getFileInfoFactory({ db: projectDb }),
+      updateBackgroundJob: updateBackgroundJobFactory({
+        db: queueDb
+      }),
       eventEmit: getEventBus().emit
     })
 
     await onFileImportResult({
-      jobId,
+      blobId: jobId,
       jobResult
     })
 

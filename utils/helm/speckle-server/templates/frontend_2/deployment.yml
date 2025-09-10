@@ -149,9 +149,17 @@ spec:
             value: {{ .Values.featureFlags.legacyFileImportsEnabled | quote }}
           - name: NUXT_PUBLIC_FF_ACC_INTEGRATION_ENABLED
             value: {{ .Values.featureFlags.accIntegrationEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_NO_PERSONAL_EMAILS_ENABLED
+            value: {{ .Values.featureFlags.noPersonalEmailsEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_DASHBOARDS_MODULE_ENABLED
+            value: {{ .Values.featureFlags.dashboardsModuleEnabled | quote }}
           {{- if .Values.analytics.intercom_app_id }}
           - name: NUXT_PUBLIC_INTERCOM_APP_ID
             value: {{ .Values.analytics.intercom_app_id | quote }}
+          {{- end }}
+          {{- if .Values.dashboards.origin }}
+          - name: NUXT_PUBLIC_DASHBOARDS_ORIGIN
+            value: {{ .Values.dashboards.origin | quote }}
           {{- end }}
           {{- with .Values.frontend_2.additionalEnvVars }}
           {{- toYaml . | nindent 10}}

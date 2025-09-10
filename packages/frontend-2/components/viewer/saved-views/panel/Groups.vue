@@ -7,7 +7,7 @@
       v-if="!hasGroups || !project"
       :type="emptyStateType"
     />
-    <div v-else class="p-2">
+    <div v-else class="p-1.5 pt-2">
       <ViewerSavedViewsPanelViewsGroup
         v-for="group in groups"
         :key="group.id"
@@ -218,9 +218,7 @@ watch(
   (newGroups) => {
     if (newGroups.length) {
       // first group should be selected
-      const selectableGroupId = props.search
-        ? newGroups[0].id
-        : newGroups.find((g) => !g.isUngroupedViewsGroup)?.id
+      const selectableGroupId = newGroups[0].id
       if (selectableGroupId) {
         openedGroupState.value.set(selectableGroupId, true)
       }

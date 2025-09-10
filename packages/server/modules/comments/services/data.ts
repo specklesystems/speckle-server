@@ -70,7 +70,7 @@ export function convertStateToLegacyData(state: SerializedViewerState): LegacyDa
           1, 0, 0, 0, 1, 0, 0, 0, 1
         ]
       },
-      propertyInfoKey: state.ui.filters.propertyFilter.key
+      propertyInfoKey: state.ui.filters.propertyFilter?.key || null
     },
     location: {
       x: selectionLocation[0] || 0,
@@ -177,7 +177,8 @@ export const convertLegacyDataToStateFactory =
         },
         measurement: {
           enabled: false,
-          options: null
+          options: null,
+          measurements: []
         }
       }
     }

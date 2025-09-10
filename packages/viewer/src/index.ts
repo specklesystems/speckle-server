@@ -34,8 +34,6 @@ import type {
 import { type Utils } from './modules/Utils.js'
 import { BatchObject } from './modules/batching/BatchObject.js'
 import {
-  type MeasurementOptions,
-  MeasurementType,
   MeasurementsExtension,
   MeasurementEvent,
   MeasurementEventPayload
@@ -206,7 +204,6 @@ export {
   PerpendicularMeasurement,
   AreaMeasurement,
   PointMeasurement,
-  MeasurementType,
   MeasurementEvent,
   MeasurementState,
   Units,
@@ -333,7 +330,6 @@ export type {
   IntersectionQueryResult,
   Utils,
   DiffResult,
-  MeasurementOptions,
   FilteringState,
   ExtendedIntersection,
   ViewerEventPayload,

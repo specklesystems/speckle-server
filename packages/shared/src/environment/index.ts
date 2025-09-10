@@ -130,6 +130,11 @@ export const parseFeatureFlags = (
         'Enables the integration with ACC. This synchronizes models with specified ACC assets.',
       defaults: { _: false }
     },
+    FF_DASHBOARDS_MODULE_ENABLED: {
+      schema: z.boolean(),
+      description: 'Enables the dashboards module.',
+      defaults: { _: false }
+    },
     FF_SAVED_VIEWS_ENABLED: {
       schema: z.boolean(),
       description: 'Enables the saved views feature for project models',

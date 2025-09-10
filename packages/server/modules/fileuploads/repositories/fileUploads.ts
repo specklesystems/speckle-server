@@ -8,7 +8,8 @@ import type {
   GetModelUploadsItems,
   GetModelUploadsBaseArgs,
   GetModelUploadsTotalCount,
-  UpdateFileStatus
+  UpdateFileStatus,
+  FailPendingUploadedFiles
 } from '@/modules/fileuploads/domain/operations'
 import type {
   FileUploadRecord,
@@ -144,6 +145,26 @@ export const expireOldPendingUploadsFactory =
       })
       .returning<FileUploadRecord[]>('*')
 
+    return updatedRows
+  }
+
+export const failPendingUploadedFilesFactory =
+  (deps: { db: Knex }): FailPendingUploadedFiles =>
+  async (params) => {
+    const updatedRows = await deps
+      .db(FileUploads.name)
+      .whereIn(FileUploads.withoutTablePrefix.col.id, params.uploadIds)
+      .whereIn(FileUploads.withoutTablePrefix.col.convertedStatus, [
+        FileUploadConvertedStatus.Queued,
+        FileUploadConvertedStatus.Converting
+      ])
+      .update({
+        [FileUploads.withoutTablePrefix.col.convertedStatus]:
+          FileUploadConvertedStatus.Error,
+        [FileUploads.withoutTablePrefix.col.convertedMessage]: 'File import job failed',
+        [FileUploads.withoutTablePrefix.col.convertedLastUpdate]: deps.db.fn.now()
+      })
+      .returning<FileUploadRecord[]>('*')
     return updatedRows
   }
 

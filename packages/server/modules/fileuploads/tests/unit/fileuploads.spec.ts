@@ -15,7 +15,7 @@ import { initUploadTestEnvironment } from '@/modules/fileuploads/tests/helpers/i
 import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
 import { assign, get } from 'lodash-es'
 import { buildFileUploadMessage } from '@/modules/fileuploads/tests/helpers/creation'
-import type { JobPayload } from '@speckle/shared/workers/fileimport'
+import type { JobPayloadV1 } from '@speckle/shared/workers/fileimport'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 import { type BasicTestUser, createTestUser } from '@/test/authHelper'
@@ -233,8 +233,7 @@ describe('FileUploads @fileuploads', () => {
       })
 
       expect(usedUserId).to.equal(upload.userId)
-      const expected: JobPayload = {
-        jobId: upload.jobId,
+      const expected: JobPayloadV1 = {
         fileName: upload.fileName,
         token,
         serverUrl: serverOrigin,

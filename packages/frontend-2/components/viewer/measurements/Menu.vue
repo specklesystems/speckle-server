@@ -83,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { MeasurementType } from '@speckle/viewer'
+import { MeasurementType } from '@speckle/shared/viewer/state'
 import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
 
 interface MeasurementTypeOption {

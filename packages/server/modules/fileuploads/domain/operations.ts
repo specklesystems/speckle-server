@@ -7,7 +7,7 @@ import type { Optional } from '@speckle/shared'
 import type { UploadResult } from '@/modules/blobstorage/domain/types'
 import type {
   FileImportResultPayload,
-  JobPayload
+  JobPayloadV1
 } from '@speckle/shared/workers/fileimport'
 import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
 
@@ -38,12 +38,16 @@ export type GarbageCollectPendingUploadedFiles = (args: {
   timeoutThresholdSeconds: number
 }) => Promise<FileUploadRecord[]>
 
+export type FailPendingUploadedFiles = (args: {
+  uploadIds: string[]
+}) => Promise<FileUploadRecord[]>
+
 export type NotifyChangeInFileStatus = (params: {
   file: FileUploadRecord
 }) => Promise<void>
 
 export type ProcessFileImportResult = (params: {
-  jobId: string
+  blobId: string
   jobResult: FileImportResultPayload
 }) => Promise<void>
 
@@ -58,11 +62,11 @@ export type UpdateFileStatus = (params: {
 export type UploadedFile = UploadResult & { userId: string }
 
 export type FileImportMessage = Pick<
-  JobPayload,
+  JobPayloadV1,
   'modelId' | 'projectId' | 'fileType' | 'fileName' | 'blobId'
-> & { jobId: string; userId: string }
+> & { userId: string }
 
-export type ScheduleFileimportJob = (args: JobPayload) => Promise<void>
+export type ScheduleFileimportJob = (args: JobPayloadV1) => Promise<void>
 
 export type PushJobToFileImporter = (
   args: { scheduleJob: ScheduleFileimportJob } & FileImportMessage

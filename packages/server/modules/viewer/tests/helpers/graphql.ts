@@ -187,6 +187,12 @@ export const canUpdateSavedViewQuery = gql`
             message
             payload
           }
+          canMove {
+            authorized
+            code
+            message
+            payload
+          }
         }
       }
     }
@@ -257,3 +263,20 @@ export const createSavedViewFactory =
   (deps: { apollo: TestApolloServer }) =>
   (input: CreateSavedViewMutationVariables, options?: ExecuteOperationOptions) =>
     deps.apollo.execute(CreateSavedViewDocument, input, options)
+
+export const getModelHomeViewQuery = gql`
+  query GetModelHomeView($projectId: String!, $modelId: String!) {
+    project(id: $projectId) {
+      id
+      model(id: $modelId) {
+        id
+        homeView {
+          ...BasicSavedView
+        }
+        resourceIdString
+      }
+    }
+  }
+
+  ${basicSavedViewFragment}
+`

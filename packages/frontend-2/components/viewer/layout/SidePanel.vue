@@ -1,5 +1,10 @@
 <template>
-  <div :class="['flex flex-col h-full', disableScrollbar ? '' : 'overflow-hidden']">
+  <div
+    :class="[
+      'flex flex-col h-full max-h-[calc(100dvh-5rem)]',
+      disableScrollbar ? '' : 'overflow-hidden'
+    ]"
+  >
     <div
       class="flex shrink-0 justify-between items-center border-b border-outline-3 h-10 pl-4 pr-2.5"
     >

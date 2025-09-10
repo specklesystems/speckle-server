@@ -1,19 +1,10 @@
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
 import {
   useThrottleFn,
-  onKeyStroke,
   watchTriggerable,
   useMagicKeys,
   useEventListener
 } from '@vueuse/core'
-import {
-  ExplodeEvent,
-  ExplodeExtension,
-  LoaderEvent,
-  type PropertyInfo,
-  type StringPropertyInfo,
-  type SunLightConfiguration
-} from '@speckle/viewer'
 import {
   ViewerEvent,
   VisualDiffMode,
@@ -22,13 +13,16 @@ import {
   SectionOutlines,
   SectionToolEvent,
   SectionTool,
-  SpeckleLoader
+  SpeckleLoader,
+  ExplodeEvent,
+  ExplodeExtension,
+  LoaderEvent,
+  type SunLightConfiguration
 } from '@speckle/viewer'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import type { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
 import { ProjectCommentsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
 import {
-  useInjectedViewer,
   useInjectedViewerState,
   useInjectedViewerInterfaceState
 } from '~~/lib/viewer/composables/setup'
@@ -51,11 +45,8 @@ import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
-import { SafeLocalStorage, type Nullable } from '@speckle/shared'
-import {
-  useCameraUtilities,
-  useMeasurementUtilities
-} from '~~/lib/viewer/composables/ui'
+import { SafeLocalStorage } from '@speckle/shared'
+import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -64,6 +55,14 @@ import { graphql } from '~/lib/common/generated/gql'
 import { useTreeManagement } from '~~/lib/viewer/composables/tree'
 import { useViewerSavedViewIntegration } from '~/lib/viewer/composables/savedViews/state'
 import { useViewModesPostSetup } from '~/lib/viewer/composables/setup/viewMode'
+import { useMeasurementsPostSetup } from '~/lib/viewer/composables/setup/measurements'
+import { useFilterColoringPostSetup } from '~/lib/viewer/composables/setup/coloring'
+import {
+  usePropertyFilteringPostSetup,
+  useManualFilteringPostSetup
+} from '~/lib/viewer/composables/setup/filters'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { useFilteringSetup } from '~/lib/viewer/composables/filtering/setup'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -534,27 +533,14 @@ function useViewerCameraIntegration() {
 }
 
 function useViewerFiltersIntegration() {
+  const state = useInjectedViewerState()
   const {
     viewer: { instance },
     ui: { filters, highlightedObjectIds }
-  } = useInjectedViewerState()
+  } = state
 
-  const {
-    metadata: { availableFilters: allFilters }
-  } = useInjectedViewer()
-
-  const stateKey = 'default'
-  let preventFilterWatchers = false
-  const withWatchersDisabled = (fn: () => void) => {
-    const isAlreadyInPreventScope = !!preventFilterWatchers
-    preventFilterWatchers = true
-    fn()
-    if (!isAlreadyInPreventScope) preventFilterWatchers = false
-  }
-
-  const speckleTypeFilter = computed(
-    () => allFilters.value?.find((f) => f.key === 'speckle_type') as StringPropertyInfo
-  )
+  useFilteringSetup()
+  useFilterUtilities({ state })
 
   // state -> viewer
   watch(
@@ -565,90 +551,6 @@ function useViewerFiltersIntegration() {
       instance.highlightObjects(newVal)
     },
     { immediate: true, flush: 'sync' }
-  )
-
-  watch(
-    filters.isolatedObjectIds,
-    (newVal, oldVal) => {
-      if (preventFilterWatchers) return
-      if (arraysEqual(newVal, oldVal || [])) return
-
-      const isolatable = difference(newVal, oldVal || [])
-      const unisolatable = difference(oldVal || [], newVal)
-
-      if (isolatable.length) {
-        withWatchersDisabled(() => {
-          instance.isolateObjects(isolatable, stateKey, true)
-          filters.hiddenObjectIds.value = []
-        })
-      }
-
-      if (unisolatable.length) {
-        withWatchersDisabled(() => {
-          instance.unIsolateObjects(unisolatable, stateKey, true)
-          filters.hiddenObjectIds.value = []
-        })
-      }
-    },
-    { immediate: true, flush: 'sync' }
-  )
-
-  watch(
-    filters.hiddenObjectIds,
-    (newVal, oldVal) => {
-      if (preventFilterWatchers) return
-      if (arraysEqual(newVal, oldVal || [])) return
-
-      const hidable = difference(newVal, oldVal || [])
-      const showable = difference(oldVal || [], newVal)
-
-      if (hidable.length) {
-        withWatchersDisabled(() => {
-          instance.hideObjects(hidable, stateKey, true)
-          filters.isolatedObjectIds.value = []
-        })
-      }
-      if (showable.length) {
-        withWatchersDisabled(() => {
-          instance.showObjects(showable, stateKey, true)
-          filters.isolatedObjectIds.value = []
-        })
-      }
-    },
-    { immediate: true, flush: 'sync' }
-  )
-
-  const syncColorFilterToViewer = async (
-    filter: Nullable<PropertyInfo>,
-    isApplied: boolean
-  ) => {
-    const targetFilter = filter || speckleTypeFilter.value
-
-    if (isApplied && targetFilter) await instance.setColorFilter(targetFilter)
-    if (!isApplied) await instance.removeColorFilter()
-  }
-
-  watch(
-    () =>
-      <const>[
-        filters.propertyFilter.filter.value,
-        filters.propertyFilter.isApplied.value
-      ],
-    async (newVal) => {
-      const [filter, isApplied] = newVal
-      await syncColorFilterToViewer(filter, isApplied)
-    },
-    { immediate: true, flush: 'sync' }
-  )
-
-  useOnViewerLoadComplete(
-    async () => {
-      const targetFilter =
-        filters.propertyFilter.filter.value || speckleTypeFilter.value
-      const isApplied = filters.propertyFilter.isApplied.value
-      await syncColorFilterToViewer(targetFilter, isApplied)
-    },
-    { initialOnly: true }
   )
 
   watch(
@@ -851,46 +753,6 @@ function useDiffingIntegration() {
   })
 }
 
-function useViewerMeasurementIntegration() {
-  const {
-    ui: { measurement },
-    viewer: { instance }
-  } = useInjectedViewerState()
-
-  const { clearMeasurements, removeMeasurement } = useMeasurementUtilities()
-
-  onBeforeUnmount(() => {
-    clearMeasurements()
-  })
-
-  watch(
-    () => measurement.enabled.value,
-    (newVal, oldVal) => {
-      if (newVal !== oldVal) {
-        instance.enableMeasurements(newVal)
-      }
-    },
-    { immediate: true }
-  )
-
-  watch(
-    () => ({ ...measurement.options.value }),
-    (newMeasurementState) => {
-      if (newMeasurementState) {
-        instance.setMeasurementOptions(newMeasurementState)
-      }
-    },
-    { immediate: true, deep: true }
-  )
-
-  onKeyStroke('Delete', () => {
-    removeMeasurement()
-  })
-  onKeyStroke('Backspace', () => {
-    removeMeasurement()
-  })
-}
-
 function useDisableZoomOnEmbed() {
   const { viewer } = useInjectedViewerState()
   const embedOptions = useEmbed()
@@ -993,7 +855,10 @@ export function useViewerPostSetup() {
   useLightConfigIntegration()
   useExplodeFactorIntegration()
   useDiffingIntegration()
-  useViewerMeasurementIntegration()
+  useMeasurementsPostSetup()
+  useFilterColoringPostSetup()
+  usePropertyFilteringPostSetup()
+  useManualFilteringPostSetup()
   useDisableZoomOnEmbed()
   useViewerCursorIntegration()
   useViewerTreeIntegration()

@@ -34,6 +34,9 @@ services:
       NUXT_REDIS_URL: 'redis://redis'
       LOG_LEVEL: 'info'
       LOG_PRETTY: 'true'
+
+      NUXT_PUBLIC_FF_LARGE_FILE_IMPORTS_ENABLED: 'true'
+      NUXT_PUBLIC_FF_NEXT_GEN_FILE_IMPORTER_ENABLED: 'true'
     depends_on:
       - speckle-server
       # - redis
@@ -88,11 +91,15 @@ services:
       S3_BUCKET: 'speckle-server'
       S3_CREATE_BUCKET: 'true'
       S3_REGION: '' # optional, defaults to 'us-east-1'
-      FILE_SIZE_LIMIT_MB: 100
+      FILE_SIZE_LIMIT_MB: 1000
       EMAIL_FROM: 'no-reply@example.org'
 
       FRONTEND_ORIGIN: 'http://127.0.0.1'
       ONBOARDING_STREAM_URL: 'https://latest.speckle.systems/projects/843d07eb10'
+
+      FILEIMPORT_QUEUE_POSTGRES_URL: 'postgresql://speckle:speckle@postgres/speckle'
+      FF_NEXT_GEN_FILE_IMPORTER_ENABLED: 'true'
+
     depends_on:
       []
       # - minio

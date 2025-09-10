@@ -13,10 +13,19 @@ import type { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
+import {
+  BackgroundJobStatus,
+  type UpdateBackgroundJob
+} from '@/modules/backgroundjobs/domain/types'
+import {
+  type FileImportJobPayloadV1,
+  JobResultStatus
+} from '@speckle/shared/workers/fileimport'
 
 type OnFileImportResultDeps = {
   getFileInfo: GetFileInfo
   updateFileUpload: UpdateFileUpload
+  updateBackgroundJob: UpdateBackgroundJob<FileImportJobPayloadV1>
   eventEmit: EventBusEmit
   logger: Logger
 }
@@ -25,15 +34,15 @@ export const onFileImportResultFactory =
   (deps: OnFileImportResultDeps): ProcessFileImportResult =>
   async (params) => {
     const { logger } = deps
-    const { jobId, jobResult } = params
+    const { blobId, jobResult } = params
 
-    const fileInfo = await deps.getFileInfo({ fileId: jobId })
+    const fileInfo = await deps.getFileInfo({ fileId: blobId })
     if (!fileInfo) {
-      throw new FileImportJobNotFoundError(`File upload with ID ${jobId} not found`)
+      throw new FileImportJobNotFoundError(`File upload with ID ${blobId} not found`)
     }
 
     const boundLogger = logger.child({
-      jobId,
+      blobId,
       fileId: fileInfo.id,
       fileSize: fileInfo.fileSize,
       fileName: fileInfo.fileName,
@@ -46,8 +55,10 @@ export const onFileImportResultFactory =
     })
 
     let convertedCommitId = null
+    let newStatusForBackgroundJob: BackgroundJobStatus = BackgroundJobStatus.Processing
+
     switch (jobResult.status) {
-      case 'error':
+      case JobResultStatus.Error:
         boundLogger.warn(
           {
             duration: jobResult.result.durationSeconds,
@@ -55,9 +66,11 @@ export const onFileImportResultFactory =
           },
           'Processing error result for file upload'
         )
+        newStatusForBackgroundJob = BackgroundJobStatus.Failed
         break
-      case 'success':
+      case JobResultStatus.Success:
         convertedCommitId = jobResult.result.versionId
+        newStatusForBackgroundJob = BackgroundJobStatus.Succeeded
         boundLogger.info(
           {
             duration: jobResult.result.durationSeconds,
@@ -71,10 +84,24 @@ export const onFileImportResultFactory =
     const status = jobResultStatusToFileUploadStatus(jobResult.status)
     const convertedMessage = jobResultToConvertedMessage(jobResult)
 
+    try {
+      await deps.updateBackgroundJob({
+        payloadFilter: { blobId },
+        status: newStatusForBackgroundJob
+      })
+    } catch (e) {
+      const err = ensureError(e)
+      logger.error(
+        { err, blobId },
+        'Error updating background jobs status in database. Blob ID: {blobId}'
+      )
+      throw err
+    }
+
     let updatedFile: FileUploadRecord
     try {
       updatedFile = await deps.updateFileUpload({
-        id: jobId,
+        id: blobId,
         upload: {
           convertedStatus: status,
           convertedLastUpdate: new Date(),
@@ -90,9 +117,8 @@ export const onFileImportResultFactory =
     } catch (e) {
       const err = ensureError(e)
       logger.error(
-        { err },
-        'Error updating imported file status in database. File ID: %s',
-        jobId
+        { err, info: { fileId: blobId } },
+        'Error updating imported file status in database. File ID: {fileId}'
       )
       throw err
     }
@@ -111,7 +137,7 @@ export const onFileImportResultFactory =
     await deps.eventEmit({
       eventName: FileuploadEvents.Finished,
       payload: {
-        jobId,
+        jobId: blobId,
         jobResult
       }
     })

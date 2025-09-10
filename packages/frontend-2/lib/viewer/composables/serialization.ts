@@ -2,24 +2,25 @@ import {
   useInjectedViewerState,
   useResetUiState
 } from '~~/lib/viewer/composables/setup'
-import { isUndefinedOrVoid, SpeckleViewer, TimeoutError } from '@speckle/shared'
+import { isUndefinedOrVoid, SpeckleViewer } from '@speckle/shared'
 import { get } from 'lodash-es'
 import { Vector3 } from 'three'
-import {
-  useDiffUtilities,
-  useFilterUtilities,
-  useSelectionUtilities
-} from '~~/lib/viewer/composables/ui'
+import { useDiffUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { CameraController, VisualDiffMode } from '@speckle/viewer'
-import type { NumericPropertyInfo } from '@speckle/viewer'
+import { StringFilterCondition } from '~/lib/viewer/helpers/filters/types'
 import type { Merge, PartialDeep } from 'type-fest'
-import type { SectionBoxData } from '@speckle/shared/viewer/state'
+import {
+  defaultMeasurementOptions,
+  formatSerializedViewerState
+} from '@speckle/shared/viewer/state'
 import { useViewerRealtimeActivityTracker } from '~/lib/viewer/composables/activity'
 import {
   isModelResource,
   resourceBuilder,
   type ViewerResource
 } from '@speckle/shared/viewer/route'
+import { until } from '@vueuse/core'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 
@@ -27,6 +28,7 @@ export function useStateSerialization() {
   const state = useInjectedViewerState()
   const { objects: selectedObjects } = useSelectionUtilities()
   const { serializeDiffCommand } = useDiffUtilities()
+  const { filters } = useFilterUtilities()
 
   /**
    * We don't want to save a comment w/ implicit identifiers like ones that only have a model ID or a folder prefix, because
@@ -99,18 +101,42 @@ export function useStateSerialization() {
           mode: state.ui.diff.mode.value
         },
         spotlightUserSessionId: state.ui.spotlightUserSessionId.value,
-        filters: {
-          isolatedObjectIds: state.ui.filters.isolatedObjectIds.value,
-          hiddenObjectIds: state.ui.filters.hiddenObjectIds.value,
-          selectedObjectApplicationIds: selectedObjects.value.reduce((ret, obj) => {
-            ret[obj.id] = obj.applicationId ?? null
-            return ret
-          }, {} as Record<string, string | null>),
-          propertyFilter: {
-            key: state.ui.filters.propertyFilter.filter.value?.key || null,
-            isApplied: state.ui.filters.propertyFilter.isApplied.value
+        filters: (() => {
+          // Convert current FilterData to serializable format
+          const propertyFilters = filters.propertyFilters.value.map((filterData) => ({
+            key: filterData.filter?.key || null,
+            isApplied: filterData.isApplied,
+            selectedValues: filterData.selectedValues,
+            id: filterData.id,
+            condition:
+              filterData.condition === StringFilterCondition.Is
+                ? ('AND' as const)
+                : ('OR' as const)
+          }))
+
+          // Create legacy-compatible propertyFilter from first item in propertyFilters
+          const propertyFilter =
+            propertyFilters.length > 0
+              ? {
+                  key: propertyFilters[0].key,
+                  isApplied: propertyFilters[0].isApplied
+                }
+              : {
+                  key: null,
+                  isApplied: false
+                }
+
+          return {
+            isolatedObjectIds: state.ui.filters.isolatedObjectIds.value,
+            hiddenObjectIds: state.ui.filters.hiddenObjectIds.value,
+            selectedObjectApplicationIds: selectedObjects.value.reduce((ret, obj) => {
+              ret[obj.id] = obj.applicationId ?? null
+              return ret
+            }, {} as Record<string, string | null>),
+            propertyFilter, // ← Preserve legacy format for backwards compatibility
+            propertyFilters
           }
-        },
+        })(),
         camera: {
           position: state.ui.camera.position.value.toArray(),
           target: state.ui.camera.target.value.toArray(),
@@ -130,7 +156,8 @@ export function useStateSerialization() {
         selection: state.ui.selection.value?.toArray() || null,
         measurement: {
           enabled: state.ui.measurement.enabled.value,
-          options: state.ui.measurement.options.value
+          options: state.ui.measurement.options.value,
+          measurements: state.ui.measurement.measurements.value.slice()
         }
       }
     }
@@ -166,27 +193,20 @@ export function useApplySerializedState() {
       explodeFactor,
       lightConfig,
       diff,
-      viewMode
+      viewMode,
+      measurement,
+      sectionBoxContext,
+      loading
     },
     resources: {
       request: { resourceIdString }
     },
     urlHashState
   } = useInjectedViewerState()
-  const {
-    resetFilters,
-    hideObjects,
-    isolateObjects,
-    removePropertyFilter,
-    setPropertyFilter,
-    applyPropertyFilter,
-    unApplyPropertyFilter,
-    waitForAvailableFilter
-  } = useFilterUtilities()
+  const { resetFilters, hideObjects, restoreFilters } = useFilterUtilities()
   const resetState = useResetUiState()
   const { diffModelVersions, deserializeDiffCommand, endDiff } = useDiffUtilities()
   const { setSelectionFromObjectIds } = useSelectionUtilities()
-  const logger = useLogger()
   const { update } = useViewerRealtimeActivityTracker()
 
   return async <Mode extends StateApplyMode>(
@@ -200,20 +220,25 @@ export function useApplySerializedState() {
       return
     }
 
-    if (state.projectId && state.projectId !== projectId.value) {
-      await projectId.update(state.projectId)
+    // Format the state to handle backwards compatibility (e.g., propertyFilter -> propertyFilters)
+    const formattedState = formatSerializedViewerState(state)
+
+    if (formattedState.projectId && formattedState.projectId !== projectId.value) {
+      await projectId.update(formattedState.projectId)
     }
 
+    // Handle loaded resource change
+    let newResourceIdString: string | undefined = undefined
     if (
       [StateApplyMode.Spotlight, StateApplyMode.ThreadFullContextOpen].includes(mode)
     ) {
-      await resourceIdString.update(state.resources?.request?.resourceIdString || '')
+      newResourceIdString = formattedState.resources?.request?.resourceIdString || ''
     } else if (mode === StateApplyMode.SavedView) {
       const { loadOriginal } = options || {}
 
       const current = resourceBuilder().addResources(resourceIdString.value)
       const incoming = resourceBuilder().addResources(
-        state.resources?.request?.resourceIdString || ''
+        formattedState.resources?.request?.resourceIdString || ''
       )
 
       const finalItems: ViewerResource[] = []
@@ -231,85 +256,10 @@ export function useApplySerializedState() {
               .find((r) => r.modelId === incomingItem.modelId)?.versionId
         finalItems.push(incomingItem)
       }
-      const newResourceIdString = resourceBuilder()
+      newResourceIdString = resourceBuilder()
         .addResources(finalItems)
-        .addNew(current) // keeping other federated models around
+        // .addNew(current) // keeping other federated models around
         .toString()
-      await resourceIdString.update(newResourceIdString)
-    }
-
-    position.value = new Vector3(
-      state.ui?.camera?.position?.[0],
-      state.ui?.camera?.position?.[1],
-      state.ui?.camera?.position?.[2]
-    )
-    target.value = new Vector3(
-      state.ui?.camera?.target?.[0],
-      state.ui?.camera?.target?.[1],
-      state.ui?.camera?.target?.[2]
-    )
-
-    isOrthoProjection.value = !!state.ui?.camera?.isOrthoProjection
-
-    sectionBox.value = state.ui?.sectionBox
-      ? // It's complaining otherwise
-        (state.ui.sectionBox as SectionBoxData)
-      : null
-
-    const filters = state.ui?.filters || {}
-    if (filters.hiddenObjectIds?.length) {
-      resetFilters()
-      hideObjects(filters.hiddenObjectIds, { replace: true })
-    } else if (filters.isolatedObjectIds?.length) {
-      resetFilters()
-      isolateObjects(filters.isolatedObjectIds, { replace: true })
-    } else {
-      resetFilters()
-    }
-
-    const propertyFilterApplied = filters.propertyFilter?.isApplied
-    if (propertyFilterApplied) {
-      applyPropertyFilter()
-    } else {
-      unApplyPropertyFilter()
-    }
-
-    const propertyInfoKey = filters.propertyFilter?.key
-    const passMin = state.viewer?.metadata?.filteringState?.passMin
-    const passMax = state.viewer?.metadata?.filteringState?.passMax
-    if (propertyInfoKey) {
-      removePropertyFilter()
-
-      // Setting property filter asynchronously, when it's possible to do so
-      waitForAvailableFilter(propertyInfoKey)
-        .then((filter) => {
-          if (passMin || passMax) {
-            const numericFilter = { ...filter } as NumericPropertyInfo
-            numericFilter.passMin = passMin || numericFilter.min
-            numericFilter.passMax = passMax || numericFilter.max
-            setPropertyFilter(numericFilter)
-            applyPropertyFilter()
-          } else {
-            setPropertyFilter(filter)
-            applyPropertyFilter()
-          }
-        })
-        .catch((e) => {
-          if (e instanceof TimeoutError) {
-            logger.warn(
-              `${e.message} - filter probably comes from a thread context that isn't currently loaded`
-            )
-          } else {
-            logger.error(e)
-          }
-        })
-    }
-
-    // Handle resource string updates
-    if (
-      [StateApplyMode.Spotlight, StateApplyMode.ThreadFullContextOpen].includes(mode)
-    ) {
-      await resourceIdString.update(state.resources?.request?.resourceIdString || '')
     } else if (mode === StateApplyMode.FederatedContext) {
       // For federated context, append only model IDs (without versions) to show latest
       const { parseUrlParameters, ViewerModelResource, createGetParamFromResources } =
@@ -317,7 +267,7 @@ export function useApplySerializedState() {
 
       const currentResources = parseUrlParameters(resourceIdString.value)
       const newResources = parseUrlParameters(
-        state.resources?.request?.resourceIdString ?? ''
+        formattedState.resources?.request?.resourceIdString ?? ''
       ).map((resource) => {
         if (resource instanceof ViewerModelResource) {
           // Only keep model ID, drop version
@@ -328,14 +278,58 @@ export function useApplySerializedState() {
 
       if (newResources.length) {
         const allResources = [...currentResources, ...newResources]
-        const newResourceString = createGetParamFromResources(allResources)
-        await resourceIdString.update(newResourceString)
+        newResourceIdString = createGetParamFromResources(allResources)
       }
+    }
+
+    // We want to make sure the final resources have been loaded before we continue on
+    // with applying the rest of the state
+    if (newResourceIdString) {
+      await until(loading).toBe(false)
+      await resourceIdString.update(newResourceIdString)
+      await until(loading).toBe(false)
+    }
+
+    position.value = new Vector3(
+      formattedState.ui?.camera?.position?.[0],
+      formattedState.ui?.camera?.position?.[1],
+      formattedState.ui?.camera?.position?.[2]
+    )
+    target.value = new Vector3(
+      formattedState.ui?.camera?.target?.[0],
+      formattedState.ui?.camera?.target?.[1],
+      formattedState.ui?.camera?.target?.[2]
+    )
+
+    isOrthoProjection.value = !!formattedState.ui?.camera?.isOrthoProjection
+
+    sectionBox.value = formattedState.ui?.sectionBox
+      ? {
+          min: formattedState.ui.sectionBox.min || [],
+          max: formattedState.ui.sectionBox.max || [],
+          rotation: formattedState.ui.sectionBox.rotation || []
+        }
+      : null
+    sectionBoxContext.visible.value = false
+    if (!sectionBox.value) {
+      sectionBoxContext.edited.value = false
+    }
+
+    const filters = formattedState.ui?.filters || {}
+    if (filters.hiddenObjectIds?.length) {
+      resetFilters()
+      hideObjects(filters.hiddenObjectIds, { replace: true })
+    }
+
+    if (filters.propertyFilters?.length) {
+      restoreFilters(filters.propertyFilters)
+    } else {
+      resetFilters()
     }
 
     if ([StateApplyMode.Spotlight, StateApplyMode.SavedView].includes(mode)) {
       await urlHashState.focusedThreadId.update(
-        state.ui?.threads?.openThread?.threadId || null
+        formattedState.ui?.threads?.openThread?.threadId || null
       )
     }
 
@@ -348,13 +342,13 @@ export function useApplySerializedState() {
       }
     }
 
-    const command = state.ui?.diff?.command
-      ? deserializeDiffCommand(state.ui.diff.command)
+    const command = formattedState.ui?.diff?.command
+      ? deserializeDiffCommand(formattedState.ui.diff.command)
       : null
     const activeDiffEnabled = !!diff.enabled.value
-    if (command && command.diffs.length && state.ui?.diff) {
-      diff.time.value = state.ui.diff.time || 0.5
-      diff.mode.value = state.ui?.diff.mode || VisualDiffMode.COLORED
+    if (command && command.diffs.length && formattedState.ui?.diff) {
+      diff.time.value = formattedState.ui.diff.time || 0.5
+      diff.mode.value = formattedState.ui?.diff.mode || VisualDiffMode.COLORED
 
       const instruction = command.diffs[0]
       await diffModelVersions(
@@ -367,21 +361,38 @@ export function useApplySerializedState() {
     }
 
     // Restore view mode
-    if (!isUndefinedOrVoid(state.ui?.viewMode?.mode))
-      viewMode.mode.value = state.ui!.viewMode!.mode
-    if (!isUndefinedOrVoid(state.ui?.viewMode?.edgesEnabled))
-      viewMode.edgesEnabled.value = state.ui!.viewMode!.edgesEnabled
-    if (!isUndefinedOrVoid(state.ui?.viewMode?.edgesWeight))
-      viewMode.edgesWeight.value = state.ui!.viewMode!.edgesWeight
-    if (!isUndefinedOrVoid(state.ui?.viewMode?.outlineOpacity))
-      viewMode.outlineOpacity.value = state.ui!.viewMode!.outlineOpacity
-    if (!isUndefinedOrVoid(state.ui?.viewMode?.edgesColor))
-      viewMode.edgesColor.value = state.ui!.viewMode!.edgesColor
+    if (!isUndefinedOrVoid(formattedState.ui?.viewMode?.mode))
+      viewMode.mode.value = formattedState.ui!.viewMode!.mode
+    if (!isUndefinedOrVoid(formattedState.ui?.viewMode?.edgesEnabled))
+      viewMode.edgesEnabled.value = formattedState.ui!.viewMode!.edgesEnabled
+    if (!isUndefinedOrVoid(formattedState.ui?.viewMode?.edgesWeight))
+      viewMode.edgesWeight.value = formattedState.ui!.viewMode!.edgesWeight
+    if (!isUndefinedOrVoid(formattedState.ui?.viewMode?.outlineOpacity))
+      viewMode.outlineOpacity.value = formattedState.ui!.viewMode!.outlineOpacity
+    if (!isUndefinedOrVoid(formattedState.ui?.viewMode?.edgesColor))
+      viewMode.edgesColor.value = formattedState.ui!.viewMode!.edgesColor
 
-    explodeFactor.value = state.ui?.explodeFactor || 0
+    explodeFactor.value = formattedState.ui?.explodeFactor || 0
     lightConfig.value = {
       ...lightConfig.value,
-      ...(state.ui?.lightConfig || {})
+      ...(formattedState.ui?.lightConfig || {})
+    }
+
+    // Apply measurements
+    const incomingMeasurement = formattedState.ui?.measurement
+    if (incomingMeasurement) {
+      if (!isUndefinedOrVoid(incomingMeasurement.enabled)) {
+        measurement.enabled.value = incomingMeasurement.enabled
+      }
+      if (!isUndefinedOrVoid(incomingMeasurement.options)) {
+        measurement.options.value = {
+          ...defaultMeasurementOptions,
+          ...incomingMeasurement.options
+        }
+      }
+      if (!isUndefinedOrVoid(incomingMeasurement.measurements)) {
+        measurement.measurements.value = incomingMeasurement.measurements
+      }
     }
 
     // Trigger activity update

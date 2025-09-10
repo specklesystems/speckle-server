@@ -7,14 +7,14 @@ import { coerceUndefinedValuesToNull } from '../../core/index.js'
 export const defaultViewModeEdgeColorValue = 'DEFAULT_EDGE_COLOR'
 
 /** Redefining these is unfortunate. Especially since they are not part of viewer-core */
-enum MeasurementType {
+export enum MeasurementType {
   PERPENDICULAR = 0,
   POINTTOPOINT = 1,
   AREA = 2,
   POINT = 3
 }
 
-interface MeasurementOptions {
+export interface MeasurementOptions {
   visible: boolean
   type?: MeasurementType
   vertexSnap?: boolean
@@ -22,6 +22,27 @@ interface MeasurementOptions {
   precision?: number
   chain?: boolean
 }
+
+export interface MeasurementData {
+  type: MeasurementType
+  startPoint: readonly [number, number, number] // vec3
+  endPoint: readonly [number, number, number] // vec3
+  startNormal: readonly [number, number, number] // vec3
+  endNormal: readonly [number, number, number] // vec3
+  value: number
+  innerPoints?: (readonly [number, number, number])[] // array of vec3
+  units?: string
+  precision?: number
+  uuid: string
+}
+
+export const defaultMeasurementOptions: Readonly<MeasurementOptions> = Object.freeze({
+  visible: true,
+  type: MeasurementType.POINTTOPOINT,
+  vertexSnap: false,
+  units: 'm',
+  precision: 2
+})
 
 export interface SectionBoxData {
   min: number[]
@@ -40,8 +61,13 @@ export interface SectionBoxData {
  * v1.3 -> 1.4
  * - ui.viewMode -> ui.viewMode.mode
  * - ui.viewMode has new keys: edgesEnabled, edgesWeight, outlineOpacity, edgesColor
+ * v1.4 -> 1.5
+ * - ui.measurement.measurements added
+ * v1.5 -> 1.6
+ * - ui.filters.propertyFilters unified with propertyFilter (propertyFilter now computed from first propertyFilters item)
+ * - Migration logic added to convert legacy propertyFilter to propertyFilters array format
  */
-export const SERIALIZED_VIEWER_STATE_VERSION = 1.3
+export const SERIALIZED_VIEWER_STATE_VERSION = 1.6
 
 export type SerializedViewerState = {
   projectId: string
@@ -82,10 +108,17 @@ export type SerializedViewerState = {
       hiddenObjectIds: string[]
       /** Map of object id => application id or null, if no application id */
       selectedObjectApplicationIds: Record<string, string | null>
-      propertyFilter: {
+      propertyFilter?: {
         key: Nullable<string>
         isApplied: boolean
       }
+      propertyFilters?: Array<{
+        key: Nullable<string>
+        isApplied: boolean
+        selectedValues: string[]
+        id: string
+        condition: 'AND' | 'OR'
+      }>
     }
     camera: {
       position: number[]
@@ -112,6 +145,7 @@ export type SerializedViewerState = {
     measurement: {
       enabled: boolean
       options: Nullable<MeasurementOptions>
+      measurements: Array<MeasurementData>
     }
   }
 }
@@ -127,6 +161,11 @@ type UnformattedState = PartialDeep<
     ui: {
       filters: {
         selectedObjectIds: string[]
+        // Legacy single propertyFilter for migration
+        propertyFilter: {
+          key: Nullable<string>
+          isApplied: boolean
+        }
       }
     }
   }
@@ -160,14 +199,6 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
     )
   }
 
-  const defaultMeasurementOptions: MeasurementOptions = {
-    visible: false,
-    type: MeasurementType.POINTTOPOINT,
-    vertexSnap: false,
-    units: 'm',
-    precision: 2
-  }
-
   const measurementOptions = {
     ...defaultMeasurementOptions,
     ...state.ui?.measurement?.options
@@ -185,9 +216,11 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
     )
   }
 
-  const viewMode = isNumber(state.ui?.viewMode)
+  const viewModeType = isNumber(state.ui?.viewMode)
     ? state.ui.viewMode
     : state.ui?.viewMode?.mode
+
+  const viewModeSettings = isNumber(state.ui?.viewMode) ? {} : state.ui?.viewMode
 
   return {
     projectId: state.projectId || throwInvalidError('projectId'),
@@ -233,17 +266,62 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
         mode: state.ui?.diff?.mode || 1
       },
       spotlightUserSessionId: state.ui?.spotlightUserSessionId || null,
-      filters: {
-        ...(state.ui?.filters || {}),
-        isolatedObjectIds: state.ui?.filters?.isolatedObjectIds || [],
-        hiddenObjectIds: state.ui?.filters?.hiddenObjectIds || [],
-        selectedObjectApplicationIds,
-        propertyFilter: {
-          ...(state.ui?.filters?.propertyFilter || {}),
-          key: state.ui?.filters?.propertyFilter?.key || null,
-          isApplied: state.ui?.filters?.propertyFilter?.isApplied || false
+      filters: (() => {
+        const baseFilters = {
+          ...(state.ui?.filters || {}),
+          isolatedObjectIds: state.ui?.filters?.isolatedObjectIds || [],
+          hiddenObjectIds: state.ui?.filters?.hiddenObjectIds || [],
+          selectedObjectApplicationIds
         }
-      },
+
+        // Migration logic: handle legacy propertyFilter and new propertyFilters
+        let propertyFilters: Array<{
+          key: Nullable<string>
+          isApplied: boolean
+          selectedValues: string[]
+          id: string
+          condition: 'AND' | 'OR'
+        }> = []
+
+        // If new propertyFilters exist and are not empty, use them
+        if (
+          state.ui?.filters?.propertyFilters &&
+          Array.isArray(state.ui.filters.propertyFilters) &&
+          state.ui.filters.propertyFilters.length > 0
+        ) {
+          propertyFilters = state.ui.filters.propertyFilters
+        }
+        // If legacy propertyFilter exists but no propertyFilters (or empty propertyFilters), migrate it
+        else if (state.ui?.filters?.propertyFilter?.key) {
+          propertyFilters = [
+            {
+              key: state.ui.filters.propertyFilter.key,
+              isApplied: state.ui.filters.propertyFilter.isApplied || false,
+              selectedValues: [], // Legacy didn't have selectedValues
+              id: 'legacy-filter', // Generate a consistent ID for legacy filter
+              condition: 'AND' as const
+            }
+          ]
+        }
+
+        // Create legacy-compatible propertyFilter from first item in propertyFilters
+        const propertyFilter =
+          propertyFilters.length > 0
+            ? {
+                key: propertyFilters[0].key,
+                isApplied: propertyFilters[0].isApplied
+              }
+            : {
+                key: null,
+                isApplied: false
+              }
+
+        return {
+          ...baseFilters,
+          propertyFilters,
+          propertyFilter
+        }
+      })(),
       camera: {
         ...(state.ui?.camera || {}),
         position: state.ui?.camera?.position || throwInvalidError('ui.camera.position'),
@@ -252,11 +330,11 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
         zoom: state.ui?.camera?.zoom || 1
       },
       viewMode: {
-        mode: viewMode || 0,
-        edgesEnabled: state.ui?.viewMode?.edgesEnabled || false,
-        edgesWeight: state.ui?.viewMode?.edgesWeight || 1,
-        outlineOpacity: state.ui?.viewMode?.outlineOpacity || 0.75,
-        edgesColor: state.ui?.viewMode?.edgesColor || defaultViewModeEdgeColorValue
+        mode: viewModeType ?? 0,
+        edgesEnabled: viewModeSettings?.edgesEnabled ?? true,
+        edgesWeight: viewModeSettings?.edgesWeight ?? 1,
+        outlineOpacity: viewModeSettings?.outlineOpacity ?? 0.75,
+        edgesColor: viewModeSettings?.edgesColor ?? defaultViewModeEdgeColorValue
       },
       sectionBox:
         state.ui?.sectionBox?.min?.length && state.ui?.sectionBox.max?.length
@@ -274,7 +352,8 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
       selection: state.ui?.selection || null,
       measurement: {
         enabled: state.ui?.measurement?.enabled ?? false,
-        options: measurementOptions
+        options: measurementOptions,
+        measurements: state.ui?.measurement?.measurements || []
       }
     }
   }

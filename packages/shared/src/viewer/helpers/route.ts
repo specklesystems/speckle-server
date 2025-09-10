@@ -260,6 +260,17 @@ class ViewerResourceBuilder implements Iterable<ViewerResource> {
     return this.#resources.length
   }
 
+  /**
+   * Remove specified versionIds from any model resources
+   */
+  clearVersions() {
+    this.#resources.forEach((r) => {
+      if (!isModelResource(r)) return
+      r.versionId = undefined
+    })
+    return this
+  }
+
   isEqualTo(resource: ViewerResourcesTarget) {
     const incomingBuilder = resourceBuilder().addResources(resource)
     return this.toString() === incomingBuilder.toString()
