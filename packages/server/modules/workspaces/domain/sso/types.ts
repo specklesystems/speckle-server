@@ -3,7 +3,7 @@ import type { infer as Infer } from 'zod'
 
 type ProviderBaseRecord = {
   id: string
-  sessionTimeoutDays?: number
+  sessionTimeoutDays: number
   createdAt: Date
   updatedAt: Date
 }
