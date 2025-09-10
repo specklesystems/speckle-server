@@ -57,7 +57,6 @@ export const useHighlightingPostSetup = () => {
     return highlightExtension.value
   }
 
-  // Initialize extension on viewer load
   useOnViewerLoadComplete(
     ({ isInitial }) => {
       if (!isInitial) return
@@ -81,6 +80,8 @@ export const useHighlightingPostSetup = () => {
 
       if (oldIds && isEqual(newIds, oldIds)) return
 
+      // Clear and re-select to avoid accumulation
+      extension.clearSelection()
       if (newIds.length > 0) {
         extension.selectObjects(newIds)
       }

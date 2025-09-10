@@ -36,6 +36,7 @@ import {
   findFilterByKvp
 } from '~/lib/viewer/helpers/filters/utils'
 import { useFilterColoringHelpers } from '~/lib/viewer/composables/filtering/coloringHelpers'
+import { useHighlightedObjectsUtilities } from '~/lib/viewer/composables/ui'
 
 export function useFilterUtilities(
   options?: Partial<{ state: InjectableViewerState }>
@@ -47,6 +48,7 @@ export function useFilterUtilities(
 
   const dataStore = useFilteringDataStore()
   const { removeColorFilter } = useFilterColoringHelpers({ state })
+  const { clearHighlightedObjects } = useHighlightedObjectsUtilities()
 
   const isolateObjects = (
     objectIds: string[],
@@ -54,6 +56,8 @@ export function useFilterUtilities(
       replace: boolean
     }>
   ) => {
+    clearHighlightedObjects()
+
     filters.isolatedObjectIds.value = uniq([
       ...(options?.replace ? [] : filters.isolatedObjectIds.value),
       ...objectIds
@@ -61,6 +65,8 @@ export function useFilterUtilities(
   }
 
   const unIsolateObjects = (objectIds: string[]) => {
+    clearHighlightedObjects()
+
     filters.isolatedObjectIds.value = difference(
       filters.isolatedObjectIds.value,
       objectIds
@@ -73,6 +79,8 @@ export function useFilterUtilities(
       replace: boolean
     }>
   ) => {
+    clearHighlightedObjects()
+
     filters.hiddenObjectIds.value = uniq([
       ...(options?.replace ? [] : filters.hiddenObjectIds.value),
       ...objectIds
@@ -80,6 +88,8 @@ export function useFilterUtilities(
   }
 
   const showObjects = (objectIds: string[]) => {
+    clearHighlightedObjects()
+
     filters.hiddenObjectIds.value = difference(filters.hiddenObjectIds.value, objectIds)
   }
 
@@ -373,6 +383,8 @@ export function useFilterUtilities(
    * Updates selected values for a specific active filter
    */
   const updateActiveFilterValues = (filterId: string, values: string[]) => {
+    clearHighlightedObjects()
+
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
       filter.selectedValues = [...values]
@@ -389,6 +401,8 @@ export function useFilterUtilities(
    * Efficiently selects all values by using valueGroups directly instead of expensive getAllPropertyValues
    */
   const selectAllFilterValues = (filterId: string) => {
+    clearHighlightedObjects()
+
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter && !isNumericFilter(filter)) {
       const propertyFilter = filter.filter
@@ -418,6 +432,8 @@ export function useFilterUtilities(
    * Updates condition for a specific active filter
    */
   const updateFilterCondition = (filterId: string, condition: FilterCondition) => {
+    clearHighlightedObjects()
+
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
       filter.condition = condition
@@ -437,6 +453,8 @@ export function useFilterUtilities(
    * Sets numeric range for a filter
    */
   const setNumericRange = (filterId: string, min: number, max: number) => {
+    clearHighlightedObjects()
+
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter && isNumericFilter(filter)) {
       const roundedMin = parseFloat(min.toFixed(4))
@@ -550,6 +568,8 @@ export function useFilterUtilities(
    * Toggles a value for a specific active filter
    */
   const toggleActiveFilterValue = (filterId: string, value: string) => {
+    clearHighlightedObjects()
+
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
       const index = filter.selectedValues.indexOf(value)
@@ -578,6 +598,8 @@ export function useFilterUtilities(
   }
 
   const resetFilters = () => {
+    clearHighlightedObjects()
+
     filters.propertyFilters.value = []
     filters.selectedObjects.value = []
     filters.activeColorFilterId.value = null
