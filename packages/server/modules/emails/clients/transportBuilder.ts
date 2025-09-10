@@ -6,7 +6,8 @@ import {
 import type { Logger } from '@/observability/logging'
 import { LogicError, MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { initializeMailjetTransporter } from '@/modules/emails/clients/mailjetApi'
-import { initializeSMTPTransporter } from '@/modules/emails/clients/smtpTransporter'
+import { initializeSMTPTransporter } from '@/modules/emails/clients/smtp'
+import { initializeJSONEchoTransporter } from '@/modules/emails/clients/jsonEcho'
 
 let transporter: EmailTransport | undefined = undefined
 
@@ -15,7 +16,8 @@ export const initializeEmailTransport = async (params: {
   isSandboxMode: boolean
   logger: Logger
 }) => {
-  const { emailTransportType, isSandboxMode, logger } = params
+  const { isSandboxMode, logger } = params
+  let { emailTransportType } = params
   const unsupportedTransportTypeMessage =
     'Unsupported email transporter type: {emailTransportType}'
   if (!isEmailTransportType(emailTransportType)) {
@@ -24,10 +26,23 @@ export const initializeEmailTransport = async (params: {
     })
   }
 
+  if (emailTransportType === EmailTransportType.SMTP && params.isSandboxMode) {
+    // if we're in sandbox mode, we won't use SMTP as our transport, so we switch to JSON echo
+    // this retains legacy behaviour
+    emailTransportType = EmailTransportType.JSONEcho
+    logger.info(
+      '📧 SMTP email transport selected but email sandbox mode is enabled, switching to JSON Echo transport'
+    )
+  }
+
   switch (emailTransportType) {
     case EmailTransportType.SMTP:
       logger.info('📧 Using SMTP email transporter')
       transporter = await initializeSMTPTransporter({ logger, isSandboxMode })
+      break
+    case EmailTransportType.JSONEcho:
+      logger.info('📧 Using JSON Echo email transporter')
+      transporter = await initializeJSONEchoTransporter({ logger, isSandboxMode })
       break
     case EmailTransportType.Mailjet:
       logger.info('📧🛩️ Using Mailjet email transporter')
