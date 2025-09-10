@@ -970,6 +970,8 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 # *** Email ***
 - name: EMAIL
   value: "true"
+- name: EMAIL_TRANSPORTER_TYPE
+  value: "{{ .Values.server.email.transporterType }}"
 - name: EMAIL_HOST
   value: "{{ .Values.server.email.host }}"
 - name: EMAIL_PORT

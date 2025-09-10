@@ -11,10 +11,16 @@ export function getStringFromEnv(
      * If set to true, wont throw if the env var is not set
      */
     unsafe: boolean
+    /**
+     * If set, will return this value if the env var is not set
+     * Takes preceden
+     */
+    default?: string
   }>
 ): string {
   const envVar = process.env[envVarKey]
   if (!envVar) {
+    if (options?.default) return options.default
     if (options?.unsafe) return ''
     throw new MisconfiguredEnvironmentError(`${envVarKey} env var not configured`)
   }
@@ -371,6 +377,10 @@ export function getLicenseToken(): string | undefined {
 
 export function isEmailEnabled() {
   return getBooleanFromEnv('EMAIL')
+}
+
+export function getEmailTransporterType() {
+  return getStringFromEnv('EMAIL_TRANSPORTER_TYPE', { unsafe: true, default: 'smtp' })
 }
 
 export const getFileImporterQueuePostgresUrl = () =>

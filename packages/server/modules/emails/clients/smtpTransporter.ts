@@ -29,7 +29,7 @@ const initSmtpTransporter = async () => {
   }
 }
 
-export async function initializeTransporter(): Promise<EmailTransport | undefined> {
+export async function initializeSMTPTransporter(): Promise<EmailTransport | undefined> {
   let newTransporter = undefined
 
   if (isEmailEnabled()) {
