@@ -1,26 +1,22 @@
 import z from 'zod'
 import { TIME } from '../../core/index.js'
 
-const job = z.object({
-  jobId: z.string()
+export const jobPayloadV1 = z.object({
+  serverUrl: z.string().url().describe('The url of the server'),
+  projectId: z.string(),
+  modelId: z.string(),
+  token: z.string(),
+  blobId: z.string(),
+  fileType: z.string(),
+  fileName: z.string(),
+  timeOutSeconds: z
+    .number()
+    .int()
+    .default(30 * TIME.minute)
+    .describe('The timeout for a single attempt of the job, in seconds.')
 })
 
-export const jobPayload = job.merge(
-  z.object({
-    serverUrl: z.string().url().describe('The url of the server'),
-    projectId: z.string(),
-    modelId: z.string(),
-    token: z.string(),
-    blobId: z.string(),
-    fileType: z.string(),
-    fileName: z.string(),
-    timeOutSeconds: z
-      .number()
-      .int()
-      .default(30 * TIME.minute)
-  })
-)
-export type JobPayload = z.infer<typeof jobPayload>
+export type JobPayloadV1 = z.infer<typeof jobPayloadV1>
 
 const baseFileImportResult = z.object({
   durationSeconds: z
@@ -69,7 +65,7 @@ export const fileImportResultPayload = z.discriminatedUnion('status', [
 
 export type FileImportResultPayload = z.infer<typeof fileImportResultPayload>
 
-export type FileImportJobPayloadV1 = JobPayload & {
+export type FileImportJobPayloadV1 = JobPayloadV1 & {
   jobType: 'fileImport'
   payloadVersion: 1
 }

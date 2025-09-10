@@ -2,10 +2,10 @@ import { expect } from 'chai'
 import { garbageCollectAttemptedFileImportBackgroundJobsFactory } from '@/modules/fileuploads/services/tasks'
 import {
   BackgroundJobs,
-  failQueuedBackgroundJobsWhichExceedMaximumAttemptsFactory,
+  failBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory,
   getBackgroundJobFactory,
   storeBackgroundJobFactory
-} from '@/modules/backgroundjobs/repositories'
+} from '@/modules/backgroundjobs/repositories/backgroundjobs'
 import { db } from '@/db/knex'
 import { notifyChangeInFileStatus } from '@/modules/fileuploads/services/management'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -19,7 +19,7 @@ import {
   type BackgroundJobPayload,
   BackgroundJobStatus,
   type BackgroundJob
-} from '@/modules/backgroundjobs/domain'
+} from '@/modules/backgroundjobs/domain/types'
 import type { FileImportJobPayloadV1 } from '@speckle/shared/workers/fileimport'
 import cryptoRandomString from 'crypto-random-string'
 import type { FileUploadRecordV2 } from '@/modules/fileuploads/helpers/types'
@@ -55,7 +55,7 @@ export const createTestJob = (
   status: BackgroundJobStatus.Queued,
   attempt: 0,
   maxAttempt: 3,
-  timeoutMs: 30000,
+  remainingComputeBudgetSeconds: 300,
   createdAt: new Date(),
   updatedAt: new Date(),
   ...overrides
@@ -140,8 +140,8 @@ describe('File import garbage collection @fileuploads integration', () => {
 
   describe('garbage collect file import background jobs', () => {
     const SUT = garbageCollectAttemptedFileImportBackgroundJobsFactory({
-      failQueuedBackgroundJobsWhichExceedMaximumAttempts:
-        failQueuedBackgroundJobsWhichExceedMaximumAttemptsFactory({
+      failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget:
+        failBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory({
           db
         }),
       failPendingUploadedFiles: failPendingUploadedFilesFactory({
@@ -173,7 +173,7 @@ describe('File import garbage collection @fileuploads integration', () => {
         projectId: projectOne.id,
         modelId: modelOne.id
       })
-      const queuedJobAtMaxAttempts = createTestJob({
+      const queuedJobExceedingMaxAttempts = createTestJob({
         status: BackgroundJobStatus.Queued,
         payload: createTestJobPayload({
           testData: identifiableData,
@@ -185,7 +185,7 @@ describe('File import garbage collection @fileuploads integration', () => {
       await saveUploadFile(fileOne)
       await storeBackgroundJob({ job: processingJobAtMaxAttempts })
       await saveUploadFile(fileTwo)
-      await storeBackgroundJob({ job: queuedJobAtMaxAttempts })
+      await storeBackgroundJob({ job: queuedJobExceedingMaxAttempts })
 
       // ensure jobs are in the database and retrievable
       const existing = await db(BackgroundJobs.name)
@@ -210,7 +210,9 @@ describe('File import garbage collection @fileuploads integration', () => {
       expect(resultOne?.status).to.equal(BackgroundJobStatus.Processing)
 
       // queued job should have been garbage collected
-      const resultTwo = await getBackgroundJob({ jobId: queuedJobAtMaxAttempts.id })
+      const resultTwo = await getBackgroundJob({
+        jobId: queuedJobExceedingMaxAttempts.id
+      })
       expect(resultTwo?.status).to.equal(BackgroundJobStatus.Failed)
 
       const fileOneResult = await getUploadFile({ fileId: fileOne.fileId })
