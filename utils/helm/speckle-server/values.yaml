@@ -789,6 +789,9 @@ server:
     ## @param server.email.port The port on the server for the email service.
     ##
     port: ''
+    ## @param server.email.secure If true, indicates that the connection to the email server should use SSL.
+    ##
+    secure: true
     ## @param server.email.from The email address from which Speckle will send emails. If left blank will cause an error when email are sent.
     ##
     from: ''

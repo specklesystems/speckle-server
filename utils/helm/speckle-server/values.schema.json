@@ -1269,7 +1269,7 @@
             },
             "transporterType": {
               "type": "string",
-              "description": "The type of transactional email API being used. Currently, only SMTP is supported.",
+              "description": "The type of transactional email API being used. smtp, mailjet, and mailchimp are supported.",
               "default": "smtp"
             },
             "verificationTimeoutMinutes": {
@@ -1286,6 +1286,11 @@
               "type": "string",
               "description": "The port on the server for the email service.",
               "default": ""
+            },
+            "secure": {
+              "type": "boolean",
+              "description": "If true, indicates that the connection to the email server should use SSL.",
+              "default": true
             },
             "from": {
               "type": "string",
