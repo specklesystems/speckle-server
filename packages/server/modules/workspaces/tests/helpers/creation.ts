@@ -674,6 +674,7 @@ export const createTestOidcProvider = async (
       id: providerId,
       createdAt: new Date(),
       updatedAt: new Date(),
+      sessionTimeoutDays: 7,
       providerType: 'oidc',
       provider: {
         providerName: 'Test Provider',
