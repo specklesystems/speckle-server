@@ -44,7 +44,7 @@ export const rhinoImporterSupportedFileExtensions = new Set([
   // 'm',
   // 'pts',
   // 'svg',
-  // 'skp', //disabled for now, may enable once we've happy with the quality
+  'skp',
   // 'slc',
   'sldprt',
   // 'sldasm',
