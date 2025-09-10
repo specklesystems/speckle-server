@@ -11,3 +11,9 @@ export class EmailVerificationFinalizationError extends BaseError {
   static defaultMessage = 'Invalid email verification finalization request'
   static statusCode = 400
 }
+
+export class EmailSendingError extends BaseError {
+  static code = 'EMAIL_SENDING_ERROR'
+  static defaultMessage = 'Error sending email'
+  static statusCode = 500
+}

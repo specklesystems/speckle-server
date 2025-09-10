@@ -383,6 +383,18 @@ export function getEmailTransporterType() {
   return getStringFromEnv('EMAIL_TRANSPORTER_TYPE', { unsafe: true, default: 'smtp' })
 }
 
+export function isEmailSandboxMode() {
+  return getBooleanFromEnv('EMAIL_SANDBOX_MODE', isDevOrTestEnv())
+}
+
+export function getEmailUsername() {
+  return getStringFromEnv('EMAIL_USERNAME')
+}
+
+export function getEmailPassword() {
+  return getStringFromEnv('EMAIL_PASSWORD')
+}
+
 export const getFileImporterQueuePostgresUrl = () =>
   process.env['FILEIMPORT_QUEUE_POSTGRES_URL'] ?? null
 

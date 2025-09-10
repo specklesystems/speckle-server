@@ -112,6 +112,7 @@
     "netmask": "^2.0.2",
     "node-cron": "^3.0.2",
     "node-machine-id": "^1.1.12",
+    "node-mailjet": "^6.0.9",
     "nodemailer": "^6.5.0",
     "openid-client": "^5.1.7",
     "passport": "^0.6.0",
