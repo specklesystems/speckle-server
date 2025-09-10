@@ -3,20 +3,18 @@ import {
   ViewerEvent,
   DefaultLightConfiguration,
   LegacyViewer,
-  MeasurementType,
   FilteringExtension
 } from '@speckle/viewer'
-import {
-  type FilteringState,
-  type PropertyInfo,
-  type SunLightConfiguration,
-  type SpeckleView,
-  type MeasurementOptions,
-  type DiffResult,
-  type Viewer,
-  type WorldTree,
-  type VisualDiffMode,
-  ViewMode
+import type {
+  ViewMode,
+  FilteringState,
+  PropertyInfo,
+  SunLightConfiguration,
+  SpeckleView,
+  DiffResult,
+  Viewer,
+  WorldTree,
+  VisualDiffMode
 } from '@speckle/viewer'
 import { inject, ref, provide } from 'vue'
 import type { ComputedRef, WritableComputedRef, Raw, Ref, ShallowRef } from 'vue'
@@ -51,13 +49,19 @@ import { nanoid } from 'nanoid'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
-import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
+import type {
+  ModelsSubView,
+  ActivePanel,
+  SpeckleObject
+} from '~/lib/viewer/helpers/sceneExplorer'
 import { Vector3 } from 'three'
 import { writableAsyncComputed } from '~~/lib/common/composables/async'
 import type { AsyncWritableComputedRef } from '~~/lib/common/composables/async'
 import { setupUiDiffState } from '~~/lib/viewer/composables/setup/diff'
 import type { DiffStateCommand } from '~~/lib/viewer/composables/setup/diff'
-import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useDiffUtilities, useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { useCreateViewerFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 import { flatten, isUndefined, reduce } from 'lodash-es'
 import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
 import {
@@ -67,7 +71,11 @@ import {
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { buildManualPromise } from '@speckle/ui-components'
 import { PassReader } from '../extensions/PassReader'
-import type { SectionBoxData } from '@speckle/shared/viewer/state'
+import type {
+  MeasurementData,
+  MeasurementOptions,
+  SectionBoxData
+} from '@speckle/shared/viewer/state'
 import {
   createGetParamFromResources,
   isAllModelsResource,
@@ -77,13 +85,20 @@ import {
   parseUrlParameters,
   resourceBuilder,
   ViewerModelResource,
+  ViewerObjectResource,
   type ViewerResource
 } from '@speckle/shared/viewer/route'
 import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
+import type { FilterData } from '~/lib/viewer/helpers/filters/types'
 import {
   useBuildSavedViewsUIState,
   type SavedViewsUIState
 } from '~/lib/viewer/composables/savedViews/state'
+import type { defaultEdgeColorValue } from '~/lib/viewer/composables/setup/viewMode'
+import { useViewModesSetup } from '~/lib/viewer/composables/setup/viewMode'
+import { useMeasurementsSetup } from '~/lib/viewer/composables/setup/measurements'
+import { useFiltersSetup } from '~/lib/viewer/composables/setup/filters'
+import { useViewerPanelsSetup } from '~/lib/viewer/composables/setup/panels'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -139,6 +154,7 @@ export type InjectableViewerState = Readonly<{
       availableFilters: ComputedRef<Optional<PropertyInfo[]>>
       views: ComputedRef<SpeckleView[]>
       filteringState: ComputedRef<Optional<FilteringState>>
+      filteringDataStore: ReturnType<typeof useCreateViewerFilteringDataStore>
     }
     /**
      * Whether the Viewer has finished doing the initial object loading
@@ -203,6 +219,10 @@ export type InjectableViewerState = Readonly<{
        * Metadata about loaded items
        */
       resourceItems: ComputedRef<ViewerResourceItem[]>
+      /**
+       * Actually loaded resource items but in string id format
+       */
+      resourceItemsIds: ComputedRef<string[]>
       /**
        * Variables used to load resource items identified by URL identifiers. Relevant when making cache updates
        */
@@ -297,18 +317,32 @@ export type InjectableViewerState = Readonly<{
        * For quick object ID lookups
        */
       selectedObjectIds: ComputedRef<Set<string>>
-      propertyFilter: {
-        filter: Ref<Nullable<PropertyInfo>>
-        isApplied: Ref<boolean>
-      }
+      /**
+       * Set of currently isolated object IDs for efficient lookups
+       */
+      isolatedObjectsSet: ComputedRef<Set<string> | null>
+
+      // Multi-filter system
+      propertyFilters: Ref<FilterData[]>
+      filteredObjectsCount: Ref<number>
       hasAnyFiltersApplied: ComputedRef<boolean>
+      activeColorFilterId: Ref<string | null>
     }
     camera: {
       position: Ref<Vector3>
       target: Ref<Vector3>
       isOrthoProjection: Ref<boolean>
     }
-    viewMode: Ref<ViewMode>
+    viewMode: {
+      mode: Ref<ViewMode>
+      edgesEnabled: Ref<boolean>
+      edgesWeight: Ref<number>
+      outlineOpacity: Ref<number>
+      edgesColor: Ref<typeof defaultEdgeColorValue | number>
+      finalEdgesColor: ComputedRef<number>
+      defaultEdgesColor: ComputedRef<number>
+      resetViewMode: () => void
+    }
     diff: {
       newVersion: ComputedRef<ViewerModelVersionCardItemFragment | undefined>
       oldVersion: ComputedRef<ViewerModelVersionCardItemFragment | undefined>
@@ -331,11 +365,19 @@ export type InjectableViewerState = Readonly<{
     measurement: {
       enabled: Ref<boolean>
       options: Ref<MeasurementOptions>
+      measurements: Ref<Array<MeasurementData>>
     }
     /**
      * Various saved views UI settings
      */
     savedViews: SavedViewsUIState
+    /**
+     * Opened viewer panel settings
+     */
+    panels: {
+      active: Ref<ActivePanel>
+      modelsSubView: Ref<ModelsSubView>
+    }
   }
   /**
    * State stored in the anchor string of the URL
@@ -418,6 +460,8 @@ function setupViewerMetadata(params: {
   const filteringState = shallowRef(undefined as Optional<FilteringState>)
   const views = ref([] as SpeckleView[])
 
+  const filteringDataStore = useCreateViewerFilteringDataStore()
+
   const refreshWorldTreeAndFilters = async () => {
     worldTree.value = viewer.getWorldTree()
     availableFilters.value = await viewer.getObjectProperties()
@@ -445,7 +489,8 @@ function setupViewerMetadata(params: {
     worldTree: computed(() => worldTree.value),
     availableFilters: computed(() => availableFilters.value),
     filteringState: computed(() => filteringState.value),
-    views: computed(() => views.value)
+    views: computed(() => views.value),
+    filteringDataStore
   }
 }
 
@@ -628,6 +673,7 @@ function setupResponseResourceItems(
   | 'savedView'
   | 'isFederatedView'
   | 'resourceItemsExtended'
+  | 'resourceItemsIds'
 > {
   const globalError = useError()
   const {
@@ -770,6 +816,15 @@ function setupResponseResourceItems(
     return finalItems
   })
 
+  const resourceItemsIds = computed(() =>
+    resourceItems.value.map((i) => {
+      if (i.modelId) {
+        return new ViewerModelResource(i.modelId, i.versionId || undefined).toString()
+      } else {
+        return new ViewerObjectResource(i.objectId).toString()
+      }
+    })
+  )
   const resourceItemsLoaded = computed(() => initLoadDone.value)
 
   const savedView = computed(() => {
@@ -790,6 +845,7 @@ function setupResponseResourceItems(
 
   return {
     resourceItemsExtended,
+    resourceItemsIds,
     resourceItems,
     resourceItemsQueryVariables: computed(() => resourceItemsQueryVariables.value),
     resourceItemsLoaded,
@@ -1077,18 +1133,8 @@ function setupInterfaceState(
 
   const loadProgress = ref(0)
 
-  const isolatedObjectIds = ref([] as string[])
-  const hiddenObjectIds = ref([] as string[])
-  const selectedObjects = shallowRef<Raw<SpeckleObject>[]>([])
-  const propertyFilter = ref(null as Nullable<PropertyInfo>)
-  const isPropertyFilterApplied = ref(false)
-  const hasAnyFiltersApplied = computed(() => {
-    if (isolatedObjectIds.value.length) return true
-    if (hiddenObjectIds.value.length) return true
-    if (propertyFilter.value || isPropertyFilterApplied.value) return true
-    return false
-  })
-  const viewMode = ref<ViewMode>(ViewMode.DEFAULT)
+  const { filters } = useFiltersSetup()
+  const { viewMode } = useViewModesSetup()
 
   const highlightedObjectIds = ref([] as string[])
   const spotlightUserSessionId = ref(null as Nullable<string>)
@@ -1100,8 +1146,8 @@ function setupInterfaceState(
   const selectedObjectIds = computed(
     () =>
       new Set(
-        selectedObjects.value
-          .map((o) => o.id as MaybeNullOrUndefined<string>)
+        filters.selectedObjects.value
+          .map((o: SpeckleObject) => o.id as MaybeNullOrUndefined<string>)
           .filter(isNonNullable)
       )
   )
@@ -1127,6 +1173,7 @@ function setupInterfaceState(
   return {
     ...state,
     ui: {
+      viewMode,
       diff: {
         ...diffState
       },
@@ -1152,35 +1199,19 @@ function setupInterfaceState(
         target,
         isOrthoProjection
       },
-      viewMode,
       sectionBox: ref(null as Nullable<SectionBoxData>),
       sectionBoxContext: {
         visible: ref(false),
         edited: ref(false)
       },
       filters: {
-        isolatedObjectIds,
-        hiddenObjectIds,
-        selectedObjects,
-        selectedObjectIds,
-        propertyFilter: {
-          filter: propertyFilter,
-          isApplied: isPropertyFilterApplied
-        },
-        hasAnyFiltersApplied
+        ...filters,
+        selectedObjectIds
       },
       highlightedObjectIds,
-      measurement: {
-        enabled: ref(false),
-        options: ref<MeasurementOptions>({
-          visible: true,
-          type: MeasurementType.POINTTOPOINT,
-          units: 'm',
-          vertexSnap: true,
-          precision: 2
-        })
-      },
-      savedViews: useBuildSavedViewsUIState()
+      measurement: useMeasurementsSetup(),
+      savedViews: useBuildSavedViewsUIState(),
+      panels: useViewerPanelsSetup()
     }
   }
 }
@@ -1241,14 +1272,16 @@ export function useResetUiState() {
   } = useInjectedViewerState()
   const { resetFilters } = useFilterUtilities()
   const { endDiff } = useDiffUtilities()
+  const { reset: resetMeasurements } = useMeasurementUtilities()
 
   return () => {
     camera.isOrthoProjection.value = false
     sectionBox.value = null
     highlightedObjectIds.value = []
     lightConfig.value = { ...DefaultLightConfiguration }
-    viewMode.value = ViewMode.DEFAULT
+    viewMode.resetViewMode()
     resetFilters()
+    resetMeasurements()
     endDiff()
   }
 }

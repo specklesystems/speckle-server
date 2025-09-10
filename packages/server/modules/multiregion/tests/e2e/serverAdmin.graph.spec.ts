@@ -1,7 +1,6 @@
 import { mainDb } from '@/db/knex'
 import { getMainObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
 import type { DataRegionsConfig } from '@/modules/multiregion/domain/types'
-import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import {
   getMultiRegionConfig,
   setMultiRegionConfig
@@ -21,15 +20,18 @@ import {
 import type { ExecuteOperationOptions, TestApolloServer } from '@/test/graphqlHelper'
 import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext, getRegionKeys } from '@/test/hooks'
-
-import { truncateRegionsSafely } from '@/test/speckle-helpers/regions'
+import {
+  isMultiRegionTestMode,
+  truncateRegionsSafely
+} from '@/test/speckle-helpers/regions'
 import { Roles } from '@speckle/shared'
 import type { MultiRegionConfig } from '@speckle/shared/environment/db'
 import { getConnectionSettings } from '@speckle/shared/environment/db'
 import { expect } from 'chai'
 import { merge } from 'lodash-es'
+import { resetRegisteredRegions } from '@/modules/multiregion/utils/dbSelector'
 
-const isEnabled = isMultiRegionEnabled()
+const isEnabled = isMultiRegionTestMode()
 
 isEnabled
   ? describe('Multi Region Server Settings @multiregion', () => {
@@ -110,6 +112,7 @@ isEnabled
       after(async () => {
         setMultiRegionConfig(originalConfig)
         await truncateRegionsSafely()
+        resetRegisteredRegions()
       })
 
       describe('server config', () => {

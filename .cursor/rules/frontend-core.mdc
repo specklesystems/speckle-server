@@ -153,7 +153,7 @@ import type { ProjectFragment } from '~/lib/common/generated/gql/graphql'
 
 - **Structured logging** with Pino for production
 - **useLogger()** composable for standard logging
-- **useStrictLogger()** when you need guaranteed real Pino logger
+- **useSafeLogger()** when you need a logger potentially outside of useNuxtApp() scope
 - **devLog()** or **useDevLogger()** for development-only logging
 - **Never use console.log** - use logging composables instead
 - **Development logging** is automatically skipped in production

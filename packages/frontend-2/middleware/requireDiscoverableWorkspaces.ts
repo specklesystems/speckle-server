@@ -6,7 +6,7 @@ import { homeRoute, workspaceCreateRoute } from '~~/lib/common/helpers/route'
 /**
  * Redirect user to /workspaces/actions/create, if they have no discoverable workspaces
  */
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineParallelizedNuxtRouteMiddleware(async (to) => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
   if (!isWorkspacesEnabled.value) return

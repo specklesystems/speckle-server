@@ -43,8 +43,8 @@ RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     --no-install-recommends \
     # up to date ca-certs are required for downloading the google signing key
-    ca-certificates=20230311 \
-    tini=0.19.0-1 \
+    ca-certificates=20230311+deb12u1 \
+    tini=0.19.0-1+b3 \
     fonts-ipafont-gothic=00303-23 \
     fonts-wqy-zenhei=0.9.45-8 \
     fonts-thai-tlwg=1:0.7.3-1 \
@@ -61,7 +61,7 @@ RUN apt-get update && \
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     # --no-install-recommends # This is causing issues with the google-chrome-stable install as not all gpg components are installed if recommended installs are disabled
-    gnupg=2.2.40-1.1 && \
+    gnupg=2.2.40-1.1+deb12u1 && \
     # Clean up
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -92,7 +92,7 @@ RUN groupadd -g 30000 -r pptruser && \
     useradd -r -g pptruser -G audio,video -u 800 pptruser && \
     mkdir -p /home/pptruser/Downloads && \
     chown -R pptruser:pptruser /home/pptruser && \
-    chown -R pptruser:pptruser ./node_modules && \
+    if [ -d ./node_modules ]; then chown -R pptruser:pptruser ./node_modules; else true; fi && \
     chown -R pptruser:pptruser ./package.json
 
 # overriding this value via `--build-arg CACHE_BUST=$(date +%s)` will cause the latest google chrome to be fetched

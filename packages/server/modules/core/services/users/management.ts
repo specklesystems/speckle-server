@@ -39,10 +39,7 @@ import type {
   FindPrimaryEmailForUser,
   ValidateAndCreateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
-import type {
-  DeleteStreamRecord,
-  GetUserDeletableStreams
-} from '@/modules/core/domain/streams/operations'
+import type { GetUserDeletableStreams } from '@/modules/core/domain/streams/operations'
 import type { Logger } from '@/observability/logging'
 import type { DeleteAllUserInvites } from '@/modules/serverinvites/domain/operations'
 import type { GetServerInfo } from '@/modules/core/domain/server/operations'
@@ -52,8 +49,12 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import type { GetUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/domain/operations'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
-import type { QueryAllProjects } from '@/modules/core/domain/projects/operations'
+import type {
+  DeleteProjectAndCommits,
+  QueryAllProjects
+} from '@/modules/core/domain/projects/operations'
 import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
+import { v4 } from 'uuid'
 
 const { FF_NO_PERSONAL_EMAILS_ENABLED } = getFeatureFlags()
 
@@ -169,11 +170,12 @@ export const createUserFactory =
 
     const signUpCtx = user.signUpContext
 
-    let finalUser: typeof user &
-      Omit<NullableKeysToOptional<UserRecord>, 'suuid' | 'createdAt'> = {
+    let finalUser: typeof user & NullableKeysToOptional<UserRecord> = {
       ...user,
       id: crs({ length: 10 }),
-      verified: user.verified || false
+      verified: user.verified || false,
+      createdAt: new Date(),
+      suuid: v4()
     }
     delete finalUser.signUpContext
 
@@ -207,7 +209,10 @@ export const createUserFactory =
           'name',
           'company',
           'verified',
-          'avatar'
+          'avatar',
+          'verified',
+          'createdAt',
+          'suuid'
         ]) as typeof finalUser)
 
     finalUser.email = finalUser.email.toLowerCase()
@@ -288,7 +293,7 @@ export const findOrCreateUserFactory =
 
 export const deleteUserFactory =
   (deps: {
-    deleteStream: DeleteStreamRecord
+    deleteProjectAndCommits: DeleteProjectAndCommits
     logger: Logger
     isLastAdminUser: IsLastAdminUser
     getUserDeletableStreams: GetUserDeletableStreams
@@ -307,7 +312,7 @@ export const deleteUserFactory =
 
     const streamIds = await deps.getUserDeletableStreams(id)
     for (const id of streamIds) {
-      await deps.deleteStream(id)
+      await deps.deleteProjectAndCommits({ projectId: id })
     }
 
     // Delete all invites (they don't have a FK, so we need to do this manually)

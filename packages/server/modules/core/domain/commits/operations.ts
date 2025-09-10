@@ -45,6 +45,7 @@ export type GetCommit = (
 
 export type DeleteCommits = (commitIds: string[]) => Promise<number>
 export type DeleteCommit = (commitId: string) => Promise<boolean>
+export type DeleteProjectCommits = (params: { projectId: string }) => Promise<void>
 
 export type DeleteCommitAndNotify = (
   commitId: string,

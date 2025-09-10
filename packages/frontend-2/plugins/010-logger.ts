@@ -1,4 +1,6 @@
 import { collectLongTrace } from '@speckle/shared'
+import type { LogType } from 'consola'
+import dayjs from 'dayjs'
 import { omit } from 'lodash-es'
 import type { SetRequired } from 'type-fest'
 import { useReadUserId } from '~/lib/auth/composables/activeUser'
@@ -31,7 +33,7 @@ const simpleStripHtml = (str: string) => str.replace(/<[^>]*>?/gm, '')
 export default defineNuxtPlugin(async (nuxtApp) => {
   const {
     public: {
-      logLevel,
+      logLevel: untypedLogLevel,
       logPretty,
       logClientApiToken,
       speckleServerVersion,
@@ -40,6 +42,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       logCsrEmitProps
     }
   } = useRuntimeConfig()
+
+  const logLevel = untypedLogLevel as LogType
   const route = useRoute()
   const router = useRouter()
   const reqId = useRequestId()
@@ -48,6 +52,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   const country = useUserCountry()
   const registerErrorTransport = useCreateLoggingTransport()
   const { invokeTransportsWithPayload } = useLogToLoggingTransports()
+
+  const profilerLogger = route.query.profilerLogger === '1'
 
   const collectMainInfo = (params: { isBrowser: boolean }) => {
     const info = {
@@ -71,9 +77,13 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   const unhandledErrorHandlers: AbstractUnhandledErrorHandler[] = []
 
   if (import.meta.server) {
-    const { buildLogger, enableDynamicBindings, serializeRequest } = await import(
-      '~/server/lib/core/helpers/observability'
-    )
+    const {
+      buildLogger,
+      enableDynamicBindings,
+      serializeRequest,
+      prettifiedLoggerFactory,
+      initSsrDevLogs
+    } = await import('~/server/lib/core/helpers/observability')
     logger = enableDynamicBindings(buildLogger(logLevel, logPretty).child({}), () => ({
       ...collectMainInfo({ isBrowser: false }),
       ...(nuxtApp.ssrContext
@@ -90,6 +100,33 @@ export default defineNuxtPlugin(async (nuxtApp) => {
         'res'
       ])
     })
+
+    // Send to consola for SSR log streaming in dev mode
+    if (import.meta.dev) {
+      const ssrDevLogs = await initSsrDevLogs({ logLevel })
+      const consola = ssrDevLogs.consola
+
+      if (consola) {
+        const unhandledHandler: AbstractUnhandledErrorHandler = ({
+          error,
+          message,
+          isUnhandledRejection
+        }) => {
+          consola.error({ err: error, isUnhandledRejection }, message)
+        }
+        unhandledErrorHandlers.push(unhandledHandler)
+
+        const errorHandler: AbstractLoggerHandler = ({ args, level }) => {
+          // applying pino-like message templating, cause consola doesnt have it
+          // the arg slice is TS appeasement
+          prettifiedLoggerFactory(consola[level])(args[0], ...args.slice(1), {
+            time: dayjs().format('HH:mm:ss.SSS'),
+            separator: '═══════════════════════════════════════════►'
+          })
+        }
+        logHandlers.push(errorHandler)
+      }
+    }
   } else {
     const localTimeFormat = new Intl.DateTimeFormat('en-GB', {
       dateStyle: 'full',
@@ -127,7 +164,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     })
 
     logger = buildFakePinoLogger({
-      consoleBindings: logCsrEmitProps ? collectCoreInfo : undefined
+      consoleBindings: logCsrEmitProps ? collectCoreInfo : undefined,
+      time: profilerLogger
     })
 
     // SEQ Browser integration
@@ -322,6 +360,13 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   if (!import.meta.server) {
     nuxtApp.hook('app:mounted', () => {
       logger.info('App mounted in the client', {
+        important: true,
+        speckleServerVersion
+      })
+    })
+  } else {
+    nuxtApp.hook('app:rendered', () => {
+      logger.info('App SSR rendered', {
         important: true,
         speckleServerVersion
       })

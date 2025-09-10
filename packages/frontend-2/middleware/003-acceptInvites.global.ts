@@ -23,7 +23,7 @@ const autoAcceptableWorkspaceInviteQuery = graphql(`
 /**
  * Handles all of the invite auto-accepting logic (when clicking on email accept links)
  */
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineParallelizedNuxtRouteMiddleware(async (to) => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
   const shouldTryProjectAccept = to.path.startsWith('/projects/')

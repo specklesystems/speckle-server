@@ -66,7 +66,8 @@ const extendedViewerResourcesResolver = async (
     resourceIdString,
     loadedVersionsOnly,
     savedViewId,
-    savedViewSettings
+    savedViewSettings,
+    applyHomeView: true
   })
 }
 

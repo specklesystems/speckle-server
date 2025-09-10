@@ -4,6 +4,7 @@
     <LayoutMenu
       v-model:open="showActionsMenu"
       :items="actionsItems"
+      :menu-id="menuId"
       :menu-position="HorizontalDirection.Left"
       @click.stop.prevent
       @chosen="onActionChosen"
@@ -43,6 +44,7 @@ const props = defineProps<{
 
 const { copy } = useClipboard()
 const copyModelLink = useCopyModelLink()
+const menuId = useId()
 
 const disabledMessage = computed(
   () =>

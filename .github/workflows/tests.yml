@@ -32,7 +32,7 @@ on:
 jobs:
   lint-and-prettier:
     name: Lint and prettier
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -55,7 +55,7 @@ jobs:
 
   pre-commit:
     name: Precommit check
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     container:
       image: speckle/pre-commit-runner:latest
@@ -74,7 +74,7 @@ jobs:
 
   test-frontend-2:
     name: Frontend
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -92,7 +92,7 @@ jobs:
 
   test-viewer:
     name: Viewer
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -119,7 +119,7 @@ jobs:
 
   test-shared:
     name: Shared
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -156,7 +156,7 @@ jobs:
 
   test-objectsender:
     name: Object Sender
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -180,7 +180,7 @@ jobs:
 
   test-ui-components:
     name: UI Components
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -207,7 +207,7 @@ jobs:
 
   test-preview-service:
     name: Preview service
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     container:
       image: ghcr.io/specklesystems/speckle-ubuntu-chromium:latest
@@ -254,25 +254,8 @@ jobs:
           path: /tmp/**/*.log
           retention-days: 5
 
-  docker-build-postgres-container:
-    runs-on: blacksmith
-    name: Docker build postgres container
-    steps:
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ inputs.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build and push
-        uses: useblacksmith/build-push-action@v1
-        with:
-          push: true
-          tags: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
-          file: ./utils/postgres/Dockerfile
-
   test-server:
     name: Server
-    needs: [docker-build-postgres-container]
     runs-on: blacksmith-8vcpu-ubuntu-2404
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
@@ -286,11 +269,12 @@ jobs:
         ports:
           - 6379:6379
       postgres:
-        image: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+        image: postgres:16.4-alpine3.20
         env:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
+          POSTGRES_INITDB_ARGS: -c max_prepared_transactions=150
         ports:
           - 5432:5432
         options: >-
@@ -367,7 +351,6 @@ jobs:
 
   test-server-no-ff:
     name: Server no ff
-    needs: [docker-build-postgres-container]
     runs-on: blacksmith-8vcpu-ubuntu-2404
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
@@ -381,11 +364,12 @@ jobs:
         ports:
           - 6379:6379
       postgres:
-        image: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+        image: postgres:16.4-alpine3.20
         env:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
+          POSTGRES_INITDB_ARGS: -c max_prepared_transactions=150
         ports:
           - 5432:5432
         options: >-
@@ -452,10 +436,8 @@ jobs:
 
   test-server-multiregion:
     name: Server multiregion
-    needs: [docker-build-postgres-container]
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
-    if: false # disabled
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     services:
       redis:
         image: redis:7.2.4
@@ -468,11 +450,12 @@ jobs:
           - 6379:6379
 
       postgres0:
-        image: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+        image: postgres:16.4-alpine3.20
         env:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
+          POSTGRES_INITDB_ARGS: -c max_prepared_transactions=150
         ports:
           - 5432:5432
         options: >-
@@ -480,13 +463,13 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
       postgres1:
-        image: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+        image: postgres:16.4-alpine3.20
         env:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
+          POSTGRES_INITDB_ARGS: -c max_prepared_transactions=150
         ports:
           - 5433:5432
         options: >-
@@ -494,13 +477,13 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
       postgres2:
-        image: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+        image: postgres:16.4-alpine3.20
         env:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
+          POSTGRES_INITDB_ARGS: -c max_prepared_transactions=150
         ports:
           - 5434:5432
         options: >-
@@ -508,7 +491,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
       minio0:
         image: bitnami/minio
         env:
@@ -581,7 +563,7 @@ jobs:
       - run: cp .env.test-example .env.test
         working-directory: 'packages/server'
       - name: 'Run test'
-        run: yarn test:report
+        run: yarn test:multiregion
         working-directory: 'packages/server'
         timeout-minutes: 30
       - uses: codecov/codecov-action@v5

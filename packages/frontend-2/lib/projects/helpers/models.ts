@@ -1,4 +1,3 @@
-import { resourceBuilder } from '@speckle/shared/viewer/route'
 import { has } from 'lodash-es'
 import { graphql } from '~/lib/common/generated/gql'
 import { modelRoute } from '~/lib/common/helpers/route'
@@ -35,20 +34,23 @@ graphql(`
       id
       resourceIds
     }
+    resourceIdString
   }
 `)
 
 export const getModelItemRoute = (
-  i: GetModelItemRoute_ModelFragment | PendingFileUploadFragment
+  i:
+    | GetModelItemRoute_ModelFragment
+    | PendingFileUploadFragment
+    | { projectId: string; id: string }
 ) => {
   if (isPendingModelFragment(i)) {
     return modelRoute(i.projectId, i.id)
   }
 
-  return modelRoute(
-    i.projectId,
-    i.homeView?.id
-      ? resourceBuilder().addResources(i.homeView.resourceIds).toString()
-      : i.id
-  )
+  if (!('resourceIdString' in i)) {
+    return modelRoute(i.projectId, i.id)
+  }
+
+  return modelRoute(i.projectId, i.resourceIdString)
 }

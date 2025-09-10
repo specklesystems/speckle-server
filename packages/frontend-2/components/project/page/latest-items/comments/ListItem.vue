@@ -57,6 +57,7 @@ const props = defineProps<{
 const { backgroundImage } = useCommentScreenshotImage(
   computed(() => props.thread.screenshot)
 )
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const updatedAt = computed(() => {
   return {

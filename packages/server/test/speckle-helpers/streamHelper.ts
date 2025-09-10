@@ -2,7 +2,6 @@ import { db } from '@/db/knex'
 import { StreamAcl } from '@/modules/core/dbSchema'
 import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
 import type { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
-import { createBranchFactory } from '@/modules/core/repositories/branches'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   createStreamFactory,
@@ -64,9 +63,13 @@ import { faker } from '@faker-js/faker'
 import type { StreamRoles } from '@speckle/shared'
 import { ensureError, Roles } from '@speckle/shared'
 import { omit } from 'lodash-es'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { logger } from '@/observability/logging'
+import type { LegacyCreateStream } from '@/modules/core/domain/streams/operations'
+import { getReplicationDbs } from '@/modules/multiregion/utils/dbSelector'
 
 const getServerInfo = getServerInfoFactory({ db })
-const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
 
@@ -116,34 +119,42 @@ const buildFinalizeProjectInvite = () =>
     getServerInfo
   })
 
-const createStream = legacyCreateStreamFactory({
-  createStreamReturnRecord: createStreamReturnRecordFactory({
-    inviteUsersToProject: inviteUsersToProjectFactory({
-      createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory({ db }),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-          getStream
-        }),
-        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-          getStream
-        }),
-        emitEvent: ({ eventName, payload }) =>
-          getEventBus().emit({
-            eventName,
-            payload
+const createStream: LegacyCreateStream = async (
+  stream: Parameters<LegacyCreateStream>[0] & { regionKey?: string }
+) =>
+  asMultiregionalOperation(
+    async ({ allDbs, mainDb, emit }) =>
+      legacyCreateStreamFactory({
+        createStreamReturnRecord: createStreamReturnRecordFactory({
+          inviteUsersToProject: inviteUsersToProjectFactory({
+            createAndSendInvite: createAndSendInviteFactory({
+              findUserByTarget: findUserByTargetFactory({ db: mainDb }),
+              insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db: mainDb }),
+              collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+                getStream: getStreamFactory({ db: mainDb })
+              }),
+              buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+                getStream: getStreamFactory({ db: mainDb })
+              }),
+              emitEvent: emit,
+              getUser: getUserFactory({ db: mainDb }),
+              getServerInfo: getServerInfoFactory({ db: mainDb }),
+              finalizeInvite: buildFinalizeProjectInvite()
+            }),
+            getUsers: getUsersFactory({ db: mainDb })
           }),
-        getUser,
-        getServerInfo,
-        finalizeInvite: buildFinalizeProjectInvite()
-      }),
-      getUsers
-    }),
-    createStream: createStreamFactory({ db }),
-    createBranch: createBranchFactory({ db }),
-    emitEvent: getEventBus().emit
-  })
-})
+          createStream: replicateFactory(allDbs, createStreamFactory),
+          storeProjectRole: storeProjectRoleFactory({ db: mainDb }),
+          emitEvent: emit
+        })
+      })(stream),
+    {
+      name: 'create stream spec',
+      logger,
+      description: 'Creates a new stream',
+      dbs: await getReplicationDbs({ regionKey: stream.regionKey || null })
+    }
+  )
 
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
@@ -166,7 +177,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
 })
 
 export type BasicTestStream = {
-  name: string
+  name?: string
   /**
    * @deprecated Use visibility instead
    */
@@ -196,7 +207,7 @@ export async function createTestStreams(
 export async function createTestStream<S extends Partial<BasicTestStream>>(
   streamObj: S,
   owner: BasicTestUser
-): Promise<S> {
+): Promise<BasicTestStream> {
   let id: string
 
   const visibility = streamObj.isPublic
@@ -218,6 +229,7 @@ export async function createTestStream<S extends Partial<BasicTestStream>>(
       },
       ownerId: owner.id
     })
+
     id = newProject.id
   } else {
     id = await createStream({
@@ -229,7 +241,11 @@ export async function createTestStream<S extends Partial<BasicTestStream>>(
 
   streamObj.id = id
   streamObj.ownerId = owner.id
-  return streamObj
+  return {
+    ...streamObj,
+    id,
+    ownerId: owner.id
+  }
 }
 
 export async function leaveStream(streamObj: BasicTestStream, user: BasicTestUser) {

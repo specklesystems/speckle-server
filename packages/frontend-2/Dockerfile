@@ -9,8 +9,8 @@ ARG TINI_VERSION=v0.19.0
 RUN apt-get update -y \
   && DEBIAN_FRONTEND=noninteractive apt-get install -y \
   --no-install-recommends \
-  ca-certificates=20230311 \
-  curl=7.88.1-10+deb12u12 \
+  ca-certificates=20230311+deb12u1 \
+  curl=7.88.1-10+deb12u14 \
   && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /usr/bin/tini \
   && chmod +x /usr/bin/tini \
   && apt-get remove -y curl \
@@ -57,6 +57,8 @@ ENV BUILD_SOURCEMAPS=${BUILD_SOURCEMAPS}
 # for better sourcemaps (the app still gets minified at the end)
 ENV SKIP_LIBRARY_MINIFICATION=true
 ARG SPECKLE_SERVER_VERSION=custom
+# for better hydration mismatch errors in prod (larger bundle size tho)
+ENV HYDRATION_MISMATCH_REPORTING=false
 # hadolint ignore=DL3059
 RUN yarn workspaces foreach --include "packages/frontend-2" -W run build
 

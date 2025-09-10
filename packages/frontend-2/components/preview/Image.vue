@@ -52,6 +52,7 @@
         v-show="shouldShowPanoramicPreview"
         ref="panorama"
         :style="{
+          display: shouldShowPanoramicPreview ? 'block' : 'none',
           backgroundImage: panoramaPreviewUrl
             ? `url('${panoramaPreviewUrl}')`
             : undefined,
@@ -89,9 +90,11 @@ const props = withDefaults(
   defineProps<{
     previewUrl: string
     panoramaOnHover?: boolean
+    eagerLoad?: boolean
   }>(),
   {
-    panoramaOnHover: true
+    panoramaOnHover: true,
+    eagerLoad: true
   }
 )
 
@@ -100,6 +103,7 @@ const finalPreviewTransitioner = ref(
   null as Nullable<{ triggerTransition: () => Promise<void> }>
 )
 
+const { $isAppHydrated } = useNuxtApp()
 const isInViewport = useElementVisibility(parent)
 const basePreviewUrl = computed(() => props.previewUrl)
 const {
@@ -109,7 +113,10 @@ const {
   isLoadingPanorama,
   hasDoneFirstLoad,
   isPanoramaPlaceholder
-} = usePreviewImageBlob(basePreviewUrl, { enabled: isInViewport })
+} = usePreviewImageBlob(basePreviewUrl, {
+  enabled: computed(() => props.eagerLoad || isInViewport.value),
+  eagerLoad: props.eagerLoad
+})
 
 const hovered = ref(false)
 const panorama = ref(null as Nullable<HTMLDivElement>)
@@ -161,7 +168,8 @@ const shouldShowPanoramicPreview = computed(
     hovered.value &&
     panoramaPreviewUrl.value &&
     props.panoramaOnHover &&
-    !isPanoramaPlaceholder.value
+    !isPanoramaPlaceholder.value &&
+    $isAppHydrated.value
 )
 
 onMounted(() => setParentDimensions())
@@ -187,4 +195,6 @@ if (import.meta.client) {
     finalPreviewTransitioner.value?.triggerTransition()
   })
 }
+
+// await init()
 </script>

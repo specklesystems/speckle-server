@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <aside
-    class="absolute left-2 lg:left-0 z-40 flex rounded-lg border border-outline-2 bg-foundation px-1 overflow-visible lg:h-full"
+    class="absolute left-2 lg:left-0 z-50 flex rounded-lg border border-outline-2 bg-foundation px-1 overflow-visible lg:h-full"
     :class="[
       isEmbedEnabled
         ? 'top-[0.5rem]'
@@ -34,7 +34,7 @@
         "
         :active="activePanel === 'filters'"
         :icon="ListFilter"
-        :dot="hasActiveFilters"
+        :dot="hasAnyFiltersApplied"
         @click="toggleActivePanel('filters')"
       />
       <ViewerControlsButtonToggle
@@ -54,7 +54,14 @@
       <!-- Saved views -->
       <ViewerControlsButtonToggle
         v-if="isSavedViewsEnabled"
-        v-tippy="getShortcutDisplayText(shortcuts.ToggleSavedViews)"
+        v-tippy="
+          getTooltipProps(
+            getShortcutDisplayText(shortcuts.ToggleSavedViews, { format: 'separate' }),
+            {
+              placement: 'right'
+            }
+          )
+        "
         :active="activePanel === 'savedViews'"
         :icon="Camera"
         @click="toggleActivePanel('savedViews')"
@@ -132,12 +139,11 @@
       ]"
       :style="`width: ${widthClass};`"
     >
-      <KeepAlive v-show="activePanel === 'models'">
-        <ViewerModelsPanel v-model:sub-view="modelsSubView" />
-      </KeepAlive>
-      <KeepAlive v-show="resourceItems.length !== 0 && activePanel === 'filters'">
-        <ViewerFiltersPanel />
-      </KeepAlive>
+      <ViewerModelsPanel
+        v-show="activePanel === 'models'"
+        v-model:sub-view="modelsSubView"
+      />
+      <ViewerFiltersPanel v-if="activePanel === 'filters'" />
       <ViewerCommentsPanel
         v-if="resourceItems.length !== 0 && activePanel === 'discussions'"
       />
@@ -147,21 +153,44 @@
         :summary="summary"
       />
       <ViewerDataviewerPanel v-if="activePanel === 'devMode'" />
-      <ViewerSavedViewsPanel
-        v-if="isSavedViewsEnabled && activePanel === 'savedViews'"
-        @close="activePanel = 'none'"
-      />
+      <KeepAlive>
+        <ViewerSavedViewsPanel
+          v-if="
+            isSavedViewsEnabled && isWorkspacesEnabled && activePanel === 'savedViews'
+          "
+          @close="activePanel = 'none'"
+        />
+      </KeepAlive>
+    </div>
+
+    <!-- Panel Extension - Portal target for additional content -->
+    <div
+      id="panel-extension"
+      class="absolute z-50 left-[calc(100dvw-20rem)] md:left-72 max-h-[calc(100dvh-6rem)] md:max-h-[calc(100dvh-4rem)] empty:hidden w-64 top-1.5 bg-foundation border border-outline-2 rounded-lg overflow-hidden"
+      :style="`left: ${panelExtensionLeft} !important`"
+    >
+      <PortalTarget name="panel-extension"></PortalTarget>
     </div>
   </aside>
 </template>
 
 <script setup lang="ts">
-import { useViewerShortcuts, useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useViewerShortcuts } from '~~/lib/viewer/composables/ui'
+import {
+  useInjectedViewerInterfaceState,
+  useInjectedViewerLoadedResources,
+  useInjectedViewerState
+} from '~~/lib/viewer/composables/setup'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import { useEventListener, useResizeObserver, useBreakpoints } from '@vueuse/core'
+import {
+  useEventListener,
+  useResizeObserver,
+  useBreakpoints,
+  useWindowSize,
+  useThrottleFn
+} from '@vueuse/core'
 import { type Nullable, isNonNullable } from '@speckle/shared'
-import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { useIntercomEnabled } from '~~/lib/intercom/composables/enabled'
 import { viewerDocsRoute } from '~~/lib/common/helpers/route'
@@ -175,18 +204,10 @@ import {
   MessageSquareText,
   CircleQuestionMark
 } from 'lucide-vue-next'
-import { ModelsSubView } from '~~/lib/viewer/helpers/sceneExplorer'
+import { useViewerPanelsUtilities } from '~/lib/viewer/composables/setup/panels'
+import type { ActivePanel } from '~/lib/viewer/helpers/sceneExplorer'
 
-type ActivePanel =
-  | 'none'
-  | 'models'
-  | 'discussions'
-  | 'explorer'
-  | 'automate'
-  | 'filters'
-  | 'devMode'
-  | 'savedViews'
-
+// TODO: Refactor all of this event business and just read/write panels state directly
 const emit = defineEmits<{
   forceClosePanels: []
 }>()
@@ -196,6 +217,7 @@ const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
 const height = ref(scrollableControlsContainer.value?.clientHeight)
 const isResizing = ref(false)
 const resizeHandle = ref(null)
+const { width: windowWidth } = useWindowSize()
 let startWidth = 0
 let startX = 0
 
@@ -207,6 +229,17 @@ const startResizing = (event: MouseEvent) => {
   startWidth = width.value
 }
 
+const throttledHandleMouseMove = useThrottleFn((event: MouseEvent) => {
+  if (isResizing.value) {
+    const diffX = event.clientX - startX
+    const newWidth = Math.max(
+      240,
+      Math.min(startWidth + diffX, Math.min(440, windowWidth.value * 0.5 - 60))
+    )
+    width.value = newWidth
+  }
+}, 150)
+
 if (import.meta.client) {
   useResizeObserver(scrollableControlsContainer, (entries) => {
     const { height: newHeight } = entries[0].contentRect
@@ -214,16 +247,7 @@ if (import.meta.client) {
   })
   useEventListener(resizeHandle, 'mousedown', startResizing)
 
-  useEventListener(document, 'mousemove', (event) => {
-    if (isResizing.value) {
-      const diffX = event.clientX - startX
-      const newWidth = Math.max(
-        240,
-        Math.min(startWidth + diffX, Math.min(440, window.innerWidth * 0.5 - 60))
-      )
-      width.value = newWidth
-    }
-  })
+  useEventListener(document, 'mousemove', throttledHandleMouseMove)
 
   useEventListener(document, 'mouseup', () => {
     if (isResizing.value) {
@@ -237,16 +261,22 @@ const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources(
 const { registerShortcuts, getShortcutDisplayText, shortcuts } = useViewerShortcuts()
 const { isEnabled: isEmbedEnabled } = useEmbed()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
-const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 const isMobile = breakpoints.smaller('sm')
 const isTablet = breakpoints.smaller('lg')
 const { getTooltipProps } = useSmartTooltipDelay()
 const isSavedViewsEnabled = useAreSavedViewsEnabled()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { $intercom } = useNuxtApp()
-const { hasActiveFilters, filters } = useFilterUtilities()
+const {
+  filters: { hasAnyFiltersApplied }
+} = useInjectedViewerInterfaceState()
+const {
+  ui: {
+    panels: { active: activePanel, modelsSubView }
+  }
+} = useInjectedViewerState()
 
-const activePanel = ref<ActivePanel>('none')
-const modelsSubView = ref<ModelsSubView>(ModelsSubView.Main)
+const { onPanelButtonClick } = useViewerPanelsUtilities()
 
 const hasActivePanel = computed(() => activePanel.value !== 'none')
 
@@ -273,6 +303,14 @@ const widthClass = computed(() => {
   }
 })
 
+const panelExtensionLeft = computed(() => {
+  if (isMobile.value || isTablet.value) {
+    return
+  }
+  const mainPanelLeft = isEmbedEnabled.value ? 52 : 60
+  return `${mainPanelLeft + width.value}px`
+})
+
 const { summary } = useFunctionRunsStatusSummary({
   runs: allFunctionRuns
 })
@@ -286,34 +324,7 @@ registerShortcuts({
 })
 
 const toggleActivePanel = (panel: ActivePanel) => {
-  const wasNone = activePanel.value === 'none'
-
-  if (panel === 'models') {
-    if (activePanel.value === 'models') {
-      if (
-        modelsSubView.value === ModelsSubView.Versions ||
-        modelsSubView.value === ModelsSubView.Diff
-      ) {
-        // Go back to main models view instead of closing
-        modelsSubView.value = ModelsSubView.Main
-        return
-      } else {
-        activePanel.value = 'none'
-      }
-    } else {
-      // Open models panel and reset to main view
-      activePanel.value = 'models'
-      modelsSubView.value = ModelsSubView.Main
-    }
-  } else {
-    activePanel.value = activePanel.value === panel ? 'none' : panel
-    modelsSubView.value = ModelsSubView.Main
-  }
-
-  // If a panel is being opened (not closed) on mobile, emit event to parent
-  if (wasNone && activePanel.value !== 'none' && isMobile.value) {
-    emit('forceClosePanels')
-  }
+  onPanelButtonClick(panel)
 }
 
 const forceClosePanel = () => {
@@ -330,25 +341,14 @@ const openIntercomChat = () => {
   }
 }
 
-onMounted(() => {
-  activePanel.value =
-    isSmallerOrEqualSm.value || isEmbedEnabled.value ? 'none' : 'models'
-})
+watch(activePanel, (newVal, oldVal) => {
+  const wasNone = oldVal === 'none'
 
-watch(isSmallerOrEqualSm, (newVal) => {
-  activePanel.value = newVal ? 'none' : 'models'
-})
-
-// Auto-open filters panel when a new filter is applied from elsewhere
-watch(
-  () => filters.propertyFilter.isApplied.value && filters.propertyFilter.filter.value,
-  (newFilterApplied, oldFilterApplied) => {
-    // Only trigger if we're going from no filter to having a filter (not when changing filters or removing)
-    if (newFilterApplied && !oldFilterApplied) {
-      activePanel.value = 'filters'
-    }
+  // If a panel is being opened (not closed) on mobile, emit event to parent
+  if (wasNone && newVal !== 'none' && isMobile.value) {
+    emit('forceClosePanels')
   }
-)
+})
 
 defineExpose({
   forceClosePanel,

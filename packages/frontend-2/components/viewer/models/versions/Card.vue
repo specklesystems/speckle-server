@@ -12,6 +12,7 @@
       @focusout="unhighlightObject"
     >
       <ViewerExpansionTriangle
+        class="h-8"
         :is-expanded="showVersions"
         @click="showVersions = !showVersions"
       />
@@ -121,6 +122,7 @@ const {
     response: { project }
   }
 } = useInjectedViewerState()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const showVersions = ref(!!props.initiallyExpanded)
 const showDeleteDialog = ref(false)

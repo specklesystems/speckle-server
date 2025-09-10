@@ -29,6 +29,7 @@ import polylabel from 'polylabel'
 import SpeckleBasicMaterial from '../../materials/SpeckleBasicMaterial.js'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
 import { ExtendedMeshIntersection } from '../../objects/SpeckleRaycaster.js'
+import { MeasurementData, MeasurementType } from '@speckle/shared/viewer/state'
 
 const _vec30 = new Vector3()
 const _vec31 = new Vector3()
@@ -42,7 +43,9 @@ export class AreaMeasurement extends Measurement {
   private surfacePoint: Vector3 = new Vector3()
   private surfaceNormal: Vector3 = new Vector3()
 
-  /** The plane params defined by the first placed point */
+  /** The plane params defined by the first placed point
+   *  When serialized they will go in the measurements startPoint and startNormal
+   */
   private planeOrigin: Vector3 = new Vector3()
   private planeNormal: Vector3 = new Vector3()
 
@@ -71,6 +74,10 @@ export class AreaMeasurement extends Measurement {
     const box = new Box3()
     this.polygonPoints.forEach((point: Vector3) => box.expandByPoint(point))
     return box
+  }
+
+  public get measurementType(): MeasurementType {
+    return MeasurementType.AREA
   }
 
   public constructor() {
@@ -126,24 +133,24 @@ export class AreaMeasurement extends Measurement {
     if (this.pointIndex === 0) {
       this.planeOrigin.copy(this.surfacePoint)
       this.planeNormal.copy(this.surfaceNormal)
+      this.startPoint.copy(this.surfacePoint)
+      this.startNormal.copy(this.startNormal)
     }
 
-    this.addPoint()
+    this.addPoint(this.surfacePoint)
   }
 
   /** Adds a point to the area measurement */
-  public addPoint(): number {
-    const measuredPoint = new Vector3().copy(this.surfacePoint)
+  public addPoint(point: Vector3): number {
+    const measuredPoint = new Vector3().copy(point)
     if (this.pointIndex > 0) {
-      measuredPoint.copy(
-        this.projectOnPlane(this.surfacePoint, this.planeOrigin, this.planeNormal)
-      )
+      measuredPoint.copy(this.projectOnPlane(point, this.planeOrigin, this.planeNormal))
       /** Check to see if added location coincides with the first one. If yes, close the measurement */
-      const distanceToFirst = this.surfacePoint.distanceTo(this.points[0])
+      const distanceToFirst = point.distanceTo(this.points[0])
       if (distanceToFirst < 1e-10) {
         this._state = MeasurementState.COMPLETE
         measuredPoint.copy(this.measuredPoints[0])
-        this.surfacePoint.copy(this.points[0])
+        point.copy(this.points[0])
       }
     }
 
@@ -155,7 +162,7 @@ export class AreaMeasurement extends Measurement {
     this.add(gizmo)
 
     /** Push the points */
-    this.points.push(this.surfacePoint.clone())
+    this.points.push(point.clone())
     this.measuredPoints.push(measuredPoint)
     this.polygonPoints.push(measuredPoint)
     this.pointIndex++
@@ -165,7 +172,7 @@ export class AreaMeasurement extends Measurement {
     /** Update polygon and label if required */
     if (this.points.length >= 2) {
       this.projectOnPlane(
-        this.surfacePoint,
+        point,
         this.planeOrigin,
         this.planeNormal,
         this.polygonPoints[0]
@@ -269,12 +276,29 @@ export class AreaMeasurement extends Measurement {
     }
 
     if (this._state === MeasurementState.COMPLETE) {
-      this.pointGizmos[this.pointIndex - 1].updateLine([
-        this.points[this.pointIndex - 2],
+      for (let k = 0; k < this.points.length - 1; k++) {
+        this.pointGizmos[k].updatePoint(this.points[k])
+        this.pointGizmos[k].updateLine([this.points[k], this.points[k + 1]])
+        this.pointGizmos[k].enable(false, true, true, false)
+      }
+
+      this.pointGizmos[this.points.length - 1].updateLine([
+        this.points[this.points.length - 1],
         this.points[0]
       ])
-      this.pointGizmos[this.pointIndex - 1].enable(false, true, false, false)
-      this.pointGizmos[this.pointIndex].enable(false, false, false, false)
+      /** There is always an extra gizmo, so gizmo count is point count + 1 */
+      this.pointGizmos[this.points.length].enable(false, false, false, false)
+      this.pointGizmos[this.points.length - 1].enable(false, false, false, false)
+      this.pointGizmos[0].enable(false, true, true, true)
+
+      /** We force a sync so that we get correct timing on text finshing */
+      this.pointGizmos[0].text._needsSync = true
+      ret = this.pointGizmos[0].updateText(
+        `${(this.value * getConversionFactor('m', this.units)).toFixed(
+          this.precision
+        )} ${this.units}²`,
+        this.labelPoint
+      )
     }
 
     return ret
@@ -467,5 +491,24 @@ export class AreaMeasurement extends Measurement {
     const projectedPoints = points.map((p) => new Vector2(p[axis1], p[axis2]))
 
     return this.shoelaceArea(projectedPoints)
+  }
+
+  public toMeasurementData(): MeasurementData {
+    const data = super.toMeasurementData()
+    data.startPoint = [this.planeOrigin.x, this.planeOrigin.y, this.planeOrigin.z]
+    data.startNormal = [this.planeNormal.x, this.planeNormal.y, this.planeNormal.z]
+    data.innerPoints = this.points.map((value) => [value.x, value.y, value.z])
+    return data
+  }
+
+  public fromMeasurementData(data: MeasurementData): void {
+    super.fromMeasurementData(data)
+    this.planeOrigin.fromArray(data.startPoint)
+    this.planeNormal.fromArray(data.startNormal)
+    if (data.innerPoints) {
+      for (let k = 0; k < data.innerPoints?.length; k++) {
+        this.addPoint(new Vector3().fromArray(data.innerPoints[k]))
+      }
+    }
   }
 }

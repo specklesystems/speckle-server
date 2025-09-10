@@ -97,7 +97,6 @@
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "files.eol": "\n",
-    "volar.vueserver.maxOldSpaceSize": 4000,
     "cSpell.words": [
       "Automations",
       "Bursty",
@@ -111,6 +110,8 @@
       "OIDC",
       "Prorotation"
     ],
+    "typescript.tsserver.maxTsServerMemory": 8192,
+    "typescript.disableAutomaticTypeAcquisition": true,
     "tailwindCSS.experimental.configFile": {
       "packages/frontend-2/tailwind.config.cjs": "packages/frontend-2/**"
     },

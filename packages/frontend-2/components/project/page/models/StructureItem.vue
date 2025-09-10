@@ -188,15 +188,6 @@
           <div class="text-heading text-foreground">
             {{ name }}
           </div>
-          <NuxtLink
-            v-if="showLastUploadFailed"
-            v-tippy="'Last upload failed'"
-            v-keyboard-clickable
-            class="text-body-3xs text-danger hover:text-danger-lighter cursor-pointer"
-            @click.stop="actions?.showUploads()"
-          >
-            <ExclamationCircleIcon class="w-4 h-4" />
-          </NuxtLink>
         </div>
 
         <!-- Preview -->
@@ -339,6 +330,7 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const importArea = ref(
   null as Nullable<{

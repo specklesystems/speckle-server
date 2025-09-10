@@ -3,17 +3,43 @@ import {
   storeBackgroundJobFactory,
   getBackgroundJobFactory,
   BackgroundJobs,
-  getBackgroundJobCountFactory
-} from '@/modules/backgroundjobs/repositories'
+  getBackgroundJobCountFactory,
+  failBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory
+} from '@/modules/backgroundjobs/repositories/backgroundjobs'
 import type {
   BackgroundJob,
   BackgroundJobPayload
-} from '@/modules/backgroundjobs/domain'
-import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain'
+} from '@/modules/backgroundjobs/domain/types'
+import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain/types'
 import { expect } from 'chai'
 import { createRandomString } from '@/modules/core/helpers/testHelpers'
 
 const originServerUrl = 'http://example.org'
+
+type TestJobPayload = BackgroundJobPayload & {
+  jobType: 'fileImport'
+  payloadVersion: 1
+  testData: string
+}
+
+const createTestJob = (
+  overrides: Partial<BackgroundJob<TestJobPayload>> = {}
+): BackgroundJob<TestJobPayload> => ({
+  id: createRandomString(10),
+  jobType: 'fileImport',
+  payload: {
+    jobType: 'fileImport',
+    payloadVersion: 1,
+    testData: 'test-data-value'
+  },
+  status: BackgroundJobStatus.Queued,
+  attempt: 0,
+  maxAttempt: 3,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  remainingComputeBudgetSeconds: 30,
+  ...overrides
+})
 
 describe('Background Jobs repositories @backgroundjobs', () => {
   const storeBackgroundJob = storeBackgroundJobFactory({
@@ -22,31 +48,6 @@ describe('Background Jobs repositories @backgroundjobs', () => {
   })
   const getBackgroundJob = getBackgroundJobFactory({ db })
   const getBackgroundJobCount = getBackgroundJobCountFactory({ db })
-
-  type TestJobPayload = BackgroundJobPayload & {
-    jobType: 'fileImport'
-    payloadVersion: 1
-    testData: string
-  }
-
-  const createTestJob = (
-    overrides: Partial<BackgroundJob<TestJobPayload>> = {}
-  ): BackgroundJob<TestJobPayload> => ({
-    id: createRandomString(10),
-    jobType: 'fileImport',
-    payload: {
-      jobType: 'fileImport',
-      payloadVersion: 1,
-      testData: 'test-data-value'
-    },
-    status: BackgroundJobStatus.Queued,
-    attempt: 0,
-    maxAttempt: 3,
-    timeoutMs: 30000,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    ...overrides
-  })
 
   beforeEach(async () => {
     // Clean up background jobs table
@@ -169,6 +170,70 @@ describe('Background Jobs repositories @backgroundjobs', () => {
       })
 
       expect(count).to.equal(1)
+    })
+  })
+
+  describe('failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory', () => {
+    it('should fail queued background jobs that meet or exceed maximum attempts', async () => {
+      const job = createTestJob({
+        status: BackgroundJobStatus.Queued,
+        attempt: 2,
+        maxAttempt: 2
+      })
+      await storeBackgroundJob({ job })
+
+      const SUT =
+        failBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory({
+          db
+        })
+
+      await SUT({ originServerUrl, jobType: 'fileImport' })
+
+      const updatedJob = await db(BackgroundJobs.name).where({ id: job.id }).first()
+      expect(updatedJob.status).to.equal(BackgroundJobStatus.Failed)
+    })
+
+    it('should fail queued background jobs with zero compute budget', async () => {
+      const job = createTestJob({
+        payload: {
+          jobType: 'fileImport',
+          payloadVersion: 1,
+          testData: 'complex-test-data'
+        },
+        remainingComputeBudgetSeconds: 0
+      })
+      await storeBackgroundJob({ job })
+
+      const SUT =
+        failBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory({
+          db
+        })
+
+      await SUT({ originServerUrl, jobType: 'fileImport' })
+
+      const updatedJob = await db(BackgroundJobs.name).where({ id: job.id }).first()
+      expect(updatedJob.status).to.equal(BackgroundJobStatus.Failed)
+    })
+    it('should fail queued background jobs with negative compute budget', async () => {
+      const job = createTestJob({
+        payload: {
+          jobType: 'fileImport',
+          payloadVersion: 1,
+          testData: 'complex-test-data'
+        },
+        remainingComputeBudgetSeconds: -100
+      })
+      await storeBackgroundJob({ job })
+
+      const SUT =
+        failBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudgetFactory({
+          db
+        })
+
+      await SUT({ originServerUrl, jobType: 'fileImport' })
+
+      const updatedJob = await db(BackgroundJobs.name).where({ id: job.id }).first()
+      expect(updatedJob.status).to.equal(BackgroundJobStatus.Failed)
     })
   })
 })

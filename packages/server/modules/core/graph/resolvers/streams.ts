@@ -13,7 +13,6 @@ import { get } from 'lodash-es'
 import {
   getStreamFactory,
   createStreamFactory,
-  deleteStreamFactory,
   updateStreamFactory,
   revokeStreamPermissionsFactory,
   grantStreamPermissionsFactory,
@@ -64,7 +63,6 @@ import { createAndSendInviteFactory } from '@/modules/serverinvites/services/cre
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { createBranchFactory } from '@/modules/core/repositories/branches'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -103,6 +101,15 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
+import {
+  deleteProjectFactory,
+  storeProjectRoleFactory
+} from '@/modules/core/repositories/projects'
+import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
+import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { getProjectReplicationDbs } from '@/modules/multiregion/utils/dbSelector'
+import type { Logger } from '@/observability/logging'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -159,43 +166,32 @@ const buildFinalizeProjectInvite = () =>
     getServerInfo
   })
 
-const createStreamReturnRecord = createStreamReturnRecordFactory({
-  inviteUsersToProject: inviteUsersToProjectFactory({
-    createAndSendInvite: createAndSendInviteFactory({
-      findUserByTarget: findUserByTargetFactory({ db }),
-      insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-      collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-        getStream
-      }),
-      buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-        getStream
-      }),
-      emitEvent: ({ eventName, payload }) =>
-        getEventBus().emit({
-          eventName,
-          payload
+const deleteStreamAndNotify = async (
+  projectId: string,
+  userId: string,
+  ctxLogger: Logger
+) =>
+  asMultiregionalOperation(
+    ({ allDbs, mainDb, emit }) => {
+      const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+        deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+          deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+          deleteProjectCommits: replicateFactory(allDbs, deleteProjectCommitsFactory)
         }),
-      getUser,
-      getServerInfo,
-      finalizeInvite: buildFinalizeProjectInvite()
-    }),
-    getUsers
-  }),
-  createStream: createStreamFactory({ db }),
-  createBranch: createBranchFactory({ db }),
-  emitEvent: getEventBus().emit
-})
-const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
-  deleteStream: deleteStreamFactory({ db }),
-  emitEvent: getEventBus().emit,
-  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-  getStream
-})
-const updateStreamAndNotify = updateStreamAndNotifyFactory({
-  getStream,
-  updateStream: updateStreamFactory({ db }),
-  emitEvent: getEventBus().emit
-})
+        emitEvent: emit,
+        deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db: mainDb }),
+        getStream: getStreamFactory({ db: mainDb })
+      })
+      return deleteStreamAndNotify(projectId, userId)
+    },
+    {
+      logger: ctxLogger,
+      name: 'delete project',
+      description: `Cascade deleting a project`,
+      dbs: await getProjectReplicationDbs({ projectId })
+    }
+  )
+
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream
@@ -511,17 +507,43 @@ export default {
       })
       throwIfAuthNotOk(canCreate)
 
-      const { id } = await withOperationLogging(
-        async () =>
-          await createStreamReturnRecord({
+      const { id } = await asMultiregionalOperation(
+        async ({ allDbs, mainDb, emit }) =>
+          createStreamReturnRecordFactory({
+            inviteUsersToProject: inviteUsersToProjectFactory({
+              createAndSendInvite: createAndSendInviteFactory({
+                findUserByTarget: findUserByTargetFactory({ db: mainDb }),
+                insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({
+                  db: mainDb
+                }),
+                collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory(
+                  {
+                    getStream: getStreamFactory({ db: mainDb })
+                  }
+                ),
+                buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+                  getStream: getStreamFactory({ db: mainDb })
+                }),
+                emitEvent: emit,
+                getUser: getUserFactory({ db: mainDb }),
+                getServerInfo: getServerInfoFactory({ db: mainDb }),
+                finalizeInvite: buildFinalizeProjectInvite()
+              }),
+              getUsers: getUsersFactory({ db: mainDb })
+            }),
+            createStream: replicateFactory(allDbs, createStreamFactory),
+            storeProjectRole: storeProjectRoleFactory({ db: mainDb }),
+            emitEvent: emit
+          })({
             ...args.stream,
             ownerId: context.userId!,
             ownerResourceAccessRules: context.resourceAccessRules
           }),
         {
           logger: context.log,
-          operationName: 'createStream',
-          operationDescription: `Create a new Stream`
+          name: 'createStream',
+          description: `Create a new Stream`,
+          dbs: [db] // legacy; no multiregion ctx
         }
       )
 
@@ -547,12 +569,20 @@ export default {
         streamId: projectId //legacy
       })
 
-      await withOperationLogging(
-        async () => await updateStreamAndNotify(args.stream, context.userId!),
+      await asMultiregionalOperation(
+        async ({ mainDb, allDbs, emit }) => {
+          const updateStreamAndNotify = updateStreamAndNotifyFactory({
+            getStream: getStreamFactory({ db: mainDb }),
+            updateStream: replicateFactory(allDbs, updateStreamFactory),
+            emitEvent: emit
+          })
+
+          await updateStreamAndNotify(args.stream, context.userId!)
+        },
         {
           logger,
-          operationName: 'updateStream',
-          operationDescription: `Update a Stream`
+          name: 'updateStream',
+          dbs: await getProjectReplicationDbs({ projectId })
         }
       )
       return true
@@ -577,43 +607,29 @@ export default {
         streamId: projectId //legacy
       })
 
-      return await withOperationLogging(
-        async () => await deleteStreamAndNotify(args.id, context.userId!),
-        {
-          logger,
-          operationName: 'deleteStream',
-          operationDescription: `Delete a Stream`
-        }
-      )
+      return await deleteStreamAndNotify(args.id, context.userId!, logger)
     },
 
     async streamsDelete(_, args, context) {
       const logger = context.log
 
-      const results = await withOperationLogging(
-        async () =>
-          await Promise.all(
-            (args.ids || []).map(async (id) => {
-              throwIfResourceAccessNotAllowed({
-                resourceId: id,
-                resourceType: TokenResourceIdentifierType.Project,
-                resourceAccessRules: context.resourceAccessRules
-              })
-              const canDelete = await context.authPolicies.project.canDelete({
-                userId: context.userId!,
-                projectId: id
-              })
-              throwIfAuthNotOk(canDelete)
+      const results = await Promise.all(
+        (args.ids || []).map(async (id) => {
+          throwIfResourceAccessNotAllowed({
+            resourceId: id,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: context.resourceAccessRules
+          })
+          const canDelete = await context.authPolicies.project.canDelete({
+            userId: context.userId!,
+            projectId: id
+          })
+          throwIfAuthNotOk(canDelete)
 
-              return await deleteStreamAndNotify(id, context.userId!)
-            })
-          ),
-        {
-          logger,
-          operationName: 'deleteStreams',
-          operationDescription: `Delete one or more Streams`
-        }
+          return await deleteStreamAndNotify(id, context.userId!, logger)
+        })
       )
+
       return results.every((res) => res === true)
     },
 
