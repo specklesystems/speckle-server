@@ -800,6 +800,9 @@ server:
       ## @param server.email.password.secretKey The key within the Kubernetes Secret holding the email password as its value.
       ##
       secretKey: ''
+    ## @param server.email.secure If true, will use TLS when connecting to the email server
+    ##
+    secure: true
     ## @extra server.email.networkPolicy If networkPolicy is enabled for Speckle server, this provides the Network Policy with the necessary details to allow egress connections to the email server
     ##
     networkPolicy:
