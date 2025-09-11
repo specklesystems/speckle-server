@@ -94,6 +94,7 @@ services:
       S3_REGION: '' # optional, defaults to 'us-east-1'
       FILE_SIZE_LIMIT_MB: 1000
       EMAIL_FROM: 'no-reply@example.org'
+      EMAIL_SECURE: 'false' # If connecting to maildev server, do not use TLS
 
       FRONTEND_ORIGIN: 'http://127.0.0.1'
       ONBOARDING_STREAM_URL: 'https://latest.speckle.systems/projects/843d07eb10'
