@@ -254,6 +254,7 @@ const handleListKeydown = (event: KeyboardEvent) => {
   switch (event.key) {
     case 'ArrowDown':
       event.preventDefault()
+      event.stopPropagation()
       if (focusedIndex.value < propertyItems.value.length - 1) {
         focusedIndex.value++
         scrollToFocusedItem()
@@ -261,12 +262,14 @@ const handleListKeydown = (event: KeyboardEvent) => {
       break
     case 'ArrowUp':
       event.preventDefault()
+      event.stopPropagation()
       if (focusedIndex.value > 0) {
         focusedIndex.value--
         scrollToFocusedItem()
       }
       break
     case 'Enter':
+      event.stopPropagation()
       event.preventDefault()
       if (focusedIndex.value >= 0 && focusedIndex.value < propertyItems.value.length) {
         const property = propertyItems.value[focusedIndex.value].property
@@ -276,6 +279,7 @@ const handleListKeydown = (event: KeyboardEvent) => {
       }
       break
     case 'Escape': {
+      event.stopPropagation()
       event.preventDefault()
       emit('close')
       break
