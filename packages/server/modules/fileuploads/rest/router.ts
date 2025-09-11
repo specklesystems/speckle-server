@@ -14,6 +14,35 @@ import type { Nullable } from '@speckle/shared'
 import { ensureError } from '@speckle/shared'
 import { UploadRequestErrorMessage } from '@/modules/fileuploads/helpers/rest'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
+import {
+  fileImportServiceShouldUsePrivateObjectsServerUrl,
+  getPrivateObjectsServerOrigin,
+  getServerOrigin
+} from '@/modules/shared/helpers/envHelper'
+import { createAppTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory,
+  storeUserServerAppTokenFactory
+} from '@/modules/core/repositories/tokens'
+import { findQueue } from '@/modules/fileuploads/queues/fileimports'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
+
+const pushJobToFileImporter = pushJobToFileImporterFactory({
+  getServerOrigin: fileImportServiceShouldUsePrivateObjectsServerUrl()
+    ? getPrivateObjectsServerOrigin
+    : getServerOrigin,
+  createAppToken: createAppTokenFactory({
+    storeApiToken: storeApiTokenFactory({ db }),
+    storeTokenScopes: storeTokenScopesFactory({ db }),
+    storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+      db
+    }),
+    storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+  })
+})
 
 export const fileuploadRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -48,8 +77,15 @@ export const fileuploadRouterFactory = (): Router => {
       const projectDb = await getProjectDbClient({ projectId })
       const getStreamBranchByName = getStreamBranchByNameFactory({ db: projectDb })
       const branch = await getStreamBranchByName(projectId, branchName)
+      if (!branch) {
+        throw new BranchNotFoundError(
+          'The branch was not found. The client is now expected to create the branch before attempting to upload files to a branch.'
+        )
+      }
 
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
+        findQueue,
+        pushJobToFileImporter,
         saveUploadFile: saveUploadFileFactory({ db: projectDb }),
         emit: getEventBus().emit
       })
@@ -66,13 +102,13 @@ export const fileuploadRouterFactory = (): Router => {
           uploadResults.map(async (upload) => {
             await insertNewUploadAndNotify({
               fileId: upload.blobId,
-              streamId: projectId,
-              branchName: branch?.name || branchName,
+              projectId,
               userId,
               fileName: upload.fileName,
               fileType: upload.fileName?.split('.').pop() || '', //FIXME
               fileSize: upload.fileSize,
-              modelId: branch?.id || null
+              modelId: branch.id,
+              modelName: branchName
             })
           })
         )

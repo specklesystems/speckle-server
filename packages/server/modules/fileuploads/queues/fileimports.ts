@@ -16,8 +16,15 @@ import {
   storeBackgroundJobFactory
 } from '@/modules/backgroundjobs/repositories/backgroundjobs'
 import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain/types'
+import type { FindQueue } from '@/modules/fileuploads/domain/operations'
 
-export const fileImportQueues: FileImportQueue[] = []
+const fileImportQueues: FileImportQueue[] = []
+
+export const findQueue: FindQueue = (filter) => {
+  return fileImportQueues.find((q) =>
+    q.supportedFileTypes.includes(filter.fileType.toLocaleLowerCase())
+  )
+}
 
 export const initializePostgresQueue = async ({
   label,

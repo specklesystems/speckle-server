@@ -1,6 +1,6 @@
 import type { Logger } from '@/observability/logging'
 import type {
-  GetFileInfoV2,
+  GetFileInfo,
   ProcessFileImportResult,
   UpdateFileUpload
 } from '@/modules/fileuploads/domain/operations'
@@ -23,12 +23,11 @@ import {
 } from '@speckle/shared/workers/fileimport'
 
 type OnFileImportResultDeps = {
-  getFileInfo: GetFileInfoV2
+  getFileInfo: GetFileInfo
   updateFileUpload: UpdateFileUpload
   updateBackgroundJob: UpdateBackgroundJob<FileImportJobPayloadV1>
   eventEmit: EventBusEmit
   logger: Logger
-  FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
 }
 
 export const onFileImportResultFactory =
@@ -85,20 +84,18 @@ export const onFileImportResultFactory =
     const status = jobResultStatusToFileUploadStatus(jobResult.status)
     const convertedMessage = jobResultToConvertedMessage(jobResult)
 
-    if (deps.FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
-      try {
-        await deps.updateBackgroundJob({
-          payloadFilter: { blobId },
-          status: newStatusForBackgroundJob
-        })
-      } catch (e) {
-        const err = ensureError(e)
-        logger.error(
-          { err, blobId },
-          'Error updating background jobs status in database. Blob ID: {blobId}'
-        )
-        throw err
-      }
+    try {
+      await deps.updateBackgroundJob({
+        payloadFilter: { blobId },
+        status: newStatusForBackgroundJob
+      })
+    } catch (e) {
+      const err = ensureError(e)
+      logger.error(
+        { err, blobId },
+        'Error updating background jobs status in database. Blob ID: {blobId}'
+      )
+      throw err
     }
 
     let updatedFile: FileUploadRecord

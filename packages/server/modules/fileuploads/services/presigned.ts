@@ -1,9 +1,8 @@
 import type { RegisterCompletedUpload } from '@/modules/blobstorage/domain/operations'
 import type { GetBranchesByIds } from '@/modules/core/domain/branches/operations'
 import type {
-  GetFileInfoV2,
+  GetFileInfo,
   InsertNewUploadAndNotify,
-  InsertNewUploadAndNotifyV2,
   RegisterUploadCompleteAndStartFileImport
 } from '@/modules/fileuploads/domain/operations'
 import { ModelNotFoundError } from '@/modules/core/errors/model'
@@ -13,9 +12,9 @@ import { get, isString } from 'lodash-es'
 
 export const registerUploadCompleteAndStartFileImportFactory = (deps: {
   registerCompletedUpload: RegisterCompletedUpload
-  insertNewUploadAndNotify: InsertNewUploadAndNotifyV2 | InsertNewUploadAndNotify
+  insertNewUploadAndNotify: InsertNewUploadAndNotify
   getModelsByIds: GetBranchesByIds
-  getFileInfo: GetFileInfoV2
+  getFileInfo: GetFileInfo
 }): RegisterUploadCompleteAndStartFileImport => {
   const {
     registerCompletedUpload,
@@ -38,15 +37,13 @@ export const registerUploadCompleteAndStartFileImportFactory = (deps: {
     try {
       const storedFile = await insertNewUploadAndNotify({
         projectId: storedBlob.streamId,
-        streamId: storedBlob.streamId, //backwards compatibility
         userId,
         fileName: storedBlob.fileName,
         fileType: storedBlob.fileType,
         fileSize: storedBlob.fileSize,
         fileId: storedBlob.id,
         modelId,
-        modelName: model.name,
-        branchName: model.name //backwards compatibility
+        modelName: model.name
       })
 
       return {
