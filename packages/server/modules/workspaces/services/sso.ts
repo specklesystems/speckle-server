@@ -116,6 +116,7 @@ export const saveSsoProviderRegistrationFactory =
       providerType: 'oidc',
       createdAt: new Date(),
       updatedAt: new Date(),
+      sessionTimeoutDays: 7,
       id: providerId
     }
     const maybeExistingSsoProvider = await getWorkspaceSsoProvider({ workspaceId })
