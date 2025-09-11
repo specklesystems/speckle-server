@@ -39,8 +39,7 @@ import {
 import {
   getCommitStreamFactory,
   getStreamFactory,
-  getStreamsFactory,
-  markCommitStreamUpdatedFactory
+  getStreamsFactory
 } from '@/modules/core/repositories/streams'
 import { getObjectFactory } from '@/modules/core/repositories/objects'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
@@ -279,7 +278,6 @@ export default {
         switchCommitBranch: switchCommitBranchFactory({ db: projectDb }),
         updateCommit: updateCommitFactory({ db: projectDb }),
         emitEvent: getEventBus().emit,
-        markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb })
       })
       return await withOperationLogging(
@@ -331,7 +329,6 @@ export default {
         getBranchById: getBranchByIdFactory({ db: projectDb }),
         insertStreamCommits: insertStreamCommitsFactory({ db: projectDb }),
         insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
-        markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
         emitEvent: getEventBus().emit
       })

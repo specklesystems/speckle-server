@@ -58,7 +58,6 @@ export const insertNewUploadAndNotifyFactoryV2 =
       projectId: file.projectId,
       modelId: upload.modelId,
       blobId: file.id,
-      jobId: file.id,
       userId: upload.userId
     })
 

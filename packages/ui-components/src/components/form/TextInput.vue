@@ -242,6 +242,10 @@ const props = defineProps({
     type: [Object, Function] as PropType<Optional<PropAnyComponent>>,
     default: undefined
   },
+  iconClasses: {
+    type: String,
+    default: null
+  },
   /**
    * Whether to focus on the input when component is mounted
    */
@@ -356,6 +360,10 @@ const inputStyle = computed((): CSSProperties => {
 
 const leadingIconClasses = computed(() => {
   const classParts: string[] = ['h-4 w-4']
+
+  if (props.iconClasses) {
+    classParts.push(props.iconClasses)
+  }
 
   if (errorMessage.value) {
     classParts.push('text-danger')

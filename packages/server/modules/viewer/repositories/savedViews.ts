@@ -50,7 +50,7 @@ import dayjs from 'dayjs'
 import { type Knex } from 'knex'
 import { clamp, isUndefined } from 'lodash-es'
 
-const SavedViews = buildTableHelper('saved_views', [
+export const SavedViews = buildTableHelper('saved_views', [
   'id',
   'name',
   'description',
@@ -68,7 +68,7 @@ const SavedViews = buildTableHelper('saved_views', [
   'updatedAt'
 ])
 
-const SavedViewGroups = buildTableHelper('saved_view_groups', [
+export const SavedViewGroups = buildTableHelper('saved_view_groups', [
   'id',
   'authorId',
   'projectId',
@@ -472,22 +472,26 @@ export const recalculateGroupResourceIdsFactory =
     const RawSavedViews = SavedViews.with({ quoted: true, withCustomTablePrefix: 'v' })
     const RawSavedViewGroups = SavedViewGroups.with({ quoted: true })
 
+    const arraySql = `
+      (
+      SELECT ARRAY(
+        SELECT DISTINCT unnest
+        FROM ${RawSavedViews.name},
+           unnest(${RawSavedViews.col.groupResourceIds}) AS unnest
+        WHERE ${RawSavedViews.col.groupId} = ${RawSavedViewGroups.col.id}
+      )
+      )
+    `
+
     const q = tables
       .savedViewGroups(deps.db)
       .where({ [SavedViewGroups.col.id]: groupId })
+      // Only update if the computed array is non-empty, otherwise we risk getting a group w/o any references
+      .andWhereRaw(`array_length(${arraySql}, 1) > 0`)
       .update(
         {
           // Recalculate the groups resourceIds based on the views in the group
-          [SavedViewGroups.withoutTablePrefix.col.resourceIds]: deps.db.raw(
-            `(
-            SELECT ARRAY(
-              SELECT DISTINCT unnest
-              FROM ${RawSavedViews.name},
-                  unnest(${RawSavedViews.col.groupResourceIds}) AS unnest
-              WHERE ${RawSavedViews.col.groupId} = ${RawSavedViewGroups.col.id}
-            )
-           )`
-          )
+          [SavedViewGroups.withoutTablePrefix.col.resourceIds]: deps.db.raw(arraySql)
         },
         '*'
       )

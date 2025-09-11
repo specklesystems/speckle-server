@@ -2,7 +2,7 @@
   <aside>
     <ViewerControlsButtonGroup
       v-show="activePanel === 'none'"
-      class="absolute left-1/2 -translate-x-1/2 z-50"
+      class="absolute left-1/2 -translate-x-1/2 z-40"
       :class="isEmbedEnabled ? 'bottom-[4rem]' : 'bottom-4'"
     >
       <ViewerControlsButtonToggle
@@ -19,7 +19,7 @@
 
     <ViewerLayoutPanel
       v-if="activePanel !== 'none'"
-      class="absolute left-1/2 -translate-x-1/2 z-50 flex p-2 items-center justify-between w-80"
+      class="absolute left-1/2 -translate-x-1/2 z-40 flex p-2 items-center justify-between w-80"
       :class="isEmbedEnabled ? 'bottom-[4rem]' : 'bottom-4'"
     >
       <span class="flex items-center">
@@ -58,9 +58,9 @@ import {
   useSectionBoxUtilities,
   useMeasurementUtilities,
   useViewerShortcuts,
-  useFilterUtilities,
   useViewModeUtilities
 } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { ViewMode } from '@speckle/viewer'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { onKeyStroke, useBreakpoints } from '@vueuse/core'

@@ -39,6 +39,7 @@ import type {
   CopyProjectModels,
   CopyProjectObjects,
   CopyProjects,
+  CopyProjectSavedViews,
   CopyProjectVersions,
   CopyProjectWebhooks,
   CopyWorkspace,
@@ -46,6 +47,7 @@ import type {
   CountProjectComments,
   CountProjectModels,
   CountProjectObjects,
+  CountProjectSavedViews,
   CountProjectVersions,
   CountProjectWebhooks
 } from '@/modules/workspaces/domain/operations'
@@ -76,6 +78,11 @@ import type { BlobStorageItem } from '@/modules/blobstorage/domain/types'
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import type { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
+import type {
+  SavedView,
+  SavedViewGroup
+} from '@speckle/shared/dist/esm/authz/domain/savedViews/types.js'
+import { SavedViewGroups, SavedViews } from '@/modules/viewer/repositories/savedViews'
 
 const tables = {
   workspaces: (db: Knex) => db<Workspace>(Workspaces.name),
@@ -107,7 +114,9 @@ const tables = {
   webhooks: (db: Knex) => db.table<Webhook>('webhooks_config'),
   webhookEvents: (db: Knex) => db.table<WebhookEvent>('webhooks_events'),
   fileUploads: (db: Knex) => db.table<FileUploadRecord>(FileUploads.name),
-  blobStorage: (db: Knex) => db.table<BlobStorageItem>(BlobStorage.name)
+  blobStorage: (db: Knex) => db.table<BlobStorageItem>(BlobStorage.name),
+  savedViews: (db: Knex) => db.table<SavedView>(SavedViews.name),
+  savedViewGroups: (db: Knex) => db.table<SavedViewGroup>(SavedViewGroups.name)
 }
 
 const getCountObject = (projectIds: string[]) => {
@@ -660,6 +669,40 @@ export const copyProjectBlobs =
     return copiedBlobsCountByProjectId
   }
 
+export const copyProjectSavedViews =
+  (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectSavedViews =>
+  async ({ projectIds }) => {
+    const copiedSavedViews = getCountObject(projectIds)
+
+    const selectSavedViews = tables
+      .savedViews(deps.sourceDb)
+      .select('*')
+      .whereIn(SavedViews.col.projectId, projectIds)
+
+    for await (const savedViews of executeBatchedSelect(selectSavedViews)) {
+      await tables.savedViews(deps.targetDb).insert(savedViews).onConflict().ignore()
+
+      for (const savedView of savedViews) {
+        copiedSavedViews[savedView.projectId]++
+      }
+    }
+
+    const selectSavedViewGroups = tables
+      .savedViewGroups(deps.sourceDb)
+      .select('*')
+      .whereIn(SavedViewGroups.col.projectId, projectIds)
+
+    for await (const savedViewGroups of executeBatchedSelect(selectSavedViewGroups)) {
+      await tables
+        .savedViewGroups(deps.targetDb)
+        .insert(savedViewGroups)
+        .onConflict()
+        .ignore()
+    }
+
+    return copiedSavedViews
+  }
+
 export const countProjectModelsFactory =
   (deps: { db: Knex }): CountProjectModels =>
   async ({ projectId }) => {
@@ -702,5 +745,12 @@ export const countProjectWebhooksFactory =
   (deps: { db: Knex }): CountProjectWebhooks =>
   async ({ projectId }) => {
     const [res] = await tables.webhooks(deps.db).where({ streamId: projectId }).count()
+    return parseInt(res?.count?.toString() ?? '0')
+  }
+
+export const countProjectSavedViewsFactory =
+  (deps: { db: Knex }): CountProjectSavedViews =>
+  async ({ projectId }) => {
+    const [res] = await tables.savedViews(deps.db).where({ projectId }).count()
     return parseInt(res?.count?.toString() ?? '0')
   }

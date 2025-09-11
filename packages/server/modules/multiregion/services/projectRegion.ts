@@ -61,6 +61,7 @@ export const updateProjectRegionKeyFactory =
   (deps: {
     upsertProjectRegionKey: StorageRegionKeyUpdate
     cacheDeleteRegionKey: CachedRegionKeyDelete
+    writeRegionToMemory: SyncRegionKeyStore
     emitEvent: EventBusEmit
   }): UpdateProjectRegionKey =>
   async ({ projectId, regionKey }) => {
@@ -75,6 +76,7 @@ export const updateProjectRegionKeyFactory =
 
     // TODO: Immediately set to new region?
     await deps.cacheDeleteRegionKey({ projectId })
+    deps.writeRegionToMemory({ projectId, regionKey })
 
     await deps.emitEvent({
       eventName: 'multiregion.project-region-updated',

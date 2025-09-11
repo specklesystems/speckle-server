@@ -129,6 +129,7 @@ import {
 import { authorizeResolver } from '@/modules/shared'
 import type { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
 import type {
+  Workspace,
   WorkspaceSeat,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
@@ -410,6 +411,26 @@ export const buildBasicTestWorkspace = (
       name: cryptoRandomString({ length: 10 }),
       slug: cryptoRandomString({ length: 10 }),
       ownerId: ''
+    },
+    overrides
+  )
+
+export const buildTestWorkspace = (overrides?: Partial<Workspace>): Workspace =>
+  assign(
+    {
+      id: cryptoRandomString({ length: 10 }),
+      name: cryptoRandomString({ length: 10 }),
+      slug: cryptoRandomString({ length: 10 }),
+      description: cryptoRandomString({ length: 10 }),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      logo: null,
+      domainBasedMembershipProtectionEnabled: false,
+      discoverabilityEnabled: false,
+      discoverabilityAutoJoinEnabled: false,
+      defaultSeatType: null,
+      isEmbedSpeckleBrandingHidden: false,
+      isExclusive: false
     },
     overrides
   )

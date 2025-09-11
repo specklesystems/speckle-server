@@ -35,7 +35,6 @@ import {
 import {
   getStreamFactory,
   grantStreamPermissionsFactory,
-  markCommitStreamUpdatedFactory,
   getUserDeletableStreamsFactory,
   getExplicitProjects
 } from '@/modules/core/repositories/streams'
@@ -121,7 +120,6 @@ import { deleteProjectFactory } from '@/modules/core/repositories/projects'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
-const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getStream = getStreamFactory({ db })
 const createBranch = createBranchFactory({ db })
 const getCommit = getCommitFactory({ db })
@@ -133,7 +131,6 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   getBranchById: getBranchByIdFactory({ db }),
   insertStreamCommits: insertStreamCommitsFactory({ db }),
   insertBranchCommits: insertBranchCommitsFactory({ db }),
-  markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   emitEvent: getEventBus().emit
 })

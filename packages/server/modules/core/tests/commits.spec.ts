@@ -35,8 +35,7 @@ import {
 } from '@/modules/core/services/commit/management'
 import {
   getStreamFactory,
-  getCommitStreamFactory,
-  markCommitStreamUpdatedFactory
+  getCommitStreamFactory
 } from '@/modules/core/repositories/streams'
 import {
   getObjectFactory,
@@ -58,7 +57,6 @@ import {
 } from '@/test/speckle-helpers/streamHelper'
 import { buildBasicTestProject } from '@/modules/core/tests/helpers/creation'
 
-const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getCommitStream = getCommitStreamFactory({ db })
 const getStream = getStreamFactory({ db })
 const createBranch = createBranchFactory({ db })
@@ -70,7 +68,6 @@ const createBranchAndNotify = createBranchAndNotifyFactory({
 const getCommit = getCommitFactory({ db })
 const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
   getCommit,
-  markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   deleteCommit: deleteCommitFactory({ db }),
   emitEvent: getEventBus().emit
@@ -83,7 +80,6 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   getBranchById: getBranchByIdFactory({ db }),
   insertStreamCommits: insertStreamCommitsFactory({ db }),
   insertBranchCommits: insertBranchCommitsFactory({ db }),
-  markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   emitEvent: getEventBus().emit
 })
@@ -103,7 +99,6 @@ const updateCommitAndNotify = updateCommitAndNotifyFactory({
   switchCommitBranch: switchCommitBranchFactory({ db }),
   updateCommit: updateCommitFactory({ db }),
   emitEvent: getEventBus().emit,
-  markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
 })
 const getStreamCommitCount = getStreamCommitCountFactory({ db })

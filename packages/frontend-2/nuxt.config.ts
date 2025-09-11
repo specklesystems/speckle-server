@@ -27,7 +27,7 @@ const hydrationMismatchReportingEnabled = ['1', 'true', true, 1].includes(
   HYDRATION_MISMATCH_REPORTING
 )
 
-const external = ['ioredis', 'crypto', 'jsdom']
+const external = ['ioredis', 'jsdom']
 
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
@@ -160,7 +160,7 @@ export default defineNuxtConfig({
           }
         },
         // Leave imports as is, they're server-side only
-        external: ['jsdom', 'crypto']
+        external: ['jsdom']
       }
       // // optionally disable minification for debugging
       // minify: false,

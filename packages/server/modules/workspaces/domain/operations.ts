@@ -45,6 +45,11 @@ export type UpsertWorkspaceArgs = {
 }
 
 export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>
+export type BulkUpsertWorkspaces = ({
+  workspaces
+}: {
+  workspaces: Array<NullableKeysToOptional<Workspace>>
+}) => Promise<void>
 
 export type GetUserDiscoverableWorkspaces = (args: {
   domains: string[]
@@ -506,6 +511,7 @@ export type ValidateProjectRegionCopy = (params: {
     automations: number
     comments: number
     webhooks: number
+    savedViews: number
   }
 }) => Promise<[boolean, Record<string, number>]>
 
@@ -530,6 +536,7 @@ export type CountProjectObjects = (params: { projectId: string }) => Promise<num
 export type CountProjectAutomations = (params: { projectId: string }) => Promise<number>
 export type CountProjectComments = (params: { projectId: string }) => Promise<number>
 export type CountProjectWebhooks = (params: { projectId: string }) => Promise<number>
+export type CountProjectSavedViews = (params: { projectId: string }) => Promise<number>
 
 export type AssignWorkspaceSeat = (
   params: Pick<WorkspaceSeat, 'userId' | 'workspaceId'> & {
@@ -554,6 +561,9 @@ export type CopyProjectWebhooks = (params: {
   projectIds: string[]
 }) => Promise<Record<string, number>>
 export type CopyProjectBlobs = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectSavedViews = (params: {
   projectIds: string[]
 }) => Promise<Record<string, number>>
 
