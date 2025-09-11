@@ -29,7 +29,7 @@ import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repos
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { getTestRegionClients } from '@/modules/multiregion/tests/helpers'
+import { getAllRegisteredTestDbs } from '@/modules/multiregion/tests/helpers'
 import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
@@ -158,7 +158,7 @@ export async function createTestUser(userObj?: Partial<BasicTestUser>) {
       })
     },
     {
-      dbs: await getTestRegionClients(),
+      dbs: await getAllRegisteredTestDbs(),
       logger,
       name: 'createUser'
     }
