@@ -79,16 +79,27 @@ export const getPropertyName = (
 }
 
 /**
- * Finds a filter by matching display names (handles complex nested properties)
+ * Finds a filter by matching display names
  */
 export const findFilterByDisplayName = (
   displayKey: string,
   availableFilters: PropertyInfo[] | null | undefined
 ): PropertyInfo | undefined => {
-  return availableFilters?.find((f) => {
-    const backendDisplayName = getPropertyName(f.key, availableFilters)
-    return backendDisplayName === displayKey || f.key.split('.').pop() === displayKey
+  if (!availableFilters) return undefined
+
+  // First, try to find an exact display name match
+  const exactDisplayMatch = availableFilters.find((f) => {
+    const propertyDisplayName = getPropertyName(f.key, availableFilters)
+    return propertyDisplayName === displayKey
   })
+  if (exactDisplayMatch) return exactDisplayMatch
+
+  // Then try to find a match where the key ends with the display key
+  const endMatches = availableFilters
+    .filter((f) => f.key.split('.').pop() === displayKey)
+    .sort((a, b) => a.key.length - b.key.length) // Shorter paths first
+
+  return endMatches[0] // Return the shortest matching path
 }
 
 /**
@@ -98,11 +109,12 @@ export const isKvpFilterable = (
   kvp: { key: string; backendPath?: string },
   availableFilters: PropertyInfo[] | null | undefined
 ): boolean => {
-  const backendKey = kvp.backendPath || kvp.key
+  // Use backendPath for legacy compatibility, but prefer the direct key
+  const propertyKey = kvp.backendPath || kvp.key
 
-  const directMatch = availableFilters?.some((f) => f.key === backendKey)
+  const directMatch = availableFilters?.some((f) => f.key === propertyKey)
   if (directMatch) {
-    return !shouldExcludeFromFiltering(backendKey)
+    return !shouldExcludeFromFiltering(propertyKey)
   }
 
   const displayKey = kvp.key as string
@@ -122,27 +134,49 @@ export const getFilterDisabledReason = (
   kvp: { key: string; backendPath?: string },
   availableFilters: PropertyInfo[] | null | undefined
 ): string => {
-  const backendKey = kvp.backendPath || kvp.key
   const availableKeys = availableFilters?.map((f) => f.key) || []
 
-  if (!availableKeys.includes(backendKey)) {
-    const similarKeys = availableKeys.filter(
-      (key) =>
-        key.toLowerCase().includes('type') ||
-        key.toLowerCase().includes('category') ||
-        key.toLowerCase().includes('class')
-    )
+  if (kvp.backendPath) {
+    if (!availableKeys.includes(kvp.backendPath)) {
+      const propertyName = kvp.key
+      const similarPaths = availableKeys.filter(
+        (key) => key.split('.').pop() === propertyName
+      )
 
-    const debugInfo =
-      similarKeys.length > 0
-        ? ` (Similar available: ${similarKeys.slice(0, 3).join(', ')})`
-        : ''
+      if (similarPaths.length > 0) {
+        return `Property path '${
+          kvp.backendPath
+        }' not found. Similar properties: ${similarPaths.slice(0, 3).join(', ')}`
+      }
 
-    return `Property '${backendKey}' is not available in backend filters${debugInfo}`
-  }
+      return `Property path '${kvp.backendPath}' is not available in the current scene`
+    }
 
-  if (shouldExcludeFromFiltering(backendKey)) {
-    return `Property '${backendKey}' is excluded from filtering (technical property)`
+    if (shouldExcludeFromFiltering(kvp.backendPath)) {
+      return `Property '${kvp.backendPath}' is excluded from filtering (technical property)`
+    }
+  } else {
+    // Fallback to key-based checking
+    const propertyKey = kvp.key
+    if (!availableKeys.includes(propertyKey)) {
+      const similarKeys = availableKeys.filter(
+        (key) =>
+          key.toLowerCase().includes('type') ||
+          key.toLowerCase().includes('category') ||
+          key.toLowerCase().includes('class')
+      )
+
+      const debugInfo =
+        similarKeys.length > 0
+          ? ` (Similar available: ${similarKeys.slice(0, 3).join(', ')})`
+          : ''
+
+      return `Property '${propertyKey}' is not available in the current scene${debugInfo}`
+    }
+
+    if (shouldExcludeFromFiltering(propertyKey)) {
+      return `Property '${propertyKey}' is excluded from filtering (technical property)`
+    }
   }
 
   return 'This property is not available for filtering'
@@ -155,16 +189,60 @@ export const findFilterByKvp = (
   kvp: { key: string; backendPath?: string },
   availableFilters: PropertyInfo[] | null | undefined
 ): PropertyInfo | undefined => {
-  const backendKey = kvp.backendPath || kvp.key
+  if (!availableFilters) return undefined
 
-  let filter = availableFilters?.find((f: PropertyInfo) => f.key === backendKey)
-
-  if (!filter) {
-    const displayKey = kvp.key as string
-    filter = findFilterByDisplayName(displayKey, availableFilters)
+  if (kvp.backendPath) {
+    const exactMatch = availableFilters.find(
+      (f: PropertyInfo) => f.key === kvp.backendPath
+    )
+    if (exactMatch) {
+      return exactMatch
+    }
   }
 
-  return filter
+  const directMatch = availableFilters.find((f: PropertyInfo) => f.key === kvp.key)
+  if (directMatch) {
+    return directMatch
+  }
+
+  // If we have a backendPath but no exact match, try partial matching
+  if (kvp.backendPath) {
+    const pathParts = kvp.backendPath.split('.')
+    const partialMatches = availableFilters.filter((f: PropertyInfo) => {
+      const filterParts = f.key.split('.')
+
+      if (pathParts.length === 1) {
+        return filterParts[filterParts.length - 1] === pathParts[0]
+      }
+
+      if (pathParts.length >= 2 && filterParts.length >= 2) {
+        const kvpEnd = pathParts.slice(-2).join('.')
+        const filterEnd = filterParts.slice(-2).join('.')
+        return kvpEnd === filterEnd
+      }
+
+      return false
+    })
+
+    if (partialMatches.length === 1) {
+      return partialMatches[0]
+    }
+
+    if (partialMatches.length > 1) {
+      const sortedMatches = partialMatches.sort((a, b) => a.key.length - b.key.length)
+      return sortedMatches[0]
+    }
+
+    return undefined
+  }
+
+  // Only fall back to fuzzy matching if no backendPath is provided (legacy support)
+  const displayKey = kvp.key as string
+  return findFilterByDisplayName(displayKey, availableFilters)
+}
+
+export const isBooleanProperty = (filter: PropertyInfo): boolean => {
+  return 'type' in filter && (filter as { type: string }).type === 'boolean'
 }
 
 /**

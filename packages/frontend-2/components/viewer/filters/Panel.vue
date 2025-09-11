@@ -145,7 +145,12 @@ const propertySelectOptions = computed((): PropertySelectOption[] => {
         value: filter.key,
         label: propertyName,
         parentPath,
-        type: filter.type === 'number' ? FilterType.Numeric : FilterType.String,
+        type:
+          filter.type === 'number'
+            ? FilterType.Numeric
+            : filter.type === 'boolean'
+            ? FilterType.Boolean
+            : FilterType.String,
         hasParent: lastDotIndex !== -1
       }
     })

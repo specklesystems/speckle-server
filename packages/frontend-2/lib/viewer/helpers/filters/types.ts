@@ -26,10 +26,16 @@ export enum ExistenceFilterCondition {
   IsNotSet = 'is_not_set'
 }
 
+export enum BooleanFilterCondition {
+  IsTrue = 'is_true',
+  IsFalse = 'is_false'
+}
+
 export type FilterCondition =
   | NumericFilterCondition
   | StringFilterCondition
   | ExistenceFilterCondition
+  | BooleanFilterCondition
 
 // Filter Enums
 export enum FilterLogic {
@@ -39,7 +45,8 @@ export enum FilterLogic {
 
 export enum FilterType {
   String = 'string',
-  Numeric = 'numeric'
+  Numeric = 'numeric',
+  Boolean = 'boolean'
 }
 
 export enum SortMode {
@@ -70,10 +77,26 @@ export type StringFilterData = BaseFilterData & {
   isDefaultAllSelected?: boolean
 }
 
-export type FilterData = NumericFilterData | StringFilterData
+export type BooleanPropertyInfo = {
+  key: string
+  type: 'boolean'
+  objectCount: number
+  valueGroups: { value: boolean; ids: string[] }[]
+}
+
+export type BooleanFilterData = BaseFilterData & {
+  type: FilterType.Boolean
+  filter: BooleanPropertyInfo
+}
+
+export type FilterData = NumericFilterData | StringFilterData | BooleanFilterData
 
 export const isNumericFilter = (filter: FilterData): filter is NumericFilterData => {
   return filter.type === FilterType.Numeric
+}
+
+export const isBooleanFilter = (filter: FilterData): filter is BooleanFilterData => {
+  return filter.type === FilterType.Boolean
 }
 
 export const isExistenceCondition = (condition: FilterCondition): boolean => {

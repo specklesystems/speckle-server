@@ -3,6 +3,7 @@ import {
   NumericFilterCondition,
   StringFilterCondition,
   ExistenceFilterCondition,
+  BooleanFilterCondition,
   FilterType
 } from '~/lib/viewer/helpers/filters/types'
 
@@ -16,7 +17,9 @@ export const FILTER_CONDITION_CONFIG: Record<FilterCondition, { label: string }>
   [NumericFilterCondition.IsLessThan]: { label: 'is less than' },
   [NumericFilterCondition.IsBetween]: { label: 'is between' },
   [ExistenceFilterCondition.IsSet]: { label: 'is set' },
-  [ExistenceFilterCondition.IsNotSet]: { label: 'is not set' }
+  [ExistenceFilterCondition.IsNotSet]: { label: 'is not set' },
+  [BooleanFilterCondition.IsTrue]: { label: 'is true' },
+  [BooleanFilterCondition.IsFalse]: { label: 'is false' }
 } as const
 
 // Popular Filter Properties
@@ -47,6 +50,11 @@ export const getConditionsForType = (filterType: FilterType): FilterCondition[] 
   if (filterType === FilterType.Numeric) {
     return [
       ...Object.values(NumericFilterCondition),
+      ...Object.values(ExistenceFilterCondition)
+    ]
+  } else if (filterType === FilterType.Boolean) {
+    return [
+      ...Object.values(BooleanFilterCondition),
       ...Object.values(ExistenceFilterCondition)
     ]
   } else {
