@@ -1,6 +1,7 @@
 <template>
   <div class="px-1">
     <button
+      v-tippy="{ content: property.parentPath, delay: 500 }"
       class="w-full h-9 px-1.5 text-foreground rounded-md hover:bg-highlight-1 text-left flex items-center gap-3"
       :class="!property.parentPath ? 'py-1.5' : 'py-1'"
       @click="$emit('selectProperty', property.value)"
