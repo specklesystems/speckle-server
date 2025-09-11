@@ -21,8 +21,6 @@ export const useFiltersSetup = () => {
   const activeColorFilterId = ref<string | null>(null)
 
   const hasAnyFiltersApplied = computed(() => {
-    if (isolatedObjectIds.value.length) return true
-    if (hiddenObjectIds.value.length) return true
     if (
       propertyFilters.value.some(
         (filter) =>
