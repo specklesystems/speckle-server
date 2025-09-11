@@ -2,8 +2,11 @@
   <div class="px-1">
     <button
       v-tippy="{ content: property.parentPath, delay: 500 }"
-      class="w-full h-9 px-1.5 text-foreground rounded-md hover:bg-highlight-1 text-left flex items-center gap-3"
-      :class="!property.parentPath ? 'py-1.5' : 'py-1'"
+      class="w-full h-9 px-1.5 text-foreground rounded-md text-left flex items-center gap-3 transition-colors"
+      :class="[
+        !property.parentPath ? 'py-1.5' : 'py-1',
+        isFocused ? 'bg-highlight-1' : 'hover:bg-highlight-1'
+      ]"
       @click="$emit('selectProperty', property.value)"
     >
       <Hash
@@ -37,6 +40,7 @@ import { FilterType } from '~/lib/viewer/helpers/filters/types'
 
 defineProps<{
   property: PropertyOption
+  isFocused?: boolean
 }>()
 
 defineEmits<{
