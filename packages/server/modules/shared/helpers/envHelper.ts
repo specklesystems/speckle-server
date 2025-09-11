@@ -7,14 +7,16 @@ import { ensureError } from '@speckle/shared'
 export function getStringFromEnv(
   envVarKey: string,
   options?: Partial<{
+    default?: string
     /**
      * If set to true, wont throw if the env var is not set
      */
-    unsafe: boolean
+    unsafe?: boolean
   }>
 ): string {
   const envVar = process.env[envVarKey]
   if (!envVar) {
+    if (options?.default !== undefined) return options.default
     if (options?.unsafe) return ''
     throw new MisconfiguredEnvironmentError(`${envVarKey} env var not configured`)
   }
@@ -374,7 +376,7 @@ export function getEmailFromAddress() {
 }
 
 export function getEmailHost() {
-  return process.env.EMAIL_HOST || '127.0.0.1'
+  return getStringFromEnv('EMAIL_HOST', { default: '127.0.0.1' })
 }
 
 export function getEmailPort() {
