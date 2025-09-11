@@ -23,7 +23,7 @@ import type { InjectableViewerState } from '~~/lib/viewer/composables/setup/core
 
 definePageMeta({
   layout: 'viewer',
-  middleware: ['require-valid-project'],
+  middleware: ['require-valid-project', 'require-valid-model'],
   pageTransition: false, // NOTE: transitions fuck viewer up
   layoutTransition: false,
   key: '/projects/:id/models/resources', // To prevent controls flickering on resource url param changes
