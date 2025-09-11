@@ -28,7 +28,8 @@ import {
   GetRegionalProjectAutomationDocument,
   GetRegionalProjectCommentDocument,
   GetRegionalProjectWebhookDocument,
-  GetRegionalProjectBlobDocument
+  GetRegionalProjectBlobDocument,
+  GetProjectSavedViewDocument
 } from '@/modules/core/graph/generated/graphql'
 import type { TestApolloServer } from '@/test/graphqlHelper'
 import { testApolloServer } from '@/test/graphqlHelper'
@@ -56,6 +57,7 @@ import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import type { Knex } from 'knex'
 import type { SetOptional } from 'type-fest'
+import { buildTestSavedView } from '@/modules/viewer/tests/helpers/savedViews'
 
 const tables = {
   projects: (db: Knex) => db.table<StreamRecord>('streams')
@@ -134,6 +136,7 @@ isMultiRegionTestMode()
       let testComment: CommentRecord
       let testWebhookId: string
       let testBlobId: string
+      let testSavedViewId: string
 
       let apollo: TestApolloServer
       let sourceRegionDb: Knex
@@ -246,6 +249,15 @@ isMultiRegionTestMode()
         })
         testBlobId = testBlob.blobId
 
+        testSavedViewId = cryptoRandomString({ length: 10 })
+        await sourceRegionDb('saved_views').insert(
+          buildTestSavedView({
+            id: testSavedViewId,
+            projectId: testProject.id,
+            authorId: adminUser.id
+          })
+        )
+
         await assertProjectRegion(testProject.id, regionKey1)
       })
 
@@ -299,7 +311,7 @@ isMultiRegionTestMode()
         })
         expect(resA).to.not.haveGraphQLErrors()
         // TODO: Change region move order of events to avoid wait
-        await wait(10_000)
+        await wait(500)
         const role = await getUserStreamRole(adminUser.id, emptyProject.id)
         if (!role || role !== Roles.Stream.Owner) {
           expect.fail('Did not preserve roles on project after region move.')
@@ -458,6 +470,24 @@ isMultiRegionTestMode()
         expect(resB).to.not.haveGraphQLErrors()
 
         expect(resB.data?.project.blob).to.not.be.undefined
+      })
+
+      it('moves project files associated with saved views', async () => {
+        const resA = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+        expect(resA).to.not.haveGraphQLErrors()
+
+        await ensureProjectRegion(testProject.id, regionKey2)
+
+        const resB = await apollo.execute(GetProjectSavedViewDocument, {
+          projectId: testProject.id,
+          viewId: testSavedViewId
+        })
+        expect(resB).to.not.haveGraphQLErrors()
+
+        expect(resB.data?.project.savedView).not.to.be.undefined
       })
     })
   : void 0

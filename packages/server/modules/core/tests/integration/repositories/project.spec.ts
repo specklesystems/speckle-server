@@ -15,6 +15,9 @@ import {
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { getAllProjectsChecksumFactory } from '@/modules/core/repositories/projects'
+import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
+import { getDb } from '@/modules/multiregion/utils/dbSelector'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -77,5 +80,50 @@ describe('projects repository', () => {
     expect(first.value).to.be.an('array').that.has.lengthOf(100)
     expect(second.value).to.be.an('array').that.has.lengthOf(50)
     expect(third.value).to.be.an('array').that.has.lengthOf(0)
+  })
+
+  describe('the mechanism to detect differences in different project tables @multiregion', () => {
+    it('should return the same checksum if all entries have not changed', async () => {
+      const getAllProjectsChecksum = getAllProjectsChecksumFactory({ db })
+
+      const checksum = await getAllProjectsChecksum({ regionKey: null })
+      const checksum2 = await getAllProjectsChecksum({ regionKey: null })
+
+      expect(checksum).to.be.a('string')
+      expect(checksum).to.be.eql(checksum2)
+    })
+
+    it('should have a different result on one update', async () => {
+      const getAllProjectsChecksum = getAllProjectsChecksumFactory({ db })
+
+      const checksum = await getAllProjectsChecksum({ regionKey: null })
+      await createTestStream(buildBasicTestProject(), user)
+      const checksum2 = await getAllProjectsChecksum({ regionKey: null })
+
+      expect(checksum).to.be.a('string')
+      expect(checksum).to.not.be.eql(checksum2)
+    })
+
+    isMultiRegionTestMode()
+      ? it('can check equality in two different regions', async () => {
+          await createTestStream(
+            buildBasicTestProject({
+              regionKey: 'region1'
+            }),
+            user
+          )
+
+          const checksum = await getAllProjectsChecksumFactory({ db })({
+            regionKey: 'region1'
+          })
+          const region1Db = await getDb({ regionKey: 'region1' })
+          const checksum2 = await getAllProjectsChecksumFactory({ db: region1Db })({
+            regionKey: 'region1'
+          })
+
+          expect(checksum).to.be.a('string')
+          expect(checksum).to.be.eql(checksum2)
+        })
+      : {}
   })
 })

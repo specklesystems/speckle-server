@@ -49,13 +49,7 @@ describe('WorkspaceCreationState services', () => {
         const deleteWorkspacesNonComplete = deleteWorkspacesNonCompleteFactory({
           getWorkspacesNonComplete: getWorkspacesNonCompleteFactory({ db: mainDb }),
           deleteWorkspace: deleteWorkspaceFactory({
-            deleteWorkspace: async (...input) => {
-              const [res] = await Promise.all(
-                allDbs.map((db) => repoDeleteWorkspaceFactory({ db })(...input))
-              )
-
-              return res
-            },
+            deleteWorkspace: replicateFactory(allDbs, repoDeleteWorkspaceFactory),
             deleteProjectAndCommits: deleteProjectAndCommitsFactory({
               deleteProject: replicateFactory(allDbs, deleteProjectFactory),
               deleteProjectCommits: replicateFactory(

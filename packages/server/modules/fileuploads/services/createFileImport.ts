@@ -26,7 +26,12 @@ export const pushJobToFileImporterFactory =
       appId: DefaultAppIds.Web,
       name: `fileimport-${projectId}@${modelId}`,
       userId,
-      scopes: [Scopes.Streams.Write, Scopes.Streams.Read, Scopes.Profile.Read],
+      scopes: [
+        Scopes.Streams.Write,
+        Scopes.Streams.Read,
+        Scopes.Profile.Read,
+        Scopes.Profile.Email
+      ],
       lifespan: maximumAllowedQueuingProcessingAndRetryTimeMs(),
       limitResources: [
         {

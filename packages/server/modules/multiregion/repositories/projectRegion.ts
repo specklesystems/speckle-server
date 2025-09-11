@@ -14,12 +14,13 @@ import type { StreamRecord } from '@/modules/core/helpers/types'
 import { TIME_MS } from '@speckle/shared'
 
 const mainDbKey = 'mainDb'
+let cache: LRUCache<string, string>
 
 export const inMemoryRegionKeyStoreFactory = (): {
   getRegionKey: SyncRegionKeyLookup
   writeRegion: SyncRegionKeyStore
 } => {
-  const cache = new LRUCache<string, string>({
+  cache ??= new LRUCache<string, string>({
     max: 2000,
     /** ttl in ms */
     ttl: 10 * TIME_MS.minute,

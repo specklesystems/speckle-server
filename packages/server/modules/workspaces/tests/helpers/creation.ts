@@ -90,7 +90,6 @@ import {
   getDefaultRegionFactory,
   upsertRegionAssignmentFactory
 } from '@/modules/workspaces/repositories/regions'
-import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import {
   assignWorkspaceSeatFactory,
@@ -130,10 +129,15 @@ import {
 import { authorizeResolver } from '@/modules/shared'
 import type { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
 import type {
+  Workspace,
   WorkspaceSeat,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceRole } from '@/modules/core/graph/generated/graphql'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { logger } from '@/observability/logging'
+import type { UpdateWorkspace } from '@/modules/workspaces/domain/operations'
+import { getAllRegisteredTestDbs } from '@/modules/multiregion/tests/helpers'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -190,41 +194,54 @@ export const createTestWorkspace = async (
   }
 
   const upsertWorkspacePlan = upsertWorkspacePlanFactory({ db })
-  const createWorkspace = createWorkspaceFactory({
-    validateSlug: validateSlugFactory({
-      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
-    }),
-    generateValidSlug: generateValidSlugFactory({
-      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
-    }),
-    upsertWorkspace: upsertWorkspaceFactory({ db }),
-    emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
-    addOrUpdateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
-      getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
-      findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
-        db
-      }),
-      getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-      upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-      emitWorkspaceEvent: getEventBus().emit,
-      ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
-        createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-        getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
-        getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
-          getWorkspace: getWorkspaceFactory({ db })
-        }),
-        eventEmit: getEventBus().emit
-      }),
-      assignWorkspaceSeat: assignWorkspaceSeatFactory({
-        createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-        getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
-          db
-        }),
-        eventEmit: getEventBus().emit,
-        getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
-      })
-    })
-  })
+  const createWorkspace: ReturnType<typeof createWorkspaceFactory> = async (...args) =>
+    asMultiregionalOperation(
+      async ({ allDbs, mainDb, emit }) => {
+        const createWorkspace = createWorkspaceFactory({
+          validateSlug: validateSlugFactory({
+            getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: mainDb })
+          }),
+          generateValidSlug: generateValidSlugFactory({
+            getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: mainDb })
+          }),
+          upsertWorkspace: replicateFactory(allDbs, upsertWorkspaceFactory),
+          emitWorkspaceEvent: emit,
+          addOrUpdateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
+            getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: mainDb }),
+            findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+              db: mainDb
+            }),
+            getWorkspaceRoles: getWorkspaceRolesFactory({ db: mainDb }),
+            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: mainDb }),
+            emitWorkspaceEvent: emit,
+            ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+              createWorkspaceSeat: createWorkspaceSeatFactory({ db: mainDb }),
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: mainDb }),
+              getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+                getWorkspace: getWorkspaceFactory({ db: mainDb })
+              }),
+              eventEmit: emit
+            }),
+            assignWorkspaceSeat: assignWorkspaceSeatFactory({
+              createWorkspaceSeat: createWorkspaceSeatFactory({ db: mainDb }),
+              getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                db: mainDb
+              }),
+              eventEmit: emit,
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: mainDb })
+            })
+          })
+        })
+
+        return createWorkspace(...args)
+      },
+      {
+        logger,
+        name: 'create workspace spec',
+        dbs: await getAllRegisteredTestDbs()
+      }
+    )
+
   const upsertSubscription = upsertWorkspaceSubscriptionFactory({ db })
 
   const newWorkspace = await createWorkspace({
@@ -304,7 +321,6 @@ export const createTestWorkspace = async (
   }
 
   if (useRegion) {
-    const regionDb = await getDb({ regionKey })
     const assignRegion = assignWorkspaceRegionFactory({
       getAvailableRegions: getAvailableRegionsFactory({
         getRegions: getRegionsFactory({ db }),
@@ -314,8 +330,7 @@ export const createTestWorkspace = async (
       }),
       upsertRegionAssignment: upsertRegionAssignmentFactory({ db }),
       getDefaultRegion: getDefaultRegionFactory({ db }),
-      getWorkspace: getWorkspaceFactory({ db }),
-      insertRegionWorkspace: upsertWorkspaceFactory({ db: regionDb })
+      getWorkspace: getWorkspaceFactory({ db })
     })
     await assignRegion({
       workspaceId: newWorkspace.id,
@@ -334,15 +349,29 @@ export const createTestWorkspace = async (
     })
   }
 
-  const updateWorkspace = updateWorkspaceFactory({
-    validateSlug: validateSlugFactory({
-      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
-    }),
-    getWorkspace: getWorkspaceWithDomainsFactory({ db }),
-    getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderRecordFactory({ db }),
-    upsertWorkspace: upsertWorkspaceFactory({ db }),
-    emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
-  })
+  const updateWorkspace: UpdateWorkspace = async (...args) =>
+    asMultiregionalOperation(
+      ({ allDbs, mainDb, emit }) => {
+        const updateWorkspace = updateWorkspaceFactory({
+          validateSlug: validateSlugFactory({
+            getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: mainDb })
+          }),
+          getWorkspace: getWorkspaceWithDomainsFactory({ db: mainDb }),
+          getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderRecordFactory({
+            db: mainDb
+          }),
+          upsertWorkspace: replicateFactory(allDbs, upsertWorkspaceFactory),
+          emitWorkspaceEvent: emit
+        })
+
+        return updateWorkspace(...args)
+      },
+      {
+        logger,
+        name: 'updateWorkspace spec',
+        dbs: await getAllRegisteredTestDbs()
+      }
+    )
 
   if (workspace.discoverabilityEnabled || workspace.discoverabilityAutoJoinEnabled) {
     if (!domain) throw new Error('Domain is needed for discoverability')
@@ -382,6 +411,26 @@ export const buildBasicTestWorkspace = (
       name: cryptoRandomString({ length: 10 }),
       slug: cryptoRandomString({ length: 10 }),
       ownerId: ''
+    },
+    overrides
+  )
+
+export const buildTestWorkspace = (overrides?: Partial<Workspace>): Workspace =>
+  assign(
+    {
+      id: cryptoRandomString({ length: 10 }),
+      name: cryptoRandomString({ length: 10 }),
+      slug: cryptoRandomString({ length: 10 }),
+      description: cryptoRandomString({ length: 10 }),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      logo: null,
+      domainBasedMembershipProtectionEnabled: false,
+      discoverabilityEnabled: false,
+      discoverabilityAutoJoinEnabled: false,
+      defaultSeatType: null,
+      isEmbedSpeckleBrandingHidden: false,
+      isExclusive: false
     },
     overrides
   )
