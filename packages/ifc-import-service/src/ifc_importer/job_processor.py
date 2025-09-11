@@ -41,7 +41,10 @@ def setup_client(job_payload: FileimportPayload) -> SpeckleClient:
         )
         raise ValueError(msg)
 
-    assert speckle_client.account.userInfo.email
+    if not speckle_client.account.userInfo.email:
+        raise ValueError(
+            "activeUser.email did not get fetched. Does the token lack profile:email?"
+        )
 
     return speckle_client
 
