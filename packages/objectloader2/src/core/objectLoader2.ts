@@ -39,6 +39,7 @@ export class ObjectLoader2 {
     const cacheOptions: CacheOptions = {
       logger: this.#logger,
       maxCacheReadSize: 10_000,
+      idbChunkSize: 500,
       maxCacheWriteSize: 10_000,
       maxWriteQueueSize: 40_000,
       maxCacheBatchWriteWait: 100, //100 ms, next to nothing!
