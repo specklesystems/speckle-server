@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full flex flex-col select-none">
+  <div class="h-full flex flex-col select-none border border-outline-2 rounded-lg">
     <ViewerFiltersPropertySelectionSearch
       v-model="searchQuery"
       placeholder="Search for a property..."
