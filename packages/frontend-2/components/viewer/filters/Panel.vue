@@ -148,7 +148,7 @@ const propertySelectOptions = computed((): PropertySelectOption[] => {
         type:
           filter.type === 'number'
             ? FilterType.Numeric
-            : filter.type === 'boolean'
+            : (filter as { type: string }).type === 'boolean'
             ? FilterType.Boolean
             : FilterType.String,
         hasParent: lastDotIndex !== -1
@@ -222,7 +222,7 @@ const selectProperty = async (propertyKey: string) => {
   }
 
   // Check if this property has too many unique values
-  const { isLarge, count } = isLargeProperty(propertyKey)
+  const { isLarge, count } = isLargeProperty(property.key)
 
   if (isLarge) {
     // Store the pending property and show warning
