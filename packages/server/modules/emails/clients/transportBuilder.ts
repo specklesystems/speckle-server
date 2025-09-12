@@ -9,7 +9,14 @@ import { initializeMailjetTransporter } from '@/modules/emails/clients/mailjetAp
 import { initializeSMTPTransporter } from '@/modules/emails/clients/smtp'
 import { initializeJSONEchoTransporter } from '@/modules/emails/clients/jsonEcho'
 import { initializeMailchimpTransporter } from '@/modules/emails/clients/mailchimp'
-import { getEmailPassword, getEmailUsername } from '@/modules/shared/helpers/envHelper'
+import {
+  getEmailHost,
+  getEmailPassword,
+  getEmailPort,
+  getEmailUsername,
+  isSSLEmailEnabled,
+  isTLSEmailRequired
+} from '@/modules/shared/helpers/envHelper'
 
 let transporter: EmailTransport | undefined = undefined
 
@@ -40,7 +47,18 @@ export const initializeEmailTransport = async (params: {
   switch (emailTransportType) {
     case EmailTransportType.SMTP:
       logger.info('📧 Using SMTP email transporter')
-      transporter = await initializeSMTPTransporter({ logger, isSandboxMode })
+      transporter = await initializeSMTPTransporter({
+        host: getEmailHost(),
+        port: getEmailPort(),
+        sslEnabled: isSSLEmailEnabled(),
+        tlsRequired: isTLSEmailRequired(),
+        auth: {
+          username: getEmailUsername(),
+          password: getEmailPassword()
+        },
+        logger,
+        isSandboxMode
+      })
       break
     case EmailTransportType.JSONEcho:
       logger.info('📧 Using JSON Echo email transporter')
