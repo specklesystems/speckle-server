@@ -88,6 +88,10 @@ graphql(`
         ...FullPermissionCheckResult
       }
     }
+    workspace {
+      id
+      hasAccessToFeature(featureName: presentations)
+    }
   }
 `)
 
@@ -159,16 +163,23 @@ const menuId = useId()
 const isUngroupedGroup = computed(() => props.group.isUngroupedViewsGroup)
 const canUpdate = computed(() => props.group.permissions.canUpdate)
 const canCreateView = computed(() => props.project.permissions.canCreateSavedView)
+const canPresent = computed(() => props.project.workspace?.hasAccessToFeature)
 
-const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
-  [
-    {
-      id: MenuItems.Presentation,
-      title: 'Present',
-      disabled: isLoading.value
-    }
-  ],
-  [
+const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => {
+  const items: LayoutMenuItem<MenuItems>[][] = []
+
+  // Only add presentation menu if user can present
+  if (canPresent.value) {
+    items.push([
+      {
+        id: MenuItems.Presentation,
+        title: 'Present',
+        disabled: isLoading.value
+      }
+    ])
+  }
+
+  items.push([
     {
       id: MenuItems.Rename,
       title: 'Rename group',
@@ -181,8 +192,10 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
       disabled: !canUpdate.value?.authorized || isLoading.value,
       disabledTooltip: canUpdate.value.errorMessage
     }
-  ]
-])
+  ])
+
+  return items
+})
 
 const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
   switch (item.id) {
