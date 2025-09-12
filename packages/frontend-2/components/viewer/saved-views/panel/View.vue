@@ -20,7 +20,19 @@
           v-if="isHomeView && !isFederatedView"
           class="absolute -top-1 -left-1 bg-orange-500 w-4 h-4 flex items-center justify-center rounded-[3px]"
         >
-          <Bookmark class="text-white w-3 h-3" fill="currentColor" stroke-width="0" />
+          <svg
+            class="w-3 h-3"
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M5.6112 1.10845C5.88906 0.939851 6.25219 0.96782 6.50183 1.19244L11.5018 5.69244C11.8097 5.96954 11.8346 6.44414 11.5575 6.75201C11.2808 7.05933 10.8078 7.0843 10.4999 6.80865V10.0001C10.4999 10.4143 10.1641 10.7501 9.74988 10.7501H8.24988C7.83574 10.75 7.49988 10.4142 7.49988 10.0001V7.25006C7.49984 6.97394 7.276 6.75006 6.99988 6.75006H4.99988C4.72383 6.75015 4.49991 6.974 4.49988 7.25006V10.0001C4.49988 10.4143 4.16409 10.7501 3.74988 10.7501H2.24988C1.83574 10.75 1.49988 10.4142 1.49988 10.0001V6.80865C1.19197 7.08421 0.718883 7.05931 0.442258 6.75201C0.165257 6.44415 0.190136 5.96952 0.497923 5.69244L5.49792 1.19244L5.6112 1.10845Z"
+              fill="white"
+            />
+          </svg>
         </div>
       </div>
     </div>
@@ -108,7 +120,7 @@ import {
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { difference } from 'lodash-es'
-import { Ellipsis, SquarePen, Bookmark, User } from 'lucide-vue-next'
+import { Ellipsis, SquarePen, User } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   SavedViewVisibility,
