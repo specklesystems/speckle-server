@@ -1,8 +1,4 @@
-import type {
-  PropertyInfo,
-  NumericPropertyInfo,
-  StringPropertyInfo
-} from '@speckle/viewer'
+import type { NumericPropertyInfo, StringPropertyInfo } from '@speckle/viewer'
 import { difference, uniq, partition } from 'lodash-es'
 import { whenever } from '@vueuse/core'
 import {
@@ -28,7 +24,8 @@ import {
   BooleanFilterCondition,
   SortMode,
   type DataSlice,
-  type QueryCriteria
+  type QueryCriteria,
+  type ExtendedPropertyInfo
 } from '~/lib/viewer/helpers/filters/types'
 import { getConditionLabel } from '~/lib/viewer/helpers/filters/constants'
 import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
@@ -128,11 +125,16 @@ export function useFilterUtilities(
   /**
    * Gets available values for the current property filter (used for UI display)
    */
-  const getAvailableFilterValues = (filter: PropertyInfo, limit?: number): string[] => {
+  const getAvailableFilterValues = (
+    filter: ExtendedPropertyInfo,
+    limit?: number
+  ): string[] => {
     // Type guard to check if filter has valueGroups property
     const hasValueGroups = (
-      f: PropertyInfo
-    ): f is PropertyInfo & { valueGroups: Array<{ value: string | number }> } => {
+      f: ExtendedPropertyInfo
+    ): f is ExtendedPropertyInfo & {
+      valueGroups: Array<{ value: string | number }>
+    } => {
       return (
         'valueGroups' in f && Array.isArray((f as Record<string, unknown>).valueGroups)
       )
@@ -187,7 +189,7 @@ export function useFilterUtilities(
    */
   const computeFullPropertyData = (
     propertyKey: string
-  ): PropertyInfo | BooleanPropertyInfo | null => {
+  ): ExtendedPropertyInfo | null => {
     const valueToObjectIds = new Map<string, string[]>()
 
     for (const dataSource of dataStore.dataSources.value) {
@@ -273,7 +275,7 @@ export function useFilterUtilities(
   }
 
   const isBooleanPropertyInfo = (
-    prop: PropertyInfo | BooleanPropertyInfo
+    prop: ExtendedPropertyInfo
   ): prop is BooleanPropertyInfo => {
     return prop.type === 'boolean'
   }
@@ -345,7 +347,7 @@ export function useFilterUtilities(
     }
   }
 
-  const addActiveFilter = (filter: PropertyInfo): string => {
+  const addActiveFilter = (filter: ExtendedPropertyInfo): string => {
     const existingIndex = filters.propertyFilters.value.findIndex(
       (f) => f.filter?.key === filter.key
     )
@@ -368,7 +370,7 @@ export function useFilterUtilities(
    */
   const updateFilterProperty = (
     filterId: string,
-    newProperty: PropertyInfo
+    newProperty: ExtendedPropertyInfo
   ): boolean => {
     const filterIndex = filters.propertyFilters.value.findIndex(
       (f) => f.id === filterId
@@ -708,7 +710,7 @@ export function useFilterUtilities(
 
     resetFilters() // Clear existing filters first
 
-    const availableProperties = getPropertyOptionsFromDataStore() as PropertyInfo[]
+    const availableProperties = getPropertyOptionsFromDataStore()
 
     // If data store is ready, restore immediately
     if (availableProperties.length > 0) {
@@ -730,7 +732,7 @@ export function useFilterUtilities(
       id: string
       condition: 'AND' | 'OR'
     }>,
-    availableProperties: PropertyInfo[]
+    availableProperties: ExtendedPropertyInfo[]
   ) => {
     for (const serializedFilter of serializedFilters) {
       if (serializedFilter.key) {
@@ -756,9 +758,9 @@ export function useFilterUtilities(
    * Filters the available filters to only include relevant ones for the filter UI
    */
   const getRelevantFilters = (
-    allFilters: PropertyInfo[] | null | undefined
-  ): PropertyInfo[] => {
-    return (allFilters || []).filter((f: PropertyInfo) => {
+    allFilters: ExtendedPropertyInfo[] | null | undefined
+  ): ExtendedPropertyInfo[] => {
+    return (allFilters || []).filter((f: ExtendedPropertyInfo) => {
       if (shouldExcludeFromFiltering(f.key)) {
         return false
       }
@@ -770,10 +772,10 @@ export function useFilterUtilities(
    * Gets property options from the data store (optimized to use propertyMap)
    */
   const getPropertyOptionsFromDataStore = (): (
-    | PropertyInfo
+    | ExtendedPropertyInfo
     | BooleanPropertyInfo
   )[] => {
-    const allProperties = new Map<string, PropertyInfo | BooleanPropertyInfo>()
+    const allProperties = new Map<string, ExtendedPropertyInfo | BooleanPropertyInfo>()
 
     for (const dataSource of dataStore.dataSources.value) {
       const propertyKeys = Object.keys(dataSource.propertyMap)
@@ -825,7 +827,7 @@ export function useFilterUtilities(
    * Gets filtered and sorted values for a string filter with search and sorting options
    */
   const getFilteredFilterValues = (
-    filter: PropertyInfo,
+    filter: ExtendedPropertyInfo,
     options?: {
       searchQuery?: string
       sortMode?: SortMode
@@ -866,7 +868,8 @@ export function useFilterUtilities(
 
   whenever(shouldRestoreFilters, () => {
     if (pendingFiltersToRestore.value) {
-      const availableProperties = getPropertyOptionsFromDataStore() as PropertyInfo[]
+      const availableProperties =
+        getPropertyOptionsFromDataStore() as ExtendedPropertyInfo[]
       applyFiltersFromSerialized(pendingFiltersToRestore.value, availableProperties)
       pendingFiltersToRestore.value = null
     }

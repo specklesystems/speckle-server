@@ -1,6 +1,9 @@
-import type { PropertyInfo } from '@speckle/viewer'
 import { isStringPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
-import { ExistenceFilterCondition } from './types'
+import {
+  ExistenceFilterCondition,
+  type BooleanPropertyInfo,
+  type ExtendedPropertyInfo
+} from '~/lib/viewer/helpers/filters/types'
 
 export const revitPropertyRegex = /^parameters\./
 export const revitPropertyRegexDui3000InstanceProps = /^properties\.Instance/
@@ -59,7 +62,7 @@ export const shouldExcludeFromFiltering = (key: string): boolean => {
  */
 export const getPropertyName = (
   key: string,
-  availableFilters?: PropertyInfo[] | null
+  availableFilters?: ExtendedPropertyInfo[] | null
 ): string => {
   if (!key) return 'Loading'
 
@@ -68,7 +71,7 @@ export const getPropertyName = (
 
   if (isRevitProperty(key) && key.endsWith('.value')) {
     const correspondingProperty = (availableFilters || []).find(
-      (f: PropertyInfo) => f.key === key.replace('.value', '.name')
+      (f: ExtendedPropertyInfo) => f.key === key.replace('.value', '.name')
     )
     if (correspondingProperty && isStringPropertyInfo(correspondingProperty)) {
       return correspondingProperty.valueGroups[0]?.value || key.split('.').pop() || key
@@ -83,8 +86,8 @@ export const getPropertyName = (
  */
 export const findFilterByDisplayName = (
   displayKey: string,
-  availableFilters: PropertyInfo[] | null | undefined
-): PropertyInfo | undefined => {
+  availableFilters: ExtendedPropertyInfo[] | null | undefined
+): ExtendedPropertyInfo | undefined => {
   if (!availableFilters) return undefined
 
   // First, try to find an exact display name match
@@ -107,7 +110,7 @@ export const findFilterByDisplayName = (
  */
 export const isKvpFilterable = (
   kvp: { key: string; backendPath?: string },
-  availableFilters: PropertyInfo[] | null | undefined
+  availableFilters: ExtendedPropertyInfo[] | null | undefined
 ): boolean => {
   // Use backendPath for legacy compatibility, but prefer the direct key
   const propertyKey = kvp.backendPath || kvp.key
@@ -132,7 +135,7 @@ export const isKvpFilterable = (
  */
 export const getFilterDisabledReason = (
   kvp: { key: string; backendPath?: string },
-  availableFilters: PropertyInfo[] | null | undefined
+  availableFilters: ExtendedPropertyInfo[] | null | undefined
 ): string => {
   const availableKeys = availableFilters?.map((f) => f.key) || []
 
@@ -187,20 +190,22 @@ export const getFilterDisabledReason = (
  */
 export const findFilterByKvp = (
   kvp: { key: string; backendPath?: string },
-  availableFilters: PropertyInfo[] | null | undefined
-): PropertyInfo | undefined => {
+  availableFilters: ExtendedPropertyInfo[] | null | undefined
+): ExtendedPropertyInfo | undefined => {
   if (!availableFilters) return undefined
 
   if (kvp.backendPath) {
     const exactMatch = availableFilters.find(
-      (f: PropertyInfo) => f.key === kvp.backendPath
+      (f: ExtendedPropertyInfo) => f.key === kvp.backendPath
     )
     if (exactMatch) {
       return exactMatch
     }
   }
 
-  const directMatch = availableFilters.find((f: PropertyInfo) => f.key === kvp.key)
+  const directMatch = availableFilters.find(
+    (f: ExtendedPropertyInfo) => f.key === kvp.key
+  )
   if (directMatch) {
     return directMatch
   }
@@ -208,7 +213,7 @@ export const findFilterByKvp = (
   // If we have a backendPath but no exact match, try partial matching
   if (kvp.backendPath) {
     const pathParts = kvp.backendPath.split('.')
-    const partialMatches = availableFilters.filter((f: PropertyInfo) => {
+    const partialMatches = availableFilters.filter((f: ExtendedPropertyInfo) => {
       const filterParts = f.key.split('.')
 
       if (pathParts.length === 1) {
@@ -241,14 +246,17 @@ export const findFilterByKvp = (
   return findFilterByDisplayName(displayKey, availableFilters)
 }
 
-export const isBooleanProperty = (filter: PropertyInfo): boolean => {
+export const isBooleanProperty = (filter: ExtendedPropertyInfo): boolean => {
   return 'type' in filter && (filter as { type: string }).type === 'boolean'
 }
 
 /**
  * Get count for a specific filter value
  */
-export function getFilterValueCount(filter: PropertyInfo, value: string): number {
+export function getFilterValueCount(
+  filter: ExtendedPropertyInfo,
+  value: string
+): number {
   if (!('valueGroups' in filter) || !Array.isArray(filter.valueGroups)) {
     return 0
   }
@@ -268,7 +276,7 @@ export function getFilterValueCount(filter: PropertyInfo, value: string): number
  * Get count for existence filters (objects that have/don't have a property set)
  */
 export function getExistenceFilterCount(
-  filter: PropertyInfo,
+  filter: ExtendedPropertyInfo | BooleanPropertyInfo,
   condition: ExistenceFilterCondition,
   totalObjectCount?: number
 ): number {

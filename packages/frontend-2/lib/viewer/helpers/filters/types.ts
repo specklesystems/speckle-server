@@ -77,10 +77,16 @@ export type StringFilterData = BaseFilterData & {
   isDefaultAllSelected?: boolean
 }
 
-export type BooleanPropertyInfo = Omit<PropertyInfo, 'type'> & {
-  type: 'boolean'
-  valueGroups: { value: boolean; ids: string[] }[]
-}
+export type ExtendedPropertyInfo =
+  | PropertyInfo
+  | {
+      key: string
+      objectCount: number
+      type: 'boolean'
+      valueGroups: { value: boolean; ids: string[] }[]
+    }
+
+export type BooleanPropertyInfo = Extract<ExtendedPropertyInfo, { type: 'boolean' }>
 
 export type BooleanFilterData = BaseFilterData & {
   type: FilterType.Boolean
@@ -128,7 +134,7 @@ export type PropertySelectionListItem = {
 }
 
 export type CreateFilterParams = {
-  filter: PropertyInfo
+  filter: ExtendedPropertyInfo
   id: string
   availableValues?: string[]
 }

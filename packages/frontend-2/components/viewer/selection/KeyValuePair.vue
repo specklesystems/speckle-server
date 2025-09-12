@@ -76,8 +76,10 @@ import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import type { KeyValuePair } from '~/components/viewer/selection/types'
 import { isNumericPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
-import type { PropertyInfo } from '@speckle/viewer'
-import { BooleanFilterCondition } from '~/lib/viewer/helpers/filters/types'
+import {
+  BooleanFilterCondition,
+  type ExtendedPropertyInfo
+} from '~/lib/viewer/helpers/filters/types'
 import { isBooleanProperty } from '~/lib/viewer/helpers/filters/utils'
 
 const props = defineProps<{
@@ -103,13 +105,13 @@ const {
 } = useInjectedViewerState()
 
 const availableFilters = computed(
-  () => getPropertyOptionsFromDataStore() as PropertyInfo[]
+  () => getPropertyOptionsFromDataStore() as ExtendedPropertyInfo[]
 )
 
 const showActionsMenu = ref(false)
 
 const showLargePropertyWarning = ref(false)
-const pendingFilter = ref<PropertyInfo | null>(null)
+const pendingFilter = ref<ExtendedPropertyInfo | null>(null)
 const pendingFilterCount = ref(0)
 
 const isUrlString = (v: unknown) => typeof v === 'string' && VALID_HTTP_URL.test(v)
@@ -152,7 +154,7 @@ const handleAddToFilters = (kvp: KeyValuePair) => {
   }
 }
 
-const addFilterWithValue = (filter: PropertyInfo, kvp: KeyValuePair) => {
+const addFilterWithValue = (filter: ExtendedPropertyInfo, kvp: KeyValuePair) => {
   const filterId = addActiveFilter(filter)
 
   if (isNumericPropertyInfo(filter)) {
