@@ -16,7 +16,7 @@
           v-tippy="showPropertySelection ? undefined : 'Add new filter'"
           color="subtle"
           size="sm"
-          :class="showPropertySelection ? '!bg-highlight-3' : ''"
+          :class="showPropertySelection ? '!bg-highlight-3 !pointer-events-none' : ''"
           hide-text
           :icon-left="showPropertySelection ? X : Plus"
           @click="handleAddFilterClick"
@@ -96,7 +96,7 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { X, Plus } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
-import { onKeyStroke } from '@vueuse/core'
+import { onKeyStroke, onClickOutside } from '@vueuse/core'
 import { useFilteredObjectsCount } from '~/lib/viewer/composables/filtering/counts'
 import type { Nullable } from '@speckle/shared'
 
@@ -142,7 +142,10 @@ const propertySelectOptions = computed((): PropertySelectOption[] => {
       const lastDotIndex = filter.key.lastIndexOf('.')
       const propertyName =
         lastDotIndex === -1 ? filter.key : filter.key.slice(lastDotIndex + 1)
-      const parentPath = lastDotIndex === -1 ? '' : filter.key.slice(0, lastDotIndex)
+      const parentPath =
+        lastDotIndex === -1
+          ? ''
+          : filter.key.slice(0, lastDotIndex).replace(/\./g, ' › ')
 
       return {
         value: filter.key,
@@ -282,6 +285,13 @@ onKeyStroke('Escape', () => {
     pendingProperty.value = null
   } else if (showPropertySelection.value) {
     showPropertySelection.value = false
+  }
+})
+
+onClickOutside(propertySelectionRef, () => {
+  if (showPropertySelection.value) {
+    showPropertySelection.value = false
+    swappingFilterId.value = null
   }
 })
 
