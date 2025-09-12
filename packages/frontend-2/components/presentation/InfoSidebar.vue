@@ -27,9 +27,9 @@
       <div v-else class="px-2">
         <FormTextArea
           v-model="editableDescription"
-          name="presentation-description"
+          name="slide-description"
           label="Description"
-          placeholder="Presentation description"
+          placeholder="Description"
           color="foundation"
           label-position="top"
           class="w-full !text-foreground-2 !h-28"
