@@ -41,7 +41,7 @@
         :slides="presentation"
         :workspace-logo="workspace?.logo"
         :workspace-name="workspace?.name"
-        :current-slide-id="currentViewIndex"
+        :current-slide-id="currentViewId"
         :is-present-mode="isPresentMode"
         @select-slide="onSelectSlide"
       />
@@ -146,7 +146,7 @@ const { result } = useQuery(projectPresentationPageQuery, () => ({
   }
 }))
 
-const currentViewIndex = ref<string | undefined>()
+const currentViewId = ref<string | undefined>()
 const isInfoSidebarOpen = ref(true)
 const isLeftSidebarOpen = ref(true)
 const hideUi = ref(false)
@@ -160,13 +160,13 @@ const visibleSlides = computed(() =>
   allSlides.value.filter((view) => view.visibility === SavedViewVisibility.Public)
 )
 const currentView = computed(() =>
-  allSlides.value.find((slide) => slide.id === currentViewIndex.value)
+  allSlides.value.find((slide) => slide.id === currentViewId.value)
 )
 const slideCount = computed(() => visibleSlides.value?.length || 0)
 const presentation = computed(() => result.value?.project.savedViewGroup)
 const currentVisibleIndex = computed(() => {
-  if (!currentViewIndex.value) return 0
-  return visibleSlides.value.findIndex((slide) => slide.id === currentViewIndex.value)
+  if (!currentViewId.value) return 0
+  return visibleSlides.value.findIndex((slide) => slide.id === currentViewId.value)
 })
 const disablePrevious = computed(() => currentVisibleIndex.value === 0)
 const disableNext = computed(() =>
@@ -174,14 +174,14 @@ const disableNext = computed(() =>
 )
 
 const onSelectSlide = (slideId: string) => {
-  currentViewIndex.value = slideId
+  currentViewId.value = slideId
 }
 
 const onPrevious = () => {
   const currentIndex = currentVisibleIndex.value
   if (currentIndex > 0) {
     const previousSlide = visibleSlides.value[currentIndex - 1]
-    currentViewIndex.value = previousSlide.id
+    currentViewId.value = previousSlide.id
   }
 }
 
@@ -189,7 +189,7 @@ const onNext = () => {
   const currentIndex = currentVisibleIndex.value
   if (currentIndex < visibleSlides.value.length - 1) {
     const nextSlide = visibleSlides.value[currentIndex + 1]
-    currentViewIndex.value = nextSlide.id
+    currentViewId.value = nextSlide.id
   }
 }
 
@@ -228,18 +228,18 @@ watch(isPresentMode, (newVal, oldVal) => {
   }
 })
 
-watch(
-  visibleSlides,
-  (slides) => {
-    if (slides && slides.length > 0 && !currentViewIndex.value) {
-      currentViewIndex.value = slides[0].id
-    }
-  },
-  { immediate: true }
-)
-
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
+
+  // Initialize with first public slide after mount
+  if (visibleSlides.value && visibleSlides.value.length > 0 && !currentViewId.value) {
+    const firstPublicSlide = visibleSlides.value.find(
+      (slide) => slide.visibility === SavedViewVisibility.Public
+    )
+    if (firstPublicSlide) {
+      currentViewId.value = firstPublicSlide.id
+    }
+  }
 })
 
 onUnmounted(() => {
