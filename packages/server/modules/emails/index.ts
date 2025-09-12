@@ -1,42 +1,32 @@
 /* istanbul ignore file */
-import { moduleLogger } from '@/observability/logging'
-import * as SendingService from '@/modules/emails/services/sending'
-import { initializeTransporter } from '@/modules/emails/utils/transporter'
+import { emailLogger, moduleLogger } from '@/observability/logging'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import RestApi from '@/modules/emails/rest/index'
+import {
+  getEmailTransporterType,
+  isEmailEnabled,
+  isEmailSandboxMode
+} from '@/modules/shared/helpers/envHelper'
+import { initializeEmailTransport } from '@/modules/emails/clients/transportBuilder'
 
 const emailsModule: SpeckleModule = {
   init: async ({ app }) => {
     moduleLogger.info('📧 Init emails module')
 
-    // init transporter
-    await initializeTransporter()
+    const emailTransportType = getEmailTransporterType()
+    if (isEmailEnabled()) {
+      await initializeEmailTransport({
+        emailTransportType,
+        isSandboxMode: isEmailSandboxMode(),
+        logger: emailLogger
+      })
+    }
 
     // init rest api
     RestApi(app)
   }
 }
 
-/**
- * @deprecated Use `sendEmail` from `@/modules/emails/services/sending` instead
- */
-async function sendEmail({
-  from,
-  to,
-  subject,
-  text,
-  html
-}: {
-  from?: string
-  to: string
-  subject: string
-  text: string
-  html: string
-}) {
-  return SendingService.sendEmail({ from, to, subject, text, html })
-}
-
 export default {
-  ...emailsModule,
-  sendEmail
+  ...emailsModule
 }

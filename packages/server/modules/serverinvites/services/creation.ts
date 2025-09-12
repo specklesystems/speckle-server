@@ -1,5 +1,4 @@
 import crs from 'crypto-random-string'
-import emailsModule from '@/modules/emails'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import sanitizeHtml from 'sanitize-html'
 import type { ResolvedTargetData } from '@/modules/serverinvites/helpers/core'
@@ -30,6 +29,7 @@ import type { ServerInfo } from '@/modules/core/helpers/types'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import type { GetUser } from '@/modules/core/domain/users/operations'
 import type { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { sendEmail } from '@/modules/emails/services/sending'
 
 const getFinalTargetData = (
   target: string,
@@ -71,7 +71,7 @@ const sendInviteEmailFactory =
     )
 
     // send email and emit event
-    await emailsModule.sendEmail({
+    await sendEmail({
       subject: emailContents.subject,
       to: targetUser ? targetUser.email : targetData.userEmail!,
       ...renderedEmail
