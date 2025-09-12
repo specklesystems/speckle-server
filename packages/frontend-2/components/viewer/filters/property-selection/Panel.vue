@@ -1,7 +1,7 @@
 <template>
   <div
     ref="listContainer"
-    class="h-full flex flex-col select-none focus-visible:outline-none"
+    class="h-full flex flex-col select-none focus-visible:outline-none border border-outline-2 rounded-lg"
     tabindex="0"
     role="listbox"
     @keydown="handleListKeydown"

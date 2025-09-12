@@ -21,6 +21,10 @@
           v-if="filter.type === FilterType.Numeric"
           class="h-3 w-3 stroke-emerald-700 dark:stroke-emerald-500 shrink-0"
         />
+        <ToggleLeft
+          v-else-if="filter.type === FilterType.Boolean"
+          class="h-3 w-3 stroke-amber-500 dark:stroke-amber-400 shrink-0"
+        />
         <CaseUpper
           v-else
           class="h-3 w-3 stroke-violet-600 dark:stroke-violet-500 shrink-0"
@@ -59,6 +63,7 @@
         @click.stop="collapsed = !collapsed"
       />
       <FormButton
+        v-if="props.filter.type !== FilterType.Boolean"
         v-tippy="'Toggle coloring for this property'"
         :color="isColoringActive ? 'primary' : 'subtle'"
         size="sm"
@@ -77,7 +82,8 @@ import {
   CaseUpper,
   ChevronsUpDown,
   Ellipsis,
-  ChevronsDownUp
+  ChevronsDownUp,
+  ToggleLeft
 } from 'lucide-vue-next'
 import {
   FormButton,

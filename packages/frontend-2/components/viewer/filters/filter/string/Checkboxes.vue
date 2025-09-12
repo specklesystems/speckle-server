@@ -50,6 +50,7 @@ const sortMode = defineModel<SortMode>('sortMode', {
   default: SortMode.Alphabetical
 })
 
+const previousLength = ref(0)
 const itemHeight = 28
 const maxHeight = 240
 
@@ -65,8 +66,31 @@ const filteredValues = computed(() => {
   })
 })
 
-const { list, containerProps, wrapperProps } = useVirtualList(filteredValues, {
-  itemHeight,
-  overscan: 5
-})
+const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(
+  filteredValues,
+  {
+    itemHeight,
+    overscan: 10
+  }
+)
+
+// Scroll to newly added values
+watch(
+  () => props.filter.selectedValues,
+  (newValues) => {
+    if (newValues.length > previousLength.value) {
+      // Find the newly added value
+      const newValue = newValues[newValues.length - 1]
+      const index = filteredValues.value.findIndex((v) => v === newValue)
+      if (index !== -1) {
+        nextTick(() => {
+          const scrollIndex = Math.max(0, index - 3) // Center-ish position
+          scrollTo(scrollIndex)
+        })
+      }
+    }
+    previousLength.value = newValues.length
+  },
+  { immediate: true }
+)
 </script>
