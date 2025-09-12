@@ -168,7 +168,6 @@ const canPresent = computed(() => props.project.workspace?.hasAccessToFeature)
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => {
   const items: LayoutMenuItem<MenuItems>[][] = []
 
-  // Only add presentation menu if user can present
   if (canPresent.value) {
     items.push([
       {
