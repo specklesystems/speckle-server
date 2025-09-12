@@ -6,8 +6,9 @@ import {
   getEmailPort,
   getEmailUsername,
   isEmailEnabled,
-  isSecureEmailEnabled,
-  isTestEnv
+  isSSLEmailEnabled,
+  isTestEnv,
+  isTLSEmailRequired
 } from '@/modules/shared/helpers/envHelper'
 import type { Transporter } from 'nodemailer'
 import { createTransport } from 'nodemailer'
@@ -21,7 +22,8 @@ const initSmtpTransporter = async () => {
     const smtpTransporter = createTransport({
       host: getEmailHost(),
       port: getEmailPort(),
-      secure: isSecureEmailEnabled(),
+      requireTLS: isTLSEmailRequired(),
+      secure: isSSLEmailEnabled(),
       auth: {
         user: getEmailUsername(),
         pass: getEmailPassword()

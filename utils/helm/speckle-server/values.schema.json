@@ -1309,7 +1309,12 @@
             },
             "secure": {
               "type": "boolean",
-              "description": "If true, will use TLS when connecting to the email server",
+              "description": "If true, will use SSL when connecting to the email server. requireTLS would be preferable if the server supports it. Both 'secure' and 'requireTLS' can be false if the email server does not support encryption, but this is not recommended. Both 'secure' and 'requireTLS' cannot be true at the same time.",
+              "default": false
+            },
+            "requireTLS": {
+              "type": "boolean",
+              "description": "If true, will require TLS when connecting to the email server. This is preferable to 'secure' if the email server supports TLS. Both 'secure' and 'requireTLS' can be false if the email server does not support encryption, but this is not recommended. Both 'secure' and 'requireTLS' cannot be true at the same time.",
               "default": true
             },
             "networkPolicy": {
