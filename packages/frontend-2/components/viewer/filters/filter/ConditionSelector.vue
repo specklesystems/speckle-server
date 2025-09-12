@@ -3,6 +3,7 @@
     v-model:open="showMenu"
     :class="noPadding ? '' : 'pl-9'"
     :items="menuItems"
+    mount-menu-on-body
     show-ticks="right"
     :custom-menu-items-classes="[
       '!text-body-2xs',

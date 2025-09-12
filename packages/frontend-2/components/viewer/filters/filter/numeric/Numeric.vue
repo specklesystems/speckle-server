@@ -1,5 +1,5 @@
 <template>
-  <div class="pt-0.5">
+  <div class="pt-0.5 w-full">
     <ViewerFiltersFilterConditionSelector
       :filter="filter"
       :no-padding="noPadding"
