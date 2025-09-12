@@ -1,6 +1,6 @@
 import type { PropertyInfo } from '@speckle/viewer'
 import { isStringPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
-import { ExistenceFilterCondition } from './types'
+import { ExistenceFilterCondition, FilterType, type DataSource } from './types'
 
 export const revitPropertyRegex = /^parameters\./
 export const revitPropertyRegexDui3000InstanceProps = /^properties\.Instance/
@@ -232,7 +232,16 @@ export function injectGradientDataIntoDataStore(
     return
   }
 
-  for (const dataSource of filteringDataStore.dataSources.value) {
+  const store = filteringDataStore as {
+    dataSources: {
+      value: DataSource[]
+    }
+  }
+  if (!store.dataSources?.value) {
+    return
+  }
+
+  for (const dataSource of store.dataSources.value) {
     for (const [objectId, { gradientValue }] of Object.entries(gradientValues)) {
       // Add the gradient property to the object if it exists in this data source
       if (dataSource.objectProperties[objectId]) {
@@ -245,7 +254,7 @@ export function injectGradientDataIntoDataStore(
       dataSource.propertyMap[propertyKey] = {
         concatenatedPath: propertyKey,
         value: Object.values(gradientValues)[0]?.gradientValue || 0,
-        type: 'number'
+        type: FilterType.Numeric
       }
     }
   }

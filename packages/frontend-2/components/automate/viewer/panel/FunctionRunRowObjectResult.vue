@@ -169,7 +169,7 @@ const setOrUnsetGradient = () => {
   if (!computedPropInfo.value) return
   if (!props.functionId) return
 
-  const gradientValues = props.result.metadata.gradientValues || {}
+  const gradientValues = props.result.metadata?.gradientValues || {}
   injectGradientDataIntoDataStore(filteringDataStore, props.functionId, gradientValues)
 
   metadataGradientIsSet.value = true
