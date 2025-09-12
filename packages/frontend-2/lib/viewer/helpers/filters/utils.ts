@@ -1,7 +1,9 @@
 import { isStringPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
 import {
   ExistenceFilterCondition,
+  FilterType,
   type BooleanPropertyInfo,
+  type DataSource,
   type ExtendedPropertyInfo
 } from '~/lib/viewer/helpers/filters/types'
 
@@ -303,5 +305,45 @@ export function getExistenceFilterCount(
   } else {
     const relevantObjectCount = filter.objectCount ?? totalObjectCount ?? 0
     return Math.max(0, relevantObjectCount - objectsWithProperty)
+  }
+}
+
+/**
+ * Injects gradient data into the filtering data store so it can be used for filtering
+ */
+export function injectGradientDataIntoDataStore(
+  filteringDataStore: unknown,
+  propertyKey: string,
+  gradientValues: Record<string, { gradientValue: number }>
+): void {
+  if (!filteringDataStore || Object.keys(gradientValues).length === 0) {
+    return
+  }
+
+  const store = filteringDataStore as {
+    dataSources: {
+      value: DataSource[]
+    }
+  }
+  if (!store.dataSources?.value) {
+    return
+  }
+
+  for (const dataSource of store.dataSources.value) {
+    for (const [objectId, { gradientValue }] of Object.entries(gradientValues)) {
+      // Add the gradient property to the object if it exists in this data source
+      if (dataSource.objectProperties[objectId]) {
+        dataSource.objectProperties[objectId][propertyKey] = gradientValue
+      }
+    }
+
+    // Add property info to the propertyMap if not already present
+    if (!dataSource.propertyMap[propertyKey]) {
+      dataSource.propertyMap[propertyKey] = {
+        concatenatedPath: propertyKey,
+        value: Object.values(gradientValues)[0]?.gradientValue || 0,
+        type: FilterType.Numeric
+      }
+    }
   }
 }
