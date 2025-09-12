@@ -70,7 +70,7 @@
         <template v-else-if="previewUrl && !isVersionUploading">
           <NuxtLink
             :to="!defaultLinkDisabled ? modelUrl : undefined"
-            class="relative z-20 bg-foundation-page w-full rounded-xl border border-outline-2"
+            class="relative z-20 bg-foundation-page w-full rounded-xl border border-outline-2 overflow-hidden"
             :class="smallView ? 'h-24' : 'h-48'"
           >
             <PreviewImage :preview-url="previewUrl" />

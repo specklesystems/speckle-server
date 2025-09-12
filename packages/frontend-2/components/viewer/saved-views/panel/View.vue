@@ -20,7 +20,7 @@
           v-if="isHomeView && !isFederatedView"
           class="absolute -top-1 -left-1 bg-orange-500 w-4 h-4 flex items-center justify-center rounded-[3px]"
         >
-          <Bookmark class="text-white w-3 h-3" fill="currentColor" stroke-width="0" />
+          <IconHome class="w-3 h-3" />
         </div>
       </div>
     </div>
@@ -108,7 +108,7 @@ import {
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { difference } from 'lodash-es'
-import { Ellipsis, SquarePen, Bookmark, User } from 'lucide-vue-next'
+import { Ellipsis, SquarePen, User } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   SavedViewVisibility,
