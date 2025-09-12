@@ -142,7 +142,7 @@ const propertySelectOptions = computed((): PropertySelectOption[] => {
       const parentPath =
         lastDotIndex === -1
           ? ''
-          : filter.key.slice(0, lastDotIndex).replace(/\./g, ' > ')
+          : filter.key.slice(0, lastDotIndex).replace(/\./g, ' › ')
 
       return {
         value: filter.key,
