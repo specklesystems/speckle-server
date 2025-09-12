@@ -64,6 +64,7 @@
         :description="currentView?.description"
         :view-id="currentView?.id"
         :project-id="projectId"
+        :is-present-mode="isPresentMode"
       />
 
       <PresentationControls
