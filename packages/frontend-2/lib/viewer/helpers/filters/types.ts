@@ -139,11 +139,39 @@ export type CreateFilterParams = {
   availableValues?: string[]
 }
 
-// Internal Data Types
+// Property Extractor Types
 export type PropertyInfoBase = {
+  path: string[]
+  concatenatedPath: string
+  type: string
+  name: string
+}
+
+// Internal Data Types (for filtering system)
+export type FilteringPropertyInfo = {
   concatenatedPath: string
   value: string | number
   type: FilterType
+}
+
+export type PropertyInfoValue = {
+  value: unknown
+} & PropertyInfoBase
+
+export type Parameter = {
+  units?: string
+} & PropertyInfoValue
+
+export type RevitMaterialPropertyInfo = {
+  materialCategory: string
+  materialClass: string
+} & Parameter
+
+export type RevitMaterialInfo = {
+  materialCategory: string
+  materialClass: string
+  area: { units: string; value: number }
+  volume: { units: string; value: number }
 }
 
 export type DataSlice = {
@@ -167,7 +195,7 @@ export type DataSource = {
   viewerInstance: Viewer
   rootObject: Nullable<SpeckleObject>
   objectMap: Record<string, SpeckleObject>
-  propertyMap: Record<string, PropertyInfoBase>
+  propertyMap: Record<string, FilteringPropertyInfo>
   objectProperties: Record<string, Record<string, unknown>>
 }
 
