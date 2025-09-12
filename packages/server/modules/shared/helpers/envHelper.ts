@@ -3,6 +3,7 @@ import { has, trimEnd } from 'lodash-es'
 import * as Environment from '@speckle/shared/environment'
 import type { Nullable } from '@speckle/shared'
 import { ensureError } from '@speckle/shared'
+import { logger } from '@/observability/logging'
 
 export function getStringFromEnv(
   envVarKey: string,
@@ -383,8 +384,24 @@ export function getEmailPort() {
   return getIntFromEnv('EMAIL_PORT', '587')
 }
 
-export function isSecureEmailEnabled() {
-  return getBooleanFromEnv('EMAIL_SECURE', true) // default to secure
+export function isSSLEmailEnabled() {
+  const sslRequired = getBooleanFromEnv('EMAIL_SECURE', false) // see EMAIL_REQUIRE_TLS
+  if (sslRequired && isTLSEmailRequired()) {
+    throw new MisconfiguredEnvironmentError(
+      'EMAIL_SECURE and EMAIL_REQUIRE_TLS cannot both be true. TLS would typically be preferred over SSL.'
+    )
+  }
+  return sslRequired
+}
+
+export function isTLSEmailRequired() {
+  const tlsRequired = getBooleanFromEnv('EMAIL_REQUIRE_TLS', true) // default to true
+  if (!tlsRequired && !isSSLEmailEnabled()) {
+    logger.warn(
+      'Neither EMAIL_SECURE and EMAIL_REQUIRE_TLS are true. Client will attempt to upgrade to TLS on connect, but will default to whatever the server supports which may be insecure.'
+    )
+  }
+  return tlsRequired
 }
 
 export function getEmailUsername() {
