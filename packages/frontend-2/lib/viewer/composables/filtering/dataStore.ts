@@ -4,7 +4,8 @@ import {
   FilterLogic,
   NumericFilterCondition,
   StringFilterCondition,
-  ExistenceFilterCondition
+  ExistenceFilterCondition,
+  BooleanFilterCondition
 } from '~/lib/viewer/helpers/filters/types'
 import type {
   DataSlice,
@@ -226,6 +227,26 @@ export function useCreateViewerFilteringDataStore() {
         )) {
           const hasProperty = criteria.propertyKey in objProps
           if (!hasProperty) {
+            matchingIds.push(objectId)
+          }
+        }
+      } else if (criteria.condition === BooleanFilterCondition.IsTrue) {
+        // Find all  where this property is true
+        for (const [objectId, objProps] of Object.entries(
+          dataSource.objectProperties
+        )) {
+          const value = objProps[criteria.propertyKey]
+          if (value === true || value === 'true') {
+            matchingIds.push(objectId)
+          }
+        }
+      } else if (criteria.condition === BooleanFilterCondition.IsFalse) {
+        // Find all objects where this property is false
+        for (const [objectId, objProps] of Object.entries(
+          dataSource.objectProperties
+        )) {
+          const value = objProps[criteria.propertyKey]
+          if (value === false || value === 'false') {
             matchingIds.push(objectId)
           }
         }

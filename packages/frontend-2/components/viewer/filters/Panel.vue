@@ -87,9 +87,11 @@
 
 <script setup lang="ts">
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
-import type { PropertySelectOption } from '~/lib/viewer/helpers/filters/types'
+import type {
+  PropertySelectOption,
+  ExtendedPropertyInfo
+} from '~/lib/viewer/helpers/filters/types'
 import { FilterType } from '~/lib/viewer/helpers/filters/types'
-import type { PropertyInfo } from '@speckle/viewer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { X, Plus } from 'lucide-vue-next'
 import { FormButton } from '@speckle/ui-components'
@@ -120,7 +122,8 @@ const filtersContainerRef = ref<HTMLElement>()
 const shouldScrollToNewFilter = ref(false)
 
 const showLargePropertyWarning = ref(false)
-const pendingProperty = ref<Nullable<{ property: PropertyInfo; count: number }>>(null)
+const pendingProperty =
+  ref<Nullable<{ property: ExtendedPropertyInfo; count: number }>>(null)
 
 const propertySelectOptions = computed((): PropertySelectOption[] => {
   if (!showPropertySelection.value) {
@@ -145,7 +148,12 @@ const propertySelectOptions = computed((): PropertySelectOption[] => {
         value: filter.key,
         label: propertyName,
         parentPath,
-        type: filter.type === 'number' ? FilterType.Numeric : FilterType.String,
+        type:
+          filter.type === 'number'
+            ? FilterType.Numeric
+            : (filter as { type: string }).type === 'boolean'
+            ? FilterType.Boolean
+            : FilterType.String,
         hasParent: lastDotIndex !== -1
       }
     })
@@ -217,7 +225,7 @@ const selectProperty = async (propertyKey: string) => {
   }
 
   // Check if this property has too many unique values
-  const { isLarge, count } = isLargeProperty(propertyKey)
+  const { isLarge, count } = isLargeProperty(property.key)
 
   if (isLarge) {
     // Store the pending property and show warning
@@ -229,7 +237,10 @@ const selectProperty = async (propertyKey: string) => {
   processPropertySelection(property, propertyKey)
 }
 
-const processPropertySelection = (property: PropertyInfo, propertyKey: string) => {
+const processPropertySelection = (
+  property: ExtendedPropertyInfo,
+  propertyKey: string
+) => {
   if (swappingFilterId.value) {
     updateFilterProperty(swappingFilterId.value, property)
     mp.track('Viewer Action', {

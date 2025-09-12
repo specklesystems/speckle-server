@@ -1,6 +1,9 @@
 <template>
   <div class="border border-outline-2 rounded-xl mb-2">
-    <div class="p-1" :class="{ 'border-b border-outline-3': !collapsed }">
+    <div
+      class="p-1"
+      :class="{ 'border-b border-outline-3': !collapsed && !isBooleanFilter(filter) }"
+    >
       <ViewerFiltersFilterHeader
         v-model:collapsed="collapsed"
         :filter="filter"
@@ -13,6 +16,10 @@
       :class="{ 'opacity-50': !filter.isApplied }"
     >
       <ViewerFiltersFilterNumeric v-if="isNumericFilter(filter)" :filter="filter" />
+      <ViewerFiltersFilterBoolean
+        v-else-if="isBooleanFilter(filter)"
+        :filter="filter"
+      />
       <ViewerFiltersFilterString
         v-else
         :filter="filter"
@@ -33,7 +40,8 @@ import type { FilterData, ConditionOption } from '~/lib/viewer/helpers/filters/t
 import {
   isNumericFilter,
   isExistenceCondition,
-  SortMode
+  SortMode,
+  isBooleanFilter
 } from '~/lib/viewer/helpers/filters/types'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 

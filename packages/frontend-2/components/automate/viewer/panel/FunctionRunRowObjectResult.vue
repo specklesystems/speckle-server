@@ -109,11 +109,6 @@ const isolateOrUnisolateObjects = () => {
 
 const metadataGradientIsSet = ref(false)
 
-watch(filteringState, (newVal) => {
-  if (newVal?.activePropFilterKey !== props.functionId)
-    metadataGradientIsSet.value = false
-})
-
 // NOTE: This is currently a hacky convention!!!
 const computedPropInfo = computed(() => {
   if (!hasMetadataGradient.value) return
@@ -202,4 +197,16 @@ const iconAndColor = computed(() => {
       }
   }
 })
+
+watch(
+  () => filters.propertyFilters.value,
+  (newFilters) => {
+    if (!props.functionId) return
+    const hasFilter = newFilters.some((f) => f.filter?.key === props.functionId)
+    if (!hasFilter && metadataGradientIsSet.value) {
+      metadataGradientIsSet.value = false
+    }
+  },
+  { deep: true }
+)
 </script>

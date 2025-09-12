@@ -13,6 +13,10 @@
         v-if="property.type === FilterType.Numeric"
         class="h-3 w-3 stroke-emerald-700 dark:stroke-emerald-500"
       />
+      <ToggleLeft
+        v-else-if="property.type === FilterType.Boolean"
+        class="h-3 w-3 stroke-amber-500 dark:stroke-amber-400"
+      />
       <CaseUpper v-else class="h-3 w-3 stroke-violet-600 dark:stroke-violet-500" />
       <div class="min-w-0 flex-1">
         <div
@@ -34,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { Hash, CaseUpper } from 'lucide-vue-next'
+import { Hash, CaseUpper, ToggleLeft } from 'lucide-vue-next'
 import type { PropertyOption } from '~/lib/viewer/helpers/filters/types'
 import { FilterType } from '~/lib/viewer/helpers/filters/types'
 
