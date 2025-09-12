@@ -31,7 +31,7 @@ export const PanelShortcuts = {
     action: 'ToggleDevMode'
   },
   ToggleSavedViews: {
-    name: 'Saved Views',
+    name: 'Saved views',
     description: 'Toggle saved views panel',
     modifiers: [ModifierKeys.Shift],
     key: 'S',
