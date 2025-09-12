@@ -5,17 +5,17 @@
     </div>
 
     <aside
-      class="relative z-20 bg-foundation h-screen w-1/2 md:w-60 border-r border-outline-3 pt-3 pl-3"
+      class="relative z-20 bg-foundation h-screen w-1/2 md:w-60 border-r border-outline-3 pt-3"
     >
       <div class="flex flex-col h-full">
-        <section class="flex-shrink-0 flex items-center gap-2.5">
+        <section class="flex-shrink-0 flex items-center gap-2.5 px-3">
           <WorkspaceAvatar size="lg" :name="workspaceName" :logo="workspaceLogo" />
           <p class="text-body-xs text-foreground">
             {{ workspaceName }}
           </p>
         </section>
         <section
-          class="flex-1 flex justify-center simple-scrollbar overflow-y-auto mt-3 pb-3 pr-3"
+          class="flex-1 flex justify-center simple-scrollbar overflow-y-auto mt-3 pb-3 px-3"
         >
           <ul class="flex flex-col gap-1 w-full">
             <template v-for="slide in slides" :key="slide.id">
@@ -29,7 +29,7 @@
                     currentSlideId === slide.id ? '!border-outline-5' : '',
                     slide.visibility !== SavedViewVisibility.AuthorOnly
                       ? 'hover:!border-outline-4'
-                      : ''
+                      : 'cursor-not-allowed'
                   ]"
                   :disabled="slide.visibility === SavedViewVisibility.AuthorOnly"
                   @click="emit('select-slide', slide.id)"
@@ -56,6 +56,8 @@
             </template>
           </ul>
         </section>
+
+        <PresentationLeftSidebarUserMenu />
       </div>
     </aside>
   </div>

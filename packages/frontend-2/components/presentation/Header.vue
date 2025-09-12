@@ -1,8 +1,8 @@
 <template>
   <PresentationFloatingPanel>
     <div
-      class="flex items-center justify-between space-x-1 md:pr-1"
-      :class="[isSidebarOpen ? '' : 'pr-1']"
+      class="flex items-center justify-between space-x-1 md:pr-1.5"
+      :class="[isSidebarOpen ? '' : 'pr-1.5']"
     >
       <PresentationFloatingPanelButton
         :active="isSidebarOpen"
