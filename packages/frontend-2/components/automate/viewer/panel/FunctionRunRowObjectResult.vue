@@ -20,10 +20,11 @@
         {{ result.message }}
       </div>
     </button>
-    <div class="flex mt-2 ml-3 overflow-hidden">
-      <ViewerExplorerNumericFilter
-        v-if="metadataGradientIsSet && computedPropInfo"
-        :filter="computedPropInfo"
+    <div class="flex mt-2 px-3 overflow-hidden">
+      <ViewerFiltersFilterNumeric
+        v-if="metadataGradientIsSet && computedFilterData"
+        :filter="computedFilterData"
+        no-padding
       />
     </div>
   </div>
@@ -41,6 +42,9 @@ import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering
 import type { NumericPropertyInfo } from '@speckle/viewer'
 import { containsAll } from '~~/lib/common/helpers/utils'
 import type { Automate } from '@speckle/shared'
+import type { NumericFilterData } from '~/lib/viewer/helpers/filters/types'
+import { isNumericFilter } from '~/lib/viewer/helpers/filters/types'
+import { injectGradientDataIntoDataStore } from '~/lib/viewer/helpers/filters/utils'
 
 type ObjectResult = Automate.AutomateTypes.ResultsSchema['values']['objectResults'][0]
 
@@ -51,11 +55,11 @@ const props = defineProps<{
 
 const {
   viewer: {
-    metadata: { filteringState }
+    metadata: { filteringState, filteringDataStore }
   }
 } = useInjectedViewerState()
 
-const { isolateObjects, resetFilters, addActiveFilter, toggleFilterApplied } =
+const { isolateObjects, resetFilters, addActiveFilter, toggleFilterApplied, filters } =
   useFilterUtilities()
 const { setSelectionFromObjectIds, clearSelection } = useSelectionUtilities()
 
@@ -144,6 +148,16 @@ const computedPropInfo = computed(() => {
   return propInfo
 })
 
+const computedFilterData = computed((): NumericFilterData | undefined => {
+  if (!metadataGradientIsSet.value || !props.functionId) return
+
+  const activeFilter = filters.propertyFilters.value.find(
+    (f) => f.filter?.key === props.functionId
+  )
+
+  return activeFilter && isNumericFilter(activeFilter) ? activeFilter : undefined
+})
+
 const setOrUnsetGradient = () => {
   if (metadataGradientIsSet.value) {
     resetFilters()
@@ -153,6 +167,10 @@ const setOrUnsetGradient = () => {
   resetFilters()
   if (!props.result.metadata) return
   if (!computedPropInfo.value) return
+  if (!props.functionId) return
+
+  const gradientValues = props.result.metadata?.gradientValues || {}
+  injectGradientDataIntoDataStore(filteringDataStore, props.functionId, gradientValues)
 
   metadataGradientIsSet.value = true
   const filterId = addActiveFilter(computedPropInfo.value)

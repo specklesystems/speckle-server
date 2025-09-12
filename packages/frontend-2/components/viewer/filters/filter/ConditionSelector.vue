@@ -1,8 +1,9 @@
 <template>
   <LayoutMenu
     v-model:open="showMenu"
-    class="pl-9"
+    :class="noPadding ? '' : 'pl-9'"
     :items="menuItems"
+    mount-menu-on-body
     show-ticks="right"
     :custom-menu-items-classes="[
       '!text-body-2xs',
@@ -46,6 +47,7 @@ import { LayoutMenu, FormButton, type LayoutMenuItem } from '@speckle/ui-compone
 
 const props = defineProps<{
   filter: FilterData
+  noPadding?: boolean
 }>()
 
 const emit = defineEmits(['selectCondition'])

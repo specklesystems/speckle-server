@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-2 px-9 pt-1 pb-2">
+  <div class="flex flex-col gap-2 pt-1 pb-2" :class="{ 'px-9': !noPadding }">
     <FormDualRange
       v-model="rangeValues"
       :name="`range-${filter.id}`"
@@ -26,6 +26,7 @@ import type { NumericFilterData } from '~/lib/viewer/helpers/filters/types'
 
 const props = defineProps<{
   filter: NumericFilterData
+  noPadding?: boolean
 }>()
 
 const { setNumericRange, filters } = useFilterUtilities()

@@ -383,8 +383,12 @@ export function getEmailPort() {
   return getIntFromEnv('EMAIL_PORT', '587')
 }
 
-export function isSecureEmailEnabled() {
-  return getBooleanFromEnv('EMAIL_SECURE', true) // default to secure
+export function isSSLEmailEnabled() {
+  return getBooleanFromEnv('EMAIL_SECURE', false) // see EMAIL_REQUIRE_TLS
+}
+
+export function isTLSEmailRequired() {
+  return getBooleanFromEnv('EMAIL_REQUIRE_TLS', true) // default to true
 }
 
 export function getEmailUsername() {

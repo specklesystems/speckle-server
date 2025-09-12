@@ -15,6 +15,7 @@ from specklepy.core.api.inputs.file_import_inputs import (
     FileImportSuccessInput,
 )
 from specklepy.core.api.models import Version
+from specklepy.logging import metrics
 
 from ifc_importer.domain import FileimportPayload, JobStatus
 from ifc_importer.repository import (
@@ -39,6 +40,12 @@ def setup_client(job_payload: FileimportPayload) -> SpeckleClient:
             "with the provided token",
         )
         raise ValueError(msg)
+
+    if not speckle_client.account.userInfo.email:
+        raise ValueError(
+            "activeUser.email did not get fetched. Does the token lack profile:email?"
+        )
+
     return speckle_client
 
 
@@ -90,8 +97,12 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
         start = time.time()
         duration = 0
         job_timeout = max(
-            0, min(job.payload.time_out_seconds, job.remaining_compute_budget_seconds)
+            1, min(job.payload.time_out_seconds, job.remaining_compute_budget_seconds)
         )
+
+        # Forcefully reset metrics, we don't want it to reuse any server/user ids between jobs
+        metrics.METRICS_TRACKER = None
+        metrics.HOST_APP = "ifc"
 
         speckle_client = setup_client(job.payload)
 
