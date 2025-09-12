@@ -5,6 +5,7 @@
       <!-- Model Header -->
       <div
         class="group flex items-center h-16 select-none cursor-pointer hover:bg-highlight-1 border-b border-outline-3"
+        :class="isHidden ? 'opacity-50' : ''"
         @mouseenter="highlightObject"
         @mouseleave="unhighlightObject"
         @focusin="highlightObject"
@@ -58,7 +59,9 @@
         </div>
         <div
           class="flex items-center ml-auto mr-2 w-0 group-hover:w-auto opacity-0 group-hover:opacity-100 transition"
-          :class="showActionsMenu ? '!w-auto !opacity-100' : ''"
+          :class="
+            showActionsMenu || isIsolated || isHidden ? '!w-auto !opacity-100' : ''
+          "
         >
           <LayoutMenu
             v-model:open="showActionsMenu"
