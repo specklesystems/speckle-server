@@ -2,7 +2,7 @@ import { cliLogger } from '@/observability/logging'
 import type { MentionedInCommentData } from '@/modules/notifications/helpers/types'
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import { publishNotification } from '@/modules/notifications/services/publication'
-import { initializeQueue } from '@/modules/notifications/services/queue'
+import { initializePublicationQueue } from '@/modules/notifications/services/publicationQueue'
 import type { CommandModule } from 'yargs'
 
 const command: CommandModule = {
@@ -22,7 +22,7 @@ const command: CommandModule = {
       })
   },
   handler: async (argv) => {
-    await initializeQueue()
+    await initializePublicationQueue()
 
     // we don't want to submit a real mentions payload, this is for testing only
     await publishNotification(NotificationType.MentionedInComment, {

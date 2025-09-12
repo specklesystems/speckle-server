@@ -550,3 +550,6 @@ export function getAutodeskIntegrationClientSecret() {
 
 export const areSavedViewsEnabled = (): boolean =>
   getFeatureFlags().FF_SAVED_VIEWS_ENABLED
+
+export const isNotificationListenerEnabled = (): boolean =>
+  getFeatureFlags().FF_NOTIFICATION_LISTENER_ENABLED
