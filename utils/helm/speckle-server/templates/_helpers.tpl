@@ -987,6 +987,11 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.server.email.from | quote }}
 - name: EMAIL_SECURE
   value: {{ .Values.server.email.secure | quote }}
+<<<<<<< HEAD
+=======
+- name: EMAIL_REQUIRE_TLS
+  value: {{ .Values.server.email.requireTLS | quote }}
+>>>>>>> main
 - name: EMAIL_VERIFICATION_TIMEOUT_MINUTES
   value: {{ .Values.server.email.verificationTimeoutMinutes | quote }}
 {{- end }}

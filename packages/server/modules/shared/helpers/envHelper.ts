@@ -7,20 +7,16 @@ import { ensureError } from '@speckle/shared'
 export function getStringFromEnv(
   envVarKey: string,
   options?: Partial<{
+    default?: string
     /**
      * If set to true, wont throw if the env var is not set
      */
-    unsafe: boolean
-    /**
-     * If set, will return this value if the env var is not set
-     * Takes preceden
-     */
-    default?: string
+    unsafe?: boolean
   }>
 ): string {
   const envVar = process.env[envVarKey]
   if (!envVar) {
-    if (options?.default) return options.default
+    if (options?.default !== undefined) return options.default
     if (options?.unsafe) return ''
     throw new MisconfiguredEnvironmentError(`${envVarKey} env var not configured`)
   }
@@ -397,8 +393,12 @@ export function isEmailSandboxMode() {
   return getBooleanFromEnv('EMAIL_SANDBOX_MODE', isDevOrTestEnv())
 }
 
-export function isSecureEmailEnabled() {
-  return getBooleanFromEnv('EMAIL_SECURE', true) // default to secure
+export function isSSLEmailEnabled() {
+  return getBooleanFromEnv('EMAIL_SECURE', false) // see EMAIL_REQUIRE_TLS
+}
+
+export function isTLSEmailRequired() {
+  return getBooleanFromEnv('EMAIL_REQUIRE_TLS', true) // default to true
 }
 
 export function getEmailUsername() {

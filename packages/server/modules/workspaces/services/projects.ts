@@ -29,7 +29,6 @@ import type {
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import type { WorkspaceProjectCreateInput } from '@/modules/core/graph/generated/graphql'
 import {
-  getDb,
   getReplicationDbs,
   getValidDefaultProjectRegionKey
 } from '@/modules/multiregion/utils/dbSelector'
@@ -38,11 +37,6 @@ import {
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
-import { mainDb } from '@/db/knex'
-import {
-  getWorkspaceFactory,
-  upsertWorkspaceFactory
-} from '@/modules/workspaces/repositories/workspaces'
 import type {
   GetWorkspaceRoleAndSeat,
   GetWorkspaceRolesAndSeats,
@@ -318,20 +312,7 @@ export const createWorkspaceProjectFactory =
     })
     const regionKey =
       workspaceDefaultRegion?.key ?? (await getValidDefaultProjectRegionKey())
-    const projectDb = await getDb({ regionKey })
-    const db = mainDb
 
-    const regionalWorkspace = await getWorkspaceFactory({ db: projectDb })({
-      workspaceId: input.workspaceId
-    })
-
-    if (!regionalWorkspace) {
-      const workspace = await getWorkspaceFactory({ db })({
-        workspaceId: input.workspaceId
-      })
-      if (!workspace) throw new WorkspaceNotFoundError()
-      await upsertWorkspaceFactory({ db: projectDb })({ workspace })
-    }
     const project = await asMultiregionalOperation(
       async ({ allDbs, mainDb, emit }) => {
         const createNewProject = createNewProjectFactory({

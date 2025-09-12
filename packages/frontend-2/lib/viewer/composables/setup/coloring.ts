@@ -17,7 +17,7 @@ export const useFilterColoringPostSetup = () => {
   const filteringExtension = () => viewer.instance.getExtension(FilteringExtension)
 
   /**
-   * Sets color filter for numeric filters using setUserObjectColors
+   * Sets color filter for numeric filters using setColorFilter
    */
   const setNumericColorFilter = (filterId: string) => {
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
@@ -29,37 +29,19 @@ export const useFilterColoringPostSetup = () => {
     const min = parseFloat(filter.numericRange.min.toFixed(4))
     const max = parseFloat(filter.numericRange.max.toFixed(4))
 
-    const colorGroups =
-      numericFilter.valueGroups
-        ?.filter((vg) => {
-          // Apply the same rounding precision to valueGroup values for consistent comparison
-          const roundedValue = parseFloat(vg.value.toFixed(4))
-          const inRange = roundedValue >= min && roundedValue <= max
-          return inRange
-        })
-        ?.map((vg) => {
-          const normalizedValue = (vg.value - min) / (max - min)
-          const fromColor = { r: 59, g: 130, b: 246 } // #3b82f6
-          const toColor = { r: 236, g: 72, b: 153 } // #ec4899
-
-          const r = Math.round(
-            fromColor.r + (toColor.r - fromColor.r) * normalizedValue
-          )
-          const g = Math.round(
-            fromColor.g + (toColor.g - fromColor.g) * normalizedValue
-          )
-          const b = Math.round(
-            fromColor.b + (toColor.b - fromColor.b) * normalizedValue
-          )
-
-          return {
-            objectIds: [vg.id],
-            color: `rgb(${r}, ${g}, ${b})`
-          }
-        }) || []
+    const updatedFilter: NumericPropertyInfo = {
+      key: numericFilter.key,
+      objectCount: numericFilter.objectCount,
+      type: numericFilter.type,
+      min: numericFilter.min,
+      max: numericFilter.max,
+      valueGroups: numericFilter.valueGroups,
+      passMin: min,
+      passMax: max
+    }
 
     const extension = filteringExtension()
-    extension.setUserObjectColors(colorGroups)
+    extension.setColorFilter(updatedFilter)
   }
 
   /**
@@ -79,7 +61,6 @@ export const useFilterColoringPostSetup = () => {
   const removeColorFilter = () => {
     const extension = filteringExtension()
     extension.removeColorFilter()
-    extension.removeUserObjectColors()
   }
 
   /**
