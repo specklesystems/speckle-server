@@ -275,7 +275,7 @@ export function useFilterUtilities(
   const isBooleanPropertyInfo = (
     prop: PropertyInfo | BooleanPropertyInfo
   ): prop is BooleanPropertyInfo => {
-    return 'type' in prop && (prop as BooleanPropertyInfo).type === 'boolean'
+    return prop.type === 'boolean'
   }
 
   const createFilterData = (params: CreateFilterParams): FilterData => {

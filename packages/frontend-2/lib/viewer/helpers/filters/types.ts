@@ -77,7 +77,7 @@ export type StringFilterData = BaseFilterData & {
   isDefaultAllSelected?: boolean
 }
 
-export type BooleanPropertyInfo = PropertyInfo & {
+export type BooleanPropertyInfo = Omit<PropertyInfo, 'type'> & {
   type: 'boolean'
   valueGroups: { value: boolean; ids: string[] }[]
 }
