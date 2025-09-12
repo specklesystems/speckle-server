@@ -165,6 +165,9 @@ export const workspaceJoinRoute = '/workspaces/actions/join'
 export const workspaceFunctionsRoute = (slug?: string) =>
   `/workspaces/${slug}/functions`
 
+export const presentationRoute = (projectId?: string, presentationId?: string) =>
+  `/projects/${projectId}/presentations/${presentationId}`
+
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()
   return (params?: { query?: LocationQueryRaw }) => {

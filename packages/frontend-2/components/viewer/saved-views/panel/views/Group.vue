@@ -73,10 +73,11 @@ import {
 } from '~/lib/viewer/composables/savedViews/management'
 import type { ViewsType } from '~/lib/viewer/helpers/savedViews'
 import { useDraggableViewTargetGroup } from '~/lib/viewer/composables/savedViews/ui'
+import { presentationRoute } from '~/lib/common/helpers/route'
 
 const { getTooltipProps } = useSmartTooltipDelay()
 
-const MenuItems = StringEnum(['Delete', 'Rename'])
+const MenuItems = StringEnum(['Delete', 'Rename', 'Presentation'])
 type MenuItems = StringEnumValues<typeof MenuItems>
 
 graphql(`
@@ -86,6 +87,10 @@ graphql(`
       canCreateSavedView {
         ...FullPermissionCheckResult
       }
+    }
+    workspace {
+      id
+      hasAccessToFeature(featureName: presentations)
     }
   }
 `)
@@ -158,25 +163,38 @@ const menuId = useId()
 const isUngroupedGroup = computed(() => props.group.isUngroupedViewsGroup)
 const canUpdate = computed(() => props.group.permissions.canUpdate)
 const canCreateView = computed(() => props.project.permissions.canCreateSavedView)
+const canPresent = computed(() => props.project.workspace?.hasAccessToFeature)
 
-const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
-  [
+const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => {
+  const items: LayoutMenuItem<MenuItems>[][] = []
+
+  if (canPresent.value) {
+    items.push([
+      {
+        id: MenuItems.Presentation,
+        title: 'Present',
+        disabled: isLoading.value
+      }
+    ])
+  }
+
+  items.push([
     {
       id: MenuItems.Rename,
       title: 'Rename group',
       disabled: !canUpdate.value?.authorized || isLoading.value,
       disabledTooltip: canUpdate.value.errorMessage
-    }
-  ],
-  [
+    },
     {
       id: MenuItems.Delete,
       title: 'Delete group...',
       disabled: !canUpdate.value?.authorized || isLoading.value,
       disabledTooltip: canUpdate.value.errorMessage
     }
-  ]
-])
+  ])
+
+  return items
+})
 
 const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
   switch (item.id) {
@@ -185,6 +203,9 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
       break
     case MenuItems.Rename:
       emit('rename-group', props.group)
+      break
+    case MenuItems.Presentation:
+      window.open(presentationRoute(props.project.id, props.group.id), '_blank')
       break
     default:
       throwUncoveredError(item.id)

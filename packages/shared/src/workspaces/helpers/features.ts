@@ -38,7 +38,9 @@ export type WorkspacePlanFeatures =
 export const WorkspaceFeatureFlags = <const>{
   none: 0,
   dashboards: 1,
-  accIntegration: 2
+  accIntegration: 2,
+  // High numbers for internal features
+  presentations: 64
 }
 
 export type WorkspaceFeatureFlags =

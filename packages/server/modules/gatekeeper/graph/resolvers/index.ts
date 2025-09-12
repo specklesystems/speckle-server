@@ -131,6 +131,8 @@ export default FF_GATEKEEPER_MODULE_ENABLED
                 return WorkspaceFeatureFlags.dashboards
               case 'accIntegration':
                 return WorkspaceFeatureFlags.accIntegration
+              case 'presentations':
+                return WorkspaceFeatureFlags.presentations
               case WorkspacePlanFeatures.DomainSecurity:
               case WorkspacePlanFeatures.ExclusiveMembership:
               case WorkspacePlanFeatures.HideSpeckleBranding:
