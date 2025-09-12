@@ -21,9 +21,9 @@
       </div>
     </button>
     <div class="flex mt-2 ml-3 overflow-hidden">
-      <ViewerExplorerNumericFilter
-        v-if="metadataGradientIsSet && computedPropInfo"
-        :filter="computedPropInfo"
+      <ViewerFiltersFilterNumeric
+        v-if="metadataGradientIsSet && computedFilterData"
+        :filter="computedFilterData"
       />
     </div>
   </div>
@@ -41,6 +41,8 @@ import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering
 import type { NumericPropertyInfo } from '@speckle/viewer'
 import { containsAll } from '~~/lib/common/helpers/utils'
 import type { Automate } from '@speckle/shared'
+import type { NumericFilterData } from '~/lib/viewer/helpers/filters/types'
+import { NumericFilterCondition, FilterType } from '~/lib/viewer/helpers/filters/types'
 
 type ObjectResult = Automate.AutomateTypes.ResultsSchema['values']['objectResults'][0]
 
@@ -142,6 +144,21 @@ const computedPropInfo = computed(() => {
   propInfo.passMax = propInfo.max
   propInfo.passMin = propInfo.min
   return propInfo
+})
+
+const computedFilterData = computed((): NumericFilterData | undefined => {
+  if (!computedPropInfo.value) return
+
+  const propInfo = computedPropInfo.value
+  return {
+    id: `gradient-${props.functionId}`,
+    isApplied: true,
+    selectedValues: [],
+    condition: NumericFilterCondition.IsBetween,
+    type: FilterType.Numeric,
+    filter: propInfo,
+    numericRange: { min: propInfo.min, max: propInfo.max }
+  }
 })
 
 const setOrUnsetGradient = () => {
