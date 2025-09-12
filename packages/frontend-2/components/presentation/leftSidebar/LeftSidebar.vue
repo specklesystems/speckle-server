@@ -19,40 +19,12 @@
         >
           <ul class="flex flex-col gap-1 w-full">
             <template v-for="slide in slides" :key="slide.id">
-              <li
+              <PresentationLeftSidebarSlide
                 v-if="slide.visibility === SavedViewVisibility.Public || !isPresentMode"
-                class="pb-3"
-              >
-                <button
-                  class="bg-foundation-page rounded-xl overflow-hidden border border-outline-3 transition-all duration-200"
-                  :class="[
-                    currentSlideId === slide.id ? '!border-outline-5' : '',
-                    slide.visibility !== SavedViewVisibility.AuthorOnly
-                      ? 'hover:!border-outline-4'
-                      : 'cursor-not-allowed'
-                  ]"
-                  :disabled="slide.visibility === SavedViewVisibility.AuthorOnly"
-                  @click="emit('select-slide', slide.id)"
-                >
-                  <img
-                    :src="slide.screenshot"
-                    :alt="slide.name"
-                    class="w-full h-28 object-cover"
-                    :class="{
-                      'opacity-40': slide.visibility === SavedViewVisibility.AuthorOnly
-                    }"
-                  />
-                </button>
-                <div class="flex items-center gap-1.5 text-foreground mt-1">
-                  <LucideEyeOff
-                    v-if="slide.visibility === SavedViewVisibility.AuthorOnly"
-                    class="size-4"
-                  />
-                  <p class="text-body-3xs leading-none">
-                    {{ slide.name }}
-                  </p>
-                </div>
-              </li>
+                :slide="slide"
+                :is-current-slide="currentSlideId === slide.id"
+                @select-slide="emit('select-slide', slide.id)"
+              />
             </template>
           </ul>
         </section>
@@ -70,23 +42,14 @@ import {
   SavedViewVisibility
 } from '~~/lib/common/generated/gql/graphql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import { LucideEyeOff } from 'lucide-vue-next'
-
-graphql(`
-  fragment PresentationSlidesSidebar_SavedView on SavedView {
-    id
-    name
-    screenshot
-    visibility
-  }
-`)
 
 graphql(`
   fragment PresentationSlidesSidebar_SavedViewGroup on SavedViewGroup {
     id
     views(input: $input) {
       items {
-        ...PresentationSlidesSidebar_SavedView
+        ...PresentationSlidesLeftSidebarSlide_SavedView
+        visibility
         id
       }
     }

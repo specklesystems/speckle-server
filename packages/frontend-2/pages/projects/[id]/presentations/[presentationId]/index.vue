@@ -22,6 +22,7 @@
         v-if="!hideUi"
         v-model:is-sidebar-open="isInfoSidebarOpen"
         v-model:is-present-mode="isPresentMode"
+        :presentation-id="presentation?.id"
         class="absolute top-4 right-4 z-20"
         :class="{ 'lg:right-[21rem]': isInfoSidebarOpen }"
         @toggle-sidebar="isInfoSidebarOpen = !isInfoSidebarOpen"
@@ -47,11 +48,13 @@
       />
 
       <div class="flex-1">
-        <img
-          :src="currentView?.screenshot"
-          alt="Current view"
-          class="h-full w-full object-cover"
-        />
+        <ClientOnly>
+          <img
+            :src="currentView?.screenshot"
+            alt="Current view"
+            class="h-full w-full object-cover"
+          />
+        </ClientOnly>
       </div>
 
       <PresentationInfoSidebar
@@ -196,6 +199,8 @@ const onNext = () => {
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'i' || event.key === 'I') {
     hideUi.value = !hideUi.value
+    isLeftSidebarOpen.value = false
+    isInfoSidebarOpen.value = false
   } else if (event.key === 'Escape' && isPresentMode.value) {
     isPresentMode.value = false
   } else if (event.key === 'ArrowLeft' && !disablePrevious.value) {

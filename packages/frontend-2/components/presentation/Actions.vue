@@ -51,7 +51,7 @@ const { copy } = useClipboard()
 const { triggerNotification } = useGlobalToast()
 
 const props = defineProps<{
-  presentationId: string
+  presentationId?: string
 }>()
 
 enum MenuItems {
