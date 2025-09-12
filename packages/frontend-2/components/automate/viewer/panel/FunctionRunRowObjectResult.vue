@@ -20,10 +20,11 @@
         {{ result.message }}
       </div>
     </button>
-    <div class="flex mt-2 ml-3 overflow-hidden">
+    <div class="flex mt-2 px-3 overflow-hidden">
       <ViewerFiltersFilterNumeric
         v-if="metadataGradientIsSet && computedFilterData"
         :filter="computedFilterData"
+        no-padding
       />
     </div>
   </div>
@@ -42,7 +43,7 @@ import type { NumericPropertyInfo } from '@speckle/viewer'
 import { containsAll } from '~~/lib/common/helpers/utils'
 import type { Automate } from '@speckle/shared'
 import type { NumericFilterData } from '~/lib/viewer/helpers/filters/types'
-import { NumericFilterCondition, FilterType } from '~/lib/viewer/helpers/filters/types'
+import { isNumericFilter } from '~/lib/viewer/helpers/filters/types'
 
 type ObjectResult = Automate.AutomateTypes.ResultsSchema['values']['objectResults'][0]
 
@@ -57,7 +58,7 @@ const {
   }
 } = useInjectedViewerState()
 
-const { isolateObjects, resetFilters, addActiveFilter, toggleFilterApplied } =
+const { isolateObjects, resetFilters, addActiveFilter, toggleFilterApplied, filters } =
   useFilterUtilities()
 const { setSelectionFromObjectIds, clearSelection } = useSelectionUtilities()
 
@@ -147,18 +148,13 @@ const computedPropInfo = computed(() => {
 })
 
 const computedFilterData = computed((): NumericFilterData | undefined => {
-  if (!computedPropInfo.value) return
+  if (!metadataGradientIsSet.value || !props.functionId) return
 
-  const propInfo = computedPropInfo.value
-  return {
-    id: `gradient-${props.functionId}`,
-    isApplied: true,
-    selectedValues: [],
-    condition: NumericFilterCondition.IsBetween,
-    type: FilterType.Numeric,
-    filter: propInfo,
-    numericRange: { min: propInfo.min, max: propInfo.max }
-  }
+  const activeFilter = filters.propertyFilters.value.find(
+    (f) => f.filter?.key === props.functionId
+  )
+
+  return activeFilter && isNumericFilter(activeFilter) ? activeFilter : undefined
 })
 
 const setOrUnsetGradient = () => {
@@ -174,6 +170,9 @@ const setOrUnsetGradient = () => {
   metadataGradientIsSet.value = true
   const filterId = addActiveFilter(computedPropInfo.value)
   toggleFilterApplied(filterId)
+
+  const ids = resultObjectIds.value
+  setSelectionFromObjectIds(ids)
 }
 
 const iconAndColor = computed(() => {
