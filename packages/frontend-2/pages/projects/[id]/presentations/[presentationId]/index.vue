@@ -1,37 +1,49 @@
 <template>
   <div class="relative">
-    <PresentationHeader
-      v-if="!hideUi"
-      v-model:is-sidebar-open="isLeftSidebarOpen"
-      class="absolute top-4 left-4"
-      :title="presentation?.title"
-      :class="{ 'left-[15.75rem]': isLeftSidebarOpen }"
-      @toggle-sidebar="isLeftSidebarOpen = !isLeftSidebarOpen"
-    />
-    <PresentationActions
-      v-if="!hideUi"
-      v-model:is-sidebar-open="isInfoSidebarOpen"
-      class="absolute top-4 right-4"
-      :class="{ 'right-[21rem]': isInfoSidebarOpen }"
-      @toggle-sidebar="isInfoSidebarOpen = !isInfoSidebarOpen"
-    />
+    <div class="h-screen w-screen flex flex-col md:flex-row relative">
+      <PresentationCloseMessage
+        class="absolute z-50 top-4 left-1/2 -translate-x-1/2"
+        :show-close-message="showCloseMessage"
+        @hide-close-message="hideCloseMessage"
+      />
 
-    <PresentationSlideIndicator
-      class="absolute left-4 top-1/2 -translate-y-1/2"
-      :current-slide-index="currentViewIndex"
-      :slide-count="viewsCount || 0"
-      :class="{ 'left-[15.75rem]': isLeftSidebarOpen }"
-    />
+      <PresentationHeader
+        v-if="!hideUi"
+        v-model:is-sidebar-open="isLeftSidebarOpen"
+        class="absolute top-4 z-40"
+        :class="[
+          isLeftSidebarOpen ? 'left-[calc(50%+0.75rem)] md:left-[15.75rem]' : 'left-4'
+        ]"
+        :title="presentation?.title"
+        @toggle-sidebar="isLeftSidebarOpen = !isLeftSidebarOpen"
+      />
 
-    <div class="h-screen w-screen flex">
+      <PresentationActions
+        v-if="!hideUi"
+        v-model:is-sidebar-open="isInfoSidebarOpen"
+        v-model:is-present-mode="isPresentMode"
+        class="absolute top-4 right-4 z-20"
+        :class="{ 'lg:right-[21rem]': isInfoSidebarOpen }"
+        @toggle-sidebar="isInfoSidebarOpen = !isInfoSidebarOpen"
+        @toggle-present-mode="isPresentMode = !isPresentMode"
+      />
+
+      <PresentationSlideIndicator
+        class="absolute top-1/2 -translate-y-1/2 z-20"
+        :current-slide-index="currentVisibleIndex"
+        :slide-count="slideCount || 0"
+        :class="[isLeftSidebarOpen ? 'lg:left-[15.75rem] hidden md:block' : 'left-4']"
+      />
+
       <PresentationLeftSidebar
         v-if="isLeftSidebarOpen"
-        class="flex-shrink-0"
+        class="absolute left-0 top-0 md:relative flex-shrink-0 z-30"
         :slides="presentation"
         :workspace-logo="workspace?.logo"
         :workspace-name="workspace?.name"
-        :current-slide-index="currentViewIndex"
-        @select-slide="currentViewIndex = $event"
+        :current-slide-id="currentViewIndex"
+        :is-present-mode="isPresentMode"
+        @select-slide="onSelectSlide"
       />
 
       <div class="flex-1">
@@ -50,36 +62,32 @@
         :view-id="currentView?.id"
         :project-id="projectId"
       />
+
+      <PresentationControls
+        v-if="!hideUi"
+        class="absolute left-1/2 -translate-x-1/2"
+        :disable-previous="disablePrevious"
+        :disable-next="disableNext"
+        :class="[
+          isInfoSidebarOpen ? 'bottom-52 md:bottom-4' : 'bottom-4',
+          isLeftSidebarOpen ? 'hidden md:flex' : ''
+        ]"
+        @on-previous="onPrevious"
+        @on-next="onNext"
+      />
+
+      <PresentationSpeckleLogo
+        class="absolute right-4 z-20"
+        :class="[isInfoSidebarOpen ? 'bottom-52 md:bottom-4' : 'bottom-4']"
+      />
     </div>
-
-    <PresentationControls
-      v-if="!hideUi"
-      class="absolute bottom-4 left-1/2 -translate-x-1/2"
-      :disable-previous="disablePrevious"
-      :disable-next="disableNext"
-      @on-previous="onPrevious"
-      @on-next="onNext"
-    />
-
-    <PresentationSpeckleLogo class="absolute bottom-4 right-4 z-20" />
-
-    <!-- <div
-      v-if="!hideUi"
-      class="bg-foundation border border-outline-3 rounded-xl shadow-md h-10 flex items-center absolute right-4 bottom-4 p-1"
-      :class="{ 'right-[21rem]': isInfoSidebarOpen }"
-    >
-      <button
-        class="size-8 flex items-center justify-center bg-foundation rounded-xl hover:bg-info-lighter hover:text-primary-focus"
-      >
-        <LucideFullscreen class="size-4" />
-      </button>
-    </div> -->
   </div>
 </template>
 
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
+import { SavedViewVisibility } from '~~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment ProjectPresentations_SavedViewGroup on SavedViewGroup {
@@ -109,8 +117,13 @@ const projectPresentationPageQuery = graphql(`
           items {
             id
             name
-            screenshot
             description
+            screenshot
+            projectId
+            visibility
+            group {
+              id
+            }
           }
         }
       }
@@ -133,32 +146,58 @@ const { result } = useQuery(projectPresentationPageQuery, () => ({
   }
 }))
 
-const currentViewIndex = ref(0)
-const isInfoSidebarOpen = ref(false)
-const isLeftSidebarOpen = ref(false)
+const currentViewIndex = ref<string | undefined>()
+const isInfoSidebarOpen = ref(true)
+const isLeftSidebarOpen = ref(true)
 const hideUi = ref(false)
+const isPresentMode = ref(false)
+const showCloseMessage = ref(false)
+const closeMessageTimeout = ref<NodeJS.Timeout | undefined>()
 
 const workspace = computed(() => result.value?.project.workspace)
-const currentView = computed(
-  () => result.value?.project.savedViewGroup.views.items[currentViewIndex.value]
+const allSlides = computed(() => result.value?.project.savedViewGroup.views.items || [])
+const visibleSlides = computed(() =>
+  allSlides.value.filter((view) => view.visibility === SavedViewVisibility.Public)
 )
-const viewsCount = computed(() => result.value?.project.savedViewGroup.views.totalCount)
+const currentView = computed(() =>
+  allSlides.value.find((slide) => slide.id === currentViewIndex.value)
+)
+const slideCount = computed(() => visibleSlides.value?.length || 0)
 const presentation = computed(() => result.value?.project.savedViewGroup)
-const disablePrevious = computed(() => currentViewIndex.value === 0)
+const currentVisibleIndex = computed(() => {
+  if (!currentViewIndex.value) return 0
+  return visibleSlides.value.findIndex((slide) => slide.id === currentViewIndex.value)
+})
+const disablePrevious = computed(() => currentVisibleIndex.value === 0)
 const disableNext = computed(() =>
-  viewsCount.value ? currentViewIndex.value === viewsCount.value - 1 : false
+  slideCount.value ? currentVisibleIndex.value === slideCount.value - 1 : false
 )
+
+const onSelectSlide = (slideId: string) => {
+  currentViewIndex.value = slideId
+}
+
 const onPrevious = () => {
-  currentViewIndex.value--
+  const currentIndex = currentVisibleIndex.value
+  if (currentIndex > 0) {
+    const previousSlide = visibleSlides.value[currentIndex - 1]
+    currentViewIndex.value = previousSlide.id
+  }
 }
 
 const onNext = () => {
-  currentViewIndex.value++
+  const currentIndex = currentVisibleIndex.value
+  if (currentIndex < visibleSlides.value.length - 1) {
+    const nextSlide = visibleSlides.value[currentIndex + 1]
+    currentViewIndex.value = nextSlide.id
+  }
 }
 
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'i' || event.key === 'I') {
     hideUi.value = !hideUi.value
+  } else if (event.key === 'Escape' && isPresentMode.value) {
+    isPresentMode.value = false
   } else if (event.key === 'ArrowLeft' && !disablePrevious.value) {
     onPrevious()
   } else if (event.key === 'ArrowRight' && !disableNext.value) {
@@ -166,11 +205,45 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 }
 
+const hideCloseMessage = () => {
+  showCloseMessage.value = false
+  if (closeMessageTimeout.value) {
+    clearTimeout(closeMessageTimeout.value)
+    closeMessageTimeout.value = undefined
+  }
+}
+
+watch(isPresentMode, (newVal, oldVal) => {
+  if (newVal && !oldVal) {
+    isLeftSidebarOpen.value = false
+    isInfoSidebarOpen.value = false
+    showCloseMessage.value = true
+    closeMessageTimeout.value = setTimeout(() => {
+      showCloseMessage.value = false
+    }, 3000)
+  } else if (!newVal && oldVal) {
+    isLeftSidebarOpen.value = true
+    isInfoSidebarOpen.value = true
+    hideCloseMessage()
+  }
+})
+
+watch(
+  visibleSlides,
+  (slides) => {
+    if (slides && slides.length > 0 && !currentViewIndex.value) {
+      currentViewIndex.value = slides[0].id
+    }
+  },
+  { immediate: true }
+)
+
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
+  hideCloseMessage()
 })
 </script>
