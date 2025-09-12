@@ -18,12 +18,24 @@ let transporter: Transporter | undefined = undefined
 const createJsonEchoTransporter = () => createTransport({ jsonTransport: true })
 
 const initSmtpTransporter = async () => {
+  const sslRequired = isSSLEmailEnabled()
+  const tlsRequired = isTLSEmailRequired()
+  if (!tlsRequired && !sslRequired) {
+    logger.warn(
+      'Neither EMAIL_SECURE and EMAIL_REQUIRE_TLS are true. Client will attempt to upgrade to TLS on connect, but will default to whatever the server supports which may be insecure.'
+    )
+  } else if (sslRequired && tlsRequired) {
+    throw new MisconfiguredEnvironmentError(
+      'EMAIL_SECURE and EMAIL_REQUIRE_TLS cannot both be true. TLS would typically be preferred over SSL.'
+    )
+  }
+
   try {
     const smtpTransporter = createTransport({
       host: getEmailHost(),
       port: getEmailPort(),
-      requireTLS: isTLSEmailRequired(),
-      secure: isSSLEmailEnabled(),
+      requireTLS: tlsRequired,
+      secure: sslRequired,
       auth: {
         user: getEmailUsername(),
         pass: getEmailPassword()
