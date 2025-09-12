@@ -44,6 +44,7 @@ import { containsAll } from '~~/lib/common/helpers/utils'
 import type { Automate } from '@speckle/shared'
 import type { NumericFilterData } from '~/lib/viewer/helpers/filters/types'
 import { isNumericFilter } from '~/lib/viewer/helpers/filters/types'
+import { injectGradientDataIntoDataStore } from '~/lib/viewer/helpers/filters/utils'
 
 type ObjectResult = Automate.AutomateTypes.ResultsSchema['values']['objectResults'][0]
 
@@ -54,7 +55,7 @@ const props = defineProps<{
 
 const {
   viewer: {
-    metadata: { filteringState }
+    metadata: { filteringState, filteringDataStore }
   }
 } = useInjectedViewerState()
 
@@ -166,13 +167,17 @@ const setOrUnsetGradient = () => {
   resetFilters()
   if (!props.result.metadata) return
   if (!computedPropInfo.value) return
+  if (!props.functionId) return
+
+  injectGradientDataIntoDataStore(
+    filteringDataStore,
+    props.functionId,
+    props.result.metadata.gradientValues
+  )
 
   metadataGradientIsSet.value = true
   const filterId = addActiveFilter(computedPropInfo.value)
   toggleFilterApplied(filterId)
-
-  const ids = resultObjectIds.value
-  setSelectionFromObjectIds(ids)
 }
 
 const iconAndColor = computed(() => {
