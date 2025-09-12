@@ -18,6 +18,12 @@ export class EmailSendingError extends BaseError {
   static statusCode = 500
 }
 
+export class EmailTransportInitializationError extends BaseError {
+  static code = 'EMAIL_TRANSPORT_INITIALIZATION_ERROR'
+  static defaultMessage = 'Error initializing email transport'
+  static statusCode = 500
+}
+
 export class MailchimpClientError extends BaseError {
   static code = 'MAILCHIMP_CLIENT_ERROR'
   static defaultMessage = 'Error with Mailchimp client'

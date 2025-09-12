@@ -1,10 +1,12 @@
 import type { EmailTransport } from '@/modules/emails/domain/types'
-import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import type { Logger } from '@/observability/logging'
 import { ensureError } from '@speckle/shared'
 import Mailjet, { type Client as MailjetClient } from 'node-mailjet'
 import { z } from 'zod'
-import { EmailSendingError } from '@/modules/emails/errors'
+import {
+  EmailSendingError,
+  EmailTransportInitializationError
+} from '@/modules/emails/errors'
 
 const initMailjetAPI = async (params: {
   apiKeyPublic: string
@@ -46,12 +48,12 @@ export async function initializeMailjetTransporter(params: {
   } catch (e) {
     const err = ensureError(e, 'Unknown error while initializing Mailjet transporter')
     params.logger.error(err, errorMessage)
-    throw new MisconfiguredEnvironmentError(errorMessage, { cause: err })
+    throw new EmailTransportInitializationError(errorMessage, { cause: err })
   }
 
   if (!newTransporter) {
     params.logger.error(errorMessage)
-    throw new MisconfiguredEnvironmentError(errorMessage)
+    throw new EmailTransportInitializationError(errorMessage)
   }
 
   // we wrap the mailjet client in our EmailTransport interface

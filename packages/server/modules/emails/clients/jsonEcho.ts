@@ -1,7 +1,7 @@
-import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { createTransport } from 'nodemailer'
 import type { EmailTransport } from '@/modules/emails/domain/types'
 import type { Logger } from '@/observability/logging'
+import { EmailTransportInitializationError } from '@/modules/emails/errors'
 
 const createJsonEchoTransporter = () => createTransport({ jsonTransport: true })
 
@@ -16,7 +16,7 @@ export async function initializeJSONEchoTransporter(deps: {
     const message =
       '📧 In testing or email sandbox mode a mock email provider is enabled but transport has not initialized correctly.'
     deps.logger.error(message)
-    throw new MisconfiguredEnvironmentError(message)
+    throw new EmailTransportInitializationError(message)
   }
 
   return newTransporter

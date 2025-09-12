@@ -3,6 +3,7 @@ import { createTransport } from 'nodemailer'
 import type { EmailTransport } from '@/modules/emails/domain/types'
 import { ensureError } from '@speckle/shared'
 import type { Logger } from '@/observability/logging'
+import { EmailTransportInitializationError } from '@/modules/emails/errors'
 
 type SMTPConfig = {
   host: string
@@ -37,7 +38,7 @@ const initSmtpTransporter = async (params: SMTPConfig & { logger: Logger }) => {
   })
   const verifyResult = await smtpTransporter.verify()
   if (!verifyResult) {
-    throw new MisconfiguredEnvironmentError(
+    throw new EmailTransportInitializationError(
       'SMTP transporter verification failed. Please check your SMTP configuration.'
     )
   }
@@ -59,12 +60,12 @@ export async function initializeSMTPTransporter(
   } catch (e) {
     const err = ensureError(e, 'Unknown error while initializing SMTP transporter')
     deps.logger.error(err, errorMessage)
-    throw new MisconfiguredEnvironmentError(errorMessage, { cause: err })
+    throw new EmailTransportInitializationError(errorMessage, { cause: err })
   }
 
   if (!newTransporter) {
     deps.logger.error(errorMessage)
-    throw new MisconfiguredEnvironmentError(errorMessage)
+    throw new EmailTransportInitializationError(errorMessage)
   }
 
   return newTransporter
