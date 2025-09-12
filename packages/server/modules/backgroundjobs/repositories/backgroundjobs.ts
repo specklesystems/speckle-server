@@ -106,7 +106,7 @@ export const failBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBud
       return await query
     }
 
-export const updateBackgroundJobFactory =
+export const updateBackgroundJobIfNotAlreadySucceededFactory =
   <T extends BackgroundJobPayload = BackgroundJobPayload>({
     db
   }: {
@@ -117,6 +117,7 @@ export const updateBackgroundJobFactory =
       .backgroundJobs(db)
       .update({ status })
       .whereJsonSupersetOf('payload', payloadFilter)
+      .andWhereNot({ status: BackgroundJobStatus.Succeeded })
       .returning<BackgroundJob<T>[]>('*')
     return await query
   }

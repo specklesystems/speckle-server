@@ -12,7 +12,8 @@ import type {
   GetModelUploadsBaseArgs,
   GetModelUploadsTotalCount,
   UpdateFileStatus,
-  FailPendingUploadedFiles
+  FailPendingUploadedFiles,
+  UpdateFileUploadInput
 } from '@/modules/fileuploads/domain/operations'
 import type {
   FileUploadRecord,
@@ -273,20 +274,43 @@ export const getBranchPendingVersionsFactory =
     return await q
   }
 
-export const updateFileUploadFactory =
-  (deps: { db: Knex }): UpdateFileUpload =>
-  async (params) => {
+const updateFileUploadBaseQueryFactory =
+  (deps: { db: Knex }) => (params: UpdateFileUploadInput) => {
     const { id, upload } = params
-    const updatedFile = await tables
+    return tables
       .fileUploads(deps.db)
       .update(upload)
       .where({ [FileUploads.col.id]: id })
       .returning<FileUploadRecord[]>('*')
+  }
 
-    if (updatedFile.length === 0) {
+export const updateFileUploadFactory =
+  (deps: { db: Knex }): UpdateFileUpload =>
+  async (params) => {
+    const { id } = params
+    const updatedFiles = await updateFileUploadBaseQueryFactory(deps)(params)
+
+    if (updatedFiles.length === 0) {
       throw new FileImportJobNotFoundError(`File with id ${id} not found`)
     }
-    return updatedFile[0]
+    return updatedFiles
+  }
+
+export const updateFileUploadIfNotAlreadyCompletedFactory =
+  (deps: { db: Knex }): UpdateFileUpload =>
+  async (params) => {
+    const { id } = params
+    const updatedFile = await updateFileUploadBaseQueryFactory(deps)(
+      params
+    ).andWhereNot({
+      [FileUploads.withoutTablePrefix.col.convertedStatus]:
+        FileUploadConvertedStatus.Completed
+    })
+
+    if (updatedFile.length > 1) {
+      throw new FileImportJobNotFoundError(`Multiple files with id ${id} were updated`)
+    }
+    return updatedFile
   }
 
 export const updateFileStatusFactory =

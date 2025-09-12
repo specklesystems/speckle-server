@@ -11,7 +11,7 @@ import {
   getStreamPendingModelsFactory,
   saveUploadFileFactory,
   saveUploadFileFactoryV2,
-  updateFileUploadFactory
+  updateFileUploadIfNotAlreadyCompletedFactory
 } from '@/modules/fileuploads/repositories/fileUploads'
 import {
   FileImportSubscriptions,
@@ -76,7 +76,7 @@ import { onFileImportResultFactory } from '@/modules/fileuploads/services/result
 import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
 import { JobResultStatus } from '@speckle/shared/workers/fileimport'
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-import { updateBackgroundJobFactory } from '@/modules/backgroundjobs/repositories/backgroundjobs'
+import { updateBackgroundJobIfNotAlreadySucceededFactory } from '@/modules/backgroundjobs/repositories/backgroundjobs'
 import { configureClient } from '@/knexfile'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
@@ -301,14 +301,13 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
 
     const projectDb = await getProjectDbClient({ projectId })
     const onFileImportResult = onFileImportResultFactory({
-      logger: logger.child({ fileUploadStatus: status }),
-      updateFileUpload: updateFileUploadFactory({ db: projectDb }),
-      getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
-      updateBackgroundJob: updateBackgroundJobFactory({
+      updateBackgroundJob: updateBackgroundJobIfNotAlreadySucceededFactory({
         db: queueDb
       }),
+      updateFileUpload: updateFileUploadIfNotAlreadyCompletedFactory({ db: projectDb }),
       eventEmit: getEventBus().emit,
-      FF_NEXT_GEN_FILE_IMPORTER_ENABLED
+      FF_NEXT_GEN_FILE_IMPORTER_ENABLED,
+      logger: logger.child({ fileUploadStatus: status })
     })
 
     await onFileImportResult({
