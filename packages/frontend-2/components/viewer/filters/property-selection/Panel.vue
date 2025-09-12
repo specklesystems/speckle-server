@@ -1,9 +1,17 @@
 <template>
-  <div class="h-full flex flex-col select-none">
+  <div
+    ref="listContainer"
+    class="h-full flex flex-col select-none focus-visible:outline-none"
+    tabindex="0"
+    role="listbox"
+    @keydown="handleListKeydown"
+  >
     <ViewerFiltersPropertySelectionSearch
+      ref="searchComponent"
       v-model="searchQuery"
       placeholder="Search for a property..."
       input-id="property-search"
+      @keydown="handleSearchKeydown"
     />
 
     <div v-if="isLoading" class="flex-1 flex items-center justify-center py-8">
@@ -46,7 +54,10 @@
           <ViewerFiltersPropertySelectionItem
             v-else-if="item.type === 'property' && item.property"
             :property="item.property"
+            :is-focused="isItemFocused(index)"
             @select-property="$emit('selectProperty', $event)"
+            @mouseenter="handleItemHover(index)"
+            @focus="handleItemHover(index)"
           />
         </div>
       </div>
@@ -55,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { useVirtualList, useDebounceFn } from '@vueuse/core'
+import { useVirtualList, useDebounceFn, onKeyStroke } from '@vueuse/core'
 import type {
   PropertyOption,
   PropertySelectionListItem
@@ -72,24 +83,27 @@ const props = defineProps<{
   options: PropertyOption[]
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   selectProperty: [propertyKey: string]
+  close: []
 }>()
 
-const searchQuery = ref('')
 const dataStore = useFilteringDataStore()
 
-const isLoading = computed(() => {
-  return dataStore.dataSources.value.length === 0
-})
-
+const searchQuery = ref('')
+const listContainer = ref<HTMLElement>()
+const searchComponent = ref()
+const focusedIndex = ref(-1)
 const debouncedSearchQuery = ref('')
 
 const updateDebouncedSearch = useDebounceFn((query: string) => {
   debouncedSearchQuery.value = query
 }, 200)
 
-// Pre-compute lowercase versions for efficient searching
+const isLoading = computed(() => {
+  return dataStore.dataSources.value.length === 0
+})
+
 const optionsWithLowercase = computed(() => {
   return props.options.map((option) => ({
     ...option,
@@ -161,12 +175,6 @@ const listItems = computed((): PropertySelectionListItem[] => {
   return items
 })
 
-const hasSearchQuery = computed(() => debouncedSearchQuery.value.trim().length > 0)
-
-const clearSearch = () => {
-  searchQuery.value = ''
-}
-
 const itemHeight = computed(() => PROPERTY_SELECTION_ITEM_HEIGHT)
 const maxHeight = computed(() => PROPERTY_SELECTION_MAX_HEIGHT - 28)
 
@@ -175,6 +183,160 @@ const { list, containerProps, wrapperProps } = useVirtualList(listItems, {
   overscan: PROPERTY_SELECTION_OVERSCAN
 })
 
+const hasSearchQuery = computed(() => debouncedSearchQuery.value.trim().length > 0)
+
+const propertyItems = computed(() => {
+  return listItems.value.filter((item) => item.type === 'property' && item.property)
+})
+
+const isItemFocused = (index: number) => {
+  const propertyItemIndex = getPropertyItemIndex(index)
+  return propertyItemIndex === focusedIndex.value
+}
+
+const getPropertyItemIndex = (virtualIndex: number) => {
+  let propertyIndex = -1
+  for (let i = 0; i <= virtualIndex; i++) {
+    const item = listItems.value[i]
+    if (item && item.type === 'property' && item.property) {
+      propertyIndex++
+    }
+  }
+  return propertyIndex
+}
+
+const getVirtualIndex = (propertyIndex: number) => {
+  let currentPropertyIndex = -1
+  for (let i = 0; i < listItems.value.length; i++) {
+    const item = listItems.value[i]
+    if (item && item.type === 'property' && item.property) {
+      currentPropertyIndex++
+      if (currentPropertyIndex === propertyIndex) {
+        return i
+      }
+    }
+  }
+  return -1
+}
+
+// Handle keyboard events from search input
+const handleSearchKeydown = (event: KeyboardEvent) => {
+  switch (event.key) {
+    case 'ArrowDown':
+      event.preventDefault()
+      if (propertyItems.value.length > 0) {
+        focusedIndex.value = 0
+        scrollToFocusedItem()
+        nextTick(() => {
+          listContainer.value?.focus()
+        })
+      }
+      break
+    case 'Enter':
+      event.preventDefault()
+      if (focusedIndex.value >= 0 && focusedIndex.value < propertyItems.value.length) {
+        const property = propertyItems.value[focusedIndex.value].property
+        if (property) {
+          emit('selectProperty', property.value)
+        }
+      }
+      break
+    case 'Escape':
+      event.preventDefault()
+      emit('close')
+      break
+  }
+}
+
+const handleListKeydown = (event: KeyboardEvent) => {
+  if (propertyItems.value.length === 0) return
+
+  switch (event.key) {
+    case 'ArrowDown':
+      event.preventDefault()
+      event.stopPropagation()
+      if (focusedIndex.value < propertyItems.value.length - 1) {
+        focusedIndex.value++
+        scrollToFocusedItem()
+      }
+      break
+    case 'ArrowUp':
+      event.preventDefault()
+      event.stopPropagation()
+      if (focusedIndex.value > 0) {
+        focusedIndex.value--
+        scrollToFocusedItem()
+      }
+      break
+    case 'Enter':
+      event.stopPropagation()
+      event.preventDefault()
+      if (focusedIndex.value >= 0 && focusedIndex.value < propertyItems.value.length) {
+        const property = propertyItems.value[focusedIndex.value].property
+        if (property) {
+          emit('selectProperty', property.value)
+        }
+      }
+      break
+    case 'Escape': {
+      event.stopPropagation()
+      event.preventDefault()
+      emit('close')
+      break
+    }
+  }
+}
+
+// Handle item hover to update focused index
+const handleItemHover = (virtualIndex: number) => {
+  const propertyItemIndex = getPropertyItemIndex(virtualIndex)
+  if (propertyItemIndex >= 0) {
+    focusedIndex.value = propertyItemIndex
+  }
+}
+
+const scrollToFocusedItem = () => {
+  if (focusedIndex.value >= 0) {
+    const virtualIndex = getVirtualIndex(focusedIndex.value)
+    if (virtualIndex >= 0) {
+      nextTick(() => {
+        const container = containerProps.ref.value
+        if (container) {
+          const containerHeight = container.clientHeight
+          const itemHeight = PROPERTY_SELECTION_ITEM_HEIGHT
+          const totalOffset = virtualIndex * itemHeight
+          const centerOffset = containerHeight / 2 - itemHeight / 2
+          const scrollPosition = Math.max(0, totalOffset - centerOffset)
+
+          container.scrollTo({
+            top: scrollPosition,
+            behavior: 'smooth'
+          })
+        }
+      })
+    }
+  }
+}
+
+// Reset scroll position to top when search results change
+const resetScrollPosition = () => {
+  nextTick(() => {
+    const container = containerProps.ref.value
+    if (container) {
+      container.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      })
+    }
+  })
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+  focusedIndex.value = -1
+  resetScrollPosition()
+}
+
 watch(
   searchQuery,
   (newQuery) => {
@@ -182,4 +344,25 @@ watch(
   },
   { immediate: true }
 )
+
+// Reset focused index and scroll position when list changes
+watch(listItems, () => {
+  focusedIndex.value = -1
+  resetScrollPosition()
+})
+
+// Reset focused index and scroll position when search changes
+watch(debouncedSearchQuery, () => {
+  focusedIndex.value = -1
+  resetScrollPosition()
+})
+
+// Handle typing to focus search input
+onKeyStroke((event) => {
+  event.preventDefault()
+  if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+    const searchInput = document.getElementById('property-search') as HTMLInputElement
+    searchInput?.focus()
+  }
+})
 </script>

@@ -1,7 +1,12 @@
 <template>
   <div class="border-b border-outline-2 flex-shrink-0 relative">
     <div class="py-1">
-      <ViewerSearchInput v-model="modelValue" auto-focus :placeholder="placeholder" />
+      <ViewerSearchInput
+        v-model="modelValue"
+        auto-focus
+        :placeholder="placeholder"
+        @keydown="$emit('keydown', $event)"
+      />
     </div>
     <div
       v-if="hasSearchValue"
@@ -28,6 +33,10 @@ import { FormButton } from '@speckle/ui-components'
 defineProps<{
   placeholder?: string
   inputId?: string
+}>()
+
+defineEmits<{
+  keydown: [event: KeyboardEvent]
 }>()
 
 const modelValue = defineModel<string>({ required: true })

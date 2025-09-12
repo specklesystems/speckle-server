@@ -10,6 +10,7 @@
       :placeholder="placeholder"
       :auto-focus="autoFocus"
       input-type="search"
+      @keydown="handleKeydown"
     />
   </div>
 </template>
@@ -21,6 +22,10 @@ import { Search } from 'lucide-vue-next'
 defineProps<{
   placeholder?: string
   autoFocus?: boolean
+}>()
+
+const emit = defineEmits<{
+  keydown: [event: KeyboardEvent]
 }>()
 
 const model = defineModel<string>({ required: true })
@@ -36,4 +41,11 @@ const iconClasses = computed(() => {
 const inputClasses = computed(() => {
   return 'text-foreground-2 placeholder:!text-foreground-3 placeholder:group-hover:!text-foreground-2 focus:placeholder:text-foreground-2'
 })
+
+const handleKeydown = (event: KeyboardEvent) => {
+  // For arrow down or enter emit the event to parent
+  if (['ArrowDown', 'Enter'].includes(event.key)) {
+    emit('keydown', event)
+  }
+}
 </script>
