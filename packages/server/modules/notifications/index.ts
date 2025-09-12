@@ -1,20 +1,26 @@
 import {
-  initializeQueue,
+  initializePublicationQueue,
   consumeIncomingNotifications,
   registerNotificationHandlers,
-  shutdownQueue
-} from '@/modules/notifications/services/queue'
+  shutdownPublicationQueue
+} from '@/modules/notifications/services/publicationQueue'
 import type { NotificationTypeHandlers } from '@/modules/notifications/helpers/types'
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { shouldDisableNotificationsConsumption } from '@/modules/shared/helpers/envHelper'
-import { moduleLogger } from '@/observability/logging'
+import { moduleLogger, notificationsLogger } from '@/observability/logging'
 import MentionedInCommentHandler from '@/modules/notifications/services/handlers/mentionedInComment'
 import NewStreamAccessRequestHandler from '@/modules/notifications/services/handlers/newStreamAccessRequest'
 import StreamAccessRequestApprovedHandler from '@/modules/notifications/services/handlers/streamAccessRequestApproved'
 import ActivityDigestHandler from '@/modules/notifications/services/handlers/activityDigest'
+import {
+  initializeEventQueue,
+  shutdownEventQueue
+} from '@/modules/notifications/services/eventQueue'
+import { notificationListenersFactory } from '@/modules/notifications/events/notificationListener'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
-export async function initializeConsumption(
+export async function initializePublicationConsumption(
   customHandlers?: Partial<NotificationTypeHandlers>
 ) {
   moduleLogger.info('📞 Initializing notification queue consumption...')
@@ -28,7 +34,7 @@ export async function initializeConsumption(
 
   registerNotificationHandlers(customHandlers || allHandlers)
 
-  await initializeQueue()
+  await initializePublicationQueue()
 
   if (shouldDisableNotificationsConsumption()) {
     moduleLogger.info('Skipping notification consumption...')
@@ -40,10 +46,16 @@ export async function initializeConsumption(
 export const init: SpeckleModule['init'] = async ({ isInitial }) => {
   moduleLogger.info('📞 Init notifications module')
   if (isInitial) {
-    await initializeConsumption()
+    await initializePublicationConsumption()
+    await initializeEventQueue()
+    notificationListenersFactory({
+      eventBus: getEventBus(),
+      logger: notificationsLogger
+    })()
   }
 }
 
 export const shutdown: SpeckleModule['shutdown'] = async () => {
-  await shutdownQueue()
+  await shutdownPublicationQueue()
+  await shutdownEventQueue()
 }
