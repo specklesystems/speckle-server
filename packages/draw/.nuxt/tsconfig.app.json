@@ -1,0 +1,189 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "nitropack/types": [
+        "../node_modules/nitropack/types"
+      ],
+      "nitropack/runtime": [
+        "../node_modules/nitropack/runtime"
+      ],
+      "nitropack": [
+        "../node_modules/nitropack"
+      ],
+      "defu": [
+        "../node_modules/defu"
+      ],
+      "h3": [
+        "../node_modules/h3"
+      ],
+      "consola": [
+        "../node_modules/consola"
+      ],
+      "ofetch": [
+        "../node_modules/ofetch"
+      ],
+      "@unhead/vue": [
+        "../node_modules/@unhead/vue"
+      ],
+      "@nuxt/devtools": [
+        "../node_modules/@nuxt/devtools"
+      ],
+      "@vue/runtime-core": [
+        "../node_modules/@vue/runtime-core"
+      ],
+      "@vue/compiler-sfc": [
+        "../node_modules/@vue/compiler-sfc"
+      ],
+      "unplugin-vue-router/client": [
+        "../node_modules/unplugin-vue-router/client"
+      ],
+      "@nuxt/schema": [
+        "../node_modules/@nuxt/schema"
+      ],
+      "nuxt": [
+        "../node_modules/nuxt"
+      ],
+      "~": [
+        ".."
+      ],
+      "~/*": [
+        "../*"
+      ],
+      "@": [
+        ".."
+      ],
+      "@/*": [
+        "../*"
+      ],
+      "~~": [
+        ".."
+      ],
+      "~~/*": [
+        "../*"
+      ],
+      "@@": [
+        ".."
+      ],
+      "@@/*": [
+        "../*"
+      ],
+      "#shared": [
+        "../shared"
+      ],
+      "#shared/*": [
+        "../shared/*"
+      ],
+      "dayjs": [
+        "../node_modules/dayjs/dayjs.min"
+      ],
+      "#app": [
+        "../node_modules/nuxt/dist/app"
+      ],
+      "#app/*": [
+        "../node_modules/nuxt/dist/app/*"
+      ],
+      "vue-demi": [
+        "../node_modules/nuxt/dist/app/compat/vue-demi"
+      ],
+      "#color-mode-options": [
+        "./color-mode-options.mjs"
+      ],
+      "#vue-router": [
+        "../node_modules/vue-router"
+      ],
+      "#unhead/composables": [
+        "../node_modules/nuxt/dist/head/runtime/composables"
+      ],
+      "#imports": [
+        "./imports"
+      ],
+      "#app-manifest": [
+        "./manifest/meta/0d9351d1-033f-4098-bfd7-207725a2c1b9"
+      ],
+      "#components": [
+        "./components"
+      ],
+      "#build": [
+        "."
+      ],
+      "#build/*": [
+        "./*"
+      ]
+    },
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "target": "ESNext",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "moduleDetection": "force",
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitOverride": true,
+    "module": "preserve",
+    "noEmit": true,
+    "lib": [
+      "ESNext",
+      "dom",
+      "dom.iterable",
+      "webworker"
+    ],
+    "jsx": "preserve",
+    "jsxImportSource": "vue",
+    "types": [],
+    "moduleResolution": "Bundler",
+    "useDefineForClassFields": true,
+    "noImplicitThis": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": [
+    "./nuxt.d.ts",
+    "../**/*",
+    "../modules/*/runtime/**/*",
+    "../layers/*/app/**/*",
+    "../layers/*/modules/*/runtime/**/*",
+    "../shared/**/*.d.ts",
+    "../modules/*/shared/**/*.d.ts",
+    "../layers/*/shared/**/*.d.ts",
+    "../*.d.ts",
+    "../layers/*/*.d.ts"
+  ],
+  "exclude": [
+    "../node_modules",
+    "../../../node_modules",
+    "../node_modules/nuxt/node_modules",
+    "../node_modules/@nuxt/eslint/node_modules",
+    "../../../node_modules/@vueuse/nuxt/node_modules",
+    "../node_modules/@nuxtjs/color-mode/node_modules",
+    "../../ui-components-nuxt/node_modules",
+    "../node_modules/@pinia/nuxt/node_modules",
+    "../node_modules/@nuxt/telemetry/node_modules",
+    "../dist",
+    "../.data",
+    "../modules/*/runtime/server/**/*",
+    "../layers/*/server/**/*",
+    "../layers/*/modules/*/runtime/server/**/*",
+    "../modules/*.*",
+    "../nuxt.config.*",
+    "../.config/nuxt.*",
+    "../layers/*/nuxt.config.*",
+    "../layers/*/.config/nuxt.*",
+    "../layers/*/modules/**/*",
+    "../node_modules/runtime/server",
+    "../node_modules/dist/runtime/server",
+    "../node_modules/*.*",
+    "../node_modules/dist/*.*",
+    "../../../node_modules/runtime/server",
+    "../../../node_modules/dist/runtime/server",
+    "../../../node_modules/*.*",
+    "../../../node_modules/dist/*.*",
+    "../../ui-components-nuxt/runtime/server",
+    "../../ui-components-nuxt/dist/runtime/server",
+    "../../ui-components-nuxt/*.*",
+    "../../ui-components-nuxt/dist/*.*",
+    "../.output",
+    "../server"
+  ]
+}
