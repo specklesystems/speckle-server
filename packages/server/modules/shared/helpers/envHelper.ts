@@ -383,16 +383,6 @@ export function getEmailPort() {
   return getIntFromEnv('EMAIL_PORT', '587')
 }
 
-export function getEmailTransporterType() {
-  return getStringFromEnv('EMAIL_TRANSPORT_TYPE', {
-    default: 'smtp'
-  }).toLocaleLowerCase()
-}
-
-export function isEmailSandboxMode() {
-  return getBooleanFromEnv('EMAIL_SANDBOX_MODE', isDevOrTestEnv())
-}
-
 export function isSSLEmailEnabled() {
   return getBooleanFromEnv('EMAIL_SECURE', false) // see EMAIL_REQUIRE_TLS
 }
