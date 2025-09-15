@@ -20762,7 +20762,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ejs@npm:>=3.1.10":
+"ejs@npm:^3.1.10, ejs@npm:^3.1.8":
   version: 3.1.10
   resolution: "ejs@npm:3.1.10"
   dependencies:
