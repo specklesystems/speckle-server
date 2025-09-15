@@ -5,10 +5,8 @@ import {
 } from '@/modules/emails/domain/consts'
 import type { Logger } from '@/observability/logging'
 import { LogicError, MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { initializeMailjetTransporter } from '@/modules/emails/clients/mailjetApi'
 import { initializeSMTPTransporter } from '@/modules/emails/clients/smtp'
 import { initializeJSONEchoTransporter } from '@/modules/emails/clients/jsonEcho'
-import { initializeMailchimpTransporter } from '@/modules/emails/clients/mailchimp'
 import {
   getEmailHost,
   getEmailPassword,
@@ -63,22 +61,6 @@ export const initializeEmailTransport = async (params: {
     case EmailTransportType.JSONEcho:
       logger.info('📧 Using JSON Echo email transporter')
       transporter = await initializeJSONEchoTransporter({ logger, isSandboxMode })
-      break
-    case EmailTransportType.Mailjet:
-      logger.info('📧🛩️ Using Mailjet email transporter')
-      transporter = await initializeMailjetTransporter({
-        config: { apiKeyPublic: getEmailUsername(), apiKeyPrivate: getEmailPassword() },
-        logger,
-        isSandboxMode
-      })
-      break
-    case EmailTransportType.Mailchimp:
-      logger.info('📧🦜 Using Mailchimp email transporter')
-      transporter = await initializeMailchimpTransporter({
-        config: { apiKey: getEmailPassword() },
-        logger,
-        isSandboxMode
-      })
       break
     default:
       throw new LogicError(unsupportedTransportTypeMessage, {

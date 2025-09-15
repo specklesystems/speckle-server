@@ -1269,7 +1269,7 @@
             },
             "transporterType": {
               "type": "string",
-              "description": "The type of transactional email API being used. smtp, mailjet, and mailchimp are supported.",
+              "description": "The type of transactional email API being used. smtp and jsonecho are supported.",
               "default": "smtp"
             },
             "verificationTimeoutMinutes": {
