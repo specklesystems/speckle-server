@@ -2,8 +2,24 @@ import { createTransport } from 'nodemailer'
 import type { EmailTransport } from '@/modules/emails/domain/types'
 import type { Logger } from '@/observability/logging'
 import { EmailTransportInitializationError } from '@/modules/emails/errors'
+import type { SentMessageInfo } from 'nodemailer/lib/json-transport'
+import { SentEmailDeliveryStatus } from '@/modules/emails/domain/consts'
 
-const createJsonEchoTransporter = () => createTransport({ jsonTransport: true })
+const createJsonEchoTransporter = () => {
+  const newTransport = createTransport({ jsonTransport: true })
+  const wrappedTransporter: EmailTransport = {
+    sendMail: async (options) => {
+      const response = await newTransport.sendMail(options)
+
+      return {
+        messageId: response.messageId,
+        status: mapJsonResponseToSentEmailDeliveryStatus(response)
+      }
+    }
+  }
+
+  return wrappedTransporter
+}
 
 export async function initializeJSONEchoTransporter(deps: {
   isSandboxMode: boolean
@@ -20,4 +36,18 @@ export async function initializeJSONEchoTransporter(deps: {
   }
 
   return newTransporter
+}
+
+export const mapJsonResponseToSentEmailDeliveryStatus = (
+  response: SentMessageInfo
+): SentEmailDeliveryStatus => {
+  if (response.rejected.length > 0) {
+    return SentEmailDeliveryStatus.FAILED
+  }
+
+  if (response.accepted.length === 0) {
+    return SentEmailDeliveryStatus.PENDING
+  }
+
+  return SentEmailDeliveryStatus.SENT
 }

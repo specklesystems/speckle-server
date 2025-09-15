@@ -85,15 +85,15 @@ export async function initializeSMTPTransporter(
 
   return newTransporter
 }
-function mapSMTPResponseToSentEmailDeliveryStatus(
+
+const mapSMTPResponseToSentEmailDeliveryStatus = (
   response: SentMessageInfo
-): SentEmailDeliveryStatus {
+): SentEmailDeliveryStatus => {
   if (response.rejected.length > 0) {
     return SentEmailDeliveryStatus.FAILED
   }
 
   if (response.accepted.length === 0) {
-    // this should not happen, but just in case
     return SentEmailDeliveryStatus.PENDING
   }
 
