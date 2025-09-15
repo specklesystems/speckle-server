@@ -4,7 +4,10 @@ import {
   StateApplyMode,
   useApplySerializedState
 } from '~/lib/viewer/composables/serialization'
-import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
+import {
+  useInjectedViewerState,
+  type InitialSetupState
+} from '~/lib/viewer/composables/setup'
 import { useOnViewerLoadComplete } from '~/lib/viewer/composables/viewer'
 import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
 
@@ -115,21 +118,6 @@ export const useViewerSavedViewIntegration = () => {
     },
     { immediate: true }
   )
-
-  // Url hash state -> core source of truth sync
-  watch(
-    urlHashStateSavedViewSettings,
-    async (newVal) => {
-      if ((newVal?.id || null) !== (savedViewId.value || null)) {
-        savedViewId.value = newVal?.id || null
-      }
-
-      if ((newVal?.loadOriginal || false) !== loadOriginal.value) {
-        loadOriginal.value = newVal?.loadOriginal || false
-      }
-    },
-    { immediate: true }
-  )
 }
 
 export type SavedViewsUIState = ReturnType<typeof useBuildSavedViewsUIState>
@@ -146,5 +134,36 @@ export const useBuildSavedViewsUIState = () => {
      * Groups that should currently be expanded/open
      */
     openedGroupState
+  }
+}
+
+export const useBuildSavedViewsCoreState = (state: InitialSetupState) => {
+  const {
+    urlHashState: { savedView: urlHashStateSavedViewSettings }
+  } = state
+
+  const savedViewId = ref<string | null | undefined>(undefined)
+  const loadOriginal = ref<boolean>(false)
+
+  // Usually this watcher would happen in post-setup, but its critical that this is fired
+  // early, before any of the GQL queries fire:
+  // Url hash state -> core source of truth sync
+  watch(
+    urlHashStateSavedViewSettings,
+    async (newVal) => {
+      if ((newVal?.id || null) !== (savedViewId.value || null)) {
+        savedViewId.value = newVal?.id || null
+      }
+
+      if ((newVal?.loadOriginal || false) !== loadOriginal.value) {
+        loadOriginal.value = newVal?.loadOriginal || false
+      }
+    },
+    { immediate: true }
+  )
+
+  return {
+    id: savedViewId,
+    loadOriginal
   }
 }

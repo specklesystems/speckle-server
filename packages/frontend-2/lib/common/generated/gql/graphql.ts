@@ -1284,7 +1284,7 @@ export type ExtendedViewerResources = {
   /** The groups of viewer resources themselves */
   groups: Array<ViewerResourceGroup>;
   /** Metadata about the request that was made to resolve this. */
-  request?: Maybe<ExtendedViewerResourcesRequest>;
+  request: ExtendedViewerResourcesRequest;
   /** Final/adjusted/resolved resource id string */
   resourceIdString: Scalars['String']['output'];
   /**
@@ -7876,7 +7876,7 @@ export type ProjectViewerResourcesQueryVariables = Exact<{
 }>;
 
 
-export type ProjectViewerResourcesQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, viewerResourcesExtended: { __typename?: 'ExtendedViewerResources', resourceIdString: string, groups: Array<{ __typename?: 'ViewerResourceGroup', identifier: string, items: Array<{ __typename?: 'ViewerResourceItem', modelId?: string | null, versionId?: string | null, objectId: string }> }>, savedView?: { __typename?: 'SavedView', id: string, viewerState: {} } | null, request?: { __typename?: 'ExtendedViewerResourcesRequest', savedViewId?: string | null } | null } } };
+export type ProjectViewerResourcesQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, viewerResourcesExtended: { __typename?: 'ExtendedViewerResources', resourceIdString: string, groups: Array<{ __typename?: 'ViewerResourceGroup', identifier: string, items: Array<{ __typename?: 'ViewerResourceItem', modelId?: string | null, versionId?: string | null, objectId: string }> }>, savedView?: { __typename?: 'SavedView', id: string, viewerState: {} } | null, request: { __typename?: 'ExtendedViewerResourcesRequest', savedViewId?: string | null } } } };
 
 export type ViewerLoadedResourcesQueryVariables = Exact<{
   projectId: Scalars['String']['input'];
