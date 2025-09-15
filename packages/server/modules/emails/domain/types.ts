@@ -16,16 +16,12 @@ export type EmailOptions = {
   speckleEmailId?: string
 }
 
-export type SentEmailRecipientStatus = {
-  email: string
-  emailStatus: SentEmailDeliveryStatus
-}
-
 export type SentEmailInfo = {
   messageId: string
   /**
-   * Overall status for the email. If multiple recipients were specified, this will be the "worst" status among them.
+   * Overall status for the sent email. If multiple recipients were specified, this will be the "worst" status among them.
    * For example, if one recipient's email was sent successfully but another's failed, the overall status will be "failed".
+   * The error messages should be checked for more granular details.
    */
   status: SentEmailDeliveryStatus
   errorMessages?: string[]
