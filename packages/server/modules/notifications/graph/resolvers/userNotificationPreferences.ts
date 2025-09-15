@@ -3,7 +3,7 @@ import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   getSavedUserNotificationPreferencesFactory,
   saveUserNotificationPreferencesFactory
-} from '@/modules/notifications/repositories'
+} from '@/modules/notifications/repositories/userNotificationPreferences'
 import {
   getUserNotificationPreferencesFactory,
   updateNotificationPreferencesFactory

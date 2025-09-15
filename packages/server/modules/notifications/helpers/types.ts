@@ -25,6 +25,17 @@ export type UserNotificationPreferencesRecord = {
   preferences: NotificationPreferences
 }
 
+export type UserNotificationRecord = {
+  id: string
+  userId: string
+  notificationType: string // TODO: extend
+  read: boolean
+  payload: Record<string, unknown> // TODO: extend
+  sendEmailAt: Date | null
+  createdAt: Date
+  updatedAt: Date
+}
+
 // Add mappings between NotificationTypes and expected Message types here
 export type NotificationTypeMessageMap = {
   [NotificationType.MentionedInComment]: MentionedInCommentMessage
