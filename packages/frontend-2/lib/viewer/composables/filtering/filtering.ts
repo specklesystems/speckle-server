@@ -686,13 +686,16 @@ export function useFilterUtilities(
   }
 
   // Store filters that need to be restored once data store is ready
-  const pendingFiltersToRestore = ref<Array<{
-    key: string | null
-    isApplied: boolean
-    selectedValues: string[]
-    id: string
-    condition: 'AND' | 'OR'
-  }> | null>(null)
+  const pendingFiltersToRestore = ref<{
+    filters: Array<{
+      key: string | null
+      isApplied: boolean
+      selectedValues: string[]
+      id: string
+      condition: 'AND' | 'OR'
+    }>
+    activeColorFilterId: string | null
+  } | null>(null)
 
   /**
    * Restores filters from serialized state
@@ -716,13 +719,14 @@ export function useFilterUtilities(
     // If data store is ready, restore immediately
     if (availableProperties.length > 0) {
       applyFiltersFromSerialized(serializedFilters, availableProperties)
+      filters.activeColorFilterId.value = activeColorFilterId
     } else {
       // Store filters to restore later when data store is ready
-      pendingFiltersToRestore.value = serializedFilters
+      pendingFiltersToRestore.value = {
+        filters: serializedFilters,
+        activeColorFilterId
+      }
     }
-
-    // Restore active color filter too
-    filters.activeColorFilterId.value = activeColorFilterId
   }
 
   /**
@@ -874,7 +878,15 @@ export function useFilterUtilities(
     if (pendingFiltersToRestore.value) {
       const availableProperties =
         getPropertyOptionsFromDataStore() as ExtendedPropertyInfo[]
-      applyFiltersFromSerialized(pendingFiltersToRestore.value, availableProperties)
+      applyFiltersFromSerialized(
+        pendingFiltersToRestore.value.filters,
+        availableProperties
+      )
+      if (pendingFiltersToRestore.value.activeColorFilterId) {
+        filters.activeColorFilterId.value =
+          pendingFiltersToRestore.value.activeColorFilterId
+      }
+
       pendingFiltersToRestore.value = null
     }
   })
