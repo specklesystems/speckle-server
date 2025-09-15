@@ -37,7 +37,10 @@ import {
   findFilterByKvp
 } from '~/lib/viewer/helpers/filters/utils'
 import { useFilterColoringHelpers } from '~/lib/viewer/composables/filtering/coloringHelpers'
-import { useHighlightedObjectsUtilities } from '~/lib/viewer/composables/ui'
+import {
+  useHighlightedObjectsUtilities,
+  useSelectionUtilities
+} from '~/lib/viewer/composables/ui'
 
 export function useFilterUtilities(
   options?: Partial<{ state: InjectableViewerState }>
@@ -50,6 +53,7 @@ export function useFilterUtilities(
   const dataStore = useFilteringDataStore()
   const { removeColorFilter } = useFilterColoringHelpers({ state })
   const { clearHighlightedObjects } = useHighlightedObjectsUtilities()
+  const { clearSelection } = useSelectionUtilities()
 
   const isolateObjects = (
     objectIds: string[],
@@ -74,6 +78,15 @@ export function useFilterUtilities(
     )
   }
 
+  const resetIsolations = () => {
+    clearHighlightedObjects()
+    filters.isolatedObjectIds.value = []
+  }
+
+  const hasAnyIsolationsApplied = computed(() => {
+    return filters.isolatedObjectIds.value.length > 0
+  })
+
   const hideObjects = (
     objectIds: string[],
     options?: Partial<{
@@ -81,6 +94,7 @@ export function useFilterUtilities(
     }>
   ) => {
     clearHighlightedObjects()
+    clearSelection()
 
     filters.hiddenObjectIds.value = uniq([
       ...(options?.replace ? [] : filters.hiddenObjectIds.value),
@@ -878,8 +892,10 @@ export function useFilterUtilities(
   return {
     isolateObjects,
     unIsolateObjects,
+    resetIsolations,
     hideObjects,
     showObjects,
+    hasAnyIsolationsApplied,
     filters,
     addActiveFilter,
     updateFilterProperty,
