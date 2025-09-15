@@ -74,12 +74,33 @@ export function useCreateViewerFilteringDataStore() {
       // Map from objectId to its property values for efficient filtering
       const objectProperties: Record<string, Record<string, unknown>> = {}
 
+      // Single-pass: collect definition proxies AND atomic objects in one walk
+      const defProxyByAppId = new Map<string, { name?: string }>()
+
       await tree.walkAsync((node: TreeNode) => {
+        const raw = node.model?.raw as Record<string, unknown> | undefined
+        if (!raw) return true
+
+        // First, check if this is a definition proxy (non-atomic)
+        const speckleType = String(raw.speckle_type ?? '')
+        const isDefProxy =
+          speckleType.includes('InstanceDefinitionProxy') ||
+          speckleType.includes('BlockDefinition')
+
+        if (isDefProxy) {
+          const appId = String(raw.applicationId ?? '')
+          const name = typeof raw.name === 'string' ? raw.name : undefined
+          if (appId) {
+            defProxyByAppId.set(appId, { name })
+          }
+          return true // Continue traversal, don't process as atomic
+        }
+
         if (
           node.model.atomic &&
           node.model.id &&
           node.model.id.length === 32 &&
-          !node.model.raw.speckle_type?.includes('Proxy') &&
+          !node.model.raw.speckle_type?.includes('InstanceDefinitionProxy') &&
           node.model.raw.properties?.builtInCategory !== 'OST_Levels'
         ) {
           const objectId = node.model.id
@@ -140,6 +161,28 @@ export function useCreateViewerFilteringDataStore() {
                 value: finalValue,
                 type: finalType
               })
+
+              const pathParts = fullPath.split('.')
+              const lastPart = pathParts[pathParts.length - 1]
+              if (
+                lastPart === 'definitionId' &&
+                typeof finalValue === 'string' &&
+                finalValue
+              ) {
+                const defInfo = defProxyByAppId.get(finalValue)
+                if (defInfo?.name) {
+                  const basePath = pathParts.slice(0, -1).join('.')
+                  const namePath = basePath
+                    ? `${basePath}.definitionName`
+                    : 'definitionName'
+                  objProps[namePath] = defInfo.name
+                  pendingPropertyUpdates.push({
+                    path: namePath,
+                    value: defInfo.name,
+                    type: 'string'
+                  })
+                }
+              }
 
               if (pendingPropertyUpdates.length >= DEEP_EXTRACTION_CONFIG.BATCH_SIZE) {
                 processBatchedPropertyUpdates(pendingPropertyUpdates, propertyMap)

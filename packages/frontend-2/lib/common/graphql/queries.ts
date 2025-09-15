@@ -33,6 +33,16 @@ export const serverInfoAllScopesQuery = graphql(`
   }
 `)
 
+export const serverInfoEmailVerificationTimeoutQuery = graphql(`
+  query ServerInfoEmailVerificationTimeout {
+    serverInfo {
+      configuration {
+        emailVerificationTimeoutMinutes
+      }
+    }
+  }
+`)
+
 export const projectModelsSelectorValuesQuery = graphql(`
   query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {
     project(id: $projectId) {
