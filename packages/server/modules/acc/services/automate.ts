@@ -92,8 +92,8 @@ export const triggerSyncItemAutomationFactory =
       functionRuns: [
         {
           id: cryptoRandomString({ length: 15 }),
-          functionId: ImporterAutomateFunctions.svf2.functionId,
-          functionReleaseId: ImporterAutomateFunctions.svf2.functionReleaseId,
+          functionId: ImporterAutomateFunctions.rvt.functionId,
+          functionReleaseId: ImporterAutomateFunctions.rvt.functionReleaseId,
           status: 'pending' as const,
           elapsed: 0,
           results: null,
@@ -148,6 +148,7 @@ export const triggerSyncItemAutomationFactory =
           modelId: syncItem.modelId,
           versionUrn: syncItem.accFileVersionUrn,
           viewName: syncItem.accFileViewName ?? null,
+          autodeskProjectId: syncItem.accProjectId,
           autodeskRegion: syncItem.accRegion === 'EMEA' ? 1 : 0,
           autodeskClientId: getAutodeskIntegrationClientId(),
           autodeskClientSecret: getAutodeskIntegrationClientSecret()

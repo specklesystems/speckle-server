@@ -28,3 +28,14 @@ export class SyncItemAutomationTriggerError extends BaseError {
   static code = 'ACC_SYNC_ITEM_AUTOMATION_TRIGGER_ERROR'
   static statusCode = 422
 }
+
+export class SyncItemUnsupportedFileExtensionError extends BaseError {
+  static defaultMessage = 'Cannot sync this file type from ACC'
+  static code = 'ACC_SYNC_ITEM_UNSUPPORTED_FILE_EXTENSION'
+  static statusCode = 422
+
+  constructor(fileExtension: string) {
+    super()
+    this.message = `Received sync item update with unsupported file extension ${fileExtension}`
+  }
+}
