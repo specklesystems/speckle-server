@@ -26,10 +26,16 @@ export enum ExistenceFilterCondition {
   IsNotSet = 'is_not_set'
 }
 
+export enum BooleanFilterCondition {
+  IsTrue = 'is_true',
+  IsFalse = 'is_false'
+}
+
 export type FilterCondition =
   | NumericFilterCondition
   | StringFilterCondition
   | ExistenceFilterCondition
+  | BooleanFilterCondition
 
 // Filter Enums
 export enum FilterLogic {
@@ -39,7 +45,8 @@ export enum FilterLogic {
 
 export enum FilterType {
   String = 'string',
-  Numeric = 'numeric'
+  Numeric = 'numeric',
+  Boolean = 'boolean'
 }
 
 export enum SortMode {
@@ -70,10 +77,30 @@ export type StringFilterData = BaseFilterData & {
   isDefaultAllSelected?: boolean
 }
 
-export type FilterData = NumericFilterData | StringFilterData
+export type ExtendedPropertyInfo =
+  | PropertyInfo
+  | {
+      key: string
+      objectCount: number
+      type: 'boolean'
+      valueGroups: { value: boolean; ids: string[] }[]
+    }
+
+export type BooleanPropertyInfo = Extract<ExtendedPropertyInfo, { type: 'boolean' }>
+
+export type BooleanFilterData = BaseFilterData & {
+  type: FilterType.Boolean
+  filter: BooleanPropertyInfo
+}
+
+export type FilterData = NumericFilterData | StringFilterData | BooleanFilterData
 
 export const isNumericFilter = (filter: FilterData): filter is NumericFilterData => {
   return filter.type === FilterType.Numeric
+}
+
+export const isBooleanFilter = (filter: FilterData): filter is BooleanFilterData => {
+  return filter.type === FilterType.Boolean
 }
 
 export const isExistenceCondition = (condition: FilterCondition): boolean => {
@@ -107,16 +134,44 @@ export type PropertySelectionListItem = {
 }
 
 export type CreateFilterParams = {
-  filter: PropertyInfo
+  filter: ExtendedPropertyInfo
   id: string
   availableValues?: string[]
 }
 
-// Internal Data Types
+// Property Extractor Types
 export type PropertyInfoBase = {
+  path: string[]
+  concatenatedPath: string
+  type: string
+  name: string
+}
+
+// Internal Data Types (for filtering system)
+export type FilteringPropertyInfo = {
   concatenatedPath: string
   value: string | number
   type: FilterType
+}
+
+export type PropertyInfoValue = {
+  value: unknown
+} & PropertyInfoBase
+
+export type Parameter = {
+  units?: string
+} & PropertyInfoValue
+
+export type RevitMaterialPropertyInfo = {
+  materialCategory: string
+  materialClass: string
+} & Parameter
+
+export type RevitMaterialInfo = {
+  materialCategory: string
+  materialClass: string
+  area: { units: string; value: number }
+  volume: { units: string; value: number }
 }
 
 export type DataSlice = {
@@ -140,7 +195,7 @@ export type DataSource = {
   viewerInstance: Viewer
   rootObject: Nullable<SpeckleObject>
   objectMap: Record<string, SpeckleObject>
-  propertyMap: Record<string, PropertyInfoBase>
+  propertyMap: Record<string, FilteringPropertyInfo>
   objectProperties: Record<string, Record<string, unknown>>
 }
 

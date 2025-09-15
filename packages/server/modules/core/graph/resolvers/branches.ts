@@ -14,10 +14,7 @@ import {
   getStreamBranchCountFactory
 } from '@/modules/core/repositories/branches'
 import { db } from '@/db/knex'
-import {
-  getStreamFactory,
-  markBranchStreamUpdatedFactory
-} from '@/modules/core/repositories/streams'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { legacyGetUserFactory } from '@/modules/core/repositories/users'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
@@ -177,13 +174,11 @@ export default {
       throwIfAuthNotOk(canDelete)
 
       const projectDB = await getProjectDbClient({ projectId })
-      const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db: projectDB })
       const getStream = getStreamFactory({ db: projectDB })
       const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
         getStream,
         getBranchById: getBranchByIdFactory({ db: projectDB }),
         emitEvent: getEventBus().emit,
-        markBranchStreamUpdated,
         deleteBranchById: deleteBranchByIdFactory({ db: projectDB })
       })
       const deleted = await withOperationLogging(

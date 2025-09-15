@@ -1,8 +1,4 @@
-import type {
-  PropertyInfo,
-  NumericPropertyInfo,
-  StringPropertyInfo
-} from '@speckle/viewer'
+import type { NumericPropertyInfo, StringPropertyInfo } from '@speckle/viewer'
 import { difference, uniq, partition } from 'lodash-es'
 import { whenever } from '@vueuse/core'
 import {
@@ -17,14 +13,19 @@ import {
   type FilterData,
   type NumericFilterData,
   type StringFilterData,
+  type BooleanFilterData,
+  type BooleanPropertyInfo,
   type CreateFilterParams,
   isNumericFilter,
+  isBooleanFilter,
   NumericFilterCondition,
   StringFilterCondition,
   ExistenceFilterCondition,
+  BooleanFilterCondition,
   SortMode,
   type DataSlice,
-  type QueryCriteria
+  type QueryCriteria,
+  type ExtendedPropertyInfo
 } from '~/lib/viewer/helpers/filters/types'
 import { getConditionLabel } from '~/lib/viewer/helpers/filters/constants'
 import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
@@ -36,6 +37,7 @@ import {
   findFilterByKvp
 } from '~/lib/viewer/helpers/filters/utils'
 import { useFilterColoringHelpers } from '~/lib/viewer/composables/filtering/coloringHelpers'
+import { useHighlightedObjectsUtilities } from '~/lib/viewer/composables/ui'
 
 export function useFilterUtilities(
   options?: Partial<{ state: InjectableViewerState }>
@@ -47,6 +49,7 @@ export function useFilterUtilities(
 
   const dataStore = useFilteringDataStore()
   const { removeColorFilter } = useFilterColoringHelpers({ state })
+  const { clearHighlightedObjects } = useHighlightedObjectsUtilities()
 
   const isolateObjects = (
     objectIds: string[],
@@ -54,6 +57,8 @@ export function useFilterUtilities(
       replace: boolean
     }>
   ) => {
+    clearHighlightedObjects()
+
     filters.isolatedObjectIds.value = uniq([
       ...(options?.replace ? [] : filters.isolatedObjectIds.value),
       ...objectIds
@@ -61,6 +66,8 @@ export function useFilterUtilities(
   }
 
   const unIsolateObjects = (objectIds: string[]) => {
+    clearHighlightedObjects()
+
     filters.isolatedObjectIds.value = difference(
       filters.isolatedObjectIds.value,
       objectIds
@@ -73,6 +80,8 @@ export function useFilterUtilities(
       replace: boolean
     }>
   ) => {
+    clearHighlightedObjects()
+
     filters.hiddenObjectIds.value = uniq([
       ...(options?.replace ? [] : filters.hiddenObjectIds.value),
       ...objectIds
@@ -80,6 +89,8 @@ export function useFilterUtilities(
   }
 
   const showObjects = (objectIds: string[]) => {
+    clearHighlightedObjects()
+
     filters.hiddenObjectIds.value = difference(filters.hiddenObjectIds.value, objectIds)
   }
 
@@ -114,11 +125,16 @@ export function useFilterUtilities(
   /**
    * Gets available values for the current property filter (used for UI display)
    */
-  const getAvailableFilterValues = (filter: PropertyInfo, limit?: number): string[] => {
+  const getAvailableFilterValues = (
+    filter: ExtendedPropertyInfo,
+    limit?: number
+  ): string[] => {
     // Type guard to check if filter has valueGroups property
     const hasValueGroups = (
-      f: PropertyInfo
-    ): f is PropertyInfo & { valueGroups: Array<{ value: string | number }> } => {
+      f: ExtendedPropertyInfo
+    ): f is ExtendedPropertyInfo & {
+      valueGroups: Array<{ value: string | number }>
+    } => {
       return (
         'valueGroups' in f && Array.isArray((f as Record<string, unknown>).valueGroups)
       )
@@ -171,7 +187,9 @@ export function useFilterUtilities(
   /**
    * Computes full property data for a given property key (min/max, valueGroups)
    */
-  const computeFullPropertyData = (propertyKey: string): PropertyInfo | null => {
+  const computeFullPropertyData = (
+    propertyKey: string
+  ): ExtendedPropertyInfo | null => {
     const valueToObjectIds = new Map<string, string[]>()
 
     for (const dataSource of dataStore.dataSources.value) {
@@ -198,11 +216,26 @@ export function useFilterUtilities(
 
     const uniqueValues = Array.from(valueToObjectIds.keys())
     const firstValue = uniqueValues[0]
+
+    const isBooleanProperty =
+      uniqueValues.every((v) => v === 'true' || v === 'false') &&
+      uniqueValues.length <= 2
+
     const isNumeric =
       typeof firstValue === 'number' ||
       (!isNaN(Number(firstValue)) && String(firstValue) !== '')
 
-    if (isNumeric) {
+    if (isBooleanProperty) {
+      return {
+        key: propertyKey,
+        type: 'boolean',
+        objectCount: valueToObjectIds.size,
+        valueGroups: uniqueValues.map((value) => ({
+          value: value === 'true',
+          ids: valueToObjectIds.get(value) || []
+        }))
+      } as BooleanPropertyInfo
+    } else if (isNumeric) {
       const numericValues = uniqueValues.map((v) => Number(v)).filter((v) => !isNaN(v))
       const min = parseFloat(Math.min(...numericValues).toFixed(4))
       const max = parseFloat(Math.max(...numericValues).toFixed(4))
@@ -241,6 +274,12 @@ export function useFilterUtilities(
     }
   }
 
+  const isBooleanPropertyInfo = (
+    prop: ExtendedPropertyInfo
+  ): prop is BooleanPropertyInfo => {
+    return prop.type === 'boolean'
+  }
+
   const createFilterData = (params: CreateFilterParams): FilterData => {
     const { filter, id } = params
 
@@ -248,7 +287,16 @@ export function useFilterUtilities(
     const fullFilter =
       filter.objectCount === 0 ? computeFullPropertyData(filter.key) || filter : filter
 
-    if (isNumericPropertyInfo(fullFilter)) {
+    if (isBooleanPropertyInfo(fullFilter)) {
+      return {
+        id,
+        isApplied: true,
+        selectedValues: [],
+        condition: BooleanFilterCondition.IsTrue,
+        type: FilterType.Boolean,
+        filter: fullFilter
+      } as BooleanFilterData
+    } else if (isNumericPropertyInfo(fullFilter)) {
       const numericFilter = fullFilter as NumericPropertyInfo
       const { min, max } = numericFilter
       const range = max - min
@@ -299,7 +347,7 @@ export function useFilterUtilities(
     }
   }
 
-  const addActiveFilter = (filter: PropertyInfo): string => {
+  const addActiveFilter = (filter: ExtendedPropertyInfo): string => {
     const existingIndex = filters.propertyFilters.value.findIndex(
       (f) => f.filter?.key === filter.key
     )
@@ -322,7 +370,7 @@ export function useFilterUtilities(
    */
   const updateFilterProperty = (
     filterId: string,
-    newProperty: PropertyInfo
+    newProperty: ExtendedPropertyInfo
   ): boolean => {
     const filterIndex = filters.propertyFilters.value.findIndex(
       (f) => f.id === filterId
@@ -373,11 +421,17 @@ export function useFilterUtilities(
    * Updates selected values for a specific active filter
    */
   const updateActiveFilterValues = (filterId: string, values: string[]) => {
+    clearHighlightedObjects()
+
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
       filter.selectedValues = [...values]
 
-      if (!isNumericFilter(filter) && filter.isDefaultAllSelected) {
+      if (
+        !isNumericFilter(filter) &&
+        !isBooleanFilter(filter) &&
+        filter.isDefaultAllSelected
+      ) {
         filter.isDefaultAllSelected = false
       }
 
@@ -389,6 +443,8 @@ export function useFilterUtilities(
    * Efficiently selects all values by using valueGroups directly instead of expensive getAllPropertyValues
    */
   const selectAllFilterValues = (filterId: string) => {
+    clearHighlightedObjects()
+
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter && !isNumericFilter(filter)) {
       const propertyFilter = filter.filter
@@ -408,7 +464,9 @@ export function useFilterUtilities(
         const allValues = getAllPropertyValues(propertyFilter.key)
         filter.selectedValues = [...allValues]
       }
-      filter.isDefaultAllSelected = false
+      if (!isBooleanFilter(filter)) {
+        filter.isDefaultAllSelected = false
+      }
 
       updateDataStoreSlices()
     }
@@ -418,6 +476,8 @@ export function useFilterUtilities(
    * Updates condition for a specific active filter
    */
   const updateFilterCondition = (filterId: string, condition: FilterCondition) => {
+    clearHighlightedObjects()
+
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
       filter.condition = condition
@@ -437,6 +497,8 @@ export function useFilterUtilities(
    * Sets numeric range for a filter
    */
   const setNumericRange = (filterId: string, min: number, max: number) => {
+    clearHighlightedObjects()
+
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter && isNumericFilter(filter)) {
       const roundedMin = parseFloat(min.toFixed(4))
@@ -498,8 +560,25 @@ export function useFilterUtilities(
         }
 
         newFilterSlices.push(slice)
+      } else if (isBooleanFilter(filter) && filter.isApplied) {
+        const { condition } = filter
+        const queryCriteria: QueryCriteria = {
+          propertyKey: filter.filter.key,
+          condition,
+          values: []
+        }
+        const matchingObjectIds = dataStore.queryObjects(queryCriteria)
+
+        const slice: DataSlice = {
+          id: `filter-${filter.id}`,
+          widgetId: filter.id,
+          name: `${getPropertyName(filter.filter.key)} ${getConditionLabel(condition)}`,
+          objectIds: matchingObjectIds
+        }
+        newFilterSlices.push(slice)
       } else if (
         !isNumericFilter(filter) &&
+        !isBooleanFilter(filter) &&
         filter.isApplied &&
         (filter.selectedValues.length > 0 ||
           filter.isDefaultAllSelected ||
@@ -550,12 +629,18 @@ export function useFilterUtilities(
    * Toggles a value for a specific active filter
    */
   const toggleActiveFilterValue = (filterId: string, value: string) => {
+    clearHighlightedObjects()
+
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
       const index = filter.selectedValues.indexOf(value)
       const wasSelected = index > -1
 
-      if (!isNumericFilter(filter) && filter.isDefaultAllSelected) {
+      if (
+        !isNumericFilter(filter) &&
+        !isBooleanFilter(filter) &&
+        filter.isDefaultAllSelected
+      ) {
         filter.selectedValues = [value]
         filter.isDefaultAllSelected = false
       } else {
@@ -578,6 +663,8 @@ export function useFilterUtilities(
   }
 
   const resetFilters = () => {
+    clearHighlightedObjects()
+
     filters.propertyFilters.value = []
     filters.selectedObjects.value = []
     filters.activeColorFilterId.value = null
@@ -645,7 +732,7 @@ export function useFilterUtilities(
       id: string
       condition: 'AND' | 'OR'
     }>,
-    availableProperties: PropertyInfo[]
+    availableProperties: ExtendedPropertyInfo[]
   ) => {
     for (const serializedFilter of serializedFilters) {
       if (serializedFilter.key) {
@@ -671,9 +758,9 @@ export function useFilterUtilities(
    * Filters the available filters to only include relevant ones for the filter UI
    */
   const getRelevantFilters = (
-    allFilters: PropertyInfo[] | null | undefined
-  ): PropertyInfo[] => {
-    return (allFilters || []).filter((f: PropertyInfo) => {
+    allFilters: ExtendedPropertyInfo[] | null | undefined
+  ): ExtendedPropertyInfo[] => {
+    return (allFilters || []).filter((f: ExtendedPropertyInfo) => {
       if (shouldExcludeFromFiltering(f.key)) {
         return false
       }
@@ -684,8 +771,11 @@ export function useFilterUtilities(
   /**
    * Gets property options from the data store (optimized to use propertyMap)
    */
-  const getPropertyOptionsFromDataStore = (): PropertyInfo[] => {
-    const allProperties = new Map<string, PropertyInfo>()
+  const getPropertyOptionsFromDataStore = (): (
+    | ExtendedPropertyInfo
+    | BooleanPropertyInfo
+  )[] => {
+    const allProperties = new Map<string, ExtendedPropertyInfo | BooleanPropertyInfo>()
 
     for (const dataSource of dataStore.dataSources.value) {
       const propertyKeys = Object.keys(dataSource.propertyMap)
@@ -697,10 +787,18 @@ export function useFilterUtilities(
 
         const propertyInfo = dataSource.propertyMap[propertyKey]
         const value = propertyInfo.value
+        const isBoolean = String(value) === 'true' || String(value) === 'false'
         const isNumeric =
           typeof value === 'number' || (!isNaN(Number(value)) && String(value) !== '')
 
-        if (isNumeric) {
+        if (isBoolean) {
+          allProperties.set(propertyKey, {
+            key: propertyKey,
+            type: 'boolean',
+            objectCount: 0,
+            valueGroups: []
+          } as BooleanPropertyInfo)
+        } else if (isNumeric) {
           allProperties.set(propertyKey, {
             key: propertyKey,
             type: 'number',
@@ -729,7 +827,7 @@ export function useFilterUtilities(
    * Gets filtered and sorted values for a string filter with search and sorting options
    */
   const getFilteredFilterValues = (
-    filter: PropertyInfo,
+    filter: ExtendedPropertyInfo,
     options?: {
       searchQuery?: string
       sortMode?: SortMode
@@ -770,7 +868,8 @@ export function useFilterUtilities(
 
   whenever(shouldRestoreFilters, () => {
     if (pendingFiltersToRestore.value) {
-      const availableProperties = getPropertyOptionsFromDataStore()
+      const availableProperties =
+        getPropertyOptionsFromDataStore() as ExtendedPropertyInfo[]
       applyFiltersFromSerialized(pendingFiltersToRestore.value, availableProperties)
       pendingFiltersToRestore.value = null
     }

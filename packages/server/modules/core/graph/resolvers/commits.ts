@@ -55,8 +55,7 @@ import { db } from '@/db/knex'
 import {
   getStreamFactory,
   getStreamsFactory,
-  getCommitStreamFactory,
-  markCommitStreamUpdatedFactory
+  getCommitStreamFactory
 } from '@/modules/core/repositories/streams'
 import {
   markCommitBranchUpdatedFactory,
@@ -397,7 +396,6 @@ export default {
         getBranchById: getBranchByIdFactory({ db: projectDb }),
         insertStreamCommits: insertStreamCommitsFactory({ db: projectDb }),
         insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
-        markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
         emitEvent: getEventBus().emit
       })
@@ -457,7 +455,6 @@ export default {
         switchCommitBranch: switchCommitBranchFactory({ db: projectDb }),
         updateCommit: updateCommitFactory({ db: projectDb }),
         emitEvent: getEventBus().emit,
-        markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb })
       })
       await withOperationLogging(
@@ -539,7 +536,6 @@ export default {
       const projectDb = await getProjectDbClient({ projectId })
       const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
         getCommit: getCommitFactory({ db: projectDb }),
-        markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
         deleteCommit: deleteCommitFactory({ db: projectDb }),
         emitEvent: getEventBus().emit

@@ -57,6 +57,28 @@ export const garbageCollectAttemptedFileImportBackgroundJobsFactory = (deps: {
       return
     }
 
+    const failedJobsDueToNoComputeBudget = failedBackgroundJobs.filter(
+      (job) =>
+        job.remainingComputeBudgetSeconds !== null &&
+        job.remainingComputeBudgetSeconds <= 0
+    )
+    if (failedJobsDueToNoComputeBudget.length > 0) {
+      logger.info(
+        { numberOfFailedBackgroundJobs: failedBackgroundJobs.length },
+        'Found {numberOfFailedBackgroundJobs} background jobs which have exceeded their compute budget'
+      )
+    }
+
+    const failedJobsDueToExceededAttempts = failedBackgroundJobs.filter(
+      (job) => job.attempt >= job.maxAttempt
+    )
+    if (failedJobsDueToExceededAttempts.length > 0) {
+      logger.warn(
+        { numberOfFailedBackgroundJobs: failedBackgroundJobs.length },
+        'Found {numberOfFailedBackgroundJobs} background jobs which have exceeded maximum number of attempts'
+      )
+    }
+
     const validFailedBackgroundJobs = failedBackgroundJobs.filter(
       (job) => !!job.payload.blobId
     )

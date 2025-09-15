@@ -2,38 +2,52 @@ import type { SpeckleObject, TreeNode, Viewer } from '@speckle/viewer'
 import { uniq, flatten, compact } from 'lodash-es'
 import {
   FilterLogic,
+  FilterType,
   NumericFilterCondition,
   StringFilterCondition,
-  ExistenceFilterCondition
+  ExistenceFilterCondition,
+  BooleanFilterCondition
 } from '~/lib/viewer/helpers/filters/types'
 import type {
   DataSlice,
   QueryCriteria,
   DataSource,
   ResourceInfo,
+  FilteringPropertyInfo,
   PropertyInfoBase
 } from '~/lib/viewer/helpers/filters/types'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { shouldExcludeFromFiltering } from '~/lib/viewer/helpers/filters/utils'
 import {
-  DEEP_EXTRACTION_CONFIG,
-  NON_FILTERABLE_OBJECT_KEYS
-} from '~/lib/viewer/helpers/filters/constants'
+  shouldExcludeFromFiltering,
+  extractNestedProperties,
+  isParameter
+} from '~/lib/viewer/helpers/filters/utils'
+import { DEEP_EXTRACTION_CONFIG } from '~/lib/viewer/helpers/filters/constants'
 
 /**
  * Helper function to batch property map updates for better performance
  */
 function processBatchedPropertyUpdates(
   updates: Array<{ path: string; value: unknown; type: string }>,
-  propertyMap: Record<string, PropertyInfoBase>
+  propertyMap: Record<string, FilteringPropertyInfo>
 ) {
   for (const update of updates) {
     if (!propertyMap[update.path]) {
+      // Convert string type to FilterType
+      let filterType: FilterType
+      if (update.type === 'number') {
+        filterType = FilterType.Numeric
+      } else if (update.type === 'boolean') {
+        filterType = FilterType.Boolean
+      } else {
+        filterType = FilterType.String
+      }
+
       propertyMap[update.path] = {
         concatenatedPath: update.path,
-        value: update.value,
-        type: update.type
-      } as PropertyInfoBase
+        value: update.value as string | number,
+        type: filterType
+      }
     }
   }
 }
@@ -56,7 +70,7 @@ export function useCreateViewerFilteringDataStore() {
       }
 
       const objectMap: Record<string, SpeckleObject> = {}
-      const propertyMap: Record<string, PropertyInfoBase> = {}
+      const propertyMap: Record<string, FilteringPropertyInfo> = {}
       // Map from objectId to its property values for efficient filtering
       const objectProperties: Record<string, Record<string, unknown>> = {}
 
@@ -71,8 +85,11 @@ export function useCreateViewerFilteringDataStore() {
           const objectId = node.model.id
           objectMap[objectId] = node.model.raw as SpeckleObject
 
-          // Extract all properties with deep traversal
+          // Extract all properties using the new property extractor
           const objProps: Record<string, unknown> = {}
+          const extractedProperties: PropertyInfoBase[] = extractNestedProperties(
+            node.model.raw as Record<string, unknown>
+          )
 
           const pendingPropertyUpdates: Array<{
             path: string
@@ -80,98 +97,53 @@ export function useCreateViewerFilteringDataStore() {
             type: string
           }> = []
 
-          const extractionQueue: Array<{
-            obj: Record<string, unknown>
-            basePath: string
-            depth: number
-          }> = [
-            { obj: node.model.raw as Record<string, unknown>, basePath: '', depth: 0 }
-          ]
+          for (const prop of extractedProperties) {
+            const fullPath = prop.concatenatedPath
 
-          while (extractionQueue.length > 0) {
-            const current = extractionQueue.shift()!
-            const { obj, basePath, depth } = current
-
-            if (
-              depth >= DEEP_EXTRACTION_CONFIG.MAX_DEPTH ||
-              !obj ||
-              typeof obj !== 'object'
-            ) {
+            if (shouldExcludeFromFiltering(fullPath)) {
               continue
             }
 
-            for (const [key, value] of Object.entries(obj)) {
-              if (value === null || value === undefined) {
-                continue
-              }
+            // Handle name-value pairs by collapsing them to just the value
+            let finalValue: unknown
+            let finalType: string
 
-              const fullPath = basePath ? `${basePath}.${key}` : key
+            if (isParameter(prop) && 'value' in prop) {
+              // This is a name-value pair, extract just the value
+              finalValue = prop.value
+              finalType = prop.type
+            } else if ('value' in prop) {
+              // This already has a value
+              finalValue = prop.value
+              finalType = prop.type
+            } else {
+              // This is a regular property, we need to get the value from the object
+              const value = prop.path.reduce(
+                (current, key) => (current as Record<string, unknown>)?.[key],
+                node.model.raw
+              )
 
-              if (shouldExcludeFromFiltering(fullPath)) {
-                continue
-              }
-
-              if (typeof value !== 'object' || Array.isArray(value)) {
-                objProps[fullPath] = value
-
-                pendingPropertyUpdates.push({
-                  path: fullPath,
-                  value,
-                  type: typeof value
-                })
-
-                if (
-                  pendingPropertyUpdates.length >= DEEP_EXTRACTION_CONFIG.BATCH_SIZE
-                ) {
-                  processBatchedPropertyUpdates(pendingPropertyUpdates, propertyMap)
-                  pendingPropertyUpdates.length = 0
-                }
+              if (value && isParameter(value)) {
+                finalValue = (value as { value: unknown }).value
+                finalType = typeof finalValue
               } else {
-                const nestedObj = value as Record<string, unknown>
+                finalValue = value
+                finalType = prop.type
+              }
+            }
 
-                // Skip common non-filterable object types early for performance
-                if (
-                  NON_FILTERABLE_OBJECT_KEYS.includes(
-                    key as (typeof NON_FILTERABLE_OBJECT_KEYS)[number]
-                  ) ||
-                  key.startsWith('__')
-                ) {
-                  continue
-                }
+            if (finalValue !== null && finalValue !== undefined) {
+              objProps[fullPath] = finalValue
 
-                if (key === 'parameters') {
-                  for (const [paramKey, paramObj] of Object.entries(nestedObj)) {
-                    if (
-                      paramObj &&
-                      typeof paramObj === 'object' &&
-                      !Array.isArray(paramObj)
-                    ) {
-                      const param = paramObj as Record<string, unknown>
-                      if ('value' in param) {
-                        const paramPath = `${fullPath}.${paramKey}.value`
-                        if (!shouldExcludeFromFiltering(paramPath)) {
-                          objProps[paramPath] = param.value
-                          pendingPropertyUpdates.push({
-                            path: paramPath,
-                            value: param.value,
-                            type: typeof param.value
-                          })
-                        }
-                      }
-                      extractionQueue.push({
-                        obj: param,
-                        basePath: `${fullPath}.${paramKey}`,
-                        depth: depth + 2
-                      })
-                    }
-                  }
-                } else {
-                  extractionQueue.push({
-                    obj: nestedObj,
-                    basePath: fullPath,
-                    depth: depth + 1
-                  })
-                }
+              pendingPropertyUpdates.push({
+                path: fullPath,
+                value: finalValue,
+                type: finalType
+              })
+
+              if (pendingPropertyUpdates.length >= DEEP_EXTRACTION_CONFIG.BATCH_SIZE) {
+                processBatchedPropertyUpdates(pendingPropertyUpdates, propertyMap)
+                pendingPropertyUpdates.length = 0
               }
             }
           }
@@ -226,6 +198,26 @@ export function useCreateViewerFilteringDataStore() {
         )) {
           const hasProperty = criteria.propertyKey in objProps
           if (!hasProperty) {
+            matchingIds.push(objectId)
+          }
+        }
+      } else if (criteria.condition === BooleanFilterCondition.IsTrue) {
+        // Find all  where this property is true
+        for (const [objectId, objProps] of Object.entries(
+          dataSource.objectProperties
+        )) {
+          const value = objProps[criteria.propertyKey]
+          if (value === true || value === 'true') {
+            matchingIds.push(objectId)
+          }
+        }
+      } else if (criteria.condition === BooleanFilterCondition.IsFalse) {
+        // Find all objects where this property is false
+        for (const [objectId, objProps] of Object.entries(
+          dataSource.objectProperties
+        )) {
+          const value = objProps[criteria.propertyKey]
+          if (value === false || value === 'false') {
             matchingIds.push(objectId)
           }
         }
