@@ -58,10 +58,14 @@ export const sendEmail: SendEmail = async ({
       })}`
     }
 
-    await transporter.sendMail(options)
+    const sentEmailResponse = await transporter.sendMail(options)
     await eventBus.emit({
       eventName: EmailsEvents.Sent,
-      payload: { options }
+      payload: {
+        options,
+        deliveryStatus: sentEmailResponse.status,
+        deliverErrorMessages: sentEmailResponse.errorMessages
+      }
     })
 
     const emails = typeof to === 'string' ? [to] : to
@@ -71,9 +75,11 @@ export const sendEmail: SendEmail = async ({
     logger.info(
       {
         subject,
-        distinctIds
+        distinctIds,
+        deliveryStatus: sentEmailResponse.status,
+        deliveryErrorMessages: sentEmailResponse.errorMessages
       },
-      'Email "{subject}" sent out to distinctIds {distinctIds}'
+      'Email "{subject}" sent out to distinctIds {distinctIds}; status: {deliveryStatus}'
     )
     return true
   } catch (error) {

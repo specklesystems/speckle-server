@@ -7,6 +7,7 @@ import {
   EmailSendingError,
   EmailTransportInitializationError
 } from '@/modules/emails/errors'
+import { SentEmailDeliveryStatus } from '@/modules/emails/domain/consts'
 
 const initMailjetAPI = async (params: {
   apiKeyPublic: string
@@ -23,7 +24,15 @@ const sendMessageResponseSchema = z.object({
   Messages: z.array(
     z.object({
       MessageID: z.string().optional(),
-      CustomId: z.string().optional()
+      CustomId: z.string().optional(),
+      Status: z.literal('success').or(z.literal('error')),
+      Errors: z.array(
+        z.object({
+          ErrorCode: z.string(),
+          StatusCode: z.number(),
+          ErrorMessage: z.string()
+        })
+      )
     })
   )
 })
@@ -85,11 +94,17 @@ export async function initializeMailjetTransporter(params: {
         throw new EmailSendingError('No messages were sent')
       }
 
+      // mailchimp allows sending multiple messages at once, but we only ever send one
+      const m = parsedResponse.data.Messages[0]
       return {
-        messageId:
-          parsedResponse.data.Messages[0].MessageID ||
-          parsedResponse.data.Messages[0].CustomId ||
-          ''
+        messageId: m.MessageID || m.CustomId || '',
+        status:
+          m.Status === 'success'
+            ? SentEmailDeliveryStatus.SENT
+            : SentEmailDeliveryStatus.FAILED,
+        errorMessages: m.Errors.map(
+          (e) => `${e.ErrorCode} (${e.StatusCode}): ${e.ErrorMessage}`
+        )
       }
     }
   }

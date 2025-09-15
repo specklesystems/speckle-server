@@ -4,6 +4,7 @@ import type { Logger } from '@/observability/logging'
 import { ensureError } from '@speckle/shared'
 import { z } from 'zod'
 import { EmailSendingError, MailchimpClientError } from '@/modules/emails/errors'
+import { SentEmailDeliveryStatus } from '@/modules/emails/domain/consts'
 
 const initMailchimpTransactionalAPI = async (params: {
   apiKey: string
@@ -19,11 +20,41 @@ const initMailchimpTransactionalAPI = async (params: {
   return mailchimpTransporter
 }
 
+const mailChimpDeliveryStatus = {
+  SENT: 'sent',
+  QUEUED: 'queued',
+  SCHEDULED: 'scheduled',
+  REJECTED: 'rejected',
+  INVALID: 'invalid'
+} as const
+
 const sendMessageResponseSchema = z.array(
   z.object({
-    _id: z.string()
+    _id: z.string(),
+    status: z.string(),
+    // eslint-disable-next-line camelcase
+    reject_reason: z.string(),
+    // eslint-disable-next-line camelcase
+    queued_reason: z.string()
   })
 )
+
+const mapMailchimpMessageStatusToSendEmailDeliveryStatus = (
+  status: string
+): SentEmailDeliveryStatus => {
+  switch (status) {
+    case mailChimpDeliveryStatus.SENT:
+      return SentEmailDeliveryStatus.SENT
+    case mailChimpDeliveryStatus.QUEUED:
+    case mailChimpDeliveryStatus.SCHEDULED:
+      return SentEmailDeliveryStatus.QUEUED
+    case mailChimpDeliveryStatus.REJECTED:
+    case mailChimpDeliveryStatus.INVALID:
+      return SentEmailDeliveryStatus.FAILED
+    default:
+      throw new EmailSendingError(`Unknown Mailchimp message status: ${status}`)
+  }
+}
 
 export async function initializeMailchimpTransporter(deps: {
   config: {
@@ -72,8 +103,15 @@ export async function initializeMailchimpTransporter(deps: {
         throw new EmailSendingError('No messages were sent')
       }
 
+      // each recipient of the same sent message gets their own response object.
+      // we will assume that we only ever send a message to one recipient at a time for simplicity.
+      const m = parsedResponse.data[0]
       return {
-        messageId: parsedResponse.data[0]._id
+        messageId: m._id,
+        status: mapMailchimpMessageStatusToSendEmailDeliveryStatus(m.status),
+        errorMessages: [m.reject_reason, m.queued_reason].filter(
+          (msg) => msg && msg.length > 0
+        )
       }
     }
   }

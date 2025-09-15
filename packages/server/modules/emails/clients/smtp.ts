@@ -4,6 +4,8 @@ import type { EmailTransport } from '@/modules/emails/domain/types'
 import { ensureError } from '@speckle/shared'
 import type { Logger } from '@/observability/logging'
 import { EmailTransportInitializationError } from '@/modules/emails/errors'
+import { SentEmailDeliveryStatus } from '@/modules/emails/domain/consts'
+import type { SentMessageInfo } from 'nodemailer/lib/smtp-pool'
 
 type SMTPConfig = {
   host: string
@@ -42,7 +44,20 @@ const initSmtpTransporter = async (params: SMTPConfig & { logger: Logger }) => {
       'SMTP transporter verification failed. Please check your SMTP configuration.'
     )
   }
-  return smtpTransporter
+
+  const wrappedTransporter: EmailTransport = {
+    sendMail: async (options) => {
+      const response = await smtpTransporter.sendMail(options)
+
+      return {
+        messageId: response.messageId,
+        status: mapSMTPResponseToSentEmailDeliveryStatus(response),
+        errorMessages: response.rejectedErrors?.map((e) => `${e.code}: ${e.message}`)
+      }
+    }
+  }
+
+  return wrappedTransporter
 }
 
 export async function initializeSMTPTransporter(
@@ -69,4 +84,18 @@ export async function initializeSMTPTransporter(
   }
 
   return newTransporter
+}
+function mapSMTPResponseToSentEmailDeliveryStatus(
+  response: SentMessageInfo
+): SentEmailDeliveryStatus {
+  if (response.rejected.length > 0) {
+    return SentEmailDeliveryStatus.FAILED
+  }
+
+  if (response.accepted.length === 0) {
+    // this should not happen, but just in case
+    return SentEmailDeliveryStatus.PENDING
+  }
+
+  return SentEmailDeliveryStatus.SENT
 }
