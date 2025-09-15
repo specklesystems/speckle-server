@@ -35,7 +35,8 @@ describe('Viewer State helpers', () => {
             isolatedObjectIds: [],
             hiddenObjectIds: [],
             selectedObjectApplicationIds: {},
-            propertyFilter: { key: null, isApplied: false }
+            propertyFilters: [],
+            activeColorFilterId: null
           },
           camera: {
             position: [0, 0, 0],
@@ -147,7 +148,8 @@ describe('Viewer State helpers', () => {
             isolatedObjectIds: [],
             hiddenObjectIds: [],
             selectedObjectApplicationIds: {},
-            propertyFilter: { key: null, isApplied: false }
+            propertyFilters: [],
+            activeColorFilterId: null
           },
           camera: {
             position: [0, 0, 0],
@@ -206,7 +208,8 @@ describe('Viewer State helpers', () => {
               isolatedObjectIds: [],
               hiddenObjectIds: [],
               selectedObjectApplicationIds: {},
-              propertyFilter: { key: null, isApplied: false }
+              propertyFilters: [],
+              activeColorFilterId: null
             },
             camera: {
               position: [0, 0, 0],

@@ -1,7 +1,7 @@
 <template>
   <div>
     <ClientOnly>
-      <HeaderNavBar v-if="!isEmbedEnabled" hide-user-nav />
+      <HeaderNavBar v-if="!isEmbedEnabled" :hide-user-nav="!isLoggedIn" />
     </ClientOnly>
     <div class="h-dvh w-dvh overflow-hidden flex flex-col">
       <!-- Static Spacer to allow for absolutely positioned HeaderNavBar  -->
@@ -25,4 +25,5 @@
 import { useDashboardEmbed } from '~/lib/dashboards/composables/embed'
 
 const { isEmbedEnabled } = useDashboardEmbed()
+const { isLoggedIn } = useActiveUser()
 </script>
