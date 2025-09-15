@@ -777,9 +777,6 @@ server:
     ## @param server.email.enabled If enabled, Speckle can send email to users - for example, email verification for account registration.
     ##
     enabled: false
-    ## @param server.email.transporterType The type of transactional email API being used. smtp and jsonecho are supported.
-    ##
-    transporterType: 'smtp'
     ## @param server.email.verificationTimeoutMinutes The number of minutes after which an email verification link will expire. Defaults to 5 minutes.
     ##
     verificationTimeoutMinutes: 5

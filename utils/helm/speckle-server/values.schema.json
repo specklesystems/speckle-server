@@ -1267,11 +1267,6 @@
               "description": "If enabled, Speckle can send email to users - for example, email verification for account registration.",
               "default": false
             },
-            "transporterType": {
-              "type": "string",
-              "description": "The type of transactional email API being used. smtp and jsonecho are supported.",
-              "default": "smtp"
-            },
             "verificationTimeoutMinutes": {
               "type": "number",
               "description": "The number of minutes after which an email verification link will expire. Defaults to 5 minutes.",
