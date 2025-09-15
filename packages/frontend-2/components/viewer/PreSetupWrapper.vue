@@ -68,6 +68,10 @@
             <ViewerControlsRight v-if="isMobile" />
           </template>
 
+          <template v-if="annotationsEnabled">
+            <DrawWrapper />
+          </template>
+
           <ViewerLimitsDialog
             v-if="project"
             v-model:open="showLimitsDialog"
@@ -134,6 +138,7 @@ import { parseUrlParameters, resourceBuilder } from '@speckle/shared/viewer/rout
 import { ViewerLimitsDialogType } from '~/lib/projects/helpers/limits'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useBreakpoints } from '@vueuse/core'
+import { useAnnotationsEnabledState } from '~/lib/annotations'
 
 graphql(`
   fragment ModelPageProject on Project {
@@ -164,6 +169,8 @@ const route = useRoute()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('sm')
+
+const annotationsEnabled = useAnnotationsEnabledState()
 
 const leftControls = ref()
 const bottomControls = ref()

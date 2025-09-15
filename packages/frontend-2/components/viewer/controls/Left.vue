@@ -68,6 +68,20 @@
       ></ViewerControlsButtonToggle>
 
       <ViewerControlsButtonToggle
+        v-tippy="
+          getTooltipProps(
+            getShortcutDisplayText(shortcuts.ToggleAnnotations, { format: 'separate' }),
+            {
+              placement: 'right'
+            }
+          )
+        "
+        :active="annotationsEnabled"
+        :icon="LineSquiggle"
+        @click="handleAnnotationsToggle"
+      ></ViewerControlsButtonToggle>
+
+      <ViewerControlsButtonToggle
         v-if="allAutomationRuns.length !== 0"
         v-tippy="{
           content: summary.longSummary,
@@ -202,10 +216,13 @@ import {
   Box,
   ListFilter,
   MessageSquareText,
-  CircleQuestionMark
+  CircleQuestionMark,
+  LineSquiggle
 } from 'lucide-vue-next'
 import { useViewerPanelsUtilities } from '~/lib/viewer/composables/setup/panels'
 import type { ActivePanel } from '~/lib/viewer/helpers/sceneExplorer'
+import { useAnnotationsEnabledState } from '~/lib/annotations'
+import { useCanvasStore } from '@speckle/draw'
 
 // TODO: Refactor all of this event business and just read/write panels state directly
 const emit = defineEmits<{
@@ -220,6 +237,20 @@ const resizeHandle = ref(null)
 const { width: windowWidth } = useWindowSize()
 let startWidth = 0
 let startX = 0
+
+const annotationsEnabled = useAnnotationsEnabledState()
+
+const handleAnnotationsToggle = () => {
+  activePanel.value = 'none'
+  const canvasStore = useCanvasStore()
+  if (annotationsEnabled.value) {
+    canvasStore.deletePaper('broccoli')
+  } else {
+    canvasStore.createPaper('broccoli', 'adaptive', width.value, height.value)
+    canvasStore.createViewerContainer('broccoli', 0, 0, width.value, height.value)
+  }
+  annotationsEnabled.value = !annotationsEnabled.value
+}
 
 const startResizing = (event: MouseEvent) => {
   if (isMobile.value) return
@@ -320,7 +351,8 @@ registerShortcuts({
   ToggleFilters: () => toggleActivePanel('filters'),
   ToggleDiscussions: () => toggleActivePanel('discussions'),
   ToggleDevMode: () => toggleActivePanel('devMode'),
-  ToggleSavedViews: () => isSavedViewsEnabled && toggleActivePanel('savedViews')
+  ToggleSavedViews: () => isSavedViewsEnabled && toggleActivePanel('savedViews'),
+  ToggleAnnotations: () => (annotationsEnabled.value = !annotationsEnabled.value)
 })
 
 const toggleActivePanel = (panel: ActivePanel) => {
