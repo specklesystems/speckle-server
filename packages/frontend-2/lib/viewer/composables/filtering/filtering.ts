@@ -347,7 +347,7 @@ export function useFilterUtilities(
     }
   }
 
-  const addActiveFilter = (filter: ExtendedPropertyInfo): string => {
+  const addActiveFilter = (filter: ExtendedPropertyInfo, id?: string): string => {
     const existingIndex = filters.propertyFilters.value.findIndex(
       (f) => f.filter?.key === filter.key
     )
@@ -355,7 +355,7 @@ export function useFilterUtilities(
     if (existingIndex !== -1) {
       return filters.propertyFilters.value[existingIndex].id
     } else {
-      const id = `filter-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      id ||= `filter-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
       const filterData = createFilterData({ filter, id })
       filters.propertyFilters.value.push(filterData)
@@ -704,7 +704,8 @@ export function useFilterUtilities(
       selectedValues: string[]
       id: string
       condition: 'AND' | 'OR'
-    }>
+    }>,
+    activeColorFilterId: string | null
   ) => {
     if (!serializedFilters?.length) return
 
@@ -719,6 +720,9 @@ export function useFilterUtilities(
       // Store filters to restore later when data store is ready
       pendingFiltersToRestore.value = serializedFilters
     }
+
+    // Restore active color filter too
+    filters.activeColorFilterId.value = activeColorFilterId
   }
 
   /**
@@ -740,7 +744,7 @@ export function useFilterUtilities(
           (f) => f.key === serializedFilter.key
         )
         if (propertyInfo) {
-          const filterId = addActiveFilter(propertyInfo)
+          const filterId = addActiveFilter(propertyInfo, serializedFilter.id)
 
           if (serializedFilter.selectedValues?.length) {
             updateActiveFilterValues(filterId, serializedFilter.selectedValues)
