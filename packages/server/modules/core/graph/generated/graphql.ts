@@ -5456,7 +5456,8 @@ export type WorkspaceEmbedOptions = {
 
 export const WorkspaceFeatureFlagName = {
   AccIntegration: 'accIntegration',
-  Dashboards: 'dashboards'
+  Dashboards: 'dashboards',
+  Presentations: 'presentations'
 } as const;
 
 export type WorkspaceFeatureFlagName = typeof WorkspaceFeatureFlagName[keyof typeof WorkspaceFeatureFlagName];
@@ -5467,6 +5468,7 @@ export const WorkspaceFeatureName = {
   ExclusiveMembership: 'exclusiveMembership',
   HideSpeckleBranding: 'hideSpeckleBranding',
   OidcSso: 'oidcSso',
+  Presentations: 'presentations',
   SavedViews: 'savedViews',
   WorkspaceDataRegionSpecificity: 'workspaceDataRegionSpecificity'
 } as const;
