@@ -53,21 +53,18 @@
         >
           Cancel
         </FormButton>
-        <div
-          v-tippy="
-            cooldownRemaining > 0
-              ? `You can send another code in ${cooldownRemaining}s`
-              : undefined
-          "
-        >
+        <div class="flex flex-col gap-1 justify-center items-center">
           <FormButton
             :disabled="isResendDisabled"
-            color="outline"
-            size="sm"
+            :color="isResendDisabled ? 'outline' : 'primary'"
+            :size="isResendDisabled ? 'sm' : 'base'"
             @click="resendEmail"
           >
             {{ isResendDisabled ? 'Code sent' : 'Resend code' }}
           </FormButton>
+          <span v-if="isResendDisabled" class="text-body-3xs text-foreground-2">
+            You can send another code in {{ cooldownRemaining }}s
+          </span>
         </div>
       </div>
       <div v-if="!registeredThisSession" class="w-full max-w-sm mx-auto mt-8">
