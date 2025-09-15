@@ -252,6 +252,7 @@ type Documents = {
     "\n  query MentionsUserSearch($query: String!, $projectId: String) {\n    users(input: { query: $query, limit: 5, cursor: null, projectId: $projectId }) {\n      items {\n        id\n        name\n        company\n      }\n    }\n  }\n": typeof types.MentionsUserSearchDocument,
     "\n  query ServerInfoBlobSizeLimit {\n    serverInfo {\n      configuration {\n        blobSizeLimitBytes\n      }\n    }\n  }\n": typeof types.ServerInfoBlobSizeLimitDocument,
     "\n  query ServerInfoAllScopes {\n    serverInfo {\n      scopes {\n        name\n        description\n      }\n    }\n  }\n": typeof types.ServerInfoAllScopesDocument,
+    "\n  query ServerInfoEmailVerificationTimeout {\n    serverInfo {\n      configuration {\n        emailVerificationTimeoutMinutes\n      }\n    }\n  }\n": typeof types.ServerInfoEmailVerificationTimeoutDocument,
     "\n  query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {\n    project(id: $projectId) {\n      id\n      models(limit: 100, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...CommonModelSelectorModel\n        }\n      }\n    }\n  }\n": typeof types.ProjectModelsSelectorValuesDocument,
     "\n  fragment UseFailedFileImportJobUtils_FileUpload on FileUpload {\n    id\n    fileName\n    projectId\n    modelId\n    updatedAt\n    convertedStatus\n    convertedMessage\n  }\n": typeof types.UseFailedFileImportJobUtils_FileUploadFragmentDoc,
     "\n  mutation GenerateUploadUrl($input: GenerateFileUploadUrlInput!) {\n    fileUploadMutations {\n      generateUploadUrl(input: $input) {\n        url\n        fileId\n      }\n    }\n  }\n": typeof types.GenerateUploadUrlDocument,
@@ -776,6 +777,7 @@ const documents: Documents = {
     "\n  query MentionsUserSearch($query: String!, $projectId: String) {\n    users(input: { query: $query, limit: 5, cursor: null, projectId: $projectId }) {\n      items {\n        id\n        name\n        company\n      }\n    }\n  }\n": types.MentionsUserSearchDocument,
     "\n  query ServerInfoBlobSizeLimit {\n    serverInfo {\n      configuration {\n        blobSizeLimitBytes\n      }\n    }\n  }\n": types.ServerInfoBlobSizeLimitDocument,
     "\n  query ServerInfoAllScopes {\n    serverInfo {\n      scopes {\n        name\n        description\n      }\n    }\n  }\n": types.ServerInfoAllScopesDocument,
+    "\n  query ServerInfoEmailVerificationTimeout {\n    serverInfo {\n      configuration {\n        emailVerificationTimeoutMinutes\n      }\n    }\n  }\n": types.ServerInfoEmailVerificationTimeoutDocument,
     "\n  query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {\n    project(id: $projectId) {\n      id\n      models(limit: 100, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...CommonModelSelectorModel\n        }\n      }\n    }\n  }\n": types.ProjectModelsSelectorValuesDocument,
     "\n  fragment UseFailedFileImportJobUtils_FileUpload on FileUpload {\n    id\n    fileName\n    projectId\n    modelId\n    updatedAt\n    convertedStatus\n    convertedMessage\n  }\n": types.UseFailedFileImportJobUtils_FileUploadFragmentDoc,
     "\n  mutation GenerateUploadUrl($input: GenerateFileUploadUrlInput!) {\n    fileUploadMutations {\n      generateUploadUrl(input: $input) {\n        url\n        fileId\n      }\n    }\n  }\n": types.GenerateUploadUrlDocument,
@@ -2028,6 +2030,10 @@ export function graphql(source: "\n  query ServerInfoBlobSizeLimit {\n    server
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query ServerInfoAllScopes {\n    serverInfo {\n      scopes {\n        name\n        description\n      }\n    }\n  }\n"): (typeof documents)["\n  query ServerInfoAllScopes {\n    serverInfo {\n      scopes {\n        name\n        description\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query ServerInfoEmailVerificationTimeout {\n    serverInfo {\n      configuration {\n        emailVerificationTimeoutMinutes\n      }\n    }\n  }\n"): (typeof documents)["\n  query ServerInfoEmailVerificationTimeout {\n    serverInfo {\n      configuration {\n        emailVerificationTimeoutMinutes\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
