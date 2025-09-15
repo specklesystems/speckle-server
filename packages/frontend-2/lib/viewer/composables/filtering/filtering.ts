@@ -104,7 +104,7 @@ export function useFilterUtilities(
 
   const showObjects = (objectIds: string[]) => {
     clearHighlightedObjects()
-
+    clearSelection()
     filters.hiddenObjectIds.value = difference(filters.hiddenObjectIds.value, objectIds)
   }
 
@@ -436,6 +436,7 @@ export function useFilterUtilities(
    */
   const updateActiveFilterValues = (filterId: string, values: string[]) => {
     clearHighlightedObjects()
+    clearSelection()
 
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
@@ -458,6 +459,7 @@ export function useFilterUtilities(
    */
   const selectAllFilterValues = (filterId: string) => {
     clearHighlightedObjects()
+    clearSelection()
 
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter && !isNumericFilter(filter)) {
@@ -491,6 +493,7 @@ export function useFilterUtilities(
    */
   const updateFilterCondition = (filterId: string, condition: FilterCondition) => {
     clearHighlightedObjects()
+    clearSelection()
 
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
@@ -512,6 +515,7 @@ export function useFilterUtilities(
    */
   const setNumericRange = (filterId: string, min: number, max: number) => {
     clearHighlightedObjects()
+    clearSelection()
 
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter && isNumericFilter(filter)) {
@@ -644,6 +648,7 @@ export function useFilterUtilities(
    */
   const toggleActiveFilterValue = (filterId: string, value: string) => {
     clearHighlightedObjects()
+    clearSelection()
 
     const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
     if (filter) {
@@ -678,6 +683,7 @@ export function useFilterUtilities(
 
   const resetFilters = () => {
     clearHighlightedObjects()
+    clearSelection()
 
     filters.propertyFilters.value = []
     filters.selectedObjects.value = []
