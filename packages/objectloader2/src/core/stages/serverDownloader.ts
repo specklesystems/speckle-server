@@ -51,9 +51,10 @@ export default class ServerDownloader implements Downloader {
     if (this.#options.token) {
       this.#headers['Authorization'] = `Bearer ${this.#options.token}`
     }
-    this.#requestUrlChildren = `${this.#options.serverUrl}/api/getobjects/${
+    this.#requestUrlChildren = `${this.#options.serverUrl}/api/v2/projects/${
       this.#options.streamId
-    }`
+    }/object-stream/`
+
     this.#requestUrlRootObj = `${this.#options.serverUrl}/objects/${
       this.#options.streamId
     }/${this.#options.objectId}/single`
@@ -121,7 +122,7 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
     const response = await this.#fetch(url, {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ objects: JSON.stringify(batch) })
+      body: JSON.stringify({ objectIds: batch })
     })
 
     this.#validateResponse(response)
