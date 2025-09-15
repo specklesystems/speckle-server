@@ -36,7 +36,8 @@
         <span class="font-semibold">{{ currentEmail?.email }}</span>
       </p>
       <p class="text-center text-body-sm text-foreground mb-8">
-        Paste (or type) it below to continue. Code expires in 5 minutes.
+        Paste (or type) it below to continue. Code expires in
+        {{ timeoutDisplayString }}.
       </p>
       <FormCodeInput
         v-model="code"
@@ -99,6 +100,7 @@ import type { UserEmail } from '~/lib/common/generated/gql/graphql'
 import { TIME_MS } from '@speckle/shared'
 import { useGenerateErrorReference } from '~/lib/core/composables/error'
 import { WrenchIcon } from '@heroicons/vue/24/solid'
+import { useEmailVerificationTimeout } from '~/lib/common/composables/serverInfo'
 
 useHead({
   title: 'Verify your email'
@@ -121,6 +123,7 @@ const { logout } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
 const registeredThisSession = useRegisteredThisSession()
 const { copyReference } = useGenerateErrorReference()
+const { timeoutDisplayString } = useEmailVerificationTimeout()
 
 const code = ref('')
 const hasError = ref(false)
