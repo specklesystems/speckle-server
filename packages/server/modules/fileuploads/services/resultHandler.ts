@@ -1,6 +1,5 @@
 import type { Logger } from '@/observability/logging'
 import type {
-  GetFileInfoV2,
   ProcessFileImportResult,
   UpdateFileUpload
 } from '@/modules/fileuploads/domain/operations'
@@ -10,7 +9,6 @@ import {
 } from '@/modules/fileuploads/helpers/convert'
 import { ensureError } from '@speckle/shared'
 import type { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
-import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 import {
@@ -23,7 +21,6 @@ import {
 } from '@speckle/shared/workers/fileimport'
 
 type OnFileImportResultDeps = {
-  getFileInfo: GetFileInfoV2
   updateFileUpload: UpdateFileUpload
   updateBackgroundJob: UpdateBackgroundJob<FileImportJobPayloadV1>
   eventEmit: EventBusEmit
@@ -37,22 +34,8 @@ export const onFileImportResultFactory =
     const { logger } = deps
     const { blobId, jobResult } = params
 
-    const fileInfo = await deps.getFileInfo({ fileId: blobId })
-    if (!fileInfo) {
-      throw new FileImportJobNotFoundError(`File upload with ID ${blobId} not found`)
-    }
-
     const boundLogger = logger.child({
-      blobId,
-      fileId: fileInfo.id,
-      fileSize: fileInfo.fileSize,
-      fileName: fileInfo.fileName,
-      fileType: fileInfo.fileType,
-      projectId: fileInfo.projectId,
-      streamId: fileInfo.projectId, // legacy for backwards compatibility
-      modelId: fileInfo.modelId,
-      branchId: fileInfo.modelId, // legacy for backwards compatibility
-      userId: fileInfo.userId
+      blobId
     })
 
     let convertedCommitId = null
@@ -87,10 +70,20 @@ export const onFileImportResultFactory =
 
     if (deps.FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
       try {
-        await deps.updateBackgroundJob({
+        const updatedBackgroundJobs = await deps.updateBackgroundJob({
           payloadFilter: { blobId },
           status: newStatusForBackgroundJob
         })
+        if (updatedBackgroundJobs.length === 0) {
+          boundLogger.warn(
+            'No background job found to update for this file upload. Background job may already be in a succeeded state. Blob ID: {blobId}'
+          )
+        } else if (updatedBackgroundJobs.length > 1) {
+          boundLogger.warn(
+            { count: updatedBackgroundJobs.length },
+            'Multiple background jobs found to update for this file upload. Blob ID: {blobId}'
+          )
+        }
       } catch (e) {
         const err = ensureError(e)
         logger.error(
@@ -101,22 +94,24 @@ export const onFileImportResultFactory =
       }
     }
 
-    let updatedFile: FileUploadRecord
+    const updatedFiles: FileUploadRecord[] = []
     try {
-      updatedFile = await deps.updateFileUpload({
-        id: blobId,
-        upload: {
-          convertedStatus: status,
-          convertedLastUpdate: new Date(),
-          convertedMessage,
-          convertedCommitId,
-          performanceData: {
-            durationSeconds: jobResult.result.durationSeconds,
-            downloadDurationSeconds: jobResult.result.downloadDurationSeconds,
-            parseDurationSeconds: jobResult.result.parseDurationSeconds
+      updatedFiles.push(
+        ...(await deps.updateFileUpload({
+          id: blobId,
+          upload: {
+            convertedStatus: status,
+            convertedLastUpdate: new Date(),
+            convertedMessage,
+            convertedCommitId,
+            performanceData: {
+              durationSeconds: jobResult.result.durationSeconds,
+              downloadDurationSeconds: jobResult.result.downloadDurationSeconds,
+              parseDurationSeconds: jobResult.result.parseDurationSeconds
+            }
           }
-        }
-      })
+        }))
+      )
     } catch (e) {
       const err = ensureError(e)
       logger.error(
@@ -126,16 +121,18 @@ export const onFileImportResultFactory =
       throw err
     }
 
-    await deps.eventEmit({
-      eventName: FileuploadEvents.Updated,
-      payload: {
-        upload: {
-          ...updatedFile,
-          projectId: updatedFile.streamId
-        },
-        isNewModel: false // next gen file uploads don't support this
-      }
-    })
+    for (const updatedFile of updatedFiles) {
+      await deps.eventEmit({
+        eventName: FileuploadEvents.Updated,
+        payload: {
+          upload: {
+            ...updatedFile,
+            projectId: updatedFile.streamId
+          },
+          isNewModel: false // next gen file uploads don't support this
+        }
+      })
+    }
 
     await deps.eventEmit({
       eventName: FileuploadEvents.Finished,
