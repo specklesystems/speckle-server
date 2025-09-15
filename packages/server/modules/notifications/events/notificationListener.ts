@@ -1,7 +1,7 @@
 import { CommentEvents } from '@/modules/comments/domain/events'
 import { isNotificationListenerEnabled } from '@/modules/shared/helpers/envHelper'
 import type { EventBus, EventPayload } from '@/modules/shared/services/eventBus'
-import { publishEventMessage } from '@/modules/notifications/services/eventQueue'
+import { publishEventMessage } from '@/modules/notifications/services/events/queue'
 import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
 import type { Logger } from '@/observability/logging'
 

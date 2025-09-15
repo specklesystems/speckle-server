@@ -2,7 +2,7 @@ import type {
   NotificationPublisher,
   NotificationTypeMessageMap
 } from '@/modules/notifications/helpers/types'
-import { publishMessage } from '@/modules/notifications/services/publicationQueue'
+import { publishMessage } from '@/modules/notifications/services/publication/queue'
 import { isNotificationListenerEnabled } from '@/modules/shared/helpers/envHelper'
 
 /**

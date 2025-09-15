@@ -116,7 +116,7 @@ function buildEmailTemplateMjml(
   Hello,<br/>
   <br/>
   <b>${author.name}</b> has just mentioned you in a comment on the <b>${stream.name}</b> project.
-  Please click on the button below to see the comment. 
+  Please click on the button below to see the comment.
   </mj-text>
   `,
     bodyEnd: `<br/><br/>`
@@ -130,7 +130,7 @@ function buildEmailTemplateText(
 
   return {
     bodyStart: `Hello
-  
+
 ${author.name} has just mentioned you in a comment on the ${stream.name} project.
 Please open the link below to see the comment.`,
     bodyEnd: undefined

@@ -1,6 +1,6 @@
 import type { MentionedInCommentData } from '@/modules/notifications/helpers/types'
 import { NotificationType } from '@/modules/notifications/helpers/types'
-import { publishNotification } from '@/modules/notifications/services/publication'
+import { publishNotification } from '@/modules/notifications/services/publication/publishNotification'
 import type { NotificationsStateManager } from '@/test/notificationsHelper'
 import {
   buildNotificationsStateTracker,
@@ -12,7 +12,7 @@ import {
   NotificationValidationError,
   UnhandledNotificationError
 } from '@/modules/notifications/errors'
-import { NotificationJobResultsStatus } from '@/modules/notifications/services/publicationQueue'
+import { NotificationJobResultsStatus } from '@/modules/notifications/services/publication/queue'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { NotificationsEvents } from '@/modules/notifications/domain/events'
 import { isNotificationListenerEnabled } from '@/modules/shared/helpers/envHelper'

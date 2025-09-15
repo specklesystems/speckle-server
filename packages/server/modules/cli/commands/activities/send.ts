@@ -1,6 +1,6 @@
 import type { CommandModule } from 'yargs'
-import { initializePublicationQueue } from '@/modules/notifications/services/publicationQueue'
-import { publishNotification } from '@/modules/notifications/services/publication'
+import { initializePublicationQueue } from '@/modules/notifications/services/publication/queue'
+import { publishNotification } from '@/modules/notifications/services/publication/publishNotification'
 import { cliLogger } from '@/observability/logging'
 import { sendActivityNotificationsFactory } from '@/modules/activitystream/services/summary'
 import { getActiveUserStreamsFactory } from '@/modules/activitystream/repositories'
