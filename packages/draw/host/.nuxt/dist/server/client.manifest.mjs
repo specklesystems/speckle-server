@@ -1,1 +1,0 @@
-export { default } from "file:///Users/oguzhankoral/Documents/git/speckle/speckle-draw/node_modules/@nuxt/vite-builder/dist/runtime/client.manifest.mjs"
