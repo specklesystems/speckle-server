@@ -1417,6 +1417,10 @@ export type FileUploadMutationsStartFileImportArgs = {
 };
 
 export type FinishFileImportInput = {
+  /**
+   * This is the blob Id of the uploaded file. For legacy reasons it is named jobId.
+   * Note: This is the not the background job Id.
+   */
   jobId: Scalars['String']['input'];
   projectId: Scalars['String']['input'];
   reason?: InputMaybe<Scalars['String']['input']>;
@@ -5452,7 +5456,8 @@ export type WorkspaceEmbedOptions = {
 
 export const WorkspaceFeatureFlagName = {
   AccIntegration: 'accIntegration',
-  Dashboards: 'dashboards'
+  Dashboards: 'dashboards',
+  Presentations: 'presentations'
 } as const;
 
 export type WorkspaceFeatureFlagName = typeof WorkspaceFeatureFlagName[keyof typeof WorkspaceFeatureFlagName];
@@ -5463,6 +5468,7 @@ export const WorkspaceFeatureName = {
   ExclusiveMembership: 'exclusiveMembership',
   HideSpeckleBranding: 'hideSpeckleBranding',
   OidcSso: 'oidcSso',
+  Presentations: 'presentations',
   SavedViews: 'savedViews',
   WorkspaceDataRegionSpecificity: 'workspaceDataRegionSpecificity'
 } as const;
