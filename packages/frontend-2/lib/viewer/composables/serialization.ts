@@ -114,18 +114,6 @@ export function useStateSerialization() {
                 : ('OR' as const)
           }))
 
-          // Create legacy-compatible propertyFilter from first item in propertyFilters
-          const propertyFilter =
-            propertyFilters.length > 0
-              ? {
-                  key: propertyFilters[0].key,
-                  isApplied: propertyFilters[0].isApplied
-                }
-              : {
-                  key: null,
-                  isApplied: false
-                }
-
           return {
             isolatedObjectIds: state.ui.filters.isolatedObjectIds.value,
             hiddenObjectIds: state.ui.filters.hiddenObjectIds.value,
@@ -133,8 +121,8 @@ export function useStateSerialization() {
               ret[obj.id] = obj.applicationId ?? null
               return ret
             }, {} as Record<string, string | null>),
-            propertyFilter, // ← Preserve legacy format for backwards compatibility
-            propertyFilters
+            propertyFilters,
+            activeColorFilterId: state.ui.filters.activeColorFilterId.value
           }
         })(),
         camera: {
@@ -322,7 +310,7 @@ export function useApplySerializedState() {
     }
 
     if (filters.propertyFilters?.length) {
-      restoreFilters(filters.propertyFilters)
+      restoreFilters(filters.propertyFilters, filters.activeColorFilterId)
     } else {
       resetFilters()
     }

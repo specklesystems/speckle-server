@@ -4,7 +4,12 @@ import {
   FilterType,
   type BooleanPropertyInfo,
   type DataSource,
-  type ExtendedPropertyInfo
+  type ExtendedPropertyInfo,
+  type PropertyInfoBase,
+  type PropertyInfoValue,
+  type Parameter,
+  type RevitMaterialPropertyInfo,
+  type RevitMaterialInfo
 } from '~/lib/viewer/helpers/filters/types'
 
 export const revitPropertyRegex = /^parameters\./
@@ -346,4 +351,188 @@ export function injectGradientDataIntoDataStore(
       }
     }
   }
+}
+
+/**
+ * Nasty smartsy object flattener that currently includes special handling logic for Revit objects
+ * @param obj object you want to extract the properties from
+ * @param currentPath do not pass in on first call, used in recursion
+ * @param knownObjectType do not pass in on first call, used in recursion
+ * @param rootObj do not pass in on first call, used in recursion
+ * @returns
+ */
+export const extractNestedProperties = (
+  obj: Record<string, unknown>,
+  currentPath: string[] = [],
+  knownObjectType?: string,
+  rootObj?: Record<string, unknown>
+) => {
+  const properties: (
+    | PropertyInfoBase
+    | PropertyInfoValue
+    | Parameter
+    | RevitMaterialPropertyInfo
+  )[] = []
+  rootObj = rootObj ?? obj
+
+  knownObjectType =
+    knownObjectType ??
+    (obj.speckle_type === 'Objects.Data.DataObject:Objects.Data.RevitObject'
+      ? 'revit'
+      : undefined)
+
+  for (const key in obj) {
+    if (
+      !Object.prototype.hasOwnProperty.call(obj, key) ||
+      key === '__closure' ||
+      key === 'displayValue' ||
+      (knownObjectType === 'revit' && (key === 'location' || key === 'elements'))
+    )
+      continue
+
+    // if (key.includes('.')) {
+    //   // Life is fun, isn't it
+    //   console.warn(
+    //     'Object contains a property that has a . in its name. Skipping!',
+    //     key,
+    //     currentPath,
+    //     rootObj
+    //   )
+    //   continue
+    // }
+
+    if (knownObjectType === 'revit' && key === 'Material Quantities') {
+      extractMaterialProperties(
+        obj[key] as Record<string, unknown>,
+        [...currentPath, key],
+        properties
+      )
+      continue
+    }
+
+    if (
+      knownObjectType === 'revit' &&
+      key === 'Structure' &&
+      currentPath[currentPath.length - 1] === 'Type Parameters'
+    ) {
+      // TODO: handle later; for now this introduces garbage
+      continue
+    }
+
+    const value = obj[key]
+    const newPath = [...currentPath, key]
+    const valueType = getValueType(value)
+    const isParam = value && isParameter(value)
+
+    if (valueType === 'object' && value !== null && !isParam) {
+      properties.push(
+        ...extractNestedProperties(
+          value as Record<string, unknown>,
+          newPath,
+          knownObjectType,
+          rootObj
+        )
+      )
+    } else if (isParam) {
+      const param = value as Parameter
+
+      properties.push({
+        name: key,
+        path: newPath,
+        concatenatedPath: newPath.join('.'),
+        type: getValueType(param.value),
+        units: param.units
+      })
+    } else {
+      properties.push({
+        name: key,
+        path: newPath,
+        concatenatedPath: newPath.join('.'),
+        type: valueType
+      })
+    }
+  }
+  return properties as PropertyInfoBase[]
+}
+
+function getValueType(value: unknown): string {
+  if (value === null) return 'null'
+  if (Array.isArray(value)) return 'array'
+  return typeof value
+}
+
+function extractMaterialProperties(
+  matQuants: Record<string, unknown>,
+  path: string[],
+  properties: (
+    | PropertyInfoBase
+    | PropertyInfoValue
+    | Parameter
+    | RevitMaterialPropertyInfo
+  )[]
+) {
+  for (const matName in matQuants) {
+    const matInfo = matQuants[matName] as RevitMaterialInfo
+
+    const areaProp: RevitMaterialPropertyInfo | undefined = matInfo.area
+      ? {
+          path,
+          concatenatedPath: path.join('.'),
+          type: 'number',
+          name: `${matName} - area`,
+          value: matInfo.area.value,
+          units: matInfo.area.units,
+          materialCategory: matInfo.materialCategory,
+          materialClass: matInfo.materialClass
+        }
+      : undefined
+
+    const volumeProp: RevitMaterialPropertyInfo | undefined = matInfo.volume
+      ? {
+          path,
+          concatenatedPath: path.join('.'),
+          type: 'number',
+          name: `${matName} - volume`,
+          value: matInfo.volume.value,
+          units: matInfo.volume.units,
+          materialCategory: matInfo.materialCategory,
+          materialClass: matInfo.materialClass
+        }
+      : undefined
+    if (areaProp) properties.push(areaProp)
+    if (volumeProp) properties.push(volumeProp)
+  }
+}
+
+export function isParameter(value: unknown) {
+  return (
+    typeof value === 'object' &&
+    Object.hasOwn(value as Record<string, unknown>, 'name') &&
+    Object.hasOwn(value as Record<string, unknown>, 'value')
+  )
+}
+
+export function isRevitMaterialQuantity(value: unknown) {
+  return (
+    typeof value === 'object' &&
+    isParameter(value) &&
+    Object.hasOwn(value as Record<string, unknown>, 'materialCategory') &&
+    Object.hasOwn(value as Record<string, unknown>, 'materialClass')
+  )
+}
+
+export function getNestedProperties(obj: unknown, properties: PropertyInfoBase[]) {
+  const values = []
+  for (const prop of properties) {
+    const value = prop.path.reduce(
+      (current: unknown, key: string) => (current as Record<string, unknown>)?.[key],
+      obj
+    )
+    if (value && isParameter(value)) {
+      values.push((value as Parameter).value)
+    } else {
+      values.push(value ?? undefined)
+    }
+  }
+  return values
 }

@@ -37,7 +37,10 @@ import {
   findFilterByKvp
 } from '~/lib/viewer/helpers/filters/utils'
 import { useFilterColoringHelpers } from '~/lib/viewer/composables/filtering/coloringHelpers'
-import { useHighlightedObjectsUtilities } from '~/lib/viewer/composables/ui'
+import {
+  useHighlightedObjectsUtilities,
+  useSelectionUtilities
+} from '~/lib/viewer/composables/ui'
 
 export function useFilterUtilities(
   options?: Partial<{ state: InjectableViewerState }>
@@ -50,6 +53,7 @@ export function useFilterUtilities(
   const dataStore = useFilteringDataStore()
   const { removeColorFilter } = useFilterColoringHelpers({ state })
   const { clearHighlightedObjects } = useHighlightedObjectsUtilities()
+  const { clearSelection } = useSelectionUtilities()
 
   const isolateObjects = (
     objectIds: string[],
@@ -74,6 +78,15 @@ export function useFilterUtilities(
     )
   }
 
+  const resetIsolations = () => {
+    clearHighlightedObjects()
+    filters.isolatedObjectIds.value = []
+  }
+
+  const hasAnyIsolationsApplied = computed(() => {
+    return filters.isolatedObjectIds.value.length > 0
+  })
+
   const hideObjects = (
     objectIds: string[],
     options?: Partial<{
@@ -81,6 +94,7 @@ export function useFilterUtilities(
     }>
   ) => {
     clearHighlightedObjects()
+    clearSelection()
 
     filters.hiddenObjectIds.value = uniq([
       ...(options?.replace ? [] : filters.hiddenObjectIds.value),
@@ -347,7 +361,7 @@ export function useFilterUtilities(
     }
   }
 
-  const addActiveFilter = (filter: ExtendedPropertyInfo): string => {
+  const addActiveFilter = (filter: ExtendedPropertyInfo, id?: string): string => {
     const existingIndex = filters.propertyFilters.value.findIndex(
       (f) => f.filter?.key === filter.key
     )
@@ -355,7 +369,7 @@ export function useFilterUtilities(
     if (existingIndex !== -1) {
       return filters.propertyFilters.value[existingIndex].id
     } else {
-      const id = `filter-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      id ||= `filter-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
       const filterData = createFilterData({ filter, id })
       filters.propertyFilters.value.push(filterData)
@@ -686,13 +700,16 @@ export function useFilterUtilities(
   }
 
   // Store filters that need to be restored once data store is ready
-  const pendingFiltersToRestore = ref<Array<{
-    key: string | null
-    isApplied: boolean
-    selectedValues: string[]
-    id: string
-    condition: 'AND' | 'OR'
-  }> | null>(null)
+  const pendingFiltersToRestore = ref<{
+    filters: Array<{
+      key: string | null
+      isApplied: boolean
+      selectedValues: string[]
+      id: string
+      condition: 'AND' | 'OR'
+    }>
+    activeColorFilterId: string | null
+  } | null>(null)
 
   /**
    * Restores filters from serialized state
@@ -704,7 +721,8 @@ export function useFilterUtilities(
       selectedValues: string[]
       id: string
       condition: 'AND' | 'OR'
-    }>
+    }>,
+    activeColorFilterId: string | null
   ) => {
     if (!serializedFilters?.length) return
 
@@ -715,9 +733,13 @@ export function useFilterUtilities(
     // If data store is ready, restore immediately
     if (availableProperties.length > 0) {
       applyFiltersFromSerialized(serializedFilters, availableProperties)
+      filters.activeColorFilterId.value = activeColorFilterId
     } else {
       // Store filters to restore later when data store is ready
-      pendingFiltersToRestore.value = serializedFilters
+      pendingFiltersToRestore.value = {
+        filters: serializedFilters,
+        activeColorFilterId
+      }
     }
   }
 
@@ -740,7 +762,7 @@ export function useFilterUtilities(
           (f) => f.key === serializedFilter.key
         )
         if (propertyInfo) {
-          const filterId = addActiveFilter(propertyInfo)
+          const filterId = addActiveFilter(propertyInfo, serializedFilter.id)
 
           if (serializedFilter.selectedValues?.length) {
             updateActiveFilterValues(filterId, serializedFilter.selectedValues)
@@ -870,7 +892,15 @@ export function useFilterUtilities(
     if (pendingFiltersToRestore.value) {
       const availableProperties =
         getPropertyOptionsFromDataStore() as ExtendedPropertyInfo[]
-      applyFiltersFromSerialized(pendingFiltersToRestore.value, availableProperties)
+      applyFiltersFromSerialized(
+        pendingFiltersToRestore.value.filters,
+        availableProperties
+      )
+      if (pendingFiltersToRestore.value.activeColorFilterId) {
+        filters.activeColorFilterId.value =
+          pendingFiltersToRestore.value.activeColorFilterId
+      }
+
       pendingFiltersToRestore.value = null
     }
   })
@@ -878,8 +908,10 @@ export function useFilterUtilities(
   return {
     isolateObjects,
     unIsolateObjects,
+    resetIsolations,
     hideObjects,
     showObjects,
+    hasAnyIsolationsApplied,
     filters,
     addActiveFilter,
     updateFilterProperty,

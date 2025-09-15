@@ -64,8 +64,8 @@ export interface SectionBoxData {
  * v1.4 -> 1.5
  * - ui.measurement.measurements added
  * v1.5 -> 1.6
- * - ui.filters.propertyFilters unified with propertyFilter (propertyFilter now computed from first propertyFilters item)
- * - Migration logic added to convert legacy propertyFilter to propertyFilters array format
+ * - ui.filters.propertyFilter -> propertyFilters
+ * - activeColorFilterId added
  */
 export const SERIALIZED_VIEWER_STATE_VERSION = 1.6
 
@@ -108,17 +108,14 @@ export type SerializedViewerState = {
       hiddenObjectIds: string[]
       /** Map of object id => application id or null, if no application id */
       selectedObjectApplicationIds: Record<string, string | null>
-      propertyFilter?: {
-        key: Nullable<string>
-        isApplied: boolean
-      }
-      propertyFilters?: Array<{
+      propertyFilters: Array<{
         key: Nullable<string>
         isApplied: boolean
         selectedValues: string[]
         id: string
         condition: 'AND' | 'OR'
       }>
+      activeColorFilterId: Nullable<string>
     }
     camera: {
       position: number[]
@@ -271,7 +268,8 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
           ...(state.ui?.filters || {}),
           isolatedObjectIds: state.ui?.filters?.isolatedObjectIds || [],
           hiddenObjectIds: state.ui?.filters?.hiddenObjectIds || [],
-          selectedObjectApplicationIds
+          selectedObjectApplicationIds,
+          activeColorFilterId: state.ui?.filters?.activeColorFilterId || null
         }
 
         // Migration logic: handle legacy propertyFilter and new propertyFilters
@@ -304,22 +302,9 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
           ]
         }
 
-        // Create legacy-compatible propertyFilter from first item in propertyFilters
-        const propertyFilter =
-          propertyFilters.length > 0
-            ? {
-                key: propertyFilters[0].key,
-                isApplied: propertyFilters[0].isApplied
-              }
-            : {
-                key: null,
-                isApplied: false
-              }
-
         return {
           ...baseFilters,
-          propertyFilters,
-          propertyFilter
+          propertyFilters
         }
       })(),
       camera: {

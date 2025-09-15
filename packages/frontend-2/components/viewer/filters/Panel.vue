@@ -140,12 +140,28 @@ const propertySelectOptions = computed((): PropertySelectOption[] => {
     .filter((filter) => !existingFilterKeys.has(filter.key))
     .map((filter) => {
       const lastDotIndex = filter.key.lastIndexOf('.')
-      const propertyName =
+      let propertyName =
         lastDotIndex === -1 ? filter.key : filter.key.slice(lastDotIndex + 1)
-      const parentPath =
+      let parentPath =
         lastDotIndex === -1
           ? ''
           : filter.key.slice(0, lastDotIndex).replace(/\./g, ' › ')
+
+      // Handle name-value pairs by collapsing them to just the value
+      // If the property name ends with '.value', use the parent as the display name
+      if (propertyName === 'value' && lastDotIndex !== -1) {
+        const valueParentPath = filter.key.slice(0, lastDotIndex)
+        const valueParentLastDot = valueParentPath.lastIndexOf('.')
+        propertyName =
+          valueParentLastDot === -1
+            ? valueParentPath
+            : valueParentPath.slice(valueParentLastDot + 1)
+
+        parentPath =
+          valueParentLastDot === -1
+            ? ''
+            : valueParentPath.slice(0, valueParentLastDot).replace(/\./g, ' › ')
+      }
 
       return {
         value: filter.key,
@@ -157,7 +173,7 @@ const propertySelectOptions = computed((): PropertySelectOption[] => {
             : (filter as { type: string }).type === 'boolean'
             ? FilterType.Boolean
             : FilterType.String,
-        hasParent: lastDotIndex !== -1
+        hasParent: parentPath !== ''
       }
     })
 
