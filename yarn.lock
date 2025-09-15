@@ -3911,33 +3911,35 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bull-board/api@npm:4.12.2":
-  version: 4.12.2
-  resolution: "@bull-board/api@npm:4.12.2"
+"@bull-board/api@npm:6.12.7":
+  version: 6.12.7
+  resolution: "@bull-board/api@npm:6.12.7"
   dependencies:
-    redis-info: "npm:^3.0.8"
-  checksum: 10/dc44b851555c9248d3746cb66add40a40f042fd5470e8df73c640734449ca6ea4260649cff0432b0be8541be37c1e049888833ab298c22c25a3be558ffbfffae
+    redis-info: "npm:^3.1.0"
+  peerDependencies:
+    "@bull-board/ui": 6.12.7
+  checksum: 10/086e9e3b85d4927d4bfd676189ffcf977fcc608efce2b12393cdf77cc59fde23b4eabc4213dae279c549d5e22de8176f517f062019cb98ac83faf2c145f99bd3
   languageName: node
   linkType: hard
 
-"@bull-board/express@npm:^4.2.2":
-  version: 4.12.2
-  resolution: "@bull-board/express@npm:4.12.2"
+"@bull-board/express@npm:^6.12.7":
+  version: 6.12.7
+  resolution: "@bull-board/express@npm:6.12.7"
   dependencies:
-    "@bull-board/api": "npm:4.12.2"
-    "@bull-board/ui": "npm:4.12.2"
-    ejs: "npm:3.1.7"
-    express: "npm:4.17.3"
-  checksum: 10/eb435abb94a2af77574450ec951dba45d62eebc0fc0fc927e873ae4b10841c1032473e1c88c116fb737dd61432763cf6b9ffbe5f02ae1ffb5f30d75ecd78001d
+    "@bull-board/api": "npm:6.12.7"
+    "@bull-board/ui": "npm:6.12.7"
+    ejs: "npm:^3.1.10"
+    express: "npm:^4.21.1 || ^5.0.0"
+  checksum: 10/20c6a3f3e8fc94f66d6526a197ac298614cae57b447d275d49e239482ba6eda4a76231fff02c93abb255a126812a93442d9bd804ac325808add3bcbc9f07743e
   languageName: node
   linkType: hard
 
-"@bull-board/ui@npm:4.12.2":
-  version: 4.12.2
-  resolution: "@bull-board/ui@npm:4.12.2"
+"@bull-board/ui@npm:6.12.7":
+  version: 6.12.7
+  resolution: "@bull-board/ui@npm:6.12.7"
   dependencies:
-    "@bull-board/api": "npm:4.12.2"
-  checksum: 10/7e2dfd3370aee1a15272a67d60b70f2f91d71040c2df0b0b41fa96a9debe21336d69adf274f993e2b45edb0d72d5b62d0f102879ccd029b5549dcf746c9e97f3
+    "@bull-board/api": "npm:6.12.7"
+  checksum: 10/930c51f1c507a4f6f1ef1662ca3987320780768158873285db13cc0560084fff9985f1f3f2b2498a2b1929f9f0b14a3e249e6b3dc5199e50820000745d75a48d
   languageName: node
   linkType: hard
 
@@ -11230,7 +11232,7 @@ __metadata:
     "@aws-sdk/client-s3": "npm:^3.276.0"
     "@aws-sdk/lib-storage": "npm:^3.100.0"
     "@aws-sdk/s3-request-presigner": "npm:3.352.0"
-    "@bull-board/express": "npm:^4.2.2"
+    "@bull-board/express": "npm:^6.12.7"
     "@faker-js/faker": "npm:^8.4.1"
     "@godaddy/terminus": "npm:^4.9.0"
     "@graphql-codegen/cli": "npm:^5.0.7"
@@ -20760,28 +20762,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ejs@npm:3.1.6":
-  version: 3.1.6
-  resolution: "ejs@npm:3.1.6"
-  dependencies:
-    jake: "npm:^10.6.1"
-  bin:
-    ejs: ./bin/cli.js
-  checksum: 10/f3882b57655b53fd9044cb7acb585c04004da9a3c90ef96c69660ee31ca9572e7a0df0cf794bbc72c674c2b9ba396bbc4ae130fe0c8c65fb0ca53b0a488c2300
-  languageName: node
-  linkType: hard
-
-"ejs@npm:3.1.7":
-  version: 3.1.7
-  resolution: "ejs@npm:3.1.7"
-  dependencies:
-    jake: "npm:^10.8.5"
-  bin:
-    ejs: bin/cli.js
-  checksum: 10/a215b98bf55df030cbaa8964a0955ccbad10c056c63af6d06f11c5a463c01ec9f17ca026c9cedc5e83f203ff2382ff454d80ccc74fb059d97db26c028d461dd2
-  languageName: node
-  linkType: hard
-
 "ejs@npm:^3.1.10, ejs@npm:^3.1.8":
   version: 3.1.10
   resolution: "ejs@npm:3.1.10"
@@ -26410,7 +26390,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jake@npm:^10.6.1, jake@npm:^10.8.5":
+"jake@npm:^10.8.5":
   version: 10.9.2
   resolution: "jake@npm:10.9.2"
   dependencies:
@@ -34334,7 +34314,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redis-info@npm:^3.0.8":
+"redis-info@npm:^3.0.8, redis-info@npm:^3.1.0":
   version: 3.1.0
   resolution: "redis-info@npm:3.1.0"
   dependencies:

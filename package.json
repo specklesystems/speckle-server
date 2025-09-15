@@ -82,6 +82,7 @@
     "@types/react": "file:./packages/frontend-2/type-augmentations/stubs/types__react",
     "core-js": "3.22.4",
     "core-js-compat/semver": "^7.5.4",
+    "bull-board/ejs": "^3.1.10",
     "eslint": "^9.20.1",
     "eslint-config-prettier": "^9.1.0",
     "levelup/bl": ">=1.2.3",
