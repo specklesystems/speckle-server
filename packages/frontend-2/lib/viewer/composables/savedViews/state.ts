@@ -8,7 +8,6 @@ import {
   useInjectedViewerState,
   type InitialSetupState
 } from '~/lib/viewer/composables/setup'
-import { useOnViewerLoadComplete } from '~/lib/viewer/composables/viewer'
 import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
 
 /**
@@ -89,12 +88,12 @@ export const useViewerSavedViewIntegration = () => {
     await update({ settings })
   })
 
-  // Apply saved view state on initial load
-  useOnViewerLoadComplete(async ({ isInitial }) => {
-    if (isInitial) {
-      await apply()
-    }
-  })
+  // // Apply saved view state on initial load
+  // useOnViewerLoadComplete(async ({ isInitial }) => {
+  //   if (isInitial) {
+  //     await apply()
+  //   }
+  // })
 
   // Saved view changed, apply
   watch(savedView, async (newVal, oldVal) => {

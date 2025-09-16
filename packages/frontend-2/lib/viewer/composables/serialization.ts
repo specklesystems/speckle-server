@@ -272,7 +272,7 @@ export function useApplySerializedState() {
 
     // We want to make sure the final resources have been loaded before we continue on
     // with applying the rest of the state
-    if (newResourceIdString) {
+    if (newResourceIdString && newResourceIdString !== resourceIdString.value) {
       await until(loading).toBe(false)
       await resourceIdString.update(newResourceIdString)
       await until(loading).toBe(false)

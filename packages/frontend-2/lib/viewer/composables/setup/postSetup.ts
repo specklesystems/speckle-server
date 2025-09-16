@@ -99,9 +99,12 @@ function useViewerObjectAutoLoading() {
       hasDoneInitialLoad
     },
     resources: {
-      response: { resourceItems }
+      request: {
+        savedView: { id: savedViewId }
+      },
+      response: { resourceItems, savedView }
     },
-    ui: { loadProgress, loading },
+    ui: { loadProgress, loading, spotlightUserSessionId },
     urlHashState: { focusedThreadId }
   } = useInjectedViewerState()
 
@@ -163,7 +166,15 @@ function useViewerObjectAutoLoading() {
       if (!newIsInitialized) return
 
       const [oldResources] = oldData || [[], false]
-      const zoomToObject = !focusedThreadId.value // we want to zoom to the thread instead
+
+      // we dont want to zoom to object, if we're loading specific coords because of a thread,
+      // or spotlight mode or a saved view etc.
+      const preventZooming =
+        focusedThreadId.value ||
+        savedViewId.value ||
+        savedView.value ||
+        spotlightUserSessionId.value
+      const zoomToObject = !preventZooming
 
       // Viewer initialized - load in all resources
       if (!newHasDoneInitialLoad) {
@@ -174,10 +185,7 @@ function useViewerObjectAutoLoading() {
         for (const i of allObjectIds) {
           res.push(await loadObject(i, false, { zoomToObject }))
         }
-        /** Load in parallel */
-        // const res = await Promise.all(
-        //   allObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
-        // )
+
         if (res.length) {
           hasDoneInitialLoad.value = true
         }
