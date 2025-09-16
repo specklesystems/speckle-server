@@ -10,9 +10,6 @@ on:
       DOCKERHUB_USERNAME:
         required: true
         type: string
-      IMAGE_PREFIX:
-        required: true
-        type: string
     secrets:
       DATADOG_API_KEY:
         required: true

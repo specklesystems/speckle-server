@@ -280,22 +280,3 @@ jobs:
         uses: useblacksmith/setup-docker-builder@v1
       - name: Build and Publish sourcemaps
         run: ./.github/workflows/scripts/publish_fe2_sourcemaps.sh
-
-  helm-chart-oci-ghcr:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
-    name: Helm chart oci
-    container:
-      image: speckle/pre-commit-runner:latest
-    env:
-      IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
-      REGISTRY_USERNAME: speckledevops
-      REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-      HELM_REGISTRY_DOMAIN: ghcr.io
-      HELM_REPOSITORY_PATH: specklesystems
-    steps:
-      - uses: actions/checkout@v4.2.2
-        with:
-          fetch-depth: 0
-      - run: git config --global --add safe.directory $PWD
-      - name: Publish Helm Chart
-        run: ./.github/workflows/scripts/publish_helm_chart_oci.sh
