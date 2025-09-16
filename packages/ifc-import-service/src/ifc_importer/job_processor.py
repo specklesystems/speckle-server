@@ -1,6 +1,7 @@
 import asyncio
 import tempfile
 import time
+from math import floor
 from pathlib import Path
 
 import structlog
@@ -14,9 +15,15 @@ from specklepy.core.api.inputs.file_import_inputs import (
     FileImportSuccessInput,
 )
 from specklepy.core.api.models import Version
+from specklepy.logging import metrics
 
 from ifc_importer.domain import FileimportPayload, JobStatus
-from ifc_importer.repository import get_next_job, return_job_to_queued, setup_connection
+from ifc_importer.repository import (
+    deduct_from_compute_budget,
+    get_next_job,
+    return_job_to_queued,
+    setup_connection,
+)
 
 IDLE_TIMEOUT = 1
 
@@ -33,6 +40,12 @@ def setup_client(job_payload: FileimportPayload) -> SpeckleClient:
             "with the provided token",
         )
         raise ValueError(msg)
+
+    if not speckle_client.account.userInfo.email:
+        raise ValueError(
+            "activeUser.email did not get fetched. Does the token lack profile:email?"
+        )
+
     return speckle_client
 
 
@@ -51,10 +64,12 @@ async def job_handler(
             "Finished source file download after {download_duration}",
             download_duration=download_duration,
         )
+        project = client.project.get(job.project_id)
+
         version = open_and_convert_file(
             file_path=str(file_path),
             client=client,
-            project_id=job.project_id,
+            project=project,
             model_id=job.model_id,
             version_message=f"Created from {job.file_name} upload.",
         )
@@ -80,6 +95,15 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
             continue
 
         start = time.time()
+        duration = 0
+        job_timeout = max(
+            1, min(job.payload.time_out_seconds, job.remaining_compute_budget_seconds)
+        )
+
+        # Forcefully reset metrics, we don't want it to reuse any server/user ids between jobs
+        metrics.METRICS_TRACKER = None
+        metrics.HOST_APP = "ifc"
+
         speckle_client = setup_client(job.payload)
 
         job_id = job.id
@@ -96,17 +120,23 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
                 )
 
             logger = logger.bind(job_id=job_id, project_id=job.payload.project_id)
-            logger.info("starting job")
+            logger.info(
+                "starting job {job_id} for project {project_id}, attempt {attempt} / {max_attempts} with remaining compute budget {remaining_compute_budget_seconds}s and timeout {job_timeout}s",
+                attempt=attempt,
+                max_attempts=job.max_attempt,
+                remaining_compute_budget_seconds=job.remaining_compute_budget_seconds,
+                job_timeout=job_timeout,
+            )
             handler = job_handler(speckle_client, job.payload, logger)
             # this will raise a TimeoutError if handler does not complete in time
             version, download_duration, parse_duration = await asyncio.wait_for(
-                handler, timeout=job.payload.time_out_seconds
+                handler, timeout=job_timeout
             )
             version_id = version.id
 
             duration = time.time() - start
             logger.info(
-                "Finished job after {duration} created version {version_id}",
+                "Finished parsing job after {duration}s, creating version {version_id}",
                 duration=duration,
                 version_id=version_id,
             )
@@ -114,7 +144,7 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
             _ = speckle_client.file_import.finish_file_import_job(
                 FileImportSuccessInput(
                     project_id=job.payload.project_id,
-                    # for some reason, the blob id identifies the job here
+                    # the blob id identifies the "job" here
                     job_id=job.payload.blob_id,
                     result=FileImportResult(
                         parser=parser,
@@ -129,32 +159,28 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
             # mark it as succeeded so we do not enter any error handling routines on finalisation
             job_status = JobStatus.SUCCEEDED
 
-        except TimeoutError as te:
-            # if it times out we allow re-queueing until it reaches max tries
-            ex = te
-            if attempt >= job.max_attempt:
-                job_status = JobStatus.FAILED
-            else:
-                job_status = JobStatus.QUEUED
-
         # raised if the task is canceled
         except Exception as e:
             #
             ex = e
             job_status = JobStatus.FAILED
         finally:
-            if job_status == JobStatus.QUEUED:
-                await return_job_to_queued(connection, job_id)
-            elif job_status == JobStatus.FAILED:
+            if duration <= 0:
+                # it probably failed before we calculated the duration, so calculate it now
+                duration = time.time() - start
+            await deduct_from_compute_budget(
+                connection, logger, job_id, floor(duration)
+            )
+
+            if job_status == JobStatus.FAILED:
                 # we should be reporting the failure to the server
                 logger.error("job processing failed", exc_info=ex)
                 try:
                     _ = speckle_client.file_import.finish_file_import_job(
                         FileImportErrorInput(
                             project_id=job.payload.project_id,
-                            # for some reason, the blob id identifies the job here
+                            # the blob id identifies the job to the server
                             job_id=job.payload.blob_id,
-                            # job_id=job_id,
                             reason=str(ex),
                             result=FileImportResult(
                                 parser=parser,
@@ -168,9 +194,10 @@ async def job_processor(logger: structlog.stdlib.BoundLogger):
                     # the server is responsible for moving failed jobs to the failed state, so the worker does not have to do anything further
                 except Exception as ex:
                     logger.error("failed to report job failure", exc_info=ex)
-                    await return_job_to_queued(connection, job_id)
-                    # The client will not pick up a queued job if it now has exceeded max attempts.
-                    # The server is responsible for moving queued jobs which have exceeded maximum attempts to failed status.
+                    # somehow we're in a weird state, let's return the job to the queued state
+                    # where it will get picked up again until one of total timeout, max attempts, or exhausted compute budget is reached
+                    # The server is responsible for garbage collecting jobs which have reached these error conditions and moving them to a failed status.
+                    await return_job_to_queued(connection, logger, job_id)
             elif job_status == JobStatus.SUCCEEDED:
                 # do nothing
                 # we expect the job to already be marked as succeeded in the database by the server (when the worker reported the results back to the server)

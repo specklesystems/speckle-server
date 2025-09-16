@@ -4,10 +4,9 @@ import type {
   GarbageCollectPendingUploadedFiles,
   NotifyChangeInFileStatus
 } from '@/modules/fileuploads/domain/operations'
-import type { FailQueuedBackgroundJobsWhichExceedMaximumAttempts } from '@/modules/backgroundjobs/domain'
+import type { FailQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget } from '@/modules/backgroundjobs/domain/types'
 import type { FileImportJobPayloadV1 } from '@speckle/shared/workers/fileimport'
 import { BackgroundJobType } from '@/modules/fileuploads/domain/consts'
-import { LogicError } from '@/modules/shared/errors'
 
 export const manageFileImportExpiryFactory = (deps: {
   garbageCollectExpiredPendingUploads: GarbageCollectPendingUploadedFiles
@@ -29,12 +28,12 @@ export const manageFileImportExpiryFactory = (deps: {
 }
 
 export const garbageCollectAttemptedFileImportBackgroundJobsFactory = (deps: {
-  failQueuedBackgroundJobsWhichExceedMaximumAttempts: FailQueuedBackgroundJobsWhichExceedMaximumAttempts<FileImportJobPayloadV1>
+  failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget: FailQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget<FileImportJobPayloadV1>
   failPendingUploadedFiles: FailPendingUploadedFiles
   notifyUploadStatus: NotifyChangeInFileStatus
 }): ((params: { logger: Logger; originServerUrl: string }) => Promise<void>) => {
   const {
-    failQueuedBackgroundJobsWhichExceedMaximumAttempts,
+    failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget,
     failPendingUploadedFiles,
     notifyUploadStatus
   } = deps
@@ -42,29 +41,52 @@ export const garbageCollectAttemptedFileImportBackgroundJobsFactory = (deps: {
     const { logger, originServerUrl } = params
 
     const failedBackgroundJobs =
-      await failQueuedBackgroundJobsWhichExceedMaximumAttempts({
-        originServerUrl,
-        jobType: BackgroundJobType.FileImport
-      })
+      await failQueuedBackgroundJobsWhichExceedMaximumAttemptsOrNoRemainingComputeBudget(
+        {
+          originServerUrl,
+          jobType: BackgroundJobType.FileImport
+        }
+      )
+
     logger.info(
-      `Found ${failedBackgroundJobs.length} background jobs which have exceeded maximum number of attempts`
+      { numberOfFailedBackgroundJobs: failedBackgroundJobs.length },
+      'Found {numberOfFailedBackgroundJobs} background jobs which have exceeded maximum number of attempts or exceeded their compute budget'
     )
 
     if (failedBackgroundJobs.length === 0) {
       return
     }
 
-    const fileIds = failedBackgroundJobs.map((job) => job.payload.blobId)
-    if (fileIds.length !== failedBackgroundJobs.length || fileIds.some((id) => !id)) {
-      throw new LogicError(
-        'We do not have a valid file Id for all failed background jobs',
-        {
-          info: {
-            fileIds
-          }
-        }
+    const failedJobsDueToNoComputeBudget = failedBackgroundJobs.filter(
+      (job) =>
+        job.remainingComputeBudgetSeconds !== null &&
+        job.remainingComputeBudgetSeconds <= 0
+    )
+    if (failedJobsDueToNoComputeBudget.length > 0) {
+      logger.info(
+        { numberOfFailedBackgroundJobs: failedBackgroundJobs.length },
+        'Found {numberOfFailedBackgroundJobs} background jobs which have exceeded their compute budget'
       )
     }
+
+    const failedJobsDueToExceededAttempts = failedBackgroundJobs.filter(
+      (job) => job.attempt >= job.maxAttempt
+    )
+    if (failedJobsDueToExceededAttempts.length > 0) {
+      logger.warn(
+        { numberOfFailedBackgroundJobs: failedBackgroundJobs.length },
+        'Found {numberOfFailedBackgroundJobs} background jobs which have exceeded maximum number of attempts'
+      )
+    }
+
+    const validFailedBackgroundJobs = failedBackgroundJobs.filter(
+      (job) => !!job.payload.blobId
+    )
+    if (validFailedBackgroundJobs.length !== failedBackgroundJobs.length) {
+      logger.warn('Some failed background jobs do not have a valid blob ID')
+    }
+
+    const fileIds = validFailedBackgroundJobs.map((job) => job.payload.blobId)
 
     const updatedUploads = await failPendingUploadedFiles({
       uploadIds: fileIds

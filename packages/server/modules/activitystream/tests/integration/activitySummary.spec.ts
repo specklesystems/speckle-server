@@ -21,12 +21,16 @@ import {
   saveStreamActivityFactory
 } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
-import {
-  deleteStreamFactory,
-  getStreamFactory
-} from '@/modules/core/repositories/streams'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
+import { deleteProjectFactory } from '@/modules/core/repositories/projects'
+import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
+import type { DeleteProjectAndCommits } from '@/modules/core/domain/projects/operations'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { logger } from '@/observability/logging'
+import { getProjectReplicationDbs } from '@/modules/multiregion/utils/dbSelector'
 
 const cleanup = async () => {
   await truncateTables([StreamActivity.name, Users.name])
@@ -40,7 +44,22 @@ const createActivitySummary = createActivitySummaryFactory({
   getActivity: geUserStreamActivityFactory({ db }),
   getUser
 })
-const deleteStream = deleteStreamFactory({ db })
+const deleteStreamAndCommits: DeleteProjectAndCommits = async ({ projectId }) =>
+  asMultiregionalOperation(
+    async ({ allDbs }) =>
+      // this is a bit of an overhead, we are issuing delete queries to all regions,
+      // instead of being selective and clever about figuring out the project DB and only
+      // deleting from main and the project db
+      deleteProjectAndCommitsFactory({
+        deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+        deleteProjectCommits: replicateFactory(allDbs, deleteProjectCommitsFactory)
+      })({ projectId }),
+    {
+      name: 'deleteStreamAndCommits spec',
+      logger,
+      dbs: await getProjectReplicationDbs({ projectId })
+    }
+  )
 
 describe('Activity summary @activity', () => {
   const userA: BasicTestUser = {
@@ -104,6 +123,7 @@ describe('Activity summary @activity', () => {
           async (stream) => (await createTestStream(stream, userA)).id
         )
       )
+
       await saveActivity({
         streamId,
         resourceType: StreamResourceTypes.Stream,
@@ -113,7 +133,7 @@ describe('Activity summary @activity', () => {
         info: {},
         message: 'foo'
       })
-      await deleteStream(streamId)
+      await deleteStreamAndCommits({ projectId: streamId })
       const summary = await createActivitySummary({
         userId: userA.id,
         streamIds: [streamId],

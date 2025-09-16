@@ -254,27 +254,8 @@ jobs:
           path: /tmp/**/*.log
           retention-days: 5
 
-  docker-build-postgres-container:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
-    name: Docker build postgres container
-    steps:
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ inputs.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Setup Docker Builder
-        uses: useblacksmith/setup-docker-builder@v1
-      - name: Build and push
-        uses: useblacksmith/build-push-action@v2
-        with:
-          push: true
-          tags: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
-          file: ./utils/postgres/Dockerfile
-
   test-server:
     name: Server
-    needs: [docker-build-postgres-container]
     runs-on: blacksmith-8vcpu-ubuntu-2404
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
@@ -288,11 +269,12 @@ jobs:
         ports:
           - 6379:6379
       postgres:
-        image: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+        image: postgres:16.4-alpine3.20
         env:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
+          POSTGRES_INITDB_ARGS: -c max_prepared_transactions=150
         ports:
           - 5432:5432
         options: >-
@@ -369,7 +351,6 @@ jobs:
 
   test-server-no-ff:
     name: Server no ff
-    needs: [docker-build-postgres-container]
     runs-on: blacksmith-8vcpu-ubuntu-2404
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
@@ -383,11 +364,12 @@ jobs:
         ports:
           - 6379:6379
       postgres:
-        image: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+        image: postgres:16.4-alpine3.20
         env:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
+          POSTGRES_INITDB_ARGS: -c max_prepared_transactions=150
         ports:
           - 5432:5432
         options: >-
@@ -454,9 +436,7 @@ jobs:
 
   test-server-multiregion:
     name: Server multiregion
-    needs: [docker-build-postgres-container]
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
-    if: false # disabled
     runs-on: blacksmith-4vcpu-ubuntu-2404
     services:
       redis:
@@ -470,11 +450,12 @@ jobs:
           - 6379:6379
 
       postgres0:
-        image: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+        image: postgres:16.4-alpine3.20
         env:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
+          POSTGRES_INITDB_ARGS: -c max_prepared_transactions=150
         ports:
           - 5432:5432
         options: >-
@@ -482,13 +463,13 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
       postgres1:
-        image: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+        image: postgres:16.4-alpine3.20
         env:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
+          POSTGRES_INITDB_ARGS: -c max_prepared_transactions=150
         ports:
           - 5433:5432
         options: >-
@@ -496,13 +477,13 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
       postgres2:
-        image: speckle/speckle-postgres:${{ inputs.IMAGE_VERSION_TAG }}
+        image: postgres:16.4-alpine3.20
         env:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
+          POSTGRES_INITDB_ARGS: -c max_prepared_transactions=150
         ports:
           - 5434:5432
         options: >-
@@ -510,7 +491,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
       minio0:
         image: bitnami/minio
         env:
@@ -583,7 +563,7 @@ jobs:
       - run: cp .env.test-example .env.test
         working-directory: 'packages/server'
       - name: 'Run test'
-        run: yarn test:report
+        run: yarn test:multiregion
         working-directory: 'packages/server'
         timeout-minutes: 30
       - uses: codecov/codecov-action@v5

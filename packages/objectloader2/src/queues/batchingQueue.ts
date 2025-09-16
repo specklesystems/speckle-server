@@ -106,6 +106,7 @@ export default class BatchingQueue<T> {
     if (this.#isProcessing || this.#queue.size === 0) {
       return
     }
+    if (this.#disposed) return
     this.#isProcessing = true
 
     const batchToProcess = this.#getBatch(this.#batchSize)
@@ -113,7 +114,8 @@ export default class BatchingQueue<T> {
     try {
       await this.#processFunction(batchToProcess)
     } catch (error) {
-      this.#logger('Batch processing failed:', error)
+      console.error('Batch processing failed:', error)
+      this.#disposed = true
     } finally {
       this.#isProcessing = false
     }

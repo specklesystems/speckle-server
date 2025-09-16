@@ -25,10 +25,7 @@ import type {
   UpdateBranch,
   UpdateBranchAndNotify
 } from '@/modules/core/domain/branches/operations'
-import type {
-  GetStream,
-  MarkBranchStreamUpdated
-} from '@/modules/core/domain/streams/operations'
+import type { GetStream } from '@/modules/core/domain/streams/operations'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ModelEvents } from '@/modules/core/domain/branches/events'
 
@@ -131,7 +128,6 @@ export const deleteBranchAndNotifyFactory =
     getStream: GetStream
     getBranchById: GetBranchById
     emitEvent: EventBusEmit
-    markBranchStreamUpdated: MarkBranchStreamUpdated
     deleteBranchById: DeleteBranchById
   }): DeleteBranchAndNotify =>
   async (input: BranchDeleteInput | DeleteModelInput, userId: string) => {
@@ -167,19 +163,16 @@ export const deleteBranchAndNotifyFactory =
 
     const isDeleted = !!(await deps.deleteBranchById(existingBranch.id))
     if (isDeleted) {
-      await Promise.all([
-        deps.markBranchStreamUpdated(input.id),
-        deps.emitEvent({
-          eventName: ModelEvents.Deleted,
-          payload: {
-            modelId: existingBranch.id,
-            model: existingBranch,
-            projectId: streamId,
-            input,
-            userId
-          }
-        })
-      ])
+      await deps.emitEvent({
+        eventName: ModelEvents.Deleted,
+        payload: {
+          modelId: existingBranch.id,
+          model: existingBranch,
+          projectId: streamId,
+          input,
+          userId
+        }
+      })
     }
 
     return isDeleted

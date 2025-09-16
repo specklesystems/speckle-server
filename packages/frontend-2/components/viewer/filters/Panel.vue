@@ -1,216 +1,326 @@
 <template>
-  <ViewerLayoutSidePanel>
+  <ViewerLayoutSidePanel max-height-class="max-h-[calc(100dvh-5rem)]" disable-scrollbar>
     <template #title>Filters</template>
     <template #actions>
       <div class="flex gap-x-0.5 items-center">
         <FormButton
-          v-if="title !== 'Object Type'"
+          v-if="hasAnyFiltersApplied"
           size="sm"
           color="subtle"
           tabindex="-1"
-          @click="
-            ;(showAllFilters = false),
-              removePropertyFilter(),
-              refreshColorsIfSetOrActiveFilterIsNumeric()
-          "
+          @click="resetFilters()"
         >
           Reset
         </FormButton>
         <FormButton
-          v-tippy="'Toggle coloring'"
+          v-tippy="showPropertySelection ? undefined : 'Add new filter'"
           color="subtle"
           size="sm"
+          :class="showPropertySelection ? '!bg-highlight-3 !pointer-events-none' : ''"
           hide-text
-          :icon-right="colors ? 'IconColouring' : 'IconColouringOutline'"
-          @click="toggleColors()"
+          :icon-left="showPropertySelection ? X : Plus"
+          @click="handleAddFilterClick"
         />
       </div>
     </template>
-
-    <div class="h-full flex flex-col">
-      <div class="px-4 py-1 border-b border-outline-2">
-        <FormButton
-          text
-          color="subtle"
-          size="sm"
-          :icon-right="showAllFilters ? ChevronUpIcon : ChevronDownIcon"
-          class="capitalize"
-          @click="showAllFilters = !showAllFilters"
-        >
-          <span class="max-w-20 md:max-w-36 truncate">
-            {{ title.split('.').reverse()[0] || title || 'No title' }}
-          </span>
-        </FormButton>
-      </div>
+    <div class="flex items-center justify-between pr-0.5">
+      <ViewerFiltersLogicSelector v-if="propertyFilters.length > 0" />
 
       <div
-        :class="`relative flex flex-col gap-0.5 simple-scrollbar overflow-y-scroll overflow-x-hidden ${
-          showAllFilters ? 'h-44 visible pb-2' : 'h-0 invisible'
-        } transition-[height] border-b border-outline-2`"
+        v-if="propertyFilters.length > 0"
+        class="flex items-center pr-4 text-body-3xs text-foreground-2 select-none"
       >
-        <div class="sticky top-0 bg-foundation p-2 pb-1">
-          <FormTextInput
-            v-model="searchString"
-            name="filter-search"
-            placeholder="Search for a property"
-            size="sm"
-            color="foundation"
-            :show-clear="!!searchString"
-            class="!text-body-2xs"
-          />
-        </div>
-        <div>
-          <div
-            v-for="(filter, index) in relevantFiltersLimited"
-            :key="index"
-            class="text-body-2xs"
-          >
-            <button
-              class="flex w-full text-left hover:bg-primary-muted truncate rounded-md py-[3px] px-2 mx-2 text-[10px] text-foreground-3 gap-1 items-center"
-              @click="
-                ;(showAllFilters = false),
-                  setPropertyFilter(filter),
-                  refreshColorsIfSetOrActiveFilterIsNumeric()
-              "
-            >
-              <span class="text-foreground text-body-3xs">
-                {{ getPropertyName(filter.key) }}
-              </span>
-              <span class="truncate">{{ filter.key }}</span>
-            </button>
-          </div>
-          <div v-if="itemCount < relevantFiltersSearched.length" class="px-4">
-            <FormButton size="sm" text @click="itemCount += 30">
-              View more ({{ relevantFiltersSearched.length - itemCount }})
-            </FormButton>
-          </div>
-        </div>
-      </div>
-
-      <div v-if="activeFilter" class="overflow-y-scroll simple-scrollbar flex-1">
-        <ViewerFiltersStringFilter
-          v-if="stringActiveFilter"
-          :filter="stringActiveFilter"
-        />
-        <ViewerFiltersNumericFilter
-          v-if="numericActiveFilter"
-          :filter="numericActiveFilter"
-        />
+        <span>
+          {{ filteredObjectsCount }} result{{ filteredObjectsCount === 1 ? '' : 's' }}
+        </span>
       </div>
     </div>
+    <div class="flex flex-col h-full justify-center select-none group/panel">
+      <div
+        v-if="propertyFilters.length > 0"
+        ref="filtersContainerRef"
+        class="flex-1 overflow-y-auto simple-scrollbar"
+      >
+        <div class="flex flex-col gap-1 p-2 py-0">
+          <ViewerFiltersFilterCard
+            v-for="filter in propertyFilters"
+            :key="filter.id"
+            :filter="filter"
+            collapsed
+            @swap-property="startPropertySwap"
+          />
+        </div>
+        <div class="px-2 pb-6 mt-1 h-14">
+          <FormButton
+            v-if="propertyFilters.length > 0"
+            full-width
+            color="outline"
+            class="rounded-xl text-foreground-2 hover:text-foreground !shadow-none"
+            :icon-left="Plus"
+            hide-text
+            @click="addNewEmptyFilter"
+          >
+            Add filter
+          </FormButton>
+        </div>
+      </div>
+
+      <ViewerFiltersFilterEmptyState v-else @add-filter="addNewEmptyFilter" />
+    </div>
+
+    <Portal v-if="showPropertySelection" to="panel-extension">
+      <div ref="propertySelectionRef" class="h-full">
+        <ViewerFiltersPropertySelectionPanel
+          :options="propertySelectOptions"
+          @select-property="selectProperty"
+        />
+      </div>
+    </Portal>
+
+    <ViewerFiltersLargePropertyWarningDialog
+      v-model:open="showLargePropertyWarning"
+      :count="pendingProperty?.count"
+      @confirm="confirmLargePropertySelection"
+    />
   </ViewerLayoutSidePanel>
 </template>
+
 <script setup lang="ts">
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/solid'
-import type { PropertyInfo } from '@speckle/viewer'
-import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
+import type {
+  PropertySelectOption,
+  ExtendedPropertyInfo
+} from '~/lib/viewer/helpers/filters/types'
+import { FilterType } from '~/lib/viewer/helpers/filters/types'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import {
-  isNumericPropertyInfo,
-  isStringPropertyInfo
-} from '~/lib/viewer/helpers/sceneExplorer'
-import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
+import { X, Plus } from 'lucide-vue-next'
+import { FormButton } from '@speckle/ui-components'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { onKeyStroke, onClickOutside } from '@vueuse/core'
+import { useFilteredObjectsCount } from '~/lib/viewer/composables/filtering/counts'
+import type { Nullable } from '@speckle/shared'
 
 const {
-  setPropertyFilter,
-  removePropertyFilter,
-  applyPropertyFilter,
-  unApplyPropertyFilter,
-  filters: { propertyFilter },
-  getRelevantFilters,
-  getPropertyName
+  filters: { propertyFilters },
+  getPropertyOptionsFromDataStore,
+  addActiveFilter,
+  updateFilterProperty,
+  resetFilters,
+  isLargeProperty
 } = useFilterUtilities()
 
-const {
-  metadata: { availableFilters: allFilters }
-} = useInjectedViewer()
-
-const showAllFilters = ref(false)
-
-const relevantFilters = computed(() => {
-  return getRelevantFilters(allFilters.value)
-})
-
-const speckleTypeFilter = computed(() =>
-  relevantFilters.value.find((f: PropertyInfo) => f.key === 'speckle_type')
-)
-const activeFilter = computed(
-  () => propertyFilter.filter.value || speckleTypeFilter.value
-)
-
+const { filteredObjectsCount } = useFilteredObjectsCount()
 const mp = useMixpanel()
-watch(activeFilter, (newVal) => {
-  if (!newVal) return
+const {
+  filters: { hasAnyFiltersApplied }
+} = useInjectedViewerInterfaceState()
+
+const showPropertySelection = ref(false)
+const propertySelectionRef = ref<HTMLElement>()
+const swappingFilterId = ref<Nullable<string>>(null)
+const filtersContainerRef = ref<HTMLElement>()
+const shouldScrollToNewFilter = ref(false)
+
+const showLargePropertyWarning = ref(false)
+const pendingProperty =
+  ref<Nullable<{ property: ExtendedPropertyInfo; count: number }>>(null)
+
+const propertySelectOptions = computed((): PropertySelectOption[] => {
+  if (!showPropertySelection.value) {
+    return []
+  }
+
+  const existingFilterKeys = new Set(
+    propertyFilters.value.map((f) => f.filter?.key).filter(Boolean)
+  )
+
+  const relevantFilters = getPropertyOptionsFromDataStore()
+
+  const allOptions: PropertySelectOption[] = relevantFilters
+    .filter((filter) => !existingFilterKeys.has(filter.key))
+    .map((filter) => {
+      const lastDotIndex = filter.key.lastIndexOf('.')
+      let propertyName =
+        lastDotIndex === -1 ? filter.key : filter.key.slice(lastDotIndex + 1)
+      let parentPath =
+        lastDotIndex === -1
+          ? ''
+          : filter.key.slice(0, lastDotIndex).replace(/\./g, ' › ')
+
+      // Handle name-value pairs by collapsing them to just the value
+      // If the property name ends with '.value', use the parent as the display name
+      if (propertyName === 'value' && lastDotIndex !== -1) {
+        const valueParentPath = filter.key.slice(0, lastDotIndex)
+        const valueParentLastDot = valueParentPath.lastIndexOf('.')
+        propertyName =
+          valueParentLastDot === -1
+            ? valueParentPath
+            : valueParentPath.slice(valueParentLastDot + 1)
+
+        parentPath =
+          valueParentLastDot === -1
+            ? ''
+            : valueParentPath.slice(0, valueParentLastDot).replace(/\./g, ' › ')
+      }
+
+      return {
+        value: filter.key,
+        label: propertyName,
+        parentPath,
+        type:
+          filter.type === 'number'
+            ? FilterType.Numeric
+            : (filter as { type: string }).type === 'boolean'
+            ? FilterType.Boolean
+            : FilterType.String,
+        hasParent: parentPath !== ''
+      }
+    })
+
+  const sortedOptions = allOptions.sort((a, b) => {
+    // First sort by whether they have parents (no-parent items first)
+    if (a.hasParent !== b.hasParent) {
+      return a.hasParent ? 1 : -1
+    }
+
+    // If both have parents, sort by parent path first
+    if (a.hasParent && b.hasParent) {
+      const parentComparison = a.parentPath.localeCompare(b.parentPath)
+      if (parentComparison !== 0) return parentComparison
+    }
+
+    // Finally sort by label
+    return a.label.localeCompare(b.label)
+  })
+
+  return sortedOptions
+})
+
+const addNewEmptyFilter = () => {
+  swappingFilterId.value = null
+  showPropertySelection.value = true
+
   mp.track('Viewer Action', {
     type: 'action',
     name: 'filters',
-    action: 'set-active-filter',
-    value: newVal.key
+    action: 'open-property-selection'
   })
-})
+}
 
-const stringActiveFilter = computed(() =>
-  isStringPropertyInfo(activeFilter.value) ? activeFilter.value : undefined
-)
-const numericActiveFilter = computed(() =>
-  isNumericPropertyInfo(activeFilter.value) ? activeFilter.value : undefined
-)
+const startPropertySwap = (filterId: string) => {
+  swappingFilterId.value = filterId
+  showPropertySelection.value = true
 
-const searchString = ref<string | undefined>(undefined)
-const relevantFiltersSearched = computed(() => {
-  if (!searchString.value) return relevantFilters.value
-  const searchLower = searchString.value.toLowerCase()
-  // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-  itemCount.value = 30 // nasty, but yolo - reset max limit on search change
-  return relevantFilters.value.filter((f: PropertyInfo) => {
-    const userFriendlyName = getPropertyName(f.key).toLowerCase()
-    return (
-      f.key.toLowerCase().includes(searchLower) ||
-      userFriendlyName.includes(searchLower)
-    )
-  })
-})
-
-const itemCount = ref(30)
-const relevantFiltersLimited = computed(() => {
-  return relevantFiltersSearched.value
-    .slice(0, itemCount.value)
-    .sort((a: PropertyInfo, b: PropertyInfo) => a.key.length - b.key.length)
-})
-
-const title = computed(() => getPropertyName(activeFilter.value?.key ?? ''))
-
-const colors = computed(() => !!propertyFilter.isApplied.value)
-
-const toggleColors = () => {
-  if (!colors.value) applyPropertyFilter()
-  else unApplyPropertyFilter()
   mp.track('Viewer Action', {
     type: 'action',
     name: 'filters',
-    action: 'toggle-colors',
-    value: colors.value
+    action: 'open-property-swap'
   })
 }
 
-// Handles a rather complicated ux flow: user sets a numeric filter which only makes sense with colors on. we set the force colors flag in that scenario, so we can revert it if user selects a non-numeric filter afterwards.
-let forcedColors = false
-const refreshColorsIfSetOrActiveFilterIsNumeric = () => {
-  if (!!numericActiveFilter.value && !colors.value) {
-    forcedColors = true
-    applyPropertyFilter()
-    return
+const handleAddFilterClick = () => {
+  if (showPropertySelection.value) {
+    showPropertySelection.value = false
+  } else {
+    addNewEmptyFilter()
   }
-
-  if (!colors.value) return
-
-  if (forcedColors) {
-    forcedColors = false
-    unApplyPropertyFilter()
-    return
-  }
-
-  // removePropertyFilter()
-  applyPropertyFilter()
 }
+
+const scrollToNewFilter = () => {
+  if (filtersContainerRef.value) {
+    filtersContainerRef.value.scrollTo({
+      top: filtersContainerRef.value.scrollHeight,
+      behavior: 'smooth'
+    })
+  }
+}
+
+const selectProperty = async (propertyKey: string) => {
+  const relevantFilters = getPropertyOptionsFromDataStore()
+  const property = relevantFilters.find((p) => p.key === propertyKey)
+
+  if (!property) {
+    return
+  }
+
+  // Check if this property has too many unique values
+  const { isLarge, count } = isLargeProperty(property.key)
+
+  if (isLarge) {
+    // Store the pending property and show warning
+    pendingProperty.value = { property, count }
+    showLargePropertyWarning.value = true
+    return
+  }
+
+  processPropertySelection(property, propertyKey)
+}
+
+const processPropertySelection = (
+  property: ExtendedPropertyInfo,
+  propertyKey: string
+) => {
+  if (swappingFilterId.value) {
+    updateFilterProperty(swappingFilterId.value, property)
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'filters',
+      action: 'swap-filter-property',
+      value: propertyKey
+    })
+  } else {
+    // Set flag to scroll when new filter is added
+    shouldScrollToNewFilter.value = true
+    addActiveFilter(property)
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'filters',
+      action: 'add-new-filter',
+      value: propertyKey
+    })
+  }
+  showPropertySelection.value = false
+  swappingFilterId.value = null
+}
+
+const confirmLargePropertySelection = () => {
+  if (!pendingProperty.value) return
+
+  processPropertySelection(
+    pendingProperty.value.property,
+    pendingProperty.value.property.key
+  )
+  pendingProperty.value = null
+}
+
+onKeyStroke('Escape', () => {
+  if (showLargePropertyWarning.value) {
+    showLargePropertyWarning.value = false
+    showPropertySelection.value = false
+    swappingFilterId.value = null
+    pendingProperty.value = null
+  } else if (showPropertySelection.value) {
+    showPropertySelection.value = false
+  }
+})
+
+onClickOutside(propertySelectionRef, () => {
+  if (showPropertySelection.value) {
+    showPropertySelection.value = false
+    swappingFilterId.value = null
+  }
+})
+
+// Watch for new filters being added and scroll when needed
+watch(
+  () => propertyFilters.value.length,
+  (newLength, oldLength) => {
+    if (shouldScrollToNewFilter.value && newLength > oldLength) {
+      nextTick(() => {
+        scrollToNewFilter()
+        shouldScrollToNewFilter.value = false
+      })
+    }
+  }
+)
 </script>

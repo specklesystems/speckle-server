@@ -47,3 +47,15 @@ Make sure to set the required feature flags correctly in the server `.env` file:
 ```bash
 FF_NEXT_GEN_FILE_IMPORTER_ENABLED="true"
 ```
+
+When running outside of the docker network, you may need to tweak some more server `.env` file:
+
+```bash
+FILEIMPORT_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL="false"
+```
+
+And in the ifc-import-service `.env` file:
+
+```bash
+FILEIMPORT_QUEUE_POSTGRES_URL=postgresql://speckle:speckle@127.0.0.1:5432/speckle
+```

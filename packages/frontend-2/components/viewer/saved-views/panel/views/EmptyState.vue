@@ -1,7 +1,14 @@
 <template>
-  <div class="flex flex-col gap-8 items-center my-16">
+  <div class="flex flex-col items-center gap-8 my-16">
     <IllustrationEmptystateViewsTab />
-    <div class="text-foreground-2 px-6">{{ message }}</div>
+    <div class="text-center mx-6 text-body-xs">
+      <div class="text-foreground-2 font-medium">
+        {{ message }}
+      </div>
+      <div v-if="type === 'base'" class="text-foreground-3 mt-2">
+        Save, organize and share views
+      </div>
+    </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -16,7 +23,7 @@ const props = withDefaults(
 
 const message = computed(() => {
   if (props.type === 'search') {
-    return 'No views match your search criteria'
+    return 'No views found'
   }
   return 'No saved views yet'
 })

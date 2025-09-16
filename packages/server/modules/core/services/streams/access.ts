@@ -117,7 +117,7 @@ export const removeStreamCollaboratorFactory =
     }
 
     const { [streamId]: role } = await deps.getStreamRoles(userId, [streamId])
-    const stream = await deps.revokeStreamPermissions({ streamId, userId }, options)
+    const stream = await deps.revokeStreamPermissions({ streamId, userId })
     if (!stream) {
       throw new LogicError('Stream not found')
     }
@@ -161,7 +161,7 @@ export const addOrUpdateStreamCollaboratorFactory =
     role,
     addedById,
     adderResourceAccessRules,
-    { fromInvite, trackProjectUpdate, skipAuthorization } = {}
+    { fromInvite, skipAuthorization } = {}
   ) => {
     const validRoles = Object.values(Roles.Stream) as string[]
     if (!validRoles.includes(role)) {
@@ -203,14 +203,11 @@ export const addOrUpdateStreamCollaboratorFactory =
     })
 
     const { [streamId]: previousRole } = await deps.getStreamRoles(userId, [streamId])
-    const stream = (await deps.grantStreamPermissions(
-      {
-        streamId,
-        userId,
-        role: role as StreamRoles
-      },
-      { trackProjectUpdate }
-    )) as StreamRecord // validateStreamAccess already checked that it exists
+    const stream = (await deps.grantStreamPermissions({
+      streamId,
+      userId,
+      role: role as StreamRoles
+    })) as StreamRecord // validateStreamAccess already checked that it exists
 
     await deps.emitEvent({
       eventName: ProjectEvents.PermissionsAdded,

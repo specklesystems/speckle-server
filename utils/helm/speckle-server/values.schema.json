@@ -1284,7 +1284,7 @@
             },
             "from": {
               "type": "string",
-              "description": "The email address from which Speckle will send emails. Defaults to 'no-reply@speckle.systems' if left blank.",
+              "description": "The email address from which Speckle will send emails. If left blank will cause an error when email are sent.",
               "default": ""
             },
             "username": {
@@ -1306,6 +1306,16 @@
                   "default": ""
                 }
               }
+            },
+            "secure": {
+              "type": "boolean",
+              "description": "If true, will use SSL when connecting to the email server. requireTLS would be preferable if the server supports it. Both 'secure' and 'requireTLS' can be false if the email server does not support encryption, but this is not recommended. Both 'secure' and 'requireTLS' cannot be true at the same time.",
+              "default": false
+            },
+            "requireTLS": {
+              "type": "boolean",
+              "description": "If true, will require TLS when connecting to the email server. This is preferable to 'secure' if the email server supports TLS. Both 'secure' and 'requireTLS' can be false if the email server does not support encryption, but this is not recommended. Both 'secure' and 'requireTLS' cannot be true at the same time.",
+              "default": true
             },
             "networkPolicy": {
               "type": "object",

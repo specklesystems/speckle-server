@@ -144,7 +144,7 @@
                 </NuxtLink>
 
                 <NuxtLink
-                  to="https://speckle.community/c/making-speckle/changelog"
+                  to="https://speckle.systems/updates"
                   target="_blank"
                   @click="isOpenMobile = false"
                 >

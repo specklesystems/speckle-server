@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <aside
-    class="absolute left-2 lg:left-0 z-40 flex rounded-lg border border-outline-2 bg-foundation px-1 overflow-visible lg:h-full"
+    class="absolute left-2 lg:left-0 z-50 flex rounded-lg border border-outline-2 bg-foundation px-1 overflow-visible lg:h-full focus-visible:outline-none"
     :class="[
       isEmbedEnabled
         ? 'top-[0.5rem]'
@@ -34,7 +34,7 @@
         "
         :active="activePanel === 'filters'"
         :icon="ListFilter"
-        :dot="hasActiveFilters"
+        :dot="hasAnyFiltersApplied"
         @click="toggleActivePanel('filters')"
       />
       <ViewerControlsButtonToggle
@@ -143,9 +143,7 @@
         v-show="activePanel === 'models'"
         v-model:sub-view="modelsSubView"
       />
-      <KeepAlive v-show="resourceItems.length !== 0 && activePanel === 'filters'">
-        <ViewerFiltersPanel />
-      </KeepAlive>
+      <ViewerFiltersPanel v-if="activePanel === 'filters'" />
       <ViewerCommentsPanel
         v-if="resourceItems.length !== 0 && activePanel === 'discussions'"
       />
@@ -157,24 +155,48 @@
       <ViewerDataviewerPanel v-if="activePanel === 'devMode'" />
       <KeepAlive>
         <ViewerSavedViewsPanel
-          v-if="isSavedViewsEnabled && activePanel === 'savedViews'"
+          v-if="
+            isSavedViewsEnabled && isWorkspacesEnabled && activePanel === 'savedViews'
+          "
           @close="activePanel = 'none'"
         />
       </KeepAlive>
+    </div>
+
+    <!-- Panel Extension - Portal target for additional content -->
+    <div
+      id="panel-extension"
+      class="absolute z-50 left-[calc(100dvw-20rem)] md:left-72 max-h-[calc(100dvh-6rem)] md:max-h-[calc(100dvh-4rem)] top-1.5 bg-foundation rounded-lg overflow-hidden"
+      :style="`left: ${panelExtensionLeft} !important; width: ${panelExtensionWidth}px;`"
+    >
+      <!-- Resize handle for panel extension -->
+      <div
+        ref="panelExtensionResizeHandle"
+        class="absolute h-full max-h-[calc(100dvh-6rem)] md:max-h-[calc(100dvh-4rem)] w-4 transition border-r hover:border-r-[2px] border-outline-2 hover:border-primary hidden lg:flex items-center cursor-ew-resize z-30 right-0"
+        @mousedown="startPanelExtensionResizing"
+      />
+      <PortalTarget name="panel-extension"></PortalTarget>
     </div>
   </aside>
 </template>
 
 <script setup lang="ts">
-import { useViewerShortcuts, useFilterUtilities } from '~~/lib/viewer/composables/ui'
-import { useEmbed } from '~/lib/viewer/composables/setup/embed'
-import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import { useEventListener, useResizeObserver, useBreakpoints } from '@vueuse/core'
-import { type Nullable, isNonNullable } from '@speckle/shared'
+import { useViewerShortcuts } from '~~/lib/viewer/composables/ui'
 import {
+  useInjectedViewerInterfaceState,
   useInjectedViewerLoadedResources,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import {
+  useEventListener,
+  useResizeObserver,
+  useBreakpoints,
+  useWindowSize,
+  useThrottleFn
+} from '@vueuse/core'
+import { type Nullable, isNonNullable } from '@speckle/shared'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { useIntercomEnabled } from '~~/lib/intercom/composables/enabled'
 import { viewerDocsRoute } from '~~/lib/common/helpers/route'
@@ -196,13 +218,44 @@ const emit = defineEmits<{
   forceClosePanels: []
 }>()
 
+const { width: windowWidth } = useWindowSize()
+
+const { isIntercomEnabled } = useIntercomEnabled()
+const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
+const { registerShortcuts, getShortcutDisplayText, shortcuts } = useViewerShortcuts()
+const { isEnabled: isEmbedEnabled } = useEmbed()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('sm')
+const isTablet = breakpoints.smaller('lg')
+const isLargerThanLg = breakpoints.greater('lg')
+const { getTooltipProps } = useSmartTooltipDelay()
+const isSavedViewsEnabled = useAreSavedViewsEnabled()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const { $intercom } = useNuxtApp()
+const {
+  filters: { hasAnyFiltersApplied }
+} = useInjectedViewerInterfaceState()
+const {
+  ui: {
+    panels: { active: activePanel, modelsSubView }
+  }
+} = useInjectedViewerState()
+
+const { onPanelButtonClick } = useViewerPanelsUtilities()
+
 const width = ref(264)
+const panelExtensionWidth = ref(isMobile.value ? 200 : isLargerThanLg.value ? 300 : 256)
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
 const height = ref(scrollableControlsContainer.value?.clientHeight)
 const isResizing = ref(false)
+const isPanelExtensionResizing = ref(false)
 const resizeHandle = ref(null)
+const panelExtensionResizeHandle = ref(null)
+
 let startWidth = 0
 let startX = 0
+let startPanelExtensionWidth = 0
+let startPanelExtensionX = 0
 
 const startResizing = (event: MouseEvent) => {
   if (isMobile.value) return
@@ -212,48 +265,51 @@ const startResizing = (event: MouseEvent) => {
   startWidth = width.value
 }
 
+const startPanelExtensionResizing = (event: MouseEvent) => {
+  if (isMobile.value) return
+  event.preventDefault()
+  isPanelExtensionResizing.value = true
+  startPanelExtensionX = event.clientX
+  startPanelExtensionWidth = panelExtensionWidth.value
+}
+
+const throttledHandleMouseMove = useThrottleFn((event: MouseEvent) => {
+  if (isResizing.value) {
+    const diffX = event.clientX - startX
+    const newWidth = Math.max(
+      240,
+      Math.min(startWidth + diffX, Math.min(440, windowWidth.value * 0.5 - 60))
+    )
+    width.value = newWidth
+  } else if (isPanelExtensionResizing.value) {
+    const diffX = event.clientX - startPanelExtensionX
+    const newWidth = Math.max(
+      200,
+      Math.min(startPanelExtensionWidth + diffX, Math.min(400, windowWidth.value * 0.4))
+    )
+    panelExtensionWidth.value = newWidth
+  }
+}, 150)
+
 if (import.meta.client) {
   useResizeObserver(scrollableControlsContainer, (entries) => {
     const { height: newHeight } = entries[0].contentRect
     height.value = newHeight
   })
   useEventListener(resizeHandle, 'mousedown', startResizing)
+  useEventListener(panelExtensionResizeHandle, 'mousedown', startPanelExtensionResizing)
 
-  useEventListener(document, 'mousemove', (event) => {
-    if (isResizing.value) {
-      const diffX = event.clientX - startX
-      const newWidth = Math.max(
-        240,
-        Math.min(startWidth + diffX, Math.min(440, window.innerWidth * 0.5 - 60))
-      )
-      width.value = newWidth
-    }
-  })
+  useEventListener(document, 'mousemove', throttledHandleMouseMove)
 
   useEventListener(document, 'mouseup', () => {
     if (isResizing.value) {
       isResizing.value = false
     }
+    if (isPanelExtensionResizing.value) {
+      isPanelExtensionResizing.value = false
+    }
   })
 }
-
-const { isIntercomEnabled } = useIntercomEnabled()
-const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
-const { registerShortcuts, getShortcutDisplayText, shortcuts } = useViewerShortcuts()
-const { isEnabled: isEmbedEnabled } = useEmbed()
-const breakpoints = useBreakpoints(TailwindBreakpoints)
-const isMobile = breakpoints.smaller('sm')
-const isTablet = breakpoints.smaller('lg')
-const { getTooltipProps } = useSmartTooltipDelay()
-const isSavedViewsEnabled = useAreSavedViewsEnabled()
-const { $intercom } = useNuxtApp()
-const { hasActiveFilters } = useFilterUtilities()
-const {
-  ui: {
-    panels: { active: activePanel, modelsSubView }
-  }
-} = useInjectedViewerState()
-const { onPanelButtonClick } = useViewerPanelsUtilities()
 
 const hasActivePanel = computed(() => activePanel.value !== 'none')
 
@@ -278,6 +334,14 @@ const widthClass = computed(() => {
   } else {
     return `${width.value + 4}px`
   }
+})
+
+const panelExtensionLeft = computed(() => {
+  if (isMobile.value || isTablet.value) {
+    return
+  }
+  const mainPanelLeft = isEmbedEnabled.value ? 52 : 60
+  return `${mainPanelLeft + width.value}px`
 })
 
 const { summary } = useFunctionRunsStatusSummary({

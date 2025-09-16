@@ -78,7 +78,8 @@ export const ensureOnboardingProjectFactory =
     )
 
     logger.info('Marking stream as onboarding base...')
-    await deps.markOnboardingBaseStream(res.projectId, metadata.version)
+    // outside of multiregion context
+    await deps.markOnboardingBaseStream(res.projectId, metadata.version, new Date())
 
     logger.info('Onboarding base stream created successfully!')
 

@@ -20,10 +20,11 @@
         {{ result.message }}
       </div>
     </button>
-    <div class="flex mt-2 ml-3 overflow-hidden">
-      <ViewerExplorerNumericFilter
-        v-if="metadataGradientIsSet && computedPropInfo"
-        :filter="computedPropInfo"
+    <div class="flex mt-2 px-3 overflow-hidden">
+      <ViewerFiltersFilterNumeric
+        v-if="metadataGradientIsSet && computedFilterData"
+        :filter="computedFilterData"
+        no-padding
       />
     </div>
   </div>
@@ -36,10 +37,14 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { useFilterColoringHelpers } from '~/lib/viewer/composables/filtering/coloringHelpers'
 import type { NumericPropertyInfo } from '@speckle/viewer'
 import { containsAll } from '~~/lib/common/helpers/utils'
 import type { Automate } from '@speckle/shared'
+import type { NumericFilterData } from '~/lib/viewer/helpers/filters/types'
+import { isNumericFilter } from '~/lib/viewer/helpers/filters/types'
+import { injectGradientDataIntoDataStore } from '~/lib/viewer/helpers/filters/utils'
 
 type ObjectResult = Automate.AutomateTypes.ResultsSchema['values']['objectResults'][0]
 
@@ -50,29 +55,32 @@ const props = defineProps<{
 
 const {
   viewer: {
-    metadata: { filteringState }
+    metadata: { filteringDataStore }
   }
 } = useInjectedViewerState()
 
-const { isolateObjects, resetFilters, setPropertyFilter, applyPropertyFilter } =
+const { isolateObjects, resetFilters, resetIsolations, addActiveFilter, filters } =
   useFilterUtilities()
-const { setSelectionFromObjectIds, clearSelection } = useSelectionUtilities()
+const { setColorFilter, removeColorFilter } = useFilterColoringHelpers()
+const logger = useLogger()
 
 const hasMetadataGradient = computed(() => {
   if (props.result.metadata?.gradient) return true
   return false
 })
 
-const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
 const isIsolated = computed(() => {
-  if (!isolatedObjects.value?.length) return false
-  if (
-    props.functionId &&
-    filteringState.value?.activePropFilterKey === props.functionId
-  )
-    return false
+  // Gradient results show active via metadataGradientIsSet
+  if (hasMetadataGradient.value) {
+    return metadataGradientIsSet.value
+  }
+
+  // Non-gradient results show active if their objects are isolated
+  const isolatedIds = filters.isolatedObjectIds.value
   const ids = resultObjectIds.value
-  return containsAll(ids, isolatedObjects.value)
+
+  if (!isolatedIds?.length) return false
+  return containsAll(ids, isolatedIds)
 })
 
 const resultObjectIds = computed(() => {
@@ -85,29 +93,40 @@ const handleClick = () => {
     setOrUnsetGradient()
     return
   }
-
   isolateOrUnisolateObjects()
 }
 
 const isolateOrUnisolateObjects = () => {
   const ids = resultObjectIds.value
-  const isCurrentlyIsolated = isIsolated.value
+  const wasIsolated = containsAll(ids, filters.isolatedObjectIds.value || [])
 
-  resetFilters()
-  if (isCurrentlyIsolated) {
-    clearSelection()
-  } else {
+  logger.debug('Isolation toggle:', {
+    resultCategory: props.result.category,
+    objectCount: ids.length,
+    wasIsolated,
+    currentIsolatedCount: filters.isolatedObjectIds.value?.length || 0
+  })
+
+  // Always clear existing isolation (radio button behavior)
+  resetIsolations()
+  logger.debug(
+    'After reset, isolated count:',
+    filters.isolatedObjectIds.value?.length || 0
+  )
+
+  // If wasn't isolated before, isolate now (toggle behavior)
+  if (!wasIsolated) {
     isolateObjects(ids)
-    setSelectionFromObjectIds(ids)
+    logger.debug(
+      'After isolate, isolated count:',
+      filters.isolatedObjectIds.value?.length || 0
+    )
+  } else {
+    logger.debug('Result was isolated, now deactivated')
   }
 }
 
 const metadataGradientIsSet = ref(false)
-
-watch(filteringState, (newVal) => {
-  if (newVal?.activePropFilterKey !== props.functionId)
-    metadataGradientIsSet.value = false
-})
 
 // NOTE: This is currently a hacky convention!!!
 const computedPropInfo = computed(() => {
@@ -143,19 +162,43 @@ const computedPropInfo = computed(() => {
   return propInfo
 })
 
+const computedFilterData = computed((): NumericFilterData | undefined => {
+  if (!metadataGradientIsSet.value || !props.functionId) return
+
+  const activeFilter = filters.propertyFilters.value.find(
+    (f) => f.filter?.key === props.functionId
+  )
+
+  return activeFilter && isNumericFilter(activeFilter) ? activeFilter : undefined
+})
+
 const setOrUnsetGradient = () => {
+  logger.debug('Gradient toggle:', {
+    resultCategory: props.result.category,
+    isCurrentlySet: metadataGradientIsSet.value
+  })
+
   if (metadataGradientIsSet.value) {
+    logger.debug('Removing gradient filter')
     resetFilters()
+    removeColorFilter()
     metadataGradientIsSet.value = false
     return
   }
+
+  logger.debug('Setting gradient filter')
   resetFilters()
   if (!props.result.metadata) return
   if (!computedPropInfo.value) return
+  if (!props.functionId) return
+
+  const gradientValues = props.result.metadata?.gradientValues || {}
+  injectGradientDataIntoDataStore(filteringDataStore, props.functionId, gradientValues)
 
   metadataGradientIsSet.value = true
-  setPropertyFilter(computedPropInfo.value)
-  applyPropertyFilter()
+  const filterId = addActiveFilter(computedPropInfo.value)
+
+  setColorFilter(filterId)
 }
 
 const iconAndColor = computed(() => {
@@ -183,4 +226,16 @@ const iconAndColor = computed(() => {
       }
   }
 })
+
+watch(
+  () => filters.propertyFilters.value,
+  (newFilters) => {
+    if (!props.functionId) return
+    const hasFilter = newFilters.some((f) => f.filter?.key === props.functionId)
+    if (!hasFilter && metadataGradientIsSet.value) {
+      metadataGradientIsSet.value = false
+    }
+  },
+  { deep: true }
+)
 </script>

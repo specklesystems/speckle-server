@@ -2,12 +2,7 @@ import { db } from '@/db/knex'
 import { StreamAcl, Streams } from '@/modules/core/dbSchema'
 import type { StreamRecord } from '@/modules/core/helpers/types'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
-import {
-  deleteProjectFactory,
-  getProjectFactory
-} from '@/modules/core/repositories/projects'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
-import { waitForRegionProjectFactory } from '@/modules/core/services/projects'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { getWorkspaceUserSeatsFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { getRegionDb } from '@/modules/multiregion/utils/dbSelector'
@@ -993,35 +988,34 @@ describe('Workspace project GQL CRUD', () => {
 
     isMultiRegionTestMode()
       ? describe('when the default server db region is not the main db @multiregion', () => {
-          const regionalProject: StreamRecord = {
-            id: cryptoRandomString({ length: 9 }),
-            name: 'My Special Project',
-            description: null,
-            clonedFrom: null,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            allowPublicComments: false,
-            workspaceId: null,
-            regionKey: 'region1',
-            visibility: ProjectRecordVisibility.Public
-          }
+          let regionalProject: BasicTestStream
 
-          beforeEach(async () => {
+          before(async () => {
             // Simulate non-main default db region
+            regionalProject = await createTestStream(
+              {
+                name: 'My Special Project',
+                description: null,
+                clonedFrom: null,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                allowPublicComments: false,
+                workspaceId: null,
+                regionKey: 'region1',
+                visibility: ProjectRecordVisibility.Public
+              },
+              serverAdminUser
+            )
+          })
+
+          it('should be located in the correct region', async () => {
             const regionDb = await getRegionDb({ regionKey: 'region1' })
-            await tables.streams(regionDb).insert(regionalProject)
-            await waitForRegionProjectFactory({
-              getProject: getProjectFactory({ db }),
-              deleteProject: deleteProjectFactory({ db: regionDb })
-            })({
-              projectId: regionalProject.id,
-              regionKey: 'region1'
-            })
-            await grantStreamPermissions({
-              streamId: regionalProject.id,
-              userId: serverAdminUser.id,
-              role: Roles.Stream.Owner
-            })
+
+            const [res] = await tables
+              .streams(regionDb)
+              .where({ id: regionalProject.id })
+
+            expect(res).to.exist
           })
 
           it('should update project without removing workspace association @multiregion', async () => {

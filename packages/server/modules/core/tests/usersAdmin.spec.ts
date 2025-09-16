@@ -37,7 +37,6 @@ import {
   deleteAllUserInvitesFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import {
-  deleteStreamFactory,
   getExplicitProjects,
   getUserDeletableStreamsFactory
 } from '@/modules/core/repositories/streams'
@@ -46,9 +45,17 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { expect } from 'chai'
 import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
-import { queryAllProjectsFactory } from '@/modules/core/services/projects'
+import {
+  deleteProjectAndCommitsFactory,
+  queryAllProjectsFactory
+} from '@/modules/core/services/projects'
 import type { BasicTestUser } from '@/test/authHelper'
 import { createTestUser } from '@/test/authHelper'
+import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
+import { deleteProjectFactory } from '@/modules/core/repositories/projects'
+import type { DeleteUser } from '@/modules/core/domain/users/operations'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { getAllRegisteredTestDbs } from '@/modules/multiregion/tests/helpers'
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 const countUsers = legacyGetPaginatedUsersCountFactory({ db })
@@ -82,19 +89,45 @@ const createUser = createUserFactory({
   }),
   emitEvent: getEventBus().emit
 })
-const deleteUser = deleteUserFactory({
-  deleteStream: deleteStreamFactory({ db }),
-  logger: dbLogger,
-  isLastAdminUser: isLastAdminUserFactory({ db }),
-  getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
-  queryAllProjects: queryAllProjectsFactory({
-    getExplicitProjects: getExplicitProjects({ db })
-  }),
-  getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db }),
-  deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
-  deleteUserRecord: deleteUserRecordFactory({ db }),
-  emitEvent: getEventBus().emit
-})
+
+const deleteUser: DeleteUser = async (...input) =>
+  asMultiregionalOperation(
+    ({ mainDb, allDbs, emit }) => {
+      const deleteUser = deleteUserFactory({
+        deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+          // this is a bit of an overhead, we are issuing delete queries to all regions,
+          // instead of being selective and clever about figuring out the project DB and only
+          // deleting from main and the project db
+          deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+          deleteProjectCommits: replicateFactory(allDbs, deleteProjectCommitsFactory)
+        }),
+        logger: dbLogger,
+        isLastAdminUser: isLastAdminUserFactory({ db: mainDb }),
+        getUserDeletableStreams: getUserDeletableStreamsFactory({ db: mainDb }),
+        queryAllProjects: queryAllProjectsFactory({
+          getExplicitProjects: getExplicitProjects({ db: mainDb })
+        }),
+        getUserWorkspaceSeats: getUserWorkspaceSeatsFactory({ db: mainDb }),
+        deleteAllUserInvites: deleteAllUserInvitesFactory({ db: mainDb }),
+        deleteUserRecord: async (params) => {
+          const [res] = await Promise.all(
+            allDbs.map((db) => deleteUserRecordFactory({ db })(params))
+          )
+
+          return res
+        },
+        emitEvent: emit
+      })
+
+      return deleteUser(...input)
+    },
+    {
+      logger: dbLogger,
+      name: 'delete user spec',
+      dbs: await getAllRegisteredTestDbs()
+    }
+  )
+
 const getUserRole = getUserRoleFactory({ db })
 const buildChangeUserRole = (guestModeEnabled = false) =>
   changeUserRoleFactory({

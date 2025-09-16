@@ -21,8 +21,7 @@ import type {
 import type { GetObject } from '@/modules/core/domain/objects/operations'
 import type {
   GetCommitStream,
-  GetStream,
-  MarkCommitStreamUpdated
+  GetStream
 } from '@/modules/core/domain/streams/operations'
 import {
   CommitCreateError,
@@ -89,7 +88,6 @@ export const createCommitByBranchIdFactory =
     getBranchById: GetBranchById
     insertStreamCommits: InsertStreamCommits
     insertBranchCommits: InsertBranchCommits
-    markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
     emitEvent: EventBusEmit
   }): CreateCommitByBranchId =>
@@ -146,7 +144,6 @@ export const createCommitByBranchIdFactory =
       branchName: branch.name
     }
     await Promise.all([
-      deps.markCommitStreamUpdated(id),
       deps.markCommitBranchUpdated(id),
       deps.emitEvent({
         eventName: VersionEvents.Created,
@@ -223,7 +220,6 @@ export const updateCommitAndNotifyFactory =
     getCommitBranch: GetCommitBranch
     switchCommitBranch: SwitchCommitBranch
     updateCommit: UpdateCommit
-    markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
     emitEvent: EventBusEmit
   }): UpdateCommitAndNotify =>
@@ -303,7 +299,6 @@ export const updateCommitAndNotifyFactory =
     if (commit) {
       const [updatedBranch] = await Promise.all([
         deps.markCommitBranchUpdated(commit.id),
-        deps.markCommitStreamUpdated(commit.id),
         deps.emitEvent({
           eventName: VersionEvents.Updated,
           payload: {
@@ -326,7 +321,6 @@ export const updateCommitAndNotifyFactory =
 export const deleteCommitAndNotifyFactory =
   (deps: {
     getCommit: GetCommit
-    markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
     deleteCommit: DeleteCommit
     emitEvent: EventBusEmit
@@ -345,11 +339,7 @@ export const deleteCommitAndNotifyFactory =
       })
     }
 
-    const [, updatedBranch] = await Promise.all([
-      deps.markCommitStreamUpdated(commit.id),
-      deps.markCommitBranchUpdated(commit.id)
-    ])
-
+    const updatedBranch = await deps.markCommitBranchUpdated(commit.id)
     const isDeleted = await deps.deleteCommit(commitId)
     if (isDeleted) {
       await deps.emitEvent({
