@@ -49,7 +49,7 @@
 
       <div class="flex-1">
         <Component
-          :is="group ? ViewerWrapper : 'div'"
+          :is="group ? ViewerPageWrapper : 'div'"
           :group="group"
           class="h-full w-full object-cover"
         />
@@ -90,6 +90,8 @@
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { SavedViewVisibility } from '~~/lib/common/generated/gql/graphql'
+
+// TODO: Presentation state inject/provide
 
 graphql(`
   fragment ProjectPresentations_SavedViewGroup on SavedViewGroup {
@@ -157,7 +159,7 @@ const isPresentMode = ref(false)
 const showCloseMessage = ref(false)
 const closeMessageTimeout = ref<NodeJS.Timeout | undefined>()
 
-const ViewerWrapper = resolveComponent('PresentationViewerWrapper')
+const ViewerPageWrapper = resolveComponent('PresentationViewerPageWrapper')
 const group = computed(() => result.value?.project.savedViewGroup)
 const workspace = computed(() => result.value?.project.workspace)
 const allSlides = computed(() => result.value?.project.savedViewGroup.views.items || [])

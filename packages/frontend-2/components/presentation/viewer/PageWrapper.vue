@@ -1,18 +1,22 @@
 <template>
-  <div class="presentation-viewer-wrapper">
-    <ViewerPreSetupWrapper :init-params="initParams" />
-  </div>
+  <ViewerStateSetup :init-params="initParams">
+    <PresentationViewerSetup />
+  </ViewerStateSetup>
 </template>
 <script setup lang="ts">
 import { resourceBuilder } from '@speckle/shared/viewer/route'
-import { writableAsyncComputed } from '@speckle/ui-components'
-import { graphql } from '~/lib/common/generated/gql'
-import type { PresentationViewerWrapper_SavedViewGroupFragment } from '~/lib/common/generated/gql/graphql'
-import type { UseSetupViewerParams } from '~/lib/viewer/composables/setup'
+import { writableAsyncComputed } from '~/lib/common/composables/async'
+import { graphql } from '~/lib/common/generated/gql/gql'
+import type { PresentationViewerPageWrapper_SavedViewGroupFragment } from '~/lib/common/generated/gql/graphql'
 import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
+import type { UseSetupViewerParams } from '~~/lib/viewer/composables/setup'
+
+/**
+ * Don't put any logic here, the state is unavailable here so do it in PresentationViewerSetup instead
+ */
 
 graphql(`
-  fragment PresentationViewerWrapper_SavedViewGroup on SavedViewGroup {
+  fragment PresentationViewerPageWrapper_SavedViewGroup on SavedViewGroup {
     id
     views(input: $input) {
       totalCount
@@ -25,7 +29,7 @@ graphql(`
 `)
 
 const props = defineProps<{
-  group: PresentationViewerWrapper_SavedViewGroupFragment
+  group: PresentationViewerPageWrapper_SavedViewGroupFragment
 }>()
 const route = useRoute()
 const router = useSafeRouter()

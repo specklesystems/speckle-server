@@ -2,11 +2,7 @@
   <div :class="isTransparent ? 'viewer-transparent' : ''">
     <ClientOnly>
       <ViewerEmbedManualLoad v-if="isManualLoad" @play="isManualLoad = false" />
-      <LazyViewerPreSetupWrapper
-        v-else
-        :init-params="initParams"
-        @setup="state = $event"
-      />
+      <LazyViewerPageWrapper v-else @setup="state = $event" />
       <Component
         :is="state ? ViewerScope : 'div'"
         :state="state"
@@ -24,10 +20,6 @@
 import { useRoute } from 'vue-router'
 import { deserializeEmbedOptions } from '~~/lib/viewer/composables/setup/embed'
 import type { InjectableViewerState } from '~~/lib/viewer/composables/setup/core'
-import { writableAsyncComputed } from '@speckle/ui-components'
-import { resourceBuilder } from '@speckle/shared/viewer/route'
-import type { UseSetupViewerParams } from '~/lib/viewer/composables/setup'
-import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
 
 definePageMeta({
   layout: 'viewer',
@@ -40,64 +32,10 @@ definePageMeta({
 
 const ViewerScope = resolveComponent('ViewerScope')
 const route = useRoute()
-const router = useSafeRouter()
 
 const isManualLoad = ref(false)
 const isTransparent = ref(false)
 const state = ref<InjectableViewerState>()
-
-// Resolve viewer init params
-const projectId = writableAsyncComputed({
-  get: () => route.params.id as string,
-  set: async (value: string) => {
-    await router.push(() => ({
-      params: { id: value }
-    }))
-  },
-  initialState: route.params.id as string,
-  asyncRead: false
-})
-
-const resourceIdString = writableAsyncComputed({
-  get: () =>
-    resourceBuilder()
-      .addResources(route.params.modelId as string)
-      .toString(),
-  set: async (newVal) => {
-    const newResources = resourceBuilder().addResources(newVal)
-    const currentResources = resourceBuilder().addResources(
-      route.params.modelId as string
-    )
-    if (newResources.toString() === currentResources.toString()) return
-
-    const modelId = newResources.toString()
-    await router.push(
-      () => ({
-        params: { modelId },
-        query: route.query,
-        hash: route.hash
-      }),
-      {
-        skipIf: (to) => {
-          if (to.params.modelId !== modelId) return false
-          if (to.query !== route.query) return false
-          if (to.hash !== route.hash) return false
-          return true
-        }
-      }
-    )
-  },
-  initialState: route.params.modelId as string,
-  asyncRead: false
-})
-
-const initParams = computed(
-  (): UseSetupViewerParams => ({
-    projectId,
-    resourceIdString,
-    pageType: ViewerRenderPageType.Viewer
-  })
-)
 
 const checkUrlForEmbedManualLoadSettings = () => {
   if (import.meta.server) return

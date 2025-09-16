@@ -68,6 +68,7 @@ type Documents = {
     "\n  fragment InviteDialogSharedSelectUsers_Workspace on Workspace {\n    id\n    slug\n    defaultSeatType\n  }\n": typeof types.InviteDialogSharedSelectUsers_WorkspaceFragmentDoc,
     "\n  fragment PresentationSlidesSidebar_SavedViewGroup on SavedViewGroup {\n    id\n    views(input: $input) {\n      items {\n        ...PresentationSlidesLeftSidebarSlide_SavedView\n        visibility\n        id\n      }\n    }\n  }\n": typeof types.PresentationSlidesSidebar_SavedViewGroupFragmentDoc,
     "\n  fragment PresentationSlidesLeftSidebarSlide_SavedView on SavedView {\n    id\n    name\n    screenshot\n    visibility\n  }\n": typeof types.PresentationSlidesLeftSidebarSlide_SavedViewFragmentDoc,
+    "\n  fragment PresentationViewerPageWrapper_SavedViewGroup on SavedViewGroup {\n    id\n    views(input: $input) {\n      totalCount\n      items {\n        id\n        resourceIdString\n      }\n    }\n  }\n": typeof types.PresentationViewerPageWrapper_SavedViewGroupFragmentDoc,
     "\n  fragment PresentationViewerWrapper_SavedViewGroup on SavedViewGroup {\n    id\n    views(input: $input) {\n      totalCount\n      items {\n        id\n        resourceIdString\n      }\n    }\n  }\n": typeof types.PresentationViewerWrapper_SavedViewGroupFragmentDoc,
     "\n  fragment ProjectCardImportFileArea_Project on Project {\n    id\n    permissions {\n      canCreateModel {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseFileImport_Project\n  }\n": typeof types.ProjectCardImportFileArea_ProjectFragmentDoc,
     "\n  fragment ProjectCardImportFileArea_Model on Model {\n    id\n    name\n    permissions {\n      canCreateVersion {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseFileImport_Model\n  }\n": typeof types.ProjectCardImportFileArea_ModelFragmentDoc,
@@ -594,6 +595,7 @@ const documents: Documents = {
     "\n  fragment InviteDialogSharedSelectUsers_Workspace on Workspace {\n    id\n    slug\n    defaultSeatType\n  }\n": types.InviteDialogSharedSelectUsers_WorkspaceFragmentDoc,
     "\n  fragment PresentationSlidesSidebar_SavedViewGroup on SavedViewGroup {\n    id\n    views(input: $input) {\n      items {\n        ...PresentationSlidesLeftSidebarSlide_SavedView\n        visibility\n        id\n      }\n    }\n  }\n": types.PresentationSlidesSidebar_SavedViewGroupFragmentDoc,
     "\n  fragment PresentationSlidesLeftSidebarSlide_SavedView on SavedView {\n    id\n    name\n    screenshot\n    visibility\n  }\n": types.PresentationSlidesLeftSidebarSlide_SavedViewFragmentDoc,
+    "\n  fragment PresentationViewerPageWrapper_SavedViewGroup on SavedViewGroup {\n    id\n    views(input: $input) {\n      totalCount\n      items {\n        id\n        resourceIdString\n      }\n    }\n  }\n": types.PresentationViewerPageWrapper_SavedViewGroupFragmentDoc,
     "\n  fragment PresentationViewerWrapper_SavedViewGroup on SavedViewGroup {\n    id\n    views(input: $input) {\n      totalCount\n      items {\n        id\n        resourceIdString\n      }\n    }\n  }\n": types.PresentationViewerWrapper_SavedViewGroupFragmentDoc,
     "\n  fragment ProjectCardImportFileArea_Project on Project {\n    id\n    permissions {\n      canCreateModel {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseFileImport_Project\n  }\n": types.ProjectCardImportFileArea_ProjectFragmentDoc,
     "\n  fragment ProjectCardImportFileArea_Model on Model {\n    id\n    name\n    permissions {\n      canCreateVersion {\n        ...FullPermissionCheckResult\n      }\n    }\n    ...UseFileImport_Model\n  }\n": types.ProjectCardImportFileArea_ModelFragmentDoc,
@@ -1296,6 +1298,10 @@ export function graphql(source: "\n  fragment PresentationSlidesSidebar_SavedVie
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment PresentationSlidesLeftSidebarSlide_SavedView on SavedView {\n    id\n    name\n    screenshot\n    visibility\n  }\n"): (typeof documents)["\n  fragment PresentationSlidesLeftSidebarSlide_SavedView on SavedView {\n    id\n    name\n    screenshot\n    visibility\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment PresentationViewerPageWrapper_SavedViewGroup on SavedViewGroup {\n    id\n    views(input: $input) {\n      totalCount\n      items {\n        id\n        resourceIdString\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment PresentationViewerPageWrapper_SavedViewGroup on SavedViewGroup {\n    id\n    views(input: $input) {\n      totalCount\n      items {\n        id\n        resourceIdString\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
