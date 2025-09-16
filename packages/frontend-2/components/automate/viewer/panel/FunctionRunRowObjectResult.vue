@@ -70,6 +70,7 @@ const {
 } = useFilterUtilities()
 const { clearSelection } = useSelectionUtilities()
 const { setColorFilter, removeColorFilter } = useFilterColoringHelpers()
+const logger = useLogger()
 
 const hasMetadataGradient = computed(() => {
   if (props.result.metadata?.gradient) return true
@@ -78,11 +79,22 @@ const hasMetadataGradient = computed(() => {
 
 const isIsolated = computed(() => {
   const isolatedIds = filters.isolatedObjectIds.value
+  const ids = resultObjectIds.value
+
+  logger.debug('isIsolated computed running for result:', props.result.category, {
+    isolatedIds: isolatedIds?.length || 0,
+    myIds: ids.length,
+    hasGradient: hasMetadataGradient.value,
+    gradientSet: metadataGradientIsSet.value,
+    sampleMyIds: ids.slice(0, 3),
+    sampleIsolatedIds: isolatedIds?.slice(0, 3) || [],
+    containsAll: isolatedIds?.length ? containsAll(ids, isolatedIds) : false
+  })
+
   if (!isolatedIds?.length) return false
 
   if (hasMetadataGradient.value && metadataGradientIsSet.value) return false
 
-  const ids = resultObjectIds.value
   return containsAll(ids, isolatedIds)
 })
 
@@ -92,11 +104,13 @@ const resultObjectIds = computed(() => {
 })
 
 const handleClick = () => {
+  logger.debug('handleClick')
   if (hasMetadataGradient.value) {
+    logger.debug('About to call setOrUnsetGradient')
     setOrUnsetGradient()
     return
   }
-
+  logger.debug('About to call isolateOrUnisolateObjects')
   isolateOrUnisolateObjects()
 }
 
@@ -104,12 +118,35 @@ const isolateOrUnisolateObjects = () => {
   const ids = resultObjectIds.value
   const isCurrentlyIsolated = isIsolated.value
 
+  logger.debug('isolateOrUnisolateObjects called:', {
+    idsCount: ids.length,
+    isCurrentlyIsolated,
+    currentIsolatedIds: filters.isolatedObjectIds.value.length
+  })
+
   resetFilters()
+  logger.debug(
+    'After resetFilters, isolatedObjectIds:',
+    filters.isolatedObjectIds.value.length
+  )
+
   if (isCurrentlyIsolated) {
+    logger.debug('Deactivating result')
     resetIsolations()
     clearSelection()
   } else {
-    isolateObjects(ids, { replace: true })
+    logger.debug(
+      'About to call isolateObjects with',
+      ids.length,
+      'objects:',
+      ids.slice(0, 3)
+    )
+    isolateObjects(ids)
+    logger.debug(
+      'After isolateObjects, filters.isolatedObjectIds:',
+      filters.isolatedObjectIds.value.length
+    )
+    logger.debug('Sample isolated IDs:', filters.isolatedObjectIds.value.slice(0, 3))
   }
 }
 
