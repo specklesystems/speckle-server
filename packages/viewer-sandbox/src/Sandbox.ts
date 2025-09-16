@@ -58,7 +58,6 @@ import {
   ObjectLoader2Flags,
   ObjectLoader2Factory
 } from '@speckle/objectloader2'
-import { SectionCaps } from './Extensions/SectionCaps.ts/SectionCaps'
 import { MeasurementType } from '@speckle/shared/viewer/state'
 
 export default class Sandbox {
@@ -494,13 +493,8 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      // console.warn(await this.viewer.screenshot())
-      this.viewer
-        .getExtension(FilteringExtension)
-        .hideObjects([
-          '09f4a74b0d8a2e5e3c69f2ad823847ab',
-          'c1bd055e8b337a8fc7085896b858d542'
-        ])
+      console.warn(await this.viewer.screenshot())
+
       /** Read depth */
       // const pass = [
       //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),
