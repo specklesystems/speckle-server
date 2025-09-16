@@ -129,7 +129,7 @@ const streamAccessRequestApprovedHandlerFactory =
       {
         id: cryptoRandomString({ length: 10 }),
         userId: state.targetUser.id,
-        notificationType: NotificationType.StreamAccessRequestApproved,
+        type: NotificationType.StreamAccessRequestApproved,
         read: false,
         payload: {
           streamId: state.stream.id

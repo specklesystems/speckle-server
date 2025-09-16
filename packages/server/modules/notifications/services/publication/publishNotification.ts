@@ -7,7 +7,7 @@ import { isNotificationListenerEnabled } from '@/modules/shared/helpers/envHelpe
 
 /**
  * Publish a notification
- * @deprecated new implementations should be built using the NotificationListener interface
+ * @deprecated new implementations should be built using the notificationListener handlers
  */
 export const publishNotification: NotificationPublisher = async (type, params) => {
   const msg = {

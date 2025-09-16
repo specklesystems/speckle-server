@@ -5,7 +5,7 @@ const TABLE_NAME = 'user_notifications'
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable(TABLE_NAME, (table) => {
     table.string('id').primary()
-    table.string('notificationType').notNullable()
+    table.string('type').notNullable()
     table.boolean('read').notNullable()
     table
       .string('userId', 10)

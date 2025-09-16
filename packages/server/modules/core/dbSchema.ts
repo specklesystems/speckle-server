@@ -471,7 +471,7 @@ export const StreamActivity = buildTableHelper('stream_activity', [
 export const UserNotifications = buildTableHelper('user_notifications', [
   'id',
   'userId',
-  'notificationType',
+  'type',
   'read',
   'payload',
   'sendEmailAt',

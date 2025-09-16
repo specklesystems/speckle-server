@@ -29,8 +29,7 @@ export const notificationListenersFactory =
     })
 
     const cbs = [
-      // TODO: better way?
-      deps.eventBus.listen(CommentEvents.Created, onEventTriggersNotification), // TODO: change to mentioned?
+      deps.eventBus.listen(CommentEvents.Created, onEventTriggersNotification),
       deps.eventBus.listen(CommentEvents.Updated, onEventTriggersNotification),
       deps.eventBus.listen(AccessRequestEvents.Created, onEventTriggersNotification),
       deps.eventBus.listen(AccessRequestEvents.Finalized, onEventTriggersNotification)

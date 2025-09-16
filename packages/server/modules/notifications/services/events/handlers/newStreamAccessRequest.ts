@@ -162,7 +162,7 @@ const newStreamAccessRequestHandlerFactory =
       notifications.push({
         id: cryptoRandomString({ length: 10 }),
         userId: targetUser.id,
-        notificationType: NotificationType.NewStreamAccessRequest,
+        type: NotificationType.NewStreamAccessRequest,
         read: false,
         payload: {
           requestId: state.request.id,

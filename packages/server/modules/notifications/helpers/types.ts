@@ -28,7 +28,7 @@ export type UserNotificationPreferencesRecord = {
 export type UserNotificationRecord = {
   id: string
   userId: string
-  notificationType: string // TODO: extend
+  type: NotificationType
   read: boolean
   payload: Record<string, unknown> // TODO: extend
   sendEmailAt: Date | null

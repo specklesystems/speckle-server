@@ -267,7 +267,7 @@ const mentionedInCommentHandlerFactory =
         {
           id: cryptoRandomString({ length: 10 }),
           userId: state.targetUser.id,
-          notificationType: NotificationType.MentionedInComment,
+          type: NotificationType.MentionedInComment,
           read: false,
           payload: {
             threadId: state.threadComment.id,
