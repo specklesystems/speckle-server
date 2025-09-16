@@ -2,7 +2,7 @@
   <div class="overflow-hidden">
     <button
       :class="`block w-full transition text-left hover:bg-primary-muted hover:shadow-md rounded-md p-1 cursor-pointer border-l-2  ${
-        isIsolated || metadataGradientIsSet
+        isIsolated || isGradientActive
           ? 'border-primary bg-primary-muted shadow-md'
           : 'border-transparent'
       }`"
@@ -22,7 +22,7 @@
     </button>
     <div class="flex mt-2 px-3 overflow-hidden">
       <ViewerFiltersFilterNumeric
-        v-if="metadataGradientIsSet && computedFilterData"
+        v-if="isGradientActive && computedFilterData"
         :filter="computedFilterData"
         no-padding
       />
@@ -39,6 +39,7 @@ import {
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { useFilterColoringHelpers } from '~/lib/viewer/composables/filtering/coloringHelpers'
 import type { NumericPropertyInfo } from '@speckle/viewer'
 import { containsAll } from '~~/lib/common/helpers/utils'
 import type { Automate } from '@speckle/shared'
@@ -62,6 +63,7 @@ const {
 const { isolateObjects, resetFilters, addActiveFilter, toggleFilterApplied, filters } =
   useFilterUtilities()
 const { setSelectionFromObjectIds, clearSelection } = useSelectionUtilities()
+const { setColorFilter, removeColorFilter } = useFilterColoringHelpers()
 
 const hasMetadataGradient = computed(() => {
   if (props.result.metadata?.gradient) return true
@@ -102,12 +104,28 @@ const isolateOrUnisolateObjects = () => {
   if (isCurrentlyIsolated) {
     clearSelection()
   } else {
-    isolateObjects(ids)
+    isolateObjects(ids, { replace: true })
     setSelectionFromObjectIds(ids)
   }
 }
 
 const metadataGradientIsSet = ref(false)
+
+const isGradientActive = computed(() => {
+  if (!props.functionId) return false
+
+  const hasFilter = filters.propertyFilters.value.some(
+    (f) => f.filter?.key === props.functionId
+  )
+  const hasColorFilter =
+    filters.activeColorFilterId.value !== null &&
+    filters.propertyFilters.value.some(
+      (f) =>
+        f.id === filters.activeColorFilterId.value && f.filter?.key === props.functionId
+    )
+
+  return hasFilter && hasColorFilter
+})
 
 // NOTE: This is currently a hacky convention!!!
 const computedPropInfo = computed(() => {
@@ -144,7 +162,7 @@ const computedPropInfo = computed(() => {
 })
 
 const computedFilterData = computed((): NumericFilterData | undefined => {
-  if (!metadataGradientIsSet.value || !props.functionId) return
+  if (!isGradientActive.value || !props.functionId) return
 
   const activeFilter = filters.propertyFilters.value.find(
     (f) => f.filter?.key === props.functionId
@@ -154,8 +172,9 @@ const computedFilterData = computed((): NumericFilterData | undefined => {
 })
 
 const setOrUnsetGradient = () => {
-  if (metadataGradientIsSet.value) {
+  if (isGradientActive.value) {
     resetFilters()
+    removeColorFilter()
     metadataGradientIsSet.value = false
     return
   }
@@ -170,6 +189,8 @@ const setOrUnsetGradient = () => {
   metadataGradientIsSet.value = true
   const filterId = addActiveFilter(computedPropInfo.value)
   toggleFilterApplied(filterId)
+
+  setColorFilter(filterId)
 }
 
 const iconAndColor = computed(() => {
