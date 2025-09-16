@@ -22,7 +22,7 @@
     </button>
     <div class="flex mt-2 px-3 overflow-hidden">
       <ViewerFiltersFilterNumeric
-        v-if="isGradientActive && computedFilterData"
+        v-if="hasMetadataGradient && isGradientActive && computedFilterData"
         :filter="computedFilterData"
         no-padding
       />
@@ -56,12 +56,18 @@ const props = defineProps<{
 
 const {
   viewer: {
-    metadata: { filteringState, filteringDataStore }
+    metadata: { filteringDataStore }
   }
 } = useInjectedViewerState()
 
-const { isolateObjects, resetFilters, addActiveFilter, toggleFilterApplied, filters } =
-  useFilterUtilities()
+const {
+  isolateObjects,
+  resetFilters,
+  resetIsolations,
+  addActiveFilter,
+  toggleFilterApplied,
+  filters
+} = useFilterUtilities()
 const { setSelectionFromObjectIds, clearSelection } = useSelectionUtilities()
 const { setColorFilter, removeColorFilter } = useFilterColoringHelpers()
 
@@ -70,16 +76,18 @@ const hasMetadataGradient = computed(() => {
   return false
 })
 
-const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
 const isIsolated = computed(() => {
-  if (!isolatedObjects.value?.length) return false
+  const isolatedIds = filters.isolatedObjectIds.value
+  if (!isolatedIds?.length) return false
+
   if (
     props.functionId &&
-    filteringState.value?.activePropFilterKey === props.functionId
+    filters.propertyFilters.value.some((f) => f.filter?.key === props.functionId)
   )
     return false
+
   const ids = resultObjectIds.value
-  return containsAll(ids, isolatedObjects.value)
+  return containsAll(ids, isolatedIds)
 })
 
 const resultObjectIds = computed(() => {
@@ -102,6 +110,7 @@ const isolateOrUnisolateObjects = () => {
 
   resetFilters()
   if (isCurrentlyIsolated) {
+    resetIsolations()
     clearSelection()
   } else {
     isolateObjects(ids, { replace: true })
