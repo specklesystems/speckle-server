@@ -7,6 +7,7 @@ import { isNotificationListenerEnabled } from '@/modules/shared/helpers/envHelpe
 
 /**
  * Publish a notification
+ * @deprecated new implementations should be built using the NotificationListener interface
  */
 export const publishNotification: NotificationPublisher = async (type, params) => {
   const msg = {
@@ -15,7 +16,7 @@ export const publishNotification: NotificationPublisher = async (type, params) =
   } as NotificationTypeMessageMap[typeof type]
 
   // return is only consumed by specs
-  // this satisfies ty
+  // this satisfies ts
   if (isNotificationListenerEnabled()) return -1
 
   return await publishMessage(msg)

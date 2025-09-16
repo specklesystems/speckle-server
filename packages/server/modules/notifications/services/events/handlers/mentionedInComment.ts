@@ -214,8 +214,6 @@ const mentionedInCommentHandlerFactory =
   }: {
     payload: EventBusPayloads['comments.created'] | EventBusPayloads['comments.updated']
   }) => {
-    console.log(payload)
-
     const mentionedUserIds =
       'comment' in payload
         ? processCommentMentions(payload.comment)
@@ -277,9 +275,9 @@ const mentionedInCommentHandlerFactory =
 /**
  * Notification that is triggered when a user is mentioned in a comment
  */
-export const handler = async (
-  args: EventBusPayloads['comments.created'] | EventBusPayloads['comments.updated']
-) => {
+export const handler = async (args: {
+  payload: EventBusPayloads['comments.created'] | EventBusPayloads['comments.updated'] // TODO: smarter typing
+}) => {
   const mentionedInCommentHandler = mentionedInCommentHandlerFactory({
     getUser: getUserFactory({ db }),
     getStream: getStreamFactory({ db }),

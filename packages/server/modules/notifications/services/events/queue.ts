@@ -9,6 +9,8 @@ import { notificationsLogger, Observability } from '@/observability/logging'
 import { UnhandledNotificationError } from '@/modules/notifications/errors'
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
 import MentionedInCommentHandler from '@/modules/notifications/services/events/handlers/mentionedInComment'
+import NewStreamAccessRequestHandler from '@/modules/notifications/services/events/handlers/newStreamAccessRequest'
+import StreamAccessRequestApprovedHandler from '@/modules/notifications/services/events/handlers/streamAccessRequestApproved'
 import { CommentEvents } from '@/modules/comments/domain/events'
 import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
 
@@ -55,8 +57,8 @@ export async function initializeNotificationEventsQueue() {
 const handlers = {
   [CommentEvents.Created]: MentionedInCommentHandler,
   [CommentEvents.Updated]: MentionedInCommentHandler,
-  [AccessRequestEvents.Created]: () => {},
-  [AccessRequestEvents.Finalized]: () => {}
+  [AccessRequestEvents.Created]: NewStreamAccessRequestHandler,
+  [AccessRequestEvents.Finalized]: StreamAccessRequestApprovedHandler
 }
 
 export async function consumeEventNotifications() {
