@@ -1,5 +1,5 @@
 extend type Query {
-  dashboard(id: String!): Dashboard!
+  dashboard(id: ID!): Dashboard!
 }
 
 extend type Mutation {
@@ -7,7 +7,7 @@ extend type Mutation {
 }
 
 type Dashboard {
-  id: String!
+  id: ID!
   name: String!
   workspace: LimitedWorkspace!
   createdBy: LimitedUser
@@ -31,7 +31,7 @@ extend type Workspace {
 
 type DashboardMutations {
   create(workspace: WorkspaceIdentifier!, input: DashboardCreateInput!): Dashboard!
-  delete(id: String!): Boolean!
+  delete(id: ID!): Boolean!
   update(input: DashboardUpdateInput!): Dashboard!
 }
 
@@ -40,7 +40,7 @@ input DashboardCreateInput {
 }
 
 input DashboardUpdateInput {
-  id: String!
+  id: ID!
   name: String
   projectIds: [String!]
   state: String

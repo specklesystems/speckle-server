@@ -1,0 +1,22 @@
+extend type Dashboard {
+  shareLink: DashboardShareLink
+}
+
+type DashboardShareLink {
+  id: ID!
+  # going to ignore this in the API for now, its in the DB
+  # createdBy: LimitedUser
+  validUntil: DateTime!
+  createdAt: DateTime!
+  content: String!
+}
+
+input DeleteDashboardShareInput {
+  dasbboardId: ID!
+  shareId: ID!
+}
+
+extend type DashboardMutations {
+  share(dashboardId: String!): DashboardShareLink!
+  deleteShare(input: DeleteDashboardShareInput!): Boolean!
+}

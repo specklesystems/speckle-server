@@ -21,6 +21,8 @@ import { getFeatureFlags } from '@speckle/shared/environment'
 import { DashboardsModuleDisabledError } from '@/modules/dashboards/errors/dashboards'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { parseWorkspaceIdentifier } from '@/modules/workspacesCore/helpers/graphHelpers'
+import { asOperation } from '@/modules/shared/command'
+import { logger } from '@/observability/logging'
 
 const { FF_WORKSPACES_MODULE_ENABLED, FF_DASHBOARDS_MODULE_ENABLED } = getFeatureFlags()
 
@@ -44,6 +46,7 @@ const resolvers: Resolvers = {
     dashboardMutations: async () => ({})
   },
   Dashboard: {
+    // share links
     createdBy: async (parent, _args, context) => {
       return await context.loaders.users.getUser.load(parent.ownerId)
     },
@@ -80,6 +83,7 @@ const resolvers: Resolvers = {
     }
   },
   DashboardMutations: {
+    //create share link...
     create: async (_parent, args, context) => {
       const { name } = args.input
 
@@ -125,11 +129,20 @@ const resolvers: Resolvers = {
         dashboardId
       })
       throwIfAuthNotOk(authResult)
-
-      return await updateDashboardFactory({
-        getDashboard: getDashboardRecordFactory({ db }),
-        upsertDashboard: upsertDashboardFactory({ db })
-      })(removeNullOrUndefinedKeys(args.input))
+      return await asOperation(
+        async ({ db }) => {
+          return await updateDashboardFactory({
+            getDashboard: getDashboardRecordFactory({ db }),
+            upsertDashboard: upsertDashboardFactory({ db })
+          })(removeNullOrUndefinedKeys(args.input))
+        },
+        {
+          logger,
+          name: 'updateDashboard',
+          description: 'Update a dashboard',
+          db
+        }
+      )
     }
   }
 }

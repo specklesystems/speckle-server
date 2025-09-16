@@ -1,7 +1,10 @@
 import type { ApiTokenRecord } from '@/modules/auth/repositories'
 import { ApiTokens } from '@/modules/core/dbSchema'
 import { DashboardApiTokens } from '@/modules/dashboards/dbSchema'
-import type { StoreDashboardApiToken } from '@/modules/dashboards/domain/tokens/operations'
+import type {
+  DeleteDashboardToken,
+  StoreDashboardApiToken
+} from '@/modules/dashboards/domain/tokens/operations'
 import type { DashboardApiTokenRecord } from '@/modules/dashboards/domain/tokens/types'
 import type { Knex } from 'knex'
 
@@ -18,4 +21,15 @@ export const storeDashboardApiTokenFactory =
       .insert(token)
       .returning('*')
     return newToken
+  }
+
+export const deleteDashboardApiTokenFactory =
+  (deps: { db: Knex }): DeleteDashboardToken =>
+  async ({ tokenId }) => {
+    const [deletedToken] = await tables
+      .dashboardApiTokens(deps.db)
+      .where({ tokenId })
+      .del()
+      .returning('*')
+    return deletedToken
   }

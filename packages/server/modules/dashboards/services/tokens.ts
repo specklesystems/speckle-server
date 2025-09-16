@@ -59,7 +59,8 @@ export const createDashboardTokenFactory =
     const tokenMetadata: DashboardApiTokenRecord = {
       userId,
       dashboardId,
-      tokenId: id
+      tokenId: id,
+      content: token
     }
 
     await deps.storeDashboardApiToken(tokenMetadata)

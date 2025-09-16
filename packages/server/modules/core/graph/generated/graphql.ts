@@ -1138,9 +1138,10 @@ export type Dashboard = {
   __typename?: 'Dashboard';
   createdAt: Scalars['DateTime']['output'];
   createdBy?: Maybe<LimitedUser>;
-  id: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   permissions: DashboardPermissionChecks;
+  shareLink?: Maybe<DashboardShareLink>;
   /** If null, this is a new dashboard and should be initialized by the client */
   state?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
@@ -1163,6 +1164,8 @@ export type DashboardMutations = {
   create: Dashboard;
   createToken: CreateDashboardTokenReturn;
   delete: Scalars['Boolean']['output'];
+  deleteShare: Scalars['Boolean']['output'];
+  share: DashboardShareLink;
   update: Dashboard;
 };
 
@@ -1179,7 +1182,17 @@ export type DashboardMutationsCreateTokenArgs = {
 
 
 export type DashboardMutationsDeleteArgs = {
-  id: Scalars['String']['input'];
+  id: Scalars['ID']['input'];
+};
+
+
+export type DashboardMutationsDeleteShareArgs = {
+  input: DeleteDashboardShareInput;
+};
+
+
+export type DashboardMutationsShareArgs = {
+  dashboardId: Scalars['String']['input'];
 };
 
 
@@ -1193,6 +1206,14 @@ export type DashboardPermissionChecks = {
   canDelete: PermissionCheckResult;
   canEdit: PermissionCheckResult;
   canRead: PermissionCheckResult;
+};
+
+export type DashboardShareLink = {
+  __typename?: 'DashboardShareLink';
+  content: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  validUntil: Scalars['DateTime']['output'];
 };
 
 export type DashboardToken = {
@@ -1219,7 +1240,7 @@ export type DashboardTokenCreateInput = {
 };
 
 export type DashboardUpdateInput = {
-  id: Scalars['String']['input'];
+  id: Scalars['ID']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
   projectIds?: InputMaybe<Array<Scalars['String']['input']>>;
   state?: InputMaybe<Scalars['String']['input']>;
@@ -1228,6 +1249,11 @@ export type DashboardUpdateInput = {
 export type DeleteAccSyncItemInput = {
   id: Scalars['ID']['input'];
   projectId: Scalars['String']['input'];
+};
+
+export type DeleteDashboardShareInput = {
+  dasbboardId: Scalars['ID']['input'];
+  shareId: Scalars['ID']['input'];
 };
 
 export type DeleteModelInput = {
@@ -3458,7 +3484,7 @@ export type QueryCommentsArgs = {
 
 
 export type QueryDashboardArgs = {
-  id: Scalars['String']['input'];
+  id: Scalars['ID']['input'];
 };
 
 
@@ -6168,12 +6194,14 @@ export type ResolversTypes = {
   DashboardCreateInput: DashboardCreateInput;
   DashboardMutations: ResolverTypeWrapper<DashboardMutationsGraphQLReturn>;
   DashboardPermissionChecks: ResolverTypeWrapper<DashboardPermissionChecksGraphQLReturn>;
+  DashboardShareLink: ResolverTypeWrapper<DashboardShareLink>;
   DashboardToken: ResolverTypeWrapper<DashboardTokenGraphQLReturn>;
   DashboardTokenCollection: ResolverTypeWrapper<Omit<DashboardTokenCollection, 'items'> & { items: Array<ResolversTypes['DashboardToken']> }>;
   DashboardTokenCreateInput: DashboardTokenCreateInput;
   DashboardUpdateInput: DashboardUpdateInput;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
   DeleteAccSyncItemInput: DeleteAccSyncItemInput;
+  DeleteDashboardShareInput: DeleteDashboardShareInput;
   DeleteModelInput: DeleteModelInput;
   DeleteSavedViewGroupInput: DeleteSavedViewGroupInput;
   DeleteSavedViewInput: DeleteSavedViewInput;
@@ -6560,12 +6588,14 @@ export type ResolversParentTypes = {
   DashboardCreateInput: DashboardCreateInput;
   DashboardMutations: DashboardMutationsGraphQLReturn;
   DashboardPermissionChecks: DashboardPermissionChecksGraphQLReturn;
+  DashboardShareLink: DashboardShareLink;
   DashboardToken: DashboardTokenGraphQLReturn;
   DashboardTokenCollection: Omit<DashboardTokenCollection, 'items'> & { items: Array<ResolversParentTypes['DashboardToken']> };
   DashboardTokenCreateInput: DashboardTokenCreateInput;
   DashboardUpdateInput: DashboardUpdateInput;
   DateTime: Scalars['DateTime']['output'];
   DeleteAccSyncItemInput: DeleteAccSyncItemInput;
+  DeleteDashboardShareInput: DeleteDashboardShareInput;
   DeleteModelInput: DeleteModelInput;
   DeleteSavedViewGroupInput: DeleteSavedViewGroupInput;
   DeleteSavedViewInput: DeleteSavedViewInput;
@@ -7336,9 +7366,10 @@ export type CurrencyBasedPricesResolvers<ContextType = GraphQLContext, ParentTyp
 export type DashboardResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Dashboard'] = ResolversParentTypes['Dashboard']> = {
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   createdBy?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   permissions?: Resolver<ResolversTypes['DashboardPermissionChecks'], ParentType, ContextType>;
+  shareLink?: Resolver<Maybe<ResolversTypes['DashboardShareLink']>, ParentType, ContextType>;
   state?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   workspace?: Resolver<ResolversTypes['LimitedWorkspace'], ParentType, ContextType>;
@@ -7356,6 +7387,8 @@ export type DashboardMutationsResolvers<ContextType = GraphQLContext, ParentType
   create?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<DashboardMutationsCreateArgs, 'input' | 'workspace'>>;
   createToken?: Resolver<ResolversTypes['CreateDashboardTokenReturn'], ParentType, ContextType, RequireFields<DashboardMutationsCreateTokenArgs, 'dashboardId'>>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<DashboardMutationsDeleteArgs, 'id'>>;
+  deleteShare?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<DashboardMutationsDeleteShareArgs, 'input'>>;
+  share?: Resolver<ResolversTypes['DashboardShareLink'], ParentType, ContextType, RequireFields<DashboardMutationsShareArgs, 'dashboardId'>>;
   update?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<DashboardMutationsUpdateArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -7365,6 +7398,14 @@ export type DashboardPermissionChecksResolvers<ContextType = GraphQLContext, Par
   canDelete?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canEdit?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canRead?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type DashboardShareLinkResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DashboardShareLink'] = ResolversParentTypes['DashboardShareLink']> = {
+  content?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  validUntil?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -8984,6 +9025,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DashboardCollection?: DashboardCollectionResolvers<ContextType>;
   DashboardMutations?: DashboardMutationsResolvers<ContextType>;
   DashboardPermissionChecks?: DashboardPermissionChecksResolvers<ContextType>;
+  DashboardShareLink?: DashboardShareLinkResolvers<ContextType>;
   DashboardToken?: DashboardTokenResolvers<ContextType>;
   DashboardTokenCollection?: DashboardTokenCollectionResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
