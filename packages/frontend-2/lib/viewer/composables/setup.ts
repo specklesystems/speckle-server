@@ -91,6 +91,7 @@ import {
 import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
 import type { FilterData } from '~/lib/viewer/helpers/filters/types'
 import {
+  useBuildSavedViewsCoreState,
   useBuildSavedViewsUIState,
   type SavedViewsUIState
 } from '~/lib/viewer/composables/savedViews/state'
@@ -400,7 +401,7 @@ type CachedViewerState = Pick<
   initPromise: Promise<void>
 }
 
-type InitialSetupState = Pick<
+export type InitialSetupState = Pick<
   InjectableViewerState,
   'projectId' | 'viewer' | 'sessionId' | 'urlHashState'
 >
@@ -467,8 +468,10 @@ function setupViewerMetadata(params: {
     availableFilters.value = await viewer.getObjectProperties()
     views.value = viewer.getViews()
   }
-  const updateFilteringState = (newState: FilteringState) => {
-    filteringState.value = newState
+  const updateFilteringState = (newState: MaybeNullOrUndefined<FilteringState>) => {
+    // treating {}, null, undefined as the same, to avoid unnecessary updates
+    filteringState.value =
+      newState && Object.keys(newState).length > 0 ? newState : undefined
   }
 
   onMounted(() => {
@@ -631,25 +634,11 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     }
   )
 
-  const savedViewId = ref<string | null | undefined>(undefined)
-
-  // // For debugging uncomment:
-  // watch(
-  //   savedViewId,
-  //   (newVal, oldVal) => {
-  //     devTrace('savedViewId', { newVal, oldVal })
-  //   },
-  //   { flush: 'sync' }
-  // )
-
   return {
     ...state,
     resources: {
       request: {
-        savedView: {
-          id: savedViewId,
-          loadOriginal: ref<boolean>(false)
-        },
+        savedView: useBuildSavedViewsCoreState(state),
         items: resources,
         resourceIdString,
         threadFilters,
@@ -683,7 +672,8 @@ function setupResponseResourceItems(
         resourceIdString,
         savedView: { id: savedViewId, loadOriginal }
       }
-    }
+    },
+    urlHashState: { savedView: urlHashSavedView }
   } = state
 
   const initLoadDone = ref(import.meta.server ? false : true)
@@ -732,17 +722,24 @@ function setupResponseResourceItems(
   onResult(async (res) => {
     initLoadDone.value = true
 
+    const data = res.data?.project?.viewerResourcesExtended
+    if (!data) return
+
     // If saved view resolved, update resourceIdString from response
     // cause it may have changed
-    const data = res.data?.project?.viewerResourcesExtended
-    if (data?.savedView?.id) {
-      const incomingResourceIdString = resourceBuilder().addResources(
-        data.resourceIdString
-      )
-      const existing = resourceBuilder().addResources(resourceIdString.value)
-      if (!incomingResourceIdString.isEqualTo(existing)) {
-        await resourceIdString.update(incomingResourceIdString.toString())
-      }
+    const incomingResourceIdString = resourceBuilder().addResources(
+      data.resourceIdString
+    )
+    const existing = resourceBuilder().addResources(resourceIdString.value)
+    if (!incomingResourceIdString.isEqualTo(existing)) {
+      await resourceIdString.update(incomingResourceIdString.toString())
+    }
+
+    // Check if savedViewId refered to an invalid one
+    if (data.request?.savedViewId && data.request.savedViewId !== data.savedView?.id) {
+      // switch to "no view"
+      savedViewId.value = null
+      void urlHashSavedView.update(null)
     }
   })
 

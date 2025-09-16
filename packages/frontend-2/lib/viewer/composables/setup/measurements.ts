@@ -78,7 +78,16 @@ export const useMeasurementsPostSetup = () => {
   // viewer -> state
   const onMeasurementsChanged = (data: Measurement[]) => {
     ignoreMeasurementsWatch(() => {
-      measurement.measurements.value = data.map((m) => m.toMeasurementData())
+      // To ensure deterministic ordering when serializing (otherwise we treat the state as different, just
+      // cause the viewer shuffled things around)
+      measurement.measurements.value = data
+        .map((m) => m.toMeasurementData())
+        .slice()
+        .sort((a, b) => {
+          const aId = a.uuid
+          const bId = b.uuid
+          return aId < bId ? -1 : aId > bId ? 1 : 0
+        })
     })
   }
 

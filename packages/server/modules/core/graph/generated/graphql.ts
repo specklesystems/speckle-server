@@ -1311,7 +1311,7 @@ export type ExtendedViewerResources = {
   /** The groups of viewer resources themselves */
   groups: Array<ViewerResourceGroup>;
   /** Metadata about the request that was made to resolve this. */
-  request?: Maybe<ExtendedViewerResourcesRequest>;
+  request: ExtendedViewerResourcesRequest;
   /** Final/adjusted/resolved resource id string */
   resourceIdString: Scalars['String']['output'];
   /**
@@ -7412,7 +7412,7 @@ export type EmbedTokenCollectionResolvers<ContextType = GraphQLContext, ParentTy
 
 export type ExtendedViewerResourcesResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ExtendedViewerResources'] = ResolversParentTypes['ExtendedViewerResources']> = {
   groups?: Resolver<Array<ResolversTypes['ViewerResourceGroup']>, ParentType, ContextType>;
-  request?: Resolver<Maybe<ResolversTypes['ExtendedViewerResourcesRequest']>, ParentType, ContextType>;
+  request?: Resolver<ResolversTypes['ExtendedViewerResourcesRequest'], ParentType, ContextType>;
   resourceIdString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   savedView?: Resolver<Maybe<ResolversTypes['SavedView']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
