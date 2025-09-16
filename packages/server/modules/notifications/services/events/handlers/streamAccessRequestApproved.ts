@@ -12,9 +12,13 @@ import { getUserFactory } from '@/modules/core/repositories/users'
 import type { EmailTemplateParams } from '@/modules/emails/domain/operations'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import type { SaveUserNotifications } from '@/modules/notifications/domain/operations'
 import { NotificationValidationError } from '@/modules/notifications/errors'
+import { NotificationType } from '@/modules/notifications/helpers/types'
+import { saveUserNotificationsFactory } from '@/modules/notifications/repositories/userNotification'
 import type { EventBusPayloads } from '@/modules/shared/services/eventBus'
 import type { Nullable } from '@speckle/shared'
+import cryptoRandomString from 'crypto-random-string'
 
 type ValidateMessageDeps = {
   getUser: GetUser
@@ -104,6 +108,7 @@ const streamAccessRequestApprovedHandlerFactory =
       getServerInfo: GetServerInfo
       renderEmail: typeof renderEmail
       sendEmail: typeof sendEmail
+      saveUserNotifications: SaveUserNotifications
     } & ValidateMessageDeps
   ) =>
   async (args: {
@@ -118,6 +123,23 @@ const streamAccessRequestApprovedHandlerFactory =
       resourceId: request.resourceId,
       finalizedBy
     })
+
+    const now = new Date()
+    await deps.saveUserNotifications([
+      {
+        id: cryptoRandomString({ length: 10 }),
+        userId: state.targetUser.id,
+        notificationType: NotificationType.StreamAccessRequestApproved,
+        read: false,
+        payload: {
+          streamId: state.stream.id
+        },
+        sendEmailAt: null,
+        createdAt: now,
+        updatedAt: now
+      }
+    ])
+
     const htmlTemplateParams = buildEmailTemplateParams(state)
     const serverInfo = await deps.getServerInfo()
     const { html, text } = await deps.renderEmail(
@@ -142,7 +164,8 @@ export const handler = async (args: {
     renderEmail,
     sendEmail,
     getUser: getUserFactory({ db }),
-    getStream: getStreamFactory({ db })
+    getStream: getStreamFactory({ db }),
+    saveUserNotifications: saveUserNotificationsFactory({ db })
   })
   return streamAccessRequestApprovedHandler(args)
 }

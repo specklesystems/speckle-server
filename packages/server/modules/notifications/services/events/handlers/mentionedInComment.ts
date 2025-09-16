@@ -20,11 +20,15 @@ import type { EmailTemplateParams } from '@/modules/emails/domain/operations'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import type { SaveUserNotifications } from '@/modules/notifications/domain/operations'
 import { NotificationValidationError } from '@/modules/notifications/errors'
+import { NotificationType } from '@/modules/notifications/helpers/types'
+import { saveUserNotificationsFactory } from '@/modules/notifications/repositories/userNotification'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import type { MaybeFalsy, Nullable } from '@/modules/shared/helpers/typeHelper'
 import type { EventBusPayloads } from '@/modules/shared/services/eventBus'
 import type { JSONContent } from '@tiptap/core'
+import cryptoRandomString from 'crypto-random-string'
 import type { Knex } from 'knex'
 import { difference } from 'lodash-es'
 
@@ -208,6 +212,7 @@ const mentionedInCommentHandlerFactory =
     getServerInfo: GetServerInfo
     renderEmail: typeof renderEmail
     sendEmail: typeof sendEmail
+    saveUserNotifications: SaveUserNotifications
   }) =>
   async ({
     payload
@@ -257,6 +262,26 @@ const mentionedInCommentHandlerFactory =
         serverInfo
       })
 
+      const now = new Date()
+      await deps.saveUserNotifications([
+        {
+          id: cryptoRandomString({ length: 10 }),
+          userId: state.targetUser.id,
+          notificationType: NotificationType.MentionedInComment,
+          read: false,
+          payload: {
+            threadId: state.threadComment.id,
+            commentId: state.mentionComment.id,
+            commitId: state.commitOrObjectId.commitId,
+            objectId: state.commitOrObjectId.objectId,
+            streamId: state.stream.id
+          },
+          sendEmailAt: null,
+          createdAt: now,
+          updatedAt: now
+        }
+      ])
+
       const templateParams = buildEmailTemplateParams(state)
       const { text, html } = await deps.renderEmail(
         templateParams,
@@ -284,7 +309,8 @@ export const handler = async (args: {
     getCommentResolver: ({ projectDb }) => getCommentFactory({ db: projectDb }),
     getServerInfo: getServerInfoFactory({ db }),
     renderEmail,
-    sendEmail
+    sendEmail,
+    saveUserNotifications: saveUserNotificationsFactory({ db })
   })
   return mentionedInCommentHandler(args)
 }

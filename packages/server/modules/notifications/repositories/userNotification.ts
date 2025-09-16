@@ -18,7 +18,7 @@ export const getUserNotifications =
     return notifications
   }
 
-export const insertUserNotifications =
+export const saveUserNotificationsFactory =
   (deps: { db: Knex }): SaveUserNotifications =>
   async (notifications: Array<UserNotificationRecord>): Promise<void> => {
     await tables.userNotifications(deps.db).insert(notifications)
