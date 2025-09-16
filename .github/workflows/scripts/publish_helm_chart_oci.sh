@@ -6,14 +6,26 @@ if [[ -z "${IMAGE_VERSION_TAG}" ]]; then
   echo "IMAGE_VERSION_TAG is not set"
   exit 1
 fi
-if [[ -z "${DOCKER_REG_USER}" ]]; then
-  echo "DOCKER_REG_USER is not set"
+if [[ -z "${REGISTRY_USERNAME}" ]]; then
+  echo "REGISTRY_USERNAME is not set"
   exit 1
 fi
-if [[ -z "${DOCKER_REG_PASS}" ]]; then
-  echo "DOCKER_REG_PASS is not set"
+if [[ -z "${REGISTRY_PASSWORD}" ]]; then
+  echo "REGISTRY_PASSWORD is not set"
   exit 1
 fi
+if [[ -z "${HELM_REGISTRY_DOMAIN}" ]]; then
+  echo "HELM_REGISTRY_DOMAIN is not set"
+  exit 1
+fi
+if [[ -z "${HELM_REPOSITORY_PATH}" ]]; then
+  echo "HELM_REPOSITORY_PATH is not set"
+  exit 1
+fi
+
+RELEASE_VERSION="${IMAGE_VERSION_TAG}"
+HELM_STABLE_BRANCH="${HELM_STABLE_BRANCH:-"main"}"
+CHART_NAME="${CHART_NAME:-"speckle-server"}"
 
 echo "🏷️ Preparing envs"
 
@@ -22,16 +34,10 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # shellcheck disable=SC1090,SC1091
 source "${SCRIPT_DIR}/common.sh"
 
-RELEASE_VERSION="${IMAGE_VERSION_TAG}-chart"
-HELM_STABLE_BRANCH="${HELM_STABLE_BRANCH:-"main"}"
-DOCKER_HELM_REG_URL="${DOCKER_HELM_REG_URL:-"registry-1.docker.io"}"
-DOCKER_HELM_REG_ORG="${DOCKER_HELM_REG_ORG:-"speckle"}"
-CHART_NAME="${CHART_NAME:-"speckle-server"}"
-
 echo "📌 Releasing Helm Chart version ${RELEASE_VERSION} for application version ${IMAGE_VERSION_TAG}"
 
 yq e -i ".docker_image_tag = \"${IMAGE_VERSION_TAG}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
 
-echo "${DOCKER_REG_PASS}" | helm registry login "${DOCKER_HELM_REG_URL}" --username "${DOCKER_REG_USER}" --password-stdin
+echo "${REGISTRY_PASSWORD}" | helm registry login "${HELM_REGISTRY_DOMAIN}" --username "${REGISTRY_USERNAME}" --password-stdin
 helm package "${GIT_REPO}/utils/helm/speckle-server" --version "${RELEASE_VERSION}" --app-version "${IMAGE_VERSION_TAG}" --destination "/tmp"
-helm push "/tmp/${CHART_NAME}-${RELEASE_VERSION}.tgz" "oci://${DOCKER_HELM_REG_URL}/${DOCKER_HELM_REG_ORG}"
+helm push "/tmp/${CHART_NAME}-${RELEASE_VERSION}.tgz" "oci://${HELM_REGISTRY_DOMAIN}/${HELM_REPOSITORY_PATH}"
