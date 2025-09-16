@@ -8,10 +8,18 @@ const emailsModule: SpeckleModule = {
   init: async ({ app }) => {
     moduleLogger.info('📧 Init emails module')
 
-    await initializeEmailTransport({
-      isSandboxMode: !isEmailEnabled() && isTestEnv(),
-      logger: emailLogger
-    })
+    if (isEmailEnabled()) {
+      await initializeEmailTransport({
+        logger: emailLogger
+      })
+    } else if (isTestEnv()) {
+      await initializeEmailTransport({
+        isSandboxMode: true,
+        logger: emailLogger
+      })
+    } else {
+      moduleLogger.warn('📧 Email functionality is disabled')
+    }
 
     // init rest api
     RestApi(app)

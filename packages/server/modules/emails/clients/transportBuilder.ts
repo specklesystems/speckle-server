@@ -14,12 +14,12 @@ import {
 let transporter: EmailTransport | undefined = undefined
 
 export const initializeEmailTransport = async (params: {
-  isSandboxMode: boolean
+  isSandboxMode?: boolean
   logger: Logger
 }) => {
-  const { isSandboxMode, logger } = params
+  const { isSandboxMode = false, logger } = params
 
-  if (params.isSandboxMode) {
+  if (isSandboxMode) {
     logger.info('📧 Using JSON Echo email transporter')
     transporter = await initializeJSONEchoTransporter({ logger, isSandboxMode })
   } else {
