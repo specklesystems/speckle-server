@@ -250,17 +250,21 @@ const handleDiffClose = async () => {
 
 const toggleModelExpansion = (modelId: string) => {
   if (expandedModels.value.has(modelId)) {
-    expandedModels.value.delete(modelId)
+    expandedModels.value = new Set(
+      [...expandedModels.value].filter((id) => id !== modelId)
+    )
   } else {
-    expandedModels.value.add(modelId)
+    expandedModels.value = new Set([...expandedModels.value, modelId])
   }
 }
 
 const toggleTreeItemExpansion = (itemId: string) => {
   if (expandedNodes.value.has(itemId)) {
-    expandedNodes.value.delete(itemId)
+    expandedNodes.value = new Set(
+      [...expandedNodes.value].filter((id) => id !== itemId)
+    )
   } else {
-    expandedNodes.value.add(itemId)
+    expandedNodes.value = new Set([...expandedNodes.value, itemId])
   }
 }
 
@@ -351,13 +355,19 @@ const handleSelectionChange = useDebounceFn(
           const containsObject = findObjectInNodes(modelRootNodes, selectedObj.id)
 
           if (containsObject) {
-            expandedModels.value.add(model.id)
-            expandNodesToShowObject(
+            expandedModels.value = new Set([...expandedModels.value, model.id])
+            const result = expandNodesToShowObject(
               modelRootNodes,
               selectedObj.id,
               model.id,
               expandedNodes.value
             )
+            if (result.found && result.nodesToExpand.length > 0) {
+              expandedNodes.value = new Set([
+                ...expandedNodes.value,
+                ...result.nodesToExpand
+              ])
+            }
 
             scrollToSelectedItem(selectedObj.id)
             break

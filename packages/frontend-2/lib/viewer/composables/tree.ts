@@ -419,22 +419,26 @@ export function useTreeManagement() {
     modelId: string,
     expandedNodes: Set<string>,
     depth = 0
-  ): boolean => {
-    if (!nodes?.length || depth > MAX_EXPANSION_DEPTH) return false
+  ): { found: boolean; nodesToExpand: string[] } => {
+    if (!nodes?.length || depth > MAX_EXPANSION_DEPTH)
+      return { found: false, nodesToExpand: [] }
 
-    return nodes.some((node) => {
+    const nodesToExpand: string[] = []
+
+    const found = nodes.some((node) => {
       if (node.raw?.id === objectId) return true
 
       if (node.children?.length) {
-        const found = expandNodesToShowObject(
+        const result = expandNodesToShowObject(
           node.children,
           objectId,
           modelId,
           expandedNodes,
           depth + 1
         )
-        if (found) {
-          if (node.raw?.id) expandedNodes.add(node.raw.id)
+        if (result.found) {
+          if (node.raw?.id) nodesToExpand.push(node.raw.id)
+          nodesToExpand.push(...result.nodesToExpand)
 
           // Handle array collections
           const speckleData = node.raw
@@ -449,7 +453,7 @@ export function useTreeManagement() {
               if (isReferencedIdArray(val)) {
                 const ids = new Set(val.map((ref) => ref.referencedId))
                 if (node.children?.some((child) => ids.has(child.raw?.id as string))) {
-                  expandedNodes.add(k)
+                  nodesToExpand.push(k)
                 }
               }
             })
@@ -459,6 +463,8 @@ export function useTreeManagement() {
       }
       return false
     })
+
+    return { found, nodesToExpand }
   }
 
   return {
