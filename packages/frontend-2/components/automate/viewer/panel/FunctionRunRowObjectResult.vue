@@ -2,7 +2,7 @@
   <div class="overflow-hidden">
     <button
       :class="`block w-full transition text-left hover:bg-primary-muted hover:shadow-md rounded-md p-1 cursor-pointer border-l-2  ${
-        isIsolated || isGradientActive
+        isIsolated || metadataGradientIsSet
           ? 'border-primary bg-primary-muted shadow-md'
           : 'border-transparent'
       }`"
@@ -22,7 +22,7 @@
     </button>
     <div class="flex mt-2 px-3 overflow-hidden">
       <ViewerFiltersFilterNumeric
-        v-if="hasMetadataGradient && isGradientActive && computedFilterData"
+        v-if="metadataGradientIsSet && computedFilterData"
         :filter="computedFilterData"
         no-padding
       />
@@ -68,7 +68,7 @@ const {
   toggleFilterApplied,
   filters
 } = useFilterUtilities()
-const { setSelectionFromObjectIds, clearSelection } = useSelectionUtilities()
+const { clearSelection } = useSelectionUtilities()
 const { setColorFilter, removeColorFilter } = useFilterColoringHelpers()
 
 const hasMetadataGradient = computed(() => {
@@ -82,6 +82,7 @@ const isIsolated = computed(() => {
 
   if (
     props.functionId &&
+    metadataGradientIsSet.value &&
     filters.propertyFilters.value.some((f) => f.filter?.key === props.functionId)
   )
     return false
@@ -114,27 +115,10 @@ const isolateOrUnisolateObjects = () => {
     clearSelection()
   } else {
     isolateObjects(ids, { replace: true })
-    setSelectionFromObjectIds(ids)
   }
 }
 
 const metadataGradientIsSet = ref(false)
-
-const isGradientActive = computed(() => {
-  if (!props.functionId) return false
-
-  const hasFilter = filters.propertyFilters.value.some(
-    (f) => f.filter?.key === props.functionId
-  )
-  const hasColorFilter =
-    filters.activeColorFilterId.value !== null &&
-    filters.propertyFilters.value.some(
-      (f) =>
-        f.id === filters.activeColorFilterId.value && f.filter?.key === props.functionId
-    )
-
-  return hasFilter && hasColorFilter
-})
 
 // NOTE: This is currently a hacky convention!!!
 const computedPropInfo = computed(() => {
@@ -171,7 +155,7 @@ const computedPropInfo = computed(() => {
 })
 
 const computedFilterData = computed((): NumericFilterData | undefined => {
-  if (!isGradientActive.value || !props.functionId) return
+  if (!metadataGradientIsSet.value || !props.functionId) return
 
   const activeFilter = filters.propertyFilters.value.find(
     (f) => f.filter?.key === props.functionId
@@ -181,7 +165,7 @@ const computedFilterData = computed((): NumericFilterData | undefined => {
 })
 
 const setOrUnsetGradient = () => {
-  if (isGradientActive.value) {
+  if (metadataGradientIsSet.value) {
     resetFilters()
     removeColorFilter()
     metadataGradientIsSet.value = false
