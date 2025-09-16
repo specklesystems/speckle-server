@@ -80,12 +80,7 @@ const isIsolated = computed(() => {
   const isolatedIds = filters.isolatedObjectIds.value
   if (!isolatedIds?.length) return false
 
-  if (
-    props.functionId &&
-    metadataGradientIsSet.value &&
-    filters.propertyFilters.value.some((f) => f.filter?.key === props.functionId)
-  )
-    return false
+  if (hasMetadataGradient.value && metadataGradientIsSet.value) return false
 
   const ids = resultObjectIds.value
   return containsAll(ids, isolatedIds)
