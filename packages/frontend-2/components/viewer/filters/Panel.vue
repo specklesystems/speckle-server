@@ -1,5 +1,5 @@
 <template>
-  <ViewerLayoutSidePanel disable-scrollbar>
+  <ViewerLayoutSidePanel max-height-class="max-h-[calc(100dvh-5rem)]" disable-scrollbar>
     <template #title>Filters</template>
     <template #actions>
       <div class="flex gap-x-0.5 items-center">

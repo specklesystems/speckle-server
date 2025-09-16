@@ -1,8 +1,9 @@
 <template>
   <div
     :class="[
-      'flex flex-col h-full max-h-[calc(100dvh-5rem)]',
-      disableScrollbar ? '' : 'overflow-hidden'
+      'flex flex-col h-full',
+      disableScrollbar ? '' : 'overflow-hidden',
+      maxHeightClass ? maxHeightClass : 'max-h-[calc(100dvh-3rem)]'
     ]"
   >
     <div
@@ -31,5 +32,6 @@
 defineProps<{
   title?: string
   disableScrollbar?: boolean
+  maxHeightClass?: string
 }>()
 </script>
