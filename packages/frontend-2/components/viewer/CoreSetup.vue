@@ -1,5 +1,5 @@
 <template>
-  <div class="flex-1">
+  <div class="flex-1 relative">
     <div
       id="viewer"
       class="viewer special-gradient absolute z-10 overflow-hidden w-screen"
@@ -10,10 +10,7 @@
     </div>
 
     <!-- Global loading bar -->
-    <ViewerLoadingBar
-      class="absolute left-0 w-full z-40 h-30"
-      :class="loadingBarClasses"
-    />
+    <ViewerLoadingBar :class="loadingBarClasses" />
   </div>
 </template>
 <script setup lang="ts">

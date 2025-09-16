@@ -1,9 +1,6 @@
 <template>
   <div class="presentation-viewer-setup">
-    <ViewerCoreSetup
-      :viewer-host-classes="'viewer-transparent h-[100dvh]'"
-      :loading-bar-classes="' -top-2'"
-    />
+    <ViewerCoreSetup viewer-host-classes="h-[100dvh]" />
   </div>
 </template>
 <script setup lang="ts"></script>

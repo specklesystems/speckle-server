@@ -30,7 +30,7 @@
               : 'h-[calc(100dvh-3.5rem)]'
             : 'h-[100dvh]'
         "
-        :loading-bar-classes="isEmbedEnabled ? 'top-0' : ' -top-2'"
+        :loading-bar-classes="isEmbedEnabled ? 'top-0' : 'top-12'"
       >
         <template #after-viewer-base>
           <Transition

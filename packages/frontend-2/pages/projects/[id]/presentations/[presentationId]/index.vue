@@ -116,7 +116,7 @@ const projectPresentationPageQuery = graphql(`
         id
         title
         ...PresentationSlidesSidebar_SavedViewGroup
-        ...PresentationViewerWrapper_SavedViewGroup
+        ...PresentationViewerPageWrapper_SavedViewGroup
         views(input: $input) {
           totalCount
           items {
