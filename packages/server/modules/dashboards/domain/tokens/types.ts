@@ -9,4 +9,5 @@ export type DashboardApiToken = DashboardApiTokenRecord & {
   createdAt: Date
   lastUsed: Date
   lifespan: number | bigint
+  revoked: boolean
 }

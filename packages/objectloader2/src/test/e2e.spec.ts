@@ -6,28 +6,6 @@ import { Base } from '../types/types.js'
 
 describe('e2e', () => {
   test(
-    'download local',
-    async () => {
-      const loader = ObjectLoader2Factory.createFromUrl({
-        serverUrl: 'https://hyperion.mermaid-emperor.ts.net',
-        streamId: '7fba444fdf',
-        objectId: '36825a8a33a5a00caf9892e89589b2b3',
-        options: {
-          indexedDB: new IDBFactory(),
-          keyRange: IDBKeyRange
-        }
-      })
-
-      const bases: Base[] = []
-      for await (const obj of loader.getObjectIterator()) {
-        bases.push(obj)
-      }
-
-      expect(bases.length).toBe(1328)
-    },
-    1 * TIME_MS.minute
-  )
-  test(
     'download small model',
     async () => {
       // Revit sample house (good for bim-like stuff with many display meshes)

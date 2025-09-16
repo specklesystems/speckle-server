@@ -23,6 +23,11 @@ import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { parseWorkspaceIdentifier } from '@/modules/workspacesCore/helpers/graphHelpers'
 import { asOperation } from '@/modules/shared/command'
 import { logger } from '@/observability/logging'
+import {
+  revokeTokenResourceAccessDefinitonsFactory,
+  storeTokenResourceAccessDefinitionsFactory
+} from '@/modules/core/repositories/tokens'
+import { getDashboardTokensFactory } from '@/modules/dashboards/repositories/tokens'
 
 const { FF_WORKSPACES_MODULE_ENABLED, FF_DASHBOARDS_MODULE_ENABLED } = getFeatureFlags()
 
@@ -133,7 +138,13 @@ const resolvers: Resolvers = {
         async ({ db }) => {
           return await updateDashboardFactory({
             getDashboard: getDashboardRecordFactory({ db }),
-            upsertDashboard: upsertDashboardFactory({ db })
+            upsertDashboard: upsertDashboardFactory({ db }),
+            storeTokenResourceAccessDefinitions:
+              storeTokenResourceAccessDefinitionsFactory({ db }),
+            revokeTokenResourceAccess: revokeTokenResourceAccessDefinitonsFactory({
+              db
+            }),
+            getDashboardTokens: getDashboardTokensFactory({ db })
           })(removeNullOrUndefinedKeys(args.input))
         },
         {

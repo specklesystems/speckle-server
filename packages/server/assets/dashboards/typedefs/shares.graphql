@@ -9,14 +9,17 @@ type DashboardShareLink {
   validUntil: DateTime!
   createdAt: DateTime!
   content: String!
+  revoked: Boolean!
 }
 
-input DeleteDashboardShareInput {
-  dasbboardId: ID!
+input DashboardShareInput {
+  dashboardId: ID!
   shareId: ID!
 }
 
 extend type DashboardMutations {
   share(dashboardId: String!): DashboardShareLink!
-  deleteShare(input: DeleteDashboardShareInput!): Boolean!
+  deleteShare(input: DashboardShareInput!): Boolean!
+  disableShare(input: DashboardShareInput!): Boolean!
+  enableShare(input: DashboardShareInput!): Boolean!
 }

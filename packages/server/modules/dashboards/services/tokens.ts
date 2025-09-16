@@ -74,6 +74,7 @@ export const createDashboardTokenFactory =
     return {
       token,
       tokenMetadata: {
+        revoked: false,
         ...tokenMetadata,
         ...pick(apiToken, 'createdAt', 'lastUsed', 'lifespan')
       }

@@ -80,7 +80,7 @@ export const updateDashboardFactory =
       const dashboardTokens = await deps.getDashboardTokens({
         dashboardId: dashboard.id
       })
-      if (newProjectIds.length) {
+      if (newProjectIds.length && dashboardTokens.length) {
         const newResourceAccessRules = dashboardTokens.flatMap((t) =>
           newProjectIds.map((p) => ({
             resourceId: p,
@@ -90,12 +90,12 @@ export const updateDashboardFactory =
         )
         await deps.storeTokenResourceAccessDefinitions(newResourceAccessRules)
       }
-      if (deletedProjectIds.length) {
+      if (deletedProjectIds.length && dashboardTokens.length) {
         await Promise.all(
           // i know this is bad and sending more than one delete requests
           // but most of the time there are only a couple of projects deleted at max from dashboards
           dashboardTokens.flatMap((t) =>
-            newProjectIds.map((p) =>
+            deletedProjectIds.map((p) =>
               deps.revokeTokenResourceAccess({
                 resourceId: p,
                 resourceType: TokenResourceIdentifierType.Project,

@@ -9,10 +9,12 @@ import {
   revokeUserTokenByIdFactory,
   storeApiTokenFactory,
   storeTokenResourceAccessDefinitionsFactory,
-  storeTokenScopesFactory
+  storeTokenScopesFactory,
+  updateApiTokenFactory
 } from '@/modules/core/repositories/tokens'
 import {
   deleteDashboardApiTokenFactory,
+  getDashboardTokensFactory,
   storeDashboardApiTokenFactory
 } from '@/modules/dashboards/repositories/tokens'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
@@ -25,6 +27,22 @@ const { FF_WORKSPACES_MODULE_ENABLED, FF_DASHBOARDS_MODULE_ENABLED } = getFeatur
 const isEnabled = FF_WORKSPACES_MODULE_ENABLED && FF_DASHBOARDS_MODULE_ENABLED
 
 const resolvers: Resolvers = {
+  Dashboard: {
+    shareLink: async (parent) => {
+      const dashboardTokens = await getDashboardTokensFactory({ db })({
+        dashboardId: parent.id
+      })
+      if (!dashboardTokens.length) return null
+      const token = dashboardTokens[0]
+      return {
+        ...token,
+        id: token.tokenId,
+        validUntil: dayjs(token.createdAt)
+          .add(Number(token.lifespan), 'milliseconds')
+          .toDate()
+      }
+    }
+  },
   DashboardMutations: {
     share: async (_, args, context) => {
       const authResult = await context.authPolicies.dashboard.canCreateToken({
@@ -50,15 +68,36 @@ const resolvers: Resolvers = {
         id: token.tokenMetadata.tokenId,
         content: `${token.tokenMetadata.tokenId}${token.tokenMetadata.content}`,
         createdAt: token.tokenMetadata.createdAt,
+        revoked: false,
         validUntil: dayjs(token.tokenMetadata.createdAt)
           .add(Number(token.tokenMetadata.lifespan), 'millisecond')
           .toDate()
       }
     },
+    disableShare: async (_, { input }, context) => {
+      const authResult = await context.authPolicies.dashboard.canCreateToken({
+        userId: context.userId,
+        dashboardId: input.dashboardId
+      })
+      throwIfAuthNotOk(authResult)
+      await updateApiTokenFactory({ db })(input.shareId, { revoked: true })
+
+      return true
+    },
+    enableShare: async (_, { input }, context) => {
+      const authResult = await context.authPolicies.dashboard.canCreateToken({
+        userId: context.userId,
+        dashboardId: input.dashboardId
+      })
+      throwIfAuthNotOk(authResult)
+      await updateApiTokenFactory({ db })(input.shareId, { revoked: false })
+
+      return true
+    },
     deleteShare: async (_, { input }, context) => {
       const authResult = await context.authPolicies.dashboard.canCreateToken({
         userId: context.userId,
-        dashboardId: input.dasbboardId
+        dashboardId: input.dashboardId
       })
       throwIfAuthNotOk(authResult)
       await deleteDashboardShareFactory({
