@@ -45,14 +45,12 @@ import type { MaybeNullOrUndefined } from '@speckle/shared'
 const props = defineProps<{
   title: MaybeNullOrUndefined<string>
   description: MaybeNullOrUndefined<string>
-  isPresentMode: boolean
 }>()
 
-// Reactive variables for editable content
 const editableTitle = ref(props.title || '')
 const editableDescription = ref(props.description || '')
+const isPresentMode = ref(false)
 
-// Watch for prop changes to update editable values
 watch(
   () => props.title,
   (newTitle) => {

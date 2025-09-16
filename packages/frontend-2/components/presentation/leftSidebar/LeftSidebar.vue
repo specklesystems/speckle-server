@@ -13,23 +13,29 @@
           <p class="text-body-xs text-foreground">
             {{ workspaceName }}
           </p>
+          <UserAvatar size="sm" class="ml-auto flex-shrink-0" :user="activeUser" />
         </section>
         <section
           class="flex-1 flex justify-center simple-scrollbar overflow-y-auto mt-3 pb-3 px-3"
         >
           <ul class="flex flex-col gap-1 w-full">
-            <template v-for="slide in slides" :key="slide.id">
+            <template v-for="(slide, index) in slides" :key="slide.id">
               <PresentationLeftSidebarSlide
-                v-if="slide.visibility === SavedViewVisibility.Public || !isPresentMode"
                 :slide="slide"
-                :is-current-slide="currentSlideId === slide.id"
-                @select-slide="emit('select-slide', slide.id)"
+                :is-current-slide="currentSlide?.id === slide.id"
+                :slide-index="index + 1"
+                @select-slide="$emit('select-slide', slide.id)"
               />
             </template>
           </ul>
         </section>
 
-        <PresentationLeftSidebarUserMenu />
+        <section
+          class="flex items-center gap-x-2 w-full h-14 border-t border-outline-3 p-3"
+        >
+          <FormButton color="outline" full-width :to="loginRoute">Log in</FormButton>
+          <FormButton full-width :to="registerRoute">Sign up</FormButton>
+        </section>
       </div>
     </aside>
   </div>
@@ -37,36 +43,27 @@
 
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import {
-  type PresentationSlidesSidebar_SavedViewGroupFragment,
-  SavedViewVisibility
-} from '~~/lib/common/generated/gql/graphql'
+import type { PresentationLeftSidebar_SavedViewFragment } from '~~/lib/common/generated/gql/graphql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { loginRoute, registerRoute } from '~~/lib/common/helpers/route'
 
 graphql(`
-  fragment PresentationSlidesSidebar_SavedViewGroup on SavedViewGroup {
+  fragment PresentationLeftSidebar_SavedView on SavedView {
+    ...PresentationSlidesLeftSidebarSlide_SavedView
     id
-    views(input: $input) {
-      items {
-        ...PresentationSlidesLeftSidebarSlide_SavedView
-        visibility
-        id
-      }
-    }
   }
 `)
 
-const emit = defineEmits<{
+defineEmits<{
   (e: 'select-slide', id: string): void
 }>()
 
-const props = defineProps<{
-  slides: MaybeNullOrUndefined<PresentationSlidesSidebar_SavedViewGroupFragment>
+defineProps<{
+  slides: MaybeNullOrUndefined<PresentationLeftSidebar_SavedViewFragment[]>
   workspaceLogo?: MaybeNullOrUndefined<string>
   workspaceName?: MaybeNullOrUndefined<string>
-  currentSlideId?: string
-  isPresentMode?: boolean
+  currentSlide?: MaybeNullOrUndefined<PresentationLeftSidebar_SavedViewFragment>
 }>()
 
-const slides = computed(() => props.slides?.views.items)
+const { activeUser } = useActiveUser()
 </script>
