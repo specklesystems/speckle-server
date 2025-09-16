@@ -25,7 +25,7 @@ fi
 
 RELEASE_VERSION="${IMAGE_VERSION_TAG}"
 HELM_STABLE_BRANCH="${HELM_STABLE_BRANCH:-"main"}"
-CHART_NAME="${CHART_NAME:-"speckle-server"}"
+CHART_NAME="${CHART_NAME:-"speckle-server-chart"}"
 
 echo "🏷️ Preparing envs"
 
