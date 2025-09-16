@@ -48,13 +48,11 @@
       />
 
       <div class="flex-1">
-        <ClientOnly>
-          <img
-            :src="currentView?.screenshot"
-            alt="Current view"
-            class="h-full w-full object-cover"
-          />
-        </ClientOnly>
+        <Component
+          :is="group ? ViewerWrapper : 'div'"
+          :group="group"
+          class="h-full w-full object-cover"
+        />
       </div>
 
       <PresentationInfoSidebar
@@ -116,6 +114,7 @@ const projectPresentationPageQuery = graphql(`
         id
         title
         ...PresentationSlidesSidebar_SavedViewGroup
+        ...PresentationViewerWrapper_SavedViewGroup
         views(input: $input) {
           totalCount
           items {
@@ -158,6 +157,8 @@ const isPresentMode = ref(false)
 const showCloseMessage = ref(false)
 const closeMessageTimeout = ref<NodeJS.Timeout | undefined>()
 
+const ViewerWrapper = resolveComponent('PresentationViewerWrapper')
+const group = computed(() => result.value?.project.savedViewGroup)
 const workspace = computed(() => result.value?.project.workspace)
 const allSlides = computed(() => result.value?.project.savedViewGroup.views.items || [])
 const visibleSlides = computed(() =>

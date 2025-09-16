@@ -27,6 +27,7 @@ import type { InjectableViewerState } from '~~/lib/viewer/composables/setup/core
 import { writableAsyncComputed } from '@speckle/ui-components'
 import { resourceBuilder } from '@speckle/shared/viewer/route'
 import type { UseSetupViewerParams } from '~/lib/viewer/composables/setup'
+import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
 
 definePageMeta({
   layout: 'viewer',
@@ -93,7 +94,8 @@ const resourceIdString = writableAsyncComputed({
 const initParams = computed(
   (): UseSetupViewerParams => ({
     projectId,
-    resourceIdString
+    resourceIdString,
+    pageType: ViewerRenderPageType.Viewer
   })
 )
 

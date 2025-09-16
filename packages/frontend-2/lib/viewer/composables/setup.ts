@@ -100,6 +100,7 @@ import { useViewModesSetup } from '~/lib/viewer/composables/setup/viewMode'
 import { useMeasurementsSetup } from '~/lib/viewer/composables/setup/measurements'
 import { useFiltersSetup } from '~/lib/viewer/composables/setup/filters'
 import { useViewerPanelsSetup } from '~/lib/viewer/composables/setup/panels'
+import type { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -124,6 +125,13 @@ export type InjectableViewerState = Readonly<{
    * This is used to ignore user activity messages from the same tab.
    */
   sessionId: ComputedRef<string>
+  /**
+   * The type of page that this state is powering. Based on this, certain features/UIs
+   * can be toggled.
+   *
+   * Default: Viewer (main viewer page), but can also be Presentation
+   */
+  pageType: ComputedRef<ViewerRenderPageType>
   /**
    * The actual Viewer instance and related objects.
    * Note: This is going to be undefined in SSR!
@@ -403,7 +411,7 @@ type CachedViewerState = Pick<
 
 export type InitialSetupState = Pick<
   InjectableViewerState,
-  'projectId' | 'viewer' | 'sessionId' | 'urlHashState'
+  'projectId' | 'viewer' | 'sessionId' | 'urlHashState' | 'pageType'
 >
 
 type InitialStateWithRequest = InitialSetupState & {
@@ -515,6 +523,7 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
   const hasDoneInitialLoad = ref(false)
 
   return {
+    pageType: computed(() => params.pageType),
     projectId: params.projectId,
     sessionId,
     viewer: import.meta.server
@@ -1205,6 +1214,7 @@ function setupInterfaceState(
 export type UseSetupViewerParams = {
   projectId: AsyncWritableComputedRef<string>
   resourceIdString: AsyncWritableComputedRef<string>
+  pageType: ViewerRenderPageType
 }
 
 export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerState {
