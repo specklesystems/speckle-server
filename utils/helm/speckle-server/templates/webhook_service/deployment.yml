@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - name: main
-        image: speckle/speckle-webhook-service:{{ .Values.docker_image_tag }}
+        image: {{ default (printf "speckle/speckle-webhook-service:%s" .Values.docker_image_tag) .Values.webhook_service.image }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
 
         ports:
