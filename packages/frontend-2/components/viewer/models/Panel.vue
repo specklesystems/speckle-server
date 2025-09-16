@@ -135,8 +135,8 @@ const expandedModelId = ref<string | null>(null)
 
 const showAddModel = ref(false)
 
-const expandedNodes = ref<Set<string>>(new Set())
-const expandedModels = ref<Set<string>>(new Set())
+const expandedNodes = shallowRef<Set<string>>(new Set())
+const expandedModels = shallowRef<Set<string>>(new Set())
 const disableScrollOnNextSelection = ref(false)
 
 const stickyHeader = ref<{ model: ModelItem; versionId: string } | null>(null)
@@ -250,22 +250,20 @@ const handleDiffClose = async () => {
 
 const toggleModelExpansion = (modelId: string) => {
   if (expandedModels.value.has(modelId)) {
-    expandedModels.value = new Set(
-      [...expandedModels.value].filter((id) => id !== modelId)
-    )
+    expandedModels.value.delete(modelId)
   } else {
-    expandedModels.value = new Set([...expandedModels.value, modelId])
+    expandedModels.value.add(modelId)
   }
+  triggerRef(expandedModels)
 }
 
 const toggleTreeItemExpansion = (itemId: string) => {
   if (expandedNodes.value.has(itemId)) {
-    expandedNodes.value = new Set(
-      [...expandedNodes.value].filter((id) => id !== itemId)
-    )
+    expandedNodes.value.delete(itemId)
   } else {
-    expandedNodes.value = new Set([...expandedNodes.value, itemId])
+    expandedNodes.value.add(itemId)
   }
+  triggerRef(expandedNodes)
 }
 
 const handleItemClick = (
@@ -355,7 +353,9 @@ const handleSelectionChange = useDebounceFn(
           const containsObject = findObjectInNodes(modelRootNodes, selectedObj.id)
 
           if (containsObject) {
-            expandedModels.value = new Set([...expandedModels.value, model.id])
+            expandedModels.value.add(model.id)
+            triggerRef(expandedModels)
+
             const result = expandNodesToShowObject(
               modelRootNodes,
               selectedObj.id,
@@ -363,10 +363,8 @@ const handleSelectionChange = useDebounceFn(
               expandedNodes.value
             )
             if (result.found && result.nodesToExpand.length > 0) {
-              expandedNodes.value = new Set([
-                ...expandedNodes.value,
-                ...result.nodesToExpand
-              ])
+              result.nodesToExpand.forEach((nodeId) => expandedNodes.value.add(nodeId))
+              triggerRef(expandedNodes)
             }
 
             scrollToSelectedItem(selectedObj.id)
