@@ -1,8 +1,8 @@
 <template>
-  <div class="flex-1 relative">
+  <div class="viewer-core-setup flex-1 relative">
     <div
       id="viewer"
-      class="viewer special-gradient absolute z-10 overflow-hidden w-screen"
+      class="viewer special-gradient absolute z-10 overflow-hidden left-0 right-0"
       :class="viewerHostClasses"
     >
       <ClientOnly><ViewerBase /></ClientOnly>
