@@ -38,7 +38,8 @@ export const useFilterColoringPostSetup = () => {
           return inRange
         })
         ?.map((vg) => {
-          const normalizedValue = (vg.value - min) / (max - min)
+          const normalizedValue =
+            (vg.value - numericFilter.min) / (numericFilter.max - numericFilter.min)
           const fromColor = { r: 59, g: 130, b: 246 } // #3b82f6
           const toColor = { r: 236, g: 72, b: 153 } // #ec4899
 
@@ -139,6 +140,29 @@ export const useFilterColoringPostSetup = () => {
             setStringColorFilter(activeFilterId)
           }
         }
+      }
+    },
+    { deep: true }
+  )
+
+  /**
+   * Watch for changes to numeric range values and re-apply color filter
+   */
+  watchTriggerable(
+    () =>
+      filters.propertyFilters.value
+        .map((f) => (f.type === 'numeric' ? { id: f.id, range: f.numericRange } : null))
+        .filter(Boolean),
+    () => {
+      const activeFilterId = filters.activeColorFilterId.value
+      if (!activeFilterId) return
+
+      const activeFilter = filters.propertyFilters.value.find(
+        (f) => f.id === activeFilterId
+      )
+
+      if (activeFilter?.filter && activeFilter.type === 'numeric') {
+        setNumericColorFilter(activeFilterId)
       }
     },
     { deep: true }

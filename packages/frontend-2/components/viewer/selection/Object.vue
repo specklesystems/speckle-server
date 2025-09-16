@@ -47,6 +47,7 @@
           :object="(kvp.value as SpeckleObject) || {}"
           :title="(kvp.key as string)"
           :unfold="autoUnfoldKeys.includes(kvp.key)"
+          :parent-path="currentPath"
         />
       </div>
       <div
@@ -113,6 +114,7 @@ const props = withDefaults(
     unfold?: boolean
     debug?: boolean
     modifiedSibling?: boolean
+    parentPath?: string
   }>(),
   { debug: false, unfold: false, root: false, modifiedSibling: false }
 )
@@ -120,6 +122,15 @@ const props = withDefaults(
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 const unfold = ref(props.unfold)
 const autoUnfoldKeys = ['properties', 'Instance Parameters']
+
+// Compute the current full path for this object
+const currentPath = computed(() => {
+  if (props.root) return ''
+  if (!props.parentPath) return props.title || ''
+  return props.parentPath
+    ? `${props.parentPath}.${props.title || ''}`
+    : props.title || ''
+})
 
 const isAdded = computed(() => {
   if (!diffEnabled.value) return false
@@ -242,14 +253,17 @@ const keyValuePairs = computed(() => {
     ) {
       // note: handles name value pairs from dui3 -
       const { value, units } = props.object[key] as { value: string; units?: string }
+      const fullPath = currentPath.value ? `${currentPath.value}.${key}` : key
       kvps.push({
         key,
         type: typeof value,
         value: value as string,
-        units
+        units,
+        backendPath: fullPath
       })
       continue
     }
+    const fullPath = currentPath.value ? `${currentPath.value}.${key}` : key
     kvps.push({
       key,
       type,
@@ -257,7 +271,7 @@ const keyValuePairs = computed(() => {
       arrayLength,
       arrayPreview,
       value: props.object[key],
-      backendPath: key
+      backendPath: fullPath
     })
   }
 

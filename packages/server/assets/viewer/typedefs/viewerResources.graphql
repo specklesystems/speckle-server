@@ -53,7 +53,7 @@ type ExtendedViewerResources {
   """
   Metadata about the request that was made to resolve this.
   """
-  request: ExtendedViewerResourcesRequest
+  request: ExtendedViewerResourcesRequest!
 }
 
 extend type Project {

@@ -23,8 +23,6 @@ import {
   getStreamRolesFactory,
   getStreamsFactory,
   grantStreamPermissionsFactory,
-  markBranchStreamUpdatedFactory,
-  markCommitStreamUpdatedFactory,
   revokeStreamPermissionsFactory,
   updateStreamFactory
 } from '@/modules/core/repositories/streams'
@@ -160,15 +158,11 @@ const buildUpdateModel = async (params: { projectId: string }) => {
 const buildDeleteModel = async (params: { projectId: string }) => {
   const { projectId } = params
   const projectDB = await getProjectDbClient({ projectId })
-  const markBranchStreamUpdated = markBranchStreamUpdatedFactory({
-    db: projectDB
-  })
   const getStream = getStreamFactory({ db })
   const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
     getStream,
     getBranchById: getBranchByIdFactory({ db: projectDB }),
     emitEvent: getEventBus().emit,
-    markBranchStreamUpdated,
     deleteBranchById: deleteBranchByIdFactory({ db: projectDB })
   })
   return deleteBranchAndNotify
@@ -199,7 +193,6 @@ const buildUpdateVersion = async (params: { projectId: string }) => {
     switchCommitBranch: switchCommitBranchFactory({ db: projectDb }),
     updateCommit: updateCommitFactory({ db: projectDb }),
     emitEvent: getEventBus().emit,
-    markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
     markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb })
   })
   return updateCommitAndNotify

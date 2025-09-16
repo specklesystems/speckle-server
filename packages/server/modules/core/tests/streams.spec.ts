@@ -17,8 +17,6 @@ import {
   getStreamRolesFactory,
   getStreamsCollaboratorsFactory,
   grantStreamPermissionsFactory,
-  markBranchStreamUpdatedFactory,
-  markCommitStreamUpdatedFactory,
   revokeStreamPermissionsFactory,
   updateStreamFactory
 } from '@/modules/core/repositories/streams'
@@ -88,8 +86,6 @@ import type { UpdateStream } from '@/modules/core/domain/streams/operations'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
-const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
-const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db })
 const getStream = getStreamFactory({ db })
 const getStreamBranchByName = getStreamBranchByNameFactory({ db })
 const createBranch = createBranchFactory({ db })
@@ -97,7 +93,6 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getStream,
   getBranchById: getBranchByIdFactory({ db }),
   emitEvent: getEventBus().emit,
-  markBranchStreamUpdated,
   deleteBranchById: deleteBranchByIdFactory({ db })
 })
 
@@ -108,7 +103,6 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   getBranchById: getBranchByIdFactory({ db }),
   insertStreamCommits: insertStreamCommitsFactory({ db }),
   insertBranchCommits: insertBranchCommitsFactory({ db }),
-  markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   emitEvent: getEventBus().emit
 })

@@ -6,7 +6,7 @@ import {
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import type { Knex } from 'knex'
 
-export async function getTestRegionClients(): Promise<[Knex, ...Knex[]]> {
+export async function getAllRegisteredTestDbs(): Promise<[Knex, ...Knex[]]> {
   if (!isMultiRegionTestMode()) return [db]
 
   const regionClients = await getRegisteredRegionClients()

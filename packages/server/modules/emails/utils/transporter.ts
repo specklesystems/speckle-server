@@ -1,6 +1,15 @@
 import { emailLogger as logger } from '@/observability/logging'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { isEmailEnabled, isTestEnv } from '@/modules/shared/helpers/envHelper'
+import {
+  getEmailHost,
+  getEmailPassword,
+  getEmailPort,
+  getEmailUsername,
+  isEmailEnabled,
+  isSSLEmailEnabled,
+  isTestEnv,
+  isTLSEmailRequired
+} from '@/modules/shared/helpers/envHelper'
 import type { Transporter } from 'nodemailer'
 import { createTransport } from 'nodemailer'
 
@@ -9,20 +18,38 @@ let transporter: Transporter | undefined = undefined
 const createJsonEchoTransporter = () => createTransport({ jsonTransport: true })
 
 const initSmtpTransporter = async () => {
+  const sslRequired = isSSLEmailEnabled()
+  const tlsRequired = isTLSEmailRequired()
+  if (!tlsRequired && !sslRequired) {
+    logger.warn(
+      'Neither EMAIL_SECURE and EMAIL_REQUIRE_TLS are true. Client will attempt to upgrade to TLS on connect, but will default to whatever the server supports which may be insecure.'
+    )
+  } else if (sslRequired && tlsRequired) {
+    throw new MisconfiguredEnvironmentError(
+      'EMAIL_SECURE and EMAIL_REQUIRE_TLS cannot both be true. TLS would typically be preferred over SSL.'
+    )
+  }
+
   try {
     const smtpTransporter = createTransport({
-      host: process.env.EMAIL_HOST || '127.0.0.1',
-      port: parseInt(process.env.EMAIL_PORT || '587'),
-      secure: process.env.EMAIL_SECURE === 'true',
+      host: getEmailHost(),
+      port: getEmailPort(),
+      requireTLS: tlsRequired,
+      secure: sslRequired,
       auth: {
-        user: process.env.EMAIL_USERNAME,
-        pass: process.env.EMAIL_PASSWORD
+        user: getEmailUsername(),
+        pass: getEmailPassword()
       },
       pool: true,
       maxConnections: 20,
       maxMessages: Infinity
     })
-    await smtpTransporter.verify()
+    const transporterVerified = await smtpTransporter.verify()
+    if (!transporterVerified) {
+      logger.error(
+        '📧 Email provider is likely misconfigured as validation failed, check config variables'
+      )
+    }
     return smtpTransporter
   } catch (e) {
     logger.error(e, '📧 Email provider is misconfigured, check config variables.')

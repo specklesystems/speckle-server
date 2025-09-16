@@ -50,7 +50,7 @@ import dayjs from 'dayjs'
 import { type Knex } from 'knex'
 import { clamp, isUndefined } from 'lodash-es'
 
-const SavedViews = buildTableHelper('saved_views', [
+export const SavedViews = buildTableHelper('saved_views', [
   'id',
   'name',
   'description',
@@ -68,7 +68,7 @@ const SavedViews = buildTableHelper('saved_views', [
   'updatedAt'
 ])
 
-const SavedViewGroups = buildTableHelper('saved_view_groups', [
+export const SavedViewGroups = buildTableHelper('saved_view_groups', [
   'id',
   'authorId',
   'projectId',

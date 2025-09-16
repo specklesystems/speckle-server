@@ -162,6 +162,7 @@ enum WorkspaceFeatureName {
   workspaceDataRegionSpecificity
   exclusiveMembership
   savedViews
+  presentations
 }
 
 type WorkspacePlanPrice {
