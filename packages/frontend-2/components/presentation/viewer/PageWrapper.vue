@@ -12,7 +12,7 @@ import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
 import type { UseSetupViewerParams } from '~~/lib/viewer/composables/setup'
 
 /**
- * Don't put any logic here, the state is unavailable here so do it in PresentationViewerSetup instead
+ * Don't put much logic here, the state is unavailable here so do as much as u can in PresentationViewerSetup instead
  */
 
 graphql(`
@@ -58,14 +58,14 @@ const coreResourceIdString = computed(() =>
 const resourceIdString = writableAsyncComputed({
   get: () => coreResourceIdString.value,
   set: async (newVal) => {
-    const newResources = resourceBuilder().addResources(newVal)
+    const newResources = resourceBuilder().addResources(newVal).toString()
     const currentResources = coreResourceIdString.value
-    if (newResources.toString() === currentResources.toString()) return
+    if (newResources === currentResources) return
 
     // what's triggering mutation? we don't want this to happen, so lets log it
     // to see the cause
     devTrace('resourceIdString mutation triggered', {
-      newVal,
+      newVal: newResources,
       oldVal: currentResources
     })
   },
