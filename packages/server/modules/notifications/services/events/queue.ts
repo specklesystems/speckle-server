@@ -8,6 +8,9 @@ import type { NotificationEvents } from '@/modules/notifications/events/notifica
 import { notificationsLogger, Observability } from '@/observability/logging'
 import { UnhandledNotificationError } from '@/modules/notifications/errors'
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
+import MentionedInCommentHandler from '@/modules/notifications/services/events/handlers/mentionedInComment'
+import { CommentEvents } from '@/modules/comments/domain/events'
+import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
 
 export const NOTIFICATION_EVENTS_QUEUE = 'default:user-event-notifications'
 
@@ -49,7 +52,12 @@ export async function initializeNotificationEventsQueue() {
   queue = await buildNotificationEventsQueue(NOTIFICATION_EVENTS_QUEUE)
 }
 
-const handlers = new Map<NotificationEvents['eventName'], () => {}>()
+const handlers = {
+  [CommentEvents.Created]: MentionedInCommentHandler,
+  [CommentEvents.Updated]: MentionedInCommentHandler,
+  [AccessRequestEvents.Created]: () => {},
+  [AccessRequestEvents.Finalized]: () => {}
+}
 
 export async function consumeEventNotifications() {
   const queue = getQueue()
@@ -59,7 +67,7 @@ export async function consumeEventNotifications() {
       notificationsLogger.info('New notification received...')
 
       // Invoke correct handler
-      const handler = handlers.get(event.eventName)
+      const handler = handlers[event.eventName]
       if (!handler) throw new UnhandledNotificationError(null, { info: event })
 
       const notificationLogger = Observability.extendLoggerComponent(
@@ -68,7 +76,9 @@ export async function consumeEventNotifications() {
       )
       notificationLogger.info('Starting processing notification...')
 
-      await Promise.resolve(handler())
+      // TODO: type this
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await Promise.resolve(handler(event as unknown as any))
 
       notificationLogger.info('...successfully processed notification')
     } catch (e: unknown) {
