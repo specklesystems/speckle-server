@@ -497,7 +497,12 @@ export default class Sandbox {
       // console.warn(await this.viewer.screenshot())
       this.viewer
         .getExtension(FilteringExtension)
-        .hideObjects(['931ef43a6d8694c6f9e8b568a49bf04a'])
+        .hideObjects([
+          '96c7e6c133504a5f2389dd63d7f59944',
+          'fed72dae4452eafdcdf94302e6b222ed',
+          'aaca0d4e99b2c9f41e507b5f813173fe',
+          'e9bfd3afa46dbdf5867e18e805be0551'
+        ])
       /** Read depth */
       // const pass = [
       //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),
