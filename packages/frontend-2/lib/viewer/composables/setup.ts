@@ -550,13 +550,17 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
 /**
  * Setup resource requests (tied to URL resource identifier param)
  */
-function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest {
+function setupResourceRequest(
+  state: InitialSetupState,
+  params: UseSetupViewerParams
+): InitialStateWithRequest {
   const route = useRoute()
   const router = useSafeRouter()
-  const getParam = computed(() => route.params.modelId as string)
+
+  const resourceIdString = params.resourceIdString
 
   const resources = writableAsyncComputed({
-    get: () => parseUrlParameters(getParam.value),
+    get: () => resourceBuilder().addResources(resourceIdString.value).toResources(),
     set: async (newResources) => {
       const modelId = createGetParamFromResources(newResources)
       await router.push(
@@ -567,7 +571,7 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
         }),
         {
           skipIf: (to) => {
-            if (to.params.modelId !== getParam.value) return false
+            if (to.params.modelId !== resourceIdString.value) return false
             if (to.query !== route.query) return false
             if (to.hash !== route.hash) return false
             return true
@@ -576,21 +580,6 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
       )
     },
     initialState: [],
-    asyncRead: false
-  })
-
-  // we could use getParam, but `createGetParamFromResources` does sorting and de-duplication AFAIK
-  // + we can skip duplicate updates
-  const resourceIdString = writableAsyncComputed({
-    get: () => createGetParamFromResources(resources.value),
-    set: async (newVal) => {
-      const newResources = resourceBuilder().addResources(parseUrlParameters(newVal))
-      const currentResources = resourceBuilder().addResources(resources.value)
-      if (newResources.toString() === currentResources.toString()) return
-
-      await resources.update(newResources.toResources())
-    },
-    initialState: '',
     asyncRead: false
   })
 
@@ -1213,13 +1202,16 @@ function setupInterfaceState(
   }
 }
 
-type UseSetupViewerParams = { projectId: AsyncWritableComputedRef<string> }
+export type UseSetupViewerParams = {
+  projectId: AsyncWritableComputedRef<string>
+  resourceIdString: AsyncWritableComputedRef<string>
+}
 
 export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerState {
   // Initialize full state object - each subsequent state initialization depends on
   // the results of the previous ones until we have the final full object
   const initState = setupInitialState(params)
-  const initialStateWithRequest = setupResourceRequest(initState)
+  const initialStateWithRequest = setupResourceRequest(initState, params)
   const stateWithResources = setupResourceResponse(initialStateWithRequest)
   const state: InjectableViewerState = setupInterfaceState(stateWithResources)
 

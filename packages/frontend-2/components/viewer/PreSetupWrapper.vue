@@ -122,14 +122,14 @@
 <script setup lang="ts">
 import {
   useSetupViewer,
-  type InjectableViewerState
+  type InjectableViewerState,
+  type UseSetupViewerParams
 } from '~~/lib/viewer/composables/setup'
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { projectsRoute, workspaceRoute } from '~~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { writableAsyncComputed } from '~/lib/common/composables/async'
 import { parseUrlParameters, resourceBuilder } from '@speckle/shared/viewer/route'
 import { ViewerLimitsDialogType } from '~/lib/projects/helpers/limits'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
@@ -159,7 +159,12 @@ const emit = defineEmits<{
   setup: [InjectableViewerState]
 }>()
 
-const router = useSafeRouter()
+const props = defineProps<{
+  // Passing in a wrapper object so that the refs don't get unwrapped. We want the full
+  // AsyncWritableComputed objects here
+  initParams: UseSetupViewerParams
+}>()
+
 const route = useRoute()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
@@ -170,22 +175,10 @@ const bottomControls = ref()
 const selectionSidebar = ref()
 const anchoredPoints = ref()
 
-const resourceIdString = computed(() => route.params.modelId as string)
-const projectId = writableAsyncComputed({
-  get: () => route.params.id as string,
-  set: async (value: string) => {
-    // Just rewrite route id param
-    await router.push(() => ({
-      params: { id: value }
-    }))
-  },
-  initialState: route.params.id as string,
-  asyncRead: false
-})
+const resourceIdString = computed(() => props.initParams.resourceIdString.value)
 
-const state = useSetupViewer({
-  projectId
-})
+// initParams isnt reactive, but the refs inside of it definitely are
+const state = useSetupViewer(props.initParams)
 const {
   isEnabled: isEmbedEnabled,
   hideSelectionInfo,
