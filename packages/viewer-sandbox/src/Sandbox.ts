@@ -498,10 +498,8 @@ export default class Sandbox {
       this.viewer
         .getExtension(FilteringExtension)
         .hideObjects([
-          '96c7e6c133504a5f2389dd63d7f59944',
-          'fed72dae4452eafdcdf94302e6b222ed',
-          'aaca0d4e99b2c9f41e507b5f813173fe',
-          'e9bfd3afa46dbdf5867e18e805be0551'
+          '09f4a74b0d8a2e5e3c69f2ad823847ab',
+          'c1bd055e8b337a8fc7085896b858d542'
         ])
       /** Read depth */
       // const pass = [

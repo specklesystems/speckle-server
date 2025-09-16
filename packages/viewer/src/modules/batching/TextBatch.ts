@@ -112,10 +112,19 @@ export default class TextBatch implements Batch {
 
   public setVisibleRange(ranges: BatchUpdateRange[]) {
     ranges
-    // TO DO
   }
 
+  /*  I hate how brittle Troika is. **Everything** you touch breaks shit
+   *  We can't actually use the 'visible' property inherited from Mesh, because it just breaks the text batch
+   */
   public getVisibleRange(): BatchUpdateRange {
+    if (this.mesh.groups.length === 1) {
+      const group = this.mesh.groups[0]
+      if (!this.materials[group.materialIndex].visible) {
+        return NoneBatchUpdateRange
+      }
+    }
+
     return AllBatchUpdateRange
   }
 
