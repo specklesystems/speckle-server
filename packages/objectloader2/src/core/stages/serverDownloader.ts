@@ -13,7 +13,7 @@ export interface ServerDownloaderOptions {
   headers?: Headers
   logger: CustomLogger
   fetch?: Fetcher
-  attributeMask: ObjectAttributeMask
+  attributeMask?: ObjectAttributeMask
 }
 
 const MAX_SAFARI_DECODE_BYTES = 2 * 1024 * 1024 * 1024 - 1024 * 1024 // 2GB minus a margin

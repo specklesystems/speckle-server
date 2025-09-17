@@ -40,7 +40,7 @@ export class ObjectLoader2Factory {
     token?: string
     headers?: Headers
     options?: ObjectLoader2FactoryOptions
-    attributeMask: ObjectAttributeMask
+    attributeMask?: ObjectAttributeMask
   }): ObjectLoader2 {
     const log = ObjectLoader2Factory.getLogger(params.options?.logger)
     let database

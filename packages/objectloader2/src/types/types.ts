@@ -20,4 +20,7 @@ export interface DataChunk extends Base {
   data?: Base[]
 }
 
-export type ObjectAttributeMask = { include: string[] } | { exclude: string[] }
+export type ObjectAttributeMask =
+  | { include: string[] }
+  | { exclude: string[] }
+  | undefined
