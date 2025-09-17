@@ -19,6 +19,8 @@ console:
     repository: bitnamilegacy/minio-object-browser
 volumePermissions:
   enabled: true
+  image:
+    repository: bitnamilegacy/os-shell
 global:
   security:
     allowInsecureImages: true # needed for bitnamilegacy images
