@@ -18,7 +18,6 @@ on:
 jobs:
   deployment-test-helm-chart:
     runs-on: blacksmith-8vcpu-ubuntu-2404
-    if: false
     steps:
       - uses: actions/checkout@v4.2.2
         with:

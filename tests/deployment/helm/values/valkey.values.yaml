@@ -1,3 +1,5 @@
 architecture: standalone
 auth:
   password: valkey
+image:
+  repository: bitnamilegacy/valkey

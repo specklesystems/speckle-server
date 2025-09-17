@@ -3,6 +3,7 @@ auth:
   rootUser: minioadmin
   rootPassword: minioadmin
 image:
+  repository: bitnamilegacy/minio
   debug: true
 persistence:
   enabled: true
