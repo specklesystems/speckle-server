@@ -283,7 +283,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       minio:
-        image: bitnami/minio
+        image: minio/minio:RELEASE.2025-09-07T16-13-09Z-cpuv1
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
@@ -378,7 +378,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       minio:
-        image: bitnami/minio
+        image: minio/minio:RELEASE.2025-09-07T16-13-09Z-cpuv1
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
@@ -492,7 +492,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       minio0:
-        image: bitnami/minio
+        image: minio/minio:RELEASE.2025-09-07T16-13-09Z-cpuv1
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
@@ -501,7 +501,7 @@ jobs:
           - 9000:9000
 
       minio1:
-        image: bitnami/minio
+        image: minio/minio:RELEASE.2025-09-07T16-13-09Z-cpuv1
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
@@ -510,7 +510,7 @@ jobs:
           - 9001:9000
 
       minio2:
-        image: bitnami/minio
+        image: minio/minio:RELEASE.2025-09-07T16-13-09Z-cpuv1
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
