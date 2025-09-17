@@ -10,6 +10,7 @@ import type { ServerInfo } from '@/modules/core/domain/server/types'
 import type { ServerConfigRecord } from '@/modules/core/helpers/types'
 import type { UserRole } from '@/modules/shared/domain/rolesAndScopes/types'
 import {
+  emailVerificationTimeoutMinutes,
   getFileSizeLimitMB,
   getMaximumObjectSizeMB,
   getServerMovedFrom,
@@ -58,7 +59,8 @@ export const getServerInfoFactory =
       configuration: {
         objectSizeLimitBytes: getMaximumObjectSizeMB() * 1024 * 1024,
         objectMultipartUploadSizeLimitBytes: getFileSizeLimitMB() * 1024 * 1024,
-        isEmailEnabled: isEmailEnabled()
+        isEmailEnabled: isEmailEnabled(),
+        emailVerificationTimeoutMinutes: emailVerificationTimeoutMinutes()
       },
       ...(movedTo || movedFrom
         ? {

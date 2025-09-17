@@ -17,6 +17,7 @@ import {
   ExplodeEvent,
   ExplodeExtension,
   LoaderEvent,
+  SelectionExtension,
   type SunLightConfiguration
 } from '@speckle/viewer'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
@@ -34,7 +35,10 @@ import {
   useViewerCameraTracker,
   useViewerEventListener
 } from '~~/lib/viewer/composables/viewer'
-import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commentManagement'
+import {
+  useCommentContext,
+  useViewerCommentUpdateTracking
+} from '~~/lib/viewer/composables/commentManagement'
 import { getCacheId } from '~~/lib/common/helpers/graphql'
 import {
   useViewerOpenedThreadUpdateEmitter,
@@ -63,6 +67,7 @@ import {
 } from '~/lib/viewer/composables/setup/filters'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { useFilteringSetup } from '~/lib/viewer/composables/filtering/setup'
+import { useHighlightingPostSetup } from '~/lib/viewer/composables/setup/highlighting'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -97,9 +102,12 @@ function useViewerObjectAutoLoading() {
       hasDoneInitialLoad
     },
     resources: {
-      response: { resourceItems }
+      request: {
+        savedView: { id: savedViewId }
+      },
+      response: { resourceItems, savedView }
     },
-    ui: { loadProgress, loading },
+    ui: { loadProgress, loading, spotlightUserSessionId },
     urlHashState: { focusedThreadId }
   } = useInjectedViewerState()
 
@@ -161,7 +169,15 @@ function useViewerObjectAutoLoading() {
       if (!newIsInitialized) return
 
       const [oldResources] = oldData || [[], false]
-      const zoomToObject = !focusedThreadId.value // we want to zoom to the thread instead
+
+      // we dont want to zoom to object, if we're loading specific coords because of a thread,
+      // or spotlight mode or a saved view etc.
+      const preventZooming =
+        focusedThreadId.value ||
+        savedViewId.value ||
+        savedView.value ||
+        spotlightUserSessionId.value
+      const zoomToObject = !preventZooming
 
       // Viewer initialized - load in all resources
       if (!newHasDoneInitialLoad) {
@@ -172,10 +188,7 @@ function useViewerObjectAutoLoading() {
         for (const i of allObjectIds) {
           res.push(await loadObject(i, false, { zoomToObject }))
         }
-        /** Load in parallel */
-        // const res = await Promise.all(
-        //   allObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
-        // )
+
         if (res.length) {
           hasDoneInitialLoad.value = true
         }
@@ -536,22 +549,11 @@ function useViewerFiltersIntegration() {
   const state = useInjectedViewerState()
   const {
     viewer: { instance },
-    ui: { filters, highlightedObjectIds }
+    ui: { filters }
   } = state
 
   useFilteringSetup()
   useFilterUtilities({ state })
-
-  // state -> viewer
-  watch(
-    highlightedObjectIds,
-    (newVal, oldVal) => {
-      if (arraysEqual(newVal, oldVal || [])) return
-
-      instance.highlightObjects(newVal)
-    },
-    { immediate: true, flush: 'sync' }
-  )
 
   watch(
     filters.selectedObjects,
@@ -564,12 +566,15 @@ function useViewerFiltersIntegration() {
       ).filter(isNonNullable)
       if (arraysEqual(newIds, oldIds)) return
 
+      state.ui.highlightedObjectIds.value = []
+
+      const selectionExtension = instance.getExtension(SelectionExtension)
+
       if (!newVal.length) {
-        instance.resetSelection()
+        selectionExtension.clearSelection()
         return
       }
-
-      instance.selectObjects(newIds)
+      selectionExtension.selectObjects(newIds)
     },
     { immediate: true, flush: 'sync' }
   )
@@ -839,6 +844,14 @@ function useViewerCursorIntegration() {
   })
 }
 
+const useCommentContextIntegration = () => {
+  const { cleanupThreadContext } = useCommentContext()
+
+  onBeforeUnmount(() => {
+    cleanupThreadContext()
+  })
+}
+
 export function useViewerPostSetup() {
   if (import.meta.server) return
   useViewerObjectAutoLoading()
@@ -863,5 +876,7 @@ export function useViewerPostSetup() {
   useViewerCursorIntegration()
   useViewerTreeIntegration()
   useViewModesPostSetup()
+  useHighlightingPostSetup()
+  useCommentContextIntegration()
   setupDebugMode()
 }

@@ -28,24 +28,24 @@
         hide-when-complete
         @infinite="onInfiniteLoad"
       />
-      <ViewerSavedViewsPanelViewEditDialog
-        v-model:open="showEditDialog"
-        :view="viewBeingEdited"
-      />
-      <ViewerSavedViewsPanelViewMoveDialog
-        v-model:open="showMoveDialog"
-        :view="viewBeingMoved"
-        @success="onMoveSuccess"
-      />
-      <ViewerSavedViewsPanelViewDeleteDialog
-        v-model:open="showDeleteDialog"
-        :view="viewBeingDeleted"
-      />
-      <ViewerSavedViewsPanelViewsGroupDeleteDialog
-        v-model:open="showGroupDeleteDialog"
-        :group="groupBeingDeleted"
-      />
     </div>
+    <ViewerSavedViewsPanelViewEditDialog
+      v-model:open="showEditDialog"
+      :view="viewBeingEdited"
+    />
+    <ViewerSavedViewsPanelViewMoveDialog
+      v-model:open="showMoveDialog"
+      :view="viewBeingMoved"
+      @success="onMoveSuccess"
+    />
+    <ViewerSavedViewsPanelViewDeleteDialog
+      v-model:open="showDeleteDialog"
+      :view="viewBeingDeleted"
+    />
+    <ViewerSavedViewsPanelViewsGroupDeleteDialog
+      v-model:open="showGroupDeleteDialog"
+      :group="groupBeingDeleted"
+    />
   </div>
 </template>
 <script setup lang="ts">

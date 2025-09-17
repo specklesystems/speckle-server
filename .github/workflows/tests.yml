@@ -283,7 +283,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       minio:
-        image: bitnami/minio
+        image: minio/minio:edge-cicd
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
@@ -378,7 +378,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       minio:
-        image: bitnami/minio
+        image: minio/minio:edge-cicd
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
@@ -463,6 +463,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
       postgres1:
         image: postgres:16.4-alpine3.20
         env:
@@ -477,6 +478,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
       postgres2:
         image: postgres:16.4-alpine3.20
         env:
@@ -491,8 +493,9 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
       minio0:
-        image: bitnami/minio
+        image: minio/minio:edge-cicd
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
@@ -501,7 +504,7 @@ jobs:
           - 9000:9000
 
       minio1:
-        image: bitnami/minio
+        image: minio/minio:edge-cicd
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
@@ -510,7 +513,7 @@ jobs:
           - 9001:9000
 
       minio2:
-        image: bitnami/minio
+        image: minio/minio:edge-cicd
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin

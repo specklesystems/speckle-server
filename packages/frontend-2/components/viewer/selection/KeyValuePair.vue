@@ -76,7 +76,11 @@ import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import type { KeyValuePair } from '~/components/viewer/selection/types'
 import { isNumericPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
-import type { PropertyInfo } from '@speckle/viewer'
+import {
+  BooleanFilterCondition,
+  type ExtendedPropertyInfo
+} from '~/lib/viewer/helpers/filters/types'
+import { isBooleanProperty } from '~/lib/viewer/helpers/filters/utils'
 
 const props = defineProps<{
   kvp: KeyValuePair
@@ -88,23 +92,26 @@ const {
   findFilterByKvp,
   addActiveFilter,
   updateActiveFilterValues,
+  updateFilterCondition,
   setNumericRange,
-  isLargeProperty
+  isLargeProperty,
+  getPropertyOptionsFromDataStore
 } = useFilterUtilities()
 
 const {
-  viewer: {
-    metadata: { availableFilters }
-  },
   ui: {
     panels: { active: activePanel }
   }
 } = useInjectedViewerState()
 
+const availableFilters = computed(
+  () => getPropertyOptionsFromDataStore() as ExtendedPropertyInfo[]
+)
+
 const showActionsMenu = ref(false)
 
 const showLargePropertyWarning = ref(false)
-const pendingFilter = ref<PropertyInfo | null>(null)
+const pendingFilter = ref<ExtendedPropertyInfo | null>(null)
 const pendingFilterCount = ref(0)
 
 const isUrlString = (v: unknown) => typeof v === 'string' && VALID_HTTP_URL.test(v)
@@ -118,10 +125,16 @@ const isCopyable = computed(() => {
 })
 
 const isFilterable = computed(() => {
+  if (props.kvp.value === null || props.kvp.value === undefined) {
+    return false
+  }
   return isKvpFilterable(props.kvp, availableFilters.value)
 })
 
 const getDisabledReason = computed(() => {
+  if (props.kvp.value === null || props.kvp.value === undefined) {
+    return 'Cannot filter on null values'
+  }
   return getFilterDisabledReason(props.kvp, availableFilters.value)
 })
 
@@ -141,7 +154,7 @@ const handleAddToFilters = (kvp: KeyValuePair) => {
   }
 }
 
-const addFilterWithValue = (filter: PropertyInfo, kvp: KeyValuePair) => {
+const addFilterWithValue = (filter: ExtendedPropertyInfo, kvp: KeyValuePair) => {
   const filterId = addActiveFilter(filter)
 
   if (isNumericPropertyInfo(filter)) {
@@ -151,6 +164,13 @@ const addFilterWithValue = (filter: PropertyInfo, kvp: KeyValuePair) => {
     if (!isNaN(numericValue)) {
       setNumericRange(filterId, numericValue, numericValue)
     }
+  } else if (isBooleanProperty(filter)) {
+    // For boolean filters, set the condition based on the value
+    const boolValue = kvp.value === true || kvp.value === 'true'
+    const condition = boolValue
+      ? BooleanFilterCondition.IsTrue
+      : BooleanFilterCondition.IsFalse
+    updateFilterCondition(filterId, condition)
   } else {
     // For string filters, use the selectedValues array
     const values = [String(kvp.value)]

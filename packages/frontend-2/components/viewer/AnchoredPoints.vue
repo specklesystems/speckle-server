@@ -120,11 +120,11 @@
 
     <!-- Shows up when filters are applied for an easy return to normality -->
     <div
-      v-if="hasAnyFiltersApplied"
       class="z-20 absolute left-1/2 -translate-x-1/2"
       :class="showFollowerMessage ? 'top-24' : 'top-14'"
     >
-      <ViewerGlobalFilterReset />
+      <ViewerGlobalFilterReset v-if="hasAnyFiltersApplied" />
+      <ViewerGlobalIsolationReset v-else-if="hasAnyIsolationsApplied" />
     </div>
   </div>
 </template>
@@ -162,7 +162,8 @@ const { sessionId } = viewerState
 const { users } = useViewerUserActivityTracking({ parentEl })
 const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
 const {
-  filters: { hasAnyFiltersApplied }
+  filters: { hasAnyFiltersApplied },
+  hasAnyIsolationsApplied
 } = useFilterUtilities({ state: viewerState })
 const canPostComment = useCheckViewerCommentingAccess()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
