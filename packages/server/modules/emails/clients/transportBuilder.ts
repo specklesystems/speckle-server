@@ -1,7 +1,14 @@
 import type { EmailTransport } from '@/modules/emails/domain/types'
+import {
+  EmailTransportType,
+  isEmailTransportType
+} from '@/modules/emails/domain/consts'
 import type { Logger } from '@/observability/logging'
+import { LogicError, MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+import { initializeMailjetTransporter } from '@/modules/emails/clients/mailjetApi'
 import { initializeSMTPTransporter } from '@/modules/emails/clients/smtp'
 import { initializeJSONEchoTransporter } from '@/modules/emails/clients/jsonEcho'
+import { initializeMailchimpTransporter } from '@/modules/emails/clients/mailchimp'
 import {
   getEmailHost,
   getEmailPassword,
@@ -14,28 +21,59 @@ import {
 let transporter: EmailTransport | undefined = undefined
 
 export const initializeEmailTransport = async (params: {
-  isSandboxMode?: boolean
+  emailTransportType: string
+  isSandboxMode: boolean
   logger: Logger
 }) => {
-  const { isSandboxMode = false, logger } = params
-
-  if (isSandboxMode) {
-    logger.info('📧 Using JSON Echo email transporter')
-    transporter = await initializeJSONEchoTransporter({ logger, isSandboxMode })
-  } else {
-    logger.info('📧 Using SMTP email transporter')
-    transporter = await initializeSMTPTransporter({
-      host: getEmailHost(),
-      port: getEmailPort(),
-      sslEnabled: isSSLEmailEnabled(),
-      tlsRequired: isTLSEmailRequired(),
-      auth: {
-        username: getEmailUsername(),
-        password: getEmailPassword()
-      },
-      logger,
-      isSandboxMode
+  const { emailTransportType, isSandboxMode, logger } = params
+  const unsupportedTransportTypeMessage =
+    'Unsupported email transporter type: {emailTransportType}'
+  if (!isEmailTransportType(emailTransportType)) {
+    throw new MisconfiguredEnvironmentError(unsupportedTransportTypeMessage, {
+      info: { emailTransportType }
     })
+  }
+
+  switch (emailTransportType) {
+    case EmailTransportType.SMTP:
+      logger.info('📧 Using SMTP email transporter')
+      transporter = await initializeSMTPTransporter({
+        host: getEmailHost(),
+        port: getEmailPort(),
+        sslEnabled: isSSLEmailEnabled(),
+        tlsRequired: isTLSEmailRequired(),
+        auth: {
+          username: getEmailUsername(),
+          password: getEmailPassword()
+        },
+        logger,
+        isSandboxMode
+      })
+      break
+    case EmailTransportType.JSONEcho:
+      logger.info('📧 Using JSON Echo email transporter')
+      transporter = await initializeJSONEchoTransporter({ logger, isSandboxMode })
+      break
+    case EmailTransportType.Mailjet:
+      logger.info('📧🛩️ Using Mailjet email transporter')
+      transporter = await initializeMailjetTransporter({
+        config: { apiKeyPublic: getEmailUsername(), apiKeyPrivate: getEmailPassword() },
+        logger,
+        isSandboxMode
+      })
+      break
+    case EmailTransportType.Mailchimp:
+      logger.info('📧🦜 Using Mailchimp email transporter')
+      transporter = await initializeMailchimpTransporter({
+        config: { apiKey: getEmailPassword() },
+        logger,
+        isSandboxMode
+      })
+      break
+    default:
+      throw new LogicError(unsupportedTransportTypeMessage, {
+        info: { emailTransportType }
+      })
   }
 }
 
