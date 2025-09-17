@@ -3,20 +3,29 @@ import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapServerRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { toProjectIdWhitelist } from '@/modules/core/helpers/token'
 import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
-import { countUsersFactory, listUsersFactory } from '@/modules/core/repositories/users'
 import {
+  countUsersFactory,
+  listUsersFactory,
+  updateUserEmailVerificationFactory
+} from '@/modules/core/repositories/users'
+import {
+  adminUpdateEmailVerificationFactory,
   adminInviteListFactory,
   adminProjectListFactory,
   adminUserListFactory
 } from '@/modules/core/services/admin'
+import { deleteVerificationsFactory } from '@/modules/emails/repositories'
 import {
   countServerInvitesFactory,
   queryServerInvitesFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
+import { asOperation } from '@/modules/shared/command'
 import {
   getTotalStreamCountFactory,
   getTotalUserCountFactory
 } from '@/modules/stats/repositories'
+import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
+import { ensureError } from '@speckle/shared'
 
 const adminUserList = adminUserListFactory({
   listUsers: listUsersFactory({ db }),
@@ -56,6 +65,36 @@ export default {
     serverStatistics: () => ({}),
     async inviteList(_parent, args) {
       return await adminInviteList(args)
+    }
+  },
+  Mutation: {
+    admin: () => ({})
+  },
+  AdminMutations: {
+    async updateEmailVerification(_parent, args, ctx) {
+      try {
+        return await asOperation(
+          async ({ db }) => {
+            const updateEmailVerification = adminUpdateEmailVerificationFactory({
+              deleteVerifications: deleteVerificationsFactory({ db }),
+              updateUserEmailVerification: updateUserEmailVerificationFactory({
+                db
+              }),
+              updateUserEmail: updateUserEmailFactory({ db })
+            })
+
+            return await updateEmailVerification(args.input)
+          },
+          {
+            logger: ctx.log,
+            name: 'adminUpdateEmailVerification',
+            description: 'Email verification updated by a server admin'
+          }
+        )
+      } catch (e) {
+        const err = ensureError(e, 'Unknown error while updating email verification')
+        ctx.log.info({ err }, 'Email verification by Admin failed.')
+      }
     }
   },
   ServerStatistics: {

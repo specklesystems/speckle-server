@@ -4,18 +4,22 @@ import type {
 } from '@/modules/core/domain/streams/operations'
 import type {
   AdminGetInviteList,
+  AdminUpdateEmailVerification,
   AdminUserList,
   CountUsers,
-  ListPaginatedUsersPage
+  ListPaginatedUsersPage,
+  UpdateUserEmailVerification
 } from '@/modules/core/domain/users/operations'
 import type { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import type { DeleteVerifications } from '@/modules/emails/domain/operations'
 import type {
   CountServerInvites,
   QueryServerInvites
 } from '@/modules/serverinvites/domain/operations'
 import type { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { BaseError } from '@/modules/shared/errors/base'
-import type { Nullable } from '@speckle/shared'
+import { type Nullable } from '@speckle/shared'
+import type { UpdateUserEmail } from '@/modules/core/domain/userEmails/operations'
 
 class CursorParsingError extends BaseError {
   static defaultMessage = 'Invalid cursor provided'
@@ -102,4 +106,30 @@ export const adminProjectListFactory =
       items: streams,
       totalCount
     }
+  }
+
+export const adminUpdateEmailVerificationFactory =
+  (deps: {
+    deleteVerifications: DeleteVerifications
+    updateUserEmailVerification: UpdateUserEmailVerification
+    updateUserEmail: UpdateUserEmail
+  }): AdminUpdateEmailVerification =>
+  async (args) => {
+    const { verified } = args
+    if (verified) {
+      await deps.deleteVerifications(args.email)
+    }
+
+    // this updates the 'users' table
+    await deps.updateUserEmailVerification({
+      email: args.email,
+      verified: args.verified
+    })
+
+    // this updates the 'user_emails' table
+    await deps.updateUserEmail({
+      query: { email: args.email },
+      update: { verified: args.verified }
+    })
+    return await deps.updateUserEmailVerification(args)
   }
