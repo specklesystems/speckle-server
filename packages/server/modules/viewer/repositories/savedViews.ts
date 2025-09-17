@@ -406,7 +406,7 @@ export const getGroupSavedViewsTotalCountFactory =
 export const getGroupSavedViewsPageItemsFactory =
   (deps: { db: Knex }): GetGroupSavedViewsPageItems =>
   async (params) => {
-    const sortByCol = params.sortBy || 'updatedAt'
+    const sortByCol = params.sortBy || 'position'
     const sortDir = params.sortDirection || 'desc'
 
     const q = getGroupSavedViewsBaseQueryFactory(deps)(params)

@@ -72,8 +72,8 @@ input SavedViewGroupViewsInput {
   """
   sortDirection: SortDirection
   """
-  Optionally specify sort by field. Default: updatedAt
-  Options: updatedAt, createdAt, name
+  Optionally specify sort by field. Default: position
+  Options: updatedAt, createdAt, name, position
   """
   sortBy: String
   limit: Int

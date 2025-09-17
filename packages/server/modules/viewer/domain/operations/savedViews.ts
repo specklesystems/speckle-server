@@ -83,7 +83,10 @@ export type GetGroupSavedViewsPageParams = GetGroupSavedViewsBaseParams & {
   limit?: MaybeNullOrUndefined<number>
   cursor?: MaybeNullOrUndefined<string>
   sortDirection?: MaybeNullOrUndefined<'asc' | 'desc'>
-  sortBy?: MaybeNullOrUndefined<'createdAt' | 'name' | 'updatedAt'>
+  /**
+   * Null means - manual positioning
+   */
+  sortBy?: MaybeNullOrUndefined<'createdAt' | 'name' | 'updatedAt' | 'position'>
 }
 
 export type GetGroupSavedViewsTotalCount = (
@@ -176,6 +179,9 @@ export type SetNewHomeView = (params: {
   newHomeViewId: string | null
 }) => Promise<boolean>
 
+/**
+ * Get position for a new view being added to the end of the (potentially ungrouped) group
+ */
 export type GetNewViewPosition = (params: {
   projectId: string
   resourceIdString: string
