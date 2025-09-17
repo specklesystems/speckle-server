@@ -4,27 +4,24 @@
   >
     <PresentationControlsButton
       :icon="LucideChevronLeft"
-      :disabled="disablePrevious"
-      @click="emit('onPrevious')"
+      :disabled="isFirstSlide"
+      @click="goToPrevious"
     />
     <PresentationControlsButton
       :icon="LucideChevronRight"
-      :disabled="disableNext"
-      @click="emit('onNext')"
+      :disabled="isLastSlide"
+      @click="goToNext"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { LucideChevronLeft, LucideChevronRight } from 'lucide-vue-next'
+import {
+  usePresentationState,
+  usePresentationActions
+} from '~/lib/presentations/composables/setup'
 
-const emit = defineEmits<{
-  (e: 'onPrevious'): void
-  (e: 'onNext'): void
-}>()
-
-defineProps<{
-  disablePrevious: boolean
-  disableNext: boolean
-}>()
+const { isFirstSlide, isLastSlide } = usePresentationState()
+const { goToPrevious, goToNext } = usePresentationActions()
 </script>

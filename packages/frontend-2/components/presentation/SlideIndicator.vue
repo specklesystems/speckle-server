@@ -10,8 +10,7 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  currentSlideIndex: number
-  slideCount: number
-}>()
+import { usePresentationState } from '~/lib/presentations/composables/setup'
+
+const { currentSlideIndex, slideCount } = usePresentationState()
 </script>

@@ -4,8 +4,11 @@
   >
     <section class="pt-2 flex flex-col gap-4">
       <div class="px-2">
-        <h1 v-if="isPresentMode && title" class="text-xl font-medium text-foreground">
-          {{ title }}
+        <h1
+          v-if="isPresentMode && currentSlide?.name"
+          class="text-xl font-medium text-foreground"
+        >
+          {{ currentSlide?.name }}
         </h1>
         <FormTextInput
           v-else
@@ -20,8 +23,11 @@
       </div>
 
       <div v-if="isPresentMode" class="px-2">
-        <p v-if="description" class="text-body-sm text-foreground whitespace-pre-wrap">
-          {{ description }}
+        <p
+          v-if="currentSlide?.description"
+          class="text-body-sm text-foreground whitespace-pre-wrap"
+        >
+          {{ currentSlide?.description }}
         </p>
       </div>
       <div v-else class="px-2">
@@ -40,26 +46,32 @@
 </template>
 
 <script setup lang="ts">
-import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { usePresentationState } from '~/lib/presentations/composables/setup'
+import { graphql } from '~~/lib/common/generated/gql'
 
-const props = defineProps<{
-  title: MaybeNullOrUndefined<string>
-  description: MaybeNullOrUndefined<string>
-}>()
+graphql(`
+  fragment PresentationInfoSidebar_SavedView on SavedView {
+    id
+    name
+    description
+  }
+`)
 
-const editableTitle = ref(props.title || '')
-const editableDescription = ref(props.description || '')
+const { currentSlide } = usePresentationState()
+
+const editableTitle = ref(currentSlide.value?.name || '')
+const editableDescription = ref(currentSlide.value?.description || '')
 const isPresentMode = ref(false)
 
 watch(
-  () => props.title,
+  () => currentSlide.value?.name,
   (newTitle) => {
     editableTitle.value = newTitle || ''
   }
 )
 
 watch(
-  () => props.description,
+  () => currentSlide.value?.description,
   (newDescription) => {
     editableDescription.value = newDescription || ''
   }

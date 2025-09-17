@@ -9,11 +9,11 @@
         <LucidePanelLeft v-else class="size-4" />
       </PresentationFloatingPanelButton>
       <h1
-        v-if="title"
+        v-if="presentation?.title"
         class="text-body-xs font-medium text-foreground leading-none md:pr-1.5"
         :class="{ 'hidden md:block': isSidebarOpen }"
       >
-        {{ title }}
+        {{ presentation.title }}
       </h1>
 
       <LayoutMenu
@@ -33,9 +33,17 @@
 </template>
 
 <script setup lang="ts">
-import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { LucideArrowLeftToLine, LucidePanelLeft, LucideEllipsis } from 'lucide-vue-next'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+import { usePresentationState } from '~/lib/presentations/composables/setup'
+import { graphql } from '~~/lib/common/generated/gql'
+
+graphql(`
+  fragment PresentationHeader_SavedViewGroup on SavedViewGroup {
+    id
+    title
+  }
+`)
 
 enum MenuItems {
   OpenInViewer = 'open-in-viewer'
@@ -45,12 +53,9 @@ const emit = defineEmits<{
   (e: 'toggleSidebar'): void
 }>()
 
-defineProps<{
-  title: MaybeNullOrUndefined<string>
-}>()
-
 const isSidebarOpen = defineModel<boolean>('is-sidebar-open')
 
+const { presentation } = usePresentationState()
 const menuId = useId()
 
 const showMenu = ref(false)
@@ -58,7 +63,7 @@ const showMenu = ref(false)
 const menuItems = computed<LayoutMenuItem[][]>(() => [
   [
     {
-      title: 'Copy link',
+      title: 'Open in viewer',
       id: MenuItems.OpenInViewer
     }
   ]
