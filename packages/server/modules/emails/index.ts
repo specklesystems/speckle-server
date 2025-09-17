@@ -1,13 +1,14 @@
-/* istanbul ignore file */
 import { emailLogger, moduleLogger } from '@/observability/logging'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import RestApi from '@/modules/emails/rest/index'
 import {
   getEmailTransporterType,
   isEmailEnabled,
-  isEmailSandboxMode
+  isEmailSandboxMode,
+  isTestEnv
 } from '@/modules/shared/helpers/envHelper'
 import { initializeEmailTransport } from '@/modules/emails/clients/transportBuilder'
+import { EmailTransportType } from '@/modules/emails/domain/consts'
 
 const emailsModule: SpeckleModule = {
   init: async ({ app }) => {
@@ -20,6 +21,14 @@ const emailsModule: SpeckleModule = {
         isSandboxMode: isEmailSandboxMode(),
         logger: emailLogger
       })
+    } else if (isTestEnv()) {
+      await initializeEmailTransport({
+        emailTransportType: EmailTransportType.JSONEcho,
+        isSandboxMode: true,
+        logger: emailLogger
+      })
+    } else {
+      moduleLogger.warn('📧 Email functionality is disabled')
     }
 
     // init rest api

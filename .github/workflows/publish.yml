@@ -27,8 +27,10 @@ jobs:
       image: speckle/pre-commit-runner:latest
     env:
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
-      DOCKER_REG_USER: ${{ inputs.DOCKERHUB_USERNAME }}
-      DOCKER_REG_PASS: ${{ secrets.DOCKERHUB_TOKEN }}
+      REGISTRY_USERNAME: ${{ inputs.DOCKERHUB_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+      HELM_REGISTRY_DOMAIN: registry-1.docker.io
+      HELM_REPOSITORY_PATH: speckle
     steps:
       - uses: actions/checkout@v4.2.2
         with:

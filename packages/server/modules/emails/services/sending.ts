@@ -12,6 +12,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { EmailsEvents } from '@/modules/emails/domain/events'
 import type { EmailOptions } from '@/modules/emails/domain/types'
 import cryptoRandomString from 'crypto-random-string'
+import { SentEmailDeliveryStatus } from '@/modules/emails/domain/consts'
 
 /**
  * Send out an e-mail
@@ -72,7 +73,9 @@ export const sendEmail: SendEmail = async ({
     const distinctIds = await Promise.all(
       emails.map((email) => resolveMixpanelUserId(email))
     )
-    logger.info(
+    ;(sentEmailResponse.status === SentEmailDeliveryStatus.FAILED
+      ? logger.warn
+      : logger.info)(
       {
         subject,
         distinctIds,
@@ -81,6 +84,7 @@ export const sendEmail: SendEmail = async ({
       },
       'Email "{subject}" sent out to distinctIds {distinctIds}; status: {deliveryStatus}'
     )
+
     return true
   } catch (error) {
     const err = ensureError(error, 'Unknown error when sending email')

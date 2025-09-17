@@ -25,23 +25,13 @@ export const initializeEmailTransport = async (params: {
   isSandboxMode: boolean
   logger: Logger
 }) => {
-  const { isSandboxMode, logger } = params
-  let { emailTransportType } = params
+  const { emailTransportType, isSandboxMode, logger } = params
   const unsupportedTransportTypeMessage =
     'Unsupported email transporter type: {emailTransportType}'
   if (!isEmailTransportType(emailTransportType)) {
     throw new MisconfiguredEnvironmentError(unsupportedTransportTypeMessage, {
       info: { emailTransportType }
     })
-  }
-
-  if (emailTransportType === EmailTransportType.SMTP && params.isSandboxMode) {
-    // if we're in sandbox mode, we won't use SMTP as our transport, so we switch to JSON echo
-    // this retains legacy behaviour
-    emailTransportType = EmailTransportType.JSONEcho
-    logger.info(
-      '📧 SMTP email transport selected but email sandbox mode is enabled, switching to JSON Echo transport'
-    )
   }
 
   switch (emailTransportType) {

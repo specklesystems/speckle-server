@@ -77,6 +77,10 @@ type ServerConfiguration {
   Whether the email feature is enabled on this server
   """
   isEmailEnabled: Boolean!
+  """
+  Email verification code timeout in minutes
+  """
+  emailVerificationTimeoutMinutes: Int!
 }
 
 extend type Mutation {
