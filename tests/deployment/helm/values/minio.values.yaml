@@ -8,6 +8,10 @@ image:
 persistence:
   enabled: true
   existingClaim: minio-pvc
+defaultInitContainers:
+  volumePermissions:
+    image:
+      repository: bitnamilegacy/os-shell
 volumePermissions:
   enabled: true
 global:
