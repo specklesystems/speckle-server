@@ -36,3 +36,6 @@ primary:
             TABLESPACE = pg_default
             CONNECTION LIMIT = -1;
         -- End Speckle Server Tests
+global:
+  security:
+    allowInsecureImages: true # needed for bitnamilegacy images

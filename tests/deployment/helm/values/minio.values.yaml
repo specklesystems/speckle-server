@@ -10,3 +10,6 @@ persistence:
   existingClaim: minio-pvc
 volumePermissions:
   enabled: true
+global:
+  security:
+    allowInsecureImages: true # needed for bitnamilegacy images

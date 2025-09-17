@@ -3,3 +3,6 @@ auth:
   password: valkey
 image:
   repository: bitnamilegacy/valkey
+global:
+  security:
+    allowInsecureImages: true # needed for bitnamilegacy images
