@@ -47,6 +47,7 @@ import {
 } from '~/lib/core/composables/fileImport'
 import { graphql } from '~/lib/common/generated/gql'
 import { getModelItemRoute } from '~/lib/projects/helpers/models'
+import { useViewerRouteBuilder } from '~/lib/projects/composables/models'
 
 const isValidModelName: GenericValidateFunction<string> = (name) => {
   name = name.trim()
@@ -438,7 +439,19 @@ export function useCopyModelLink() {
       throw new Error('Not supported in SSR')
     }
 
-    const path = getModelItemRoute(model)
+    let path: string
+    if (versionId) {
+      // Use the viewer route builder to create a URL with version ID
+      const { versionUrl } = useViewerRouteBuilder()
+      path = versionUrl({
+        projectId: model.projectId,
+        modelId: model.id,
+        versionId
+      })
+    } else {
+      path = getModelItemRoute(model)
+    }
+
     const url = new URL(path, window.location.toString()).toString()
 
     await copy(url)
