@@ -3,7 +3,10 @@ import { resourceBuilder } from '@speckle/shared/viewer/route'
 import type { AsyncWritableComputedRef } from '@speckle/ui-components'
 import { useQuery } from '@vue/apollo-composable'
 import type { Get } from 'type-fest'
-import type { ProjectPresentationPageQuery } from '~/lib/common/generated/gql/graphql'
+import {
+  type ProjectPresentationPageQuery,
+  SavedViewVisibility
+} from '~/lib/common/generated/gql/graphql'
 import { projectPresentationPageQuery } from '~/lib/presentations/graphql/queries'
 
 type ResponseProject = Optional<Get<ProjectPresentationPageQuery, 'project'>>
@@ -55,7 +58,8 @@ const setupStateResponse = (initState: InitState): ResponseState => {
     projectId: initState.projectId.value,
     savedViewGroupId: initState.presentationId.value,
     input: {
-      limit: 100
+      limit: 100,
+      onlyVisibility: SavedViewVisibility.Public
     }
   }))
 
