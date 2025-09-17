@@ -9,7 +9,6 @@ import type {
   CountUsers,
   ListPaginatedUsersPage,
   UpdateUserEmailVerification,
-  UpdateUserVerification
 } from '@/modules/core/domain/users/operations'
 import type { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import type { DeleteVerifications } from '@/modules/emails/domain/operations'
@@ -18,10 +17,9 @@ import type {
   QueryServerInvites
 } from '@/modules/serverinvites/domain/operations'
 import type { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
-import { asMultiregionalOperation } from '@/modules/shared/command'
 import { BaseError } from '@/modules/shared/errors/base'
 import { type Nullable } from '@speckle/shared'
-import type { UpdateUserEmail } from '../domain/userEmails/operations'
+import type { UpdateUserEmail } from '@/modules/core/domain/userEmails/operations'
 
 class CursorParsingError extends BaseError {
   static defaultMessage = 'Invalid cursor provided'
