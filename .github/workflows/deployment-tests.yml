@@ -1,6 +1,7 @@
 name: Run deployment test
 
 on:
+  push:
   workflow_call:
     inputs:
       IMAGE_VERSION_TAG:
