@@ -21,7 +21,11 @@ import { DatabaseError } from '@/modules/shared/errors'
 import { validateRequest } from 'zod-express'
 import { z } from 'zod'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
-import { streamReadPermissionsPipelineFactory } from '@/modules/shared/authz'
+import {
+  allowAnonymousUsersOnPublicStreams,
+  allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
+  streamReadPermissionsPipelineFactory
+} from '@/modules/shared/authz'
 import { chunk } from 'lodash-es'
 
 export default (app: Application) => {
@@ -152,7 +156,9 @@ export default (app: Application) => {
     authMiddlewareCreator([
       ...streamReadPermissionsPipelineFactory({
         getStream: getStreamFactory({ db })
-      })
+      }),
+      allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
+      allowAnonymousUsersOnPublicStreams
     ]),
     validateRequest({
       body: reqBody
