@@ -83,6 +83,5 @@ export const NON_FILTERABLE_OBJECT_KEYS = [
   'vertices',
   'faces',
   'colors',
-  'transform',
   'bbox'
 ] as const

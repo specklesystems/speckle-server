@@ -37,8 +37,8 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { useFilterColoringHelpers } from '~/lib/viewer/composables/filtering/coloringHelpers'
 import type { NumericPropertyInfo } from '@speckle/viewer'
 import { containsAll } from '~~/lib/common/helpers/utils'
 import type { Automate } from '@speckle/shared'
@@ -55,29 +55,32 @@ const props = defineProps<{
 
 const {
   viewer: {
-    metadata: { filteringState, filteringDataStore }
+    metadata: { filteringDataStore }
   }
 } = useInjectedViewerState()
 
-const { isolateObjects, resetFilters, addActiveFilter, toggleFilterApplied, filters } =
+const { isolateObjects, resetFilters, resetIsolations, addActiveFilter, filters } =
   useFilterUtilities()
-const { setSelectionFromObjectIds, clearSelection } = useSelectionUtilities()
+const { setColorFilter, removeColorFilter } = useFilterColoringHelpers()
+const logger = useLogger()
 
 const hasMetadataGradient = computed(() => {
   if (props.result.metadata?.gradient) return true
   return false
 })
 
-const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
 const isIsolated = computed(() => {
-  if (!isolatedObjects.value?.length) return false
-  if (
-    props.functionId &&
-    filteringState.value?.activePropFilterKey === props.functionId
-  )
-    return false
+  // Gradient results show active via metadataGradientIsSet
+  if (hasMetadataGradient.value) {
+    return metadataGradientIsSet.value
+  }
+
+  // Non-gradient results show active if their objects are isolated
+  const isolatedIds = filters.isolatedObjectIds.value
   const ids = resultObjectIds.value
-  return containsAll(ids, isolatedObjects.value)
+
+  if (!isolatedIds?.length) return false
+  return containsAll(ids, isolatedIds)
 })
 
 const resultObjectIds = computed(() => {
@@ -90,20 +93,36 @@ const handleClick = () => {
     setOrUnsetGradient()
     return
   }
-
   isolateOrUnisolateObjects()
 }
 
 const isolateOrUnisolateObjects = () => {
   const ids = resultObjectIds.value
-  const isCurrentlyIsolated = isIsolated.value
+  const wasIsolated = containsAll(ids, filters.isolatedObjectIds.value || [])
 
-  resetFilters()
-  if (isCurrentlyIsolated) {
-    clearSelection()
-  } else {
+  logger.debug('Isolation toggle:', {
+    resultCategory: props.result.category,
+    objectCount: ids.length,
+    wasIsolated,
+    currentIsolatedCount: filters.isolatedObjectIds.value?.length || 0
+  })
+
+  // Always clear existing isolation (radio button behavior)
+  resetIsolations()
+  logger.debug(
+    'After reset, isolated count:',
+    filters.isolatedObjectIds.value?.length || 0
+  )
+
+  // If wasn't isolated before, isolate now (toggle behavior)
+  if (!wasIsolated) {
     isolateObjects(ids)
-    setSelectionFromObjectIds(ids)
+    logger.debug(
+      'After isolate, isolated count:',
+      filters.isolatedObjectIds.value?.length || 0
+    )
+  } else {
+    logger.debug('Result was isolated, now deactivated')
   }
 }
 
@@ -154,11 +173,20 @@ const computedFilterData = computed((): NumericFilterData | undefined => {
 })
 
 const setOrUnsetGradient = () => {
+  logger.debug('Gradient toggle:', {
+    resultCategory: props.result.category,
+    isCurrentlySet: metadataGradientIsSet.value
+  })
+
   if (metadataGradientIsSet.value) {
+    logger.debug('Removing gradient filter')
     resetFilters()
+    removeColorFilter()
     metadataGradientIsSet.value = false
     return
   }
+
+  logger.debug('Setting gradient filter')
   resetFilters()
   if (!props.result.metadata) return
   if (!computedPropInfo.value) return
@@ -169,7 +197,8 @@ const setOrUnsetGradient = () => {
 
   metadataGradientIsSet.value = true
   const filterId = addActiveFilter(computedPropInfo.value)
-  toggleFilterApplied(filterId)
+
+  setColorFilter(filterId)
 }
 
 const iconAndColor = computed(() => {

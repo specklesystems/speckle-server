@@ -2,7 +2,8 @@ import { useQuery } from '@vue/apollo-composable'
 import { cloneDeep } from 'lodash-es'
 import {
   serverInfoAllScopesQuery,
-  serverInfoBlobSizeLimitQuery
+  serverInfoBlobSizeLimitQuery,
+  serverInfoEmailVerificationTimeoutQuery
 } from '~~/lib/common/graphql/queries'
 import { prettyFileSize } from '~~/lib/core/helpers/file'
 import type { AllScopes } from '@speckle/shared'
@@ -37,5 +38,24 @@ export const useServerInfoScopes = () => {
 
   return {
     scopes
+  }
+}
+
+export const useEmailVerificationTimeout = () => {
+  const { result } = useQuery(serverInfoEmailVerificationTimeoutQuery)
+
+  const timeoutMinutes = computed(
+    () => result.value?.serverInfo.configuration.emailVerificationTimeoutMinutes || 5
+  )
+
+  const timeoutDisplayString = computed(() => {
+    const minutes = timeoutMinutes.value
+    if (minutes === 1) return '1 minute'
+    return `${minutes} minutes`
+  })
+
+  return {
+    timeoutMinutes,
+    timeoutDisplayString
   }
 }
