@@ -57,7 +57,7 @@ We have a detailed section on [deploying a Speckle server](https://docs.speckle.
 ## TL;DR;
 
 We're using yarn and its workspaces functionalities to manage the monorepo.
-Make sure you are using [Node](https://nodejs.org/en) version 22.
+Make sure you are using [Node](https://nodejs.org/en) version 22 and Docker.
 To get started, run:
 
 1. `corepack enable`
@@ -65,12 +65,10 @@ To get started, run:
 1. `yarn build:public`
 1. `yarn build`
 
-After this, you can use the scripts in the individual packages or run them all in dev mode:
+After this, you can start the development dependencies and run all packages in dev mode. Dev mode will watch for changes and rebuild automatically:
 
-- `yarn dev`
-
-For development you'll also want to run `yarn dev:docker:up` which will start up the docker containers you will need
-to be able to run the apps on your machine.
+1. `yarn dev:docker:up`
+1. `yarn dev`
 
 ## IDE
 
@@ -84,29 +82,6 @@ To get proper TS support in standard TS files as well as Vue files, we rely on t
 The default Volar setup can be quite resource intensive, however, because there end up being standard TS Language Server instances running as well as Vue TS Language server instances. To resolve this issue we rely on Volar's [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471).
 
 Essentially, ensure you have **Volar** enabled, and the built in **TypeScript and JavaScript Language Features** extension disabled (for this workspace)!
-
-## Useful containers
-
-### Maildev
-
-We have a [Maildev](https://github.com/maildev/maildev) container available that you can use to see all e-mails sent out from the app. Make sure your `server` .env file is configured properly to use it:
-
-```bash
-EMAIL=true
-EMAIL_FROM="no-reply@example.org"
-EMAIL_HOST="localhost"
-EMAIL_PORT="1025"
-```
-
-The web portal is available at `localhost:1080` and it's listening for mail on port `1025`.
-
-### Minio (S3 storage)
-
-Default credentials are: `minioadmin:minioadmin`
-Main storage Web UI: [http://localhost:9001/](http://localhost:9001/)
-Region1 storage Web UI: [http://localhost:9021/](http://localhost:9021/)
-
-You can use the web UI to validate uploaded blobs
 
 # Contributing
 
