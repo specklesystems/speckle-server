@@ -35,7 +35,10 @@ import {
   useViewerCameraTracker,
   useViewerEventListener
 } from '~~/lib/viewer/composables/viewer'
-import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commentManagement'
+import {
+  useCommentContext,
+  useViewerCommentUpdateTracking
+} from '~~/lib/viewer/composables/commentManagement'
 import { getCacheId } from '~~/lib/common/helpers/graphql'
 import {
   useViewerOpenedThreadUpdateEmitter,
@@ -841,6 +844,14 @@ function useViewerCursorIntegration() {
   })
 }
 
+const useCommentContextIntegration = () => {
+  const { cleanupThreadContext } = useCommentContext()
+
+  onBeforeUnmount(() => {
+    cleanupThreadContext()
+  })
+}
+
 export function useViewerPostSetup() {
   if (import.meta.server) return
   useViewerObjectAutoLoading()
@@ -866,5 +877,6 @@ export function useViewerPostSetup() {
   useViewerTreeIntegration()
   useViewModesPostSetup()
   useHighlightingPostSetup()
+  useCommentContextIntegration()
   setupDebugMode()
 }

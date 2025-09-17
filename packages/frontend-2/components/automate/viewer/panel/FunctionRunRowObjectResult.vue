@@ -59,10 +59,8 @@ const {
   }
 } = useInjectedViewerState()
 
-const { isolateObjects, resetFilters, resetIsolations, addActiveFilter, filters } =
-  useFilterUtilities()
+const { isolateObjects, resetFilters, addActiveFilter, filters } = useFilterUtilities()
 const { setColorFilter, removeColorFilter } = useFilterColoringHelpers()
-const logger = useLogger()
 
 const hasMetadataGradient = computed(() => {
   if (props.result.metadata?.gradient) return true
@@ -100,29 +98,12 @@ const isolateOrUnisolateObjects = () => {
   const ids = resultObjectIds.value
   const wasIsolated = containsAll(ids, filters.isolatedObjectIds.value || [])
 
-  logger.debug('Isolation toggle:', {
-    resultCategory: props.result.category,
-    objectCount: ids.length,
-    wasIsolated,
-    currentIsolatedCount: filters.isolatedObjectIds.value?.length || 0
-  })
+  resetFilters()
+  removeColorFilter()
+  metadataGradientIsSet.value = false
 
-  // Always clear existing isolation (radio button behavior)
-  resetIsolations()
-  logger.debug(
-    'After reset, isolated count:',
-    filters.isolatedObjectIds.value?.length || 0
-  )
-
-  // If wasn't isolated before, isolate now (toggle behavior)
   if (!wasIsolated) {
     isolateObjects(ids)
-    logger.debug(
-      'After isolate, isolated count:',
-      filters.isolatedObjectIds.value?.length || 0
-    )
-  } else {
-    logger.debug('Result was isolated, now deactivated')
   }
 }
 
@@ -173,20 +154,13 @@ const computedFilterData = computed((): NumericFilterData | undefined => {
 })
 
 const setOrUnsetGradient = () => {
-  logger.debug('Gradient toggle:', {
-    resultCategory: props.result.category,
-    isCurrentlySet: metadataGradientIsSet.value
-  })
-
   if (metadataGradientIsSet.value) {
-    logger.debug('Removing gradient filter')
     resetFilters()
     removeColorFilter()
     metadataGradientIsSet.value = false
     return
   }
 
-  logger.debug('Setting gradient filter')
   resetFilters()
   if (!props.result.metadata) return
   if (!computedPropInfo.value) return
