@@ -24,7 +24,7 @@
     </Portal>
     <Portal to="primary-actions">
       <div class="flex items-center gap-2">
-        <DashboardsShare :id="dashboard?.id" />
+        <DashboardsShare :id="dashboard?.id" :workspace-slug="workspace?.slug" />
         <FormButton
           v-tippy="'Toggle fullscreen'"
           size="sm"
