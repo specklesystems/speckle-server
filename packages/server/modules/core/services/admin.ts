@@ -8,7 +8,7 @@ import type {
   AdminUserList,
   CountUsers,
   ListPaginatedUsersPage,
-  UpdateUserEmailVerification,
+  UpdateUserEmailVerification
 } from '@/modules/core/domain/users/operations'
 import type { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import type { DeleteVerifications } from '@/modules/emails/domain/operations'
@@ -110,12 +110,23 @@ export const adminProjectListFactory =
 
 export const adminUpdateEmailVerificationFactory =
   (deps: {
-    updateUserEmailVerification: UpdateUserEmailVerification
     deleteVerifications: DeleteVerifications
+    updateUserEmailVerification: UpdateUserEmailVerification
     updateUserEmail: UpdateUserEmail
   }): AdminUpdateEmailVerification =>
   async (args) => {
-    await deps.deleteVerifications(args.email)
+    const { verified } = args
+    if (verified) {
+      await deps.deleteVerifications(args.email)
+    }
+
+    // this updates the 'users' table
+    await deps.updateUserEmailVerification({
+      email: args.email,
+      verified: args.verified
+    })
+
+    // this updates the 'user_emails' table
     await deps.updateUserEmail({
       query: { email: args.email },
       update: { verified: args.verified }
