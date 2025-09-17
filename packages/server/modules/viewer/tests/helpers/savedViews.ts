@@ -16,6 +16,7 @@ import {
 import { formatResourceIdsForGroup } from '@/modules/viewer/helpers/savedViews'
 import {
   getModelHomeSavedViewFactory,
+  getNewViewPositionFactory,
   getSavedViewFactory,
   getSavedViewGroupFactory,
   getStoredViewCountFactory,
@@ -132,7 +133,8 @@ export const createTestSavedView = async (params?: {
     }),
     setNewHomeView: setNewHomeViewFactory({
       db
-    })
+    }),
+    getNewViewPosition: getNewViewPositionFactory({ db })
   })
 
   const createdView = await createSavedView({

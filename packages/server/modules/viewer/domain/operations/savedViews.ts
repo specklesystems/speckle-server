@@ -176,6 +176,12 @@ export type SetNewHomeView = (params: {
   newHomeViewId: string | null
 }) => Promise<boolean>
 
+export type GetNewViewPosition = (params: {
+  projectId: string
+  resourceIdString: string
+  groupId: string | null
+}) => Promise<number>
+
 /////////////////////
 // SERVICE OPERATIONS:
 /////////////////////

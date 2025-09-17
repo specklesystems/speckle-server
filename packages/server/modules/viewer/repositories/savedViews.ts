@@ -1,5 +1,6 @@
 import { Branches, buildTableHelper } from '@/modules/core/dbSchema'
 import type { Model } from '@/modules/core/domain/branches/types'
+import { LogicError } from '@/modules/shared/errors'
 import {
   compositeCursorTools,
   formatJsonArrayRecords
@@ -27,7 +28,8 @@ import type {
   UpdateSavedViewGroupRecord,
   GetModelHomeSavedViews,
   GetModelHomeSavedView,
-  SetNewHomeView
+  SetNewHomeView,
+  GetNewViewPosition
 } from '@/modules/viewer/domain/operations/savedViews'
 import {
   SavedViewVisibility,
@@ -757,4 +759,40 @@ export const setNewHomeViewFactory =
     await q
 
     return true
+  }
+
+export const getNewViewPositionFactory =
+  (deps: { db: Knex }): GetNewViewPosition =>
+  async (params) => {
+    const { projectId, resourceIdString, groupId } = params
+
+    const groupResourceIds = formatResourceIdsForGroup(resourceIdString)
+    if (!groupId && !groupResourceIds.length) {
+      throw new LogicError(
+        'Cannot determine new view position without resources or groupId'
+      )
+    }
+
+    const q = tables
+      .savedViews(deps.db)
+      .where({
+        [SavedViews.col.projectId]: projectId,
+        [SavedViews.col.groupId]: groupId
+      })
+      .select<Array<{ newPosition: number }>>(
+        deps.db.raw('COALESCE(MAX(??), 0) + 1000 as "newPosition"', [
+          SavedViews.col.position
+        ])
+      )
+
+    if (!groupId) {
+      // Logic for ungrouped views - group within those
+      q.andWhereRaw(
+        `cardinality(ARRAY(SELECT UNNEST(??) INTERSECT SELECT UNNEST(?::varchar[]))) > 0`,
+        [SavedViews.col.groupResourceIds, groupResourceIds]
+      )
+    }
+
+    const [result] = await q
+    return result?.newPosition || 1000
   }
