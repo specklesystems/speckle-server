@@ -135,8 +135,8 @@ const expandedModelId = ref<string | null>(null)
 
 const showAddModel = ref(false)
 
-const expandedNodes = shallowRef<Set<string>>(new Set())
-const expandedModels = shallowRef<Set<string>>(new Set())
+const expandedNodes = ref<Set<string>>(new Set())
+const expandedModels = ref<Set<string>>(new Set())
 const disableScrollOnNextSelection = ref(false)
 
 const stickyHeader = ref<{ model: ModelItem; versionId: string } | null>(null)
@@ -254,7 +254,6 @@ const toggleModelExpansion = (modelId: string) => {
   } else {
     expandedModels.value.add(modelId)
   }
-  triggerRef(expandedModels)
 }
 
 const toggleTreeItemExpansion = (itemId: string) => {
@@ -263,7 +262,6 @@ const toggleTreeItemExpansion = (itemId: string) => {
   } else {
     expandedNodes.value.add(itemId)
   }
-  triggerRef(expandedNodes)
 }
 
 const handleItemClick = (
@@ -354,7 +352,6 @@ const handleSelectionChange = useDebounceFn(
 
           if (containsObject) {
             expandedModels.value.add(model.id)
-            triggerRef(expandedModels)
 
             const result = expandNodesToShowObject(
               modelRootNodes,
@@ -364,7 +361,6 @@ const handleSelectionChange = useDebounceFn(
             )
             if (result.found && result.nodesToExpand.length > 0) {
               result.nodesToExpand.forEach((nodeId) => expandedNodes.value.add(nodeId))
-              triggerRef(expandedNodes)
             }
 
             scrollToSelectedItem(selectedObj.id)
