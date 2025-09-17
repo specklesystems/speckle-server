@@ -37,7 +37,7 @@ export const lightThemeVariables = {
   '--outline-2': primitives.neutral[90],
   '--outline-3': primitives.neutral[95],
   '--outline-4': primitives.blue[50],
-  '--outline-5': primitives.neutral[85],
+  '--outline-5': primitives.neutral[75],
 
   /* highlight variations */
   '--highlight-1': primitives.neutralAlpha[97],
@@ -47,18 +47,18 @@ export const lightThemeVariables = {
   /* success variations */
   '--success': primitives.green[65],
   '--success-lighter': primitives.green[85],
-  '--success-lightest': primitives.green[95],
+  '--success-lightest': primitives.green[97],
   '--success-darker': primitives.green[55],
 
   /* warning variations */
-  '--warning': primitives.yellow[65],
+  '--warning': primitives.yellow[75],
   '--warning-lighter': primitives.yellow[85],
   '--warning-lightest': primitives.yellow[97],
   '--warning-darker': primitives.yellow[55],
 
   /* info variations */
   '--info': primitives.blue[55],
-  '--info-lighter': primitives.blue[90],
+  '--info-lighter': primitives.blue[92],
   '--info-lightest': primitives.blue[95],
   '--info-darker': primitives.blue[30],
 
@@ -87,7 +87,7 @@ export const darkThemeVariables = {
   '--foreground': primitives.darkNeutral[99],
   /* dimmer foreground color, e.g. caption text */
   '--foreground-2': primitives.darkNeutral[75],
-  '--foreground-3': primitives.darkNeutral[50],
+  '--foreground-3': primitives.darkNeutral[55],
   '--foreground-on-primary': '#FFFFFF',
   '--foreground-disabled': '#FFFFFF50',
 
@@ -106,9 +106,9 @@ export const darkThemeVariables = {
   '--outline-5': primitives.darkNeutral[30],
 
   /* highlight variations */
-  '--highlight-1': primitives.darkNeutralAlpha[15],
-  '--highlight-2': primitives.darkNeutralAlpha[20],
-  '--highlight-3': primitives.darkNeutralAlpha[25],
+  '--highlight-1': primitives.darkNeutralAlpha[10],
+  '--highlight-2': primitives.darkNeutralAlpha[15],
+  '--highlight-3': primitives.darkNeutralAlpha[20],
 
   /* success variations */
   '--success': primitives.green[55],
@@ -117,10 +117,10 @@ export const darkThemeVariables = {
   '--success-darker': primitives.green[65],
 
   /* warning variations */
-  '--warning': primitives.yellow[75],
+  '--warning': primitives.yellow[65],
   '--warning-lighter': primitives.yellow[30],
   '--warning-lightest': primitives.yellow[15],
-  '--warning-darker': primitives.yellow[65],
+  '--warning-darker': primitives.yellow[75],
 
   /* info variations */
   '--info': primitives.blue[35],
