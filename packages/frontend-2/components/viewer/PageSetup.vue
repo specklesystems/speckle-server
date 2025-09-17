@@ -1,108 +1,98 @@
 <template>
   <div>
-    <ViewerPostSetupWrapper>
-      <div class="flex-1">
-        <!-- Nav -->
-        <Portal to="navigation">
-          <ViewerScope :state="state">
-            <template v-if="project?.workspace && isWorkspacesEnabled">
-              <HeaderNavLink
-                :to="workspaceRoute(project?.workspace.slug)"
-                name="Projects"
-                :separator="false"
-              />
-            </template>
+    <div class="flex-1">
+      <!-- Nav -->
+      <Portal to="navigation">
+        <ViewerScope :state="state">
+          <template v-if="project?.workspace && isWorkspacesEnabled">
             <HeaderNavLink
-              v-else
-              :to="projectsRoute"
+              :to="workspaceRoute(project?.workspace.slug)"
               name="Projects"
               :separator="false"
             />
-            <HeaderNavLink :to="`/projects/${project?.id}`" :name="project?.name" />
-            <ViewerExplorerNavbarLink />
-          </ViewerScope>
-        </Portal>
-
-        <ClientOnly>
-          <!-- Viewer host -->
-          <div
-            id="viewer"
-            class="viewer special-gradient absolute z-10 overflow-hidden w-screen"
-            :class="
-              isEmbedEnabled
-                ? isTransparent
-                  ? 'viewer-transparent h-[100dvh]'
-                  : 'h-[calc(100dvh-3.5rem)]'
-                : 'h-[100dvh]'
-            "
-          >
-            <ViewerBase />
-            <Transition
-              enter-from-class="opacity-0"
-              enter-active-class="transition duration-1000"
-            >
-              <ViewerAnchoredPoints
-                ref="anchoredPoints"
-                @force-close-panels="() => closeAllPanels('threads')"
-              />
-            </Transition>
-          </div>
-
-          <!-- Global loading bar -->
-          <ViewerLoadingBar
-            class="absolute left-0 w-full z-40 h-30"
-            :class="isEmbedEnabled ? 'top-0' : ' -top-2'"
-          />
-
-          <!-- Controls -->
-          <!-- <ViewerControls v-if="showControls" class="relative z-20" /> -->
-          <template v-if="showControls">
-            <ViewerControlsLeft
-              ref="leftControls"
-              @force-close-panels="() => closeAllPanels('left')"
-            />
-            <ViewerControlsBottom
-              ref="bottomControls"
-              @force-close-panels="() => closeAllPanels('bottom')"
-            />
-            <ViewerControlsRight v-if="isMobile" />
           </template>
-
-          <ViewerLimitsDialog
-            v-if="project"
-            v-model:open="showLimitsDialog"
-            :project="project"
-            :resource-id-string="resourceIdString"
-            :limit-type="limitsDialogType"
+          <HeaderNavLink
+            v-else
+            :to="projectsRoute"
+            name="Projects"
+            :separator="false"
           />
+          <HeaderNavLink :to="`/projects/${project?.id}`" :name="project?.name" />
+          <ViewerExplorerNavbarLink />
+        </ViewerScope>
+      </Portal>
 
-          <!-- Viewer Object Selection Info Display -->
+      <ViewerCoreSetup
+        :viewer-host-classes="
+          isEmbedEnabled
+            ? isTransparent
+              ? 'viewer-transparent h-[100dvh]'
+              : 'h-[calc(100dvh-3.5rem)]'
+            : 'h-[100dvh]'
+        "
+        :loading-bar-classes="isEmbedEnabled ? 'top-0' : 'top-12'"
+      >
+        <template #after-viewer-base>
           <Transition
-            v-if="!hideSelectionInfo"
             enter-from-class="opacity-0"
             enter-active-class="transition duration-1000"
           >
-            <ViewerSelectionSidebar ref="selectionSidebar" class="z-20" />
+            <ViewerAnchoredPoints
+              ref="anchoredPoints"
+              @force-close-panels="() => closeAllPanels('threads')"
+            />
           </Transition>
-          <div
-            class="absolute z-10 w-screen px-8 grid grid-cols-1 sm:grid-cols-3 gap-2 top-[3.75rem]"
-          >
-            <div class="flex items-end justify-center sm:justify-start">
-              <PortalTarget name="pocket-left"></PortalTarget>
-            </div>
-            <div class="flex flex-col gap-2 items-center justify-end">
-              <PortalTarget name="pocket-tip"></PortalTarget>
-              <div class="flex gap-3">
-                <PortalTarget name="pocket-actions"></PortalTarget>
-              </div>
-            </div>
-            <div class="flex items-end justify-center sm:justify-end">
-              <PortalTarget name="pocket-right"></PortalTarget>
+        </template>
+      </ViewerCoreSetup>
+
+      <ClientOnly>
+        <!-- Controls -->
+        <template v-if="showControls">
+          <ViewerControlsLeft
+            ref="leftControls"
+            @force-close-panels="() => closeAllPanels('left')"
+          />
+          <ViewerControlsBottom
+            ref="bottomControls"
+            @force-close-panels="() => closeAllPanels('bottom')"
+          />
+          <ViewerControlsRight v-if="isMobile" />
+        </template>
+
+        <ViewerLimitsDialog
+          v-if="project"
+          v-model:open="showLimitsDialog"
+          :project="project"
+          :resource-id-string="resourceIdString"
+          :limit-type="limitsDialogType"
+        />
+
+        <!-- Viewer Object Selection Info Display -->
+        <Transition
+          v-if="!hideSelectionInfo"
+          enter-from-class="opacity-0"
+          enter-active-class="transition duration-1000"
+        >
+          <ViewerSelectionSidebar ref="selectionSidebar" class="z-20" />
+        </Transition>
+        <div
+          class="absolute z-10 w-screen px-8 grid grid-cols-1 sm:grid-cols-3 gap-2 top-[3.75rem]"
+        >
+          <div class="flex items-end justify-center sm:justify-start">
+            <PortalTarget name="pocket-left"></PortalTarget>
+          </div>
+          <div class="flex flex-col gap-2 items-center justify-end">
+            <PortalTarget name="pocket-tip"></PortalTarget>
+            <div class="flex gap-3">
+              <PortalTarget name="pocket-actions"></PortalTarget>
             </div>
           </div>
-        </ClientOnly>
-      </div>
-    </ViewerPostSetupWrapper>
+          <div class="flex items-end justify-center sm:justify-end">
+            <PortalTarget name="pocket-right"></PortalTarget>
+          </div>
+        </div>
+      </ClientOnly>
+    </div>
     <ViewerEmbedFooter
       :name="modelName || 'Loading...'"
       :date="lastUpdate"
@@ -120,16 +110,12 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  useSetupViewer,
-  type InjectableViewerState
-} from '~~/lib/viewer/composables/setup'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { projectsRoute, workspaceRoute } from '~~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { writableAsyncComputed } from '~/lib/common/composables/async'
 import { parseUrlParameters, resourceBuilder } from '@speckle/shared/viewer/route'
 import { ViewerLimitsDialogType } from '~/lib/projects/helpers/limits'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
@@ -155,11 +141,6 @@ graphql(`
   }
 `)
 
-const emit = defineEmits<{
-  setup: [InjectableViewerState]
-}>()
-
-const router = useSafeRouter()
 const route = useRoute()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
@@ -170,22 +151,9 @@ const bottomControls = ref()
 const selectionSidebar = ref()
 const anchoredPoints = ref()
 
-const resourceIdString = computed(() => route.params.modelId as string)
-const projectId = writableAsyncComputed({
-  get: () => route.params.id as string,
-  set: async (value: string) => {
-    // Just rewrite route id param
-    await router.push(() => ({
-      params: { id: value }
-    }))
-  },
-  initialState: route.params.id as string,
-  asyncRead: false
-})
+const state = useInjectedViewerState()
+const resourceIdString = computed(() => state.resources.request.resourceIdString.value)
 
-const state = useSetupViewer({
-  projectId
-})
 const {
   isEnabled: isEmbedEnabled,
   hideSelectionInfo,
@@ -195,8 +163,6 @@ const {
   hideSpeckleBranding
 } = useEmbed()
 const mp = useMixpanel()
-
-emit('setup', state)
 
 const {
   resources: {
