@@ -18,6 +18,13 @@ export type GetUserNotificationPreferences = (
 
 export type GetUserNotifications = (userId: string) => Promise<UserNotificationRecord[]>
 
-export type SaveUserNotifications = (
+export type GetEmailNotifications = () => Promise<UserNotificationRecord[]>
+
+export type StoreUserNotifications = (
   notifications: UserNotificationRecord[]
+) => Promise<void>
+
+export type UpdateUserNotification = (
+  id: string,
+  notification: Partial<Omit<UserNotificationRecord, 'id' | 'createdAt'>>
 ) => Promise<void>

@@ -20,6 +20,10 @@ import {
 } from '@/modules/notifications/services/events/queue'
 import { notificationListenersFactory } from '@/modules/notifications/events/notificationListener'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { scheduleDelayedEmailNotifications } from '@/modules/notifications/tasks/delayedNotifications'
+import type cron from 'node-cron'
+
+let scheduledTasks: cron.ScheduledTask[] = []
 
 export async function initializePublicationConsumption(
   customHandlers?: Partial<NotificationTypeHandlers>
@@ -48,16 +52,22 @@ export const init: SpeckleModule['init'] = async ({ isInitial }) => {
   moduleLogger.info('📞 Init notifications module')
   if (isInitial) {
     await initializePublicationConsumption()
+
     await initializeNotificationEventsQueue()
     await consumeEventNotifications()
     notificationListenersFactory({
       eventBus: getEventBus(),
       logger: notificationsLogger
     })()
+
+    scheduledTasks = [await scheduleDelayedEmailNotifications()]
   }
 }
 
 export const shutdown: SpeckleModule['shutdown'] = async () => {
   await shutdownPublicationQueue()
   await shutdownEventQueue()
+  scheduledTasks.forEach((task) => {
+    task.stop()
+  })
 }

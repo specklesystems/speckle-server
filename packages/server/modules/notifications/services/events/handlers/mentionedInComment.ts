@@ -9,22 +9,17 @@ import type { GetStream } from '@/modules/core/domain/streams/operations'
 import type { StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
 import type { GetUser } from '@/modules/core/domain/users/operations'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { getCommentRoute } from '@/modules/core/helpers/routeHelper'
 import type { ServerInfo } from '@/modules/core/helpers/types'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import type { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { iterateContentNodes } from '@/modules/core/services/richTextEditorService'
-import type { EmailTemplateParams } from '@/modules/emails/domain/operations'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import type { SaveUserNotifications } from '@/modules/notifications/domain/operations'
+import type { StoreUserNotifications } from '@/modules/notifications/domain/operations'
 import { NotificationValidationError } from '@/modules/notifications/errors'
 import { NotificationType } from '@/modules/notifications/helpers/types'
-import { saveUserNotificationsFactory } from '@/modules/notifications/repositories/userNotification'
-import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
+import { storeUserNotificationsFactory } from '@/modules/notifications/repositories/userNotification'
 import type { MaybeFalsy, Nullable } from '@/modules/shared/helpers/typeHelper'
 import type { EventBusPayloads } from '@/modules/shared/services/eventBus'
 import type { JSONContent } from '@tiptap/core'
@@ -78,7 +73,7 @@ export const processCommentMentions = (
   return difference(newMentionedUserIds, previouslyMentionedUserIds)
 }
 
-function validate(state: {
+export function validateCommentNotification(state: {
   targetUser: MaybeFalsy<UserWithOptionalRole>
   author: MaybeFalsy<UserWithOptionalRole>
   stream: MaybeFalsy<StreamWithOptionalRole>
@@ -144,63 +139,6 @@ function validate(state: {
   }
 }
 
-function buildEmailTemplateMjml(
-  state: ValidatedNotificationState
-): EmailTemplateParams['mjml'] {
-  const { author, stream } = state
-
-  return {
-    bodyStart: `
-  <mj-text align="center" line-height="2" >
-  Hello,<br/>
-  <br/>
-  <b>${author.name}</b> has just mentioned you in a comment on the <b>${stream.name}</b> project.
-  Please click on the button below to see the comment.
-  </mj-text>
-  `,
-    bodyEnd: `<br/><br/>`
-  }
-}
-
-function buildEmailTemplateText(
-  state: ValidatedNotificationState
-): EmailTemplateParams['text'] {
-  const { author, stream } = state
-
-  return {
-    bodyStart: `Hello
-
-${author.name} has just mentioned you in a comment on the ${stream.name} project.
-Please open the link below to see the comment.`,
-    bodyEnd: undefined
-  }
-}
-
-function buildEmailTemplateParams(
-  state: ValidatedNotificationState
-): EmailTemplateParams {
-  const {
-    commitOrObjectId: { objectId, commitId },
-    stream,
-    threadComment
-  } = state
-
-  const commentRoute = getCommentRoute(stream.id, threadComment.id, {
-    objectId,
-    commitId
-  })
-  const url = new URL(commentRoute, getFrontendOrigin()).toString()
-
-  return {
-    mjml: buildEmailTemplateMjml(state),
-    text: buildEmailTemplateText(state),
-    cta: {
-      url,
-      title: 'View comment thread'
-    }
-  }
-}
-
 /**
  * Notification that is triggered when a user is mentioned in a comment
  */
@@ -210,9 +148,7 @@ const mentionedInCommentHandlerFactory =
     getStream: GetStream
     getCommentResolver: (deps: { projectDb: Knex }) => GetComment
     getServerInfo: GetServerInfo
-    renderEmail: typeof renderEmail
-    sendEmail: typeof sendEmail
-    saveUserNotifications: SaveUserNotifications
+    saveUserNotifications: StoreUserNotifications
   }) =>
   async ({
     payload
@@ -253,7 +189,7 @@ const mentionedInCommentHandlerFactory =
       const mentionComment = isCommentAndThreadTheSame ? threadComment : comment
 
       // Validate message
-      const state = validate({
+      const state = validateCommentNotification({
         targetUser,
         author,
         stream,
@@ -272,34 +208,17 @@ const mentionedInCommentHandlerFactory =
           payload: {
             threadId: state.threadComment.id,
             commentId: state.mentionComment.id,
-            commitId: state.commitOrObjectId.commitId,
-            objectId: state.commitOrObjectId.objectId,
+            authorId: state.author.id,
             streamId: state.stream.id
           },
-          sendEmailAt: null,
+          sendEmailAt: new Date(), // now
           createdAt: now,
           updatedAt: now
         }
       ])
-
-      const templateParams = buildEmailTemplateParams(state)
-      const { text, html } = await deps.renderEmail(
-        templateParams,
-        serverInfo,
-        targetUser
-      )
-      await deps.sendEmail({
-        to: state.targetUser.email,
-        text,
-        html,
-        subject: "You've just been mentioned in a Speckle comment"
-      })
     }
   }
 
-/**
- * Notification that is triggered when a user is mentioned in a comment
- */
 export const handler = async (args: {
   payload: EventBusPayloads['comments.created'] | EventBusPayloads['comments.updated'] // TODO: smarter typing
 }) => {
@@ -308,10 +227,9 @@ export const handler = async (args: {
     getStream: getStreamFactory({ db }),
     getCommentResolver: ({ projectDb }) => getCommentFactory({ db: projectDb }),
     getServerInfo: getServerInfoFactory({ db }),
-    renderEmail,
-    sendEmail,
-    saveUserNotifications: saveUserNotificationsFactory({ db })
+    saveUserNotifications: storeUserNotificationsFactory({ db })
   })
+
   return mentionedInCommentHandler(args)
 }
 

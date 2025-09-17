@@ -12,10 +12,10 @@ import { getUserFactory } from '@/modules/core/repositories/users'
 import type { EmailTemplateParams } from '@/modules/emails/domain/operations'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import type { SaveUserNotifications } from '@/modules/notifications/domain/operations'
+import type { StoreUserNotifications } from '@/modules/notifications/domain/operations'
 import { NotificationValidationError } from '@/modules/notifications/errors'
 import { NotificationType } from '@/modules/notifications/helpers/types'
-import { saveUserNotificationsFactory } from '@/modules/notifications/repositories/userNotification'
+import { storeUserNotificationsFactory } from '@/modules/notifications/repositories/userNotification'
 import type { EventBusPayloads } from '@/modules/shared/services/eventBus'
 import type { Nullable } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
@@ -108,7 +108,7 @@ const streamAccessRequestApprovedHandlerFactory =
       getServerInfo: GetServerInfo
       renderEmail: typeof renderEmail
       sendEmail: typeof sendEmail
-      saveUserNotifications: SaveUserNotifications
+      saveUserNotifications: StoreUserNotifications
     } & ValidateMessageDeps
   ) =>
   async (args: {
@@ -165,7 +165,7 @@ export const handler = async (args: {
     sendEmail,
     getUser: getUserFactory({ db }),
     getStream: getStreamFactory({ db }),
-    saveUserNotifications: saveUserNotificationsFactory({ db })
+    saveUserNotifications: storeUserNotificationsFactory({ db })
   })
   return streamAccessRequestApprovedHandler(args)
 }

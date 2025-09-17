@@ -26,10 +26,10 @@ import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import type { EmailTemplateParams } from '@/modules/emails/domain/operations'
 import type { EventBusPayloads } from '@/modules/shared/services/eventBus'
-import type { SaveUserNotifications } from '@/modules/notifications/domain/operations'
+import type { StoreUserNotifications } from '@/modules/notifications/domain/operations'
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import cryptoRandomString from 'crypto-random-string'
-import { saveUserNotificationsFactory } from '@/modules/notifications/repositories/userNotification'
+import { storeUserNotificationsFactory } from '@/modules/notifications/repositories/userNotification'
 
 type ValidateMessageDeps = {
   getPendingAccessRequest: GetPendingAccessRequest
@@ -147,7 +147,7 @@ const newStreamAccessRequestHandlerFactory =
       getServerInfo: GetServerInfo
       renderEmail: typeof renderEmail
       sendEmail: typeof sendEmail
-      saveUserNotifications: SaveUserNotifications
+      saveUserNotifications: StoreUserNotifications
     } & ValidateMessageDeps
   ) =>
   async (args: { payload: EventBusPayloads['accessrequests.created'] }) => {
@@ -202,7 +202,7 @@ export const handler = (args: {
     getStream: getStreamFactory({ db }),
     getPendingAccessRequest: getPendingAccessRequestFactory({ db }),
     getStreamCollaborators: getStreamCollaboratorsFactory({ db }),
-    saveUserNotifications: saveUserNotificationsFactory({ db })
+    saveUserNotifications: storeUserNotificationsFactory({ db })
   })
   return newStreamAccessRequestHandler(args)
 }
