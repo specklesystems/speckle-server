@@ -3,6 +3,7 @@
     <button
       class="bg-foundation-page rounded-xl overflow-hidden border border-outline-3 transition-all duration-200 hover:!border-outline-4"
       :class="[isCurrentSlide ? '!border-outline-5' : '']"
+      @click="onSelectSlide"
     >
       <img :src="slide.screenshot" :alt="slide.name" class="w-full h-28 object-cover" />
     </button>
@@ -32,9 +33,12 @@ const props = defineProps<{
 }>()
 
 const {
-  ui: { slide: currentSlide }
+  ui: { slideIdx: currentSlideIdx, slide: currentSlide }
 } = useInjectedPresentationState()
-// const { selectSlide } = usePresentationActions()
 
 const isCurrentSlide = computed(() => currentSlide.value?.id === props.slide.id)
+
+const onSelectSlide = () => {
+  currentSlideIdx.value = props.slideIndex - 1
+}
 </script>

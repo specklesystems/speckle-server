@@ -35,12 +35,13 @@ const onNext = () => {
   currentVisibleIndex.value = clamp(currentVisibleIndex.value + 1, 0, slideCount.value)
 }
 
-// TBD
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'ArrowLeft' && !disablePrevious.value) {
+    event.stopPropagation()
     onPrevious()
   }
   if (event.key === 'ArrowRight' && !disableNext.value) {
+    event.stopPropagation()
     onNext()
   }
 }
