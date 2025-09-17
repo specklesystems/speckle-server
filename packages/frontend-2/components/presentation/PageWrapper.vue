@@ -42,15 +42,15 @@
         :slides="presentation"
         :workspace-logo="workspace?.logo"
         :workspace-name="workspace?.name"
-        :current-slide-id="currentViewId"
+        :current-slide-id="slide?.id"
         :is-present-mode="isPresentMode"
         @select-slide="onSelectSlide"
       />
 
       <div class="flex-1">
         <Component
-          :is="group ? ViewerPageWrapper : 'div'"
-          :group="group"
+          :is="presentation ? ViewerWrapper : 'div'"
+          :group="presentation"
           class="h-full w-full object-cover"
         />
       </div>
@@ -87,17 +87,18 @@
 </template>
 
 <script setup lang="ts">
-import { SavedViewVisibility } from '~~/lib/common/generated/gql/graphql'
 import { useInjectedPresentationState } from '~/lib/presentations/composables/setup'
+import { clamp } from 'lodash-es'
+
+// TODO: Move whatever's needed to the state
+// TODO: Eager load viewer w/ SSR support?
 
 const {
   projectId,
-  response: { savedViewGroup: group, workspace }
+  response: { presentation, workspace, visibleSlides },
+  ui: { slideIdx, slide }
 } = useInjectedPresentationState()
 
-// TODO: Move whatever's needed to the state
-
-const currentViewId = ref<string | undefined>()
 const isInfoSidebarOpen = ref(true)
 const isLeftSidebarOpen = ref(true)
 const hideUi = ref(false)
@@ -105,44 +106,26 @@ const isPresentMode = ref(false)
 const showCloseMessage = ref(false)
 const closeMessageTimeout = ref<NodeJS.Timeout | undefined>()
 
-const ViewerPageWrapper = resolveComponent('PresentationViewerPageWrapper')
+const ViewerWrapper = resolveComponent('PresentationViewerWrapper')
 
-const allSlides = computed(() => presentation.value?.views.items || [])
-const visibleSlides = computed(() =>
-  allSlides.value.filter((view) => view.visibility === SavedViewVisibility.Public)
-)
-const currentView = computed(() =>
-  allSlides.value.find((slide) => slide.id === currentViewId.value)
-)
+const currentView = slide
+const currentVisibleIndex = slideIdx
 const slideCount = computed(() => visibleSlides.value?.length || 0)
-const presentation = computed(() => group.value)
-const currentVisibleIndex = computed(() => {
-  if (!currentViewId.value) return 0
-  return visibleSlides.value.findIndex((slide) => slide.id === currentViewId.value)
-})
 const disablePrevious = computed(() => currentVisibleIndex.value === 0)
 const disableNext = computed(() =>
   slideCount.value ? currentVisibleIndex.value === slideCount.value - 1 : false
 )
 
 const onSelectSlide = (slideId: string) => {
-  currentViewId.value = slideId
+  slideIdx.value = visibleSlides.value.findIndex((s) => s.id === slideId)
 }
 
 const onPrevious = () => {
-  const currentIndex = currentVisibleIndex.value
-  if (currentIndex > 0) {
-    const previousSlide = visibleSlides.value[currentIndex - 1]
-    currentViewId.value = previousSlide.id
-  }
+  slideIdx.value = clamp(slideIdx.value - 1, 0, slideCount.value)
 }
 
 const onNext = () => {
-  const currentIndex = currentVisibleIndex.value
-  if (currentIndex < visibleSlides.value.length - 1) {
-    const nextSlide = visibleSlides.value[currentIndex + 1]
-    currentViewId.value = nextSlide.id
-  }
+  slideIdx.value = clamp(slideIdx.value + 1, 0, slideCount.value)
 }
 
 const handleKeydown = (event: KeyboardEvent) => {
@@ -184,16 +167,6 @@ watch(isPresentMode, (newVal, oldVal) => {
 
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
-
-  // Initialize with first public slide after mount
-  if (visibleSlides.value && visibleSlides.value.length > 0 && !currentViewId.value) {
-    const firstPublicSlide = visibleSlides.value.find(
-      (slide) => slide.visibility === SavedViewVisibility.Public
-    )
-    if (firstPublicSlide) {
-      currentViewId.value = firstPublicSlide.id
-    }
-  }
 })
 
 onUnmounted(() => {

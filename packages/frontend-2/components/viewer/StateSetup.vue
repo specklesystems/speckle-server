@@ -23,13 +23,4 @@ const props = defineProps<{
 // initParams isnt reactive, but the refs inside of it definitely are
 const state = useSetupViewer(props.initParams)
 emit('setup', state)
-
-/**
- * TODO: What do?? need viewer embed separate from state init
- *
- * StateSetup - just set up state, do nothing else dont even render anything
- * (as child component) PageSetup - do everything else, render viewer host
- *
- * CoreSetup - just do the viewer rendering part, maybe something extra thats needed everyhthing
- */
 </script>

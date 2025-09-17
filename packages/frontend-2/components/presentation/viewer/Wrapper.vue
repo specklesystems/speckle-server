@@ -7,12 +7,12 @@
 import { resourceBuilder } from '@speckle/shared/viewer/route'
 import { writableAsyncComputed } from '~/lib/common/composables/async'
 import { graphql } from '~/lib/common/generated/gql/gql'
-import type { PresentationViewerPageWrapper_SavedViewGroupFragment } from '~/lib/common/generated/gql/graphql'
+import { useInjectedPresentationState } from '~/lib/presentations/composables/setup'
 import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
 import type { UseSetupViewerParams } from '~~/lib/viewer/composables/setup'
 
 /**
- * Don't put much logic here, the state is unavailable here so do as much as u can in PresentationViewerSetup instead
+ * Don't put much logic here, the viewer state is unavailable here so do as much as u can in PresentationViewerSetup instead
  */
 
 graphql(`
@@ -28,30 +28,11 @@ graphql(`
   }
 `)
 
-const props = defineProps<{
-  group: PresentationViewerPageWrapper_SavedViewGroupFragment
-}>()
+const {
+  projectId,
+  viewer: { resourceIdString: coreResourceIdString }
+} = useInjectedPresentationState()
 const route = useRoute()
-const router = useSafeRouter()
-
-// Resolve viewer init params
-const projectId = writableAsyncComputed({
-  get: () => route.params.id as string,
-  set: async (value: string) => {
-    await router.push(() => ({
-      params: { id: value }
-    }))
-  },
-  initialState: route.params.id as string,
-  asyncRead: false
-})
-
-// the real target to load based on active presentation & slides
-const coreResourceIdString = computed(() =>
-  resourceBuilder()
-    .addResources(props.group.views.items[0]?.resourceIdString || '')
-    .toString()
-)
 
 // Resolved from the presentation's views, but also has to be at least somewhat mutable
 // cause some viewer internals try to change it
