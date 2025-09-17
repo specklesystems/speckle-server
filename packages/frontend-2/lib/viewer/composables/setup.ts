@@ -513,11 +513,14 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
     public: { viewerDebug }
   } = useRuntimeConfig()
 
+  const route = useRoute()
   const sessionId = computed(() => nanoid())
   const isInitialized = ref(false)
   const { instance, initPromise, container } = useScopedState(
     GlobalViewerDataKey,
-    createViewerDataBuilder({ viewerDebug })
+    createViewerDataBuilder({
+      viewerDebug: viewerDebug || route.query.viewerVerbose === '1'
+    })
   ) || { initPromise: Promise.resolve() }
   initPromise.then(() => (isInitialized.value = true))
   const hasDoneInitialLoad = ref(false)
