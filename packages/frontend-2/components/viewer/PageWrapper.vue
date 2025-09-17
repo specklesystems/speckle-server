@@ -56,7 +56,7 @@ const resourceIdString = writableAsyncComputed({
       }),
       {
         skipIf: (to) => {
-          if (to.params.modelId !== modelId) return false
+          if (to.params.modelId !== route.params.modelId) return false
           if (to.query !== route.query) return false
           if (to.hash !== route.hash) return false
           return true
