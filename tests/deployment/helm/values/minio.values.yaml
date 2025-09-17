@@ -12,6 +12,11 @@ defaultInitContainers:
   volumePermissions:
     image:
       repository: bitnamilegacy/os-shell
+clientImage:
+  repository: bitnamilegacy/minio-client
+console:
+  image:
+    repository: bitnamilegacy/minio-object-browser
 volumePermissions:
   enabled: true
 global:

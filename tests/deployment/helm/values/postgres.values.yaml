@@ -3,6 +3,11 @@ image:
   debug: true
 volumePermissions:
   enabled: true
+  image:
+    repository: bitnamilegacy/os-shell
+metrics:
+  image:
+    repository: bitnamilegacy/postgres-exporter
 primary:
   auth:
     username: postgres
