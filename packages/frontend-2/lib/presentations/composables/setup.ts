@@ -3,10 +3,7 @@ import { resourceBuilder } from '@speckle/shared/viewer/route'
 import type { AsyncWritableComputedRef } from '@speckle/ui-components'
 import { useQuery } from '@vue/apollo-composable'
 import type { Get } from 'type-fest'
-import {
-  SavedViewVisibility,
-  type ProjectPresentationPageQuery
-} from '~/lib/common/generated/gql/graphql'
+import type { ProjectPresentationPageQuery } from '~/lib/common/generated/gql/graphql'
 import { projectPresentationPageQuery } from '~/lib/presentations/graphql/queries'
 
 type ResponseProject = Optional<Get<ProjectPresentationPageQuery, 'project'>>
@@ -22,17 +19,14 @@ export type InjectablePresentationState = Readonly<{
     workspace: ComputedRef<ResponseWorkspace>
     presentation: ComputedRef<ResponseGroup>
     slides: ComputedRef<ResponseView[]>
-    /**
-     * We only show public slides
-     */
-    visibleSlides: ComputedRef<ResponseView[]>
   }
   ui: {
     /**
-     * Current slide to show (0 based indexing). Indexes are based on visibleSlides, not slides.
+     * Current slide to show (0 based indexing)
      */
     slideIdx: Ref<number>
     slide: ComputedRef<ResponseView | undefined>
+    slideCount: ComputedRef<number>
   }
   viewer: {
     /**
@@ -70,17 +64,12 @@ const setupStateResponse = (initState: InitState): ResponseState => {
   const workspace = computed(() => project.value?.workspace)
   const slides = computed(() => presentation.value?.views.items || [])
 
-  const visibleSlides = computed(() =>
-    slides.value.filter((view) => view.visibility === SavedViewVisibility.Public)
-  )
-
   return {
     response: {
       project,
       workspace,
       presentation,
-      slides,
-      visibleSlides
+      slides
     }
   }
 }
@@ -106,14 +95,20 @@ const setupStateUi = (initState: ResponseState): UiState => {
   const slideIdx = ref(0)
 
   const slide = computed(() => {
-    const slides = initState.response.visibleSlides.value
+    const slides = initState.response.slides.value
     return slides.at(slideIdx.value)
+  })
+
+  const slideCount = computed(() => {
+    const slides = initState.response.slides.value
+    return slides.length
   })
 
   return {
     ui: {
       slideIdx,
-      slide
+      slide,
+      slideCount
     }
   }
 }

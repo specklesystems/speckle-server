@@ -10,14 +10,14 @@ export const projectPresentationPageQuery = graphql(`
       id
       workspace {
         id
-        name
-        logo
+        ...PresentationLeftSidebar_Workspace
       }
       savedViewGroup(id: $savedViewGroupId) {
         id
         title
-        ...PresentationSlidesSidebar_SavedViewGroup
         ...PresentationViewerPageWrapper_SavedViewGroup
+        ...PresentationHeader_SavedViewGroup
+        ...PresentationSlideListSlide_SavedViewGroup
         views(input: $input) {
           totalCount
           items {
@@ -27,6 +27,7 @@ export const projectPresentationPageQuery = graphql(`
             screenshot
             projectId
             visibility
+            ...PresentationInfoSidebar_SavedView
             group {
               id
             }
