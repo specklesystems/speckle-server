@@ -92,6 +92,7 @@ import { clamp } from 'lodash-es'
 
 // TODO: Move whatever's needed to the state
 // TODO: Eager load viewer w/ SSR support?
+// TODO: Optimization - skip queries/integration we dont need in presentation pageType
 
 const {
   projectId,

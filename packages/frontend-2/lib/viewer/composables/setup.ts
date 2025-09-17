@@ -636,7 +636,7 @@ function setupResourceRequest(
     ...state,
     resources: {
       request: {
-        savedView: useBuildSavedViewsCoreState(state),
+        savedView: useBuildSavedViewsCoreState(state, params),
         items: resources,
         resourceIdString,
         threadFilters,
@@ -1215,6 +1215,13 @@ export type UseSetupViewerParams = {
   projectId: AsyncWritableComputedRef<string>
   resourceIdString: AsyncWritableComputedRef<string>
   pageType: ViewerRenderPageType
+  /**
+   * Optionally override savedView source of truth
+   */
+  savedView?: {
+    id: InjectableViewerState['resources']['request']['savedView']['id']
+    loadOriginal: InjectableViewerState['resources']['request']['savedView']['loadOriginal']
+  }
 }
 
 export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerState {

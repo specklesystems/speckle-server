@@ -8,7 +8,6 @@
 <script setup lang="ts">
 import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
 import { useResizeObserver } from '@vueuse/core'
-import { debounce } from 'lodash-es'
 
 const rendererparent = ref<HTMLElement>()
 const {
@@ -33,11 +32,8 @@ onBeforeUnmount(() => {
   document.body.appendChild(container)
 })
 
-useResizeObserver(
-  rendererparent,
-  debounce(() => {
-    if (!import.meta.client) return
-    viewer.resize()
-  }, 500)
-)
+useResizeObserver(rendererparent, () => {
+  if (!import.meta.client) return
+  viewer.resize()
+})
 </script>

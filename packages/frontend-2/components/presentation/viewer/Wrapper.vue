@@ -30,7 +30,8 @@ graphql(`
 
 const {
   projectId,
-  viewer: { resourceIdString: coreResourceIdString }
+  viewer: { resourceIdString: coreResourceIdString },
+  ui: { slide }
 } = useInjectedPresentationState()
 const route = useRoute()
 
@@ -43,9 +44,9 @@ const resourceIdString = writableAsyncComputed({
     const currentResources = coreResourceIdString.value
     if (newResources === currentResources) return
 
-    // what's triggering mutation? we don't want this to happen, so lets log it
-    // to see the cause
-    devTrace('resourceIdString mutation triggered', {
+    // we don't want this to happen, so lets log it
+    // to see the cause and make it not do that
+    devTrace('Unexpected resourceIdString mutation', {
       newVal: newResources,
       oldVal: currentResources
     })
@@ -54,11 +55,26 @@ const resourceIdString = writableAsyncComputed({
   asyncRead: false
 })
 
+const savedViewId = computed({
+  get: () => slide.value?.id || null,
+  set: (newVal) => {
+    // we don't want this to happen, so lets log it
+    // to see the cause and make it not do that
+    devTrace('Unexpected savedViewId mutation', { newVal, oldVal: slide.value?.id })
+  }
+})
+
+const loadOriginal = ref(false)
+
 const initParams = computed(
   (): UseSetupViewerParams => ({
     projectId,
     resourceIdString,
-    pageType: ViewerRenderPageType.Presentation
+    pageType: ViewerRenderPageType.Presentation,
+    savedView: {
+      id: savedViewId,
+      loadOriginal
+    }
   })
 )
 </script>
