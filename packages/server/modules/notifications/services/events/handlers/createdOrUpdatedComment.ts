@@ -21,7 +21,7 @@ import { NotificationValidationError } from '@/modules/notifications/errors'
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import { storeUserNotificationsFactory } from '@/modules/notifications/repositories/userNotification'
 import type { MaybeFalsy, Nullable } from '@/modules/shared/helpers/typeHelper'
-import type { EventBusPayloads } from '@/modules/shared/services/eventBus'
+import type { EventType } from '@/modules/shared/services/eventBus'
 import type { JSONContent } from '@tiptap/core'
 import cryptoRandomString from 'crypto-random-string'
 import type { Knex } from 'knex'
@@ -142,7 +142,7 @@ export function validateCommentNotification(state: {
 /**
  * Notification that is triggered when a user is mentioned in a comment
  */
-const mentionedInCommentHandlerFactory =
+const createdOrUpdatedCommentHandlerFactory =
   (deps: {
     getUser: GetUser
     getStream: GetStream
@@ -150,11 +150,7 @@ const mentionedInCommentHandlerFactory =
     getServerInfo: GetServerInfo
     saveUserNotifications: StoreUserNotifications
   }) =>
-  async ({
-    payload
-  }: {
-    payload: EventBusPayloads['comments.created'] | EventBusPayloads['comments.updated']
-  }) => {
+  async ({ payload }: EventType<'comments.created' | 'comments.updated'>) => {
     const mentionedUserIds =
       'comment' in payload
         ? processCommentMentions(payload.comment)
@@ -207,8 +203,8 @@ const mentionedInCommentHandlerFactory =
           read: false,
           payload: {
             threadId: state.threadComment.id,
-            commentId: state.mentionComment.id,
             authorId: state.author.id,
+            commentId: state.mentionComment.id,
             streamId: state.stream.id
           },
           sendEmailAt: new Date(), // now
@@ -219,10 +215,10 @@ const mentionedInCommentHandlerFactory =
     }
   }
 
-export const handler = async (args: {
-  payload: EventBusPayloads['comments.created'] | EventBusPayloads['comments.updated'] // TODO: smarter typing
-}) => {
-  const mentionedInCommentHandler = mentionedInCommentHandlerFactory({
+export const handler = async (
+  event: EventType<'comments.created' | 'comments.updated'>
+) => {
+  const createdOrUpdatedCommentHandler = createdOrUpdatedCommentHandlerFactory({
     getUser: getUserFactory({ db }),
     getStream: getStreamFactory({ db }),
     getCommentResolver: ({ projectDb }) => getCommentFactory({ db: projectDb }),
@@ -230,7 +226,7 @@ export const handler = async (args: {
     saveUserNotifications: storeUserNotificationsFactory({ db })
   })
 
-  return mentionedInCommentHandler(args)
+  return createdOrUpdatedCommentHandler(event)
 }
 
 export default handler

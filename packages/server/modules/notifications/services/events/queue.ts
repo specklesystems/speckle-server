@@ -8,9 +8,9 @@ import type { NotificationEvents } from '@/modules/notifications/events/notifica
 import { notificationsLogger, Observability } from '@/observability/logging'
 import { UnhandledNotificationError } from '@/modules/notifications/errors'
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
-import MentionedInCommentHandler from '@/modules/notifications/services/events/handlers/mentionedInComment'
-import NewStreamAccessRequestHandler from '@/modules/notifications/services/events/handlers/newStreamAccessRequest'
-import StreamAccessRequestApprovedHandler from '@/modules/notifications/services/events/handlers/streamAccessRequestApproved'
+import CreatedOrUpdatedCommentHandler from '@/modules/notifications/services/events/handlers/createdOrUpdatedComment'
+import StreamAccessRequestCreatedHandler from '@/modules/notifications/services/events/handlers/streamAccessRequestCreated'
+import StreamAccessRequestFinalizedHandler from '@/modules/notifications/services/events/handlers/streamAccessRequestFinalized'
 import { CommentEvents } from '@/modules/comments/domain/events'
 import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
 
@@ -54,35 +54,34 @@ export async function initializeNotificationEventsQueue() {
   queue = await buildNotificationEventsQueue(NOTIFICATION_EVENTS_QUEUE)
 }
 
-const handlers = {
-  [CommentEvents.Created]: MentionedInCommentHandler,
-  [CommentEvents.Updated]: MentionedInCommentHandler,
-  [AccessRequestEvents.Created]: NewStreamAccessRequestHandler,
-  [AccessRequestEvents.Finalized]: StreamAccessRequestApprovedHandler
-}
-
-export async function consumeEventNotifications() {
+export async function initializeNotificationEventsConsumption() {
   const queue = getQueue()
 
   void queue.process(async ({ data: event }: Bull.Job<NotificationEvents>) => {
+    const notificationLogger = Observability.extendLoggerComponent(
+      notificationsLogger,
+      event.eventName
+    )
+
     try {
-      notificationsLogger.info('New notification received...')
+      notificationLogger.info('Handling notifications for event')
 
-      // Invoke correct handler
-      const handler = handlers[event.eventName]
-      if (!handler) throw new UnhandledNotificationError(null, { info: event })
+      switch (event.eventName) {
+        case CommentEvents.Created:
+        case CommentEvents.Updated:
+          await CreatedOrUpdatedCommentHandler(event)
+          break
+        case AccessRequestEvents.Created:
+          await StreamAccessRequestCreatedHandler(event)
+          break
+        case AccessRequestEvents.Finalized:
+          await StreamAccessRequestFinalizedHandler(event)
+          break
+        default:
+          throw new UnhandledNotificationError(null, { info: event })
+      }
 
-      const notificationLogger = Observability.extendLoggerComponent(
-        notificationsLogger,
-        event.eventName
-      )
-      notificationLogger.info('Starting processing notification...')
-
-      // TODO: type this
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await Promise.resolve(handler(event as unknown as any))
-
-      notificationLogger.info('...successfully processed notification')
+      notificationLogger.info('Handled notifications for event')
     } catch (e: unknown) {
       notificationsLogger.error(e)
       const err = ensureErrorOrWrapAsCause(

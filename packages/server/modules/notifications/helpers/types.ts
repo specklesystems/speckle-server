@@ -25,26 +25,24 @@ export type UserNotificationPreferencesRecord = {
   preferences: NotificationPreferences
 }
 
-export type UserNotificationRecord<
-  T extends keyof NotificationPayloadMap = keyof NotificationPayloadMap
-> = {
-  id: string
-  userId: string
-  type: T
-  read: boolean
-  payload: NotificationPayloadMap[T]
-  sendEmailAt: Date | null
-  createdAt: Date
-  updatedAt: Date
-}
+export type UserNotificationRecord = {
+  [K in keyof NotificationPayloadMap]: {
+    id: string
+    userId: string
+    type: K
+    read: boolean
+    payload: NotificationPayloadMap[K]
+    sendEmailAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+  }
+}[keyof NotificationPayloadMap]
 
 type NotificationPayloadMap = {
   [NotificationType.MentionedInComment]: {
     threadId: string
     authorId: string
     commentId: string
-    commitId: string
-    objectId: string
     streamId: string
   }
   [NotificationType.NewStreamAccessRequest]: {

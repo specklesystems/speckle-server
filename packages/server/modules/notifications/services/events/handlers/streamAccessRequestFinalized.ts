@@ -16,7 +16,7 @@ import type { StoreUserNotifications } from '@/modules/notifications/domain/oper
 import { NotificationValidationError } from '@/modules/notifications/errors'
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import { storeUserNotificationsFactory } from '@/modules/notifications/repositories/userNotification'
-import type { EventBusPayloads } from '@/modules/shared/services/eventBus'
+import type { EventBusPayloads, EventType } from '@/modules/shared/services/eventBus'
 import type { Nullable } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 
@@ -102,7 +102,7 @@ function buildEmailTemplateParams(state: ValidatedMessageState): EmailTemplatePa
   }
 }
 
-const streamAccessRequestApprovedHandlerFactory =
+const steamAccessRequestFinalizedHandlerFactory =
   (
     deps: {
       getServerInfo: GetServerInfo
@@ -156,10 +156,8 @@ const streamAccessRequestApprovedHandlerFactory =
     })
   }
 
-export const handler = async (args: {
-  payload: EventBusPayloads['accessrequests.finalized'] // TODO: smarter typing
-}) => {
-  const streamAccessRequestApprovedHandler = streamAccessRequestApprovedHandlerFactory({
+export const handler = async (event: EventType<'accessrequests.finalized'>) => {
+  const steamAccessRequestFinalizedHandler = steamAccessRequestFinalizedHandlerFactory({
     getServerInfo: getServerInfoFactory({ db }),
     renderEmail,
     sendEmail,
@@ -167,7 +165,7 @@ export const handler = async (args: {
     getStream: getStreamFactory({ db }),
     saveUserNotifications: storeUserNotificationsFactory({ db })
   })
-  return streamAccessRequestApprovedHandler(args)
+  return steamAccessRequestFinalizedHandler(event)
 }
 
 export default handler

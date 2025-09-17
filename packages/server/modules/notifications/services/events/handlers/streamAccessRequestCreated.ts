@@ -25,8 +25,9 @@ import { getUserFactory } from '@/modules/core/repositories/users'
 import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import type { EmailTemplateParams } from '@/modules/emails/domain/operations'
-import type { EventBusPayloads } from '@/modules/shared/services/eventBus'
+import type { EventBusPayloads, EventType } from '@/modules/shared/services/eventBus'
 import type { StoreUserNotifications } from '@/modules/notifications/domain/operations'
+import type { UserNotificationRecord } from '@/modules/notifications/helpers/types'
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import cryptoRandomString from 'crypto-random-string'
 import { storeUserNotificationsFactory } from '@/modules/notifications/repositories/userNotification'
@@ -141,7 +142,7 @@ function buildEmailTemplateParams(state: ValidatedMessageState): EmailTemplatePa
   }
 }
 
-const newStreamAccessRequestHandlerFactory =
+const streamAccessRequestCreatedHandlerFactory =
   (
     deps: {
       getServerInfo: GetServerInfo
@@ -150,10 +151,10 @@ const newStreamAccessRequestHandlerFactory =
       saveUserNotifications: StoreUserNotifications
     } & ValidateMessageDeps
   ) =>
-  async (args: { payload: EventBusPayloads['accessrequests.created'] }) => {
-    const state = await validateMessageFactory(deps)(args)
+  async (event: EventType<'accessrequests.created'>) => {
+    const state = await validateMessageFactory(deps)(event)
     const now = new Date()
-    const notifications = []
+    const notifications: UserNotificationRecord[] = []
     for (const targetUser of state.targetUsers) {
       const htmlTemplateParams = buildEmailTemplateParams({
         ...state
@@ -165,8 +166,6 @@ const newStreamAccessRequestHandlerFactory =
         type: NotificationType.NewStreamAccessRequest,
         read: false,
         payload: {
-          requestId: state.request.id,
-          commentId: state.requester.id,
           streamId: state.stream.id
         },
         sendEmailAt: null,
@@ -191,10 +190,8 @@ const newStreamAccessRequestHandlerFactory =
     await deps.saveUserNotifications(notifications)
   }
 
-export const handler = (args: {
-  payload: EventBusPayloads['accessrequests.created'] // TODO: smarter typing
-}) => {
-  const newStreamAccessRequestHandler = newStreamAccessRequestHandlerFactory({
+export const handler = (event: EventType<'accessrequests.created'>) => {
+  const streamAccessRequestCreatedHandler = streamAccessRequestCreatedHandlerFactory({
     getServerInfo: getServerInfoFactory({ db }),
     renderEmail,
     sendEmail,
@@ -204,7 +201,7 @@ export const handler = (args: {
     getStreamCollaborators: getStreamCollaboratorsFactory({ db }),
     saveUserNotifications: storeUserNotificationsFactory({ db })
   })
-  return newStreamAccessRequestHandler(args)
+  return streamAccessRequestCreatedHandler(event)
 }
 
 export default handler

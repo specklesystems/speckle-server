@@ -23,13 +23,13 @@ export const getUserNotifications =
 export const storeUserNotificationsFactory =
   (deps: { db: Knex }): StoreUserNotifications =>
   async (notifications: Array<UserNotificationRecord>) => {
-    await tables.userNotifications(deps.db).insert(notifications)
+    await deps.db(UserNotifications.name).insert(notifications)
   }
 
 export const updateUserNotificationFactory =
   (deps: { db: Knex }): UpdateUserNotification =>
   async (id, update) => {
-    await tables.userNotifications(deps.db).where({ id }).update(update)
+    await deps.db(UserNotifications.name).where({ id }).update(update)
   }
 
 export const getEmailNotificationsFactory =

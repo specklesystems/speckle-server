@@ -26,5 +26,5 @@ export type StoreUserNotifications = (
 
 export type UpdateUserNotification = (
   id: string,
-  notification: Partial<Omit<UserNotificationRecord, 'id' | 'createdAt'>>
+  update: Partial<Omit<UserNotificationRecord, 'id' | 'createdAt'>>
 ) => Promise<void>

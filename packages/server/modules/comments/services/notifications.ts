@@ -13,7 +13,7 @@ import {
   StreamActionTypes,
   StreamResourceTypes
 } from '@/modules/activitystream/helpers/types'
-import { processCommentMentions } from '@/modules/notifications/services/events/handlers/mentionedInComment'
+import { processCommentMentions } from '@/modules/notifications/services/events/handlers/createdOrUpdatedComment'
 
 /**
  * Save "user mentioned in stream comment" activity item

@@ -14,7 +14,7 @@ import NewStreamAccessRequestHandler from '@/modules/notifications/services/publ
 import StreamAccessRequestApprovedHandler from '@/modules/notifications/services/publication/handlers/streamAccessRequestApproved'
 import ActivityDigestHandler from '@/modules/notifications/services/publication/handlers/activityDigest'
 import {
-  consumeEventNotifications,
+  initializeNotificationEventsConsumption,
   initializeNotificationEventsQueue,
   shutdownEventQueue
 } from '@/modules/notifications/services/events/queue'
@@ -54,7 +54,8 @@ export const init: SpeckleModule['init'] = async ({ isInitial }) => {
     await initializePublicationConsumption()
 
     await initializeNotificationEventsQueue()
-    await consumeEventNotifications()
+    await initializeNotificationEventsConsumption()
+
     notificationListenersFactory({
       eventBus: getEventBus(),
       logger: notificationsLogger

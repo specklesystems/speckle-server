@@ -16,7 +16,12 @@ import type { UserNotificationRecord } from '@/modules/notifications/helpers/typ
 import type { NotificationType } from '@/modules/notifications/helpers/types'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import type { Knex } from 'knex'
-import { validateCommentNotification } from '@/modules/notifications/services/events/handlers/mentionedInComment'
+import { validateCommentNotification } from '@/modules/notifications/services/events/handlers/createdOrUpdatedComment'
+
+type MentionedInCommentNotification = Extract<
+  UserNotificationRecord,
+  { type: NotificationType.MentionedInComment }
+>
 
 function buildEmailTemplateMjml(
   state: ReturnType<typeof validateCommentNotification>
@@ -87,7 +92,7 @@ const mentionedInCommentEmailHandlerFactory =
     renderEmail: typeof renderEmail
     sendEmail: typeof sendEmail
   }) =>
-  async (notification: UserNotificationRecord<NotificationType.MentionedInComment>) => {
+  async (notification: MentionedInCommentNotification) => {
     const { threadId, commentId, authorId, streamId } = notification.payload
 
     const isCommentAndThreadTheSame = threadId === commentId
@@ -130,9 +135,7 @@ const mentionedInCommentEmailHandlerFactory =
     })
   }
 
-export const handler = async (
-  notification: UserNotificationRecord<NotificationType.MentionedInComment>
-) => {
+export const handler = async (notification: MentionedInCommentNotification) => {
   const mentionedInCommentHandler = mentionedInCommentEmailHandlerFactory({
     getUser: getUserFactory({ db }),
     getStream: getStreamFactory({ db }),
