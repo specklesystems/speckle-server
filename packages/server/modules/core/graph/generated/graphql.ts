@@ -173,6 +173,7 @@ export type AdminMutations = {
   __typename?: 'AdminMutations';
   giveAccessToWorkspaceFeature: Scalars['Boolean']['output'];
   removeAccessToWorkspaceFeature: Scalars['Boolean']['output'];
+  updateEmailVerification: Scalars['Boolean']['output'];
   updateWorkspacePlan: Scalars['Boolean']['output'];
 };
 
@@ -184,6 +185,11 @@ export type AdminMutationsGiveAccessToWorkspaceFeatureArgs = {
 
 export type AdminMutationsRemoveAccessToWorkspaceFeatureArgs = {
   input: AdminAccessToWorkspaceFeatureInput;
+};
+
+
+export type AdminMutationsUpdateEmailVerificationArgs = {
+  input: AdminUpdateEmailVerificationInput;
 };
 
 
@@ -229,6 +235,11 @@ export type AdminQueriesWorkspaceListArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
   query?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AdminUpdateEmailVerificationInput = {
+  email: Scalars['String']['input'];
+  verified: Scalars['Boolean']['input'];
 };
 
 export type AdminUpdateWorkspacePlanInput = {
@@ -6072,6 +6083,7 @@ export type ResolversTypes = {
   AdminInviteList: ResolverTypeWrapper<Omit<AdminInviteList, 'items'> & { items: Array<ResolversTypes['ServerInvite']> }>;
   AdminMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   AdminQueries: ResolverTypeWrapper<GraphQLEmptyReturn>;
+  AdminUpdateEmailVerificationInput: AdminUpdateEmailVerificationInput;
   AdminUpdateWorkspacePlanInput: AdminUpdateWorkspacePlanInput;
   AdminUserList: ResolverTypeWrapper<AdminUserList>;
   AdminUserListItem: ResolverTypeWrapper<AdminUserListItem>;
@@ -6469,6 +6481,7 @@ export type ResolversParentTypes = {
   AdminInviteList: Omit<AdminInviteList, 'items'> & { items: Array<ResolversParentTypes['ServerInvite']> };
   AdminMutations: MutationsObjectGraphQLReturn;
   AdminQueries: GraphQLEmptyReturn;
+  AdminUpdateEmailVerificationInput: AdminUpdateEmailVerificationInput;
   AdminUpdateWorkspacePlanInput: AdminUpdateWorkspacePlanInput;
   AdminUserList: AdminUserList;
   AdminUserListItem: AdminUserListItem;
@@ -6925,6 +6938,7 @@ export type AdminInviteListResolvers<ContextType = GraphQLContext, ParentType ex
 export type AdminMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AdminMutations'] = ResolversParentTypes['AdminMutations']> = {
   giveAccessToWorkspaceFeature?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<AdminMutationsGiveAccessToWorkspaceFeatureArgs, 'input'>>;
   removeAccessToWorkspaceFeature?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<AdminMutationsRemoveAccessToWorkspaceFeatureArgs, 'input'>>;
+  updateEmailVerification?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<AdminMutationsUpdateEmailVerificationArgs, 'input'>>;
   updateWorkspacePlan?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<AdminMutationsUpdateWorkspacePlanArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
