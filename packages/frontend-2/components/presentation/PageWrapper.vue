@@ -47,7 +47,7 @@
         @select-slide="onSelectSlide"
       />
 
-      <div class="flex-1">
+      <div class="flex-1 z-0">
         <Component
           :is="presentation ? ViewerWrapper : 'div'"
           :group="presentation"
@@ -67,7 +67,7 @@
 
       <PresentationControls
         v-if="!hideUi"
-        class="absolute left-1/2 -translate-x-1/2"
+        class="z-10 absolute left-1/2 -translate-x-1/2"
         :disable-previous="disablePrevious"
         :disable-next="disableNext"
         :class="[
@@ -89,10 +89,6 @@
 <script setup lang="ts">
 import { useInjectedPresentationState } from '~/lib/presentations/composables/setup'
 import { clamp } from 'lodash-es'
-
-// TODO: Move whatever's needed to the state
-// TODO: Eager load viewer w/ SSR support?
-// TODO: Optimization - skip queries/integration we dont need in presentation pageType
 
 const {
   projectId,
