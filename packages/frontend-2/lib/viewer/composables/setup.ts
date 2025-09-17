@@ -100,7 +100,7 @@ import { useViewModesSetup } from '~/lib/viewer/composables/setup/viewMode'
 import { useMeasurementsSetup } from '~/lib/viewer/composables/setup/measurements'
 import { useFiltersSetup } from '~/lib/viewer/composables/setup/filters'
 import { useViewerPanelsSetup } from '~/lib/viewer/composables/setup/panels'
-import type { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
+import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -563,30 +563,13 @@ function setupResourceRequest(
   state: InitialSetupState,
   params: UseSetupViewerParams
 ): InitialStateWithRequest {
-  const route = useRoute()
-  const router = useSafeRouter()
-
   const resourceIdString = params.resourceIdString
 
   const resources = writableAsyncComputed({
     get: () => resourceBuilder().addResources(resourceIdString.value).toResources(),
     set: async (newResources) => {
-      const modelId = createGetParamFromResources(newResources)
-      await router.push(
-        () => ({
-          params: { modelId },
-          query: route.query,
-          hash: route.hash
-        }),
-        {
-          skipIf: (to) => {
-            if (to.params.modelId !== resourceIdString.value) return false
-            if (to.query !== route.query) return false
-            if (to.hash !== route.hash) return false
-            return true
-          }
-        }
-      )
+      const newIdString = createGetParamFromResources(newResources)
+      await resourceIdString.update(newIdString)
     },
     initialState: [],
     asyncRead: false
@@ -1050,7 +1033,11 @@ function setupResponseResourceData(
         resourceIdString: resourceIdString.value
       }
     }),
-    { keepPreviousResult: true }
+    () => ({
+      keepPreviousResult: true,
+      // Dont need threads when in presentation mode
+      enabled: state.pageType.value !== ViewerRenderPageType.Presentation
+    })
   )
 
   const commentThreadsMetadata = computed(

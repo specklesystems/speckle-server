@@ -42,7 +42,7 @@
         :slides="presentation"
         :workspace-logo="workspace?.logo"
         :workspace-name="workspace?.name"
-        :current-slide-id="slide?.id"
+        :current-slide-id="currentView?.id"
         :is-present-mode="isPresentMode"
         @select-slide="onSelectSlide"
       />
@@ -97,7 +97,7 @@ import { clamp } from 'lodash-es'
 const {
   projectId,
   response: { presentation, workspace, visibleSlides },
-  ui: { slideIdx, slide }
+  ui: { slideIdx: currentVisibleIndex, slide: currentView }
 } = useInjectedPresentationState()
 
 const isInfoSidebarOpen = ref(true)
@@ -109,8 +109,6 @@ const closeMessageTimeout = ref<NodeJS.Timeout | undefined>()
 
 const ViewerWrapper = resolveComponent('PresentationViewerWrapper')
 
-const currentView = slide
-const currentVisibleIndex = slideIdx
 const slideCount = computed(() => visibleSlides.value?.length || 0)
 const disablePrevious = computed(() => currentVisibleIndex.value === 0)
 const disableNext = computed(() =>
@@ -118,15 +116,15 @@ const disableNext = computed(() =>
 )
 
 const onSelectSlide = (slideId: string) => {
-  slideIdx.value = visibleSlides.value.findIndex((s) => s.id === slideId)
+  currentVisibleIndex.value = visibleSlides.value.findIndex((s) => s.id === slideId)
 }
 
 const onPrevious = () => {
-  slideIdx.value = clamp(slideIdx.value - 1, 0, slideCount.value)
+  currentVisibleIndex.value = clamp(currentVisibleIndex.value - 1, 0, slideCount.value)
 }
 
 const onNext = () => {
-  slideIdx.value = clamp(slideIdx.value + 1, 0, slideCount.value)
+  currentVisibleIndex.value = clamp(currentVisibleIndex.value + 1, 0, slideCount.value)
 }
 
 const handleKeydown = (event: KeyboardEvent) => {
