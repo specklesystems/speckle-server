@@ -22,6 +22,10 @@ export type InjectablePresentationState = Readonly<{
     workspace: ComputedRef<ResponseWorkspace>
     presentation: ComputedRef<ResponseGroup>
     slides: ComputedRef<ResponseView[]>
+    /**
+     * In case we want to fetch private slides again later, only return public slides
+     */
+    visibleSlides: ComputedRef<ResponseView[]>
   }
   ui: {
     /**
@@ -67,13 +71,15 @@ const setupStateResponse = (initState: InitState): ResponseState => {
   const presentation = computed(() => project.value?.savedViewGroup)
   const workspace = computed(() => project.value?.workspace)
   const slides = computed(() => presentation.value?.views.items || [])
+  const visibleSlides = computed(() => slides.value)
 
   return {
     response: {
       project,
       workspace,
       presentation,
-      slides
+      slides,
+      visibleSlides
     }
   }
 }

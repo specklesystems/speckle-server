@@ -19,6 +19,7 @@
 import { LucideChevronLeft, LucideChevronRight } from 'lucide-vue-next'
 import { useInjectedPresentationState } from '~/lib/presentations/composables/setup'
 import { clamp } from 'lodash-es'
+import { useEventListener } from '@vueuse/core'
 
 const {
   ui: { slideIdx: currentVisibleIndex, slideCount }
@@ -35,22 +36,15 @@ const onNext = () => {
   currentVisibleIndex.value = clamp(currentVisibleIndex.value + 1, 0, slideCount.value)
 }
 
+// TBD
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'ArrowLeft' && !disablePrevious.value) {
-    event.stopPropagation()
     onPrevious()
   }
   if (event.key === 'ArrowRight' && !disableNext.value) {
-    event.stopPropagation()
     onNext()
   }
 }
 
-onMounted(() => {
-  window.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown)
-})
+useEventListener('keydown', handleKeydown)
 </script>

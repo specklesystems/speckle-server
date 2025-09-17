@@ -1,8 +1,8 @@
 <template>
   <ul class="flex flex-col gap-1 w-full">
     <PresentationSlideListSlide
-      v-for="(slide, index) in slides"
-      :key="slide?.id"
+      v-for="(slide, index) in visibleSlides"
+      :key="slide.id"
       :slide="slide"
       :slide-index="index + 1"
       :hide-title="hideTitle"
@@ -15,7 +15,7 @@ import { useInjectedPresentationState } from '~/lib/presentations/composables/se
 import { graphql } from '~~/lib/common/generated/gql'
 
 graphql(`
-  fragment PresentationSlideListSlide_SavedViewGroup on SavedViewGroup {
+  fragment PresentationSlideList_SavedViewGroup on SavedViewGroup {
     id
     views(input: $input) {
       items {
@@ -31,6 +31,6 @@ defineProps<{
 }>()
 
 const {
-  response: { slides }
+  response: { visibleSlides }
 } = useInjectedPresentationState()
 </script>

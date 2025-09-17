@@ -17,7 +17,7 @@ export const projectPresentationPageQuery = graphql(`
         title
         ...PresentationViewerPageWrapper_SavedViewGroup
         ...PresentationHeader_SavedViewGroup
-        ...PresentationSlideListSlide_SavedViewGroup
+        ...PresentationSlideList_SavedViewGroup
         views(input: $input) {
           totalCount
           items {

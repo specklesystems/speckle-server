@@ -1,5 +1,5 @@
 <template>
-  <li :class="[hideTitle ? '' : 'pb-4']">
+  <li :class="{ 'pb-4': hideTitle }">
     <button
       class="bg-foundation-page rounded-xl overflow-hidden border border-outline-3 transition-all duration-200 hover:!border-outline-4"
       :class="[isCurrentSlide ? '!border-outline-5' : '']"

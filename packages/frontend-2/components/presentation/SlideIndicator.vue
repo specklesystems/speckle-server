@@ -1,7 +1,7 @@
 <template>
   <div class="p-4 pl-0 absolute">
     <ul class="flex flex-col space-y-2">
-      <li v-for="slide in slides" :key="slide.id">
+      <li v-for="slide in visibleSlides" :key="slide.id">
         <div
           class="w-2 h-[1px] bg-foreground-3 transition-all duration-200"
           :class="{ 'w-4 !bg-foreground': slide.id === currentView?.id }"
@@ -22,6 +22,6 @@ import { useInjectedPresentationState } from '~/lib/presentations/composables/se
 
 const {
   ui: { slide: currentView },
-  response: { slides }
+  response: { visibleSlides }
 } = useInjectedPresentationState()
 </script>

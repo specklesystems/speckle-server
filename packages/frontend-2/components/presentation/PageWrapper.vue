@@ -58,6 +58,7 @@
 
 <script setup lang="ts">
 import { useInjectedPresentationState } from '~/lib/presentations/composables/setup'
+import { useEventListener } from '@vueuse/core'
 
 const {
   response: { presentation }
@@ -77,11 +78,5 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 }
 
-onMounted(() => {
-  window.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown)
-})
+useEventListener('keydown', handleKeydown)
 </script>
