@@ -1,0 +1,67 @@
+# This file is intended to be run when you are actively developing Speckle Server itself.
+# It builds all the images from the local source code and tags them with the `local`.
+# It is intended to be run as an overlay to docker-compose-speckle.yml
+# `docker compose -f docker-compose-deps.yml -f docker-compose-speckle.yml -f docker-compose-speckle.overlay.yml up --detach`
+
+services:
+  speckle-ingress:
+    build:
+      context: .
+      dockerfile: utils/docker-compose-ingress/Dockerfile
+    platform: linux/amd64
+    image: speckle/speckle-docker-compose-ingress:local
+
+  speckle-frontend-2:
+    build:
+      context: .
+      dockerfile: packages/frontend-2/Dockerfile
+    platform: linux/amd64
+    image: speckle/speckle-frontend-2:local
+    environment:
+      NUXT_PUBLIC_SERVER_NAME: 'local'
+      #TODO: Change this to the URL of your server. This is the URL of the server as accessed by users.
+      NUXT_PUBLIC_API_ORIGIN: 'http://127.0.0.1'
+      #TODO: Change this to the URL of your server. This is the URL of the server as accessed by users.
+      NUXT_PUBLIC_BASE_URL: 'http://127.0.0.1'
+
+  speckle-server:
+    build:
+      context: .
+      dockerfile: packages/server/Dockerfile
+    platform: linux/amd64
+    image: speckle/speckle-server:local
+    environment:
+      # TODO. Change this to the url of your server. This is the URL of the server as accessed by users.
+      CANONICAL_URL: 'http://127.0.0.1'
+      EMAIL: 'true'
+      EMAIL_HOST: 'maildev'
+      EMAIL_PORT: '1025'
+      EMAIL_USERNAME: ''
+      EMAIL_PASSWORD: ''
+      EMAIL_FROM: 'no-reply@example.org'
+      EMAIL_SECURE: 'false' # When connecting to maildev server, do not use SSL.
+      EMAIL_REQUIRE_TLS: 'false' # When connecting to maildev server, do not use TLS.
+
+      FRONTEND_ORIGIN: 'http://127.0.0.1'
+      ONBOARDING_STREAM_URL: 'https://latest.speckle.systems/projects/843d07eb10'
+
+  preview-service:
+    build:
+      context: .
+      dockerfile: packages/preview-service/Dockerfile
+    platform: linux/amd64
+    image: speckle/speckle-preview-service:local
+
+  webhook-service:
+    build:
+      context: .
+      dockerfile: packages/webhook-service/Dockerfile
+    platform: linux/amd64
+    image: speckle/speckle-webhook-service:local
+
+  ifc-import-server:
+    build:
+      context: .
+      dockerfile: packages/ifc-import-service/Dockerfile
+    platform: linux/amd64
+    image: speckle/speckle-ifc-import-service:local
