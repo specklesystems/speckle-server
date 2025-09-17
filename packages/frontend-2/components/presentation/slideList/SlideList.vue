@@ -2,9 +2,10 @@
   <ul class="flex flex-col gap-1 w-full">
     <PresentationSlideListSlide
       v-for="(slide, index) in slides"
-      :key="slide.id"
+      :key="slide?.id"
       :slide="slide"
       :slide-index="index + 1"
+      :hide-title="hideTitle"
     />
   </ul>
 </template>
@@ -24,6 +25,10 @@ graphql(`
     }
   }
 `)
+
+defineProps<{
+  hideTitle?: boolean
+}>()
 
 const { slides } = usePresentationState()
 </script>
