@@ -1,4 +1,5 @@
 image:
+  repository: bitnamilegacy/postgresql
   debug: true
 volumePermissions:
   enabled: true
