@@ -1114,7 +1114,6 @@ export type Dashboard = {
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   permissions: DashboardPermissionChecks;
-  shareLink?: Maybe<DashboardShareLink>;
   /** If null, this is a new dashboard and should be initialized by the client */
   state?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
@@ -1137,10 +1136,6 @@ export type DashboardMutations = {
   create: Dashboard;
   createToken: CreateDashboardTokenReturn;
   delete: Scalars['Boolean']['output'];
-  deleteShare: Scalars['Boolean']['output'];
-  disableShare: Scalars['Boolean']['output'];
-  enableShare: Scalars['Boolean']['output'];
-  share: DashboardShareLink;
   update: Dashboard;
 };
 
@@ -1161,26 +1156,6 @@ export type DashboardMutationsDeleteArgs = {
 };
 
 
-export type DashboardMutationsDeleteShareArgs = {
-  input: DashboardShareInput;
-};
-
-
-export type DashboardMutationsDisableShareArgs = {
-  input: DashboardShareInput;
-};
-
-
-export type DashboardMutationsEnableShareArgs = {
-  input: DashboardShareInput;
-};
-
-
-export type DashboardMutationsShareArgs = {
-  dashboardId: Scalars['String']['input'];
-};
-
-
 export type DashboardMutationsUpdateArgs = {
   input: DashboardUpdateInput;
 };
@@ -1191,20 +1166,6 @@ export type DashboardPermissionChecks = {
   canDelete: PermissionCheckResult;
   canEdit: PermissionCheckResult;
   canRead: PermissionCheckResult;
-};
-
-export type DashboardShareInput = {
-  dashboardId: Scalars['ID']['input'];
-  shareId: Scalars['ID']['input'];
-};
-
-export type DashboardShareLink = {
-  __typename?: 'DashboardShareLink';
-  content: Scalars['String']['output'];
-  createdAt: Scalars['DateTime']['output'];
-  id: Scalars['ID']['output'];
-  revoked: Scalars['Boolean']['output'];
-  validUntil: Scalars['DateTime']['output'];
 };
 
 export type DashboardToken = {
@@ -1323,7 +1284,7 @@ export type ExtendedViewerResources = {
   /** The groups of viewer resources themselves */
   groups: Array<ViewerResourceGroup>;
   /** Metadata about the request that was made to resolve this. */
-  request?: Maybe<ExtendedViewerResourcesRequest>;
+  request: ExtendedViewerResourcesRequest;
   /** Final/adjusted/resolved resource id string */
   resourceIdString: Scalars['String']['output'];
   /**
@@ -3830,6 +3791,8 @@ export type ServerAutomateInfo = {
 export type ServerConfiguration = {
   __typename?: 'ServerConfiguration';
   blobSizeLimitBytes: Scalars['Int']['output'];
+  /** Email verification code timeout in minutes */
+  emailVerificationTimeoutMinutes: Scalars['Int']['output'];
   /** Whether the email feature is enabled on this server */
   isEmailEnabled: Scalars['Boolean']['output'];
   objectMultipartUploadSizeLimitBytes: Scalars['Int']['output'];
@@ -7915,7 +7878,7 @@ export type ProjectViewerResourcesQueryVariables = Exact<{
 }>;
 
 
-export type ProjectViewerResourcesQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, viewerResourcesExtended: { __typename?: 'ExtendedViewerResources', resourceIdString: string, groups: Array<{ __typename?: 'ViewerResourceGroup', identifier: string, items: Array<{ __typename?: 'ViewerResourceItem', modelId?: string | null, versionId?: string | null, objectId: string }> }>, savedView?: { __typename?: 'SavedView', id: string, viewerState: {} } | null, request?: { __typename?: 'ExtendedViewerResourcesRequest', savedViewId?: string | null } | null } } };
+export type ProjectViewerResourcesQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, viewerResourcesExtended: { __typename?: 'ExtendedViewerResources', resourceIdString: string, groups: Array<{ __typename?: 'ViewerResourceGroup', identifier: string, items: Array<{ __typename?: 'ViewerResourceItem', modelId?: string | null, versionId?: string | null, objectId: string }> }>, savedView?: { __typename?: 'SavedView', id: string, viewerState: {} } | null, request: { __typename?: 'ExtendedViewerResourcesRequest', savedViewId?: string | null } } } };
 
 export type ViewerLoadedResourcesQueryVariables = Exact<{
   projectId: Scalars['String']['input'];
@@ -8996,7 +8959,6 @@ export type AllObjectTypes = {
   DashboardCollection: DashboardCollection,
   DashboardMutations: DashboardMutations,
   DashboardPermissionChecks: DashboardPermissionChecks,
-  DashboardShareLink: DashboardShareLink,
   DashboardToken: DashboardToken,
   DashboardTokenCollection: DashboardTokenCollection,
   EmbedToken: EmbedToken,
@@ -9524,7 +9486,6 @@ export type DashboardFieldArgs = {
   id: {},
   name: {},
   permissions: {},
-  shareLink: {},
   state: {},
   updatedAt: {},
   workspace: {},
@@ -9538,10 +9499,6 @@ export type DashboardMutationsFieldArgs = {
   create: DashboardMutationsCreateArgs,
   createToken: DashboardMutationsCreateTokenArgs,
   delete: DashboardMutationsDeleteArgs,
-  deleteShare: DashboardMutationsDeleteShareArgs,
-  disableShare: DashboardMutationsDisableShareArgs,
-  enableShare: DashboardMutationsEnableShareArgs,
-  share: DashboardMutationsShareArgs,
   update: DashboardMutationsUpdateArgs,
 }
 export type DashboardPermissionChecksFieldArgs = {
@@ -9549,13 +9506,6 @@ export type DashboardPermissionChecksFieldArgs = {
   canDelete: {},
   canEdit: {},
   canRead: {},
-}
-export type DashboardShareLinkFieldArgs = {
-  content: {},
-  createdAt: {},
-  id: {},
-  revoked: {},
-  validUntil: {},
 }
 export type DashboardTokenFieldArgs = {
   createdAt: {},
@@ -10226,6 +10176,7 @@ export type ServerAutomateInfoFieldArgs = {
 }
 export type ServerConfigurationFieldArgs = {
   blobSizeLimitBytes: {},
+  emailVerificationTimeoutMinutes: {},
   isEmailEnabled: {},
   objectMultipartUploadSizeLimitBytes: {},
   objectSizeLimitBytes: {},
@@ -10863,7 +10814,6 @@ export type AllObjectFieldArgTypes = {
   DashboardCollection: DashboardCollectionFieldArgs,
   DashboardMutations: DashboardMutationsFieldArgs,
   DashboardPermissionChecks: DashboardPermissionChecksFieldArgs,
-  DashboardShareLink: DashboardShareLinkFieldArgs,
   DashboardToken: DashboardTokenFieldArgs,
   DashboardTokenCollection: DashboardTokenCollectionFieldArgs,
   EmbedToken: EmbedTokenFieldArgs,

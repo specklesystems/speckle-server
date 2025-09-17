@@ -352,12 +352,16 @@ const handleSelectionChange = useDebounceFn(
 
           if (containsObject) {
             expandedModels.value.add(model.id)
-            expandNodesToShowObject(
+
+            const result = expandNodesToShowObject(
               modelRootNodes,
               selectedObj.id,
               model.id,
               expandedNodes.value
             )
+            if (result.found && result.nodesToExpand.length > 0) {
+              result.nodesToExpand.forEach((nodeId) => expandedNodes.value.add(nodeId))
+            }
 
             scrollToSelectedItem(selectedObj.id)
             break

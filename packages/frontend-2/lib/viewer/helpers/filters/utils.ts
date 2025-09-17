@@ -31,6 +31,15 @@ export const isRevitProperty = (key: string): boolean => {
  * Determines if a property should be excluded from filtering based on its key
  */
 export const shouldExcludeFromFiltering = (key: string): boolean => {
+  // Whitelist essential instance properties
+  const pathParts = key.split('.')
+  const lastPart = pathParts[pathParts.length - 1]
+
+  // Always include these instance-related properties
+  if (['definitionId', 'transform', 'name', 'definitionName'].includes(lastPart)) {
+    return false
+  }
+
   if (
     key.endsWith('.units') ||
     key.endsWith('.speckle_type') ||
