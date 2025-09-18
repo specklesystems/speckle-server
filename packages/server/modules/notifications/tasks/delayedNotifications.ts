@@ -7,11 +7,11 @@ import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import type { Logger } from '@/observability/logging'
 import type {
   GetEmailNotifications,
-  UpdateUserNotification
+  UpdateUserNotifications
 } from '@/modules/notifications/domain/operations'
 import {
   getEmailNotificationsFactory,
-  updateUserNotificationFactory
+  updateUserNotificationsFactory
 } from '@/modules/notifications/repositories/userNotification'
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import MentionedInCommentHandler from '@/modules/notifications/tasks/handlers/mentionedInComment'
@@ -19,8 +19,9 @@ import MentionedInCommentHandler from '@/modules/notifications/tasks/handlers/me
 export const emitDelayedEmailNotifications = async (deps: {
   logger: Logger
   getEmailNotifications: GetEmailNotifications
-  updateUserNotification: UpdateUserNotification
+  updateUserNotifications: UpdateUserNotifications
 }) => {
+  // tx per one notification
   const notifications = await deps.getEmailNotifications()
   if (!notifications.length) return
 
@@ -40,8 +41,14 @@ export const emitDelayedEmailNotifications = async (deps: {
         return
     }
 
-    await deps.updateUserNotification(notification.id, { sendEmailAt: null })
-    continue
+    await deps.updateUserNotifications({
+      ids: [notification.id],
+      userId: notification.userId,
+      update: {
+        sendEmailAt: null,
+        updatedAt: new Date()
+      }
+    })
   }
 }
 
@@ -59,7 +66,7 @@ export const scheduleDelayedEmailNotifications = async () => {
       await emitDelayedEmailNotifications({
         logger,
         getEmailNotifications: getEmailNotificationsFactory({ db }),
-        updateUserNotification: updateUserNotificationFactory({ db })
+        updateUserNotifications: updateUserNotificationsFactory({ db })
       })
     }
   )

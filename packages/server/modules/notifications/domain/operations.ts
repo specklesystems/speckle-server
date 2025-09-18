@@ -16,15 +16,23 @@ export type GetUserNotificationPreferences = (
   userId: string
 ) => Promise<NotificationPreferences>
 
-export type GetUserNotifications = (userId: string) => Promise<UserNotificationRecord[]>
+export type GetUserNotifications = (args: {
+  userId: string
+}) => Promise<UserNotificationRecord[]>
 
 export type GetEmailNotifications = () => Promise<UserNotificationRecord[]>
+
+export type DeleteUserNotifications = (args: {
+  userId: string
+  ids: string[]
+}) => Promise<void>
 
 export type StoreUserNotifications = (
   notifications: UserNotificationRecord[]
 ) => Promise<void>
 
-export type UpdateUserNotification = (
-  id: string,
+export type UpdateUserNotifications = (args: {
+  ids: string[]
+  userId: string
   update: Partial<Omit<UserNotificationRecord, 'id' | 'createdAt'>>
-) => Promise<void>
+}) => Promise<void>

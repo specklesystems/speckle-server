@@ -207,7 +207,7 @@ const createdOrUpdatedCommentHandlerFactory =
             commentId: state.mentionComment.id,
             streamId: state.stream.id
           },
-          sendEmailAt: new Date(), // now
+          sendEmailAt: new Date(), // now <- 8pm
           createdAt: now,
           updatedAt: now
         }

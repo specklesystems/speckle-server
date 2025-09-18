@@ -30,7 +30,7 @@ export default {
   Mutation: {
     async userNotificationPreferencesUpdate(_parent, args, context) {
       const logger = context.log
-      await await withOperationLogging(
+      await withOperationLogging(
         async () => updateNotificationPreferences(context.userId!, args.preferences),
         {
           logger,

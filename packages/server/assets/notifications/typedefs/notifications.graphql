@@ -1,0 +1,43 @@
+type UserNotificationCollection {
+  totalCount: Int!
+  numberOfHidden: Int!
+  cursor: String
+  items: [Notification!]!
+}
+
+type Notification {
+  id: ID!
+  type: String!
+  read: Boolean!
+  payload: JSONObject!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input NotificationUpdateInput {
+  read: Boolean!
+}
+
+extend type User {
+  """
+  List all notifications for the user
+  """
+  notifications: UserNotificationCollection! @isOwner
+}
+
+extend type Mutation {
+  notificationMutations: NotificationMutations! @hasServerRole(role: SERVER_GUEST)
+}
+
+type NotificationMutations {
+  """
+  Delete an existing notification
+  """
+  bulkDelete(ids: [String!]!): Boolean! @hasServerRole(role: SERVER_USER)
+
+  """
+  update notidication
+  """
+  bulkUpdate(ids: [String!]!, input: NotificationUpdateInput!): Boolean!
+    @hasServerRole(role: SERVER_USER)
+}

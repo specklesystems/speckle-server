@@ -1,9 +1,10 @@
 import { UserNotifications } from '@/modules/core/dbSchema'
 import type {
+  DeleteUserNotifications,
   GetEmailNotifications,
   GetUserNotifications,
   StoreUserNotifications,
-  UpdateUserNotification
+  UpdateUserNotifications
 } from '@/modules/notifications/domain/operations'
 import type { UserNotificationRecord } from '@/modules/notifications/helpers/types'
 import { type Knex } from 'knex'
@@ -12,10 +13,13 @@ const tables = {
   userNotifications: (db: Knex) => db<UserNotificationRecord>(UserNotifications.name)
 }
 
-export const getUserNotifications =
+export const getUserNotificationsFactory =
   (deps: { db: Knex }): GetUserNotifications =>
-  async (userId: string): Promise<Array<UserNotificationRecord>> => {
-    const notifications = await tables.userNotifications(deps.db).where({ userId })
+  async ({ userId }): Promise<Array<UserNotificationRecord>> => {
+    const notifications = await tables
+      .userNotifications(deps.db)
+      .where({ userId })
+      .orderBy(UserNotifications.col.createdAt, 'desc')
 
     return notifications
   }
@@ -26,10 +30,14 @@ export const storeUserNotificationsFactory =
     await deps.db(UserNotifications.name).insert(notifications)
   }
 
-export const updateUserNotificationFactory =
-  (deps: { db: Knex }): UpdateUserNotification =>
-  async (id, update) => {
-    await deps.db(UserNotifications.name).where({ id }).update(update)
+export const updateUserNotificationsFactory =
+  (deps: { db: Knex }): UpdateUserNotifications =>
+  async ({ userId, ids, update }) => {
+    await deps
+      .db(UserNotifications.name)
+      .where({ userId })
+      .whereIn(UserNotifications.col.id, ids)
+      .update(update)
   }
 
 export const getEmailNotificationsFactory =
@@ -41,4 +49,14 @@ export const getEmailNotificationsFactory =
       .andWhere(UserNotifications.col.read, false)
 
     return notifications
+  }
+
+export const deleteUserNotificationsFactory =
+  (deps: { db: Knex }): DeleteUserNotifications =>
+  async ({ userId, ids }) => {
+    await tables
+      .userNotifications(deps.db)
+      .where({ userId })
+      .whereIn(UserNotifications.col.id, ids)
+      .delete()
   }

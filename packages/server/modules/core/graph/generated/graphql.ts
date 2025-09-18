@@ -1916,6 +1916,7 @@ export type Mutation = {
    */
   inviteResend: Scalars['Boolean']['output'];
   modelMutations: ModelMutations;
+  notificationMutations: NotificationMutations;
   /** @deprecated Part of the old API surface and will be removed in the future. */
   objectCreate: Array<Scalars['String']['output']>;
   projectMutations: ProjectMutations;
@@ -2307,6 +2308,39 @@ export type MutationWebhookDeleteArgs = {
 
 export type MutationWebhookUpdateArgs = {
   webhook: WebhookUpdateInput;
+};
+
+export type Notification = {
+  __typename?: 'Notification';
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  payload: Scalars['JSONObject']['output'];
+  read: Scalars['Boolean']['output'];
+  type: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type NotificationMutations = {
+  __typename?: 'NotificationMutations';
+  /** Delete an existing notification */
+  bulkDelete: Scalars['Boolean']['output'];
+  /** update notidication */
+  bulkUpdate: Scalars['Boolean']['output'];
+};
+
+
+export type NotificationMutationsBulkDeleteArgs = {
+  ids: Array<Scalars['String']['input']>;
+};
+
+
+export type NotificationMutationsBulkUpdateArgs = {
+  ids: Array<Scalars['String']['input']>;
+  input: NotificationUpdateInput;
+};
+
+export type NotificationUpdateInput = {
+  read: Scalars['Boolean']['input'];
 };
 
 export type Object = {
@@ -4693,6 +4727,8 @@ export type User = {
   meta: UserMeta;
   name: Scalars['String']['output'];
   notificationPreferences: Scalars['JSONObject']['output'];
+  /** List all notifications for the user */
+  notifications: UserNotificationCollection;
   permissions: RootPermissionChecks;
   profiles?: Maybe<Scalars['JSONObject']['output']>;
   /** Get pending project access request, that the user made */
@@ -4946,6 +4982,14 @@ export type UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs = {
 
 export type UserMetaMutationsSetSpeckleConBannerDismissedArgs = {
   value: Scalars['Boolean']['input'];
+};
+
+export type UserNotificationCollection = {
+  __typename?: 'UserNotificationCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<Notification>;
+  numberOfHidden: Scalars['Int']['output'];
+  totalCount: Scalars['Int']['output'];
 };
 
 export type UserProjectCollection = {
@@ -6224,6 +6268,9 @@ export type ResolversTypes = {
   ModelsTreeItemCollection: ResolverTypeWrapper<Omit<ModelsTreeItemCollection, 'items'> & { items: Array<ResolversTypes['ModelsTreeItem']> }>;
   MoveVersionsInput: MoveVersionsInput;
   Mutation: ResolverTypeWrapper<{}>;
+  Notification: ResolverTypeWrapper<Notification>;
+  NotificationMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  NotificationUpdateInput: NotificationUpdateInput;
   Object: ResolverTypeWrapper<ObjectGraphQLReturn>;
   ObjectCollection: ResolverTypeWrapper<Omit<ObjectCollection, 'objects'> & { objects: Array<ResolversTypes['Object']> }>;
   ObjectCreateInput: ObjectCreateInput;
@@ -6360,6 +6407,7 @@ export type ResolversTypes = {
   UserGendoAICredits: ResolverTypeWrapper<UserGendoAiCredits>;
   UserMeta: ResolverTypeWrapper<UserMetaGraphQLReturn>;
   UserMetaMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  UserNotificationCollection: ResolverTypeWrapper<UserNotificationCollection>;
   UserProjectCollection: ResolverTypeWrapper<Omit<UserProjectCollection, 'items'> & { items: Array<ResolversTypes['Project']> }>;
   UserProjectsFilter: UserProjectsFilter;
   UserProjectsUpdatedMessage: ResolverTypeWrapper<Omit<UserProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
@@ -6614,6 +6662,9 @@ export type ResolversParentTypes = {
   ModelsTreeItemCollection: Omit<ModelsTreeItemCollection, 'items'> & { items: Array<ResolversParentTypes['ModelsTreeItem']> };
   MoveVersionsInput: MoveVersionsInput;
   Mutation: {};
+  Notification: Notification;
+  NotificationMutations: MutationsObjectGraphQLReturn;
+  NotificationUpdateInput: NotificationUpdateInput;
   Object: ObjectGraphQLReturn;
   ObjectCollection: Omit<ObjectCollection, 'objects'> & { objects: Array<ResolversParentTypes['Object']> };
   ObjectCreateInput: ObjectCreateInput;
@@ -6731,6 +6782,7 @@ export type ResolversParentTypes = {
   UserGendoAICredits: UserGendoAiCredits;
   UserMeta: UserMetaGraphQLReturn;
   UserMetaMutations: MutationsObjectGraphQLReturn;
+  UserNotificationCollection: UserNotificationCollection;
   UserProjectCollection: Omit<UserProjectCollection, 'items'> & { items: Array<ResolversParentTypes['Project']> };
   UserProjectsFilter: UserProjectsFilter;
   UserProjectsUpdatedMessage: Omit<UserProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversParentTypes['Project']> };
@@ -7655,6 +7707,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   inviteDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteDeleteArgs, 'inviteId'>>;
   inviteResend?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteResendArgs, 'inviteId'>>;
   modelMutations?: Resolver<ResolversTypes['ModelMutations'], ParentType, ContextType>;
+  notificationMutations?: Resolver<ResolversTypes['NotificationMutations'], ParentType, ContextType>;
   objectCreate?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType, RequireFields<MutationObjectCreateArgs, 'objectInput'>>;
   projectMutations?: Resolver<ResolversTypes['ProjectMutations'], ParentType, ContextType>;
   requestVerification?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -7689,6 +7742,22 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   webhookUpdate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationWebhookUpdateArgs, 'webhook'>>;
   workspaceJoinRequestMutations?: Resolver<ResolversTypes['WorkspaceJoinRequestMutations'], ParentType, ContextType>;
   workspaceMutations?: Resolver<ResolversTypes['WorkspaceMutations'], ParentType, ContextType>;
+};
+
+export type NotificationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Notification'] = ResolversParentTypes['Notification']> = {
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  payload?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
+  read?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type NotificationMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['NotificationMutations'] = ResolversParentTypes['NotificationMutations']> = {
+  bulkDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<NotificationMutationsBulkDeleteArgs, 'ids'>>;
+  bulkUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<NotificationMutationsBulkUpdateArgs, 'ids' | 'input'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ObjectResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Object'] = ResolversParentTypes['Object']> = {
@@ -8446,6 +8515,7 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   meta?: Resolver<ResolversTypes['UserMeta'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   notificationPreferences?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
+  notifications?: Resolver<ResolversTypes['UserNotificationCollection'], ParentType, ContextType>;
   permissions?: Resolver<ResolversTypes['RootPermissionChecks'], ParentType, ContextType>;
   profiles?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   projectAccessRequest?: Resolver<Maybe<ResolversTypes['ProjectAccessRequest']>, ParentType, ContextType, RequireFields<UserProjectAccessRequestArgs, 'projectId'>>;
@@ -8507,6 +8577,14 @@ export type UserMetaMutationsResolvers<ContextType = GraphQLContext, ParentType 
   setLegacyProjectsExplainerCollapsed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetLegacyProjectsExplainerCollapsedArgs, 'value'>>;
   setNewWorkspaceExplainerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs, 'value'>>;
   setSpeckleConBannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetSpeckleConBannerDismissedArgs, 'value'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type UserNotificationCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserNotificationCollection'] = ResolversParentTypes['UserNotificationCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['Notification']>, ParentType, ContextType>;
+  numberOfHidden?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -9010,6 +9088,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ModelsTreeItem?: ModelsTreeItemResolvers<ContextType>;
   ModelsTreeItemCollection?: ModelsTreeItemCollectionResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
+  Notification?: NotificationResolvers<ContextType>;
+  NotificationMutations?: NotificationMutationsResolvers<ContextType>;
   Object?: ObjectResolvers<ContextType>;
   ObjectCollection?: ObjectCollectionResolvers<ContextType>;
   PasswordStrengthCheckFeedback?: PasswordStrengthCheckFeedbackResolvers<ContextType>;
@@ -9087,6 +9167,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   UserGendoAICredits?: UserGendoAiCreditsResolvers<ContextType>;
   UserMeta?: UserMetaResolvers<ContextType>;
   UserMetaMutations?: UserMetaMutationsResolvers<ContextType>;
+  UserNotificationCollection?: UserNotificationCollectionResolvers<ContextType>;
   UserProjectCollection?: UserProjectCollectionResolvers<ContextType>;
   UserProjectsUpdatedMessage?: UserProjectsUpdatedMessageResolvers<ContextType>;
   UserSearchResultCollection?: UserSearchResultCollectionResolvers<ContextType>;
