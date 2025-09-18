@@ -190,18 +190,8 @@ export type GetNewViewBoundaryPosition = (params: {
 }) => Promise<number>
 
 /**
- * Calculate new view position for a specific position in the group that it will be a part of
- *
- * - beforeId: null & afterId: null  => end of the list (default)
- * - beforeId: "some-id" & afterId: "some-other-id"  => between "some-id" and "some-other-id"
- *
- * What about these?
- * - beforeId: null & afterId: "some-id"  => right after "some-id"
- * - - what if beforeId=null, but in the DB there actually are items after "some-id"?
- * - - - maybe we treat this as "end of the list"?
- * - - - or do query to find the "beforeId"?
- *
- * - beforeId: "some-id" & afterId: null  => right before "some-id"
+ * Calculate new view position for a specific position in the group that it will be a part of. Also
+ * returns whether rebalancing is needed (i.e. the gap between before and after positions is too small)
  */
 export type GetNewViewSpecificPosition = (params: {
   projectId: string
@@ -209,7 +199,10 @@ export type GetNewViewSpecificPosition = (params: {
   groupId: string | null
   beforeId: MaybeNullOrUndefined<string>
   afterId: MaybeNullOrUndefined<string>
-}) => Promise<number>
+}) => Promise<{
+  newPosition: number
+  needsRebalancing: boolean
+}>
 
 /////////////////////
 // SERVICE OPERATIONS:

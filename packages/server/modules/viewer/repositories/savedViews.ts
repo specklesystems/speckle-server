@@ -81,6 +81,8 @@ export const SavedViewGroups = buildTableHelper('saved_view_groups', [
   'updatedAt'
 ])
 
+const MINIMUM_POSITION_GAP = 0.00001
+
 const savedGroupCursorUtils = () =>
   compositeCursorTools({
     schema: SavedViewGroups,
@@ -762,25 +764,37 @@ export const setNewHomeViewFactory =
     return true
   }
 
+function applyViewPositionGroupFiltering(
+  q: Knex.QueryBuilder,
+  groupId: string | null,
+  projectId: string,
+  resourceIdString: string,
+  col = SavedViews.col
+) {
+  const groupResourceIds = formatResourceIdsForGroup(resourceIdString)
+  if (!groupId && !groupResourceIds.length) {
+    throw new LogicError(
+      'Cannot determine new view position without resources or groupId'
+    )
+  }
+
+  q.andWhere(col.projectId, projectId).andWhere(col.groupId, groupId)
+  if (!groupId) {
+    q.andWhereRaw(
+      `cardinality(ARRAY(SELECT UNNEST(??::varchar[]) INTERSECT SELECT UNNEST(?::varchar[]))) > 0`,
+      [col.groupResourceIds, groupResourceIds]
+    )
+  }
+}
+
 export const getNewViewBoundaryPositionFactory =
   (deps: { db: Knex }): GetNewViewBoundaryPosition =>
   async (params) => {
     const { projectId, resourceIdString, groupId } = params
     const asLast = params.position === 'last'
 
-    const groupResourceIds = formatResourceIdsForGroup(resourceIdString)
-    if (!groupId && !groupResourceIds.length) {
-      throw new LogicError(
-        'Cannot determine new view position without resources or groupId'
-      )
-    }
-
     const q = tables
       .savedViews(deps.db)
-      .where({
-        [SavedViews.col.projectId]: projectId,
-        [SavedViews.col.groupId]: groupId
-      })
       .select<Array<{ newPosition: number }>>(
         deps.db.raw(
           asLast
@@ -790,19 +804,13 @@ export const getNewViewBoundaryPositionFactory =
         )
       )
 
-    if (!groupId) {
-      // Logic for ungrouped views - group within those
-      q.andWhereRaw(
-        `cardinality(ARRAY(SELECT UNNEST(??) INTERSECT SELECT UNNEST(?::varchar[]))) > 0`,
-        [SavedViews.col.groupResourceIds, groupResourceIds]
-      )
-    }
+    applyViewPositionGroupFiltering(q, groupId, projectId, resourceIdString)
 
     const [result] = await q
     return result?.newPosition || 1000
   }
 
-const getNeighborViewIdFactory =
+const getNeighborViewFactory =
   (deps: { db: Knex }) =>
   async (params: {
     projectId: string
@@ -811,15 +819,11 @@ const getNeighborViewIdFactory =
     direction: 'before' | 'after'
     anchorId: string
   }) => {
-    const { direction, anchorId, projectId } = params
+    const { direction, anchorId, projectId, groupId, resourceIdString } = params
 
-    // Subquery for anchor row: pull projectId, groupId, position
-    const subQ = tables
-      .savedViews(deps.db)
-      .select(SavedViews.col.projectId, SavedViews.col.groupId, SavedViews.col.position)
-      .where(SavedViews.col.id, anchorId)
-      .andWhere(SavedViews.col.projectId, projectId)
-      .first()
+    // Subquery to find the anchor view
+    const subQ = tables.savedViews(deps.db).where(SavedViews.col.id, anchorId).first()
+    applyViewPositionGroupFiltering(subQ, groupId, projectId, resourceIdString)
 
     // Main query: find neighbor
     const cmpOperator = direction === 'before' ? '<' : '>'
@@ -831,50 +835,125 @@ const getNeighborViewIdFactory =
     const resultQ = tables
       .savedViews(deps.db)
       .as('mv')
-      .join(subQ.as('sq1'), function () {
-        // join on projectId and groupId (allow NULLs to match if groupId is null)
-        this.on(MainCols.col.projectId, '=', SubqCols.col.projectId).andOn(function () {
-          this.on(MainCols.col.groupId, '=', SubqCols.col.groupId)
-            .orOnNull(MainCols.col.groupId)
-            .orOnNull(SubqCols.col.groupId)
-        })
+      .select<Array<SavedView>>(MainCols.cols)
+      .join(subQ.as('sq1'), (j1) => {
+        j1
+          // same projectId
+          .on(MainCols.col.projectId, '=', SubqCols.col.projectId)
+          // same groupId (including null)
+          .andOn(function () {
+            this.on(MainCols.col.groupId, '=', SubqCols.col.groupId)
+              .orOnNull(MainCols.col.groupId)
+              .orOnNull(SubqCols.col.groupId)
+          })
+          // next positions
+          .andOn(MainCols.col.position, cmpOperator, SubqCols.col.position)
+
+        if (!groupId) {
+          // Check resource intersection too, if no groupId
+          const groupResourceIds = formatResourceIdsForGroup(resourceIdString)
+          j1.andOn(
+            deps.db.raw(
+              `cardinality(ARRAY(SELECT UNNEST(??::varchar[]) INTERSECT SELECT UNNEST(?::varchar[]))) > 0`,
+              [MainCols.col.groupResourceIds, groupResourceIds]
+            )
+          )
+        }
       })
-      .andWhere(MainCols.col.projectId, projectId)
-      .andWhere(MainCols.col.position, cmpOperator, SubqCols.col.position)
-      .select<Array<{ id: string }>>(MainCols.col.id)
       .orderBy(MainCols.col.position, sortDir)
       .limit(1)
 
     const result = await resultQ
-    return result.length > 0 ? result[0].id : null
+    return result.length > 0 ? result[0] : null
   }
 
 export const getNewViewSpecificPositionFactory =
   (deps: { db: Knex }): GetNewViewSpecificPosition =>
   async (params) => {
-    const { projectId, resourceIdString, groupId } = params
-    let { beforeId, afterId } = params
-    if (!beforeId && !afterId) {
-      // end of list
-      return getNewViewBoundaryPositionFactory(deps)({ ...params, position: 'last' })
+    const { beforeId, afterId } = params
+    const boundaries = {
+      before: { id: beforeId, position: undefined as number | undefined },
+      after: { id: afterId, position: undefined as number | undefined }
     }
 
-    if (!beforeId || !afterId) {
-      const getNeighborViewId = getNeighborViewIdFactory(deps)
-      if (!beforeId) {
+    const getNewViewBoundaryPosition = getNewViewBoundaryPositionFactory(deps)
+    const getNeighborViewId = getNeighborViewFactory(deps)
+    const getView = getSavedViewFactory(deps)
+
+    if (!boundaries.before.id && !boundaries.after.id) {
+      // end of list
+      return {
+        needsRebalancing: false,
+        newPosition: await getNewViewBoundaryPosition({ ...params, position: 'last' })
+      }
+    }
+
+    // One of the ids is undefined, try to resolve it
+    if (!boundaries.before.id || !boundaries.after.id) {
+      if (!boundaries.before.id) {
         // only afterId - get the view before it
-        beforeId = await getNeighborViewId({
+        const beforeView = await getNeighborViewId({
           ...params,
           direction: 'before',
-          anchorId: afterId!
+          anchorId: boundaries.after.id!
         })
-      } else if (!afterId) {
+        boundaries.before.position = beforeView?.position
+        boundaries.before.id = beforeView?.id
+      } else if (!boundaries.after.id) {
         // only beforeId - get the view after it
-        afterId = await getNeighborViewId({
+        const afterView = await getNeighborViewId({
           ...params,
           direction: 'after',
-          anchorId: beforeId!
+          anchorId: boundaries.before.id!
         })
+        boundaries.after.position = afterView?.position
+        boundaries.after.id = afterView?.id
       }
+    }
+
+    // If one of the ids is still undefined, it means we hit the list boundary
+    if (!boundaries.before.id || !boundaries.after.id) {
+      const hasNoBeforeView = !boundaries.before.id
+      return {
+        newPosition: await getNewViewBoundaryPosition({
+          ...params,
+          position: hasNoBeforeView ? 'last' : 'first'
+        }),
+        needsRebalancing: false
+      }
+    }
+
+    // Both ids are defined - get their positions if we don't have them yet
+    if (!boundaries.before.position || !boundaries.after.position) {
+      const [beforePosition, afterPosition] = await Promise.all([
+        boundaries.before.position
+          ? Promise.resolve(boundaries.before.position)
+          : getView({ id: boundaries.before.id!, projectId: params.projectId }).then(
+              (v) => v?.position
+            ),
+        boundaries.after.position
+          ? Promise.resolve(boundaries.after.position)
+          : getView({ id: boundaries.after.id!, projectId: params.projectId }).then(
+              (v) => v?.position
+            )
+      ])
+
+      // These will only be undefined if the view ids are actually invalid
+      if (!beforePosition || !afterPosition) {
+        throw new Error('Either beforeId or afterId are invalid IDs')
+      }
+
+      boundaries.before.position = beforePosition
+      boundaries.after.position = afterPosition
+    }
+
+    // See if we need rebalancing
+    const gap = boundaries.after.position - boundaries.before.position
+    const needsRebalancing = gap < MINIMUM_POSITION_GAP
+    const newPosition = (boundaries.before.position + boundaries.after.position) / 2
+
+    return {
+      needsRebalancing,
+      newPosition
     }
   }

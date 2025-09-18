@@ -3666,8 +3666,8 @@ export type SavedViewGroupViewsInput = {
   /** Whether to only include views matching this search term */
   search?: InputMaybe<Scalars['String']['input']>;
   /**
-   * Optionally specify sort by field. Default: updatedAt
-   * Options: updatedAt, createdAt, name
+   * Optionally specify sort by field. Default: position
+   * Options: updatedAt, createdAt, name, position
    */
   sortBy?: InputMaybe<Scalars['String']['input']>;
   /** Optionally specify sort direction. Default: descending */
