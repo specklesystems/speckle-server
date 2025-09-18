@@ -50,7 +50,6 @@ type Documents = {
     "\n  mutation DashboardsShareToken($dashboardId: String!) {\n    dashboardMutations {\n      share(dashboardId: $dashboardId) {\n        id\n        revoked\n        content\n      }\n    }\n  }\n": typeof types.DashboardsShareTokenDocument,
     "\n  mutation DashboardsShareEnableToken($input: DashboardShareInput!) {\n    dashboardMutations {\n      enableShare(input: $input) {\n        id\n        revoked\n        content\n      }\n    }\n  }\n": typeof types.DashboardsShareEnableTokenDocument,
     "\n  mutation DashboardsShareDisableToken($input: DashboardShareInput!) {\n    dashboardMutations {\n      disableShare(input: $input) {\n        id\n        revoked\n        content\n      }\n    }\n  }\n": typeof types.DashboardsShareDisableTokenDocument,
-    "\n  query DashboardsSharePermissions($id: String!) {\n    dashboard(id: $id) {\n      id\n      permissions {\n        canCreateToken {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": typeof types.DashboardsSharePermissionsDocument,
     "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n": typeof types.FormSelectModels_ModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": typeof types.FormSelectProjects_ProjectFragmentDoc,
     "\n  fragment FormSelectSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    title\n    isUngroupedViewsGroup\n  }\n": typeof types.FormSelectSavedViewGroup_SavedViewGroupFragmentDoc,
@@ -584,7 +583,6 @@ const documents: Documents = {
     "\n  mutation DashboardsShareToken($dashboardId: String!) {\n    dashboardMutations {\n      share(dashboardId: $dashboardId) {\n        id\n        revoked\n        content\n      }\n    }\n  }\n": types.DashboardsShareTokenDocument,
     "\n  mutation DashboardsShareEnableToken($input: DashboardShareInput!) {\n    dashboardMutations {\n      enableShare(input: $input) {\n        id\n        revoked\n        content\n      }\n    }\n  }\n": types.DashboardsShareEnableTokenDocument,
     "\n  mutation DashboardsShareDisableToken($input: DashboardShareInput!) {\n    dashboardMutations {\n      disableShare(input: $input) {\n        id\n        revoked\n        content\n      }\n    }\n  }\n": types.DashboardsShareDisableTokenDocument,
-    "\n  query DashboardsSharePermissions($id: String!) {\n    dashboard(id: $id) {\n      id\n      permissions {\n        canCreateToken {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n": types.DashboardsSharePermissionsDocument,
     "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n": types.FormSelectModels_ModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": types.FormSelectProjects_ProjectFragmentDoc,
     "\n  fragment FormSelectSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    title\n    isUngroupedViewsGroup\n  }\n": types.FormSelectSavedViewGroup_SavedViewGroupFragmentDoc,
@@ -1240,10 +1238,6 @@ export function graphql(source: "\n  mutation DashboardsShareEnableToken($input:
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation DashboardsShareDisableToken($input: DashboardShareInput!) {\n    dashboardMutations {\n      disableShare(input: $input) {\n        id\n        revoked\n        content\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation DashboardsShareDisableToken($input: DashboardShareInput!) {\n    dashboardMutations {\n      disableShare(input: $input) {\n        id\n        revoked\n        content\n      }\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query DashboardsSharePermissions($id: String!) {\n    dashboard(id: $id) {\n      id\n      permissions {\n        canCreateToken {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query DashboardsSharePermissions($id: String!) {\n    dashboard(id: $id) {\n      id\n      permissions {\n        canCreateToken {\n          ...FullPermissionCheckResult\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
