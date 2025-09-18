@@ -58,10 +58,11 @@ export class ObjectLoader2Factory {
     ) {
       this.logger('Using DEBUG mode for ObjectLoader2Factory')
     }
-    if (
-      params.options?.useCache === true ||
-      getFeatureFlag(ObjectLoader2Flags.USE_CACHE) === 'true'
-    ) {
+    const useCache = params.options?.useCache ?? true
+    const flag = getFeatureFlag(ObjectLoader2Flags.USE_CACHE)
+    const flagAllowsCache = flag !== 'false'
+
+    if (useCache && flagAllowsCache) {
       database = new IndexedDatabase({
         indexedDB: params.options?.indexedDB,
         keyRange: params.options?.keyRange
