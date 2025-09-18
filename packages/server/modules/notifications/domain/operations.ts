@@ -18,7 +18,11 @@ export type GetUserNotificationPreferences = (
 
 export type GetUserNotifications = (args: {
   userId: string
-}) => Promise<UserNotificationRecord[]>
+  cursor: string | null
+  limit: number | null
+}) => Promise<{ items: UserNotificationRecord[]; cursor: string | null }>
+
+export type GetUserNotificationsCount = (args: { userId: string }) => Promise<number>
 
 export type GetEmailNotifications = () => Promise<UserNotificationRecord[]>
 

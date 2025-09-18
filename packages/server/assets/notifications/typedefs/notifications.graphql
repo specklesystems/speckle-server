@@ -1,6 +1,5 @@
 type UserNotificationCollection {
   totalCount: Int!
-  numberOfHidden: Int!
   cursor: String
   items: [Notification!]!
 }
@@ -22,7 +21,7 @@ extend type User {
   """
   List all notifications for the user
   """
-  notifications: UserNotificationCollection! @isOwner
+  notifications(cursor: String, limit: Int): UserNotificationCollection! @isOwner
 }
 
 extend type Mutation {

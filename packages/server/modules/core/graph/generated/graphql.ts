@@ -4818,6 +4818,16 @@ export type UserFavoriteStreamsArgs = {
  * Full user type, should only be used in the context of admin operations or
  * when a user is reading/writing info about himself
  */
+export type UserNotificationsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
 export type UserProjectAccessRequestArgs = {
   projectId: Scalars['String']['input'];
 };
@@ -4988,7 +4998,6 @@ export type UserNotificationCollection = {
   __typename?: 'UserNotificationCollection';
   cursor?: Maybe<Scalars['String']['output']>;
   items: Array<Notification>;
-  numberOfHidden: Scalars['Int']['output'];
   totalCount: Scalars['Int']['output'];
 };
 
@@ -8515,7 +8524,7 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   meta?: Resolver<ResolversTypes['UserMeta'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   notificationPreferences?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
-  notifications?: Resolver<ResolversTypes['UserNotificationCollection'], ParentType, ContextType>;
+  notifications?: Resolver<ResolversTypes['UserNotificationCollection'], ParentType, ContextType, Partial<UserNotificationsArgs>>;
   permissions?: Resolver<ResolversTypes['RootPermissionChecks'], ParentType, ContextType>;
   profiles?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   projectAccessRequest?: Resolver<Maybe<ResolversTypes['ProjectAccessRequest']>, ParentType, ContextType, RequireFields<UserProjectAccessRequestArgs, 'projectId'>>;
@@ -8583,7 +8592,6 @@ export type UserMetaMutationsResolvers<ContextType = GraphQLContext, ParentType 
 export type UserNotificationCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserNotificationCollection'] = ResolversParentTypes['UserNotificationCollection']> = {
   cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   items?: Resolver<Array<ResolversTypes['Notification']>, ParentType, ContextType>;
-  numberOfHidden?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

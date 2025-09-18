@@ -3,11 +3,18 @@ import type {
   DeleteUserNotifications,
   GetEmailNotifications,
   GetUserNotifications,
+  GetUserNotificationsCount,
   StoreUserNotifications,
   UpdateUserNotifications
 } from '@/modules/notifications/domain/operations'
 import type { UserNotificationRecord } from '@/modules/notifications/helpers/types'
+import {
+  decodeIsoDateCursor,
+  encodeIsoDateCursor
+} from '@/modules/shared/helpers/dbHelper'
+import { isNullOrUndefined } from '@speckle/shared'
 import { type Knex } from 'knex'
+import { clamp } from 'lodash-es'
 
 const tables = {
   userNotifications: (db: Knex) => db<UserNotificationRecord>(UserNotifications.name)
@@ -15,13 +22,36 @@ const tables = {
 
 export const getUserNotificationsFactory =
   (deps: { db: Knex }): GetUserNotifications =>
-  async ({ userId }): Promise<Array<UserNotificationRecord>> => {
-    const notifications = await tables
-      .userNotifications(deps.db)
-      .where({ userId })
-      .orderBy(UserNotifications.col.createdAt, 'desc')
+  async (args) => {
+    if (args.limit === 0) return { items: [], cursor: null }
 
-    return notifications
+    const cursor = args.cursor ? decodeIsoDateCursor(args.cursor) : null
+    const limit = clamp(isNullOrUndefined(args.limit) ? 10 : args.limit, 0, 50)
+
+    const q = tables
+      .userNotifications(deps.db)
+      .where({ userId: args.userId })
+      .orderBy(UserNotifications.col.createdAt, 'desc')
+      .limit(limit)
+
+    if (cursor) q.andWhere(UserNotifications.col.createdAt, '<', cursor)
+
+    const items = await q
+    return {
+      items,
+      cursor:
+        items.length === limit
+          ? encodeIsoDateCursor(items[items.length - 1].createdAt)
+          : null
+    }
+  }
+
+export const getUserNotificationsCountFactory =
+  (deps: { db: Knex }): GetUserNotificationsCount =>
+  async ({ userId }) => {
+    const [res] = await tables.userNotifications(deps.db).where({ userId }).count()
+
+    return parseInt(res.count.toString())
   }
 
 export const storeUserNotificationsFactory =

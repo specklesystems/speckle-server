@@ -2,6 +2,7 @@ import { db } from '@/db/knex'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   deleteUserNotificationsFactory,
+  getUserNotificationsCountFactory,
   getUserNotificationsFactory,
   updateUserNotificationsFactory
 } from '@/modules/notifications/repositories/userNotification'
@@ -10,16 +11,23 @@ import { withOperationLogging } from '@/observability/domain/businessLogging'
 const getUserNotifications = getUserNotificationsFactory({ db })
 const deleteUserNotifications = deleteUserNotificationsFactory({ db })
 const updateUserNotifications = updateUserNotificationsFactory({ db })
+const getUserNotificationsCount = getUserNotificationsCountFactory({ db })
 
 export default {
   User: {
-    async notifications(parent) {
-      const notifications = await getUserNotifications({ userId: parent.id })
+    async notifications(parent, args) {
+      const [totalCount, { items, cursor }] = await Promise.all([
+        await getUserNotificationsCount({ userId: parent.id }),
+        await getUserNotifications({
+          userId: parent.id,
+          cursor: args.cursor || null,
+          limit: args.limit || null
+        })
+      ])
       return {
-        totalCount: notifications.length,
-        numberOfHidden: 0,
-        cursor: '',
-        items: notifications
+        totalCount,
+        cursor,
+        items
       }
     }
   },
