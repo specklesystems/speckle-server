@@ -1877,8 +1877,6 @@ export type Mutation = {
    */
   commitsMove: Scalars['Boolean']['output'];
   dashboardMutations: DashboardMutations;
-  /** Delete an existing notification */
-  delete: Scalars['Boolean']['output'];
   fileUploadMutations: FileUploadMutations;
   /**
    * Delete a pending invite
@@ -1891,6 +1889,7 @@ export type Mutation = {
    */
   inviteResend: Scalars['Boolean']['output'];
   modelMutations: ModelMutations;
+  notificationMutations: NotificationMutations;
   /** @deprecated Part of the old API surface and will be removed in the future. */
   objectCreate: Array<Scalars['String']['output']>;
   projectMutations: ProjectMutations;
@@ -2125,11 +2124,6 @@ export type MutationCommitsMoveArgs = {
 };
 
 
-export type MutationDeleteArgs = {
-  id: Scalars['String']['input'];
-};
-
-
 export type MutationInviteDeleteArgs = {
   inviteId: Scalars['String']['input'];
 };
@@ -2297,6 +2291,29 @@ export type Notification = {
   read: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
+};
+
+export type NotificationMutations = {
+  __typename?: 'NotificationMutations';
+  /** Delete an existing notification */
+  bulkDelete: Scalars['Boolean']['output'];
+  /** update notidication */
+  bulkUpdate: Scalars['Boolean']['output'];
+};
+
+
+export type NotificationMutationsBulkDeleteArgs = {
+  ids: Array<Scalars['String']['input']>;
+};
+
+
+export type NotificationMutationsBulkUpdateArgs = {
+  ids: Array<Scalars['String']['input']>;
+  input: NotificationUpdateInput;
+};
+
+export type NotificationUpdateInput = {
+  read: Scalars['Boolean']['input'];
 };
 
 export type Object = {
@@ -4774,6 +4791,16 @@ export type UserFavoriteStreamsArgs = {
  * Full user type, should only be used in the context of admin operations or
  * when a user is reading/writing info about himself
  */
+export type UserNotificationsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
 export type UserProjectAccessRequestArgs = {
   projectId: Scalars['String']['input'];
 };
@@ -4944,7 +4971,6 @@ export type UserNotificationCollection = {
   __typename?: 'UserNotificationCollection';
   cursor?: Maybe<Scalars['String']['output']>;
   items: Array<Notification>;
-  numberOfHidden: Scalars['Int']['output'];
   totalCount: Scalars['Int']['output'];
 };
 
@@ -8990,6 +9016,7 @@ export type AllObjectTypes = {
   ModelsTreeItemCollection: ModelsTreeItemCollection,
   Mutation: Mutation,
   Notification: Notification,
+  NotificationMutations: NotificationMutations,
   Object: Object,
   ObjectCollection: ObjectCollection,
   PasswordStrengthCheckFeedback: PasswordStrengthCheckFeedback,
@@ -9740,11 +9767,11 @@ export type MutationFieldArgs = {
   commitsDelete: MutationCommitsDeleteArgs,
   commitsMove: MutationCommitsMoveArgs,
   dashboardMutations: {},
-  delete: MutationDeleteArgs,
   fileUploadMutations: {},
   inviteDelete: MutationInviteDeleteArgs,
   inviteResend: MutationInviteResendArgs,
   modelMutations: {},
+  notificationMutations: {},
   objectCreate: MutationObjectCreateArgs,
   projectMutations: {},
   requestVerification: {},
@@ -9787,6 +9814,10 @@ export type NotificationFieldArgs = {
   read: {},
   type: {},
   updatedAt: {},
+}
+export type NotificationMutationsFieldArgs = {
+  bulkDelete: NotificationMutationsBulkDeleteArgs,
+  bulkUpdate: NotificationMutationsBulkUpdateArgs,
 }
 export type ObjectFieldArgs = {
   applicationId: {},
@@ -10405,7 +10436,7 @@ export type UserFieldArgs = {
   meta: {},
   name: {},
   notificationPreferences: {},
-  notifications: {},
+  notifications: UserNotificationsArgs,
   permissions: {},
   profiles: {},
   projectAccessRequest: UserProjectAccessRequestArgs,
@@ -10459,7 +10490,6 @@ export type UserMetaMutationsFieldArgs = {
 export type UserNotificationCollectionFieldArgs = {
   cursor: {},
   items: {},
-  numberOfHidden: {},
   totalCount: {},
 }
 export type UserProjectCollectionFieldArgs = {
@@ -10862,6 +10892,7 @@ export type AllObjectFieldArgTypes = {
   ModelsTreeItemCollection: ModelsTreeItemCollectionFieldArgs,
   Mutation: MutationFieldArgs,
   Notification: NotificationFieldArgs,
+  NotificationMutations: NotificationMutationsFieldArgs,
   Object: ObjectFieldArgs,
   ObjectCollection: ObjectCollectionFieldArgs,
   PasswordStrengthCheckFeedback: PasswordStrengthCheckFeedbackFieldArgs,

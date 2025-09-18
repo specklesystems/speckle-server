@@ -1,7 +1,7 @@
 import { UserNotifications } from '@/modules/core/dbSchema'
 import type {
   DeleteUserNotifications,
-  GetEmailNotifications,
+  GetNextEmailNotification,
   GetUserNotifications,
   GetUserNotificationsCount,
   StoreUserNotifications,
@@ -70,15 +70,18 @@ export const updateUserNotificationsFactory =
       .update(update)
   }
 
-export const getEmailNotificationsFactory =
-  (deps: { db: Knex }): GetEmailNotifications =>
+export const getNextEmailNotificationFactory =
+  (deps: { db: Knex }): GetNextEmailNotification =>
   async () => {
-    const notifications = await tables
+    const notification = await tables
       .userNotifications(deps.db)
       .where(UserNotifications.col.sendEmailAt, '<=', new Date())
       .andWhere(UserNotifications.col.read, false)
+      .forUpdate()
+      .skipLocked()
+      .first()
 
-    return notifications
+    return notification
   }
 
 export const deleteUserNotificationsFactory =

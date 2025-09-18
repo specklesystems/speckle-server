@@ -2,6 +2,7 @@ import type {
   NotificationPreferences,
   UserNotificationRecord
 } from '@/modules/notifications/helpers/types'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 export type GetSavedUserNotificationPreferences = (
   userId: string
@@ -24,7 +25,9 @@ export type GetUserNotifications = (args: {
 
 export type GetUserNotificationsCount = (args: { userId: string }) => Promise<number>
 
-export type GetEmailNotifications = () => Promise<UserNotificationRecord[]>
+export type GetNextEmailNotification = () => Promise<
+  MaybeNullOrUndefined<UserNotificationRecord>
+>
 
 export type DeleteUserNotifications = (args: {
   userId: string

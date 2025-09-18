@@ -5,43 +5,49 @@ import {
 } from '@/modules/core/repositories/scheduledTasks'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import type { Logger } from '@/observability/logging'
-import type {
-  GetEmailNotifications,
-  UpdateUserNotifications
-} from '@/modules/notifications/domain/operations'
 import {
-  getEmailNotificationsFactory,
+  getNextEmailNotificationFactory,
   updateUserNotificationsFactory
 } from '@/modules/notifications/repositories/userNotification'
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import MentionedInCommentHandler from '@/modules/notifications/tasks/handlers/mentionedInComment'
 
-export const emitDelayedEmailNotifications = async (deps: {
-  logger: Logger
-  getEmailNotifications: GetEmailNotifications
-  updateUserNotifications: UpdateUserNotifications
-}) => {
-  // tx per one notification
-  const notifications = await deps.getEmailNotifications()
-  if (!notifications.length) return
+type EmailNotificationResult = { notificationId: string } | null
 
-  for (const notification of notifications) {
-    switch (notification.type) {
-      case NotificationType.MentionedInComment:
-        await MentionedInCommentHandler(notification)
-        break
-      default:
-        deps.logger.error(
-          {
-            type: notification.type,
-            notificationId: notification.id
-          },
-          `No handler scheduled notification type. Skipping.`
-        )
-        return
+const handleNextEmailNotification = async (deps: {
+  logger: Logger
+}): Promise<EmailNotificationResult> =>
+  db.transaction(async (trx) => {
+    const notification = await getNextEmailNotificationFactory({ db: trx })()
+    if (!notification) return null
+
+    try {
+      switch (notification.type) {
+        case NotificationType.MentionedInComment:
+          await MentionedInCommentHandler(notification)
+          break
+        default:
+          deps.logger.error(
+            {
+              type: notification.type,
+              notificationId: notification.id
+            },
+            `No handler scheduled notification type. Skipping.`
+          )
+          break
+      }
+    } catch (error) {
+      deps.logger.error(
+        {
+          error,
+          type: notification.type,
+          notificationId: notification.id
+        },
+        `Error handling notification. Skipping.`
+      )
     }
 
-    await deps.updateUserNotifications({
+    await updateUserNotificationsFactory({ db: trx })({
       ids: [notification.id],
       userId: notification.userId,
       update: {
@@ -49,7 +55,23 @@ export const emitDelayedEmailNotifications = async (deps: {
         updatedAt: new Date()
       }
     })
-  }
+
+    return { notificationId: notification.id }
+  })
+
+export const emitDelayedEmailNotifications = async (deps: { logger: Logger }) => {
+  let result: EmailNotificationResult
+  const MAX_ITERATIONS = 10_000
+  let iterationCount = 0
+
+  do {
+    if (iterationCount++ >= MAX_ITERATIONS) {
+      deps.logger.error(`Reached max iteration limit of ${MAX_ITERATIONS}.`)
+      break
+    }
+
+    result = await handleNextEmailNotification(deps)
+  } while (result)
 }
 
 export const scheduleDelayedEmailNotifications = async () => {
@@ -64,9 +86,7 @@ export const scheduleDelayedEmailNotifications = async () => {
     'DelayedEmailNotifications',
     async (_scheduledTime, { logger }) => {
       await emitDelayedEmailNotifications({
-        logger,
-        getEmailNotifications: getEmailNotificationsFactory({ db }),
-        updateUserNotifications: updateUserNotificationsFactory({ db })
+        logger
       })
     }
   )
