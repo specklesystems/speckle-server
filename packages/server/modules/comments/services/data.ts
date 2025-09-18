@@ -142,7 +142,8 @@ export const convertLegacyDataToStateFactory =
               condition: 'AND'
             }
           ],
-          activeColorFilterId: null
+          activeColorFilterId: null,
+          filterLogic: 'all'
         },
         camera: {
           position: [
