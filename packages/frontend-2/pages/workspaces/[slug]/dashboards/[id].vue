@@ -81,7 +81,8 @@ graphql(`
 `)
 
 definePageMeta({
-  layout: 'dashboard'
+  layout: 'dashboard',
+  middleware: ['require-valid-dashboard']
 })
 
 const { id } = useRoute().params

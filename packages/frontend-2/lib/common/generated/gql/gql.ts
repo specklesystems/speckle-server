@@ -270,6 +270,7 @@ type Documents = {
     "\n  mutation CreateDashboard(\n    $workspace: WorkspaceIdentifier!\n    $input: DashboardCreateInput!\n  ) {\n    dashboardMutations {\n      create(workspace: $workspace, input: $input) {\n        id\n        workspace {\n          id\n        }\n      }\n    }\n  }\n": typeof types.CreateDashboardDocument,
     "\n  mutation UpdateDashboard($input: DashboardUpdateInput!) {\n    dashboardMutations {\n      update(input: $input) {\n        id\n        name\n      }\n    }\n  }\n": typeof types.UpdateDashboardDocument,
     "\n  mutation DeleteDashboard($id: String!) {\n    dashboardMutations {\n      delete(id: $id)\n    }\n  }\n": typeof types.DeleteDashboardDocument,
+    "\n  query DashboardAccessCheck($id: String!) {\n    dashboard(id: $id) {\n      id\n    }\n  }\n": typeof types.DashboardAccessCheckDocument,
     "\n  query Dashboard($id: String!) {\n    dashboard(id: $id) {\n      id\n      ...WorkspaceDashboards_Dashboard\n    }\n  }\n": typeof types.DashboardDocument,
     "\n  query WorkspaceDashboards($workspaceSlug: String!, $cursor: String) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      dashboards(cursor: $cursor) {\n        cursor\n        items {\n          id\n          ...DashboardsCard_Dashboard\n        }\n      }\n    }\n  }\n": typeof types.WorkspaceDashboardsDocument,
     "\n  mutation DeleteAccessToken($token: String!) {\n    apiTokenRevoke(token: $token)\n  }\n": typeof types.DeleteAccessTokenDocument,
@@ -801,6 +802,7 @@ const documents: Documents = {
     "\n  mutation CreateDashboard(\n    $workspace: WorkspaceIdentifier!\n    $input: DashboardCreateInput!\n  ) {\n    dashboardMutations {\n      create(workspace: $workspace, input: $input) {\n        id\n        workspace {\n          id\n        }\n      }\n    }\n  }\n": types.CreateDashboardDocument,
     "\n  mutation UpdateDashboard($input: DashboardUpdateInput!) {\n    dashboardMutations {\n      update(input: $input) {\n        id\n        name\n      }\n    }\n  }\n": types.UpdateDashboardDocument,
     "\n  mutation DeleteDashboard($id: String!) {\n    dashboardMutations {\n      delete(id: $id)\n    }\n  }\n": types.DeleteDashboardDocument,
+    "\n  query DashboardAccessCheck($id: String!) {\n    dashboard(id: $id) {\n      id\n    }\n  }\n": types.DashboardAccessCheckDocument,
     "\n  query Dashboard($id: String!) {\n    dashboard(id: $id) {\n      id\n      ...WorkspaceDashboards_Dashboard\n    }\n  }\n": types.DashboardDocument,
     "\n  query WorkspaceDashboards($workspaceSlug: String!, $cursor: String) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      dashboards(cursor: $cursor) {\n        cursor\n        items {\n          id\n          ...DashboardsCard_Dashboard\n        }\n      }\n    }\n  }\n": types.WorkspaceDashboardsDocument,
     "\n  mutation DeleteAccessToken($token: String!) {\n    apiTokenRevoke(token: $token)\n  }\n": types.DeleteAccessTokenDocument,
@@ -2114,6 +2116,10 @@ export function graphql(source: "\n  mutation UpdateDashboard($input: DashboardU
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation DeleteDashboard($id: String!) {\n    dashboardMutations {\n      delete(id: $id)\n    }\n  }\n"): (typeof documents)["\n  mutation DeleteDashboard($id: String!) {\n    dashboardMutations {\n      delete(id: $id)\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query DashboardAccessCheck($id: String!) {\n    dashboard(id: $id) {\n      id\n    }\n  }\n"): (typeof documents)["\n  query DashboardAccessCheck($id: String!) {\n    dashboard(id: $id) {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
