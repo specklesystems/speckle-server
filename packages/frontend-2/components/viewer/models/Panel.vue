@@ -54,16 +54,17 @@
             v-bind="containerProps"
             @scroll="handleScroll"
           >
-            <div v-bind="wrapperProps">
+            <div v-bind="wrapperProps" class="model-list">
               <div
                 v-for="{ data: item } in virtualList"
                 :key="item.id"
                 :data-item-id="item.id"
+                :data-item-type="item.type"
                 class="group first:hidden"
               >
                 <!-- Model Header -->
                 <template v-if="item.type === 'model-header'">
-                  <div class="bg-foundation h-16">
+                  <div class="bg-foundation h-16 model-header">
                     <ViewerModelsCard
                       :model="getModelFromItem(item)"
                       :version-id="getVersionIdFromItem(item)"
@@ -442,3 +443,13 @@ watch(
   { immediate: true }
 )
 </script>
+
+<style scoped>
+/* Add border-top to model headers that follow tree items using css */
+.model-list
+  .group[data-item-type='tree-item']
+  + .group[data-item-type='model-header']
+  .model-header {
+  @apply border-t border-outline-3;
+}
+</style>
