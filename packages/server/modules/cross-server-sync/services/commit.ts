@@ -1,3 +1,4 @@
+import fetch from 'cross-fetch'
 import type { ApolloClient, NormalizedCacheObject } from '@apollo/client/core'
 import { gql } from '@apollo/client/core'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
@@ -556,7 +557,10 @@ const loadAllObjectsFromParentFactory =
       serverUrl: origin,
       streamId: sourceStreamId,
       objectId: sourceCommit.referencedObject,
-      token
+      token,
+      options: {
+        fetch
+      }
     })
 
     // Iterate over all objects and download them into the DB
