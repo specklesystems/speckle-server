@@ -10,7 +10,7 @@
       </PresentationFloatingPanelButton>
       <h1
         v-if="presentation?.title"
-        class="hidden md:block text-body-xs font-medium text-foreground leading-none md:pr-1.5"
+        class="hidden sm:block text-body-xs font-medium text-foreground leading-none sm:pr-1.5"
       >
         {{ presentation?.title }}
       </h1>

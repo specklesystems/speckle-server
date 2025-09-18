@@ -26,7 +26,7 @@
       />
 
       <PresentationSpeckleLogo
-        class="absolute right-4 z-30 top-5 md:top-auto md:bottom-4"
+        class="absolute right-4 z-30 top-4 md:top-auto md:bottom-4"
         :class="[isInfoSidebarOpen ? '' : '']"
       />
 
