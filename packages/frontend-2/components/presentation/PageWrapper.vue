@@ -5,17 +5,18 @@
         v-if="!hideUi"
         v-model:is-sidebar-open="isLeftSidebarOpen"
         class="absolute top-4 z-40"
-        :class="[
-          isLeftSidebarOpen ? 'left-[calc(50%+0.75rem)] md:left-[15.75rem]' : 'left-4'
-        ]"
+        :class="[isLeftSidebarOpen ? 'left-56 md:left-[15.75rem]' : 'left-4']"
         @toggle-sidebar="isLeftSidebarOpen = !isLeftSidebarOpen"
       />
 
       <PresentationActions
         v-if="!hideUi"
         v-model:is-sidebar-open="isInfoSidebarOpen"
-        class="absolute top-4 right-4 z-20"
-        :class="{ 'lg:right-[21rem]': isInfoSidebarOpen }"
+        class="absolute bottom-4 md:top-4 right-4 z-20"
+        :class="{
+          'bottom-52 lg:bottom-auto md:right-[17rem] xl:right-[21rem]':
+            isInfoSidebarOpen
+        }"
         @toggle-sidebar="isInfoSidebarOpen = !isInfoSidebarOpen"
       />
 
@@ -25,8 +26,8 @@
       />
 
       <PresentationSpeckleLogo
-        class="absolute right-4 z-20"
-        :class="[isInfoSidebarOpen ? 'bottom-52 md:bottom-4' : 'bottom-4']"
+        class="absolute right-4 z-30 top-5 md:top-auto md:bottom-4"
+        :class="[isInfoSidebarOpen ? '' : '']"
       />
 
       <PresentationLeftSidebar
@@ -42,11 +43,11 @@
         />
       </div>
 
-      <PresentationInfoSidebar v-if="isInfoSidebarOpen" class="flex-shrink-0" />
+      <PresentationInfoSidebar v-if="isInfoSidebarOpen" class="flex-shrink-0 z-20" />
 
       <PresentationControls
         v-if="!hideUi"
-        class="absolute left-1/2 -translate-x-1/2"
+        class="absolute left-4 md:left-1/2 md:-translate-x-1/2"
         :class="[
           isInfoSidebarOpen ? 'bottom-52 md:bottom-4' : 'bottom-4',
           isLeftSidebarOpen ? 'hidden md:flex' : ''

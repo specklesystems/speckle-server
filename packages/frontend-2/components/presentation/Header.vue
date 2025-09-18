@@ -10,8 +10,7 @@
       </PresentationFloatingPanelButton>
       <h1
         v-if="presentation?.title"
-        class="text-body-xs font-medium text-foreground leading-none md:pr-1.5"
-        :class="{ 'hidden md:block': isSidebarOpen }"
+        class="hidden md:block text-body-xs font-medium text-foreground leading-none md:pr-1.5"
       >
         {{ presentation?.title }}
       </h1>
