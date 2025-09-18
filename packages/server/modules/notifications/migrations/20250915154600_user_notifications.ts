@@ -17,6 +17,8 @@ export async function up(knex: Knex): Promise<void> {
     table.timestamp('sendEmailAt').nullable()
     table.timestamp('createdAt').defaultTo(knex.fn.now())
     table.timestamp('updatedAt').defaultTo(knex.fn.now())
+
+    table.index(['userId', 'createdAt'])
   })
 }
 
