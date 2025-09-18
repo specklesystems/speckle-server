@@ -4,7 +4,7 @@ import {
   getFeatureFlag,
   ObjectLoader2Flags
 } from '../types/functions.js'
-import { Base } from '../types/types.js'
+import { Base, ObjectAttributeMask } from '../types/types.js'
 import { ObjectLoader2 } from './objectLoader2.js'
 import { IndexedDatabase } from './stages/indexedDatabase.js'
 import { MemoryDatabase } from './stages/memory/memoryDatabase.js'
@@ -48,6 +48,7 @@ export class ObjectLoader2Factory {
     token?: string
     headers?: Headers
     options?: ObjectLoader2FactoryOptions
+    attributeMask?: ObjectAttributeMask
   }): ObjectLoader2 {
     const log = ObjectLoader2Factory.getLogger(params.options?.logger)
     let database
