@@ -38,15 +38,32 @@ const onNext = () => {
   currentVisibleIndex.value = clamp(currentVisibleIndex.value + 1, 0, slideCount.value)
 }
 
-// TBD
-const handleKeydown = (event: KeyboardEvent) => {
-  if (event.key === 'ArrowLeft' && !disablePrevious.value) {
-    onPrevious()
-  }
-  if (event.key === 'ArrowRight' && !disableNext.value) {
-    onNext()
-  }
-}
+// Prevent viewer from moving when using arrow keys
+useEventListener(
+  'keydown',
+  (event) => {
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation()
+      if (disablePrevious.value) return
+      onPrevious()
+    }
 
-useEventListener('keydown', handleKeydown)
+    if (event.key === 'ArrowRight') {
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation()
+      if (disableNext.value) return
+      onNext()
+    }
+
+    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation()
+    }
+  },
+  { capture: true }
+)
 </script>
