@@ -7,6 +7,7 @@
       :disabled="disablePrevious"
       @click="onPrevious"
     />
+    <PresentationControlsButton :icon="LucideRotateCcw" @click="resetView" />
     <PresentationControlsButton
       :icon="LucideChevronRight"
       :disabled="disableNext"
@@ -16,13 +17,14 @@
 </template>
 
 <script setup lang="ts">
-import { LucideChevronLeft, LucideChevronRight } from 'lucide-vue-next'
+import { LucideChevronLeft, LucideChevronRight, LucideRotateCcw } from 'lucide-vue-next'
 import { useInjectedPresentationState } from '~/lib/presentations/composables/setup'
 import { clamp } from 'lodash-es'
 import { useEventListener } from '@vueuse/core'
 
 const {
-  ui: { slideIdx: currentVisibleIndex, slideCount }
+  ui: { slideIdx: currentVisibleIndex, slideCount },
+  viewer: { resetView }
 } = useInjectedPresentationState()
 
 const disablePrevious = computed(() => currentVisibleIndex.value === 0)
