@@ -14,5 +14,6 @@ export const Dashboards = buildTableHelper('dashboards', [
 export const DashboardApiTokens = buildTableHelper('dashboard_api_tokens', [
   'tokenId',
   'dashboardId',
-  'userId'
+  'userId',
+  'content'
 ])

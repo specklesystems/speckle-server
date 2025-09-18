@@ -1,5 +1,13 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
+export const dashboardAccessCheckQuery = graphql(`
+  query DashboardAccessCheck($id: String!) {
+    dashboard(id: $id) {
+      id
+    }
+  }
+`)
+
 export const dashboardQuery = graphql(`
   query Dashboard($id: String!) {
     dashboard(id: $id) {
