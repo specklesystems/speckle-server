@@ -8,6 +8,8 @@ import {
   SavedViewVisibility
 } from '~/lib/common/generated/gql/graphql'
 import { projectPresentationPageQuery } from '~/lib/presentations/graphql/queries'
+import { useEventBus } from '~/lib/core/composables/eventBus'
+import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
 
 type ResponseProject = Optional<Get<ProjectPresentationPageQuery, 'project'>>
 type ResponseWorkspace = Get<ProjectPresentationPageQuery, 'project.workspace'>
@@ -41,6 +43,10 @@ export type InjectablePresentationState = Readonly<{
      * active slide etc.
      */
     resourceIdString: ComputedRef<string>
+    /**
+     * Reset the current view to the saved view state of the current slide
+     */
+    resetView: () => void
   }
 }>
 
@@ -98,7 +104,21 @@ const setupStateViewer = (initState: ResponseState & UiState): ViewerState => {
       .toString()
   })
 
-  return { viewer: { resourceIdString } }
+  const { emit } = useEventBus()
+
+  const resetView = () => {
+    const slides = presentation.value?.views.items || []
+    const currentSlide = slides.at(slideIdx.value)
+
+    if (!currentSlide?.id) return
+
+    emit(ViewerEventBusKeys.ApplySavedView, {
+      id: currentSlide.id,
+      loadOriginal: false
+    })
+  }
+
+  return { viewer: { resourceIdString, resetView } }
 }
 
 const setupStateUi = (initState: ResponseState): UiState => {
