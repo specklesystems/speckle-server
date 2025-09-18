@@ -1,5 +1,4 @@
 import type { Optional } from '@speckle/shared'
-
 import { useApolloClientFromNuxt } from '~/lib/common/composables/graphql'
 import {
   convertThrowIntoFetchResult,
@@ -41,6 +40,14 @@ export default defineParallelizedNuxtRouteMiddleware(async (to, _from) => {
         return abortNavigation(
           createError({
             statusCode: 403,
+            message: authResult.message
+          })
+        )
+
+      default:
+        return abortNavigation(
+          createError({
+            statusCode: 500,
             message: authResult.message
           })
         )
