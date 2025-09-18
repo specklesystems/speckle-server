@@ -43,7 +43,11 @@
         />
       </div>
 
-      <PresentationInfoSidebar v-if="isInfoSidebarOpen" class="flex-shrink-0 z-20" />
+      <PresentationInfoSidebar
+        v-if="isInfoSidebarOpen"
+        class="flex-shrink-0 z-20"
+        @close="isInfoSidebarOpen = false"
+      />
 
       <PresentationControls
         v-if="!hideUi"
