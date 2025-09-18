@@ -570,11 +570,11 @@ function useViewerFiltersIntegration() {
 
       const selectionExtension = instance.getExtension(SelectionExtension)
 
-      if (!newVal.length) {
-        selectionExtension.clearSelection()
-        return
+      selectionExtension.clearSelection()
+
+      if (newVal.length > 0) {
+        selectionExtension.selectObjects(newIds)
       }
-      selectionExtension.selectObjects(newIds)
     },
     { immediate: true, flush: 'sync' }
   )
