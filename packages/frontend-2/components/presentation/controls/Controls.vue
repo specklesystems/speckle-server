@@ -1,6 +1,7 @@
 <template>
   <div
     class="flex items-center rounded-xl bg-foundation border border-outline-3 shadow-md overflow-hidden divide-x divide-outline-3"
+    :class="{ hidden: hideUi }"
   >
     <PresentationControlsButton
       :icon="LucideChevronLeft"
@@ -21,6 +22,10 @@ import { LucideChevronLeft, LucideChevronRight, LucideRotateCcw } from 'lucide-v
 import { useInjectedPresentationState } from '~/lib/presentations/composables/setup'
 import { clamp } from 'lodash-es'
 import { useEventListener } from '@vueuse/core'
+
+defineProps<{
+  hideUi?: boolean
+}>()
 
 const {
   ui: { slideIdx: currentVisibleIndex, slideCount },

@@ -50,7 +50,7 @@
       />
 
       <PresentationControls
-        v-if="!hideUi"
+        :hide-ui="hideUi"
         class="absolute left-4 md:left-1/2 md:-translate-x-1/2"
         :class="[
           isInfoSidebarOpen ? 'bottom-52 md:bottom-4' : 'bottom-4',
