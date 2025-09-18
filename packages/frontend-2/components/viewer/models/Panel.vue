@@ -27,24 +27,22 @@
 
       <div class="flex flex-col h-full">
         <template v-if="resourceItems.length || objects.length">
-          <!-- Detached Objects Section -->
-          <div v-if="objects.length > 0">
-            <ViewerModelsDetachedObjectCard
-              v-for="object in objects"
-              :key="object.objectId"
-              :object-id="object.objectId"
-            />
-          </div>
-
           <!-- Sticky Header Area (outside virtual list) -->
           <div v-if="stickyHeader" class="sticky top-0 z-20 h-16">
             <ViewerModelsCard
+              v-if="!isDetachedObjectSticky"
               :model="stickyHeader!.model"
               :version-id="stickyHeader!.versionId"
               :is-expanded="expandedModels.has(stickyHeader!.model.id)"
               @toggle-expansion="toggleModelExpansion(stickyHeader!.model.id)"
               @show-versions="handleShowVersions"
               @show-diff="handleShowDiff"
+            />
+            <ViewerModelsDetachedObjectHeader
+              v-else
+              :object-id="stickyHeader!.versionId"
+              :is-expanded="expandedModels.has(stickyHeader!.model.id)"
+              @toggle-expansion="toggleModelExpansion"
             />
           </div>
 
@@ -72,6 +70,17 @@
                       @toggle-expansion="toggleModelExpansion(item.modelId)"
                       @show-versions="handleShowVersions"
                       @show-diff="handleShowDiff"
+                    />
+                  </div>
+                </template>
+
+                <!-- Detached Object Header -->
+                <template v-else-if="item.type === 'detached-object-header'">
+                  <div class="bg-foundation h-16 model-header">
+                    <ViewerModelsDetachedObjectHeader
+                      :object-id="getObjectIdFromItem(item)"
+                      :is-expanded="expandedModels.has(item.modelId)"
+                      @toggle-expansion="toggleModelExpansion(item.modelId)"
                     />
                   </div>
                 </template>
@@ -179,6 +188,7 @@ const unifiedVirtualItems = computed(() => {
     selectedObjects.value,
     worldTree.value || null,
     stateResourceItems.value as { objectId: string; modelId?: string }[],
+    objects.value,
     getRootNodesForModel,
     flattenModelTree
   )
@@ -191,7 +201,9 @@ const {
 } = useVirtualList(unifiedVirtualItems, {
   itemHeight: (index) => {
     const item = unifiedVirtualItems.value[index]
-    return item?.type === 'model-header' ? 64 : 40
+    return item?.type === 'model-header' || item?.type === 'detached-object-header'
+      ? 64
+      : 40
   },
   overscan: 20
 })
@@ -208,7 +220,8 @@ const modelHeaderPositions = computed(() => {
   let cumulativeHeight = 0
   for (let i = 0; i < unifiedVirtualItems.value.length; i++) {
     const item = unifiedVirtualItems.value[i]
-    const itemHeight = item.type === 'model-header' ? 64 : 40
+    const itemHeight =
+      item.type === 'model-header' || item.type === 'detached-object-header' ? 64 : 40
 
     if (item.type === 'model-header') {
       const data = item.data as { model: ModelItem; versionId: string }
@@ -216,6 +229,20 @@ const modelHeaderPositions = computed(() => {
         index: i,
         model: data.model,
         versionId: data.versionId,
+        position: cumulativeHeight
+      })
+    } else if (item.type === 'detached-object-header') {
+      const data = item.data as { objectId: string }
+      // Create a detached object header item in the virtual list
+      const detachedObjectHeader = {
+        id: data.objectId,
+        name: 'Detached Object',
+        displayName: 'Detached Object'
+      } as unknown as ModelItem
+      headers.push({
+        index: i,
+        model: detachedObjectHeader,
+        versionId: data.objectId,
         position: cumulativeHeight
       })
     }
@@ -226,6 +253,11 @@ const modelHeaderPositions = computed(() => {
 
 const hasDiffActive = computed(() => {
   return !!(diffState.oldVersion.value && diffState.newVersion.value)
+})
+
+const isDetachedObjectSticky = computed(() => {
+  if (!stickyHeader.value) return false
+  return objects.value.some((obj) => obj.objectId === stickyHeader.value?.model.id)
 })
 
 const handleShowVersions = (modelId: string) => {
@@ -311,6 +343,13 @@ const getModelFromItem = (item: UnifiedVirtualItem): ModelItem => {
 const getVersionIdFromItem = (item: UnifiedVirtualItem): string => {
   if (item.type === 'model-header') {
     return (item.data as { model: ModelItem; versionId: string }).versionId
+  }
+  return ''
+}
+
+const getObjectIdFromItem = (item: UnifiedVirtualItem): string => {
+  if (item.type === 'detached-object-header') {
+    return (item.data as { objectId: string }).objectId
   }
   return ''
 }
@@ -426,14 +465,28 @@ watch(
   unifiedVirtualItems,
   (items) => {
     if (items.length > 0) {
-      const firstModelHeader = items.find((item) => item.type === 'model-header')
-      if (firstModelHeader) {
-        const data = firstModelHeader.data as { model: ModelItem; versionId: string }
-
-        // Always update to the current first model (handles new models being added)
-        stickyHeader.value = {
-          model: data.model,
-          versionId: data.versionId
+      const firstHeader = items.find(
+        (item) => item.type === 'model-header' || item.type === 'detached-object-header'
+      )
+      if (firstHeader) {
+        if (firstHeader.type === 'model-header') {
+          const data = firstHeader.data as { model: ModelItem; versionId: string }
+          stickyHeader.value = {
+            model: data.model,
+            versionId: data.versionId
+          }
+        } else if (firstHeader.type === 'detached-object-header') {
+          const data = firstHeader.data as { objectId: string }
+          // Create a fake model for detached objects
+          const fakeModel = {
+            id: data.objectId,
+            name: 'Detached Object',
+            displayName: 'Detached Object'
+          } as unknown as ModelItem
+          stickyHeader.value = {
+            model: fakeModel,
+            versionId: data.objectId
+          }
         }
       }
     } else {
@@ -445,10 +498,14 @@ watch(
 </script>
 
 <style scoped>
-/* Add border-top to model headers that follow tree items using css */
+/* Add border-top to model/detached object headers that follow tree items using css */
 .model-list
   .group[data-item-type='tree-item']
   + .group[data-item-type='model-header']
+  .model-header,
+.model-list
+  .group[data-item-type='tree-item']
+  + .group[data-item-type='detached-object-header']
   .model-header {
   @apply border-t border-outline-3;
 }
