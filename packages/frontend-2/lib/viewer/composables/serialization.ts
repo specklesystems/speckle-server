@@ -9,7 +9,7 @@ import { useDiffUtilities, useSelectionUtilities } from '~~/lib/viewer/composabl
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 import { CameraController, VisualDiffMode } from '@speckle/viewer'
-import { StringFilterCondition } from '~/lib/viewer/helpers/filters/types'
+import type { FilterLogic, FilterCondition } from '~/lib/viewer/helpers/filters/types'
 import type { Merge, PartialDeep } from 'type-fest'
 import {
   defaultMeasurementOptions,
@@ -110,10 +110,7 @@ export function useStateSerialization() {
             isApplied: filterData.isApplied,
             selectedValues: filterData.selectedValues,
             id: filterData.id,
-            condition:
-              filterData.condition === StringFilterCondition.Is
-                ? ('AND' as const)
-                : ('OR' as const)
+            condition: filterData.condition
           }))
 
           return {
@@ -314,9 +311,15 @@ export function useApplySerializedState() {
 
     if (filters.propertyFilters?.length) {
       restoreFilters(
-        filters.propertyFilters,
+        filters.propertyFilters as Array<{
+          key: string | null
+          isApplied: boolean
+          selectedValues: string[]
+          id: string
+          condition: FilterCondition
+        }>,
         filters.activeColorFilterId,
-        filters.filterLogic
+        filters.filterLogic as FilterLogic
       )
     } else {
       resetFilters()

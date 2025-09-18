@@ -712,10 +712,10 @@ export function useFilterUtilities(
       isApplied: boolean
       selectedValues: string[]
       id: string
-      condition: 'AND' | 'OR'
+      condition: FilterCondition
     }>
     activeColorFilterId: string | null
-    filterLogic?: string
+    filterLogic?: FilterLogic
   } | null>(null)
 
   /**
@@ -727,10 +727,10 @@ export function useFilterUtilities(
       isApplied: boolean
       selectedValues: string[]
       id: string
-      condition: 'AND' | 'OR'
+      condition: FilterCondition
     }>,
     activeColorFilterId: string | null,
-    filterLogic?: string
+    filterLogic?: FilterLogic
   ) => {
     if (!serializedFilters?.length) return
 
@@ -744,7 +744,12 @@ export function useFilterUtilities(
       filters.activeColorFilterId.value = activeColorFilterId
 
       if (filterLogic) {
-        const logicValue = filterLogic === 'any' ? FilterLogic.Any : FilterLogic.All
+        const logicValue =
+          typeof filterLogic === 'string'
+            ? filterLogic === 'any'
+              ? FilterLogic.Any
+              : FilterLogic.All
+            : filterLogic
         dataStore.setFilterLogic(logicValue)
       }
     } else {
@@ -766,7 +771,7 @@ export function useFilterUtilities(
       isApplied: boolean
       selectedValues: string[]
       id: string
-      condition: 'AND' | 'OR'
+      condition: FilterCondition
     }>,
     availableProperties: ExtendedPropertyInfo[]
   ) => {
@@ -777,6 +782,8 @@ export function useFilterUtilities(
         )
         if (propertyInfo) {
           const filterId = addActiveFilter(propertyInfo, serializedFilter.id)
+
+          updateFilterCondition(filterId, serializedFilter.condition)
 
           if (serializedFilter.selectedValues?.length) {
             updateActiveFilterValues(filterId, serializedFilter.selectedValues)
@@ -916,10 +923,13 @@ export function useFilterUtilities(
       }
 
       if (pendingFiltersToRestore.value.filterLogic) {
+        const filterLogic = pendingFiltersToRestore.value.filterLogic
         const logicValue =
-          pendingFiltersToRestore.value.filterLogic === 'any'
-            ? FilterLogic.Any
-            : FilterLogic.All
+          typeof filterLogic === 'string'
+            ? filterLogic === 'any'
+              ? FilterLogic.Any
+              : FilterLogic.All
+            : filterLogic
         dataStore.setFilterLogic(logicValue)
       }
 

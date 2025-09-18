@@ -113,7 +113,7 @@ export type SerializedViewerState = {
         isApplied: boolean
         selectedValues: string[]
         id: string
-        condition: 'AND' | 'OR'
+        condition: string
       }>
       activeColorFilterId: Nullable<string>
       filterLogic: string
@@ -279,7 +279,7 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
           isApplied: boolean
           selectedValues: string[]
           id: string
-          condition: 'AND' | 'OR'
+          condition: string
         }> = []
 
         // If new propertyFilters exist and are not empty, use them
@@ -298,7 +298,7 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
               isApplied: state.ui.filters.propertyFilter.isApplied || false,
               selectedValues: [], // Legacy didn't have selectedValues
               id: 'legacy-filter', // Generate a consistent ID for legacy filter
-              condition: 'AND' as const
+              condition: 'is'
             }
           ]
         }
