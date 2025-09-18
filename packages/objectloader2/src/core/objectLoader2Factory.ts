@@ -15,9 +15,10 @@ export interface ObjectLoader2FactoryOptions {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   keyRange?: { bound: Function; lowerBound: Function; upperBound: Function }
   indexedDB?: IDBFactory
+  fetch?: Fetcher
+  attributeMask?: ObjectAttributeMask
   useCache?: boolean
   debug?: boolean
-  fetch?: Fetcher
   logger?: CustomLogger
 }
 
@@ -84,6 +85,7 @@ export class ObjectLoader2Factory {
         token: params.token,
         headers: params.headers,
         fetch: params.options?.fetch,
+        attributeMask: params.attributeMask,
         logger: log || ((): void => {})
       }),
       database,
