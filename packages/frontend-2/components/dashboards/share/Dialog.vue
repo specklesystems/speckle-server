@@ -45,8 +45,10 @@ const dashboardsDialogSharePermissionsQuery = graphql(`
 const dashboardsDialogShareTokenMutation = graphql(`
   mutation DashboardsShareToken($dashboardId: String!) {
     dashboardMutations {
-      createToken(dashboardId: $dashboardId) {
-        token
+      share(dashboardId: $dashboardId) {
+        id
+        revoked
+        content
       }
     }
   }
@@ -123,8 +125,6 @@ const onEnablePublicUrl = async (value: boolean) => {
     // If enabling and no share link exists, create one first
     if (!shareLink.value?.id) {
       await createToken({ dashboardId: props.dashboardId })
-      // Create token doesnt return anything, so we need to refetch
-      await refetch()
     }
 
     // Enable the share link
