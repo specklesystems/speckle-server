@@ -100,7 +100,7 @@ const workspace = computed(() => result.value?.dashboard?.workspace)
 const dashboard = computed(() => result.value?.dashboard)
 const dashboardUrl = computed(
   () =>
-    `${dashboardsOrigin}/dashboards/${id}?token=${
+    `${dashboardsOrigin}/${dashboardToken.value ? 'view' : 'dashboards'}/${id}?token=${
       dashboardToken.value || effectiveAuthToken.value
     }&isEmbed=true&theme=${isDarkTheme.value ? 'dark' : 'light'}`
 )
