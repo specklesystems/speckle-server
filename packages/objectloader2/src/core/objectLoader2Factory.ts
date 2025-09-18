@@ -52,11 +52,14 @@ export class ObjectLoader2Factory {
   }): ObjectLoader2 {
     const log = ObjectLoader2Factory.getLogger(params.options?.logger)
     let database
-    if (params.options?.debug || getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true') {
+    if (
+      params.options?.debug === true ||
+      getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true'
+    ) {
       this.logger('Using DEBUG mode for ObjectLoader2Factory')
     }
     if (
-      params.options?.useCache ||
+      params.options?.useCache === true ||
       getFeatureFlag(ObjectLoader2Flags.USE_CACHE) === 'true'
     ) {
       database = new IndexedDatabase({
