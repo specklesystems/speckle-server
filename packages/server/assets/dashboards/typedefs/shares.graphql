@@ -20,6 +20,6 @@ input DashboardShareInput {
 extend type DashboardMutations {
   share(dashboardId: String!): DashboardShareLink!
   deleteShare(input: DashboardShareInput!): Boolean!
-  disableShare(input: DashboardShareInput!): Boolean!
-  enableShare(input: DashboardShareInput!): Boolean!
+  disableShare(input: DashboardShareInput!): DashboardShareLink!
+  enableShare(input: DashboardShareInput!): DashboardShareLink!
 }

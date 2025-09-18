@@ -1165,8 +1165,8 @@ export type DashboardMutations = {
   createToken: CreateDashboardTokenReturn;
   delete: Scalars['Boolean']['output'];
   deleteShare: Scalars['Boolean']['output'];
-  disableShare: Scalars['Boolean']['output'];
-  enableShare: Scalars['Boolean']['output'];
+  disableShare: DashboardShareLink;
+  enableShare: DashboardShareLink;
   share: DashboardShareLink;
   update: Dashboard;
 };
@@ -7403,8 +7403,8 @@ export type DashboardMutationsResolvers<ContextType = GraphQLContext, ParentType
   createToken?: Resolver<ResolversTypes['CreateDashboardTokenReturn'], ParentType, ContextType, RequireFields<DashboardMutationsCreateTokenArgs, 'dashboardId'>>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<DashboardMutationsDeleteArgs, 'id'>>;
   deleteShare?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<DashboardMutationsDeleteShareArgs, 'input'>>;
-  disableShare?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<DashboardMutationsDisableShareArgs, 'input'>>;
-  enableShare?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<DashboardMutationsEnableShareArgs, 'input'>>;
+  disableShare?: Resolver<ResolversTypes['DashboardShareLink'], ParentType, ContextType, RequireFields<DashboardMutationsDisableShareArgs, 'input'>>;
+  enableShare?: Resolver<ResolversTypes['DashboardShareLink'], ParentType, ContextType, RequireFields<DashboardMutationsEnableShareArgs, 'input'>>;
   share?: Resolver<ResolversTypes['DashboardShareLink'], ParentType, ContextType, RequireFields<DashboardMutationsShareArgs, 'dashboardId'>>;
   update?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<DashboardMutationsUpdateArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;

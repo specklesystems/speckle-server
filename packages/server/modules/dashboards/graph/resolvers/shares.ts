@@ -1,7 +1,10 @@
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getDashboardRecordFactory } from '@/modules/dashboards/repositories/management'
 import { db } from '@/db/knex'
-import { DashboardsModuleDisabledError } from '@/modules/dashboards/errors/dashboards'
+import {
+  DashboardMalformedTokenError,
+  DashboardsModuleDisabledError
+} from '@/modules/dashboards/errors/dashboards'
 import { createDashboardTokenFactory } from '@/modules/dashboards/services/tokens'
 import { createTokenFactory } from '@/modules/core/services/tokens'
 import {
@@ -14,6 +17,7 @@ import {
 } from '@/modules/core/repositories/tokens'
 import {
   deleteDashboardApiTokenFactory,
+  getDashboardTokenFactory,
   getDashboardTokensFactory,
   storeDashboardApiTokenFactory
 } from '@/modules/dashboards/repositories/tokens'
@@ -21,10 +25,21 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import dayjs from 'dayjs'
 import { deleteDashboardShareFactory } from '@/modules/dashboards/services/shares'
+import type { DashboardApiToken } from '@/modules/dashboards/domain/tokens/types'
 
 const { FF_WORKSPACES_MODULE_ENABLED, FF_DASHBOARDS_MODULE_ENABLED } = getFeatureFlags()
 
 const isEnabled = FF_WORKSPACES_MODULE_ENABLED && FF_DASHBOARDS_MODULE_ENABLED
+
+const formatDashboardTokenToDashboardShare = (token: DashboardApiToken) => {
+  return {
+    ...token,
+    id: token.tokenId,
+    validUntil: dayjs(token.createdAt)
+      .add(Number(token.lifespan), 'milliseconds')
+      .toDate()
+  }
+}
 
 const resolvers: Resolvers = {
   Dashboard: {
@@ -34,13 +49,7 @@ const resolvers: Resolvers = {
       })
       if (!dashboardTokens.length) return null
       const token = dashboardTokens[0]
-      return {
-        ...token,
-        id: token.tokenId,
-        validUntil: dayjs(token.createdAt)
-          .add(Number(token.lifespan), 'milliseconds')
-          .toDate()
-      }
+      return formatDashboardTokenToDashboardShare(token)
     }
   },
   DashboardMutations: {
@@ -64,15 +73,7 @@ const resolvers: Resolvers = {
         dashboardId: args.dashboardId,
         userId: context.userId!
       })
-      return {
-        id: token.tokenMetadata.tokenId,
-        content: `${token.tokenMetadata.tokenId}${token.tokenMetadata.content}`,
-        createdAt: token.tokenMetadata.createdAt,
-        revoked: false,
-        validUntil: dayjs(token.tokenMetadata.createdAt)
-          .add(Number(token.tokenMetadata.lifespan), 'millisecond')
-          .toDate()
-      }
+      return formatDashboardTokenToDashboardShare(token.tokenMetadata)
     },
     disableShare: async (_, { input }, context) => {
       const authResult = await context.authPolicies.dashboard.canCreateToken({
@@ -81,8 +82,12 @@ const resolvers: Resolvers = {
       })
       throwIfAuthNotOk(authResult)
       await updateApiTokenFactory({ db })(input.shareId, { revoked: true })
-
-      return true
+      const token = await getDashboardTokenFactory({ db })({
+        dashboardId: input.dashboardId,
+        tokenId: input.shareId
+      })
+      if (!token) throw new DashboardMalformedTokenError()
+      return formatDashboardTokenToDashboardShare(token)
     },
     enableShare: async (_, { input }, context) => {
       const authResult = await context.authPolicies.dashboard.canCreateToken({
@@ -91,8 +96,12 @@ const resolvers: Resolvers = {
       })
       throwIfAuthNotOk(authResult)
       await updateApiTokenFactory({ db })(input.shareId, { revoked: false })
-
-      return true
+      const token = await getDashboardTokenFactory({ db })({
+        dashboardId: input.dashboardId,
+        tokenId: input.shareId
+      })
+      if (!token) throw new DashboardMalformedTokenError()
+      return formatDashboardTokenToDashboardShare(token)
     },
     deleteShare: async (_, { input }, context) => {
       const authResult = await context.authPolicies.dashboard.canCreateToken({

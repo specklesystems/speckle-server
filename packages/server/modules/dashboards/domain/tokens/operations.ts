@@ -15,3 +15,8 @@ export type DeleteDashboardToken = (args: {
 export type GetDashboardTokens = (args: {
   dashboardId: string
 }) => Promise<DashboardApiToken[]>
+
+export type GetDashboardToken = (args: {
+  dashboardId: string
+  tokenId: string
+}) => Promise<DashboardApiToken | null>

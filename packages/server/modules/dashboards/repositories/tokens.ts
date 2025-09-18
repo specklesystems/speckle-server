@@ -2,6 +2,7 @@ import { ApiTokens } from '@/modules/core/dbSchema'
 import { DashboardApiTokens } from '@/modules/dashboards/dbSchema'
 import type {
   DeleteDashboardToken,
+  GetDashboardToken,
   GetDashboardTokens,
   StoreDashboardApiToken
 } from '@/modules/dashboards/domain/tokens/operations'
@@ -53,4 +54,23 @@ export const getDashboardTokensFactory =
       ])
       .where({ dashboardId })
     return tokens
+  }
+
+export const getDashboardTokenFactory =
+  (deps: { db: Knex }): GetDashboardToken =>
+  async ({ dashboardId, tokenId }) => {
+    const token = await tables
+      .dashboardApiTokens(deps.db)
+      .orderBy(ApiTokens.col.createdAt)
+      .join(ApiTokens.name, ApiTokens.col.id, DashboardApiTokens.col.tokenId)
+      .select<DashboardApiToken[]>([
+        ...DashboardApiTokens.cols,
+        ApiTokens.col.createdAt,
+        ApiTokens.col.lastUsed,
+        ApiTokens.col.lifespan,
+        ApiTokens.col.revoked
+      ])
+      .where({ dashboardId, tokenId })
+      .first()
+    return token ?? null
   }
