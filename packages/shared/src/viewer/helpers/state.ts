@@ -291,7 +291,16 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
           Array.isArray(state.ui.filters.propertyFilters) &&
           state.ui.filters.propertyFilters.length > 0
         ) {
-          propertyFilters = state.ui.filters.propertyFilters
+          // Map legacy condition values to new format
+          propertyFilters = state.ui.filters.propertyFilters.map((filter) => ({
+            ...filter,
+            condition:
+              filter.condition === 'AND'
+                ? 'is'
+                : filter.condition === 'OR'
+                ? 'is'
+                : filter.condition
+          }))
         }
         // If legacy propertyFilter exists but no propertyFilters (or empty propertyFilters), migrate it
         else if (state.ui?.filters?.propertyFilter?.key) {
