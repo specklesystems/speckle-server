@@ -5,11 +5,11 @@
     </div>
 
     <aside
-      class="relative z-20 bg-foundation h-screen w-1/2 md:w-60 border-r border-outline-3 pt-3"
+      class="relative z-20 bg-foundation h-screen w-52 md:w-60 border-r border-outline-3 pt-3"
     >
       <div class="flex flex-col h-full">
         <section class="flex-shrink-0 flex items-center gap-2.5 px-3">
-          <WorkspaceAvatar size="lg" :name="workspace?.name" :logo="workspace?.logo" />
+          <WorkspaceAvatar :name="workspace?.name" :logo="workspace?.logo" />
           <p class="text-body-xs text-foreground">
             {{ workspace?.name }}
           </p>

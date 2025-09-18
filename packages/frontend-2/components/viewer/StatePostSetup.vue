@@ -1,5 +1,5 @@
 <template>
-  <div class="viewer-core-post-setup"><slot /></div>
+  <div class="viewer-core-post-setup h-full"><slot /></div>
 </template>
 <script setup lang="ts">
 import { useViewerPostSetup } from '~~/lib/viewer/composables/setup/postSetup'
