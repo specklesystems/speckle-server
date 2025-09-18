@@ -30,7 +30,8 @@ import type {
   GetModelHomeSavedView,
   SetNewHomeView,
   GetNewViewBoundaryPosition,
-  GetNewViewSpecificPosition
+  GetNewViewSpecificPosition,
+  RebalanceViewPositions
 } from '@/modules/viewer/domain/operations/savedViews'
 import {
   SavedViewVisibility,
@@ -841,8 +842,8 @@ const getNeighborViewFactory =
           // same projectId
           .on(MainCols.col.projectId, '=', SubqCols.col.projectId)
           // same groupId (including null)
-          .andOn(function () {
-            this.on(MainCols.col.groupId, '=', SubqCols.col.groupId)
+          .andOn((o1) => {
+            o1.on(MainCols.col.groupId, '=', SubqCols.col.groupId)
               .orOnNull(MainCols.col.groupId)
               .orOnNull(SubqCols.col.groupId)
           })
@@ -956,4 +957,36 @@ export const getNewViewSpecificPositionFactory =
       needsRebalancing,
       newPosition
     }
+  }
+
+// TODO: Prolly shouldnt rebalance "ungrouped" groups. Wont it mess up other attached "ungrouped" groups?
+// - OR you need to rebalance all attached groups at once. basically any group that has any resourceId intersection with any other group
+// - - isnt this happening already?
+
+/**
+ * Rebalances the view positions within a group. This needs to happen when the gap between two view positions becomes so small
+ * that inserting a new view between them becomes problematic because of floating point precision limits.
+ */
+export const rebalancingViewPositionsFactory =
+  (deps: { db: Knex }): RebalanceViewPositions =>
+  async (params) => {
+    const { projectId, resourceIdString, groupId } = params
+
+    const q = deps.db
+      .with('ordered', (q2) => {
+        q2.from(SavedViews.name).select(
+          SavedViews.col.id,
+          deps.db.raw('ROW_NUMBER() OVER (ORDER BY ??) AS rn', [
+            SavedViews.col.position
+          ])
+        )
+        applyViewPositionGroupFiltering(q2, groupId, projectId, resourceIdString)
+      })
+      .update({
+        [SavedViews.withoutTablePrefix.col.position]: deps.db.raw('ordered.rn * 1000')
+      })
+      .from('ordered')
+      .whereRaw('ordered.id = ??', [SavedViews.withoutTablePrefix.col.id])
+
+    return await q
   }

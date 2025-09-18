@@ -8,7 +8,7 @@ import type {
   GetGroupSavedViews,
   GetGroupSavedViewsPageItems,
   GetGroupSavedViewsTotalCount,
-  GetNewViewBoundaryPosition,
+  GetNewViewSpecificPosition,
   GetProjectSavedViewGroups,
   GetProjectSavedViewGroupsPageItems,
   GetProjectSavedViewGroupsTotalCount,
@@ -16,6 +16,7 @@ import type {
   GetSavedViewGroup,
   GetStoredViewCount,
   GetStoredViewGroupCount,
+  RebalanceViewPositions,
   RecalculateGroupResourceIds,
   SetNewHomeView,
   StoreSavedView,
@@ -228,7 +229,8 @@ export const createSavedViewFactory =
     getSavedViewGroup: GetSavedViewGroup
     recalculateGroupResourceIds: RecalculateGroupResourceIds
     setNewHomeView: SetNewHomeView
-    getNewViewBoundaryPosition: GetNewViewBoundaryPosition
+    getNewViewSpecificPosition: GetNewViewSpecificPosition
+    rebalanceViewPositions: RebalanceViewPositions
   }): CreateSavedView =>
   async ({ input, authorId }) => {
     const { resourceIdString, projectId } = input
@@ -311,11 +313,12 @@ export const createSavedViewFactory =
     })
 
     // Resolve new position
-    const position = await deps.getNewViewBoundaryPosition({
+    const { newPosition: position } = await deps.getNewViewSpecificPosition({
       projectId,
       groupId,
       resourceIdString: resourceIds.toString(),
-      position: 'last'
+      beforeId: null,
+      afterId: null
     })
 
     const concreteResourceIds = resourceIds.toResources().map((r) => r.toString())
