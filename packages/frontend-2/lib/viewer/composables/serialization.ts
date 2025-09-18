@@ -7,6 +7,7 @@ import { get } from 'lodash-es'
 import { Vector3 } from 'three'
 import { useDiffUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 import { CameraController, VisualDiffMode } from '@speckle/viewer'
 import { StringFilterCondition } from '~/lib/viewer/helpers/filters/types'
 import type { Merge, PartialDeep } from 'type-fest'
@@ -29,6 +30,7 @@ export function useStateSerialization() {
   const { objects: selectedObjects } = useSelectionUtilities()
   const { serializeDiffCommand } = useDiffUtilities()
   const { filters } = useFilterUtilities()
+  const dataStore = useFilteringDataStore()
 
   /**
    * We don't want to save a comment w/ implicit identifiers like ones that only have a model ID or a folder prefix, because
@@ -122,7 +124,8 @@ export function useStateSerialization() {
               return ret
             }, {} as Record<string, string | null>),
             propertyFilters,
-            activeColorFilterId: state.ui.filters.activeColorFilterId.value
+            activeColorFilterId: state.ui.filters.activeColorFilterId.value,
+            filterLogic: dataStore.currentFilterLogic.value
           }
         })(),
         camera: {
@@ -310,7 +313,11 @@ export function useApplySerializedState() {
     }
 
     if (filters.propertyFilters?.length) {
-      restoreFilters(filters.propertyFilters, filters.activeColorFilterId)
+      restoreFilters(
+        filters.propertyFilters,
+        filters.activeColorFilterId,
+        filters.filterLogic
+      )
     } else {
       resetFilters()
     }

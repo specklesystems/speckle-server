@@ -116,6 +116,7 @@ export type SerializedViewerState = {
         condition: 'AND' | 'OR'
       }>
       activeColorFilterId: Nullable<string>
+      filterLogic: string
     }
     camera: {
       position: number[]
@@ -304,7 +305,8 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
 
         return {
           ...baseFilters,
-          propertyFilters
+          propertyFilters,
+          filterLogic: state.ui?.filters?.filterLogic || 'all'
         }
       })(),
       camera: {

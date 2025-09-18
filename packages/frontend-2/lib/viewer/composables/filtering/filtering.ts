@@ -715,6 +715,7 @@ export function useFilterUtilities(
       condition: 'AND' | 'OR'
     }>
     activeColorFilterId: string | null
+    filterLogic?: string
   } | null>(null)
 
   /**
@@ -728,7 +729,8 @@ export function useFilterUtilities(
       id: string
       condition: 'AND' | 'OR'
     }>,
-    activeColorFilterId: string | null
+    activeColorFilterId: string | null,
+    filterLogic?: string
   ) => {
     if (!serializedFilters?.length) return
 
@@ -740,11 +742,17 @@ export function useFilterUtilities(
     if (availableProperties.length > 0) {
       applyFiltersFromSerialized(serializedFilters, availableProperties)
       filters.activeColorFilterId.value = activeColorFilterId
+
+      if (filterLogic) {
+        const logicValue = filterLogic === 'any' ? FilterLogic.Any : FilterLogic.All
+        dataStore.setFilterLogic(logicValue)
+      }
     } else {
       // Store filters to restore later when data store is ready
       pendingFiltersToRestore.value = {
         filters: serializedFilters,
-        activeColorFilterId
+        activeColorFilterId,
+        filterLogic
       }
     }
   }
@@ -905,6 +913,14 @@ export function useFilterUtilities(
       if (pendingFiltersToRestore.value.activeColorFilterId) {
         filters.activeColorFilterId.value =
           pendingFiltersToRestore.value.activeColorFilterId
+      }
+
+      if (pendingFiltersToRestore.value.filterLogic) {
+        const logicValue =
+          pendingFiltersToRestore.value.filterLogic === 'any'
+            ? FilterLogic.Any
+            : FilterLogic.All
+        dataStore.setFilterLogic(logicValue)
       }
 
       pendingFiltersToRestore.value = null
