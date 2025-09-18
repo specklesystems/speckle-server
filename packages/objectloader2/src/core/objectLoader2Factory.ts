@@ -1,4 +1,9 @@
-import { CustomLogger, getFeatureFlag, ObjectLoader2Flags } from '../types/functions.js'
+import {
+  CustomLogger,
+  Fetcher,
+  getFeatureFlag,
+  ObjectLoader2Flags
+} from '../types/functions.js'
 import { Base } from '../types/types.js'
 import { ObjectLoader2 } from './objectLoader2.js'
 import { IndexedDatabase } from './stages/indexedDatabase.js'
@@ -10,6 +15,9 @@ export interface ObjectLoader2FactoryOptions {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   keyRange?: { bound: Function; lowerBound: Function; upperBound: Function }
   indexedDB?: IDBFactory
+  useCache?: boolean
+  debug?: boolean
+  fetch?: Fetcher
   logger?: CustomLogger
 }
 
@@ -43,10 +51,13 @@ export class ObjectLoader2Factory {
   }): ObjectLoader2 {
     const log = ObjectLoader2Factory.getLogger(params.options?.logger)
     let database
-    if (getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true') {
+    if (params.options?.debug || getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true') {
       this.logger('Using DEBUG mode for ObjectLoader2Factory')
     }
-    if (getFeatureFlag(ObjectLoader2Flags.USE_CACHE) === 'true') {
+    if (
+      params.options?.useCache ||
+      getFeatureFlag(ObjectLoader2Flags.USE_CACHE) === 'true'
+    ) {
       database = new IndexedDatabase({
         indexedDB: params.options?.indexedDB,
         keyRange: params.options?.keyRange
@@ -67,6 +78,7 @@ export class ObjectLoader2Factory {
         objectId: params.objectId,
         token: params.token,
         headers: params.headers,
+        fetch: params.options?.fetch,
         logger: log || ((): void => {})
       }),
       database,
