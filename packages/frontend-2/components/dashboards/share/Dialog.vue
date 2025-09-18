@@ -85,12 +85,9 @@ const props = defineProps<{
 
 const open = defineModel<boolean>('open', { required: true })
 
-const { result, onResult, refetch } = useQuery(
-  dashboardsDialogSharePermissionsQuery,
-  () => ({
-    id: props.dashboardId || ''
-  })
-)
+const { result, refetch } = useQuery(dashboardsDialogSharePermissionsQuery, () => ({
+  id: props.dashboardId || ''
+}))
 const { mutate: createToken } = useMutation(dashboardsDialogShareTokenMutation)
 const { mutate: disableToken } = useMutation(dashboardsDialogShareDisableTokenMutation)
 const { mutate: enableToken } = useMutation(dashboardsDialogShareEnableTokenMutation)
@@ -151,10 +148,4 @@ const onEnablePublicUrl = async (value: boolean) => {
 
   await refetch()
 }
-
-onResult(async () => {
-  if (!result.value?.dashboard?.shareLink && !isRevoked.value) {
-    await createToken({ dashboardId: props.dashboardId || '' })
-  }
-})
 </script>
