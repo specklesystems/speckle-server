@@ -1,27 +1,29 @@
 <template>
   <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <template #header>Edit slide</template>
-    <div class="flex flex-col gap-2">
-      <img
-        :src="slide?.screenshot"
-        :alt="slide?.name"
-        class="w-full object-cover rounded-lg border border-outline-3"
-      />
-      <FormTextInput
-        v-model="name"
-        name="name"
-        label="Name"
-        color="foundation"
-        :rules="[isRequired]"
-      />
-      <FormTextArea
-        v-model="description"
-        name="description"
-        label="Description"
-        color="foundation"
-        placeholder="Add a description..."
-      />
-    </div>
+    <form @submit="onSubmit">
+      <div class="flex flex-col gap-2">
+        <img
+          :src="slide?.screenshot"
+          :alt="slide?.name"
+          class="w-full object-cover rounded-lg border border-outline-3"
+        />
+        <FormTextInput
+          v-model="name"
+          name="name"
+          label="Name"
+          color="foundation"
+          :rules="[isRequired]"
+        />
+        <FormTextArea
+          v-model="description"
+          name="description"
+          label="Description"
+          color="foundation"
+          placeholder="Add a description..."
+        />
+      </div>
+    </form>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
@@ -31,6 +33,7 @@ import type { PresentationSlideEditDialog_SavedViewFragment } from '~/lib/common
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { isRequired } from '~/lib/common/helpers/validation'
 import { useUpdatePresentationSlide } from '~/lib/presentations/composables/mangament'
+import { useForm } from 'vee-validate'
 
 graphql(`
   fragment PresentationSlideEditDialog_SavedView on SavedView {
@@ -52,8 +55,9 @@ const name = ref<string>('')
 const description = ref<string>('')
 
 const { mutate: updateSlide, loading } = useUpdatePresentationSlide()
+const { handleSubmit } = useForm()
 
-const handleSave = async () => {
+const onSubmit = handleSubmit(async () => {
   if (!props.slide?.id) return
 
   await updateSlide({
@@ -64,7 +68,7 @@ const handleSave = async () => {
   })
 
   open.value = false
-}
+})
 
 const dialogButtons = computed((): LayoutDialogButton[] => {
   return [
@@ -78,7 +82,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
     {
       text: 'Save',
       props: { loading: loading.value },
-      onClick: handleSave
+      onClick: onSubmit
     }
   ]
 })
