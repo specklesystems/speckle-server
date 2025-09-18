@@ -139,7 +139,7 @@ export const convertLegacyDataToStateFactory =
               isApplied: true,
               id: 'legacy-filter',
               selectedValues: [],
-              condition: 'AND'
+              condition: 'is'
             }
           ],
           activeColorFilterId: null,

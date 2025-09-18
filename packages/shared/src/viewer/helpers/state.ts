@@ -66,8 +66,11 @@ export interface SectionBoxData {
  * v1.5 -> 1.6
  * - ui.filters.propertyFilter -> propertyFilters
  * - activeColorFilterId added
+ * v1.6 -> 1.7
+ * - ui.filters.filterLogic added
+ * - ui.filters.propertyFilters.condition updated
  */
-export const SERIALIZED_VIEWER_STATE_VERSION = 1.6
+export const SERIALIZED_VIEWER_STATE_VERSION = 1.7
 
 export type SerializedViewerState = {
   projectId: string
