@@ -124,6 +124,8 @@ const isColoringActive = computed(() => {
 })
 
 const removeFilter = () => {
+  clearHighlightedObjects()
+  clearSelection()
   removeActiveFilter(props.filter.id)
 }
 
