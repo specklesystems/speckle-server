@@ -25,7 +25,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 
 const dashboardsDialogSharePermissionsQuery = graphql(`
-  query DashboardsSharePermissions($id: String!) {
+  query DashboardsSharDialogPermissions($id: String!) {
     dashboard(id: $id) {
       id
       shareLink {
@@ -57,7 +57,11 @@ const dashboardsDialogShareTokenMutation = graphql(`
 const dashboardsDialogShareEnableTokenMutation = graphql(`
   mutation DashboardsShareEnableToken($input: DashboardShareInput!) {
     dashboardMutations {
-      enableShare(input: $input)
+      enableShare(input: $input) {
+        id
+        revoked
+        content
+      }
     }
   }
 `)
@@ -65,7 +69,11 @@ const dashboardsDialogShareEnableTokenMutation = graphql(`
 const dashboardsDialogShareDisableTokenMutation = graphql(`
   mutation DashboardsShareDisableToken($input: DashboardShareInput!) {
     dashboardMutations {
-      disableShare(input: $input)
+      disableShare(input: $input) {
+        id
+        revoked
+        content
+      }
     }
   }
 `)
