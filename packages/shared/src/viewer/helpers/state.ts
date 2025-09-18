@@ -66,8 +66,11 @@ export interface SectionBoxData {
  * v1.5 -> 1.6
  * - ui.filters.propertyFilter -> propertyFilters
  * - activeColorFilterId added
+ * v1.6 -> 1.7
+ * - ui.filters.filterLogic added
+ * - ui.filters.propertyFilters.condition updated
  */
-export const SERIALIZED_VIEWER_STATE_VERSION = 1.6
+export const SERIALIZED_VIEWER_STATE_VERSION = 1.7
 
 export type SerializedViewerState = {
   projectId: string
@@ -113,9 +116,10 @@ export type SerializedViewerState = {
         isApplied: boolean
         selectedValues: string[]
         id: string
-        condition: 'AND' | 'OR'
+        condition: string
       }>
       activeColorFilterId: Nullable<string>
+      filterLogic: string
     }
     camera: {
       position: number[]
@@ -278,7 +282,7 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
           isApplied: boolean
           selectedValues: string[]
           id: string
-          condition: 'AND' | 'OR'
+          condition: string
         }> = []
 
         // If new propertyFilters exist and are not empty, use them
@@ -287,7 +291,16 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
           Array.isArray(state.ui.filters.propertyFilters) &&
           state.ui.filters.propertyFilters.length > 0
         ) {
-          propertyFilters = state.ui.filters.propertyFilters
+          // Map legacy condition values to new format
+          propertyFilters = state.ui.filters.propertyFilters.map((filter) => ({
+            ...filter,
+            condition:
+              filter.condition === 'AND'
+                ? 'is'
+                : filter.condition === 'OR'
+                ? 'is'
+                : filter.condition
+          }))
         }
         // If legacy propertyFilter exists but no propertyFilters (or empty propertyFilters), migrate it
         else if (state.ui?.filters?.propertyFilter?.key) {
@@ -297,14 +310,15 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
               isApplied: state.ui.filters.propertyFilter.isApplied || false,
               selectedValues: [], // Legacy didn't have selectedValues
               id: 'legacy-filter', // Generate a consistent ID for legacy filter
-              condition: 'AND' as const
+              condition: 'is'
             }
           ]
         }
 
         return {
           ...baseFilters,
-          propertyFilters
+          propertyFilters,
+          filterLogic: state.ui?.filters?.filterLogic || 'all'
         }
       })(),
       camera: {
