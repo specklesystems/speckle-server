@@ -66,7 +66,7 @@
                     :active="isActive(dashboardsRoute(activeWorkspaceSlug))"
                   >
                     <template #icon>
-                      <IconProjects class="size-4 text-foreground-2" />
+                      <LayoutDashboard class="size-4 text-foreground-2" />
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
@@ -81,20 +81,6 @@
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
-
-                <div v-if="isWorkspacesEnabled">
-                  <LayoutSidebarMenuGroupItem
-                    label="Getting started"
-                    @click="openExplainerVideoDialog"
-                  >
-                    <template #icon>
-                      <IconPlay class="size-4 text-foreground-2" />
-                    </template>
-                  </LayoutSidebarMenuGroupItem>
-                  <WorkspaceExplainerVideoDialog
-                    v-model:open="showExplainerVideoDialog"
-                  />
-                </div>
               </LayoutSidebarMenuGroup>
 
               <LayoutSidebarMenuGroup title="Resources" collapsible>
@@ -154,6 +140,20 @@
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
+
+                <div v-if="isWorkspacesEnabled">
+                  <LayoutSidebarMenuGroupItem
+                    label="Getting started"
+                    @click="openExplainerVideoDialog"
+                  >
+                    <template #icon>
+                      <IconPlay class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                  <WorkspaceExplainerVideoDialog
+                    v-model:open="showExplainerVideoDialog"
+                  />
+                </div>
               </LayoutSidebarMenuGroup>
             </div>
           </LayoutSidebarMenu>
@@ -189,6 +189,7 @@ import { graphql } from '~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import dayjs from 'dayjs'
 import { useActiveUserMeta } from '~/lib/user/composables/meta'
+import { LayoutDashboard } from 'lucide-vue-next'
 
 const dashboardSidebarQuery = graphql(`
   query DashboardSidebar {
