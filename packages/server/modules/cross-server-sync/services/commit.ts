@@ -559,7 +559,8 @@ const loadAllObjectsFromParentFactory =
       objectId: sourceCommit.referencedObject,
       token,
       options: {
-        fetch
+        fetch,
+        useCache: false
       }
     })
 
