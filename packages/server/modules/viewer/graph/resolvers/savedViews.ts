@@ -21,7 +21,7 @@ import {
   deleteSavedViewRecordFactory,
   getGroupSavedViewsPageItemsFactory,
   getGroupSavedViewsTotalCountFactory,
-  getNewViewPositionFactory,
+  getNewViewBoundaryPositionFactory,
   getProjectSavedViewGroupsPageItemsFactory,
   getProjectSavedViewGroupsTotalCountFactory,
   getStoredViewCountFactory,
@@ -312,7 +312,7 @@ const resolvers: Resolvers = {
         setNewHomeView: setNewHomeViewFactory({
           db: projectDb
         }),
-        getNewViewPosition: getNewViewPositionFactory({ db: projectDb })
+        getNewViewBoundaryPosition: getNewViewBoundaryPositionFactory({ db: projectDb })
       })
       return await createSavedView({ input: args.input, authorId: ctx.userId! })
     },

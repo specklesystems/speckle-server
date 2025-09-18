@@ -29,7 +29,8 @@ import type {
   GetModelHomeSavedViews,
   GetModelHomeSavedView,
   SetNewHomeView,
-  GetNewViewPosition
+  GetNewViewBoundaryPosition,
+  GetNewViewSpecificPosition
 } from '@/modules/viewer/domain/operations/savedViews'
 import {
   SavedViewVisibility,
@@ -761,10 +762,11 @@ export const setNewHomeViewFactory =
     return true
   }
 
-export const getNewViewPositionFactory =
-  (deps: { db: Knex }): GetNewViewPosition =>
+export const getNewViewBoundaryPositionFactory =
+  (deps: { db: Knex }): GetNewViewBoundaryPosition =>
   async (params) => {
     const { projectId, resourceIdString, groupId } = params
+    const asLast = params.position === 'last'
 
     const groupResourceIds = formatResourceIdsForGroup(resourceIdString)
     if (!groupId && !groupResourceIds.length) {
@@ -780,9 +782,12 @@ export const getNewViewPositionFactory =
         [SavedViews.col.groupId]: groupId
       })
       .select<Array<{ newPosition: number }>>(
-        deps.db.raw('COALESCE(MAX(??), 0) + 1000 as "newPosition"', [
-          SavedViews.col.position
-        ])
+        deps.db.raw(
+          asLast
+            ? 'COALESCE(MAX(??), 0) + 1000 as "newPosition"'
+            : 'COALESCE(MIN(??), 0) - 1000 as "newPosition"',
+          [SavedViews.col.position]
+        )
       )
 
     if (!groupId) {
@@ -795,4 +800,81 @@ export const getNewViewPositionFactory =
 
     const [result] = await q
     return result?.newPosition || 1000
+  }
+
+const getNeighborViewIdFactory =
+  (deps: { db: Knex }) =>
+  async (params: {
+    projectId: string
+    resourceIdString: string
+    groupId: string | null
+    direction: 'before' | 'after'
+    anchorId: string
+  }) => {
+    const { direction, anchorId, projectId } = params
+
+    // Subquery for anchor row: pull projectId, groupId, position
+    const subQ = tables
+      .savedViews(deps.db)
+      .select(SavedViews.col.projectId, SavedViews.col.groupId, SavedViews.col.position)
+      .where(SavedViews.col.id, anchorId)
+      .andWhere(SavedViews.col.projectId, projectId)
+      .first()
+
+    // Main query: find neighbor
+    const cmpOperator = direction === 'before' ? '<' : '>'
+    const sortDir = direction === 'before' ? 'desc' : 'asc'
+
+    const SubqCols = SavedViews.with({ withCustomTablePrefix: 'sqv' })
+    const MainCols = SavedViews.with({ withCustomTablePrefix: 'mv' })
+
+    const resultQ = tables
+      .savedViews(deps.db)
+      .as('mv')
+      .join(subQ.as('sq1'), function () {
+        // join on projectId and groupId (allow NULLs to match if groupId is null)
+        this.on(MainCols.col.projectId, '=', SubqCols.col.projectId).andOn(function () {
+          this.on(MainCols.col.groupId, '=', SubqCols.col.groupId)
+            .orOnNull(MainCols.col.groupId)
+            .orOnNull(SubqCols.col.groupId)
+        })
+      })
+      .andWhere(MainCols.col.projectId, projectId)
+      .andWhere(MainCols.col.position, cmpOperator, SubqCols.col.position)
+      .select<Array<{ id: string }>>(MainCols.col.id)
+      .orderBy(MainCols.col.position, sortDir)
+      .limit(1)
+
+    const result = await resultQ
+    return result.length > 0 ? result[0].id : null
+  }
+
+export const getNewViewSpecificPositionFactory =
+  (deps: { db: Knex }): GetNewViewSpecificPosition =>
+  async (params) => {
+    const { projectId, resourceIdString, groupId } = params
+    let { beforeId, afterId } = params
+    if (!beforeId && !afterId) {
+      // end of list
+      return getNewViewBoundaryPositionFactory(deps)({ ...params, position: 'last' })
+    }
+
+    if (!beforeId || !afterId) {
+      const getNeighborViewId = getNeighborViewIdFactory(deps)
+      if (!beforeId) {
+        // only afterId - get the view before it
+        beforeId = await getNeighborViewId({
+          ...params,
+          direction: 'before',
+          anchorId: afterId!
+        })
+      } else if (!afterId) {
+        // only beforeId - get the view after it
+        afterId = await getNeighborViewId({
+          ...params,
+          direction: 'after',
+          anchorId: beforeId!
+        })
+      }
+    }
   }

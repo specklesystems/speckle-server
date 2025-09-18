@@ -180,12 +180,35 @@ export type SetNewHomeView = (params: {
 }) => Promise<boolean>
 
 /**
- * Get position for a new view being added to the end of the (potentially ungrouped) group
+ * Calculate new view position for the beginning or end of the group that it will be a part of
  */
-export type GetNewViewPosition = (params: {
+export type GetNewViewBoundaryPosition = (params: {
   projectId: string
   resourceIdString: string
   groupId: string | null
+  position: 'last' | 'first'
+}) => Promise<number>
+
+/**
+ * Calculate new view position for a specific position in the group that it will be a part of
+ *
+ * - beforeId: null & afterId: null  => end of the list (default)
+ * - beforeId: "some-id" & afterId: "some-other-id"  => between "some-id" and "some-other-id"
+ *
+ * What about these?
+ * - beforeId: null & afterId: "some-id"  => right after "some-id"
+ * - - what if beforeId=null, but in the DB there actually are items after "some-id"?
+ * - - - maybe we treat this as "end of the list"?
+ * - - - or do query to find the "beforeId"?
+ *
+ * - beforeId: "some-id" & afterId: null  => right before "some-id"
+ */
+export type GetNewViewSpecificPosition = (params: {
+  projectId: string
+  resourceIdString: string
+  groupId: string | null
+  beforeId: MaybeNullOrUndefined<string>
+  afterId: MaybeNullOrUndefined<string>
 }) => Promise<number>
 
 /////////////////////

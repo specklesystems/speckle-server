@@ -8,7 +8,7 @@ import type {
   GetGroupSavedViews,
   GetGroupSavedViewsPageItems,
   GetGroupSavedViewsTotalCount,
-  GetNewViewPosition,
+  GetNewViewBoundaryPosition,
   GetProjectSavedViewGroups,
   GetProjectSavedViewGroupsPageItems,
   GetProjectSavedViewGroupsTotalCount,
@@ -228,7 +228,7 @@ export const createSavedViewFactory =
     getSavedViewGroup: GetSavedViewGroup
     recalculateGroupResourceIds: RecalculateGroupResourceIds
     setNewHomeView: SetNewHomeView
-    getNewViewPosition: GetNewViewPosition
+    getNewViewBoundaryPosition: GetNewViewBoundaryPosition
   }): CreateSavedView =>
   async ({ input, authorId }) => {
     const { resourceIdString, projectId } = input
@@ -311,10 +311,11 @@ export const createSavedViewFactory =
     })
 
     // Resolve new position
-    const position = await deps.getNewViewPosition({
+    const position = await deps.getNewViewBoundaryPosition({
       projectId,
       groupId,
-      resourceIdString: resourceIds.toString()
+      resourceIdString: resourceIds.toString(),
+      position: 'last'
     })
 
     const concreteResourceIds = resourceIds.toResources().map((r) => r.toString())
