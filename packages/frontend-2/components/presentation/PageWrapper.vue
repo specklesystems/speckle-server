@@ -78,8 +78,8 @@ const ViewerWrapper = resolveComponent('PresentationViewerWrapper')
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'i' || event.key === 'I') {
     hideUi.value = !hideUi.value
-    isLeftSidebarOpen.value = false
-    isInfoSidebarOpen.value = false
+    isLeftSidebarOpen.value = !hideUi.value
+    isInfoSidebarOpen.value = !hideUi.value
   }
 }
 
