@@ -1,10 +1,8 @@
-import fetch from 'cross-fetch'
 import type { ApolloClient, NormalizedCacheObject } from '@apollo/client/core'
 import { gql } from '@apollo/client/core'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { Roles, TIME_MS, timeoutAt } from '@speckle/shared'
-import ObjectLoader from '@speckle/objectloader'
-import { noop } from 'lodash-es'
+import { ObjectLoader2Factory } from '@speckle/objectloader2'
 import { crossServerSyncLogger } from '@/observability/logging'
 import type { SpeckleViewer } from '@speckle/shared'
 import { retry } from '@speckle/shared'
@@ -554,11 +552,10 @@ const loadAllObjectsFromParentFactory =
     } = params
 
     // Initialize ObjectLoader
-    const objectLoader = new ObjectLoader({
+    const objectLoader = ObjectLoader2Factory.createFromUrl({
       serverUrl: origin,
       streamId: sourceStreamId,
       objectId: sourceCommit.referencedObject,
-      options: { fetch, customLogger: noop },
       token
     })
 
