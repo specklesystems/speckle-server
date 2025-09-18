@@ -1,9 +1,7 @@
 import { ensureError } from '@speckle/shared'
-import { filter } from 'compression'
 import { omit, pick } from 'lodash-es'
 import type { TransformCallback } from 'stream'
 import { Transform } from 'stream'
-import { object } from 'zod'
 
 /**
  * A stream that converts database objects stream to "{id}\t{data_json}\n" stream or a json stream of obj.data fields
