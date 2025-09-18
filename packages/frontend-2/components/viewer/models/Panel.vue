@@ -477,14 +477,13 @@ watch(
           }
         } else if (firstHeader.type === 'detached-object-header') {
           const data = firstHeader.data as { objectId: string }
-          // Create a fake model for detached objects
-          const fakeModel = {
+          const detachedObjectHeader = {
             id: data.objectId,
             name: 'Detached Object',
             displayName: 'Detached Object'
           } as unknown as ModelItem
           stickyHeader.value = {
-            model: fakeModel,
+            model: detachedObjectHeader,
             versionId: data.objectId
           }
         }
