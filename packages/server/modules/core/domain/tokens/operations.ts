@@ -25,6 +25,10 @@ export type StoreTokenResourceAccessDefinitions = (
   defs: TokenResourceAccessDefinition[]
 ) => Promise<void>
 
+export type RevokeTokenResourceAccess = (
+  def: TokenResourceAccessDefinition
+) => Promise<void>
+
 export type StoreUserServerAppToken = (
   token: UserServerAppToken
 ) => Promise<UserServerAppToken>

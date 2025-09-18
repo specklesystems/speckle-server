@@ -242,6 +242,8 @@ export const validateTokenFactory =
       return { valid: false, tokenId }
     }
 
+    if (token.revoked) return { valid: false, tokenId }
+
     const timeDiff = Math.abs(Date.now() - new Date(token.createdAt).getTime())
     if (timeDiff > token.lifespan) {
       await deps.revokeUserTokenById(tokenId, token.owner)
