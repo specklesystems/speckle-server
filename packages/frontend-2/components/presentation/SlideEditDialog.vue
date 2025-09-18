@@ -51,11 +51,11 @@ const props = defineProps<{
 
 const open = defineModel<boolean>('open', { required: true })
 
-const name = ref<string>('')
-const description = ref<string>('')
-
 const { mutate: updateSlide, loading } = useUpdatePresentationSlide()
 const { handleSubmit } = useForm()
+
+const name = ref<string>('')
+const description = ref<string>('')
 
 const onSubmit = handleSubmit(async () => {
   if (!props.slide?.id) return
