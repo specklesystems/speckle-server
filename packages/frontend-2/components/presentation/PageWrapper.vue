@@ -77,7 +77,7 @@ const {
 const isInfoSidebarOpen = ref(false)
 const isLeftSidebarOpen = ref(false)
 const hideUi = ref(true)
-const isViewerLoading = ref(false)
+const isViewerLoading = ref(true)
 const viewerProgress = ref(0)
 const isMobile = useBreakpoints(TailwindBreakpoints).smaller('sm')
 
