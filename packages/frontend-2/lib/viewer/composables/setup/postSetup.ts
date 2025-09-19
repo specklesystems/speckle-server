@@ -574,7 +574,10 @@ function useViewerFiltersIntegration() {
         .getSelectedObjects()
         .map((obj) => obj.id as string)
 
-      if (arraysEqual(currentViewerSelection.sort(), newIds.sort())) {
+      if (
+        currentViewerSelection.length === newIds.length &&
+        difference(currentViewerSelection, newIds).length === 0
+      ) {
         return
       }
 
