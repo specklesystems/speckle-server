@@ -153,8 +153,8 @@ import { onProjectAccSyncItemUpdatedSubscription } from '~/lib/acc/graphql/subsc
 import { PauseIcon } from '@heroicons/vue/24/solid'
 import { TrashIcon, PlayIcon } from '@heroicons/vue/24/outline'
 
-import type { AccFolder } from '~/lib/acc/composables/useAcc'
-import { useAcc } from '~/lib/acc/composables/useAcc'
+import type { AccFolder } from '~/lib/acc/composables/useAccFiles'
+import { useAcc } from '~/lib/acc/composables/useAccFiles'
 
 const props = defineProps<{
   projectId: string
