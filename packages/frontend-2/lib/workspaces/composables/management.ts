@@ -452,12 +452,13 @@ export const useWorkspaceUpdateRole = () => {
   const { triggerNotification } = useGlobalToast()
   const mixpanel = useMixpanel()
 
-  return async (input: WorkspaceRoleUpdateInput) => {
+  return async (input: WorkspaceRoleUpdateInput & { previousRole?: string }) => {
     const result = await mutate(
-      { input },
+      { input: { userId: input.userId, workspaceId: input.workspaceId, role: input.role } },
       {
         update: (cache) => {
           if (!input.role) {
+            // User is being removed from workspace
             cache.evict({
               id: getCacheId('WorkspaceCollaborator', input.userId)
             })
@@ -475,15 +476,101 @@ export const useWorkspaceUpdateRole = () => {
                 autoEvictFiltered: true
               }
             )
-          }
-          modifyObjectField(
-            cache,
-            getCacheId('Workspace', input.workspaceId),
-            'teamByRole',
-            ({ helpers: { evict } }) => {
-              return evict()
+
+            // Update teamByRole counts by decrementing the appropriate role count
+            if (input.previousRole) {
+              modifyObjectField(
+                cache,
+                getCacheId('Workspace', input.workspaceId),
+                'teamByRole',
+                ({ value, helpers: { createUpdatedValue } }) => {
+                  if (!value) return value
+                  
+                  return createUpdatedValue(({ update }) => {
+                    // Decrement the count for the previous role
+                    if (input.previousRole === 'workspace:admin') {
+                      update('admins', (admins) => {
+                        if (!admins) return admins
+                        return { ...admins, totalCount: Math.max(0, admins.totalCount - 1) }
+                      })
+                    } else if (input.previousRole === 'workspace:member') {
+                      update('members', (members) => {
+                        if (!members) return members
+                        return { ...members, totalCount: Math.max(0, members.totalCount - 1) }
+                      })
+                    } else if (input.previousRole === 'workspace:guest') {
+                      update('guests', (guests) => {
+                        if (!guests) return guests
+                        return { ...guests, totalCount: Math.max(0, guests.totalCount - 1) }
+                      })
+                    }
+                  })
+                }
+              )
+            } else {
+              // If we don't know the previous role, evict the entire teamByRole field
+              modifyObjectField(
+                cache,
+                getCacheId('Workspace', input.workspaceId),
+                'teamByRole',
+                ({ helpers: { evict } }) => {
+                  return evict()
+                }
+              )
             }
-          )
+          } else {
+            // User role is being updated (not removed)
+            modifyObjectField(
+              cache,
+              getCacheId('Workspace', input.workspaceId),
+              'teamByRole',
+              ({ value, helpers: { createUpdatedValue } }) => {
+                if (!value) return value
+                
+                return createUpdatedValue(({ update }) => {
+                  // If we have the previous role, decrement it and increment the new role
+                  if (input.previousRole && input.previousRole !== input.role) {
+                    // Decrement previous role
+                    if (input.previousRole === 'workspace:admin') {
+                      update('admins', (admins) => {
+                        if (!admins) return admins
+                        return { ...admins, totalCount: Math.max(0, admins.totalCount - 1) }
+                      })
+                    } else if (input.previousRole === 'workspace:member') {
+                      update('members', (members) => {
+                        if (!members) return members
+                        return { ...members, totalCount: Math.max(0, members.totalCount - 1) }
+                      })
+                    } else if (input.previousRole === 'workspace:guest') {
+                      update('guests', (guests) => {
+                        if (!guests) return guests
+                        return { ...guests, totalCount: Math.max(0, guests.totalCount - 1) }
+                      })
+                    }
+
+                    // Increment new role
+                    if (input.role === 'workspace:admin') {
+                      update('admins', (admins) => {
+                        if (!admins) return { __typename: 'WorkspaceRoleCollection', totalCount: 1 }
+                        return { ...admins, totalCount: admins.totalCount + 1 }
+                      })
+                    } else if (input.role === 'workspace:member') {
+                      update('members', (members) => {
+                        if (!members) return { __typename: 'WorkspaceRoleCollection', totalCount: 1 }
+                        return { ...members, totalCount: members.totalCount + 1 }
+                      })
+                    } else if (input.role === 'workspace:guest') {
+                      update('guests', (guests) => {
+                        if (!guests) return { __typename: 'WorkspaceRoleCollection', totalCount: 1 }
+                        return { ...guests, totalCount: guests.totalCount + 1 }
+                      })
+                    }
+                  }
+                })
+              }
+            )
+          }
+          
           modifyObjectField(
             cache,
             getCacheId('WorkspaceCollaborator', input.userId),
