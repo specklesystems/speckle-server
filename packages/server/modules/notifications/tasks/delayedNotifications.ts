@@ -11,6 +11,8 @@ import {
 } from '@/modules/notifications/repositories/userNotification'
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import MentionedInCommentHandler from '@/modules/notifications/tasks/handlers/mentionedInComment'
+import StreamAccessRequestApprovedHandler from '@/modules/notifications/tasks/handlers/streamAccessRequestApproved'
+import NewStreamAccessRequestHandler from '@/modules/notifications/tasks/handlers/newStreamAccessRequest'
 
 type EmailNotificationResult = { notificationId: string } | null
 
@@ -25,6 +27,12 @@ const handleNextEmailNotification = async (deps: {
       switch (notification.type) {
         case NotificationType.MentionedInComment:
           await MentionedInCommentHandler(notification)
+          break
+        case NotificationType.StreamAccessRequestApproved:
+          await StreamAccessRequestApprovedHandler(notification)
+          break
+        case NotificationType.NewStreamAccessRequest:
+          await NewStreamAccessRequestHandler(notification)
           break
         default:
           deps.logger.error(

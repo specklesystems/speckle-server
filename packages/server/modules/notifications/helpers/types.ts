@@ -47,6 +47,7 @@ type NotificationPayloadMap = {
   }
   [NotificationType.NewStreamAccessRequest]: {
     streamId: string
+    requesterId: string
   }
   [NotificationType.StreamAccessRequestApproved]: {
     streamId: string
