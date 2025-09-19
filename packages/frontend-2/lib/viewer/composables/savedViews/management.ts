@@ -297,17 +297,17 @@ export const useUpdateSavedView = () => {
           const groupChanged = oldGroupId !== newGroupId
           if (groupChanged) {
             // Clean up old group
-            // onGroupViewRemovalCacheUpdates(cache, {
-            //   viewId: params.view.id,
-            //   groupId: oldGroupId,
-            //   projectId: params.view.projectId
-            // })
-            // // Update new group
-            // onNewGroupViewCacheUpdates(cache, {
-            //   viewId: update.id,
-            //   groupId: newGroupId,
-            //   projectId: params.view.projectId
-            // })
+            onGroupViewRemovalCacheUpdates(cache, {
+              viewId: params.view.id,
+              groupId: oldGroupId,
+              projectId: params.view.projectId
+            })
+            // Update new group
+            onNewGroupViewCacheUpdates(cache, {
+              viewId: update.id,
+              groupId: newGroupId,
+              projectId: params.view.projectId
+            })
           }
 
           // W/ current filter setup, if u can change visibility, you're gonna see it in all filtered groups

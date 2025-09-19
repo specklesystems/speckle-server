@@ -207,7 +207,15 @@ graphql(`
 export const useDraggableViewTargetGroup = (params: {
   group: Ref<UseDraggableViewTargetGroup_SavedViewGroupFragment>
   onMoved?: () => void
+  enabled?: boolean
 }) => {
+  if (params.enabled === false) {
+    return {
+      on: {},
+      classes: computed(() => 'draggable-view-target')
+    }
+  }
+
   const isDragOver = ref(false)
   const dragCounter = ref(0)
   const { triggerNotification } = useGlobalToast()
