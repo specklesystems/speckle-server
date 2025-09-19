@@ -140,7 +140,7 @@ const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
 const { zoom } = useCameraUtilities()
 const { items } = useInjectedViewerRequestedResources()
 const { resourceItems } = useInjectedViewerLoadedResources()
-const { addToSelectionFromObjectIds, clearSelection } = useSelectionUtilities()
+const { addToSelectionFromObjectIds } = useSelectionUtilities()
 
 const {
   viewer: {
@@ -313,7 +313,6 @@ const handleClick = () => {
   if (!props.isExpanded) {
     emit('toggle-expansion')
   } else {
-    clearSelection()
     addToSelectionFromObjectIds(modelObjectIds.value)
   }
 }

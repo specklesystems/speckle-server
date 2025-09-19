@@ -67,7 +67,10 @@ import {
 } from '~/lib/viewer/composables/setup/filters'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { useFilteringSetup } from '~/lib/viewer/composables/filtering/setup'
-import { useHighlightingPostSetup } from '~/lib/viewer/composables/setup/highlighting'
+import {
+  useHighlightingPostSetup,
+  HighlightExtension
+} from '~/lib/viewer/composables/setup/highlighting'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -566,12 +569,25 @@ function useViewerFiltersIntegration() {
       ).filter(isNonNullable)
       if (arraysEqual(newIds, oldIds)) return
 
-      state.ui.highlightedObjectIds.value = []
-
       const selectionExtension = instance.getExtension(SelectionExtension)
+      const currentViewerSelection = selectionExtension
+        .getSelectedObjects()
+        .map((obj) => obj.id as string)
+
+      if (
+        currentViewerSelection.length === newIds.length &&
+        difference(currentViewerSelection, newIds).length === 0
+      ) {
+        return
+      }
+
+      state.ui.highlightedObjectIds.value = []
+      const highlightExtension = instance.getExtension(HighlightExtension)
+      if (highlightExtension) {
+        highlightExtension.clearSelection()
+      }
 
       selectionExtension.clearSelection()
-
       if (newVal.length > 0) {
         selectionExtension.selectObjects(newIds)
       }

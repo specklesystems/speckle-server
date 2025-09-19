@@ -15,7 +15,7 @@ import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
  * Highlighting extension that replicates LegacyViewer's HighlightExtension
  * Uses SelectionExtension but disables default events for UI-only highlighting
  */
-class HighlightExtension extends SelectionExtension {
+export class HighlightExtension extends SelectionExtension {
   public constructor(viewer: IViewer, cameraProvider: CameraController) {
     super(viewer, cameraProvider)
 
@@ -51,20 +51,16 @@ export const useHighlightingPostSetup = () => {
 
   if (pageType.value === ViewerRenderPageType.Presentation) return
 
-  const highlightExtension = ref<HighlightExtension | null>(null)
+  // Create the highlighting extension once during setup
+  instance.createExtension(HighlightExtension)
 
   // Get the highlighting extension instance
-  const getHighlightExtension = () => {
-    if (!highlightExtension.value) {
-      highlightExtension.value = instance.createExtension(HighlightExtension)
-    }
-    return highlightExtension.value
-  }
+  const getHighlightExtensionInstance = () => instance.getExtension(HighlightExtension)
 
   useOnViewerLoadComplete(
     ({ isInitial }) => {
       if (!isInitial) return
-      getHighlightExtension()
+      getHighlightExtensionInstance()
     },
     { initialOnly: true }
   )
@@ -73,7 +69,7 @@ export const useHighlightingPostSetup = () => {
   watch(
     highlightedObjectIds,
     (newIds, oldIds) => {
-      const extension = getHighlightExtension()
+      const extension = getHighlightExtensionInstance()
       if (!extension) return
 
       // Clear all current highlights if new list is empty
@@ -83,8 +79,6 @@ export const useHighlightingPostSetup = () => {
       }
 
       if (oldIds && isEqual(newIds, oldIds)) return
-
-      // Clear and re-select to avoid accumulation
       extension.clearSelection()
       if (newIds.length > 0) {
         extension.selectObjects(newIds)
