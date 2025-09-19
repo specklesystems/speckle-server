@@ -26,7 +26,6 @@ COPY package.json yarn.lock ./
 COPY packages/frontend-2/type-augmentations/stubs ./packages/frontend-2/type-augmentations/stubs/
 COPY packages/server/package.json ./packages/server/
 COPY packages/shared/package.json ./packages/shared/
-COPY packages/objectloader/package.json ./packages/objectloader/
 
 # Consume the ARG from the global scope
 ARG NODE_ENV
@@ -36,7 +35,6 @@ RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspa
 # build shared libraries
 COPY packages/server ./packages/server/
 COPY packages/shared ./packages/shared/
-COPY packages/objectloader ./packages/objectloader/
 
 RUN yarn workspaces foreach -W run build
 
@@ -52,7 +50,6 @@ COPY package.json yarn.lock ./
 COPY packages/frontend-2/type-augmentations/stubs ./packages/frontend-2/type-augmentations/stubs/
 COPY packages/server/package.json ./packages/server/
 COPY packages/shared/package.json ./packages/shared/
-COPY packages/objectloader/package.json ./packages/objectloader/
 
 WORKDIR /speckle-server/packages/server
 
@@ -68,7 +65,6 @@ COPY --link --from=build-stage /usr/bin/tini /usr/bin/tini
 WORKDIR /speckle-server
 COPY --link --from=build-stage /speckle-server/package.json ./package.json
 COPY --link --from=build-stage /speckle-server/packages/shared ./packages/shared
-COPY --link --from=build-stage /speckle-server/packages/objectloader ./packages/objectloader
 COPY --link --from=dependency-stage /speckle-server/node_modules ./node_modules
 
 WORKDIR /speckle-server/packages/server
