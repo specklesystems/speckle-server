@@ -9,6 +9,7 @@ import {
 } from '@speckle/viewer'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { useOnViewerLoadComplete } from '~/lib/viewer/composables/viewer'
+import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
 
 /**
  * Highlighting extension that replicates LegacyViewer's HighlightExtension
@@ -44,8 +45,11 @@ class HighlightExtension extends SelectionExtension {
 export const useHighlightingPostSetup = () => {
   const {
     ui: { highlightedObjectIds },
-    viewer: { instance }
+    viewer: { instance },
+    pageType
   } = useInjectedViewerState()
+
+  if (pageType.value === ViewerRenderPageType.Presentation) return
 
   const highlightExtension = ref<HighlightExtension | null>(null)
 

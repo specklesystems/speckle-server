@@ -11,6 +11,7 @@ import {
   useInjectedViewerInterfaceState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
+import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
 import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
 import { getKeyboardShortcutTitle, onKeyboardShortcut } from '@speckle/ui-components'
 import { ViewerShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
@@ -355,10 +356,13 @@ export function useConditionalViewerRendering() {
 
 export function useHighlightedObjectsUtilities() {
   const {
-    ui: { highlightedObjectIds }
+    ui: { highlightedObjectIds },
+    pageType
   } = useInjectedViewerState()
 
   const highlightObjects = (ids: string[]) => {
+    if (pageType.value === ViewerRenderPageType.Presentation) return
+
     highlightedObjectIds.value = [...new Set([...highlightedObjectIds.value, ...ids])]
   }
 

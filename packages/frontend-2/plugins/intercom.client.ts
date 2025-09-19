@@ -54,13 +54,14 @@ export const useIntercom = () => {
 
     // Hide default launcher on viewer routes (/models/)
     const isViewerRoute = route.path.includes('/models/')
+    const isPresentationRoute = route.path.includes('/presentations/')
 
     Intercom({
       /* eslint-disable camelcase */
       app_id: intercomAppId,
       user_id: user.value.id || '',
       created_at: Math.floor(new Date(user.value.createdAt || '').getTime() / 1000),
-      hide_default_launcher: isViewerRoute,
+      hide_default_launcher: isViewerRoute || isPresentationRoute,
       /* eslint-enable camelcase */
       name: user.value.name || '',
       email: user.value.email || ''
@@ -104,9 +105,11 @@ export const useIntercom = () => {
     if (!isInitialized.value) return
 
     const isViewerRoute = route.path.includes('/models/')
+    const isPresentationRoute = route.path.includes('/presentations/')
+
     update({
       /* eslint-disable camelcase */
-      hide_default_launcher: isViewerRoute
+      hide_default_launcher: isViewerRoute || isPresentationRoute
       /* eslint-enable camelcase */
     })
   }

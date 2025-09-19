@@ -576,7 +576,10 @@ function useViewerFiltersIntegration() {
         selectionExtension.selectObjects(newIds)
       }
     },
-    { immediate: true, flush: 'sync' }
+    {
+      immediate: true,
+      flush: 'sync'
+    }
   )
 }
 
