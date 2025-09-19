@@ -322,14 +322,12 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     logger.error({ err: error, isAppError: true }, 'Unhandled app error')
   })
 
-  if (import.meta.server) {
-    nuxtApp.hook('vue:error', (error, _vm, info) => {
-      logger.error(
-        { err: error, info, isAppError: true, vm: _vm?.$options.name },
-        'Unhandled Vue error'
-      )
-    })
-  }
+  nuxtApp.hook('vue:error', (error, _vm, info) => {
+    logger.error(
+      { err: error, info, isAppError: true, vm: _vm?.$options.name },
+      'Unhandled Vue error'
+    )
+  })
 
   // Hydrate server fatal error to CSR
   if (!import.meta.server) {

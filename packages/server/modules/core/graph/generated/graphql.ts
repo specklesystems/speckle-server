@@ -5137,8 +5137,14 @@ export type VersionPermissionChecks = {
   canUpdate: PermissionCheckResult;
 };
 
+/**
+ * If only one is set, the other will be resolved automatically
+ * If none are set, the view will be added to the end of the list
+ */
 export type ViewPositionInput = {
+  /** The ID of the view that should be after the new position */
   afterViewId?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the view that should be before the new position */
   beforeViewId?: InputMaybe<Scalars['ID']['input']>;
   type: ViewPositionInputType;
 };
