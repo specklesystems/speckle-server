@@ -95,10 +95,6 @@ import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering
 import { useFilterColoringHelpers } from '~/lib/viewer/composables/filtering/coloringHelpers'
 import type { FilterData } from '~/lib/viewer/helpers/filters/types'
 import { FilterType } from '~/lib/viewer/helpers/filters/types'
-import {
-  useHighlightedObjectsUtilities,
-  useSelectionUtilities
-} from '~/lib/viewer/composables/ui'
 
 const props = defineProps<{
   filter: FilterData
@@ -112,8 +108,6 @@ const { removeActiveFilter, toggleFilterApplied, getPropertyName, filters } =
   useFilterUtilities()
 
 const { toggleColorFilter } = useFilterColoringHelpers()
-const { clearHighlightedObjects } = useHighlightedObjectsUtilities()
-const { clearSelection } = useSelectionUtilities()
 
 const emit = defineEmits<{
   swapProperty: [filterId: string]
@@ -124,8 +118,6 @@ const isColoringActive = computed(() => {
 })
 
 const removeFilter = () => {
-  clearHighlightedObjects()
-  clearSelection()
   removeActiveFilter(props.filter.id)
 }
 
@@ -134,8 +126,6 @@ const toggleVisibility = () => {
 }
 
 const toggleColors = () => {
-  clearHighlightedObjects()
-  clearSelection()
   toggleColorFilter(props.filter.id)
 }
 

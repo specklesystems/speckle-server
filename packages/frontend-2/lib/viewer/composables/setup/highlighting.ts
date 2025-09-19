@@ -10,6 +10,7 @@ import {
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { useOnViewerLoadComplete } from '~/lib/viewer/composables/viewer'
 import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
+import { useScopedState } from '~~/lib/common/composables/scopedState'
 
 /**
  * Highlighting extension that replicates LegacyViewer's HighlightExtension
@@ -39,6 +40,29 @@ class HighlightExtension extends SelectionExtension {
 }
 
 /**
+ * Scoped state for the global highlight extension instance
+ */
+const useHighlightExtensionState = () =>
+  useScopedState('highlightExtension', () =>
+    shallowRef<HighlightExtension | null>(null)
+  )
+
+/**
+ * Get the global highlight extension
+ */
+export const getGlobalHighlightExtension = (
+  instance?: IViewer
+): HighlightExtension | null => {
+  const highlightExtensionState = useHighlightExtensionState()
+
+  if (!highlightExtensionState.value && instance) {
+    highlightExtensionState.value = instance.createExtension(HighlightExtension)
+  }
+
+  return highlightExtensionState.value
+}
+
+/**
  * Post-setup integration that sets up highlighting extension and watches state
  * This should only be called once during post-setup after the viewer is initialized.
  */
@@ -51,15 +75,8 @@ export const useHighlightingPostSetup = () => {
 
   if (pageType.value === ViewerRenderPageType.Presentation) return
 
-  const highlightExtension = ref<HighlightExtension | null>(null)
-
   // Get the highlighting extension instance
-  const getHighlightExtension = () => {
-    if (!highlightExtension.value) {
-      highlightExtension.value = instance.createExtension(HighlightExtension)
-    }
-    return highlightExtension.value
-  }
+  const getHighlightExtension = () => getGlobalHighlightExtension(instance)
 
   useOnViewerLoadComplete(
     ({ isInitial }) => {
@@ -83,8 +100,6 @@ export const useHighlightingPostSetup = () => {
       }
 
       if (oldIds && isEqual(newIds, oldIds)) return
-
-      // Clear and re-select to avoid accumulation
       extension.clearSelection()
       if (newIds.length > 0) {
         extension.selectObjects(newIds)
