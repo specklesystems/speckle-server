@@ -1,10 +1,6 @@
-import {
-  CustomLogger,
-  Fetcher,
-  getFeatureFlag,
-  ObjectLoader2Flags
-} from '../types/functions.js'
+import { CustomLogger, Fetcher } from '../types/functions.js'
 import { Base, ObjectAttributeMask } from '../types/types.js'
+import { ObjectLoader2Flags, flagIsEnabledFromQuery } from './features.js'
 import { ObjectLoader2 } from './objectLoader2.js'
 import { IndexedDatabase } from './stages/indexedDatabase.js'
 import { MemoryDatabase } from './stages/memory/memoryDatabase.js'
@@ -53,17 +49,13 @@ export class ObjectLoader2Factory {
   }): ObjectLoader2 {
     const log = ObjectLoader2Factory.getLogger(params.options?.logger)
     let database
-    if (
-      params.options?.debug === true ||
-      getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true'
-    ) {
+    if (params.options?.debug ?? flagIsEnabledFromQuery(ObjectLoader2Flags.DEBUG)) {
       this.logger('Using DEBUG mode for ObjectLoader2Factory')
     }
-    const useCache = params.options?.useCache ?? true
-    const flag = getFeatureFlag(ObjectLoader2Flags.USE_CACHE)
-    const flagAllowsCache = flag !== 'false'
-
-    if (useCache && flagAllowsCache) {
+    if (
+      params.options?.useCache ??
+      flagIsEnabledFromQuery(ObjectLoader2Flags.USE_CACHE)
+    ) {
       database = new IndexedDatabase({
         indexedDB: params.options?.indexedDB,
         keyRange: params.options?.keyRange
@@ -95,7 +87,7 @@ export class ObjectLoader2Factory {
   }
 
   static getLogger(providedLogger?: CustomLogger): CustomLogger | undefined {
-    if (getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true') {
+    if (flagIsEnabledFromQuery(ObjectLoader2Flags.DEBUG)) {
       return providedLogger || this.logger
     }
     return providedLogger
