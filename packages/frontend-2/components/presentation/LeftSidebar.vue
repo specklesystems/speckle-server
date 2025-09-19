@@ -20,7 +20,12 @@
               </p>
             </div>
           </NuxtLink>
-          <UserAvatar size="sm" class="ml-auto flex-shrink-0" :user="activeUser" />
+          <UserAvatar
+            v-if="isLoggedIn"
+            size="sm"
+            class="ml-auto flex-shrink-0"
+            :user="activeUser"
+          />
         </section>
         <section
           class="flex-1 flex justify-center simple-scrollbar overflow-y-auto mt-3 pb-3 px-3"
