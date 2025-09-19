@@ -48,7 +48,11 @@ const useHighlightExtensionState = () =>
   )
 
 /**
- * Get the global highlight extension
+ * Get the global highlight extension instance.
+ *
+ * Unlike built-in extensions (SelectionExtension), our custom HighlightExtension
+ * must be stored globally to prevent multiple instances from being created,
+ * which would cause material storage conflicts and highlighting issues.
  */
 export const getGlobalHighlightExtension = (
   instance?: IViewer
@@ -107,4 +111,12 @@ export const useHighlightingPostSetup = () => {
     },
     { immediate: true, flush: 'sync' }
   )
+
+  // Clean up the global highlight extension on unmount
+  onBeforeUnmount(() => {
+    const highlightExtensionState = useHighlightExtensionState()
+    if (highlightExtensionState.value) {
+      highlightExtensionState.value = null
+    }
+  })
 }
