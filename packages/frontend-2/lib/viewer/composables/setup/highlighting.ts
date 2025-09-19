@@ -10,7 +10,6 @@ import {
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { useOnViewerLoadComplete } from '~/lib/viewer/composables/viewer'
 import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
-import { useScopedState } from '~~/lib/common/composables/scopedState'
 
 /**
  * Highlighting extension that replicates LegacyViewer's HighlightExtension
@@ -40,30 +39,11 @@ class HighlightExtension extends SelectionExtension {
 }
 
 /**
- * Scoped state for the global highlight extension instance
+ * Get the highlight extension instance from the viewer.
+ * The extension is created once during setup and then retrieved everywhere else.
  */
-const useHighlightExtensionState = () =>
-  useScopedState('highlightExtension', () =>
-    shallowRef<HighlightExtension | null>(null)
-  )
-
-/**
- * Get the global highlight extension instance.
- *
- * Unlike built-in extensions (SelectionExtension), our custom HighlightExtension
- * must be stored globally to prevent multiple instances from being created,
- * which would cause material storage conflicts and highlighting issues.
- */
-export const getGlobalHighlightExtension = (
-  instance?: IViewer
-): HighlightExtension | null => {
-  const highlightExtensionState = useHighlightExtensionState()
-
-  if (!highlightExtensionState.value && instance) {
-    highlightExtensionState.value = instance.createExtension(HighlightExtension)
-  }
-
-  return highlightExtensionState.value
+export const getHighlightExtension = (instance: IViewer): HighlightExtension | null => {
+  return instance.getExtension(HighlightExtension)
 }
 
 /**
@@ -79,13 +59,16 @@ export const useHighlightingPostSetup = () => {
 
   if (pageType.value === ViewerRenderPageType.Presentation) return
 
+  // Create the highlighting extension once during setup
+  instance.createExtension(HighlightExtension)
+
   // Get the highlighting extension instance
-  const getHighlightExtension = () => getGlobalHighlightExtension(instance)
+  const getHighlightExtensionInstance = () => getHighlightExtension(instance)
 
   useOnViewerLoadComplete(
     ({ isInitial }) => {
       if (!isInitial) return
-      getHighlightExtension()
+      getHighlightExtensionInstance()
     },
     { initialOnly: true }
   )
@@ -94,7 +77,7 @@ export const useHighlightingPostSetup = () => {
   watch(
     highlightedObjectIds,
     (newIds, oldIds) => {
-      const extension = getHighlightExtension()
+      const extension = getHighlightExtensionInstance()
       if (!extension) return
 
       // Clear all current highlights if new list is empty
@@ -111,12 +94,4 @@ export const useHighlightingPostSetup = () => {
     },
     { immediate: true, flush: 'sync' }
   )
-
-  // Clean up the global highlight extension on unmount
-  onBeforeUnmount(() => {
-    const highlightExtensionState = useHighlightExtensionState()
-    if (highlightExtensionState.value) {
-      highlightExtensionState.value = null
-    }
-  })
 }

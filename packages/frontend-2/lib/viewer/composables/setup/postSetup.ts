@@ -69,7 +69,7 @@ import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering
 import { useFilteringSetup } from '~/lib/viewer/composables/filtering/setup'
 import {
   useHighlightingPostSetup,
-  getGlobalHighlightExtension
+  getHighlightExtension
 } from '~/lib/viewer/composables/setup/highlighting'
 
 function useViewerLoadCompleteEventHandler() {
@@ -582,7 +582,7 @@ function useViewerFiltersIntegration() {
       }
 
       state.ui.highlightedObjectIds.value = []
-      const highlightExtension = getGlobalHighlightExtension()
+      const highlightExtension = getHighlightExtension(instance)
       if (highlightExtension) {
         highlightExtension.clearSelection()
       }

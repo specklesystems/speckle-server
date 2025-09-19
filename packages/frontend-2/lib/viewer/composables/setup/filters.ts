@@ -6,7 +6,7 @@ import { watchTriggerable } from '@vueuse/core'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { useOnViewerLoadComplete } from '~/lib/viewer/composables/viewer'
 import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
-import { getGlobalHighlightExtension } from '~/lib/viewer/composables/setup/highlighting'
+import { getHighlightExtension } from '~/lib/viewer/composables/setup/highlighting'
 
 /**
  * Setup composable for filter-related state
@@ -68,7 +68,7 @@ export const useManualFilteringPostSetup = () => {
    */
   const preserveSelectionHighlightFilter = <T>(filterFn: () => T): T => {
     const selectionExtension = instance.getExtension(SelectionExtension)
-    const highlightExtension = getGlobalHighlightExtension()
+    const highlightExtension = getHighlightExtension(instance)
 
     // 1. SAVE current state from viewer extensions
     const selectedObjects = selectionExtension
