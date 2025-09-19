@@ -16,9 +16,15 @@ import type { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { iterateContentNodes } from '@/modules/core/services/richTextEditorService'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import type { StoreUserNotifications } from '@/modules/notifications/domain/operations'
+import type {
+  GetUserPreferenceForNotificationType,
+  StoreUserNotifications
+} from '@/modules/notifications/domain/operations'
 import { NotificationValidationError } from '@/modules/notifications/errors'
-import { NotificationType } from '@/modules/notifications/helpers/types'
+import {
+  NotificationChannel,
+  NotificationType
+} from '@/modules/notifications/helpers/types'
 import { storeUserNotificationsFactory } from '@/modules/notifications/repositories/userNotification'
 import type { MaybeFalsy, Nullable } from '@/modules/shared/helpers/typeHelper'
 import type { EventType } from '@/modules/shared/services/eventBus'
@@ -26,6 +32,8 @@ import type { JSONContent } from '@tiptap/core'
 import cryptoRandomString from 'crypto-random-string'
 import type { Knex } from 'knex'
 import { difference } from 'lodash-es'
+import { getUserPreferenceForNotificationTypeFactory } from '@/modules/notifications/services/notificationPreferences'
+import { getSavedUserNotificationPreferencesFactory } from '@/modules/notifications/repositories/userNotificationPreferences'
 
 type ValidatedNotificationState = {
   targetUser: UserWithOptionalRole
@@ -149,6 +157,7 @@ const createdOrUpdatedCommentHandlerFactory =
     getCommentResolver: (deps: { projectDb: Knex }) => GetComment
     getServerInfo: GetServerInfo
     saveUserNotifications: StoreUserNotifications
+    getUserPreferenceForNotificationType: GetUserPreferenceForNotificationType
   }) =>
   async ({ payload }: EventType<'comments.created' | 'comments.updated'>) => {
     const mentionedUserIds =
@@ -194,6 +203,12 @@ const createdOrUpdatedCommentHandlerFactory =
         serverInfo
       })
 
+      const isSubscribedToEmail = await deps.getUserPreferenceForNotificationType(
+        state.targetUser.id,
+        NotificationType.MentionedInComment,
+        NotificationChannel.Email
+      )
+
       const now = new Date()
       await deps.saveUserNotifications([
         {
@@ -207,7 +222,7 @@ const createdOrUpdatedCommentHandlerFactory =
             commentId: state.mentionComment.id,
             streamId: state.stream.id
           },
-          sendEmailAt: new Date(), // now <- 8pm
+          sendEmailAt: isSubscribedToEmail ? now : null,
           createdAt: now,
           updatedAt: now
         }
@@ -223,7 +238,12 @@ export const handler = async (
     getStream: getStreamFactory({ db }),
     getCommentResolver: ({ projectDb }) => getCommentFactory({ db: projectDb }),
     getServerInfo: getServerInfoFactory({ db }),
-    saveUserNotifications: storeUserNotificationsFactory({ db })
+    saveUserNotifications: storeUserNotificationsFactory({ db }),
+    getUserPreferenceForNotificationType: getUserPreferenceForNotificationTypeFactory({
+      getSavedUserNotificationPreferences: getSavedUserNotificationPreferencesFactory({
+        db
+      })
+    })
   })
 
   return createdOrUpdatedCommentHandler(event)

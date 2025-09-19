@@ -1,5 +1,7 @@
 import type {
+  NotificationChannel,
   NotificationPreferences,
+  NotificationType,
   UserNotificationRecord
 } from '@/modules/notifications/helpers/types'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
@@ -16,6 +18,12 @@ export type SaveUserNotificationPreferences = (
 export type GetUserNotificationPreferences = (
   userId: string
 ) => Promise<NotificationPreferences>
+
+export type GetUserPreferenceForNotificationType = (
+  userId: string,
+  notificationType: NotificationType,
+  notificationChannel: NotificationChannel
+) => Promise<boolean>
 
 export type GetUserNotifications = (args: {
   userId: string

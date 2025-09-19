@@ -7,6 +7,7 @@ import { InvalidArgumentError } from '@/modules/shared/errors'
 import type {
   GetSavedUserNotificationPreferences,
   GetUserNotificationPreferences,
+  GetUserPreferenceForNotificationType,
   SaveUserNotificationPreferences
 } from '@/modules/notifications/domain/operations'
 
@@ -34,6 +35,18 @@ function addDefaultPreferenceValues(
   })
   return savedPreferences
 }
+
+export const getUserPreferenceForNotificationTypeFactory =
+  (deps: {
+    getSavedUserNotificationPreferences: GetSavedUserNotificationPreferences
+  }): GetUserPreferenceForNotificationType =>
+  async (userId, notificationType, notificationChannel) => {
+    const preferences = await deps.getSavedUserNotificationPreferences(userId)
+    if (!preferences) return true
+
+    const notificationTypeSettings = preferences[notificationType]
+    return notificationTypeSettings?.[notificationChannel] ?? false
+  }
 
 export const updateNotificationPreferencesFactory =
   (deps: { saveUserNotificationPreferences: SaveUserNotificationPreferences }) =>

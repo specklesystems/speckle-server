@@ -21,11 +21,19 @@ import { getUserFactory } from '@/modules/core/repositories/users'
 import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import type { EventBusPayloads, EventType } from '@/modules/shared/services/eventBus'
-import type { StoreUserNotifications } from '@/modules/notifications/domain/operations'
+import type {
+  GetUserPreferenceForNotificationType,
+  StoreUserNotifications
+} from '@/modules/notifications/domain/operations'
 import type { UserNotificationRecord } from '@/modules/notifications/helpers/types'
-import { NotificationType } from '@/modules/notifications/helpers/types'
+import {
+  NotificationChannel,
+  NotificationType
+} from '@/modules/notifications/helpers/types'
 import cryptoRandomString from 'crypto-random-string'
 import { storeUserNotificationsFactory } from '@/modules/notifications/repositories/userNotification'
+import { getUserPreferenceForNotificationTypeFactory } from '@/modules/notifications/services/notificationPreferences'
+import { getSavedUserNotificationPreferencesFactory } from '@/modules/notifications/repositories/userNotificationPreferences'
 
 type ValidateMessageDeps = {
   getPendingAccessRequest: GetPendingAccessRequest
@@ -97,6 +105,7 @@ const streamAccessRequestCreatedHandlerFactory =
       renderEmail: typeof renderEmail
       sendEmail: typeof sendEmail
       saveUserNotifications: StoreUserNotifications
+      getUserPreferenceForNotificationType: GetUserPreferenceForNotificationType
     } & ValidateMessageDeps
   ) =>
   async (event: EventType<'accessrequests.created'>) => {
@@ -104,6 +113,12 @@ const streamAccessRequestCreatedHandlerFactory =
     const now = new Date()
     const notifications: UserNotificationRecord[] = []
     for (const targetUser of state.targetUsers) {
+      const isSubscribedToEmail = await deps.getUserPreferenceForNotificationType(
+        targetUser.id,
+        NotificationType.NewStreamAccessRequest,
+        NotificationChannel.Email
+      )
+
       notifications.push({
         id: cryptoRandomString({ length: 10 }),
         userId: targetUser.id,
@@ -113,7 +128,7 @@ const streamAccessRequestCreatedHandlerFactory =
           streamId: state.stream.id,
           requesterId: state.requester.id
         },
-        sendEmailAt: now,
+        sendEmailAt: isSubscribedToEmail ? now : null,
         createdAt: now,
         updatedAt: now
       })
@@ -130,7 +145,12 @@ export const handler = (event: EventType<'accessrequests.created'>) => {
     getStream: getStreamFactory({ db }),
     getPendingAccessRequest: getPendingAccessRequestFactory({ db }),
     getStreamCollaborators: getStreamCollaboratorsFactory({ db }),
-    saveUserNotifications: storeUserNotificationsFactory({ db })
+    saveUserNotifications: storeUserNotificationsFactory({ db }),
+    getUserPreferenceForNotificationType: getUserPreferenceForNotificationTypeFactory({
+      getSavedUserNotificationPreferences: getSavedUserNotificationPreferencesFactory({
+        db
+      })
+    })
   })
   return streamAccessRequestCreatedHandler(event)
 }
