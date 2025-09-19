@@ -40,6 +40,8 @@
           :is="presentation ? ViewerWrapper : 'div'"
           :group="presentation"
           class="h-full w-full object-cover"
+          @loading-change="onLoadingChange"
+          @progress-change="onProgressChange"
         />
       </div>
 
@@ -63,17 +65,36 @@
 
 <script setup lang="ts">
 import { useInjectedPresentationState } from '~/lib/presentations/composables/setup'
-import { useEventListener } from '@vueuse/core'
+import { useEventListener, useBreakpoints } from '@vueuse/core'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 const {
   response: { presentation }
 } = useInjectedPresentationState()
 
-const isInfoSidebarOpen = ref(true)
-const isLeftSidebarOpen = ref(true)
-const hideUi = ref(false)
+const isInfoSidebarOpen = ref(false)
+const isLeftSidebarOpen = ref(false)
+const hideUi = ref(true)
+const isViewerLoading = ref(false)
+const viewerProgress = ref(0)
+const isMobile = useBreakpoints(TailwindBreakpoints).smaller('sm')
 
 const ViewerWrapper = resolveComponent('PresentationViewerWrapper')
+
+const onLoadingChange = (loading: boolean) => {
+  isViewerLoading.value = loading
+
+  if (!loading) {
+    hideUi.value = false
+
+    isLeftSidebarOpen.value = !isMobile.value
+    isInfoSidebarOpen.value = true
+  }
+}
+
+const onProgressChange = (progress: number) => {
+  viewerProgress.value = progress
+}
 
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'i' || event.key === 'I') {
