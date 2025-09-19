@@ -19,6 +19,7 @@ import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { settingsWorkspacesAutomationQuery } from '~/lib/settings/graphql/queries'
 
 definePageMeta({
+  middleware: ['require-valid-workspace'],
   layout: 'settings'
 })
 
