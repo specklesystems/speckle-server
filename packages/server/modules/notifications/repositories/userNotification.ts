@@ -4,10 +4,14 @@ import type {
   GetNextEmailNotification,
   GetUserNotifications,
   GetUserNotificationsCount,
+  MarkCommentNotificationAsRead,
   StoreUserNotifications,
   UpdateUserNotifications
 } from '@/modules/notifications/domain/operations'
-import type { UserNotificationRecord } from '@/modules/notifications/helpers/types'
+import {
+  NotificationType,
+  type UserNotificationRecord
+} from '@/modules/notifications/helpers/types'
 import {
   decodeIsoDateCursor,
   encodeIsoDateCursor
@@ -92,4 +96,15 @@ export const deleteUserNotificationsFactory =
       .where({ userId })
       .whereIn(UserNotifications.col.id, ids)
       .delete()
+  }
+
+export const markCommentNotificationsAsReadFactory =
+  (deps: { db: Knex }): MarkCommentNotificationAsRead =>
+  async ({ userId, commentId }) => {
+    await deps
+      .db(UserNotifications.name)
+      .where({ userId })
+      .andWhere(UserNotifications.col.type, NotificationType.MentionedInComment)
+      .whereJsonSupersetOf(UserNotifications.col.payload, { commentId })
+      .update({ read: true })
   }

@@ -37,6 +37,11 @@ export type GetNextEmailNotification = () => Promise<
   MaybeNullOrUndefined<UserNotificationRecord>
 >
 
+export type MarkCommentNotificationAsRead = (args: {
+  userId: string
+  commentId: string
+}) => Promise<void>
+
 export type DeleteUserNotifications = (args: {
   userId: string
   ids: string[]
