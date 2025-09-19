@@ -21,6 +21,7 @@
       />
 
       <PresentationSlideIndicator
+        v-if="!isViewerLoading"
         class="absolute top-1/2 translate-y-[calc(-50%+25px)] z-20"
         :class="[isLeftSidebarOpen ? 'lg:left-[15.75rem] hidden md:block' : 'left-4']"
       />
