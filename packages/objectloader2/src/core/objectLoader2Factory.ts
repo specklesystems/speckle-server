@@ -1,4 +1,9 @@
-import { CustomLogger, getFeatureFlag, ObjectLoader2Flags } from '../types/functions.js'
+import {
+  CustomLogger,
+  Fetcher,
+  getFeatureFlag,
+  ObjectLoader2Flags
+} from '../types/functions.js'
 import { Base, ObjectAttributeMask } from '../types/types.js'
 import { ObjectLoader2 } from './objectLoader2.js'
 import { IndexedDatabase } from './stages/indexedDatabase.js'
@@ -10,6 +15,10 @@ export interface ObjectLoader2FactoryOptions {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   keyRange?: { bound: Function; lowerBound: Function; upperBound: Function }
   indexedDB?: IDBFactory
+  fetch?: Fetcher
+  attributeMask?: ObjectAttributeMask
+  useCache?: boolean
+  debug?: boolean
   logger?: CustomLogger
 }
 
@@ -44,10 +53,17 @@ export class ObjectLoader2Factory {
   }): ObjectLoader2 {
     const log = ObjectLoader2Factory.getLogger(params.options?.logger)
     let database
-    if (getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true') {
+    if (
+      params.options?.debug === true ||
+      getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true'
+    ) {
       this.logger('Using DEBUG mode for ObjectLoader2Factory')
     }
-    if (getFeatureFlag(ObjectLoader2Flags.USE_CACHE) === 'true') {
+    const useCache = params.options?.useCache ?? true
+    const flag = getFeatureFlag(ObjectLoader2Flags.USE_CACHE)
+    const flagAllowsCache = flag !== 'false'
+
+    if (useCache && flagAllowsCache) {
       database = new IndexedDatabase({
         indexedDB: params.options?.indexedDB,
         keyRange: params.options?.keyRange
@@ -68,6 +84,7 @@ export class ObjectLoader2Factory {
         objectId: params.objectId,
         token: params.token,
         headers: params.headers,
+        fetch: params.options?.fetch,
         attributeMask: params.attributeMask,
         logger: log || ((): void => {})
       }),
