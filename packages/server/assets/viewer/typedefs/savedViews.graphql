@@ -189,9 +189,19 @@ enum ViewPositionInputType {
   between
 }
 
+"""
+If only one is set, the other will be resolved automatically
+If none are set, the view will be added to the end of the list
+"""
 input ViewPositionInput {
   type: ViewPositionInputType!
+  """
+  The ID of the view that should be after the new position
+  """
   afterViewId: ID
+  """
+  The ID of the view that should be before the new position
+  """
   beforeViewId: ID
 }
 

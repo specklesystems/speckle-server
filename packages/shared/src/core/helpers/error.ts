@@ -1,3 +1,5 @@
+import { get } from '#lodash'
+
 class UnexpectedErrorStructureError extends Error {}
 
 /**
@@ -45,4 +47,28 @@ export const collectLongTrace = (limit?: number) => {
   const trace = (new Error().stack || '').split('\n').slice(1).join('\n').trim()
   Error.stackTraceLimit = originalLimit
   return trace
+}
+
+/**
+ * When you need to log a full error representation, w/ full .cause() support
+ */
+export const errorToString = (e: unknown): string => {
+  if (!(e instanceof Error)) {
+    try {
+      return JSON.stringify(e)
+    } catch {
+      return String(e)
+    }
+  }
+
+  let ret = e.stack || e.message || String(e)
+  const causeProps = ['cause', 'jse_cause'] as const
+
+  for (const prop of causeProps) {
+    if (prop in e) {
+      ret += `\nCause: ${errorToString(get(e, prop))}`
+    }
+  }
+
+  return ret
 }

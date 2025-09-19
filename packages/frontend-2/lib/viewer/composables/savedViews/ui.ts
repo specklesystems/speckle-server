@@ -110,12 +110,6 @@ export const useDraggableViewTargetView = (params: {
       isDragOver.value = false
       dragCounter.value = 0
 
-      // See whether view was dropped closer to top or bottom to figure out
-      // whether to put it before or after the target view
-      const targetRect = (event.target as HTMLElement).getBoundingClientRect()
-      const dropPosition = event.clientY - targetRect.top
-      const dropInTopHalf = dropPosition < targetRect.height / 2
-
       try {
         const data = event.dataTransfer.getData('application/json')
         const view = safeParse(data, isDraggableView)
@@ -125,6 +119,12 @@ export const useDraggableViewTargetView = (params: {
         if (view.id === params.view.value.id) {
           return
         }
+
+        // See whether view was dropped closer to top or bottom to figure out
+        // whether to put it before or after the target view
+        const targetRect = (event.target as HTMLElement).getBoundingClientRect()
+        const dropPosition = event.clientY - targetRect.top
+        const dropInTopHalf = dropPosition < targetRect.height / 2
 
         await updateView(
           {

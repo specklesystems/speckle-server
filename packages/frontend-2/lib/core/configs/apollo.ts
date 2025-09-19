@@ -8,7 +8,7 @@ import { getMainDefinition, Observable } from '@apollo/client/utilities'
 import { Kind } from 'graphql'
 import type { GraphQLError, OperationDefinitionNode } from 'graphql'
 import type { CookieRef, NuxtApp } from '#app'
-import type { Optional } from '@speckle/shared'
+import { errorToString, type Optional } from '@speckle/shared'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import {
   buildAbstractCollectionMergeFunction,
@@ -489,6 +489,7 @@ function createLink(params: {
       )
       const logContext = {
         ...omit(res, ['forward', 'response']),
+        networkError: res.networkError ? errorToString(res.networkError) : undefined,
         networkErrorMessage: res.networkError?.message,
         gqlErrorMessages: gqlErrors.map((e) => e.message),
         errorMessage: errMsg,
