@@ -15,7 +15,7 @@ import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
  * Highlighting extension that replicates LegacyViewer's HighlightExtension
  * Uses SelectionExtension but disables default events for UI-only highlighting
  */
-class HighlightExtension extends SelectionExtension {
+export class HighlightExtension extends SelectionExtension {
   public constructor(viewer: IViewer, cameraProvider: CameraController) {
     super(viewer, cameraProvider)
 
@@ -39,14 +39,6 @@ class HighlightExtension extends SelectionExtension {
 }
 
 /**
- * Get the highlight extension instance from the viewer.
- * The extension is created once during setup and then retrieved everywhere else.
- */
-export const getHighlightExtension = (instance: IViewer): HighlightExtension | null => {
-  return instance.getExtension(HighlightExtension)
-}
-
-/**
  * Post-setup integration that sets up highlighting extension and watches state
  * This should only be called once during post-setup after the viewer is initialized.
  */
@@ -63,7 +55,7 @@ export const useHighlightingPostSetup = () => {
   instance.createExtension(HighlightExtension)
 
   // Get the highlighting extension instance
-  const getHighlightExtensionInstance = () => getHighlightExtension(instance)
+  const getHighlightExtensionInstance = () => instance.getExtension(HighlightExtension)
 
   useOnViewerLoadComplete(
     ({ isInitial }) => {
