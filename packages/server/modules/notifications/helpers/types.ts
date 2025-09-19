@@ -25,6 +25,36 @@ export type UserNotificationPreferencesRecord = {
   preferences: NotificationPreferences
 }
 
+export type UserNotificationRecord = {
+  [K in keyof NotificationPayloadMap]: {
+    id: string
+    userId: string
+    type: K
+    read: boolean
+    payload: NotificationPayloadMap[K]
+    sendEmailAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+  }
+}[keyof NotificationPayloadMap]
+
+type NotificationPayloadMap = {
+  [NotificationType.MentionedInComment]: {
+    threadId: string
+    authorId: string
+    commentId: string
+    streamId: string
+  }
+  [NotificationType.NewStreamAccessRequest]: {
+    streamId: string
+    requesterId: string
+  }
+  [NotificationType.StreamAccessRequestApproved]: {
+    streamId: string
+  }
+  [NotificationType.ActivityDigest]: {} // TODO: Remove activity digest
+}
+
 // Add mappings between NotificationTypes and expected Message types here
 export type NotificationTypeMessageMap = {
   [NotificationType.MentionedInComment]: MentionedInCommentMessage

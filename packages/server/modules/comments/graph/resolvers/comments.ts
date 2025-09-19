@@ -101,6 +101,7 @@ import {
   getModelHomeSavedViewFactory,
   getSavedViewFactory
 } from '@/modules/viewer/repositories/dataLoaders/savedViews'
+import { CommentEvents } from '@/modules/comments/domain/events'
 
 // We can use the main DB for these
 const getStream = getStreamFactory({ db })
@@ -535,7 +536,13 @@ export default {
       const projectDb = await getProjectDbClient({ projectId: args.input.projectId })
       const markCommentViewed = markCommentViewedFactory({ db: projectDb })
       await markCommentViewed(args.input.commentId, ctx.userId!)
-
+      await getEventBus().emit({
+        eventName: CommentEvents.Viewed,
+        payload: {
+          commentId: args.input.commentId,
+          userId: ctx.userId!
+        }
+      })
       return true
     },
     async create(_parent, args, ctx) {

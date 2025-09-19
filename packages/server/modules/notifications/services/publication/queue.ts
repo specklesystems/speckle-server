@@ -87,7 +87,7 @@ export function getQueue(): Bull.Queue {
 /**
  * Initialize notifications queue
  */
-export async function initializeQueue() {
+export async function initializePublicationQueue() {
   queue = await buildNotificationsQueue(NOTIFICATIONS_QUEUE)
 }
 
@@ -186,7 +186,7 @@ export async function consumeIncomingNotifications() {
   })
 }
 
-export async function shutdownQueue() {
+export async function shutdownPublicationQueue() {
   if (!queue) return
   await queue.close()
 }

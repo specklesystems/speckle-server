@@ -15,7 +15,7 @@ import {
 import {
   getSavedUserNotificationPreferencesFactory,
   saveUserNotificationPreferencesFactory
-} from '@/modules/notifications/repositories'
+} from '@/modules/notifications/repositories/userNotificationPreferences'
 import { db } from '@/db/knex'
 
 const getSavedUserNotificationPreferences = getSavedUserNotificationPreferencesFactory({
