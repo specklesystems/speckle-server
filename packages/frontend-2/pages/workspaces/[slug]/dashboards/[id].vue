@@ -12,6 +12,7 @@
           :name="dashboard?.name"
         />
         <FormButton
+          v-if="canEdit"
           v-tippy="'Edit name'"
           size="sm"
           color="subtle"
@@ -24,7 +25,11 @@
     </Portal>
     <Portal to="primary-actions">
       <div class="flex items-center gap-2">
-        <DashboardsShare :id="dashboard?.id" :workspace-slug="workspace?.slug" />
+        <DashboardsShare
+          v-if="canEdit"
+          :id="dashboard?.id"
+          :workspace-slug="workspace?.slug"
+        />
         <FormButton
           v-tippy="'Toggle fullscreen'"
           size="sm"
@@ -77,6 +82,11 @@ graphql(`
       slug
       logo
     }
+    permissions {
+      canEdit {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -96,6 +106,9 @@ const {
 
 const editDialogOpen = ref(false)
 
+const canEdit = computed(
+  () => result.value?.dashboard?.permissions?.canEdit?.authorized
+)
 const workspace = computed(() => result.value?.dashboard?.workspace)
 const dashboard = computed(() => result.value?.dashboard)
 const dashboardUrl = computed(
