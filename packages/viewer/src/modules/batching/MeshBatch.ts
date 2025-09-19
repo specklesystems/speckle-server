@@ -168,16 +168,19 @@ export class MeshBatch extends PrimitiveBatch {
       )
 
       if (transparentDepthHiddenGroup) {
-        for (
-          let k = this.groups.indexOf(transparentDepthHiddenGroup);
-          k < this.groups.length;
-          k++
-        ) {
-          const material = this.materials[this.groups[k].materialIndex]
-          if (material.visible) {
-            if (!material.transparent || material.colorWrite) {
-              this.needsShuffle = true
-              break
+        if (this.groups.length === 1) this.needsShuffle = true
+        else {
+          for (
+            let k = this.groups.indexOf(transparentDepthHiddenGroup);
+            k < this.groups.length;
+            k++
+          ) {
+            const material = this.materials[this.groups[k].materialIndex]
+            if (material.visible) {
+              if (!material.transparent || material.colorWrite) {
+                this.needsShuffle = true
+                break
+              }
             }
           }
         }

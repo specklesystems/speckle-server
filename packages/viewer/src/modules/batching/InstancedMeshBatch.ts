@@ -19,6 +19,7 @@ import {
   type DrawGroup,
   GeometryType,
   INSTANCE_TRANSFORM_BUFFER_STRIDE,
+  isNoneBatchUpdateRange,
   NoneBatchUpdateRange
 } from './Batch.js'
 import SpeckleInstancedMesh from '../objects/SpeckleInstancedMesh.js'
@@ -139,7 +140,7 @@ export class InstancedMeshBatch implements Batch {
   /** Note: You can only set visibility on ranges that exist as draw groups! */
   public setVisibleRange(ranges: BatchUpdateRange[]) {
     /** Entire batch needs to NOT be drawn */
-    if (ranges.length === 1 && ranges[0] === NoneBatchUpdateRange) {
+    if (ranges.length === 1 && isNoneBatchUpdateRange(ranges[0])) {
       this.mesh.children.forEach((instance) => (instance.visible = false))
       return
     }
@@ -324,9 +325,32 @@ export class InstancedMeshBatch implements Batch {
     }
     this.setBatchBuffers(ranges)
     this.cleanMaterials()
+    const transparentDepthHiddenGroup = this.groups.find(
+      (value) =>
+        this.materials[value.materialIndex].transparent === true ||
+        this.materials[value.materialIndex].visible === false ||
+        this.materials[value.materialIndex].colorWrite === false
+    )
     /** We shuffle only when above a certain fragmentation threshold. We don't want to be shuffling every single time */
     if (this.drawCalls > this.maxDrawCalls) {
       this.needsShuffle = true
+    } else if (transparentDepthHiddenGroup) {
+      if (this.groups.length === 1) this.needsShuffle = true
+      else {
+        for (
+          let k = this.groups.indexOf(transparentDepthHiddenGroup);
+          k < this.groups.length;
+          k++
+        ) {
+          const material = this.materials[this.groups[k].materialIndex]
+          if (material.visible) {
+            if (!material.transparent || material.colorWrite) {
+              this.needsShuffle = true
+              break
+            }
+          }
+        }
+      }
     } else
       this.mesh.updateDrawGroups(
         this.getCurrentTransformBuffer(),

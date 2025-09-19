@@ -58,7 +58,6 @@ import {
   ObjectLoader2Flags,
   ObjectLoader2Factory
 } from '@speckle/objectloader2'
-import { SectionCaps } from './Extensions/SectionCaps.ts/SectionCaps'
 import { MeasurementType } from '@speckle/shared/viewer/state'
 
 export default class Sandbox {
@@ -430,12 +429,10 @@ export default class Sandbox {
         this.selectionList.map((val) => val.hits[0].node.model.raw.id) as string[]
       )
       if (!box) {
-        box = this.viewer.getRenderer().sceneBox
+        box = this.viewer.getRenderer().visibleSceneBox
       }
       this.viewer.getExtension(SectionTool).setBox(box)
       this.viewer.getExtension(SectionTool).toggle()
-      const sectionCaps = this.viewer.getExtension(SectionCaps)
-      if (sectionCaps) sectionCaps.enabled = !sectionCaps.enabled
     })
 
     const toggleSectionBoxVisibility = this.tabs.pages[0].addButton({

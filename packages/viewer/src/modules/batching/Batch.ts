@@ -91,3 +91,18 @@ export function isAcceleratedBatchType(batch: Batch): batch is AcceleratedBatchT
       batch.geometryType === GeometryType.TEXT)
   )
 }
+
+export function isNoneBatchUpdateRange(range: BatchUpdateRange) {
+  return (
+    range.offset === NoneBatchUpdateRange.offset &&
+    range.count === NoneBatchUpdateRange.count
+  )
+}
+
+export function isAllBatchUpdateRange(range: BatchUpdateRange, totalCount?: number) {
+  return (
+    range.offset === AllBatchUpdateRange.offset &&
+    (range.count === AllBatchUpdateRange.count ||
+      (totalCount ? range.count === totalCount : true))
+  )
+}
