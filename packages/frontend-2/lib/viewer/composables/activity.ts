@@ -167,6 +167,9 @@ export function useViewerUserActivityBroadcasting(
       response: { project }
     }
   } = options?.state || useInjectedViewerState()
+  const {
+    public: { disableViewerActivityBroadcasting }
+  } = useRuntimeConfig()
   const { activeUser } = useActiveUser()
   const { update, activity, status, activityId } = useViewerRealtimeActivityTracker()
   const apollo = useApolloClient().client
@@ -186,7 +189,7 @@ export function useViewerUserActivityBroadcasting(
   }
 
   const invokeMutation = async () => {
-    if (!activeUser.value?.id) return false
+    if (!activeUser.value?.id || disableViewerActivityBroadcasting) return false
 
     const result = await apollo
       .mutate({

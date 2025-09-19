@@ -3,10 +3,10 @@
 <template>
   <div
     v-keyboard-clickable
-    :class="[wrapperClasses, draggableClasses]"
+    :class="[wrapperClasses, draggableClasses, draggableTargetClasses]"
     :view-id="view.id"
     draggable="true"
-    v-on="on"
+    v-on="{ ...on, ...targetOn }"
     @click="apply"
   >
     <div class="flex items-center shrink-0">
@@ -120,7 +120,10 @@ import {
   useCollectNewSavedViewViewerData,
   useUpdateSavedView
 } from '~/lib/viewer/composables/savedViews/management'
-import { useDraggableView } from '~/lib/viewer/composables/savedViews/ui'
+import {
+  useDraggableView,
+  useDraggableViewTargetView
+} from '~/lib/viewer/composables/savedViews/ui'
 import { useSavedViewValidationHelpers } from '~/lib/viewer/composables/savedViews/validation'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 
@@ -192,6 +195,10 @@ const {
 const { classes: draggableClasses, on } = useDraggableView({
   view: computed(() => props.view)
 })
+const { classes: draggableTargetClasses, on: targetOn } = useDraggableViewTargetView({
+  view: computed(() => props.view)
+})
+
 const mp = useMixpanel()
 
 const showMenu = ref(false)

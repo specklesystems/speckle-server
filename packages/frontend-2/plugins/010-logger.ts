@@ -1,4 +1,4 @@
-import { collectLongTrace } from '@speckle/shared'
+import { collectLongTrace, errorToString } from '@speckle/shared'
 import type { LogType } from 'consola'
 import dayjs from 'dayjs'
 import { omit } from 'lodash-es'
@@ -31,6 +31,7 @@ const simpleStripHtml = (str: string) => str.replace(/<[^>]*>?/gm, '')
  */
 
 export default defineNuxtPlugin(async (nuxtApp) => {
+  const runtimeConfig = useRuntimeConfig()
   const {
     public: {
       logLevel: untypedLogLevel,
@@ -41,7 +42,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       serverName,
       logCsrEmitProps
     }
-  } = useRuntimeConfig()
+  } = runtimeConfig
 
   const logLevel = untypedLogLevel as LogType
   const route = useRoute()
@@ -313,12 +314,35 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
   // More error logging hooks
   nuxtApp.vueApp.config.errorHandler = (error, _vm, info) => {
-    logger.error(error, 'Unhandled error in Vue app', info)
+    logger.error(
+      {
+        err: error,
+        info,
+        isAppError: true,
+        vm: _vm?.$options.name,
+        errString: errorToString(error)
+      },
+      'Unhandled error in Vue app'
+    )
   }
   nuxtApp.hook('app:error', (error) => {
-    logger.error(error, 'Unhandled app error', {
-      isAppError: true
-    })
+    logger.error(
+      { err: error, isAppError: true, errString: errorToString(error) },
+      'Unhandled app error'
+    )
+  })
+
+  nuxtApp.hook('vue:error', (error, _vm, info) => {
+    logger.error(
+      {
+        err: error,
+        info,
+        isAppError: true,
+        vm: _vm?.$options.name,
+        errString: errorToString(error)
+      },
+      'Unhandled Vue error'
+    )
   })
 
   // Hydrate server fatal error to CSR
@@ -361,7 +385,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     nuxtApp.hook('app:mounted', () => {
       logger.info('App mounted in the client', {
         important: true,
-        speckleServerVersion
+        speckleServerVersion,
+        runtimeConfig
       })
     })
   } else {

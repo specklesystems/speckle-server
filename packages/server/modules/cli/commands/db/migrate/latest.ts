@@ -11,6 +11,8 @@ const command: CommandModule<unknown, CommonDbArgs> = {
     const { regionKey } = argv
 
     const dbs = await getTargettedDbClients({ regionKey })
+    logger.info(`Found ${dbs.length} DB(s) to run latest on`)
+
     for (const db of dbs) {
       logger.info(`Running latest on DB ${db.regionKey}...`)
       await db.client.migrate.latest()

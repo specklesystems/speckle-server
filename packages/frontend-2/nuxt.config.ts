@@ -85,7 +85,8 @@ export default defineNuxtConfig({
       datadogEnv: '',
       intercomAppId: '',
       dashboardsOrigin: '',
-      parallelMiddlewares: true
+      parallelMiddlewares: true,
+      disableViewerActivityBroadcasting: false
     }
   },
 
