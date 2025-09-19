@@ -482,6 +482,8 @@ export const updateSavedViewFactory =
       updateSavedViewRecord: UpdateSavedViewRecord
       recalculateGroupResourceIds: RecalculateGroupResourceIds
       setNewHomeView: SetNewHomeView
+      getNewViewSpecificPosition: GetNewViewSpecificPosition
+      rebalanceViewPositions: RebalanceViewPositions
     } & DependenciesOf<typeof validateProjectResourceIdStringFactory>
   ): UpdateSavedView =>
   async (params) => {
@@ -615,7 +617,25 @@ export const updateSavedViewFactory =
       resourceIds: resourceIds || resourceBuilder().addResources(view.resourceIds)
     })
 
-    const finalChanges = omit(changes, ['resourceIdString', 'viewerState'])
+    // Position
+    let position: number | undefined = undefined
+    let needsRebalancing = false
+    if ('position' in changes && changes.position) {
+      const posInput = changes.position
+      const newPos = await deps.getNewViewSpecificPosition({
+        projectId,
+        groupId: ('groupId' in changes ? changes.groupId : view.groupId) || null,
+        resourceIdString: resourceIds
+          ? resourceIds.toString()
+          : view.resourceIds.join(','),
+        beforeId: posInput.type === 'between' ? posInput.beforeViewId || null : null,
+        afterId: posInput.type === 'between' ? posInput.afterViewId || null : null
+      })
+      position = newPos.newPosition
+      needsRebalancing = newPos.needsRebalancing
+    }
+
+    const finalChanges = omit(changes, ['resourceIdString', 'viewerState', 'position'])
     const update = {
       ...finalChanges,
       ...(resourceIds
@@ -628,7 +648,8 @@ export const updateSavedViewFactory =
         ? {
             viewerState
           }
-        : {})
+        : {}),
+      ...(!isUndefined(position) ? { position } : {})
     }
 
     // Check if there's any actual changes
@@ -680,6 +701,15 @@ export const updateSavedViewFactory =
               projectId,
               newHomeViewId: updatedView!.id,
               modelId: homeViewModel.modelId
+            })
+          ]
+        : []),
+      ...(needsRebalancing
+        ? [
+            deps.rebalanceViewPositions({
+              projectId,
+              groupId: updatedView!.groupId || null,
+              resourceIdString: updatedView!.resourceIds.join(',')
             })
           ]
         : [])

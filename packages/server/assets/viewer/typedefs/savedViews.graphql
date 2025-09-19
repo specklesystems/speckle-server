@@ -163,6 +163,7 @@ input CreateSavedViewInput {
   Set visibility of the view. Default: public
   """
   visibility: SavedViewVisibility
+  position: ViewPositionInput
 }
 
 input CreateSavedViewGroupInput {
@@ -182,6 +183,16 @@ input DeleteSavedViewGroupInput {
 input DeleteSavedViewInput {
   id: ID!
   projectId: ID!
+}
+
+enum ViewPositionInputType {
+  between
+}
+
+input ViewPositionInput {
+  type: ViewPositionInputType!
+  afterViewId: ID
+  beforeViewId: ID
 }
 
 input UpdateSavedViewInput {
@@ -218,6 +229,7 @@ input UpdateSavedViewInput {
   Optionally change visibility of the view
   """
   visibility: SavedViewVisibility
+  position: ViewPositionInput
 }
 
 input UpdateSavedViewGroupInput {

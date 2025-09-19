@@ -232,6 +232,7 @@ export type CreateSavedViewParams = {
     screenshot: string
     isHomeView?: MaybeNullOrUndefined<boolean>
     visibility?: MaybeNullOrUndefined<SavedViewVisibility>
+    position?: MaybeNullOrUndefined<ViewPositionInput>
   }
   authorId: string
 }
@@ -265,6 +266,12 @@ export type DeleteSavedView = (params: {
   userId: string
 }) => Promise<void>
 
+export type ViewPositionInput = {
+  type: 'first' | 'last' | 'between'
+  beforeViewId?: MaybeNullOrUndefined<string>
+  afterViewId?: MaybeNullOrUndefined<string>
+}
+
 export type UpdateSavedViewParams = {
   id: string
   projectId: string
@@ -276,6 +283,7 @@ export type UpdateSavedViewParams = {
   viewerState?: MaybeNullOrUndefined<unknown>
   resourceIdString?: MaybeNullOrUndefined<string>
   screenshot?: MaybeNullOrUndefined<string>
+  position?: MaybeNullOrUndefined<ViewPositionInput>
 }
 
 export type UpdateSavedView = (params: {

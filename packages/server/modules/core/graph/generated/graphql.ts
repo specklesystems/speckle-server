@@ -1089,6 +1089,7 @@ export type CreateSavedViewInput = {
   isHomeView?: InputMaybe<Scalars['Boolean']['input']>;
   /** Auto-generated name, if not specified */
   name?: InputMaybe<Scalars['String']['input']>;
+  position?: InputMaybe<ViewPositionInput>;
   projectId: Scalars['ID']['input'];
   resourceIdString: Scalars['String']['input'];
   /** Encoded screenshot of the view */
@@ -4603,6 +4604,7 @@ export type UpdateSavedViewInput = {
   isHomeView?: InputMaybe<Scalars['Boolean']['input']>;
   /** New name for the view */
   name?: InputMaybe<Scalars['String']['input']>;
+  position?: InputMaybe<ViewPositionInput>;
   projectId: Scalars['ID']['input'];
   /** New resource targets, if necessary. Must be set together w/ viewerState & screenshot. */
   resourceIdString?: InputMaybe<Scalars['String']['input']>;
@@ -5135,6 +5137,17 @@ export type VersionPermissionChecks = {
   canUpdate: PermissionCheckResult;
 };
 
+export type ViewPositionInput = {
+  afterViewId?: InputMaybe<Scalars['ID']['input']>;
+  beforeViewId?: InputMaybe<Scalars['ID']['input']>;
+  type: ViewPositionInputType;
+};
+
+export const ViewPositionInputType = {
+  Between: 'between'
+} as const;
+
+export type ViewPositionInputType = typeof ViewPositionInputType[keyof typeof ViewPositionInputType];
 export type ViewerResourceGroup = {
   __typename?: 'ViewerResourceGroup';
   /** Resource identifier used to refer to a collection of resource items */
@@ -6381,6 +6394,8 @@ export type ResolversTypes = {
   VersionCreatedTriggerDefinition: ResolverTypeWrapper<AutomationRevisionTriggerDefinitionGraphQLReturn>;
   VersionMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   VersionPermissionChecks: ResolverTypeWrapper<VersionPermissionChecksGraphQLReturn>;
+  ViewPositionInput: ViewPositionInput;
+  ViewPositionInputType: ViewPositionInputType;
   ViewerResourceGroup: ResolverTypeWrapper<ViewerResourceGroup>;
   ViewerResourceItem: ResolverTypeWrapper<ViewerResourceItem>;
   ViewerUpdateTrackingTarget: ViewerUpdateTrackingTarget;
@@ -6751,6 +6766,7 @@ export type ResolversParentTypes = {
   VersionCreatedTriggerDefinition: AutomationRevisionTriggerDefinitionGraphQLReturn;
   VersionMutations: MutationsObjectGraphQLReturn;
   VersionPermissionChecks: VersionPermissionChecksGraphQLReturn;
+  ViewPositionInput: ViewPositionInput;
   ViewerResourceGroup: ViewerResourceGroup;
   ViewerResourceItem: ViewerResourceItem;
   ViewerUpdateTrackingTarget: ViewerUpdateTrackingTarget;

@@ -396,6 +396,10 @@ const resolvers: Resolvers = {
         }),
         setNewHomeView: setNewHomeViewFactory({
           db: projectDb
+        }),
+        rebalanceViewPositions: rebalancingViewPositionsFactory({ db: projectDb }),
+        getNewViewSpecificPosition: getNewViewSpecificPositionFactory({
+          db: projectDb
         })
       })
 

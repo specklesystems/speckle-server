@@ -1,8 +1,10 @@
 import { useMutationLoading } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
-import type {
-  UseDraggableView_SavedViewFragment,
-  UseDraggableViewTargetGroup_SavedViewGroupFragment
+import {
+  ViewPositionInputType,
+  type UseDraggableView_SavedViewFragment,
+  type UseDraggableViewTargetGroup_SavedViewGroupFragment,
+  type UseDraggableViewTargetView_SavedViewFragment
 } from '~/lib/common/generated/gql/graphql'
 import { ensureError, safeParse } from '@speckle/shared'
 import { has, isObjectLike } from 'lodash-es'
@@ -17,6 +19,7 @@ graphql(`
     id
     projectId
     name
+    position
     group {
       id
     }
@@ -70,6 +73,127 @@ export const useDraggableView = (params: {
   return {
     classes,
     on: vOn
+  }
+}
+
+graphql(`
+  fragment UseDraggableViewTargetView_SavedView on SavedView {
+    id
+    name
+    position
+    group {
+      id
+    }
+  }
+`)
+
+export const useDraggableViewTargetView = (params: {
+  view: Ref<UseDraggableViewTargetView_SavedViewFragment>
+  onMoved?: () => void
+}) => {
+  const isDragOver = ref(false)
+  const dragCounter = ref(0)
+  const { triggerNotification } = useGlobalToast()
+  const updateView = useUpdateSavedView()
+
+  const vOn = {
+    dragover: (event: DragEvent) => {
+      if (!event.dataTransfer) return
+
+      event.preventDefault()
+      event.dataTransfer.dropEffect = 'move'
+    },
+    drop: async (event: DragEvent) => {
+      if (!event.dataTransfer) return
+
+      event.preventDefault()
+      isDragOver.value = false
+      dragCounter.value = 0
+
+      // See whether view was dropped closer to top or bottom to figure out
+      // whether to put it before or after the target view
+      const targetRect = (event.target as HTMLElement).getBoundingClientRect()
+      const dropPosition = event.clientY - targetRect.top
+      const dropInTopHalf = dropPosition < targetRect.height / 2
+
+      try {
+        const data = event.dataTransfer.getData('application/json')
+        const view = safeParse(data, isDraggableView)
+        if (!view) return
+
+        // check if same view
+        if (view.id === params.view.value.id) {
+          return
+        }
+
+        await updateView(
+          {
+            view,
+            input: {
+              id: view.id,
+              projectId: view.projectId,
+              groupId: params.view.value.group.id,
+              position: {
+                type: ViewPositionInputType.Between,
+                ...(dropInTopHalf
+                  ? { beforeViewId: params.view.value.id }
+                  : { afterViewId: params.view.value.id })
+              }
+            }
+          },
+          {
+            skipToast: true,
+            onFullResult: (res, success) => {
+              if (success) {
+                triggerNotification({
+                  type: ToastNotificationType.Success,
+                  title: `Moved "${view.name}" to position of "${params.view.value.name}"`
+                })
+                params.onMoved?.()
+              } else {
+                triggerNotification({
+                  type: ToastNotificationType.Danger,
+                  title: 'Failed to move view',
+                  description: getFirstGqlErrorMessage(res?.errors)
+                })
+              }
+            }
+          }
+        )
+      } catch (e) {
+        triggerNotification({
+          type: ToastNotificationType.Danger,
+          title: 'Failed to move view',
+          description: ensureError(e).message
+        })
+      }
+    },
+    dragenter: (event: DragEvent) => {
+      event.preventDefault()
+      dragCounter.value++
+      isDragOver.value = true
+    },
+    dragleave: () => {
+      dragCounter.value--
+      if (dragCounter.value === 0) {
+        isDragOver.value = false
+      }
+    }
+  }
+
+  const classes = computed(() => {
+    const classParts: string[] = ['draggable-view-target']
+
+    if (isDragOver.value) {
+      classParts.push('rounded-md ring-2 ring-primary ring-opacity-50 bg-primary/5')
+    }
+
+    return classParts.join(' ')
+  })
+
+  return {
+    on: vOn,
+    classes
   }
 }
 

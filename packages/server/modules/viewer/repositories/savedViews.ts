@@ -822,6 +822,9 @@ const getNeighborViewFactory =
   }) => {
     const { direction, anchorId, projectId, groupId, resourceIdString } = params
 
+    const SubqCols = SavedViews.with({ withCustomTablePrefix: 'sqv' })
+    const MainCols = SavedViews.with({ withCustomTablePrefix: 'mv' })
+
     // Subquery to find the anchor view
     const subQ = tables.savedViews(deps.db).where(SavedViews.col.id, anchorId).first()
     applyViewPositionGroupFiltering(subQ, groupId, projectId, resourceIdString)
@@ -830,14 +833,10 @@ const getNeighborViewFactory =
     const cmpOperator = direction === 'before' ? '<' : '>'
     const sortDir = direction === 'before' ? 'desc' : 'asc'
 
-    const SubqCols = SavedViews.with({ withCustomTablePrefix: 'sqv' })
-    const MainCols = SavedViews.with({ withCustomTablePrefix: 'mv' })
-
-    const resultQ = tables
-      .savedViews(deps.db)
-      .as('mv')
+    const resultQ = deps
+      .db(MainCols.name)
       .select<Array<SavedView>>(MainCols.cols)
-      .join(subQ.as('sq1'), (j1) => {
+      .join(subQ.as('sqv'), (j1) => {
         j1
           // same projectId
           .on(MainCols.col.projectId, '=', SubqCols.col.projectId)
@@ -918,7 +917,7 @@ export const getNewViewSpecificPositionFactory =
       return {
         newPosition: await getNewViewBoundaryPosition({
           ...params,
-          position: hasNoBeforeView ? 'last' : 'first'
+          position: hasNoBeforeView ? 'first' : 'last'
         }),
         needsRebalancing: false
       }
