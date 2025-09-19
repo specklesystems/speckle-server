@@ -49,7 +49,6 @@ graphql(`
 `)
 
 definePageMeta({
-  middleware: ['require-valid-workspace'],
   layout: 'settings'
 })
 

@@ -6,7 +6,6 @@
 
 <script setup lang="ts">
 definePageMeta({
-  middleware: ['require-valid-workspace'],
   layout: 'settings'
 })
 
