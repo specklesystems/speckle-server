@@ -12,7 +12,7 @@
           :name="dashboard?.name"
         />
         <FormButton
-          v-if="canEdit"
+          v-if="canEdit && !hasDashboardToken"
           v-tippy="'Edit name'"
           size="sm"
           color="subtle"
@@ -26,7 +26,7 @@
     <Portal to="primary-actions">
       <div class="flex items-center gap-2">
         <DashboardsShare
-          v-if="canEdit"
+          v-if="canEdit && !hasDashboardToken"
           :id="dashboard?.id"
           :workspace-slug="workspace?.slug"
         />
@@ -106,6 +106,7 @@ const {
 
 const editDialogOpen = ref(false)
 
+const hasDashboardToken = computed(() => !!dashboardToken.value)
 const canEdit = computed(
   () => result.value?.dashboard?.permissions?.canEdit?.authorized
 )
