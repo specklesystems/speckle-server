@@ -22,8 +22,9 @@
 
       <PresentationSlideIndicator
         v-if="!isViewerLoading"
+        :show-slide-list="!isLeftSidebarOpen"
         class="absolute top-1/2 translate-y-[calc(-50%+25px)] z-20"
-        :class="[isLeftSidebarOpen ? 'lg:left-[15.75rem] hidden md:block' : 'left-4']"
+        :class="[isLeftSidebarOpen ? 'lg:left-[14.75rem] hidden md:block' : 'left-0']"
       />
 
       <PresentationSpeckleLogo
