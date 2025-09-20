@@ -56,7 +56,8 @@ const handleConfirm = async () => {
     await updateUserRole({
       userId: props.user.id,
       role: null,
-      workspaceId: props.workspace.id
+      workspaceId: props.workspace.id,
+      previousRole: props.user.role
     })
 
     open.value = false

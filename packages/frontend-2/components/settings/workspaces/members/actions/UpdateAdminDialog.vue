@@ -149,7 +149,8 @@ const handleConfirm = async () => {
     await updateUserRole({
       userId: props.user.id,
       role: props.action === 'make' ? Roles.Workspace.Admin : Roles.Workspace.Member,
-      workspaceId: props.workspace.id
+      workspaceId: props.workspace.id,
+      previousRole: props.user.role
     })
 
     if (!isUnpaidPaidUpgrade.value) {
