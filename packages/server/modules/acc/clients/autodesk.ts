@@ -58,13 +58,18 @@ interface ExchangeCodeOptions {
   redirectUri: string
 }
 
-const AccTokens = z.object({
-  access_token: z.string(),
-  refresh_token: z.string(),
-  token_type: z.string(),
-  id_token: z.string(),
-  expires_in: z.number()
-})
+const AccTokens = z
+  .object({
+    access_token: z.string(),
+    refresh_token: z.string(),
+    token_type: z.string(),
+    id_token: z.string().optional(),
+    expires_in: z.number()
+  })
+  .transform((data) => ({
+    ...data,
+    timestamp: Date.now()
+  }))
 
 export const generateCodeVerifier = () => {
   const codeVerifier = crypto.randomBytes(32).toString('base64url')
@@ -121,17 +126,18 @@ export const exchangeCodeForTokens = async ({
   )
 
   const data = await response.json()
-
   return AccTokens.parse(data)
 }
 
 export const exchangeRefreshTokenForTokens = async (args: {
   refresh_token: string
 }): Promise<AccTokens> => {
+  const clientId = getAutodeskIntegrationClientId()
+  const clientSecret = getAutodeskIntegrationClientSecret()
+  const token = Buffer.from(`${clientId}:${clientSecret}`, 'utf8').toString('base64')
+
   const params = new URLSearchParams({
     grant_type: 'refresh_token',
-    client_id: getAutodeskIntegrationClientId(),
-    client_secret: getAutodeskIntegrationClientSecret(),
     refresh_token: args.refresh_token
   })
 
@@ -139,7 +145,11 @@ export const exchangeRefreshTokenForTokens = async (args: {
     'https://developer.api.autodesk.com/authentication/v2/token',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: {
+        Authorization: `Basic ${token}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
       body: params
     }
   )

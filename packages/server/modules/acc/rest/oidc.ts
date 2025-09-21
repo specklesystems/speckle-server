@@ -86,7 +86,7 @@ export const setupAccOidcEndpoints = (app: Express) => {
     corsMiddleware,
     sessionMiddleware,
     async (req, res) => {
-      const { refresh_token } = req.session.accTokens || {}
+      const { refresh_token } = req.body || {}
       if (!refresh_token) {
         return res.status(401).json({ error: 'No refresh token found' })
       }
@@ -97,7 +97,7 @@ export const setupAccOidcEndpoints = (app: Express) => {
         res.json(newTokens)
       } catch (error) {
         console.error('Error refreshing token:', error)
-        res.status(500).json({ error: 'Error refreshing token' })
+        res.status(500).json({ error })
       }
     }
   )
