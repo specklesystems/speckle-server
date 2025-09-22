@@ -3,6 +3,7 @@
     <Portal to="navigation">
       <div class="flex items-center">
         <HeaderNavLink
+          v-if="isLoggedIn"
           :to="dashboardsRoute(workspace?.slug)"
           name="Dashboard"
           :separator="false"
@@ -10,6 +11,7 @@
         <HeaderNavLink
           :to="dashboardRoute(workspace?.slug, id as string)"
           :name="dashboard?.name"
+          :separator="isLoggedIn ? true : false"
         />
         <FormButton
           v-if="canEdit && !hasDashboardToken"
@@ -103,6 +105,7 @@ const { isDarkTheme } = useTheme()
 const {
   public: { dashboardsOrigin }
 } = useRuntimeConfig()
+const { isLoggedIn } = useActiveUser()
 
 const editDialogOpen = ref(false)
 
