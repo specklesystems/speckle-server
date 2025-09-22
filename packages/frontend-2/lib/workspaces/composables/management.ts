@@ -476,6 +476,7 @@ export const useWorkspaceUpdateRole = () => {
               }
             )
           }
+
           modifyObjectField(
             cache,
             getCacheId('Workspace', input.workspaceId),
