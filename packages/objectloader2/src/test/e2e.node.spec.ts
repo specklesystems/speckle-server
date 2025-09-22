@@ -2,17 +2,33 @@ import { describe, test, expect } from 'vitest'
 import { TIME_MS } from '@speckle/shared'
 import { ObjectLoader2Factory } from '../core/objectLoader2Factory.js'
 import { Base } from '../types/types.js'
+import * as crossFetch from 'cross-fetch'
 
-describe('e2e', () => {
-  test(
-    'download small model',
-    async () => {
+describe('e2e (pure node)', () => {
+  test.each(['native fetch', 'cross-fetch'])(
+    'download small model w/o needing extra deps %s)',
+    async (fetchType) => {
+      let fetchImplementation: typeof fetch
+      switch (fetchType) {
+        case 'native fetch':
+        default:
+          fetchImplementation = fetch
+          break
+        case 'cross-fetch': {
+          fetchImplementation = crossFetch.fetch
+          break
+        }
+      }
+
       // Revit sample house (good for bim-like stuff with many display meshes)
       //const resource = 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
       const loader = ObjectLoader2Factory.createFromUrl({
         serverUrl: 'https://app.speckle.systems',
         streamId: 'da9e320dad',
-        objectId: '31d10c0cea569a1e26809658ed27e281'
+        objectId: '31d10c0cea569a1e26809658ed27e281',
+        options: {
+          fetch: fetchImplementation
+        }
       })
 
       const getObjectPromise = loader.getObject({

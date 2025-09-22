@@ -69,6 +69,7 @@
     "@opentelemetry/instrumentation-pino": "^0.42.0",
     "@opentelemetry/sdk-trace-node": "^1.26.0",
     "@speckle/shared": "workspace:^",
+    "@speckle/objectloader2": "workspace:^",
     "ajv": "^8.12.0",
     "bcrypt": "^5.0.0",
     "bull": "^4.16.4",
