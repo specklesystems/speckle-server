@@ -3,8 +3,7 @@ import type { ApolloClient, NormalizedCacheObject } from '@apollo/client/core'
 import { gql } from '@apollo/client/core'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { Roles, TIME_MS, timeoutAt } from '@speckle/shared'
-import ObjectLoader from '@speckle/objectloader'
-import { noop } from 'lodash-es'
+import { ObjectLoader2Factory } from '@speckle/objectloader2'
 import { crossServerSyncLogger } from '@/observability/logging'
 import type { SpeckleViewer } from '@speckle/shared'
 import { retry } from '@speckle/shared'
@@ -34,6 +33,7 @@ import type {
   GetStreamCollaborators
 } from '@/modules/core/domain/streams/operations'
 import type { GetUser } from '@/modules/core/domain/users/operations'
+import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
 
 type LocalResources = Awaited<ReturnType<ReturnType<typeof getLocalResourcesFactory>>>
 type LocalResourcesWithCommit = LocalResources & { newCommitId: string }
@@ -554,12 +554,25 @@ const loadAllObjectsFromParentFactory =
     } = params
 
     // Initialize ObjectLoader
-    const objectLoader = new ObjectLoader({
+    // const objectLoader = new ObjectLoader({
+    //   serverUrl: origin,
+    //   streamId: sourceStreamId,
+    //   objectId: sourceCommit.referencedObject,
+    //   options: { fetch, customLogger: noop },
+    //   token
+    // })
+    // Initialize ObjectLoader
+    const objectLoader = ObjectLoader2Factory.createFromUrl({
       serverUrl: origin,
       streamId: sourceStreamId,
       objectId: sourceCommit.referencedObject,
-      options: { fetch, customLogger: noop },
-      token
+      token,
+      options: {
+        fetch,
+        useCache: false,
+        indexedDB: new IDBFactory(),
+        keyRange: IDBKeyRange
+      }
     })
 
     // Iterate over all objects and download them into the DB
