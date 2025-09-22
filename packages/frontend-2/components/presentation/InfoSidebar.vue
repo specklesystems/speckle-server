@@ -3,13 +3,20 @@
     class="bg-foundation h-48 md:h-dvh w-full md:w-64 xl:w-80 border-t md:border-t-0 md:border-l border-outline-3 py-5 px-4"
   >
     <div class="hidden md:flex items-center justify-end space-x-0.5">
-      <FormButton
-        v-if="canUpdate"
-        :icon-left="LucidePencilLine"
-        color="subtle"
-        hide-text
-        @click="isSlideEditDialogOpen = true"
-      />
+      <div
+        v-tippy="
+          canUpdateSlide ? undefined : 'You do not have permission to edit this slide'
+        "
+      >
+        <FormButton
+          v-if="canUpdate"
+          :disabled="!canUpdateSlide"
+          :icon-left="LucidePencilLine"
+          color="subtle"
+          hide-text
+          @click="isSlideEditDialogOpen = true"
+        />
+      </div>
       <FormButton
         :icon-left="LucideX"
         color="subtle"
@@ -72,6 +79,11 @@ graphql(`
     ...PresentationSlideEditDialog_SavedView
     name
     description
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -83,6 +95,9 @@ const {
 const isSlideEditDialogOpen = ref(false)
 
 const canUpdate = computed(() => {
-  return presentation.value?.permissions?.canUpdate
+  return presentation.value?.permissions?.canUpdate?.authorized
+})
+const canUpdateSlide = computed(() => {
+  return currentSlide.value?.permissions?.canUpdate.authorized
 })
 </script>
