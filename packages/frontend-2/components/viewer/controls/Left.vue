@@ -166,7 +166,7 @@
     <!-- Panel Extension - Portal target for additional content -->
     <div
       id="panel-extension"
-      class="absolute z-50 left-[calc(100dvw-20rem)] md:left-72 max-h-[calc(100dvh-6rem)] md:max-h-[calc(100dvh-4rem)] top-1.5 bg-foundation rounded-lg overflow-hidden"
+      class="absolute z-50 left-[calc(100dvw-16rem)] sm:left-72 max-h-[calc(100dvh-6rem)] md:max-h-[calc(100dvh-4rem)] top-1.5 bg-foundation rounded-lg overflow-hidden"
       :style="`left: ${panelExtensionLeft} !important; width: ${panelExtensionWidth}px;`"
     >
       <!-- Resize handle for panel extension -->

@@ -231,20 +231,6 @@ export default defineNuxtConfig({
       }
     },
     // Redirect old settings - End
-    '/settings/**': {
-      appMiddleware: ['auth', 'settings']
-    },
-    '/settings/server/*': {
-      appMiddleware: ['auth', 'settings', 'admin']
-    },
-    '/settings/workspaces/:slug/*': {
-      appMiddleware: [
-        'auth',
-        'settings',
-        'requires-workspaces-enabled',
-        'require-valid-workspace'
-      ]
-    },
     '/downloads': {
       redirect: {
         to: 'https://www.speckle.systems/connectors',

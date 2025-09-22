@@ -1,5 +1,5 @@
 <template>
-  <div class="viewer-core-setup flex-1 relative">
+  <div class="viewer-core-setup flex-1 relative h-full">
     <div
       id="viewer"
       class="viewer special-gradient absolute z-10 overflow-hidden left-0 right-0"

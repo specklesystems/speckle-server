@@ -13,6 +13,12 @@ import {
   encodeIsoDateCursor
 } from '@/modules/shared/helpers/dbHelper'
 import cryptoRandomString from 'crypto-random-string'
+import type { GetDashboardTokens } from '@/modules/dashboards/domain/tokens/operations'
+import type {
+  RevokeTokenResourceAccess,
+  StoreTokenResourceAccessDefinitions
+} from '@/modules/core/domain/tokens/operations'
+import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 
 export type CreateDashboard = (params: {
   name: string
@@ -48,6 +54,9 @@ export type UpdateDashboard = (params: {
 export const updateDashboardFactory =
   (deps: {
     getDashboard: GetDashboardRecord
+    getDashboardTokens: GetDashboardTokens
+    storeTokenResourceAccessDefinitions: StoreTokenResourceAccessDefinitions
+    revokeTokenResourceAccess: RevokeTokenResourceAccess
     upsertDashboard: UpsertDashboardRecord
   }): UpdateDashboard =>
   async ({ id, ...update }) => {
@@ -55,6 +64,47 @@ export const updateDashboardFactory =
 
     if (!dashboard) {
       throw new DashboardNotFoundError()
+    }
+
+    const newProjectIds = [
+      ...new Set(update.projectIds).difference(new Set(dashboard.projectIds))
+    ]
+
+    const deletedProjectIds = [
+      ...new Set(dashboard.projectIds).difference(new Set(update.projectIds))
+    ]
+
+    const projectIdsChanged = newProjectIds.length || deletedProjectIds.length
+
+    if (projectIdsChanged) {
+      const dashboardTokens = await deps.getDashboardTokens({
+        dashboardId: dashboard.id
+      })
+      if (newProjectIds.length && dashboardTokens.length) {
+        const newResourceAccessRules = dashboardTokens.flatMap((t) =>
+          newProjectIds.map((p) => ({
+            resourceId: p,
+            tokenId: t.tokenId,
+            resourceType: TokenResourceIdentifierType.Project
+          }))
+        )
+        await deps.storeTokenResourceAccessDefinitions(newResourceAccessRules)
+      }
+      if (deletedProjectIds.length && dashboardTokens.length) {
+        await Promise.all(
+          // i know this is bad and sending more than one delete requests
+          // but most of the time there are only a couple of projects deleted at max from dashboards
+          dashboardTokens.flatMap((t) =>
+            deletedProjectIds.map((p) =>
+              deps.revokeTokenResourceAccess({
+                resourceId: p,
+                resourceType: TokenResourceIdentifierType.Project,
+                tokenId: t.tokenId
+              })
+            )
+          )
+        )
+      }
     }
 
     const nextDashboard: Dashboard = {

@@ -7,8 +7,9 @@ import { get } from 'lodash-es'
 import { Vector3 } from 'three'
 import { useDiffUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 import { CameraController, VisualDiffMode } from '@speckle/viewer'
-import { StringFilterCondition } from '~/lib/viewer/helpers/filters/types'
+import type { FilterLogic, FilterCondition } from '~/lib/viewer/helpers/filters/types'
 import type { Merge, PartialDeep } from 'type-fest'
 import {
   defaultMeasurementOptions,
@@ -29,6 +30,7 @@ export function useStateSerialization() {
   const { objects: selectedObjects } = useSelectionUtilities()
   const { serializeDiffCommand } = useDiffUtilities()
   const { filters } = useFilterUtilities()
+  const dataStore = useFilteringDataStore()
 
   /**
    * We don't want to save a comment w/ implicit identifiers like ones that only have a model ID or a folder prefix, because
@@ -108,10 +110,7 @@ export function useStateSerialization() {
             isApplied: filterData.isApplied,
             selectedValues: filterData.selectedValues,
             id: filterData.id,
-            condition:
-              filterData.condition === StringFilterCondition.Is
-                ? ('AND' as const)
-                : ('OR' as const)
+            condition: filterData.condition
           }))
 
           return {
@@ -122,7 +121,8 @@ export function useStateSerialization() {
               return ret
             }, {} as Record<string, string | null>),
             propertyFilters,
-            activeColorFilterId: state.ui.filters.activeColorFilterId.value
+            activeColorFilterId: state.ui.filters.activeColorFilterId.value,
+            filterLogic: dataStore.currentFilterLogic.value
           }
         })(),
         camera: {
@@ -310,7 +310,17 @@ export function useApplySerializedState() {
     }
 
     if (filters.propertyFilters?.length) {
-      restoreFilters(filters.propertyFilters, filters.activeColorFilterId)
+      restoreFilters(
+        filters.propertyFilters as Array<{
+          key: string | null
+          isApplied: boolean
+          selectedValues: string[]
+          id: string
+          condition: FilterCondition
+        }>,
+        filters.activeColorFilterId,
+        filters.filterLogic as FilterLogic
+      )
     } else {
       resetFilters()
     }
