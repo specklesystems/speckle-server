@@ -17,7 +17,7 @@ describe('BatchingQueue disposal', () => {
 
     await queue.disposeAsync()
 
-  //  expect(processFunction).toHaveBeenCalledWith(items)
+    expect(processFunction).not.toHaveBeenCalled()
     expect(queue.count()).toBe(0)
     expect(queue.isDisposed()).toBe(true)
   })
