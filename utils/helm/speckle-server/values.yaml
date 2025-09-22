@@ -805,7 +805,7 @@ server:
     secure: false
     ## @param server.email.requireTLS If true, will require TLS when connecting to the email server. This is preferable to 'secure' if the email server supports TLS. Both 'secure' and 'requireTLS' can be false if the email server does not support encryption, but this is not recommended. Both 'secure' and 'requireTLS' cannot be true at the same time.
     ##
-    requireTLS: false
+    requireTLS: true
     ## @extra server.email.networkPolicy If networkPolicy is enabled for Speckle server, this provides the Network Policy with the necessary details to allow egress connections to the email server
     ##
     networkPolicy:
