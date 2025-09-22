@@ -436,7 +436,7 @@ export function useViewModeUtilities() {
 export function useViewerShortcuts() {
   const { ui } = useInjectedViewerState()
   const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
-  const { isEnabled: isEmbedEnabled, showControls } = useEmbed()
+  const { isEnabled: isEmbedEnabled } = useEmbed()
   const activeElement = useActiveElement()
 
   const isTypingComment = computed(() => {
@@ -468,7 +468,7 @@ export function useViewerShortcuts() {
     options?: { hideName?: boolean; format?: 'default' | 'separate' }
   ) => {
     if (isSmallerOrEqualSm.value) return undefined
-    if (isEmbedEnabled.value && !showControls.value) return undefined
+    if (isEmbedEnabled.value) return undefined
 
     const shortcutText = getKeyboardShortcutTitle([
       ...shortcut.modifiers,
