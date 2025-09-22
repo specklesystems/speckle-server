@@ -1,3 +1,4 @@
+import { isBrowser } from '../helpers/env.js'
 import { CustomLogger, Fetcher } from '../types/functions.js'
 import { Base, ObjectAttributeMask } from '../types/types.js'
 import { ObjectLoader2Flags, flagIsEnabledFromQuery } from './features.js'
@@ -53,8 +54,9 @@ export class ObjectLoader2Factory {
       this.logger('Using DEBUG mode for ObjectLoader2Factory')
     }
     if (
-      params.options?.useCache ??
-      flagIsEnabledFromQuery(ObjectLoader2Flags.USE_CACHE)
+      (params.options?.useCache ??
+        flagIsEnabledFromQuery(ObjectLoader2Flags.USE_CACHE)) &&
+      isBrowser
     ) {
       database = new IndexedDatabase({
         indexedDB: params.options?.indexedDB,
