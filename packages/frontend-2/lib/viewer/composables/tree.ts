@@ -51,7 +51,7 @@ export type UnifiedVirtualItem = {
 }
 
 function createTreeStateManager() {
-  const flattenedTreeCache = reactive(new Map<string, UnifiedVirtualItem[]>())
+  const flattenedTreeCache = new Map<string, UnifiedVirtualItem[]>()
   const lastCacheKey = ref('')
   const isInitialized = ref(false)
 
