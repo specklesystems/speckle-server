@@ -62,7 +62,7 @@ type AdminQueries {
   serverStatistics: ServerStatistics! @hasScope(scope: "server:stats")
 }
 
-type AdminMutations {
+type ServerAdminMutations {
   """
   A server administrator can update the verification status of an user's email.
   The server administrator is recommended to confirm ownership of the email address

@@ -151,7 +151,6 @@ export type AdminMutations = {
   __typename?: 'AdminMutations';
   giveAccessToWorkspaceFeature: Scalars['Boolean']['output'];
   removeAccessToWorkspaceFeature: Scalars['Boolean']['output'];
-  updateEmailVerification: Scalars['Boolean']['output'];
   updateWorkspacePlan: Scalars['Boolean']['output'];
 };
 
@@ -163,11 +162,6 @@ export type AdminMutationsGiveAccessToWorkspaceFeatureArgs = {
 
 export type AdminMutationsRemoveAccessToWorkspaceFeatureArgs = {
   input: AdminAccessToWorkspaceFeatureInput;
-};
-
-
-export type AdminMutationsUpdateEmailVerificationArgs = {
-  input: AdminUpdateEmailVerificationInput;
 };
 
 
@@ -3763,6 +3757,21 @@ export type Scope = {
   __typename?: 'Scope';
   description: Scalars['String']['output'];
   name: Scalars['String']['output'];
+};
+
+export type ServerAdminMutations = {
+  __typename?: 'ServerAdminMutations';
+  /**
+   * A server administrator can update the verification status of an user's email.
+   * The server administrator is recommended to confirm ownership of the email address
+   * with the user before performing this action.
+   */
+  updateEmailVerification: Scalars['Boolean']['output'];
+};
+
+
+export type ServerAdminMutationsUpdateEmailVerificationArgs = {
+  input: AdminUpdateEmailVerificationInput;
 };
 
 export type ServerApp = {
@@ -9055,6 +9064,7 @@ export type AllObjectTypes = {
   SavedViewMutations: SavedViewMutations,
   SavedViewPermissionChecks: SavedViewPermissionChecks,
   Scope: Scope,
+  ServerAdminMutations: ServerAdminMutations,
   ServerApp: ServerApp,
   ServerAppListItem: ServerAppListItem,
   ServerAutomateInfo: ServerAutomateInfo,
@@ -9198,7 +9208,6 @@ export type AdminInviteListFieldArgs = {
 export type AdminMutationsFieldArgs = {
   giveAccessToWorkspaceFeature: AdminMutationsGiveAccessToWorkspaceFeatureArgs,
   removeAccessToWorkspaceFeature: AdminMutationsRemoveAccessToWorkspaceFeatureArgs,
-  updateEmailVerification: AdminMutationsUpdateEmailVerificationArgs,
   updateWorkspacePlan: AdminMutationsUpdateWorkspacePlanArgs,
 }
 export type AdminQueriesFieldArgs = {
@@ -10174,6 +10183,9 @@ export type ScopeFieldArgs = {
   description: {},
   name: {},
 }
+export type ServerAdminMutationsFieldArgs = {
+  updateEmailVerification: ServerAdminMutationsUpdateEmailVerificationArgs,
+}
 export type ServerAppFieldArgs = {
   author: {},
   createdAt: {},
@@ -10911,6 +10923,7 @@ export type AllObjectFieldArgTypes = {
   SavedViewMutations: SavedViewMutationsFieldArgs,
   SavedViewPermissionChecks: SavedViewPermissionChecksFieldArgs,
   Scope: ScopeFieldArgs,
+  ServerAdminMutations: ServerAdminMutationsFieldArgs,
   ServerApp: ServerAppFieldArgs,
   ServerAppListItem: ServerAppListItemFieldArgs,
   ServerAutomateInfo: ServerAutomateInfoFieldArgs,

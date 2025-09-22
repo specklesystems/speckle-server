@@ -70,7 +70,7 @@ export default {
   Mutation: {
     admin: () => ({})
   },
-  AdminMutations: {
+  ServerAdminMutations: {
     async updateEmailVerification(_parent, args, ctx) {
       try {
         return await asOperation(
