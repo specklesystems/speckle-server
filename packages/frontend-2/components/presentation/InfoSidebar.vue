@@ -43,6 +43,7 @@
     <PresentationSlideEditDialog
       v-model:open="isSlideEditDialogOpen"
       :slide="currentSlide"
+      :workspace-id="workspace?.id"
     />
   </aside>
 </template>
@@ -76,7 +77,7 @@ graphql(`
 
 const {
   ui: { slide: currentSlide },
-  response: { presentation }
+  response: { presentation, workspace }
 } = useInjectedPresentationState()
 
 const isSlideEditDialogOpen = ref(false)

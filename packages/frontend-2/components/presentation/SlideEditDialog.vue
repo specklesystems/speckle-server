@@ -47,6 +47,7 @@ graphql(`
 
 const props = defineProps<{
   slide: MaybeNullOrUndefined<PresentationSlideEditDialog_SavedViewFragment>
+  workspaceId: MaybeNullOrUndefined<string>
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
@@ -61,10 +62,13 @@ const onSubmit = handleSubmit(async () => {
   if (!props.slide?.id) return
 
   await updateSlide({
-    id: props.slide.id,
-    projectId: props.slide.projectId,
-    name: name.value,
-    description: description.value
+    input: {
+      id: props.slide.id,
+      projectId: props.slide.projectId,
+      name: name.value,
+      description: description.value
+    },
+    workspaceId: props.workspaceId
   })
 
   open.value = false

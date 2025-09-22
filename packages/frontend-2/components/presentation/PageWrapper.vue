@@ -69,17 +69,19 @@
 import { useInjectedPresentationState } from '~/lib/presentations/composables/setup'
 import { useEventListener, useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const {
-  response: { presentation }
+  response: { presentation, workspace }
 } = useInjectedPresentationState()
+const mixpanel = useMixpanel()
+const isMobile = useBreakpoints(TailwindBreakpoints).smaller('sm')
 
 const isInfoSidebarOpen = ref(false)
 const isLeftSidebarOpen = ref(false)
 const hideUi = ref(true)
 const isViewerLoading = ref(true)
 const viewerProgress = ref(0)
-const isMobile = useBreakpoints(TailwindBreakpoints).smaller('sm')
 
 const ViewerWrapper = resolveComponent('PresentationViewerWrapper')
 
@@ -107,4 +109,13 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 useEventListener('keydown', handleKeydown)
+
+onMounted(() => {
+  mixpanel.track('Presentation Viewed', {
+    // eslint-disable-next-line camelcase
+    presentation_id: presentation.value?.id,
+    // eslint-disable-next-line camelcase
+    workspace_id: workspace.value?.id
+  })
+})
 </script>
