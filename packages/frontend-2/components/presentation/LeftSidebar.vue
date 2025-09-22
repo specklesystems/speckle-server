@@ -5,7 +5,7 @@
     </div>
 
     <aside
-      class="relative z-20 bg-foundation h-screen w-52 md:w-60 border-r border-outline-3 pt-3"
+      class="relative z-20 bg-foundation h-dvh w-52 md:w-60 border-r border-outline-3 pt-3"
     >
       <div class="flex flex-col h-full">
         <section class="flex-shrink-0 flex items-center gap-3 px-3">
