@@ -1,6 +1,6 @@
 <template>
   <div class="relative">
-    <div class="h-screen w-screen flex flex-col md:flex-row relative">
+    <div class="h-dvh w-screen flex flex-col md:flex-row relative">
       <PresentationHeader
         v-if="!hideUi"
         v-model:is-sidebar-open="isLeftSidebarOpen"
@@ -90,7 +90,7 @@ const onLoadingChange = (loading: boolean) => {
     hideUi.value = false
 
     isLeftSidebarOpen.value = !isMobile.value
-    isInfoSidebarOpen.value = true
+    isInfoSidebarOpen.value = !isMobile.value
   }
 }
 
