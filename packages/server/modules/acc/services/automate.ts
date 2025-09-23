@@ -22,7 +22,9 @@ import type { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operat
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import {
   getAutodeskIntegrationClientId,
-  getAutodeskIntegrationClientSecret
+  getAutodeskIntegrationClientSecret,
+  getOdaUserId,
+  getOdaUserSecret
 } from '@/modules/shared/helpers/envHelper'
 import { logger } from '@/observability/logging'
 import { Scopes } from '@speckle/shared'
@@ -92,8 +94,8 @@ export const triggerSyncItemAutomationFactory =
       functionRuns: [
         {
           id: cryptoRandomString({ length: 15 }),
-          functionId: ImporterAutomateFunctions.svf2.functionId,
-          functionReleaseId: ImporterAutomateFunctions.svf2.functionReleaseId,
+          functionId: ImporterAutomateFunctions.rvt.functionId,
+          functionReleaseId: ImporterAutomateFunctions.rvt.functionReleaseId,
           status: 'pending' as const,
           elapsed: 0,
           results: null,
@@ -148,9 +150,12 @@ export const triggerSyncItemAutomationFactory =
           modelId: syncItem.modelId,
           versionUrn: syncItem.accFileVersionUrn,
           viewName: syncItem.accFileViewName ?? null,
+          autodeskProjectId: syncItem.accProjectId.replace('b.', ''),
           autodeskRegion: syncItem.accRegion === 'EMEA' ? 1 : 0,
           autodeskClientId: getAutodeskIntegrationClientId(),
-          autodeskClientSecret: getAutodeskIntegrationClientSecret()
+          autodeskClientSecret: getAutodeskIntegrationClientSecret(),
+          odaUserId: getOdaUserId(),
+          odaUserSecret: getOdaUserSecret()
         }
       })),
       manifests: [
