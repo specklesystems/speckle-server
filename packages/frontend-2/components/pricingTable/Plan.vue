@@ -145,16 +145,16 @@ const commonFeatures = shallowRef([
       planLimits.value.projectCount === 1 ? '' : 's'
     }`,
     description:
-      props.plan === WorkspacePlans.Free
-        ? 'Your maximum number of projects'
-        : 'Your maximum number of projects. Can be extended with the Unlimited projects and models add-on.'
+      props.plan === WorkspacePlans.Pro
+        ? 'Your maximum number of projects. Can be extended with the Unlimited projects and models add-on.'
+        : 'Your maximum number of projects'
   },
   {
     displayName: `${planLimits.value.modelCount} models per workspace`,
     description:
-      props.plan === WorkspacePlans.Free
-        ? 'Your maximum number of models'
-        : 'Your maximum number of models. Can be extended with the Unlimited projects and models add-on.'
+      props.plan === WorkspacePlans.Pro
+        ? 'Your maximum number of models. Can be extended with the Unlimited projects and models add-on.'
+        : 'Your maximum number of models'
   },
   {
     displayName: planLimits.value.versionsHistory
