@@ -35,7 +35,12 @@ import { WorkspacePlanFeatures } from '../../workspaces/index.js'
 import { isUngroupedGroup } from '../../saved-views/index.js'
 import { StringEnum, StringEnumValues, throwUncoveredError } from '../../core/index.js'
 
-export const WriteTypes = StringEnum(['UpdateGeneral', 'MoveView'])
+export const WriteTypes = StringEnum([
+  'UpdateGeneral',
+  'MoveView',
+  'EditTitle',
+  'EditDescription'
+])
 export type WriteTypes = StringEnumValues<typeof WriteTypes>
 
 /**
@@ -137,6 +142,8 @@ export const ensureCanAccessSavedViewFragment: AuthPolicyEnsureFragment<
     // Non-author project writers can make specific changes
     switch (access) {
       case WriteTypes.MoveView:
+      case WriteTypes.EditTitle:
+      case WriteTypes.EditDescription:
         return ok()
       case WriteTypes.UpdateGeneral:
         return err(

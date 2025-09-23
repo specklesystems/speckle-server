@@ -3795,7 +3795,13 @@ export type SavedViewMutationsUpdateViewArgs = {
 
 export type SavedViewPermissionChecks = {
   __typename?: 'SavedViewPermissionChecks';
+  canEditDescription: PermissionCheckResult;
+  canEditTitle: PermissionCheckResult;
   canMove: PermissionCheckResult;
+  /**
+   * Can the current user fully update everything about this view. Even if this fails,
+   * the user may be able to do partial updates (e.g. just change the title)
+   */
   canUpdate: PermissionCheckResult;
 };
 
@@ -8202,6 +8208,8 @@ export type SavedViewMutationsResolvers<ContextType = GraphQLContext, ParentType
 };
 
 export type SavedViewPermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SavedViewPermissionChecks'] = ResolversParentTypes['SavedViewPermissionChecks']> = {
+  canEditDescription?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canEditTitle?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canMove?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canUpdate?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
