@@ -82,7 +82,7 @@ export const SavedViewGroups = buildTableHelper('saved_view_groups', [
   'updatedAt'
 ])
 
-const MINIMUM_POSITION_GAP = 0.00001
+export const MINIMUM_POSITION_GAP = 0.00001
 
 const savedGroupCursorUtils = () =>
   compositeCursorTools({
@@ -958,10 +958,6 @@ export const getNewViewSpecificPositionFactory =
     }
   }
 
-// TODO: Prolly shouldnt rebalance "ungrouped" groups. Wont it mess up other attached "ungrouped" groups?
-// - OR you need to rebalance all attached groups at once. basically any group that has any resourceId intersection with any other group
-// - - isnt this happening already?
-
 /**
  * Rebalances the view positions within a group. This needs to happen when the gap between two view positions becomes so small
  * that inserting a new view between them becomes problematic because of floating point precision limits.
@@ -971,21 +967,30 @@ export const rebalancingViewPositionsFactory =
   async (params) => {
     const { projectId, resourceIdString, groupId } = params
 
-    const q = deps.db
-      .with('ordered', (q2) => {
-        q2.from(SavedViews.name).select(
-          SavedViews.col.id,
-          deps.db.raw('ROW_NUMBER() OVER (ORDER BY ??) AS rn', [
-            SavedViews.col.position
-          ])
-        )
-        applyViewPositionGroupFiltering(q2, groupId, projectId, resourceIdString)
-      })
-      .update({
-        [SavedViews.withoutTablePrefix.col.position]: deps.db.raw('ordered.rn * 1000')
-      })
-      .from('ordered')
-      .whereRaw('ordered.id = ??', [SavedViews.withoutTablePrefix.col.id])
+    const cteRawQuery = deps.db.with('ordered', (q2) => {
+      q2.from(SavedViews.name).select(
+        SavedViews.col.id,
+        deps.db.raw('ROW_NUMBER() OVER (ORDER BY ??) AS rn', [SavedViews.col.position])
+      )
+      applyViewPositionGroupFiltering(q2, groupId, projectId, resourceIdString)
+    })
 
-    return await q
+    // need to strip the final select *. sort of hacky,
+    // but i dont want to write the CTE by hand as a raw string, cause
+    // then i cant reuse the applyViewPositionGroupFiltering util
+    const cteString = cteRawQuery.toQuery().replace(/\s+select\s+\*\s*$/i, '')
+
+    // knex .with().update() support sucks, gotta make this a raw query
+    const q = deps.db.raw(`
+      ${cteString}
+      UPDATE ${SavedViews.with({ quoted: true }).name}
+      SET ${
+        SavedViews.with({ quoted: true, withoutTablePrefix: true }).col.position
+      } = ordered.rn * 1000
+      FROM ordered
+      WHERE ordered.id = ${SavedViews.with({ quoted: true }).col.id}
+    `)
+
+    const ret = (await q) as { rowCount: number }
+    return ret.rowCount
   }

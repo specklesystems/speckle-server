@@ -233,7 +233,7 @@ export const createSavedViewFactory =
     rebalanceViewPositions: RebalanceViewPositions
   }): CreateSavedView =>
   async ({ input, authorId }) => {
-    const { resourceIdString, projectId } = input
+    const { resourceIdString, projectId, position: positionInput } = input
     const visibility = input.visibility || SavedViewVisibility.public // default to public
     let groupId = input.groupId?.trim() || null
     const description = input.description?.trim() || null
@@ -313,13 +313,14 @@ export const createSavedViewFactory =
     })
 
     // Resolve new position
-    const { newPosition: position } = await deps.getNewViewSpecificPosition({
-      projectId,
-      groupId,
-      resourceIdString: resourceIds.toString(),
-      beforeId: null,
-      afterId: null
-    })
+    const { newPosition: position, needsRebalancing } =
+      await deps.getNewViewSpecificPosition({
+        projectId,
+        groupId,
+        resourceIdString: resourceIds.toString(),
+        beforeId: positionInput?.beforeViewId,
+        afterId: positionInput?.afterViewId
+      })
 
     const concreteResourceIds = resourceIds.toResources().map((r) => r.toString())
     const ret = await deps.storeSavedView({
@@ -347,6 +348,15 @@ export const createSavedViewFactory =
               projectId,
               modelId: homeViewModel.modelId,
               newHomeViewId: ret.id
+            })
+          ]
+        : []),
+      ...(needsRebalancing
+        ? [
+            deps.rebalanceViewPositions({
+              projectId,
+              groupId: ret!.groupId || null,
+              resourceIdString: ret!.resourceIds.join(',')
             })
           ]
         : [])
