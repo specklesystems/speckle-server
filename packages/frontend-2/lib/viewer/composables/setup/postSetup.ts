@@ -9,6 +9,7 @@ import {
   ViewerEvent,
   VisualDiffMode,
   CameraController,
+  DiffExtension,
   UpdateFlags,
   SectionOutlines,
   SectionToolEvent,
@@ -679,6 +680,7 @@ function useDiffingIntegration() {
   const getObjectUrl = useGetObjectUrl()
 
   const hasInitialLoadFired = ref(false)
+  const diffExtension = state.viewer.instance.getExtension(DiffExtension)
 
   const { trigger: triggerDiffCommandWatch } = watchTriggerable(
     () => <const>[state.ui.diff.oldVersion.value, state.ui.diff.newVersion.value],
@@ -704,7 +706,7 @@ function useDiffingIntegration() {
         return
 
       if (!newCommand || oldVal) {
-        await state.viewer.instance.undiff()
+        await diffExtension.undiff()
         if (!newCommand) return
       }
 
@@ -718,7 +720,7 @@ function useDiffingIntegration() {
         newVersion?.referencedObject as string
       )
 
-      state.ui.diff.result.value = await state.viewer.instance.diff(
+      state.ui.diff.result.value = await diffExtension.diff(
         oldObjUrl,
         newObjUrl,
         state.ui.diff.mode.value,
@@ -752,7 +754,7 @@ function useDiffingIntegration() {
       if (!hasInitialLoadFired.value) return
       if (!state.ui.diff.result.value) return
 
-      state.viewer.instance.setDiffTime(state.ui.diff.result.value, val)
+      diffExtension.updateVisualDiff(val, state.ui.diff.mode.value)
     }
   )
 
@@ -761,11 +763,7 @@ function useDiffingIntegration() {
       if (!hasInitialLoadFired.value) return
       if (!state.ui.diff.result.value) return
 
-      state.viewer.instance.setVisualDiffMode(state.ui.diff.result.value, val)
-      state.viewer.instance.setDiffTime(
-        state.ui.diff.result.value,
-        state.ui.diff.time.value
-      ) // hmm, why do i need to call diff time again? seems like a minor viewer bug
+      diffExtension.updateVisualDiff(state.ui.diff.time.value, val)
     })
 
   useOnViewerLoadComplete(({ isInitial }) => {
