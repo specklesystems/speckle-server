@@ -148,7 +148,7 @@ export const ensureCanAccessSavedViewFragment: AuthPolicyEnsureFragment<
       case WriteTypes.UpdateGeneral:
         return err(
           new SavedViewNoAccessError({
-            message: 'You do not have permission to edit this view'
+            message: 'You do not have permission to edit the view in this way'
           })
         )
       default:
