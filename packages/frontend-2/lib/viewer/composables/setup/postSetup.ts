@@ -642,33 +642,32 @@ function useExplodeFactorIntegration() {
     viewer: { instance }
   } = useInjectedViewerState()
 
+  const explodeExtension = instance.getExtension(ExplodeExtension)
+
   const updateOutlines = () => {
     const sectionOutlines = instance.getExtension(SectionOutlines)
     if (sectionOutlines && sectionOutlines.enabled) sectionOutlines.requestUpdate(true)
   }
   onMounted(() => {
-    instance.getExtension(ExplodeExtension).on(ExplodeEvent.Finshed, updateOutlines)
+    explodeExtension.on(ExplodeEvent.Finshed, updateOutlines)
   })
 
   onBeforeUnmount(() => {
-    instance
-      .getExtension(ExplodeExtension)
-      .removeListener(ExplodeEvent.Finshed, updateOutlines)
+    explodeExtension.removeListener(ExplodeEvent.Finshed, updateOutlines)
   })
 
   // state -> viewer only. we don't need the reverse.
   watch(
     explodeFactor,
     (newVal) => {
-      /** newVal turns out to be a string. It needs to be a */
-      instance.explode(newVal)
+      explodeExtension.setExplode(newVal)
     },
     { immediate: true }
   )
 
   useOnViewerLoadComplete(
     () => {
-      instance.explode(explodeFactor.value)
+      explodeExtension.setExplode(explodeFactor.value)
     },
     { initialOnly: true }
   )
