@@ -36,9 +36,9 @@ export class DefermentManager implements Deferment {
   private disposed = false
   private cache: MemoryCache
 
-  constructor(logger: CustomLogger) {
+  constructor(logger: CustomLogger, cache?: MemoryCache) {
     this.logger = logger
-    this.cache = new MemoryCache(
+    this.cache = cache || new MemoryCache(
       {
         maxSizeInMb: 500, // 500 MB
         ttlms: 5_000 // 5 seconds

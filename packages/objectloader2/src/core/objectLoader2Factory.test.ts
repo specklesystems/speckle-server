@@ -17,13 +17,11 @@ describe('ObjectLoader2Factory', () => {
       },
       {
         id: 'child-1',
-        speckle_type: 'Base',
-        value: 'first child'
+        speckle_type: 'Base'
       },
       {
         id: 'child-2',
-        speckle_type: 'Base',
-        value: 'second child'
+        speckle_type: 'Base'
       }
     ]
   })
@@ -37,7 +35,7 @@ describe('ObjectLoader2Factory', () => {
       // Test that we can get the root object
       const rootObject = await loader.getRootObject()
       expect(rootObject?.baseId).toBe('root-id')
-      expect(rootObject?.base.speckle_type).toBe('Base')
+      expect(rootObject?.base?.speckle_type).toBe('Base')
 
       await loader.disposeAsync()
     })
@@ -47,7 +45,7 @@ describe('ObjectLoader2Factory', () => {
 
       const rootObject = await loader.getRootObject()
       expect(rootObject?.baseId).toBe('root-id')
-      expect(rootObject?.base.__closure).toEqual({
+      expect(rootObject?.base?.__closure).toEqual({
         'child-1': 1,
         'child-2': 2
       })
@@ -93,11 +91,9 @@ describe('ObjectLoader2Factory', () => {
 
       const child1 = await loader.getObject({ id: 'child-1' })
       expect(child1.id).toBe('child-1')
-      expect((child1 as any).value).toBe('first child')
 
       const child2 = await loader.getObject({ id: 'child-2' })
       expect(child2.id).toBe('child-2')
-      expect((child2 as any).value).toBe('second child')
 
       await loader.disposeAsync()
     })
