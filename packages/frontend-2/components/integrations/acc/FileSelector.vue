@@ -9,7 +9,7 @@
         <InfiniteLoading />
       </div>
       <ul v-else-if="folderTree && folderTree.children" class="space-y-1 pt-1">
-        <ProjectPageAccFolderNode
+        <IntegrationsAccFolderNode
           v-for="folder in folderTree.children"
           :key="folder.id"
           :folder="folder"

@@ -139,6 +139,9 @@ export const projectWebhooksRoute = (projectId: string) =>
 export const projectTokensRoute = (projectId: string) =>
   `/projects/${projectId}/settings/tokens`
 
+export const projectAccRoute = (projectId: string) =>
+  `/projects/${projectId}/settings/acc`
+
 export const threadRedirectRoute = (projectId: string, threadId: string) =>
   `/projects/${projectId}/threads/${threadId}`
 

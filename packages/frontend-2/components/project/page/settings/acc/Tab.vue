@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col text-xs space-y-2">
-    <ProjectPageAccSyncs
+    <IntegrationsAccSyncs
       :project-id="projectId"
       :is-logged-in="hasTokens"
       :tokens="tokens"

@@ -14,7 +14,8 @@ import { LayoutTabsVertical, type LayoutPageTabItem } from '@speckle/ui-componen
 import {
   projectSettingsRoute,
   projectWebhooksRoute,
-  projectTokensRoute
+  projectTokensRoute,
+  projectAccRoute
 } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageSettingsTab_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
@@ -34,6 +35,9 @@ graphql(`
       canReadEmbedTokens {
         ...FullPermissionCheckResult
       }
+      canReadAccIntegrationSettings {
+        ...FullPermissionCheckResult
+      }
     }
   }
 `)
@@ -48,6 +52,10 @@ const canReadEmbedTokens = computed(() => attrs.project.permissions.canReadEmbed
 const canReadWebhooks = computed(() => attrs.project.permissions.canReadWebhooks)
 const projectName = computed(() =>
   attrs.project.name.length ? attrs.project.name : ''
+)
+const isAccEnabled = useIsAccModuleEnabled() // check permission over project
+const canReadAccIntegrationSettings = computed(
+  () => attrs.project.permissions.canReadAccIntegrationSettings
 )
 
 useHead({
@@ -70,6 +78,12 @@ const settingsTabItems = computed((): LayoutPageTabItem[] => [
     id: 'tokens',
     disabled: !canReadEmbedTokens.value.authorized,
     disabledMessage: canReadEmbedTokens.value.message
+  },
+  {
+    title: 'ACC',
+    id: 'acc',
+    disabled: isAccEnabled && !canReadAccIntegrationSettings.value.authorized,
+    disabledMessage: canReadAccIntegrationSettings.value.message
   }
 ])
 
@@ -80,6 +94,7 @@ const activeSettingsPageTab = computed({
     const path = route.path
     if (path.includes('/settings/webhooks')) return settingsTabItems.value[1]
     if (path.includes('/settings/tokens')) return settingsTabItems.value[2]
+    if (path.includes('/settings/acc')) return settingsTabItems.value[3]
     return settingsTabItems.value[0]
   },
   set: (val: LayoutPageTabItem) => {
@@ -89,6 +104,9 @@ const activeSettingsPageTab = computed({
         break
       case 'tokens':
         router.push(projectTokensRoute(projectId.value))
+        break
+      case 'acc':
+        router.push(projectAccRoute(projectId.value))
         break
       case 'general':
       default:

@@ -14,7 +14,7 @@
       :items="accSyncItems"
     >
       <template #status="{ item }">
-        <ProjectPageAccSyncStatus :status="item.status" />
+        <IntegrationsAccSyncStatus :status="item.status" />
       </template>
       <template #accFileName="{ item }">
         {{ item.accFileName }}
@@ -50,7 +50,7 @@
         </div>
       </template>
     </LayoutTable>
-    <FormButton
+    <!-- <FormButton
       color="outline"
       size="sm"
       :disabled="!isLoggedIn"
@@ -60,7 +60,7 @@
       <template #default>
         <div v-tippy="isLoggedIn ? undefined : 'Log in required'">New sync</div>
       </template>
-    </FormButton>
+    </FormButton> -->
     <LayoutDialog
       v-model:open="showNewSyncDialog"
       title="Create new sync"
@@ -68,13 +68,13 @@
     >
       <div class="flex flex-col">
         <div v-if="step === 0" class="space-y-2">
-          <ProjectPageAccHubs
+          <IntegrationsAccHubs
             :hubs="hubs"
             :loading="loadingHubs"
             @hub-selected="onHubClick"
           />
 
-          <ProjectPageAccProjects
+          <IntegrationsAccProjects
             v-if="selectedHubId"
             :hub-id="selectedHubId"
             :projects="projects"
@@ -82,7 +82,7 @@
             @project-selected="onProjectClick"
           />
 
-          <ProjectPageAccFileSelector
+          <IntegrationsAccFileSelector
             v-if="selectedProjectId && selectedHubId && tokens"
             :hub-id="selectedHubId"
             :project-id="selectedProjectId"
@@ -118,7 +118,7 @@
             </template>
           </CommonAlert>
           <hr />
-          <ProjectPageAccModelSelector
+          <IntegrationsAccModelSelector
             :project-id="projectId"
             :acc-sync-items="accSyncItems"
             @model-selected="(model) => (selectedModel = model)"

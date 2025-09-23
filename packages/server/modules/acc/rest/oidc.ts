@@ -88,7 +88,7 @@ export const setupAccOidcEndpoints = (app: Express) => {
       }
       res.send(req.session.accTokens)
     } finally {
-      req.session.accTokens = undefined
+      req.session.accTokens = undefined // we wanna return it just once
     }
   })
 

@@ -94,7 +94,7 @@
       </div>
     </div>
     <ProjectModelsAdd v-model:open="showNewDialog" :project="project" />
-    <ProjectPageAccDialogCreateSync :open="showNewAccSync" :project-id="project?.id" />
+    <IntegrationsAccDialogCreateSync :open="showNewAccSync" :project-id="project?.id" />
   </div>
 </template>
 <script setup lang="ts">

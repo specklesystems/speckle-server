@@ -11,7 +11,7 @@
     />
 
     <CommonLoadingBar v-if="loading" loading />
-    <ProjectPageAccModelItem
+    <IntegrationsAccModelItem
       v-for="model in models"
       :key="model.id"
       :model="model"

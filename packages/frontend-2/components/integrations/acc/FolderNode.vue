@@ -19,7 +19,7 @@
       v-if="isExpanded && folder.children && folder.children.length > 0"
       class="ml-4 mt-1 space-y-1"
     >
-      <ProjectPageAccFolderNode
+      <IntegrationsAccFolderNode
         v-for="child in folder.children"
         :key="child.id"
         :folder="child"

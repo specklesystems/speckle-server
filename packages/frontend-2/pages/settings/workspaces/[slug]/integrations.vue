@@ -4,10 +4,10 @@
       title="Integrations"
       text="Connect your workspace to authorized applications."
     />
-    <IntegrationsAcc
+    <IntegrationsAccCard
       :workspace-id="workspaceResult?.workspaceBySlug.id || ''"
       :workspace-slug="routeSlug"
-    ></IntegrationsAcc>
+    ></IntegrationsAccCard>
     <!-- <div v-for="integration in integrations" :key="integration.cookieKey">
       <IntegrationsCard
         :integration="integration"

@@ -6,14 +6,14 @@
     max-width="lg"
     fullscreen="none"
   >
-    <div class="flex flex-col">
-      <ProjectPageAccHubs
+    <div class="flex flex-col space-y-2">
+      <IntegrationsAccHubs
         :hubs="hubs"
         :loading="loadingHubs"
         @hub-selected="onHubClick"
       />
 
-      <ProjectPageAccProjects
+      <IntegrationsAccProjects
         v-if="selectedHubId"
         :hub-id="selectedHubId"
         :projects="projects"
@@ -21,7 +21,7 @@
         @project-selected="onProjectClick"
       />
 
-      <ProjectPageAccFileSelector
+      <IntegrationsAccFileSelector
         v-if="selectedProjectId && selectedHubId && tokens"
         :hub-id="selectedHubId"
         :project-id="selectedProjectId"
