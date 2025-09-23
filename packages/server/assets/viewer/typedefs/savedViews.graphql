@@ -223,7 +223,6 @@ input UpdateSavedViewInput {
 input UpdateSavedViewGroupInput {
   projectId: ID!
   groupId: ID!
-  name: String
 }
 
 type SavedViewMutations {

@@ -4658,7 +4658,6 @@ export type UpdateModelInput = {
 
 export type UpdateSavedViewGroupInput = {
   groupId: Scalars['ID']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
   projectId: Scalars['ID']['input'];
 };
 
