@@ -247,6 +247,7 @@ const onReset = () => {
   }
   if (activePanel.value === ActivePanel.sectionBox) {
     resetSectionBoxCompletely()
+    activePanel.value = ActivePanel.none
   }
 }
 
