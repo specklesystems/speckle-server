@@ -1364,7 +1364,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
       })
 
-      it('fails if non author contributor is updating the view', async () => {
+      it('succeeds if non author contributor is renaming the view', async () => {
         const newName = 'Updated View Name'
 
         const res = await updateView(
@@ -1378,8 +1378,32 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           { authUserId: notAuthorButContributor.id }
         )
 
-        expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
-        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+        expect(res).to.not.haveGraphQLErrors({ code: ForbiddenError.code })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.be.ok
+
+        const update = res.data?.projectMutations.savedViewMutations.updateView
+        expect(update?.name).to.equal(newName)
+      })
+
+      it('succeeds if non author contributor is updating the description of the view', async () => {
+        const newDescription = 'Updated View Description'
+
+        const res = await updateView(
+          {
+            input: {
+              id: testView.id,
+              projectId: updatablesProject.id,
+              description: newDescription
+            }
+          },
+          { authUserId: notAuthorButContributor.id }
+        )
+
+        expect(res).to.not.haveGraphQLErrors({ code: ForbiddenError.code })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.be.ok
+
+        const update = res.data?.projectMutations.savedViewMutations.updateView
+        expect(update?.description).to.equal(newDescription)
       })
 
       it('succeeds if non author contributor is just moving the view', async () => {
@@ -1399,6 +1423,24 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
         const update = res.data?.projectMutations.savedViewMutations.updateView
         expect(update?.groupId).to.equal(optionalGroup.id)
+      })
+
+      it('fails if non author contributor is updating the visibility of the view', async () => {
+        const newVisibility = SavedViewVisibility.authorOnly
+
+        const res = await updateView(
+          {
+            input: {
+              id: testView.id,
+              projectId: updatablesProject.id,
+              visibility: newVisibility
+            }
+          },
+          { authUserId: notAuthorButContributor.id }
+        )
+
+        expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
       })
 
       it('fails if view does not exist', async () => {
