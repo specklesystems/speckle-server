@@ -2479,7 +2479,7 @@ export type Price = {
 export type Project = {
   __typename?: 'Project';
   accSyncItem: AccSyncItem;
-  accSyncItemByModelId?: Maybe<AccSyncItem>;
+  accSyncItemByModelId: AccSyncItem;
   accSyncItems: AccSyncItemCollection;
   allowPublicComments: Scalars['Boolean']['output'];
   /** Get a single automation by id. Error will be thrown if automation is not found or inaccessible. */
@@ -6568,7 +6568,7 @@ export type ProjectAccSyncItemsByModelIdQueryVariables = Exact<{
 }>;
 
 
-export type ProjectAccSyncItemsByModelIdQuery = { __typename?: 'Query', project: { __typename?: 'Project', accSyncItemByModelId?: { __typename?: 'AccSyncItem', id: string, projectId: string, modelId: string, accRegion: string, accHubId: string, accProjectId: string, accRootProjectFolderUrn: string, accFileLineageUrn: string, accFileName: string, accFileExtension: string, accFileVersionIndex: number, accFileViewName?: string | null, updatedAt: string, status: AccSyncItemStatus, author?: { __typename?: 'LimitedUser', name: string, avatar?: string | null } | null } | null } };
+export type ProjectAccSyncItemsByModelIdQuery = { __typename?: 'Query', project: { __typename?: 'Project', accSyncItemByModelId: { __typename?: 'AccSyncItem', id: string, projectId: string, modelId: string, accRegion: string, accHubId: string, accProjectId: string, accRootProjectFolderUrn: string, accFileLineageUrn: string, accFileName: string, accFileExtension: string, accFileVersionIndex: number, accFileViewName?: string | null, updatedAt: string, status: AccSyncItemStatus, author?: { __typename?: 'LimitedUser', name: string, avatar?: string | null } | null } } };
 
 export type OnProjectAccSyncItemUpdatedSubscriptionVariables = Exact<{
   id: Scalars['String']['input'];
