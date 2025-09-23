@@ -58,7 +58,6 @@ import {
   ObjectLoader2Flags,
   ObjectLoader2Factory
 } from '@speckle/objectloader2'
-import { SectionCaps } from './Extensions/SectionCaps.ts/SectionCaps'
 import { MeasurementType } from '@speckle/shared/viewer/state'
 
 export default class Sandbox {
