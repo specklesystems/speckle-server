@@ -10,6 +10,10 @@ on:
       DOCKERHUB_USERNAME:
         required: true
         type: string
+      CHART_NAME:
+        required: false
+        type: string
+        default: 'speckle-server-chart'
     secrets:
       DATADOG_API_KEY:
         required: true
@@ -31,6 +35,7 @@ jobs:
       REGISTRY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
       HELM_REGISTRY_DOMAIN: registry-1.docker.io
       HELM_REPOSITORY_PATH: speckle
+      CHART_NAME: ${{ inputs.CHART_NAME }}
     steps:
       - uses: actions/checkout@v4.2.2
         with:
