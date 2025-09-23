@@ -2506,6 +2506,7 @@ export type Price = {
 export type Project = {
   __typename?: 'Project';
   accSyncItem: AccSyncItem;
+  accSyncItemByModelId?: Maybe<AccSyncItem>;
   accSyncItems: AccSyncItemCollection;
   allowPublicComments: Scalars['Boolean']['output'];
   /** Get a single automation by id. Error will be thrown if automation is not found or inaccessible. */
@@ -2583,6 +2584,11 @@ export type Project = {
 
 export type ProjectAccSyncItemArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type ProjectAccSyncItemByModelIdArgs = {
+  modelId: Scalars['String']['input'];
 };
 
 
@@ -7844,6 +7850,7 @@ export type PriceResolvers<ContextType = GraphQLContext, ParentType extends Reso
 
 export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Project'] = ResolversParentTypes['Project']> = {
   accSyncItem?: Resolver<ResolversTypes['AccSyncItem'], ParentType, ContextType, RequireFields<ProjectAccSyncItemArgs, 'id'>>;
+  accSyncItemByModelId?: Resolver<Maybe<ResolversTypes['AccSyncItem']>, ParentType, ContextType, RequireFields<ProjectAccSyncItemByModelIdArgs, 'modelId'>>;
   accSyncItems?: Resolver<ResolversTypes['AccSyncItemCollection'], ParentType, ContextType, Partial<ProjectAccSyncItemsArgs>>;
   allowPublicComments?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   automation?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationArgs, 'id'>>;

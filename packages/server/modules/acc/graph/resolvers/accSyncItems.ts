@@ -244,6 +244,28 @@ const resolvers: Resolvers = {
       }
 
       return syncItem
+    },
+    async accSyncItemByModelId(parent, args, ctx) {
+      const { modelId } = args
+
+      const authResult = await ctx.authPolicies.project.canReadAccIntegrationSettings({
+        userId: ctx.userId,
+        projectId: parent.id
+      })
+      throwIfAuthNotOk(authResult)
+      throwIfResourceAccessNotAllowed({
+        resourceId: parent.id,
+        resourceAccessRules: ctx.resourceAccessRules,
+        resourceType: TokenResourceIdentifierType.Project
+      })
+
+      const syncItem = await ctx.loaders.acc.getAccSyncItemByModelId.load(modelId)
+
+      if (!syncItem) {
+        throw new SyncItemNotFoundError()
+      }
+
+      return syncItem
     }
   },
   Subscription: {

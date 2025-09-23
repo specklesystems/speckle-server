@@ -11,3 +11,13 @@ export const projectAccSyncItemsQuery = graphql(`
     }
   }
 `)
+
+export const projectAccSyncItemByModelIdQuery = graphql(`
+  query ProjectAccSyncItemsByModelId($id: String!, $modelId: String!) {
+    project(id: $id) {
+      accSyncItemByModelId(modelId: $modelId) {
+        ...ProjectAccSyncItem
+      }
+    }
+  }
+`)

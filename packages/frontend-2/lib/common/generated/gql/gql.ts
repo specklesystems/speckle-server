@@ -223,6 +223,7 @@ type Documents = {
     "\n  mutation DeleteAccSyncItem($input: DeleteAccSyncItemInput!) {\n    accSyncItemMutations {\n      delete(input: $input)\n    }\n  }\n": typeof types.DeleteAccSyncItemDocument,
     "\n  mutation UpdateAccSyncItem($input: UpdateAccSyncItemInput!) {\n    accSyncItemMutations {\n      update(input: $input) {\n        id\n        status\n      }\n    }\n  }\n": typeof types.UpdateAccSyncItemDocument,
     "\n  query ProjectAccSyncItems($id: String!) {\n    project(id: $id) {\n      accSyncItems {\n        items {\n          ...ProjectAccSyncItem\n        }\n      }\n    }\n  }\n": typeof types.ProjectAccSyncItemsDocument,
+    "\n  query ProjectAccSyncItemsByModelId($id: String!, $modelId: String!) {\n    project(id: $id) {\n      accSyncItemByModelId(modelId: $modelId) {\n        ...ProjectAccSyncItem\n      }\n    }\n  }\n": typeof types.ProjectAccSyncItemsByModelIdDocument,
     "\n  subscription OnProjectAccSyncItemUpdated($id: String!, $itemIds: [String!]) {\n    projectAccSyncItemsUpdated(id: $id, itemIds: $itemIds) {\n      type\n      accSyncItem {\n        ...ProjectAccSyncItem\n      }\n    }\n  }\n": typeof types.OnProjectAccSyncItemUpdatedDocument,
     "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      emails {\n        id\n        email\n        verified\n        primary\n      }\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n      ...ProjectsAdd_User\n    }\n  }\n": typeof types.ActiveUserMainMetadataDocument,
     "\n  query ActiveUserProjectsToMove($filter: UserProjectsFilter) {\n    activeUser {\n      id\n      projects(filter: $filter) {\n        totalCount\n      }\n    }\n  }\n": typeof types.ActiveUserProjectsToMoveDocument,
@@ -757,6 +758,7 @@ const documents: Documents = {
     "\n  mutation DeleteAccSyncItem($input: DeleteAccSyncItemInput!) {\n    accSyncItemMutations {\n      delete(input: $input)\n    }\n  }\n": types.DeleteAccSyncItemDocument,
     "\n  mutation UpdateAccSyncItem($input: UpdateAccSyncItemInput!) {\n    accSyncItemMutations {\n      update(input: $input) {\n        id\n        status\n      }\n    }\n  }\n": types.UpdateAccSyncItemDocument,
     "\n  query ProjectAccSyncItems($id: String!) {\n    project(id: $id) {\n      accSyncItems {\n        items {\n          ...ProjectAccSyncItem\n        }\n      }\n    }\n  }\n": types.ProjectAccSyncItemsDocument,
+    "\n  query ProjectAccSyncItemsByModelId($id: String!, $modelId: String!) {\n    project(id: $id) {\n      accSyncItemByModelId(modelId: $modelId) {\n        ...ProjectAccSyncItem\n      }\n    }\n  }\n": types.ProjectAccSyncItemsByModelIdDocument,
     "\n  subscription OnProjectAccSyncItemUpdated($id: String!, $itemIds: [String!]) {\n    projectAccSyncItemsUpdated(id: $id, itemIds: $itemIds) {\n      type\n      accSyncItem {\n        ...ProjectAccSyncItem\n      }\n    }\n  }\n": types.OnProjectAccSyncItemUpdatedDocument,
     "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      emails {\n        id\n        email\n        verified\n        primary\n      }\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n      ...ProjectsAdd_User\n    }\n  }\n": types.ActiveUserMainMetadataDocument,
     "\n  query ActiveUserProjectsToMove($filter: UserProjectsFilter) {\n    activeUser {\n      id\n      projects(filter: $filter) {\n        totalCount\n      }\n    }\n  }\n": types.ActiveUserProjectsToMoveDocument,
@@ -1932,6 +1934,10 @@ export function graphql(source: "\n  mutation UpdateAccSyncItem($input: UpdateAc
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query ProjectAccSyncItems($id: String!) {\n    project(id: $id) {\n      accSyncItems {\n        items {\n          ...ProjectAccSyncItem\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query ProjectAccSyncItems($id: String!) {\n    project(id: $id) {\n      accSyncItems {\n        items {\n          ...ProjectAccSyncItem\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query ProjectAccSyncItemsByModelId($id: String!, $modelId: String!) {\n    project(id: $id) {\n      accSyncItemByModelId(modelId: $modelId) {\n        ...ProjectAccSyncItem\n      }\n    }\n  }\n"): (typeof documents)["\n  query ProjectAccSyncItemsByModelId($id: String!, $modelId: String!) {\n    project(id: $id) {\n      accSyncItemByModelId(modelId: $modelId) {\n        ...ProjectAccSyncItem\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

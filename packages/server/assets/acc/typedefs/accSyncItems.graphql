@@ -1,6 +1,7 @@
 extend type Project {
   accSyncItems(cursor: String, limit: Int): AccSyncItemCollection!
   accSyncItem(id: String!): AccSyncItem!
+  accSyncItemByModelId(modelId: String!): AccSyncItem
 }
 
 type AccSyncItemCollection {

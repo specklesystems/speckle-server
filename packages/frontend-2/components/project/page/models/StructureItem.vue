@@ -55,8 +55,12 @@
             submodel
           </FormButton>
         </div>
+        <div v-if="accSyncItem" class="flex items-center ml-2">
+          <IntegrationsAccSyncStatus :status="accSyncItem.status" />
+        </div>
         <!-- Spacer -->
         <div class="flex-grow"></div>
+
         <template v-if="!isPendingFileUpload(item)">
           <div
             v-show="
@@ -272,6 +276,7 @@ import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
 import dayjs from 'dayjs'
 import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
 import { getModelItemRoute } from '~/lib/projects/helpers/models'
+import { projectAccSyncItemByModelIdQuery } from '~/lib/acc/graphql/queries'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -331,6 +336,18 @@ const props = defineProps<{
 
 const router = useRouter()
 const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
+
+const { result: accSyncItemResult } = useQuery(
+  projectAccSyncItemByModelIdQuery,
+  () => ({
+    id: props.project.id,
+    modelId: props.item.model.id
+  })
+)
+
+const accSyncItem = computed(
+  () => accSyncItemResult.value?.project.accSyncItemByModelId || undefined
+)
 
 const importArea = ref(
   null as Nullable<{
