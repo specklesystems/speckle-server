@@ -5,7 +5,7 @@ import { Downloader, Database } from './interfaces.js'
 
 export interface ObjectLoader2Options {
   rootId: string
-    deferments: Deferment
+  deferments: Deferment
   downloader: Downloader
   database: Database
   logger?: CustomLogger

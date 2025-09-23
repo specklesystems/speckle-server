@@ -102,7 +102,6 @@ describe('ObjectLoader2Factory', () => {
       await loader.disposeAsync()
     })
 
-  
     it('should get individual objects by id that does not exist', async () => {
       const loader = ObjectLoader2Factory.createFromObjects(testObjects)
 
