@@ -1,7 +1,7 @@
 <template>
   <ViewerCommentsPortalOrDiv class="relative" to="bottomPanel">
     <ViewerControlsRight
-      v-if="isGreaterThanSm"
+      v-if="isGreaterThanSm && showControls"
       :sidebar-open="sidebarOpen && shouldRenderSidebar"
       :sidebar-width="sidebarWidth"
     />
@@ -90,6 +90,7 @@ import { modelRoute } from '~/lib/common/helpers/route'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { Ellipsis } from 'lucide-vue-next'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 enum ActionTypes {
   OpenInNewTab = 'open-in-new-tab'
@@ -112,6 +113,7 @@ const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isGreaterThanSm = breakpoints.greater('sm')
 const menuId = useId()
 const mp = useMixpanel()
+const { showControls } = useEmbed()
 
 const itemCount = ref(20)
 const sidebarOpen = ref(false)
