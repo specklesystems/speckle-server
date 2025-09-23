@@ -18,7 +18,6 @@ const props = defineProps<{
   isYearlyIntervalSelected: boolean
   currency?: Currency
   tooltip?: string
-  fixedPrice?: string
 }>()
 
 const { addonPrices } = useWorkspaceAddonPrices()
@@ -40,10 +39,6 @@ const addonPrice = computed(() => {
 })
 
 const text = computed(() => {
-  if (props.fixedPrice) {
-    return props.fixedPrice
-  }
-
   return addonPrice.value
     ? `${addonPrice.value} per editor seat / month`
     : 'Contact us for pricing'

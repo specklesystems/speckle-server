@@ -4,7 +4,7 @@ import { clientOs, ModifierKeys } from '~~/src/helpers/form/input'
 import { computed, ref } from 'vue'
 import type { Ref } from 'vue'
 
-export type LabelPosition = 'top' | 'left'
+export type LabelPosition = 'top' | 'left' | 'right'
 
 /**
  * onKeyDown wrapper that also checks for modifier keys being pressed
