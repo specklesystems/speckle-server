@@ -1,5 +1,5 @@
 <template>
-  <PresentationFloatingPanel class="flex items-center shrink-0 select-none px-2.5 h-8">
+  <PresentationFloatingPanel class="flex items-center shrink-0 select-none px-3 h-10">
     <span class="text-body-2xs text-foreground-2">Made with</span>
     <img
       class="size-5 block mr-0.5 ml-1"
@@ -7,6 +7,6 @@
       alt="Speckle"
     />
 
-    <div class="text-body-xs mt-0 font-medium hidden md:flex">Speckle</div>
+    <div class="text-body-xs mt-0 font-medium">Speckle</div>
   </PresentationFloatingPanel>
 </template>

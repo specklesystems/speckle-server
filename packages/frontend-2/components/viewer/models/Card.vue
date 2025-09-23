@@ -10,9 +10,9 @@
         @mouseleave="unhighlightObject"
         @focusin="highlightObject"
         @focusout="unhighlightObject"
-        @click="selectObject"
+        @click="handleClick"
         @dblclick="zoomToModel"
-        @keydown.enter="selectObject"
+        @keydown.enter="handleClick"
       >
         <ViewerExpansionTriangle
           class="h-8"
@@ -104,7 +104,8 @@ import type { Get } from 'type-fest'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import {
   useHighlightedObjectsUtilities,
-  useCameraUtilities
+  useCameraUtilities,
+  useSelectionUtilities
 } from '~~/lib/viewer/composables/ui'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import {
@@ -139,6 +140,8 @@ const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
 const { zoom } = useCameraUtilities()
 const { items } = useInjectedViewerRequestedResources()
 const { resourceItems } = useInjectedViewerLoadedResources()
+const { addToSelectionFromObjectIds } = useSelectionUtilities()
+
 const {
   viewer: {
     metadata: { filteringState }
@@ -306,10 +309,11 @@ const unhighlightObject = () => {
   if (refObject && typeof refObject === 'string') unhighlightObjects([refObject])
 }
 
-const selectObject = () => {
-  // Only expand if not already expanded
+const handleClick = () => {
   if (!props.isExpanded) {
     emit('toggle-expansion')
+  } else {
+    addToSelectionFromObjectIds(modelObjectIds.value)
   }
 }
 

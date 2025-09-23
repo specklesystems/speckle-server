@@ -10,6 +10,7 @@
         :key="panel.id"
         v-tippy="getTooltipProps(panel.tooltip)"
         :active="activePanel === panel.id"
+        :disabled="!viewerLoaded"
         :dot="shouldShowDot(panel.id)"
         :icon="panel.icon"
         :class="panel.extraClasses"
@@ -68,6 +69,7 @@ import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { Ruler, Scissors, Sun, Layers2, Glasses } from 'lucide-vue-next'
+import { useOnViewerLoadComplete } from '~/lib/viewer/composables/viewer'
 
 enum ActivePanel {
   none = 'none',
@@ -109,6 +111,7 @@ const isMobile = breakpoints.smaller('sm')
 const mixpanel = useMixpanel()
 
 const activePanel = ref<ActivePanel>(ActivePanel.none)
+const viewerLoaded = ref(false)
 
 const panels = shallowRef({
   [ActivePanel.measurements]: {
@@ -283,6 +286,13 @@ onKeyStroke('Escape', () => {
   }
   activePanel.value = ActivePanel.none
 })
+
+useOnViewerLoadComplete(
+  () => {
+    viewerLoaded.value = true
+  },
+  { initialOnly: true, waitForLoadingOver: true }
+)
 
 watch(activePanel, (newVal) => {
   // Using 'controls' here to stick to the old naming convention
