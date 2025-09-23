@@ -337,11 +337,15 @@ const props = defineProps<{
 const router = useRouter()
 const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
+const modelId = computed(() =>
+  props.item.__typename === 'ModelsTreeItem' ? props.item.model?.id : ''
+)
+
 const { result: accSyncItemResult } = useQuery(
   projectAccSyncItemByModelIdQuery,
   () => ({
     id: props.project.id,
-    modelId: props.item.model.id
+    modelId: modelId.value || ''
   })
 )
 
