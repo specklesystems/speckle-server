@@ -25,7 +25,6 @@ export const FILTER_CONDITION_CONFIG: Record<FilterCondition, { label: string }>
 // Popular Filter Properties
 export const FILTERS_POPULAR_PROPERTIES = [
   'name',
-  'speckle_type',
   'category',
   'level',
   'type',
