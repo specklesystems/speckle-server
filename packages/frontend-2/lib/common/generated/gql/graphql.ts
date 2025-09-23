@@ -3695,6 +3695,23 @@ export type SavedViewGroupPermissionChecks = {
   canUpdate: PermissionCheckResult;
 };
 
+export type SavedViewGroupToken = {
+  __typename?: 'SavedViewGroupToken';
+  createdAt: Scalars['DateTime']['output'];
+  lastUsed: Scalars['DateTime']['output'];
+  lifespan: Scalars['BigInt']['output'];
+  projects: Array<Project>;
+  savedViewGroupId: Scalars['String']['output'];
+  tokenId: Scalars['String']['output'];
+  user?: Maybe<LimitedUser>;
+};
+
+export type SavedViewGroupTokenReturn = {
+  __typename?: 'SavedViewGroupTokenReturn';
+  token: Scalars['String']['output'];
+  tokenMetadata: SavedViewGroupToken;
+};
+
 export type SavedViewGroupViewsInput = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -3729,6 +3746,7 @@ export type SavedViewGroupsInput = {
 export type SavedViewMutations = {
   __typename?: 'SavedViewMutations';
   createGroup: SavedViewGroup;
+  createToken: SavedViewGroupTokenReturn;
   createView: SavedView;
   deleteGroup: Scalars['Boolean']['output'];
   deleteView: Scalars['Boolean']['output'];
@@ -3739,6 +3757,11 @@ export type SavedViewMutations = {
 
 export type SavedViewMutationsCreateGroupArgs = {
   input: CreateSavedViewGroupInput;
+};
+
+
+export type SavedViewMutationsCreateTokenArgs = {
+  groupId: Scalars['String']['input'];
 };
 
 
@@ -4928,18 +4951,31 @@ export type UserGendoAiCredits = {
 
 export type UserMeta = {
   __typename?: 'UserMeta';
+  flag: Scalars['Boolean']['output'];
   intelligenceCommunityStandUpBannerDismissed: Scalars['Boolean']['output'];
   legacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   newWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
   speckleConBannerDismissed: Scalars['Boolean']['output'];
 };
 
+
+export type UserMetaFlagArgs = {
+  key: Scalars['String']['input'];
+};
+
 export type UserMetaMutations = {
   __typename?: 'UserMetaMutations';
+  setFlag: Scalars['Boolean']['output'];
   setIntelligenceCommunityStandUpBannerDismissed: Scalars['Boolean']['output'];
   setLegacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   setNewWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
   setSpeckleConBannerDismissed: Scalars['Boolean']['output'];
+};
+
+
+export type UserMetaMutationsSetFlagArgs = {
+  key: Scalars['String']['input'];
+  value: Scalars['Boolean']['input'];
 };
 
 
@@ -9119,6 +9155,8 @@ export type AllObjectTypes = {
   SavedViewGroup: SavedViewGroup,
   SavedViewGroupCollection: SavedViewGroupCollection,
   SavedViewGroupPermissionChecks: SavedViewGroupPermissionChecks,
+  SavedViewGroupToken: SavedViewGroupToken,
+  SavedViewGroupTokenReturn: SavedViewGroupTokenReturn,
   SavedViewMutations: SavedViewMutations,
   SavedViewPermissionChecks: SavedViewPermissionChecks,
   Scope: Scope,
@@ -10236,8 +10274,22 @@ export type SavedViewGroupCollectionFieldArgs = {
 export type SavedViewGroupPermissionChecksFieldArgs = {
   canUpdate: {},
 }
+export type SavedViewGroupTokenFieldArgs = {
+  createdAt: {},
+  lastUsed: {},
+  lifespan: {},
+  projects: {},
+  savedViewGroupId: {},
+  tokenId: {},
+  user: {},
+}
+export type SavedViewGroupTokenReturnFieldArgs = {
+  token: {},
+  tokenMetadata: {},
+}
 export type SavedViewMutationsFieldArgs = {
   createGroup: SavedViewMutationsCreateGroupArgs,
+  createToken: SavedViewMutationsCreateTokenArgs,
   createView: SavedViewMutationsCreateViewArgs,
   deleteGroup: SavedViewMutationsDeleteGroupArgs,
   deleteView: SavedViewMutationsDeleteViewArgs,
@@ -10535,12 +10587,14 @@ export type UserGendoAiCreditsFieldArgs = {
   used: {},
 }
 export type UserMetaFieldArgs = {
+  flag: UserMetaFlagArgs,
   intelligenceCommunityStandUpBannerDismissed: {},
   legacyProjectsExplainerCollapsed: {},
   newWorkspaceExplainerDismissed: {},
   speckleConBannerDismissed: {},
 }
 export type UserMetaMutationsFieldArgs = {
+  setFlag: UserMetaMutationsSetFlagArgs,
   setIntelligenceCommunityStandUpBannerDismissed: UserMetaMutationsSetIntelligenceCommunityStandUpBannerDismissedArgs,
   setLegacyProjectsExplainerCollapsed: UserMetaMutationsSetLegacyProjectsExplainerCollapsedArgs,
   setNewWorkspaceExplainerDismissed: UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs,
@@ -10987,6 +11041,8 @@ export type AllObjectFieldArgTypes = {
   SavedViewGroup: SavedViewGroupFieldArgs,
   SavedViewGroupCollection: SavedViewGroupCollectionFieldArgs,
   SavedViewGroupPermissionChecks: SavedViewGroupPermissionChecksFieldArgs,
+  SavedViewGroupToken: SavedViewGroupTokenFieldArgs,
+  SavedViewGroupTokenReturn: SavedViewGroupTokenReturnFieldArgs,
   SavedViewMutations: SavedViewMutationsFieldArgs,
   SavedViewPermissionChecks: SavedViewPermissionChecksFieldArgs,
   Scope: ScopeFieldArgs,
