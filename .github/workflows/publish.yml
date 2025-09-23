@@ -43,7 +43,7 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Helm chart commit
     container:
-      image: bitnami/python:3.12.0
+      image: python:3.12.11-bookworm
     env:
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
     steps:

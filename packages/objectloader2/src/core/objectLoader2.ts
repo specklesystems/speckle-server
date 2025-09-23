@@ -1,5 +1,4 @@
-import { MemoryCache } from '../deferment/MemoryCache.js'
-import { DefermentManager } from '../deferment/defermentManager.js'
+import { Deferment } from '../deferment/defermentManager.js'
 import AggregateQueue from '../queues/aggregateQueue.js'
 import AsyncGeneratorQueue from '../queues/asyncGeneratorQueue.js'
 import { CustomLogger, take } from '../types/functions.js'
@@ -23,8 +22,7 @@ export class ObjectLoader2 {
   #cacheReader: CacheReader
   #cacheWriter: CacheWriter
 
-  #deferments: DefermentManager
-  #cache: MemoryCache
+  #deferments: Deferment
 
   #gathered: AsyncGeneratorQueue<Item>
 
@@ -48,14 +46,7 @@ export class ObjectLoader2 {
     this.#gathered = new AsyncGeneratorQueue()
 
     this.#database = options.database
-    this.#cache = new MemoryCache(
-      {
-        maxSizeInMb: 500, // 500 MB
-        ttlms: 5_000 // 5 seconds
-      },
-      this.#logger
-    )
-    this.#deferments = new DefermentManager(this.#cache, this.#logger)
+    this.#deferments = options.deferments
     this.#downloader = options.downloader
     this.#cacheReader = new CacheReader(
       this.#database,
@@ -83,7 +74,6 @@ export class ObjectLoader2 {
       this.#cacheReader.disposeAsync()
     ])
     this.#deferments.dispose()
-    this.#cache.dispose()
   }
 
   async getRootObject(): Promise<Item | undefined> {

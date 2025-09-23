@@ -1141,6 +1141,7 @@ export type Dashboard = {
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   permissions: DashboardPermissionChecks;
+  shareLink?: Maybe<DashboardShareLink>;
   /** If null, this is a new dashboard and should be initialized by the client */
   state?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
@@ -1163,6 +1164,10 @@ export type DashboardMutations = {
   create: Dashboard;
   createToken: CreateDashboardTokenReturn;
   delete: Scalars['Boolean']['output'];
+  deleteShare: Scalars['Boolean']['output'];
+  disableShare: DashboardShareLink;
+  enableShare: DashboardShareLink;
+  share: DashboardShareLink;
   update: Dashboard;
 };
 
@@ -1183,6 +1188,26 @@ export type DashboardMutationsDeleteArgs = {
 };
 
 
+export type DashboardMutationsDeleteShareArgs = {
+  input: DashboardShareInput;
+};
+
+
+export type DashboardMutationsDisableShareArgs = {
+  input: DashboardShareInput;
+};
+
+
+export type DashboardMutationsEnableShareArgs = {
+  input: DashboardShareInput;
+};
+
+
+export type DashboardMutationsShareArgs = {
+  dashboardId: Scalars['String']['input'];
+};
+
+
 export type DashboardMutationsUpdateArgs = {
   input: DashboardUpdateInput;
 };
@@ -1193,6 +1218,20 @@ export type DashboardPermissionChecks = {
   canDelete: PermissionCheckResult;
   canEdit: PermissionCheckResult;
   canRead: PermissionCheckResult;
+};
+
+export type DashboardShareInput = {
+  dashboardId: Scalars['ID']['input'];
+  shareId: Scalars['ID']['input'];
+};
+
+export type DashboardShareLink = {
+  __typename?: 'DashboardShareLink';
+  content: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  revoked: Scalars['Boolean']['output'];
+  validUntil: Scalars['DateTime']['output'];
 };
 
 export type DashboardToken = {
@@ -4916,18 +4955,31 @@ export type UserGendoAiCredits = {
 
 export type UserMeta = {
   __typename?: 'UserMeta';
+  flag: Scalars['Boolean']['output'];
   intelligenceCommunityStandUpBannerDismissed: Scalars['Boolean']['output'];
   legacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   newWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
   speckleConBannerDismissed: Scalars['Boolean']['output'];
 };
 
+
+export type UserMetaFlagArgs = {
+  key: Scalars['String']['input'];
+};
+
 export type UserMetaMutations = {
   __typename?: 'UserMetaMutations';
+  setFlag: Scalars['Boolean']['output'];
   setIntelligenceCommunityStandUpBannerDismissed: Scalars['Boolean']['output'];
   setLegacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   setNewWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
   setSpeckleConBannerDismissed: Scalars['Boolean']['output'];
+};
+
+
+export type UserMetaMutationsSetFlagArgs = {
+  key: Scalars['String']['input'];
+  value: Scalars['Boolean']['input'];
 };
 
 
@@ -6170,6 +6222,8 @@ export type ResolversTypes = {
   DashboardCreateInput: DashboardCreateInput;
   DashboardMutations: ResolverTypeWrapper<DashboardMutationsGraphQLReturn>;
   DashboardPermissionChecks: ResolverTypeWrapper<DashboardPermissionChecksGraphQLReturn>;
+  DashboardShareInput: DashboardShareInput;
+  DashboardShareLink: ResolverTypeWrapper<DashboardShareLink>;
   DashboardToken: ResolverTypeWrapper<DashboardTokenGraphQLReturn>;
   DashboardTokenCollection: ResolverTypeWrapper<Omit<DashboardTokenCollection, 'items'> & { items: Array<ResolversTypes['DashboardToken']> }>;
   DashboardTokenCreateInput: DashboardTokenCreateInput;
@@ -6562,6 +6616,8 @@ export type ResolversParentTypes = {
   DashboardCreateInput: DashboardCreateInput;
   DashboardMutations: DashboardMutationsGraphQLReturn;
   DashboardPermissionChecks: DashboardPermissionChecksGraphQLReturn;
+  DashboardShareInput: DashboardShareInput;
+  DashboardShareLink: DashboardShareLink;
   DashboardToken: DashboardTokenGraphQLReturn;
   DashboardTokenCollection: Omit<DashboardTokenCollection, 'items'> & { items: Array<ResolversParentTypes['DashboardToken']> };
   DashboardTokenCreateInput: DashboardTokenCreateInput;
@@ -7341,6 +7397,7 @@ export type DashboardResolvers<ContextType = GraphQLContext, ParentType extends 
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   permissions?: Resolver<ResolversTypes['DashboardPermissionChecks'], ParentType, ContextType>;
+  shareLink?: Resolver<Maybe<ResolversTypes['DashboardShareLink']>, ParentType, ContextType>;
   state?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   workspace?: Resolver<ResolversTypes['LimitedWorkspace'], ParentType, ContextType>;
@@ -7358,6 +7415,10 @@ export type DashboardMutationsResolvers<ContextType = GraphQLContext, ParentType
   create?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<DashboardMutationsCreateArgs, 'input' | 'workspace'>>;
   createToken?: Resolver<ResolversTypes['CreateDashboardTokenReturn'], ParentType, ContextType, RequireFields<DashboardMutationsCreateTokenArgs, 'dashboardId'>>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<DashboardMutationsDeleteArgs, 'id'>>;
+  deleteShare?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<DashboardMutationsDeleteShareArgs, 'input'>>;
+  disableShare?: Resolver<ResolversTypes['DashboardShareLink'], ParentType, ContextType, RequireFields<DashboardMutationsDisableShareArgs, 'input'>>;
+  enableShare?: Resolver<ResolversTypes['DashboardShareLink'], ParentType, ContextType, RequireFields<DashboardMutationsEnableShareArgs, 'input'>>;
+  share?: Resolver<ResolversTypes['DashboardShareLink'], ParentType, ContextType, RequireFields<DashboardMutationsShareArgs, 'dashboardId'>>;
   update?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<DashboardMutationsUpdateArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -7367,6 +7428,15 @@ export type DashboardPermissionChecksResolvers<ContextType = GraphQLContext, Par
   canDelete?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canEdit?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canRead?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type DashboardShareLinkResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DashboardShareLink'] = ResolversParentTypes['DashboardShareLink']> = {
+  content?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  revoked?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  validUntil?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -8500,6 +8570,7 @@ export type UserGendoAiCreditsResolvers<ContextType = GraphQLContext, ParentType
 };
 
 export type UserMetaResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserMeta'] = ResolversParentTypes['UserMeta']> = {
+  flag?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaFlagArgs, 'key'>>;
   intelligenceCommunityStandUpBannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   legacyProjectsExplainerCollapsed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   newWorkspaceExplainerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -8508,6 +8579,7 @@ export type UserMetaResolvers<ContextType = GraphQLContext, ParentType extends R
 };
 
 export type UserMetaMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserMetaMutations'] = ResolversParentTypes['UserMetaMutations']> = {
+  setFlag?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetFlagArgs, 'key' | 'value'>>;
   setIntelligenceCommunityStandUpBannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetIntelligenceCommunityStandUpBannerDismissedArgs, 'value'>>;
   setLegacyProjectsExplainerCollapsed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetLegacyProjectsExplainerCollapsedArgs, 'value'>>;
   setNewWorkspaceExplainerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs, 'value'>>;
@@ -8987,6 +9059,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DashboardCollection?: DashboardCollectionResolvers<ContextType>;
   DashboardMutations?: DashboardMutationsResolvers<ContextType>;
   DashboardPermissionChecks?: DashboardPermissionChecksResolvers<ContextType>;
+  DashboardShareLink?: DashboardShareLinkResolvers<ContextType>;
   DashboardToken?: DashboardTokenResolvers<ContextType>;
   DashboardTokenCollection?: DashboardTokenCollectionResolvers<ContextType>;
   DateTime?: GraphQLScalarType;

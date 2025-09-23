@@ -3,8 +3,8 @@
   <button
     class="w-full border-b border-outline-3 p-3 cursor-pointer group text-left"
     :class="getObjectBackgroundClass()"
-    @click="handleObjectClick"
-    @keydown.enter="handleObjectClick"
+    @click="handleClick"
+    @keydown.enter="handleClick"
     @mouseenter="handleObjectMouseEnter"
     @mouseleave="handleObjectMouseLeave"
   >
@@ -33,19 +33,14 @@ const props = defineProps<{
 
 const {
   objects: selectedObjects,
-  addToSelection,
+  addToSelectionFromObjectIds,
   clearSelection
 } = useSelectionUtilities()
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 
-const handleObjectClick = () => {
-  const objectData = {
-    id: props.objectId,
-    speckle_type: 'Base' // eslint-disable-line camelcase
-  }
-
+const handleClick = () => {
   clearSelection()
-  addToSelection(objectData)
+  addToSelectionFromObjectIds([props.objectId])
 }
 
 const handleObjectMouseEnter = () => {
