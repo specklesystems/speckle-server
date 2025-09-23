@@ -85,7 +85,6 @@ export function useSectionBoxUtilities() {
   const resetSectionBoxCompletely = () => {
     sectionBox.value = null
     visible.value = false
-    toggleSectionBox()
   }
 
   return {
