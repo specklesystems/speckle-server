@@ -26,6 +26,18 @@
               New model
             </FormButton>
           </div>
+          <!-- I believe for now sync limits corralate with model limit since new sync creates new model, once we have limits for syncs, this should change -->
+          <div
+            v-tippy="canCreateModel.cantClickCreateReason.value"
+            class="grow inline-flex sm:grow-0 lg:hidden"
+          >
+            <FormButton
+              :disabled="!canCreateModel.canClickCreate.value"
+              @click="showNewAccSync = true"
+            >
+              New sync
+            </FormButton>
+          </div>
         </div>
       </div>
       <div
@@ -87,8 +99,15 @@
               New model
             </FormButton>
           </div>
-          <div>
-            <FormButton @click="showNewAccSync = true">New sync</FormButton>
+          <!-- I believe for now sync limits corralate with model limit since new sync creates new model, once we have limits for syncs, this should change -->
+          <div v-tippy="canCreateModel.cantClickCreateReason.value">
+            <FormButton
+              :disabled="!canCreateModel.canClickCreate.value"
+              class="hidden lg:inline-flex shrink-0"
+              @click="showNewAccSync = true"
+            >
+              New sync
+            </FormButton>
           </div>
         </div>
       </div>
