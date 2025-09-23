@@ -95,6 +95,8 @@ import type { PartialDeep } from 'type-fest'
 
 const { FF_WORKSPACES_MODULE_ENABLED, FF_SAVED_VIEWS_ENABLED } = getFeatureFlags()
 
+const TOO_SMALL_OF_A_GAP = MINIMUM_POSITION_GAP / 2
+
 const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerState>) =>
   merge(
     {},
@@ -927,7 +929,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           // API doesnt allow direct control over position, so
           // we need to do this directly in DB
           const updateView = updateSavedViewRecordFactory({ db })
-          const newFixablePos = beforeView.position! + MINIMUM_POSITION_GAP
+          const newFixablePos = beforeView.position! + TOO_SMALL_OF_A_GAP
           await updateView({
             id: afterView.id,
             projectId: afterView.projectId,
@@ -1329,7 +1331,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           // API doesnt allow direct control over position, so
           // we need to do this directly in DB
           const updateViewDb = updateSavedViewRecordFactory({ db })
-          const newFixablePos = firstView.position! + MINIMUM_POSITION_GAP
+          const newFixablePos = firstView.position! + TOO_SMALL_OF_A_GAP
           await updateViewDb({
             id: secondView.id,
             projectId: secondView.projectId,
