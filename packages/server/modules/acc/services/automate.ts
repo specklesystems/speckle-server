@@ -155,7 +155,7 @@ export const triggerSyncItemAutomationFactory =
           autodeskClientId: getAutodeskIntegrationClientId(),
           autodeskClientSecret: getAutodeskIntegrationClientSecret(),
           odaUserId: getOdaUserId(),
-          odaUserSecret: getOdaUserSecret()
+          odaUserSignature: getOdaUserSecret()
         }
       })),
       manifests: [
