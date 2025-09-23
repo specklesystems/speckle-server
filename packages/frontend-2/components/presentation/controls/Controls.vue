@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex items-center rounded-xl bg-foundation border border-outline-3 shadow-md overflow-hidden divide-x divide-outline-3"
+    class="flex items-center rounded-xl bg-foundation border border-outline-3 shadow-md overflow-hidden h-10 p-[3px]"
     :class="{ hidden: hideUi }"
   >
     <PresentationControlsButton
