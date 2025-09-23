@@ -64,7 +64,7 @@
         :description="featureMetadata.description"
       />
     </ul>
-    <div v-if="showAddons && displayAddons.length > 0" class="mt-auto lg:h-72 pt-8">
+    <div v-if="showAddons && displayAddons.length > 0" class="mt-auto lg:h-32 pt-8">
       <h5 class="text-body-2xs mb-2 text-foreground-2">Available add-ons</h5>
       <div class="flex flex-col gap-y-2">
         <PricingTableAddon
@@ -75,7 +75,6 @@
           :is-yearly-interval-selected="isYearlyIntervalSelected"
           :currency="props.currency"
           :tooltip="addon.tooltip"
-          :fixed-price="addon.fixedPrice"
         />
       </div>
     </div>
@@ -389,16 +388,6 @@ const displayAddons = computed(() => {
       {
         title: 'Unlimited projects and models',
         tooltip: 'You can purchase this in the next step'
-      },
-      {
-        title: 'Extra data regions',
-        fixedPrice: '$500 per region / month',
-        tooltip: 'Available upon request'
-      },
-      {
-        title: 'Priority support',
-        fixedPrice: 'Contact us for pricing',
-        tooltip: 'Available upon request'
       }
     ]
   }
