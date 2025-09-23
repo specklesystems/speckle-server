@@ -1,11 +1,15 @@
 <template>
-  <li :class="{ 'pb-1 last:pb-0': hideTitle }">
+  <li class="w-full" :class="{ 'pb-1 last:pb-0': hideTitle }">
     <button
-      class="bg-foundation-page rounded-xl overflow-hidden border border-outline-3 transition-all duration-200 hover:!border-outline-4"
+      class="bg-foundation-page rounded-xl overflow-hidden border border-outline-3 transition-all duration-200 hover:!border-outline-4 w-full"
       :class="[isCurrentSlide ? '!border-outline-5' : '']"
       @click="onSelectSlide"
     >
-      <img :src="slide.screenshot" :alt="slide.name" class="w-full h-28 object-cover" />
+      <img
+        :src="slide.screenshot"
+        :alt="slide.name"
+        class="w-full h-28 object-contain"
+      />
     </button>
     <p v-if="!hideTitle" class="text-body-3xs leading-none text-foreground my-2">
       {{ slideIndex }}. {{ slide.name }}
