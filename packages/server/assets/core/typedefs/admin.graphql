@@ -79,5 +79,5 @@ extend type Query {
 }
 
 extend type Mutation {
-  admin: AdminMutations! @hasServerRole(role: SERVER_ADMIN)
+  admin: ServerAdminMutations! @hasServerRole(role: SERVER_ADMIN)
 }
