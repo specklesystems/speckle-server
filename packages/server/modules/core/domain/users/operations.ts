@@ -89,7 +89,7 @@ export type UpdateUserServerRole = (params: {
 
 export type AdminUpdateEmailVerification = (args: {
   email: string
-  verified: boolean
+  verified?: MaybeNullOrUndefined<boolean>
 }) => Promise<boolean>
 
 export type UpdateUserEmailVerification = (params: {

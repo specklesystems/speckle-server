@@ -34,7 +34,10 @@ type ProjectCollection {
 
 input AdminUpdateEmailVerificationInput {
   email: String!
-  verified: Boolean!
+  """
+  Defaults to true. If set to false, the email will be marked as unverified.
+  """
+  verified: Boolean
 }
 
 type AdminQueries {

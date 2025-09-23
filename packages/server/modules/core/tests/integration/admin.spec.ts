@@ -24,9 +24,9 @@ describe('Admin @core-admin', () => {
     })
 
     await adminUpdateEmailVerificationFactory({
-      updateUserEmail: updateUserEmailFactory({ db }),
+      updateEmail: updateUserEmailFactory({ db }),
       deleteVerifications: deleteVerificationsFactory({ db }),
-      updateUserEmailVerification: updateUserEmailVerificationFactory({ db })
+      updateUserVerification: updateUserEmailVerificationFactory({ db })
     })({
       email,
       verified: true

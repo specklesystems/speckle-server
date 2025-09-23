@@ -111,25 +111,30 @@ export const adminProjectListFactory =
 export const adminUpdateEmailVerificationFactory =
   (deps: {
     deleteVerifications: DeleteVerifications
-    updateUserEmailVerification: UpdateUserEmailVerification
-    updateUserEmail: UpdateUserEmail
+    updateUserVerification: UpdateUserEmailVerification
+    updateEmail: UpdateUserEmail
   }): AdminUpdateEmailVerification =>
   async (args) => {
-    const { verified } = args
+    const { email } = args
+    let { verified } = args
+    if (verified === undefined || verified === null) {
+      verified = true
+    }
+
     if (verified) {
-      await deps.deleteVerifications(args.email)
+      await deps.deleteVerifications(email)
     }
 
     // this updates the 'users' table
-    await deps.updateUserEmailVerification({
-      email: args.email,
-      verified: args.verified
+    await deps.updateUserVerification({
+      email,
+      verified
     })
 
     // this updates the 'user_emails' table
-    await deps.updateUserEmail({
-      query: { email: args.email },
-      update: { verified: args.verified }
+    await deps.updateEmail({
+      query: { email },
+      update: { verified }
     })
-    return await deps.updateUserEmailVerification(args)
+    return await deps.updateUserVerification({ email, verified })
   }

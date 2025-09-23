@@ -233,7 +233,8 @@ export type AdminQueriesWorkspaceListArgs = {
 
 export type AdminUpdateEmailVerificationInput = {
   email: Scalars['String']['input'];
-  verified: Scalars['Boolean']['input'];
+  /** Defaults to true. If set to false, the email will be marked as unverified. */
+  verified?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type AdminUpdateWorkspacePlanInput = {

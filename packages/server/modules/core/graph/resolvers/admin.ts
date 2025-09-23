@@ -1,4 +1,4 @@
-import { db } from '@/db/knex'
+import { db as mainDb } from '@/db/knex'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapServerRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { toProjectIdWhitelist } from '@/modules/core/helpers/token'
@@ -19,24 +19,25 @@ import {
   countServerInvitesFactory,
   queryServerInvitesFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
-import { asOperation } from '@/modules/shared/command'
+import { asMultiregionalOperation } from '@/modules/shared/command'
 import {
   getTotalStreamCountFactory,
   getTotalUserCountFactory
 } from '@/modules/stats/repositories'
 import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
 import { ensureError } from '@speckle/shared'
+import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
 
 const adminUserList = adminUserListFactory({
-  listUsers: listUsersFactory({ db }),
-  countUsers: countUsersFactory({ db })
+  listUsers: listUsersFactory({ db: mainDb }),
+  countUsers: countUsersFactory({ db: mainDb })
 })
 const adminInviteList = adminInviteListFactory({
-  countServerInvites: countServerInvitesFactory({ db }),
-  queryServerInvites: queryServerInvitesFactory({ db })
+  countServerInvites: countServerInvitesFactory({ db: mainDb }),
+  queryServerInvites: queryServerInvitesFactory({ db: mainDb })
 })
 const adminProjectList = adminProjectListFactory({
-  getStreams: legacyGetStreamsFactory({ db })
+  getStreams: legacyGetStreamsFactory({ db: mainDb })
 })
 
 export default {
@@ -73,14 +74,23 @@ export default {
   ServerAdminMutations: {
     async updateEmailVerification(_parent, args, ctx) {
       try {
-        return await asOperation(
-          async ({ db }) => {
+        return await asMultiregionalOperation(
+          async ({ mainDb, allDbs }) => {
             const updateEmailVerification = adminUpdateEmailVerificationFactory({
-              deleteVerifications: deleteVerificationsFactory({ db }),
-              updateUserEmailVerification: updateUserEmailVerificationFactory({
-                db
-              }),
-              updateUserEmail: updateUserEmailFactory({ db })
+              deleteVerifications: deleteVerificationsFactory({ db: mainDb }),
+              // this updates the users table
+              updateUserVerification: async (...params) => {
+                const [emailVerified] = await Promise.all(
+                  allDbs.map((db) =>
+                    updateUserEmailVerificationFactory({
+                      db
+                    })(...params)
+                  )
+                )
+                return emailVerified
+              },
+              // this updates the user_emails table
+              updateEmail: updateUserEmailFactory({ db: mainDb })
             })
 
             return await updateEmailVerification(args.input)
@@ -88,7 +98,8 @@ export default {
           {
             logger: ctx.log,
             name: 'adminUpdateEmailVerification',
-            description: 'Email verification updated by a server admin'
+            description: 'Email verification updated by a server admin',
+            dbs: await getAllRegisteredDbs()
           }
         )
       } catch (e) {
@@ -99,11 +110,11 @@ export default {
   },
   ServerStatistics: {
     async totalProjectCount() {
-      return await getTotalStreamCountFactory({ db })()
+      return await getTotalStreamCountFactory({ db: mainDb })()
     },
 
     async totalUserCount() {
-      return await getTotalUserCountFactory({ db })()
+      return await getTotalUserCountFactory({ db: mainDb })()
     },
     async totalPendingInvites() {
       return 0
