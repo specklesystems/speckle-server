@@ -71,7 +71,7 @@ export default {
   Mutation: {
     admin: () => ({})
   },
-  ServerAdminMutations: {
+  AdminMutations: {
     async updateEmailVerification(_parent, args, ctx) {
       try {
         return await asMultiregionalOperation(

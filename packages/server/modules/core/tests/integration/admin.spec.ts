@@ -10,14 +10,20 @@ import {
 import { expect } from 'chai'
 import { createTestUser } from '@/test/authHelper'
 import { adminUpdateEmailVerificationFactory } from '@/modules/core/services/admin'
-import { updateUserEmailVerificationFactory } from '@/modules/core/repositories/users'
-import { deleteVerificationsFactory } from '@/modules/emails/repositories'
+import {
+  getUserFactory,
+  updateUserEmailVerificationFactory
+} from '@/modules/core/repositories/users'
+import {
+  deleteVerificationsFactory,
+  getPendingVerificationByEmailFactory
+} from '@/modules/emails/repositories'
 
 describe('Admin @core-admin', () => {
   it('can mark users as verified', async () => {
     const email = createRandomEmail()
 
-    await createTestUser({
+    const testUser = await createTestUser({
       name: 'John',
       email,
       password: createRandomPassword()
@@ -36,7 +42,14 @@ describe('Admin @core-admin', () => {
     expect(userEmail).to.be.ok
     expect(userEmail!.verified).to.be.true
 
-    //TODO check verifications deleted
-    //TODO check user updated
+    const pendingVerifications = await getPendingVerificationByEmailFactory({
+      db,
+      verificationTimeoutMinutes: 100 // minutes
+    })({ email })
+    expect(pendingVerifications).to.be.null
+
+    const user = await getUserFactory({ db })(testUser.id)
+    expect(user).to.be.ok
+    expect(user!.verified).to.be.true
   })
 })
