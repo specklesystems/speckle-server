@@ -26,6 +26,7 @@ export async function up(knex: Knex): Promise<void> {
       .references('id')
       .inTable('users')
       .onDelete('cascade')
+    table.string('content').notNullable()
     table.primary(['savedViewGroupId', 'tokenId'])
   })
 }

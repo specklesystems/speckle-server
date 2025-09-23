@@ -5,6 +5,7 @@ import type {
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { LogicError } from '@/modules/shared/errors'
 import type { StoreSavedViewGroupApiToken } from '@/modules/viewer/domain/operations/savedViewGroupApiTokens'
+import type { GetSavedViewGroup } from '@/modules/viewer/domain/operations/savedViews'
 import type {
   SavedViewGroupApiToken,
   SavedViewGroupApiTokenRecord
@@ -14,7 +15,6 @@ import {
   SavedViewGroupNotFoundError,
   SavedViewGroupResourcelessError
 } from '@speckle/shared/authz'
-import type { GetSavedViewGroup } from '@speckle/shared/dist/esm/authz/domain/savedViews/operations.js'
 import cryptoRandomString from 'crypto-random-string'
 import { pick } from 'lodash-es'
 
@@ -37,7 +37,7 @@ export const createSavedViewGroupTokenFactory =
   }): CreateAndStoreSavedViewGroupToken =>
   async ({ projectId, savedViewGroupId, userId, lifespan }) => {
     const savedViewGroups = await deps.getSavedViewGroup({
-      groupId: savedViewGroupId,
+      id: savedViewGroupId,
       projectId
     })
 

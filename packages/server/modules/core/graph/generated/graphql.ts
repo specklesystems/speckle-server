@@ -1081,6 +1081,12 @@ export type CreateSavedViewGroupInput = {
   resourceIdString: Scalars['String']['input'];
 };
 
+export type CreateSavedViewGroupTokenInput = {
+  groupId: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+  projectId: Scalars['ID']['input'];
+};
+
 export type CreateSavedViewInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   /** Group id, if grouping necessary */
@@ -3722,6 +3728,23 @@ export type SavedViewGroupPermissionChecks = {
   canUpdate: PermissionCheckResult;
 };
 
+export type SavedViewGroupToken = {
+  __typename?: 'SavedViewGroupToken';
+  createdAt: Scalars['DateTime']['output'];
+  lastUsed: Scalars['DateTime']['output'];
+  lifespan: Scalars['BigInt']['output'];
+  project: Project;
+  savedViewGroupId: Scalars['String']['output'];
+  tokenId: Scalars['String']['output'];
+  user?: Maybe<LimitedUser>;
+};
+
+export type SavedViewGroupTokenReturn = {
+  __typename?: 'SavedViewGroupTokenReturn';
+  token: Scalars['String']['output'];
+  tokenMetadata: SavedViewGroupToken;
+};
+
 export type SavedViewGroupViewsInput = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -3756,6 +3779,7 @@ export type SavedViewGroupsInput = {
 export type SavedViewMutations = {
   __typename?: 'SavedViewMutations';
   createGroup: SavedViewGroup;
+  createToken: SavedViewGroupTokenReturn;
   createView: SavedView;
   deleteGroup: Scalars['Boolean']['output'];
   deleteView: Scalars['Boolean']['output'];
@@ -3766,6 +3790,11 @@ export type SavedViewMutations = {
 
 export type SavedViewMutationsCreateGroupArgs = {
   input: CreateSavedViewGroupInput;
+};
+
+
+export type SavedViewMutationsCreateTokenArgs = {
+  input: CreateSavedViewGroupTokenInput;
 };
 
 
@@ -6211,6 +6240,7 @@ export type ResolversTypes = {
   CreateEmbedTokenReturn: ResolverTypeWrapper<Omit<CreateEmbedTokenReturn, 'tokenMetadata'> & { tokenMetadata: ResolversTypes['EmbedToken'] }>;
   CreateModelInput: CreateModelInput;
   CreateSavedViewGroupInput: CreateSavedViewGroupInput;
+  CreateSavedViewGroupTokenInput: CreateSavedViewGroupTokenInput;
   CreateSavedViewInput: CreateSavedViewInput;
   CreateServerRegionInput: CreateServerRegionInput;
   CreateUserEmailInput: CreateUserEmailInput;
@@ -6353,6 +6383,8 @@ export type ResolversTypes = {
   SavedViewGroup: ResolverTypeWrapper<SavedViewGroupGraphQLReturn>;
   SavedViewGroupCollection: ResolverTypeWrapper<Omit<SavedViewGroupCollection, 'items'> & { items: Array<ResolversTypes['SavedViewGroup']> }>;
   SavedViewGroupPermissionChecks: ResolverTypeWrapper<SavedViewGroupPermissionChecksGraphQLReturn>;
+  SavedViewGroupToken: ResolverTypeWrapper<Omit<SavedViewGroupToken, 'project' | 'user'> & { project: ResolversTypes['Project'], user?: Maybe<ResolversTypes['LimitedUser']> }>;
+  SavedViewGroupTokenReturn: ResolverTypeWrapper<Omit<SavedViewGroupTokenReturn, 'tokenMetadata'> & { tokenMetadata: ResolversTypes['SavedViewGroupToken'] }>;
   SavedViewGroupViewsInput: SavedViewGroupViewsInput;
   SavedViewGroupsInput: SavedViewGroupsInput;
   SavedViewMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
@@ -6606,6 +6638,7 @@ export type ResolversParentTypes = {
   CreateEmbedTokenReturn: Omit<CreateEmbedTokenReturn, 'tokenMetadata'> & { tokenMetadata: ResolversParentTypes['EmbedToken'] };
   CreateModelInput: CreateModelInput;
   CreateSavedViewGroupInput: CreateSavedViewGroupInput;
+  CreateSavedViewGroupTokenInput: CreateSavedViewGroupTokenInput;
   CreateSavedViewInput: CreateSavedViewInput;
   CreateServerRegionInput: CreateServerRegionInput;
   CreateUserEmailInput: CreateUserEmailInput;
@@ -6732,6 +6765,8 @@ export type ResolversParentTypes = {
   SavedViewGroup: SavedViewGroupGraphQLReturn;
   SavedViewGroupCollection: Omit<SavedViewGroupCollection, 'items'> & { items: Array<ResolversParentTypes['SavedViewGroup']> };
   SavedViewGroupPermissionChecks: SavedViewGroupPermissionChecksGraphQLReturn;
+  SavedViewGroupToken: Omit<SavedViewGroupToken, 'project' | 'user'> & { project: ResolversParentTypes['Project'], user?: Maybe<ResolversParentTypes['LimitedUser']> };
+  SavedViewGroupTokenReturn: Omit<SavedViewGroupTokenReturn, 'tokenMetadata'> & { tokenMetadata: ResolversParentTypes['SavedViewGroupToken'] };
   SavedViewGroupViewsInput: SavedViewGroupViewsInput;
   SavedViewGroupsInput: SavedViewGroupsInput;
   SavedViewMutations: MutationsObjectGraphQLReturn;
@@ -8204,8 +8239,26 @@ export type SavedViewGroupPermissionChecksResolvers<ContextType = GraphQLContext
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type SavedViewGroupTokenResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SavedViewGroupToken'] = ResolversParentTypes['SavedViewGroupToken']> = {
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  lastUsed?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  lifespan?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
+  project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
+  savedViewGroupId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  tokenId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  user?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type SavedViewGroupTokenReturnResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SavedViewGroupTokenReturn'] = ResolversParentTypes['SavedViewGroupTokenReturn']> = {
+  token?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  tokenMetadata?: Resolver<ResolversTypes['SavedViewGroupToken'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type SavedViewMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SavedViewMutations'] = ResolversParentTypes['SavedViewMutations']> = {
   createGroup?: Resolver<ResolversTypes['SavedViewGroup'], ParentType, ContextType, RequireFields<SavedViewMutationsCreateGroupArgs, 'input'>>;
+  createToken?: Resolver<ResolversTypes['SavedViewGroupTokenReturn'], ParentType, ContextType, RequireFields<SavedViewMutationsCreateTokenArgs, 'input'>>;
   createView?: Resolver<ResolversTypes['SavedView'], ParentType, ContextType, RequireFields<SavedViewMutationsCreateViewArgs, 'input'>>;
   deleteGroup?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<SavedViewMutationsDeleteGroupArgs, 'input'>>;
   deleteView?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<SavedViewMutationsDeleteViewArgs, 'input'>>;
@@ -9129,6 +9182,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   SavedViewGroup?: SavedViewGroupResolvers<ContextType>;
   SavedViewGroupCollection?: SavedViewGroupCollectionResolvers<ContextType>;
   SavedViewGroupPermissionChecks?: SavedViewGroupPermissionChecksResolvers<ContextType>;
+  SavedViewGroupToken?: SavedViewGroupTokenResolvers<ContextType>;
+  SavedViewGroupTokenReturn?: SavedViewGroupTokenReturnResolvers<ContextType>;
   SavedViewMutations?: SavedViewMutationsResolvers<ContextType>;
   SavedViewPermissionChecks?: SavedViewPermissionChecksResolvers<ContextType>;
   Scope?: ScopeResolvers<ContextType>;

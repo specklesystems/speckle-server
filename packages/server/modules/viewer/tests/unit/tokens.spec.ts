@@ -22,7 +22,9 @@ describe('createSavedViewGroupTokenFactory returns a function, that', () => {
         projectId,
         name: null,
         authorId: null,
-        resourceIds: [cryptoRandomString({ length: 10 })]
+        resourceIds: [cryptoRandomString({ length: 10 })],
+        createdAt: new Date(),
+        updatedAt: new Date()
       }),
       createToken: async () => ({
         id: cryptoRandomString({ length: 10 }),
@@ -47,7 +49,7 @@ describe('createSavedViewGroupTokenFactory returns a function, that', () => {
 
   it('throws NotFound if savedViewGroup is not found', async () => {
     const createSavedViewGroupToken = createSavedViewGroupTokenFactory({
-      getSavedViewGroup: async () => null,
+      getSavedViewGroup: async () => undefined,
       createToken: async () => ({
         id: cryptoRandomString({ length: 10 }),
         token: cryptoRandomString({ length: 20 })
@@ -68,7 +70,9 @@ describe('createSavedViewGroupTokenFactory returns a function, that', () => {
         projectId,
         name: null,
         authorId: null,
-        resourceIds: [] // no resources
+        resourceIds: [], // no resources
+        createdAt: new Date(),
+        updatedAt: new Date()
       }),
       createToken: async () => ({
         id: cryptoRandomString({ length: 10 }),
@@ -90,7 +94,9 @@ describe('createSavedViewGroupTokenFactory returns a function, that', () => {
         projectId: cryptoRandomString({ length: 10 }), // wrong project
         name: null,
         authorId: null,
-        resourceIds: [cryptoRandomString({ length: 10 })]
+        resourceIds: [cryptoRandomString({ length: 10 })],
+        createdAt: new Date(),
+        updatedAt: new Date()
       }),
       createToken: async () => ({
         id: cryptoRandomString({ length: 10 }),
