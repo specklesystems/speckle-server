@@ -47,7 +47,7 @@ import {
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
-import { Vector3 } from 'three'
+import { Vector3, Box3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import { SafeLocalStorage } from '@speckle/shared'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
@@ -354,6 +354,12 @@ function sectionBoxDataEquals(a: SectionBoxData, b: SectionBoxData): boolean {
   )
 }
 
+function sectionBoxDataToBox3(data: SectionBoxData): Box3 {
+  const min = new Vector3().fromArray(data.min)
+  const max = new Vector3().fromArray(data.max)
+  return new Box3(min, max)
+}
+
 function useViewerSectionBoxIntegration() {
   const {
     ui: {
@@ -384,7 +390,7 @@ function useViewerSectionBoxIntegration() {
         visible.value = false
         edited.value = false
 
-        instance.sectionBoxOff()
+        sectionTool.enabled = false
         instance.requestRender(UpdateFlags.RENDER_RESET)
         return
       }
@@ -393,8 +399,9 @@ function useViewerSectionBoxIntegration() {
         visible.value = true
         edited.value = false
 
-        instance.setSectionBox(newVal)
-        instance.sectionBoxOn()
+        const box3 = sectionBoxDataToBox3(newVal)
+        sectionTool.setBox(box3)
+        sectionTool.enabled = true
         const outlines = instance.getExtension(SectionOutlines)
         if (outlines) outlines.requestUpdate()
         instance.requestRender(UpdateFlags.RENDER_RESET)
@@ -420,7 +427,7 @@ function useViewerSectionBoxIntegration() {
   )
 
   onBeforeUnmount(() => {
-    instance.sectionBoxOff()
+    sectionTool.enabled = false
     sectionTool.removeListener(SectionToolEvent.DragStart, onDragStart)
   })
 }
