@@ -23,7 +23,7 @@ const testForbiddenResponse = (
   )
 }
 
-describe('Server Admin GraphQL', () => {
+describe('Admin @core-admin Graphql', () => {
   const serverAdminUser: BasicTestUser = {
     id: '',
     email: createRandomEmail(),

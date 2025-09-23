@@ -87,4 +87,37 @@ describe('Admin @core-admin', () => {
     expect(user).to.be.ok
     expect(user!.verified).to.be.true
   })
+  it('can mark verified users as unverified', async () => {
+    const email = createRandomEmail()
+
+    const testUser = await createTestUser({
+      name: 'John',
+      email,
+      password: createRandomPassword(),
+      verified: true
+    })
+
+    await adminUpdateEmailVerificationFactory({
+      updateEmail: updateUserEmailFactory({ db }),
+      deleteVerifications: deleteVerificationsFactory({ db }),
+      updateUserVerification: updateUserEmailVerificationFactory({ db })
+    })({
+      email,
+      verified: false
+    })
+
+    const userEmail = await findEmailFactory({ db })({ email })
+    expect(userEmail).to.be.ok
+    expect(userEmail!.verified).to.be.false
+
+    const pendingVerifications = await getPendingVerificationByEmailFactory({
+      db,
+      verificationTimeoutMinutes: 100 // minutes
+    })({ email })
+    expect(pendingVerifications).to.be.undefined
+
+    const user = await getUserFactory({ db })(testUser.id)
+    expect(user).to.be.ok
+    expect(user!.verified).to.be.false
+  })
 })
