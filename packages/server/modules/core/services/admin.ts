@@ -125,16 +125,18 @@ export const adminUpdateEmailVerificationFactory =
       await deps.deleteVerifications(email)
     }
 
-    // this updates the 'users' table
-    await deps.updateUserVerification({
-      email,
-      verified
-    })
+    const result = await Promise.all([
+      // this updates the 'users' table
+      deps.updateUserVerification({
+        email,
+        verified
+      }),
+      // this updates the 'user_emails' table
+      deps.updateEmail({
+        query: { email },
+        update: { verified }
+      })
+    ])
 
-    // this updates the 'user_emails' table
-    await deps.updateEmail({
-      query: { email },
-      update: { verified }
-    })
-    return await deps.updateUserVerification({ email, verified })
+    return result[0] && !!result[1]?.verified
   }

@@ -80,14 +80,14 @@ export default {
               deleteVerifications: deleteVerificationsFactory({ db: mainDb }),
               // this updates the users table
               updateUserVerification: async (...params) => {
-                const [emailVerified] = await Promise.all(
+                const emailVerified = await Promise.all(
                   allDbs.map((db) =>
                     updateUserEmailVerificationFactory({
                       db
                     })(...params)
                   )
                 )
-                return emailVerified
+                return emailVerified.every(Boolean)
               },
               // this updates the user_emails table
               updateEmail: updateUserEmailFactory({ db: mainDb })
