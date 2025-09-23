@@ -26,7 +26,42 @@ describe('Admin @core-admin', () => {
     const testUser = await createTestUser({
       name: 'John',
       email,
-      password: createRandomPassword()
+      password: createRandomPassword(),
+      verified: false
+    })
+
+    await adminUpdateEmailVerificationFactory({
+      updateEmail: updateUserEmailFactory({ db }),
+      deleteVerifications: deleteVerificationsFactory({ db }),
+      updateUserVerification: updateUserEmailVerificationFactory({ db })
+    })({
+      email
+      //verified: true // defaults to true
+    })
+
+    const userEmail = await findEmailFactory({ db })({ email })
+    expect(userEmail).to.be.ok
+    expect(userEmail!.verified).to.be.true
+
+    const pendingVerifications = await getPendingVerificationByEmailFactory({
+      db,
+      verificationTimeoutMinutes: 100 // minutes; we don't care for this test
+    })({ email })
+    expect(pendingVerifications).to.be.undefined
+
+    const user = await getUserFactory({ db })(testUser.id)
+    expect(user).to.be.ok
+    expect(user!.verified).to.be.true
+  })
+
+  it('idempotent when marking already verified users as verified', async () => {
+    const email = createRandomEmail()
+
+    const testUser = await createTestUser({
+      name: 'John',
+      email,
+      password: createRandomPassword(),
+      verified: true
     })
 
     await adminUpdateEmailVerificationFactory({
