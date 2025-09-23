@@ -26,10 +26,6 @@ services:
         target: /workspaces/speckle-server/packages/monitor-deployment/node_modules
         read_only: false
       - type: volume
-        source: objectloader-node_modules
-        target: /workspaces/speckle-server/packages/objectloader/node_modules
-        read_only: false
-      - type: volume
         source: objectsender-node_modules
         target: /workspaces/speckle-server/packages/objectsender/node_modules
         read_only: false
@@ -113,10 +109,6 @@ services:
         target: /workspaces/speckle-server/packages/monitor-deployment/node_modules
         read_only: false
       - type: volume
-        source: objectloader-node_modules
-        target: /workspaces/speckle-server/packages/objectloader/node_modules
-        read_only: false
-      - type: volume
         source: objectsender-node_modules
         target: /workspaces/speckle-server/packages/objectsender/node_modules
         read_only: false
@@ -171,7 +163,6 @@ volumes:
   fileimport-service-node_modules:
   frontend-2-node_modules:
   monitor-deployment-node_modules:
-  objectloader-node_modules:
   objectsender-node_modules:
   preview-frontend-node_modules:
   preview-service-node_modules:

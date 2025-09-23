@@ -1,5 +1,7 @@
-import { CustomLogger, getFeatureFlag, ObjectLoader2Flags } from '../types/functions.js'
+import { isBrowser } from '../helpers/env.js'
+import { CustomLogger, Fetcher } from '../types/functions.js'
 import { Base, ObjectAttributeMask } from '../types/types.js'
+import { ObjectLoader2Flags, flagIsEnabledFromQuery } from './features.js'
 import { ObjectLoader2 } from './objectLoader2.js'
 import { IndexedDatabase } from './stages/indexedDatabase.js'
 import { MemoryDatabase } from './stages/memory/memoryDatabase.js'
@@ -10,6 +12,10 @@ export interface ObjectLoader2FactoryOptions {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   keyRange?: { bound: Function; lowerBound: Function; upperBound: Function }
   indexedDB?: IDBFactory
+  fetch?: Fetcher
+  attributeMask?: ObjectAttributeMask
+  useCache?: boolean
+  debug?: boolean
   logger?: CustomLogger
 }
 
@@ -44,10 +50,14 @@ export class ObjectLoader2Factory {
   }): ObjectLoader2 {
     const log = ObjectLoader2Factory.getLogger(params.options?.logger)
     let database
-    if (getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true') {
+    if (params.options?.debug ?? flagIsEnabledFromQuery(ObjectLoader2Flags.DEBUG)) {
       this.logger('Using DEBUG mode for ObjectLoader2Factory')
     }
-    if (getFeatureFlag(ObjectLoader2Flags.USE_CACHE) === 'true') {
+    if (
+      (params.options?.useCache ??
+        flagIsEnabledFromQuery(ObjectLoader2Flags.USE_CACHE)) &&
+      isBrowser
+    ) {
       database = new IndexedDatabase({
         indexedDB: params.options?.indexedDB,
         keyRange: params.options?.keyRange
@@ -68,6 +78,7 @@ export class ObjectLoader2Factory {
         objectId: params.objectId,
         token: params.token,
         headers: params.headers,
+        fetch: params.options?.fetch,
         attributeMask: params.attributeMask,
         logger: log || ((): void => {})
       }),
@@ -78,7 +89,7 @@ export class ObjectLoader2Factory {
   }
 
   static getLogger(providedLogger?: CustomLogger): CustomLogger | undefined {
-    if (getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true') {
+    if (flagIsEnabledFromQuery(ObjectLoader2Flags.DEBUG)) {
       return providedLogger || this.logger
     }
     return providedLogger

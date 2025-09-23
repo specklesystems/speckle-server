@@ -41,10 +41,6 @@
       "name": "✉️ webhook-service"
     },
     {
-      "path": "packages/objectloader",
-      "name": "⬇️ objectloader"
-    },
-    {
       "path": "packages/objectloader2",
       "name": "⬇️ objectloader2"
     },

@@ -117,6 +117,30 @@ jobs:
         run: yarn build
         working-directory: 'packages/viewer-sandbox'
 
+  test-objectloader:
+    name: Objectloader
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: useblacksmith/setup-node@v5
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Build public packages
+        run: yarn build:public
+      - name: Lint
+        run: yarn lint:ci
+        working-directory: 'packages/objectloader2'
+      - name: Run tests
+        run: yarn test:single-run
+        working-directory: 'packages/objectloader2'
+      - name: Build
+        run: yarn build
+        working-directory: 'packages/objectloader2'
+
   test-shared:
     name: Shared
     runs-on: blacksmith-4vcpu-ubuntu-2404
