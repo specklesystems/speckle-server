@@ -10,7 +10,9 @@
         <CommonLoadingBar v-if="loadingTokens" :loading="true" class="my-2" />
         <div v-else>
           <hr class="mb-2" />
-          <FormButton size="sm" @click="authAcc(projectId)">Connect to ACC</FormButton>
+          <FormButton size="sm" @click="authAcc(`/projects/${projectId}/acc`)">
+            Connect to ACC
+          </FormButton>
         </div>
       </div>
 
@@ -58,8 +60,7 @@ defineProps<{ projectId: string }>()
 
 const hasTokens = computed(() => !!tokens.value?.access_token)
 
-const { tokens, loadingTokens, authAcc, fetchTokens, tryGetTokensFromCookies } =
-  useAccAuthManager()
+const { tokens, loadingTokens, authAcc, tryGetTokensFromCookies } = useAccAuthManager()
 const { userInfo, fetchUserInfo } = useAccUser()
 
 watch(tokens, async (newTokens) => {
@@ -72,8 +73,6 @@ onMounted(async () => {
   await tryGetTokensFromCookies()
   if (tokens.value) {
     await fetchUserInfo(tokens.value?.access_token)
-  } else {
-    await fetchTokens()
   }
 })
 </script>

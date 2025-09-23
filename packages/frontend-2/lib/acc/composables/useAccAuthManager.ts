@@ -17,6 +17,7 @@ export function useAccAuthManager() {
   const { triggerNotification } = useGlobalToast()
   const loadingTokens = ref(false)
   const tokens = ref<AccTokens>()
+  const isExpired = ref(false)
   const REFRESH_TOKEN_LIFESPAN = 15 * 24 * 60 * 60 // in seconds
 
   /**
@@ -33,8 +34,8 @@ export function useAccAuthManager() {
 
       if (timeDiff > REFRESH_TOKEN_LIFESPAN) {
         logger.info('Acc refresh token in cookies is expired')
-        tokens.value = undefined
-        Cookies.remove(ACC_COOKIE_KEY)
+        isExpired.value = true
+        logOut()
       } else if (timeDiff + 300 > tokensInCookies.expires_in) {
         logger.info('Acc access token in cookies need refreshing')
         // 300s (6min) is arbitrary guard
@@ -50,6 +51,11 @@ export function useAccAuthManager() {
       }
     }
     loadingTokens.value = false
+  }
+
+  const logOut = () => {
+    tokens.value = undefined
+    Cookies.remove(ACC_COOKIE_KEY)
   }
 
   const refreshTokens = async (tokensToRefresh: AccTokens) => {
@@ -86,6 +92,7 @@ export function useAccAuthManager() {
       secure: true,
       sameSite: 'Strict'
     })
+    isExpired.value = false
   }
 
   const fetchTokens = async () => {
@@ -105,13 +112,13 @@ export function useAccAuthManager() {
     }
   }
 
-  const authAcc = async (projectId: string) => {
+  const authAcc = async (callbackEndpoint: string) => {
     try {
       const response = await fetch(`${apiOrigin}/api/v1/acc/auth/login`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId })
+        body: JSON.stringify({ callbackEndpoint })
       })
       if (!response.ok) throw new Error('Failed to initiate ACC login.')
       const { authorizeUrl } = await response.json()
@@ -157,9 +164,11 @@ export function useAccAuthManager() {
   }
 
   return {
+    isExpired,
     tokens,
     loadingTokens,
     authAcc,
+    logOut,
     fetchTokens,
     refreshTokens,
     tryGetTokensFromCookies,

@@ -488,6 +488,7 @@ type Documents = {
     "\n  mutation WorkspaceUpdateAutoJoinMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        discoverabilityAutoJoinEnabled\n      }\n    }\n  }\n": typeof types.WorkspaceUpdateAutoJoinMutationDocument,
     "\n  mutation WorkspaceUpdateDefaultSeatTypeMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        defaultSeatType\n      }\n    }\n  }\n": typeof types.WorkspaceUpdateDefaultSeatTypeMutationDocument,
     "\n  mutation WorkspaceUpdateExclusiveMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        isExclusive\n      }\n    }\n  }\n": typeof types.WorkspaceUpdateExclusiveMutationDocument,
+    "\n  query Workspace($featureName: WorkspaceFeatureName!, $workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      hasAccessToFeature(featureName: $featureName)\n    }\n  }\n": typeof types.WorkspaceDocument,
     "\n  query WorkspaceAccessCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      slug\n    }\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        slug\n      }\n    }\n  }\n": typeof types.WorkspaceAccessCheckDocument,
     "\n  query WorkspacePageQuery(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspacePage_Workspace\n    }\n  }\n": typeof types.WorkspacePageQueryDocument,
     "\n  query WorkspaceProjectsQuery(\n    $workspaceSlug: String!\n    $filter: WorkspaceProjectsFilter\n    $cursor: String\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      projects(filter: $filter, cursor: $cursor, limit: 10) {\n        ...WorkspaceDashboardProjectList_ProjectCollection\n      }\n    }\n  }\n": typeof types.WorkspaceProjectsQueryDocument,
@@ -1013,6 +1014,7 @@ const documents: Documents = {
     "\n  mutation WorkspaceUpdateAutoJoinMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        discoverabilityAutoJoinEnabled\n      }\n    }\n  }\n": types.WorkspaceUpdateAutoJoinMutationDocument,
     "\n  mutation WorkspaceUpdateDefaultSeatTypeMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        defaultSeatType\n      }\n    }\n  }\n": types.WorkspaceUpdateDefaultSeatTypeMutationDocument,
     "\n  mutation WorkspaceUpdateExclusiveMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        isExclusive\n      }\n    }\n  }\n": types.WorkspaceUpdateExclusiveMutationDocument,
+    "\n  query Workspace($featureName: WorkspaceFeatureName!, $workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      hasAccessToFeature(featureName: $featureName)\n    }\n  }\n": types.WorkspaceDocument,
     "\n  query WorkspaceAccessCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      slug\n    }\n    activeUser {\n      id\n      activeWorkspace {\n        id\n        slug\n      }\n    }\n  }\n": types.WorkspaceAccessCheckDocument,
     "\n  query WorkspacePageQuery(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspacePage_Workspace\n    }\n  }\n": types.WorkspacePageQueryDocument,
     "\n  query WorkspaceProjectsQuery(\n    $workspaceSlug: String!\n    $filter: WorkspaceProjectsFilter\n    $cursor: String\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      projects(filter: $filter, cursor: $cursor, limit: 10) {\n        ...WorkspaceDashboardProjectList_ProjectCollection\n      }\n    }\n  }\n": types.WorkspaceProjectsQueryDocument,
@@ -2974,6 +2976,10 @@ export function graphql(source: "\n  mutation WorkspaceUpdateDefaultSeatTypeMuta
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation WorkspaceUpdateExclusiveMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        isExclusive\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation WorkspaceUpdateExclusiveMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        isExclusive\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query Workspace($featureName: WorkspaceFeatureName!, $workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      hasAccessToFeature(featureName: $featureName)\n    }\n  }\n"): (typeof documents)["\n  query Workspace($featureName: WorkspaceFeatureName!, $workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      hasAccessToFeature(featureName: $featureName)\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
