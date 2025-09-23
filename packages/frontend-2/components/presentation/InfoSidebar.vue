@@ -1,8 +1,8 @@
 <template>
   <aside
-    class="bg-foundation h-48 md:h-dvh w-full md:w-64 xl:w-80 border-t md:border-t-0 md:border-l border-outline-3 py-5 px-4"
+    class="bg-foundation h-48 lg:h-dvh w-full lg:w-64 xl:w-80 border-t lg:border-t-0 lg:border-l border-outline-3 py-5 px-4"
   >
-    <div class="hidden md:flex items-center justify-end space-x-0.5">
+    <div class="hidden lg:flex items-center justify-end space-x-0.5">
       <div
         v-tippy="
           canUpdateSlide ? undefined : 'You do not have permission to edit this slide'
@@ -29,14 +29,21 @@
         <h1 v-if="currentSlide?.name" class="text-xl font-medium text-foreground px-2">
           {{ currentSlide?.name }}
         </h1>
-        <FormButton
-          v-if="canUpdate"
-          :icon-left="LucidePencilLine"
-          color="subtle"
-          hide-text
-          class="md:hidden"
-          @click="isSlideEditDialogOpen = true"
-        />
+        <div class="lg:hidden flex items-center gap-x-1">
+          <FormButton
+            v-if="canUpdate"
+            :icon-left="LucidePencilLine"
+            color="subtle"
+            hide-text
+            @click="isSlideEditDialogOpen = true"
+          />
+          <FormButton
+            :icon-left="LucideX"
+            color="subtle"
+            hide-text
+            @click="$emit('close')"
+          />
+        </div>
       </div>
 
       <p
