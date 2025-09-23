@@ -46,7 +46,7 @@ describe('Admin @core-admin', () => {
       db,
       verificationTimeoutMinutes: 100 // minutes
     })({ email })
-    expect(pendingVerifications).to.be.null
+    expect(pendingVerifications).to.be.undefined
 
     const user = await getUserFactory({ db })(testUser.id)
     expect(user).to.be.ok
