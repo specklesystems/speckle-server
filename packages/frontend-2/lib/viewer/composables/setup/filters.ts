@@ -1,11 +1,12 @@
 import type { FilterData } from '~/lib/viewer/helpers/filters/types'
 import type { SpeckleObject } from '@speckle/viewer'
 import type { Raw } from 'vue'
-import { FilteringExtension } from '@speckle/viewer'
+import { FilteringExtension, SelectionExtension } from '@speckle/viewer'
 import { watchTriggerable } from '@vueuse/core'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { useOnViewerLoadComplete } from '~/lib/viewer/composables/viewer'
 import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
+import { HighlightExtension } from '~/lib/viewer/composables/setup/highlighting'
 
 /**
  * Setup composable for filter-related state
@@ -62,6 +63,39 @@ export const useManualFilteringPostSetup = () => {
   const filteringExtension = () => instance.getExtension(FilteringExtension)
 
   /**
+   * Preserve selection and highlighting state during filtering operations
+   * This replicates LegacyViewer's preserveSelectionHighlightFilter function
+   */
+  const preserveSelectionHighlightFilter = <T>(filterFn: () => T): T => {
+    const selectionExtension = instance.getExtension(SelectionExtension)
+    const highlightExtension = instance.getExtension(HighlightExtension)
+
+    // 1. SAVE current state from viewer extensions
+    const selectedObjects = selectionExtension
+      .getSelectedObjects()
+      .map((obj) => obj.id as string)
+    const highlightedObjects =
+      highlightExtension?.getSelectedObjects().map((obj) => obj.id as string) || []
+
+    // 2. CLEAR viewer extensions directly
+    if (selectedObjects.length) selectionExtension.clearSelection()
+    if (highlightedObjects.length && highlightExtension) {
+      highlightExtension.clearSelection()
+    }
+
+    // 3. EXECUTE the filtering operation
+    const result = filterFn()
+
+    // 4. RESTORE to viewer extensions directly
+    if (selectedObjects.length) selectionExtension.selectObjects(selectedObjects)
+    if (highlightedObjects.length && highlightExtension) {
+      highlightExtension.selectObjects(highlightedObjects)
+    }
+
+    return result
+  }
+
+  /**
    * Watch for changes to manually isolated object IDs
    */
   const { trigger: triggerIsolationWatch } = watchTriggerable(
@@ -69,17 +103,19 @@ export const useManualFilteringPostSetup = () => {
     (newIds, oldIds) => {
       if (!newIds || !oldIds) return
 
-      const extension = filteringExtension()
+      preserveSelectionHighlightFilter(() => {
+        const extension = filteringExtension()
 
-      const toIsolate = newIds.filter((id) => !oldIds.includes(id))
-      if (toIsolate.length > 0) {
-        extension.isolateObjects(toIsolate, 'manual-isolation', true, true)
-      }
+        const toIsolate = newIds.filter((id) => !oldIds.includes(id))
+        if (toIsolate.length > 0) {
+          extension.isolateObjects(toIsolate, 'manual-isolation', true, true)
+        }
 
-      const toUnIsolate = oldIds.filter((id) => !newIds.includes(id))
-      if (toUnIsolate.length > 0) {
-        extension.unIsolateObjects(toUnIsolate, 'manual-isolation', true, true)
-      }
+        const toUnIsolate = oldIds.filter((id) => !newIds.includes(id))
+        if (toUnIsolate.length > 0) {
+          extension.unIsolateObjects(toUnIsolate, 'manual-isolation', true, true)
+        }
+      })
     },
     { deep: true }
   )
@@ -92,17 +128,19 @@ export const useManualFilteringPostSetup = () => {
     (newIds, oldIds) => {
       if (!newIds || !oldIds) return
 
-      const extension = filteringExtension()
+      preserveSelectionHighlightFilter(() => {
+        const extension = filteringExtension()
 
-      const toHide = newIds.filter((id) => !oldIds.includes(id))
-      if (toHide.length > 0) {
-        extension.hideObjects(toHide, 'manual-hiding', false, false)
-      }
+        const toHide = newIds.filter((id) => !oldIds.includes(id))
+        if (toHide.length > 0) {
+          extension.hideObjects(toHide, 'manual-hiding', false, false)
+        }
 
-      const toShow = oldIds.filter((id) => !newIds.includes(id))
-      if (toShow.length > 0) {
-        extension.showObjects(toShow, 'manual-hiding', false)
-      }
+        const toShow = oldIds.filter((id) => !newIds.includes(id))
+        if (toShow.length > 0) {
+          extension.showObjects(toShow, 'manual-hiding', false)
+        }
+      })
     },
     { deep: true }
   )

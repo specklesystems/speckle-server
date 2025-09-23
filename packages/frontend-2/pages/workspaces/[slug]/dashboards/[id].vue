@@ -3,6 +3,7 @@
     <Portal to="navigation">
       <div class="flex items-center">
         <HeaderNavLink
+          v-if="isLoggedIn"
           :to="dashboardsRoute(workspace?.slug)"
           name="Dashboard"
           :separator="false"
@@ -10,8 +11,10 @@
         <HeaderNavLink
           :to="dashboardRoute(workspace?.slug, id as string)"
           :name="dashboard?.name"
+          :separator="isLoggedIn ? true : false"
         />
         <FormButton
+          v-if="canEdit && !hasDashboardToken"
           v-tippy="'Edit name'"
           size="sm"
           color="subtle"
@@ -24,7 +27,11 @@
     </Portal>
     <Portal to="primary-actions">
       <div class="flex items-center gap-2">
-        <DashboardsShare :id="dashboard?.id" :workspace-slug="workspace?.slug" />
+        <DashboardsShare
+          v-if="canEdit && !hasDashboardToken"
+          :id="dashboard?.id"
+          :workspace-slug="workspace?.slug"
+        />
         <FormButton
           v-tippy="'Toggle fullscreen'"
           size="sm"
@@ -77,6 +84,11 @@ graphql(`
       slug
       logo
     }
+    permissions {
+      canEdit {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
@@ -93,14 +105,19 @@ const { isDarkTheme } = useTheme()
 const {
   public: { dashboardsOrigin }
 } = useRuntimeConfig()
+const { isLoggedIn } = useActiveUser()
 
 const editDialogOpen = ref(false)
 
+const hasDashboardToken = computed(() => !!dashboardToken.value)
+const canEdit = computed(
+  () => result.value?.dashboard?.permissions?.canEdit?.authorized
+)
 const workspace = computed(() => result.value?.dashboard?.workspace)
 const dashboard = computed(() => result.value?.dashboard)
 const dashboardUrl = computed(
   () =>
-    `${dashboardsOrigin}/dashboards/${id}?token=${
+    `${dashboardsOrigin}/${dashboardToken.value ? 'view' : 'dashboards'}/${id}?token=${
       dashboardToken.value || effectiveAuthToken.value
     }&isEmbed=true&theme=${isDarkTheme.value ? 'dark' : 'light'}`
 )
