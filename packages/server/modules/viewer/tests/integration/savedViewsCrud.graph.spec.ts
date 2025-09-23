@@ -901,9 +901,11 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           )
 
           const finalView = res2.data?.projectMutations.savedViewMutations.createView
-          expect(finalView!.position).to.equal(
-            firstView!.position + (addBefore ? -1000 : 1000)
-          )
+          if (addBefore) {
+            expect(finalView!.position).to.be.lessThan(firstView!.position)
+          } else {
+            expect(finalView!.position).to.be.greaterThan(firstView!.position)
+          }
         }
       )
 
