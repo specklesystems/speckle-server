@@ -842,9 +842,9 @@ const getNeighborViewFactory =
           .on(MainCols.col.projectId, '=', SubqCols.col.projectId)
           // same groupId (including null)
           .andOn((o1) => {
-            o1.on(MainCols.col.groupId, '=', SubqCols.col.groupId)
-              .orOnNull(MainCols.col.groupId)
-              .orOnNull(SubqCols.col.groupId)
+            o1.on(MainCols.col.groupId, '=', SubqCols.col.groupId).orOn((o2) => {
+              o2.onNull(MainCols.col.groupId).andOnNull(SubqCols.col.groupId)
+            })
           })
           // next positions
           .andOn(MainCols.col.position, cmpOperator, SubqCols.col.position)

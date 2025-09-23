@@ -855,10 +855,17 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
       })
 
       itEach(
-        ['ungrouped', 'grouped'],
-        (grouping) =>
-          `should add new views after the last position in the ${grouping} group`,
-        async (grouping) => {
+        [
+          { grouping: 'ungrouped', specificLastPosition: true },
+          { grouping: 'grouped', specificLastPosition: true },
+          { grouping: 'ungrouped', specificLastPosition: false },
+          { grouping: 'grouped', specificLastPosition: false }
+        ],
+        ({ grouping, specificLastPosition }) =>
+          `should add new views after the${
+            specificLastPosition ? ' specifically specified' : ''
+          } last position in the ${grouping} group`,
+        async ({ grouping, specificLastPosition }) => {
           const resourceIdString = model1ResourceIds().toString()
           const res1 = await createSavedView(
             buildCreateInput({
@@ -876,7 +883,17 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
             buildCreateInput({
               resourceIdString,
               overrides: {
-                groupId: grouping === 'grouped' ? testGroup1.id : null
+                groupId: grouping === 'grouped' ? testGroup1.id : null,
+                ...(specificLastPosition
+                  ? {
+                      position: {
+                        type: ViewPositionInputType.Between,
+                        beforeViewId:
+                          res1.data?.projectMutations.savedViewMutations.createView!.id,
+                        afterViewId: null
+                      }
+                    }
+                  : {})
               }
             }),
             {
