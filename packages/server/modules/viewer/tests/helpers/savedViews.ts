@@ -1,4 +1,5 @@
 import { db } from '@/db/knex'
+import { ViewPositionInputType } from '@/modules/core/graph/generated/graphql'
 import {
   getBranchesByIdsFactory,
   getBranchLatestCommitsFactory,
@@ -144,6 +145,9 @@ export const createTestSavedView = async (params?: {
   const createdView = await createSavedView({
     input: {
       ...view,
+      position: {
+        type: ViewPositionInputType.Between
+      },
       resourceIdString: view.resourceIds.join(','),
       viewerState: view.viewerState.state
     },
