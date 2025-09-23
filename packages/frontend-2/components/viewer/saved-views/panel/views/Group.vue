@@ -17,7 +17,7 @@
     />
     <template #title-actions>
       <div
-        class="flex gap-0.5 items-center opacity-0 group-hover/disclosure:opacity-100"
+        class="flex gap-0.5 items-center lg:opacity-0 lg:group-hover/disclosure:opacity-100"
         @click.stop
       >
         <LayoutMenu

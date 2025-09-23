@@ -6,7 +6,7 @@
         <img
           :src="slide?.screenshot"
           :alt="slide?.name"
-          class="w-full object-cover rounded-lg border border-outline-3"
+          class="w-full object-cover rounded-lg border border-outline-3 h-64"
         />
         <FormTextInput
           v-model="name"

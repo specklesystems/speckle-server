@@ -2,10 +2,13 @@
   <div
     class="bg-foundation border border-outline-3 rounded-xl shadow-md h-10 flex items-center"
   >
-    <div class="flex items-center justify-between md:space-x-1 p-1">
-      <FormButton class="hidden md:flex">Share</FormButton>
+    <div class="flex items-center justify-between space-x-1 p-1">
+      <FormButton>Share</FormButton>
 
-      <PresentationFloatingPanelButton class="hidden md:flex" @click="toggleFullscreen">
+      <PresentationFloatingPanelButton
+        class="hidden md:flex touch:hidden"
+        @click="toggleFullscreen"
+      >
         <LucideFullscreen class="size-4" />
       </PresentationFloatingPanelButton>
 
