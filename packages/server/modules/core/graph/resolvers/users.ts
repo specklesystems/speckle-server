@@ -17,7 +17,7 @@ import {
   lookupUsersFactory,
   bulkLookupUsersFactory
 } from '@/modules/core/repositories/users'
-import { Users, UsersMeta } from '@/modules/core/dbSchema'
+import { isUsersMetaFlag, Users, UsersMeta } from '@/modules/core/dbSchema'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import {
   deleteAllUserInvitesFactory,
@@ -25,7 +25,7 @@ import {
   findServerInvitesFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import db from '@/db/knex'
-import { BadRequestError } from '@/modules/shared/errors'
+import { BadRequestError, InvalidArgumentError } from '@/modules/shared/errors'
 import {
   updateUserAndNotifyFactory,
   deleteUserFactory,
@@ -502,6 +502,16 @@ export default {
     meta: () => ({})
   },
   UserMetaMutations: {
+    setFlag: async (_parent, { key, value }, ctx) => {
+      if (!isUsersMetaFlag(key)) {
+        throw new InvalidArgumentError(`User flag ${key} is not known.`)
+      }
+
+      const meta = metaHelpers(Users, db)
+      const res = await meta.set(ctx.userId!, key, value)
+
+      return !!res.value
+    },
     setLegacyProjectsExplainerCollapsed: async (_parent, args, ctx) => {
       const meta = metaHelpers(Users, db)
       const res = await meta.set(

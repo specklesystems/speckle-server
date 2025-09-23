@@ -4955,18 +4955,31 @@ export type UserGendoAiCredits = {
 
 export type UserMeta = {
   __typename?: 'UserMeta';
+  flag: Scalars['Boolean']['output'];
   intelligenceCommunityStandUpBannerDismissed: Scalars['Boolean']['output'];
   legacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   newWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
   speckleConBannerDismissed: Scalars['Boolean']['output'];
 };
 
+
+export type UserMetaFlagArgs = {
+  key: Scalars['String']['input'];
+};
+
 export type UserMetaMutations = {
   __typename?: 'UserMetaMutations';
+  setFlag: Scalars['Boolean']['output'];
   setIntelligenceCommunityStandUpBannerDismissed: Scalars['Boolean']['output'];
   setLegacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   setNewWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
   setSpeckleConBannerDismissed: Scalars['Boolean']['output'];
+};
+
+
+export type UserMetaMutationsSetFlagArgs = {
+  key: Scalars['String']['input'];
+  value: Scalars['Boolean']['input'];
 };
 
 
@@ -8557,6 +8570,7 @@ export type UserGendoAiCreditsResolvers<ContextType = GraphQLContext, ParentType
 };
 
 export type UserMetaResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserMeta'] = ResolversParentTypes['UserMeta']> = {
+  flag?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaFlagArgs, 'key'>>;
   intelligenceCommunityStandUpBannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   legacyProjectsExplainerCollapsed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   newWorkspaceExplainerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -8565,6 +8579,7 @@ export type UserMetaResolvers<ContextType = GraphQLContext, ParentType extends R
 };
 
 export type UserMetaMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserMetaMutations'] = ResolversParentTypes['UserMetaMutations']> = {
+  setFlag?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetFlagArgs, 'key' | 'value'>>;
   setIntelligenceCommunityStandUpBannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetIntelligenceCommunityStandUpBannerDismissedArgs, 'value'>>;
   setLegacyProjectsExplainerCollapsed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetLegacyProjectsExplainerCollapsedArgs, 'value'>>;
   setNewWorkspaceExplainerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs, 'value'>>;
