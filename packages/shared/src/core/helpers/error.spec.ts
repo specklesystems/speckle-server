@@ -2,68 +2,133 @@ import { describe, it, expect } from 'vitest'
 import { errorToString } from './error.js'
 
 describe('errorToString', () => {
-  it('stringifies plain non-error values', () => {
-    expect(errorToString({ a: 1, b: 'x' })).toBe('{"a":1,"b":"x"}')
-    expect(errorToString([1, 2, 3])).toBe('[1,2,3]')
-    expect(errorToString('oops')).toBe('"oops"')
-    expect(errorToString(42)).toBe('42')
+  it('should stringify non-Error objects', () => {
+    const obj = { foo: 'bar', num: 42 }
+    const result = errorToString(obj)
+    expect(result).toBe('{"foo":"bar","num":42}')
+  })
+
+  it('should handle primitive values', () => {
+    expect(errorToString('string error')).toBe('"string error"')
+    expect(errorToString(123)).toBe('123')
     expect(errorToString(true)).toBe('true')
-    // null is valid JSON
     expect(errorToString(null)).toBe('null')
+    expect(errorToString(undefined)).toBeUndefined()
   })
 
-  it('falls back to String(e) when JSON.stringify fails (circular)', () => {
-    const a: Record<string, unknown> = {}
-    a.self = a
-    // JSON.stringify would throw "Converting circular structure to JSON"
-    // errorToString should catch and fall back to String(e)
-    expect(errorToString(a)).toBe('[object Object]')
-  })
-
-  it('includes error message and stack for Error', () => {
-    const err = new Error('Top level')
-    const s = errorToString(err)
-    expect(s).toContain('Top level')
-    // Should look like a stack string
-    expect(s).toMatch(/Error: Top level\n/) // first line commonly formatted like this
-  })
-
-  it('recursively includes standard cause property', () => {
-    const inner = new Error('Inner cause')
-    const outer: { cause?: unknown } & Error = new Error('Top w/ cause')
-    outer.cause = inner
-    const s = errorToString(outer)
-    expect(s).toContain('Top w/ cause')
-    expect(s).toContain('Cause:')
-    expect(s).toContain('Inner cause')
-  })
-
-  it('supports jse_cause property', () => {
-    const inner = new Error('Legacy inner')
-    const outer = new Error('Top legacy') as Error & { [key: string]: unknown }
-    outer['jse_cause'] = inner
-    const s = errorToString(outer)
-    expect(s).toContain('Top legacy')
-    expect(s).toContain('Cause:')
-    expect(s).toContain('Legacy inner')
-  })
-
-  it('handles non-Error cause values', () => {
-    const outer = new Error('Top with non-error cause') as Error & {
-      cause?: unknown
-      [key: string]: unknown
-    }
-    outer.cause = { a: 1 }
-    const s1 = errorToString(outer)
-    expect(s1).toContain('Top with non-error cause')
-    expect(s1).toContain('Cause: {"a":1}')
-
-    const circular: Record<string, unknown> = {}
+  it('should fallback to String() for non-serializable objects', () => {
+    const circular: Record<string, unknown> = { name: 'circular' }
     circular.self = circular
-    outer['jse_cause'] = circular
-    const s2 = errorToString(outer)
-    // One of the causes will be circular, should fall back to String(e)
-    expect(s2).toContain('Top with non-error cause')
-    expect(s2).toContain('Cause: [object Object]')
+
+    const result = errorToString(circular)
+    expect(result).toBe('[object Object]')
+  })
+
+  it('should return stack trace for Error objects', () => {
+    const error = new Error('Test error')
+    const result = errorToString(error)
+
+    expect(result).toContain('Test error')
+    expect(result).toContain('Error: Test error')
+  })
+
+  it('should fallback to message if no stack', () => {
+    const error = new Error('Test message')
+    // Remove stack to test fallback
+    delete (error as Error & { stack?: string }).stack
+
+    const result = errorToString(error)
+    expect(result).toBe('Test message')
+  })
+
+  it('should fallback to String(error) if no stack or message', () => {
+    const error = new Error()
+    delete (error as Error & { stack?: string }).stack
+    // Use Reflect.deleteProperty to avoid TypeScript error
+    Reflect.deleteProperty(error, 'message')
+
+    const result = errorToString(error)
+    expect(result).toBe('Error')
+  })
+
+  it('should handle Error with cause property', () => {
+    const rootCause = new Error('Root cause')
+    const error = new Error('Main error') as Error & { cause?: Error }
+    error.cause = rootCause
+
+    const result = errorToString(error)
+    expect(result).toContain('Main error')
+    expect(result).toContain('Cause: ')
+    expect(result).toContain('Root cause')
+  })
+
+  it('should handle Error with jse_cause property', () => {
+    const rootCause = new Error('JSE root cause')
+    const error = new Error('Main error') as Error & { jse_cause?: Error }
+    error['jse_cause'] = rootCause
+
+    const result = errorToString(error)
+    expect(result).toContain('Main error')
+    expect(result).toContain('Cause: ')
+    expect(result).toContain('JSE root cause')
+  })
+
+  it('should handle nested causes recursively', () => {
+    const deepCause = new Error('Deep cause')
+    const midCause = new Error('Mid cause') as Error & { cause?: Error }
+    midCause.cause = deepCause
+
+    const error = new Error('Top error') as Error & { cause?: Error }
+    error.cause = midCause
+
+    const result = errorToString(error)
+    expect(result).toContain('Top error')
+    expect(result).toContain('Mid cause')
+    expect(result).toContain('Deep cause')
+
+    // Should have nested "Cause:" labels
+    const causeCount = (result.match(/Cause: /g) || []).length
+    expect(causeCount).toBe(2)
+  })
+
+  it('should handle both cause and jse_cause properties', () => {
+    const jseCause = new Error('JSE cause')
+    const stdCause = new Error('Standard cause')
+
+    const error = new Error('Main error') as Error & {
+      cause?: Error
+      jse_cause?: Error
+    }
+    error.cause = stdCause
+    error['jse_cause'] = jseCause
+
+    const result = errorToString(error)
+    expect(result).toContain('Main error')
+    expect(result).toContain('Standard cause')
+    expect(result).toContain('JSE cause')
+
+    // Should have two "Cause:" labels
+    const causeCount = (result.match(/Cause: /g) || []).length
+    expect(causeCount).toBe(2)
+  })
+
+  it('should handle non-Error causes', () => {
+    const error = new Error('Main error') as Error & { cause?: unknown }
+    error.cause = { type: 'custom', message: 'Custom cause' }
+
+    const result = errorToString(error)
+    expect(result).toContain('Main error')
+    expect(result).toContain('Cause: {"type":"custom","message":"Custom cause"}')
+  })
+
+  it('should handle circular reference in causes', () => {
+    const error = new Error('Main error') as Error & { cause?: unknown }
+    const cause: Record<string, unknown> = { message: 'Circular cause' }
+    cause.self = cause
+    error.cause = cause
+
+    const result = errorToString(error)
+    expect(result).toContain('Main error')
+    expect(result).toContain('Cause: [object Object]')
   })
 })
