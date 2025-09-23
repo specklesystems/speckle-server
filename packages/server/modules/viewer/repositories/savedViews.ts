@@ -808,7 +808,7 @@ export const getNewViewBoundaryPositionFactory =
     applyViewPositionGroupFiltering(q, groupId, projectId, resourceIdString)
 
     const [result] = await q
-    return result?.newPosition || 1000
+    return result?.newPosition ?? 1000
   }
 
 const getNeighborViewFactory =

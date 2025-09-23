@@ -856,6 +856,59 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
       itEach(
         [
+          { grouping: 'ungrouped', expectedPosition: 'before' },
+          { grouping: 'grouped', expectedPosition: 'before' },
+          { grouping: 'ungrouped', expectedPosition: 'after' },
+          { grouping: 'grouped', expectedPosition: 'after' }
+        ],
+        ({ grouping, expectedPosition }) =>
+          `should add new view ${expectedPosition} the other view in the ${grouping} group`,
+        async ({ grouping, expectedPosition }) => {
+          const addBefore = expectedPosition === 'before'
+          const resourceIdString = model1ResourceIds().toString()
+          const res1 = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              overrides: {
+                groupId: grouping === 'grouped' ? testGroup1.id : null
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+          const firstView = res1.data?.projectMutations.savedViewMutations.createView!
+
+          const res2 = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              overrides: {
+                groupId: grouping === 'grouped' ? testGroup1.id : null,
+                ...(expectedPosition
+                  ? {
+                      position: {
+                        type: ViewPositionInputType.Between,
+                        beforeViewId: !addBefore ? firstView.id : null,
+                        afterViewId: addBefore ? firstView.id : null
+                      }
+                    }
+                  : {})
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+
+          const finalView = res2.data?.projectMutations.savedViewMutations.createView
+          expect(finalView!.position).to.equal(
+            firstView!.position + (addBefore ? -1000 : 1000)
+          )
+        }
+      )
+
+      itEach(
+        [
           { grouping: 'ungrouped', specificLastPosition: true },
           { grouping: 'grouped', specificLastPosition: true },
           { grouping: 'ungrouped', specificLastPosition: false },
