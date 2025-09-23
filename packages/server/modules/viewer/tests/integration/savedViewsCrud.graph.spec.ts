@@ -891,7 +891,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
       itEach(
         ['ungrouped', 'grouped'],
         (grouping) =>
-          `should rebalance ${grouping} group upon inserting a view w/ too close of a position`,
+          `should allow positioning between 2 other views and rebalance ${grouping} group when positions get too close`,
         async (grouping) => {
           const resourceIdString = model1ResourceIds().toString()
           const beforeViewRes = await createSavedView(
@@ -981,7 +981,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
             groupWithViews?.views.items.filter((v) =>
               [beforeView.id, afterView.id, middleView.id].includes(v.id)
             ).length
-          ).to.be.gte(3) // might be more from other tests
+          ).to.be.eq(3)
 
           let prevPosition: number | undefined = undefined
           for (const view of groupWithViews?.views.items || []) {
@@ -1213,6 +1213,186 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           const initUpdatedAt = dayjs(testView.updatedAt)
           const newUpdatedAt = dayjs(updatedView!.updatedAt)
           expect(newUpdatedAt.isAfter(initUpdatedAt)).to.be.true // date should be updated
+        }
+      )
+
+      itEach(
+        ['ungrouped', 'grouped'],
+        (grouping) =>
+          `should update view to have the last position in the ${grouping} group w/ an empty position input`,
+        async (grouping) => {
+          const resourceIdString = models[0].id
+          const res1 = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              projectId: updatablesProject.id,
+              overrides: {
+                groupId: grouping === 'grouped' ? optionalGroup.id : null
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+
+          const res2 = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              projectId: updatablesProject.id,
+              overrides: {
+                groupId: grouping === 'grouped' ? optionalGroup.id : null
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+
+          const firstView = res1.data?.projectMutations.savedViewMutations.createView
+          const secondView = res2.data?.projectMutations.savedViewMutations.createView
+          expect(secondView!.position).to.equal(firstView!.position! + 1000)
+
+          const rest3 = await updateView(
+            {
+              input: {
+                id: firstView!.id,
+                projectId: updatablesProject.id,
+                position: {
+                  // empty input means "move to end"
+                  type: ViewPositionInputType.Between
+                }
+              }
+            },
+            { assertNoErrors: true }
+          )
+          const firstViewAgain =
+            rest3.data?.projectMutations.savedViewMutations.updateView!
+          expect(firstViewAgain.position).to.equal(secondView!.position! + 1000)
+        }
+      )
+
+      itEach(
+        ['ungrouped', 'grouped'],
+        (grouping) =>
+          `should allow updating position between 2 other views and rebalance ${grouping} group when positions get too close`,
+        async (grouping) => {
+          const resourceIdString = models[0].id
+          const projectId = updatablesProject.id
+          const firstViewRes = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              projectId,
+              overrides: {
+                groupId: grouping === 'grouped' ? optionalGroup.id : null
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+          const firstView =
+            firstViewRes.data?.projectMutations.savedViewMutations.createView!
+          expect(firstView.position).to.be.ok
+
+          const secondViewRes = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              projectId,
+              overrides: {
+                groupId: grouping === 'grouped' ? optionalGroup.id : null
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+          const secondView =
+            secondViewRes.data?.projectMutations.savedViewMutations.createView!
+          expect(secondView.position).to.be.eq(firstView.position! + 1000)
+
+          const thirdViewRes = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              projectId,
+              overrides: {
+                groupId: grouping === 'grouped' ? optionalGroup.id : null
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+          const thirdView =
+            thirdViewRes.data?.projectMutations.savedViewMutations.createView!
+          expect(thirdView.position).to.be.eq(secondView.position! + 1000)
+
+          // API doesnt allow direct control over position, so
+          // we need to do this directly in DB
+          const updateViewDb = updateSavedViewRecordFactory({ db })
+          const newFixablePos = firstView.position! + MINIMUM_POSITION_GAP
+          await updateViewDb({
+            id: secondView.id,
+            projectId: secondView.projectId,
+            update: {
+              position: newFixablePos
+            }
+          })
+
+          // Now lets update the third view to be in the middle, and recalculation should happen
+          const thirdViewAgainRes = await updateView(
+            {
+              input: {
+                id: thirdView.id,
+                projectId: updatablesProject.id,
+                position: {
+                  type: ViewPositionInputType.Between,
+                  beforeViewId: firstView.id,
+                  afterViewId: secondView.id
+                }
+              }
+            },
+            {
+              assertNoErrors: true
+            }
+          )
+          const middleView =
+            thirdViewAgainRes.data?.projectMutations.savedViewMutations.updateView!
+          expect(middleView.position).to.be.ok
+
+          // Now list that "group" again, check that all 3 views are there
+          // and have fixed positions
+          const groupWithViews =
+            grouping === 'grouped'
+              ? await getGroup(
+                  {
+                    groupId: optionalGroup.id,
+                    projectId: updatablesProject.id
+                  },
+                  { assertNoErrors: true }
+                ).then((r) => r.data?.project.savedViewGroup)
+              : await getProjectUngroupedViewGroup(
+                  {
+                    projectId: updatablesProject.id,
+                    input: { resourceIdString }
+                  },
+                  { assertNoErrors: true }
+                ).then((r) => r.data?.project.ungroupedViewGroup)
+
+          expect(groupWithViews).to.be.ok
+          expect(
+            groupWithViews?.views.items.filter((v) =>
+              [firstView.id, secondView.id, middleView.id].includes(v.id)
+            ).length
+          ).to.be.eq(3)
+
+          let prevPosition: number | undefined = undefined
+          for (const view of groupWithViews?.views.items || []) {
+            if (!isUndefined(prevPosition)) {
+              expect(view.position).to.be.eq(prevPosition - 1000)
+            }
+
+            prevPosition = view.position
+          }
         }
       )
 
