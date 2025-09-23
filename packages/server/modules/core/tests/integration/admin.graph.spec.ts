@@ -1,6 +1,6 @@
 import type { BasicTestUser } from '@/test/authHelper'
 import { createTestUser } from '@/test/authHelper'
-import type { TestApolloServer } from '@/test/graphqlHelper'
+import type { ExecuteOperationResponse, TestApolloServer } from '@/test/graphqlHelper'
 import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { expect } from 'chai'
@@ -10,56 +10,117 @@ import { getPendingVerificationByEmailFactory } from '@/modules/emails/repositor
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { db } from '@/db/knex'
 import { AdminMutationsDocument } from '@/modules/core/graph/generated/graphql'
+import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
+
+const testForbiddenResponse = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  result: ExecuteOperationResponse<Record<string, any>>
+) => {
+  expect(result.errors, 'This should have failed').to.exist
+  expect(result.errors!.length).to.be.above(0)
+  expect(result.errors![0].extensions!.code, JSON.stringify(result.errors)).to.match(
+    /(STREAM_INVALID_ACCESS_ERROR|FORBIDDEN|UNAUTHORIZED_ACCESS_ERROR)/
+  )
+}
 
 describe('Server Admin GraphQL', () => {
   const serverAdminUser: BasicTestUser = {
     id: '',
-    email: '',
-    verified: false,
+    email: createRandomEmail(),
     name: 'I am Admin',
     role: Roles.Server.Admin
   }
 
-  const basicUser: BasicTestUser = {
+  const regularServerUser = {
     id: '',
-    email: '',
-    verified: false,
-    name: 'I am User',
+    email: createRandomEmail(),
+    name: 'regular server user',
     role: Roles.Server.User
   }
-
-  let apollo: TestApolloServer
+  const archivedUser = {
+    id: '',
+    email: createRandomEmail(),
+    name: 'archived user',
+    role: Roles.Server.ArchivedUser
+  }
+  const unaffiliatedUser = {
+    id: '',
+    email: createRandomEmail(),
+    name: 'unaffiliated user',
+    role: Roles.Server.Guest
+  }
 
   before(async () => {
     await beforeEachContext()
     await createTestUser(serverAdminUser)
-    await createTestUser(basicUser)
-    apollo = await testApolloServer({ authUserId: serverAdminUser.id })
+    await createTestUser(regularServerUser)
+    await createTestUser(archivedUser)
+    await createTestUser(unaffiliatedUser)
   })
 
-  it('verify another users email', async () => {
-    const userFromDbBefore = await getUserFactory({ db })(basicUser.id)
-    expect(userFromDbBefore).to.be.ok
-    expect(userFromDbBefore!.verified).to.be.false
+  describe('updateEmailVerification', () => {
+    describe('when attempting to verify another users email', () => {
+      const testCases = [
+        { user: serverAdminUser, canVerify: true },
+        { user: regularServerUser, canVerify: false },
+        { user: archivedUser, canVerify: false },
+        { user: unaffiliatedUser, canVerify: false }
+      ]
 
-    const verifyRes = await apollo.execute(AdminMutationsDocument, {
-      input: { email: basicUser.email }
+      testCases.forEach(({ user: testUser, canVerify }) => {
+        let apollo: TestApolloServer
+        before(async () => {
+          apollo = await testApolloServer({
+            authUserId: testUser?.id
+          })
+        })
+
+        it(`a ${testUser.role} is ${canVerify ? 'allowed' : 'forbidden'}`, async () => {
+          const userToVerify = {
+            id: '',
+            email: createRandomEmail(),
+            name: 'unverified user',
+            role: Roles.Server.Guest,
+            verified: false
+          }
+          await createTestUser(userToVerify)
+
+          const userFromDbBefore = await getUserFactory({ db })(userToVerify.id)
+          expect(userFromDbBefore).to.be.ok
+          expect(userFromDbBefore!.verified).to.be.false
+
+          const verifyRes = await apollo.execute(AdminMutationsDocument, {
+            input: { email: userToVerify.email }
+          })
+          if (!canVerify) {
+            testForbiddenResponse(verifyRes)
+            return
+          }
+
+          expect(verifyRes).to.not.haveGraphQLErrors()
+          expect(verifyRes.data?.admin.updateEmailVerification).to.equal(canVerify)
+
+          const userEmail = await findEmailFactory({ db })({
+            email: userToVerify.email
+          })
+          expect(userEmail).to.be.ok
+          expect(userEmail!.verified).to.equal(canVerify)
+
+          const pendingVerifications = await getPendingVerificationByEmailFactory({
+            db,
+            verificationTimeoutMinutes: 100 // we don't care about timeout here
+          })({ email: userToVerify.email })
+          if (canVerify) {
+            expect(pendingVerifications).to.be.undefined
+          } else {
+            expect(pendingVerifications).to.not.be.undefined
+          }
+
+          const user = await getUserFactory({ db })(userToVerify.id)
+          expect(user).to.be.ok
+          expect(user!.verified).to.equal(canVerify)
+        })
+      })
     })
-    expect(verifyRes).to.not.haveGraphQLErrors()
-    expect(verifyRes.data?.admin.updateEmailVerification).to.be.true
-
-    const userEmail = await findEmailFactory({ db })({ email: basicUser.email })
-    expect(userEmail).to.be.ok
-    expect(userEmail!.verified).to.be.true
-
-    const pendingVerifications = await getPendingVerificationByEmailFactory({
-      db,
-      verificationTimeoutMinutes: 100 // we don't care about timeout here
-    })({ email: basicUser.email })
-    expect(pendingVerifications).to.be.null
-
-    const user = await getUserFactory({ db })(basicUser.id)
-    expect(user).to.be.ok
-    expect(user!.verified).to.be.true
   })
 })
