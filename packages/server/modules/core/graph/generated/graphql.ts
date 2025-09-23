@@ -1083,7 +1083,6 @@ export type CreateSavedViewGroupInput = {
 
 export type CreateSavedViewGroupTokenInput = {
   groupId: Scalars['ID']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
   projectId: Scalars['ID']['input'];
 };
 
@@ -4658,6 +4657,7 @@ export type UpdateModelInput = {
 
 export type UpdateSavedViewGroupInput = {
   groupId: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
   projectId: Scalars['ID']['input'];
 };
 
