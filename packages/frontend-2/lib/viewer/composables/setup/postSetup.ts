@@ -433,7 +433,7 @@ function useViewerCameraIntegration() {
       spotlightUserSessionId
     }
   } = useInjectedViewerState()
-  const { forceViewToViewerSync } = useCameraUtilities()
+  const { forceViewToViewerSync, setView, cameraController } = useCameraUtilities()
 
   const hasInitialLoadFired = ref(false)
 
@@ -499,9 +499,9 @@ function useViewerCameraIntegration() {
     }
 
     if (newVal) {
-      instance.setOrthoCameraOn()
+      cameraController.setOrthoCameraOn()
     } else {
-      instance.setPerspectiveCameraOn()
+      cameraController.setPerspectiveCameraOn()
     }
 
     // reset camera pos, cause we've switched cameras now and it might not have the new ones
@@ -524,7 +524,7 @@ function useViewerCameraIntegration() {
       if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
         return
       }
-      instance.setView({
+      setView({
         position: newVal,
         target: target.value
       })
@@ -539,7 +539,7 @@ function useViewerCameraIntegration() {
         return
       }
 
-      instance.setView({
+      setView({
         position: position.value,
         target: newVal
       })
