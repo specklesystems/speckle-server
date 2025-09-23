@@ -87,10 +87,14 @@
               New model
             </FormButton>
           </div>
+          <div>
+            <FormButton @click="showNewAccSync = true">New sync</FormButton>
+          </div>
         </div>
       </div>
     </div>
     <ProjectModelsAdd v-model:open="showNewDialog" :project="project" />
+    <ProjectPageAccDialogCreateSync :open="showNewAccSync" :project-id="project?.id" />
   </div>
 </template>
 <script setup lang="ts">
@@ -180,6 +184,7 @@ const onViewAllClick = () => {
 }
 
 const showNewDialog = ref(false)
+const showNewAccSync = ref(false)
 
 const canCreateModel = useCanCreateModel({
   project: computed(() => props.project)
