@@ -145,10 +145,7 @@ export const useDraggableViewTargetView = (params: {
             skipToast: true,
             onFullResult: (res, success) => {
               if (success) {
-                triggerNotification({
-                  type: ToastNotificationType.Success,
-                  title: `Moved "${view.name}" to position of "${params.view.value.name}"`
-                })
+                // no notification here, this can get noisy
                 params.onMoved?.()
               } else {
                 triggerNotification({
@@ -185,7 +182,8 @@ export const useDraggableViewTargetView = (params: {
     const classParts: string[] = ['draggable-view-target']
 
     if (isDragOver.value) {
-      classParts.push('rounded-md ring-2 ring-primary ring-opacity-50 bg-primary/5')
+      // classParts.push('rounded-md ring-2 ring-primary ring-opacity-50 bg-primary/5')
+      classParts.push('bg-foundation-2')
     }
 
     return classParts.join(' ')
@@ -207,15 +205,9 @@ graphql(`
 export const useDraggableViewTargetGroup = (params: {
   group: Ref<UseDraggableViewTargetGroup_SavedViewGroupFragment>
   onMoved?: () => void
-  enabled?: boolean
+  enabled?: boolean | Ref<boolean>
 }) => {
-  if (params.enabled === false) {
-    return {
-      on: {},
-      classes: computed(() => 'draggable-view-target')
-    }
-  }
-
+  const enabled = computed(() => unref(params.enabled) ?? true)
   const isDragOver = ref(false)
   const dragCounter = ref(0)
   const { triggerNotification } = useGlobalToast()
@@ -223,12 +215,14 @@ export const useDraggableViewTargetGroup = (params: {
 
   const vOn = {
     dragover: (event: DragEvent) => {
+      if (!enabled.value) return
       if (!event.dataTransfer) return
 
       event.preventDefault()
       event.dataTransfer.dropEffect = 'move'
     },
     drop: async (event: DragEvent) => {
+      if (!enabled.value) return
       if (!event.dataTransfer) return
 
       event.preventDefault()
@@ -286,11 +280,15 @@ export const useDraggableViewTargetGroup = (params: {
       }
     },
     dragenter: (event: DragEvent) => {
+      if (!enabled.value) return
+
       event.preventDefault()
       dragCounter.value++
       isDragOver.value = true
     },
     dragleave: () => {
+      if (!enabled.value) return
+
       dragCounter.value--
       if (dragCounter.value === 0) {
         isDragOver.value = false
@@ -301,11 +299,18 @@ export const useDraggableViewTargetGroup = (params: {
   const classes = computed(() => {
     const classParts: string[] = ['draggable-view-target']
 
-    if (isDragOver.value) {
+    if (isDragOver.value && enabled.value) {
       classParts.push('rounded-md ring-2 ring-primary ring-opacity-50 bg-primary/5')
     }
 
     return classParts.join(' ')
+  })
+
+  watch(enabled, (newVal, oldVal) => {
+    if (newVal && !oldVal) {
+      dragCounter.value = 0
+      isDragOver.value = false
+    }
   })
 
   return {

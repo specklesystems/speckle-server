@@ -14,6 +14,7 @@
       :group="group"
       :search="search"
       :views-type="viewsType"
+      @view-count-updated="(count) => (viewCount = count)"
     />
     <template #title-actions>
       <div
@@ -141,6 +142,9 @@ const props = defineProps<{
   search?: string
 }>()
 
+const open = defineModel<boolean>('open')
+const viewCount = ref(0)
+
 const { triggerNotification } = useGlobalToast()
 const isLoading = useMutationLoading()
 const createView = useCreateSavedView()
@@ -153,11 +157,10 @@ const { on, classes: dropZoneClasses } = useDraggableViewTargetGroup({
       open.value = true
     }
   },
-  enabled: false // TODO:
+  enabled: computed(() => !open.value || !viewCount.value)
 })
 
 const renameMode = defineModel<boolean>('renameMode')
-const open = defineModel<boolean>('open')
 const showMenu = ref(false)
 const menuId = useId()
 
