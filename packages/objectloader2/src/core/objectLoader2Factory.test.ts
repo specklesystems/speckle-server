@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { ObjectLoader2Factory } from './objectLoader2Factory.js'
 import { Base } from '../types/types.js'

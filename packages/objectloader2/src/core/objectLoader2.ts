@@ -1,5 +1,4 @@
-import { MemoryCache } from '../deferment/MemoryCache.js'
-import { Deferment, DefermentManager } from '../deferment/defermentManager.js'
+import { Deferment } from '../deferment/defermentManager.js'
 import AggregateQueue from '../queues/aggregateQueue.js'
 import AsyncGeneratorQueue from '../queues/asyncGeneratorQueue.js'
 import { CustomLogger, take } from '../types/functions.js'
