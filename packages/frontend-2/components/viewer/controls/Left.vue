@@ -289,7 +289,7 @@ const throttledHandleMouseMove = useThrottleFn((event: MouseEvent) => {
     )
     panelExtensionWidth.value = newWidth
   }
-}, 150)
+}, 50)
 
 if (import.meta.client) {
   useResizeObserver(scrollableControlsContainer, (entries) => {
