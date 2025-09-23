@@ -1,3 +1,4 @@
+import { DefermentManager, MemoryOnlyDeferment } from '../deferment/defermentManager.js'
 import {
   CustomLogger,
   Fetcher,
@@ -31,6 +32,7 @@ export class ObjectLoader2Factory {
     })
     const loader = new ObjectLoader2({
       rootId: root.id,
+      deferments: new MemoryOnlyDeferment(records),
       database: new MemoryDatabase({ items: records }),
       downloader: new MemoryDownloader(root.id, records)
     })
@@ -76,8 +78,10 @@ export class ObjectLoader2Factory {
         'Disabled persistent caching for ObjectLoader2.  Using MemoryDatabase'
       )
     }
+    const logger = log || (((): void => {}) as CustomLogger)
     const loader = new ObjectLoader2({
       rootId: params.objectId,
+      deferments: new DefermentManager(logger),
       downloader: new ServerDownloader({
         serverUrl: params.serverUrl,
         streamId: params.streamId,
@@ -86,10 +90,10 @@ export class ObjectLoader2Factory {
         headers: params.headers,
         fetch: params.options?.fetch,
         attributeMask: params.attributeMask,
-        logger: log || ((): void => {})
+        logger
       }),
       database,
-      logger: log
+      logger
     })
     return loader
   }

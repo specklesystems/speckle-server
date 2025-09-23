@@ -3,15 +3,49 @@ import { CustomLogger } from '../types/functions.js'
 import { Item, Base } from '../types/types.js'
 import { MemoryCache } from './MemoryCache.js'
 
-export class DefermentManager {
+export interface Deferment {
+  defer(params: { id: string }): [Promise<Base>, boolean]
+  undefer(item: Item, requestItem: (id: string) => void): void
+  dispose(): void
+}
+
+export class MemoryOnlyDeferment implements Deferment {
+  
+    private items: Map<string, Base>
+  
+  constructor(items: Map<string, Base>) {
+    this.items = items
+  }
+  defer(params: { id: string }): [Promise<Base>, boolean] {
+    const item = this.items.get(params.id)
+    if (item) {
+      return [Promise.resolve(item), true]
+    }
+    return [Promise.reject(new Error('Not found in cache')), false]
+  }
+  undefer(): void {
+    //no-op
+  }
+  dispose(): void {
+    //no-op
+  }
+}
+
+export class DefermentManager implements Deferment {
   private outstanding: Map<string, DeferredBase> = new Map()
   private logger: CustomLogger
   private disposed = false
   private cache: MemoryCache
 
-  constructor(cache: MemoryCache, logger: CustomLogger) {
-    this.cache = cache
+  constructor(logger: CustomLogger) {
     this.logger = logger
+    this.cache = new MemoryCache(
+      {
+        maxSizeInMb: 500, // 500 MB
+        ttlms: 5_000 // 5 seconds
+      },
+      logger
+    )
   }
 
   defer(params: { id: string }): [Promise<Base>, boolean] {
@@ -55,5 +89,6 @@ export class DefermentManager {
     this.disposed = true
     this.logger('cleared deferments, left', this.outstanding.size)
     this.outstanding.clear()
+    this.cache.dispose()
   }
 }
