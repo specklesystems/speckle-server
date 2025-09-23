@@ -38,13 +38,15 @@ export class DefermentManager implements Deferment {
 
   constructor(logger: CustomLogger, cache?: MemoryCache) {
     this.logger = logger
-    this.cache = cache || new MemoryCache(
-      {
-        maxSizeInMb: 500, // 500 MB
-        ttlms: 5_000 // 5 seconds
-      },
-      logger
-    )
+    this.cache =
+      cache ||
+      new MemoryCache(
+        {
+          maxSizeInMb: 500, // 500 MB
+          ttlms: 5_000 // 5 seconds
+        },
+        logger
+      )
   }
 
   defer(params: { id: string }): [Promise<Base>, boolean] {
