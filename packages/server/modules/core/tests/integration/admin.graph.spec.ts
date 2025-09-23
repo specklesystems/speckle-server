@@ -43,7 +43,7 @@ describe('Server Admin GraphQL', () => {
     expect(userFromDbBefore!.verified).to.be.false
 
     const verifyRes = await apollo.execute(AdminMutationsDocument, {
-      input: { email: serverAdminUser.email }
+      input: { email: basicUser.email }
     })
     expect(verifyRes).to.not.haveGraphQLErrors()
     expect(verifyRes.data?.admin.updateEmailVerification).to.be.true
