@@ -33,9 +33,8 @@ import {
   prettyFileSize,
   resolveFileExtension
 } from '@speckle/ui-components'
-
 import dayjs from 'dayjs'
-import { uniqBy } from 'lodash-es'
+import { trimEnd, uniqBy } from 'lodash-es'
 
 export const FailedFileImportJobError = <const>{
   InvalidFileType: 'InvalidFileType',
@@ -122,9 +121,9 @@ export const useFailedFileImportJobUtils = () => {
         return `The file you tried to upload (${fileExtension}) is not a supported file type. Only ${accept.value} are supported by this server.`
       }
       case FailedFileImportJobError.ImportFailed:
+        return trimEnd(job.error.message, '.') + '.'
       case FailedFileImportJobError.UploadFailed: {
-        const isImport = job.error.type === FailedFileImportJobError.ImportFailed
-        const base = `The file ${isImport ? 'import' : 'upload'} failed unexpectedly.`
+        const base = `The file upload failed unexpectedly.`
         return base
       }
       default:
