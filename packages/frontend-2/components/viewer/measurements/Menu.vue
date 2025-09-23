@@ -21,14 +21,14 @@
         />
       </span>
 
-      <span class="flex items-center pt-2">
+      <span class="flex items-center">
         <FormCheckbox
-          name="Chain Measurements"
+          name="Chain measurements"
           hide-label
           :model-value="measurementOptions.chain"
           @update:model-value="toggleMeasurementsChaining"
         />
-        <label class="text-body-2xs" for="chain">Chain Measurements</label>
+        <span class="text-body-2xs mt-3">Chain measurements</span>
       </span>
 
       <span class="flex items-center pt-1">
@@ -38,7 +38,7 @@
           :model-value="measurementOptions.vertexSnap"
           @update:model-value="toggleMeasurementsSnap"
         />
-        <label class="text-body-2xs" for="snap">Snap to vertices</label>
+        <span class="text-body-2xs mt-3">Snap to vertices</span>
       </span>
     </ViewerLayoutPanel>
     <ViewerLayoutPanel class="mt-1 p-1 pr-2">

@@ -1,5 +1,5 @@
 import { SpeckleViewer } from '@speckle/shared'
-import type { TreeNode, ViewMode } from '@speckle/viewer'
+import { MeasurementsExtension, type TreeNode, type ViewMode } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { useActiveElement } from '@vueuse/core'
 import { isString } from 'lodash-es'
@@ -283,6 +283,8 @@ export function useThreadUtilities() {
 
 export function useMeasurementUtilities() {
   const state = useInjectedViewerState()
+  const measurementsExtension =
+    state.viewer.instance.getExtension(MeasurementsExtension)
 
   const measurementOptions = computed(() => state.ui.measurement.options.value)
   const hasMeasurements = computed(
@@ -298,9 +300,7 @@ export function useMeasurementUtilities() {
   }
 
   const removeActiveMeasurement = () => {
-    if (state.viewer.instance?.removeMeasurement) {
-      state.viewer.instance.removeMeasurement()
-    }
+    measurementsExtension.removeMeasurement()
   }
 
   const clearMeasurements = () => {
