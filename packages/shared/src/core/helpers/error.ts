@@ -62,11 +62,15 @@ export const errorToString = (e: unknown): string => {
   }
 
   let ret = e.stack || e.message || String(e)
-  const causeProps = ['cause', 'jse_cause'] as const
+  const causeProps = ['jse_cause', 'cause'] as const
 
   for (const prop of causeProps) {
     if (prop in e) {
-      ret += `\nCause: ${errorToString(get(e, prop))}`
+      const cause = get(e, prop)
+      if (!cause) continue
+
+      ret += `\nCause: ${errorToString(cause)}`
+      break // avoid chaining multiple causes
     }
   }
 

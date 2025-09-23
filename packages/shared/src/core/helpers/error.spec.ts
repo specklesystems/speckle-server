@@ -91,7 +91,7 @@ describe('errorToString', () => {
     expect(causeCount).toBe(2)
   })
 
-  it('should handle both cause and jse_cause properties', () => {
+  it('should prioritize jse_cause over cause when both are present', () => {
     const jseCause = new Error('JSE cause')
     const stdCause = new Error('Standard cause')
 
@@ -104,12 +104,40 @@ describe('errorToString', () => {
 
     const result = errorToString(error)
     expect(result).toContain('Main error')
-    expect(result).toContain('Standard cause')
     expect(result).toContain('JSE cause')
+    // Should NOT contain cause since jse_cause takes priority
+    expect(result).not.toContain('Standard cause')
 
-    // Should have two "Cause:" labels
+    // Should have only one "Cause:" label
     const causeCount = (result.match(/Cause: /g) || []).length
-    expect(causeCount).toBe(2)
+    expect(causeCount).toBe(1)
+  })
+
+  it('should handle cause when jse_cause is not present', () => {
+    const stdCause = new Error('Standard cause')
+
+    const error = new Error('Main error') as Error & { cause?: Error }
+    error.cause = stdCause
+
+    const result = errorToString(error)
+    expect(result).toContain('Main error')
+    expect(result).toContain('Standard cause')
+
+    // Should have one "Cause:" label
+    const causeCount = (result.match(/Cause: /g) || []).length
+    expect(causeCount).toBe(1)
+  })
+
+  it('should handle error with no cause properties', () => {
+    const error = new Error('Error without cause')
+
+    const result = errorToString(error)
+    expect(result).toContain('Error without cause')
+    expect(result).not.toContain('Cause:')
+
+    // Should have no "Cause:" labels
+    const causeCount = (result.match(/Cause: /g) || []).length
+    expect(causeCount).toBe(0)
   })
 
   it('should handle non-Error causes', () => {
