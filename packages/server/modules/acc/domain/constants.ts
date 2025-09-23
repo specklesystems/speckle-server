@@ -8,7 +8,7 @@ export const ImporterAutomateFunctions = {
   },
   rvt: {
     functionId: '0659f470f5',
-    functionReleaseId: '1bf21f4f67'
+    functionReleaseId: 'ffb6e03aa7'
   }
 }
 
