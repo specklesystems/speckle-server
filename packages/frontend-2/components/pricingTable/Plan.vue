@@ -384,14 +384,7 @@ const badgeText = computed(() =>
 )
 
 const displayAddons = computed(() => {
-  if (props.plan === WorkspacePlans.Team) {
-    return [
-      {
-        title: 'Unlimited projects and models',
-        tooltip: 'You can purchase this in the next step'
-      }
-    ]
-  } else if (props.plan === WorkspacePlans.Pro) {
+  if (props.plan === WorkspacePlans.Pro) {
     return [
       {
         title: 'Unlimited projects and models',
