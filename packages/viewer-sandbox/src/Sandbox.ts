@@ -58,7 +58,6 @@ import {
   ObjectLoader2Flags,
   ObjectLoader2Factory
 } from '@speckle/objectloader2'
-import { SectionCaps } from './Extensions/SectionCaps.ts/SectionCaps'
 import { MeasurementType } from '@speckle/shared/viewer/state'
 
 export default class Sandbox {
@@ -434,8 +433,6 @@ export default class Sandbox {
       }
       this.viewer.getExtension(SectionTool).setBox(box)
       this.viewer.getExtension(SectionTool).toggle()
-      const sectionCaps = this.viewer.getExtension(SectionCaps)
-      if (sectionCaps) sectionCaps.enabled = !sectionCaps.enabled
     })
 
     const toggleSectionBoxVisibility = this.tabs.pages[0].addButton({
