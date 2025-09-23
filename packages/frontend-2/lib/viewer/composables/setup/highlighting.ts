@@ -9,12 +9,13 @@ import {
 } from '@speckle/viewer'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { useOnViewerLoadComplete } from '~/lib/viewer/composables/viewer'
+import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
 
 /**
  * Highlighting extension that replicates LegacyViewer's HighlightExtension
  * Uses SelectionExtension but disables default events for UI-only highlighting
  */
-class HighlightExtension extends SelectionExtension {
+export class HighlightExtension extends SelectionExtension {
   public constructor(viewer: IViewer, cameraProvider: CameraController) {
     super(viewer, cameraProvider)
 
@@ -35,6 +36,10 @@ class HighlightExtension extends SelectionExtension {
     }
     this.options = highlightMaterialData
   }
+
+  /** Disable default click events - highlighting is controlled through state only */
+  protected override onObjectClicked() {}
+  protected override onObjectDoubleClick() {}
 }
 
 /**
@@ -44,23 +49,22 @@ class HighlightExtension extends SelectionExtension {
 export const useHighlightingPostSetup = () => {
   const {
     ui: { highlightedObjectIds },
-    viewer: { instance }
+    viewer: { instance },
+    pageType
   } = useInjectedViewerState()
 
-  const highlightExtension = ref<HighlightExtension | null>(null)
+  if (pageType.value === ViewerRenderPageType.Presentation) return
+
+  // Create the highlighting extension once during setup
+  instance.createExtension(HighlightExtension)
 
   // Get the highlighting extension instance
-  const getHighlightExtension = () => {
-    if (!highlightExtension.value) {
-      highlightExtension.value = instance.createExtension(HighlightExtension)
-    }
-    return highlightExtension.value
-  }
+  const getHighlightExtensionInstance = () => instance.getExtension(HighlightExtension)
 
   useOnViewerLoadComplete(
     ({ isInitial }) => {
       if (!isInitial) return
-      getHighlightExtension()
+      getHighlightExtensionInstance()
     },
     { initialOnly: true }
   )
@@ -69,7 +73,7 @@ export const useHighlightingPostSetup = () => {
   watch(
     highlightedObjectIds,
     (newIds, oldIds) => {
-      const extension = getHighlightExtension()
+      const extension = getHighlightExtensionInstance()
       if (!extension) return
 
       // Clear all current highlights if new list is empty
@@ -79,8 +83,6 @@ export const useHighlightingPostSetup = () => {
       }
 
       if (oldIds && isEqual(newIds, oldIds)) return
-
-      // Clear and re-select to avoid accumulation
       extension.clearSelection()
       if (newIds.length > 0) {
         extension.selectObjects(newIds)

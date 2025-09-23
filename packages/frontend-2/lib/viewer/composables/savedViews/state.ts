@@ -6,15 +6,18 @@ import {
 } from '~/lib/viewer/composables/serialization'
 import {
   useInjectedViewerState,
-  type InitialSetupState
+  type InitialSetupState,
+  type UseSetupViewerParams
 } from '~/lib/viewer/composables/setup'
 import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
+import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
 
 /**
  * Invoke in postSetup
  */
 export const useViewerSavedViewIntegration = () => {
   const {
+    pageType,
     resources: {
       request: {
         savedView: { id: savedViewId, loadOriginal }
@@ -77,6 +80,9 @@ export const useViewerSavedViewIntegration = () => {
   }
 
   const reset = async () => {
+    // No such thing as a reset in presentation mode - we always have a view active
+    if (pageType.value === ViewerRenderPageType.Presentation) return
+
     savedViewId.value = null
     loadOriginal.value = false
     savedViewStateId.value = undefined
@@ -88,23 +94,20 @@ export const useViewerSavedViewIntegration = () => {
     await update({ settings })
   })
 
-  // // Apply saved view state on initial load
-  // useOnViewerLoadComplete(async ({ isInitial }) => {
-  //   if (isInitial) {
-  //     await apply()
-  //   }
-  // })
-
   // Saved view changed, apply
-  watch(savedView, async (newVal, oldVal) => {
-    if (!newVal || newVal.id === oldVal?.id) return
+  watch(
+    savedView,
+    async (newVal, oldVal) => {
+      if (!newVal || newVal.id === oldVal?.id) return
 
-    const state = validState(newVal.viewerState)
-    if (!state) return
+      const state = validState(newVal.viewerState)
+      if (!state) return
 
-    // If the saved view has changed, apply it
-    await apply()
-  })
+      // If the saved view has changed, apply it
+      await apply()
+    },
+    { immediate: true }
+  )
 
   watch(
     () => serializedStateId.value,
@@ -136,30 +139,37 @@ export const useBuildSavedViewsUIState = () => {
   }
 }
 
-export const useBuildSavedViewsCoreState = (state: InitialSetupState) => {
+export const useBuildSavedViewsCoreState = (
+  state: InitialSetupState,
+  initParams: UseSetupViewerParams
+) => {
   const {
     urlHashState: { savedView: urlHashStateSavedViewSettings }
   } = state
 
-  const savedViewId = ref<string | null | undefined>(undefined)
-  const loadOriginal = ref<boolean>(false)
+  const savedViewId =
+    initParams?.savedView?.id || ref<string | null | undefined>(undefined)
+  const loadOriginal = initParams?.savedView?.loadOriginal || ref<boolean>(false)
 
-  // Usually this watcher would happen in post-setup, but its critical that this is fired
-  // early, before any of the GQL queries fire:
-  // Url hash state -> core source of truth sync
-  watch(
-    urlHashStateSavedViewSettings,
-    async (newVal) => {
-      if ((newVal?.id || null) !== (savedViewId.value || null)) {
-        savedViewId.value = newVal?.id || null
-      }
+  // Dont care about urlHashState in presentation mode
+  if (state.pageType.value !== ViewerRenderPageType.Presentation) {
+    // Usually this watcher would happen in post-setup, but its critical that this is fired
+    // early, before any of the GQL queries fire:
+    // Url hash state -> core source of truth sync
+    watch(
+      urlHashStateSavedViewSettings,
+      async (newVal) => {
+        if ((newVal?.id || null) !== (savedViewId.value || null)) {
+          savedViewId.value = newVal?.id || null
+        }
 
-      if ((newVal?.loadOriginal || false) !== loadOriginal.value) {
-        loadOriginal.value = newVal?.loadOriginal || false
-      }
-    },
-    { immediate: true }
-  )
+        if ((newVal?.loadOriginal || false) !== loadOriginal.value) {
+          loadOriginal.value = newVal?.loadOriginal || false
+        }
+      },
+      { immediate: true }
+    )
+  }
 
   return {
     id: savedViewId,

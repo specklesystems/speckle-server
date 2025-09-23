@@ -35,7 +35,10 @@ import {
   useViewerCameraTracker,
   useViewerEventListener
 } from '~~/lib/viewer/composables/viewer'
-import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commentManagement'
+import {
+  useCommentContext,
+  useViewerCommentUpdateTracking
+} from '~~/lib/viewer/composables/commentManagement'
 import { getCacheId } from '~~/lib/common/helpers/graphql'
 import {
   useViewerOpenedThreadUpdateEmitter,
@@ -64,7 +67,10 @@ import {
 } from '~/lib/viewer/composables/setup/filters'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { useFilteringSetup } from '~/lib/viewer/composables/filtering/setup'
-import { useHighlightingPostSetup } from '~/lib/viewer/composables/setup/highlighting'
+import {
+  useHighlightingPostSetup,
+  HighlightExtension
+} from '~/lib/viewer/composables/setup/highlighting'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -563,17 +569,33 @@ function useViewerFiltersIntegration() {
       ).filter(isNonNullable)
       if (arraysEqual(newIds, oldIds)) return
 
-      state.ui.highlightedObjectIds.value = []
-
       const selectionExtension = instance.getExtension(SelectionExtension)
+      const currentViewerSelection = selectionExtension
+        .getSelectedObjects()
+        .map((obj) => obj.id as string)
 
-      if (!newVal.length) {
-        selectionExtension.clearSelection()
+      if (
+        currentViewerSelection.length === newIds.length &&
+        difference(currentViewerSelection, newIds).length === 0
+      ) {
         return
       }
-      selectionExtension.selectObjects(newIds)
+
+      state.ui.highlightedObjectIds.value = []
+      const highlightExtension = instance.getExtension(HighlightExtension)
+      if (highlightExtension) {
+        highlightExtension.clearSelection()
+      }
+
+      selectionExtension.clearSelection()
+      if (newVal.length > 0) {
+        selectionExtension.selectObjects(newIds)
+      }
     },
-    { immediate: true, flush: 'sync' }
+    {
+      immediate: true,
+      flush: 'sync'
+    }
   )
 }
 
@@ -841,6 +863,14 @@ function useViewerCursorIntegration() {
   })
 }
 
+const useCommentContextIntegration = () => {
+  const { cleanupThreadContext } = useCommentContext()
+
+  onBeforeUnmount(() => {
+    cleanupThreadContext()
+  })
+}
+
 export function useViewerPostSetup() {
   if (import.meta.server) return
   useViewerObjectAutoLoading()
@@ -866,5 +896,6 @@ export function useViewerPostSetup() {
   useViewerTreeIntegration()
   useViewModesPostSetup()
   useHighlightingPostSetup()
+  useCommentContextIntegration()
   setupDebugMode()
 }
