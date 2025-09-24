@@ -151,6 +151,12 @@ export type AdminMutations = {
   __typename?: 'AdminMutations';
   giveAccessToWorkspaceFeature: Scalars['Boolean']['output'];
   removeAccessToWorkspaceFeature: Scalars['Boolean']['output'];
+  /**
+   * A server administrator can update the verification status of an user's email.
+   * The server administrator is recommended to confirm ownership of the email address
+   * with the user before performing this action.
+   */
+  updateEmailVerification: Scalars['Boolean']['output'];
   updateWorkspacePlan: Scalars['Boolean']['output'];
 };
 
@@ -162,6 +168,11 @@ export type AdminMutationsGiveAccessToWorkspaceFeatureArgs = {
 
 export type AdminMutationsRemoveAccessToWorkspaceFeatureArgs = {
   input: AdminAccessToWorkspaceFeatureInput;
+};
+
+
+export type AdminMutationsUpdateEmailVerificationArgs = {
+  input: AdminUpdateEmailVerificationInput;
 };
 
 
@@ -207,6 +218,12 @@ export type AdminQueriesWorkspaceListArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
   query?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AdminUpdateEmailVerificationInput = {
+  email: Scalars['String']['input'];
+  /** Defaults to true. If set to false, the email will be marked as unverified. */
+  verified?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type AdminUpdateWorkspacePlanInput = {
@@ -9306,6 +9323,7 @@ export type AdminInviteListFieldArgs = {
 export type AdminMutationsFieldArgs = {
   giveAccessToWorkspaceFeature: AdminMutationsGiveAccessToWorkspaceFeatureArgs,
   removeAccessToWorkspaceFeature: AdminMutationsRemoveAccessToWorkspaceFeatureArgs,
+  updateEmailVerification: AdminMutationsUpdateEmailVerificationArgs,
   updateWorkspacePlan: AdminMutationsUpdateWorkspacePlanArgs,
 }
 export type AdminQueriesFieldArgs = {
