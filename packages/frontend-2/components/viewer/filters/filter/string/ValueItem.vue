@@ -2,9 +2,9 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <div class="px-1">
+  <div class="px-1 h-full">
     <div
-      class="group/checkbox flex items-center justify-between gap-2 text-body-3xs py-0.5 px-2 hover:bg-highlight-1 rounded-md cursor-pointer"
+      class="group/checkbox flex items-center justify-between gap-2 text-body-3xs py-0.5 px-2 hover:bg-highlight-1 rounded-md cursor-pointer h-full"
       @click="$emit('toggle')"
       @mouseenter="highlight"
       @mouseleave="unhighlight"
@@ -12,7 +12,7 @@
       <div class="flex items-center min-w-0">
         <!-- Checkbox is purely visual - so pointer-events-none -->
         <FormCheckbox
-          class="pointer-events-none -mt-1"
+          class="pointer-events-none"
           :class="{
             'border-transparent group-hover/checkbox:border-outline-5': !isSelected,
             'opacity-50 dark:!bg-transparent !border dark:!border-outline-5 !group-hover/checkbox:border-outline-5':
@@ -42,7 +42,6 @@
 </template>
 
 <script setup lang="ts">
-import { FormCheckbox } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { getFilterValueCount } from '~/lib/viewer/helpers/filters/utils'
 import type { StringFilterData } from '~/lib/viewer/helpers/filters/types'

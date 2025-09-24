@@ -80,7 +80,11 @@
       </LayoutMenu>
       <div
         v-tippy="
-          getTooltipProps(canUpdate?.authorized ? 'Edit view' : canUpdate?.errorMessage)
+          getTooltipProps(
+            canOpenEditDialog?.authorized
+              ? 'Edit view'
+              : canOpenEditDialog?.errorMessage
+          )
         "
         class="shrink-0 opacity-0 group-hover:opacity-100"
       >
@@ -91,7 +95,7 @@
           hide-text
           name="editView"
           class="shrink-0"
-          :disabled="!canUpdate?.authorized || isLoading"
+          :disabled="!canOpenEditDialog?.authorized"
           @click="onEdit"
         />
       </div>
@@ -188,7 +192,8 @@ const {
   canSetHomeView,
   isHomeView,
   canToggleVisibility,
-  canMove
+  canMove,
+  canOpenEditDialog
 } = useSavedViewValidationHelpers({
   view: computed(() => props.view)
 })

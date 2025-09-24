@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full md:w-auto">
+  <div class="w-full sm:w-auto">
     <div class="fixed inset-0 z-10 md:hidden">
       <div class="absolute inset-0 bg-black/50" />
     </div>
@@ -20,12 +20,6 @@
               </p>
             </div>
           </NuxtLink>
-          <UserAvatar
-            v-if="isLoggedIn"
-            size="sm"
-            class="ml-auto flex-shrink-0"
-            :user="activeUser"
-          />
         </section>
         <section
           class="flex-1 flex justify-center simple-scrollbar overflow-y-auto mt-3 pb-3 px-3"
@@ -59,7 +53,7 @@ graphql(`
   }
 `)
 
-const { isLoggedIn, activeUser } = useActiveUser()
+const { isLoggedIn } = useActiveUser()
 const {
   response: { workspace }
 } = useInjectedPresentationState()

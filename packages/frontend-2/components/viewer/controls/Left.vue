@@ -1,11 +1,11 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <aside
-    class="absolute left-2 lg:left-0 z-50 flex rounded-lg border border-outline-2 bg-foundation px-1 overflow-visible lg:h-full focus-visible:outline-none"
+    class="absolute left-2 z-50 flex rounded-lg border border-outline-2 bg-foundation px-1 overflow-visible focus-visible:outline-none"
     :class="[
       isEmbedEnabled
         ? 'top-[0.5rem]'
-        : 'top-[3.5rem] lg:top-[3rem] lg:rounded-none lg:px-2 lg:max-h-[calc(100dvh-3rem)] lg:border-l-0 lg:border-t-0 lg:border-b-0',
+        : 'top-[3.5rem] lg:top-[3rem] lg:rounded-none lg:px-2 lg:max-h-[calc(100dvh-3rem)] lg:border-l-0 lg:border-t-0 lg:border-b-0 lg:h-full lg:left-0',
       hasActivePanel && 'h-full max-h-[calc(100dvh-8rem)] rounded-r-none'
     ]"
   >
@@ -121,7 +121,7 @@
 
     <!-- Resize handle -->
     <div
-      v-if="activePanel !== 'none'"
+      v-if="activePanel !== 'none' && !isEmbedEnabled"
       ref="resizeHandle"
       class="absolute h-full max-h-[calc(100dvh-3rem)] w-4 transition border-l hover:border-l-[2px] border-outline-2 hover:border-primary hidden lg:flex items-center cursor-ew-resize z-30"
       :style="`left:${width + 52}px;`"
@@ -289,7 +289,7 @@ const throttledHandleMouseMove = useThrottleFn((event: MouseEvent) => {
     )
     panelExtensionWidth.value = newWidth
   }
-}, 150)
+}, 50)
 
 if (import.meta.client) {
   useResizeObserver(scrollableControlsContainer, (entries) => {
