@@ -8,6 +8,7 @@ import type {
   GetGroupSavedViews,
   GetGroupSavedViewsPageItems,
   GetGroupSavedViewsTotalCount,
+  GetNewViewSpecificPosition,
   GetProjectSavedViewGroups,
   GetProjectSavedViewGroupsPageItems,
   GetProjectSavedViewGroupsTotalCount,
@@ -15,6 +16,7 @@ import type {
   GetSavedViewGroup,
   GetStoredViewCount,
   GetStoredViewGroupCount,
+  RebalanceViewPositions,
   RecalculateGroupResourceIds,
   SetNewHomeView,
   StoreSavedView,
@@ -227,11 +229,12 @@ export const createSavedViewFactory =
     getSavedViewGroup: GetSavedViewGroup
     recalculateGroupResourceIds: RecalculateGroupResourceIds
     setNewHomeView: SetNewHomeView
+    getNewViewSpecificPosition: GetNewViewSpecificPosition
+    rebalanceViewPositions: RebalanceViewPositions
   }): CreateSavedView =>
   async ({ input, authorId }) => {
-    const { resourceIdString, projectId } = input
+    const { resourceIdString, projectId, position: positionInput } = input
     const visibility = input.visibility || SavedViewVisibility.public // default to public
-    const position = 0 // TODO: Resolve based on existing views
     let groupId = input.groupId?.trim() || null
     const description = input.description?.trim() || null
     const isHomeView = input.isHomeView || false
@@ -309,6 +312,16 @@ export const createSavedViewFactory =
       resourceIds
     })
 
+    // Resolve new position
+    const { newPosition: position, needsRebalancing } =
+      await deps.getNewViewSpecificPosition({
+        projectId,
+        groupId,
+        resourceIdString: resourceIds.toString(),
+        beforeId: positionInput?.beforeViewId,
+        afterId: positionInput?.afterViewId
+      })
+
     const concreteResourceIds = resourceIds.toResources().map((r) => r.toString())
     const ret = await deps.storeSavedView({
       view: {
@@ -335,6 +348,15 @@ export const createSavedViewFactory =
               projectId,
               modelId: homeViewModel.modelId,
               newHomeViewId: ret.id
+            })
+          ]
+        : []),
+      ...(needsRebalancing
+        ? [
+            deps.rebalanceViewPositions({
+              projectId,
+              groupId: ret!.groupId || null,
+              resourceIdString: ret!.resourceIds.join(',')
             })
           ]
         : [])
@@ -470,6 +492,8 @@ export const updateSavedViewFactory =
       updateSavedViewRecord: UpdateSavedViewRecord
       recalculateGroupResourceIds: RecalculateGroupResourceIds
       setNewHomeView: SetNewHomeView
+      getNewViewSpecificPosition: GetNewViewSpecificPosition
+      rebalanceViewPositions: RebalanceViewPositions
     } & DependenciesOf<typeof validateProjectResourceIdStringFactory>
   ): UpdateSavedView =>
   async (params) => {
@@ -603,7 +627,25 @@ export const updateSavedViewFactory =
       resourceIds: resourceIds || resourceBuilder().addResources(view.resourceIds)
     })
 
-    const finalChanges = omit(changes, ['resourceIdString', 'viewerState'])
+    // Position
+    let position: number | undefined = undefined
+    let needsRebalancing = false
+    if ('position' in changes && changes.position) {
+      const posInput = changes.position
+      const newPos = await deps.getNewViewSpecificPosition({
+        projectId,
+        groupId: ('groupId' in changes ? changes.groupId : view.groupId) || null,
+        resourceIdString: resourceIds
+          ? resourceIds.toString()
+          : view.resourceIds.join(','),
+        beforeId: posInput.type === 'between' ? posInput.beforeViewId || null : null,
+        afterId: posInput.type === 'between' ? posInput.afterViewId || null : null
+      })
+      position = newPos.newPosition
+      needsRebalancing = newPos.needsRebalancing
+    }
+
+    const finalChanges = omit(changes, ['resourceIdString', 'viewerState', 'position'])
     const update = {
       ...finalChanges,
       ...(resourceIds
@@ -616,7 +658,8 @@ export const updateSavedViewFactory =
         ? {
             viewerState
           }
-        : {})
+        : {}),
+      ...(!isUndefined(position) ? { position } : {})
     }
 
     // Check if there's any actual changes
@@ -668,6 +711,15 @@ export const updateSavedViewFactory =
               projectId,
               newHomeViewId: updatedView!.id,
               modelId: homeViewModel.modelId
+            })
+          ]
+        : []),
+      ...(needsRebalancing
+        ? [
+            deps.rebalanceViewPositions({
+              projectId,
+              groupId: updatedView!.groupId || null,
+              resourceIdString: updatedView!.resourceIds.join(',')
             })
           ]
         : [])

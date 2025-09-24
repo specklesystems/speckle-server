@@ -1,5 +1,6 @@
 import { Branches, buildTableHelper } from '@/modules/core/dbSchema'
 import type { Model } from '@/modules/core/domain/branches/types'
+import { LogicError } from '@/modules/shared/errors'
 import {
   compositeCursorTools,
   formatJsonArrayRecords
@@ -27,7 +28,10 @@ import type {
   UpdateSavedViewGroupRecord,
   GetModelHomeSavedViews,
   GetModelHomeSavedView,
-  SetNewHomeView
+  SetNewHomeView,
+  GetNewViewBoundaryPosition,
+  GetNewViewSpecificPosition,
+  RebalanceViewPositions
 } from '@/modules/viewer/domain/operations/savedViews'
 import {
   SavedViewVisibility,
@@ -77,6 +81,8 @@ export const SavedViewGroups = buildTableHelper('saved_view_groups', [
   'createdAt',
   'updatedAt'
 ])
+
+export const MINIMUM_POSITION_GAP = 0.00001
 
 const savedGroupCursorUtils = () =>
   compositeCursorTools({
@@ -404,7 +410,7 @@ export const getGroupSavedViewsTotalCountFactory =
 export const getGroupSavedViewsPageItemsFactory =
   (deps: { db: Knex }): GetGroupSavedViewsPageItems =>
   async (params) => {
-    const sortByCol = params.sortBy || 'updatedAt'
+    const sortByCol = params.sortBy || 'position'
     const sortDir = params.sortDirection || 'desc'
 
     const q = getGroupSavedViewsBaseQueryFactory(deps)(params)
@@ -757,4 +763,234 @@ export const setNewHomeViewFactory =
     await q
 
     return true
+  }
+
+function applyViewPositionGroupFiltering(
+  q: Knex.QueryBuilder,
+  groupId: string | null,
+  projectId: string,
+  resourceIdString: string,
+  col = SavedViews.col
+) {
+  const groupResourceIds = formatResourceIdsForGroup(resourceIdString)
+  if (!groupId && !groupResourceIds.length) {
+    throw new LogicError(
+      'Cannot determine new view position without resources or groupId'
+    )
+  }
+
+  q.andWhere(col.projectId, projectId).andWhere(col.groupId, groupId)
+  if (!groupId) {
+    q.andWhereRaw(
+      `cardinality(ARRAY(SELECT UNNEST(??::varchar[]) INTERSECT SELECT UNNEST(?::varchar[]))) > 0`,
+      [col.groupResourceIds, groupResourceIds]
+    )
+  }
+}
+
+export const getNewViewBoundaryPositionFactory =
+  (deps: { db: Knex }): GetNewViewBoundaryPosition =>
+  async (params) => {
+    const { projectId, resourceIdString, groupId } = params
+    const asLast = params.position === 'last'
+
+    const q = tables
+      .savedViews(deps.db)
+      .select<Array<{ newPosition: number }>>(
+        deps.db.raw(
+          asLast
+            ? 'COALESCE(MAX(??), 0) + 1000 as "newPosition"'
+            : 'COALESCE(MIN(??), 0) - 1000 as "newPosition"',
+          [SavedViews.col.position]
+        )
+      )
+
+    applyViewPositionGroupFiltering(q, groupId, projectId, resourceIdString)
+
+    const [result] = await q
+    return result?.newPosition ?? 1000
+  }
+
+const getNeighborViewFactory =
+  (deps: { db: Knex }) =>
+  async (params: {
+    projectId: string
+    resourceIdString: string
+    groupId: string | null
+    direction: 'before' | 'after'
+    anchorId: string
+  }) => {
+    const { direction, anchorId, projectId, groupId, resourceIdString } = params
+
+    const SubqCols = SavedViews.with({ withCustomTablePrefix: 'sqv' })
+    const MainCols = SavedViews.with({ withCustomTablePrefix: 'mv' })
+
+    // Subquery to find the anchor view
+    const subQ = tables.savedViews(deps.db).where(SavedViews.col.id, anchorId).first()
+    applyViewPositionGroupFiltering(subQ, groupId, projectId, resourceIdString)
+
+    // Main query: find neighbor
+    const cmpOperator = direction === 'before' ? '<' : '>'
+    const sortDir = direction === 'before' ? 'desc' : 'asc'
+
+    const resultQ = deps
+      .db(MainCols.name)
+      .select<Array<SavedView>>(MainCols.cols)
+      .join(subQ.as('sqv'), (j1) => {
+        j1
+          // same projectId
+          .on(MainCols.col.projectId, '=', SubqCols.col.projectId)
+          // same groupId (including null)
+          .andOn((o1) => {
+            o1.on(MainCols.col.groupId, '=', SubqCols.col.groupId).orOn((o2) => {
+              o2.onNull(MainCols.col.groupId).andOnNull(SubqCols.col.groupId)
+            })
+          })
+          // next positions
+          .andOn(MainCols.col.position, cmpOperator, SubqCols.col.position)
+
+        if (!groupId) {
+          // Check resource intersection too, if no groupId
+          const groupResourceIds = formatResourceIdsForGroup(resourceIdString)
+          j1.andOn(
+            deps.db.raw(
+              `cardinality(ARRAY(SELECT UNNEST(??::varchar[]) INTERSECT SELECT UNNEST(?::varchar[]))) > 0`,
+              [MainCols.col.groupResourceIds, groupResourceIds]
+            )
+          )
+        }
+      })
+      .orderBy(MainCols.col.position, sortDir)
+      .limit(1)
+
+    const result = await resultQ
+    return result.length > 0 ? result[0] : null
+  }
+
+export const getNewViewSpecificPositionFactory =
+  (deps: { db: Knex }): GetNewViewSpecificPosition =>
+  async (params) => {
+    const { beforeId, afterId } = params
+    const boundaries = {
+      before: { id: beforeId, position: undefined as number | undefined },
+      after: { id: afterId, position: undefined as number | undefined }
+    }
+
+    const getNewViewBoundaryPosition = getNewViewBoundaryPositionFactory(deps)
+    const getNeighborViewId = getNeighborViewFactory(deps)
+    const getView = getSavedViewFactory(deps)
+
+    if (!boundaries.before.id && !boundaries.after.id) {
+      // end of list
+      return {
+        needsRebalancing: false,
+        newPosition: await getNewViewBoundaryPosition({ ...params, position: 'last' })
+      }
+    }
+
+    // One of the ids is undefined, try to resolve it
+    if (!boundaries.before.id || !boundaries.after.id) {
+      if (!boundaries.before.id) {
+        // only afterId - get the view before it
+        const beforeView = await getNeighborViewId({
+          ...params,
+          direction: 'before',
+          anchorId: boundaries.after.id!
+        })
+        boundaries.before.position = beforeView?.position
+        boundaries.before.id = beforeView?.id
+      } else if (!boundaries.after.id) {
+        // only beforeId - get the view after it
+        const afterView = await getNeighborViewId({
+          ...params,
+          direction: 'after',
+          anchorId: boundaries.before.id!
+        })
+        boundaries.after.position = afterView?.position
+        boundaries.after.id = afterView?.id
+      }
+    }
+
+    // If one of the ids is still undefined, it means we hit the list boundary
+    if (!boundaries.before.id || !boundaries.after.id) {
+      const hasNoBeforeView = !boundaries.before.id
+      return {
+        newPosition: await getNewViewBoundaryPosition({
+          ...params,
+          position: hasNoBeforeView ? 'first' : 'last'
+        }),
+        needsRebalancing: false
+      }
+    }
+
+    // Both ids are defined - get their positions if we don't have them yet
+    if (!boundaries.before.position || !boundaries.after.position) {
+      const [beforePosition, afterPosition] = await Promise.all([
+        boundaries.before.position
+          ? Promise.resolve(boundaries.before.position)
+          : getView({ id: boundaries.before.id!, projectId: params.projectId }).then(
+              (v) => v?.position
+            ),
+        boundaries.after.position
+          ? Promise.resolve(boundaries.after.position)
+          : getView({ id: boundaries.after.id!, projectId: params.projectId }).then(
+              (v) => v?.position
+            )
+      ])
+
+      // These will only be undefined if the view ids are actually invalid
+      if (!beforePosition || !afterPosition) {
+        throw new Error('Either beforeId or afterId are invalid IDs')
+      }
+
+      boundaries.before.position = beforePosition
+      boundaries.after.position = afterPosition
+    }
+
+    // See if we need rebalancing
+    const gap = boundaries.after.position - boundaries.before.position
+    const needsRebalancing = gap < MINIMUM_POSITION_GAP
+    const newPosition = (boundaries.before.position + boundaries.after.position) / 2
+
+    return {
+      needsRebalancing,
+      newPosition
+    }
+  }
+
+/**
+ * Rebalances the view positions within a group. This needs to happen when the gap between two view positions becomes so small
+ * that inserting a new view between them becomes problematic because of floating point precision limits.
+ */
+export const rebalancingViewPositionsFactory =
+  (deps: { db: Knex }): RebalanceViewPositions =>
+  async (params) => {
+    const { projectId, resourceIdString, groupId } = params
+
+    const cteRawQuery = deps.db.with('ordered', (q2) => {
+      q2.from(SavedViews.name).select(
+        SavedViews.col.id,
+        deps.db.raw('ROW_NUMBER() OVER (ORDER BY ??) AS rn', [SavedViews.col.position])
+      )
+      applyViewPositionGroupFiltering(q2, groupId, projectId, resourceIdString)
+    })
+
+    // need to strip the final select *. sort of hacky,
+    // but i dont want to write the CTE by hand as a raw string, cause
+    // then i cant reuse the applyViewPositionGroupFiltering util
+    const cteString = cteRawQuery.toQuery().replace(/\s+select\s+\*\s*$/i, '')
+
+    // knex .with().update() support sucks, gotta make this a raw query
+    const q = deps.db.raw(`
+      ${cteString}
+      UPDATE ${SavedViews.with({ quoted: true }).name}
+      SET ${
+        SavedViews.with({ quoted: true, withoutTablePrefix: true }).col.position
+      } = ordered.rn * 1000
+      FROM ordered
+      WHERE ordered.id = ${SavedViews.with({ quoted: true }).col.id}
+    `)
+
+    const ret = (await q) as { rowCount: number }
+    return ret.rowCount
   }

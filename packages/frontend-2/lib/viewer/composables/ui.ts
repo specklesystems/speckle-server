@@ -1,5 +1,13 @@
 import { SpeckleViewer } from '@speckle/shared'
-import type { TreeNode, ViewMode } from '@speckle/viewer'
+import {
+  CameraController,
+  type TreeNode,
+  type ViewMode,
+  type CanonicalView,
+  type InlineView,
+  type SpeckleView,
+  MeasurementsExtension
+} from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { useActiveElement } from '@vueuse/core'
 import { isString } from 'lodash-es'
@@ -106,35 +114,46 @@ export function useCameraUtilities() {
     camera
   } = useInjectedViewerInterfaceState()
 
-  const zoom = (...args: Parameters<typeof instance.zoom>) => instance.zoom(...args)
+  const cameraController = instance.getExtension(CameraController)
 
-  const setView = (...args: Parameters<typeof instance.setView>) => {
-    instance.setView(...args)
+  const setView = (
+    view: CanonicalView | InlineView | SpeckleView,
+    transition = true
+  ) => {
+    cameraController.setCameraView(view, transition)
   }
 
   const zoomExtentsOrSelection = () => {
     const ids = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
 
     if (ids.length > 0) {
-      return instance.zoom(ids)
+      return cameraController.setCameraView(ids, true)
     }
 
     if (isolatedObjectIds.value.length) {
-      return instance.zoom(isolatedObjectIds.value)
+      return cameraController.setCameraView(isolatedObjectIds.value, true)
     }
 
-    instance.zoom()
+    cameraController.setCameraView(undefined, true)
   }
 
   const toggleProjection = () => {
     camera.isOrthoProjection.value = !camera.isOrthoProjection.value
+    cameraController.toggleCameras()
   }
 
   const forceViewToViewerSync = () => {
-    setView({
-      position: camera.position.value,
-      target: camera.target.value
-    })
+    setView(
+      {
+        position: camera.position.value,
+        target: camera.target.value
+      },
+      true
+    )
+  }
+
+  const zoom = (objectIds?: string[], fit?: number, transition?: boolean) => {
+    cameraController.setCameraView(objectIds, transition, fit)
   }
 
   return {
@@ -143,7 +162,8 @@ export function useCameraUtilities() {
     camera,
     setView,
     zoom,
-    forceViewToViewerSync
+    forceViewToViewerSync,
+    cameraController
   }
 }
 
@@ -283,6 +303,8 @@ export function useThreadUtilities() {
 
 export function useMeasurementUtilities() {
   const state = useInjectedViewerState()
+  const measurementsExtension =
+    state.viewer.instance.getExtension(MeasurementsExtension)
 
   const measurementOptions = computed(() => state.ui.measurement.options.value)
   const hasMeasurements = computed(
@@ -298,9 +320,7 @@ export function useMeasurementUtilities() {
   }
 
   const removeActiveMeasurement = () => {
-    if (state.viewer.instance?.removeMeasurement) {
-      state.viewer.instance.removeMeasurement()
-    }
+    measurementsExtension.removeMeasurement()
   }
 
   const clearMeasurements = () => {
