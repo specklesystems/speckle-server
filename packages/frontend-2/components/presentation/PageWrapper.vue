@@ -4,15 +4,15 @@
       <PresentationHeader
         v-if="!hideUi"
         v-model:is-sidebar-open="isLeftSidebarOpen"
-        class="absolute top-4 z-40"
-        :class="[isLeftSidebarOpen ? 'left-56 md:left-[15.75rem]' : 'left-4']"
+        class="absolute top-3 z-40"
+        :class="[isLeftSidebarOpen ? 'left-56 md:left-[15.75rem]' : 'left-3']"
         @toggle-sidebar="isLeftSidebarOpen = !isLeftSidebarOpen"
       />
 
       <PresentationActions
         v-if="!hideUi"
         v-model:is-sidebar-open="isInfoSidebarOpen"
-        class="absolute bottom-4 lg:top-4 right-4 z-20"
+        class="absolute bottom-3 lg:top-3 right-3 z-20"
         :class="{
           'bottom-52 lg:bottom-auto lg:right-[17rem] xl:right-[21rem]':
             isInfoSidebarOpen
@@ -28,12 +28,12 @@
           isInfoSidebarOpen
             ? 'translate-y-[calc(-50%+25px-6rem)] lg:translate-y-[-50%]'
             : 'translate-y-[-50%]',
-          isLeftSidebarOpen ? 'lg:left-[14.75rem] hidden md:block' : 'left-0'
+          isLeftSidebarOpen ? 'lg:left-60 hidden md:block' : 'left-0'
         ]"
       />
 
       <PresentationSpeckleLogo
-        class="absolute right-4 z-30 top-4 lg:top-auto lg:bottom-4"
+        class="absolute right-3 z-30 top-3 lg:top-auto lg:bottom-3"
         :class="[isInfoSidebarOpen ? '' : '']"
       />
 
@@ -60,10 +60,10 @@
 
       <PresentationControls
         :hide-ui="hideUi"
-        class="absolute left-4 lg:left-1/2 lg:-translate-x-1/2"
+        class="absolute left-3 lg:left-1/2 lg:-translate-x-1/2"
         :class="[
-          isInfoSidebarOpen ? 'bottom-52 lg:bottom-4' : 'bottom-4',
-          isLeftSidebarOpen ? 'hidden md:flex md:left-64' : ''
+          isInfoSidebarOpen ? 'bottom-52 lg:bottom-3' : 'bottom-3',
+          isLeftSidebarOpen ? 'hidden md:flex md:left-[252px]' : ''
         ]"
       />
     </div>
@@ -101,7 +101,7 @@ const onLoadingChange = (loading: boolean) => {
   if (!loading) {
     hideUi.value = false
 
-    isLeftSidebarOpen.value = !isMobile.value
+    isLeftSidebarOpen.value = false
     isInfoSidebarOpen.value = !isMobile.value
   }
 }
