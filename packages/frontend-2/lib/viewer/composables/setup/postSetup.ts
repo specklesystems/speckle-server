@@ -21,8 +21,7 @@ import {
   SelectionExtension,
   type SunLightConfiguration
 } from '@speckle/viewer'
-import { Matrix3, Vector3, Box3 } from 'three'
-import { OBB } from 'three/examples/jsm/math/OBB.js'
+import { Vector3 } from 'three'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import type { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
 import { ProjectCommentsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
@@ -52,11 +51,13 @@ import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import { SafeLocalStorage } from '@speckle/shared'
-import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useCameraUtilities,
+  useSectionBoxUtilities
+} from '~~/lib/viewer/composables/ui'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import type { SectionBoxData } from '@speckle/shared/viewer/state'
 import { graphql } from '~/lib/common/generated/gql'
 import { useTreeManagement } from '~~/lib/viewer/composables/tree'
 import { useViewerSavedViewIntegration } from '~/lib/viewer/composables/savedViews/state'
@@ -346,43 +347,6 @@ function useViewerSubscriptionEventTracker() {
   )
 }
 
-function sectionBoxDataEquals(a: SectionBoxData, b: SectionBoxData): boolean {
-  const isEqual = (a: number[], b: number[]) =>
-    a.length === b.length && a.every((v, i) => Math.abs(v - b[i]) < 1e-6)
-  return (
-    isEqual(a.min, b.min) &&
-    isEqual(a.max, b.max) &&
-    (a.rotation && b.rotation ? isEqual(a.rotation, b.rotation) : true)
-  )
-}
-
-function sectionBoxDataToBox3(data: SectionBoxData): Box3 | OBB {
-  let box: Box3 | OBB
-
-  if (!data.rotation || !data.rotation.length) {
-    // No rotation, use Box3
-    const min = new Vector3().fromArray(data.min)
-    const max = new Vector3().fromArray(data.max)
-    box = new Box3(min, max)
-  } else {
-    // Has rotation, create OBB
-    box = new OBB()
-    const min = new Vector3().fromArray(data.min)
-    const max = new Vector3().fromArray(data.max)
-
-    // Replicate the logic from OBB.prototype.min/max setters
-    const _box3 = new Box3()
-    _box3.set(min, max)
-    _box3.getCenter(box.center)
-    _box3.getSize(box.halfSize)
-    box.halfSize.multiplyScalar(0.5)
-
-    box.rotation = new Matrix3().fromArray(data.rotation)
-  }
-
-  return box
-}
-
 function useViewerSectionBoxIntegration() {
   const {
     ui: {
@@ -391,6 +355,8 @@ function useViewerSectionBoxIntegration() {
     },
     viewer: { instance }
   } = useInjectedViewerState()
+
+  const { sectionBoxDataToBox3, sectionBoxDataEquals } = useSectionBoxUtilities()
 
   // Change edited=true when user starts changing the section box by dragging it
   const sectionTool = instance.getExtension(SectionTool)
