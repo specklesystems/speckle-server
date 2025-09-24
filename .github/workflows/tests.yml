@@ -316,6 +316,15 @@ jobs:
       APOLLO_KEY: ${{ secrets.APOLLO_KEY }}
     steps:
       - uses: actions/checkout@v4.2.2
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            server:
+              - 'packages/server/**'
+              - 'packages/shared/**'
+      - if: steps.changes.outputs.server == 'false'
+        run: exit 1
       - uses: useblacksmith/setup-node@v5
         with:
           node-version: 22
