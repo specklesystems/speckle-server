@@ -69,7 +69,7 @@ jobs:
             objectsender:
               - 'packages/objectsender/**'
               - 'packages/shared/**'
-            shared
+            shared:
               - 'packages/shared/**'
 
   lint-and-prettier:
