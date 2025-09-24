@@ -27,7 +27,10 @@ import {
   type QueryCriteria,
   type ExtendedPropertyInfo
 } from '~/lib/viewer/helpers/filters/types'
-import { getConditionLabel } from '~/lib/viewer/helpers/filters/constants'
+import {
+  getConditionLabel,
+  FILTERS_POPULAR_PROPERTIES
+} from '~/lib/viewer/helpers/filters/constants'
 import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 import {
   shouldExcludeFromFiltering,
@@ -904,6 +907,56 @@ export function useFilterUtilities(
     }
   }
 
+  /**
+   * Gets available popular filters from the data store
+   */
+  const getAvailablePopularFilters = (maxCount?: number) => {
+    const allOptions = getPropertyOptionsFromDataStore()
+
+    const results = FILTERS_POPULAR_PROPERTIES.map((filterKey) => {
+      return allOptions.find((opt) => opt.key.toLowerCase() === filterKey.toLowerCase())
+    }).filter(Boolean)
+
+    const limitedResults = maxCount ? results.slice(0, maxCount) : results
+
+    return limitedResults.map((property) => {
+      const lastDotIndex = property!.key.lastIndexOf('.')
+      let propertyName =
+        lastDotIndex === -1 ? property!.key : property!.key.slice(lastDotIndex + 1)
+      let parentPath =
+        lastDotIndex === -1
+          ? ''
+          : property!.key.slice(0, lastDotIndex).replace(/\./g, ' › ')
+
+      if (propertyName === 'value' && lastDotIndex !== -1) {
+        const valueParentPath = property!.key.slice(0, lastDotIndex)
+        const valueParentLastDot = valueParentPath.lastIndexOf('.')
+        propertyName =
+          valueParentLastDot === -1
+            ? valueParentPath
+            : valueParentPath.slice(valueParentLastDot + 1)
+
+        parentPath =
+          valueParentLastDot === -1
+            ? ''
+            : valueParentPath.slice(0, valueParentLastDot).replace(/\./g, ' › ')
+      }
+
+      return {
+        value: property!.key,
+        label: propertyName,
+        parentPath,
+        type:
+          property!.type === 'number'
+            ? FilterType.Numeric
+            : (property! as { type: string }).type === 'boolean'
+            ? FilterType.Boolean
+            : FilterType.String,
+        hasParent: parentPath !== ''
+      }
+    })
+  }
+
   // Watch for data store to become ready and restore pending filters
   const shouldRestoreFilters = computed(() => {
     return pendingFiltersToRestore.value && getPropertyOptionsFromDataStore().length > 0
@@ -966,6 +1019,7 @@ export function useFilterUtilities(
     findFilterByKvp,
     getFilteredFilterValues,
     setNumericRange,
-    isLargeProperty
+    isLargeProperty,
+    getAvailablePopularFilters
   }
 }
