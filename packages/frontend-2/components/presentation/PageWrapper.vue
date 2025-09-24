@@ -81,6 +81,7 @@ const {
 } = useInjectedPresentationState()
 const mixpanel = useMixpanel()
 const isMobile = useBreakpoints(TailwindBreakpoints).smaller('sm')
+const { $intercom } = useNuxtApp()
 
 const isInfoSidebarOpen = ref(false)
 const isLeftSidebarOpen = ref(false)
@@ -89,6 +90,10 @@ const isViewerLoading = ref(true)
 const viewerProgress = ref(0)
 
 const ViewerWrapper = resolveComponent('PresentationViewerWrapper')
+
+const canEditPresentation = computed(() => {
+  return presentation.value?.permissions.canUpdate.authorized
+})
 
 const onLoadingChange = (loading: boolean) => {
   isViewerLoading.value = loading
@@ -121,6 +126,10 @@ onMounted(() => {
     presentation_id: presentation.value?.id,
     // eslint-disable-next-line camelcase
     workspace_id: workspace.value?.id
+  })
+
+  $intercom.track('Presentation Viewed', {
+    canEditPresentation: canEditPresentation.value
   })
 })
 </script>
