@@ -2,7 +2,8 @@ import type { Request, RequestHandler, Response } from 'express'
 import type { RateLimitSuccess } from '@/modules/core/utils/ratelimiter'
 import {
   getActionForPath,
-  throwIfRateLimitedFactory,
+  getRateLimitResult,
+  isRateLimitBreached,
   type RateLimitBreached,
   type RateLimiterMapping
 } from '@/modules/core/utils/ratelimiter'
@@ -10,13 +11,13 @@ import { getRequestPath } from '@/modules/core/helpers/server'
 import { getTokenFromRequest } from '@/modules/shared/middleware'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import type { Nullable } from '@speckle/shared'
+import { RateLimitError } from '@/modules/core/errors/ratelimit'
 
 export const createRateLimiterMiddleware = (params: {
   rateLimiterEnabled: boolean
   rateLimiterMapping?: RateLimiterMapping
 }): RequestHandler => {
   const { rateLimiterEnabled } = params
-  const throwIfRateLimited = throwIfRateLimitedFactory(params)
 
   return async (req, res, next) => {
     if (!rateLimiterEnabled) return next()
@@ -30,13 +31,13 @@ export const createRateLimiterMiddleware = (params: {
       hit = req.body.length
     }
 
-    let rateLimitResult: Nullable<RateLimitSuccess> = null
+    let rateLimitResult: Nullable<RateLimitSuccess | RateLimitBreached> = null
     for (let i = 0; i < hit; i++) {
-      rateLimitResult = await throwIfRateLimited({
-        action,
-        source,
-        handleRateLimitBreachPriorToThrowing: addRateLimitHeadersToResponseFactory(res)
-      })
+      rateLimitResult = await getRateLimitResult(action, source)
+      if (isRateLimitBreached(rateLimitResult)) {
+        addRateLimitHeadersToResponseFactory(res)(rateLimitResult)
+        return next(new RateLimitError(rateLimitResult))
+      }
     }
 
     if (res.headersSent) return res
