@@ -17,7 +17,6 @@
           :title="(kvp.value as string)"
         >
           <div class="flex gap-1 items-center w-full">
-            <!-- NOTE: can't do kvp.value || 'null' because 0 || 'null' = 'null' -->
             <template v-if="isUrlString(kvp.value)">
               <a
                 :href="kvp.value as string"
@@ -78,6 +77,7 @@ import type { KeyValuePair } from '~/components/viewer/selection/types'
 import { isNumericPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
 import {
   BooleanFilterCondition,
+  ArrayFilterCondition,
   type ExtendedPropertyInfo
 } from '~/lib/viewer/helpers/filters/types'
 import { isBooleanProperty } from '~/lib/viewer/helpers/filters/utils'
@@ -171,6 +171,9 @@ const addFilterWithValue = (filter: ExtendedPropertyInfo, kvp: KeyValuePair) => 
       ? BooleanFilterCondition.IsTrue
       : BooleanFilterCondition.IsFalse
     updateFilterCondition(filterId, condition)
+  } else if (filter.type === 'array' && Array.isArray(kvp.value)) {
+    // For array filters, default to "contains" condition
+    updateFilterCondition(filterId, ArrayFilterCondition.Contains)
   } else {
     // For string filters, use the selectedValues array
     const values = [String(kvp.value)]

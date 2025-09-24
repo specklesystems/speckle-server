@@ -172,6 +172,8 @@ const propertySelectOptions = computed((): PropertySelectOption[] => {
             ? FilterType.Numeric
             : (filter as { type: string }).type === 'boolean'
             ? FilterType.Boolean
+            : (filter as { type: string }).type === 'array'
+            ? FilterType.Array
             : FilterType.String,
         hasParent: parentPath !== ''
       }

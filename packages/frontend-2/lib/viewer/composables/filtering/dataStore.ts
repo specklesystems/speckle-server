@@ -39,6 +39,8 @@ function processBatchedPropertyUpdates(
         filterType = FilterType.Numeric
       } else if (update.type === 'boolean') {
         filterType = FilterType.Boolean
+      } else if (update.type === 'array') {
+        filterType = FilterType.Array
       } else {
         filterType = FilterType.String
       }
@@ -262,6 +264,56 @@ export function useCreateViewerFilteringDataStore() {
           const value = objProps[criteria.propertyKey]
           if (value === false || value === 'false') {
             matchingIds.push(objectId)
+          }
+        }
+      } else if (criteria.condition === 'is_empty') {
+        // Array filtering: is empty
+        for (const [objectId, objProps] of Object.entries(
+          dataSource.objectProperties
+        )) {
+          const value = objProps[criteria.propertyKey]
+          if (Array.isArray(value) && value.length === 0) {
+            matchingIds.push(objectId)
+          }
+        }
+      } else if (criteria.condition === 'is_not_empty') {
+        // Array filtering: is not empty
+        for (const [objectId, objProps] of Object.entries(
+          dataSource.objectProperties
+        )) {
+          const value = objProps[criteria.propertyKey]
+          if (Array.isArray(value) && value.length > 0) {
+            matchingIds.push(objectId)
+          }
+        }
+      } else if (criteria.condition === 'contains' && criteria.searchValue) {
+        // Array filtering: contains value
+        for (const [objectId, objProps] of Object.entries(
+          dataSource.objectProperties
+        )) {
+          const value = objProps[criteria.propertyKey]
+          if (Array.isArray(value)) {
+            const containsValue = value.some((item) =>
+              String(item).toLowerCase().includes(criteria.searchValue!.toLowerCase())
+            )
+            if (containsValue) {
+              matchingIds.push(objectId)
+            }
+          }
+        }
+      } else if (criteria.condition === 'does_not_contain' && criteria.searchValue) {
+        // Array filtering: does not contain value
+        for (const [objectId, objProps] of Object.entries(
+          dataSource.objectProperties
+        )) {
+          const value = objProps[criteria.propertyKey]
+          if (Array.isArray(value)) {
+            const containsValue = value.some((item) =>
+              String(item).toLowerCase().includes(criteria.searchValue!.toLowerCase())
+            )
+            if (!containsValue) {
+              matchingIds.push(objectId)
+            }
           }
         }
       } else {

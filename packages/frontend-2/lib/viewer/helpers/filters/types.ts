@@ -31,11 +31,19 @@ export enum BooleanFilterCondition {
   IsFalse = 'is_false'
 }
 
+export enum ArrayFilterCondition {
+  Contains = 'contains',
+  DoesNotContain = 'does_not_contain',
+  IsEmpty = 'is_empty',
+  IsNotEmpty = 'is_not_empty'
+}
+
 export type FilterCondition =
   | NumericFilterCondition
   | StringFilterCondition
   | ExistenceFilterCondition
   | BooleanFilterCondition
+  | ArrayFilterCondition
 
 // Filter Enums
 export enum FilterLogic {
@@ -46,7 +54,8 @@ export enum FilterLogic {
 export enum FilterType {
   String = 'string',
   Numeric = 'numeric',
-  Boolean = 'boolean'
+  Boolean = 'boolean',
+  Array = 'array'
 }
 
 export enum SortMode {
@@ -85,6 +94,7 @@ export type ExtendedPropertyInfo =
       type: 'boolean'
       valueGroups: { value: boolean; ids: string[] }[]
     }
+  | ArrayPropertyInfo
 
 export type BooleanPropertyInfo = Extract<ExtendedPropertyInfo, { type: 'boolean' }>
 
@@ -93,7 +103,24 @@ export type BooleanFilterData = BaseFilterData & {
   filter: BooleanPropertyInfo
 }
 
-export type FilterData = NumericFilterData | StringFilterData | BooleanFilterData
+export type ArrayPropertyInfo = {
+  key: string
+  objectCount: number
+  type: 'array'
+  valueGroups: { value: unknown[]; ids: string[] }[]
+}
+
+export type ArrayFilterData = BaseFilterData & {
+  type: FilterType.Array
+  filter: ArrayPropertyInfo
+  searchValue?: string // For contains/does not contain
+}
+
+export type FilterData =
+  | NumericFilterData
+  | StringFilterData
+  | BooleanFilterData
+  | ArrayFilterData
 
 export const isNumericFilter = (filter: FilterData): filter is NumericFilterData => {
   return filter.type === FilterType.Numeric
@@ -101,6 +128,10 @@ export const isNumericFilter = (filter: FilterData): filter is NumericFilterData
 
 export const isBooleanFilter = (filter: FilterData): filter is BooleanFilterData => {
   return filter.type === FilterType.Boolean
+}
+
+export const isArrayFilter = (filter: FilterData): filter is ArrayFilterData => {
+  return filter.type === FilterType.Array
 }
 
 export const isExistenceCondition = (condition: FilterCondition): boolean => {
@@ -188,6 +219,7 @@ export type QueryCriteria = {
   values: string[]
   minValue?: number
   maxValue?: number
+  searchValue?: string // For array contains/does not contain
 }
 
 export type DataSource = {

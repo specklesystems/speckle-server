@@ -63,10 +63,32 @@
             {{ kvp.key }}
           </div>
           <div
-            class="col-span-2 flex w-full min-w-0 truncate text-body-3xs pl-1 text-foreground"
+            class="group col-span-2 flex w-full min-w-0 truncate text-body-3xs pl-1 text-foreground items-center gap-1"
           >
             <div class="flex-grow truncate">{{ kvp.innerType }} array</div>
             <div class="text-foreground-2">({{ kvp.arrayLength }})</div>
+            <LayoutMenu
+              v-model:open="arrayMenuState[`${index}-nonprimitive`]"
+              :items="getArrayMenuItems(kvp)"
+              mount-menu-on-body
+              @click.stop.prevent
+              @chosen="(params) => onArrayActionChosen(params, kvp)"
+            >
+              <button
+                class="group-hover:opacity-100 hover:bg-highlight-1 rounded h-4 w-4 flex items-center justify-center opacity-0"
+                :class="
+                  arrayMenuState[`${index}-nonprimitive`]
+                    ? 'bg-highlight-1 opacity-100'
+                    : ''
+                "
+                @click.stop="
+                  arrayMenuState[`${index}-nonprimitive`] =
+                    !arrayMenuState[`${index}-nonprimitive`]
+                "
+              >
+                <Ellipsis class="h-3 w-3" />
+              </button>
+            </LayoutMenu>
           </div>
         </div>
       </div>
@@ -79,11 +101,33 @@
             {{ kvp.key }}
           </div>
           <div
-            class="col-span-2 flex w-full min-w-0 truncate text-body-3xs text-foreground"
+            class="group col-span-2 flex w-full min-w-0 truncate text-body-3xs text-foreground items-center gap-1"
             :title="(kvp.value as string)"
           >
-            <div class="pl-2.5 flex-grow truncate">{{ kvp.arrayPreview }}</div>
-            <div class="text-foreground-2">({{ kvp.arrayLength }})</div>
+            <div class="pl-2.5 truncate">{{ kvp.arrayPreview }}</div>
+            <LayoutMenu
+              v-model:open="arrayMenuState[`${index}-primitive`]"
+              :items="getArrayMenuItems(kvp)"
+              mount-menu-on-body
+              @click.stop.prevent
+              @chosen="(params) => onArrayActionChosen(params, kvp)"
+            >
+              <button
+                class="group-hover:opacity-100 hover:bg-highlight-1 rounded h-4 w-4 flex items-center justify-center opacity-0"
+                :class="
+                  arrayMenuState[`${index}-primitive`]
+                    ? 'bg-highlight-1 opacity-100'
+                    : ''
+                "
+                @click.stop="
+                  arrayMenuState[`${index}-primitive`] =
+                    !arrayMenuState[`${index}-primitive`]
+                "
+              >
+                <Ellipsis class="h-3 w-3" />
+              </button>
+            </LayoutMenu>
+            <div class="text-foreground-2 ml-auto">({{ kvp.arrayLength }})</div>
           </div>
         </div>
       </div>
@@ -99,12 +143,29 @@ import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/hel
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useHighlightedObjectsUtilities } from '~/lib/viewer/composables/ui'
 import type { KeyValuePair } from '~/components/viewer/selection/types'
+import { LayoutMenu, type LayoutMenuItem } from '@speckle/ui-components'
+import { Ellipsis } from 'lucide-vue-next'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import {
+  ArrayFilterCondition,
+  type ExtendedPropertyInfo
+} from '~/lib/viewer/helpers/filters/types'
 
 const {
   ui: {
-    diff: { result, enabled: diffEnabled }
+    diff: { result, enabled: diffEnabled },
+    panels: { active: activePanel }
   }
 } = useInjectedViewerState()
+
+const {
+  isKvpFilterable,
+  getFilterDisabledReason,
+  findFilterByKvp,
+  addActiveFilter,
+  updateFilterCondition,
+  getPropertyOptionsFromDataStore
+} = useFilterUtilities()
 
 const props = withDefaults(
   defineProps<{
@@ -122,6 +183,13 @@ const props = withDefaults(
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 const unfold = ref(props.unfold)
 const autoUnfoldKeys = ['properties', 'Instance Parameters']
+
+// Array menu state management
+const arrayMenuState = ref<Record<string, boolean>>({})
+
+const availableFilters = computed(
+  () => getPropertyOptionsFromDataStore() as ExtendedPropertyInfo[]
+)
 
 // Compute the current full path for this object
 const currentPath = computed(() => {
@@ -321,6 +389,65 @@ const highlightObject = () => {
 const unhighlightObject = () => {
   if (props.object.id && typeof props.object.id === 'string') {
     unhighlightObjects([props.object.id])
+  }
+}
+
+// Array filtering functions
+const isArrayFilterable = (kvp: KeyValuePair): boolean => {
+  if (!Array.isArray(kvp.value)) return false
+  return isKvpFilterable(kvp, availableFilters.value)
+}
+
+const getArrayFilterDisabledReason = (kvp: KeyValuePair): string => {
+  if (!Array.isArray(kvp.value)) return 'Not an array property'
+  return getFilterDisabledReason(kvp, availableFilters.value)
+}
+
+const getArrayMenuItems = (kvp: KeyValuePair): LayoutMenuItem[][] => {
+  const isFilterable = isArrayFilterable(kvp)
+
+  return [
+    [
+      {
+        title: 'Add to filters',
+        id: 'add-to-filters',
+        disabled: !isFilterable,
+        disabledTooltip: isFilterable
+          ? 'Add this array property to filters'
+          : getArrayFilterDisabledReason(kvp)
+      }
+    ]
+  ]
+}
+
+const handleAddArrayToFilters = (kvp: KeyValuePair) => {
+  const filter = findFilterByKvp(kvp, availableFilters.value)
+  if (filter && Array.isArray(kvp.value)) {
+    addArrayFilterWithValue(filter, kvp)
+  }
+}
+
+const addArrayFilterWithValue = (filter: ExtendedPropertyInfo, kvp: KeyValuePair) => {
+  const filterId = addActiveFilter(filter)
+
+  if (filter.type === 'array' && Array.isArray(kvp.value)) {
+    // For array filters, default to "contains" condition
+    updateFilterCondition(filterId, ArrayFilterCondition.Contains)
+  }
+
+  activePanel.value = 'filters'
+}
+
+const onArrayActionChosen = (params: { item: LayoutMenuItem }, kvp: KeyValuePair) => {
+  const { item } = params
+
+  // Don't execute if item is disabled
+  if (item.disabled) return
+
+  switch (item.id) {
+    case 'add-to-filters':
+      handleAddArrayToFilters(kvp)
+      break
   }
 }
 

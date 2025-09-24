@@ -25,6 +25,10 @@
           v-else-if="filter.type === FilterType.Boolean"
           class="h-3 w-3 stroke-amber-500 dark:stroke-amber-400 shrink-0"
         />
+        <List
+          v-else-if="filter.type === FilterType.Array"
+          class="h-3 w-3 stroke-blue-600 dark:stroke-blue-400 shrink-0"
+        />
         <CaseUpper
           v-else
           class="h-3 w-3 stroke-violet-600 dark:stroke-violet-500 shrink-0"
@@ -83,7 +87,8 @@ import {
   ChevronsUpDown,
   Ellipsis,
   ChevronsDownUp,
-  ToggleLeft
+  ToggleLeft,
+  List
 } from 'lucide-vue-next'
 import {
   FormButton,

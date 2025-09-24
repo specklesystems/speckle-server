@@ -41,6 +41,7 @@ import {
   StringFilterCondition,
   NumericFilterCondition,
   ExistenceFilterCondition,
+  ArrayFilterCondition,
   isNumericFilter
 } from '~/lib/viewer/helpers/filters/types'
 import { LayoutMenu, FormButton, type LayoutMenuItem } from '@speckle/ui-components'
@@ -108,6 +109,46 @@ const menuItems = computed<LayoutMenuItem[][]>(() => {
 
     return [
       basicConditions.map((conditionOption) => ({
+        id: conditionOption.value,
+        title: conditionOption.label,
+        active: conditionOption.value === props.filter.condition,
+        disabled: isConditionDisabled(conditionOption.value),
+        disabledTooltip: getDisabledReason(conditionOption.value)
+      })),
+      specialConditions.map((conditionOption) => ({
+        id: conditionOption.value,
+        title: conditionOption.label,
+        active: conditionOption.value === props.filter.condition,
+        disabled: isConditionDisabled(conditionOption.value),
+        disabledTooltip: getDisabledReason(conditionOption.value)
+      }))
+    ]
+  } else if (props.filter.type === FilterType.Array) {
+    const contentConditions = conditionOptions.value.filter(
+      (option) =>
+        option.value === ArrayFilterCondition.Contains ||
+        option.value === ArrayFilterCondition.DoesNotContain
+    )
+    const emptyConditions = conditionOptions.value.filter(
+      (option) =>
+        option.value === ArrayFilterCondition.IsEmpty ||
+        option.value === ArrayFilterCondition.IsNotEmpty
+    )
+    const specialConditions = conditionOptions.value.filter(
+      (option) =>
+        option.value === ExistenceFilterCondition.IsSet ||
+        option.value === ExistenceFilterCondition.IsNotSet
+    )
+
+    return [
+      contentConditions.map((conditionOption) => ({
+        id: conditionOption.value,
+        title: conditionOption.label,
+        active: conditionOption.value === props.filter.condition,
+        disabled: isConditionDisabled(conditionOption.value),
+        disabledTooltip: getDisabledReason(conditionOption.value)
+      })),
+      emptyConditions.map((conditionOption) => ({
         id: conditionOption.value,
         title: conditionOption.label,
         active: conditionOption.value === props.filter.condition,

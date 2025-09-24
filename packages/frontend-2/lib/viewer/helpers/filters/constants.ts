@@ -4,6 +4,7 @@ import {
   StringFilterCondition,
   ExistenceFilterCondition,
   BooleanFilterCondition,
+  ArrayFilterCondition,
   FilterType
 } from '~/lib/viewer/helpers/filters/types'
 
@@ -19,7 +20,11 @@ export const FILTER_CONDITION_CONFIG: Record<FilterCondition, { label: string }>
   [ExistenceFilterCondition.IsSet]: { label: 'is set' },
   [ExistenceFilterCondition.IsNotSet]: { label: 'is not set' },
   [BooleanFilterCondition.IsTrue]: { label: 'is true' },
-  [BooleanFilterCondition.IsFalse]: { label: 'is false' }
+  [BooleanFilterCondition.IsFalse]: { label: 'is false' },
+  [ArrayFilterCondition.Contains]: { label: 'contains' },
+  [ArrayFilterCondition.DoesNotContain]: { label: 'does not contain' },
+  [ArrayFilterCondition.IsEmpty]: { label: 'is empty' },
+  [ArrayFilterCondition.IsNotEmpty]: { label: 'is not empty' }
 } as const
 
 // Popular Filter Properties
@@ -54,6 +59,11 @@ export const getConditionsForType = (filterType: FilterType): FilterCondition[] 
   } else if (filterType === FilterType.Boolean) {
     return [
       ...Object.values(BooleanFilterCondition),
+      ...Object.values(ExistenceFilterCondition)
+    ]
+  } else if (filterType === FilterType.Array) {
+    return [
+      ...Object.values(ArrayFilterCondition),
       ...Object.values(ExistenceFilterCondition)
     ]
   } else {

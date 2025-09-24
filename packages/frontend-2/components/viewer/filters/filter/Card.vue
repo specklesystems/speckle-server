@@ -20,6 +20,7 @@
         v-else-if="isBooleanFilter(filter)"
         :filter="filter"
       />
+      <ViewerFiltersFilterArray v-else-if="isArrayFilter(filter)" :filter="filter" />
       <ViewerFiltersFilterString
         v-else
         :filter="filter"
@@ -41,7 +42,8 @@ import {
   isNumericFilter,
   isExistenceCondition,
   SortMode,
-  isBooleanFilter
+  isBooleanFilter,
+  isArrayFilter
 } from '~/lib/viewer/helpers/filters/types'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 

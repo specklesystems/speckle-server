@@ -14,14 +14,18 @@ import {
   type NumericFilterData,
   type StringFilterData,
   type BooleanFilterData,
+  type ArrayFilterData,
   type BooleanPropertyInfo,
+  type ArrayPropertyInfo,
   type CreateFilterParams,
   isNumericFilter,
   isBooleanFilter,
+  isArrayFilter,
   NumericFilterCondition,
   StringFilterCondition,
   ExistenceFilterCondition,
   BooleanFilterCondition,
+  ArrayFilterCondition,
   SortMode,
   type DataSlice,
   type QueryCriteria,
@@ -239,7 +243,58 @@ export function useFilterUtilities(
       typeof firstValue === 'number' ||
       (!isNaN(Number(firstValue)) && String(firstValue) !== '')
 
-    if (isBooleanProperty) {
+    // Check if this is an array property by looking at the actual values in the data store
+    const isArrayProperty = (() => {
+      for (const dataSource of dataStore.dataSources.value) {
+        for (const objProps of Object.values(dataSource.objectProperties)) {
+          const value = objProps[propertyKey]
+          if (value !== undefined) {
+            return Array.isArray(value)
+          }
+        }
+      }
+      return false
+    })()
+
+    if (isArrayProperty) {
+      // For array properties, collect actual array values and their object IDs
+      const arrayValueGroups: { value: unknown[]; ids: string[] }[] = []
+      const processedArrays = new Map<string, string[]>()
+
+      for (const dataSource of dataStore.dataSources.value) {
+        for (const [objectId, objProps] of Object.entries(
+          dataSource.objectProperties
+        )) {
+          const value = objProps[propertyKey]
+          if (Array.isArray(value)) {
+            const arrayKey = JSON.stringify(value) // Use JSON string as key for comparison
+            if (!processedArrays.has(arrayKey)) {
+              processedArrays.set(arrayKey, [])
+            }
+            processedArrays.get(arrayKey)!.push(objectId)
+          }
+        }
+      }
+
+      for (const [arrayKey, objectIds] of processedArrays.entries()) {
+        try {
+          const arrayValue = JSON.parse(arrayKey) as unknown[]
+          arrayValueGroups.push({
+            value: arrayValue,
+            ids: objectIds
+          })
+        } catch {
+          // Skip invalid JSON
+        }
+      }
+
+      return {
+        key: propertyKey,
+        type: 'array',
+        objectCount: valueToObjectIds.size,
+        valueGroups: arrayValueGroups
+      } as ArrayPropertyInfo
+    } else if (isBooleanProperty) {
       return {
         key: propertyKey,
         type: 'boolean',
@@ -348,6 +403,15 @@ export function useFilterUtilities(
         filter: numericFilter,
         numericRange: { min, max }
       } as NumericFilterData
+    } else if (fullFilter.type === 'array') {
+      return {
+        id,
+        isApplied: true,
+        selectedValues: [],
+        condition: ArrayFilterCondition.Contains,
+        type: FilterType.Array,
+        filter: fullFilter as ArrayPropertyInfo
+      } as ArrayFilterData
     } else {
       return {
         id,
@@ -445,6 +509,7 @@ export function useFilterUtilities(
       if (
         !isNumericFilter(filter) &&
         !isBooleanFilter(filter) &&
+        !isArrayFilter(filter) &&
         filter.isDefaultAllSelected
       ) {
         filter.isDefaultAllSelected = false
@@ -480,7 +545,7 @@ export function useFilterUtilities(
         const allValues = getAllPropertyValues(propertyFilter.key)
         filter.selectedValues = [...allValues]
       }
-      if (!isBooleanFilter(filter)) {
+      if (!isBooleanFilter(filter) && !isArrayFilter(filter)) {
         filter.isDefaultAllSelected = false
       }
 
@@ -506,6 +571,23 @@ export function useFilterUtilities(
         filter.isApplied = true
       }
 
+      updateDataStoreSlices()
+    }
+  }
+
+  /**
+   * Updates search value for array filters
+   */
+  const updateArrayFilterSearchValue = (filterId: string, searchValue: string) => {
+    clearHighlightedObjects()
+    clearSelection()
+
+    const filter = filters.propertyFilters.value.find((f) => f.id === filterId)
+    if (filter && isArrayFilter(filter)) {
+      filter.searchValue = searchValue
+      if (!filter.isApplied) {
+        filter.isApplied = true
+      }
       updateDataStoreSlices()
     }
   }
@@ -594,9 +676,45 @@ export function useFilterUtilities(
           objectIds: matchingObjectIds
         }
         newFilterSlices.push(slice)
+      } else if (isArrayFilter(filter) && filter.isApplied) {
+        const { condition } = filter
+        const queryCriteria: QueryCriteria = {
+          propertyKey: filter.filter.key,
+          condition,
+          values: [],
+          searchValue: filter.searchValue
+        }
+        const matchingObjectIds = dataStore.queryObjects(queryCriteria)
+
+        let sliceName = `${getPropertyName(filter.filter.key)} `
+        switch (condition) {
+          case ArrayFilterCondition.Contains:
+            sliceName += `contains "${filter.searchValue}"`
+            break
+          case ArrayFilterCondition.DoesNotContain:
+            sliceName += `does not contain "${filter.searchValue}"`
+            break
+          case ArrayFilterCondition.IsEmpty:
+            sliceName += 'is empty'
+            break
+          case ArrayFilterCondition.IsNotEmpty:
+            sliceName += 'is not empty'
+            break
+          default:
+            sliceName += getConditionLabel(condition)
+        }
+
+        const slice: DataSlice = {
+          id: `filter-${filter.id}`,
+          widgetId: filter.id,
+          name: sliceName,
+          objectIds: matchingObjectIds
+        }
+        newFilterSlices.push(slice)
       } else if (
         !isNumericFilter(filter) &&
         !isBooleanFilter(filter) &&
+        !isArrayFilter(filter) &&
         filter.isApplied &&
         (filter.selectedValues.length > 0 ||
           filter.isDefaultAllSelected ||
@@ -658,6 +776,7 @@ export function useFilterUtilities(
       if (
         !isNumericFilter(filter) &&
         !isBooleanFilter(filter) &&
+        !isArrayFilter(filter) &&
         filter.isDefaultAllSelected
       ) {
         filter.selectedValues = [value]
@@ -833,8 +952,16 @@ export function useFilterUtilities(
         const isBoolean = String(value) === 'true' || String(value) === 'false'
         const isNumeric =
           typeof value === 'number' || (!isNaN(Number(value)) && String(value) !== '')
+        const isArray = propertyInfo.type === FilterType.Array
 
-        if (isBoolean) {
+        if (isArray) {
+          allProperties.set(propertyKey, {
+            key: propertyKey,
+            type: 'array',
+            objectCount: 0,
+            valueGroups: []
+          } as ArrayPropertyInfo)
+        } else if (isBoolean) {
           allProperties.set(propertyKey, {
             key: propertyKey,
             type: 'boolean',
@@ -966,6 +1093,7 @@ export function useFilterUtilities(
     findFilterByKvp,
     getFilteredFilterValues,
     setNumericRange,
+    updateArrayFilterSearchValue,
     isLargeProperty
   }
 }
