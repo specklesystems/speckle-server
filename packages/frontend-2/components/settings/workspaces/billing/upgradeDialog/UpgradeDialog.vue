@@ -62,7 +62,7 @@ const mixpanel = useMixpanel()
 const { projectCount, modelCount } = useWorkspaceUsage(props.slug)
 const featureFlags = useFeatureFlags()
 
-const showAddonSelect = ref<boolean>(true)
+const showAddonSelect = ref<boolean>(false)
 const isLoading = ref<boolean>(false)
 
 const title = computed(() => {
@@ -196,7 +196,12 @@ watch(
   () => isOpen.value,
   (newVal) => {
     if (newVal) {
-      showAddonSelect.value = props.isChangingPlan && !isSamePlanWithAddon.value
+      // Only show addon select for Business (Pro) plans
+      const isBusinessPlan =
+        props.plan === PaidWorkspacePlans.Pro ||
+        props.plan === PaidWorkspacePlans.ProUnlimited
+      showAddonSelect.value =
+        props.isChangingPlan && !isSamePlanWithAddon.value && isBusinessPlan
       // If the add-on is required or already included, set it to yes
       if (usageExceedsNewPlanLimit.value && props.isChangingPlan) {
         includeUnlimitedAddon.value = 'yes'
