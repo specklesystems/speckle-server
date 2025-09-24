@@ -3,6 +3,7 @@ import type { GenericValidateFunction } from 'vee-validate'
 import { graphql } from '~/lib/common/generated/gql/gql'
 import {
   SavedViewVisibility,
+  type FullPermissionCheckResultFragment,
   type UseSavedViewValidationHelpers_SavedViewFragment
 } from '~/lib/common/generated/gql/graphql'
 import { Globe, User } from 'lucide-vue-next'
@@ -20,6 +21,12 @@ graphql(`
         ...FullPermissionCheckResult
       }
       canMove {
+        ...FullPermissionCheckResult
+      }
+      canEditTitle {
+        ...FullPermissionCheckResult
+      }
+      canEditDescription {
         ...FullPermissionCheckResult
       }
     }
@@ -42,6 +49,30 @@ export const useSavedViewValidationHelpers = (params: {
 
   const canUpdate = computed(() => params.view.value?.permissions.canUpdate)
   const canMove = computed(() => params.view.value?.permissions.canMove)
+  const canEditTitle = computed(() => params.view.value?.permissions.canEditTitle)
+  const canEditDescription = computed(
+    () => params.view.value?.permissions.canEditDescription
+  )
+
+  const canOpenEditDialog = computed(
+    (): FullPermissionCheckResultFragment | undefined => {
+      if (isLoading.value) {
+        return {
+          authorized: false,
+          errorMessage: undefined,
+          code: 'LOADING',
+          message: ''
+        }
+      }
+
+      if (canUpdate.value?.authorized) return canUpdate.value
+      if (canEditTitle.value?.authorized) return canEditTitle.value
+      if (canEditDescription.value?.authorized) return canEditDescription.value
+      if (canMove.value?.authorized) return canMove.value
+      return canMove.value
+    }
+  )
+
   const isOnlyVisibleToMe = computed(
     () => params.view.value?.visibility === SavedViewVisibility.AuthorOnly
   )
@@ -134,6 +165,9 @@ export const useSavedViewValidationHelpers = (params: {
     canSetHomeView,
     isHomeView,
     canToggleVisibility,
-    canMove
+    canMove,
+    canEditTitle,
+    canEditDescription,
+    canOpenEditDialog
   }
 }
