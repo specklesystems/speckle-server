@@ -21,11 +21,13 @@ import {
   deleteSavedViewRecordFactory,
   getGroupSavedViewsPageItemsFactory,
   getGroupSavedViewsTotalCountFactory,
+  getNewViewSpecificPositionFactory,
   getProjectSavedViewGroupsPageItemsFactory,
   getProjectSavedViewGroupsTotalCountFactory,
   getStoredViewCountFactory,
   getStoredViewGroupCountFactory,
   getUngroupedSavedViewsGroupFactory,
+  rebalancingViewPositionsFactory,
   recalculateGroupResourceIdsFactory,
   setNewHomeViewFactory,
   storeSavedViewFactory,
@@ -310,7 +312,11 @@ const resolvers: Resolvers = {
         }),
         setNewHomeView: setNewHomeViewFactory({
           db: projectDb
-        })
+        }),
+        getNewViewSpecificPosition: getNewViewSpecificPositionFactory({
+          db: projectDb
+        }),
+        rebalanceViewPositions: rebalancingViewPositionsFactory({ db: projectDb })
       })
       return await createSavedView({ input: args.input, authorId: ctx.userId! })
     },
@@ -370,7 +376,8 @@ const resolvers: Resolvers = {
       > = {
         groupId: 'canMove',
         name: 'canEditTitle',
-        description: 'canEditDescription'
+        description: 'canEditDescription',
+        position: 'canMove'
       }
       const results = await Promise.all(
         Object.keys(updates).map((key) => {
@@ -398,6 +405,10 @@ const resolvers: Resolvers = {
           db: projectDb
         }),
         setNewHomeView: setNewHomeViewFactory({
+          db: projectDb
+        }),
+        rebalanceViewPositions: rebalancingViewPositionsFactory({ db: projectDb }),
+        getNewViewSpecificPosition: getNewViewSpecificPositionFactory({
           db: projectDb
         })
       })

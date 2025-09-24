@@ -21,6 +21,7 @@ import {
   SelectionExtension,
   type SunLightConfiguration
 } from '@speckle/viewer'
+import { Vector3 } from 'three'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import type { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
 import { ProjectCommentsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
@@ -48,14 +49,15 @@ import {
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
-import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import { SafeLocalStorage } from '@speckle/shared'
-import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useCameraUtilities,
+  useSectionBoxUtilities
+} from '~~/lib/viewer/composables/ui'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import type { SectionBoxData } from '@speckle/shared/viewer/state'
 import { graphql } from '~/lib/common/generated/gql'
 import { useTreeManagement } from '~~/lib/viewer/composables/tree'
 import { useViewerSavedViewIntegration } from '~/lib/viewer/composables/savedViews/state'
@@ -345,16 +347,6 @@ function useViewerSubscriptionEventTracker() {
   )
 }
 
-function sectionBoxDataEquals(a: SectionBoxData, b: SectionBoxData): boolean {
-  const isEqual = (a: number[], b: number[]) =>
-    a.length === b.length && a.every((v, i) => Math.abs(v - b[i]) < 1e-6)
-  return (
-    isEqual(a.min, b.min) &&
-    isEqual(a.max, b.max) &&
-    (a.rotation && b.rotation ? isEqual(a.rotation, b.rotation) : true)
-  )
-}
-
 function useViewerSectionBoxIntegration() {
   const {
     ui: {
@@ -363,6 +355,8 @@ function useViewerSectionBoxIntegration() {
     },
     viewer: { instance }
   } = useInjectedViewerState()
+
+  const { sectionBoxDataToBox3, sectionBoxDataEquals } = useSectionBoxUtilities()
 
   // Change edited=true when user starts changing the section box by dragging it
   const sectionTool = instance.getExtension(SectionTool)
@@ -385,7 +379,7 @@ function useViewerSectionBoxIntegration() {
         visible.value = false
         edited.value = false
 
-        instance.sectionBoxOff()
+        sectionTool.enabled = false
         instance.requestRender(UpdateFlags.RENDER_RESET)
         return
       }
@@ -394,8 +388,9 @@ function useViewerSectionBoxIntegration() {
         visible.value = true
         edited.value = false
 
-        instance.setSectionBox(newVal)
-        instance.sectionBoxOn()
+        const box3 = sectionBoxDataToBox3(newVal)
+        sectionTool.setBox(box3)
+        sectionTool.enabled = true
         const outlines = instance.getExtension(SectionOutlines)
         if (outlines) outlines.requestUpdate()
         instance.requestRender(UpdateFlags.RENDER_RESET)
@@ -421,7 +416,7 @@ function useViewerSectionBoxIntegration() {
   )
 
   onBeforeUnmount(() => {
-    instance.sectionBoxOff()
+    sectionTool.enabled = false
     sectionTool.removeListener(SectionToolEvent.DragStart, onDragStart)
   })
 }
@@ -434,7 +429,7 @@ function useViewerCameraIntegration() {
       spotlightUserSessionId
     }
   } = useInjectedViewerState()
-  const { forceViewToViewerSync } = useCameraUtilities()
+  const { forceViewToViewerSync, setView, cameraController } = useCameraUtilities()
 
   const hasInitialLoadFired = ref(false)
 
@@ -500,9 +495,9 @@ function useViewerCameraIntegration() {
     }
 
     if (newVal) {
-      instance.setOrthoCameraOn()
+      cameraController.setOrthoCameraOn()
     } else {
-      instance.setPerspectiveCameraOn()
+      cameraController.setPerspectiveCameraOn()
     }
 
     // reset camera pos, cause we've switched cameras now and it might not have the new ones
@@ -525,7 +520,7 @@ function useViewerCameraIntegration() {
       if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
         return
       }
-      instance.setView({
+      setView({
         position: newVal,
         target: target.value
       })
@@ -540,7 +535,7 @@ function useViewerCameraIntegration() {
         return
       }
 
-      instance.setView({
+      setView({
         position: position.value,
         target: newVal
       })

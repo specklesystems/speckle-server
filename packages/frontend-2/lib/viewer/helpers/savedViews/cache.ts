@@ -37,10 +37,14 @@ export const onNewGroupViewCacheUpdates = (
     getCacheId('Project', projectId),
     'savedViewGroups',
     ({ helpers: { createUpdatedValue, ref, fromRef }, value }) => {
-      const isNewGroup = !value?.items?.some((group) => fromRef(group).id === groupId)
-      if (!isNewGroup) return
-
       const isNewGroupUngrouped = isUngroupedGroup(groupId)
+      const alreadyExists = value?.items?.some((group) =>
+        isNewGroupUngrouped
+          ? isUngroupedGroup(fromRef(group).id)
+          : fromRef(group).id === groupId
+      )
+      const isNewGroup = !alreadyExists
+      if (!isNewGroup) return
 
       return createUpdatedValue(({ update }) => {
         update('totalCount', (count) => count + 1)

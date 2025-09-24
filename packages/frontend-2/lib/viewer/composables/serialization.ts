@@ -5,10 +5,14 @@ import {
 import { isUndefinedOrVoid, SpeckleViewer } from '@speckle/shared'
 import { get } from 'lodash-es'
 import { Vector3 } from 'three'
-import { useDiffUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useDiffUtilities,
+  useSelectionUtilities,
+  useSectionBoxUtilities
+} from '~~/lib/viewer/composables/ui'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
-import { CameraController, VisualDiffMode } from '@speckle/viewer'
+import { CameraController, SectionTool, VisualDiffMode } from '@speckle/viewer'
 import type { FilterLogic, FilterCondition } from '~/lib/viewer/helpers/filters/types'
 import type { Merge, PartialDeep } from 'type-fest'
 import {
@@ -31,6 +35,7 @@ export function useStateSerialization() {
   const { serializeDiffCommand } = useDiffUtilities()
   const { filters } = useFilterUtilities()
   const dataStore = useFilteringDataStore()
+  const { box3ToSectionBoxData } = useSectionBoxUtilities()
 
   /**
    * We don't want to save a comment w/ implicit identifiers like ones that only have a model ID or a folder prefix, because
@@ -64,7 +69,9 @@ export function useStateSerialization() {
     const { concreteResourceIdString } = options || {}
 
     const camControls = state.viewer.instance.getExtension(CameraController).controls
-    const box = state.viewer.instance.getCurrentSectionBox()
+
+    const rawBox = state.viewer.instance.getExtension(SectionTool).getBox()
+    const box = rawBox ? box3ToSectionBoxData(rawBox) : null
 
     const ret: SerializedViewerState = {
       projectId: state.projectId.value,
