@@ -324,7 +324,7 @@ jobs:
               - 'packages/server/**'
               - 'packages/shared/**'
       - if: steps.changes.outputs.server == 'false'
-        run: exit 1
+        run: exit 0
       - uses: useblacksmith/setup-node@v5
         with:
           node-version: 22
