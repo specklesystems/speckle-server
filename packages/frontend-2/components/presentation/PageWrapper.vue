@@ -90,6 +90,8 @@ const viewerProgress = ref(0)
 
 const ViewerWrapper = resolveComponent('PresentationViewerWrapper')
 
+const title = computed(() => presentation.value?.title)
+
 const onLoadingChange = (loading: boolean) => {
   isViewerLoading.value = loading
 
@@ -114,6 +116,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 useEventListener('keydown', handleKeydown)
+useHead({ title })
 
 onMounted(() => {
   mixpanel.track('Presentation Viewed', {
