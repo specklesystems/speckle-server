@@ -56,7 +56,7 @@
           </FormButton>
         </div>
         <div v-if="accSyncItem" class="flex items-center ml-2">
-          <IntegrationsAccSyncStatus :status="accSyncItem.status" />
+          <IntegrationsAccSyncStatusModelItem :status="accSyncItem.status" />
         </div>
         <!-- Spacer -->
         <div class="flex-grow"></div>
