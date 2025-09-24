@@ -13,6 +13,7 @@ declare module 'http' {
 
 export type AccSessionData = {
   accTokens?: AccTokens
+  bentleyTokens?: any
   codeVerifier?: string
   callbackEndpoint?: string
 }

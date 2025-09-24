@@ -4,16 +4,22 @@
       title="Integrations"
       text="Connect your workspace to authorized applications."
     />
-    <IntegrationsAccCard
-      :workspace-id="workspaceResult?.workspaceBySlug.id || ''"
-      :workspace-slug="routeSlug"
-    ></IntegrationsAccCard>
-    <!-- <div v-for="integration in integrations" :key="integration.cookieKey">
+    <div class="flex flex-col space-y-2 w-full">
+      <IntegrationsAccCard
+        :workspace-id="workspaceResult?.workspaceBySlug.id || ''"
+        :workspace-slug="routeSlug"
+      ></IntegrationsAccCard>
+      <IntegrationsBentleyCard
+        :workspace-id="workspaceResult?.workspaceBySlug.id || ''"
+        :workspace-slug="routeSlug"
+      ></IntegrationsBentleyCard>
+      <!-- <div v-for="integration in integrations" :key="integration.cookieKey">
       <IntegrationsCard
         :integration="integration"
         @handle-c-t-a="handleCTA(integration)"
       ></IntegrationsCard>
     </div> -->
+    </div>
   </section>
 </template>
 

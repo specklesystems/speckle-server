@@ -548,6 +548,14 @@ export function getAutodeskIntegrationClientSecret() {
   return getStringFromEnv('AUTODESK_INTEGRATION_CLIENT_SECRET')
 }
 
+export function getBentleyIntegrationClientId() {
+  return getStringFromEnv('BENTLEY_INTEGRATION_CLIENT_ID')
+}
+
+export function getBentleyIntegrationClientSecret() {
+  return getStringFromEnv('BENTLEY_INTEGRATION_CLIENT_SECRET')
+}
+
 export function getOdaUserId() {
   return getStringFromEnv('ODA_USER_ID')
 }
