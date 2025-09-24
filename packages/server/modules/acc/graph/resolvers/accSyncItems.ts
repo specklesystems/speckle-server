@@ -62,6 +62,7 @@ import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { AccModuleDisabledError, SyncItemNotFoundError } from '@/modules/acc/errors/acc'
 import { getFeatureFlags } from '@speckle/shared/environment'
 import type { AccRegion } from '@/modules/acc/domain/constants'
+import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 
 const { FF_ACC_INTEGRATION_ENABLED, FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -193,6 +194,14 @@ const resolvers: Resolvers = {
     }
   },
   AccSyncItem: {
+    project: async (parent, _args, context) => {
+      const project = await context.loaders.streams.getStream.load(parent.projectId)
+      if (!project) throw new ProjectNotFoundError()
+      return project
+    },
+    model: async (parent, _args, context) => {
+      return await context.loaders.branches.getById.load(parent.modelId)
+    },
     author: async (parent, _args, context) => {
       return await context.loaders.users.getUser.load(parent.authorId)
     }
@@ -244,22 +253,23 @@ const resolvers: Resolvers = {
       }
 
       return syncItem
-    },
-    async accSyncItemByModelId(parent, args, ctx) {
-      const { modelId } = args
-
-      const authResult = await ctx.authPolicies.project.canReadAccIntegrationSettings({
-        userId: ctx.userId,
-        projectId: parent.id
-      })
+    }
+  },
+  Model: {
+    accSyncItem: async (parent, _args, context) => {
+      const authResult =
+        await context.authPolicies.project.canReadAccIntegrationSettings({
+          userId: context.userId,
+          projectId: parent.id
+        })
       throwIfAuthNotOk(authResult)
       throwIfResourceAccessNotAllowed({
-        resourceId: parent.id,
-        resourceAccessRules: ctx.resourceAccessRules,
+        resourceId: parent.streamId,
+        resourceAccessRules: context.resourceAccessRules,
         resourceType: TokenResourceIdentifierType.Project
       })
 
-      const syncItem = await ctx.loaders.acc.getAccSyncItemByModelId.load(modelId)
+      const syncItem = await context.loaders.acc.getAccSyncItemByModelId.load(parent.id)
 
       if (!syncItem) {
         throw new SyncItemNotFoundError()
@@ -317,6 +327,11 @@ const disabledResolvers: Resolvers = {
     },
     async accSyncItems() {
       throw new AccModuleDisabledError()
+    }
+  },
+  Model: {
+    async accSyncItem() {
+      return null
     }
   },
   Subscription: {
