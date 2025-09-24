@@ -25,9 +25,9 @@
       <template #modelId="{ item }">
         <NuxtLink
           class="text-foreground-1 hover:text-blue-500 underline"
-          :to="`/projects/${projectId}/models/${item.modelId}`"
+          :to="`/projects/${projectId}/models/${item.model?.id}`"
         >
-          {{ item.modelId }}
+          {{ item.model?.id }}
         </NuxtLink>
       </template>
       <template #createdBy="{ item }">
