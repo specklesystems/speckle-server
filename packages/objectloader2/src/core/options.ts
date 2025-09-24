@@ -1,9 +1,11 @@
+import { Deferment } from '../deferment/defermentManager.js'
 import { CustomLogger } from '../types/functions.js'
 import { Base } from '../types/types.js'
 import { Downloader, Database } from './interfaces.js'
 
 export interface ObjectLoader2Options {
   rootId: string
+  deferments: Deferment
   downloader: Downloader
   database: Database
   logger?: CustomLogger
