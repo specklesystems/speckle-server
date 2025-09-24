@@ -6,6 +6,15 @@ import { SavedViewPreviewRetrievalError } from '@/modules/viewer/errors/savedVie
 import { outputSavedViewPreviewFactory } from '@/modules/viewer/services/savedViewPreviews'
 import { getSavedViewFactory } from '@/modules/viewer/repositories/savedViews'
 import { SavedViewPreviewType } from '@/modules/viewer/domain/operations/savedViews'
+import { authMiddlewareCreator } from '@/modules/shared/middleware'
+import {
+  allowAnonymousUsersOnPublicStreams,
+  allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
+  allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
+  streamReadPermissionsPipelineFactory
+} from '@/modules/shared/authz'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { db } from '@/db/knex'
 
 export const getSavedViewsRouter = (): Router => {
   const router = Router()
@@ -16,6 +25,16 @@ export const getSavedViewsRouter = (): Router => {
       route,
       cors(),
       allowCrossOriginResourceAccessMiddelware(),
+      async (req, res, next) => {
+        authMiddlewareCreator([
+          ...streamReadPermissionsPipelineFactory({
+            getStream: getStreamFactory({ db })
+          }),
+          allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
+          allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
+          allowAnonymousUsersOnPublicStreams
+        ])(req, res, next)
+      },
       async (req, res) => {
         const projectId = req.params.projectId
         const viewId = req.params.viewId

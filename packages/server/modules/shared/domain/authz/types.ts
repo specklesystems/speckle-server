@@ -11,6 +11,7 @@ export interface AuthContext {
   token?: string
   scopes?: string[]
   stream?: StreamWithOptionalRole
+  project?: StreamWithOptionalRole
   err?: Error | BaseError
   /**
    * Set if authenticated with an app token
@@ -28,6 +29,7 @@ export interface AuthResult {
 
 export interface AuthParams {
   streamId?: string
+  projectId?: string
 }
 
 export interface AuthData {
