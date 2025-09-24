@@ -9,11 +9,11 @@ concurrency:
 jobs:
   get-version:
     name: Get version
-    uses: ./.github/workflows/get-version.yml
+    uses: ./.github/workflows/jobs/get-version.yml
 
   tests:
     needs: [get-version]
-    uses: ./.github/workflows/tests.yml
+    uses: ./.github/workflows/jobs/tests.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
       DOCKERHUB_USERNAME: 'speckledevops'
@@ -21,7 +21,7 @@ jobs:
 
   builds:
     needs: [get-version]
-    uses: ./.github/workflows/builds.yml
+    uses: ./.github/workflow/jobss/builds.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
       DOCKERHUB_USERNAME: 'speckledevops'

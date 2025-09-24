@@ -12,11 +12,11 @@ jobs:
   get-version:
     needs: [verify-non-prod]
     name: Get version
-    uses: ./.github/workflows/get-version.yml
+    uses: ./.github/workflows/jobs/get-version.yml
 
   builds:
     needs: [verify-non-prod, get-version]
-    uses: ./.github/workflows/builds.yml
+    uses: ./.github/workflows/jobs/builds.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
       DOCKERHUB_USERNAME: 'speckledevops'
@@ -26,7 +26,7 @@ jobs:
 
   deployment-tests:
     needs: [builds, get-version]
-    uses: ./.github/workflows/deployment-tests.yml
+    uses: ./.github/workflows/jobs/deployment-tests.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
       DOCKERHUB_USERNAME: 'speckledevops'
