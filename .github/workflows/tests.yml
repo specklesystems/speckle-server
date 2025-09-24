@@ -38,7 +38,7 @@ jobs:
     name: Get modified files
     runs-on: blacksmith
     outputs:
-      server: ${{ steps.changes.outputs }}
+      server: ${{ steps.changes.outputs.server }}
     steps:
       - uses: dorny/paths-filter@v3
         id: changes
@@ -73,6 +73,7 @@ jobs:
               - 'packages/shared/**'
             shared:
               - 'packages/shared/**'
+      - run: echo ${{ steps.changes.output }}
 
   lint-and-prettier:
     name: Lint and prettier
