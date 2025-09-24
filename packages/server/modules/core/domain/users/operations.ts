@@ -97,11 +97,6 @@ export type UpdateUserEmailVerification = (params: {
   verified: boolean
 }) => Promise<boolean>
 
-export type UpdateUserVerification = (args: {
-  email: string
-  verified: boolean
-}) => Promise<boolean>
-
 export type MarkUserAsVerified = (email: string) => Promise<boolean>
 
 export type MarkOnboardingComplete = (userId: string) => Promise<boolean>

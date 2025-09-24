@@ -93,7 +93,10 @@ export default {
               updateEmail: updateUserEmailFactory({ db: mainDb })
             })
 
-            return await updateEmailVerification(args.input)
+            return await updateEmailVerification({
+              email: args.input.email.toLowerCase().trim(),
+              verified: args.input.verified
+            })
           },
           {
             logger: ctx.log,

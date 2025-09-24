@@ -5,12 +5,9 @@ import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { expect } from 'chai'
 import { Roles } from '@speckle/shared'
-import { findEmailFactory } from '@/modules/core/repositories/userEmails'
-import { getPendingVerificationByEmailFactory } from '@/modules/emails/repositories'
-import { getUserFactory } from '@/modules/core/repositories/users'
-import { db } from '@/db/knex'
 import { AdminMutationsDocument } from '@/modules/core/graph/generated/graphql'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
+import gql from 'graphql-tag'
 
 const testForbiddenResponse = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -22,6 +19,17 @@ const testForbiddenResponse = (
     /(STREAM_INVALID_ACCESS_ERROR|FORBIDDEN|UNAUTHORIZED_ACCESS_ERROR)/
   )
 }
+
+const getActiveUserVerifiedQuery = gql`
+  query GetActiveUser {
+    activeUser {
+      verified
+      emails {
+        verified
+      }
+    }
+  }
+`
 
 describe('Admin @core-admin Graphql', () => {
   const serverAdminUser: BasicTestUser = {
@@ -70,9 +78,8 @@ describe('Admin @core-admin Graphql', () => {
       testCases.forEach(({ user: testUser, canVerify }) => {
         let apollo: TestApolloServer
         before(async () => {
-          apollo = await testApolloServer({
-            authUserId: testUser?.id
-          })
+          // we are purposefully not using the helper to create the token, as we want to test with multiple users
+          apollo = await testApolloServer()
         })
 
         it(`a ${testUser.role} is ${canVerify ? 'allowed' : 'forbidden'}`, async () => {
@@ -85,12 +92,17 @@ describe('Admin @core-admin Graphql', () => {
           }
           await createTestUser(userToVerify)
 
-          const userFromDbBefore = await getUserFactory({ db })(userToVerify.id)
-          expect(userFromDbBefore).to.be.ok
-          expect(userFromDbBefore!.verified).to.be.false
+          const preCheckRes = await apollo.execute(getActiveUserVerifiedQuery, {
+            authUserId: userToVerify.id,
+            assertNoErrors: true
+          })
+          expect(preCheckRes.data?.activeUser.verified).to.equal(false)
+          expect(preCheckRes.data?.activeUser.emails).to.have.length(1)
+          expect(preCheckRes.data?.activeUser.emails[0].verified).to.equal(false)
 
           const verifyRes = await apollo.execute(AdminMutationsDocument, {
-            input: { email: userToVerify.email }
+            input: { email: userToVerify.email },
+            authUserId: testUser.id // auth as the test user
           })
           if (!canVerify) {
             testForbiddenResponse(verifyRes)
@@ -100,25 +112,13 @@ describe('Admin @core-admin Graphql', () => {
           expect(verifyRes).to.not.haveGraphQLErrors()
           expect(verifyRes.data?.admin.updateEmailVerification).to.equal(canVerify)
 
-          const userEmail = await findEmailFactory({ db })({
-            email: userToVerify.email
+          const postCheckRes = await apollo.execute(getActiveUserVerifiedQuery, {
+            authUserId: userToVerify.id,
+            assertNoErrors: true
           })
-          expect(userEmail).to.be.ok
-          expect(userEmail!.verified).to.equal(canVerify)
-
-          const pendingVerifications = await getPendingVerificationByEmailFactory({
-            db,
-            verificationTimeoutMinutes: 100 // we don't care about timeout here
-          })({ email: userToVerify.email })
-          if (canVerify) {
-            expect(pendingVerifications).to.be.undefined
-          } else {
-            expect(pendingVerifications).to.not.be.undefined
-          }
-
-          const user = await getUserFactory({ db })(userToVerify.id)
-          expect(user).to.be.ok
-          expect(user!.verified).to.equal(canVerify)
+          expect(postCheckRes.data?.activeUser.verified).to.equal(false)
+          expect(postCheckRes.data?.activeUser.emails).to.have.length(1)
+          expect(postCheckRes.data?.activeUser.emails[0].verified).to.equal(canVerify)
         })
       })
     })
