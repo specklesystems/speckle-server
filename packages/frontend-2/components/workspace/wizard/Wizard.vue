@@ -104,11 +104,6 @@ onResult((result) => {
         newState.plan === PaidWorkspacePlans.ProUnlimited
       ) {
         goToStep(WizardSteps.Region)
-      } else if (
-        newState.plan === PaidWorkspacePlans.Team ||
-        newState.plan === PaidWorkspacePlans.TeamUnlimited
-      ) {
-        goToStep(WizardSteps.AddOns)
       } else {
         goToStep(WizardSteps.Pricing)
       }
