@@ -39,6 +39,12 @@ jobs:
     runs-on: blacksmith
     outputs:
       server: ${{ steps.changes.outputs.server }}
+      frontend-2: ${{ steps.changes.outputs.frontend-2 }}
+      preview-service: ${{ steps.changes.outputs.preview-service }}
+      viewer: ${{ steps.changes.outputs.viewer }}
+      ui-components: ${{ steps.changes.outputs.ui-components }}
+      objectsender: ${{ steps.changes.outputs.objectsender }}
+      shared: ${{ steps.changes.outputs.shared }}
     steps:
       - uses: dorny/paths-filter@v3
         id: changes
@@ -73,7 +79,6 @@ jobs:
               - 'packages/shared/**'
             shared:
               - 'packages/shared/**'
-      - run: echo ${{ steps.changes.output }}
 
   lint-and-prettier:
     name: Lint and prettier
