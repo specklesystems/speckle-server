@@ -5,7 +5,8 @@ import {
   type ViewMode,
   type CanonicalView,
   type InlineView,
-  type SpeckleView
+  type SpeckleView,
+  MeasurementsExtension
 } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { useActiveElement } from '@vueuse/core'
@@ -302,6 +303,8 @@ export function useThreadUtilities() {
 
 export function useMeasurementUtilities() {
   const state = useInjectedViewerState()
+  const measurementsExtension =
+    state.viewer.instance.getExtension(MeasurementsExtension)
 
   const measurementOptions = computed(() => state.ui.measurement.options.value)
   const hasMeasurements = computed(
@@ -317,9 +320,7 @@ export function useMeasurementUtilities() {
   }
 
   const removeActiveMeasurement = () => {
-    if (state.viewer.instance?.removeMeasurement) {
-      state.viewer.instance.removeMeasurement()
-    }
+    measurementsExtension.removeMeasurement()
   }
 
   const clearMeasurements = () => {
