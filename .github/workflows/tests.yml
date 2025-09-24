@@ -35,7 +35,7 @@ on:
 
 jobs:
   changes:
-    name: Evaluate changes
+    name: Get modified files
     runs-on: blacksmith
     steps:
       - uses: dorny/paths-filter@v3
@@ -43,11 +43,34 @@ jobs:
         with:
           filters: |
             server:
+              - 'packages/server/**'
               - 'packages/shared/**'
-              - 'packages/server/**'
-            frontend:
-              - 'packages/server/**'
+              - 'packages/objectloader2/**'
+            frontend-2:
               - 'packages/frontend-2/**'
+              - 'packages/shared/**'
+              - 'packages/tailwind-theme/**'
+              - 'packages/ui-components/**'
+              - 'packages/ui-components-nuxt/**'
+              - 'packages/viewer/**'
+              - 'packages/objectloader2/**'
+            preview-service:
+              - 'packages/preview-service/**'
+              - 'packages/objectloader2/**'
+              - 'packages/preview-frontend/**'
+              - 'packages/shared/**'
+              - 'packages/viewer/**'
+            viewer:
+              - 'packages/viewer/**'
+              - 'packages/shared/**'
+            ui-components:
+              - 'packages/ui-components/**'
+              - 'packages/shared/**'
+            objectsender:
+              - 'packages/objectsender/**'
+              - 'packages/shared/**'
+            shared
+              - 'packages/shared/**'
 
   lint-and-prettier:
     name: Lint and prettier
@@ -93,9 +116,9 @@ jobs:
 
   test-frontend-2:
     name: Frontend
-    needs: changes
-    if: needs.changes.outputs.frontend == 'true' || ${{ inputs.DISABLE_SKIPPING }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
+    needs: changes
+    if: ${{ needs.changes.outputs.frontend2 == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -114,6 +137,8 @@ jobs:
   test-viewer:
     name: Viewer
     runs-on: blacksmith-4vcpu-ubuntu-2404
+    needs: changes
+    if: ${{ needs.changes.outputs.viewer == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -141,6 +166,8 @@ jobs:
   test-shared:
     name: Shared
     runs-on: blacksmith-4vcpu-ubuntu-2404
+    needs: changes
+    if: ${{ needs.changes.outputs.shared == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -178,6 +205,8 @@ jobs:
   test-objectsender:
     name: Object Sender
     runs-on: blacksmith-4vcpu-ubuntu-2404
+    needs: changes
+    if: ${{ needs.changes.outputs.objectsender == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -202,6 +231,8 @@ jobs:
   test-ui-components:
     name: UI Components
     runs-on: blacksmith-4vcpu-ubuntu-2404
+    needs: changes
+    if: ${{ needs.changes.outputs.ui-components == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -229,6 +260,8 @@ jobs:
   test-preview-service:
     name: Preview service
     runs-on: blacksmith-4vcpu-ubuntu-2404
+    needs: changes
+    if: ${{ needs.changes.outputs.preview-service == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     container:
       image: ghcr.io/specklesystems/speckle-ubuntu-chromium:latest
@@ -376,7 +409,7 @@ jobs:
     name: Server no ff
     runs-on: blacksmith-8vcpu-ubuntu-2404
     needs: changes
-    if: needs.changes.outputs.server == 'true' || ${{ inputs.DISABLE_SKIPPING }}
+    if: ${{ needs.changes.outputs.server == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
       redis:
@@ -462,7 +495,7 @@ jobs:
   test-server-multiregion:
     name: Server multiregion
     needs: changes
-    if: needs.changes.outputs.server == 'true' || ${{ inputs.DISABLE_SKIPPING }}
+    if: ${{ needs.changes.outputs.server == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     services:
