@@ -34,6 +34,16 @@ export default [
     public: true
   },
   {
+    name: Scopes.Notifications.Read,
+    description: 'Required to see your notifications.',
+    public: true
+  },
+  {
+    name: Scopes.Notifications.Write,
+    description: 'Required to update your notifications.',
+    public: true
+  },
+  {
     name: Scopes.Server.Stats,
     description:
       'Request server stats from the API. Only works in conjunction with a "server:admin" role.',

@@ -120,6 +120,10 @@ export const Scopes = Object.freeze(<const>{
     Email: 'users:email',
     Invite: 'users:invite'
   },
+  Notifications: {
+    Read: 'notifications:read',
+    Write: 'notifications:write'
+  },
   Server: {
     Stats: 'server:stats',
     Setup: 'server:setup'
@@ -153,6 +157,8 @@ export const Scopes = Object.freeze(<const>{
 export type StreamScopes = (typeof Scopes)['Streams'][keyof (typeof Scopes)['Streams']]
 export type ProfileScopes = (typeof Scopes)['Profile'][keyof (typeof Scopes)['Profile']]
 export type UserScopes = (typeof Scopes)['Users'][keyof (typeof Scopes)['Users']]
+export type NotificationScopes =
+  (typeof Scopes)['Notifications'][keyof (typeof Scopes)['Notifications']]
 export type ServerScopes = (typeof Scopes)['Server'][keyof (typeof Scopes)['Server']]
 export type TokenScopes = (typeof Scopes)['Tokens'][keyof (typeof Scopes)['Tokens']]
 export type AppScopes = (typeof Scopes)['Apps'][keyof (typeof Scopes)['Apps']]
@@ -175,6 +181,7 @@ export type AvailableScopes =
   | AutomateScopes
   | AutomateFunctionScopes
   | WorkspaceScopes
+  | NotificationScopes
 
 /**
  * All scopes

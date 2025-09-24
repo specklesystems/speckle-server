@@ -21,7 +21,9 @@ extend type User {
   """
   List all notifications for the user
   """
-  notifications(cursor: String, limit: Int): UserNotificationCollection! @isOwner
+  notifications(cursor: String, limit: Int): UserNotificationCollection!
+    @isOwner
+    @hasScope(scope: "notifications:read")
 }
 
 extend type Mutation {
@@ -32,11 +34,14 @@ type NotificationMutations {
   """
   Delete an existing notification
   """
-  bulkDelete(ids: [String!]!): Boolean! @hasServerRole(role: SERVER_USER)
+  bulkDelete(ids: [String!]!): Boolean!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "notifications:write")
 
   """
   update notidication
   """
   bulkUpdate(ids: [String!]!, input: NotificationUpdateInput!): Boolean!
     @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "notifications:write")
 }
