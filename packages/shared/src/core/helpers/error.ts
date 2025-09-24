@@ -1,4 +1,4 @@
-import { get } from '#lodash'
+import { get, isObject, isString, isUndefined } from '#lodash'
 
 class UnexpectedErrorStructureError extends Error {}
 
@@ -75,4 +75,17 @@ export const errorToString = (e: unknown): string => {
   }
 
   return ret
+}
+
+export const getErrorMessage = (e: unknown): string => {
+  if (e instanceof Error) return e.message
+  if (isObject(e) && 'message' in e && isString(e.message)) return e.message
+  if (isString(e)) return e
+  if (isUndefined(e)) return 'undefined'
+
+  try {
+    return JSON.stringify(e)
+  } catch {
+    return String(e)
+  }
 }
