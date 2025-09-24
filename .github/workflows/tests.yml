@@ -126,7 +126,7 @@ jobs:
     name: Frontend
     runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: changes
-    if: ${{ needs.changes.outputs.frontend2 == 'true' || inputs.DISABLE_SKIPPING }}
+    if: ${{ needs.changes.outputs.frontend-2 == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
