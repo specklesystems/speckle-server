@@ -14,6 +14,9 @@ on:
       OCI_REGISTRY_USERNAME:
         required: true
         type: string
+      OCI_REGISTRY_PATH:
+        required: true
+        type: string
       CHART_NAME:
         required: false
         type: string
@@ -38,7 +41,7 @@ jobs:
       REGISTRY_USERNAME: ${{ inputs.OCI_REGISTRY_USERNAME }}
       REGISTRY_PASSWORD: ${{ secrets.OCI_REGISTRY_PASSWORD }}
       HELM_REGISTRY_DOMAIN: ${{ inputs.OCI_REGISTRY_DOMAIN }}
-      HELM_REPOSITORY_PATH: specklesystems
+      HELM_REPOSITORY_PATH: ${{ inputs.OCI_REGISTRY_PATH }}
       CHART_NAME: ${{ inputs.CHART_NAME }}
     steps:
       - uses: actions/checkout@v4.2.2

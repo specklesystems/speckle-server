@@ -59,6 +59,7 @@ jobs:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
       OCI_REGISTRY_DOMAIN: ghcr.io
+      OCI_REGISTRY_PATH: specklesystems
       OCI_REGISTRY_USERNAME: ${{ github.actor }} # we are pushing helm chart to ghcr
       CHART_NAME: ${{ needs.get-chart-name.outputs.CHART_NAME }}
     secrets:
