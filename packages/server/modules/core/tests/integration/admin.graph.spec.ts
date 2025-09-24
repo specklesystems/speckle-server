@@ -87,23 +87,36 @@ describe('Admin @core-admin Graphql', () => {
             id: '',
             email: createRandomEmail(),
             name: 'unverified user',
-            role: Roles.Server.Guest,
+            role: Roles.Server.User,
             verified: false
           }
           await createTestUser(userToVerify)
 
-          const preCheckRes = await apollo.execute(getActiveUserVerifiedQuery, {
-            authUserId: userToVerify.id,
-            assertNoErrors: true
-          })
-          expect(preCheckRes.data?.activeUser.verified).to.equal(false)
-          expect(preCheckRes.data?.activeUser.emails).to.have.length(1)
-          expect(preCheckRes.data?.activeUser.emails[0].verified).to.equal(false)
+          const preCheckRes = await apollo.execute(
+            getActiveUserVerifiedQuery,
+            {},
+            {
+              authUserId: userToVerify.id,
+              assertNoErrors: true
+            }
+          )
+          expect(preCheckRes.data?.activeUser).to.exist
+          expect(preCheckRes.data?.activeUser?.verified).to.equal(false)
+          expect(
+            preCheckRes.data?.activeUser.emails.some(
+              (email: { verified: boolean }) => email.verified
+            )
+          ).to.be.false
 
-          const verifyRes = await apollo.execute(AdminMutationsDocument, {
-            input: { email: userToVerify.email },
-            authUserId: testUser.id // auth as the test user
-          })
+          const verifyRes = await apollo.execute(
+            AdminMutationsDocument,
+            {
+              input: { email: userToVerify.email }
+            },
+            {
+              authUserId: testUser.id // auth as the test user
+            }
+          )
           if (!canVerify) {
             testForbiddenResponse(verifyRes)
             return
@@ -112,13 +125,21 @@ describe('Admin @core-admin Graphql', () => {
           expect(verifyRes).to.not.haveGraphQLErrors()
           expect(verifyRes.data?.admin.updateEmailVerification).to.equal(canVerify)
 
-          const postCheckRes = await apollo.execute(getActiveUserVerifiedQuery, {
-            authUserId: userToVerify.id,
-            assertNoErrors: true
-          })
-          expect(postCheckRes.data?.activeUser.verified).to.equal(false)
+          const postCheckRes = await apollo.execute(
+            getActiveUserVerifiedQuery,
+            {},
+            {
+              authUserId: userToVerify.id,
+              assertNoErrors: true
+            }
+          )
+          expect(postCheckRes.data?.activeUser.verified).to.equal(canVerify)
           expect(postCheckRes.data?.activeUser.emails).to.have.length(1)
-          expect(postCheckRes.data?.activeUser.emails[0].verified).to.equal(canVerify)
+          expect(
+            postCheckRes.data?.activeUser.emails.every(
+              (email: { verified: boolean }) => email.verified
+            )
+          ).to.equal(canVerify)
         })
       })
     })
