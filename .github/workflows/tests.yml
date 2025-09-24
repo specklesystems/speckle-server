@@ -312,7 +312,7 @@ jobs:
     name: Server
     runs-on: blacksmith-8vcpu-ubuntu-2404
     needs: changes
-    if: ${{ needs.changes.outputs.server == 'true' || inputs.DISABLE_SKIPPING }}
+    if: ${{ contains(needs.changes.outputs, 'server') || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
       redis:
