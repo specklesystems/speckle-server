@@ -28,7 +28,7 @@
       <div class="flex items-start justify-between gap-x-2">
         <h1
           v-if="currentSlide?.name"
-          class="text-xl font-medium text-foreground px-1 lg:px-3 lg:py-1.5"
+          class="text-xl/7 xl:text-[26px]/8 tracking-[-0.399px] xl:tracking-[-0.494px] font-medium text-foreground px-1 lg:px-2 xl:px-3 py-0.5 lg:py-1.5"
         >
           {{ currentSlide?.name }}
         </h1>
@@ -45,7 +45,7 @@
 
       <p
         v-if="currentSlide?.description"
-        class="text-body-sm text-foreground whitespace-pre-wrap px-1 lg:px-3 lg:py-1"
+        class="text-body-sm xl:text-body text-foreground whitespace-pre-wrap px-1 lg:px-2 xl:px-3 lg:py-1"
       >
         {{ currentSlide?.description }}
       </p>
