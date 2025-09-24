@@ -13,6 +13,10 @@ on:
         required: false
         default: false
         type: boolean
+      DISABLE_SKIPPING:
+        required: false
+        default: false
+        type: boolean
     secrets:
       LICENSE_TOKEN:
         required: true
@@ -30,6 +34,21 @@ on:
         required: true
 
 jobs:
+  changes:
+    name: Evaluate changes
+    runs-on: blacksmith
+    steps:
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            server:
+              - 'packages/shared/**'
+              - 'packages/server/**'
+            frontend:
+              - 'packages/server/**'
+              - 'packages/frontend-2/**'
+
   lint-and-prettier:
     name: Lint and prettier
     runs-on: blacksmith-4vcpu-ubuntu-2404
@@ -74,6 +93,8 @@ jobs:
 
   test-frontend-2:
     name: Frontend
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || ${{ inputs.DISABLE_SKIPPING }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
@@ -257,6 +278,8 @@ jobs:
   test-server:
     name: Server
     runs-on: blacksmith-8vcpu-ubuntu-2404
+    needs: changes
+    if: needs.changes.outputs.server == 'true' || ${{ inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
       redis:
@@ -316,15 +339,6 @@ jobs:
       APOLLO_KEY: ${{ secrets.APOLLO_KEY }}
     steps:
       - uses: actions/checkout@v4.2.2
-      - uses: dorny/paths-filter@v3
-        id: changes
-        with:
-          filters: |
-            server:
-              - 'packages/server/**'
-              - 'packages/shared/**'
-      - if: steps.changes.outputs.server == 'false'
-        run: exit 0
       - uses: useblacksmith/setup-node@v5
         with:
           node-version: 22
@@ -361,6 +375,8 @@ jobs:
   test-server-no-ff:
     name: Server no ff
     runs-on: blacksmith-8vcpu-ubuntu-2404
+    needs: changes
+    if: needs.changes.outputs.server == 'true' || ${{ inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
       redis:
@@ -445,6 +461,8 @@ jobs:
 
   test-server-multiregion:
     name: Server multiregion
+    needs: changes
+    if: needs.changes.outputs.server == 'true' || ${{ inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     services:
