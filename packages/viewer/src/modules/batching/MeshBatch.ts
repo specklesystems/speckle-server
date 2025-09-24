@@ -281,7 +281,7 @@ export class MeshBatch extends PrimitiveBatch {
           ) as unknown as number[],
           geometry.attributes.POSITION,
           geometry.attributes.INDEX,
-          geometry.flipNormals
+          geometry.transform
         )
       }
       batchIndices.fill(k, offset / 3, offset / 3 + geometry.attributes.POSITION.length)

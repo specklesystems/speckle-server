@@ -7,6 +7,7 @@ import {
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
   MathUtils,
+  Matrix3,
   Matrix4,
   Vector2,
   Vector3,
@@ -501,7 +502,7 @@ export class Geometry {
     buffer: number[],
     position: ChunkArray,
     index: ChunkArray,
-    flip: boolean = false
+    transform: Matrix4 | null = null
   ) {
     const pA = new Vector3(),
       pB = new Vector3(),
@@ -512,6 +513,18 @@ export class Geometry {
     const cb = new Vector3(),
       ab = new Vector3()
 
+    let normalMatrix = null
+    const vDiv = new Vector3()
+    let signDet = 1
+    if (transform) {
+      normalMatrix = new Matrix3().setFromMatrix4(transform)
+      const m0 = new Vector3().setFromMatrix3Column(normalMatrix, 0)
+      const m1 = new Vector3().setFromMatrix3Column(normalMatrix, 1)
+      const m2 = new Vector3().setFromMatrix3Column(normalMatrix, 2)
+      vDiv.set(m0.dot(m0), m1.dot(m1), m2.dot(m2))
+      signDet = Math.sign(m0.dot(new Vector3().crossVectors(m1, m2)))
+      signDet += 1.0 - Math.abs(signDet)
+    }
     // indexed elements
     for (let i = 0, il = index.length; i < il; i += 3) {
       const vA = index.get(i + 0)
@@ -533,14 +546,21 @@ export class Geometry {
       nB.add(cb)
       nC.add(cb)
 
-      if (flip) {
+      if (normalMatrix) {
+        nA.divide(vDiv)
+        nB.divide(vDiv)
+        nC.divide(vDiv)
+        nA.applyMatrix3(normalMatrix)
+        nB.applyMatrix3(normalMatrix)
+        nC.applyMatrix3(normalMatrix)
+
+        nA.multiplyScalar(signDet)
+        nB.multiplyScalar(signDet)
+        nC.multiplyScalar(signDet)
+
         nA.normalize()
         nB.normalize()
         nC.normalize()
-
-        nA.negate()
-        nB.negate()
-        nC.negate()
       }
 
       buffer[vA * 3] = nA.x
