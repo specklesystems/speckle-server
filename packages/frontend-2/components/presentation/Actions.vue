@@ -53,15 +53,15 @@ const toggleFullscreen = () => {
 }
 
 // Listen for fullscreen changes
+const handleFullscreenChange = () => {
+  isFullscreen.value = !!document.fullscreenElement
+}
+
 onMounted(() => {
-  const handleFullscreenChange = () => {
-    isFullscreen.value = !!document.fullscreenElement
-  }
-
   document.addEventListener('fullscreenchange', handleFullscreenChange)
+})
 
-  onUnmounted(() => {
-    document.removeEventListener('fullscreenchange', handleFullscreenChange)
-  })
+onUnmounted(() => {
+  document.removeEventListener('fullscreenchange', handleFullscreenChange)
 })
 </script>

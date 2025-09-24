@@ -11,12 +11,11 @@
         class="w-full aspect-[3/2] md:aspect-video object-cover"
       />
     </button>
-    <div v-if="!hideTitle" class="flex flex-row gap-x-1 pt-0.5 pb-1">
-      <p class="text-body-3xs font-semibold text-foreground my-1">{{ slideIndex }}.</p>
-      <p class="text-body-3xs font-medium text-foreground my-1">
-        {{ slide.name }}
-      </p>
-    </div>
+
+    <p v-if="!hideTitle" class="text-body-3xs font-medium text-foreground mt-1.5 mb-2">
+      <span class="font-semibold mr-1">{{ slideIndex }}.</span>
+      {{ slide.name }}
+    </p>
   </li>
 </template>
 

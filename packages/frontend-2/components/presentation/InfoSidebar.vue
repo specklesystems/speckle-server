@@ -40,12 +40,6 @@
             hide-text
             @click="isSlideEditDialogOpen = true"
           />
-          <!--<FormButton
-            :icon-left="LucideX"
-            color="subtle"
-            hide-text
-            @click="$emit('close')"
-          />-->
         </div>
       </div>
 

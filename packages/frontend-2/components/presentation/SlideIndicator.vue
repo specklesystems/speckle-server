@@ -11,7 +11,7 @@
 
     <div
       v-if="showSlideList"
-      class="hidden lg:block absolute top-[calc(50%+25px)] -translate-y-1/2 max-h-[75vh] overflow-y-auto w-56 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-foundation border border-outline-3 rounded-2xl p-2 shadow-md transition-all duration-300 ease-out opacity-0 invisible group-hover:opacity-100 group-hover:visible -translate-x-5 group-hover:translate-x-0"
+      class="hidden lg:block absolute top-[calc(50%+25px)] -translate-y-1/2 max-h-[75vh] overflow-y-auto w-56 simple-scrollbar bg-foundation border border-outline-3 rounded-2xl p-2 shadow-md transition-all duration-300 ease-out opacity-0 invisible group-hover:opacity-100 group-hover:visible -translate-x-5 group-hover:translate-x-0"
     >
       <PresentationSlideList class="w-full" hide-title />
     </div>

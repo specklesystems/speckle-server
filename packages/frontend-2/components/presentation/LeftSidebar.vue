@@ -9,7 +9,7 @@
     >
       <div class="flex flex-col h-full">
         <section
-          class="flex-shrink-0 flex items-center gap-3 absolute bg-white/70 backdrop-blur-md w-full p-3 pb-2.5 border-b border-white/80"
+          class="flex-shrink-0 flex items-center gap-3 absolute bg-foundation/70 backdrop-blur-lg w-full p-3 pb-2.5 border-b border-white/80 dark:border-gray-900/30"
         >
           <NuxtLink
             class="flex items-center gap-2.5 min-w-0 flex-1"
@@ -18,7 +18,7 @@
             <WorkspaceAvatar
               :name="workspace?.name"
               :logo="workspace?.logo"
-              :size="'lg'"
+              size="lg"
             />
             <div class="flex-1 min-w-0">
               <p class="text-body-xs font-medium text-foreground truncate">
@@ -28,7 +28,7 @@
           </NuxtLink>
         </section>
         <section
-          class="flex-1 flex justify-center overflow-y-auto pt-16 pb-3 px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          class="flex-1 flex justify-center simple-scrollbar overflow-y-auto pt-16 pb-3 px-3"
         >
           <PresentationSlideList />
         </section>
