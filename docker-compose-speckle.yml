@@ -1,10 +1,15 @@
+# This file is configured to run a local Speckle server with all its services using Docker Compose.
+# It is intended to be run with the services available in docker-compose-deps.yml
+# Note that some changes are required to make it work in your environment, see inline comments for details.
+
+# To run, use the command: docker compose -f docker-compose-deps.yml -f docker-compose-speckle.yml up
+# More information about running a local Speckle server via Docker Compose
+# can be found at https://docs.speckle.systems/developers/server/getting-started
+
 services:
   speckle-ingress:
-    build:
-      context: .
-      dockerfile: utils/docker-compose-ingress/Dockerfile
     platform: linux/amd64
-    image: speckle/speckle-docker-compose-ingress:local
+    image: speckle/speckle-docker-compose-ingress:2
     restart: always
     ports:
       - '0.0.0.0:80:8080'
@@ -16,11 +21,8 @@ services:
       - speckle-frontend-2
 
   speckle-frontend-2:
-    build:
-      context: .
-      dockerfile: packages/frontend-2/Dockerfile
     platform: linux/amd64
-    image: speckle/speckle-frontend-2:local
+    image: speckle/speckle-frontend-2:2
     restart: always
     environment:
       NUXT_PUBLIC_SERVER_NAME: 'local'
@@ -39,14 +41,11 @@ services:
       NUXT_PUBLIC_FF_NEXT_GEN_FILE_IMPORTER_ENABLED: 'true'
     depends_on:
       - speckle-server
-      # - redis
+      - redis
 
   speckle-server:
-    build:
-      context: .
-      dockerfile: packages/server/Dockerfile
     platform: linux/amd64
-    image: speckle/speckle-server:local
+    image: speckle/speckle-server:2
     restart: always
     healthcheck:
       test:
@@ -93,9 +92,15 @@ services:
       S3_CREATE_BUCKET: 'true'
       S3_REGION: '' # optional, defaults to 'us-east-1'
       FILE_SIZE_LIMIT_MB: 1000
-      EMAIL_FROM: 'no-reply@example.org'
-      EMAIL_SECURE: 'false' # Force the use of SSL. If connecting to maildev server, do not use SSL.
-      EMAIL_REQUIRE_TLS: 'false' # Force the use of TLS. If your email server supports STARTTLS, you probably want this enabled instead of EMAIL_SECURE. If connecting to maildev server, do not use TLS.
+
+      EMAIL: 'true'
+      EMAIL_HOST: 'TODO:Replace' # Please provide a Transactional Email provider's SMTP relay host domain here, such as Mailchimp Transactional, AWS SES, Mailjet etc..
+      EMAIL_PORT: '587' # TODO:Replace with the port your Transactional email provider's SMTP relay is using. Preferably a port that supports TLS.
+      EMAIL_USERNAME: 'TODO:Replace' # Replace with the username provided by your Transactional email provider's SMTP relay service
+      EMAIL_PASSWORD: 'TODO:Replace' # Replace with the password provided by your Transactional email provider's SMTP relay service
+      EMAIL_FROM: 'no-reply@example.org' # TODO:Replace with the email you have configured with the SMTP relay
+      EMAIL_SECURE: 'false' # Force the use of SSL. TLS is preferred, see EMAIL_REQUIRE_TLS
+      EMAIL_REQUIRE_TLS: 'true' # Force the use of TLS. If your email server supports STARTTLS, you preferably want this enabled instead of EMAIL_SECURE.
 
       FRONTEND_ORIGIN: 'http://127.0.0.1'
       ONBOARDING_STREAM_URL: 'https://latest.speckle.systems/projects/843d07eb10'
@@ -104,17 +109,13 @@ services:
       FF_NEXT_GEN_FILE_IMPORTER_ENABLED: 'true'
 
     depends_on:
-      []
-      # - minio
-      # - redis
-      # - postgres
+      - minio
+      - redis
+      - postgres
 
   preview-service:
-    build:
-      context: .
-      dockerfile: packages/preview-service/Dockerfile
     platform: linux/amd64
-    image: speckle/speckle-preview-service:local
+    image: speckle/speckle-preview-service:2
     restart: always
     mem_limit: '3000m'
     memswap_limit: '3000m'
@@ -125,15 +126,11 @@ services:
       LOG_PRETTY: 'true'
       REDIS_URL: 'redis://redis'
     depends_on:
-      []
-      # - redis
+      - redis
 
   webhook-service:
-    build:
-      context: .
-      dockerfile: packages/webhook-service/Dockerfile
     platform: linux/amd64
-    image: speckle/speckle-webhook-service:local
+    image: speckle/speckle-webhook-service:2
     restart: always
     environment:
       LOG_LEVEL: 'info'
@@ -141,14 +138,11 @@ services:
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
     depends_on:
       - speckle-server
-      # - postgres
+      - postgres
 
   ifc-import-server:
-    build:
-      context: .
-      dockerfile: packages/ifc-import-service/Dockerfile
     platform: linux/amd64
-    image: speckle/ifc-import-service:local
+    image: speckle/speckle-ifc-import-service:2
     restart: always
     environment:
       LOG_LEVEL: 'info'
@@ -156,4 +150,4 @@ services:
       FILEIMPORT_QUEUE_POSTGRES_URL: 'postgresql://speckle:speckle@postgres/speckle'
     depends_on:
       - speckle-server
-      # - postgres
+      - postgres
