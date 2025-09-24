@@ -87,6 +87,16 @@ export type UpdateUserServerRole = (params: {
   role: ServerRoles
 }) => Promise<boolean>
 
+export type AdminUpdateEmailVerification = (args: {
+  email: string
+  verified?: MaybeNullOrUndefined<boolean>
+}) => Promise<boolean>
+
+export type UpdateUserEmailVerification = (params: {
+  email: string
+  verified: boolean
+}) => Promise<boolean>
+
 export type MarkUserAsVerified = (email: string) => Promise<boolean>
 
 export type MarkOnboardingComplete = (userId: string) => Promise<boolean>
