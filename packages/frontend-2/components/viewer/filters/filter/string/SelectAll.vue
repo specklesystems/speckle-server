@@ -15,7 +15,7 @@
         :name="`select-all-${selectedCount}-${totalCount}`"
         :model-value="areAllValuesSelected"
         :indeterminate="areSomeValuesSelected"
-        class="pointer-events-none -mt-1"
+        class="pointer-events-none"
         :class="selectAllCheckboxClasses"
         hide-label
       />
@@ -32,7 +32,6 @@
 </template>
 
 <script setup lang="ts">
-import { FormCheckbox } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import type { StringFilterData } from '~/lib/viewer/helpers/filters/types'
 

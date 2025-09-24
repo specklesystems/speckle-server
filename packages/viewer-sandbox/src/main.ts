@@ -638,6 +638,9 @@ const getStream = () => {
 
     // Revit v3 instances
     // 'https://app.speckle.systems/projects/03074a2834/models/a013d06fe1@cc11e1ead1'
+
+    // Gergo's new house
+    // 'https://app.speckle.systems/projects/4743372784/models/2aeaa357e6'
   )
 }
 

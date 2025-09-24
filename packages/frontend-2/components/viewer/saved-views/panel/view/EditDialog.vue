@@ -30,12 +30,15 @@
         :resource-id-string="resourceIdString"
         :rules="[isRequired]"
       />
-      <FormRadioGroup
-        :options="visibilityOptions"
-        size="sm"
-        name="visibility"
-        :rules="[isRequired, validateVisibility]"
-      />
+      <div v-tippy="canToggleVisibility.message">
+        <FormRadioGroup
+          :options="visibilityOptions"
+          :disabled="!canToggleVisibility.authorized"
+          size="sm"
+          name="visibility"
+          :rules="[isRequired, validateVisibility]"
+        />
+      </div>
     </div>
   </LayoutDialog>
 </template>
@@ -90,9 +93,10 @@ const {
   }
 } = useInjectedViewerState()
 const updateView = useUpdateSavedView()
-const { validateVisibility, visibilityOptions } = useSavedViewValidationHelpers({
-  view: computed(() => props.view)
-})
+const { validateVisibility, visibilityOptions, canToggleVisibility } =
+  useSavedViewValidationHelpers({
+    view: computed(() => props.view)
+  })
 
 const buttons = computed((): LayoutDialogButton[] => [
   {

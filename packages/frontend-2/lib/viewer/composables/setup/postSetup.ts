@@ -9,6 +9,7 @@ import {
   ViewerEvent,
   VisualDiffMode,
   CameraController,
+  DiffExtension,
   UpdateFlags,
   SectionOutlines,
   SectionToolEvent,
@@ -462,7 +463,7 @@ function useViewerCameraIntegration() {
       spotlightUserSessionId
     }
   } = useInjectedViewerState()
-  const { forceViewToViewerSync } = useCameraUtilities()
+  const { forceViewToViewerSync, setView, cameraController } = useCameraUtilities()
 
   const hasInitialLoadFired = ref(false)
 
@@ -528,9 +529,9 @@ function useViewerCameraIntegration() {
     }
 
     if (newVal) {
-      instance.setOrthoCameraOn()
+      cameraController.setOrthoCameraOn()
     } else {
-      instance.setPerspectiveCameraOn()
+      cameraController.setPerspectiveCameraOn()
     }
 
     // reset camera pos, cause we've switched cameras now and it might not have the new ones
@@ -553,7 +554,7 @@ function useViewerCameraIntegration() {
       if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
         return
       }
-      instance.setView({
+      setView({
         position: newVal,
         target: target.value
       })
@@ -568,7 +569,7 @@ function useViewerCameraIntegration() {
         return
       }
 
-      instance.setView({
+      setView({
         position: position.value,
         target: newVal
       })
@@ -671,33 +672,32 @@ function useExplodeFactorIntegration() {
     viewer: { instance }
   } = useInjectedViewerState()
 
+  const explodeExtension = instance.getExtension(ExplodeExtension)
+
   const updateOutlines = () => {
     const sectionOutlines = instance.getExtension(SectionOutlines)
     if (sectionOutlines && sectionOutlines.enabled) sectionOutlines.requestUpdate(true)
   }
   onMounted(() => {
-    instance.getExtension(ExplodeExtension).on(ExplodeEvent.Finshed, updateOutlines)
+    explodeExtension.on(ExplodeEvent.Finshed, updateOutlines)
   })
 
   onBeforeUnmount(() => {
-    instance
-      .getExtension(ExplodeExtension)
-      .removeListener(ExplodeEvent.Finshed, updateOutlines)
+    explodeExtension.removeListener(ExplodeEvent.Finshed, updateOutlines)
   })
 
   // state -> viewer only. we don't need the reverse.
   watch(
     explodeFactor,
     (newVal) => {
-      /** newVal turns out to be a string. It needs to be a */
-      instance.explode(newVal)
+      explodeExtension.setExplode(newVal)
     },
     { immediate: true }
   )
 
   useOnViewerLoadComplete(
     () => {
-      instance.explode(explodeFactor.value)
+      explodeExtension.setExplode(explodeFactor.value)
     },
     { initialOnly: true }
   )
@@ -709,6 +709,7 @@ function useDiffingIntegration() {
   const getObjectUrl = useGetObjectUrl()
 
   const hasInitialLoadFired = ref(false)
+  const diffExtension = state.viewer.instance.getExtension(DiffExtension)
 
   const { trigger: triggerDiffCommandWatch } = watchTriggerable(
     () => <const>[state.ui.diff.oldVersion.value, state.ui.diff.newVersion.value],
@@ -734,7 +735,7 @@ function useDiffingIntegration() {
         return
 
       if (!newCommand || oldVal) {
-        await state.viewer.instance.undiff()
+        await diffExtension.undiff()
         if (!newCommand) return
       }
 
@@ -748,7 +749,7 @@ function useDiffingIntegration() {
         newVersion?.referencedObject as string
       )
 
-      state.ui.diff.result.value = await state.viewer.instance.diff(
+      state.ui.diff.result.value = await diffExtension.diff(
         oldObjUrl,
         newObjUrl,
         state.ui.diff.mode.value,
@@ -782,7 +783,7 @@ function useDiffingIntegration() {
       if (!hasInitialLoadFired.value) return
       if (!state.ui.diff.result.value) return
 
-      state.viewer.instance.setDiffTime(state.ui.diff.result.value, val)
+      diffExtension.updateVisualDiff(val, state.ui.diff.mode.value)
     }
   )
 
@@ -791,11 +792,7 @@ function useDiffingIntegration() {
       if (!hasInitialLoadFired.value) return
       if (!state.ui.diff.result.value) return
 
-      state.viewer.instance.setVisualDiffMode(state.ui.diff.result.value, val)
-      state.viewer.instance.setDiffTime(
-        state.ui.diff.result.value,
-        state.ui.diff.time.value
-      ) // hmm, why do i need to call diff time again? seems like a minor viewer bug
+      diffExtension.updateVisualDiff(state.ui.diff.time.value, val)
     })
 
   useOnViewerLoadComplete(({ isInitial }) => {
