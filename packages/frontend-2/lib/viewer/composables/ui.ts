@@ -94,7 +94,6 @@ export function useSectionBoxUtilities() {
       const min = new Vector3().fromArray(data.min)
       const max = new Vector3().fromArray(data.max)
 
-      // Replicate the logic from OBB.prototype.min/max setters
       const _box3 = new Box3()
       _box3.set(min, max)
       _box3.getCenter(box.center)
