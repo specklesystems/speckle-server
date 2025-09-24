@@ -12,7 +12,7 @@ import { useEventBus } from '~/lib/core/composables/eventBus'
 import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
 
 type ResponseProject = Optional<Get<ProjectPresentationPageQuery, 'project'>>
-type ResponseWorkspace = Get<ProjectPresentationPageQuery, 'project.workspace'>
+type ResponseWorkspace = Get<ProjectPresentationPageQuery, 'project.limitedWorkspace'>
 type ResponseGroup = Get<ResponseProject, 'savedViewGroup'>
 type ResponseView = NonNullable<Get<ResponseGroup, 'views.items.0'>>
 
@@ -75,7 +75,7 @@ const setupStateResponse = (initState: InitState): ResponseState => {
 
   const project = computed(() => result.value?.project)
   const presentation = computed(() => project.value?.savedViewGroup)
-  const workspace = computed(() => project.value?.workspace)
+  const workspace = computed(() => project.value?.limitedWorkspace)
   const slides = computed(() => presentation.value?.views.items || [])
   const visibleSlides = computed(() => slides.value)
 
