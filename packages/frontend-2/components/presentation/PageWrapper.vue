@@ -91,6 +91,7 @@ const viewerProgress = ref(0)
 
 const ViewerWrapper = resolveComponent('PresentationViewerWrapper')
 
+const title = computed(() => presentation.value?.title)
 const canEditPresentation = computed(() => {
   return presentation.value?.permissions.canUpdate.authorized
 })
@@ -119,6 +120,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 useEventListener('keydown', handleKeydown)
+useHead({ title })
 
 onMounted(() => {
   mixpanel.track('Presentation Viewed', {
