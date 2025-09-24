@@ -30,6 +30,7 @@ export interface AuthResult {
 export interface AuthParams {
   streamId?: string
   projectId?: string
+  viewId?: string
 }
 
 export interface AuthData {

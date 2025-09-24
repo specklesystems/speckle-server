@@ -6,10 +6,22 @@ import { SavedViewPreviewRetrievalError } from '@/modules/viewer/errors/savedVie
 
 export const outputSavedViewPreviewFactory =
   (deps: { getSavedView: GetSavedView }): OutputSavedViewPreview =>
-  (params) => {
-    const { res, projectId, viewId, type } = params
-    const view = await deps.getSavedView({ projectId, viewId })
+  async (params) => {
+    const { res, projectId, viewId } = params
+    const view = await deps.getSavedView({ projectId, id: viewId })
     if (!view) {
-      throw new SavedViewPreviewRetrievalError()
+      throw new SavedViewPreviewRetrievalError('Could not find view', {
+        info: { projectId, viewId }
+      })
     }
+
+    const preview = view.screenshot
+    const imgBuffer = Buffer.from(preview, 'base64')
+
+    res.writeHead(200, {
+      'Content-Type': 'image/png',
+      'Content-Length': imgBuffer.length
+    })
+
+    res.end(imgBuffer)
   }

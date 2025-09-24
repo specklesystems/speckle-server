@@ -1,64 +1,96 @@
+import type { ErrorRequestHandler, Request, Response } from 'express'
 import { Router } from 'express'
 import cors from 'cors'
 import { allowCrossOriginResourceAccessMiddelware } from '@/modules/shared/middleware/security'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { SavedViewPreviewRetrievalError } from '@/modules/viewer/errors/savedViews'
 import { outputSavedViewPreviewFactory } from '@/modules/viewer/services/savedViewPreviews'
 import { getSavedViewFactory } from '@/modules/viewer/repositories/savedViews'
 import { SavedViewPreviewType } from '@/modules/viewer/domain/operations/savedViews'
-import { authMiddlewareCreator } from '@/modules/shared/middleware'
-import {
-  allowAnonymousUsersOnPublicStreams,
-  allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
-  allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
-  streamReadPermissionsPipelineFactory
-} from '@/modules/shared/authz'
-import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { db } from '@/db/knex'
+import { ensureError } from '@speckle/shared'
+import { resolveStatusCode } from '@/modules/core/rest/defaultErrorHandler'
+import { fileURLToPath } from 'node:url'
+import { buildAuthPolicies } from '@/modules'
+import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { NotFoundError } from '@/modules/shared/errors'
+
+const previewErrorPath = () =>
+  fileURLToPath(import.meta.resolve('#/assets/previews/images/preview_error.png'))
+const preview404Path = () =>
+  fileURLToPath(import.meta.resolve('#/assets/previews/images/preview_404.png'))
+const preview401Path = () =>
+  fileURLToPath(import.meta.resolve('#/assets/previews/images/preview_401.png'))
+
+const previewErrHandler: ErrorRequestHandler = (err, req, res, next) => {
+  if (!err) return next()
+
+  // Return failure image, instead of throwing
+  const error = ensureError(err)
+  const status = resolveStatusCode(error)
+  res.header('X-Error-Message', error.message)
+  res.status(status)
+
+  if (error instanceof StreamNotFoundError || error instanceof NotFoundError) {
+    return res.sendFile(preview404Path())
+  } else if (status === 401) {
+    return res.sendFile(preview401Path())
+  } else {
+    return res.sendFile(previewErrorPath())
+  }
+}
+
+const buildPreviewRoute = (
+  router: Router,
+  type: SavedViewPreviewType,
+  route: string
+) => {
+  router.options(route, cors(), allowCrossOriginResourceAccessMiddelware())
+  router.get(
+    route,
+    cors(),
+    allowCrossOriginResourceAccessMiddelware(),
+    async (req: Request, res: Response) => {
+      const projectId = req.params.projectId
+      const viewId = req.params.viewId
+
+      // Access check
+      const authz = await buildAuthPolicies({
+        authContext: req.context
+      })
+      const authResults = await Promise.all([
+        authz.project.canRead({
+          userId: req.context.userId,
+          projectId
+        }),
+        authz.project.savedViews.canRead({
+          userId: req.context.userId,
+          projectId,
+          savedViewId: viewId,
+          allowNonExistent: true // we check inside the service layer anyway
+        })
+      ])
+      authResults.forEach(throwIfAuthNotOk)
+
+      // Access is fine - look for the view
+      const projectDb = await getProjectDbClient({ projectId })
+      const outputSavedViewPreview = outputSavedViewPreviewFactory({
+        getSavedView: getSavedViewFactory({ db: projectDb })
+      })
+
+      await outputSavedViewPreview({ res, projectId, viewId, type })
+    },
+    previewErrHandler
+  )
+}
 
 export const getSavedViewsRouter = (): Router => {
   const router = Router()
 
-  const buildPreviewRoute = (type: SavedViewPreviewType, route: string) => {
-    router.options(route, cors(), allowCrossOriginResourceAccessMiddelware())
-    router.get(
-      route,
-      cors(),
-      allowCrossOriginResourceAccessMiddelware(),
-      async (req, res, next) => {
-        authMiddlewareCreator([
-          ...streamReadPermissionsPipelineFactory({
-            getStream: getStreamFactory({ db })
-          }),
-          allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
-          allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
-          allowAnonymousUsersOnPublicStreams
-        ])(req, res, next)
-      },
-      async (req, res) => {
-        const projectId = req.params.projectId
-        const viewId = req.params.viewId
-        if (!projectId || !viewId) {
-          throw new SavedViewPreviewRetrievalError(
-            'Either projectId or viewId is missing'
-          )
-        }
-
-        const projectDb = await getProjectDbClient({ projectId })
-        const outputSavedViewPreview = outputSavedViewPreviewFactory({
-          getSavedView: getSavedViewFactory({ db: projectDb })
-        })
-
-        await outputSavedViewPreview({ res, projectId, viewId, type })
-      }
-    )
-  }
-
   const thumbnailRoute = '/api/v1/projects/:projectId/saved-views/:viewId/thumbnail'
-  buildPreviewRoute(SavedViewPreviewType.thumbnail, thumbnailRoute)
+  buildPreviewRoute(router, SavedViewPreviewType.thumbnail, thumbnailRoute)
 
   const fullPreviewRoute = '/api/v1/projects/:projectId/saved-views/:viewId/preview'
-  buildPreviewRoute(SavedViewPreviewType.preview, fullPreviewRoute)
+  buildPreviewRoute(router, SavedViewPreviewType.preview, fullPreviewRoute)
 
   return router
 }
