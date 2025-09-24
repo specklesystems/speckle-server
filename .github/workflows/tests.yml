@@ -37,6 +37,8 @@ jobs:
   changes:
     name: Get modified files
     runs-on: blacksmith
+    outputs:
+      server: ${{ steps.changes.outputs }}
     steps:
       - uses: dorny/paths-filter@v3
         id: changes
@@ -312,7 +314,7 @@ jobs:
     name: Server
     runs-on: blacksmith-8vcpu-ubuntu-2404
     needs: changes
-    if: ${{ contains(needs.changes.outputs, 'server') || inputs.DISABLE_SKIPPING }}
+    if: ${{ needs.changes.outputs.server == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
       redis:
