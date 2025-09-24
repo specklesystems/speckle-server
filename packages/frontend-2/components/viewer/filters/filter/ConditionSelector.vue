@@ -5,10 +5,7 @@
     :items="menuItems"
     mount-menu-on-body
     show-ticks="right"
-    :custom-menu-items-classes="[
-      '!text-body-2xs',
-      filter.type === FilterType.Numeric ? '!w-36' : '!w-28'
-    ]"
+    :custom-menu-items-classes="customMenuItemsClasses"
     @chosen="onConditionChosen"
   >
     <FormButton
@@ -85,6 +82,21 @@ const getDisabledReason = (condition: FilterCondition): string | undefined => {
 
   return undefined
 }
+
+const customMenuItemsClasses = computed(() => {
+  const widthClass =
+    props.filter.type === FilterType.String
+      ? '!w-28'
+      : props.filter.type === FilterType.Boolean
+      ? '!w-28'
+      : props.filter.type === FilterType.Numeric
+      ? '!w-36'
+      : props.filter.type === FilterType.Array
+      ? '!w-40'
+      : ''
+
+  return ['!text-body-2xs', widthClass]
+})
 
 const conditionOptions = computed<ConditionOption[]>(() => {
   const availableConditions = getConditionsForType(props.filter.type)
