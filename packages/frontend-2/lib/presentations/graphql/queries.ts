@@ -8,9 +8,9 @@ export const projectPresentationPageQuery = graphql(`
   ) {
     project(id: $projectId) {
       id
-      workspace {
+      limitedWorkspace {
         id
-        ...PresentationLeftSidebar_Workspace
+        ...PresentationLeftSidebar_LimitedWorkspace
       }
       savedViewGroup(id: $savedViewGroupId) {
         id

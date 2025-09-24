@@ -51,7 +51,7 @@ import { useInjectedPresentationState } from '~/lib/presentations/composables/se
 import { graphql } from '~~/lib/common/generated/gql'
 
 graphql(`
-  fragment PresentationLeftSidebar_Workspace on Workspace {
+  fragment PresentationLeftSidebar_LimitedWorkspace on LimitedWorkspace {
     id
     name
     logo
