@@ -7,7 +7,6 @@ import { TIME_MS } from '@speckle/shared'
 import type { NotificationEvents } from '@/modules/notifications/events/notificationListener'
 import { notificationsLogger, Observability } from '@/observability/logging'
 import { UnhandledNotificationError } from '@/modules/notifications/errors'
-import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
 import CreatedOrUpdatedCommentHandler from '@/modules/notifications/services/events/handlers/createdOrUpdatedComment'
 import StreamAccessRequestCreatedHandler from '@/modules/notifications/services/events/handlers/streamAccessRequestCreated'
 import StreamAccessRequestFinalizedHandler from '@/modules/notifications/services/events/handlers/streamAccessRequestFinalized'
@@ -84,12 +83,6 @@ export async function initializeNotificationEventsConsumption() {
       notificationLogger.info('Handled notifications for event')
     } catch (e: unknown) {
       notificationsLogger.error(e)
-      const err = ensureErrorOrWrapAsCause(
-        e,
-        'Unexpected notification consumption error'
-      )
-
-      throw err
     }
   })
 }
