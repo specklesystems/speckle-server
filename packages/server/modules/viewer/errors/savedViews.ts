@@ -41,3 +41,9 @@ export class SavedViewGroupNotFoundError extends BaseError {
   static defaultMessage = 'Saved view group not found'
   static statusCode = 404
 }
+
+export class SavedViewPreviewRetrievalError extends BaseError {
+  static code = 'SAVED_VIEW_PREVIEW_RETRIEVAL_ERROR'
+  static defaultMessage = 'Could not retrieve saved view preview'
+  static statusCode = 400
+}

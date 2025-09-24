@@ -4,8 +4,14 @@ import type {
   SavedViewGroup,
   SavedViewVisibility
 } from '@/modules/viewer/domain/types/savedViews'
-import type { MaybeNullOrUndefined, NullableKeysToOptional } from '@speckle/shared'
+import type { StringEnumValues } from '@speckle/shared'
+import {
+  StringEnum,
+  type MaybeNullOrUndefined,
+  type NullableKeysToOptional
+} from '@speckle/shared'
 import type { SerializedViewerState } from '@speckle/shared/viewer/state'
+import type { Response } from 'express'
 import type { Exact, SetOptional } from 'type-fest'
 
 /////////////////////
@@ -265,3 +271,13 @@ export type UpdateSavedViewGroup = (params: {
   }
   userId: string
 }) => Promise<SavedViewGroup>
+
+export const SavedViewPreviewType = StringEnum(['preview', 'thumbnail'])
+export type SavedViewPreviewType = StringEnumValues<typeof SavedViewPreviewType>
+
+export type OutputSavedViewPreview = (params: {
+  res: Response
+  projectId: string
+  viewId: string
+  type: SavedViewPreviewType
+}) => Promise<void>
