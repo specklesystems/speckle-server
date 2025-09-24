@@ -60,6 +60,7 @@ import { ChevronRightIcon, ArrowUpRightIcon, FunnelIcon } from '@heroicons/vue/2
 import { modelRoute } from '~/lib/common/helpers/route'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { useCameraUtilities } from '~/lib/viewer/composables/ui'
 const props = defineProps<{
   prop: {
     key: string
@@ -70,11 +71,11 @@ const props = defineProps<{
 
 const {
   projectId,
-  viewer: { instance },
   ui: { filters }
 } = useInjectedViewerState()
 
 const { isolateObjects, resetFilters } = useFilterUtilities()
+const { zoom } = useCameraUtilities()
 
 const expanded = ref(false)
 
@@ -111,7 +112,7 @@ const handleHighlight = () => {
   if (!isDetached.value) return
   const isIsolated = filters.isolatedObjectsSet.value?.has(isDetached.value)
   if (isIsolated) return resetFilters()
-  instance.zoom([isDetached.value])
+  zoom([isDetached.value])
   resetFilters()
   isolateObjects([isDetached.value])
 }

@@ -78,6 +78,7 @@ import type { KeyValuePair } from '~/components/viewer/selection/types'
 import { isNumericPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
 import {
   BooleanFilterCondition,
+  NumericFilterCondition,
   type ExtendedPropertyInfo
 } from '~/lib/viewer/helpers/filters/types'
 import { isBooleanProperty } from '~/lib/viewer/helpers/filters/utils'
@@ -158,10 +159,11 @@ const addFilterWithValue = (filter: ExtendedPropertyInfo, kvp: KeyValuePair) => 
   const filterId = addActiveFilter(filter)
 
   if (isNumericPropertyInfo(filter)) {
-    // For numeric filters, set the specific numeric value
+    // For numeric filters, set the specific numeric value with IsEqualTo condition
     const numericValue =
       typeof kvp.value === 'number' ? kvp.value : parseFloat(String(kvp.value))
     if (!isNaN(numericValue)) {
+      updateFilterCondition(filterId, NumericFilterCondition.IsEqualTo)
       setNumericRange(filterId, numericValue, numericValue)
     }
   } else if (isBooleanProperty(filter)) {
