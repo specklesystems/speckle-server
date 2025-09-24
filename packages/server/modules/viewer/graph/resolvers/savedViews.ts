@@ -21,11 +21,13 @@ import {
   deleteSavedViewRecordFactory,
   getGroupSavedViewsPageItemsFactory,
   getGroupSavedViewsTotalCountFactory,
+  getNewViewSpecificPositionFactory,
   getProjectSavedViewGroupsPageItemsFactory,
   getProjectSavedViewGroupsTotalCountFactory,
   getStoredViewCountFactory,
   getStoredViewGroupCountFactory,
   getUngroupedSavedViewsGroupFactory,
+  rebalancingViewPositionsFactory,
   recalculateGroupResourceIdsFactory,
   setNewHomeViewFactory,
   storeSavedViewFactory,
@@ -310,7 +312,11 @@ const resolvers: Resolvers = {
         }),
         setNewHomeView: setNewHomeViewFactory({
           db: projectDb
-        })
+        }),
+        getNewViewSpecificPosition: getNewViewSpecificPositionFactory({
+          db: projectDb
+        }),
+        rebalanceViewPositions: rebalancingViewPositionsFactory({ db: projectDb })
       })
       return await createSavedView({ input: args.input, authorId: ctx.userId! })
     },
@@ -357,23 +363,32 @@ const resolvers: Resolvers = {
         resourceAccessRules: ctx.resourceAccessRules
       })
 
+      // Different keys have different auth checks
       const updates = omit(args.input, 'id', 'projectId')
-      const isJustMove = Object.keys(updates).length === 1 && 'groupId' in updates
-      if (isJustMove) {
-        const canMove = await ctx.authPolicies.project.savedViews.canMove({
-          userId: ctx.userId,
-          projectId,
-          savedViewId: args.input.id
-        })
-        throwIfAuthNotOk(canMove)
-      } else {
-        const canUpdate = await ctx.authPolicies.project.savedViews.canUpdate({
-          userId: ctx.userId,
-          projectId,
-          savedViewId: args.input.id
-        })
-        throwIfAuthNotOk(canUpdate)
+      const updatePolicyMap: Partial<
+        Record<
+          keyof typeof updates,
+          Extract<
+            keyof typeof ctx.authPolicies.project.savedViews,
+            'canMove' | 'canUpdate' | 'canEditTitle' | 'canEditDescription'
+          >
+        >
+      > = {
+        groupId: 'canMove',
+        name: 'canEditTitle',
+        description: 'canEditDescription'
       }
+      const results = await Promise.all(
+        Object.keys(updates).map((key) => {
+          const policyKey = updatePolicyMap[key as keyof typeof updates] || 'canUpdate'
+          return ctx.authPolicies.project.savedViews[policyKey]({
+            userId: ctx.userId,
+            projectId,
+            savedViewId: args.input.id
+          })
+        })
+      )
+      results.forEach(throwIfAuthNotOk)
 
       const updateSavedView = updateSavedViewFactory({
         getViewerResourceGroups: buildGetViewerResourceGroups({
@@ -389,6 +404,10 @@ const resolvers: Resolvers = {
           db: projectDb
         }),
         setNewHomeView: setNewHomeViewFactory({
+          db: projectDb
+        }),
+        rebalanceViewPositions: rebalancingViewPositionsFactory({ db: projectDb }),
+        getNewViewSpecificPosition: getNewViewSpecificPositionFactory({
           db: projectDb
         })
       })

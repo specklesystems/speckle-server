@@ -1,3 +1,4 @@
+import { db } from '@/db/knex'
 import type {
   BasicSavedViewFragment,
   BasicSavedViewGroupFragment,
@@ -32,7 +33,8 @@ import {
   GetProjectSavedViewIfExistsDocument,
   GetProjectUngroupedViewGroupDocument,
   UpdateSavedViewDocument,
-  UpdateSavedViewGroupDocument
+  UpdateSavedViewGroupDocument,
+  ViewPositionInputType
 } from '@/modules/core/graph/generated/graphql'
 import {
   buildBasicTestModel,
@@ -51,6 +53,10 @@ import {
   SavedViewInvalidResourceTargetError,
   SavedViewUpdateValidationError
 } from '@/modules/viewer/errors/savedViews'
+import {
+  MINIMUM_POSITION_GAP,
+  updateSavedViewRecordFactory
+} from '@/modules/viewer/repositories/savedViews'
 import { createSavedViewFactory } from '@/modules/viewer/tests/helpers/graphql'
 import {
   fakeScreenshot,
@@ -84,10 +90,12 @@ import * as ViewerState from '@speckle/shared/viewer/state'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
-import { intersection, merge, times } from 'lodash-es'
+import { intersection, isUndefined, merge, times } from 'lodash-es'
 import type { PartialDeep } from 'type-fest'
 
 const { FF_WORKSPACES_MODULE_ENABLED, FF_SAVED_VIEWS_ENABLED } = getFeatureFlags()
+
+const TOO_SMALL_OF_A_GAP = MINIMUM_POSITION_GAP / 2
 
 const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerState>) =>
   merge(
@@ -127,7 +135,11 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     viewerState?: ViewerState.SerializedViewerState
     overrides?: PartialDeep<CreateSavedViewMutationVariables['input']>
   }): CreateSavedViewMutationVariables => ({
-    input: merge(
+    input: merge<
+      {},
+      CreateSavedViewMutationVariables['input'],
+      PartialDeep<CreateSavedViewMutationVariables['input']>
+    >(
       {},
       {
         projectId: params.projectId || myProject.id,
@@ -488,7 +500,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(view!.visibility).to.equal(SavedViewVisibility.public) // default
         expect(view!.viewerState).to.deep.equalInAnyOrder(viewerState)
         expect(view!.screenshot).to.equal(fakeScreenshot)
-        expect(view!.position).to.equal(0) // default position
+        expect(view!.position).to.equal(1000)
       })
 
       it('setting a new home view unsets home view from old one', async () => {
@@ -841,6 +853,220 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           { assertNoErrors: true }
         )
       })
+
+      itEach(
+        [
+          { grouping: 'ungrouped', expectedPosition: 'before' },
+          { grouping: 'grouped', expectedPosition: 'before' },
+          { grouping: 'ungrouped', expectedPosition: 'after' },
+          { grouping: 'grouped', expectedPosition: 'after' }
+        ],
+        ({ grouping, expectedPosition }) =>
+          `should add new view ${expectedPosition} the other view in the ${grouping} group`,
+        async ({ grouping, expectedPosition }) => {
+          const addBefore = expectedPosition === 'before'
+          const resourceIdString = model1ResourceIds().toString()
+          const res1 = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              overrides: {
+                groupId: grouping === 'grouped' ? testGroup1.id : null
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+          const firstView = res1.data?.projectMutations.savedViewMutations.createView!
+
+          const res2 = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              overrides: {
+                groupId: grouping === 'grouped' ? testGroup1.id : null,
+                ...(expectedPosition
+                  ? {
+                      position: {
+                        type: ViewPositionInputType.Between,
+                        beforeViewId: !addBefore ? firstView.id : null,
+                        afterViewId: addBefore ? firstView.id : null
+                      }
+                    }
+                  : {})
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+
+          const finalView = res2.data?.projectMutations.savedViewMutations.createView
+          if (addBefore) {
+            expect(finalView!.position).to.be.lessThan(firstView!.position)
+          } else {
+            expect(finalView!.position).to.be.greaterThan(firstView!.position)
+          }
+        }
+      )
+
+      itEach(
+        [
+          { grouping: 'ungrouped', specificLastPosition: true },
+          { grouping: 'grouped', specificLastPosition: true },
+          { grouping: 'ungrouped', specificLastPosition: false },
+          { grouping: 'grouped', specificLastPosition: false }
+        ],
+        ({ grouping, specificLastPosition }) =>
+          `should add new views after the${
+            specificLastPosition ? ' specifically specified' : ''
+          } last position in the ${grouping} group`,
+        async ({ grouping, specificLastPosition }) => {
+          const resourceIdString = model1ResourceIds().toString()
+          const res1 = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              overrides: {
+                groupId: grouping === 'grouped' ? testGroup1.id : null
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+
+          const res2 = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              overrides: {
+                groupId: grouping === 'grouped' ? testGroup1.id : null,
+                ...(specificLastPosition
+                  ? {
+                      position: {
+                        type: ViewPositionInputType.Between,
+                        beforeViewId:
+                          res1.data?.projectMutations.savedViewMutations.createView!.id,
+                        afterViewId: null
+                      }
+                    }
+                  : {})
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+
+          const firstView = res1.data?.projectMutations.savedViewMutations.createView
+          const finalView = res2.data?.projectMutations.savedViewMutations.createView
+          expect(finalView!.position).to.equal(firstView!.position + 1000)
+        }
+      )
+
+      itEach(
+        ['ungrouped', 'grouped'],
+        (grouping) =>
+          `should allow positioning between 2 other views and rebalance ${grouping} group when positions get too close`,
+        async (grouping) => {
+          const resourceIdString = model1ResourceIds().toString()
+          const beforeViewRes = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              overrides: {
+                groupId: grouping === 'grouped' ? testGroup1.id : null
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+          const beforeView =
+            beforeViewRes.data?.projectMutations.savedViewMutations.createView!
+          expect(beforeView.position).to.be.ok
+
+          const afterViewRes = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              overrides: {
+                groupId: grouping === 'grouped' ? testGroup1.id : null
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+          const afterView =
+            afterViewRes.data?.projectMutations.savedViewMutations.createView!
+          expect(afterView.position).to.be.ok
+
+          // API doesnt allow direct control over position, so
+          // we need to do this directly in DB
+          const updateView = updateSavedViewRecordFactory({ db })
+          const newFixablePos = beforeView.position! + TOO_SMALL_OF_A_GAP
+          await updateView({
+            id: afterView.id,
+            projectId: afterView.projectId,
+            update: {
+              position: newFixablePos
+            }
+          })
+
+          // Now lets insert new view in the middle, and recalculation should happen
+          const middleViewRes = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              overrides: {
+                groupId: grouping === 'grouped' ? testGroup1.id : null,
+                position: {
+                  type: ViewPositionInputType.Between,
+                  beforeViewId: beforeView.id,
+                  afterViewId: afterView.id
+                }
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+          const middleView =
+            middleViewRes.data?.projectMutations.savedViewMutations.createView!
+          expect(middleView.position).to.be.ok
+
+          // Now list that "group" again, check that all 3 views are there
+          // and have fixed positions
+          const groupWithViews =
+            grouping === 'grouped'
+              ? await getGroup(
+                  {
+                    groupId: testGroup1.id,
+                    projectId: myProject.id
+                  },
+                  { assertNoErrors: true }
+                ).then((r) => r.data?.project.savedViewGroup)
+              : await getProjectUngroupedViewGroup(
+                  {
+                    projectId: myProject.id,
+                    input: { resourceIdString }
+                  },
+                  { assertNoErrors: true }
+                ).then((r) => r.data?.project.ungroupedViewGroup)
+
+          expect(groupWithViews).to.be.ok
+          expect(
+            groupWithViews?.views.items.filter((v) =>
+              [beforeView.id, afterView.id, middleView.id].includes(v.id)
+            ).length
+          ).to.be.eq(3)
+
+          let prevPosition: number | undefined = undefined
+          for (const view of groupWithViews?.views.items || []) {
+            if (!isUndefined(prevPosition)) {
+              expect(view.position).to.be.eq(prevPosition - 1000)
+            }
+
+            prevPosition = view.position
+          }
+        }
+      )
     })
 
     describe('updates', () => {
@@ -1061,6 +1287,186 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           const initUpdatedAt = dayjs(testView.updatedAt)
           const newUpdatedAt = dayjs(updatedView!.updatedAt)
           expect(newUpdatedAt.isAfter(initUpdatedAt)).to.be.true // date should be updated
+        }
+      )
+
+      itEach(
+        ['ungrouped', 'grouped'],
+        (grouping) =>
+          `should update view to have the last position in the ${grouping} group w/ an empty position input`,
+        async (grouping) => {
+          const resourceIdString = models[0].id
+          const res1 = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              projectId: updatablesProject.id,
+              overrides: {
+                groupId: grouping === 'grouped' ? optionalGroup.id : null
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+
+          const res2 = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              projectId: updatablesProject.id,
+              overrides: {
+                groupId: grouping === 'grouped' ? optionalGroup.id : null
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+
+          const firstView = res1.data?.projectMutations.savedViewMutations.createView
+          const secondView = res2.data?.projectMutations.savedViewMutations.createView
+          expect(secondView!.position).to.equal(firstView!.position! + 1000)
+
+          const rest3 = await updateView(
+            {
+              input: {
+                id: firstView!.id,
+                projectId: updatablesProject.id,
+                position: {
+                  // empty input means "move to end"
+                  type: ViewPositionInputType.Between
+                }
+              }
+            },
+            { assertNoErrors: true }
+          )
+          const firstViewAgain =
+            rest3.data?.projectMutations.savedViewMutations.updateView!
+          expect(firstViewAgain.position).to.equal(secondView!.position! + 1000)
+        }
+      )
+
+      itEach(
+        ['ungrouped', 'grouped'],
+        (grouping) =>
+          `should allow updating position between 2 other views and rebalance ${grouping} group when positions get too close`,
+        async (grouping) => {
+          const resourceIdString = models[0].id
+          const projectId = updatablesProject.id
+          const firstViewRes = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              projectId,
+              overrides: {
+                groupId: grouping === 'grouped' ? optionalGroup.id : null
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+          const firstView =
+            firstViewRes.data?.projectMutations.savedViewMutations.createView!
+          expect(firstView.position).to.be.ok
+
+          const secondViewRes = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              projectId,
+              overrides: {
+                groupId: grouping === 'grouped' ? optionalGroup.id : null
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+          const secondView =
+            secondViewRes.data?.projectMutations.savedViewMutations.createView!
+          expect(secondView.position).to.be.eq(firstView.position! + 1000)
+
+          const thirdViewRes = await createSavedView(
+            buildCreateInput({
+              resourceIdString,
+              projectId,
+              overrides: {
+                groupId: grouping === 'grouped' ? optionalGroup.id : null
+              }
+            }),
+            {
+              assertNoErrors: true
+            }
+          )
+          const thirdView =
+            thirdViewRes.data?.projectMutations.savedViewMutations.createView!
+          expect(thirdView.position).to.be.eq(secondView.position! + 1000)
+
+          // API doesnt allow direct control over position, so
+          // we need to do this directly in DB
+          const updateViewDb = updateSavedViewRecordFactory({ db })
+          const newFixablePos = firstView.position! + TOO_SMALL_OF_A_GAP
+          await updateViewDb({
+            id: secondView.id,
+            projectId: secondView.projectId,
+            update: {
+              position: newFixablePos
+            }
+          })
+
+          // Now lets update the third view to be in the middle, and recalculation should happen
+          const thirdViewAgainRes = await updateView(
+            {
+              input: {
+                id: thirdView.id,
+                projectId: updatablesProject.id,
+                position: {
+                  type: ViewPositionInputType.Between,
+                  beforeViewId: firstView.id,
+                  afterViewId: secondView.id
+                }
+              }
+            },
+            {
+              assertNoErrors: true
+            }
+          )
+          const middleView =
+            thirdViewAgainRes.data?.projectMutations.savedViewMutations.updateView!
+          expect(middleView.position).to.be.ok
+
+          // Now list that "group" again, check that all 3 views are there
+          // and have fixed positions
+          const groupWithViews =
+            grouping === 'grouped'
+              ? await getGroup(
+                  {
+                    groupId: optionalGroup.id,
+                    projectId: updatablesProject.id
+                  },
+                  { assertNoErrors: true }
+                ).then((r) => r.data?.project.savedViewGroup)
+              : await getProjectUngroupedViewGroup(
+                  {
+                    projectId: updatablesProject.id,
+                    input: { resourceIdString }
+                  },
+                  { assertNoErrors: true }
+                ).then((r) => r.data?.project.ungroupedViewGroup)
+
+          expect(groupWithViews).to.be.ok
+          expect(
+            groupWithViews?.views.items.filter((v) =>
+              [firstView.id, secondView.id, middleView.id].includes(v.id)
+            ).length
+          ).to.be.eq(3)
+
+          let prevPosition: number | undefined = undefined
+          for (const view of groupWithViews?.views.items || []) {
+            if (!isUndefined(prevPosition)) {
+              expect(view.position).to.be.eq(prevPosition - 1000)
+            }
+
+            prevPosition = view.position
+          }
         }
       )
 
@@ -1364,7 +1770,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
       })
 
-      it('fails if non author contributor is updating the view', async () => {
+      it('succeeds if non author contributor is renaming the view', async () => {
         const newName = 'Updated View Name'
 
         const res = await updateView(
@@ -1378,8 +1784,32 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           { authUserId: notAuthorButContributor.id }
         )
 
-        expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
-        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
+        expect(res).to.not.haveGraphQLErrors({ code: ForbiddenError.code })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.be.ok
+
+        const update = res.data?.projectMutations.savedViewMutations.updateView
+        expect(update?.name).to.equal(newName)
+      })
+
+      it('succeeds if non author contributor is updating the description of the view', async () => {
+        const newDescription = 'Updated View Description'
+
+        const res = await updateView(
+          {
+            input: {
+              id: testView.id,
+              projectId: updatablesProject.id,
+              description: newDescription
+            }
+          },
+          { authUserId: notAuthorButContributor.id }
+        )
+
+        expect(res).to.not.haveGraphQLErrors({ code: ForbiddenError.code })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.be.ok
+
+        const update = res.data?.projectMutations.savedViewMutations.updateView
+        expect(update?.description).to.equal(newDescription)
       })
 
       it('succeeds if non author contributor is just moving the view', async () => {
@@ -1399,6 +1829,24 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
         const update = res.data?.projectMutations.savedViewMutations.updateView
         expect(update?.groupId).to.equal(optionalGroup.id)
+      })
+
+      it('fails if non author contributor is updating the visibility of the view', async () => {
+        const newVisibility = SavedViewVisibility.authorOnly
+
+        const res = await updateView(
+          {
+            input: {
+              id: testView.id,
+              projectId: updatablesProject.id,
+              visibility: newVisibility
+            }
+          },
+          { authUserId: notAuthorButContributor.id }
+        )
+
+        expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
       })
 
       it('fails if view does not exist', async () => {

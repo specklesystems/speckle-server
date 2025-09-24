@@ -9,6 +9,7 @@ import {
   ViewerEvent,
   VisualDiffMode,
   CameraController,
+  DiffExtension,
   UpdateFlags,
   SectionOutlines,
   SectionToolEvent,
@@ -20,6 +21,8 @@ import {
   SelectionExtension,
   type SunLightConfiguration
 } from '@speckle/viewer'
+import { Matrix3, Vector3, Box3 } from 'three'
+import { OBB } from 'three/examples/jsm/math/OBB.js'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import type { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
 import { ProjectCommentsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
@@ -47,7 +50,6 @@ import {
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
-import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import { SafeLocalStorage } from '@speckle/shared'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
@@ -354,6 +356,33 @@ function sectionBoxDataEquals(a: SectionBoxData, b: SectionBoxData): boolean {
   )
 }
 
+function sectionBoxDataToBox3(data: SectionBoxData): Box3 | OBB {
+  let box: Box3 | OBB
+
+  if (!data.rotation || !data.rotation.length) {
+    // No rotation, use Box3
+    const min = new Vector3().fromArray(data.min)
+    const max = new Vector3().fromArray(data.max)
+    box = new Box3(min, max)
+  } else {
+    // Has rotation, create OBB
+    box = new OBB()
+    const min = new Vector3().fromArray(data.min)
+    const max = new Vector3().fromArray(data.max)
+
+    // Replicate the logic from OBB.prototype.min/max setters
+    const _box3 = new Box3()
+    _box3.set(min, max)
+    _box3.getCenter(box.center)
+    _box3.getSize(box.halfSize)
+    box.halfSize.multiplyScalar(0.5)
+
+    box.rotation = new Matrix3().fromArray(data.rotation)
+  }
+
+  return box
+}
+
 function useViewerSectionBoxIntegration() {
   const {
     ui: {
@@ -384,7 +413,7 @@ function useViewerSectionBoxIntegration() {
         visible.value = false
         edited.value = false
 
-        instance.sectionBoxOff()
+        sectionTool.enabled = false
         instance.requestRender(UpdateFlags.RENDER_RESET)
         return
       }
@@ -393,8 +422,9 @@ function useViewerSectionBoxIntegration() {
         visible.value = true
         edited.value = false
 
-        instance.setSectionBox(newVal)
-        instance.sectionBoxOn()
+        const box3 = sectionBoxDataToBox3(newVal)
+        sectionTool.setBox(box3)
+        sectionTool.enabled = true
         const outlines = instance.getExtension(SectionOutlines)
         if (outlines) outlines.requestUpdate()
         instance.requestRender(UpdateFlags.RENDER_RESET)
@@ -420,7 +450,7 @@ function useViewerSectionBoxIntegration() {
   )
 
   onBeforeUnmount(() => {
-    instance.sectionBoxOff()
+    sectionTool.enabled = false
     sectionTool.removeListener(SectionToolEvent.DragStart, onDragStart)
   })
 }
@@ -433,7 +463,7 @@ function useViewerCameraIntegration() {
       spotlightUserSessionId
     }
   } = useInjectedViewerState()
-  const { forceViewToViewerSync } = useCameraUtilities()
+  const { forceViewToViewerSync, setView, cameraController } = useCameraUtilities()
 
   const hasInitialLoadFired = ref(false)
 
@@ -499,9 +529,9 @@ function useViewerCameraIntegration() {
     }
 
     if (newVal) {
-      instance.setOrthoCameraOn()
+      cameraController.setOrthoCameraOn()
     } else {
-      instance.setPerspectiveCameraOn()
+      cameraController.setPerspectiveCameraOn()
     }
 
     // reset camera pos, cause we've switched cameras now and it might not have the new ones
@@ -524,7 +554,7 @@ function useViewerCameraIntegration() {
       if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
         return
       }
-      instance.setView({
+      setView({
         position: newVal,
         target: target.value
       })
@@ -539,7 +569,7 @@ function useViewerCameraIntegration() {
         return
       }
 
-      instance.setView({
+      setView({
         position: position.value,
         target: newVal
       })
@@ -642,33 +672,32 @@ function useExplodeFactorIntegration() {
     viewer: { instance }
   } = useInjectedViewerState()
 
+  const explodeExtension = instance.getExtension(ExplodeExtension)
+
   const updateOutlines = () => {
     const sectionOutlines = instance.getExtension(SectionOutlines)
     if (sectionOutlines && sectionOutlines.enabled) sectionOutlines.requestUpdate(true)
   }
   onMounted(() => {
-    instance.getExtension(ExplodeExtension).on(ExplodeEvent.Finshed, updateOutlines)
+    explodeExtension.on(ExplodeEvent.Finshed, updateOutlines)
   })
 
   onBeforeUnmount(() => {
-    instance
-      .getExtension(ExplodeExtension)
-      .removeListener(ExplodeEvent.Finshed, updateOutlines)
+    explodeExtension.removeListener(ExplodeEvent.Finshed, updateOutlines)
   })
 
   // state -> viewer only. we don't need the reverse.
   watch(
     explodeFactor,
     (newVal) => {
-      /** newVal turns out to be a string. It needs to be a */
-      instance.explode(newVal)
+      explodeExtension.setExplode(newVal)
     },
     { immediate: true }
   )
 
   useOnViewerLoadComplete(
     () => {
-      instance.explode(explodeFactor.value)
+      explodeExtension.setExplode(explodeFactor.value)
     },
     { initialOnly: true }
   )
@@ -680,6 +709,7 @@ function useDiffingIntegration() {
   const getObjectUrl = useGetObjectUrl()
 
   const hasInitialLoadFired = ref(false)
+  const diffExtension = state.viewer.instance.getExtension(DiffExtension)
 
   const { trigger: triggerDiffCommandWatch } = watchTriggerable(
     () => <const>[state.ui.diff.oldVersion.value, state.ui.diff.newVersion.value],
@@ -705,7 +735,7 @@ function useDiffingIntegration() {
         return
 
       if (!newCommand || oldVal) {
-        await state.viewer.instance.undiff()
+        await diffExtension.undiff()
         if (!newCommand) return
       }
 
@@ -719,7 +749,7 @@ function useDiffingIntegration() {
         newVersion?.referencedObject as string
       )
 
-      state.ui.diff.result.value = await state.viewer.instance.diff(
+      state.ui.diff.result.value = await diffExtension.diff(
         oldObjUrl,
         newObjUrl,
         state.ui.diff.mode.value,
@@ -753,7 +783,7 @@ function useDiffingIntegration() {
       if (!hasInitialLoadFired.value) return
       if (!state.ui.diff.result.value) return
 
-      state.viewer.instance.setDiffTime(state.ui.diff.result.value, val)
+      diffExtension.updateVisualDiff(val, state.ui.diff.mode.value)
     }
   )
 
@@ -762,11 +792,7 @@ function useDiffingIntegration() {
       if (!hasInitialLoadFired.value) return
       if (!state.ui.diff.result.value) return
 
-      state.viewer.instance.setVisualDiffMode(state.ui.diff.result.value, val)
-      state.viewer.instance.setDiffTime(
-        state.ui.diff.result.value,
-        state.ui.diff.time.value
-      ) // hmm, why do i need to call diff time again? seems like a minor viewer bug
+      diffExtension.updateVisualDiff(state.ui.diff.time.value, val)
     })
 
   useOnViewerLoadComplete(({ isInitial }) => {

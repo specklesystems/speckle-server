@@ -1089,6 +1089,7 @@ export type CreateSavedViewInput = {
   isHomeView?: InputMaybe<Scalars['Boolean']['input']>;
   /** Auto-generated name, if not specified */
   name?: InputMaybe<Scalars['String']['input']>;
+  position?: InputMaybe<ViewPositionInput>;
   projectId: Scalars['ID']['input'];
   resourceIdString: Scalars['String']['input'];
   /** Encoded screenshot of the view */
@@ -3732,8 +3733,8 @@ export type SavedViewGroupViewsInput = {
   /** Whether to only include views matching this search term */
   search?: InputMaybe<Scalars['String']['input']>;
   /**
-   * Optionally specify sort by field. Default: updatedAt
-   * Options: updatedAt, createdAt, name
+   * Optionally specify sort by field. Default: position
+   * Options: updatedAt, createdAt, name, position
    */
   sortBy?: InputMaybe<Scalars['String']['input']>;
   /** Optionally specify sort direction. Default: descending */
@@ -3795,7 +3796,13 @@ export type SavedViewMutationsUpdateViewArgs = {
 
 export type SavedViewPermissionChecks = {
   __typename?: 'SavedViewPermissionChecks';
+  canEditDescription: PermissionCheckResult;
+  canEditTitle: PermissionCheckResult;
   canMove: PermissionCheckResult;
+  /**
+   * Can the current user fully update everything about this view. Even if this fails,
+   * the user may be able to do partial updates (e.g. just change the title)
+   */
   canUpdate: PermissionCheckResult;
 };
 
@@ -4642,6 +4649,7 @@ export type UpdateSavedViewInput = {
   isHomeView?: InputMaybe<Scalars['Boolean']['input']>;
   /** New name for the view */
   name?: InputMaybe<Scalars['String']['input']>;
+  position?: InputMaybe<ViewPositionInput>;
   projectId: Scalars['ID']['input'];
   /** New resource targets, if necessary. Must be set together w/ viewerState & screenshot. */
   resourceIdString?: InputMaybe<Scalars['String']['input']>;
@@ -5187,6 +5195,23 @@ export type VersionPermissionChecks = {
   canUpdate: PermissionCheckResult;
 };
 
+/**
+ * If only one is set, the other will be resolved automatically
+ * If none are set, the view will be added to the end of the list
+ */
+export type ViewPositionInput = {
+  /** The ID of the view that should be after the new position */
+  afterViewId?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the view that should be before the new position */
+  beforeViewId?: InputMaybe<Scalars['ID']['input']>;
+  type: ViewPositionInputType;
+};
+
+export const ViewPositionInputType = {
+  Between: 'between'
+} as const;
+
+export type ViewPositionInputType = typeof ViewPositionInputType[keyof typeof ViewPositionInputType];
 export type ViewerResourceGroup = {
   __typename?: 'ViewerResourceGroup';
   /** Resource identifier used to refer to a collection of resource items */
@@ -6435,6 +6460,8 @@ export type ResolversTypes = {
   VersionCreatedTriggerDefinition: ResolverTypeWrapper<AutomationRevisionTriggerDefinitionGraphQLReturn>;
   VersionMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   VersionPermissionChecks: ResolverTypeWrapper<VersionPermissionChecksGraphQLReturn>;
+  ViewPositionInput: ViewPositionInput;
+  ViewPositionInputType: ViewPositionInputType;
   ViewerResourceGroup: ResolverTypeWrapper<ViewerResourceGroup>;
   ViewerResourceItem: ResolverTypeWrapper<ViewerResourceItem>;
   ViewerUpdateTrackingTarget: ViewerUpdateTrackingTarget;
@@ -6807,6 +6834,7 @@ export type ResolversParentTypes = {
   VersionCreatedTriggerDefinition: AutomationRevisionTriggerDefinitionGraphQLReturn;
   VersionMutations: MutationsObjectGraphQLReturn;
   VersionPermissionChecks: VersionPermissionChecksGraphQLReturn;
+  ViewPositionInput: ViewPositionInput;
   ViewerResourceGroup: ViewerResourceGroup;
   ViewerResourceItem: ViewerResourceItem;
   ViewerUpdateTrackingTarget: ViewerUpdateTrackingTarget;
@@ -8215,6 +8243,8 @@ export type SavedViewMutationsResolvers<ContextType = GraphQLContext, ParentType
 };
 
 export type SavedViewPermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SavedViewPermissionChecks'] = ResolversParentTypes['SavedViewPermissionChecks']> = {
+  canEditDescription?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canEditTitle?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canMove?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canUpdate?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
