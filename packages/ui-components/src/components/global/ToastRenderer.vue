@@ -15,27 +15,31 @@
       >
         <div
           v-if="notification"
-          class="pointer-events-auto w-full max-w-[20rem] overflow-hidden rounded bg-foundation text-foreground shadow-lg border border-outline-2 p-3"
-          :class="{ 'pb-2': isTitleOnly }"
+          class="flex pointer-events-auto w-full max-w-[20rem] overflow-hidden rounded bg-foundation text-foreground shadow-lg border border-outline-2 p-2 pl-3"
         >
-          <div class="flex space-x-2">
-            <div class="flex-shrink-0 mt-1">
-              <CheckCircleIcon
+          <div class="flex gap-2 items-center w-full">
+            <div
+              class="shrink-0"
+              :class="{
+                'self-start mt-0.5': notification.description || notification.cta
+              }"
+            >
+              <CircleCheck
                 v-if="notification.type === ToastNotificationType.Success"
                 class="text-success h-4 w-4"
                 aria-hidden="true"
               />
-              <XCircleIcon
+              <CircleX
                 v-else-if="notification.type === ToastNotificationType.Danger"
                 class="text-danger h-4 w-4"
                 aria-hidden="true"
               />
-              <ExclamationCircleIcon
+              <AlertCircle
                 v-else-if="notification.type === ToastNotificationType.Warning"
                 class="text-foreground-2 h-4 w-4"
                 aria-hidden="true"
               />
-              <InformationCircleIcon
+              <Info
                 v-else-if="notification.type === ToastNotificationType.Info"
                 class="text-foreground-2 h-4 w-4"
                 aria-hidden="true"
@@ -48,37 +52,36 @@
             <div class="w-full min-w-[10rem]">
               <p
                 v-if="notification.title"
-                class="text-foreground-2 font-medium text-body-xs"
+                class="text-foreground text-body-xs font-medium"
               >
                 {{ notification.title }}
               </p>
               <p
                 v-if="notification.description"
-                class="text-foreground-2 text-body-xs leading-snug"
+                class="text-foreground-2 text-body-2xs leading-snug"
               >
                 {{ notification.description }}
               </p>
               <div v-if="notification.cta">
-                <TextLink
-                  class="mt-1 color-primary"
-                  :to="notification.cta.url"
-                  size="sm"
-                  @click="onCtaClick"
-                >
+                <TextLink :to="notification.cta.url" size="sm" @click="onCtaClick">
                   {{ notification.cta.title }}
                 </TextLink>
               </div>
             </div>
-            <div class="ml-2 flex-shrink-0 mt-0.5">
-              <button
-                type="button"
-                class="inline-flex rounded-md bg-foundation text-foreground-2 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                @click="dismiss"
-              >
-                <span class="sr-only">Close</span>
-                <XMarkIcon class="h-5 w-5" aria-hidden="true" />
-              </button>
-            </div>
+            <FormButton
+              :icon-left="X"
+              color="subtle"
+              size="sm"
+              hide-text
+              class="shrink-0 ml-auto"
+              :class="{
+                'self-start -mt-0.5 -mr-0.5':
+                  notification.description || notification.cta
+              }"
+              @click="dismiss"
+            >
+              Close
+            </FormButton>
           </div>
         </div>
       </Transition>
@@ -87,18 +90,11 @@
 </template>
 <script setup lang="ts">
 import TextLink from '~~/src/components/common/text/Link.vue'
-import {
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationCircleIcon,
-  InformationCircleIcon,
-  XMarkIcon
-} from '@heroicons/vue/20/solid'
-import { computed } from 'vue'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { ToastNotificationType } from '~~/src/helpers/global/toast'
 import type { ToastNotification } from '~~/src/helpers/global/toast'
-import { CommonLoadingIcon } from '~~/src/lib'
+import { CommonLoadingIcon, FormButton } from '~~/src/lib'
+import { X, CircleCheck, CircleX, AlertCircle, Info } from 'lucide-vue-next'
 
 const emit = defineEmits<{
   (e: 'update:notification', val: MaybeNullOrUndefined<ToastNotification>): void
@@ -107,10 +103,6 @@ const emit = defineEmits<{
 const props = defineProps<{
   notification: MaybeNullOrUndefined<ToastNotification>
 }>()
-
-const isTitleOnly = computed(
-  () => !props.notification?.description && !props.notification?.cta
-)
 
 const dismiss = () => {
   emit('update:notification', null)
