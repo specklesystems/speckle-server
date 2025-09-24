@@ -1,8 +1,8 @@
 <template>
   <aside
-    class="bg-foundation h-48 md:h-dvh w-full md:w-64 xl:w-80 border-t md:border-t-0 md:border-l border-outline-3 py-5 px-4"
+    class="bg-foundation h-[196px] lg:h-dvh w-full lg:w-[260px] xl:w-[324px] border-t lg:border-t-0 lg:border-l border-outline-3 p-4"
   >
-    <div class="hidden md:flex items-center justify-end space-x-0.5">
+    <div class="hidden lg:flex items-center justify-end space-x-1">
       <div
         v-tippy="
           canUpdateSlide ? undefined : 'You do not have permission to edit this slide'
@@ -24,24 +24,28 @@
         @click="$emit('close')"
       />
     </div>
-    <section class="pt-2 flex flex-col gap-4">
-      <div class="flex items-center justify-between gap-x-2">
-        <h1 v-if="currentSlide?.name" class="text-xl font-medium text-foreground px-2">
+    <section class="lg:pt-4 lg:px-1 flex flex-col gap-3">
+      <div class="flex items-start justify-between gap-x-2">
+        <h1
+          v-if="currentSlide?.name"
+          class="text-xl/7 xl:text-[26px]/8 tracking-[-0.399px] xl:tracking-[-0.494px] font-medium text-foreground px-1 lg:px-2 xl:px-3 py-0.5 lg:py-1.5"
+        >
           {{ currentSlide?.name }}
         </h1>
-        <FormButton
-          v-if="canUpdate"
-          :icon-left="LucidePencilLine"
-          color="subtle"
-          hide-text
-          class="md:hidden"
-          @click="isSlideEditDialogOpen = true"
-        />
+        <div class="lg:hidden flex items-center gap-x-1">
+          <FormButton
+            v-if="canUpdate"
+            :icon-left="LucidePencilLine"
+            color="subtle"
+            hide-text
+            @click="isSlideEditDialogOpen = true"
+          />
+        </div>
       </div>
 
       <p
         v-if="currentSlide?.description"
-        class="text-body-sm text-foreground whitespace-pre-wrap px-2"
+        class="text-body-sm xl:text-body text-foreground whitespace-pre-wrap px-1 lg:px-2 xl:px-3 lg:py-1"
       >
         {{ currentSlide?.description }}
       </p>

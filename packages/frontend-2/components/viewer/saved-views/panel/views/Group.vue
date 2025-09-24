@@ -14,10 +14,12 @@
       :group="group"
       :search="search"
       :views-type="viewsType"
+      @view-count-updated="(count) => (viewCount = count)"
     />
     <template #title-actions>
       <div
-        class="flex gap-0.5 items-center opacity-0 group-hover/disclosure:opacity-100"
+        class="flex gap-0.5 items-center lg:group-hover/disclosure:opacity-100"
+        :class="{ 'lg:opacity-0': !showMenu }"
         @click.stop
       >
         <LayoutMenu
@@ -141,6 +143,9 @@ const props = defineProps<{
   search?: string
 }>()
 
+const open = defineModel<boolean>('open')
+const viewCount = ref(0)
+
 const { triggerNotification } = useGlobalToast()
 const isLoading = useMutationLoading()
 const createView = useCreateSavedView()
@@ -152,11 +157,11 @@ const { on, classes: dropZoneClasses } = useDraggableViewTargetGroup({
     if (!open.value) {
       open.value = true
     }
-  }
+  },
+  enabled: computed(() => !open.value || !viewCount.value)
 })
 
 const renameMode = defineModel<boolean>('renameMode')
-const open = defineModel<boolean>('open')
 const showMenu = ref(false)
 const menuId = useId()
 

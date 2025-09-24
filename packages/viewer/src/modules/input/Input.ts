@@ -26,7 +26,7 @@ export interface InputEventPayload {
 //TO DO: Define proper interface for InputEvent data
 export default class Input extends EventEmitter {
   private static readonly MAX_DOUBLE_CLICK_TIMING = 500
-  private static readonly MIN_CLICK_TIMING = 150
+  private static readonly MIN_CLICK_TIMING = 200
   private tapTimeout: number = 0
   private lastTap = 0
   private lastClick = 0
