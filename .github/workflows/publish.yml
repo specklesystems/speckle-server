@@ -7,7 +7,11 @@ on:
       CLOUDFLARE_ACCOUNT_ID:
         required: true
         type: string
-      DOCKERHUB_USERNAME:
+      OCI_REGISTRY_DOMAIN:
+        required: false
+        type: string
+        default: registry-1.docker.io
+      OCI_REGISTRY_USERNAME:
         required: true
         type: string
       CHART_NAME:
@@ -19,7 +23,7 @@ on:
         required: true
       CLOUDFLARE_API_TOKEN:
         required: true
-      DOCKERHUB_TOKEN:
+      OCI_REGISTRY_PASSWORD:
         required: true
       GH_DEVOPS_PAT:
         required: true
@@ -31,10 +35,10 @@ jobs:
       image: speckle/pre-commit-runner:latest
     env:
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
-      REGISTRY_USERNAME: ${{ inputs.DOCKERHUB_USERNAME }}
-      REGISTRY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
-      HELM_REGISTRY_DOMAIN: registry-1.docker.io
-      HELM_REPOSITORY_PATH: speckle
+      REGISTRY_USERNAME: ${{ inputs.OCI_REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.OCI_REGISTRY_PASSWORD }}
+      HELM_REGISTRY_DOMAIN: ${{ inputs.OCI_REGISTRY_DOMAIN }}
+      HELM_REPOSITORY_PATH: specklesystems
       CHART_NAME: ${{ inputs.CHART_NAME }}
     steps:
       - uses: actions/checkout@v4.2.2

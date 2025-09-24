@@ -58,9 +58,15 @@ jobs:
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-      DOCKERHUB_USERNAME: 'speckledevops'
+      OCI_REGISTRY_DOMAIN: ghcr.io
+      OCI_REGISTRY_USERNAME: ${{ github.actor }} # we are pushing helm chart to ghcr
       CHART_NAME: ${{ needs.get-chart-name.outputs.CHART_NAME }}
-    secrets: inherit
+    secrets:
+      # we do not inherit here as we wish to configure secrets depending on the target registry
+      DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      OCI_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }} # we are pushing helm chart to ghcr
+      GH_DEVOPS_PAT: ${{ secrets.GH_DEVOPS_PAT }}
 
   npm:
     needs: [get-version, tests, builds]
