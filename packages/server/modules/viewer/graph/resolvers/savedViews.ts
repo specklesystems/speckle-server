@@ -376,7 +376,8 @@ const resolvers: Resolvers = {
       > = {
         groupId: 'canMove',
         name: 'canEditTitle',
-        description: 'canEditDescription'
+        description: 'canEditDescription',
+        position: 'canMove'
       }
       const results = await Promise.all(
         Object.keys(updates).map((key) => {

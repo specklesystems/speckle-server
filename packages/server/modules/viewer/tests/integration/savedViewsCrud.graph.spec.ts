@@ -1818,7 +1818,10 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
             input: {
               id: testView.id,
               projectId: updatablesProject.id,
-              groupId: optionalGroup.id
+              groupId: optionalGroup.id,
+              position: {
+                type: ViewPositionInputType.Between
+              }
             }
           },
           { authUserId: notAuthorButContributor.id }
