@@ -563,7 +563,14 @@ extend type User {
 }
 
 extend type Project {
-  workspace: Workspace
+  """
+  Full workspace information for the project.
+  """
+  workspace: Workspace @hasScope(scope: "workspace:read")
+  """
+  Limited workspace records that exposes public data projects workspaces.
+  """
+  limitedWorkspace: LimitedWorkspace
   """
   Public project-level configuration for embedded viewer
   """
