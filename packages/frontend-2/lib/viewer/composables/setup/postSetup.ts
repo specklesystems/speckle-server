@@ -9,6 +9,7 @@ import {
   ViewerEvent,
   VisualDiffMode,
   CameraController,
+  DiffExtension,
   UpdateFlags,
   SectionOutlines,
   SectionToolEvent,
@@ -67,7 +68,10 @@ import {
 } from '~/lib/viewer/composables/setup/filters'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { useFilteringSetup } from '~/lib/viewer/composables/filtering/setup'
-import { useHighlightingPostSetup } from '~/lib/viewer/composables/setup/highlighting'
+import {
+  useHighlightingPostSetup,
+  HighlightExtension
+} from '~/lib/viewer/composables/setup/highlighting'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -566,17 +570,33 @@ function useViewerFiltersIntegration() {
       ).filter(isNonNullable)
       if (arraysEqual(newIds, oldIds)) return
 
-      state.ui.highlightedObjectIds.value = []
-
       const selectionExtension = instance.getExtension(SelectionExtension)
+      const currentViewerSelection = selectionExtension
+        .getSelectedObjects()
+        .map((obj) => obj.id as string)
 
-      if (!newVal.length) {
-        selectionExtension.clearSelection()
+      if (
+        currentViewerSelection.length === newIds.length &&
+        difference(currentViewerSelection, newIds).length === 0
+      ) {
         return
       }
-      selectionExtension.selectObjects(newIds)
+
+      state.ui.highlightedObjectIds.value = []
+      const highlightExtension = instance.getExtension(HighlightExtension)
+      if (highlightExtension) {
+        highlightExtension.clearSelection()
+      }
+
+      selectionExtension.clearSelection()
+      if (newVal.length > 0) {
+        selectionExtension.selectObjects(newIds)
+      }
     },
-    { immediate: true, flush: 'sync' }
+    {
+      immediate: true,
+      flush: 'sync'
+    }
   )
 }
 
@@ -623,33 +643,32 @@ function useExplodeFactorIntegration() {
     viewer: { instance }
   } = useInjectedViewerState()
 
+  const explodeExtension = instance.getExtension(ExplodeExtension)
+
   const updateOutlines = () => {
     const sectionOutlines = instance.getExtension(SectionOutlines)
     if (sectionOutlines && sectionOutlines.enabled) sectionOutlines.requestUpdate(true)
   }
   onMounted(() => {
-    instance.getExtension(ExplodeExtension).on(ExplodeEvent.Finshed, updateOutlines)
+    explodeExtension.on(ExplodeEvent.Finshed, updateOutlines)
   })
 
   onBeforeUnmount(() => {
-    instance
-      .getExtension(ExplodeExtension)
-      .removeListener(ExplodeEvent.Finshed, updateOutlines)
+    explodeExtension.removeListener(ExplodeEvent.Finshed, updateOutlines)
   })
 
   // state -> viewer only. we don't need the reverse.
   watch(
     explodeFactor,
     (newVal) => {
-      /** newVal turns out to be a string. It needs to be a */
-      instance.explode(newVal)
+      explodeExtension.setExplode(newVal)
     },
     { immediate: true }
   )
 
   useOnViewerLoadComplete(
     () => {
-      instance.explode(explodeFactor.value)
+      explodeExtension.setExplode(explodeFactor.value)
     },
     { initialOnly: true }
   )
@@ -661,6 +680,7 @@ function useDiffingIntegration() {
   const getObjectUrl = useGetObjectUrl()
 
   const hasInitialLoadFired = ref(false)
+  const diffExtension = state.viewer.instance.getExtension(DiffExtension)
 
   const { trigger: triggerDiffCommandWatch } = watchTriggerable(
     () => <const>[state.ui.diff.oldVersion.value, state.ui.diff.newVersion.value],
@@ -686,7 +706,7 @@ function useDiffingIntegration() {
         return
 
       if (!newCommand || oldVal) {
-        await state.viewer.instance.undiff()
+        await diffExtension.undiff()
         if (!newCommand) return
       }
 
@@ -700,7 +720,7 @@ function useDiffingIntegration() {
         newVersion?.referencedObject as string
       )
 
-      state.ui.diff.result.value = await state.viewer.instance.diff(
+      state.ui.diff.result.value = await diffExtension.diff(
         oldObjUrl,
         newObjUrl,
         state.ui.diff.mode.value,
@@ -734,7 +754,7 @@ function useDiffingIntegration() {
       if (!hasInitialLoadFired.value) return
       if (!state.ui.diff.result.value) return
 
-      state.viewer.instance.setDiffTime(state.ui.diff.result.value, val)
+      diffExtension.updateVisualDiff(val, state.ui.diff.mode.value)
     }
   )
 
@@ -743,11 +763,7 @@ function useDiffingIntegration() {
       if (!hasInitialLoadFired.value) return
       if (!state.ui.diff.result.value) return
 
-      state.viewer.instance.setVisualDiffMode(state.ui.diff.result.value, val)
-      state.viewer.instance.setDiffTime(
-        state.ui.diff.result.value,
-        state.ui.diff.time.value
-      ) // hmm, why do i need to call diff time again? seems like a minor viewer bug
+      diffExtension.updateVisualDiff(state.ui.diff.time.value, val)
     })
 
   useOnViewerLoadComplete(({ isInitial }) => {

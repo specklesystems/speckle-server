@@ -41,6 +41,25 @@ const resolvers: Resolvers = {
         savedViewId
       })
       return toGraphqlResult(canMove)
+    },
+    canEditTitle: async (parent, _args, ctx) => {
+      const savedViewId = parent.savedView.id
+      const canEditTitle = await ctx.authPolicies.project.savedViews.canEditTitle({
+        userId: ctx.userId,
+        projectId: parent.savedView.projectId,
+        savedViewId
+      })
+      return toGraphqlResult(canEditTitle)
+    },
+    canEditDescription: async (parent, _args, ctx) => {
+      const savedViewId = parent.savedView.id
+      const canEditDescription =
+        await ctx.authPolicies.project.savedViews.canEditDescription({
+          userId: ctx.userId,
+          projectId: parent.savedView.projectId,
+          savedViewId
+        })
+      return toGraphqlResult(canEditDescription)
     }
   },
   SavedViewGroupPermissionChecks: {

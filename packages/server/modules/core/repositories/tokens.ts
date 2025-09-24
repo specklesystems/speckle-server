@@ -19,6 +19,7 @@ import type {
   GetTokenScopesById,
   GetUserPersonalAccessTokens,
   RevokeTokenById,
+  RevokeTokenResourceAccess,
   RevokeUserTokenById,
   StoreApiToken,
   StorePersonalApiToken,
@@ -61,6 +62,12 @@ export const storeTokenResourceAccessDefinitionsFactory =
   (deps: { db: Knex }): StoreTokenResourceAccessDefinitions =>
   async (defs) => {
     await tables.tokenResourceAccess(deps.db).insert(defs)
+  }
+
+export const revokeTokenResourceAccessDefinitonsFactory =
+  (deps: { db: Knex }): RevokeTokenResourceAccess =>
+  async (definition) => {
+    await tables.tokenResourceAccess(deps.db).where(definition).delete()
   }
 
 export const storeUserServerAppTokenFactory =
