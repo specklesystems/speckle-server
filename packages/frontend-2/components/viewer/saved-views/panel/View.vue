@@ -24,7 +24,7 @@
         </div>
       </div>
     </div>
-    <div class="flex flex-col min-w-0 grow">
+    <div class="flex flex-col min-w-0 grow gap-y-0.5">
       <div class="text-body-2xs font-medium text-foreground truncate grow-0">
         {{ view.name }}
       </div>
@@ -279,7 +279,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
 
 const wrapperClasses = computed(() => {
   const classParts = [
-    'flex items-center gap-2 p-1.5 w-full group rounded-md cursor-pointer relative transition-all'
+    'flex items-center gap-2 p-2 w-full group rounded-md cursor-pointer relative transition-all'
   ]
 
   if (isActive.value) {
