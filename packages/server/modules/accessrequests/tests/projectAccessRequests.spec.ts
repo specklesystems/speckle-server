@@ -62,6 +62,7 @@ import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
 import { noop } from 'lodash-es'
+import { isNotificationListenerEnabled } from '@/modules/shared/helpers/envHelper'
 
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -236,12 +237,6 @@ describe('Project access requests', () => {
         })
       )
 
-      const { getSends } = emailListener.listen({ times: 1 })
-
-      const waitForAck = notificationsStateManager.waitForAck(
-        (e) => e.result?.type === NotificationType.NewStreamAccessRequest
-      )
-
       const results = await createReq(otherGuysPrivateStream.id)
 
       // req gets created
@@ -257,18 +252,6 @@ describe('Project access requests', () => {
       expect(results.data?.projectMutations.accessRequestMutations.create.projectId).to
         .be.ok
 
-      await waitForAck
-
-      // email gets sent out
-      const sentEmails = getSends()
-      expect(sentEmails.length).to.eq(1)
-      const emailParams = sentEmails[0]
-
-      expect(emailParams.subject).to.contain('A user requested access to your project')
-      expect(emailParams.html).to.be.ok
-      expect(emailParams.text).to.be.ok
-      expect(emailParams.to).to.eq(otherGuy.email)
-
       // activity stream item inserted
       const streamActivity = await getStreamActivities(otherGuysPrivateStream.id, {
         actionType: StreamActionTypes.Stream.AccessRequestSent,
@@ -277,6 +260,33 @@ describe('Project access requests', () => {
       expect(streamActivity).to.have.lengthOf(1)
       expect(eventFired).to.be.true
     })
+
+    !isNotificationListenerEnabled()
+      ? it('sends an email notification ', async () => {
+          const { getSends } = emailListener.listen({ times: 1 })
+
+          const waitForAck = notificationsStateManager.waitForAck(
+            (e) => e.result?.type === NotificationType.NewStreamAccessRequest
+          )
+
+          const results = await createReq(otherGuysPrivateStream.id)
+          expect(results).to.not.haveGraphQLErrors()
+
+          await waitForAck
+
+          // email gets sent out
+          const sentEmails = getSends()
+          expect(sentEmails.length).to.eq(1)
+          const emailParams = sentEmails[0]
+
+          expect(emailParams.subject).to.contain(
+            'A user requested access to your project'
+          )
+          expect(emailParams.html).to.be.ok
+          expect(emailParams.text).to.be.ok
+          expect(emailParams.to).to.eq(otherGuy.email)
+        })
+      : {}
 
     it('operation fails if request already exists', async () => {
       const firstResults = await createReq(otherGuysPrivateStream.id)

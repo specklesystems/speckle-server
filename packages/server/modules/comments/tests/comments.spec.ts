@@ -98,6 +98,7 @@ import {
 import type { GetCommentsQueryVariables } from '@/modules/core/graph/generated/graphql'
 import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { isNotificationListenerEnabled } from '@/modules/shared/helpers/envHelper'
 
 const getStream = getStreamFactory({ db })
 const streamResourceCheck = streamResourceCheckFactory({
@@ -1818,28 +1819,32 @@ describe('Comments @comments', () => {
               ...input
             })
 
-          it('a valid mention triggers a notification', async () => {
-            const { getSends } = emailListener.listen({ times: 2 })
+          !isNotificationListenerEnabled()
+            ? it('a valid mention triggers a notification', async () => {
+                const { getSends } = emailListener.listen({ times: 2 })
 
-            const waitForAck = notificationsState.waitForAck(
-              (e) => e.result?.type === NotificationType.MentionedInComment
-            )
+                const waitForAck = notificationsState.waitForAck(
+                  (e) => e.result?.type === NotificationType.MentionedInComment
+                )
 
-            const { data, errors } = await createOrReplyCommentWithMention(otherUser.id)
-            const result = getResult(data)
+                const { data, errors } = await createOrReplyCommentWithMention(
+                  otherUser.id
+                )
+                const result = getResult(data)
 
-            expect(errors).to.be.not.ok
-            expect(result).to.be.ok
+                expect(errors).to.be.not.ok
+                expect(result).to.be.ok
 
-            // Wait for
-            await waitForAck
+                // Wait for
+                await waitForAck
 
-            const emailSends = getSends()
-            const emailParams = emailSends[0]
-            expect(emailParams).to.be.ok
-            expect(emailParams.subject).to.contain('mentioned in a Speckle comment')
-            expect(emailParams.to).to.eq(otherUser.email)
-          })
+                const emailSends = getSends()
+                const emailParams = emailSends[0]
+                expect(emailParams).to.be.ok
+                expect(emailParams.subject).to.contain('mentioned in a Speckle comment')
+                expect(emailParams.to).to.eq(otherUser.email)
+              })
+            : {}
         })
       })
     })
