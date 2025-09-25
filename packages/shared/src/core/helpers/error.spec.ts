@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { errorToString } from './error.js'
+import { errorToString, getErrorMessage } from './error.js'
 
 describe('errorToString', () => {
   it('should stringify non-Error objects', () => {
@@ -158,5 +158,58 @@ describe('errorToString', () => {
     const result = errorToString(error)
     expect(result).toContain('Main error')
     expect(result).toContain('Cause: [object Object]')
+  })
+})
+
+describe('getErrorMessage', () => {
+  it('should return message from Error objects', () => {
+    const error = new Error('Test error message')
+    const result = getErrorMessage(error)
+    expect(result).toBe('Test error message')
+  })
+
+  it('should return message from objects with message property', () => {
+    const errorLike = { message: 'Custom error message', code: 500 }
+    const result = getErrorMessage(errorLike)
+    expect(result).toBe('Custom error message')
+  })
+
+  it('should return string values directly', () => {
+    const stringError = 'This is a string error'
+    const result = getErrorMessage(stringError)
+    expect(result).toBe('This is a string error')
+  })
+
+  it('should ignore non-string message properties', () => {
+    const errorLike = { message: 123, other: 'value' }
+    const result = getErrorMessage(errorLike)
+    expect(result).toBe('{"message":123,"other":"value"}')
+  })
+
+  it('should stringify objects without message property', () => {
+    const obj = { foo: 'bar', num: 42 }
+    const result = getErrorMessage(obj)
+    expect(result).toBe('{"foo":"bar","num":42}')
+  })
+
+  it('should handle primitive values', () => {
+    expect(getErrorMessage(123)).toBe('123')
+    expect(getErrorMessage(true)).toBe('true')
+    expect(getErrorMessage(null)).toBe('null')
+    expect(getErrorMessage(undefined)).toBe('undefined')
+  })
+
+  it('should fallback to String() for non-serializable objects', () => {
+    const circular: Record<string, unknown> = { name: 'circular' }
+    circular.self = circular
+
+    const result = getErrorMessage(circular)
+    expect(result).toBe('[object Object]')
+  })
+
+  it('should handle empty Error message', () => {
+    const error = new Error('')
+    const result = getErrorMessage(error)
+    expect(result).toBe('')
   })
 })

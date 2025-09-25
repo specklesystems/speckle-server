@@ -55,9 +55,6 @@ export const useHighlightingPostSetup = () => {
 
   if (pageType.value === ViewerRenderPageType.Presentation) return
 
-  // Create the highlighting extension once during setup
-  instance.createExtension(HighlightExtension)
-
   // Get the highlighting extension instance
   const getHighlightExtensionInstance = () => instance.getExtension(HighlightExtension)
 

@@ -8,9 +8,9 @@ export const projectPresentationPageQuery = graphql(`
   ) {
     project(id: $projectId) {
       id
-      workspace {
+      limitedWorkspace {
         id
-        ...PresentationLeftSidebar_Workspace
+        ...PresentationLeftSidebar_LimitedWorkspace
       }
       savedViewGroup(id: $savedViewGroupId) {
         id
@@ -18,7 +18,7 @@ export const projectPresentationPageQuery = graphql(`
         ...PresentationViewerPageWrapper_SavedViewGroup
         ...PresentationHeader_SavedViewGroup
         ...PresentationSlideList_SavedViewGroup
-        ...PresentationInfoSidebar_SavedViewGroup
+        ...PresentationPageWrapper_SavedViewGroup
         views(input: $input) {
           totalCount
           items {
