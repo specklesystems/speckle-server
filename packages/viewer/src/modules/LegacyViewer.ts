@@ -420,14 +420,7 @@ export class LegacyViewer extends Viewer {
   /** MISC */
   public screenshot(): Promise<string> {
     return new Promise((resolve) => {
-      const sectionBoxVisible = this.sections.enabled
-      if (sectionBoxVisible) {
-        this.sections.visible = false
-      }
       const screenshot = this.speckleRenderer.renderer.domElement.toDataURL('image/png')
-      if (sectionBoxVisible) {
-        this.sections.visible = true
-      }
       resolve(screenshot)
     })
   }

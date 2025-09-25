@@ -1,4 +1,5 @@
 import { db } from '@/db/knex'
+import { ViewPositionInputType } from '@/modules/core/graph/generated/graphql'
 import {
   getBranchesByIdsFactory,
   getBranchLatestCommitsFactory,
@@ -16,9 +17,11 @@ import {
 import { formatResourceIdsForGroup } from '@/modules/viewer/helpers/savedViews'
 import {
   getModelHomeSavedViewFactory,
+  getNewViewSpecificPositionFactory,
   getSavedViewFactory,
   getSavedViewGroupFactory,
   getStoredViewCountFactory,
+  rebalancingViewPositionsFactory,
   recalculateGroupResourceIdsFactory,
   setNewHomeViewFactory,
   storeSavedViewFactory
@@ -132,12 +135,19 @@ export const createTestSavedView = async (params?: {
     }),
     setNewHomeView: setNewHomeViewFactory({
       db
-    })
+    }),
+    getNewViewSpecificPosition: getNewViewSpecificPositionFactory({
+      db
+    }),
+    rebalanceViewPositions: rebalancingViewPositionsFactory({ db })
   })
 
   const createdView = await createSavedView({
     input: {
       ...view,
+      position: {
+        type: ViewPositionInputType.Between
+      },
       resourceIdString: view.resourceIds.join(','),
       viewerState: view.viewerState.state
     },

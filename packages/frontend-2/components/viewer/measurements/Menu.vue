@@ -10,7 +10,7 @@
         />
       </span>
 
-      <span class="flex flex-col gap-1.5 pt-3">
+      <span class="flex flex-col gap-1.5 py-3">
         <FormRange
           v-model="measurementOptions.precision"
           name="precision"
@@ -21,25 +21,23 @@
         />
       </span>
 
-      <span class="flex items-center pt-2">
+      <div class="flex flex-col gap-1.5 pb-1">
         <FormCheckbox
-          name="Chain Measurements"
-          hide-label
+          name="Chain measurements"
+          label-position="right"
+          label-classes="text-body-2xs font-normal"
           :model-value="measurementOptions.chain"
           @update:model-value="toggleMeasurementsChaining"
         />
-        <label class="text-body-2xs" for="chain">Chain Measurements</label>
-      </span>
 
-      <span class="flex items-center pt-1">
         <FormCheckbox
           name="Snap to vertices"
-          hide-label
+          label-position="right"
+          label-classes="text-body-2xs font-normal"
           :model-value="measurementOptions.vertexSnap"
           @update:model-value="toggleMeasurementsSnap"
         />
-        <label class="text-body-2xs" for="snap">Snap to vertices</label>
-      </span>
+      </div>
     </ViewerLayoutPanel>
     <ViewerLayoutPanel class="mt-1 p-1 pr-2">
       <div class="flex gap-2 justify-between items-center">

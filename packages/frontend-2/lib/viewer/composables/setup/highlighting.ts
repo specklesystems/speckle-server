@@ -36,6 +36,10 @@ export class HighlightExtension extends SelectionExtension {
     }
     this.options = highlightMaterialData
   }
+
+  /** Disable default click events - highlighting is controlled through state only */
+  protected override onObjectClicked() {}
+  protected override onObjectDoubleClick() {}
 }
 
 /**

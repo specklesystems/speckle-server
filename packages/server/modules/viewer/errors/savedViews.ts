@@ -41,3 +41,9 @@ export class SavedViewGroupNotFoundError extends BaseError {
   static defaultMessage = 'Saved view group not found'
   static statusCode = 404
 }
+
+export class SavedViewPositionUpdateError extends BaseError {
+  static code = 'SAVED_VIEW_POSITION_UPDATE_ERROR'
+  static defaultMessage = 'Failed to update saved view position'
+  static statusCode = 400
+}

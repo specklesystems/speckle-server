@@ -92,15 +92,9 @@ export const useWorkspacesWizard = () => {
     let shouldComplete = false
 
     if (wizardState.value.currentStep === WizardSteps.Pricing) {
-      if (state.value.plan === WorkspacePlans.Free) {
-        shouldComplete = true
-      }
-    }
-
-    if (wizardState.value.currentStep === WizardSteps.AddOns) {
       if (
-        state.value.plan === WorkspacePlans.Team ||
-        state.value.plan === WorkspacePlans.TeamUnlimited
+        state.value.plan === WorkspacePlans.Free ||
+        state.value.plan === WorkspacePlans.Team
       ) {
         shouldComplete = true
       }

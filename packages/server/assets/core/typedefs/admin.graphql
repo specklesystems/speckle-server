@@ -32,6 +32,14 @@ type ProjectCollection {
   items: [Project!]!
 }
 
+input AdminUpdateEmailVerificationInput {
+  email: String!
+  """
+  Defaults to true. If set to false, the email will be marked as unverified.
+  """
+  verified: Boolean
+}
+
 type AdminQueries {
   userList(
     limit: Int! = 25
@@ -57,6 +65,19 @@ type AdminQueries {
   serverStatistics: ServerStatistics! @hasScope(scope: "server:stats")
 }
 
+type AdminMutations {
+  """
+  A server administrator can update the verification status of an user's email.
+  The server administrator is recommended to confirm ownership of the email address
+  with the user before performing this action.
+  """
+  updateEmailVerification(input: AdminUpdateEmailVerificationInput!): Boolean!
+}
+
 extend type Query {
   admin: AdminQueries! @hasServerRole(role: SERVER_ADMIN)
+}
+
+extend type Mutation {
+  admin: AdminMutations! @hasServerRole(role: SERVER_ADMIN)
 }

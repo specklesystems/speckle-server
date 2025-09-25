@@ -3,10 +3,10 @@
 <template>
   <div
     v-keyboard-clickable
-    :class="[wrapperClasses, draggableClasses]"
+    :class="[wrapperClasses, draggableClasses, draggableTargetClasses]"
     :view-id="view.id"
     draggable="true"
-    v-on="on"
+    v-on="{ ...on, ...targetOn }"
     @click="apply"
   >
     <div class="flex items-center shrink-0">
@@ -24,7 +24,7 @@
         </div>
       </div>
     </div>
-    <div class="flex flex-col min-w-0 grow">
+    <div class="flex flex-col min-w-0 grow gap-y-0.5">
       <div class="text-body-2xs font-medium text-foreground truncate grow-0">
         {{ view.name }}
       </div>
@@ -80,7 +80,11 @@
       </LayoutMenu>
       <div
         v-tippy="
-          getTooltipProps(canUpdate?.authorized ? 'Edit view' : canUpdate?.errorMessage)
+          getTooltipProps(
+            canOpenEditDialog?.authorized
+              ? 'Edit view'
+              : canOpenEditDialog?.errorMessage
+          )
         "
         class="shrink-0 opacity-0 group-hover:opacity-100"
       >
@@ -91,7 +95,7 @@
           hide-text
           name="editView"
           class="shrink-0"
-          :disabled="!canUpdate?.authorized || isLoading"
+          :disabled="!canOpenEditDialog?.authorized"
           @click="onEdit"
         />
       </div>
@@ -120,7 +124,10 @@ import {
   useCollectNewSavedViewViewerData,
   useUpdateSavedView
 } from '~/lib/viewer/composables/savedViews/management'
-import { useDraggableView } from '~/lib/viewer/composables/savedViews/ui'
+import {
+  useDraggableView,
+  useDraggableViewTargetView
+} from '~/lib/viewer/composables/savedViews/ui'
 import { useSavedViewValidationHelpers } from '~/lib/viewer/composables/savedViews/validation'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 
@@ -185,13 +192,18 @@ const {
   canSetHomeView,
   isHomeView,
   canToggleVisibility,
-  canMove
+  canMove,
+  canOpenEditDialog
 } = useSavedViewValidationHelpers({
   view: computed(() => props.view)
 })
 const { classes: draggableClasses, on } = useDraggableView({
   view: computed(() => props.view)
 })
+const { classes: draggableTargetClasses, on: targetOn } = useDraggableViewTargetView({
+  view: computed(() => props.view)
+})
+
 const mp = useMixpanel()
 
 const showMenu = ref(false)
@@ -267,7 +279,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
 
 const wrapperClasses = computed(() => {
   const classParts = [
-    'flex items-center gap-2 p-1.5 w-full group rounded-md cursor-pointer relative transition-all'
+    'flex items-center gap-2 p-2 w-full group rounded-md cursor-pointer relative transition-all'
   ]
 
   if (isActive.value) {
