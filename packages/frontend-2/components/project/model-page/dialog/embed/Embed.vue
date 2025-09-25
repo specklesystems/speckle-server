@@ -95,12 +95,14 @@
                     <span
                       v-if="
                         !canEditEmbedOptions?.authorized &&
-                        canEditEmbedOptions?.code === 'WorkspaceNoFeatureAccess'
+                        canEditEmbedOptions?.code ===
+                          'WorkspacePlanNoFeatureAccessError'
                       "
                       class="text-body-2xs text-foreground-2"
                     >
                       This feature is only available on the business plan
                       <NuxtLink
+                        v-if="isAdmin"
                         :to="settingsWorkspaceRoutes.billing.route(workspaceSlug)"
                         class="underline"
                       >
@@ -113,8 +115,9 @@
                     >
                       Tip: You can also hide the logo for all embeds in
                       <NuxtLink
-                        :to="settingsWorkspaceRoutes.billing.route(workspaceSlug)"
+                        :to="settingsWorkspaceRoutes.general.route(workspaceSlug)"
                         class="underline"
+                        target="_blank"
                       >
                         workspace settings.
                       </NuxtLink>
@@ -162,7 +165,7 @@
 <script setup lang="ts">
 import type { ProjectsModelPageEmbed_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { useClipboard } from '~~/composables/browser'
-import { SpeckleViewer } from '@speckle/shared'
+import { SpeckleViewer, Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
@@ -185,6 +188,7 @@ graphql(`
     workspace {
       id
       slug
+      role
       embedOptions {
         hideSpeckleBranding
       }
@@ -224,6 +228,8 @@ const preventScrolling = ref(false)
 const manuallyLoadModel = ref(false)
 const hideSpeckleBranding = ref(false)
 const embedToken = ref<string | null>(null)
+
+const isAdmin = computed(() => props.project.workspace?.role === Roles.Workspace.Admin)
 
 const routeModelId = computed(() => route.params.modelId as string)
 
