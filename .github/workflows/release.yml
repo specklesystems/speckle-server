@@ -75,6 +75,7 @@ jobs:
     needs: [get-version, tests, builds, test-deployments, get-chart-name]
     uses: ./.github/workflows/publish.yml
     with:
+      IMAGE_PREFIX: 'ghcr.io/specklesystems'
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
       OCI_REGISTRY_DOMAIN: ghcr.io
