@@ -3,20 +3,14 @@
     class="bg-foundation h-[196px] lg:h-dvh w-full lg:w-[260px] xl:w-[324px] border-t lg:border-t-0 lg:border-l border-outline-3 p-4"
   >
     <div class="hidden lg:flex items-center justify-end space-x-1">
-      <div
-        v-tippy="
-          canUpdateSlide ? undefined : 'You do not have permission to edit this slide'
-        "
-      >
-        <FormButton
-          v-if="canUpdate"
-          :disabled="!canUpdateSlide"
-          :icon-left="LucidePencilLine"
-          color="subtle"
-          hide-text
-          @click="isSlideEditDialogOpen = true"
-        />
-      </div>
+      <FormButton
+        v-if="canUpdateSlide"
+        :icon-left="LucidePencilLine"
+        color="subtle"
+        hide-text
+        @click="isSlideEditDialogOpen = true"
+      />
+
       <FormButton
         :icon-left="LucideX"
         color="subtle"
@@ -34,7 +28,7 @@
         </h1>
         <div class="lg:hidden flex items-center gap-x-1">
           <FormButton
-            v-if="canUpdate"
+            v-if="canUpdateSlide"
             :icon-left="LucidePencilLine"
             color="subtle"
             hide-text
@@ -69,15 +63,6 @@ defineEmits<{
 }>()
 
 graphql(`
-  fragment PresentationInfoSidebar_SavedViewGroup on SavedViewGroup {
-    id
-    permissions {
-      canUpdate {
-        ...FullPermissionCheckResult
-      }
-    }
-  }
-
   fragment PresentationInfoSidebar_SavedView on SavedView {
     id
     ...PresentationSlideEditDialog_SavedView
@@ -93,14 +78,11 @@ graphql(`
 
 const {
   ui: { slide: currentSlide },
-  response: { presentation, workspace }
+  response: { workspace }
 } = useInjectedPresentationState()
 
 const isSlideEditDialogOpen = ref(false)
 
-const canUpdate = computed(() => {
-  return presentation.value?.permissions?.canUpdate?.authorized
-})
 const canUpdateSlide = computed(() => {
   return currentSlide.value?.permissions?.canUpdate.authorized
 })
