@@ -116,7 +116,7 @@ const googleStrategyBuilderFactory =
             !existingUser &&
             // we do not want to break invites, just individual signups
             !req.session.token &&
-            email.endsWith('@gmail.com')
+            email.toLowerCase().trim().endsWith('@gmail.com')
           ) {
             throw new BlockedEmailDomainError()
           }
