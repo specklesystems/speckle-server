@@ -29,6 +29,7 @@ const previewErrHandler: ErrorRequestHandler = (err, req, res, next) => {
   const error = ensureError(err)
   const status = resolveStatusCode(error)
   res.header('X-Error-Message', error.message)
+  res.header('Cache-Control', 'no-cache, no-store')
   res.status(status)
 
   if (error instanceof StreamNotFoundError || error instanceof NotFoundError) {
