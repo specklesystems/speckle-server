@@ -100,6 +100,7 @@ import { useMeasurementsSetup } from '~/lib/viewer/composables/setup/measurement
 import { useFiltersSetup } from '~/lib/viewer/composables/setup/filters'
 import { useViewerPanelsSetup } from '~/lib/viewer/composables/setup/panels'
 import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
+import { HighlightExtension } from '~/lib/viewer/composables/setup/highlighting'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -446,6 +447,7 @@ function createViewerDataBuilder(params: { viewerDebug: boolean }) {
       ...DefaultViewerParams,
       verbose: !!(import.meta.client && params.viewerDebug)
     })
+    viewer.createExtension(HighlightExtension)
     viewer.createExtension(PassReader)
     const initPromise = viewer.init()
 
