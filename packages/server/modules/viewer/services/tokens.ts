@@ -11,10 +11,7 @@ import type {
   SavedViewGroupApiTokenRecord
 } from '@/modules/viewer/domain/types/savedViewGroupApiTokens'
 import { Scopes } from '@speckle/shared'
-import {
-  SavedViewGroupNotFoundError,
-  SavedViewGroupResourcelessError
-} from '@speckle/shared/authz'
+import { SavedViewGroupNotFoundError } from '@speckle/shared/authz'
 import cryptoRandomString from 'crypto-random-string'
 import { pick } from 'lodash-es'
 
@@ -42,13 +39,12 @@ export const createSavedViewGroupTokenFactory =
     })
 
     if (!savedViewGroups) throw new SavedViewGroupNotFoundError()
-    if (!savedViewGroups.resourceIds.length) throw new SavedViewGroupResourcelessError()
     if (projectId !== savedViewGroups.projectId) throw new LogicError()
 
     const { id, token } = await deps.createToken({
       userId,
       name: `svgat-${cryptoRandomString({ length: 10 })}`,
-      scopes: [Scopes.Streams.Read, Scopes.Users.Read, Scopes.Workspaces.Read],
+      scopes: [Scopes.Streams.Read, Scopes.Users.Read],
       limitResources: [
         {
           id: projectId,
