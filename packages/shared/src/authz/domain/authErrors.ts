@@ -216,6 +216,11 @@ export const SavedViewGroupNotFoundError = defineAuthError({
   message: 'Saved view group not found'
 })
 
+export const SavedViewGroupResourcelessError = defineAuthError({
+  code: 'SavedViewGroupResourcelessError',
+  message: 'Saved view expected to contain resources'
+})
+
 export const UngroupedSavedViewGroupLockError = defineAuthError({
   code: 'UngroupedSavedViewGroupLock',
   message: 'The default/ungrouped group cannot be modified.'

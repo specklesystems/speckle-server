@@ -11,6 +11,9 @@ export class SpeckleFsMigrations extends FsMigrations {
   }
 
   getMigrationName(migration: { file: string }): string {
+    if (!migration.file) {
+      console.log('here?', migration)
+    }
     // Replace .ts w/ .js, if in TS mode
     // (operate on cloned string to avoid mutating the original)
     const fileName = migration.file.slice().replace(/\.ts$/, '.js')
