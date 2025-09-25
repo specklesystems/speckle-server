@@ -336,6 +336,9 @@ function createCache(): InMemoryCache {
       ExtendedViewerResources: {
         merge: true
       },
+      DashboardPermissionChecks: {
+        merge: true
+      },
       AutomateFunction: {
         fields: {
           releases: {
