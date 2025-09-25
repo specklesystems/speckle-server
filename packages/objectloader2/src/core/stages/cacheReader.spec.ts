@@ -10,7 +10,7 @@ describe('CacheReader testing', () => {
     const i1: Item = { baseId: 'id1', base: { id: 'id', speckle_type: 'type' } }
 
     const cache = new MemoryCache({ maxSizeInMb: 1, ttlms: 1 }, () => {})
-    const deferments = new DefermentManager(cache, () => {})
+    const deferments = new DefermentManager(() => {}, cache)
     const cacheReader = new CacheReader(
       new MemoryDatabase({
         items: new Map<string, Base>([[i1.baseId, i1.base!]])
