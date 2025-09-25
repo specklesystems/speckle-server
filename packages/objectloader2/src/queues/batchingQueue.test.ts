@@ -146,4 +146,27 @@ describe('BatchingQueue', () => {
       await queue.disposeAsync()
     }
   })
+
+  test('should handle processFunction throwing an exception during flush and is disposed', async () => {
+    const errorMessage = 'Process function failed'
+    const processFunction = vi.fn().mockRejectedValue(new Error(errorMessage))
+
+    const queue = new BatchingQueue<{ id: string }>({
+      batchSize: 5,
+      maxWaitTime: 1000,
+      processFunction
+    })
+
+    const items = Array.from({ length: 3 }, (_, i) => ({ id: `item-${i}` }))
+    items.forEach((item) => queue.add(item.id, item))
+
+    expect(queue.count()).toBe(3)
+
+    // flush should not throw even if processFunction rejects
+    await expect(queue.flush()).resolves.not.toThrow()
+
+    expect(processFunction).toHaveBeenCalled()
+    expect(queue.count()).toBe(0)
+    expect(queue.isDisposed()).toBe(true)
+  })
 })
