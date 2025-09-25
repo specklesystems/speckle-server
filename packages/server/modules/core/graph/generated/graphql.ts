@@ -3745,6 +3745,7 @@ export type SavedViewGroupCollection = {
 
 export type SavedViewGroupPermissionChecks = {
   __typename?: 'SavedViewGroupPermissionChecks';
+  canCreateToken: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
 };
 
@@ -8286,6 +8287,7 @@ export type SavedViewGroupCollectionResolvers<ContextType = GraphQLContext, Pare
 };
 
 export type SavedViewGroupPermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SavedViewGroupPermissionChecks'] = ResolversParentTypes['SavedViewGroupPermissionChecks']> = {
+  canCreateToken?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canUpdate?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

@@ -47,6 +47,7 @@ import { canReadDashboardPolicy } from './dashboard/canRead.js'
 import { canMoveSavedViewPolicy } from './project/savedViews/canMove.js'
 import { canEditSavedViewTitlePolicy } from './project/savedViews/canEditTitle.js'
 import { canEditSavedViewDescriptionPolicy } from './project/savedViews/canEditDescription.js'
+import { canCreateSavedViewGroupTokenPolicy } from './project/savedViews/canCreateSavedViewGroupToken.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   automate: {
@@ -87,6 +88,7 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
       canCreate: canCreateSavedViewPolicy(loaders),
       canUpdate: canUpdateSavedViewPolicy(loaders),
       canUpdateGroup: canUpdateSavedViewGroupPolicy(loaders),
+      canCreateGroupToken: canCreateSavedViewGroupTokenPolicy(loaders),
       canRead: canReadSavedViewPolicy(loaders),
       canMove: canMoveSavedViewPolicy(loaders),
       canEditTitle: canEditSavedViewTitlePolicy(loaders),
