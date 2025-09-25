@@ -323,3 +323,7 @@ export type OutputSavedViewPreview = (params: {
   viewId: string
   type: SavedViewPreviewType
 }) => Promise<void>
+
+export type DownscaleScreenshotForThumbnail = (params: {
+  screenshot: string
+}) => Promise<string>

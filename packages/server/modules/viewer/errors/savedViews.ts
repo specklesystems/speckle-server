@@ -53,3 +53,9 @@ export class SavedViewPreviewRetrievalError extends BaseError {
   static defaultMessage = 'Could not retrieve saved view preview'
   static statusCode = 400
 }
+
+export class SavedViewScreenshotError extends BaseError {
+  static code = 'SAVED_VIEW_SCREENSHOT_ERROR'
+  static defaultMessage = 'Could not process saved view screenshot'
+  static statusCode = 400
+}

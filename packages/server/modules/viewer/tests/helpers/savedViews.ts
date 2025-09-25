@@ -26,6 +26,7 @@ import {
   setNewHomeViewFactory,
   storeSavedViewFactory
 } from '@/modules/viewer/repositories/savedViews'
+import { downscaleScreenshotForThumbnailFactory } from '@/modules/viewer/services/savedViewPreviews'
 import { createSavedViewFactory } from '@/modules/viewer/services/savedViewsManagement'
 import { getViewerResourceGroupsFactory } from '@/modules/viewer/services/viewerResources'
 import type { BasicTestUser } from '@/test/authHelper'
@@ -93,6 +94,7 @@ export const buildTestSavedView = (overrides?: Partial<SavedView>): SavedView =>
         })
       ),
       screenshot: fakeScreenshot,
+      thumbnail: fakeScreenshot,
       position: 0,
       createdAt: new Date(Date.now() - 10000),
       updatedAt: new Date(Date.now() - 10000)
@@ -139,7 +141,8 @@ export const createTestSavedView = async (params?: {
     getNewViewSpecificPosition: getNewViewSpecificPositionFactory({
       db
     }),
-    rebalanceViewPositions: rebalancingViewPositionsFactory({ db })
+    rebalanceViewPositions: rebalancingViewPositionsFactory({ db }),
+    downscaleScreenshotForThumbnail: downscaleScreenshotForThumbnailFactory()
   })
 
   const createdView = await createSavedView({

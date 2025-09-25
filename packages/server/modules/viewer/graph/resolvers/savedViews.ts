@@ -63,6 +63,7 @@ import {
 } from '@/modules/viewer/repositories/dataLoaders/savedViews'
 import type { RequestDataLoaders } from '@/modules/core/loaders'
 import { omit } from 'lodash-es'
+import { downscaleScreenshotForThumbnailFactory } from '@/modules/viewer/services/savedViewPreviews'
 
 const buildGetViewerResourceGroups = (params: {
   projectDb: Knex
@@ -332,7 +333,8 @@ const resolvers: Resolvers = {
         getNewViewSpecificPosition: getNewViewSpecificPositionFactory({
           db: projectDb
         }),
-        rebalanceViewPositions: rebalancingViewPositionsFactory({ db: projectDb })
+        rebalanceViewPositions: rebalancingViewPositionsFactory({ db: projectDb }),
+        downscaleScreenshotForThumbnail: downscaleScreenshotForThumbnailFactory()
       })
       return await createSavedView({ input: args.input, authorId: ctx.userId! })
     },
@@ -426,7 +428,8 @@ const resolvers: Resolvers = {
         rebalanceViewPositions: rebalancingViewPositionsFactory({ db: projectDb }),
         getNewViewSpecificPosition: getNewViewSpecificPositionFactory({
           db: projectDb
-        })
+        }),
+        downscaleScreenshotForThumbnail: downscaleScreenshotForThumbnailFactory()
       })
 
       const updatedView = await updateSavedView({
