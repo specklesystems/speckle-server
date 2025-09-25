@@ -1,16 +1,17 @@
 import { useMutation, type MutateResult } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
-import type {
-  CreateSavedViewGroupInput,
-  CreateSavedViewInput,
-  UpdateSavedViewGroupInput,
-  UpdateSavedViewGroupMutationVariables,
-  UpdateSavedViewInput,
-  UpdateSavedViewMutation,
-  UseDeleteSavedView_SavedViewFragment,
-  UseDeleteSavedViewGroup_SavedViewGroupFragment,
-  UseUpdateSavedView_SavedViewFragment,
-  UseUpdateSavedViewGroup_SavedViewGroupFragment
+import {
+  SortDirection,
+  type CreateSavedViewGroupInput,
+  type CreateSavedViewInput,
+  type UpdateSavedViewGroupInput,
+  type UpdateSavedViewGroupMutationVariables,
+  type UpdateSavedViewInput,
+  type UpdateSavedViewMutation,
+  type UseDeleteSavedView_SavedViewFragment,
+  type UseDeleteSavedViewGroup_SavedViewGroupFragment,
+  type UseUpdateSavedView_SavedViewFragment,
+  type UseUpdateSavedViewGroup_SavedViewGroupFragment
 } from '~/lib/common/generated/gql/graphql'
 import { useStateSerialization } from '~/lib/viewer/composables/serialization'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
@@ -20,7 +21,11 @@ import {
   onNewGroupViewCacheUpdates
 } from '~/lib/viewer/helpers/savedViews/cache'
 import { isUngroupedGroup } from '@speckle/shared/saved-views'
-import { getCachedObjectKeys } from '~/lib/common/helpers/graphql'
+import {
+  getCachedObjectKeys,
+  parseObjectReference,
+  type CacheObjectReference
+} from '~/lib/common/helpers/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
 const createSavedViewMutation = graphql(`
@@ -297,7 +302,6 @@ export const useUpdateSavedView = () => {
               groupId: oldGroupId,
               projectId: params.view.projectId
             })
-
             // Update new group
             onNewGroupViewCacheUpdates(cache, {
               viewId: update.id,
@@ -343,6 +347,64 @@ export const useUpdateSavedView = () => {
                 }
               )
             }
+          }
+
+          // If position changed, recalculate it according to sort dir in vars
+          if (input.position) {
+            // Go through all SavedViewGroup.views, where this view exists and update array position
+            iterateObjectField(
+              cache,
+              getCacheId('Project', params.view.projectId),
+              'savedViewGroups',
+              ({ value }) => {
+                const items = value.items
+                if (!items) return
+
+                items.forEach((groupRef) => {
+                  const parsed = parseObjectReference(groupRef)
+                  modifyObjectField(
+                    cache,
+                    getCacheId('SavedViewGroup', parsed.id),
+                    'views',
+                    ({ helpers: { createUpdatedValue, readField }, variables }) => {
+                      const sortDir =
+                        variables.input.sortDirection || SortDirection.Desc
+                      const sortBy = (variables.input.sortBy || 'position') as
+                        | 'position'
+                        | 'updatedAt'
+
+                      return createUpdatedValue(({ update }) => {
+                        update('items', (items) => {
+                          const newItems = items.slice().sort((a, b) => {
+                            const process = (
+                              ref: CacheObjectReference<'SavedView'>
+                            ) => {
+                              const val = readField(ref, sortBy)
+                              if (!val) return -1
+
+                              if (sortBy === 'updatedAt') {
+                                return new Date(val).getTime()
+                              }
+                              return val as number
+                            }
+
+                            const aVal = process(a)
+                            const bVal = process(b)
+
+                            if (aVal < bVal)
+                              return sortDir === SortDirection.Asc ? -1 : 1
+                            if (aVal > bVal)
+                              return sortDir === SortDirection.Asc ? 1 : -1
+                            return 0
+                          })
+                          return newItems
+                        })
+                      })
+                    }
+                  )
+                })
+              }
+            )
           }
         }
       }

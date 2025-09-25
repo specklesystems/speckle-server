@@ -269,3 +269,11 @@ export const setLegacyProjectsExplainerCollapsedMutation = gql`
     }
   }
 `
+
+export const updateEmailVerificationMutation = gql`
+  mutation AdminMutations($input: AdminUpdateEmailVerificationInput!) {
+    admin {
+      updateEmailVerification(input: $input)
+    }
+  }
+`

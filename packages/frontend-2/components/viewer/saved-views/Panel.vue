@@ -63,7 +63,7 @@
         />
       </div>
     </template>
-    <div class="px-3 pt-3">
+    <div class="px-2 pt-2">
       <ViewerButtonGroup>
         <ViewerButtonGroupButton
           v-for="viewsType in Object.values(ViewsType)"

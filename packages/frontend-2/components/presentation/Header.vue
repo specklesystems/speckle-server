@@ -1,16 +1,26 @@
 <template>
   <PresentationFloatingPanel>
-    <div class="flex items-center justify-between space-x-1">
+    <div class="flex items-center justify-between space-x-2">
       <PresentationFloatingPanelButton
         :active="isSidebarOpen"
         @click="emit('toggleSidebar')"
       >
-        <LucideArrowLeftToLine v-if="isSidebarOpen" class="size-4" />
-        <LucidePanelLeft v-else class="size-4" />
+        <LucideArrowLeftToLine
+          v-if="isSidebarOpen"
+          :size="16"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+        />
+        <LucidePanelLeft
+          v-else
+          :size="16"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+        />
       </PresentationFloatingPanelButton>
       <h1
         v-if="presentation?.title"
-        class="hidden sm:block text-body-xs font-medium text-foreground leading-none sm:pr-1.5"
+        class="hidden sm:block text-body-xs font-medium text-foreground leading-none sm:pr-3 max-w-64 truncate"
       >
         {{ presentation?.title }}
       </h1>

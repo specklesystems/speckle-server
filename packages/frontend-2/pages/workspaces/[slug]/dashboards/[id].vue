@@ -28,7 +28,7 @@
     <Portal to="primary-actions">
       <div class="flex items-center gap-2">
         <DashboardsShare
-          v-if="canEdit && !hasDashboardToken"
+          v-if="canRead && !hasDashboardToken"
           :id="dashboard?.id"
           :workspace-slug="workspace?.slug"
         />
@@ -88,6 +88,9 @@ graphql(`
       canEdit {
         ...FullPermissionCheckResult
       }
+      canRead {
+        ...FullPermissionCheckResult
+      }
     }
   }
 `)
@@ -112,6 +115,9 @@ const editDialogOpen = ref(false)
 const hasDashboardToken = computed(() => !!dashboardToken.value)
 const canEdit = computed(
   () => result.value?.dashboard?.permissions?.canEdit?.authorized
+)
+const canRead = computed(
+  () => result.value?.dashboard?.permissions?.canRead?.authorized
 )
 const workspace = computed(() => result.value?.dashboard?.workspace)
 const dashboard = computed(() => result.value?.dashboard)

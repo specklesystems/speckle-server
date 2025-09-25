@@ -42,6 +42,12 @@ export class SavedViewGroupNotFoundError extends BaseError {
   static statusCode = 404
 }
 
+export class SavedViewPositionUpdateError extends BaseError {
+  static code = 'SAVED_VIEW_POSITION_UPDATE_ERROR'
+  static defaultMessage = 'Failed to update saved view position'
+  static statusCode = 400
+}
+
 export class SavedViewPreviewRetrievalError extends BaseError {
   static code = 'SAVED_VIEW_PREVIEW_RETRIEVAL_ERROR'
   static defaultMessage = 'Could not retrieve saved view preview'
