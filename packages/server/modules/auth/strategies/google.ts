@@ -4,7 +4,8 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 
 import {
   UserInputError,
-  UnverifiedEmailSSOLoginError
+  UnverifiedEmailSSOLoginError,
+  BlockedEmailDomainError
 } from '@/modules/core/errors/userinput'
 
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
@@ -14,6 +15,7 @@ import type {
   AuthStrategyBuilder
 } from '@/modules/auth/helpers/types'
 import {
+  getFeatureFlags,
   getGoogleClientId,
   getGoogleClientSecret
 } from '@/modules/shared/helpers/envHelper'
@@ -34,6 +36,8 @@ import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 import { ExpectedAuthFailure } from '@/modules/auth/domain/const'
 import { ServerNoAccessError } from '@speckle/shared/authz'
+
+const { FF_NO_PERSONAL_EMAILS_ENABLED } = getFeatureFlags()
 
 const googleStrategyBuilderFactory =
   (deps: {
@@ -107,6 +111,13 @@ const googleStrategyBuilderFactory =
 
           const existingUser = await deps.getUserByEmail({ email: user.email })
 
+          if (
+            FF_NO_PERSONAL_EMAILS_ENABLED &&
+            !existingUser &&
+            email.endsWith('@gmail.com')
+          ) {
+            throw new BlockedEmailDomainError()
+          }
           if (existingUser && !existingUser.verified) {
             throw new UnverifiedEmailSSOLoginError(undefined, {
               info: {
