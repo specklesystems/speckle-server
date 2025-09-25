@@ -1,5 +1,16 @@
 import { graphql } from '~/lib/common/generated/gql/gql'
 
+export const presentationAccessCheckQuery = graphql(`
+  query PresentationAccessCheck($savedViewGroupId: ID!, $projectId: String!) {
+    project(id: $projectId) {
+      id
+      savedViewGroup(id: $savedViewGroupId) {
+        id
+      }
+    }
+  }
+`)
+
 export const projectPresentationPageQuery = graphql(`
   query ProjectPresentationPage(
     $input: SavedViewGroupViewsInput!

@@ -6,7 +6,8 @@
 
 <script setup lang="ts">
 definePageMeta({
-  layout: 'empty'
+  layout: 'empty',
+  middleware: ['require-valid-presentation']
 })
 
 useHead({
