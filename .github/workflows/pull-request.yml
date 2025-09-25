@@ -14,8 +14,7 @@ jobs:
   tests:
     needs: [get-version]
     uses: ./.github/workflows/tests.yml
-    with:
-      IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
+    with: {}
     secrets: inherit
 
   builds:
