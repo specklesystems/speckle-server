@@ -7,7 +7,7 @@ import { db } from '@/db/knex'
 import { legacyGetUserByEmailFactory } from '@/modules/core/repositories/users'
 import { updateServerInfoFactory } from '@/modules/core/repositories/server'
 import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
-import { RATE_LIMITERS, createConsumer } from '@/modules/core/utils/ratelimiter'
+import { getRateLimiters, createConsumer } from '@/modules/core/utils/ratelimiter'
 import httpMocks from 'node-mocks-http'
 import { RateLimiterMemory } from 'rate-limiter-flexible'
 import { TIME } from '@speckle/shared'
@@ -479,9 +479,9 @@ describe('Auth @auth', () => {
             .expect(expectCode)
         }
 
-        const oldRateLimiter = RATE_LIMITERS.USER_CREATE
+        const oldRateLimiter = getRateLimiters().USER_CREATE
 
-        RATE_LIMITERS.USER_CREATE = createConsumer(
+        getRateLimiters().USER_CREATE = createConsumer(
           'USER_CREATE',
           new RateLimiterMemory({
             keyPrefix: 'USER_CREATE',
@@ -505,7 +505,7 @@ describe('Auth @auth', () => {
         // should fail the additional user from unknown ip address
         await newUser(`unknown1`, '', 429)
 
-        RATE_LIMITERS.USER_CREATE = oldRateLimiter
+        getRateLimiters().USER_CREATE = oldRateLimiter
       }
     )
   })

@@ -1,4 +1,4 @@
-import { pubsub } from '@/modules/shared/utils/subscriptions'
+import { getPubSub } from '@/modules/shared/utils/subscriptions'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
@@ -750,7 +750,7 @@ export default {
         })
       throwIfAuthNotOk(canBroadcastActivity)
 
-      await pubsub.publish(CommentSubscriptions.ViewerActivity, {
+      await getPubSub().publish(CommentSubscriptions.ViewerActivity, {
         userViewerActivity: args.data,
         streamId: args.streamId,
         resourceId: args.resourceId,
@@ -769,7 +769,7 @@ export default {
       if (!stream?.allowPublicComments && !stream?.role)
         throw new ForbiddenError('You are not authorized.')
 
-      await pubsub.publish(CommentSubscriptions.CommentThreadActivity, {
+      await getPubSub().publish(CommentSubscriptions.CommentThreadActivity, {
         commentThreadActivity: { type: 'reply-typing-status', data: args.data },
         streamId: args.streamId,
         commentId: args.commentId

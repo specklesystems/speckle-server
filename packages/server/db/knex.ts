@@ -17,8 +17,8 @@ config.log = {
 }
 
 dbStartupLogger.debug(`Loaded knex conf for ${env}`)
-
 const knexInstance = knex(config)
+dbStartupLogger.debug(`...knex init`)
 
 export default knexInstance
 export {

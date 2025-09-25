@@ -46,6 +46,7 @@ import { EnvironmentResourceError } from '@/modules/shared/errors'
 import * as mocha from 'mocha'
 import { getStalePreparedTransactionsFactory } from '@/modules/multiregion/repositories/transactions'
 import { rollbackPreparedTransaction } from '@/modules/shared/helpers/dbHelper'
+import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 
 // Register chai plugins
 chai.use(chaiAsPromised)
@@ -304,10 +305,14 @@ export const beforeEntireTestRun = async () => {
   logger.info('🔧 Global setup: runs once before all tests')
 
   // Init (or cleanup) test databases
+  logger.info('Resetting and preparing test databases...')
   await setupDatabases()
+  logger.info('...done')
 
   // Init app
+  logger.info('Starting application...')
   await buildApp()
+  logger.info('...app started')
 }
 
 export const afterEntireTestRun = async () => {
@@ -323,3 +328,5 @@ export const mochaHooks: mocha.RootHookObject = {
   beforeAll: beforeEntireTestRun,
   afterAll: afterEntireTestRun
 }
+
+if (isTestEnv()) logger.info('...hooks loaded')

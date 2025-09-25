@@ -88,6 +88,8 @@ import { initApolloSubscriptionMonitoring } from '@/observability/components/apo
 import { initiateRequestContextMiddleware } from '@/observability/components/express/requestContextMiddleware'
 import { createRateLimiterMiddleware } from '@/modules/core/rest/ratelimiter'
 import { TIME_MS } from '@speckle/shared'
+import { getPubSub } from '@/modules/shared/utils/subscriptions'
+import { getRateLimiters } from '@/modules/core/utils/ratelimiter'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -309,6 +311,9 @@ export async function init() {
 
   const app = express()
   const promRegister = initPrometheusRegistry() // has to be called before both Metrics and Modules are initialized
+
+  getPubSub() // init pubsub
+  getRateLimiters() // init rate limiters
 
   app.disable('x-powered-by')
 

@@ -27,6 +27,7 @@
     "ts-mocha": "node --experimental-strip-types --experimental-transform-types --import ./esmLoader.js ./bin/mocha",
     "ts-gqlgen": "tsx --import ./esmLoader.js ./bin/gqlgen",
     "test": "cross-env TSX=true NODE_ENV=test LOG_FILTER=test LOG_PRETTY=true yarn ts-mocha",
+    "test:profile": "cross-env DEBUG=\"*\" TSX=true NODE_ENV=test LOG_LEVEL=trace LOG_PRETTY=true yarn ts-mocha",
     "test:all-ff": "cross-env ENABLE_ALL_FFS=true yarn test",
     "test:multiregion": "cross-env RUN_TESTS_IN_MULTIREGION_MODE=true FF_WORKSPACES_MODULE_ENABLED=true FF_WORKSPACES_MULTI_REGION_ENABLED=true FF_MOVE_PROJECT_REGION_ENABLED=true yarn test:report -g '@multiregion'",
     "test:no-ff": "cross-env DISABLE_ALL_FFS=true yarn test",

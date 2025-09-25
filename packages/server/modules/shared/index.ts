@@ -12,7 +12,6 @@ import {
 } from '@/modules/shared/services/auth'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
-  pubsub,
   StreamSubscriptions,
   CommitSubscriptions,
   BranchSubscriptions
@@ -20,7 +19,6 @@ import {
 import { getWorkspaceRoleAndSeatFactory } from '@/modules/workspacesCore/repositories/rolesSeats'
 
 export {
-  pubsub,
   StreamSubscriptions as StreamPubsubEvents,
   CommitSubscriptions as CommitPubsubEvents,
   BranchSubscriptions as BranchPubsubEvents

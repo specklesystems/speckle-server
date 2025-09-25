@@ -6,7 +6,7 @@ import {
   getApolloServerVersion,
   getServerVersion
 } from '@/modules/shared/helpers/envHelper'
-import { logger } from '@/observability/logging'
+import { logger, testLogger } from '@/observability/logging'
 import { initOpenTelemetry } from '@/observability/otel'
 import { patchKnex } from '@/modules/core/patches/knex'
 import { appRoot, packageRoot, isTsMode } from '#/root.js'
@@ -15,6 +15,7 @@ import inspector from 'node:inspector'
 /**
  * Bootstrap module that should be imported at the very top of each entry point module
  */
+if (isTestEnv()) testLogger.info('Bootstrapping...')
 
 // Initializing env vars
 if (isApolloMonitoringEnabled() && !getApolloServerVersion()) {

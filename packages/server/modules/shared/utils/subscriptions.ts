@@ -79,10 +79,17 @@ import type { AccSyncItemGraphQLReturn } from '@/modules/acc/helpers/graphTypes'
 /**
  * GraphQL Subscription PubSub instance
  */
-export const pubsub = new RedisPubSub({
-  publisher: new Redis(getRedisUrl()),
-  subscriber: new Redis(getRedisUrl())
-})
+let pubsub: RedisPubSub | null = null
+
+export const getPubSub = (): RedisPubSub => {
+  if (!pubsub) {
+    pubsub = new RedisPubSub({
+      publisher: new Redis(getRedisUrl()),
+      subscriber: new Redis(getRedisUrl())
+    })
+  }
+  return pubsub
+}
 
 /**
  * Subscription event keys
@@ -420,7 +427,7 @@ type SubscriptionEvent =
 export const publish = <T extends SubscriptionEvent>(
   event: T,
   payload: SubscriptionTypeMap[T]['payload']
-) => pubsub.publish(event, payload)
+) => getPubSub().publish(event, payload)
 
 export type PublishSubscription = typeof publish
 
@@ -443,7 +450,7 @@ export const filteredSubscribe = <T extends SubscriptionEvent>(
   // with our version of graphql-subscriptions
   // https://github.com/dotansimha/graphql-code-generator/issues/7197#issuecomment-1098014584
   return withFilter(
-    () => pubsub.asyncIterator([event]),
+    () => getPubSub().asyncIterator([event]),
     async (...args: Parameters<typeof filterFn>) => {
       const [, , ctx] = args
 

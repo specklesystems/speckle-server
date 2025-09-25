@@ -340,7 +340,14 @@ const initializeRedisRateLimiters = (
   return mapping as RateLimiterMapping
 }
 
-export const RATE_LIMITERS = initializeRedisRateLimiters()
+let rateLimitersInstance: RateLimiterMapping | null = null
+
+export const getRateLimiters = (): RateLimiterMapping => {
+  if (!rateLimitersInstance) {
+    rateLimitersInstance = initializeRedisRateLimiters()
+  }
+  return rateLimitersInstance
+}
 
 export const isRateLimitBreached = (
   rateLimitResult: RateLimitResult
@@ -349,9 +356,9 @@ export const isRateLimitBreached = (
 export async function getRateLimitResult(
   action: RateLimitAction,
   source: string,
-  rateLimiterMapping: RateLimiterMapping = RATE_LIMITERS
+  rateLimiterMapping?: RateLimiterMapping
 ): Promise<RateLimitSuccess | RateLimitBreached> {
-  const consumerFunc = rateLimiterMapping[action]
+  const consumerFunc = (rateLimiterMapping || getRateLimiters())[action]
   return await consumerFunc(source)
 }
 
