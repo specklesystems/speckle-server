@@ -9,6 +9,18 @@ export interface Deferment {
   dispose(): void
 }
 
+export class DisabledDeferment implements Deferment {
+  defer(params: { id: string }): [Promise<Base>, boolean] {
+    return [Promise.reject(new Error('Deferment is disabled: ' + params.id)), false]
+  }
+  undefer(): void {
+    //no-op
+  }
+  dispose(): void {
+    //no-op
+  }
+}
+
 export class MemoryOnlyDeferment implements Deferment {
   private items: Map<string, Base>
 

@@ -1,4 +1,9 @@
-import { DefermentManager, MemoryOnlyDeferment } from '../deferment/defermentManager.js'
+import {
+  Deferment,
+  DefermentManager,
+  DisabledDeferment,
+  MemoryOnlyDeferment
+} from '../deferment/defermentManager.js'
 import {
   CustomLogger,
   Fetcher,
@@ -6,6 +11,7 @@ import {
   ObjectLoader2Flags
 } from '../types/functions.js'
 import { Base, ObjectAttributeMask } from '../types/types.js'
+import { Database } from './interfaces.js'
 import { ObjectLoader2 } from './objectLoader2.js'
 import { IndexedDatabase } from './stages/indexedDatabase.js'
 import { MemoryDatabase } from './stages/memory/memoryDatabase.js'
@@ -20,7 +26,18 @@ export interface ObjectLoader2FactoryOptions {
   attributeMask?: ObjectAttributeMask
   useCache?: boolean
   debug?: boolean
+  useGetObject?: boolean //defaults to true
   logger?: CustomLogger
+}
+
+export interface ObjectLoader2FactoryParams {
+  serverUrl: string
+  streamId: string
+  objectId: string
+  token?: string
+  headers?: Headers
+  options?: ObjectLoader2FactoryOptions
+  attributeMask?: ObjectAttributeMask
 }
 
 export class ObjectLoader2Factory {
@@ -44,44 +61,13 @@ export class ObjectLoader2Factory {
     return this.createFromObjects(jsonObj)
   }
 
-  static createFromUrl(params: {
-    serverUrl: string
-    streamId: string
-    objectId: string
-    token?: string
-    headers?: Headers
-    options?: ObjectLoader2FactoryOptions
-    attributeMask?: ObjectAttributeMask
-  }): ObjectLoader2 {
-    const log = ObjectLoader2Factory.getLogger(params.options?.logger)
-    let database
-    if (
-      params.options?.debug === true ||
-      getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true'
-    ) {
-      this.logger('Using DEBUG mode for ObjectLoader2Factory')
-    }
-    const useCache = params.options?.useCache ?? true
-    const flag = getFeatureFlag(ObjectLoader2Flags.USE_CACHE)
-    const flagAllowsCache = flag !== 'false'
-
-    if (useCache && flagAllowsCache) {
-      database = new IndexedDatabase({
-        indexedDB: params.options?.indexedDB,
-        keyRange: params.options?.keyRange
-      })
-    } else {
-      database = new MemoryDatabase({
-        items: new Map<string, Base>()
-      })
-      this.logger(
-        'Disabled persistent caching for ObjectLoader2.  Using MemoryDatabase'
-      )
-    }
-    const logger = log || (((): void => {}) as CustomLogger)
+  static createFromUrl(params: ObjectLoader2FactoryParams): ObjectLoader2 {
+    const logger = this.getLogger(params.options?.logger)
+    const database = this.getDatabase(params)
+    const deferments = this.getDeferment(params, logger)
     const loader = new ObjectLoader2({
       rootId: params.objectId,
-      deferments: new DefermentManager(logger),
+      deferments,
       downloader: new ServerDownloader({
         serverUrl: params.serverUrl,
         streamId: params.streamId,
@@ -93,19 +79,61 @@ export class ObjectLoader2Factory {
         logger
       }),
       database,
-      logger
+      logger,
+      useGetObject: params.options?.useGetObject
     })
     return loader
   }
 
-  static getLogger(providedLogger?: CustomLogger): CustomLogger | undefined {
+  static getLogger(providedLogger?: CustomLogger): CustomLogger {
     if (getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true') {
       return providedLogger || this.logger
     }
-    return providedLogger
+    return providedLogger || (((): void => {}) as CustomLogger)
   }
 
   static logger: CustomLogger = (m?: string, ...optionalParams: unknown[]) => {
     console.log(`[debug] ${m}`, ...optionalParams)
+  }
+
+  static getDatabase(params: ObjectLoader2FactoryParams): Database {
+    if (
+      params.options?.debug === true ||
+      getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true'
+    ) {
+      this.logger('Using DEBUG mode for ObjectLoader2Factory')
+    }
+    const useCache = params.options?.useCache ?? true
+    const flag = getFeatureFlag(ObjectLoader2Flags.USE_CACHE)
+    const flagAllowsCache = flag !== 'false'
+
+    if (useCache && flagAllowsCache) {
+      return new IndexedDatabase({
+        indexedDB: params.options?.indexedDB,
+        keyRange: params.options?.keyRange
+      })
+    } else {
+      return new MemoryDatabase({
+        items: new Map<string, Base>()
+      })
+      this.logger(
+        'Disabled persistent caching for ObjectLoader2.  Using MemoryDatabase'
+      )
+    }
+  }
+
+  static getDeferment(
+    params: ObjectLoader2FactoryParams,
+    logger: CustomLogger
+  ): Deferment {
+    const useGetObject = params.options?.useGetObject ?? true
+
+    if (useGetObject) {
+      logger('Using cached deferment for ObjectLoader2Factory')
+      return new DefermentManager(logger)
+    } else {
+      logger('Disabled caching for ObjectLoader2. Using MemoryOnlyDeferment')
+      return new DisabledDeferment()
+    }
   }
 }
