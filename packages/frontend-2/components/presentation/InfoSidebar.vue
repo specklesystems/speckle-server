@@ -29,7 +29,7 @@
       <div class="flex items-start justify-between gap-x-2">
         <h1
           v-if="currentSlide?.name"
-          class="text-xl/7 xl:text-[26px]/8 tracking-[-0.399px] xl:tracking-[-0.494px] font-medium text-foreground px-1 lg:px-2 xl:px-3 py-0.5 lg:py-1.5 line-clamp-1 lg:line-clamp-none truncate"
+          class="text-xl/7 xl:text-[26px]/8 tracking-[-0.399px] xl:tracking-[-0.494px] font-medium text-foreground px-1 lg:px-2 xl:px-3 py-0.5 lg:py-1.5 line-clamp-1 lg:line-clamp-none break-all"
         >
           {{ currentSlide?.name }}
         </h1>
@@ -65,7 +65,8 @@
     </section>
 
     <div
-      class="lg:hidden absolute bottom-0 left-0 w-full h-16 bg-red z-20 flex justify-center items-center"
+      v-if="!isExpanded"
+      class="lg:hidden absolute bottom-0 left-0 w-full h-16 bg-red z-20 flex justify-center items-center bg-[linear-gradient(0deg,#FFFFFF_0%,rgba(255,255,255,0)_100%)] dark:bg-[linear-gradient(0deg,#15161c_0%,rgba(255,255,255,0)_100%)]"
     />
 
     <PresentationSlideEditDialog

@@ -127,11 +127,10 @@ graphql(`
     createdAt
     name
     visibility
-    workspace {
+    limitedWorkspace {
       id
       slug
       name
-      role
     }
     embedOptions {
       hideSpeckleBranding
