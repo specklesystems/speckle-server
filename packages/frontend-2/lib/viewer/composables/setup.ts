@@ -8,7 +8,6 @@ import {
 import type {
   ViewMode,
   FilteringState,
-  PropertyInfo,
   SunLightConfiguration,
   SpeckleView,
   DiffResult,
@@ -160,7 +159,6 @@ export type InjectableViewerState = Readonly<{
        * Based on a shallow ref
        */
       worldTree: ComputedRef<Optional<WorldTree>>
-      availableFilters: ComputedRef<Optional<PropertyInfo[]>>
       views: ComputedRef<SpeckleView[]>
       filteringState: ComputedRef<Optional<FilteringState>>
       filteringDataStore: ReturnType<typeof useCreateViewerFilteringDataStore>
@@ -465,7 +463,6 @@ function setupViewerMetadata(params: {
   const { viewer } = params
 
   const worldTree = shallowRef(undefined as Optional<WorldTree>)
-  const availableFilters = shallowRef(undefined as Optional<PropertyInfo[]>)
   const filteringState = shallowRef(undefined as Optional<FilteringState>)
   const views = ref([] as SpeckleView[])
 
@@ -473,7 +470,6 @@ function setupViewerMetadata(params: {
 
   const refreshWorldTreeAndFilters = async () => {
     worldTree.value = viewer.getWorldTree()
-    availableFilters.value = await viewer.getObjectProperties()
     views.value = viewer.getViews()
   }
   const updateFilteringState = (newState: MaybeNullOrUndefined<FilteringState>) => {
@@ -498,7 +494,6 @@ function setupViewerMetadata(params: {
 
   return {
     worldTree: computed(() => worldTree.value),
-    availableFilters: computed(() => availableFilters.value),
     filteringState: computed(() => filteringState.value),
     views: computed(() => views.value),
     filteringDataStore
@@ -539,7 +534,6 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
           },
           metadata: {
             worldTree: computed(() => undefined),
-            availableFilters: computed(() => undefined),
             views: computed(() => []),
             filteringState: computed(() => undefined)
           },
