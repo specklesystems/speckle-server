@@ -1,9 +1,6 @@
-import {
-  Deferment,
-  DefermentManager,
-  DisabledDeferment,
-  MemoryOnlyDeferment
-} from '../deferment/defermentManager.js'
+import { Deferment, DefermentManager } from '../deferment/defermentManager.js'
+import { MemoryOnlyDeferment } from '../deferment/MemoryOnlyDeferment.js'
+import { DisabledDeferment } from '../deferment/DisabledDeferment.js'
 import {
   CustomLogger,
   Fetcher,
