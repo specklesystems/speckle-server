@@ -1,7 +1,10 @@
 extend type Project {
   accSyncItems(cursor: String, limit: Int): AccSyncItemCollection!
   accSyncItem(id: String!): AccSyncItem!
-  accSyncItemByModelId(modelId: String!): AccSyncItem!
+}
+
+extend type Model {
+  accSyncItem: AccSyncItem
 }
 
 type AccSyncItemCollection {
@@ -12,8 +15,9 @@ type AccSyncItemCollection {
 
 type AccSyncItem {
   id: ID!
-  projectId: String!
-  modelId: String!
+  project: Project!
+  model: Model
+  author: LimitedUser
   accRegion: String!
   accHubId: String!
   accProjectId: String!
@@ -26,7 +30,6 @@ type AccSyncItem {
   accFileViewName: String
   accWebhookId: String
   status: AccSyncItemStatus!
-  author: LimitedUser
   createdAt: DateTime!
   updatedAt: DateTime!
 }

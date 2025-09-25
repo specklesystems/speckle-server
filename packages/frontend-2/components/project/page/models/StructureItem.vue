@@ -56,7 +56,7 @@
           </FormButton>
         </div>
         <div v-if="accSyncItem" class="flex items-center ml-2">
-          <IntegrationsAccSyncStatusModelItem :status="accSyncItem.status" />
+          <IntegrationsAccSyncStatusModelItem :item="accSyncItem" />
         </div>
         <!-- Spacer -->
         <div class="flex-grow"></div>
@@ -276,7 +276,6 @@ import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
 import dayjs from 'dayjs'
 import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
 import { getModelItemRoute } from '~/lib/projects/helpers/models'
-import { projectAccSyncItemByModelIdQuery } from '~/lib/acc/graphql/queries'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -313,6 +312,9 @@ graphql(`
       ...ProjectPageLatestItemsModelItem
       ...ProjectCardImportFileArea_Model
       ...ProjectPageModelsCard_Model
+      accSyncItem {
+        ...SyncStatusModelItem_AccSyncItem
+      }
     }
     hasChildren
     updatedAt
@@ -337,20 +339,8 @@ const props = defineProps<{
 const router = useRouter()
 const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
-const modelId = computed(() =>
-  props.item.__typename === 'ModelsTreeItem' ? props.item.model?.id : ''
-)
-
-const { result: accSyncItemResult } = useQuery(
-  projectAccSyncItemByModelIdQuery,
-  () => ({
-    id: props.project.id,
-    modelId: modelId.value || ''
-  })
-)
-
-const accSyncItem = computed(
-  () => accSyncItemResult.value?.project.accSyncItemByModelId || undefined
+const accSyncItem = computed(() =>
+  props.item.__typename === 'ModelsTreeItem' ? props.item.model?.accSyncItem : undefined
 )
 
 const importArea = ref(

@@ -1,5 +1,5 @@
 <template>
-  <div v-tippy="status.charAt(0).toUpperCase() + status.slice(1)">
+  <div v-tippy="statusLabel">
     <CommonBadge
       :color-classes="
         [runStatusClasses(status), 'shrink-0 grow-0 text-foreground'].join(' ')
@@ -11,11 +11,27 @@
 </template>
 
 <script setup lang="ts">
-import type { AccSyncItemStatus } from '~/lib/common/generated/gql/graphql'
+import { graphql } from '~/lib/common/generated/gql'
+import type {
+  AccSyncItemStatus,
+  SyncStatusModelItem_AccSyncItemFragment
+} from '~/lib/common/generated/gql/graphql'
 
-defineProps<{
-  status: AccSyncItemStatus
+graphql(`
+  fragment SyncStatusModelItem_AccSyncItem on AccSyncItem {
+    id
+    status
+  }
+`)
+
+const props = defineProps<{
+  item: SyncStatusModelItem_AccSyncItemFragment
 }>()
+
+const status = computed(() => props.item.status)
+const statusLabel = computed(
+  () => status.value.charAt(0).toUpperCase() + status.value.slice(1)
+)
 
 const runStatusClasses = (run: AccSyncItemStatus) => {
   const classParts = ['w-24 justify-center']
