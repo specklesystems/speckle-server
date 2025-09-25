@@ -60,8 +60,8 @@ export type AccSyncItem = {
   author?: Maybe<LimitedUser>;
   createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
-  modelId: Scalars['String']['output'];
-  projectId: Scalars['String']['output'];
+  model?: Maybe<Model>;
+  project: Project;
   status: AccSyncItemStatus;
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -1752,6 +1752,7 @@ export type MarkReceivedVersionInput = {
 
 export type Model = {
   __typename?: 'Model';
+  accSyncItem?: Maybe<AccSyncItem>;
   author?: Maybe<LimitedUser>;
   automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** Return a model tree of children */
@@ -6971,8 +6972,8 @@ export type AccSyncItemResolvers<ContextType = GraphQLContext, ParentType extend
   author?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  modelId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
+  project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['AccSyncItemStatus'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -7683,6 +7684,7 @@ export type LimitedWorkspaceJoinRequestCollectionResolvers<ContextType = GraphQL
 };
 
 export type ModelResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Model'] = ResolversParentTypes['Model']> = {
+  accSyncItem?: Resolver<Maybe<ResolversTypes['AccSyncItem']>, ParentType, ContextType>;
   author?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   automationsStatus?: Resolver<Maybe<ResolversTypes['TriggeredAutomationsStatus']>, ParentType, ContextType>;
   childrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;

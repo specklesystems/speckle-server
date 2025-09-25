@@ -67,6 +67,12 @@ export const useSettingsMenu = () => {
         ]
       : []),
     {
+      title: 'Integrations',
+      name: settingsWorkspaceRoutes.integrations.name,
+      route: (slug?: string) => settingsWorkspaceRoutes.integrations.route(slug),
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
+    },
+    {
       title: 'Security',
       name: settingsWorkspaceRoutes.security.name,
       route: (slug?: string) => settingsWorkspaceRoutes.security.route(slug),

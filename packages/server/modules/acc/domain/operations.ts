@@ -13,7 +13,14 @@ export type UpdateAccSyncItemStatus = (args: {
 
 export type GetAccSyncItemById = (args: { id: string }) => Promise<AccSyncItem | null>
 
+export type GetAccSyncItemByModelId = (args: {
+  modelId: string
+}) => Promise<AccSyncItem | null>
+
 export type GetAccSyncItemsById = (args: { ids: string[] }) => Promise<AccSyncItem[]>
+export type GetAccSyncItemsByModelId = (args: {
+  ids: string[]
+}) => Promise<AccSyncItem[]>
 
 export type ListAccSyncItems = (args: {
   projectId: string

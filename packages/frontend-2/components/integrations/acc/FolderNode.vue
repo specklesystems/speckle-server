@@ -19,7 +19,7 @@
       v-if="isExpanded && folder.children && folder.children.length > 0"
       class="ml-4 mt-1 space-y-1"
     >
-      <ProjectPageAccFolderNode
+      <IntegrationsAccFolderNode
         v-for="child in folder.children"
         :key="child.id"
         :folder="child"
@@ -33,7 +33,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
-import type { AccFolder } from '~/lib/acc/composables/useAcc'
+import type { AccFolder } from '~/lib/acc/composables/useAccFiles'
 
 const props = defineProps<{
   folder: AccFolder

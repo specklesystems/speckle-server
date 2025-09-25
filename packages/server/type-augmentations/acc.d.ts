@@ -14,5 +14,5 @@ declare module 'http' {
 export type AccSessionData = {
   accTokens?: AccTokens
   codeVerifier?: string
-  projectId?: string
+  callbackEndpoint?: string
 }

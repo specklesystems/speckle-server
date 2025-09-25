@@ -1,14 +1,9 @@
-import {
-  getManifestByUrn,
-  getToken,
-  tryRegisterAccWebhook
-} from '@/modules/acc/clients/autodesk'
+import { tryRegisterAccWebhook } from '@/modules/acc/clients/autodesk'
 import {
   AccSyncItemStatuses,
   ImporterAutomateFunctions
 } from '@/modules/acc/domain/constants'
 import { AccSyncItemEvents } from '@/modules/acc/domain/events'
-import { isReadyForImport } from '@/modules/acc/helpers/svfUtils'
 import type {
   CountAccSyncItems,
   DeleteAccSyncItemById,
@@ -17,7 +12,10 @@ import type {
   UpsertAccSyncItem
 } from '@/modules/acc/domain/operations'
 import type { AccSyncItem } from '@/modules/acc/domain/types'
-import { SyncItemNotFoundError } from '@/modules/acc/errors/acc'
+import {
+  SyncItemNotFoundError,
+  SyncItemUnsupportedFileExtensionError
+} from '@/modules/acc/errors/acc'
 import type { TriggerSyncItemAutomation } from '@/modules/acc/services/automate'
 import type {
   CreateAutomation,
@@ -82,8 +80,8 @@ export const createAccSyncItemFactory =
         automationId: automation.id,
         functions: [
           {
-            functionId: ImporterAutomateFunctions.svf2.functionId,
-            functionReleaseId: ImporterAutomateFunctions.svf2.functionReleaseId
+            functionId: ImporterAutomateFunctions.rvt.functionId,
+            functionReleaseId: ImporterAutomateFunctions.rvt.functionReleaseId
           }
         ],
         triggerDefinitions: {
@@ -114,7 +112,6 @@ export const createAccSyncItemFactory =
 
     await deps.upsertAccSyncItem(newSyncItem)
 
-    // TODO ACC: somehow i could not managed to get subsriptions work, doing stupid timeout refetch in FE after create/delete/update
     // Once we have it properly TODO ogu: fix it on FE
     await deps.eventEmit({
       eventName: AccSyncItemEvents.Created,
@@ -125,19 +122,14 @@ export const createAccSyncItemFactory =
     })
 
     // Import new sync item immediately, if possible
-    const tokenData = await getToken()
-    const manifest = await getManifestByUrn(
-      {
-        urn: newSyncItem.accFileVersionUrn,
-        region: newSyncItem.accRegion
-      },
-      { token: tokenData.access_token }
-    )
-    const isReady = isReadyForImport(manifest)
-
-    if (!isReady) return newSyncItem
-
-    return await deps.triggerSyncItemAutomation({ id: newSyncItem.id })
+    switch (newSyncItem.accFileExtension.toLowerCase()) {
+      case 'rvt': {
+        return await deps.triggerSyncItemAutomation({ id: newSyncItem.id })
+      }
+      default: {
+        throw new SyncItemUnsupportedFileExtensionError(newSyncItem.accFileExtension)
+      }
+    }
   }
 
 export type GetPaginatedAccSyncItems = (params: {

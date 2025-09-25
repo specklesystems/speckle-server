@@ -9,7 +9,7 @@
         <InfiniteLoading />
       </div>
       <ul v-else-if="folderTree && folderTree.children" class="space-y-1 pt-1">
-        <ProjectPageAccFolderNode
+        <IntegrationsAccFolderNode
           v-for="folder in folderTree.children"
           :key="folder.id"
           :folder="folder"
@@ -71,8 +71,8 @@
 <script setup lang="ts">
 import type { AccTokens } from '@speckle/shared/acc'
 import { ref, watch } from 'vue'
-import { useAcc } from '~/lib/acc/composables/useAcc'
-import type { AccFolder, AccItem } from '~/lib/acc/composables/useAcc'
+import { useAcc } from '~/lib/acc/composables/useAccFiles'
+import type { AccFolder, AccItem } from '~/lib/acc/composables/useAccFiles'
 
 const props = defineProps<{
   hubId: string

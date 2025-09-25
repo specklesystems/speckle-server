@@ -26,6 +26,18 @@
               New model
             </FormButton>
           </div>
+          <!-- I believe for now sync limits corralate with model limit since new sync creates new model, once we have limits for syncs, this should change -->
+          <div
+            v-tippy="canCreateModel.cantClickCreateReason.value"
+            class="grow inline-flex sm:grow-0 lg:hidden"
+          >
+            <FormButton
+              :disabled="!canCreateModel.canClickCreate.value"
+              @click="showNewAccSync = true"
+            >
+              New sync
+            </FormButton>
+          </div>
         </div>
       </div>
       <div
@@ -78,7 +90,23 @@
           >
             View all in 3D
           </FormButton>
-          <div v-tippy="canCreateModel.cantClickCreateReason.value" class="test123">
+          <LayoutMenu
+            v-if="showAccIntegration"
+            v-model:open="showMenu"
+            :items="menuItems"
+            :menu-position="HorizontalDirection.Left"
+            :menu-id="menuId"
+            @click.stop.prevent
+            @chosen="onActionChosen"
+          >
+            <FormButton color="primary" @click="showMenu = !showMenu">
+              <div class="flex items-center gap-1">
+                Add model
+                <ChevronDownIcon class="h-3 w-3" />
+              </div>
+            </FormButton>
+          </LayoutMenu>
+          <div v-else v-tippy="canCreateModel.cantClickCreateReason.value">
             <FormButton
               :disabled="!canCreateModel.canClickCreate.value"
               class="hidden lg:inline-flex shrink-0"
@@ -91,9 +119,11 @@
       </div>
     </div>
     <ProjectModelsAdd v-model:open="showNewDialog" :project="project" />
+    <IntegrationsAccDialogCreateSync :open="showNewAccSync" :project-id="project?.id" />
   </div>
 </template>
 <script setup lang="ts">
+import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { SourceApps, SpeckleViewer } from '@speckle/shared'
 import type { SourceAppDefinition } from '@speckle/shared'
 import { debounce } from 'lodash-es'
@@ -103,9 +133,13 @@ import type {
   ProjectModelsPageHeader_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
-import type { GridListToggleValue } from '~~/lib/layout/helpers/components'
+import type {
+  GridListToggleValue,
+  LayoutMenuItem
+} from '~~/lib/layout/helpers/components'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useCanCreateModel } from '~/lib/projects/composables/permissions'
+import { HorizontalDirection } from '@speckle/ui-components'
 
 const emit = defineEmits<{
   (e: 'update:selected-members', val: FormUsersSelectItemFragment[]): void
@@ -147,6 +181,9 @@ graphql(`
       canCreateModel {
         ...FullPermissionCheckResult
       }
+      canReadAccIntegrationSettings {
+        ...FullPermissionCheckResult
+      }
     }
     ...ProjectModelsAdd_Project
   }
@@ -168,6 +205,8 @@ const sourceAppsBtnId = useId()
 const router = useRouter()
 const mp = useMixpanel()
 
+const menuId = useId()
+
 const onViewAllClick = () => {
   router.push(allModelsRoute.value)
 
@@ -180,6 +219,11 @@ const onViewAllClick = () => {
 }
 
 const showNewDialog = ref(false)
+const showNewAccSync = ref(false)
+
+const showAccIntegration = computed(
+  () => props.project?.permissions.canReadAccIntegrationSettings.authorized
+)
 
 const canCreateModel = useCanCreateModel({
   project: computed(() => props.project)
@@ -216,6 +260,46 @@ const allModelsRoute = computed(() => {
     .toString()
   return modelRoute(props.projectId, resourceIdString)
 })
+
+const showMenu = ref(false)
+
+enum AddNewModelActionTypes {
+  NewModel = 'new-model',
+  NewAccSyncItem = 'new-acc-sync-item'
+}
+
+const menuItems = computed<LayoutMenuItem[][]>(() => [
+  [
+    {
+      title: 'Create new model...',
+      id: AddNewModelActionTypes.NewModel,
+      disabled: !canCreateModel.canClickCreate.value,
+      disabledTooltip: canCreateModel.cantClickCreateReason.value
+    },
+    // TODO ACC: Upload a file
+    {
+      // TODO: Do we show this disabled in all non-enterprise cases?
+      title: 'Sync from ACC...',
+      id: AddNewModelActionTypes.NewAccSyncItem,
+      // I believe for now sync limits corralate with model limit since new sync creates new model, once we have limits for syncs, this should change
+      disabled: !canCreateModel.canClickCreate.value,
+      disabledTooltip: canCreateModel.cantClickCreateReason.value
+    }
+  ]
+])
+
+const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
+  const { item } = params
+
+  switch (item.id) {
+    case AddNewModelActionTypes.NewModel:
+      handleCreateModelClick()
+      break
+    case AddNewModelActionTypes.NewAccSyncItem:
+      showNewAccSync.value = true
+      break
+  }
+}
 
 const team = computed(() => props.project?.team.map((t) => t.user) || [])
 

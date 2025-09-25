@@ -92,7 +92,10 @@ import type {
 import { logger } from '@/observability/logging'
 import { getLastVersionsByProjectIdFactory } from '@/modules/core/repositories/versions'
 import type { StreamRoles } from '@speckle/shared'
-import { getAccSyncItemsByIdFactory } from '@/modules/acc/repositories/accSyncItems'
+import {
+  getAccSyncItemsByIdFactory,
+  getAccSyncItemsByModelIdFactory
+} from '@/modules/acc/repositories/accSyncItems'
 import type { AccSyncItem } from '@/modules/acc/domain/types'
 
 declare module '@/modules/core/loaders' {
@@ -142,6 +145,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
       db
     })
     const getAccSyncItemsById = getAccSyncItemsByIdFactory({ db })
+    const getAccSyncItemsByModelId = getAccSyncItemsByModelIdFactory({ db })
 
     return {
       streams: {
@@ -558,7 +562,16 @@ const dataLoadersDefinition = defineRequestDataloaders(
             (i) => i.id
           )
           return ids.map((i) => results[i] || null)
-        })
+        }),
+        getAccSyncItemByModelId: createLoader<string, Nullable<AccSyncItem>>(
+          async (ids) => {
+            const results = keyBy(
+              await getAccSyncItemsByModelId({ ids: ids.slice() }),
+              (i) => i.modelId
+            )
+            return ids.map((i) => results[i] || null)
+          }
+        )
       },
       automations: {
         getAutomation: createLoader<string, Nullable<AutomationRecord>>(async (ids) => {

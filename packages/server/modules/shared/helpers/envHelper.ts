@@ -548,5 +548,13 @@ export function getAutodeskIntegrationClientSecret() {
   return getStringFromEnv('AUTODESK_INTEGRATION_CLIENT_SECRET')
 }
 
+export function getOdaUserId() {
+  return getStringFromEnv('ODA_USER_ID')
+}
+
+export function getOdaUserSecret() {
+  return getStringFromEnv('ODA_USER_SECRET')
+}
+
 export const areSavedViewsEnabled = (): boolean =>
   getFeatureFlags().FF_SAVED_VIEWS_ENABLED

@@ -14,7 +14,7 @@
       :items="accSyncItems"
     >
       <template #status="{ item }">
-        <ProjectPageAccSyncStatus :status="item.status" />
+        <IntegrationsAccSyncStatus :status="item.status" />
       </template>
       <template #accFileName="{ item }">
         {{ item.accFileName }}
@@ -25,9 +25,9 @@
       <template #modelId="{ item }">
         <NuxtLink
           class="text-foreground-1 hover:text-blue-500 underline"
-          :to="`/projects/${projectId}/models/${item.modelId}`"
+          :to="`/projects/${projectId}/models/${item.model?.id}`"
         >
-          {{ item.modelId }}
+          {{ item.model?.id }}
         </NuxtLink>
       </template>
       <template #createdBy="{ item }">
@@ -50,7 +50,7 @@
         </div>
       </template>
     </LayoutTable>
-    <FormButton
+    <!-- <FormButton
       color="outline"
       size="sm"
       :disabled="!isLoggedIn"
@@ -60,7 +60,7 @@
       <template #default>
         <div v-tippy="isLoggedIn ? undefined : 'Log in required'">New sync</div>
       </template>
-    </FormButton>
+    </FormButton> -->
     <LayoutDialog
       v-model:open="showNewSyncDialog"
       title="Create new sync"
@@ -68,13 +68,13 @@
     >
       <div class="flex flex-col">
         <div v-if="step === 0" class="space-y-2">
-          <ProjectPageAccHubs
+          <IntegrationsAccHubs
             :hubs="hubs"
             :loading="loadingHubs"
             @hub-selected="onHubClick"
           />
 
-          <ProjectPageAccProjects
+          <IntegrationsAccProjects
             v-if="selectedHubId"
             :hub-id="selectedHubId"
             :projects="projects"
@@ -82,7 +82,7 @@
             @project-selected="onProjectClick"
           />
 
-          <ProjectPageAccFileSelector
+          <IntegrationsAccFileSelector
             v-if="selectedProjectId && selectedHubId && tokens"
             :hub-id="selectedHubId"
             :project-id="selectedProjectId"
@@ -118,7 +118,7 @@
             </template>
           </CommonAlert>
           <hr />
-          <ProjectPageAccModelSelector
+          <IntegrationsAccModelSelector
             :project-id="projectId"
             :acc-sync-items="accSyncItems"
             @model-selected="(model) => (selectedModel = model)"
@@ -153,8 +153,8 @@ import { onProjectAccSyncItemUpdatedSubscription } from '~/lib/acc/graphql/subsc
 import { PauseIcon } from '@heroicons/vue/24/solid'
 import { TrashIcon, PlayIcon } from '@heroicons/vue/24/outline'
 
-import type { AccFolder } from '~/lib/acc/composables/useAcc'
-import { useAcc } from '~/lib/acc/composables/useAcc'
+import type { AccFolder } from '~/lib/acc/composables/useAccFiles'
+import { useAcc } from '~/lib/acc/composables/useAccFiles'
 
 const props = defineProps<{
   projectId: string
