@@ -12,7 +12,7 @@
     <div class="flex items-center shrink-0">
       <div class="relative">
         <img
-          :src="view.screenshot"
+          :src="view.thumbnailUrl"
           alt="View screenshot"
           class="w-20 h-[60px] object-cover rounded border border-outline-3 bg-foundation-page cursor-pointer"
         />
@@ -149,7 +149,7 @@ graphql(`
     id
     name
     description
-    screenshot
+    thumbnailUrl
     visibility
     isHomeView
     resourceIds

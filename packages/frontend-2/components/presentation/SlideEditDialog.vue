@@ -4,7 +4,7 @@
     <form @submit="onSubmit">
       <div class="flex flex-col gap-2">
         <img
-          :src="slide?.screenshot"
+          :src="slide?.thumbnailUrl"
           :alt="slide?.name"
           class="w-full object-cover rounded-lg border border-outline-3 h-64"
         />
@@ -41,7 +41,7 @@ graphql(`
     projectId
     name
     description
-    screenshot
+    thumbnailUrl
   }
 `)
 

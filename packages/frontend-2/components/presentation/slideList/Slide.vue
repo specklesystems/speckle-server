@@ -6,7 +6,7 @@
       @click="onSelectSlide"
     >
       <img
-        :src="slide.screenshot"
+        :src="slide.thumbnailUrl"
         :alt="slide.name"
         class="w-full aspect-[3/2] md:aspect-video object-cover"
       />
@@ -28,7 +28,7 @@ graphql(`
   fragment PresentationSlideListSlide_SavedView on SavedView {
     id
     name
-    screenshot
+    thumbnailUrl
   }
 `)
 

@@ -29,6 +29,7 @@ export type SavedView = {
   visibility: SavedViewVisibility
   viewerState: VersionedSerializedViewerState
   screenshot: string
+  thumbnail: string
   position: number
   createdAt: Date
   updatedAt: Date

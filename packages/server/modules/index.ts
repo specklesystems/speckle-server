@@ -20,7 +20,7 @@ import { moduleLogger } from '@/observability/logging'
 import { addMocksToSchema } from '@graphql-tools/mock'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import type { Optional } from '@speckle/shared'
-import { isNonNullable, TIME_MS } from '@speckle/shared'
+import { Authz, isNonNullable, TIME_MS } from '@speckle/shared'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import type { Express } from 'express'
 import type { RequestDataLoadersBuilder } from '@/modules/shared/helpers/graphqlHelper'
@@ -51,6 +51,7 @@ import type {
   AuthCheckContextLoaders
 } from '@speckle/shared/authz'
 import { AuthCheckContextLoaderKeys } from '@speckle/shared/authz'
+import type { AuthContext } from '@/modules/shared/authz'
 
 /**
  * Cached speckle module requires
@@ -461,4 +462,18 @@ export const moduleAuthLoaders = async (params: {
     },
     internalCache: cache
   }
+}
+
+export const buildAuthPolicies = async (params: {
+  /**
+   * Undefined means - treat it as an anonymous req
+   */
+  authContext?: AuthContext
+}) => {
+  const dataLoaders: RequestDataLoaders | undefined = params.authContext
+    ? await buildRequestLoaders(params.authContext)
+    : undefined
+
+  const authLoaders = await moduleAuthLoaders({ dataLoaders })
+  return Authz.authPoliciesFactory(authLoaders.loaders)
 }

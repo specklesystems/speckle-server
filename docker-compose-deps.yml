@@ -2,9 +2,7 @@ services:
   # Actual Speckle Server dependencies
 
   postgres:
-    build:
-      context: .
-      dockerfile: utils/postgres/Dockerfile
+    image: 'postgres:16.4-alpine3.20@sha256:d898b0b78a2627cb4ee63464a14efc9d296884f1b28c841b0ab7d7c42f1fffdf'
     restart: always
     environment:
       POSTGRES_DB: speckle
@@ -19,9 +17,7 @@ services:
     command: postgres -c max_prepared_transactions=150
 
   postgres-region1:
-    build:
-      context: .
-      dockerfile: utils/postgres/Dockerfile
+    image: 'postgres:16.4-alpine3.20@sha256:d898b0b78a2627cb4ee63464a14efc9d296884f1b28c841b0ab7d7c42f1fffdf'
     restart: always
     environment:
       POSTGRES_DB: speckle
@@ -36,9 +32,7 @@ services:
     command: postgres -c max_prepared_transactions=150
 
   postgres-region2:
-    build:
-      context: .
-      dockerfile: utils/postgres/Dockerfile
+    image: 'postgres:16.4-alpine3.20@sha256:d898b0b78a2627cb4ee63464a14efc9d296884f1b28c841b0ab7d7c42f1fffdf'
     restart: always
     environment:
       POSTGRES_DB: speckle
