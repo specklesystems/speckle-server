@@ -15,12 +15,14 @@ export const outputSavedViewPreviewFactory =
       })
     }
 
-    const preview = view.screenshot
+    // no `data:image/png;base64,` prefix
+    const preview = view.screenshot.replace(/^data:image\/png;base64,/, '')
     const imgBuffer = Buffer.from(preview, 'base64')
 
     res.writeHead(200, {
       'Content-Type': 'image/png',
-      'Content-Length': imgBuffer.length
+      'Content-Length': imgBuffer.length,
+      'Cache-Control': 'no-cache, no-store'
     })
 
     res.end(imgBuffer)

@@ -13,6 +13,7 @@ import { buildAuthPolicies } from '@/modules'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { NotFoundError } from '@/modules/shared/errors'
+import { fullPreviewRoute, thumbnailRoute } from '@/modules/viewer/helpers/savedViews'
 
 const previewErrorPath = () =>
   fileURLToPath(import.meta.resolve('#/assets/previews/images/preview_error.png'))
@@ -86,10 +87,7 @@ const buildPreviewRoute = (
 export const getSavedViewsRouter = (): Router => {
   const router = Router()
 
-  const thumbnailRoute = '/api/v1/projects/:projectId/saved-views/:viewId/thumbnail'
   buildPreviewRoute(router, SavedViewPreviewType.thumbnail, thumbnailRoute)
-
-  const fullPreviewRoute = '/api/v1/projects/:projectId/saved-views/:viewId/preview'
   buildPreviewRoute(router, SavedViewPreviewType.preview, fullPreviewRoute)
 
   return router
