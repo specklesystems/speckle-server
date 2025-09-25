@@ -114,6 +114,8 @@ const googleStrategyBuilderFactory =
           if (
             FF_NO_PERSONAL_EMAILS_ENABLED &&
             !existingUser &&
+            // we do not want to break invites, just individual signups
+            !req.session.token &&
             email.endsWith('@gmail.com')
           ) {
             throw new BlockedEmailDomainError()
