@@ -75,6 +75,18 @@ import { useInjectedPresentationState } from '~/lib/presentations/composables/se
 import { useEventListener, useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { graphql } from '~~/lib/common/generated/gql'
+
+graphql(`
+  fragment PresentationPageWrapper_SavedViewGroup on SavedViewGroup {
+    id
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
 
 const {
   response: { presentation, workspace }
@@ -91,6 +103,7 @@ const viewerProgress = ref(0)
 
 const ViewerWrapper = resolveComponent('PresentationViewerWrapper')
 
+const title = computed(() => presentation.value?.title)
 const canEditPresentation = computed(() => {
   return presentation.value?.permissions.canUpdate.authorized
 })
@@ -119,6 +132,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 useEventListener('keydown', handleKeydown)
+useHead({ title })
 
 onMounted(() => {
   mixpanel.track('Presentation Viewed', {

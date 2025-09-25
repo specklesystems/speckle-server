@@ -2548,6 +2548,8 @@ export type Project = {
   invitableCollaborators: WorkspaceCollaboratorCollection;
   /** Collaborators who have been invited, but not yet accepted. */
   invitedTeam?: Maybe<Array<PendingStreamCollaborator>>;
+  /** Limited workspace records that exposes public data projects workspaces. */
+  limitedWorkspace?: Maybe<LimitedWorkspace>;
   /** Returns a specific model by its ID */
   model: Model;
   /** Retrieve a specific project model by its ID */
@@ -2595,6 +2597,7 @@ export type Project = {
   viewerResourcesExtended: ExtendedViewerResources;
   visibility: ProjectVisibility;
   webhooks: WebhookCollection;
+  /** Full workspace information for the project. */
   workspace?: Maybe<Workspace>;
   workspaceId?: Maybe<Scalars['String']['output']>;
 };
@@ -7911,6 +7914,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   invitableCollaborators?: Resolver<ResolversTypes['WorkspaceCollaboratorCollection'], ParentType, ContextType, RequireFields<ProjectInvitableCollaboratorsArgs, 'limit'>>;
   invitedTeam?: Resolver<Maybe<Array<ResolversTypes['PendingStreamCollaborator']>>, ParentType, ContextType>;
+  limitedWorkspace?: Resolver<Maybe<ResolversTypes['LimitedWorkspace']>, ParentType, ContextType>;
   model?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<ProjectModelArgs, 'id'>>;
   modelByName?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<ProjectModelByNameArgs, 'name'>>;
   modelChildrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType, RequireFields<ProjectModelChildrenTreeArgs, 'fullName'>>;

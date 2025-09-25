@@ -38,12 +38,14 @@ import {
   type SavedView,
   type SavedViewGroup
 } from '@/modules/viewer/domain/types/savedViews'
+import { SavedViewPositionUpdateError } from '@/modules/viewer/errors/savedViews'
 import type { DefaultGroupMetadata } from '@/modules/viewer/helpers/savedViews'
 import {
   buildDefaultGroupId,
   decodeDefaultGroupId,
   formatResourceIdsForGroup
 } from '@/modules/viewer/helpers/savedViews'
+import { logger } from '@/observability/logging'
 import {
   isUngroupedGroup,
   ungroupedScenesGroupTitle
@@ -52,7 +54,7 @@ import { resourceBuilder } from '@speckle/shared/viewer/route'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
 import { type Knex } from 'knex'
-import { clamp, isUndefined } from 'lodash-es'
+import { clamp, isNumber, isUndefined } from 'lodash-es'
 
 export const SavedViews = buildTableHelper('saved_views', [
   'id',
@@ -926,12 +928,12 @@ export const getNewViewSpecificPositionFactory =
     // Both ids are defined - get their positions if we don't have them yet
     if (!boundaries.before.position || !boundaries.after.position) {
       const [beforePosition, afterPosition] = await Promise.all([
-        boundaries.before.position
+        isNumber(boundaries.before.position)
           ? Promise.resolve(boundaries.before.position)
           : getView({ id: boundaries.before.id!, projectId: params.projectId }).then(
               (v) => v?.position
             ),
-        boundaries.after.position
+        isNumber(boundaries.after.position)
           ? Promise.resolve(boundaries.after.position)
           : getView({ id: boundaries.after.id!, projectId: params.projectId }).then(
               (v) => v?.position
@@ -939,8 +941,31 @@ export const getNewViewSpecificPositionFactory =
       ])
 
       // These will only be undefined if the view ids are actually invalid
-      if (!beforePosition || !afterPosition) {
-        throw new Error('Either beforeId or afterId are invalid IDs')
+      // but we dont want to throw, just treat as if we hit the boundary
+      if (!isNumber(beforePosition) || !isNumber(afterPosition)) {
+        logger.warn(
+          new SavedViewPositionUpdateError(
+            'Either beforeId or afterId are invalid IDs',
+            {
+              info: {
+                beforeId,
+                afterId,
+                beforePosition,
+                afterPosition,
+                projectId: params.projectId
+              }
+            }
+          )
+        )
+
+        const hasNoBeforeView = !isNumber(beforePosition)
+        return {
+          newPosition: await getNewViewBoundaryPosition({
+            ...params,
+            position: hasNoBeforeView ? 'first' : 'last'
+          }),
+          needsRebalancing: false
+        }
       }
 
       boundaries.before.position = beforePosition
