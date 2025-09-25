@@ -1,5 +1,7 @@
 import time
+import traceback
 from pathlib import Path
+from pprint import pprint
 
 from speckleifc.main import open_and_convert_file
 from specklepy.logging import metrics
@@ -24,6 +26,7 @@ def process_job(
         # we don't want it to reuse any server/user ids between jobs
         metrics.METRICS_TRACKER = None
         metrics.HOST_APP = "ifc"
+        print(job_payload)
 
         job = FileimportPayload.model_validate_json(job_payload)
         start = time.time()
@@ -52,9 +55,11 @@ def process_job(
             parse_duration_seconds=parse_duration,
         )
     except Exception as ex:
-        outcome = FileimportError(reason=str(ex))
+        stack_trace = traceback.format_exc()
+        outcome = FileimportError(reason=str(ex), stack_trace=stack_trace)
     finally:
         if outcome:
+            pprint(outcome)
             work_dir.joinpath("result.json").write_text(
                 FileimportResult(outcome=outcome).model_dump_json()
             )

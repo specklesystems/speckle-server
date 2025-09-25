@@ -35,6 +35,7 @@ class FileimportSuccess(JobBase):
 
 class FileimportError(JobBase):
     reason: str
+    stack_trace: str
 
 
 class FileimportResult(JobBase):

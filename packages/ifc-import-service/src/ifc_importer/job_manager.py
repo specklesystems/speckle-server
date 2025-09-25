@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import tempfile
 import time
 from math import floor
@@ -12,6 +13,7 @@ from specklepy.core.api.inputs.file_import_inputs import (
 )
 from specklepy.logging import metrics
 
+from ifc_importer.client import setup_client
 from ifc_importer.domain import FileimportError, FileimportResult, JobStatus
 from ifc_importer.repository import (
     deduct_from_compute_budget,
@@ -19,7 +21,6 @@ from ifc_importer.repository import (
     return_job_to_queued,
     setup_connection,
 )
-from src.ifc_importer.client import setup_client
 
 IDLE_TIMEOUT = 1
 
@@ -76,10 +77,17 @@ async def job_manager(logger: structlog.stdlib.BoundLogger):
                     remaining_compute_budget_seconds=job.remaining_compute_budget_seconds,
                     job_timeout=job_timeout,
                 )
-
+                cmd = (
+                    f"python job_processor.py {temp_dir}"
+                    + f" {
+                        base64.b64encode(
+                            job.payload.model_dump_json().encode()
+                        ).decode()
+                    }"
+                )
                 # subprocess
                 process = await asyncio.create_subprocess_shell(
-                    f"python job_processor.py {temp_dir} {job.model_dump_json()}",
+                    cmd,
                 )
                 exit_code = await asyncio.wait_for(process.wait(), timeout=job_timeout)
                 # this should never happen, as the job processor is handling errors
@@ -98,6 +106,9 @@ async def job_manager(logger: structlog.stdlib.BoundLogger):
                 ).outcome
 
                 if isinstance(outcome, FileimportError):
+                    logger.error(
+                        "File import subprocess failed", exc_info=outcome.stack_trace
+                    )
                     raise Exception(outcome.reason)
 
                 # except TimeoutError as te:
@@ -132,8 +143,10 @@ async def job_manager(logger: structlog.stdlib.BoundLogger):
                         ),
                     )
                 )
-                # the server is responsible for moving successful jobs to the succeeded state
-                # mark it as succeeded so we do not enter any error handling routines on finalisation
+                # the server is responsible for moving successful
+                # jobs to the succeeded state
+                # mark it as succeeded so we do not enter any error
+                # handling routines on finalisation
                 job_status = JobStatus.SUCCEEDED
 
             # raised if the task is canceled
@@ -143,7 +156,8 @@ async def job_manager(logger: structlog.stdlib.BoundLogger):
                 job_status = JobStatus.FAILED
             finally:
                 if duration <= 0:
-                    # it probably failed before we calculated the duration, so calculate it now
+                    # it probably failed before we calculated the duration,
+                    # so calculate it now
                     duration = time.time() - start
                     await deduct_from_compute_budget(
                         connection, logger, job_id, floor(duration)
@@ -173,11 +187,17 @@ async def job_manager(logger: structlog.stdlib.BoundLogger):
                         # so the worker does not have to do anything further
                     except Exception as ex:
                         logger.error("failed to report job failure", exc_info=ex)
-                        # somehow we're in a weird state, let's return the job to the queued state
-                        # where it will get picked up again until one of total timeout, max attempts, or exhausted compute budget is reached
-                        # The server is responsible for garbage collecting jobs which have reached these error conditions and moving them to a failed status.
+                        # somehow we're in a weird state,
+                        # let's return the job to the queued state
+                        # where it will get picked up again until one of total timeout,
+                        # max attempts, or exhausted compute budget is reached
+                        # The server is responsible for garbage collecting jobs
+                        # which have reached these error conditions and moving
+                        # them to a failed status.
                         await return_job_to_queued(connection, logger, job_id)
                 elif job_status == JobStatus.SUCCEEDED:
                     # do nothing
-                    # we expect the job to already be marked as succeeded in the database by the server (when the worker reported the results back to the server)
+                    # we expect the job to already be marked as succeeded in the
+                    # database by the server (when the worker reported
+                    # the results back to the server)
                     continue
