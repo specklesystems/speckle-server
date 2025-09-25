@@ -3,12 +3,6 @@ name: Run all tests
 on:
   workflow_call:
     inputs:
-      IMAGE_VERSION_TAG:
-        required: true
-        type: string
-      DOCKERHUB_USERNAME:
-        required: true
-        type: string
       CONTINUE_ON_ERROR:
         required: false
         default: false
@@ -29,8 +23,6 @@ on:
       APOLLO_KEY:
         required: true
       CODECOV_TOKEN:
-        required: true
-      DOCKERHUB_TOKEN:
         required: true
 
 jobs:

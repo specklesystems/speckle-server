@@ -1,6 +1,9 @@
 on:
   workflow_call:
     inputs:
+      IMAGE_PREFIX:
+        required: true
+        type: string
       IMAGE_VERSION_TAG:
         required: true
         type: string
@@ -10,7 +13,6 @@ on:
       OCI_REGISTRY_DOMAIN:
         required: false
         type: string
-        default: registry-1.docker.io
       OCI_REGISTRY_USERNAME:
         required: true
         type: string
@@ -37,6 +39,7 @@ jobs:
     container:
       image: speckle/pre-commit-runner:latest
     env:
+      IMAGE_PREFIX: ${{ inputs.IMAGE_PREFIX }}
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
       REGISTRY_USERNAME: ${{ inputs.OCI_REGISTRY_USERNAME }}
       REGISTRY_PASSWORD: ${{ secrets.OCI_REGISTRY_PASSWORD }}

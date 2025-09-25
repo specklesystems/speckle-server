@@ -14,9 +14,7 @@ jobs:
   tests:
     needs: [get-version]
     uses: ./.github/workflows/tests.yml
-    with:
-      IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
-      DOCKERHUB_USERNAME: 'speckledevops'
+    with: {}
     secrets: inherit
 
   builds:
@@ -24,7 +22,11 @@ jobs:
     uses: ./.github/workflows/builds.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
-      DOCKERHUB_USERNAME: 'speckledevops'
+      REGISTRY_DOMAIN: 'ghcr.io'
+      REGISTRY_USERNAME: ${{ github.actor }}
+      # REGISTRY_DOMAIN, REGISTRY_USERNAME, REGISTRY_TOKEN must allow pushing to the below IMAGE_PREFIX
       IMAGE_PREFIX: 'ghcr.io/specklesystems'
       PUBLISH: false # do not publish the sourcemaps or include the version in frontend-2 builds for pull requests
-    secrets: inherit
+    secrets:
+      DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+      REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
