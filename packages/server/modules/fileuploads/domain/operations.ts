@@ -3,9 +3,10 @@ import type {
   FileUploadRecord,
   FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'
-import type { Optional } from '@speckle/shared'
+import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import type { UploadResult } from '@/modules/blobstorage/domain/types'
 import type {
+  FileImportResult,
   FileImportResultPayload,
   JobPayloadV1
 } from '@speckle/shared/workers/fileimport'
@@ -70,6 +71,20 @@ export type ProcessFileImportResult = (params: {
   blobId: string
   jobResult: FileImportResultPayload
 }) => Promise<void>
+
+export enum ProcessFileImportProgressResult {
+  received = 0,
+  ignored = 1,
+  cancelled = 2
+}
+
+export type ProcessFileImportProgress = (params: {
+  blobId: string
+  progressPercentage: number
+  attempt: number
+  result: MaybeNullOrUndefined<FileImportResult>
+  message: MaybeNullOrUndefined<string>
+}) => Promise<ProcessFileImportProgressResult>
 
 export type UpdateFileStatus = (params: {
   fileId: string

@@ -1,6 +1,6 @@
 import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
 import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
-import { FileImportInvalidJobResultPayload } from '@/modules/fileuploads/helpers/errors'
+import { FileImportInvalidJobResultPayload } from '@/modules/fileuploads/errors'
 
 export const jobResultStatusToFileUploadStatus = (
   jobResultStatus: 'success' | 'error'
