@@ -177,7 +177,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => {
     items.push([
       {
         id: MenuItems.Presentation,
-        title: 'Present',
+        title: 'Open as presentation',
         disabled: isLoading.value
       }
     ])
