@@ -45,7 +45,12 @@
       <div class="space-y-2 max-[275px]:hidden">
         <div class="px-1 text-xs flex items-center">
           <div>{{ model.versionCount.totalCount }}</div>
-          <ClockIcon class="ml-1 h-3" />
+          <Clock
+            :size="LucideSize.sm"
+            :stroke-width="1.5"
+            :absolute-stroke-width="true"
+            class="ml-1"
+          />
         </div>
         <!-- <div class="text-right">
           <SourceAppBadge v-if="sourceApp" :source-app="sourceApp" />
@@ -60,8 +65,9 @@ import { computedAsync } from '@vueuse/core'
 import type { ProjectPageLatestItemsModelItemFragment } from '~/lib/common/generated/gql/graphql'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import dayjs from 'dayjs'
-import { ClockIcon } from '@heroicons/vue/24/outline'
+
 import { CubeTransparentIcon } from '@heroicons/vue/20/solid'
+import { Clock } from 'lucide-vue-next'
 
 const props = defineProps<{
   model: ProjectPageLatestItemsModelItemFragment

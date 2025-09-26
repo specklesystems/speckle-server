@@ -4,7 +4,7 @@
       class="absolute top-1 right-1"
       size="sm"
       color="subtle"
-      :icon-right="XMarkIcon"
+      :icon-right="X"
       hide-text
       @click="dismissBanner"
     >
@@ -33,14 +33,14 @@
         @click="onCTAClick"
       >
         <span class="text-body-3xs font-semibold">Register</span>
-        <ArrowUpRightIcon class="h-2 w-2 mt-px stroke-2 stroke-foreground" />
+        <ArrowUpRight class="h-2 w-2 mt-px stroke-2 stroke-foreground" />
       </NuxtLink>
     </div>
   </CommonCard>
 </template>
 
 <script setup lang="ts">
-import { ArrowUpRightIcon, XMarkIcon } from '@heroicons/vue/24/solid'
+import { ArrowUpRight, X } from 'lucide-vue-next'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useActiveUserMeta } from '~~/lib/user/composables/meta'
 import dayjs from 'dayjs'
