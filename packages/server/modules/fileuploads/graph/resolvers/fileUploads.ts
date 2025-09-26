@@ -72,7 +72,10 @@ import type {
   FileUploadRecord,
   FileUploadRecordV2
 } from '@/modules/fileuploads/helpers/types'
-import { onFileImportResultFactory } from '@/modules/fileuploads/services/resultHandler'
+import {
+  onFileImportProgressUpdateFactory,
+  onFileImportResultFactory
+} from '@/modules/fileuploads/services/resultHandler'
 import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
 import { JobResultStatus } from '@speckle/shared/workers/fileimport'
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
@@ -244,6 +247,58 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       streamId: uploadedFileData.projectId,
       branchName: uploadedFileData.modelName
     }
+  },
+
+  async reportProgress(_parent, args, ctx) {
+    if (!FF_NEXT_GEN_FILE_IMPORTER_ENABLED)
+      throw new MisconfiguredEnvironmentError('File import next gen is not enabled')
+
+    // NOTE: jobId in this context is actually the blobId of the uploaded file
+    // We keep the naming for backwards compatibility reasons
+    const { projectId, jobId, progressPercentage, attempt, result, message } =
+      args.input
+    const userId = ctx.userId
+    if (!userId) {
+      throw new ForbiddenError('No userId provided')
+    }
+
+    throwIfResourceAccessNotAllowed({
+      resourceId: projectId,
+      resourceType: TokenResourceIdentifierType.Project,
+      resourceAccessRules: ctx.resourceAccessRules
+    })
+
+    const canPublish = await ctx.authPolicies.project.canPublish({
+      userId: ctx.userId,
+      projectId
+    })
+    throwIfAuthNotOk(canPublish)
+
+    const logger = ctx.log.child({
+      projectId,
+      streamId: projectId, //legacy
+      userId,
+      blobId: jobId
+    })
+
+    const projectDb = await getProjectDbClient({ projectId })
+    const onFileImportProgressUpdate = onFileImportProgressUpdateFactory({
+      logger,
+      updateFileUpload: updateFileUploadFactory({ db: projectDb }),
+      getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
+      eventEmit: getEventBus().emit,
+      FF_NEXT_GEN_FILE_IMPORTER_ENABLED
+    })
+
+    await onFileImportProgressUpdate({
+      blobId: jobId,
+      progressPercentage,
+      attempt,
+      result,
+      message
+    })
+
+    return true
   },
 
   async finishFileImport(_parent, args, ctx) {

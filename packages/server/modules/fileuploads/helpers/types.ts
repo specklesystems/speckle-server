@@ -15,6 +15,8 @@ type FileUploadPerformanceData = {
   durationSeconds: number
   downloadDurationSeconds: number
   parseDurationSeconds: number
+  parser?: string
+  versionId?: string
 }
 
 export type FileUploadRecord = {
@@ -29,6 +31,8 @@ export type FileUploadRecord = {
   uploadComplete: boolean
   uploadDate: Date
   convertedStatus: number | FileUploadConvertedStatus
+  convertedProgress: number
+  convertedAttempt: number
   convertedLastUpdate: Date
   convertedMessage: Nullable<string>
   convertedCommitId: Nullable<string>

@@ -19,6 +19,12 @@ export class FileImportInvalidJobResultPayload extends BaseError {
   static statusCode = 400
 }
 
+export class FileImportInvalidJobProgressPayload extends BaseError {
+  static defaultMessage = 'The file upload job progress report was invalid.'
+  static code = 'FILE_IMPORT_INVALID_JOB_PROGRESS_PAYLOAD'
+  static statusCode = 400
+}
+
 export class UnsupportedFileTypeError extends BaseError {
   static code = 'UNSUPPORTED_FILE_TYPE'
   static defaultMessage = 'The provided file type is not supported for importing.'

@@ -540,6 +540,8 @@ export const FileUploads = buildTableHelper('file_uploads', [
   'uploadComplete',
   'uploadDate',
   'convertedStatus',
+  'convertedProgress',
+  'convertedAttempt',
   'convertedLastUpdate',
   'convertedMessage',
   'convertedCommitId',

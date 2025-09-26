@@ -1384,6 +1384,31 @@ export type ExtendedViewerResourcesRequest = {
   savedViewId?: Maybe<Scalars['ID']['output']>;
 };
 
+export type FileImportProgressReportInput = {
+  /** Current attempt number */
+  attempt: Scalars['Int']['input'];
+  /**
+   * This is the blob Id of the uploaded file. For legacy reasons it is named jobId.
+   * Note: This is the not the background job Id.
+   */
+  jobId: Scalars['String']['input'];
+  /** Optional message to accompany the progress update */
+  message?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Progress percentage (0 to 100)
+   * 100% progress should be reported via finishFileImport, not here.
+   * Any progress >= 100% reported here will assume to be a >99% rounding error
+   */
+  progressPercentage: Scalars['Int']['input'];
+  projectId: Scalars['String']['input'];
+  /**
+   * Optional results to accompany the progress update.
+   * The download duration may be provided here if available.
+   * The results provided here will eventually be overwritten by the results provided in finishFileImport.
+   */
+  result?: InputMaybe<FileImportResultInput>;
+};
+
 export type FileImportResultInput = {
   /** Duration of the file download before parsing started in seconds */
   downloadDurationSeconds: Scalars['Float']['input'];
@@ -1441,7 +1466,7 @@ export type FileUploadMutations = {
   /**
    * Marks the file import flow as completed for that specific job
    * recording the provided status, and emitting the needed subscriptions.
-   * Mostly for internal service usage.
+   * For internal service usage.
    */
   finishFileImport: Scalars['Boolean']['output'];
   /**
@@ -1449,6 +1474,11 @@ export type FileUploadMutations = {
    * After uploading the file, call mutation startFileImport to register the completed upload.
    */
   generateUploadUrl: GenerateFileUploadUrlOutput;
+  /**
+   * Report progress of an ongoing file import job.
+   * For internal service usage.
+   */
+  reportProgress: Scalars['Boolean']['output'];
   /**
    * Before calling this mutation, call generateUploadUrl to get the
    * pre-signed url and blobId. Then upload the file to that url.
@@ -1466,6 +1496,11 @@ export type FileUploadMutationsFinishFileImportArgs = {
 
 export type FileUploadMutationsGenerateUploadUrlArgs = {
   input: GenerateFileUploadUrlInput;
+};
+
+
+export type FileUploadMutationsReportProgressArgs = {
+  input: FileImportProgressReportInput;
 };
 
 
@@ -6291,6 +6326,7 @@ export type ResolversTypes = {
   EmbedTokenCreateInput: EmbedTokenCreateInput;
   ExtendedViewerResources: ResolverTypeWrapper<ExtendedViewerResourcesGraphQLReturn>;
   ExtendedViewerResourcesRequest: ResolverTypeWrapper<ExtendedViewerResourcesRequest>;
+  FileImportProgressReportInput: FileImportProgressReportInput;
   FileImportResultInput: FileImportResultInput;
   FileUpload: ResolverTypeWrapper<FileUploadGraphQLReturn>;
   FileUploadCollection: ResolverTypeWrapper<Omit<FileUploadCollection, 'items'> & { items: Array<ResolversTypes['FileUpload']> }>;
@@ -6687,6 +6723,7 @@ export type ResolversParentTypes = {
   EmbedTokenCreateInput: EmbedTokenCreateInput;
   ExtendedViewerResources: ExtendedViewerResourcesGraphQLReturn;
   ExtendedViewerResourcesRequest: ExtendedViewerResourcesRequest;
+  FileImportProgressReportInput: FileImportProgressReportInput;
   FileImportResultInput: FileImportResultInput;
   FileUpload: FileUploadGraphQLReturn;
   FileUploadCollection: Omit<FileUploadCollection, 'items'> & { items: Array<ResolversParentTypes['FileUpload']> };
@@ -7577,6 +7614,7 @@ export type FileUploadCollectionResolvers<ContextType = GraphQLContext, ParentTy
 export type FileUploadMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FileUploadMutations'] = ResolversParentTypes['FileUploadMutations']> = {
   finishFileImport?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<FileUploadMutationsFinishFileImportArgs, 'input'>>;
   generateUploadUrl?: Resolver<ResolversTypes['GenerateFileUploadUrlOutput'], ParentType, ContextType, RequireFields<FileUploadMutationsGenerateUploadUrlArgs, 'input'>>;
+  reportProgress?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<FileUploadMutationsReportProgressArgs, 'input'>>;
   startFileImport?: Resolver<ResolversTypes['FileUpload'], ParentType, ContextType, RequireFields<FileUploadMutationsStartFileImportArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

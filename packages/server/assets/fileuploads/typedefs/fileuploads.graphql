@@ -142,9 +142,37 @@ input FileImportResultInput {
   """
   parser: String!
   """
-  Version associated if applicable
+  Version associated with parser, if applicable
   """
   versionId: String
+}
+
+input FileImportProgressReportInput {
+  projectId: String!
+  """
+  This is the blob Id of the uploaded file. For legacy reasons it is named jobId.
+  Note: This is the not the background job Id.
+  """
+  jobId: String!
+  """
+  Current attempt number
+  """
+  attempt: Int!
+  """
+  Progress percentage (0 to 100)
+  100% progress should be reported via finishFileImport, not here.
+  Any progress >= 100% reported here will assume to be a >99% rounding error
+  """
+  progressPercentage: Int!
+  """
+  Optional message to accompany the progress update. Can be used to report current operation within the parser.
+  """
+  message: String
+  """
+  Optional results to accompany the progress update.
+  The results provided here will eventually be overwritten by the results provided in finishFileImport.
+  """
+  result: FileImportResultInput
 }
 
 enum JobResultStatus {
@@ -181,9 +209,16 @@ type FileUploadMutations {
   startFileImport(input: StartFileImportInput!): FileUpload!
 
   """
+  Report progress of an ongoing file import job.
+  For internal service usage.
+  """
+  reportProgress(input: FileImportProgressReportInput!): Boolean!
+    @hasScope(scope: "streams:write")
+
+  """
   Marks the file import flow as completed for that specific job
   recording the provided status, and emitting the needed subscriptions.
-  Mostly for internal service usage.
+  For internal service usage.
   """
   finishFileImport(input: FinishFileImportInput!): Boolean!
     @hasScope(scope: "streams:write")
