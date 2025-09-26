@@ -7,7 +7,7 @@ from multiprocessing import Process
 import structlog
 from structlog_to_seq import CelfProcessor
 
-from ifc_importer.job_processor import job_processor
+from ifc_importer.job_manager import job_manager
 
 
 def configure_logger() -> structlog.stdlib.BoundLogger:
@@ -48,7 +48,7 @@ class HealthcheckHTTPRequestHandler(BaseHTTPRequestHandler):
 
 async def main():
     logger = configure_logger()
-    task = asyncio.create_task(job_processor(logger))
+    task = asyncio.create_task(job_manager(logger))
     httpd = HTTPServer(("0.0.0.0", 9080), HealthcheckHTTPRequestHandler)
     healthcheck_server_process = Process(target=httpd.serve_forever, daemon=True)
     healthcheck_server_process.start()
