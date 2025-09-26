@@ -706,7 +706,9 @@ export default class SpeckleConverter {
         instanced: true
       })
       this.addNode(instancedNode, transformNode)
-      await this.convertToNode(speckleData, instancedNode)
+      /** Alex 16.09.2025: We're adding support for instance proxies that are not direct displayable types */
+      // await this.convertToNode(speckleData, instancedNode)
+      await this.displayableLookup(speckleData, instancedNode, true)
     }
   }
 

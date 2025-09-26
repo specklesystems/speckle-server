@@ -1,7 +1,12 @@
 <template>
   <div class="select-none h-full">
+    <ViewerCompareChangesPanel
+      v-if="subView === 'diff'"
+      :clear-on-back="false"
+      @close="handleDiffClose"
+    />
     <ViewerModelsVersions
-      v-if="showVersions"
+      v-else-if="subView === 'versions'"
       :expanded-model-id="expandedModelId"
       @close="handleVersionsClose"
     />
@@ -14,23 +19,30 @@
       <template #actions>
         <ViewerModelsActions
           v-if="!hasObjects"
-          :hide-versions="resourceItems.length === 0"
-          @show-versions="showVersions = true"
+          :hide-versions="resourceItems.length === 0 && objects.length === 0"
+          @show-versions="subView = ModelsSubView.Versions"
           @add-model="showAddModel = true"
         />
       </template>
 
       <div class="flex flex-col h-full">
-        <template v-if="resourceItems.length">
+        <template v-if="resourceItems.length || objects.length">
           <!-- Sticky Header Area (outside virtual list) -->
           <div v-if="stickyHeader" class="sticky top-0 z-20 h-16">
             <ViewerModelsCard
+              v-if="!isDetachedObjectSticky"
               :model="stickyHeader!.model"
               :version-id="stickyHeader!.versionId"
               :is-expanded="expandedModels.has(stickyHeader!.model.id)"
               @toggle-expansion="toggleModelExpansion(stickyHeader!.model.id)"
               @show-versions="handleShowVersions"
               @show-diff="handleShowDiff"
+            />
+            <ViewerModelsDetachedObjectHeader
+              v-else
+              :object-id="stickyHeader!.versionId"
+              :is-expanded="expandedModels.has(stickyHeader!.model.id)"
+              @toggle-expansion="toggleModelExpansion"
             />
           </div>
 
@@ -40,16 +52,17 @@
             v-bind="containerProps"
             @scroll="handleScroll"
           >
-            <div v-bind="wrapperProps">
+            <div v-bind="wrapperProps" class="model-list">
               <div
                 v-for="{ data: item } in virtualList"
                 :key="item.id"
                 :data-item-id="item.id"
+                :data-item-type="item.type"
                 class="group first:hidden"
               >
                 <!-- Model Header -->
                 <template v-if="item.type === 'model-header'">
-                  <div class="bg-foundation h-16">
+                  <div class="bg-foundation h-16 model-header">
                     <ViewerModelsCard
                       :model="getModelFromItem(item)"
                       :version-id="getVersionIdFromItem(item)"
@@ -57,6 +70,17 @@
                       @toggle-expansion="toggleModelExpansion(item.modelId)"
                       @show-versions="handleShowVersions"
                       @show-diff="handleShowDiff"
+                    />
+                  </div>
+                </template>
+
+                <!-- Detached Object Header -->
+                <template v-else-if="item.type === 'detached-object-header'">
+                  <div class="bg-foundation h-16 model-header">
+                    <ViewerModelsDetachedObjectHeader
+                      :object-id="getObjectIdFromItem(item)"
+                      :is-expanded="expandedModels.has(item.modelId)"
+                      @toggle-expansion="toggleModelExpansion(item.modelId)"
                     />
                   </div>
                 </template>
@@ -73,6 +97,14 @@
             </div>
           </div>
         </template>
+
+        <!-- Loading State -->
+        <div
+          v-else-if="resourcesLoading"
+          class="flex items-center justify-center h-full -mt-8 opacity-60"
+        >
+          <CommonLoadingIcon />
+        </div>
 
         <!-- Empty State -->
         <div
@@ -96,8 +128,7 @@ import {
   useInjectedViewer,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-
-import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
+import { ModelsSubView, type ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
 import type { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import type { Get } from 'type-fest'
 import { useDiffUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
@@ -105,15 +136,14 @@ import {
   useTreeManagement,
   type UnifiedVirtualItem
 } from '~~/lib/viewer/composables/tree'
-import { useVirtualList, useDebounceFn } from '@vueuse/core'
+import { useVirtualList, useDebounceFn, useThrottleFn } from '@vueuse/core'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
-defineEmits(['close'])
-
-const showVersions = ref(false)
-const showAddModel = ref(false)
+const subView = defineModel<ModelsSubView>('subView', { default: ModelsSubView.Main })
 const expandedModelId = ref<string | null>(null)
+
+const showAddModel = ref(false)
 
 const expandedNodes = ref<Set<string>>(new Set())
 const expandedModels = ref<Set<string>>(new Set())
@@ -122,7 +152,7 @@ const disableScrollOnNextSelection = ref(false)
 const stickyHeader = ref<{ model: ModelItem; versionId: string } | null>(null)
 const scrollTop = ref(0)
 
-const { resourceItems, modelsAndVersionIds, objects } =
+const { resourceItems, modelsAndVersionIds, objects, resourcesLoading } =
   useInjectedViewerLoadedResources()
 const {
   metadata: { worldTree }
@@ -130,7 +160,8 @@ const {
 const {
   resources: {
     response: { resourceItems: stateResourceItems }
-  }
+  },
+  ui: { diff: diffState }
 } = useInjectedViewerState()
 const {
   objects: selectedObjects,
@@ -138,7 +169,7 @@ const {
   clearSelection,
   removeFromSelection
 } = useSelectionUtilities()
-const { diffModelVersions } = useDiffUtilities()
+const { diffModelVersions, endDiff } = useDiffUtilities()
 const {
   flattenModelTree,
   getRootNodesForModel,
@@ -157,6 +188,7 @@ const unifiedVirtualItems = computed(() => {
     selectedObjects.value,
     worldTree.value || null,
     stateResourceItems.value as { objectId: string; modelId?: string }[],
+    objects.value,
     getRootNodesForModel,
     flattenModelTree
   )
@@ -169,7 +201,9 @@ const {
 } = useVirtualList(unifiedVirtualItems, {
   itemHeight: (index) => {
     const item = unifiedVirtualItems.value[index]
-    return item?.type === 'model-header' ? 64 : 40
+    return item?.type === 'model-header' || item?.type === 'detached-object-header'
+      ? 64
+      : 40
   },
   overscan: 20
 })
@@ -186,7 +220,8 @@ const modelHeaderPositions = computed(() => {
   let cumulativeHeight = 0
   for (let i = 0; i < unifiedVirtualItems.value.length; i++) {
     const item = unifiedVirtualItems.value[i]
-    const itemHeight = item.type === 'model-header' ? 64 : 40
+    const itemHeight =
+      item.type === 'model-header' || item.type === 'detached-object-header' ? 64 : 40
 
     if (item.type === 'model-header') {
       const data = item.data as { model: ModelItem; versionId: string }
@@ -196,26 +231,54 @@ const modelHeaderPositions = computed(() => {
         versionId: data.versionId,
         position: cumulativeHeight
       })
+    } else if (item.type === 'detached-object-header') {
+      const data = item.data as { objectId: string }
+      // Create a detached object header item in the virtual list
+      const detachedObjectHeader = {
+        id: data.objectId,
+        name: 'Detached Object',
+        displayName: 'Detached Object'
+      } as unknown as ModelItem
+      headers.push({
+        index: i,
+        model: detachedObjectHeader,
+        versionId: data.objectId,
+        position: cumulativeHeight
+      })
     }
     cumulativeHeight += itemHeight
   }
   return headers
 })
 
+const hasDiffActive = computed(() => {
+  return !!(diffState.oldVersion.value && diffState.newVersion.value)
+})
+
+const isDetachedObjectSticky = computed(() => {
+  if (!stickyHeader.value) return false
+  return objects.value.some((obj) => obj.objectId === stickyHeader.value?.model.id)
+})
+
 const handleShowVersions = (modelId: string) => {
   expandedModelId.value = modelId
-  showVersions.value = true
+  subView.value = ModelsSubView.Versions
 }
 
 const handleShowDiff = async (modelId: string, versionA: string, versionB: string) => {
   await diffModelVersions(modelId, versionA, versionB)
   expandedModelId.value = modelId
-  showVersions.value = true
+  subView.value = ModelsSubView.Diff
 }
 
 const handleVersionsClose = () => {
-  showVersions.value = false
+  subView.value = ModelsSubView.Main
   expandedModelId.value = null
+}
+
+const handleDiffClose = async () => {
+  await endDiff()
+  subView.value = ModelsSubView.Versions
 }
 
 const toggleModelExpansion = (modelId: string) => {
@@ -284,6 +347,13 @@ const getVersionIdFromItem = (item: UnifiedVirtualItem): string => {
   return ''
 }
 
+const getObjectIdFromItem = (item: UnifiedVirtualItem): string => {
+  if (item.type === 'detached-object-header') {
+    return (item.data as { objectId: string }).objectId
+  }
+  return ''
+}
+
 const scrollToSelectedItem = (objectId: string) => {
   nextTick(() => {
     const itemIndex = unifiedVirtualItems.value.findIndex(
@@ -322,12 +392,16 @@ const handleSelectionChange = useDebounceFn(
 
           if (containsObject) {
             expandedModels.value.add(model.id)
-            expandNodesToShowObject(
+
+            const result = expandNodesToShowObject(
               modelRootNodes,
               selectedObj.id,
               model.id,
               expandedNodes.value
             )
+            if (result.found && result.nodesToExpand.length > 0) {
+              result.nodesToExpand.forEach((nodeId) => expandedNodes.value.add(nodeId))
+            }
 
             scrollToSelectedItem(selectedObj.id)
             break
@@ -343,7 +417,7 @@ const handleSelectionChange = useDebounceFn(
 )
 
 // Simple scroll tracking - just switch headers
-const handleScroll = (e: Event) => {
+const handleScroll = useThrottleFn((e: Event) => {
   const container = e.target as HTMLElement
   if (!container) return
 
@@ -370,23 +444,48 @@ const handleScroll = (e: Event) => {
       versionId: currentHeader.versionId
     }
   }
-}
+}, 16)
 
 watch(selectedObjects, handleSelectionChange, { deep: true })
+
+watch(subView, (newSubView) => {
+  if (newSubView === ModelsSubView.Main) {
+    expandedModelId.value = null
+  }
+})
+
+watch(hasDiffActive, (isActive) => {
+  if (isActive && subView.value !== ModelsSubView.Diff) {
+    subView.value = ModelsSubView.Diff
+  }
+})
 
 // Initialize and update sticky header when models change
 watch(
   unifiedVirtualItems,
   (items) => {
     if (items.length > 0) {
-      const firstModelHeader = items.find((item) => item.type === 'model-header')
-      if (firstModelHeader) {
-        const data = firstModelHeader.data as { model: ModelItem; versionId: string }
-
-        // Always update to the current first model (handles new models being added)
-        stickyHeader.value = {
-          model: data.model,
-          versionId: data.versionId
+      const firstHeader = items.find(
+        (item) => item.type === 'model-header' || item.type === 'detached-object-header'
+      )
+      if (firstHeader) {
+        if (firstHeader.type === 'model-header') {
+          const data = firstHeader.data as { model: ModelItem; versionId: string }
+          stickyHeader.value = {
+            model: data.model,
+            versionId: data.versionId
+          }
+        } else if (firstHeader.type === 'detached-object-header') {
+          const data = firstHeader.data as { objectId: string }
+          const detachedObjectHeader = {
+            id: data.objectId,
+            name: 'Detached Object',
+            displayName: 'Detached Object'
+          } as unknown as ModelItem
+          stickyHeader.value = {
+            model: detachedObjectHeader,
+            versionId: data.objectId
+          }
         }
       }
     } else {
@@ -396,3 +495,17 @@ watch(
   { immediate: true }
 )
 </script>
+
+<style scoped>
+/* Add border-top to model/detached object headers that follow tree items using css */
+.model-list
+  .group[data-item-type='tree-item']
+  + .group[data-item-type='model-header']
+  .model-header,
+.model-list
+  .group[data-item-type='tree-item']
+  + .group[data-item-type='detached-object-header']
+  .model-header {
+  @apply border-t border-outline-3;
+}
+</style>

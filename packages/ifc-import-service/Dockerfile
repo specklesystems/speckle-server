@@ -35,10 +35,9 @@ FROM python:3.13-slim-bookworm
 ENV PATH=/app/bin:$PATH
 
 # Don't run your app as root.
-RUN <<EOT
-groupadd -r app
+RUN groupadd -r app && \
 useradd -r -d /app -g app -N app
-EOT
+
 
 STOPSIGNAL SIGINT
 

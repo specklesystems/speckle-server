@@ -1,23 +1,27 @@
-import { SpeckleViewer, TIME_MS, timeoutAt } from '@speckle/shared'
+import { SpeckleViewer } from '@speckle/shared'
 import {
+  CameraController,
   type TreeNode,
-  type MeasurementOptions,
-  type PropertyInfo,
-  ViewMode
+  type ViewMode,
+  type CanonicalView,
+  type InlineView,
+  type SpeckleView,
+  MeasurementsExtension
 } from '@speckle/viewer'
-import { MeasurementsExtension, ViewModes, MeasurementEvent } from '@speckle/viewer'
+import { Box3, Vector3, Matrix3 } from 'three'
+import { OBB } from 'three/examples/jsm/math/OBB'
 import { until } from '@vueuse/shared'
 import { useActiveElement } from '@vueuse/core'
-import { difference, isString, uniq } from 'lodash-es'
+import { isString, isEqualWith } from 'lodash-es'
 import { useEmbedState, useEmbed } from '~/lib/viewer/composables/setup/embed'
 import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
 import {
   useInjectedViewer,
   useInjectedViewerInterfaceState,
-  useInjectedViewerState,
-  type InjectableViewerState
+  useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
+import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
 import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
 import { getKeyboardShortcutTitle, onKeyboardShortcut } from '@speckle/ui-components'
 import { ViewerShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
@@ -25,8 +29,12 @@ import type {
   ViewerShortcut,
   ViewerShortcutAction
 } from '~/lib/viewer/helpers/shortcuts/types'
-import { useTheme } from '~/lib/core/composables/theme'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import type { defaultEdgeColorValue } from '~/lib/viewer/composables/setup/viewMode'
+import {
+  defaultMeasurementOptions,
+  type MeasurementOptions
+} from '@speckle/shared/viewer/state'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -43,14 +51,80 @@ export function useSectionBoxUtilities() {
   const isSectionBoxVisible = computed(() => visible.value)
   const isSectionBoxEdited = computed(() => edited.value)
 
+  /**
+   * Converts a Box3 or OBB to SectionBoxData format
+   */
+  const box3ToSectionBoxData = (
+    box: Box3 | OBB
+  ): SpeckleViewer.ViewerState.SectionBoxData => {
+    if (box instanceof Box3) {
+      return {
+        min: box.min.toArray(),
+        max: box.max.toArray()
+      }
+    } else {
+      // OBB case - calculate min/max from center and halfSize
+      const min = box.center.clone().sub(box.halfSize)
+      const max = box.center.clone().add(box.halfSize)
+
+      return {
+        min: min.toArray(),
+        max: max.toArray(),
+        ...(box.rotation && { rotation: box.rotation.toArray() })
+      }
+    }
+  }
+
+  /**
+   * Converts SectionBoxData to Box3 or OBB format (reverse of box3ToSectionBoxData)
+   */
+  const sectionBoxDataToBox3 = (
+    data: SpeckleViewer.ViewerState.SectionBoxData
+  ): Box3 | OBB => {
+    let box: Box3 | OBB
+
+    if (!data.rotation || !data.rotation.length) {
+      // No rotation, use Box3
+      const min = new Vector3().fromArray(data.min)
+      const max = new Vector3().fromArray(data.max)
+      box = new Box3(min, max)
+    } else {
+      // Has rotation, create OBB
+      box = new OBB()
+      const min = new Vector3().fromArray(data.min)
+      const max = new Vector3().fromArray(data.max)
+
+      const _box3 = new Box3()
+      _box3.set(min, max)
+      _box3.getCenter(box.center)
+      _box3.getSize(box.halfSize)
+      box.halfSize.multiplyScalar(0.5)
+
+      box.rotation = new Matrix3().fromArray(data.rotation)
+    }
+
+    return box
+  }
+
+  /**
+   * Compares two SectionBoxData objects for equality with floating-point tolerance
+   */
+  const sectionBoxDataEquals = (
+    a: SpeckleViewer.ViewerState.SectionBoxData,
+    b: SpeckleViewer.ViewerState.SectionBoxData
+  ): boolean => {
+    return isEqualWith(a, b, (objValue, othValue) => {
+      if (typeof objValue === 'number' && typeof othValue === 'number') {
+        return Math.abs(objValue - othValue) < 1e-6
+      }
+      return undefined
+    })
+  }
+
   const resolveSectionBoxFromSelection = () => {
     const objectIds = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
     const box = instance.getRenderer().boxFromObjects(objectIds)
-    /** When generating a section box from selection we don't apply any rotation */
-    sectionBox.value = {
-      min: box.min.toArray(),
-      max: box.max.toArray()
-    }
+    sectionBox.value = box3ToSectionBoxData(box)
   }
 
   const closeSectionBox = () => {
@@ -97,7 +171,10 @@ export function useSectionBoxUtilities() {
     resetSectionBox,
     resetSectionBoxCompletely,
     sectionBox,
-    closeSectionBox
+    closeSectionBox,
+    box3ToSectionBoxData,
+    sectionBoxDataToBox3,
+    sectionBoxDataEquals
   }
 }
 
@@ -108,35 +185,46 @@ export function useCameraUtilities() {
     camera
   } = useInjectedViewerInterfaceState()
 
-  const zoom = (...args: Parameters<typeof instance.zoom>) => instance.zoom(...args)
+  const cameraController = instance.getExtension(CameraController)
 
-  const setView = (...args: Parameters<typeof instance.setView>) => {
-    instance.setView(...args)
+  const setView = (
+    view: CanonicalView | InlineView | SpeckleView,
+    transition = true
+  ) => {
+    cameraController.setCameraView(view, transition)
   }
 
   const zoomExtentsOrSelection = () => {
     const ids = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
 
     if (ids.length > 0) {
-      return instance.zoom(ids)
+      return cameraController.setCameraView(ids, true)
     }
 
     if (isolatedObjectIds.value.length) {
-      return instance.zoom(isolatedObjectIds.value)
+      return cameraController.setCameraView(isolatedObjectIds.value, true)
     }
 
-    instance.zoom()
+    cameraController.setCameraView(undefined, true)
   }
 
   const toggleProjection = () => {
     camera.isOrthoProjection.value = !camera.isOrthoProjection.value
+    cameraController.toggleCameras()
   }
 
   const forceViewToViewerSync = () => {
-    setView({
-      position: camera.position.value,
-      target: camera.target.value
-    })
+    setView(
+      {
+        position: camera.position.value,
+        target: camera.target.value
+      },
+      true
+    )
+  }
+
+  const zoom = (objectIds?: string[], fit?: number, transition?: boolean) => {
+    cameraController.setCameraView(objectIds, transition, fit)
   }
 
   return {
@@ -145,129 +233,8 @@ export function useCameraUtilities() {
     camera,
     setView,
     zoom,
-    forceViewToViewerSync
-  }
-}
-
-export function useFilterUtilities(
-  options?: Partial<{ state: InjectableViewerState }>
-) {
-  const state = options?.state || useInjectedViewerState()
-  const {
-    viewer,
-    ui: { filters, explodeFactor }
-  } = state
-
-  const isolateObjects = (
-    objectIds: string[],
-    options?: Partial<{
-      replace: boolean
-    }>
-  ) => {
-    filters.isolatedObjectIds.value = uniq([
-      ...(options?.replace ? [] : filters.isolatedObjectIds.value),
-      ...objectIds
-    ])
-    // instance.isolateObjects(objectIds, 'utilities', true)
-  }
-
-  const unIsolateObjects = (objectIds: string[]) => {
-    filters.isolatedObjectIds.value = difference(
-      filters.isolatedObjectIds.value,
-      objectIds
-    )
-    // instance.unIsolateObjects(objectIds, 'utilities', true)
-  }
-
-  const hideObjects = (
-    objectIds: string[],
-    options?: Partial<{
-      replace: boolean
-    }>
-  ) => {
-    filters.hiddenObjectIds.value = uniq([
-      ...(options?.replace ? [] : filters.hiddenObjectIds.value),
-      ...objectIds
-    ])
-    // instance.hideObjects(objectIds, 'utilities', true)
-  }
-
-  const showObjects = (objectIds: string[]) => {
-    filters.hiddenObjectIds.value = difference(filters.hiddenObjectIds.value, objectIds)
-    // instance.showObjects(objectIds, 'utilities', true)
-  }
-
-  /**
-   * Sets the current filter property. Does not apply it (instruct viewer to color objects).
-   */
-  const setPropertyFilter = (property: PropertyInfo) => {
-    filters.propertyFilter.filter.value = property
-  }
-
-  /**
-   * Instructs the viewer to apply the current property filter (color objects).
-   */
-  const applyPropertyFilter = () => {
-    filters.propertyFilter.isApplied.value = true
-  }
-
-  /**
-   * Unsets the current property filter.
-   */
-  const removePropertyFilter = () => {
-    filters.propertyFilter.isApplied.value = false
-    filters.propertyFilter.filter.value = null
-  }
-
-  /**
-   * Unapplies the current property filter - removes object colouring
-   */
-  const unApplyPropertyFilter = () => {
-    filters.propertyFilter.isApplied.value = false
-  }
-
-  const resetFilters = () => {
-    filters.hiddenObjectIds.value = []
-    filters.isolatedObjectIds.value = []
-    filters.propertyFilter.filter.value = null
-    filters.propertyFilter.isApplied.value = false
-    // filters.selectedObjects.value = []
-  }
-
-  const resetExplode = () => {
-    explodeFactor.value = 0
-  }
-
-  const waitForAvailableFilter = async (
-    key: string,
-    options?: Partial<{ timeout: number }>
-  ) => {
-    const timeout = options?.timeout || 10 * TIME_MS.second
-
-    const res = await Promise.race([
-      until(viewer.metadata.availableFilters).toMatch(
-        (filters) => !!filters?.find((p) => p.key === key)
-      ),
-      timeoutAt(timeout, 'Waiting for available filter timed out')
-    ])
-
-    const filter = res?.find((p) => p.key === key)
-    return filter as NonNullable<typeof filter>
-  }
-
-  return {
-    isolateObjects,
-    unIsolateObjects,
-    hideObjects,
-    showObjects,
-    filters,
-    setPropertyFilter,
-    applyPropertyFilter,
-    removePropertyFilter,
-    unApplyPropertyFilter,
-    resetFilters,
-    resetExplode,
-    waitForAvailableFilter
+    forceViewToViewerSync,
+    cameraController
   }
 }
 
@@ -407,10 +374,13 @@ export function useThreadUtilities() {
 
 export function useMeasurementUtilities() {
   const state = useInjectedViewerState()
-
-  const measurementCount = ref(0)
+  const measurementsExtension =
+    state.viewer.instance.getExtension(MeasurementsExtension)
 
   const measurementOptions = computed(() => state.ui.measurement.options.value)
+  const hasMeasurements = computed(
+    () => state.ui.measurement.measurements.value.length > 0
+  )
 
   const enableMeasurements = (enabled: boolean) => {
     state.ui.measurement.enabled.value = enabled
@@ -420,54 +390,29 @@ export function useMeasurementUtilities() {
     state.ui.measurement.options.value = options
   }
 
-  const removeMeasurement = () => {
-    if (state.viewer.instance?.removeMeasurement) {
-      state.viewer.instance.removeMeasurement()
-    }
+  const removeActiveMeasurement = () => {
+    measurementsExtension.removeMeasurement()
   }
 
   const clearMeasurements = () => {
-    state.viewer.instance.getExtension(MeasurementsExtension).clearMeasurements()
+    state.ui.measurement.measurements.value = []
   }
 
-  const getActiveMeasurement = () => {
-    const measurementsExtension =
-      state.viewer.instance.getExtension(MeasurementsExtension)
-    const activeMeasurement = measurementsExtension?.activeMeasurement
-    return activeMeasurement && activeMeasurement.state === 2
-  }
-
-  const hasMeasurements = computed(() => measurementCount.value > 0)
-
-  const setupMeasurementListener = () => {
-    const extension = state.viewer.instance?.getExtension(MeasurementsExtension)
-    if (!extension) return
-
-    const updateCount = () => {
-      measurementCount.value = (
-        extension as unknown as { measurementCount: number }
-      ).measurementCount
-    }
-
-    // Set initial count
-    updateCount()
-
-    // Listen for changes
-    extension.on(MeasurementEvent.CountChanged, updateCount)
-  }
-
-  if (state.viewer.instance) {
-    setupMeasurementListener()
+  const reset = () => {
+    state.ui.measurement.enabled.value = false
+    state.ui.measurement.measurements.value = []
+    state.ui.measurement.options.value = { ...defaultMeasurementOptions }
   }
 
   return {
     measurementOptions,
     enableMeasurements,
     setMeasurementOptions,
-    removeMeasurement,
+    removeActiveMeasurement,
     clearMeasurements,
-    getActiveMeasurement,
-    hasMeasurements
+    hasMeasurements,
+    reset,
+    measurements: state.ui.measurement.measurements
   }
 }
 
@@ -502,10 +447,13 @@ export function useConditionalViewerRendering() {
 
 export function useHighlightedObjectsUtilities() {
   const {
-    ui: { highlightedObjectIds }
+    ui: { highlightedObjectIds },
+    pageType
   } = useInjectedViewerState()
 
   const highlightObjects = (ids: string[]) => {
+    if (pageType.value === ViewerRenderPageType.Presentation) return
+
     highlightedObjectIds.value = [...new Set([...highlightedObjectIds.value, ...ids])]
   }
 
@@ -527,50 +475,11 @@ export function useHighlightedObjectsUtilities() {
 }
 
 export function useViewModeUtilities() {
-  const { instance } = useInjectedViewer()
   const { viewMode } = useInjectedViewerInterfaceState()
-  const { isLightTheme } = useTheme()
   const mp = useMixpanel()
-  const logger = useLogger()
-
-  const edgesEnabled = ref(true)
-  const edgesWeight = ref(1)
-  const outlineOpacity = ref(0.75)
-  const defaultColor = ref(0x1a1a1a)
-  const edgesColor = ref(defaultColor.value)
-
-  const currentViewMode = computed(() => viewMode.value)
-
-  const updateViewMode = () => {
-    const viewModes = instance.getExtension(ViewModes)
-    if (viewModes) {
-      viewModes.setViewMode(currentViewMode.value, {
-        edges: edgesEnabled.value,
-        outlineThickness: edgesWeight.value,
-        outlineOpacity: outlineOpacity.value,
-        outlineColor: edgesColor.value
-      })
-    }
-  }
 
   const setViewMode = (mode: ViewMode) => {
-    viewMode.value = mode
-    if (mode === ViewMode.PEN) {
-      outlineOpacity.value = 1
-      edgesEnabled.value = true
-      if (edgesColor.value === defaultColor.value) {
-        if (!isLightTheme.value) {
-          edgesColor.value = 0xffffff
-        }
-      }
-    } else {
-      outlineOpacity.value = 0.75
-      if (edgesColor.value === 0xffffff) {
-        edgesColor.value = isLightTheme.value ? 0xffffff : defaultColor.value
-      }
-    }
-
-    updateViewMode()
+    viewMode.mode.value = mode
     mp.track('Viewer Action', {
       type: 'action',
       name: 'set-view-mode',
@@ -579,95 +488,39 @@ export function useViewModeUtilities() {
   }
 
   const toggleEdgesEnabled = () => {
-    edgesEnabled.value = !edgesEnabled.value
-    updateViewMode()
+    viewMode.edgesEnabled.value = !viewMode.edgesEnabled.value
     mp.track('Viewer Action', {
       type: 'action',
       name: 'toggle-edges',
-      enabled: edgesEnabled.value
+      enabled: viewMode.edgesEnabled.value
     })
   }
 
   const setEdgesWeight = (weight: number) => {
-    edgesWeight.value = Number(weight)
-    updateViewMode()
+    viewMode.edgesWeight.value = Number(weight)
     mp.track('Viewer Action', {
       type: 'action',
       name: 'set-edges-weight',
-      weight: edgesWeight.value
+      weight: viewMode.edgesWeight.value
     })
   }
 
-  const setEdgesColor = (color: number) => {
-    edgesColor.value = color
-    updateViewMode()
+  const setEdgesColor = (color: number | typeof defaultEdgeColorValue) => {
+    viewMode.edgesColor.value = color
     mp.track('Viewer Action', {
       type: 'action',
       name: 'set-edges-color',
       color: color.toString(16).padStart(6, '0')
     })
   }
-  // Get the current view mode from the extension and sync the UI state
-  const initializeFromViewerState = () => {
-    try {
-      const viewModesExt = instance.getExtension(ViewModes)
-      if (viewModesExt) {
-        const extensionViewMode = viewModesExt.viewMode
-        if (extensionViewMode !== undefined) {
-          viewMode.value = extensionViewMode
-        }
-
-        const renderer = instance.getRenderer()
-        const currentPipeline = renderer?.pipeline
-
-        if (currentPipeline && currentPipeline.options) {
-          const currentOptions = currentPipeline.options as Record<string, unknown>
-
-          if (typeof currentOptions.edges === 'boolean') {
-            edgesEnabled.value = currentOptions.edges
-          }
-
-          const edgesPasses = currentPipeline.getPass('EDGES')
-          if (edgesPasses.length > 0) {
-            const edgesPass = edgesPasses[0] as unknown as Record<string, unknown>
-            const edgesPassOptions = edgesPass._options as Record<string, unknown>
-
-            if (
-              edgesPassOptions &&
-              typeof edgesPassOptions.outlineThickness === 'number'
-            ) {
-              edgesWeight.value = edgesPassOptions.outlineThickness
-            }
-            if (
-              edgesPassOptions &&
-              typeof edgesPassOptions.outlineOpacity === 'number'
-            ) {
-              outlineOpacity.value = edgesPassOptions.outlineOpacity
-            }
-            if (edgesPassOptions && typeof edgesPassOptions.outlineColor === 'number') {
-              edgesColor.value = edgesPassOptions.outlineColor
-            }
-          }
-        }
-      }
-    } catch (error) {
-      logger.warn('Could not initialize from viewer state, using defaults:', error)
-    }
-  }
-
-  onMounted(() => {
-    initializeFromViewerState()
-  })
 
   return {
-    currentViewMode,
+    viewMode,
     setViewMode,
-    edgesEnabled,
     toggleEdgesEnabled,
-    edgesWeight,
     setEdgesWeight,
     setEdgesColor,
-    edgesColor
+    resetViewMode: viewMode.resetViewMode
   }
 }
 

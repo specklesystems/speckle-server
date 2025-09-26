@@ -3,13 +3,18 @@ import { Roles } from '../../../core/constants.js'
 import { parseFeatureFlags } from '../../../environment/index.js'
 import { OverridesOf } from '../../../tests/helpers/types.js'
 import { canReadAccIntegrationSettingsPolicy } from './canReadAccIntegrationSettings.js'
-import { getProjectFake, getWorkspaceFake } from '../../../tests/fakes.js'
+import {
+  getProjectFake,
+  getWorkspaceFake,
+  getWorkspacePlanFake
+} from '../../../tests/fakes.js'
 import { assert, describe, expect, it } from 'vitest'
 import {
   AccIntegrationNotEnabledError,
   ProjectNoAccessError,
   WorkspacePlanNoFeatureAccessError
 } from '../../domain/authErrors.js'
+import { WorkspaceFeatureFlags, WorkspacePlans } from '../../../workspaces/index.js'
 
 const buildSUT = (
   overrides?: OverridesOf<typeof canReadAccIntegrationSettingsPolicy>
@@ -43,15 +48,7 @@ const buildSUT = (
     getWorkspaceSsoSession: async () => {
       assert.fail()
     },
-    getWorkspacePlan: async () => {
-      return {
-        status: 'valid',
-        workspaceId,
-        name: 'enterprise',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    },
+    getWorkspacePlan: getWorkspacePlanFake({ workspaceId, name: 'enterprise' }),
     ...overrides
   })
 }
@@ -100,15 +97,16 @@ describe('canReadAccIntegrationSettings returns a function, that', () => {
       code: WorkspacePlanNoFeatureAccessError.code
     })
   })
-  it('requires the workspace plan to have access to the ACC integration feature', async () => {
+  it('requires the workspace plan to have access to the ACC integration feature flag', async () => {
     const result = await buildSUT({
       getWorkspacePlan: async () => {
         return {
           status: 'valid',
           workspaceId: cryptoRandomString({ length: 9 }),
-          name: 'free',
+          name: WorkspacePlans.Enterprise,
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          featureFlags: WorkspaceFeatureFlags.none
         }
       }
     })(buildArgs())
@@ -117,8 +115,19 @@ describe('canReadAccIntegrationSettings returns a function, that', () => {
       code: WorkspacePlanNoFeatureAccessError.code
     })
   })
-  it('allows enterprise plans to access the ACC integration feature', async () => {
-    const result = await buildSUT({})(buildArgs())
+  it('allows plans with the feature flag on, to access the ACC integration feature', async () => {
+    const result = await buildSUT({
+      getWorkspacePlan: async () => {
+        return {
+          status: 'valid',
+          workspaceId: cryptoRandomString({ length: 9 }),
+          name: WorkspacePlans.Free,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          featureFlags: WorkspaceFeatureFlags.accIntegration
+        }
+      }
+    })(buildArgs())
     expect(result).toBeAuthOKResult()
   })
 })

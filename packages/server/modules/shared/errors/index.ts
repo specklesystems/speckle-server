@@ -163,5 +163,24 @@ export class TestOnlyLogicError extends BaseError {
   static statusCode = 500
 }
 
+// 2PC failed and we failed to rollback. A prepared transaction may have been left behind.
+export class RegionalTransactionFatalError extends BaseError {
+  static code = 'REGIONAL_TRANSACTION_FATAL_ERROR'
+  static defaultMessage = 'Failed to rollback 2PC operation'
+  static statusCode = 500
+
+  constructor(
+    message: string | null,
+    { gid, clients }: { gid: string; clients: Knex[] }
+  ) {
+    super(message, {
+      info: {
+        gid,
+        dbs: clients.map(retrieveMetadataFromDatabaseClient)
+      }
+    })
+  }
+}
+
 export { BaseError }
 export type { Info }

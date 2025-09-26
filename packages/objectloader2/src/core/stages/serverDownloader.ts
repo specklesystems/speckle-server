@@ -1,8 +1,8 @@
-import BatchedPool from '../../queues/batchedPool.js'
+import BatchingQueue from '../../queues/batchingQueue.js'
 import Queue from '../../queues/queue.js'
 import { ObjectLoaderRuntimeError } from '../../types/errors.js'
-import { Fetcher, indexOf, isBase, take } from '../../types/functions.js'
-import { Item } from '../../types/types.js'
+import { CustomLogger, Fetcher, indexOf, isBase, take } from '../../types/functions.js'
+import { Item, ObjectAttributeMask } from '../../types/types.js'
 import { Downloader } from '../interfaces.js'
 
 export interface ServerDownloaderOptions {
@@ -11,7 +11,9 @@ export interface ServerDownloaderOptions {
   objectId: string
   token?: string
   headers?: Headers
+  logger: CustomLogger
   fetch?: Fetcher
+  attributeMask?: ObjectAttributeMask
 }
 
 const MAX_SAFARI_DECODE_BYTES = 2 * 1024 * 1024 * 1024 - 1024 * 1024 // 2GB minus a margin
@@ -24,8 +26,9 @@ export default class ServerDownloader implements Downloader {
   #fetch: Fetcher
   #results?: Queue<Item>
   #total?: number
+  #logger: CustomLogger
 
-  #downloadQueue?: BatchedPool<string>
+  #downloadQueue?: BatchingQueue<string>
   #decoder = new TextDecoder('utf-8', { fatal: true })
   #decodedBytesCount = 0
 
@@ -34,6 +37,7 @@ export default class ServerDownloader implements Downloader {
 
   constructor(options: ServerDownloaderOptions) {
     this.#options = options
+    this.#logger = options.logger
     this.#fetch =
       options.fetch ?? ((...args): Promise<Response> => globalThis.fetch(...args))
 
@@ -48,9 +52,10 @@ export default class ServerDownloader implements Downloader {
     if (this.#options.token) {
       this.#headers['Authorization'] = `Bearer ${this.#options.token}`
     }
-    this.#requestUrlChildren = `${this.#options.serverUrl}/api/getobjects/${
+    this.#requestUrlChildren = `${this.#options.serverUrl}/api/v2/projects/${
       this.#options.streamId
-    }`
+    }/object-stream/`
+
     this.#requestUrlRootObj = `${this.#options.serverUrl}/objects/${
       this.#options.streamId
     }/${this.#options.objectId}/single`
@@ -59,25 +64,17 @@ export default class ServerDownloader implements Downloader {
     this.#rawEncoding = encoder.encode(this.#rawString)
   }
 
-  #getDownloadCountAndSizes(total: number): number[] {
-    if (total <= 50) {
-      return [total]
-    }
-
-    return [10000, 25000, 10000, 1000]
-  }
-
-  initializePool(params: {
+  initialize(params: {
     results: Queue<Item>
     total: number
     maxDownloadBatchWait?: number
   }): void {
-    const { results, total } = params
+    const { results, total, maxDownloadBatchWait } = params
     this.#results = results
     this.#total = total
-    this.#downloadQueue = new BatchedPool<string>({
-      concurrencyAndSizes: this.#getDownloadCountAndSizes(total),
-      maxWaitTime: params.maxDownloadBatchWait,
+    this.#downloadQueue = new BatchingQueue<string>({
+      batchSize: 15000, // 15k is a good number for most cases
+      maxWaitTime: maxDownloadBatchWait ?? 1000, // 1 second
       processFunction: (batch: string[]): Promise<void> =>
         this.downloadBatch({
           batch,
@@ -87,15 +84,8 @@ export default class ServerDownloader implements Downloader {
     })
   }
 
-  #getPool(): BatchedPool<string> {
-    if (this.#downloadQueue) {
-      return this.#downloadQueue
-    }
-    throw new Error('Download pool is not initialized')
-  }
-
   add(id: string): void {
-    this.#getPool().add(id)
+    this.#downloadQueue?.add(id, id)
   }
 
   /*
@@ -126,11 +116,15 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
     headers: HeadersInit
   }): Promise<void> {
     const { batch, url, headers } = params
+
+    const start = performance.now()
+    this.#logger(`Downloading batch of ${batch.length} items...`)
+    const attributeMask = this.#options.attributeMask
     const keys = new Set<string>(batch)
     const response = await this.#fetch(url, {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ objects: JSON.stringify(batch) })
+      body: JSON.stringify({ objectIds: batch, attributeMask })
     })
 
     this.#validateResponse(response)
@@ -162,6 +156,9 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
     if (count >= this.#total!) {
       await this.#results?.disposeAsync() // mark the queue as done
     }
+    this.#logger(
+      `Downloaded batch of ${batch.length} items in ${performance.now() - start}ms`
+    )
   }
 
   async #processArray(

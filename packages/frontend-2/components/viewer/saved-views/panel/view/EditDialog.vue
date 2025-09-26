@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="open"
-    title="Edit view details"
+    title="Edit view"
     max-width="sm"
     :buttons="buttons"
     :on-submit="onSubmit"
@@ -9,7 +9,7 @@
     <div class="flex flex-col gap-4">
       <FormTextInput
         name="name"
-        label="View name"
+        label="Name"
         show-label
         color="foundation"
         auto-focus
@@ -30,31 +30,32 @@
         :resource-id-string="resourceIdString"
         :rules="[isRequired]"
       />
-      <FormRadioGroup
-        :options="radioOptions"
-        size="sm"
-        name="visibility"
-        :rules="[isRequired]"
-      />
+      <div v-tippy="canToggleVisibility.message">
+        <FormRadioGroup
+          :options="visibilityOptions"
+          :disabled="!canToggleVisibility.authorized"
+          size="sm"
+          name="visibility"
+          :rules="[isRequired, validateVisibility]"
+        />
+      </div>
     </div>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import type { FormRadioGroupItem, LayoutDialogButton } from '@speckle/ui-components'
-import { Globe, Lock } from 'lucide-vue-next'
+import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useForm } from 'vee-validate'
 import { graphql } from '~/lib/common/generated/gql'
-import {
-  SavedViewVisibility,
-  type FormSelectSavedViewGroup_SavedViewGroupFragment,
-  type ViewerSavedViewsPanelViewEditDialog_SavedViewFragment
-} from '~/lib/common/generated/gql/graphql'
 import { isRequired, isStringOfLength } from '~/lib/common/helpers/validation'
 import { useUpdateSavedView } from '~/lib/viewer/composables/savedViews/management'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
-
-// TODO: Should we switch to resolvedResourceIdString everywhere?
-// TODO: If search for 'Ungrouped' (ungrouped title), then return the ungrouped group too
+import { isUndefined } from 'lodash-es'
+import { useSavedViewValidationHelpers } from '~/lib/viewer/composables/savedViews/validation'
+import type {
+  FormSelectSavedViewGroup_SavedViewGroupFragment,
+  SavedViewVisibility,
+  ViewerSavedViewsPanelViewEditDialog_SavedViewFragment
+} from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment ViewerSavedViewsPanelViewEditDialog_SavedView on SavedView {
@@ -66,6 +67,7 @@ graphql(`
       ...FormSelectSavedViewGroup_SavedViewGroup
     }
     ...UseUpdateSavedView_SavedView
+    ...UseSavedViewValidationHelpers_SavedView
   }
 `)
 
@@ -77,7 +79,7 @@ type FormType = {
 }
 
 const props = defineProps<{
-  view: ViewerSavedViewsPanelViewEditDialog_SavedViewFragment
+  view: ViewerSavedViewsPanelViewEditDialog_SavedViewFragment | undefined
 }>()
 
 const open = defineModel<boolean>('open', {
@@ -91,6 +93,10 @@ const {
   }
 } = useInjectedViewerState()
 const updateView = useUpdateSavedView()
+const { validateVisibility, visibilityOptions, canToggleVisibility } =
+  useSavedViewValidationHelpers({
+    view: computed(() => props.view)
+  })
 
 const buttons = computed((): LayoutDialogButton[] => [
   {
@@ -110,41 +116,36 @@ const buttons = computed((): LayoutDialogButton[] => [
   }
 ])
 
-const radioOptions = computed((): FormRadioGroupItem<SavedViewVisibility>[] => [
-  {
-    value: SavedViewVisibility.Public,
-    title: 'Public',
-    introduction: 'Visible to anyone with access to the model.',
-    icon: Globe
-  },
-  {
-    value: SavedViewVisibility.AuthorOnly,
-    title: 'Private',
-    introduction: 'Visible only to the view author.',
-    icon: Lock
-  }
-])
-
 const onSubmit = handleSubmit(async (values) => {
+  if (!props.view) return
+
   const name =
     values.name.trim() && values.name.trim() !== props.view.name
       ? values.name.trim()
-      : null
+      : undefined
   const description =
     values.description?.trim() !== (props.view.description || undefined)
       ? values.description?.trim() || null
-      : null
+      : undefined
   const visibility =
-    values.visibility !== props.view.visibility ? values.visibility : null
-  const groupId = values.group.id !== props.view.group.id ? values.group.id : null
+    values.visibility !== props.view.visibility ? values.visibility : undefined
+  const groupId = values.group.id !== props.view.group.id ? values.group.id : undefined
+
+  const coreInput = {
+    ...(isUndefined(name) ? {} : { name }),
+    ...(isUndefined(description) ? {} : { description }),
+    ...(isUndefined(visibility) ? {} : { visibility }),
+    ...(isUndefined(groupId) ? {} : { groupId })
+  }
+  if (!Object.keys(coreInput).length) {
+    open.value = false
+    return
+  }
 
   const res = await updateView({
     view: props.view,
     input: {
-      name,
-      description,
-      visibility,
-      groupId,
+      ...coreInput,
       id: props.view.id,
       projectId: props.view.projectId
     }
@@ -156,6 +157,8 @@ const onSubmit = handleSubmit(async (values) => {
 })
 
 watch(open, (newVal, oldVal) => {
+  if (!props.view) return
+
   if (newVal && !oldVal) {
     // Reset form state when dialog opens
     setValues({

@@ -1,4 +1,14 @@
 import type { ApolloCache } from '@apollo/client/cache'
+import { isUngroupedGroup } from '@speckle/shared/saved-views'
+
+export const filterKeys = [
+  'input.search',
+  'input.onlyAuthored',
+  'input.onlyVisibility',
+  'filter.search',
+  'filter.onlyAuthored',
+  'filter.onlyVisibility'
+]
 
 /**
  * Cache mutations for when a group gets a new view:
@@ -27,15 +37,27 @@ export const onNewGroupViewCacheUpdates = (
     getCacheId('Project', projectId),
     'savedViewGroups',
     ({ helpers: { createUpdatedValue, ref, fromRef }, value }) => {
-      const isNewGroup = !value?.items?.some((group) => fromRef(group).id === groupId)
+      const isNewGroupUngrouped = isUngroupedGroup(groupId)
+      const alreadyExists = value?.items?.some((group) =>
+        isNewGroupUngrouped
+          ? isUngroupedGroup(fromRef(group).id)
+          : fromRef(group).id === groupId
+      )
+      const isNewGroup = !alreadyExists
       if (!isNewGroup) return
 
       return createUpdatedValue(({ update }) => {
         update('totalCount', (count) => count + 1)
-        update('items', (items) => [...items, ref('SavedViewGroup', groupId)])
+        update('items', (items) => {
+          const newItems = items.slice()
+          newItems[isNewGroupUngrouped ? 'unshift' : 'push'](
+            ref('SavedViewGroup', groupId)
+          )
+          return newItems
+        })
       })
     },
-    { autoEvictFiltered: true }
+    { autoEvictFiltered: filterKeys }
   )
 
   // SavedViewGroup.views + 1
@@ -49,7 +71,7 @@ export const onNewGroupViewCacheUpdates = (
         update('items', (items) => [ref('SavedView', viewId), ...items])
       })
     },
-    { autoEvictFiltered: true }
+    { autoEvictFiltered: filterKeys }
   )
 }
 
@@ -75,7 +97,7 @@ export const onGroupViewRemovalCacheUpdates = (
   const { viewId: id, groupId, projectId } = params
 
   // Check if default/ungrouped group
-  const isDefaultGroup = groupId.startsWith('default-')
+  const isDefaultGroup = isUngroupedGroup(groupId)
 
   // If default group and its now empty - remove it as it doesn't exist otherwise
   let shouldEvict
@@ -114,7 +136,7 @@ export const onGroupViewRemovalCacheUpdates = (
           )
         })
       },
-      { autoEvictFiltered: true }
+      { autoEvictFiltered: filterKeys }
     )
 
     // Evict entirely
@@ -132,7 +154,7 @@ export const onGroupViewRemovalCacheUpdates = (
           update('items', (items) => items.filter((item) => fromRef(item).id !== id))
         })
       },
-      { autoEvictFiltered: true }
+      { autoEvictFiltered: filterKeys }
     )
   }
 }

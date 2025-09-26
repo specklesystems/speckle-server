@@ -152,11 +152,21 @@ export const workspaceRoute = (slug: MaybeNullOrUndefined<string>) =>
   slug ? `/workspaces/${slug}` : '/'
 export const workspaceSsoRoute = (slug: string) => `/workspaces/${slug}/sso`
 
+export const dashboardsRoute = (slug?: MaybeNullOrUndefined<string>) =>
+  `/workspaces/${slug}/dashboards`
+
+export const dashboardRoute = (slug?: MaybeNullOrUndefined<string>, id?: string) =>
+  `/workspaces/${slug}/dashboards/${id}`
+
 export const workspaceCreateRoute = '/workspaces/actions/create'
 
 export const workspaceJoinRoute = '/workspaces/actions/join'
 
-export const workspaceFunctionsRoute = (slug: string) => `/workspaces/${slug}/functions`
+export const workspaceFunctionsRoute = (slug?: string) =>
+  `/workspaces/${slug}/functions`
+
+export const presentationRoute = (projectId?: string, presentationId?: string) =>
+  `/projects/${projectId}/presentations/${presentationId}`
 
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()
@@ -203,7 +213,7 @@ export const doesRouteFitTarget = (fullPathA: string, fullPathB: string) => {
     urlA = new URL(fullPathA, fakeOrigin)
     urlB = new URL(fullPathB, fakeOrigin)
   } catch (e) {
-    useLogger().warn('Failed to parse URLs', e)
+    useSafeLogger().logger().warn('Failed to parse URLs', e)
     return false
   }
 

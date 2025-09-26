@@ -44,39 +44,13 @@ import {
 } from '@/modules/core/repositories/branches'
 import {
   updateStreamFactory,
-  grantStreamPermissionsFactory,
-  markCommitStreamUpdatedFactory
+  grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import {
   getObjectFactory,
   storeSingleObjectIfNotFoundFactory,
   getStreamObjectsFactory
 } from '@/modules/core/repositories/objects'
-import { legacyUpdateStreamFactory } from '@/modules/core/services/streams/management'
-import {
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { getEventBus } from '@/modules/shared/services/eventBus'
-import {
-  getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory
-} from '@/modules/core/repositories/users'
-import {
-  findEmailFactory,
-  ensureNoPrimaryEmailForUserFactory,
-  createUserEmailFactory
-} from '@/modules/core/repositories/userEmails'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import {
   getViewerResourcesFromLegacyIdentifiersFactory,
@@ -84,9 +58,14 @@ import {
 } from '@/modules/core/services/commit/viewerResources'
 import type { SetNonNullable } from 'type-fest'
 import { createProject } from '@/test/projectHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import type { UpdateStreamRecord } from '@/modules/core/domain/streams/operations'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { logger } from '@/observability/logging'
+import { getProjectReplicationDbs } from '@/modules/multiregion/utils/dbSelector'
 
-const getServerInfo = getServerInfoFactory({ db })
-const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
 })
@@ -123,7 +102,6 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   getBranchById: getBranchByIdFactory({ db }),
   insertStreamCommits: insertStreamCommitsFactory({ db }),
   insertBranchCommits: insertBranchCommitsFactory({ db }),
-  markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   emitEvent: getEventBus().emit
 })
@@ -134,38 +112,18 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getBranchById: getBranchByIdFactory({ db })
 })
 
-const updateStream = legacyUpdateStreamFactory({
-  updateStream: updateStreamFactory({ db })
-})
+const updateStream: UpdateStreamRecord = async (update) =>
+  asMultiregionalOperation(
+    async ({ allDbs }) => replicateFactory(allDbs, updateStreamFactory)(update),
+    {
+      logger,
+      name: 'updateStream',
+      dbs: await getProjectReplicationDbs({ projectId: update.id })
+    }
+  )
+
 const grantPermissionsStream = grantStreamPermissionsFactory({ db })
 
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 const createObject = createObjectFactory({
   storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
@@ -718,7 +676,7 @@ describe('Graphql @comments', () => {
   // this user will be admin by default
   // it will be used to create all resources, that the other actors can
   // be tested against
-  const myTestActor = {
+  let myTestActor: BasicTestUser = {
     name: 'Gergo Jedlicska',
     email: 'gergo@jedlicska.com',
     password: 'sn3aky-1337-b1m',
@@ -1011,11 +969,11 @@ describe('Graphql @comments', () => {
 
   before(async () => {
     await beforeEachContext()
-    myTestActor.id = await createUser(myTestActor)
+    myTestActor = await createTestUser(myTestActor)
     await Promise.all(
       [chadTheEngineer, archived].map((user) =>
-        createUser({ name: user.name, email: user.email, password: user.password })
-          .then((id) => (user.id = id))
+        createTestUser({ name: user.name, email: user.email, password: user.password })
+          .then(({ id }) => (user.id = id))
           .catch((err) => {
             throw err
           })
@@ -1058,7 +1016,8 @@ describe('Graphql @comments', () => {
     await updateStream({
       ...publicStreamWithPublicComments,
       id: publicStreamWithPublicComments.id,
-      allowPublicComments: true
+      allowPublicComments: true,
+      updatedAt: new Date()
     })
   })
 

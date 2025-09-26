@@ -13,6 +13,7 @@ import {
 import { Roles } from '../../../../core/constants.js'
 import {
   ProjectNotEnoughPermissionsError,
+  SavedViewNoAccessError,
   ServerNoAccessError,
   WorkspaceNoAccessError,
   WorkspacePlanNoFeatureAccessError,
@@ -23,7 +24,8 @@ describe('canUpdateSavedViewPolicy', () => {
   const buildSUT = (overrides?: OverridesOf<typeof canUpdateSavedViewPolicy>) =>
     canUpdateSavedViewPolicy({
       getSavedView: getSavedViewFake({
-        projectId: 'project-id'
+        projectId: 'project-id',
+        authorId: 'user-id'
       }),
       getProject: getProjectFake({
         id: 'project-id',
@@ -40,6 +42,7 @@ describe('canUpdateSavedViewPolicy', () => {
       getWorkspaceSsoProvider: async () => null,
       getWorkspacePlan: async () => null,
       getWorkspaceSsoSession: async () => null,
+      getAdminOverrideEnabled: async () => false,
       ...overrides
     })
 
@@ -83,16 +86,18 @@ describe('canUpdateSavedViewPolicy', () => {
         ...overrides
       })
 
-    it('works if user is project owner', async () => {
-      const sut = buildWorkspacedSUT()
+    it('doesnt work for non-author even if user is project owner', async () => {
+      const sut = buildWorkspacedSUT({
+        getWorkspaceRole: async () => Roles.Workspace.Admin
+      })
 
       const result = await sut({
-        userId: 'user-id',
+        userId: 'user-idx',
         projectId: 'project-id',
         savedViewId: 'saved-view-id'
       })
 
-      expect(result).toBeOKResult()
+      expect(result).toBeAuthErrorResult({ code: SavedViewNoAccessError.code })
     })
 
     it('fails if workspaces disabled', async () => {
@@ -157,7 +162,7 @@ describe('canUpdateSavedViewPolicy', () => {
       })
 
       const result = await sut({
-        userId: 'aaa',
+        userId: 'user-id',
         projectId: 'project-id',
         savedViewId: 'saved-view-id'
       })
@@ -166,33 +171,12 @@ describe('canUpdateSavedViewPolicy', () => {
       })
     })
 
-    it('fails if not owner and not the author', async () => {
-      const sut = buildWorkspacedSUT({
-        getSavedView: getSavedViewFake({
-          projectId: 'project-id',
-          authorId: 'another-user-id'
-        }),
-        getProjectRole: async () => Roles.Stream.Contributor
-      })
-
-      const result = await sut({
-        userId: 'user-id',
-        projectId: 'project-id',
-        savedViewId: 'saved-view-id'
-      })
-
-      expect(result).toBeAuthErrorResult({
-        code: ProjectNotEnoughPermissionsError.code
-      })
-    })
-
-    it('succeeds if not owner but author', async () => {
+    it('succeeds if view author', async () => {
       const sut = buildWorkspacedSUT({
         getSavedView: getSavedViewFake({
           projectId: 'project-id',
           authorId: 'user-id'
-        }),
-        getProjectRole: async () => Roles.Stream.Contributor
+        })
       })
 
       const result = await sut({

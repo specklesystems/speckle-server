@@ -12,14 +12,11 @@
     <div class="relative p-2 h-full flex flex-col">
       <NuxtLink
         v-if="!defaultLinkDisabled"
-        :to="modelRoute(projectId, model.id)"
+        :to="modelUrl"
         class="absolute z-10 inset-0"
       />
       <div class="relative z-40 flex justify-between items-center h-10">
-        <NuxtLink
-          :to="!defaultLinkDisabled ? modelRoute(projectId, model.id) : undefined"
-          class="truncate"
-        >
+        <NuxtLink :to="!defaultLinkDisabled ? modelUrl : undefined" class="truncate">
           <div class="px-1 select-none w-full">
             <div
               v-if="nameParts[0]"
@@ -72,8 +69,8 @@
         />
         <template v-else-if="previewUrl && !isVersionUploading">
           <NuxtLink
-            :to="!defaultLinkDisabled ? modelRoute(projectId, model.id) : undefined"
-            class="relative z-20 bg-foundation-page w-full rounded-xl border border-outline-2"
+            :to="!defaultLinkDisabled ? modelUrl : undefined"
+            class="relative z-20 bg-foundation-page w-full rounded-xl border border-outline-2 overflow-hidden"
             :class="smallView ? 'h-24' : 'h-48'"
           >
             <PreviewImage :preview-url="previewUrl" />
@@ -141,9 +138,12 @@ import type {
   ProjectPageLatestItemsModelItemFragment,
   ProjectPageModelsCardProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
+import { modelVersionsRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
-import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
+import {
+  getModelItemRoute,
+  isPendingModelFragment
+} from '~~/lib/projects/helpers/models'
 import type { Nullable, Optional } from '@speckle/shared'
 import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
 import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
@@ -167,6 +167,10 @@ graphql(`
 graphql(`
   fragment ProjectPageModelsCard_Model on Model {
     id
+    homeView {
+      id
+      resourceIds
+    }
     lastUpload: uploads(input: { limit: 1, cursor: null }) {
       items {
         id
@@ -255,6 +259,8 @@ const nameParts = computed(() => {
   const displayName = splitName.pop()
   return [splitName.join('/') + '/', displayName]
 })
+
+const modelUrl = computed(() => getModelItemRoute(props.model))
 
 const previewUrl = computed(() =>
   isPendingModelFragment(props.model) ? null : props.model.previewUrl

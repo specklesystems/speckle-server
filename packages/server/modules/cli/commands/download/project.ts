@@ -4,8 +4,7 @@ import { downloadProjectFactory } from '@/modules/cross-server-sync/services/pro
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import {
   getStreamCollaboratorsFactory,
-  getStreamFactory,
-  markCommitStreamUpdatedFactory
+  getStreamFactory
 } from '@/modules/core/repositories/streams'
 import {
   createBranchFactory,
@@ -57,23 +56,20 @@ import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
+import { createNewProjectFactory } from '@/modules/core/services/projects'
 import {
-  createNewProjectFactory,
-  waitForRegionProjectFactory
-} from '@/modules/core/services/projects'
-import {
-  deleteProjectFactory,
-  getProjectFactory,
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
-import { storeModelFactory } from '@/modules/core/repositories/models'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   getViewerResourceGroupsFactory,
   getViewerResourceItemsUngroupedFactory
 } from '@/modules/viewer/services/viewerResources'
-import { getSavedViewFactory } from '@/modules/viewer/repositories/savedViews'
+import {
+  getModelHomeSavedViewFactory,
+  getSavedViewFactory
+} from '@/modules/viewer/repositories/savedViews'
 
 const command: CommandModule<
   unknown,
@@ -131,7 +127,6 @@ const command: CommandModule<
 
     const getStream = getStreamFactory({ db: projectDb })
     const getObject = getObjectFactory({ db: projectDb })
-    const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db: projectDb })
 
     const getStreamObjects = getStreamObjectsFactory({ db: projectDb })
     const markCommentViewed = markCommentViewedFactory({ db: projectDb })
@@ -148,7 +143,8 @@ const command: CommandModule<
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
         getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb }),
         getBranchesByIds: getBranchesByIdsFactory({ db: projectDb }),
-        getSavedView: getSavedViewFactory({ db: projectDb })
+        getSavedView: getSavedViewFactory({ db: projectDb }),
+        getModelHomeSavedView: getModelHomeSavedViewFactory({ db: projectDb })
       })
     })
     const getViewerResourcesFromLegacyIdentifiers =
@@ -190,7 +186,6 @@ const command: CommandModule<
       getBranchById: getBranchByIdFactory({ db: projectDb }),
       insertStreamCommits: insertStreamCommitsFactory({ db: projectDb }),
       insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
-      markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
       emitEvent: getEventBus().emit
     })
@@ -198,14 +193,11 @@ const command: CommandModule<
     const getUser = getUserFactory({ db })
 
     const createNewProject = createNewProjectFactory({
+      // TODO: this goes as event emmits outside  (default model)
+      // This does not support multiregion
       storeProject: storeProjectFactory({ db: projectDb }),
-      storeModel: storeModelFactory({ db: projectDb }),
       // THIS MUST GO TO THE MAIN DB
       storeProjectRole: storeProjectRoleFactory({ db }),
-      waitForRegionProject: waitForRegionProjectFactory({
-        getProject: getProjectFactory({ db: projectDb }),
-        deleteProject: deleteProjectFactory({ db: projectDb })
-      }),
       emitEvent: getEventBus().emit
     })
 

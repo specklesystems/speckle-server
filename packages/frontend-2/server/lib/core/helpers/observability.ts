@@ -3,6 +3,8 @@ import type { IncomingMessage } from 'node:http'
 import { get } from 'lodash-es'
 import type { Logger } from 'pino'
 import type express from 'express'
+import { prettifiedLoggerFactory, prettify } from '~/lib/core/helpers/observability'
+import type { ConsolaInstance, LogType } from 'consola'
 
 const redactedReqHeaders = ['authorization', 'cookie']
 
@@ -65,3 +67,54 @@ export const getRequestPath = (req: IncomingMessage | express.Request) => {
   )[0] as string
   return path?.length ? path : null
 }
+
+// i dunno why but importing this returns undefined in server build, it makes no sense to me why it would be stripped out
+// but the solution is to duplicate this here
+const consolaLogLevels = {
+  silent: Number.NEGATIVE_INFINITY,
+  fatal: 0,
+  error: 0,
+  warn: 1,
+  log: 2,
+  info: 3,
+  success: 3,
+  fail: 3,
+  ready: 3,
+  start: 3,
+  box: 3,
+  debug: 4,
+  trace: 5,
+  verbose: Number.POSITIVE_INFINITY
+}
+
+interface DevLogsServerContext {
+  consola?: ConsolaInstance
+}
+
+export const initSsrDevLogs = async (params: { logLevel: LogType }) => {
+  const { getContext } = await import('unctx')
+  const { AsyncLocalStorage } = await import('node:async_hooks')
+
+  const asyncContext = getContext<DevLogsServerContext>('nuxt-dev-logs', {
+    asyncContext: true,
+    AsyncLocalStorage
+  })
+
+  const ctx = asyncContext.tryUse()
+  if (ctx?.consola) {
+    // Fix up
+    // remove print to stdout, pino already handles all that
+    ctx.consola.setReporters(
+      ctx.consola.options.reporters.filter(
+        (r) => get(r, 'constructor.name') !== 'FancyReporter'
+      )
+    )
+    ctx.consola.level = consolaLogLevels[params.logLevel] || 0
+  }
+
+  return {
+    consola: ctx?.consola
+  }
+}
+
+export { prettifiedLoggerFactory, prettify }

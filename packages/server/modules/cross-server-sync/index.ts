@@ -31,15 +31,12 @@ import {
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { storeModelFactory } from '@/modules/core/repositories/models'
 import {
   getObjectFactory,
   getStreamObjectsFactory,
   storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
-  deleteProjectFactory,
-  getProjectFactory,
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
@@ -47,7 +44,6 @@ import {
   getOnboardingBaseStreamFactory,
   getStreamCollaboratorsFactory,
   getStreamFactory,
-  markCommitStreamUpdatedFactory,
   markOnboardingBaseStreamFactory
 } from '@/modules/core/repositories/streams'
 import { getFirstAdminFactory, getUserFactory } from '@/modules/core/repositories/users'
@@ -59,10 +55,7 @@ import {
   getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
-import {
-  createNewProjectFactory,
-  waitForRegionProjectFactory
-} from '@/modules/core/services/projects'
+import { createNewProjectFactory } from '@/modules/core/services/projects'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { ensureOnboardingProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
@@ -72,7 +65,10 @@ import {
   getViewerResourceGroupsFactory,
   getViewerResourceItemsUngroupedFactory
 } from '@/modules/viewer/services/viewerResources'
-import { getSavedViewFactory } from '@/modules/viewer/repositories/savedViews'
+import {
+  getModelHomeSavedViewFactory,
+  getSavedViewFactory
+} from '@/modules/viewer/repositories/savedViews'
 
 const crossServerSyncModule: SpeckleModule = {
   init() {
@@ -84,7 +80,6 @@ const crossServerSyncModule: SpeckleModule = {
     // Its fine to use main DB here, none of this is executed in a workspace context
     const getUser = getUserFactory({ db })
     const markOnboardingBaseStream = markOnboardingBaseStreamFactory({ db })
-    const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
     const getStream = getStreamFactory({ db })
     const getObject = getObjectFactory({ db })
     const getStreamObjects = getStreamObjectsFactory({ db })
@@ -102,7 +97,8 @@ const crossServerSyncModule: SpeckleModule = {
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
         getAllBranchCommits: getAllBranchCommitsFactory({ db }),
         getBranchesByIds: getBranchesByIdsFactory({ db }),
-        getSavedView: getSavedViewFactory({ db })
+        getSavedView: getSavedViewFactory({ db }),
+        getModelHomeSavedView: getModelHomeSavedViewFactory({ db })
       })
     })
     const getViewerResourcesFromLegacyIdentifiers =
@@ -142,7 +138,6 @@ const crossServerSyncModule: SpeckleModule = {
       getBranchById: getBranchByIdFactory({ db }),
       insertStreamCommits: insertStreamCommitsFactory({ db }),
       insertBranchCommits: insertBranchCommitsFactory({ db }),
-      markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
       emitEvent: getEventBus().emit
     })
@@ -152,13 +147,9 @@ const crossServerSyncModule: SpeckleModule = {
     })
 
     const createNewProject = createNewProjectFactory({
+      // This happens always outside of multiregion ctx
       storeProject: storeProjectFactory({ db }),
-      storeModel: storeModelFactory({ db }),
       storeProjectRole: storeProjectRoleFactory({ db }),
-      waitForRegionProject: waitForRegionProjectFactory({
-        getProject: getProjectFactory({ db }),
-        deleteProject: deleteProjectFactory({ db })
-      }),
       emitEvent: getEventBus().emit
     })
 

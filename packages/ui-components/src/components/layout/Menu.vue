@@ -57,7 +57,7 @@ import {
   useResponsiveHorizontalDirectionCalculation
 } from '~~/src/composables/common/window'
 import type { LayoutMenuItem } from '~~/src/helpers/layout/components'
-import { useElementBounding, useEventListener } from '@vueuse/core'
+import { useElementBounding, useElementSize, useEventListener } from '@vueuse/core'
 import { useBodyMountedMenuPositioning } from '~~/src/composables/layout/menu'
 import { isNumber } from '#lodash'
 import IconCheck from '~~/src/components/global/icon/Check.vue'
@@ -101,6 +101,8 @@ const menuButtonBounding = useElementBounding(menuButtonWrapper, {
   immediate: true
 })
 
+const menuItemsSize = useElementSize(computed(() => menuItems.value?.el || null))
+
 const { direction: calculatedDirection } = useResponsiveHorizontalDirectionCalculation({
   el: computed(() => menuItems.value?.el || null),
   defaultDirection: props.menuPosition,
@@ -124,7 +126,8 @@ const { menuStyle } = useBodyMountedMenuPositioning({
       default:
         return 176
     }
-  })
+  }),
+  menuHeight: computed(() => menuItemsSize.height.value)
 })
 
 const menuItemsStyles = computed(() => {
@@ -141,7 +144,7 @@ const menuItemsStyles = computed(() => {
 
 const menuItemsClasses = computed(() => {
   const classParts = [
-    'mt-1 w-44 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg border border-outline-2 z-50'
+    'w-44 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg border border-outline-2 z-50'
   ]
 
   if (props.customMenuItemsClasses) {
@@ -151,7 +154,7 @@ const menuItemsClasses = computed(() => {
   if (props.mountMenuOnBody) {
     classParts.push('fixed')
   } else {
-    classParts.push('absolute')
+    classParts.push('absolute mt-1')
 
     if (menuDirection.value === HorizontalDirection.Left) {
       classParts.push('right-0')
@@ -198,6 +201,7 @@ const buildButtonClassses = (params: {
 
 const chooseItem = (item: LayoutMenuItem<MenuIds>, event: MouseEvent) => {
   emit('chosen', { item, event })
+  setOpen(false)
 }
 
 const toggle = () => {
@@ -205,6 +209,11 @@ const toggle = () => {
   if (props.mountMenuOnBody) {
     menuButtonBounding.update()
   }
+}
+
+const setOpen = (open: boolean) => {
+  if (isOpenInternally.value === open) return
+  toggle()
 }
 
 // ok this is a bit hacky, but it's done because of headlessui's limited API

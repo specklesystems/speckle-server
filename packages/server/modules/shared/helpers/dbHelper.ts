@@ -302,3 +302,21 @@ export const compositeCursorTools = <
     resolveNewCursor
   }
 }
+
+export const prepareTransaction = async (db: Knex, gid: string): Promise<void> => {
+  await db.raw(`PREPARE TRANSACTION '${gid}';`)
+}
+
+export const commitPreparedTransaction = async (
+  db: Knex,
+  gid: string
+): Promise<void> => {
+  await db.raw(`COMMIT PREPARED '${gid}';`)
+}
+
+export const rollbackPreparedTransaction = async (
+  db: Knex,
+  gid: string
+): Promise<void> => {
+  await db.raw(`ROLLBACK PREPARED '${gid}';`)
+}

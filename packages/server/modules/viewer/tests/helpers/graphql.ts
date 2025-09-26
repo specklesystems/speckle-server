@@ -1,3 +1,6 @@
+import type { CreateSavedViewMutationVariables } from '@/modules/core/graph/generated/graphql'
+import { CreateSavedViewDocument } from '@/modules/core/graph/generated/graphql'
+import type { ExecuteOperationOptions, TestApolloServer } from '@/test/graphqlHelper'
 import gql from 'graphql-tag'
 
 const basicSavedViewFragment = gql`
@@ -134,6 +137,17 @@ export const getProjectSavedViewQuery = gql`
   ${basicSavedViewFragment}
 `
 
+export const getProjectSavedViewIfExistsQuery = gql`
+  query GetProjectSavedViewIfExists($projectId: String!, $viewId: ID!) {
+    project(id: $projectId) {
+      savedViewIfExists(id: $viewId) {
+        ...BasicSavedView
+      }
+    }
+  }
+  ${basicSavedViewFragment}
+`
+
 export const deleteSavedViewMutation = gql`
   mutation DeleteSavedView($input: DeleteSavedViewInput!) {
     projectMutations {
@@ -173,6 +187,12 @@ export const canUpdateSavedViewQuery = gql`
             message
             payload
           }
+          canMove {
+            authorized
+            code
+            message
+            payload
+          }
         }
       }
     }
@@ -186,6 +206,74 @@ export const updateSavedViewMutation = gql`
         updateView(input: $input) {
           ...BasicSavedView
         }
+      }
+    }
+  }
+
+  ${basicSavedViewFragment}
+`
+
+export const deleteSavedViewGroupMutation = gql`
+  mutation DeleteSavedViewGroup($input: DeleteSavedViewGroupInput!) {
+    projectMutations {
+      savedViewMutations {
+        deleteGroup(input: $input)
+      }
+    }
+  }
+`
+
+export const canUpdateSavedViewGroupQuery = gql`
+  query CanUpdateSavedViewGroup($projectId: String!, $groupId: ID!) {
+    project(id: $projectId) {
+      id
+      savedViewGroup(id: $groupId) {
+        id
+        permissions {
+          canUpdate {
+            authorized
+            code
+            message
+            payload
+          }
+        }
+      }
+    }
+  }
+`
+
+export const updateSavedViewGroupMutation = gql`
+  mutation UpdateSavedViewGroup(
+    $input: UpdateSavedViewGroupInput!
+    $viewsInput: SavedViewGroupViewsInput! = { limit: 10 }
+  ) {
+    projectMutations {
+      savedViewMutations {
+        updateGroup(input: $input) {
+          ...BasicSavedViewGroup
+        }
+      }
+    }
+  }
+
+  ${basicSavedViewGroupFragment}
+`
+
+export const createSavedViewFactory =
+  (deps: { apollo: TestApolloServer }) =>
+  (input: CreateSavedViewMutationVariables, options?: ExecuteOperationOptions) =>
+    deps.apollo.execute(CreateSavedViewDocument, input, options)
+
+export const getModelHomeViewQuery = gql`
+  query GetModelHomeView($projectId: String!, $modelId: String!) {
+    project(id: $projectId) {
+      id
+      model(id: $modelId) {
+        id
+        homeView {
+          ...BasicSavedView
+        }
+        resourceIdString
       }
     }
   }

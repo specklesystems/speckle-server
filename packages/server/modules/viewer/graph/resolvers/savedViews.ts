@@ -17,25 +17,33 @@ import { LogicError, NotFoundError, NotImplementedError } from '@/modules/shared
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { buildDefaultGroupId } from '@/modules/viewer/helpers/savedViews'
 import {
+  deleteSavedViewGroupRecordFactory,
   deleteSavedViewRecordFactory,
   getGroupSavedViewsPageItemsFactory,
   getGroupSavedViewsTotalCountFactory,
+  getNewViewSpecificPositionFactory,
   getProjectSavedViewGroupsPageItemsFactory,
   getProjectSavedViewGroupsTotalCountFactory,
   getStoredViewCountFactory,
+  getStoredViewGroupCountFactory,
   getUngroupedSavedViewsGroupFactory,
+  rebalancingViewPositionsFactory,
   recalculateGroupResourceIdsFactory,
+  setNewHomeViewFactory,
   storeSavedViewFactory,
   storeSavedViewGroupFactory,
+  updateSavedViewGroupRecordFactory,
   updateSavedViewRecordFactory
 } from '@/modules/viewer/repositories/savedViews'
 import {
   createSavedViewFactory,
   createSavedViewGroupFactory,
   deleteSavedViewFactory,
+  deleteSavedViewGroupFactory,
   getGroupSavedViewsFactory,
   getProjectSavedViewGroupsFactory,
-  updateSavedViewFactory
+  updateSavedViewFactory,
+  updateSavedViewGroupFactory
 } from '@/modules/viewer/services/savedViewsManagement'
 import { getViewerResourceGroupsFactory } from '@/modules/viewer/services/viewerResources'
 import { Authz } from '@speckle/shared'
@@ -45,10 +53,12 @@ import type { Knex } from 'knex'
 import { ungroupedScenesGroupTitle } from '@speckle/shared/saved-views'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
+  getModelHomeSavedViewFactory,
   getSavedViewFactory,
   getSavedViewGroupFactory
 } from '@/modules/viewer/repositories/dataLoaders/savedViews'
 import type { RequestDataLoaders } from '@/modules/core/loaders'
+import { omit } from 'lodash-es'
 
 const buildGetViewerResourceGroups = (params: {
   projectDb: Knex
@@ -62,7 +72,8 @@ const buildGetViewerResourceGroups = (params: {
     getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
     getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb }),
     getBranchesByIds: getBranchesByIdsFactory({ db: projectDb }),
-    getSavedView: getSavedViewFactory({ loaders: params.loaders })
+    getSavedView: getSavedViewFactory({ loaders: params.loaders }),
+    getModelHomeSavedView: getModelHomeSavedViewFactory({ loaders: params.loaders })
   })
 }
 
@@ -86,6 +97,7 @@ const resolvers: Resolvers = {
         resourceIdString: input.resourceIdString,
         userId: ctx.userId,
         onlyAuthored: input.onlyAuthored,
+        onlyVisibility: input.onlyVisibility,
         search: input.search,
         limit: input.limit,
         cursor: input.cursor
@@ -117,12 +129,20 @@ const resolvers: Resolvers = {
       return group
     },
     savedView: async (parent, args, ctx) => {
-      const projectDb = await getProjectDbClient({ projectId: parent.id })
+      const projectId = parent.id
+      const canRead = await ctx.authPolicies.project.savedViews.canRead({
+        userId: ctx.userId,
+        projectId,
+        savedViewId: args.id
+      })
+      throwIfAuthNotOk(canRead)
+
+      const projectDb = await getProjectDbClient({ projectId })
       const view = await ctx.loaders
         .forRegion({ db: projectDb })
         .savedViews.getSavedView.load({
           viewId: args.id,
-          projectId: parent.id
+          projectId
         })
       if (!view) {
         throw new NotFoundError(
@@ -133,17 +153,57 @@ const resolvers: Resolvers = {
       return view
     },
     savedViewIfExists: async (parent, args, ctx) => {
+      const projectId = parent.id
       if (!args.id?.length) return null
 
-      const projectDb = await getProjectDbClient({ projectId: parent.id })
+      const projectDb = await getProjectDbClient({ projectId })
       const view = await ctx.loaders
         .forRegion({ db: projectDb })
         .savedViews.getSavedView.load({
           viewId: args.id,
-          projectId: parent.id
+          projectId
         })
 
+      if (view) {
+        // Only access check if found
+        const canRead = await ctx.authPolicies.project.savedViews.canRead({
+          userId: ctx.userId,
+          projectId,
+          savedViewId: args.id
+        })
+        throwIfAuthNotOk(canRead)
+      }
+
       return view
+    }
+  },
+  Model: {
+    homeView: async (parent, _args, ctx) => {
+      const projectId = parent.streamId
+      const projectDb = await getProjectDbClient({ projectId })
+
+      return ctx.loaders
+        .forRegion({ db: projectDb })
+        .savedViews.getModelHomeSavedView.load({
+          modelId: parent.id,
+          projectId
+        })
+    },
+    resourceIdString: async (parent, _args, ctx) => {
+      const projectId = parent.streamId
+      const projectDb = await getProjectDbClient({ projectId })
+      const homeView = await ctx.loaders
+        .forRegion({ db: projectDb })
+        .savedViews.getModelHomeSavedView.load({
+          modelId: parent.id,
+          projectId
+        })
+
+      if (!homeView) return parent.id
+      return resourceBuilder()
+        .addResources(homeView.resourceIds)
+        .clearVersions() // just use latest version
+        .toString()
     }
   },
   SavedView: {
@@ -209,6 +269,7 @@ const resolvers: Resolvers = {
         userId: ctx.userId,
         groupId: parent.name ? parent.id : null,
         onlyAuthored: input.onlyAuthored,
+        onlyVisibility: input.onlyVisibility,
         search: input.search,
         limit: input.limit,
         cursor: input.cursor,
@@ -248,7 +309,14 @@ const resolvers: Resolvers = {
         getSavedViewGroup: getSavedViewGroupFactory({ loaders: ctx.loaders }),
         recalculateGroupResourceIds: recalculateGroupResourceIdsFactory({
           db: projectDb
-        })
+        }),
+        setNewHomeView: setNewHomeViewFactory({
+          db: projectDb
+        }),
+        getNewViewSpecificPosition: getNewViewSpecificPositionFactory({
+          db: projectDb
+        }),
+        rebalanceViewPositions: rebalancingViewPositionsFactory({ db: projectDb })
       })
       return await createSavedView({ input: args.input, authorId: ctx.userId! })
     },
@@ -270,7 +338,11 @@ const resolvers: Resolvers = {
       throwIfAuthNotOk(canUpdate)
 
       await deleteSavedViewFactory({
+        getSavedView: getSavedViewFactory({ loaders: ctx.loaders }),
         deleteSavedViewRecord: deleteSavedViewRecordFactory({
+          db: projectDb
+        }),
+        recalculateGroupResourceIds: recalculateGroupResourceIdsFactory({
           db: projectDb
         })
       })({
@@ -291,12 +363,33 @@ const resolvers: Resolvers = {
         resourceAccessRules: ctx.resourceAccessRules
       })
 
-      const canUpdate = await ctx.authPolicies.project.savedViews.canUpdate({
-        userId: ctx.userId,
-        projectId,
-        savedViewId: args.input.id
-      })
-      throwIfAuthNotOk(canUpdate)
+      // Different keys have different auth checks
+      const updates = omit(args.input, 'id', 'projectId')
+      const updatePolicyMap: Partial<
+        Record<
+          keyof typeof updates,
+          Extract<
+            keyof typeof ctx.authPolicies.project.savedViews,
+            'canMove' | 'canUpdate' | 'canEditTitle' | 'canEditDescription'
+          >
+        >
+      > = {
+        groupId: 'canMove',
+        name: 'canEditTitle',
+        description: 'canEditDescription',
+        position: 'canMove'
+      }
+      const results = await Promise.all(
+        Object.keys(updates).map((key) => {
+          const policyKey = updatePolicyMap[key as keyof typeof updates] || 'canUpdate'
+          return ctx.authPolicies.project.savedViews[policyKey]({
+            userId: ctx.userId,
+            projectId,
+            savedViewId: args.input.id
+          })
+        })
+      )
+      results.forEach(throwIfAuthNotOk)
 
       const updateSavedView = updateSavedViewFactory({
         getViewerResourceGroups: buildGetViewerResourceGroups({
@@ -306,6 +399,16 @@ const resolvers: Resolvers = {
         getSavedView: getSavedViewFactory({ loaders: ctx.loaders }),
         getSavedViewGroup: getSavedViewGroupFactory({ loaders: ctx.loaders }),
         updateSavedViewRecord: updateSavedViewRecordFactory({
+          db: projectDb
+        }),
+        recalculateGroupResourceIds: recalculateGroupResourceIdsFactory({
+          db: projectDb
+        }),
+        setNewHomeView: setNewHomeViewFactory({
+          db: projectDb
+        }),
+        rebalanceViewPositions: rebalancingViewPositionsFactory({ db: projectDb }),
+        getNewViewSpecificPosition: getNewViewSpecificPositionFactory({
           db: projectDb
         })
       })
@@ -352,11 +455,74 @@ const resolvers: Resolvers = {
         getViewerResourceGroups: buildGetViewerResourceGroups({
           projectDb,
           loaders: ctx.loaders
+        }),
+        getStoredViewGroupCount: getStoredViewGroupCountFactory({
+          db: projectDb
         })
       })
       return await createSavedViewGroup({
         input: args.input,
         authorId: ctx.userId!
+      })
+    },
+    deleteGroup: async (_parent, args, ctx) => {
+      const projectId = args.input.projectId
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: ctx.resourceAccessRules
+      })
+
+      const canDelete = await ctx.authPolicies.project.savedViews.canUpdateGroup({
+        userId: ctx.userId,
+        projectId,
+        savedViewGroupId: args.input.groupId
+      })
+      throwIfAuthNotOk(canDelete)
+
+      const projectDb = await getProjectDbClient({ projectId })
+      const deleteSavedViewGroup = deleteSavedViewGroupFactory({
+        deleteSavedViewGroupRecord: deleteSavedViewGroupRecordFactory({
+          db: projectDb
+        })
+      })
+
+      await deleteSavedViewGroup({
+        input: {
+          groupId: args.input.groupId,
+          projectId
+        },
+        userId: ctx.userId!
+      })
+
+      return true
+    },
+    updateGroup: async (_parent, args, ctx) => {
+      const projectId = args.input.projectId
+      throwIfResourceAccessNotAllowed({
+        resourceId: projectId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: ctx.resourceAccessRules
+      })
+
+      const canUpdate = await ctx.authPolicies.project.savedViews.canUpdateGroup({
+        userId: ctx.userId,
+        projectId,
+        savedViewGroupId: args.input.groupId
+      })
+      throwIfAuthNotOk(canUpdate)
+
+      const projectDb = await getProjectDbClient({ projectId })
+      const updateSavedViewGroup = updateSavedViewGroupFactory({
+        updateSavedViewGroupRecord: updateSavedViewGroupRecordFactory({
+          db: projectDb
+        }),
+        getSavedViewGroup: getSavedViewGroupFactory({ loaders: ctx.loaders })
+      })
+
+      return await updateSavedViewGroup({
+        input: args.input,
+        userId: ctx.userId!
       })
     }
   },
@@ -390,6 +556,10 @@ const disabledResolvers: Resolvers = {
     savedViewIfExists: () => {
       return null // intentional - so we dont have to FF guard the query
     }
+  },
+  Model: {
+    homeView: () => null, // intentional - so we dont have to FF guard the query
+    resourceIdString: (parent) => parent.id
   },
   ProjectMutations: {
     savedViewMutations: () => {

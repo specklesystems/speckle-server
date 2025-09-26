@@ -36,8 +36,7 @@ export function deserializeHashState(hashString: string) {
  */
 export function useRouteHashState() {
   const route = useRoute()
-  const router = useRouter()
-  const { waitUntilReady } = useRouterNavigating()
+  const router = useSafeRouter()
 
   const hashState = writableAsyncComputed({
     get: () => {
@@ -46,11 +45,17 @@ export function useRouteHashState() {
     set: async (newVal) => {
       const hashString = serializeHashState(newVal)
 
-      await waitUntilReady()
-      await router.push({
-        query: route.query,
-        hash: hashString
-      })
+      await router.push(
+        () => ({
+          query: route.query,
+          hash: hashString
+        }),
+        {
+          skipIf: (to) => {
+            return (to.hash || '') === route.hash
+          }
+        }
+      )
     },
     initialState: {},
     asyncRead: false

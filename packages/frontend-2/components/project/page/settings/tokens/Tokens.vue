@@ -66,7 +66,6 @@ import { Trash2 } from 'lucide-vue-next'
 import { projectEmbedTokensQuery } from '~~/lib/projects/graphql/queries'
 import type { EmbedTokenItem } from '~~/lib/projects/helpers/types'
 import { graphql } from '~/lib/common/generated/gql'
-import { formattedFullDate } from '~/utils/dateFormatter'
 import { useDeleteEmbedToken } from '~~/lib/projects/composables/tokenManagement'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import type { Nullable } from '@speckle/shared'
@@ -107,6 +106,7 @@ graphql(`
   }
 `)
 
+const { formattedFullDate } = useDateFormatters()
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
 const deleteEmbedToken = useDeleteEmbedToken()

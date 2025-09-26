@@ -34,10 +34,12 @@
       @login="showLoginDialog = true"
     />
 
+    <ViewerContextMenu v-model:open="contextMenuOpen" :parent-el="parentEl" />
+
     <div v-if="!isEmbedEnabled">
       <!-- Active users -->
       <ViewerAnchoredPointUser
-        v-for="user in Object.values(users)"
+        v-for="user in visibleUsers"
         :key="user.state.sessionId"
         :user="user"
         class="z-[10]"
@@ -118,11 +120,11 @@
 
     <!-- Shows up when filters are applied for an easy return to normality -->
     <div
-      v-if="hasAnyFiltersApplied"
       class="z-20 absolute left-1/2 -translate-x-1/2"
       :class="showFollowerMessage ? 'top-24' : 'top-14'"
     >
-      <ViewerGlobalFilterReset />
+      <ViewerGlobalFilterReset v-if="hasAnyFiltersApplied" />
+      <ViewerGlobalIsolationReset v-else-if="hasAnyIsolationsApplied" />
     </div>
   </div>
 </template>
@@ -144,7 +146,8 @@ import {
   useInjectedViewerInterfaceState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-import { useThreadUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useBreakpoints } from '@vueuse/core'
 
@@ -159,7 +162,8 @@ const { sessionId } = viewerState
 const { users } = useViewerUserActivityTracking({ parentEl })
 const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
 const {
-  filters: { hasAnyFiltersApplied }
+  filters: { hasAnyFiltersApplied },
+  hasAnyIsolationsApplied
 } = useFilterUtilities({ state: viewerState })
 const canPostComment = useCheckViewerCommentingAccess()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
@@ -187,6 +191,7 @@ const {
 } = useInjectedViewerInterfaceState()
 
 const showLoginDialog = ref(false)
+const contextMenuOpen = ref(false)
 
 useViewerCommentBubblesProjection({ parentEl })
 
@@ -207,6 +212,7 @@ const onThreadUpdate = (thread: CommentBubbleModel) => {
 const onThreadExpandedChange = (isExpanded: boolean) => {
   if (isExpanded) {
     closeNewThread()
+    contextMenuOpen.value = false
   }
 }
 
@@ -251,6 +257,12 @@ const usersWithAvatars = computed(() =>
     (u): u is SetFullyRequired<typeof u, 'user'> => !!u.user
   )
 )
+
+const visibleUsers = computed(() =>
+  // Hide users who are following someone else
+  Object.values(users.value).filter((user) => !user.state.ui.spotlightUserSessionId)
+)
+
 const spotlightUser = computed(() => {
   return Object.values(users.value).find(
     (u) => u.sessionId === spotlightUserSessionId.value
@@ -296,6 +308,15 @@ watch(
     // If a thread opened (wasn't open before) on mobile, emit event
     if (newThread && !oldThread && isMobile.value) {
       emit('forceClosePanels')
+    }
+  }
+)
+
+watch(
+  () => contextMenuOpen.value,
+  (isOpen) => {
+    if (isOpen) {
+      closeNewThread()
     }
   }
 )

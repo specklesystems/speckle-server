@@ -4,28 +4,25 @@ export const workspaceAccessCheckQuery = graphql(`
   query WorkspaceAccessCheck($slug: String!) {
     workspaceBySlug(slug: $slug) {
       id
+      slug
+    }
+    activeUser {
+      id
+      activeWorkspace {
+        id
+        slug
+      }
     }
   }
 `)
 
-export const workspaceSidebarQuery = graphql(`
-  query WorkspaceSidebar(
+export const workspacePageQuery = graphql(`
+  query WorkspacePageQuery(
     $workspaceSlug: String!
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
   ) {
     workspaceBySlug(slug: $workspaceSlug) {
-      ...WorkspaceSidebar_Workspace
-    }
-  }
-`)
-
-export const workspaceDashboardQuery = graphql(`
-  query WorkspaceDashboard(
-    $workspaceSlug: String!
-    $invitesFilter: PendingWorkspaceCollaboratorsFilter
-  ) {
-    workspaceBySlug(slug: $workspaceSlug) {
-      ...WorkspaceDashboard_Workspace
+      ...WorkspacePage_Workspace
     }
   }
 `)

@@ -29,26 +29,14 @@ import type {
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import type { WorkspaceProjectCreateInput } from '@/modules/core/graph/generated/graphql'
 import {
-  getDb,
+  getReplicationDbs,
   getValidDefaultProjectRegionKey
 } from '@/modules/multiregion/utils/dbSelector'
+import { createNewProjectFactory } from '@/modules/core/services/projects'
 import {
-  createNewProjectFactory,
-  waitForRegionProjectFactory
-} from '@/modules/core/services/projects'
-import {
-  deleteProjectFactory,
-  getProjectFactory,
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
-import { mainDb } from '@/db/knex'
-import { storeModelFactory } from '@/modules/core/repositories/models'
-import { getEventBus } from '@/modules/shared/services/eventBus'
-import {
-  getWorkspaceFactory,
-  upsertWorkspaceFactory
-} from '@/modules/workspaces/repositories/workspaces'
 import type {
   GetWorkspaceRoleAndSeat,
   GetWorkspaceRolesAndSeats,
@@ -59,6 +47,8 @@ import type { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operat
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
 import type { CreateWorkspaceSeat } from '@/modules/gatekeeper/domain/operations'
 import type { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { logger } from '@/observability/logging'
 
 type MoveProjectToWorkspaceArgs = {
   projectId: string
@@ -193,6 +183,7 @@ export const moveProjectToWorkspaceFactory =
     return await updateProject({
       projectUpdate: {
         id: projectId,
+        updatedAt: new Date(),
         workspaceId,
         visibility:
           // Migrate from Private -> Workspace visibility
@@ -308,6 +299,7 @@ export const validateWorkspaceMemberProjectRoleFactory =
     }
   }
 
+// This factory uses the command factory to create a new project in transactional (cross region) so it cannot be wrapped in another transaction
 export const createWorkspaceProjectFactory =
   (deps: { getDefaultRegion: GetDefaultRegion }) =>
   async (params: { input: WorkspaceProjectCreateInput; ownerId: string }) => {
@@ -320,40 +312,29 @@ export const createWorkspaceProjectFactory =
     })
     const regionKey =
       workspaceDefaultRegion?.key ?? (await getValidDefaultProjectRegionKey())
-    const projectDb = await getDb({ regionKey })
-    const db = mainDb
 
-    const regionalWorkspace = await getWorkspaceFactory({ db: projectDb })({
-      workspaceId: input.workspaceId
-    })
+    const project = await asMultiregionalOperation(
+      async ({ allDbs, mainDb, emit }) => {
+        const createNewProject = createNewProjectFactory({
+          // TODO: this goes as event emmits outside  (default model)
+          storeProject: replicateFactory(allDbs, storeProjectFactory),
+          // THIS MUST GO TO THE MAIN DB
+          storeProjectRole: storeProjectRoleFactory({ db: mainDb }),
+          emitEvent: emit
+        })
 
-    if (!regionalWorkspace) {
-      const workspace = await getWorkspaceFactory({ db })({
-        workspaceId: input.workspaceId
-      })
-      if (!workspace) throw new WorkspaceNotFoundError()
-      await upsertWorkspaceFactory({ db: projectDb })({ workspace })
-    }
-
-    // todo, use the command factory here, but for that, we need to migrate to the event bus
-    // deps not injected to ensure proper DB injection
-    const createNewProject = createNewProjectFactory({
-      storeProject: storeProjectFactory({ db: projectDb }),
-      storeModel: storeModelFactory({ db: projectDb }),
-      // THIS MUST GO TO THE MAIN DB
-      storeProjectRole: storeProjectRoleFactory({ db }),
-      waitForRegionProject: waitForRegionProjectFactory({
-        getProject: getProjectFactory({ db }),
-        deleteProject: deleteProjectFactory({ db: projectDb })
-      }),
-      emitEvent: getEventBus().emit
-    })
-
-    const project = await createNewProject({
-      ...input,
-      regionKey,
-      ownerId
-    })
+        return createNewProject({
+          ...input,
+          regionKey,
+          ownerId
+        })
+      },
+      {
+        dbs: await getReplicationDbs({ regionKey }),
+        name: 'Create project workspace',
+        logger
+      }
+    )
 
     return project
   }

@@ -1,4 +1,4 @@
-export default defineNuxtRouteMiddleware((to) => {
+export default defineParallelizedNuxtRouteMiddleware((to) => {
   const { ssrContext } = useNuxtApp()
 
   if (ssrContext) {

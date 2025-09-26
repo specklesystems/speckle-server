@@ -2,7 +2,7 @@
   <aside>
     <ViewerControlsButtonGroup
       v-show="activePanel === 'none'"
-      class="absolute left-1/2 -translate-x-1/2 z-50"
+      class="absolute left-1/2 -translate-x-1/2 z-40"
       :class="isEmbedEnabled ? 'bottom-[4rem]' : 'bottom-4'"
     >
       <ViewerControlsButtonToggle
@@ -10,6 +10,7 @@
         :key="panel.id"
         v-tippy="getTooltipProps(panel.tooltip)"
         :active="activePanel === panel.id"
+        :disabled="!viewerLoaded"
         :dot="shouldShowDot(panel.id)"
         :icon="panel.icon"
         :class="panel.extraClasses"
@@ -19,7 +20,7 @@
 
     <ViewerLayoutPanel
       v-if="activePanel !== 'none'"
-      class="absolute left-1/2 -translate-x-1/2 z-50 flex p-1 items-center justify-between w-80"
+      class="absolute left-1/2 -translate-x-1/2 z-40 flex p-2 items-center justify-between w-80"
       :class="isEmbedEnabled ? 'bottom-[4rem]' : 'bottom-4'"
     >
       <span class="flex items-center">
@@ -43,7 +44,7 @@
         </FormButton>
       </div>
 
-      <div class="absolute left-1/2 -translate-x-1/2 bottom-9 w-80">
+      <div class="absolute left-1/2 -translate-x-1/2 bottom-11 w-80">
         <ViewerMeasurementsMenu v-show="activePanel === 'measurements'" />
         <ViewerExplodeMenu v-show="activePanel === 'explode'" />
         <ViewerViewModesMenu v-show="activePanel === 'viewModes'" />
@@ -58,15 +59,17 @@ import {
   useSectionBoxUtilities,
   useMeasurementUtilities,
   useViewerShortcuts,
-  useFilterUtilities,
   useViewModeUtilities
 } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { ViewMode } from '@speckle/viewer'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { onKeyStroke, useBreakpoints } from '@vueuse/core'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { Ruler, Scissors, Sun, Layers2, Glasses } from 'lucide-vue-next'
+import { useOnViewerLoadComplete } from '~/lib/viewer/composables/viewer'
 
 enum ActivePanel {
   none = 'none',
@@ -89,10 +92,12 @@ const {
   isSectionBoxEnabled,
   isSectionBoxVisible
 } = useSectionBoxUtilities()
-const { getActiveMeasurement, removeMeasurement, enableMeasurements, hasMeasurements } =
-  useMeasurementUtilities()
+const { enableMeasurements, hasMeasurements, measurements } = useMeasurementUtilities()
 const { resetExplode } = useFilterUtilities()
-const { currentViewMode } = useViewModeUtilities()
+const {
+  viewMode: { mode: currentViewMode },
+  setViewMode
+} = useViewModeUtilities()
 const {
   ui: { explodeFactor }
 } = useInjectedViewerState()
@@ -106,12 +111,13 @@ const isMobile = breakpoints.smaller('sm')
 const mixpanel = useMixpanel()
 
 const activePanel = ref<ActivePanel>(ActivePanel.none)
+const viewerLoaded = ref(false)
 
 const panels = shallowRef({
   [ActivePanel.measurements]: {
     id: ActivePanel.measurements,
     name: 'Measure',
-    icon: 'IconViewerMeasurements',
+    icon: Ruler,
     tooltip: getShortcutDisplayText(shortcuts.ToggleMeasurements, {
       format: 'separate'
     }),
@@ -120,29 +126,31 @@ const panels = shallowRef({
   [ActivePanel.sectionBox]: {
     id: ActivePanel.sectionBox,
     name: 'Section',
-    icon: 'IconViewerSectionBox',
+    icon: Scissors,
     tooltip: getShortcutDisplayText(shortcuts.ToggleSectionBox, { format: 'separate' }),
     extraClasses: ''
   },
   [ActivePanel.explode]: {
     id: ActivePanel.explode,
     name: 'Explode',
-    icon: 'IconViewerExplode',
-    tooltip: 'Explode model',
+    icon: Layers2,
+    tooltip: getShortcutDisplayText(shortcuts.ToggleExplode, { format: 'separate' }),
     extraClasses: 'hidden md:flex'
   },
   [ActivePanel.viewModes]: {
     id: ActivePanel.viewModes,
     name: 'View modes',
-    icon: 'IconViewerViewModes',
-    tooltip: 'View modes',
+    icon: Glasses,
+    tooltip: getShortcutDisplayText(shortcuts.ToggleViewModes, { format: 'separate' }),
     extraClasses: ''
   },
   [ActivePanel.lightControls]: {
     id: ActivePanel.lightControls,
     name: 'Light controls',
-    icon: 'IconViewerLightControls',
-    tooltip: 'Light controls',
+    icon: Sun,
+    tooltip: getShortcutDisplayText(shortcuts.ToggleLightControls, {
+      format: 'separate'
+    }),
     extraClasses: 'hidden md:flex'
   }
 })
@@ -195,6 +203,11 @@ const toggleMeasurements = () => {
   activePanel.value = isMeasurementsActive ? ActivePanel.none : ActivePanel.measurements
 }
 
+const toggleExplode = () => {
+  activePanel.value =
+    activePanel.value === ActivePanel.explode ? ActivePanel.none : ActivePanel.explode
+}
+
 const toggleSectionBoxPanel = () => {
   if (activePanel.value === ActivePanel.measurements) {
     enableMeasurements(false)
@@ -205,6 +218,20 @@ const toggleSectionBoxPanel = () => {
       ? ActivePanel.none
       : ActivePanel.sectionBox
   toggleSectionBox()
+}
+
+const toggleViewModes = () => {
+  activePanel.value =
+    activePanel.value === ActivePanel.viewModes
+      ? ActivePanel.none
+      : ActivePanel.viewModes
+}
+
+const toggleLightControls = () => {
+  activePanel.value =
+    activePanel.value === ActivePanel.lightControls
+      ? ActivePanel.none
+      : ActivePanel.lightControls
 }
 
 const onActivePanelClose = () => {
@@ -223,6 +250,7 @@ const onReset = () => {
   }
   if (activePanel.value === ActivePanel.sectionBox) {
     resetSectionBoxCompletely()
+    activePanel.value = ActivePanel.none
   }
 }
 
@@ -230,18 +258,27 @@ const forceClosePanels = () => {
   activePanel.value = ActivePanel.none
 }
 
+const handleViewModeChange = (mode: ViewMode) => {
+  setViewMode(mode)
+}
+
 registerShortcuts({
   ToggleMeasurements: () => toggleMeasurements(),
-  ToggleSectionBox: () => toggleSectionBoxPanel()
+  ToggleExplode: () => toggleExplode(),
+  ToggleSectionBox: () => toggleSectionBoxPanel(),
+  ToggleViewModes: () => toggleViewModes(),
+  ToggleLightControls: () => toggleLightControls(),
+  SetViewModeDefault: () => handleViewModeChange(ViewMode.DEFAULT),
+  SetViewModeSolid: () => handleViewModeChange(ViewMode.SOLID),
+  SetViewModePen: () => handleViewModeChange(ViewMode.PEN),
+  SetViewModeArctic: () => handleViewModeChange(ViewMode.ARCTIC),
+  SetViewModeShaded: () => handleViewModeChange(ViewMode.SHADED)
 })
 
 onKeyStroke('Escape', () => {
-  const isActiveMeasurement = getActiveMeasurement()
+  const hasActiveMeasurements = measurements.value.length > 0
+  if (hasActiveMeasurements) return
 
-  if (isActiveMeasurement) {
-    removeMeasurement()
-    return
-  }
   // Only close panels if there's no active measurement
   if (activePanel.value === ActivePanel.measurements) {
     toggleMeasurements()
@@ -250,6 +287,13 @@ onKeyStroke('Escape', () => {
   }
   activePanel.value = ActivePanel.none
 })
+
+useOnViewerLoadComplete(
+  () => {
+    viewerLoaded.value = true
+  },
+  { initialOnly: true, waitForLoadingOver: true }
+)
 
 watch(activePanel, (newVal) => {
   // Using 'controls' here to stick to the old naming convention

@@ -243,6 +243,9 @@ class ViewerResourceBuilder implements Iterable<ViewerResource> {
   toResources() {
     return this.#resources.slice()
   }
+  toResourceIds() {
+    return this.toResources().map((r) => r.toString())
+  }
   clear() {
     this.#resources = []
     return this
@@ -255,6 +258,17 @@ class ViewerResourceBuilder implements Iterable<ViewerResource> {
   }
   get length() {
     return this.#resources.length
+  }
+
+  /**
+   * Remove specified versionIds from any model resources
+   */
+  clearVersions() {
+    this.#resources.forEach((r) => {
+      if (!isModelResource(r)) return
+      r.versionId = undefined
+    })
+    return this
   }
 
   isEqualTo(resource: ViewerResourcesTarget) {

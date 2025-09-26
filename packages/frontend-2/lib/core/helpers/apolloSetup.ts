@@ -113,6 +113,7 @@ export function buildAbstractCollectionMergeFunction<T extends string>(
     }
 
     return {
+      ...(existing || {}),
       ...(incoming || {}),
       ...(finalItems ? { items: finalItems } : {}),
       __typename: incoming?.__typename || existing?.__typename || typeName
@@ -132,7 +133,8 @@ export const incomingOverwritesExistingMergeFunction: FieldMergeFunction = (
   incoming: unknown
 ) => incoming
 
-export const mergeAsObjectsFunction: FieldMergeFunction = (existing, incoming) => ({
-  ...existing,
-  ...incoming
-})
+export const mergeAsObjectsFunction: FieldMergeFunction = (
+  existing,
+  incoming,
+  { mergeObjects }
+) => mergeObjects(existing, incoming) // built in apollo logic is more foolproof

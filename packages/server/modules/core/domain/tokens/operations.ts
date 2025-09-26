@@ -25,6 +25,10 @@ export type StoreTokenResourceAccessDefinitions = (
   defs: TokenResourceAccessDefinition[]
 ) => Promise<void>
 
+export type RevokeTokenResourceAccess = (
+  def: TokenResourceAccessDefinition
+) => Promise<void>
+
 export type StoreUserServerAppToken = (
   token: UserServerAppToken
 ) => Promise<UserServerAppToken>
@@ -104,7 +108,8 @@ export type CreateAndStorePersonalAccessToken = (
   userId: string,
   name: string,
   scopes: ServerScope[],
-  lifespan?: number | bigint
+  lifespan?: number | bigint,
+  limitResources?: TokenResourceIdentifierInput[] | null
 ) => Promise<string>
 
 export type CreateAndStoreEmbedToken = (args: {

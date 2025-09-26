@@ -2,10 +2,8 @@ import type {
   SavedViewsLoadSettings,
   ViewerUpdateTrackingTarget
 } from '@/modules/core/graph/generated/graphql'
-import type {
-  ViewerResourceGroup,
-  ViewerResourceItem
-} from '@/modules/viewer/domain/types/resources'
+import type { ViewerResourceItem } from '@/modules/viewer/domain/types/resources'
+import type { ExtendedViewerResourcesGraphQLReturn } from '@/modules/viewer/helpers/graphTypes'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 export type GetViewerResourceGroupsParams = ViewerUpdateTrackingTarget & {
@@ -19,11 +17,18 @@ export type GetViewerResourceGroupsParams = ViewerUpdateTrackingTarget & {
    */
   savedViewId?: MaybeNullOrUndefined<string>
   savedViewSettings?: MaybeNullOrUndefined<SavedViewsLoadSettings>
+  /**
+   * If true and no savedViewId specified, we'll resolve if there's an appropriate home view for
+   * the specified resources and change the resourceIdString accordingly
+   *
+   * Default: false
+   */
+  applyHomeView?: boolean
 }
 
 export type GetViewerResourceGroups = (
   target: GetViewerResourceGroupsParams
-) => Promise<ViewerResourceGroup[]>
+) => Promise<ExtendedViewerResourcesGraphQLReturn>
 
 export type GetViewerResourceItemsUngrouped = (
   target: GetViewerResourceGroupsParams

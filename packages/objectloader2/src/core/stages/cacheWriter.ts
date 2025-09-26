@@ -1,4 +1,4 @@
-import { DefermentManager } from '../../deferment/defermentManager.js'
+import { Deferment } from '../../deferment/defermentManager.js'
 import BatchingQueue from '../../queues/batchingQueue.js'
 import Queue from '../../queues/queue.js'
 import { CustomLogger } from '../../types/functions.js'
@@ -9,7 +9,7 @@ import { CacheOptions } from '../options.js'
 export class CacheWriter implements Queue<Item> {
   #writeQueue: BatchingQueue<Item> | undefined
   #database: Database
-  #defermentManager: DefermentManager
+  #deferment: Deferment
   #requestItem: (id: string) => void
   #logger: CustomLogger
   #options: CacheOptions
@@ -18,14 +18,14 @@ export class CacheWriter implements Queue<Item> {
   constructor(
     database: Database,
     logger: CustomLogger,
-    defermentManager: DefermentManager,
+    deferment: Deferment,
     options: CacheOptions,
     requestItem: (id: string) => void
   ) {
     this.#database = database
     this.#options = options
     this.#logger = logger
-    this.#defermentManager = defermentManager
+    this.#deferment = deferment
     this.#requestItem = requestItem
   }
 
@@ -40,12 +40,12 @@ export class CacheWriter implements Queue<Item> {
       })
     }
     this.#writeQueue.add(item.baseId, item)
-    this.#defermentManager.undefer(item, this.#requestItem)
+    this.#deferment.undefer(item, this.#requestItem)
   }
 
   async writeAll(items: Item[]): Promise<void> {
     const start = performance.now()
-    await this.#database.saveBatch({ batch: items })
+    await this.#database.putAll(items)
     this.#logger(
       `writeBatch: wrote ${items.length}, time ${
         performance.now() - start

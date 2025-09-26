@@ -11,6 +11,15 @@ export default defineModuleLoaders(async () => {
           viewId: savedViewId,
           projectId
         })
+    },
+    getSavedViewGroup: async ({ groupId, projectId }, { dataLoaders }) => {
+      const projectDb = await getProjectDbClient({ projectId })
+      return await dataLoaders
+        .forRegion({ db: projectDb })
+        .savedViews.getSavedViewGroup.load({
+          groupId,
+          projectId
+        })
     }
   }
 })

@@ -11,6 +11,12 @@ export const projectAccessCheckQuery = graphql(`
       }
       workspaceId
     }
+    activeUser {
+      id
+      activeWorkspace {
+        id
+      }
+    }
   }
 `)
 
@@ -67,10 +73,11 @@ export const latestModelsPaginationQuery = graphql(`
     $projectId: String!
     $filter: ProjectModelsFilter
     $cursor: String = null
+    $limit: Int = 16
   ) {
     project(id: $projectId) {
       id
-      models(cursor: $cursor, limit: 16, filter: $filter) {
+      models(cursor: $cursor, limit: $limit, filter: $filter) {
         totalCount
         cursor
         items {

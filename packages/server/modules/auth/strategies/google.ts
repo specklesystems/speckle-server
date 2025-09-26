@@ -4,7 +4,8 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 
 import {
   UserInputError,
-  UnverifiedEmailSSOLoginError
+  UnverifiedEmailSSOLoginError,
+  BlockedEmailDomainError
 } from '@/modules/core/errors/userinput'
 
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
@@ -14,6 +15,7 @@ import type {
   AuthStrategyBuilder
 } from '@/modules/auth/helpers/types'
 import {
+  getFeatureFlags,
   getGoogleClientId,
   getGoogleClientSecret
 } from '@/modules/shared/helpers/envHelper'
@@ -35,11 +37,13 @@ import { EnvironmentResourceError } from '@/modules/shared/errors'
 import { ExpectedAuthFailure } from '@/modules/auth/domain/const'
 import { ServerNoAccessError } from '@speckle/shared/authz'
 
+const { FF_NO_PERSONAL_EMAILS_ENABLED } = getFeatureFlags()
+
 const googleStrategyBuilderFactory =
   (deps: {
     getServerInfo: GetServerInfo
     getUserByEmail: LegacyGetUserByEmail
-    findOrCreateUser: FindOrCreateValidatedUser
+    buildFindOrCreateUser: () => Promise<FindOrCreateValidatedUser>
     validateServerInvite: ValidateServerInvite
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
@@ -75,6 +79,7 @@ const googleStrategyBuilderFactory =
           profileId: profile.id,
           serverVersion: serverInfo.version
         })
+        const findOrCreateUser = await deps.buildFindOrCreateUser()
 
         try {
           // seems very weird that the Google strategy is not parsing 'error' query params
@@ -106,6 +111,15 @@ const googleStrategyBuilderFactory =
 
           const existingUser = await deps.getUserByEmail({ email: user.email })
 
+          if (
+            FF_NO_PERSONAL_EMAILS_ENABLED &&
+            !existingUser &&
+            // we do not want to break invites, just individual signups
+            !req.session.token &&
+            email.toLowerCase().trim().endsWith('@gmail.com')
+          ) {
+            throw new BlockedEmailDomainError()
+          }
           if (existingUser && !existingUser.verified) {
             throw new UnverifiedEmailSSOLoginError(undefined, {
               info: {
@@ -117,7 +131,7 @@ const googleStrategyBuilderFactory =
           // if there is an existing user, go ahead and log them in (regardless of
           // whether the server is invite only or not).
           if (existingUser) {
-            const myUser = await deps.findOrCreateUser({ user })
+            const myUser = await findOrCreateUser({ user })
             return done(null, myUser)
           }
 
@@ -135,7 +149,7 @@ const googleStrategyBuilderFactory =
           }
 
           // create the user
-          const myUser = await deps.findOrCreateUser({
+          const myUser = await findOrCreateUser({
             user: {
               ...user,
               role: invite

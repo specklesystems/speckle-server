@@ -59,7 +59,7 @@ graphql(`
 `)
 
 export const useCanCreateWorkspace = () => {
-  const { result } = useQuery(useCanCreateWorkspaceQuery)
+  const { result, loading } = useQuery(useCanCreateWorkspaceQuery)
 
   const {
     canClickAction: canClickCreate,
@@ -76,7 +76,8 @@ export const useCanCreateWorkspace = () => {
     canClickCreate,
     canActuallyCreate,
     cantClickCreateReason,
-    cantClickCreateCode
+    cantClickCreateCode,
+    loading
   }
 }
 

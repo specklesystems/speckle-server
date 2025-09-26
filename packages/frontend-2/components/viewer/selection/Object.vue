@@ -30,69 +30,14 @@
     </div>
     <div v-if="unfold" class="space-y-1 pl-0 py-1 pr-2">
       <!-- key value pair display -->
-      <div
+      <ViewerSelectionKeyValuePair
         v-for="(kvp, index) in [
           ...categorisedValuePairs.primitives,
           ...categorisedValuePairs.nulls
         ]"
         :key="index"
-        class="flex w-full"
-      >
-        <div
-          :class="`grid grid-cols-3 w-full pl-2 py-0.5 ${
-            kvp.value === null || kvp.value === undefined ? 'text-foreground-2' : ''
-          }`"
-        >
-          <div
-            class="col-span-1 truncate text-body-3xs mr-2 font-medium text-foreground-2"
-            :title="(kvp.key as string)"
-          >
-            {{ kvp.key }}
-          </div>
-          <div
-            class="group col-span-2 pl-1 truncate text-body-3xs flex gap-1 items-center text-foreground"
-            :title="(kvp.value as string)"
-          >
-            <div class="flex gap-1 items-center w-full">
-              <!-- NOTE: can't do kvp.value || 'null' because 0 || 'null' = 'null' -->
-              <template v-if="isUrlString(kvp.value)">
-                <a
-                  :href="kvp.value as string"
-                  target="_blank"
-                  rel="noopener"
-                  class="truncate border-b border-outline-3 hover:border-outline-5"
-                  :class="
-                    kvp.value === null ? '' : 'group-hover:max-w-[calc(100%-1rem)]'
-                  "
-                >
-                  {{ kvp.value }}
-                </a>
-              </template>
-              <template v-else>
-                <span
-                  class="truncate"
-                  :class="
-                    kvp.value === null ? '' : 'group-hover:max-w-[calc(100%-1rem)]'
-                  "
-                >
-                  {{ kvp.value === null ? 'null' : kvp.value }}
-                </span>
-              </template>
-              <span v-if="kvp.units" class="truncate opacity-70">
-                {{ kvp.units }}
-              </span>
-              <button
-                v-if="isCopyable(kvp)"
-                :class="isCopyable(kvp) ? 'cursor-pointer' : 'cursor-default'"
-                class="opacity-0 group-hover:opacity-100 w-4"
-                @click="handleCopy(kvp)"
-              >
-                <ClipboardDocumentIcon class="h-3 w-3" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+        :kvp="kvp"
+      />
       <div
         v-for="(kvp, index) in categorisedValuePairs.objects"
         :key="index"
@@ -102,22 +47,23 @@
           :object="(kvp.value as SpeckleObject) || {}"
           :title="(kvp.key as string)"
           :unfold="autoUnfoldKeys.includes(kvp.key)"
+          :parent-path="currentPath"
         />
       </div>
       <div
         v-for="(kvp, index) in categorisedValuePairs.nonPrimitiveArrays"
         :key="index"
-        class="text-xs"
+        class="text-body-3xs"
       >
         <div class="text-foreground-2 grid grid-cols-3 pl-2">
           <div
-            class="col-span-1 truncate text-xs font-medium"
+            class="col-span-1 truncate text-body-3xs font-medium"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
           </div>
           <div
-            class="col-span-2 flex w-full min-w-0 truncate text-xs pl-1 text-foreground"
+            class="col-span-2 flex w-full min-w-0 truncate text-body-3xs pl-1 text-foreground"
           >
             <div class="flex-grow truncate">{{ kvp.innerType }} array</div>
             <div class="text-foreground-2">({{ kvp.arrayLength }})</div>
@@ -127,16 +73,16 @@
       <div v-for="(kvp, index) in categorisedValuePairs.primitiveArrays" :key="index">
         <div class="grid grid-cols-3">
           <div
-            class="col-span-1 truncate text-xs font-medium pl-2 text-foreground-2"
+            class="col-span-1 truncate text-body-3xs font-medium pl-2 text-foreground-2"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
           </div>
           <div
-            class="col-span-2 flex w-full min-w-0 truncate text-xs text-foreground"
+            class="col-span-2 flex w-full min-w-0 truncate text-body-3xs text-foreground"
             :title="(kvp.value as string)"
           >
-            <div class="flex-grow truncate">{{ kvp.arrayPreview }}</div>
+            <div class="pl-2.5 flex-grow truncate">{{ kvp.arrayPreview }}</div>
             <div class="text-foreground-2">({{ kvp.arrayLength }})</div>
           </div>
         </div>
@@ -148,12 +94,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ClipboardDocumentIcon } from '@heroicons/vue/24/outline'
 import type { SpeckleObject } from '~~/lib/viewer/helpers/sceneExplorer'
 import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useHighlightedObjectsUtilities } from '~/lib/viewer/composables/ui'
-import { VALID_HTTP_URL } from '~~/lib/common/helpers/validation'
+import type { KeyValuePair } from '~/components/viewer/selection/types'
 
 const {
   ui: {
@@ -169,14 +114,23 @@ const props = withDefaults(
     unfold?: boolean
     debug?: boolean
     modifiedSibling?: boolean
+    parentPath?: string
   }>(),
   { debug: false, unfold: false, root: false, modifiedSibling: false }
 )
 
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
-
 const unfold = ref(props.unfold)
 const autoUnfoldKeys = ['properties', 'Instance Parameters']
+
+// Compute the current full path for this object
+const currentPath = computed(() => {
+  if (props.root) return ''
+  if (!props.parentPath) return props.title || ''
+  return props.parentPath
+    ? `${props.parentPath}.${props.title || ''}`
+    : props.title || ''
+})
 
 const isAdded = computed(() => {
   if (!diffEnabled.value) return false
@@ -241,23 +195,6 @@ const headerAndSubheader = computed(() => {
   return getHeaderAndSubheaderForSpeckleObject(props.object)
 })
 
-const isUrlString = (v: unknown) => typeof v === 'string' && VALID_HTTP_URL.test(v)
-
-const isCopyable = (kvp: Record<string, unknown>) => {
-  return kvp.value !== null && kvp.value !== undefined && typeof kvp.value !== 'object'
-}
-
-const handleCopy = async (kvp: Record<string, unknown>) => {
-  const { copy } = useClipboard()
-  if (isCopyable(kvp)) {
-    const keyName = kvp.key as string
-    await copy(kvp.value as string, {
-      successMessage: `${keyName} copied to clipboard`,
-      failureMessage: `Failed to copy ${keyName} to clipboard`
-    })
-  }
-}
-
 const ignoredProps = [
   '__closure',
   'displayMesh',
@@ -269,16 +206,19 @@ const ignoredProps = [
 ]
 
 const keyValuePairs = computed(() => {
-  const kvps = [] as (Record<string, unknown> & { key: string; value: unknown })[]
+  const kvps: KeyValuePair[] = []
 
   // handle revit paramters
   if (props.title === 'parameters') {
     const paramKeys = Object.keys(props.object)
     for (const prop of paramKeys) {
-      const param = props.object[prop] as Record<string, unknown>
-      if (!param) continue
+      const param = props.object[prop]
+      if (!param || typeof param !== 'object' || param === null) continue
+      if (!('name' in param) || typeof param.name !== 'string') continue
+      if (!('value' in param)) continue
+
       kvps.push({
-        key: param.name as string,
+        key: param.name,
         type: typeof param.value,
         innerType: null,
         arrayLength: null,
@@ -313,21 +253,25 @@ const keyValuePairs = computed(() => {
     ) {
       // note: handles name value pairs from dui3 -
       const { value, units } = props.object[key] as { value: string; units?: string }
+      const fullPath = currentPath.value ? `${currentPath.value}.${key}` : key
       kvps.push({
         key,
         type: typeof value,
         value: value as string,
-        units
+        units,
+        backendPath: fullPath
       })
       continue
     }
+    const fullPath = currentPath.value ? `${currentPath.value}.${key}` : key
     kvps.push({
       key,
       type,
       innerType,
       arrayLength,
       arrayPreview,
-      value: props.object[key]
+      value: props.object[key],
+      backendPath: fullPath
     })
   }
 
@@ -369,11 +313,15 @@ const categorisedValuePairs = computed(() => {
 })
 
 const highlightObject = () => {
-  highlightObjects([props.object.id])
+  if (props.object.id && typeof props.object.id === 'string') {
+    highlightObjects([props.object.id])
+  }
 }
 
 const unhighlightObject = () => {
-  unhighlightObjects([props.object.id])
+  if (props.object.id && typeof props.object.id === 'string') {
+    unhighlightObjects([props.object.id])
+  }
 }
 
 watch(

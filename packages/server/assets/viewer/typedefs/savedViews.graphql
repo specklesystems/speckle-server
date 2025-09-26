@@ -27,6 +27,11 @@ type SavedView {
   Same as resourceIdString, but split into an array of resource IDs.
   """
   resourceIds: [String!]!
+  """
+  Truncated resourceIds w/o specific version data that is used to associate the view w/
+  specific groups
+  """
+  groupResourceIds: [String!]!
   isHomeView: Boolean!
   visibility: SavedViewVisibility!
   """
@@ -55,6 +60,10 @@ input SavedViewGroupViewsInput {
   """
   onlyAuthored: Boolean
   """
+  Optionally filter by visibility. Setting this to 'authorOnly' is the equivalent of setting 'onlyAuthored' to true.
+  """
+  onlyVisibility: SavedViewVisibility
+  """
   Whether to only include views matching this search term
   """
   search: String
@@ -63,8 +72,8 @@ input SavedViewGroupViewsInput {
   """
   sortDirection: SortDirection
   """
-  Optionally specify sort by field. Default: updatedAt
-  Options: updatedAt, createdAt, name
+  Optionally specify sort by field. Default: position
+  Options: updatedAt, createdAt, name, position
   """
   sortBy: String
   limit: Int
@@ -106,9 +115,13 @@ input SavedViewGroupsInput {
   """
   onlyAuthored: Boolean
   """
-  Whether to only include groups that have views matching this search term
+  Whether to only include groups that have names or views matching this search term
   """
   search: String
+  """
+  Optionally filter by visibility. Setting this to 'authorOnly' is the equivalent of setting 'onlyAuthored' to true.
+  """
+  onlyVisibility: SavedViewVisibility
   limit: Int
   cursor: String
 }
@@ -118,17 +131,6 @@ input GetUngroupedViewGroupInput {
   Viewer resource ID string that identifies which resources should be loaded
   """
   resourceIdString: String!
-}
-
-extend type Project {
-  savedViewGroups(input: SavedViewGroupsInput!): SavedViewGroupCollection!
-  savedViewGroup(id: ID!): SavedViewGroup!
-  ungroupedViewGroup(input: GetUngroupedViewGroupInput!): SavedViewGroup!
-  savedView(id: ID!): SavedView!
-  """
-  Same as savedView(), but won't throw if view isn't found
-  """
-  savedViewIfExists(id: ID): SavedView
 }
 
 input CreateSavedViewInput {
@@ -161,17 +163,46 @@ input CreateSavedViewInput {
   Set visibility of the view. Default: public
   """
   visibility: SavedViewVisibility
+  position: ViewPositionInput
 }
 
 input CreateSavedViewGroupInput {
   projectId: ID!
   resourceIdString: String!
-  groupName: String!
+  """
+  Will default to auto-generated group name otherwise
+  """
+  groupName: String
+}
+
+input DeleteSavedViewGroupInput {
+  projectId: ID!
+  groupId: ID!
 }
 
 input DeleteSavedViewInput {
   id: ID!
   projectId: ID!
+}
+
+enum ViewPositionInputType {
+  between
+}
+
+"""
+If only one is set, the other will be resolved automatically
+If none are set, the view will be added to the end of the list
+"""
+input ViewPositionInput {
+  type: ViewPositionInputType!
+  """
+  The ID of the view that should be after the new position
+  """
+  afterViewId: ID
+  """
+  The ID of the view that should be before the new position
+  """
+  beforeViewId: ID
 }
 
 input UpdateSavedViewInput {
@@ -208,10 +239,19 @@ input UpdateSavedViewInput {
   Optionally change visibility of the view
   """
   visibility: SavedViewVisibility
+  position: ViewPositionInput
+}
+
+input UpdateSavedViewGroupInput {
+  projectId: ID!
+  groupId: ID!
+  name: String
 }
 
 type SavedViewMutations {
   createGroup(input: CreateSavedViewGroupInput!): SavedViewGroup!
+  deleteGroup(input: DeleteSavedViewGroupInput!): Boolean!
+  updateGroup(input: UpdateSavedViewGroupInput!): SavedViewGroup!
   createView(input: CreateSavedViewInput!): SavedView!
   deleteView(input: DeleteSavedViewInput!): Boolean!
   updateView(input: UpdateSavedViewInput!): SavedView!
@@ -219,4 +259,26 @@ type SavedViewMutations {
 
 extend type ProjectMutations {
   savedViewMutations: SavedViewMutations!
+}
+
+extend type Project {
+  savedViewGroups(input: SavedViewGroupsInput!): SavedViewGroupCollection!
+  savedViewGroup(id: ID!): SavedViewGroup!
+  ungroupedViewGroup(input: GetUngroupedViewGroupInput!): SavedViewGroup!
+  savedView(id: ID!): SavedView!
+  """
+  Same as savedView(), but won't throw if view isn't found
+  """
+  savedViewIfExists(id: ID): SavedView
+}
+
+extend type Model {
+  """
+  The model's home view, if any
+  """
+  homeView: SavedView
+  """
+  The resourceIdString to use when building links to this model in the viewer. Takes home view settings into account.
+  """
+  resourceIdString: String!
 }

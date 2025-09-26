@@ -1,4 +1,5 @@
 import { ensureError } from '@speckle/shared'
+import { omit, pick } from 'lodash-es'
 import type { TransformCallback } from 'stream'
 import { Transform } from 'stream'
 
@@ -47,5 +48,37 @@ class SpeckleObjectsStream extends Transform {
     callback()
   }
 }
-
 export { SpeckleObjectsStream }
+
+export const objectDataTransformFactory = ({
+  attributeMask
+}: {
+  attributeMask?: { include: string[] } | { exclude: string[] }
+}) => {
+  let objectTransform: ((dataText: string) => string) | null
+  if (attributeMask) {
+    let objectFilter: (obj: unknown, props: string[]) => unknown
+    let filteredAttributes: string[]
+    if ('include' in attributeMask) {
+      objectFilter = pick
+      filteredAttributes = attributeMask.include
+    }
+    if ('exclude' in attributeMask) {
+      objectFilter = omit
+      filteredAttributes = attributeMask.exclude
+    }
+    objectTransform = (dataText: string) =>
+      JSON.stringify(objectFilter(JSON.parse(dataText), filteredAttributes))
+  }
+  return new Transform({
+    writableObjectMode: true,
+    transform({ dataText, id }: { dataText: string; id: string }, _, callback) {
+      try {
+        const objectDataString = objectTransform ? objectTransform(dataText) : dataText
+        callback(null, `${id}\t${objectDataString}\n`)
+      } catch (err) {
+        callback(ensureError(err))
+      }
+    }
+  })
+}

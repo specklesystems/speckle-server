@@ -7,28 +7,42 @@ on:
       CLOUDFLARE_ACCOUNT_ID:
         required: true
         type: string
-      DOCKERHUB_USERNAME:
+      OCI_REGISTRY_DOMAIN:
+        required: false
+        type: string
+        default: registry-1.docker.io
+      OCI_REGISTRY_USERNAME:
         required: true
         type: string
+      OCI_REGISTRY_PATH:
+        required: true
+        type: string
+      CHART_NAME:
+        required: false
+        type: string
+        default: 'speckle-server-chart'
     secrets:
       DATADOG_API_KEY:
         required: true
       CLOUDFLARE_API_TOKEN:
         required: true
-      DOCKERHUB_TOKEN:
+      OCI_REGISTRY_PASSWORD:
         required: true
       GH_DEVOPS_PAT:
         required: true
 jobs:
   helm-chart-oci:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Helm chart oci
     container:
       image: speckle/pre-commit-runner:latest
     env:
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
-      DOCKER_REG_USER: ${{ inputs.DOCKERHUB_USERNAME }}
-      DOCKER_REG_PASS: ${{ secrets.DOCKERHUB_TOKEN }}
+      REGISTRY_USERNAME: ${{ inputs.OCI_REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.OCI_REGISTRY_PASSWORD }}
+      HELM_REGISTRY_DOMAIN: ${{ inputs.OCI_REGISTRY_DOMAIN }}
+      HELM_REPOSITORY_PATH: ${{ inputs.OCI_REGISTRY_PATH }}
+      CHART_NAME: ${{ inputs.CHART_NAME }}
     steps:
       - uses: actions/checkout@v4.2.2
         with:
@@ -38,10 +52,10 @@ jobs:
         run: ./.github/workflows/scripts/publish_helm_chart_oci.sh
 
   helm-chart-commit:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Helm chart commit
     container:
-      image: bitnami/python:3.12.0
+      image: python:3.12.11-bookworm
     env:
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
     steps:
@@ -65,7 +79,7 @@ jobs:
         working-directory: speckle
 
   viewer-sandbox-cloudflare-pages:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Viewer sandbox cloudflare pages
     env:
       CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}

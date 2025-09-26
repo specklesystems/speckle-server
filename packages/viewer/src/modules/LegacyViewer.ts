@@ -30,10 +30,7 @@ import {
 import { Viewer } from './Viewer.js'
 import { SectionOutlines } from './extensions/sections/SectionOutlines.js'
 import { type TreeNode, WorldTree } from './tree/WorldTree.js'
-import {
-  type MeasurementOptions,
-  MeasurementsExtension
-} from './extensions/measurements/MeasurementsExtension.js'
+import { MeasurementsExtension } from './extensions/measurements/MeasurementsExtension.js'
 import { ExplodeExtension } from './extensions/ExplodeExtension.js'
 import {
   DiffExtension,
@@ -49,6 +46,7 @@ import { HybridCameraController } from './extensions/HybridCameraController.js'
 import { SectionTool } from './extensions/sections/SectionTool.js'
 import { OBB } from 'three/examples/jsm/math/OBB.js'
 import { SpeckleViewer } from '@speckle/shared'
+import { MeasurementOptions } from '@speckle/shared/viewer/state'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler
@@ -422,14 +420,7 @@ export class LegacyViewer extends Viewer {
   /** MISC */
   public screenshot(): Promise<string> {
     return new Promise((resolve) => {
-      const sectionBoxVisible = this.sections.enabled
-      if (sectionBoxVisible) {
-        this.sections.visible = false
-      }
       const screenshot = this.speckleRenderer.renderer.domElement.toDataURL('image/png')
-      if (sectionBoxVisible) {
-        this.sections.visible = true
-      }
       resolve(screenshot)
     })
   }

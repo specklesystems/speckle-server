@@ -16,21 +16,19 @@ import {
   toProjectIdWhitelist
 } from '@/modules/core/helpers/token'
 import {
-  createBranchFactory,
   getBatchedStreamBranchesFactory,
   insertBranchesFactory
 } from '@/modules/core/repositories/branches'
 import {
+  deleteProjectCommitsFactory,
   getBatchedBranchCommitsFactory,
   getBatchedStreamCommitsFactory,
   insertBranchCommitsFactory,
   insertCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { storeModelFactory } from '@/modules/core/repositories/models'
 import {
   deleteProjectFactory,
-  getProjectFactory,
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
@@ -38,7 +36,6 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   getStreamFactory,
   createStreamFactory,
-  deleteStreamFactory,
   updateStreamFactory,
   revokeStreamPermissionsFactory,
   grantStreamPermissionsFactory,
@@ -50,7 +47,7 @@ import {
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import {
   createNewProjectFactory,
-  waitForRegionProjectFactory
+  deleteProjectAndCommitsFactory
 } from '@/modules/core/services/projects'
 import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
@@ -69,8 +66,9 @@ import {
 import { createOnboardingStreamFactory } from '@/modules/core/services/streams/onboarding'
 import { getOnboardingBaseProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
 import {
-  getDb,
   getProjectDbClient,
+  getProjectReplicationDbs,
+  getReplicationDbs,
   getValidDefaultProjectRegionKey
 } from '@/modules/multiregion/utils/dbSelector'
 import {
@@ -88,6 +86,7 @@ import { createAndSendInviteFactory } from '@/modules/serverinvites/services/cre
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   filteredSubscribe,
@@ -118,84 +117,59 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import type { Knex } from 'knex'
+import type { Logger } from '@/observability/logging'
 
-const getServerInfo = getServerInfoFactory({ db })
-const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
 
-const buildFinalizeProjectInvite = () =>
+const buildFinalizeProjectInvite = (mainDb: Knex, emit: EventBusEmit) =>
   finalizeResourceInviteFactory({
-    findInvite: findInviteFactory({ db }),
+    findInvite: findInviteFactory({ db: mainDb }),
     validateInvite: validateProjectInviteBeforeFinalizationFactory({
-      getProject: getStream
+      getProject: getStreamFactory({ db: mainDb })
     }),
     processInvite: processFinalizedProjectInviteFactory({
-      getProject: getStream,
+      getProject: getStreamFactory({ db: mainDb }),
       addProjectRole: addOrUpdateStreamCollaboratorFactory({
         validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
-        getUser,
-        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-        getStreamRoles: getStreamRolesFactory({ db }),
-        emitEvent: getEventBus().emit
+        getUser: getUserFactory({ db: mainDb }),
+        grantStreamPermissions: grantStreamPermissionsFactory({ db: mainDb }),
+        getStreamRoles: getStreamRolesFactory({ db: mainDb }),
+        emitEvent: emit
       })
     }),
-    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    emitEvent: (...args) => getEventBus().emit(...args),
-    findEmail: findEmailFactory({ db }),
+    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db: mainDb }),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db: mainDb }),
+    emitEvent: emit,
+    findEmail: findEmailFactory({ db: mainDb }),
     validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-      createUserEmail: createUserEmailFactory({ db }),
-      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-      findEmail: findEmailFactory({ db }),
+      createUserEmail: createUserEmailFactory({ db: mainDb }),
+      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db: mainDb }),
+      findEmail: findEmailFactory({ db: mainDb }),
       updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db: mainDb }),
+        updateAllInviteTargets: updateAllInviteTargetsFactory({ db: mainDb })
       }),
       requestNewEmailVerification: requestNewEmailVerificationFactory({
-        findEmail: findEmailFactory({ db }),
-        getUser,
-        getServerInfo,
+        findEmail: findEmailFactory({ db: mainDb }),
+        getUser: getUserFactory({ db: mainDb }),
+        getServerInfo: getServerInfoFactory({ db: mainDb }),
         deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-          db
+          db: mainDb
         }),
         renderEmail,
         sendEmail
       })
     }),
     collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-      getStream
+      getStream: getStreamFactory({ db: mainDb })
     }),
-    getUser,
-    getServerInfo
+    getUser: getUserFactory({ db: mainDb }),
+    getServerInfo: getServerInfoFactory({ db: mainDb })
   })
 
-const createStreamReturnRecord = createStreamReturnRecordFactory({
-  inviteUsersToProject: inviteUsersToProjectFactory({
-    createAndSendInvite: createAndSendInviteFactory({
-      findUserByTarget: findUserByTargetFactory({ db }),
-      insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-      collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-        getStream
-      }),
-      buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-        getStream
-      }),
-      emitEvent: ({ eventName, payload }) =>
-        getEventBus().emit({
-          eventName,
-          payload
-        }),
-      getUser,
-      getServerInfo,
-      finalizeInvite: buildFinalizeProjectInvite()
-    }),
-    getUsers
-  }),
-  createStream: createStreamFactory({ db }),
-  createBranch: createBranchFactory({ db }),
-  emitEvent: getEventBus().emit
-})
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream
@@ -219,42 +193,37 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
   removeStreamCollaborator
 })
 
-const updateStream = updateStreamFactory({ db })
-const cloneStream = cloneStreamFactory({
-  getStream: getStreamFactory({ db }),
-  getUser,
-  newProjectDb: db,
-  sourceProjectDb: db,
-  createStream: createStreamFactory({ db }),
-  insertCommits: insertCommitsFactory({ db }),
-  getBatchedStreamCommits: getBatchedStreamCommitsFactory({ db }),
-  insertStreamCommits: insertStreamCommitsFactory({ db }),
-  getBatchedStreamBranches: getBatchedStreamBranchesFactory({ db }),
-  insertBranches: insertBranchesFactory({ db }),
-  getBatchedBranchCommits: getBatchedBranchCommitsFactory({ db }),
-  insertBranchCommits: insertBranchCommitsFactory({ db }),
-  getBatchedStreamComments: getBatchedStreamCommentsFactory({ db }),
-  insertComments: insertCommentsFactory({ db }),
-  getCommentLinks: getCommentLinksFactory({ db }),
-  insertCommentLinks: insertCommentLinksFactory({ db }),
-  emitEvent: getEventBus().emit
-})
-
-// We want to read & write from main DB - this isn't occurring in a multi region workspace ctx
-const createOnboardingStream = createOnboardingStreamFactory({
-  getOnboardingBaseProject: getOnboardingBaseProjectFactory({
-    getOnboardingBaseStream: getOnboardingBaseStreamFactory({ db })
-  }),
-  cloneStream,
-  createStreamReturnRecord,
-  getUser,
-  updateStream
-})
 const getUserStreams = getUserStreamsPageFactory({ db })
 const getUserStreamsCount = getUserStreamsCountFactory({ db })
 const throwIfRateLimited = throwIfRateLimitedFactory({
   rateLimiterEnabled: isRateLimiterEnabled()
 })
+
+const deleteStreamAndNotify = async (
+  projectId: string,
+  userId: string,
+  ctxLogger: Logger
+) =>
+  asMultiregionalOperation(
+    ({ allDbs, mainDb, emit }) => {
+      const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+        deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+          deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+          deleteProjectCommits: replicateFactory(allDbs, deleteProjectCommitsFactory)
+        }),
+        emitEvent: emit,
+        deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db: mainDb }),
+        getStream: getStreamFactory({ db: mainDb })
+      })
+      return deleteStreamAndNotify(projectId, userId)
+    },
+    {
+      logger: ctxLogger,
+      name: 'delete project',
+      description: `Cascade deleting a project`,
+      dbs: await getProjectReplicationDbs({ projectId })
+    }
+  )
 
 const resolvers: Resolvers = {
   Query: {
@@ -324,27 +293,8 @@ const resolvers: Resolvers = {
         })
       )
 
-      const results = await withOperationLogging(
-        async () =>
-          await Promise.all(
-            args.ids.map(async (id) => {
-              const projectDb = await getProjectDbClient({ projectId: id })
-              const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
-                deleteStream: deleteStreamFactory({
-                  db: projectDb
-                }),
-                emitEvent: getEventBus().emit,
-                deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-                getStream: getStreamFactory({ db: projectDb })
-              })
-              return deleteStreamAndNotify(id, ctx.userId!)
-            })
-          ),
-        {
-          logger: ctx.log,
-          operationName: 'projectBatchDelete',
-          operationDescription: `Delete multiple projects`
-        }
+      const results = await Promise.all(
+        args.ids.map((id) => deleteStreamAndNotify(id, ctx.userId!, ctx.log))
       )
       return results.every((res) => res === true)
     },
@@ -370,36 +320,76 @@ const resolvers: Resolvers = {
       })
       throwIfAuthNotOk(canDelete)
 
-      const projectDb = await getProjectDbClient({ projectId })
-      const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
-        deleteStream: deleteStreamFactory({
-          db: projectDb
-        }),
-        emitEvent: getEventBus().emit,
-        deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-        getStream: getStreamFactory({ db: projectDb })
-      })
-      return await withOperationLogging(
-        async () => await deleteStreamAndNotify(projectId, userId!),
-        {
-          logger,
-          operationName: 'projectDelete',
-          operationDescription: `Delete a project`
-        }
-      )
+      return deleteStreamAndNotify(projectId, userId!, logger)
     },
     async createForOnboarding(_parent, _args, { userId, resourceAccessRules, log }) {
-      return await withOperationLogging(
-        async () =>
-          await createOnboardingStream({
+      return await asMultiregionalOperation(
+        async ({ mainDb, emit, allDbs }) => {
+          // We want to read & write from main DB - this isn't occurring in a multi region workspace ctx
+          const createOnboardingStream = createOnboardingStreamFactory({
+            getOnboardingBaseProject: getOnboardingBaseProjectFactory({
+              getOnboardingBaseStream: getOnboardingBaseStreamFactory({ db: mainDb })
+            }),
+            cloneStream: cloneStreamFactory({
+              getStream: getStreamFactory({ db: mainDb }),
+              getUser: getUserFactory({ db: mainDb }),
+              newProjectDb: mainDb,
+              sourceProjectDb: mainDb,
+              createStream: replicateFactory(allDbs, createStreamFactory),
+              insertCommits: insertCommitsFactory({ db: mainDb }),
+              getBatchedStreamCommits: getBatchedStreamCommitsFactory({ db: mainDb }),
+              insertStreamCommits: insertStreamCommitsFactory({ db: mainDb }),
+              getBatchedStreamBranches: getBatchedStreamBranchesFactory({ db: mainDb }),
+              insertBranches: insertBranchesFactory({ db: mainDb }),
+              getBatchedBranchCommits: getBatchedBranchCommitsFactory({ db: mainDb }),
+              insertBranchCommits: insertBranchCommitsFactory({ db: mainDb }),
+              getBatchedStreamComments: getBatchedStreamCommentsFactory({ db: mainDb }),
+              insertComments: insertCommentsFactory({ db: mainDb }),
+              getCommentLinks: getCommentLinksFactory({ db: mainDb }),
+              insertCommentLinks: insertCommentLinksFactory({ db: mainDb }),
+              emitEvent: emit,
+              storeProjectRole: storeProjectRoleFactory({ db: mainDb })
+            }),
+            createStreamReturnRecord: createStreamReturnRecordFactory({
+              inviteUsersToProject: inviteUsersToProjectFactory({
+                createAndSendInvite: createAndSendInviteFactory({
+                  findUserByTarget: findUserByTargetFactory({ db: mainDb }),
+                  insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({
+                    db: mainDb
+                  }),
+                  collectAndValidateResourceTargets:
+                    collectAndValidateCoreTargetsFactory({
+                      getStream: getStreamFactory({ db: mainDb })
+                    }),
+                  buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+                    getStream: getStreamFactory({ db: mainDb })
+                  }),
+                  emitEvent: emit,
+                  getUser: getUserFactory({ db: mainDb }),
+                  getServerInfo: getServerInfoFactory({ db: mainDb }),
+                  finalizeInvite: buildFinalizeProjectInvite(mainDb, emit)
+                }),
+                getUsers: getUsersFactory({ db: mainDb })
+              }),
+              createStream: replicateFactory(allDbs, createStreamFactory),
+              storeProjectRole: storeProjectRoleFactory({ db: mainDb }),
+              emitEvent: emit
+            }),
+            getUser: getUserFactory({ db: mainDb }),
+            updateStream: replicateFactory(allDbs, updateStreamFactory)
+          })
+
+          return await createOnboardingStream({
             targetUserId: userId!,
             targetUserResourceAccessRules: resourceAccessRules,
             logger: log
-          }),
+          })
+        },
         {
           logger: log,
-          operationName: 'createOnboardingProject',
-          operationDescription: `Create a project for onboarding`
+          name: 'createOnboardingProject',
+          dbs: [db], // Cloning does not support multiregion
+          description: `Create a project for onboarding`
         }
       )
     },
@@ -426,18 +416,20 @@ const resolvers: Resolvers = {
       })
       throwIfAuthNotOk(canUpdate)
 
-      const projectDB = await getProjectDbClient({ projectId })
-      const updateStreamAndNotify = updateStreamAndNotifyFactory({
-        getStream: getStreamFactory({ db: projectDB }),
-        updateStream: updateStreamFactory({ db: projectDB }),
-        emitEvent: getEventBus().emit
-      })
-      const res = await withOperationLogging(
-        async () => await updateStreamAndNotify(update, userId!),
+      const res = await asMultiregionalOperation(
+        async ({ mainDb, allDbs, emit }) => {
+          const updateStreamAndNotify = updateStreamAndNotifyFactory({
+            getStream: getStreamFactory({ db: mainDb }),
+            updateStream: replicateFactory(allDbs, updateStreamFactory),
+            emitEvent: emit
+          })
+
+          return await updateStreamAndNotify(update, userId!)
+        },
         {
           logger,
-          operationName: 'projectUpdate',
-          operationDescription: `Update a project`
+          name: 'Update Project',
+          dbs: await getProjectReplicationDbs({ projectId })
         }
       )
 
@@ -465,31 +457,25 @@ const resolvers: Resolvers = {
       throwIfAuthNotOk(canCreate)
 
       const regionKey = await getValidDefaultProjectRegionKey()
-      const projectDb = await getDb({ regionKey })
+      const project = await asMultiregionalOperation(
+        async ({ allDbs, mainDb, emit }) => {
+          const createNewProject = createNewProjectFactory({
+            storeProject: replicateFactory(allDbs, storeProjectFactory),
+            storeProjectRole: storeProjectRoleFactory({ db: mainDb }),
+            emitEvent: emit
+          })
 
-      const createNewProject = createNewProjectFactory({
-        storeProject: storeProjectFactory({ db: projectDb }),
-        storeModel: storeModelFactory({ db: projectDb }),
-        // THIS MUST GO TO THE MAIN DB
-        storeProjectRole: storeProjectRoleFactory({ db }),
-        waitForRegionProject: waitForRegionProjectFactory({
-          getProject: getProjectFactory({ db }),
-          deleteProject: deleteProjectFactory({ db: projectDb })
-        }),
-        emitEvent: getEventBus().emit
-      })
-
-      const project = await withOperationLogging(
-        async () =>
-          await createNewProject({
+          return createNewProject({
             ...(args.input || {}),
             ownerId: context.userId!,
             regionKey
-          }),
+          })
+        },
         {
           logger,
-          operationName: 'projectCreate',
-          operationDescription: `Create a new project`
+          name: 'projectCreate',
+          dbs: await getReplicationDbs({ regionKey }),
+          description: `Create a new project`
         }
       )
 

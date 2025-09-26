@@ -70,7 +70,7 @@ export function convertStateToLegacyData(state: SerializedViewerState): LegacyDa
           1, 0, 0, 0, 1, 0, 0, 0, 1
         ]
       },
-      propertyInfoKey: state.ui.filters.propertyFilter.key
+      propertyInfoKey: state.ui.filters.propertyFilters[0]?.key || null
     },
     location: {
       x: selectionLocation[0] || 0,
@@ -133,10 +133,17 @@ export const convertLegacyDataToStateFactory =
           isolatedObjectIds: data.filters?.isolatedIds || [],
           hiddenObjectIds: data.filters?.hiddenIds || [],
           selectedObjectApplicationIds: {},
-          propertyFilter: {
-            key: data.filters?.propertyInfoKey || null,
-            isApplied: true
-          }
+          propertyFilters: [
+            {
+              key: data.filters?.propertyInfoKey || null,
+              isApplied: true,
+              id: 'legacy-filter',
+              selectedValues: [],
+              condition: 'is'
+            }
+          ],
+          activeColorFilterId: null,
+          filterLogic: 'all'
         },
         camera: {
           position: [
@@ -148,7 +155,13 @@ export const convertLegacyDataToStateFactory =
           isOrthoProjection: !!data.camPos?.[6],
           zoom: data.camPos?.[7] || 1
         },
-        viewMode: 0,
+        viewMode: {
+          mode: 0,
+          edgesColor: 0,
+          edgesEnabled: true,
+          outlineOpacity: 0.75,
+          edgesWeight: 1
+        },
         sectionBox: sectionBox
           ? {
               min: (sectionBox.min as number[]) || [0, 0, 0],
@@ -171,7 +184,8 @@ export const convertLegacyDataToStateFactory =
         },
         measurement: {
           enabled: false,
-          options: null
+          options: null,
+          measurements: []
         }
       }
     }

@@ -12,7 +12,7 @@
         {
           id: 'actions',
           header: '',
-          classes: 'col-span-1 flex items-center justify-end'
+          classes: 'col-span-1 flex items-center justify-end gap-0.5'
         }
       ]"
       :items="items"
@@ -69,10 +69,20 @@
       </template>
       <template #actions="{ item }">
         <FormButton
-          :icon-left="Download"
+          v-if="item.convertedVersionId && item.modelId"
+          :icon-left="ArrowRightIcon"
           hide-text
           size="sm"
           color="outline"
+          class="shrink-0"
+          :to="buildUploadedVersionUrl(item)"
+        />
+        <FormButton
+          :icon-left="ArrowDownTrayIcon"
+          hide-text
+          size="sm"
+          color="outline"
+          class="shrink-0"
           @click="onDownload(item)"
         />
       </template>
@@ -88,15 +98,17 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { Download } from 'lucide-vue-next'
+import { ArrowDownTrayIcon, ArrowRightIcon } from '@heroicons/vue/24/outline'
 import {
   FileUploadConvertedStatus,
   fileUploadConvertedStatusLabels
 } from '@speckle/shared/blobs'
+import { resourceBuilder } from '@speckle/shared/viewer/route'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectPageModelsUploadsDialog_FileUploadFragment } from '~/lib/common/generated/gql/graphql'
+import { viewerRoute } from '~/lib/common/helpers/route'
 import { useFailedFileImportJobUtils } from '~/lib/core/composables/fileImport'
 import { useFileDownload } from '~/lib/core/composables/fileUpload'
 import { prettyFileSize } from '~~/lib/core/helpers/file'
@@ -109,6 +121,7 @@ graphql(`
     fileName
     fileSize
     convertedLastUpdate
+    convertedVersionId
     uploadDate
     uploadComplete
     branchName
@@ -146,6 +159,7 @@ const props = defineProps<{
 
 const open = defineModel<boolean>('open', { required: true })
 const { copy } = useClipboard()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const { getErrorMessage, convertUploadToFailedJob } = useFailedFileImportJobUtils()
 const {
@@ -233,6 +247,16 @@ const onDownload = async (item: ProjectPageModelsUploadsDialog_FileUploadFragmen
     fileName: item.fileName,
     projectId: props.projectId
   })
+}
+
+const buildUploadedVersionUrl = (
+  item: ProjectPageModelsUploadsDialog_FileUploadFragment
+) => {
+  if (!item.convertedVersionId || !item.modelId) return undefined
+  return viewerRoute(
+    props.projectId,
+    resourceBuilder().addModel(item.modelId, item.convertedVersionId).toString()
+  )
 }
 
 const onErrorBadgeClick = async (

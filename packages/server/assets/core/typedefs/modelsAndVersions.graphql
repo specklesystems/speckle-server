@@ -91,6 +91,7 @@ type Model {
     cursor: String
     filter: ModelVersionsFilter
   ): VersionCollection!
+  projectId: String!
 }
 
 type ModelCollection {

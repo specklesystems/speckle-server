@@ -26,6 +26,7 @@ import {
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import {
   fileImportServiceShouldUsePrivateObjectsServerUrl,
+  getFileImporterQueuePostgresUrl,
   getFileUploadUrlExpiryMinutes,
   getPrivateObjectsServerOrigin,
   getServerOrigin,
@@ -75,6 +76,8 @@ import { onFileImportResultFactory } from '@/modules/fileuploads/services/result
 import type { FileImportResultPayload } from '@speckle/shared/workers/fileimport'
 import { JobResultStatus } from '@speckle/shared/workers/fileimport'
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import { updateBackgroundJobFactory } from '@/modules/backgroundjobs/repositories/backgroundjobs'
+import { configureClient } from '@/knexfile'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
@@ -101,6 +104,11 @@ const getFileUploadModel = async (params: {
 
   return null
 }
+
+const fileImporterConnectionUri = getFileImporterQueuePostgresUrl()
+const queueDb = fileImporterConnectionUri
+  ? configureClient({ postgres: { connectionUri: fileImporterConnectionUri } }).public
+  : db
 
 const fileUploadMutations: Resolvers['FileUploadMutations'] = {
   async generateUploadUrl(_parent, args, ctx) {
@@ -242,6 +250,8 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
     if (!FF_NEXT_GEN_FILE_IMPORTER_ENABLED)
       throw new MisconfiguredEnvironmentError('File import next gen is not enabled')
 
+    // NOTE: jobId in this context is actually the blobId of the uploaded file
+    // We keep the naming for backwards compatibility reasons
     const { projectId, jobId, status, warnings, reason, result } = args.input
     const userId = ctx.userId
     if (!userId) {
@@ -286,7 +296,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       projectId,
       streamId: projectId, //legacy
       userId,
-      jobId
+      blobId: jobId
     })
 
     const projectDb = await getProjectDbClient({ projectId })
@@ -294,11 +304,15 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       logger: logger.child({ fileUploadStatus: status }),
       updateFileUpload: updateFileUploadFactory({ db: projectDb }),
       getFileInfo: getFileInfoFactoryV2({ db: projectDb }),
-      eventEmit: getEventBus().emit
+      updateBackgroundJob: updateBackgroundJobFactory({
+        db: queueDb
+      }),
+      eventEmit: getEventBus().emit,
+      FF_NEXT_GEN_FILE_IMPORTER_ENABLED
     })
 
     await onFileImportResult({
-      jobId,
+      blobId: jobId,
       jobResult
     })
 

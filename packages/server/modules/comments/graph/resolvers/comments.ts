@@ -97,7 +97,10 @@ import {
   getViewerResourceItemsUngroupedFactory
 } from '@/modules/viewer/services/viewerResources'
 import type { RequestDataLoaders } from '@/modules/core/loaders'
-import { getSavedViewFactory } from '@/modules/viewer/repositories/dataLoaders/savedViews'
+import {
+  getModelHomeSavedViewFactory,
+  getSavedViewFactory
+} from '@/modules/viewer/repositories/dataLoaders/savedViews'
 
 // We can use the main DB for these
 const getStream = getStreamFactory({ db })
@@ -128,7 +131,8 @@ const buildGetViewerResourceItemsUngrouped = (deps: {
       getSpecificBranchCommits: getSpecificBranchCommitsFactory(deps),
       getAllBranchCommits: getAllBranchCommitsFactory(deps),
       getBranchesByIds: getBranchesByIdsFactory(deps),
-      getSavedView: getSavedViewFactory(deps)
+      getSavedView: getSavedViewFactory(deps),
+      getModelHomeSavedView: getModelHomeSavedViewFactory(deps)
     })
   })
 
@@ -476,7 +480,11 @@ export default {
   ViewerUserActivityMessage: {
     async user(parent, _args, context) {
       const { userId } = parent
-      return context.loaders.users.getUser.load(userId!)
+      if (!userId) {
+        return null
+      }
+
+      return context.loaders.users.getUser.load(userId)
     }
   },
   Stream: {
@@ -723,9 +731,13 @@ export default {
       await publish(ViewerSubscriptions.UserActivityBroadcasted, {
         projectId: args.projectId,
         resourceItems: await getViewerResourceItemsUngrouped(args),
-        viewerUserActivityBroadcasted: args.message,
+        viewerUserActivityBroadcasted: {
+          ...args.message,
+          userId: context.userId!
+        },
         userId: context.userId!
       })
+
       return true
     },
 

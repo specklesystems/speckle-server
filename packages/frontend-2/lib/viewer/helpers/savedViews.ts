@@ -1,18 +1,15 @@
-import type { StringEnumValues } from '@speckle/shared'
+import { throwUncoveredError, type StringEnumValues } from '@speckle/shared'
 import { isObjectLike, isString } from 'lodash-es'
-import type { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
 
 export const ViewsType = {
-  All: 'all-views',
-  My: 'my-views',
-  Connector: 'connector-views'
+  All: 'all',
+  Mine: 'mine'
 } as const
 export type ViewsType = StringEnumValues<typeof ViewsType>
 
 export const viewsTypeLabels: Record<ViewsType, string> = {
-  [ViewsType.All]: 'All Views',
-  [ViewsType.My]: 'My Views',
-  [ViewsType.Connector]: 'From connectors'
+  [ViewsType.All]: 'All views',
+  [ViewsType.Mine]: 'My views'
 }
 
 /**
@@ -21,10 +18,6 @@ export const viewsTypeLabels: Record<ViewsType, string> = {
 export type SavedViewUrlSettings = {
   id: string
   loadOriginal?: boolean
-}
-
-export type ViewerSavedViewEventBusPayloads = {
-  [ViewerEventBusKeys.UpdateSavedView]: SavedViewUrlSettings
 }
 
 export const parseSavedViewUrlSettings = (
@@ -48,4 +41,16 @@ export const serializeSavedViewUrlSettings = (
   settings: SavedViewUrlSettings
 ): string => {
   return JSON.stringify(settings)
+}
+
+export const viewsTypeToFilters = (type: ViewsType) => {
+  if (type === ViewsType.Mine) {
+    return {
+      onlyAuthored: true
+    }
+  } else if (type === ViewsType.All) {
+    return {}
+  } else {
+    throwUncoveredError(type)
+  }
 }

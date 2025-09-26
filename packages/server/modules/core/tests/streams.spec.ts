@@ -10,20 +10,13 @@ import {
 import type { BasicTestUser } from '@/test/authHelper'
 import { createTestUsers } from '@/test/authHelper'
 import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
-import {
-  createTestStream,
-  createTestStreams
-} from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
 import {
-  createStreamFactory,
-  deleteStreamFactory,
   getStreamFactory,
   getStreamRolesFactory,
   getStreamsCollaboratorsFactory,
   grantStreamPermissionsFactory,
-  markBranchStreamUpdatedFactory,
-  markCommitStreamUpdatedFactory,
   revokeStreamPermissionsFactory,
   updateStreamFactory
 } from '@/modules/core/repositories/streams'
@@ -56,6 +49,7 @@ import {
 } from '@/modules/core/services/commit/management'
 import {
   createCommitFactory,
+  deleteProjectCommitsFactory,
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
@@ -64,24 +58,10 @@ import {
   storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
-  createStreamReturnRecordFactory,
   deleteStreamAndNotifyFactory,
-  legacyCreateStreamFactory,
   updateStreamAndNotifyFactory
 } from '@/modules/core/services/streams/management'
-import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
-import {
-  deleteAllResourceInvitesFactory,
-  deleteInvitesByTargetFactory,
-  deleteServerOnlyInvitesFactory,
-  findInviteFactory,
-  findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory,
-  updateAllInviteTargetsFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   addOrUpdateStreamCollaboratorFactory,
@@ -91,37 +71,21 @@ import {
 import { authorizeResolver } from '@/modules/shared'
 import {
   getUserFactory,
-  getUsersFactory,
   isLastAdminUserFactory,
   updateUserServerRoleFactory
 } from '@/modules/core/repositories/users'
 import { changeUserRoleFactory } from '@/modules/core/services/users/management'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
-import {
-  finalizeInvitedServerRegistrationFactory,
-  finalizeResourceInviteFactory
-} from '@/modules/serverinvites/services/processing'
-import {
-  processFinalizedProjectInviteFactory,
-  validateProjectInviteBeforeFinalizationFactory
-} from '@/modules/serverinvites/services/coreFinalization'
-import {
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory,
-  findEmailFactory
-} from '@/modules/core/repositories/userEmails'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
+import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
+import { deleteProjectFactory } from '@/modules/core/repositories/projects'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { logger } from '@/observability/logging'
+import { getProjectReplicationDbs } from '@/modules/multiregion/utils/dbSelector'
+import type { UpdateStream } from '@/modules/core/domain/streams/operations'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
-const getUsers = getUsersFactory({ db })
-const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
-const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db })
 const getStream = getStreamFactory({ db })
 const getStreamBranchByName = getStreamBranchByNameFactory({ db })
 const createBranch = createBranchFactory({ db })
@@ -129,7 +93,6 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getStream,
   getBranchById: getBranchByIdFactory({ db }),
   emitEvent: getEventBus().emit,
-  markBranchStreamUpdated,
   deleteBranchById: deleteBranchByIdFactory({ db })
 })
 
@@ -140,7 +103,6 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   getBranchById: getBranchByIdFactory({ db }),
   insertStreamCommits: insertStreamCommitsFactory({ db }),
   insertBranchCommits: insertBranchCommitsFactory({ db }),
-  markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   emitEvent: getEventBus().emit
 })
@@ -151,92 +113,45 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getBranchById: getBranchByIdFactory({ db })
 })
 
-const buildFinalizeProjectInvite = () =>
-  finalizeResourceInviteFactory({
-    findInvite: findInviteFactory({ db }),
-    validateInvite: validateProjectInviteBeforeFinalizationFactory({
-      getProject: getStream
-    }),
-    processInvite: processFinalizedProjectInviteFactory({
-      getProject: getStream,
-      addProjectRole: addOrUpdateStreamCollaboratorFactory({
-        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
-        getUser,
-        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-        getStreamRoles: getStreamRolesFactory({ db }),
-        emitEvent: getEventBus().emit
+const deleteStream = async (projectId: string, userId: string) =>
+  asMultiregionalOperation(
+    ({ allDbs, mainDb, emit }) => {
+      const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+        deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+          deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+          deleteProjectCommits: replicateFactory(allDbs, deleteProjectCommitsFactory)
+        }),
+        emitEvent: emit,
+        deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db: mainDb }),
+        getStream: getStreamFactory({ db: mainDb })
       })
-    }),
-    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    emitEvent: (...args) => getEventBus().emit(...args),
-    findEmail: findEmailFactory({ db }),
-    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-      createUserEmail: createUserEmailFactory({ db }),
-      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-      findEmail: findEmailFactory({ db }),
-      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-      }),
-      requestNewEmailVerification: requestNewEmailVerificationFactory({
-        findEmail: findEmailFactory({ db }),
-        getUser,
-        getServerInfo,
-        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-          db
-        }),
-        renderEmail,
-        sendEmail
+      return deleteStreamAndNotify(projectId, userId)
+    },
+    {
+      logger,
+      name: 'delete project spec',
+      description: `Cascade deleting a project in all regions`,
+      dbs: await getProjectReplicationDbs({ projectId })
+    }
+  )
+
+const updateStream: UpdateStream = async (stream, userId) =>
+  asMultiregionalOperation(
+    async ({ mainDb, allDbs, emit }) => {
+      const updateStreamAndNotify = updateStreamAndNotifyFactory({
+        getStream: getStreamFactory({ db: mainDb }),
+        updateStream: replicateFactory(allDbs, updateStreamFactory),
+        emitEvent: emit
       })
-    }),
-    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-      getStream
-    }),
-    getUser,
-    getServerInfo
-  })
 
-const createStream = legacyCreateStreamFactory({
-  createStreamReturnRecord: createStreamReturnRecordFactory({
-    inviteUsersToProject: inviteUsersToProjectFactory({
-      createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory({ db }),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-          getStream
-        }),
-        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-          getStream
-        }),
-        emitEvent: ({ eventName, payload }) =>
-          getEventBus().emit({
-            eventName,
-            payload
-          }),
-        getUser,
-        getServerInfo,
-        finalizeInvite: buildFinalizeProjectInvite()
-      }),
-      getUsers
-    }),
-    createStream: createStreamFactory({ db }),
-    createBranch: createBranchFactory({ db }),
-    emitEvent: getEventBus().emit
-  })
-})
-const deleteStream = deleteStreamAndNotifyFactory({
-  deleteStream: deleteStreamFactory({ db }),
-  getStream,
-  emitEvent: getEventBus().emit,
-  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
-})
-
-const updateStream = updateStreamAndNotifyFactory({
-  getStream,
-  updateStream: updateStreamFactory({ db }),
-  emitEvent: getEventBus().emit
-})
+      return updateStreamAndNotify(stream, userId)
+    },
+    {
+      logger,
+      name: 'updateStream',
+      dbs: await getProjectReplicationDbs({ projectId: stream.id })
+    }
+  )
 
 const revokeStreamPermissions = revokeStreamPermissionsFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({
@@ -273,21 +188,8 @@ describe('Streams @core-streams', () => {
     id: ''
   }
 
-  const testStream: BasicTestStream = {
-    name: 'Test Stream 01',
-    description: 'wonderful test stream',
-    isPublic: true,
-    ownerId: '',
-    id: ''
-  }
-
-  const secondTestStream: BasicTestStream = {
-    name: 'Test Stream 02',
-    description: 'wot',
-    isPublic: false,
-    ownerId: '',
-    id: ''
-  }
+  let testStream: BasicTestStream
+  let secondTestStream: BasicTestStream
 
   let quitters: (() => void)[] = []
 
@@ -300,10 +202,22 @@ describe('Streams @core-streams', () => {
     await beforeEachContext()
 
     await createTestUsers([userOne, userTwo])
-    await createTestStreams([
-      [testStream, userOne],
-      [secondTestStream, userOne]
-    ])
+    testStream = await createTestStream(
+      {
+        name: 'Test Stream 01',
+        description: 'wonderful test stream',
+        isPublic: true
+      },
+      userOne
+    )
+    secondTestStream = await createTestStream(
+      {
+        name: 'Test Stream 02',
+        description: 'wot',
+        isPublic: false
+      },
+      userOne
+    )
   })
 
   afterEach(() => {
@@ -322,13 +236,10 @@ describe('Streams @core-streams', () => {
         })
       )
 
-      const stream1Id = await createStream({ ...testStream, ownerId: userOne.id })
+      const { id: stream1Id } = await createTestStream(testStream, userOne)
       expect(stream1Id).to.not.be.null
 
-      const stream2Id = await createStream({
-        ...secondTestStream,
-        ownerId: userOne.id
-      })
+      const { id: stream2Id } = await createTestStream(secondTestStream, userOne)
       expect(stream2Id).to.not.be.null
       expect(eventFired).to.be.ok
     })
@@ -371,11 +282,13 @@ describe('Streams @core-streams', () => {
     // })
 
     it('Should delete a stream', async () => {
-      const id = await createStream({
-        name: 'mayfly',
-        description: 'wonderful',
-        ownerId: userOne.id
-      })
+      const { id } = await createTestStream(
+        {
+          name: 'mayfly',
+          description: 'wonderful'
+        },
+        userOne
+      )
 
       await deleteStream(id, userOne.id)
       const stream = await getStream({ streamId: id })
@@ -423,12 +336,14 @@ describe('Streams @core-streams', () => {
     })
 
     it('Collaborator can leave a stream on his own', async () => {
-      const streamId = await createStream({
-        name: 'test streammmmm',
-        description: 'ayy',
-        isPublic: false,
-        ownerId: userOne.id
-      })
+      const { id: streamId } = await createTestStream(
+        {
+          name: 'test streammmmm',
+          description: 'ayy',
+          isPublic: false
+        },
+        userOne
+      )
       await addOrUpdateStreamCollaborator(
         streamId,
         userTwo.id,
@@ -487,11 +402,13 @@ describe('Streams @core-streams', () => {
     let updatableStream: StreamWithOptionalRole
 
     before(async () => {
-      const id = await createStream({
-        name: 'T1',
-        ownerId: userOne.id,
-        isPublic: false
-      })
+      const { id } = await createTestStream(
+        {
+          name: 'T1',
+          isPublic: false
+        },
+        userOne
+      )
       const newStream = await getStream({ streamId: id })
       if (!newStream) throw new Error("Couldn't create stream")
 

@@ -18,7 +18,7 @@ import type http from 'http'
 import type express from 'express'
 import type net from 'net'
 import type { MaybeAsync, MaybeNullOrUndefined, Nullable } from '@speckle/shared'
-import { ensureError, retry, TIME_MS, wait } from '@speckle/shared'
+import { ensureError, retry } from '@speckle/shared'
 import {
   getAvailableRegionKeysFactory,
   getFreeRegionKeysFactory
@@ -37,7 +37,6 @@ import {
 } from '@/modules/multiregion/utils/dbSelector'
 import type { Knex } from 'knex'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
-import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import type { ApolloServer } from '@apollo/server'
 import type { ReadinessHandler } from '@/healthchecks/types'
@@ -45,6 +44,8 @@ import { set } from 'lodash-es'
 import { fixStackTrace } from '@/test/speckle-helpers/error'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 import * as mocha from 'mocha'
+import { getStalePreparedTransactionsFactory } from '@/modules/multiregion/repositories/transactions'
+import { rollbackPreparedTransaction } from '@/modules/shared/helpers/dbHelper'
 
 // Register chai plugins
 chai.use(chaiAsPromised)
@@ -99,10 +100,6 @@ const inEachDb = async (fn: (db: Knex) => MaybeAsync<void>) => {
   for (const regionClient of Object.values(regionClients)) {
     await fn(regionClient)
   }
-}
-
-const ensureAivenExtrasFactory = (deps: { db: Knex }) => async () => {
-  await deps.db.raw('CREATE EXTENSION IF NOT EXISTS "aiven_extras";')
 }
 
 const setupDatabases = async () => {
@@ -162,60 +159,6 @@ const unlockFactory = (deps: { db: Knex }) => async () => {
 
 export const getRegionKeys = () => Object.keys(regionClients)
 
-export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
-  // We wanna reset even outside of multiregion test mode, as long as multi region is generally enabled
-  if (!isMultiRegionEnabled()) {
-    return { drop: async () => {}, reenable: async () => {} }
-  }
-
-  const ensureAivenExtras = ensureAivenExtrasFactory(deps)
-  await ensureAivenExtras()
-
-  type SubInfo = {
-    subname: string
-    subconninfo: string
-    subpublications: string[]
-    subslotname: string
-  }
-
-  const subscriptions = (await deps.db.raw(
-    `SELECT subname, subconninfo, subpublications, subslotname FROM aiven_extras.pg_list_all_subscriptions() WHERE subname ILIKE 'test_%';`
-  )) as {
-    rows: Array<SubInfo>
-  }
-  const publications = (await deps.db.raw(
-    `SELECT pubname FROM pg_publication WHERE pubname ILIKE 'test_%';`
-  )) as {
-    rows: Array<{ pubname: string }>
-  }
-
-  // If we do not wait, the following call occasionally fails because a replication slot is still in use.
-  const dropSubs = async (info: SubInfo) => {
-    await wait(TIME_MS.second)
-    await deps.db.raw(
-      `SELECT * FROM aiven_extras.pg_alter_subscription_disable('${info.subname}');`
-    )
-    await wait(TIME_MS.second)
-    await deps.db.raw(
-      `SELECT * FROM aiven_extras.pg_drop_subscription('${info.subname}');`
-    )
-    await wait(TIME_MS.second)
-    await deps.db.raw(
-      `SELECT * FROM aiven_extras.dblink_slot_create_or_drop('${info.subconninfo}', '${info.subslotname}', 'drop');`
-    )
-  }
-
-  // Drop all subs
-  for (const sub of subscriptions.rows) {
-    await dropSubs(sub)
-  }
-
-  // Drop all pubs
-  for (const pub of publications.rows) {
-    await deps.db.raw(`DROP PUBLICATION ${pub.pubname};`)
-  }
-}
-
 const truncateTablesFactory = (deps: { db: Knex }) => async (tableNames?: string[]) => {
   if (!tableNames?.length) {
     tableNames = (
@@ -255,11 +198,16 @@ const resetSchemaFactory =
   (deps: { db: Knex; regionKey: Nullable<string> }) => async () => {
     const { regionKey } = deps
 
-    const resetPubSub = resetPubSubFactory(deps)
     const truncate = truncateTablesFactory(deps)
 
+    const pendingTransactions = await getStalePreparedTransactionsFactory({
+      db: deps.db
+    })({ interval: '1 second' })
+    await Promise.all(
+      pendingTransactions.map(({ gid }) => rollbackPreparedTransaction(deps.db, gid))
+    )
+
     await unlockFactory(deps)()
-    await resetPubSub()
     await truncate() // otherwise some rollbacks will fail
 
     // Reset schema
@@ -278,27 +226,8 @@ const resetSchemaFactory =
     }
   }
 
-export const truncateTables = async (
-  tableNames?: string[],
-  options?: Partial<{
-    /**
-     * Whether to also reset pubsub before truncate. Pubsub only gets re-initialized on app
-     * init so don't do this if not needed!
-     * Defaults to: false
-     */
-    resetPubSub: boolean
-  }>
-) => {
-  const { resetPubSub = false } = options || {}
+export const truncateTables = async (tableNames?: string[]) => {
   const dbs = [mainDb, ...Object.values(regionClients)]
-
-  // First reset pubsubs, if needed
-  if (resetPubSub) {
-    for (const db of dbs) {
-      const resetPubSub = resetPubSubFactory({ db })
-      await resetPubSub()
-    }
-  }
 
   // Now truncate
   for (const db of dbs) {
@@ -351,7 +280,7 @@ export const buildApp = async () => {
 }
 
 export const beforeEachContext = async () => {
-  await truncateTables(undefined, { resetPubSub: true })
+  await truncateTables(undefined)
   return await buildApp()
 }
 

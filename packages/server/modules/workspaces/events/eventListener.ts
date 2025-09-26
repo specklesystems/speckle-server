@@ -33,7 +33,12 @@ import type { EventBusEmit, EventPayload } from '@/modules/shared/services/event
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import type { MaybeNullOrUndefined, StreamRoles, WorkspaceRoles } from '@speckle/shared'
-import { isPaidPlan, Roles, throwUncoveredError } from '@speckle/shared'
+import {
+  isPaidPlan,
+  Roles,
+  throwUncoveredError,
+  WorkspaceFeatureFlags
+} from '@speckle/shared'
 import type {
   QueryAllProjects,
   UpsertProjectRole
@@ -285,7 +290,7 @@ export const onWorkspaceRoleDeletedFactory =
                 role: Roles.Stream.Owner,
                 setByUserId: updatedByUserId
               },
-              { trackProjectUpdate: false, skipAuthorization: true }
+              { skipAuthorization: true }
             )
           }
 
@@ -297,7 +302,7 @@ export const onWorkspaceRoleDeletedFactory =
               role: null,
               setByUserId: updatedByUserId
             },
-            { trackProjectUpdate: false, skipAuthorization: true }
+            { skipAuthorization: true }
           )
         })
       )
@@ -382,7 +387,7 @@ export const onWorkspaceSeatUpdatedFactory =
                 role: Roles.Stream.Owner,
                 setByUserId: updatedByUserId
               },
-              { trackProjectUpdate: false, skipAuthorization: true }
+              { skipAuthorization: true }
             )
           }
 
@@ -394,7 +399,7 @@ export const onWorkspaceSeatUpdatedFactory =
               role: nextUserRole,
               setByUserId: updatedByUserId
             },
-            { trackProjectUpdate: false, skipAuthorization: true }
+            { skipAuthorization: true }
           )
         })
       )
@@ -497,7 +502,7 @@ export const onWorkspaceRoleUpdatedFactory =
                 role: Roles.Stream.Owner,
                 setByUserId: updatedByUserId
               },
-              { trackProjectUpdate: false, skipAuthorization: true }
+              { skipAuthorization: true }
             )
           }
 
@@ -509,7 +514,7 @@ export const onWorkspaceRoleUpdatedFactory =
               role: nextUserRole,
               setByUserId: updatedByUserId
             },
-            { trackProjectUpdate: false, skipAuthorization: true }
+            { skipAuthorization: true }
           )
         })
       )
@@ -965,7 +970,8 @@ export const initializeEventListenersFactory =
           status: WorkspacePlanStatuses.Valid,
           workspaceId: payload.workspace.id,
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          featureFlags: WorkspaceFeatureFlags.none
         }
         await upsertUnpaidWorkspacePlanFactory({ db })({ workspacePlan })
         await eventBus.emit({

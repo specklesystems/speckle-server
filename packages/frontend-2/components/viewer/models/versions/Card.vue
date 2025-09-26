@@ -12,6 +12,7 @@
       @focusout="unhighlightObject"
     >
       <ViewerExpansionTriangle
+        class="h-8"
         :is-expanded="showVersions"
         @click="showVersions = !showVersions"
       />
@@ -121,6 +122,7 @@ const {
     response: { project }
   }
 } = useInjectedViewerState()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const showVersions = ref(!!props.initiallyExpanded)
 const showDeleteDialog = ref(false)
@@ -197,12 +199,12 @@ async function handleViewChanges(version: ViewerModelVersionCardItemFragment) {
 
 const highlightObject = () => {
   const refObject = props.model.loadedVersion.items[0]?.referencedObject
-  if (refObject) highlightObjects([refObject])
+  if (refObject && typeof refObject === 'string') highlightObjects([refObject])
 }
 
 const unhighlightObject = () => {
   const refObject = props.model.loadedVersion.items[0]?.referencedObject
-  if (refObject) unhighlightObjects([refObject])
+  if (refObject && typeof refObject === 'string') unhighlightObjects([refObject])
 }
 
 const handleRemoveVersion = (versionId: string) => {

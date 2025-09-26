@@ -154,12 +154,15 @@ extend type Project {
 }
 
 enum WorkspaceFeatureName {
-  accIntegration
+  accIntegration # will be moved to a per workspace feature
+  dashboards
   domainBasedSecurityPolicies
   oidcSso
   hideSpeckleBranding
   workspaceDataRegionSpecificity
   exclusiveMembership
+  savedViews
+  presentations
 }
 
 type WorkspacePlanPrice {

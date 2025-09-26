@@ -1,24 +1,37 @@
 <template>
   <div
-    class="relative flex"
-    :class="labelPosition === 'left' ? 'flex-row-reverse items-center' : 'items-start'"
+    class="relative flex items-center"
+    :class="[
+      labelPosition === 'left' && 'flex-row-reverse items-center',
+      labelPosition === 'top' && 'items-start',
+      labelPosition === 'right' && 'items-center'
+    ]"
   >
     <div
-      class="flex h-6 items-center"
+      class="flex items-center h-3.5 w-3.5"
       :class="labelPosition === 'left' ? 'w-1/2 justify-end mr-2' : ''"
     >
-      <input
-        :id="finalId"
-        :checked="coreChecked"
-        :aria-describedby="descriptionId"
-        :name="name"
-        :disabled="disabled"
-        :value="checkboxValue"
-        type="checkbox"
-        :class="checkboxClasses"
-        v-bind="$attrs"
-        @change="onChange"
-      />
+      <div class="relative flex h-full w-full">
+        <input
+          :id="finalId"
+          :checked="coreChecked"
+          :aria-describedby="descriptionId"
+          :name="name"
+          :disabled="disabled"
+          :value="checkboxValue"
+          type="checkbox"
+          :class="checkboxClasses"
+          v-bind="$attrs"
+          @change="onChange"
+        />
+        <!-- Indeterminate state overlay -->
+        <div
+          v-if="indeterminate"
+          class="absolute w-full h-full top-0 left-0 flex items-center justify-center pointer-events-none"
+        >
+          <Minus class="w-3 h-3 text-foreground" />
+        </div>
+      </div>
     </div>
     <div class="text-sm" :class="labelPosition === 'left' ? 'w-1/2' : 'ml-2'">
       <label :for="finalId" :class="{ 'sr-only': hideLabel }">
@@ -43,6 +56,7 @@ import type { PropType } from 'vue'
 import type { Optional } from '@speckle/shared'
 import { nanoid } from 'nanoid'
 import type { LabelPosition } from '~~/src/composables/form/input'
+import { Minus } from 'lucide-vue-next'
 
 /**
  * Troubleshooting:
@@ -152,6 +166,10 @@ const props = defineProps({
   labelPosition: {
     type: String as PropType<LabelPosition>,
     default: 'top'
+  },
+  indeterminate: {
+    type: Boolean,
+    default: false
   }
 })
 

@@ -18,8 +18,32 @@ export class SavedViewInvalidResourceTargetError extends BaseError {
   static statusCode = 400
 }
 
+export class SavedViewInvalidHomeViewSettingsError extends BaseError {
+  static code = 'SAVED_VIEW_INVALID_HOME_VIEW_SETTINGS_ERROR'
+  static defaultMessage = 'Invalid home view settings specified'
+  static statusCode = 400
+}
+
 export class SavedViewUpdateValidationError extends BaseError {
   static code = 'SAVED_VIEW_UPDATE_VALIDATION_ERROR'
   static defaultMessage = 'Saved view update failed due to a validation error'
+  static statusCode = 400
+}
+
+export class SavedViewGroupUpdateValidationError extends BaseError {
+  static code = 'SAVED_VIEW_GROUP_UPDATE_VALIDATION_ERROR'
+  static defaultMessage = 'Saved view group update failed due to a validation error'
+  static statusCode = 400
+}
+
+export class SavedViewGroupNotFoundError extends BaseError {
+  static code = 'SAVED_VIEW_GROUP_NOT_FOUND_ERROR'
+  static defaultMessage = 'Saved view group not found'
+  static statusCode = 404
+}
+
+export class SavedViewPositionUpdateError extends BaseError {
+  static code = 'SAVED_VIEW_POSITION_UPDATE_ERROR'
+  static defaultMessage = 'Failed to update saved view position'
   static statusCode = 400
 }

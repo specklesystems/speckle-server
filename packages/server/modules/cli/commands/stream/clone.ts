@@ -1,4 +1,3 @@
-import { db } from '@/db/knex'
 import { cliLogger as logger } from '@/observability/logging'
 import {
   getBatchedStreamCommentsFactory,
@@ -23,8 +22,10 @@ import {
 } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { cloneStreamFactory } from '@/modules/core/services/streams/clone'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import type { CommandModule } from 'yargs'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
+import { db } from '@/db/knex'
 
 const command: CommandModule<
   unknown,
@@ -45,31 +46,41 @@ const command: CommandModule<
   handler: async (argv) => {
     const { sourceStreamId, targetUserId } = argv
 
-    const getUser = getUserFactory({ db })
-    const cloneStream = cloneStreamFactory({
-      getStream: getStreamFactory({ db }),
-      getUser,
-      newProjectDb: db,
-      sourceProjectDb: db,
-      createStream: createStreamFactory({ db }),
-      insertCommits: insertCommitsFactory({ db }),
-      getBatchedStreamCommits: getBatchedStreamCommitsFactory({ db }),
-      insertStreamCommits: insertStreamCommitsFactory({ db }),
-      getBatchedStreamBranches: getBatchedStreamBranchesFactory({ db }),
-      insertBranches: insertBranchesFactory({ db }),
-      getBatchedBranchCommits: getBatchedBranchCommitsFactory({ db }),
-      insertBranchCommits: insertBranchCommitsFactory({ db }),
-      getBatchedStreamComments: getBatchedStreamCommentsFactory({ db }),
-      insertComments: insertCommentsFactory({ db }),
-      getCommentLinks: getCommentLinksFactory({ db }),
-      insertCommentLinks: insertCommentLinksFactory({ db }),
-      emitEvent: getEventBus().emit
-    })
-
     logger.info(
       `Cloning stream ${sourceStreamId} into the account of user ${targetUserId}...`
     )
-    const { id } = await cloneStream(targetUserId, sourceStreamId)
+    const { id } = await asMultiregionalOperation(
+      ({ emit, mainDb, allDbs }) => {
+        const cloneStream = cloneStreamFactory({
+          getStream: getStreamFactory({ db: mainDb }),
+          getUser: getUserFactory({ db: mainDb }),
+          newProjectDb: mainDb,
+          sourceProjectDb: mainDb,
+          createStream: replicateFactory(allDbs, createStreamFactory),
+          insertCommits: insertCommitsFactory({ db: mainDb }),
+          getBatchedStreamCommits: getBatchedStreamCommitsFactory({ db: mainDb }),
+          insertStreamCommits: insertStreamCommitsFactory({ db: mainDb }),
+          getBatchedStreamBranches: getBatchedStreamBranchesFactory({ db: mainDb }),
+          insertBranches: insertBranchesFactory({ db: mainDb }),
+          getBatchedBranchCommits: getBatchedBranchCommitsFactory({ db: mainDb }),
+          insertBranchCommits: insertBranchCommitsFactory({ db: mainDb }),
+          getBatchedStreamComments: getBatchedStreamCommentsFactory({ db: mainDb }),
+          insertComments: insertCommentsFactory({ db: mainDb }),
+          getCommentLinks: getCommentLinksFactory({ db: mainDb }),
+          insertCommentLinks: insertCommentLinksFactory({ db: mainDb }),
+          emitEvent: emit,
+          storeProjectRole: storeProjectRoleFactory({ db: mainDb })
+        })
+
+        return cloneStream(targetUserId, sourceStreamId)
+      },
+      {
+        name: 'Clone Stream',
+        dbs: [db], // Cloning does not support multiregion
+        logger
+      }
+    )
+
     logger.info('Cloning successful! New stream ID: ' + id)
   }
 }

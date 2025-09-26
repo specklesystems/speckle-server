@@ -5,6 +5,7 @@
       class="group flex items-center w-full p-1 pr-2 cursor-pointer text-left justify-between"
       :class="[getItemBackgroundClass(), getItemOpacityClass()]"
       @click="handleItemClick($event)"
+      @dblclick="handleItemDoubleClick()"
       @mouseenter="handleItemMouseEnter()"
       @mouseleave="handleItemMouseLeave()"
       @focusin="handleItemMouseEnter()"
@@ -18,6 +19,7 @@
 
         <ViewerExpansionTriangle
           v-if="item.hasChildren"
+          class="h-8"
           :is-expanded="item.isExpanded"
           :class="getItemOpacityClass()"
           @click="toggleExpansion()"
@@ -64,9 +66,10 @@ import {
 } from '~~/lib/object-sidebar/helpers'
 import {
   useSelectionUtilities,
-  useFilterUtilities,
-  useHighlightedObjectsUtilities
+  useHighlightedObjectsUtilities,
+  useCameraUtilities
 } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import type { UnifiedVirtualItem } from '~~/lib/viewer/composables/tree'
 
@@ -83,19 +86,22 @@ const { objects: selectedObjects } = useSelectionUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
+const { zoom } = useCameraUtilities()
 
 const {
   viewer: {
     metadata: { filteringState }
-  }
+  },
+  ui: { filters }
 } = useInjectedViewerState()
 
 const hiddenObjects = computed(() => filteringState.value?.hiddenObjects)
-const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
+// Use singleton isolatedObjectsSet from viewer state
+const { isolatedObjectsSet } = filters
 
 const stateHasIsolatedObjectsInGeneral = computed(() => {
-  if (!isolatedObjects.value) return false
-  return isolatedObjects.value.length > 0
+  if (!isolatedObjectsSet.value) return false
+  return isolatedObjectsSet.value.size > 0
 })
 
 const rawSpeckleData = computed(() => {
@@ -111,9 +117,10 @@ const isTreeItemHidden = computed((): boolean => {
 })
 
 const isTreeItemIsolated = computed((): boolean => {
-  if (!rawSpeckleData.value || !isolatedObjects.value) return false
+  if (!rawSpeckleData.value || !isolatedObjectsSet.value) return false
   const ids = getTargetObjectIds(rawSpeckleData.value)
-  return containsAll(ids, isolatedObjects.value)
+  const isolatedObjectsArray = Array.from(isolatedObjectsSet.value)
+  return containsAll(ids, isolatedObjectsArray)
 })
 
 const toggleTreeItemVisibility = () => {
@@ -144,6 +151,11 @@ const toggleExpansion = () => {
 
 const handleItemClick = (event: MouseEvent | KeyboardEvent) => {
   emit('item-click', props.item, event)
+}
+
+const handleItemDoubleClick = () => {
+  if (!rawSpeckleData.value?.id) return
+  zoom([rawSpeckleData.value.id])
 }
 
 const handleItemMouseEnter = () => {

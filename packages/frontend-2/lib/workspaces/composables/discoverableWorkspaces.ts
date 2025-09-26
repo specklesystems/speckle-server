@@ -159,6 +159,21 @@ export const useDiscoverableWorkspaces = () => {
     if (result?.data) {
       await refetch()
 
+      modifyObjectField(
+        apollo.cache,
+        getCacheId('User', activeUserId),
+        'workspaces',
+        ({ helpers: { createUpdatedValue, ref } }) => {
+          return createUpdatedValue(({ update }) => {
+            update('totalCount', (totalCount) => totalCount + 1)
+            update('items', (items) => [...items, ref('Workspace', workspace.id)])
+          })
+        },
+        {
+          autoEvictFiltered: true
+        }
+      )
+
       apollo.query({
         query: activeUserWorkspaceExistenceCheckQuery,
         variables: {

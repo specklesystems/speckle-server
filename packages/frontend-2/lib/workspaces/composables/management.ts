@@ -192,9 +192,11 @@ export const useProcessWorkspaceInvite = () => {
               'workspaceInvite',
               ({ value, variables, helpers: { readField } }) => {
                 if (value) {
-                  const workspace = readField(value, 'workspace')
-                  if (workspace) {
-                    const inviteWorkspaceId = workspace.id
+                  const workspaceRef = readField(value, 'workspace')
+
+                  if (workspaceRef) {
+                    const workspaceId = readField(workspaceRef, 'id')
+                    const inviteWorkspaceId = workspaceId
                     if (inviteWorkspaceId === workspaceId) return null
                   }
                 } else {
@@ -203,9 +205,12 @@ export const useProcessWorkspaceInvite = () => {
               }
             )
 
-            // Evict invite itself
+            // Evict invite itself (because of implicit workspace invites, we need to also evict equivalent project invite)
             cache.evict({
               id: getCacheId('PendingWorkspaceCollaborator', inviteId)
+            })
+            cache.evict({
+              id: getCacheId('PendingStreamCollaborator', inviteId)
             })
 
             if (options?.callback) await options.callback()
@@ -471,6 +476,7 @@ export const useWorkspaceUpdateRole = () => {
               }
             )
           }
+
           modifyObjectField(
             cache,
             getCacheId('Workspace', input.workspaceId),

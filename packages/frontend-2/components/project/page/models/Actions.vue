@@ -73,6 +73,7 @@ graphql(`
         ...FullPermissionCheckResult
       }
     }
+    ...UseCopyModelLink_Model
   }
 `)
 
@@ -237,7 +238,7 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       break
     case ActionTypes.Share:
       mp.track('Branch Action', { type: 'action', name: 'share' })
-      copyModelLink(props.project.id, props.model.id)
+      void copyModelLink({ model: props.model })
       break
     case ActionTypes.ViewVersions:
       router.push(modelVersionsRoute(props.project.id, props.model.id))

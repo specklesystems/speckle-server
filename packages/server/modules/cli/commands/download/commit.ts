@@ -3,8 +3,7 @@ import { downloadCommitFactory } from '@/modules/cross-server-sync/services/comm
 import { cliLogger as logger } from '@/observability/logging'
 import {
   getStreamCollaboratorsFactory,
-  getStreamFactory,
-  markCommitStreamUpdatedFactory
+  getStreamFactory
 } from '@/modules/core/repositories/streams'
 import {
   getBranchByIdFactory,
@@ -56,7 +55,10 @@ import {
   getViewerResourceGroupsFactory,
   getViewerResourceItemsUngroupedFactory
 } from '@/modules/viewer/services/viewerResources'
-import { getSavedViewFactory } from '@/modules/viewer/repositories/savedViews'
+import {
+  getModelHomeSavedViewFactory,
+  getSavedViewFactory
+} from '@/modules/viewer/repositories/savedViews'
 
 const command: CommandModule<
   unknown,
@@ -101,7 +103,6 @@ const command: CommandModule<
     // everything should happen in the project db right?
     const projectDb = await getProjectDbClient({ projectId })
 
-    const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db: projectDb })
     const getStream = getStreamFactory({ db: projectDb })
     const getObject = getObjectFactory({ db: projectDb })
     const getStreamObjects = getStreamObjectsFactory({ db: projectDb })
@@ -120,7 +121,8 @@ const command: CommandModule<
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
         getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb }),
         getBranchesByIds: getBranchesByIdsFactory({ db: projectDb }),
-        getSavedView: getSavedViewFactory({ db: projectDb })
+        getSavedView: getSavedViewFactory({ db: projectDb }),
+        getModelHomeSavedView: getModelHomeSavedViewFactory({ db: projectDb })
       })
     })
     const getViewerResourcesFromLegacyIdentifiers =
@@ -163,7 +165,6 @@ const command: CommandModule<
       getBranchById: getBranchByIdFactory({ db: projectDb }),
       insertStreamCommits: insertStreamCommitsFactory({ db: projectDb }),
       insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
-      markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
       emitEvent: getEventBus().emit
     })

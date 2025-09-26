@@ -44,10 +44,16 @@
             v-slot="{ open }"
             :class="buttonClasses"
           >
-            <div class="flex items-center justify-between w-full">
+            <div
+              class="flex items-center w-full"
+              :class="buttonStyle === 'simple' ? 'justify-start' : 'justify-between'"
+            >
               <div
-                class="block truncate grow text-left text-xs sm:text-[13px]"
-                :class="[hasValueSelected ? 'text-foreground' : 'text-foreground-2']"
+                class="block truncate text-left text-xs sm:text-[13px]"
+                :class="[
+                  hasValueSelected ? 'text-foreground' : 'text-foreground-2',
+                  buttonStyle === 'simple' ? '' : 'grow'
+                ]"
               >
                 <template
                   v-if="
@@ -761,13 +767,13 @@ const finalItems = computed(() => {
 
 const listboxOptionsClasses = computed(() => {
   const classParts = [
-    'rounded-md bg-foundation py-1 label label--light border border-outline-3 shadow-md mt-1 '
+    'rounded-md bg-foundation py-1 label label--light border border-outline-3 shadow-md'
   ]
 
   if (props.mountMenuOnBody) {
     classParts.push('fixed z-50')
   } else {
-    classParts.push('absolute top-[100%] w-full z-40')
+    classParts.push('absolute top-[100%] w-full z-40 mt-1')
   }
 
   return classParts.join(' ')

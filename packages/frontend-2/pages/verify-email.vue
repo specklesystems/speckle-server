@@ -4,17 +4,27 @@
       <HeaderLogoBlock no-link />
     </template>
     <template #header-right>
-      <FormButton
-        v-if="isPrimaryEmail"
-        color="outline"
-        size="sm"
-        @click="() => logout({ skipRedirect: false })"
-      >
-        Sign out
-      </FormButton>
-      <FormButton v-else color="outline" size="sm" @click="showDeleteDialog = true">
-        Cancel
-      </FormButton>
+      <div class="flex items-center gap-2">
+        <FormButton
+          size="sm"
+          text
+          class="pointer-events-auto"
+          @click="() => copyReference()"
+        >
+          <WrenchIcon class="w-4 h-4" />
+        </FormButton>
+        <FormButton
+          v-if="isPrimaryEmail"
+          color="outline"
+          size="sm"
+          @click="() => logout({ skipRedirect: false })"
+        >
+          Sign out
+        </FormButton>
+        <FormButton v-else color="outline" size="sm" @click="showDeleteDialog = true">
+          Cancel
+        </FormButton>
+      </div>
     </template>
 
     <div class="flex flex-col items-center justify-center p-4">
@@ -26,7 +36,8 @@
         <span class="font-semibold">{{ currentEmail?.email }}</span>
       </p>
       <p class="text-center text-body-sm text-foreground mb-8">
-        Paste (or type) it below to continue. Code expires in 5 minutes.
+        Paste (or type) it below to continue. Code expires in
+        {{ timeoutDisplayString }}.
       </p>
       <FormCodeInput
         v-model="code"
@@ -42,21 +53,18 @@
         >
           Cancel
         </FormButton>
-        <div
-          v-tippy="
-            cooldownRemaining > 0
-              ? `You can send another code in ${cooldownRemaining}s`
-              : undefined
-          "
-        >
+        <div class="flex flex-col gap-1 justify-center items-center">
           <FormButton
             :disabled="isResendDisabled"
-            color="outline"
-            size="sm"
+            :color="isResendDisabled ? 'outline' : 'primary'"
+            :size="isResendDisabled ? 'sm' : 'base'"
             @click="resendEmail"
           >
             {{ isResendDisabled ? 'Code sent' : 'Resend code' }}
           </FormButton>
+          <span v-if="isResendDisabled" class="text-body-3xs text-foreground-2">
+            You can send another code in {{ cooldownRemaining }}s
+          </span>
         </div>
       </div>
       <div v-if="!registeredThisSession" class="w-full max-w-sm mx-auto mt-8">
@@ -87,6 +95,9 @@ import { useAuthManager, useRegisteredThisSession } from '~/lib/auth/composables
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { UserEmail } from '~/lib/common/generated/gql/graphql'
 import { TIME_MS } from '@speckle/shared'
+import { useGenerateErrorReference } from '~/lib/core/composables/error'
+import { WrenchIcon } from '@heroicons/vue/24/solid'
+import { useEmailVerificationTimeout } from '~/lib/common/composables/serverInfo'
 
 useHead({
   title: 'Verify your email'
@@ -108,6 +119,8 @@ const route = useRoute()
 const { logout } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
 const registeredThisSession = useRegisteredThisSession()
+const { copyReference } = useGenerateErrorReference()
+const { timeoutDisplayString } = useEmailVerificationTimeout()
 
 const code = ref('')
 const hasError = ref(false)

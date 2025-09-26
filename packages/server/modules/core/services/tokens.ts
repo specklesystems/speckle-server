@@ -24,6 +24,7 @@ import type {
   StoreTokenResourceAccessDefinitions,
   StoreTokenScopes,
   StoreUserServerAppToken,
+  TokenResourceIdentifierInput,
   UpdateApiToken,
   ValidateToken
 } from '@/modules/core/domain/tokens/operations'
@@ -128,13 +129,15 @@ export const createPersonalAccessTokenFactory =
     userId: string,
     name: string,
     scopes: ServerScope[],
-    lifespan?: number | bigint
+    lifespan?: number | bigint,
+    limitResources?: TokenResourceIdentifierInput[] | null
   ) => {
     const { id, token } = await createTokenFactory(deps)({
       userId,
       name,
       scopes,
-      lifespan
+      lifespan,
+      limitResources
     })
 
     // Store the relationship
@@ -238,6 +241,8 @@ export const validateTokenFactory =
     if (!token) {
       return { valid: false, tokenId }
     }
+
+    if (token.revoked) return { valid: false, tokenId }
 
     const timeDiff = Math.abs(Date.now() - new Date(token.createdAt).getTime())
     if (timeDiff > token.lifespan) {

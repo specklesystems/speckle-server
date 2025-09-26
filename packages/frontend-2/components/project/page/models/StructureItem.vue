@@ -22,11 +22,7 @@
               class="text-body-3xs text-danger hover:text-danger-lighter cursor-pointer"
               @click.stop="actions?.showUploads()"
             >
-              <CircleAlert
-                :size="LucideSize.base"
-                :stroke-width="1.5"
-                :absolute-stroke-width="true"
-              />
+              <ExclamationCircleIcon class="w-4 h-4" />
             </NuxtLink>
             <ProjectPageModelsActions
               ref="actions"
@@ -51,7 +47,7 @@
         >
           <FormButton
             color="subtle"
-            :icon-left="Plus"
+            :icon-left="PlusIcon"
             size="sm"
             :disabled="!canCreateModel.canClickCreate.value"
             @click.stop="$emit('create-submodel', model?.name || '')"
@@ -142,7 +138,7 @@
       >
         <NuxtLink
           :to="modelLink || ''"
-          class="h-full w-full block bg-foundation-page rounded-lg border border-outline-3 hover:border-outline-5"
+          class="h-full w-full block bg-foundation-page rounded-lg border border-outline-3 hover:border-outline-5 overflow-hidden"
         >
           <PreviewImage
             v-if="item.model?.previewUrl"
@@ -181,38 +177,17 @@
         <!-- Icon -->
         <div>
           <div class="mx-2 flex items-center hover:text-primary text-foreground-2 h-14">
-            <ChevronDown
-              :size="LucideSize.base"
-              :stroke-width="1.5"
-              :absolute-stroke-width="true"
-              :class="`transition ${expanded ? 'rotate-180' : ''}`"
+            <ChevronDownIcon
+              :class="`w-4 h-4 transition ${expanded ? 'rotate-180' : ''}`"
             />
           </div>
         </div>
         <!-- Name -->
-        <Folder
-          :size="LucideSize.base"
-          :stroke-width="1.5"
-          :absolute-stroke-width="true"
-          class="text-foreground"
-        />
+        <FolderIcon class="w-4 h-4 text-foreground" />
         <div class="ml-2 flex-grow text-left flex items-center gap-2">
           <div class="text-heading text-foreground">
             {{ name }}
           </div>
-          <NuxtLink
-            v-if="showLastUploadFailed"
-            v-tippy="'Last upload failed'"
-            v-keyboard-clickable
-            class="text-body-3xs text-danger hover:text-danger-lighter cursor-pointer"
-            @click.stop="actions?.showUploads()"
-          >
-            <CircleAlert
-              :size="LucideSize.base"
-              :stroke-width="1.5"
-              :absolute-stroke-width="true"
-            />
-          </NuxtLink>
         </div>
 
         <!-- Preview -->
@@ -258,12 +233,7 @@
         <template v-else>
           <div v-for="child in children" :key="child.fullName" class="flex">
             <div class="h-20 absolute -ml-8 flex items-center mt-0 mr-1 pl-1">
-              <ChevronDown
-                :size="LucideSize.base"
-                :stroke-width="1.5"
-                :absolute-stroke-width="true"
-                class="rotate-45 text-foreground-2"
-              />
+              <ChevronDownIcon class="w-4 h-4 rotate-45 text-foreground-2" />
             </div>
 
             <ProjectPageModelsStructureItem
@@ -282,8 +252,8 @@
 </template>
 <script lang="ts" setup>
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
-import { ChevronDown, Plus, Folder, CircleAlert } from 'lucide-vue-next'
-
+import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid'
+import { ExclamationCircleIcon, FolderIcon } from '@heroicons/vue/24/outline'
 import type {
   PendingFileUploadFragment,
   ProjectPageModelsStructureItem_ProjectFragment,
@@ -301,6 +271,7 @@ import { useCanCreateModel } from '~/lib/projects/composables/permissions'
 import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
 import dayjs from 'dayjs'
 import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
+import { getModelItemRoute } from '~/lib/projects/helpers/models'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -359,6 +330,7 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const importArea = ref(
   null as Nullable<{
@@ -489,13 +461,9 @@ const updatedAt = computed(() => {
 })
 
 const modelLink = computed(() => {
-  if (
-    isPendingFileUpload(props.item) ||
-    !props.item.model ||
-    props.item.model?.versionCount.totalCount === 0
-  )
-    return null
-  return modelRoute(props.project.id, props.item.model.id)
+  const item = isPendingFileUpload(props.item) ? props.item : props.item.model
+  if (!item) return null
+  return getModelItemRoute(item)
 })
 
 const viewAllUrl = computed(() => {

@@ -163,6 +163,7 @@ const props = defineProps<{
   workspace: MaybeNullOrUndefined<SettingsSharedProjects_WorkspaceFragment>
 }>()
 
+const { formattedFullDate } = useDateFormatters()
 const { activeUser } = useActiveUser()
 const canCreatePersonal = useCanCreatePersonalProject({
   activeUser: computed(() => activeUser.value)

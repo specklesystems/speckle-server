@@ -1,8 +1,10 @@
 <template>
   <div>
     <nav class="fixed z-40 top-0 h-12 bg-foundation border-b border-outline-2">
-      <div class="flex gap-4 items-center justify-between h-full w-screen py-4 px-3">
-        <div class="hidden lg:block lg:w-52">
+      <div
+        class="flex gap-4 items-center justify-between h-full w-screen px-2 lg:pl-1.5"
+      >
+        <div class="hidden lg:flex lg:w-52">
           <HeaderWorkspaceSwitcher v-if="isWorkspacesEnabled && isLoggedIn" />
           <HeaderLogoBlock
             v-else
@@ -25,7 +27,7 @@
             <PortalTarget name="primary-actions"></PortalTarget>
           </ClientOnly>
           <HeaderNavNotifications v-if="isLoggedIn" />
-          <div class="flex justify-end gap-x-2">
+          <div v-if="!hideUserNav" class="flex justify-end gap-x-2">
             <FormButton
               v-if="!activeUser"
               :to="loginUrl.fullPath"
@@ -47,6 +49,10 @@
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { loginRoute } from '~~/lib/common/helpers/route'
 import type { Optional } from '@speckle/shared'
+
+defineProps<{
+  hideUserNav?: boolean
+}>()
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { activeUser, isLoggedIn } = useActiveUser()

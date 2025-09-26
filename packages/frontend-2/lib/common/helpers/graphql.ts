@@ -90,6 +90,8 @@ export function getCacheId<Type extends keyof AllObjectTypes>(
   return cachedId as ApolloCacheObjectKey<Type>
 }
 
+export const getCacheKey = getCacheId
+
 export function isInvalidAuth(error: ApolloError | NetworkError) {
   const networkError = error instanceof ApolloError ? error.networkError : error
   if (
@@ -195,7 +197,7 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
 ): boolean {
   const { fragment, query } = filter
   const { ignoreCacheErrors = true, overwrite = true } = options
-  const logger = useLogger()
+  const { logger } = useSafeLogger()
 
   if (!fragment && !query) {
     throw new Error(
@@ -242,7 +244,7 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
     }
 
     if (ignoreCacheErrors) {
-      logger.warn('Failed Apollo cache update:', e)
+      logger().warn('Failed Apollo cache update:', e)
       return false
     }
     throw e
@@ -308,6 +310,14 @@ export function getObjectReference<Type extends keyof AllObjectTypes>(
 ): CacheObjectReference<Type> {
   return {
     __ref: getCacheId(typeName, id)
+  } as CacheObjectReference<Type>
+}
+
+export const keyToRef = <Type extends keyof AllObjectTypes>(
+  key: ApolloCacheObjectKey<Type>
+): CacheObjectReference<Type> => {
+  return {
+    __ref: key
   } as CacheObjectReference<Type>
 }
 
@@ -382,13 +392,13 @@ export function modifyObjectFields<
 ) {
   const { fieldNameWhitelist, debug = false } = options || {}
 
-  const logger = useLogger()
+  const { logger } = useSafeLogger()
   const invocationId = nanoid()
-  const log = (...args: Parameters<typeof logger.debug>) => {
+  const log = (...args: unknown[]) => {
     if (!debug) return
     const [message, ...rest] = args
 
-    logger.debug(`[${invocationId}] ${message}`, ...rest)
+    logger().debug(`[${invocationId}] ${message}`, ...rest)
   }
 
   log(
@@ -585,6 +595,18 @@ type ModifyObjectFieldValue<
 > = ModifyFnCacheData<AllObjectTypes[Type][Field]>
 
 /**
+ * Get keys of all cached objects by type
+ */
+export const getCachedObjectKeys = <Type extends keyof AllObjectTypes>(
+  cache: ApolloCache<unknown>,
+  type: Type
+): ApolloCacheObjectKey<Type>[] => {
+  const data = cache.extract() as Record<string, unknown>
+  const objectIds = Object.keys(data).filter((k) => k.startsWith(`${type}:`))
+  return objectIds as ApolloCacheObjectKey<Type>[]
+}
+
+/**
  * Simplified & improved version of modifyObjectFields, just targetting a single field for a cache modification
  * @see modifyObjectFields
  */
@@ -644,11 +666,23 @@ export const modifyObjectField = <
       >(
         ref: CacheObjectReference<ReadFieldType>,
         fieldName: ReadFieldName
-      ) => Optional<AllObjectTypes[ReadFieldType][ReadFieldName]>
+      ) => Optional<ModifyFnCacheData<AllObjectTypes[ReadFieldType][ReadFieldName]>>
+      /**
+       * Get the object we're modifying as a readable object
+       */
+      readObject: () => Partial<{
+        [prop in keyof AllObjectTypes[Type]]: ModifyFnCacheData<
+          AllObjectTypes[Type][prop]
+        >
+      }>
       /**
        * Build a reference object for a specific object in the cache
        */
       ref: typeof getObjectReference
+      /**
+       * Build a reference object from a key
+       */
+      keyToRef: typeof keyToRef
       /**
        * Parse a reference object to get its type and id separately
        */
@@ -666,8 +700,10 @@ export const modifyObjectField = <
      * Whether to auto evict values that have variables with common filters in them (e.g. a 'filter' or
      * 'search' prop). Often its better to evict filtered values, because we can't tell if the newly
      * added item should be included in the filtered list or not.
+     *
+     * If string array passed in, these extra filter keys will be checked to see if we need to evict
      */
-    autoEvictFiltered: boolean
+    autoEvictFiltered: boolean | string[]
   }>
 ) => {
   const { autoEvictFiltered } = options || {}
@@ -692,7 +728,14 @@ export const modifyObjectField = <
           return false
         }
 
-        const commonFilters = ['query', 'filter', 'search', 'filter.search']
+        const commonFilters = [
+          'query',
+          'filter',
+          'search',
+          'filter.search',
+          'input.search',
+          ...(isArray(autoEvictFiltered) ? autoEvictFiltered : [])
+        ]
         const hasFilter = commonFilters.some(checkFilter)
 
         if (hasFilter) {
@@ -727,6 +770,7 @@ export const modifyObjectField = <
         path: Path
       ) => getFromPathIfExists<ModifyObjectFieldValue<Type, Field>, Path>(value, path)
       const evict = () => details.DELETE
+
       const readField = <
         ReadFieldType extends keyof AllObjectTypes,
         ReadFieldName extends keyof AllObjectTypes[ReadFieldType] & string
@@ -734,10 +778,26 @@ export const modifyObjectField = <
         ref: CacheObjectReference<ReadFieldType>,
         fieldName: ReadFieldName
       ) =>
-        details.readField(
-          fieldName,
-          ref
-        ) as AllObjectTypes[ReadFieldType][ReadFieldName]
+        details.readField(fieldName, ref) as Optional<
+          ModifyFnCacheData<AllObjectTypes[ReadFieldType][ReadFieldName]>
+        >
+
+      const readObject = () =>
+        new Proxy(
+          {} as Partial<{
+            [prop in keyof AllObjectTypes[Type]]: ModifyFnCacheData<
+              AllObjectTypes[Type][prop]
+            >
+          }>,
+          {
+            get(_target, prop) {
+              if (!isString(prop)) return undefined
+
+              const ref = keyToRef(key)
+              return details.readField(prop, ref)
+            }
+          }
+        )
 
       return updater({
         fieldName: field,
@@ -749,7 +809,9 @@ export const modifyObjectField = <
           evict,
           readField,
           ref: getObjectReference,
-          fromRef: parseObjectReference
+          fromRef: parseObjectReference,
+          keyToRef,
+          readObject
         }
       })
     },
@@ -794,7 +856,15 @@ export const iterateObjectField = <
       >(
         ref: CacheObjectReference<ReadFieldType>,
         fieldName: ReadFieldName
-      ) => Optional<AllObjectTypes[ReadFieldType][ReadFieldName]>
+      ) => Optional<ModifyFnCacheData<AllObjectTypes[ReadFieldType][ReadFieldName]>>
+      /**
+       * Get the object we're modifying as a readable object
+       */
+      readObject: () => Partial<{
+        [prop in keyof AllObjectTypes[Type]]: ModifyFnCacheData<
+          AllObjectTypes[Type][prop]
+        >
+      }>
       /**
        * Build a reference object for a specific object in the cache
        */

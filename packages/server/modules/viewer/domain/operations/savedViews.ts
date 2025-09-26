@@ -35,6 +35,8 @@ export type StoreSavedViewGroup = <
 
 export type GetStoredViewCount = (params: { projectId: string }) => Promise<number>
 
+export type GetStoredViewGroupCount = (params: { projectId: string }) => Promise<number>
+
 export type GetProjectSavedViewGroupsBaseParams = {
   /**
    * Falsy means - anonymous user (so no onlyAuthored filtering)
@@ -43,6 +45,7 @@ export type GetProjectSavedViewGroupsBaseParams = {
   projectId: string
   resourceIdString: string
   onlyAuthored?: MaybeNullOrUndefined<boolean>
+  onlyVisibility?: MaybeNullOrUndefined<SavedViewVisibility>
   search?: MaybeNullOrUndefined<string>
 }
 
@@ -72,6 +75,7 @@ export type GetGroupSavedViewsBaseParams = {
    */
   groupId: MaybeNullOrUndefined<string>
   onlyAuthored?: MaybeNullOrUndefined<boolean>
+  onlyVisibility?: MaybeNullOrUndefined<SavedViewVisibility>
   search?: MaybeNullOrUndefined<string>
 }
 
@@ -79,7 +83,10 @@ export type GetGroupSavedViewsPageParams = GetGroupSavedViewsBaseParams & {
   limit?: MaybeNullOrUndefined<number>
   cursor?: MaybeNullOrUndefined<string>
   sortDirection?: MaybeNullOrUndefined<'asc' | 'desc'>
-  sortBy?: MaybeNullOrUndefined<'createdAt' | 'name' | 'updatedAt'>
+  /**
+   * Null means - manual positioning
+   */
+  sortBy?: MaybeNullOrUndefined<'createdAt' | 'name' | 'updatedAt' | 'position'>
 }
 
 export type GetGroupSavedViewsTotalCount = (
@@ -128,13 +135,80 @@ export type DeleteSavedViewRecord = (params: {
   savedViewId: string
 }) => Promise<boolean>
 
-export type UpdateSavedViewRecord = <
-  Update extends Exact<Partial<SavedView>, Update>
+export type UpdateSavedViewRecord = <Update extends Exact<Partial<SavedView>, Update>>(
+  params: {
+    id: string
+    projectId: string
+    update: Update
+  },
+  options?: Partial<{
+    /**
+     * Skip updating updatedAt
+     */
+    skipUpdatingDate: boolean
+  }>
+) => Promise<SavedView | undefined>
+
+export type DeleteSavedViewGroupRecord = (params: {
+  groupId: string
+  projectId: string
+}) => Promise<boolean>
+
+export type UpdateSavedViewGroupRecord = <
+  Update extends Exact<Partial<SavedViewGroup>, Update>
 >(params: {
-  id: string
+  groupId: string
   projectId: string
   update: Update
+}) => Promise<SavedViewGroup | undefined>
+
+export type GetModelHomeSavedViews = (params: {
+  requests: Array<{ modelId: string; projectId: string }>
+}) => Promise<{
+  [modelId: string]: SavedView | undefined
+}>
+
+export type GetModelHomeSavedView = (params: {
+  modelId: string
+  projectId: string
 }) => Promise<SavedView | undefined>
+
+export type SetNewHomeView = (params: {
+  projectId: string
+  modelId: string
+  newHomeViewId: string | null
+}) => Promise<boolean>
+
+/**
+ * Calculate new view position for the beginning or end of the group that it will be a part of
+ */
+export type GetNewViewBoundaryPosition = (params: {
+  projectId: string
+  resourceIdString: string
+  groupId: string | null
+  position: 'last' | 'first'
+}) => Promise<number>
+
+/**
+ * Calculate new view position for a specific position in the group that it will be a part of. Also
+ * returns whether rebalancing is needed (i.e. the gap between before and after positions is too small)
+ */
+export type GetNewViewSpecificPosition = (params: {
+  projectId: string
+  resourceIdString: string
+  groupId: string | null
+  beforeId: MaybeNullOrUndefined<string>
+  afterId: MaybeNullOrUndefined<string>
+}) => Promise<{
+  newPosition: number
+  needsRebalancing: boolean
+}>
+
+export type RebalanceViewPositions = (params: {
+  projectId: string
+  resourceIdString: string
+  groupId: string | null
+}) => Promise<number>
 
 /////////////////////
 // SERVICE OPERATIONS:
@@ -158,6 +232,7 @@ export type CreateSavedViewParams = {
     screenshot: string
     isHomeView?: MaybeNullOrUndefined<boolean>
     visibility?: MaybeNullOrUndefined<SavedViewVisibility>
+    position?: MaybeNullOrUndefined<ViewPositionInput>
   }
   authorId: string
 }
@@ -168,7 +243,7 @@ export type CreateSavedViewGroupParams = {
   input: {
     projectId: string
     resourceIdString: string
-    groupName: string
+    groupName?: MaybeNullOrUndefined<string>
   }
   authorId: string
 }
@@ -191,6 +266,12 @@ export type DeleteSavedView = (params: {
   userId: string
 }) => Promise<void>
 
+export type ViewPositionInput = {
+  type: 'first' | 'last' | 'between'
+  beforeViewId?: MaybeNullOrUndefined<string>
+  afterViewId?: MaybeNullOrUndefined<string>
+}
+
 export type UpdateSavedViewParams = {
   id: string
   projectId: string
@@ -202,9 +283,27 @@ export type UpdateSavedViewParams = {
   viewerState?: MaybeNullOrUndefined<unknown>
   resourceIdString?: MaybeNullOrUndefined<string>
   screenshot?: MaybeNullOrUndefined<string>
+  position?: MaybeNullOrUndefined<ViewPositionInput>
 }
 
 export type UpdateSavedView = (params: {
   input: UpdateSavedViewParams
   userId: string
 }) => Promise<SavedView>
+
+export type DeleteSavedViewGroup = (params: {
+  input: {
+    groupId: string
+    projectId: string
+  }
+  userId: string
+}) => Promise<boolean>
+
+export type UpdateSavedViewGroup = (params: {
+  input: {
+    groupId: string
+    projectId: string
+    name?: MaybeNullOrUndefined<string>
+  }
+  userId: string
+}) => Promise<SavedViewGroup>

@@ -3,12 +3,17 @@ import type {
   StreamWithOptionalRole
 } from '@/modules/core/domain/streams/types'
 import type { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
-import type { MaybeNullOrUndefined, StreamRoles } from '@speckle/shared'
+import type {
+  MaybeNullOrUndefined,
+  Nullable,
+  NullableKeysToOptional,
+  StreamRoles
+} from '@speckle/shared'
 
 export type GetProject = (args: { projectId: string }) => Promise<Project | null>
 
 export type UpdateProject = (args: {
-  projectUpdate: Pick<StreamRecord, 'id'> & Partial<StreamRecord>
+  projectUpdate: Pick<StreamRecord, 'id'> & Partial<StreamRecord> & { updatedAt: Date }
 }) => Promise<StreamRecord>
 
 export type StoreProjectRole = (args: {
@@ -25,21 +30,27 @@ export type StoreProjectRoles = (args: {
   }[]
 }) => Promise<void>
 
-export type UpsertProjectRole = (
-  args: {
-    projectId: string
-    userId: string
-    role: StreamRoles
-  },
-  options?: { trackProjectUpdate?: boolean }
-) => Promise<StreamRecord>
-
-export type DeleteProjectRole = (args: {
+export type UpsertProjectRole = (args: {
   projectId: string
   userId: string
-}) => Promise<StreamRecord | undefined>
+  role: StreamRoles
+}) => Promise<StreamRecord>
+
+export type BulkUpsertProjects = (params: {
+  projects: Array<NullableKeysToOptional<StreamRecord>>
+}) => Promise<void>
+
+export type GetAllProjects = (args: {
+  limit: number
+  regionKey: string
+  cursor: Nullable<string>
+}) => Promise<{
+  items: StreamRecord[]
+  cursor: Nullable<string>
+}>
 
 export type DeleteProject = (args: { projectId: string }) => Promise<void>
+export type DeleteProjectAndCommits = (args: { projectId: string }) => Promise<void>
 
 export type GetUserProjectRoles = ({
   userId,
@@ -61,7 +72,6 @@ export type ProjectCreateArgs = {
 }
 
 export type CreateProject = (params: ProjectCreateArgs) => Promise<Project>
-
 export type StoreProject = (params: { project: Project }) => Promise<void>
 
 export type StoreModel = (params: {

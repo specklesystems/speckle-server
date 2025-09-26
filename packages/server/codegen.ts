@@ -197,7 +197,18 @@ const config: CodegenConfig = {
           PermissionCheckResult:
             '@/modules/core/helpers/graphTypes#PermissionCheckResultGraphQLReturn',
           SavedViewPermissionChecks:
-            '@/modules/viewer/helpers/graphTypes#SavedViewPermissionChecksGraphQLReturn'
+            '@/modules/viewer/helpers/graphTypes#SavedViewPermissionChecksGraphQLReturn',
+          SavedViewGroupPermissionChecks:
+            '@/modules/viewer/helpers/graphTypes#SavedViewGroupPermissionChecksGraphQLReturn',
+          ExtendedViewerResources:
+            '@/modules/viewer/helpers/graphTypes#ExtendedViewerResourcesGraphQLReturn',
+          Dashboard: '@/modules/dashboards/helpers/graphTypes#DashboardGraphQLReturn',
+          DashboardMutations:
+            '@/modules/dashboards/helpers/graphTypes#DashboardMutationsGraphQLReturn',
+          DashboardPermissionChecks:
+            '@/modules/dashboards/helpers/graphTypes#DashboardPermissionChecksGraphQLReturn',
+          DashboardToken:
+            '@/modules/dashboards/helpers/graphTypes#DashboardTokenGraphQLReturn'
         }
       }
     }

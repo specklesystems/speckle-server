@@ -4,6 +4,7 @@
     <LayoutMenu
       v-model:open="showActionsMenu"
       :items="actionsItems"
+      :menu-id="menuId"
       :menu-position="HorizontalDirection.Left"
       @click.stop.prevent
       @chosen="onActionChosen"
@@ -43,6 +44,7 @@ const props = defineProps<{
 
 const { copy } = useClipboard()
 const copyModelLink = useCopyModelLink()
+const menuId = useId()
 
 const disabledMessage = computed(
   () =>
@@ -101,7 +103,13 @@ const onActionChosen = (params: { item: LayoutMenuItem<VersionActionTypes> }) =>
       emit('select')
       break
     case VersionActionTypes.Share:
-      copyModelLink(props.projectId, props.modelId, props.versionId)
+      void copyModelLink({
+        model: {
+          projectId: props.projectId,
+          id: props.modelId
+        },
+        versionId: props.versionId
+      })
       break
     case VersionActionTypes.CopyId:
       copy(props.versionId, { successMessage: 'Version ID copied to clipboard' })

@@ -3,7 +3,7 @@ name = "ifc_importer"
 version = "0.1.0"
 description = "Speckle IFC importer worker app"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
     "asyncpg>=0.30.0",
     "typed-settings>=24.5.0",
@@ -11,7 +11,7 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "structlog>=25.4.0",
     "structlog-to-seq>=21.0.0",
-    "specklepy[speckleifc]>=3.0.4.dev8",
+    "specklepy[speckleifc]>=3.0.7",
     "colorful>=0.5.7",
 ]
 

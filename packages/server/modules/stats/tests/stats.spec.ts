@@ -19,61 +19,15 @@ import {
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
 import {
-  createBranchFactory,
   getBranchByIdFactory,
   getStreamBranchByNameFactory,
   markCommitBranchUpdatedFactory
 } from '@/modules/core/repositories/branches'
 import {
-  createStreamFactory,
-  getStreamFactory,
-  getStreamRolesFactory,
-  grantStreamPermissionsFactory,
-  markCommitStreamUpdatedFactory
-} from '@/modules/core/repositories/streams'
-import {
   getObjectFactory,
   storeObjectsIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
-import {
-  createStreamReturnRecordFactory,
-  legacyCreateStreamFactory
-} from '@/modules/core/services/streams/management'
-import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
-import {
-  deleteInvitesByTargetFactory,
-  deleteServerOnlyInvitesFactory,
-  findInviteFactory,
-  findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory,
-  updateAllInviteTargetsFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import {
-  countAdminUsersFactory,
-  getUserFactory,
-  getUsersFactory,
-  storeUserAclFactory,
-  storeUserFactory
-} from '@/modules/core/repositories/users'
-import {
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory,
-  findEmailFactory
-} from '@/modules/core/repositories/userEmails'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import {
-  finalizeInvitedServerRegistrationFactory,
-  finalizeResourceInviteFactory
-} from '@/modules/serverinvites/services/processing'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import {
   storeApiTokenFactory,
@@ -81,22 +35,12 @@ import {
   storeTokenResourceAccessDefinitionsFactory,
   storeTokenScopesFactory
 } from '@/modules/core/repositories/tokens'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectsFactory } from '@/modules/core/services/objects/management'
-import {
-  processFinalizedProjectInviteFactory,
-  validateProjectInviteBeforeFinalizationFactory
-} from '@/modules/serverinvites/services/coreFinalization'
-import {
-  addOrUpdateStreamCollaboratorFactory,
-  validateStreamAccessFactory
-} from '@/modules/core/services/streams/access'
-import { authorizeResolver } from '@/modules/shared'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { buildBasicTestProject } from '@/modules/core/tests/helpers/creation'
 
-const getServerInfo = getServerInfoFactory({ db })
-const getUsers = getUsersFactory({ db })
-const getUser = getUserFactory({ db })
-const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getObject = getObjectFactory({ db })
 const createCommitByBranchId = createCommitByBranchIdFactory({
   createCommit: createCommitFactory({ db }),
@@ -104,7 +48,6 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   getBranchById: getBranchByIdFactory({ db }),
   insertStreamCommits: insertStreamCommitsFactory({ db }),
   insertBranchCommits: insertBranchCommitsFactory({ db }),
-  markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   emitEvent: getEventBus().emit
 })
@@ -115,107 +58,6 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getBranchById: getBranchByIdFactory({ db })
 })
 
-const getStream = getStreamFactory({ db })
-const buildFinalizeProjectInvite = () =>
-  finalizeResourceInviteFactory({
-    findInvite: findInviteFactory({ db }),
-    validateInvite: validateProjectInviteBeforeFinalizationFactory({
-      getProject: getStream
-    }),
-    processInvite: processFinalizedProjectInviteFactory({
-      getProject: getStream,
-      addProjectRole: addOrUpdateStreamCollaboratorFactory({
-        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
-        getUser,
-        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-        getStreamRoles: getStreamRolesFactory({ db }),
-        emitEvent: getEventBus().emit
-      })
-    }),
-    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    emitEvent: (...args) => getEventBus().emit(...args),
-    findEmail: findEmailFactory({ db }),
-    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-      createUserEmail: createUserEmailFactory({ db }),
-      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-      findEmail: findEmailFactory({ db }),
-      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-      }),
-      requestNewEmailVerification: requestNewEmailVerificationFactory({
-        findEmail: findEmailFactory({ db }),
-        getUser,
-        getServerInfo,
-        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-          db
-        }),
-        renderEmail,
-        sendEmail
-      })
-    }),
-    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-      getStream
-    }),
-    getUser,
-    getServerInfo
-  })
-const createStream = legacyCreateStreamFactory({
-  createStreamReturnRecord: createStreamReturnRecordFactory({
-    inviteUsersToProject: inviteUsersToProjectFactory({
-      createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory({ db }),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-          getStream
-        }),
-        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-          getStream
-        }),
-        emitEvent: ({ eventName, payload }) =>
-          getEventBus().emit({
-            eventName,
-            payload
-          }),
-        getUser: getUserFactory({ db }),
-        getServerInfo,
-        finalizeInvite: buildFinalizeProjectInvite()
-      }),
-      getUsers
-    }),
-    createStream: createStreamFactory({ db }),
-    createBranch: createBranchFactory({ db }),
-    emitEvent: getEventBus().emit
-  })
-})
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
   storeTokenScopes: storeTokenScopesFactory({ db }),
@@ -251,23 +93,8 @@ describe('Server stats services @stats-services', function () {
 describe('Server stats api @stats-api', function () {
   let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 
-  const adminUser = {
-    name: 'Dimitrie',
-    password: 'TestPasswordSecure',
-    email: 'spam@spam.spam',
-    id: '', // Will be filled in before()
-    goodToken: '',
-    badToken: ''
-  }
-
-  const notAdminUser = {
-    name: 'Andrei',
-    password: 'TestPasswordSecure',
-    email: 'spasm@spam.spam',
-    id: '', // Will be filled in before()
-    goodToken: '',
-    badToken: ''
-  }
+  let adminUser: BasicTestUser & { goodToken?: string; badToken?: string }
+  let notAdminUser: BasicTestUser & { goodToken?: string; badToken?: string }
 
   const fullQuery = `
   query{
@@ -289,7 +116,12 @@ describe('Server stats api @stats-api', function () {
     const ctx = await beforeEachContext()
     ;({ sendRequest } = await initializeTestServer(ctx))
 
-    adminUser.id = await createUser(adminUser)
+    adminUser = await createTestUser({
+      name: 'Dimitrie',
+      password: 'TestPasswordSecure',
+      email: 'spam@spam.spam',
+      id: ''
+    })
     adminUser.goodToken = `Bearer ${await createPersonalAccessToken(
       adminUser.id,
       'test token user A',
@@ -301,7 +133,12 @@ describe('Server stats api @stats-api', function () {
       [Scopes.Streams.Read]
     )}`
 
-    notAdminUser.id = await createUser(notAdminUser)
+    notAdminUser = await createTestUser({
+      name: 'Andrei',
+      password: 'TestPasswordSecure',
+      email: 'spasm@spam.spam',
+      id: ''
+    })
     notAdminUser.goodToken = `Bearer ${await createPersonalAccessToken(
       notAdminUser.id,
       'test token user A',
@@ -367,29 +204,26 @@ async function seedDb({
   numCommits = 10
 } = {}) {
   // create users
-  const userPromises = []
+  const users = []
   for (let i = 0; i < numUsers; i++) {
-    const promise = createUser({
+    const user = await createTestUser({
       name: `User ${i}`,
       password: `SuperSecure${i}${i * 3.14}`,
       email: `user${i}@speckle.systems`
     })
-    userPromises.push(promise)
+    users.push(user)
   }
-
-  const userIds = await Promise.all(userPromises)
 
   // create streams
   const streamPromises: Array<Promise<{ id: string; ownerId: string }>> = []
   for (let i = 0; i < numStreams; i++) {
-    const ownerId = userIds[i >= userIds.length ? userIds.length - 1 : i]
-    const promise = createStream({
-      name: `Stream ${i}`,
-      ownerId
-    }).then((id) => ({
-      id,
-      ownerId
-    }))
+    const owner = users[i >= users.length ? users.length - 1 : i]
+    const promise = createTestStream(
+      buildBasicTestProject({
+        name: `Stream ${i}`
+      }),
+      owner
+    )
 
     streamPromises.push(promise)
   }

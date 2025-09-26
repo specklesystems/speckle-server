@@ -1,7 +1,7 @@
 <template>
   <ViewerCommentsPortalOrDiv class="relative" to="bottomPanel">
     <ViewerControlsRight
-      v-if="isGreaterThanSm"
+      v-if="isGreaterThanSm && showControls"
       :sidebar-open="sidebarOpen && shouldRenderSidebar"
       :sidebar-width="sidebarWidth"
     />
@@ -13,38 +13,24 @@
     >
       <template #title>
         <div class="flex items-center gap-x-2">
-          <p>Selected</p>
-          <CommonBadge v-if="objects.length" rounded>
+          <span>Selected</span>
+          <CommonBadge v-if="objects.length > 1" rounded>
             {{ objects.length }}
           </CommonBadge>
         </div>
       </template>
       <template #actions>
         <div class="flex gap-x-0.5 items-center">
-          <div
-            v-tippy="getTooltipProps(isHidden ? 'Show' : 'Hide', { placement: 'top' })"
-          >
-            <FormButton
-              color="subtle"
-              :icon-left="isHidden ? iconEyeClosed : iconEye"
-              hide-text
-              @click.stop="hideOrShowSelection"
-            />
-          </div>
-          <div
-            v-tippy="
-              getTooltipProps(isIsolated ? 'Unisolate' : 'Isolate', {
-                placement: 'top'
-              })
-            "
-          >
-            <FormButton
-              color="subtle"
-              :icon-left="isIsolated ? iconViewerUnisolate : iconViewerIsolate"
-              hide-text
-              @click.stop="isolateOrUnisolateSelection"
-            />
-          </div>
+          <ViewerVisibilityButton
+            :is-hidden="isHidden"
+            :force-visible="showSubMenu"
+            @click="hideOrShowSelection"
+          />
+          <ViewerIsolateButton
+            :is-isolated="isIsolated"
+            :force-visible="showSubMenu"
+            @click="isolateOrUnisolateSelection"
+          />
           <LayoutMenu
             v-model:open="showSubMenu"
             :menu-id="menuId"
@@ -56,7 +42,11 @@
             <FormButton
               hide-text
               color="subtle"
-              :icon-left="settingsIcon"
+              size="sm"
+              :icon-left="Ellipsis"
+              :class="{
+                '!bg-highlight-3': showSubMenu
+              }"
               @click="showSubMenu = !showSubMenu"
             />
           </LayoutMenu>
@@ -91,14 +81,16 @@ import { onKeyStroke, useBreakpoints } from '@vueuse/core'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { containsAll } from '~~/lib/common/helpers/utils'
-import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { uniqWith } from 'lodash-es'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 import { modelRoute } from '~/lib/common/helpers/route'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import type { ConcreteComponent } from 'vue'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+import { Ellipsis } from 'lucide-vue-next'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 enum ActionTypes {
   OpenInNewTab = 'open-in-new-tab'
@@ -109,7 +101,7 @@ const {
   viewer: {
     metadata: { filteringState }
   },
-  ui: { diff, measurement, threads },
+  ui: { diff, measurement, threads, filters },
   urlHashState: { focusedThreadId }
 } = useInjectedViewerState()
 const { objects, clearSelection } = useSelectionUtilities()
@@ -121,17 +113,12 @@ const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isGreaterThanSm = breakpoints.greater('sm')
 const menuId = useId()
 const mp = useMixpanel()
-const { getTooltipProps } = useSmartTooltipDelay()
+const { showControls } = useEmbed()
 
 const itemCount = ref(20)
 const sidebarOpen = ref(false)
 const sidebarWidth = ref(280)
 const showSubMenu = ref(false)
-const iconViewerUnisolate = resolveComponent('IconViewerUnisolate') as ConcreteComponent
-const iconViewerIsolate = resolveComponent('IconViewerIsolate') as ConcreteComponent
-const iconEyeClosed = resolveComponent('IconEyeClosed') as ConcreteComponent
-const iconEye = resolveComponent('IconEye') as ConcreteComponent
-const settingsIcon = resolveComponent('IconThreeDots') as ConcreteComponent
 
 const objectsUniqueByAppId = computed(() => {
   if (!diff.enabled.value) return objects.value
@@ -149,7 +136,8 @@ const objectsLimited = computed(() => {
 })
 
 const hiddenObjects = computed(() => filteringState.value?.hiddenObjects)
-const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
+// Use singleton isolatedObjectsSet from viewer state
+const { isolatedObjectsSet } = filters
 
 const allTargetIds = computed(() => {
   const ids = []
@@ -166,8 +154,8 @@ const isHidden = computed(() => {
 })
 
 const isIsolated = computed(() => {
-  if (!isolatedObjects.value) return false
-  return containsAll(allTargetIds.value, isolatedObjects.value)
+  if (!isolatedObjectsSet.value) return false
+  return containsAll(allTargetIds.value, isolatedObjectsSet.value)
 })
 
 const actionsItems = computed<LayoutMenuItem[][]>(() => [

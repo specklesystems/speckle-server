@@ -112,10 +112,13 @@ export { vKeyboardClickable } from '~~/src/directives/accessibility'
 export { useAvatarSizeClasses } from '~~/src/composables/user/avatar'
 export type { UserAvatarSize } from '~~/src/composables/user/avatar'
 import CommonProgressBar from '~~/src/components/common/ProgressBar.vue'
+import CommonPromoAlert from '~~/src/components/common/PromoAlert.vue'
 import FormRange from '~~/src/components/form/Range.vue'
+import FormDualRange from '~~/src/components/form/DualRange.vue'
 import type { FormRadioGroupItem } from '~~/src/helpers/common/components'
 
 export {
+  CommonPromoAlert,
   MissingFileExtensionError,
   ForbiddenFileTypeError,
   FileTooLargeError,
@@ -190,7 +193,8 @@ export {
   resolveFileExtension,
   generateFileId,
   LucideSize,
-  FormRange
+  FormRange,
+  FormDualRange
 }
 export type {
   FormRadioGroupItem,

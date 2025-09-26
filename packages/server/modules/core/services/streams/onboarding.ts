@@ -67,7 +67,8 @@ export const createOnboardingStreamFactory =
     await deps.updateStream({
       id: newStream.id,
       name: `${name}'s First Project`,
-      description: `Welcome to Speckle! This is your sample project, designed by Beijia Gu - feel free to do whatever you want with it!`
+      description: `Welcome to Speckle! This is your sample project, designed by Beijia Gu - feel free to do whatever you want with it!`,
+      updatedAt: new Date()
     })
     logger.info('Done updating onboarding stream title')
     return newStream

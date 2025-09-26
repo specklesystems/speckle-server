@@ -1,12 +1,16 @@
 type UserMeta {
+  flag(key: String!): Boolean!
   newWorkspaceExplainerDismissed: Boolean!
   speckleConBannerDismissed: Boolean!
+  intelligenceCommunityStandUpBannerDismissed: Boolean!
   legacyProjectsExplainerCollapsed: Boolean!
 }
 
 type UserMetaMutations {
+  setFlag(key: String!, value: Boolean!): Boolean!
   setNewWorkspaceExplainerDismissed(value: Boolean!): Boolean!
   setSpeckleConBannerDismissed(value: Boolean!): Boolean!
+  setIntelligenceCommunityStandUpBannerDismissed(value: Boolean!): Boolean!
   setLegacyProjectsExplainerCollapsed(value: Boolean!): Boolean!
 }
 

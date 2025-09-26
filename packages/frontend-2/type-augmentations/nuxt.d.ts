@@ -15,6 +15,10 @@ declare module '#app' {
 
   interface NuxtPayload {
     serverFatalError?: import('~~/lib/core/helpers/observability').AbstractLoggerHandlerParams
+    apollo?: {
+      [clientKey: string]: Record<string, unknown>
+    }
+    appCache?: Record<string, unknown> | undefined
   }
 }
 

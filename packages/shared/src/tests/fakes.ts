@@ -9,11 +9,16 @@ import {
   WorkspaceSsoProvider,
   WorkspaceSsoSession
 } from '../authz/domain/workspaces/types.js'
-import { FeatureFlags, parseFeatureFlags } from '../environment/index.js'
+import { parseFeatureFlags } from '../environment/index.js'
 import { mapValues } from 'lodash'
-import { WorkspacePlan } from '../workspaces/index.js'
+import { WorkspaceFeatureFlags, WorkspacePlan } from '../workspaces/index.js'
 import { TIME_MS } from '../core/index.js'
-import { SavedView } from '../authz/domain/savedViews/types.js'
+import {
+  SavedView,
+  SavedViewGroup,
+  SavedViewVisibility
+} from '../authz/domain/savedViews/types.js'
+import { FeatureFlags } from '../environment/featureFlags.js'
 
 export const fakeGetFactory =
   <T extends Record<string, unknown>>(defaults: () => T) =>
@@ -44,7 +49,8 @@ export const getWorkspacePlanFake = fakeGetFactory<WorkspacePlan>(() => ({
   status: 'valid',
   workspaceId: nanoid(10),
   createdAt: new Date(Date.now() - TIME_MS.day),
-  updatedAt: new Date(Date.now() - TIME_MS.day)
+  updatedAt: new Date(Date.now() - TIME_MS.day),
+  featureFlags: WorkspaceFeatureFlags.none
 }))
 
 export const getWorkspaceSsoProviderFake = fakeGetFactory<WorkspaceSsoProvider>(() => ({
@@ -81,7 +87,16 @@ export const getSavedViewFake = fakeGetFactory<SavedView>(() => ({
   name: nanoid(10),
   authorId: nanoid(10),
   projectId: nanoid(10),
-  groupId: null
+  groupId: null,
+  visibility: SavedViewVisibility.public
+}))
+
+export const getSavedViewGroupFake = fakeGetFactory<SavedViewGroup>(() => ({
+  id: nanoid(10),
+  name: nanoid(10),
+  projectId: nanoid(10),
+  resourceIds: [nanoid(10)],
+  authorId: nanoid(10)
 }))
 
 // eslint-disable-next-line @typescript-eslint/require-await

@@ -34,8 +34,6 @@ import type {
 import { type Utils } from './modules/Utils.js'
 import { BatchObject } from './modules/batching/BatchObject.js'
 import {
-  type MeasurementOptions,
-  MeasurementType,
   MeasurementsExtension,
   MeasurementEvent,
   MeasurementEventPayload
@@ -114,6 +112,8 @@ import {
   ProgressiveGPass
 } from './modules/pipeline/Passes/GPass.js'
 import {
+  PipelineOptions,
+  BasePipelineOptions,
   DefaultPipelineOptions,
   Pipeline
 } from './modules/pipeline/Pipelines/Pipeline.js'
@@ -179,7 +179,10 @@ import {
   EdgesPipeline
 } from './modules/pipeline/Pipelines/EdgesPipeline.js'
 import { Geometry } from './modules/converter/Geometry.js'
-
+import {
+  ObjectPickConfiguration,
+  DefaultObjectPickConfiguration
+} from './modules/SpeckleRenderer.js'
 export {
   Viewer,
   LegacyViewer,
@@ -187,7 +190,9 @@ export {
   SpeckleWebGLRenderer,
   DefaultViewerParams,
   ViewerEvent,
+  ObjectPickConfiguration,
   DefaultLightConfiguration,
+  DefaultObjectPickConfiguration,
   World,
   BatchObject,
   InstancedBatchObject,
@@ -199,7 +204,6 @@ export {
   PerpendicularMeasurement,
   AreaMeasurement,
   PointMeasurement,
-  MeasurementType,
   MeasurementEvent,
   MeasurementState,
   Units,
@@ -283,6 +287,8 @@ export {
   ArcticViewPipeline,
   TAAPipeline,
   ShadedViewPipeline,
+  PipelineOptions,
+  BasePipelineOptions,
   DefaultPipelineOptions,
   DefaultEdgesPipelineOptions,
   ViewModes,
@@ -324,7 +330,6 @@ export type {
   IntersectionQueryResult,
   Utils,
   DiffResult,
-  MeasurementOptions,
   FilteringState,
   ExtendedIntersection,
   ViewerEventPayload,

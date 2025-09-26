@@ -6,6 +6,7 @@ export const activeUserMetaQuery = graphql(`
     activeUser {
       meta {
         legacyProjectsExplainerCollapsed
+        intelligenceCommunityStandUpBannerDismissed
       }
     }
   }
@@ -21,10 +22,23 @@ export const updateLegacyProjectsExplainerMutation = graphql(`
   }
 `)
 
+export const updateIntelligenceCommunityStandUpBannerDismissedMutation = graphql(`
+  mutation UpdateIntelligenceCommunityStandUpBannerDismissed($value: Boolean!) {
+    activeUserMutations {
+      meta {
+        setIntelligenceCommunityStandUpBannerDismissed(value: $value)
+      }
+    }
+  }
+`)
+
 export function useActiveUserMeta() {
   const { result } = useQuery(activeUserMetaQuery)
   const { mutate: updateLegacyProjectsExplainer } = useMutation(
     updateLegacyProjectsExplainerMutation
+  )
+  const { mutate: updateIntelligenceCommunityStandUpBanner } = useMutation(
+    updateIntelligenceCommunityStandUpBannerDismissedMutation
   )
   const apollo = useApolloClient().client
   const cache = apollo.cache
@@ -35,6 +49,10 @@ export function useActiveUserMeta() {
 
   const hasCollapsedLegacyProjectsExplainer = computed(
     () => meta.value?.legacyProjectsExplainerCollapsed
+  )
+
+  const hasDismissedIntelligenceCommunityStandUpBanner = computed(
+    () => meta.value?.intelligenceCommunityStandUpBannerDismissed
   )
 
   const updateLegacyProjectsExplainerCollapsed = async (value: boolean) => {
@@ -51,8 +69,24 @@ export function useActiveUserMeta() {
     )
   }
 
+  const updateIntelligenceCommunityStandUpBannerDismissed = async (value: boolean) => {
+    await updateIntelligenceCommunityStandUpBanner({ value })
+
+    modifyObjectField(
+      cache,
+      getCacheId('User', activeUserId.value),
+      'meta',
+      ({ helpers: { createUpdatedValue } }) =>
+        createUpdatedValue(({ update }) => {
+          update('intelligenceCommunityStandUpBannerDismissed', () => value)
+        })
+    )
+  }
+
   return {
     hasCollapsedLegacyProjectsExplainer,
-    updateLegacyProjectsExplainerCollapsed
+    updateLegacyProjectsExplainerCollapsed,
+    hasDismissedIntelligenceCommunityStandUpBanner,
+    updateIntelligenceCommunityStandUpBannerDismissed
   }
 }

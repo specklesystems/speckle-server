@@ -63,22 +63,22 @@ featureFlags:
   moveProjectRegionEnabled: false
   ## @param featureFlags.retryErroredPreviewsEnabled Toggles whether the system periodically retries preview requests which have previously errored.
   retryErroredPreviewsEnabled: false
-  ## @param featureFlags.nextGenFileImporterEnabled Enables the next generation file importer
+  ## @param featureFlags.nextGenFileImporterEnabled Enables the next generation file importer. Requires ifc_import_service to be enabled and configured.
   nextGenFileImporterEnabled: false
   ## @param featureFlags.legacyFileImportsEnabled Enables the legacy file upload mechanism, using REST API to proxy file uploads via the server
   legacyFileImportsEnabled: false
-  ## @param featureFlags.experimentalIfcImporterEnabled Enables the ability to parse IFC files using the experimental IFC importer
-  experimentalIfcImporterEnabled: false
-  ## @param featureFlags.legacyIfcImporterEnabled Enables the ability to parse IFC files using the legacy IFC importer.
-  legacyIfcImporterEnabled: false
-  ## @param featureFlags.backgroundJobsEnabled Enables the ability to run background jobs (such as the IFC importer) in Speckle
-  backgroundJobsEnabled: false
   ## @param featureFlags.accIntegrationEnabled Enables the ability to import data from ACC
   accIntegrationEnabled: false
+  ## @param featureFlags.dashboardsModuleEnabled Enables the ability to create and manage dashboards
+  dashboardsModuleEnabled: false
   ## @param featureFlags.rhinoFileImporterEnabled Enables the dedicated Rhino based file importer. This is not part of the deployment.
   rhinoFileImporterEnabled: false
   ## @param featureFlags.savedViewsEnabled Enables the ability to create and manage saved views
   savedViewsEnabled: false
+  ## @param featureFlags.usersInviteScopeIsPublic Enables the ability to create Personal Access Tokens (PAT) with users:invite privileges. WARNING: This can be used by untrusted users to send spam; do not enable on servers which allow public registration or to which untrusted users have been, or will be, invited.
+  usersInviteScopeIsPublic: false
+  ## @param featureFlags.noPersonalEmailsEnabled Disables personal emails for new accounts
+  noPersonalEmailsEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
@@ -87,6 +87,10 @@ analytics:
   mixpanel_token_id: 'acd87c5a50b56df91a795e999812a3a4'
   ## @param analytics.mixpanel_api_host The Mixpanel API host to which analytics data will be sent
   mixpanel_api_host: 'https://analytics.speckle.systems'
+
+dashboards:
+  ## @param dashboards.origin The origin of the dashboards deployment
+  origin: ''
 
 ## @section Network Plugin configuration
 ## @descriptionStart
@@ -422,30 +426,6 @@ redis:
     ## @param redis.previewServiceConnectionString.secretKey Required. The key within the Kubernetes Secret holding the Redis connection string.
     ##
     secretKey: ''
-
-  fileImportService:
-    rhino:
-      connectionString:
-        ## @param redis.fileImportService.rhino.connectionString.secretName Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
-        ##
-        secretName: ''
-        ## @param redis.fileImportService.rhino.connectionString.secretKey Required. The key within the Kubernetes Secret holding the Redis connection string.
-        ##
-        secretKey: ''
-      ## @param redis.fileImportService.rhino.queueName Optional. The name of the queue created within the Redis cluster.
-      ##
-      queueName: 'fileimport-service-jobs'
-    ifc:
-      connectionString:
-        ## @param redis.fileImportService.ifc.connectionString.secretName Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
-        ##
-        secretName: ''
-        ## @param redis.fileImportService.ifc.connectionString.secretKey Required. The key within the Kubernetes Secret holding the Redis connection string.
-        ##
-        secretKey: ''
-      ## @param redis.fileImportService.ifc.queueName Optional. The name of the queue created within the Redis cluster.
-      ##
-      queueName: 'fileimport-service-jobs'
 
   ## @extra redis.networkPolicy If networkPolicy is enabled for Speckle server, this provides the NetworkPolicy with the necessary details to allow egress connections to the Redis store
   ##
@@ -806,7 +786,7 @@ server:
     ## @param server.email.port The port on the server for the email service.
     ##
     port: ''
-    ## @param server.email.from The email address from which Speckle will send emails. Defaults to 'no-reply@speckle.systems' if left blank.
+    ## @param server.email.from The email address from which Speckle will send emails. If left blank will cause an error when email are sent.
     ##
     from: ''
     ## @param server.email.username The username with which Speckle will authenticate with the email service.
@@ -820,6 +800,12 @@ server:
       ## @param server.email.password.secretKey The key within the Kubernetes Secret holding the email password as its value.
       ##
       secretKey: ''
+    ## @param server.email.secure If true, will use SSL when connecting to the email server. requireTLS would be preferable if the server supports it. Both 'secure' and 'requireTLS' can be false if the email server does not support encryption, but this is not recommended. Both 'secure' and 'requireTLS' cannot be true at the same time.
+    ##
+    secure: false
+    ## @param server.email.requireTLS If true, will require TLS when connecting to the email server. This is preferable to 'secure' if the email server supports TLS. Both 'secure' and 'requireTLS' can be false if the email server does not support encryption, but this is not recommended. Both 'secure' and 'requireTLS' cannot be true at the same time.
+    ##
+    requireTLS: true
     ## @extra server.email.networkPolicy If networkPolicy is enabled for Speckle server, this provides the Network Policy with the necessary details to allow egress connections to the email server
     ##
     networkPolicy:
@@ -1405,11 +1391,13 @@ webhook_service:
 
 ## @section File Import Service
 ## @descriptionStart
-## Defines parameters related to the File Import Service component of Speckle.
+## DEPRECATED
+## Defines parameters related to the Legacy file Import Service component of Speckle.
+## Use the ifc_import_service instead.
 ## @descriptionEnd
 ##
 fileimport_service:
-  ## @param fileimport_service.enabled If enabled, the File Import Service will be deployed within the cluster.
+  ## @param fileimport_service.enabled If enabled, the Legacy File Import Service will be deployed within the cluster.
   enabled: true
   ## @param fileimport_service.replicas The number of instances of the FileImport Service pod to be deployed within the cluster.
   ##

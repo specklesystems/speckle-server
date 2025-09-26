@@ -57,7 +57,7 @@ export class PassReader extends Extension {
     return renderer.properties.get(pass.outputTarget).__webglFramebuffer !== undefined
   }
 
-  public onRender(): void {
+  public override onRender(): void {
     if (!this.needsRead || !this.renderTarget) return
 
     const renderer = this.viewer.getRenderer().renderer

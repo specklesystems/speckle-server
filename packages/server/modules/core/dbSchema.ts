@@ -51,6 +51,12 @@ type BaseSchemaConfig<BC extends BaseInnerSchemaConfig<any, any>> = BC & {
    * Helper with withoutTablePrefix set to true
    */
   withoutTablePrefix: BC
+
+  /**
+   * Alias to withoutTablePrefix - omits table prefixes from final strings. Useful in UPDATE
+   * queries.
+   */
+  short: BC
 }
 
 type InnerSchemaConfig<
@@ -185,7 +191,8 @@ export function buildTableHelper<
   return {
     ...buildInnerConfig(),
     with: buildInnerConfig,
-    withoutTablePrefix: buildInnerConfig({ withoutTablePrefix: true })
+    withoutTablePrefix: buildInnerConfig({ withoutTablePrefix: true }),
+    short: buildInnerConfig({ withoutTablePrefix: true })
   }
 }
 
@@ -232,7 +239,8 @@ export function buildMetaTableHelper<
   return {
     ...buildInnerMetaConfig(),
     with: buildInnerMetaConfig,
-    withoutTablePrefix: buildInnerMetaConfig({ withoutTablePrefix: true })
+    withoutTablePrefix: buildInnerMetaConfig({ withoutTablePrefix: true }),
+    short: buildInnerMetaConfig({ withoutTablePrefix: true })
   }
 }
 
@@ -290,16 +298,26 @@ export const StreamFavorites = buildTableHelper('stream_favorites', [
   'cursor'
 ])
 
+export const UsersMetaFlags = ['presentationsFeatureNudgeDismissed'] as const
+
+type UsersMetaFlag = (typeof UsersMetaFlags)[number]
+
+export const isUsersMetaFlag = (key: string): key is UsersMetaFlag => {
+  return UsersMetaFlags.includes(key as UsersMetaFlag)
+}
+
 export const UsersMeta = buildMetaTableHelper(
   'users_meta',
   ['userId', 'key', 'value', 'createdAt', 'updatedAt'],
   [
+    ...UsersMetaFlags,
     'isOnboardingFinished',
     'onboardingStreamId',
     'activeWorkspace',
     'isProjectsActive',
     'newWorkspaceExplainerDismissed',
     'speckleConBannerDismissed',
+    'intelligenceCommunityStandUpBannerDismissed',
     'legacyProjectsExplainerCollapsed',
     // Used in tests
     'foo',
