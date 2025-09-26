@@ -1,5 +1,8 @@
 import { TIME } from '@speckle/shared'
-import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import {
+  ReportProgressOutput,
+  type Resolvers
+} from '@/modules/core/graph/generated/graphql'
 import { db } from '@/db/knex'
 import {
   getBranchPendingVersionsFactory,
@@ -81,6 +84,7 @@ import { JobResultStatus } from '@speckle/shared/workers/fileimport'
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { updateBackgroundJobFactory } from '@/modules/backgroundjobs/repositories/backgroundjobs'
 import { configureClient } from '@/knexfile'
+import { ProcessFileImportProgressResult } from '@/modules/fileuploads/domain/operations'
 
 const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
@@ -290,7 +294,7 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       FF_NEXT_GEN_FILE_IMPORTER_ENABLED
     })
 
-    await onFileImportProgressUpdate({
+    const progressResult = await onFileImportProgressUpdate({
       blobId: jobId,
       progressPercentage,
       attempt,
@@ -298,7 +302,14 @@ const fileUploadMutations: Resolvers['FileUploadMutations'] = {
       message
     })
 
-    return true
+    switch (progressResult) {
+      case ProcessFileImportProgressResult.received:
+        return ReportProgressOutput.Received
+      case ProcessFileImportProgressResult.ignored:
+        return ReportProgressOutput.Ignored
+      case ProcessFileImportProgressResult.cancelled:
+        return ReportProgressOutput.Cancelled
+    }
   },
 
   async finishFileImport(_parent, args, ctx) {

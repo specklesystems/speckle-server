@@ -1,9 +1,10 @@
 import type { Logger } from '@/observability/logging'
-import type {
-  GetFileInfoV2,
-  ProcessFileImportProgress,
-  ProcessFileImportResult,
-  UpdateFileUpload
+import {
+  ProcessFileImportProgressResult,
+  type GetFileInfoV2,
+  type ProcessFileImportProgress,
+  type ProcessFileImportResult,
+  type UpdateFileUpload
 } from '@/modules/fileuploads/domain/operations'
 import {
   jobResultStatusToFileUploadStatus,
@@ -185,7 +186,34 @@ export const onFileImportProgressUpdateFactory =
       logger.warn(
         'Received progress update for a file that is already in a final state'
       )
-      return false // we return false to indicate that no update was made and the job should be cancelled
+      return ProcessFileImportProgressResult.cancelled
+    }
+
+    if (attempt < fileInfo.convertedAttempt) {
+      // stale attempt, ignore
+      logger.warn(
+        {
+          receivedAttempt: attempt,
+          existingAttempt: fileInfo.convertedAttempt
+        },
+        'Received progress update for a stale attempt (existing: {existingAttempt}, received: {receivedAttempt})'
+      )
+      return ProcessFileImportProgressResult.ignored
+    }
+
+    if (
+      attempt === fileInfo.convertedAttempt &&
+      progressPercentage < fileInfo.convertedProgress
+    ) {
+      // stale progress, ignore
+      logger.warn(
+        {
+          receivedReportedProgress: progressPercentage,
+          existingReportedProgress: fileInfo.convertedProgress
+        },
+        'Received progress update with a stale progress value (existing: {existingReportedProgress}, received: {receivedReportedProgress})'
+      )
+      return ProcessFileImportProgressResult.ignored
     }
 
     if (progressPercentage < 0 || progressPercentage > 100) {
@@ -247,5 +275,5 @@ export const onFileImportProgressUpdateFactory =
       }
     })
 
-    return true
+    return ProcessFileImportProgressResult.received
   }

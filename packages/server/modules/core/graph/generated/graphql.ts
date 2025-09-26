@@ -1392,7 +1392,7 @@ export type FileImportProgressReportInput = {
    * Note: This is the not the background job Id.
    */
   jobId: Scalars['String']['input'];
-  /** Optional message to accompany the progress update */
+  /** Optional message to accompany the progress update. Can be used to report current operation within the parser. */
   message?: InputMaybe<Scalars['String']['input']>;
   /**
    * Progress percentage (0 to 100)
@@ -1403,7 +1403,6 @@ export type FileImportProgressReportInput = {
   projectId: Scalars['String']['input'];
   /**
    * Optional results to accompany the progress update.
-   * The download duration may be provided here if available.
    * The results provided here will eventually be overwritten by the results provided in finishFileImport.
    */
   result?: InputMaybe<FileImportResultInput>;
@@ -1418,7 +1417,7 @@ export type FileImportResultInput = {
   parseDurationSeconds: Scalars['Float']['input'];
   /** Parser used for import */
   parser: Scalars['String']['input'];
-  /** Version associated if applicable */
+  /** Version associated with parser, if applicable */
   versionId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1478,7 +1477,7 @@ export type FileUploadMutations = {
    * Report progress of an ongoing file import job.
    * For internal service usage.
    */
-  reportProgress: Scalars['Boolean']['output'];
+  reportProgress: ReportProgressOutput;
   /**
    * Before calling this mutation, call generateUploadUrl to get the
    * pre-signed url and blobId. Then upload the file to that url.
@@ -3674,6 +3673,13 @@ export type ReplyCreateInput = {
   text?: InputMaybe<Scalars['JSONObject']['input']>;
 };
 
+export const ReportProgressOutput = {
+  Cancelled: 'Cancelled',
+  Ignored: 'Ignored',
+  Received: 'Received'
+} as const;
+
+export type ReportProgressOutput = typeof ReportProgressOutput[keyof typeof ReportProgressOutput];
 export type ResourceIdentifier = {
   __typename?: 'ResourceIdentifier';
   resourceId: Scalars['String']['output'];
@@ -6425,6 +6431,7 @@ export type ResolversTypes = {
   ProjectVisibility: ProjectVisibility;
   Query: ResolverTypeWrapper<{}>;
   ReplyCreateInput: ReplyCreateInput;
+  ReportProgressOutput: ReportProgressOutput;
   ResourceIdentifier: ResolverTypeWrapper<ResourceIdentifier>;
   ResourceIdentifierInput: ResourceIdentifierInput;
   ResourceType: ResourceType;
@@ -7614,7 +7621,7 @@ export type FileUploadCollectionResolvers<ContextType = GraphQLContext, ParentTy
 export type FileUploadMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FileUploadMutations'] = ResolversParentTypes['FileUploadMutations']> = {
   finishFileImport?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<FileUploadMutationsFinishFileImportArgs, 'input'>>;
   generateUploadUrl?: Resolver<ResolversTypes['GenerateFileUploadUrlOutput'], ParentType, ContextType, RequireFields<FileUploadMutationsGenerateUploadUrlArgs, 'input'>>;
-  reportProgress?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<FileUploadMutationsReportProgressArgs, 'input'>>;
+  reportProgress?: Resolver<ResolversTypes['ReportProgressOutput'], ParentType, ContextType, RequireFields<FileUploadMutationsReportProgressArgs, 'input'>>;
   startFileImport?: Resolver<ResolversTypes['FileUpload'], ParentType, ContextType, RequireFields<FileUploadMutationsStartFileImportArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

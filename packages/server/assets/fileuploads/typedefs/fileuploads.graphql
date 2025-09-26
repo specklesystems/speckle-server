@@ -175,6 +175,23 @@ input FileImportProgressReportInput {
   result: FileImportResultInput
 }
 
+enum ReportProgressOutput {
+  """
+  The progress report was received successfully.
+  """
+  received
+  """
+  The progress report was ignored, but the parser may continue.
+  This may occur if the reported progress was less than the last reported progress for the same attempt.
+  """
+  ignored
+  """
+  The job was cancelled. The parser should stop processing.
+  This may also occur if the job was already marked as finished (success or error).
+  """
+  cancelled
+}
+
 enum JobResultStatus {
   success
   error
@@ -212,7 +229,7 @@ type FileUploadMutations {
   Report progress of an ongoing file import job.
   For internal service usage.
   """
-  reportProgress(input: FileImportProgressReportInput!): Boolean!
+  reportProgress(input: FileImportProgressReportInput!): ReportProgressOutput!
     @hasScope(scope: "streams:write")
 
   """

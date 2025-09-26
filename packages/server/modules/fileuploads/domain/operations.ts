@@ -72,13 +72,19 @@ export type ProcessFileImportResult = (params: {
   jobResult: FileImportResultPayload
 }) => Promise<void>
 
+export enum ProcessFileImportProgressResult {
+  received = 0,
+  ignored = 1,
+  cancelled = 2
+}
+
 export type ProcessFileImportProgress = (params: {
   blobId: string
   progressPercentage: number
   attempt: number
   result: MaybeNullOrUndefined<FileImportResult>
   message: MaybeNullOrUndefined<string>
-}) => Promise<boolean>
+}) => Promise<ProcessFileImportProgressResult>
 
 export type UpdateFileStatus = (params: {
   fileId: string

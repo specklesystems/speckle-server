@@ -51,6 +51,8 @@ export type FileUploadRecordV2 = {
   uploadComplete: boolean
   uploadDate: Date
   convertedStatus: number | FileUploadConvertedStatus
+  convertedProgress: number
+  convertedAttempt: number
   convertedLastUpdate: Date
   convertedMessage: Nullable<string>
   convertedCommitId: Nullable<string>
