@@ -81,12 +81,26 @@ export const resultSchemaV2 = z.object({
   })
 })
 
+export type ResultSchemaV2 = z.infer<typeof resultSchemaV2>
+
+const versionResultV3 = z.record(z.string(), z.unknown())
+
+export const resultSchemaV3 = z.object({
+  version: z.literal(3),
+  values: z.object({
+    versionResult: versionResultV3.optional(),
+    objectResults: objectResultV2.array().optional(),
+    blobIds: z.string().array().optional()
+  })
+})
+
+export type ResultSchemaV3 = z.infer<typeof resultSchemaV3>
+
 export const resultSchema = z.discriminatedUnion('version', [
   resultSchemaV1,
-  resultSchemaV2
+  resultSchemaV2,
+  resultSchemaV3
 ])
-
-export type ResultSchemaV2 = z.infer<typeof resultSchemaV2>
 
 export type ResultsSchema = z.infer<typeof resultSchema>
 
