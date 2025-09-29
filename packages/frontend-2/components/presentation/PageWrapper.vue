@@ -1,5 +1,12 @@
 <template>
   <div class="relative">
+    <div
+      v-if="isViewerLoading"
+      key="loading"
+      class="h-dvh w-screen flex flex-col md:flex-row absolute left-0 top-0 z-50"
+    >
+      <PresentationLoading />
+    </div>
     <div class="h-dvh w-screen flex flex-col md:flex-row relative">
       <PresentationHeader
         v-if="!hideUi"
@@ -7,17 +14,6 @@
         class="absolute top-3 z-40"
         :class="[isLeftSidebarOpen ? 'left-56 md:left-[15.75rem]' : 'left-3']"
         @toggle-sidebar="isLeftSidebarOpen = !isLeftSidebarOpen"
-      />
-
-      <PresentationActions
-        v-if="!hideUi"
-        v-model:is-sidebar-open="isInfoSidebarOpen"
-        class="absolute bottom-3 lg:top-3 right-3 z-20"
-        :class="{
-          'bottom-52 lg:bottom-auto lg:right-[17rem] xl:right-[21rem]':
-            isInfoSidebarOpen
-        }"
-        @toggle-sidebar="isInfoSidebarOpen = !isInfoSidebarOpen"
       />
 
       <PresentationSlideIndicator
@@ -42,7 +38,7 @@
         class="absolute left-0 top-0 md:relative flex-shrink-0 z-30"
       />
 
-      <div class="flex-1 z-0 flex flex-col lg:flex-row">
+      <div class="flex-1 z-0 flex flex-col lg:flex-row pb-[11rem] lg:pb-0">
         <Component
           :is="presentation ? ViewerWrapper : 'div'"
           :group="presentation"
@@ -51,21 +47,32 @@
           @progress-change="onProgressChange"
         />
 
+        <PresentationControls
+          :hide-ui="hideUi"
+          class="absolute left-3 lg:left-1/2 lg:-translate-x-1/2 z-10"
+          :class="[
+            isInfoSidebarOpen ? 'bottom-52 lg:bottom-3' : 'bottom-3',
+            isLeftSidebarOpen ? 'hidden md:flex md:left-[252px]' : ''
+          ]"
+        />
+
+        <PresentationActions
+          v-if="!hideUi"
+          v-model:is-sidebar-open="isInfoSidebarOpen"
+          class="absolute bottom-3 lg:top-3 right-3 z-20"
+          :class="{
+            'bottom-52 lg:bottom-auto lg:right-[17rem] xl:right-[21rem]':
+              isInfoSidebarOpen
+          }"
+          @toggle-sidebar="isInfoSidebarOpen = !isInfoSidebarOpen"
+        />
+
         <PresentationInfoSidebar
           v-if="isInfoSidebarOpen"
           class="flex-shrink-0 z-20"
           @close="isInfoSidebarOpen = false"
         />
       </div>
-
-      <PresentationControls
-        :hide-ui="hideUi"
-        class="absolute left-3 lg:left-1/2 lg:-translate-x-1/2"
-        :class="[
-          isInfoSidebarOpen ? 'bottom-52 lg:bottom-3' : 'bottom-3',
-          isLeftSidebarOpen ? 'hidden md:flex md:left-[252px]' : ''
-        ]"
-      />
     </div>
   </div>
 </template>
