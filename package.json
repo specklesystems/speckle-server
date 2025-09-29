@@ -75,6 +75,7 @@
     "@aws-sdk/client-s3/fast-xml-parser": ">=4.2.5",
     "@bull-board/express/express": "^4.20.0",
     "@datadog/datadog-ci/ssh2": "^1.16.0",
+    "@datadog/datadog-ci/form-data": "^4.0.4",
     "@microsoft/api-extractor/semver": "^7.5.4",
     "@rushstack/node-core-library/semver": "^7.5.4",
     "@typescript-eslint/eslint-plugin": "^8.20.0",
