@@ -15,8 +15,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: {{ .Values.server.rollingUpdate.maxUnavailable }}
-      maxSurge: {{ .Values.server.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.server.rollingUpdate.maxUnavailable | quote }}
+      maxSurge: {{ .Values.server.rollingUpdate.maxSurge | quote }}
   template:
     metadata:
       labels:

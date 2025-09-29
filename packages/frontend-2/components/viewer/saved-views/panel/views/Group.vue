@@ -40,6 +40,17 @@
             @click="showMenu = !showMenu"
           />
         </LayoutMenu>
+        <div v-if="canPresent">
+          <FormButton
+            v-tippy="getTooltipProps('Present')"
+            size="sm"
+            color="subtle"
+            :icon-left="Play"
+            hide-text
+            name="presentGroup"
+            @click="onPresentGroup"
+          />
+        </div>
         <div v-tippy="canCreateView?.errorMessage">
           <FormButton
             v-tippy="getTooltipProps('Create view')"
@@ -60,7 +71,7 @@
 import { StringEnum, throwUncoveredError, type StringEnumValues } from '@speckle/shared'
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
-import { Ellipsis, Plus } from 'lucide-vue-next'
+import { Ellipsis, Plus, Play } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   UseUpdateSavedViewGroup_SavedViewGroupFragment,
@@ -79,7 +90,7 @@ import { presentationRoute } from '~/lib/common/helpers/route'
 
 const { getTooltipProps } = useSmartTooltipDelay()
 
-const MenuItems = StringEnum(['Delete', 'Rename', 'Presentation'])
+const MenuItems = StringEnum(['Delete', 'Rename'])
 type MenuItems = StringEnumValues<typeof MenuItems>
 
 graphql(`
@@ -173,16 +184,6 @@ const canPresent = computed(() => props.project.workspace?.hasAccessToFeature)
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => {
   const items: LayoutMenuItem<MenuItems>[][] = []
 
-  if (canPresent.value) {
-    items.push([
-      {
-        id: MenuItems.Presentation,
-        title: 'Present',
-        disabled: isLoading.value
-      }
-    ])
-  }
-
   items.push([
     {
       id: MenuItems.Rename,
@@ -209,12 +210,13 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
     case MenuItems.Rename:
       emit('rename-group', props.group)
       break
-    case MenuItems.Presentation:
-      window.open(presentationRoute(props.project.id, props.group.id), '_blank')
-      break
     default:
       throwUncoveredError(item.id)
   }
+}
+
+const onPresentGroup = () => {
+  window.open(presentationRoute(props.project.id, props.group.id), '_blank')
 }
 
 const onAddGroupView = async () => {
