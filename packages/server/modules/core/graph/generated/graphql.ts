@@ -3700,6 +3700,7 @@ export type SavedView = {
   /**
    * Encoded screenshot of the view. Can be a very large value, its preferred you
    * use the thumbnailUrl or previewUrl fields to load the image from a separate endpoint
+   * @deprecated Use thumbnailUrl or previewUrl instead
    */
   screenshot: Scalars['String']['output'];
   thumbnailUrl: Scalars['String']['output'];
