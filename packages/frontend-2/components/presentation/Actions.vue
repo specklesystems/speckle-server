@@ -3,7 +3,7 @@
     class="bg-foundation border border-outline-3 rounded-xl shadow-md flex items-center h-10"
   >
     <div class="flex items-center justify-between space-x-1 p-1">
-      <FormButton>Share</FormButton>
+      <FormButton v-if="isLoggedIn" @click="showShareDialog = true">Share</FormButton>
 
       <PresentationFloatingPanelButton
         class="hidden md:flex touch:hidden"
@@ -30,6 +30,8 @@
         <LucideInfo :size="16" :stroke-width="1.5" :absolute-stroke-width="true" />
       </PresentationFloatingPanelButton>
     </div>
+
+    <PresentationShareDialog v-model:open="showShareDialog" />
   </div>
 </template>
 
@@ -42,7 +44,10 @@ const emit = defineEmits<{
 
 const isSidebarOpen = defineModel<boolean>('is-sidebar-open')
 
+const { isLoggedIn } = useActiveUser()
+
 const isFullscreen = ref(false)
+const showShareDialog = ref(false)
 
 const toggleFullscreen = () => {
   if (!document.fullscreenElement) {
@@ -52,7 +57,6 @@ const toggleFullscreen = () => {
   }
 }
 
-// Listen for fullscreen changes
 const handleFullscreenChange = () => {
   isFullscreen.value = !!document.fullscreenElement
 }

@@ -30,7 +30,6 @@
 
 <script setup lang="ts">
 import { LucideArrowLeftToLine, LucidePanelLeft } from 'lucide-vue-next'
-// import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useInjectedPresentationState } from '~/lib/presentations/composables/setup'
 import { graphql } from '~~/lib/common/generated/gql'
 
