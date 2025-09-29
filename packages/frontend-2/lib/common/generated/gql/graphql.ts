@@ -3695,6 +3695,7 @@ export type SavedViewGroup = {
   projectId: Scalars['ID']['output'];
   /** Resources that were used to find this group */
   resourceIds: Array<Scalars['String']['output']>;
+  shareLink?: Maybe<SavedViewGroupShareLink>;
   title: Scalars['String']['output'];
   views: SavedViewCollection;
 };
@@ -3713,24 +3714,28 @@ export type SavedViewGroupCollection = {
 
 export type SavedViewGroupPermissionChecks = {
   __typename?: 'SavedViewGroupPermissionChecks';
+  canCreateToken: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
 };
 
-export type SavedViewGroupToken = {
-  __typename?: 'SavedViewGroupToken';
-  createdAt: Scalars['DateTime']['output'];
-  lastUsed: Scalars['DateTime']['output'];
-  lifespan: Scalars['BigInt']['output'];
-  projects: Array<Project>;
-  savedViewGroupId: Scalars['String']['output'];
-  tokenId: Scalars['String']['output'];
-  user?: Maybe<LimitedUser>;
+export type SavedViewGroupShareInput = {
+  groupId: Scalars['ID']['input'];
+  projectId: Scalars['ID']['input'];
 };
 
-export type SavedViewGroupTokenReturn = {
-  __typename?: 'SavedViewGroupTokenReturn';
-  token: Scalars['String']['output'];
-  tokenMetadata: SavedViewGroupToken;
+export type SavedViewGroupShareLink = {
+  __typename?: 'SavedViewGroupShareLink';
+  content: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  revoked: Scalars['Boolean']['output'];
+  validUntil: Scalars['DateTime']['output'];
+};
+
+export type SavedViewGroupShareUpdateInput = {
+  groupId: Scalars['ID']['input'];
+  projectId: Scalars['ID']['input'];
+  shareId: Scalars['ID']['input'];
 };
 
 export type SavedViewGroupViewsInput = {
@@ -3767,10 +3772,13 @@ export type SavedViewGroupsInput = {
 export type SavedViewMutations = {
   __typename?: 'SavedViewMutations';
   createGroup: SavedViewGroup;
-  createToken: SavedViewGroupTokenReturn;
   createView: SavedView;
   deleteGroup: Scalars['Boolean']['output'];
+  deleteShare: Scalars['Boolean']['output'];
   deleteView: Scalars['Boolean']['output'];
+  disableShare: SavedViewGroupShareLink;
+  enableShare: SavedViewGroupShareLink;
+  share: SavedViewGroupShareLink;
   updateGroup: SavedViewGroup;
   updateView: SavedView;
 };
@@ -3778,11 +3786,6 @@ export type SavedViewMutations = {
 
 export type SavedViewMutationsCreateGroupArgs = {
   input: CreateSavedViewGroupInput;
-};
-
-
-export type SavedViewMutationsCreateTokenArgs = {
-  groupId: Scalars['String']['input'];
 };
 
 
@@ -3796,8 +3799,28 @@ export type SavedViewMutationsDeleteGroupArgs = {
 };
 
 
+export type SavedViewMutationsDeleteShareArgs = {
+  input: SavedViewGroupShareUpdateInput;
+};
+
+
 export type SavedViewMutationsDeleteViewArgs = {
   input: DeleteSavedViewInput;
+};
+
+
+export type SavedViewMutationsDisableShareArgs = {
+  input: SavedViewGroupShareUpdateInput;
+};
+
+
+export type SavedViewMutationsEnableShareArgs = {
+  input: SavedViewGroupShareUpdateInput;
+};
+
+
+export type SavedViewMutationsShareArgs = {
+  input: SavedViewGroupShareInput;
 };
 
 
@@ -6261,6 +6284,10 @@ export type PresentationInfoSidebar_SavedViewFragment = { __typename?: 'SavedVie
 
 export type PresentationLeftSidebar_LimitedWorkspaceFragment = { __typename?: 'LimitedWorkspace', id: string, name: string, logo?: string | null, slug: string };
 
+export type PresentationLoading_SavedViewGroupFragment = { __typename?: 'SavedViewGroup', id: string, title: string, views: { __typename?: 'SavedViewCollection', items: Array<{ __typename?: 'SavedView', id: string, screenshot: string }> } };
+
+export type PresentationLoading_LimitedWorkspaceFragment = { __typename?: 'LimitedWorkspace', id: string, name: string, logo?: string | null };
+
 export type PresentationPageWrapper_SavedViewGroupFragment = { __typename?: 'SavedViewGroup', id: string, permissions: { __typename?: 'SavedViewGroupPermissionChecks', canUpdate: { __typename?: 'PermissionCheckResult', authorized: boolean, code: string, message: string, payload?: {} | null, errorMessage?: string | null } } };
 
 export type PresentationSlideEditDialog_SavedViewFragment = { __typename?: 'SavedView', id: string, projectId: string, name: string, description?: string | null, screenshot: string };
@@ -8598,6 +8625,8 @@ export const PresentationHeader_SavedViewGroupFragmentDoc = {"kind":"Document","
 export const PresentationSlideEditDialog_SavedViewFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"PresentationSlideEditDialog_SavedView"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SavedView"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"projectId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"screenshot"}}]}}]} as unknown as DocumentNode<PresentationSlideEditDialog_SavedViewFragment, unknown>;
 export const PresentationInfoSidebar_SavedViewFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"PresentationInfoSidebar_SavedView"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SavedView"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"PresentationSlideEditDialog_SavedView"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canUpdate"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"PresentationSlideEditDialog_SavedView"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SavedView"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"projectId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"screenshot"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FullPermissionCheckResult"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"PermissionCheckResult"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authorized"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"payload"}},{"kind":"Field","name":{"kind":"Name","value":"errorMessage"}}]}}]} as unknown as DocumentNode<PresentationInfoSidebar_SavedViewFragment, unknown>;
 export const PresentationLeftSidebar_LimitedWorkspaceFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"PresentationLeftSidebar_LimitedWorkspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"LimitedWorkspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}}]}}]} as unknown as DocumentNode<PresentationLeftSidebar_LimitedWorkspaceFragment, unknown>;
+export const PresentationLoading_SavedViewGroupFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"PresentationLoading_SavedViewGroup"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SavedViewGroup"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"views"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"screenshot"}}]}}]}}]}}]} as unknown as DocumentNode<PresentationLoading_SavedViewGroupFragment, unknown>;
+export const PresentationLoading_LimitedWorkspaceFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"PresentationLoading_LimitedWorkspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"LimitedWorkspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}}]}}]} as unknown as DocumentNode<PresentationLoading_LimitedWorkspaceFragment, unknown>;
 export const PresentationPageWrapper_SavedViewGroupFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"PresentationPageWrapper_SavedViewGroup"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SavedViewGroup"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canUpdate"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FullPermissionCheckResult"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"PermissionCheckResult"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authorized"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"payload"}},{"kind":"Field","name":{"kind":"Name","value":"errorMessage"}}]}}]} as unknown as DocumentNode<PresentationPageWrapper_SavedViewGroupFragment, unknown>;
 export const PresentationSlideListSlide_SavedViewFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"PresentationSlideListSlide_SavedView"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SavedView"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"screenshot"}}]}}]} as unknown as DocumentNode<PresentationSlideListSlide_SavedViewFragment, unknown>;
 export const PresentationSlideList_SavedViewGroupFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"PresentationSlideList_SavedViewGroup"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SavedViewGroup"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"views"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"PresentationSlideListSlide_SavedView"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"PresentationSlideListSlide_SavedView"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SavedView"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"screenshot"}}]}}]} as unknown as DocumentNode<PresentationSlideList_SavedViewGroupFragment, unknown>;
@@ -9219,8 +9248,7 @@ export type AllObjectTypes = {
   SavedViewGroup: SavedViewGroup,
   SavedViewGroupCollection: SavedViewGroupCollection,
   SavedViewGroupPermissionChecks: SavedViewGroupPermissionChecks,
-  SavedViewGroupToken: SavedViewGroupToken,
-  SavedViewGroupTokenReturn: SavedViewGroupTokenReturn,
+  SavedViewGroupShareLink: SavedViewGroupShareLink,
   SavedViewMutations: SavedViewMutations,
   SavedViewPermissionChecks: SavedViewPermissionChecks,
   Scope: Scope,
@@ -10329,6 +10357,7 @@ export type SavedViewGroupFieldArgs = {
   permissions: {},
   projectId: {},
   resourceIds: {},
+  shareLink: {},
   title: {},
   views: SavedViewGroupViewsArgs,
 }
@@ -10338,27 +10367,25 @@ export type SavedViewGroupCollectionFieldArgs = {
   totalCount: {},
 }
 export type SavedViewGroupPermissionChecksFieldArgs = {
+  canCreateToken: {},
   canUpdate: {},
 }
-export type SavedViewGroupTokenFieldArgs = {
+export type SavedViewGroupShareLinkFieldArgs = {
+  content: {},
   createdAt: {},
-  lastUsed: {},
-  lifespan: {},
-  projects: {},
-  savedViewGroupId: {},
-  tokenId: {},
-  user: {},
-}
-export type SavedViewGroupTokenReturnFieldArgs = {
-  token: {},
-  tokenMetadata: {},
+  id: {},
+  revoked: {},
+  validUntil: {},
 }
 export type SavedViewMutationsFieldArgs = {
   createGroup: SavedViewMutationsCreateGroupArgs,
-  createToken: SavedViewMutationsCreateTokenArgs,
   createView: SavedViewMutationsCreateViewArgs,
   deleteGroup: SavedViewMutationsDeleteGroupArgs,
+  deleteShare: SavedViewMutationsDeleteShareArgs,
   deleteView: SavedViewMutationsDeleteViewArgs,
+  disableShare: SavedViewMutationsDisableShareArgs,
+  enableShare: SavedViewMutationsEnableShareArgs,
+  share: SavedViewMutationsShareArgs,
   updateGroup: SavedViewMutationsUpdateGroupArgs,
   updateView: SavedViewMutationsUpdateViewArgs,
 }
@@ -11111,8 +11138,7 @@ export type AllObjectFieldArgTypes = {
   SavedViewGroup: SavedViewGroupFieldArgs,
   SavedViewGroupCollection: SavedViewGroupCollectionFieldArgs,
   SavedViewGroupPermissionChecks: SavedViewGroupPermissionChecksFieldArgs,
-  SavedViewGroupToken: SavedViewGroupTokenFieldArgs,
-  SavedViewGroupTokenReturn: SavedViewGroupTokenReturnFieldArgs,
+  SavedViewGroupShareLink: SavedViewGroupShareLinkFieldArgs,
   SavedViewMutations: SavedViewMutationsFieldArgs,
   SavedViewPermissionChecks: SavedViewPermissionChecksFieldArgs,
   Scope: ScopeFieldArgs,

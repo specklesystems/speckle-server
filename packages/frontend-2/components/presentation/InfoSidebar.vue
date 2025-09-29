@@ -48,7 +48,7 @@
       <p
         v-if="currentSlide?.description"
         ref="descriptionRef"
-        class="text-body-sm xl:text-body text-foreground whitespace-pre-wrap px-1 lg:px-2 xl:px-3 lg:py-1 lg:flex-1 lg:overflow-y-auto lg:line-clamp-none"
+        class="simple-scrollbar text-body-sm xl:text-body text-foreground whitespace-pre-wrap px-1 lg:px-2 xl:px-3 lg:py-1 lg:flex-1 lg:overflow-y-auto lg:line-clamp-none"
         :class="{
           'line-clamp-4 overflow-hidden': !isExpanded,
           'flex-1 overflow-y-auto': isExpanded

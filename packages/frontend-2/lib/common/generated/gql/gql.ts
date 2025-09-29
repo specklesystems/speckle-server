@@ -71,6 +71,7 @@ type Documents = {
     "\n  fragment PresentationHeader_SavedViewGroup on SavedViewGroup {\n    id\n    title\n  }\n": typeof types.PresentationHeader_SavedViewGroupFragmentDoc,
     "\n  fragment PresentationInfoSidebar_SavedView on SavedView {\n    id\n    ...PresentationSlideEditDialog_SavedView\n    name\n    description\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.PresentationInfoSidebar_SavedViewFragmentDoc,
     "\n  fragment PresentationLeftSidebar_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    logo\n    slug\n  }\n": typeof types.PresentationLeftSidebar_LimitedWorkspaceFragmentDoc,
+    "\n  fragment PresentationLoading_SavedViewGroup on SavedViewGroup {\n    id\n    title\n    views(input: $input) {\n      items {\n        id\n        screenshot\n      }\n    }\n  }\n\n  fragment PresentationLoading_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    logo\n  }\n": typeof types.PresentationLoading_SavedViewGroupFragmentDoc,
     "\n  fragment PresentationPageWrapper_SavedViewGroup on SavedViewGroup {\n    id\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.PresentationPageWrapper_SavedViewGroupFragmentDoc,
     "\n  fragment PresentationSlideEditDialog_SavedView on SavedView {\n    id\n    projectId\n    name\n    description\n    screenshot\n  }\n": typeof types.PresentationSlideEditDialog_SavedViewFragmentDoc,
     "\n  fragment PresentationSlideListSlide_SavedView on SavedView {\n    id\n    name\n    screenshot\n  }\n": typeof types.PresentationSlideListSlide_SavedViewFragmentDoc,
@@ -607,6 +608,7 @@ const documents: Documents = {
     "\n  fragment PresentationHeader_SavedViewGroup on SavedViewGroup {\n    id\n    title\n  }\n": types.PresentationHeader_SavedViewGroupFragmentDoc,
     "\n  fragment PresentationInfoSidebar_SavedView on SavedView {\n    id\n    ...PresentationSlideEditDialog_SavedView\n    name\n    description\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.PresentationInfoSidebar_SavedViewFragmentDoc,
     "\n  fragment PresentationLeftSidebar_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    logo\n    slug\n  }\n": types.PresentationLeftSidebar_LimitedWorkspaceFragmentDoc,
+    "\n  fragment PresentationLoading_SavedViewGroup on SavedViewGroup {\n    id\n    title\n    views(input: $input) {\n      items {\n        id\n        screenshot\n      }\n    }\n  }\n\n  fragment PresentationLoading_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    logo\n  }\n": types.PresentationLoading_SavedViewGroupFragmentDoc,
     "\n  fragment PresentationPageWrapper_SavedViewGroup on SavedViewGroup {\n    id\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.PresentationPageWrapper_SavedViewGroupFragmentDoc,
     "\n  fragment PresentationSlideEditDialog_SavedView on SavedView {\n    id\n    projectId\n    name\n    description\n    screenshot\n  }\n": types.PresentationSlideEditDialog_SavedViewFragmentDoc,
     "\n  fragment PresentationSlideListSlide_SavedView on SavedView {\n    id\n    name\n    screenshot\n  }\n": types.PresentationSlideListSlide_SavedViewFragmentDoc,
@@ -1328,6 +1330,10 @@ export function graphql(source: "\n  fragment PresentationInfoSidebar_SavedView 
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment PresentationLeftSidebar_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    logo\n    slug\n  }\n"): (typeof documents)["\n  fragment PresentationLeftSidebar_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    logo\n    slug\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment PresentationLoading_SavedViewGroup on SavedViewGroup {\n    id\n    title\n    views(input: $input) {\n      items {\n        id\n        screenshot\n      }\n    }\n  }\n\n  fragment PresentationLoading_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    logo\n  }\n"): (typeof documents)["\n  fragment PresentationLoading_SavedViewGroup on SavedViewGroup {\n    id\n    title\n    views(input: $input) {\n      items {\n        id\n        screenshot\n      }\n    }\n  }\n\n  fragment PresentationLoading_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    logo\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
