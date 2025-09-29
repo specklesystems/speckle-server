@@ -4,8 +4,10 @@
       <div
         class="text-foreground flex flex-col mx-4 items-center justify-center bg-foundation rounded-2xl border border-outline-2 shadow-lg p-10 pb-8 w-full max-w-md"
       >
-        <div class="min-w-0 mb-14 text-center">
-          <h1 class="text-heading-xl truncate">{{ presentation?.title }}</h1>
+        <div class="min-w-0 mb-14 w-full">
+          <h1 class="text-heading-xl truncate text-center">
+            {{ presentation?.title }}
+          </h1>
         </div>
 
         <div class="w-30 h-30 inline-block mb-4">
