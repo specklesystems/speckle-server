@@ -22,6 +22,7 @@ export const projectPresentationPageQuery = graphql(`
       limitedWorkspace {
         id
         ...PresentationLeftSidebar_LimitedWorkspace
+        ...PresentationLoading_LimitedWorkspace
       }
       savedViewGroup(id: $savedViewGroupId) {
         id
@@ -30,6 +31,7 @@ export const projectPresentationPageQuery = graphql(`
         ...PresentationHeader_SavedViewGroup
         ...PresentationSlideList_SavedViewGroup
         ...PresentationPageWrapper_SavedViewGroup
+        ...PresentationLoading_SavedViewGroup
         views(input: $input) {
           totalCount
           items {
