@@ -10,14 +10,19 @@
 
         <div class="w-30 h-30 inline-block mb-4">
           <svg width="120" height="120" viewBox="0 0 120 120" class="medium-spin">
-            <circle cx="60" cy="60" r="59.5" fill="#F7F7F7" stroke="#F2F2F2" />
-            <circle cx="60" cy="60" r="50" fill="white" />
+            <circle
+              cx="60"
+              cy="60"
+              r="59.5"
+              class="fill-foundation-2 stroke-outline-3"
+            />
+            <circle cx="60" cy="60" r="50" class="fill-foundation" />
             <circle
               cx="60"
               cy="60"
               r="55"
               fill="none"
-              stroke="#146FFF"
+              class="stroke-primary"
               stroke-width="8"
               stroke-linecap="round"
               stroke-dasharray="60 290"
