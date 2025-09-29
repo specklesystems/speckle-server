@@ -31,14 +31,14 @@
     <hr class="mb-6 border-outline-3" />
 
     <p class="text-body-2xs text-foreground-2 mb-3">
-      Permissions for who can view and edit dashboards is based on the workspace seats.
-      Editor seats can edit, Viewer seats can view.
+      Permissions for who can view and edit the presentation is based on the project
+      roles.
       <NuxtLink
         v-if="isProjectOwner"
         :to="settingsWorkspaceRoutes.members.route(projectId)"
         class="text-primary"
       >
-        Manage seats.
+        Manage project roles.
       </NuxtLink>
     </p>
   </LayoutDialog>
