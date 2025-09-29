@@ -2,10 +2,7 @@ import type { ApiTokenRecord } from '@/modules/auth/repositories'
 import { LogicError } from '@/modules/shared/errors'
 import type { SavedViewGroupApiTokenRecord } from '@/modules/viewer/domain/types/savedViewGroupApiTokens'
 import { createSavedViewGroupTokenFactory } from '@/modules/viewer/services/tokens'
-import {
-  SavedViewGroupNotFoundError,
-  SavedViewGroupResourcelessError
-} from '@speckle/shared/authz'
+import { SavedViewGroupNotFoundError } from '@speckle/shared/authz'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
@@ -61,30 +58,6 @@ describe('createSavedViewGroupTokenFactory returns a function, that', () => {
     const promise = createSavedViewGroupToken({ projectId, savedViewGroupId, userId })
 
     expect(promise).to.eventually.throw(SavedViewGroupNotFoundError)
-  })
-
-  it('throws Resourceless if savedViewGroup does not contain resources', async () => {
-    const createSavedViewGroupToken = createSavedViewGroupTokenFactory({
-      getSavedViewGroup: async () => ({
-        id: cryptoRandomString({ length: 10 }),
-        projectId,
-        name: null,
-        authorId: null,
-        resourceIds: [], // no resources
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }),
-      createToken: async () => ({
-        id: cryptoRandomString({ length: 10 }),
-        token: cryptoRandomString({ length: 20 })
-      }),
-      getToken: async () => ({} as ApiTokenRecord),
-      storeSavedViewGroupApiToken: async () => ({} as SavedViewGroupApiTokenRecord)
-    })
-
-    const promise = createSavedViewGroupToken({ projectId, savedViewGroupId, userId })
-
-    expect(promise).to.eventually.throw(SavedViewGroupResourcelessError)
   })
 
   it('throws LogicError if savedViewGroup belongs to another project', async () => {
