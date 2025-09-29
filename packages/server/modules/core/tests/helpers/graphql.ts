@@ -250,6 +250,26 @@ export const setIntelligenceCommunityStandUpBannerDismissedMutation = gql`
   }
 `
 
+export const getSpeckleCon25BannerDismissedQuery = gql`
+  query GetSpeckleCon25BannerDismissed {
+    activeUser {
+      meta {
+        speckleCon25BannerDismissed
+      }
+    }
+  }
+`
+
+export const setSpeckleCon25BannerDismissedMutation = gql`
+  mutation SetSpeckleCon25BannerDismissed($input: Boolean!) {
+    activeUserMutations {
+      meta {
+        setSpeckleCon25BannerDismissed(value: $input)
+      }
+    }
+  }
+`
+
 export const getLegacyProjectsExplainerCollapsedQuery = gql`
   query GetLegacyProjectsExplainerCollapsed {
     activeUser {
