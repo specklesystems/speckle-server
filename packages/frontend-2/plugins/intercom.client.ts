@@ -74,21 +74,25 @@ export const useIntercom = () => {
     })
 
     onShow(async () => {
-      const result = await apolloClient.query({
-        query: intercomActiveWorkspaceQuery,
-        variables: {
-          slug: activeWorkspaceSlug.value || ''
-        }
-      })
-
-      if (result.data) {
-        updateCompany({
-          id: result.data.workspaceBySlug.id,
-          /* eslint-disable camelcase */
-          plan_name: result.data.workspaceBySlug.plan?.name,
-          plan_status: result.data.workspaceBySlug.plan?.status
-          /* eslint-enable camelcase */
+      try {
+        const result = await apolloClient.query({
+          query: intercomActiveWorkspaceQuery,
+          variables: {
+            slug: activeWorkspaceSlug.value || ''
+          }
         })
+
+        if (result.data) {
+          updateCompany({
+            id: result.data.workspaceBySlug.id,
+            /* eslint-disable camelcase */
+            plan_name: result.data.workspaceBySlug.plan?.name,
+            plan_status: result.data.workspaceBySlug.plan?.status
+            /* eslint-enable camelcase */
+          })
+        }
+      } catch {
+        // Silently fail - we don't want Intercom initialization to break
       }
     })
   }
