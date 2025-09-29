@@ -537,7 +537,7 @@ export const updateSavedViewFactory =
     const hasResourceIdString = 'resourceIdString' in input && input.resourceIdString
     const hasViewerState = 'viewerState' in input && input.viewerState
     const hasScreenshot = 'screenshot' in input && input.screenshot
-    if (hasResourceIdString || hasViewerState) {
+    if (hasResourceIdString || hasViewerState || hasScreenshot) {
       if (!hasResourceIdString || !hasViewerState || !hasScreenshot) {
         throw new SavedViewUpdateValidationError(
           'If the resourceIdString or viewerState are being updated, resourceIdString, viewerState and screenshot must all be submitted.',

@@ -45,12 +45,12 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import type { FactoryResultOf } from '@/modules/shared/helpers/factory'
 import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
 import {
-  SavedViewCreationValidationError,
   SavedViewGroupCreationValidationError,
   SavedViewGroupNotFoundError,
   SavedViewGroupUpdateValidationError,
   SavedViewInvalidHomeViewSettingsError,
   SavedViewInvalidResourceTargetError,
+  SavedViewScreenshotError,
   SavedViewUpdateValidationError
 } from '@/modules/viewer/errors/savedViews'
 import {
@@ -748,7 +748,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         )
 
         expect(res).to.haveGraphQLErrors({
-          code: SavedViewCreationValidationError.code
+          code: SavedViewScreenshotError.code
         })
         expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
       })
@@ -1896,7 +1896,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           input: {
             id: testView.id,
             projectId: updatablesProject.id,
-            screenshot: 'invalid'
+            screenshot: fakeScreenshot2
           }
         })
         expect(res).to.haveGraphQLErrors({ code: SavedViewUpdateValidationError.code })
@@ -1925,7 +1925,7 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
             name: 'x'
           }
         })
-        expect(res).to.haveGraphQLErrors({ code: SavedViewUpdateValidationError.code })
+        expect(res).to.haveGraphQLErrors({ code: SavedViewScreenshotError.code })
         expect(res.data?.projectMutations.savedViewMutations.updateView).to.not.be.ok
       })
 
