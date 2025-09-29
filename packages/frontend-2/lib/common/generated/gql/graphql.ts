@@ -3695,6 +3695,7 @@ export type SavedViewGroup = {
   projectId: Scalars['ID']['output'];
   /** Resources that were used to find this group */
   resourceIds: Array<Scalars['String']['output']>;
+  shareLink?: Maybe<SavedViewGroupShareLink>;
   title: Scalars['String']['output'];
   views: SavedViewCollection;
 };
@@ -3713,24 +3714,28 @@ export type SavedViewGroupCollection = {
 
 export type SavedViewGroupPermissionChecks = {
   __typename?: 'SavedViewGroupPermissionChecks';
+  canCreateToken: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
 };
 
-export type SavedViewGroupToken = {
-  __typename?: 'SavedViewGroupToken';
-  createdAt: Scalars['DateTime']['output'];
-  lastUsed: Scalars['DateTime']['output'];
-  lifespan: Scalars['BigInt']['output'];
-  projects: Array<Project>;
-  savedViewGroupId: Scalars['String']['output'];
-  tokenId: Scalars['String']['output'];
-  user?: Maybe<LimitedUser>;
+export type SavedViewGroupShareInput = {
+  groupId: Scalars['ID']['input'];
+  projectId: Scalars['ID']['input'];
 };
 
-export type SavedViewGroupTokenReturn = {
-  __typename?: 'SavedViewGroupTokenReturn';
-  token: Scalars['String']['output'];
-  tokenMetadata: SavedViewGroupToken;
+export type SavedViewGroupShareLink = {
+  __typename?: 'SavedViewGroupShareLink';
+  content: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  revoked: Scalars['Boolean']['output'];
+  validUntil: Scalars['DateTime']['output'];
+};
+
+export type SavedViewGroupShareUpdateInput = {
+  groupId: Scalars['ID']['input'];
+  projectId: Scalars['ID']['input'];
+  shareId: Scalars['ID']['input'];
 };
 
 export type SavedViewGroupViewsInput = {
@@ -3767,10 +3772,13 @@ export type SavedViewGroupsInput = {
 export type SavedViewMutations = {
   __typename?: 'SavedViewMutations';
   createGroup: SavedViewGroup;
-  createToken: SavedViewGroupTokenReturn;
   createView: SavedView;
   deleteGroup: Scalars['Boolean']['output'];
+  deleteShare: Scalars['Boolean']['output'];
   deleteView: Scalars['Boolean']['output'];
+  disableShare: SavedViewGroupShareLink;
+  enableShare: SavedViewGroupShareLink;
+  share: SavedViewGroupShareLink;
   updateGroup: SavedViewGroup;
   updateView: SavedView;
 };
@@ -3778,11 +3786,6 @@ export type SavedViewMutations = {
 
 export type SavedViewMutationsCreateGroupArgs = {
   input: CreateSavedViewGroupInput;
-};
-
-
-export type SavedViewMutationsCreateTokenArgs = {
-  groupId: Scalars['String']['input'];
 };
 
 
@@ -3796,8 +3799,28 @@ export type SavedViewMutationsDeleteGroupArgs = {
 };
 
 
+export type SavedViewMutationsDeleteShareArgs = {
+  input: SavedViewGroupShareUpdateInput;
+};
+
+
 export type SavedViewMutationsDeleteViewArgs = {
   input: DeleteSavedViewInput;
+};
+
+
+export type SavedViewMutationsDisableShareArgs = {
+  input: SavedViewGroupShareUpdateInput;
+};
+
+
+export type SavedViewMutationsEnableShareArgs = {
+  input: SavedViewGroupShareUpdateInput;
+};
+
+
+export type SavedViewMutationsShareArgs = {
+  input: SavedViewGroupShareInput;
 };
 
 
@@ -9219,8 +9242,7 @@ export type AllObjectTypes = {
   SavedViewGroup: SavedViewGroup,
   SavedViewGroupCollection: SavedViewGroupCollection,
   SavedViewGroupPermissionChecks: SavedViewGroupPermissionChecks,
-  SavedViewGroupToken: SavedViewGroupToken,
-  SavedViewGroupTokenReturn: SavedViewGroupTokenReturn,
+  SavedViewGroupShareLink: SavedViewGroupShareLink,
   SavedViewMutations: SavedViewMutations,
   SavedViewPermissionChecks: SavedViewPermissionChecks,
   Scope: Scope,
@@ -10329,6 +10351,7 @@ export type SavedViewGroupFieldArgs = {
   permissions: {},
   projectId: {},
   resourceIds: {},
+  shareLink: {},
   title: {},
   views: SavedViewGroupViewsArgs,
 }
@@ -10338,27 +10361,25 @@ export type SavedViewGroupCollectionFieldArgs = {
   totalCount: {},
 }
 export type SavedViewGroupPermissionChecksFieldArgs = {
+  canCreateToken: {},
   canUpdate: {},
 }
-export type SavedViewGroupTokenFieldArgs = {
+export type SavedViewGroupShareLinkFieldArgs = {
+  content: {},
   createdAt: {},
-  lastUsed: {},
-  lifespan: {},
-  projects: {},
-  savedViewGroupId: {},
-  tokenId: {},
-  user: {},
-}
-export type SavedViewGroupTokenReturnFieldArgs = {
-  token: {},
-  tokenMetadata: {},
+  id: {},
+  revoked: {},
+  validUntil: {},
 }
 export type SavedViewMutationsFieldArgs = {
   createGroup: SavedViewMutationsCreateGroupArgs,
-  createToken: SavedViewMutationsCreateTokenArgs,
   createView: SavedViewMutationsCreateViewArgs,
   deleteGroup: SavedViewMutationsDeleteGroupArgs,
+  deleteShare: SavedViewMutationsDeleteShareArgs,
   deleteView: SavedViewMutationsDeleteViewArgs,
+  disableShare: SavedViewMutationsDisableShareArgs,
+  enableShare: SavedViewMutationsEnableShareArgs,
+  share: SavedViewMutationsShareArgs,
   updateGroup: SavedViewMutationsUpdateGroupArgs,
   updateView: SavedViewMutationsUpdateViewArgs,
 }
@@ -11111,8 +11132,7 @@ export type AllObjectFieldArgTypes = {
   SavedViewGroup: SavedViewGroupFieldArgs,
   SavedViewGroupCollection: SavedViewGroupCollectionFieldArgs,
   SavedViewGroupPermissionChecks: SavedViewGroupPermissionChecksFieldArgs,
-  SavedViewGroupToken: SavedViewGroupTokenFieldArgs,
-  SavedViewGroupTokenReturn: SavedViewGroupTokenReturnFieldArgs,
+  SavedViewGroupShareLink: SavedViewGroupShareLinkFieldArgs,
   SavedViewMutations: SavedViewMutationsFieldArgs,
   SavedViewPermissionChecks: SavedViewPermissionChecksFieldArgs,
   Scope: ScopeFieldArgs,
