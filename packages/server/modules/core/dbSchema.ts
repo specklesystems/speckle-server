@@ -318,6 +318,7 @@ export const UsersMeta = buildMetaTableHelper(
     'newWorkspaceExplainerDismissed',
     'speckleConBannerDismissed',
     'intelligenceCommunityStandUpBannerDismissed',
+    'speckleCon25BannerDismissed',
     'legacyProjectsExplainerCollapsed',
     // Used in tests
     'foo',

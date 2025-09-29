@@ -75,6 +75,18 @@ import { useInjectedPresentationState } from '~/lib/presentations/composables/se
 import { useEventListener, useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { graphql } from '~~/lib/common/generated/gql'
+
+graphql(`
+  fragment PresentationPageWrapper_SavedViewGroup on SavedViewGroup {
+    id
+    permissions {
+      canUpdate {
+        ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
 
 const {
   response: { presentation, workspace }
