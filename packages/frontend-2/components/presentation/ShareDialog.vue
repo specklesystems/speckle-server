@@ -74,10 +74,10 @@ const presentationDialogSharePermissionsQuery = graphql(`
           content
           revoked
         }
-      }
-      permissions {
-        canCreateSavedView {
-          ...FullPermissionCheckResult
+        permissions {
+          canCreateToken {
+            ...FullPermissionCheckResult
+          }
         }
       }
     }
@@ -146,7 +146,7 @@ const isProjectOwner = computed(
   () => result.value?.project?.role === Roles.Stream.Owner
 )
 const createTokenPermission = computed(
-  () => result.value?.project?.permissions?.canCreateSavedView
+  () => result.value?.project?.savedViewGroup?.permissions?.canCreateToken.authorized
 )
 const isRevoked = computed(
   () => result.value?.project?.savedViewGroup?.shareLink?.revoked
