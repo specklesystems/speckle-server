@@ -11261,7 +11261,6 @@ __metadata:
     "@types/bull": "npm:^3.15.9"
     "@types/busboy": "npm:^1.5.4"
     "@types/chai-as-promised": "npm:^7.1.8"
-    "@types/cipher-base": "npm:^1"
     "@types/compression": "npm:^1.7.2"
     "@types/connect-redis": "npm:^0.0.23"
     "@types/content-disposition": "npm:^0.5.9"
@@ -11311,7 +11310,6 @@ __metadata:
     chai: "npm:^4.2.0"
     chai-as-promised: "npm:^7.1.2"
     chai-http: "npm:^4.3.0"
-    cipher-base: "npm:1.0.7"
     compression: "npm:^1.7.4"
     concurrently: "npm:^7.0.0"
     connect-redis: "npm:^6.1.1"
@@ -13377,15 +13375,6 @@ __metadata:
   version: 4.3.16
   resolution: "@types/chai@npm:4.3.16"
   checksum: 10/f84a9049a7f13284f7237236872ed4afce5045dd6ea3926c8b0ac995490f5a524b247b2e70fcd3ebc85832201349a8f026bd0c336b90b5baca9eed0c7a4dbd3f
-  languageName: node
-  linkType: hard
-
-"@types/cipher-base@npm:^1":
-  version: 1.0.3
-  resolution: "@types/cipher-base@npm:1.0.3"
-  dependencies:
-    "@types/node": "npm:*"
-  checksum: 10/95cd845b5e965514f404fb54155817c36e8be3220d8fb0c88b248a3828f4929f50eab7ca4a96c088665ae8f930b3e460f85cd7a9a11d691042805a150a8d058f
   languageName: node
   linkType: hard
 
@@ -18099,7 +18088,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cipher-base@npm:1.0.7, cipher-base@npm:^1.0.0, cipher-base@npm:^1.0.1, cipher-base@npm:^1.0.3":
+"cipher-base@npm:^1.0.0, cipher-base@npm:^1.0.1, cipher-base@npm:^1.0.3":
   version: 1.0.7
   resolution: "cipher-base@npm:1.0.7"
   dependencies:
