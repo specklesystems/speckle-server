@@ -146,7 +146,7 @@ const isProjectOwner = computed(
   () => result.value?.project?.role === Roles.Stream.Owner
 )
 const createTokenPermission = computed(
-  () => result.value?.project?.savedViewGroup?.permissions?.canCreateToken.authorized
+  () => result.value?.project?.savedViewGroup?.permissions?.canCreateToken
 )
 const isRevoked = computed(
   () => result.value?.project?.savedViewGroup?.shareLink?.revoked
