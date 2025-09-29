@@ -1,5 +1,12 @@
 <template>
   <div class="relative">
+    <div
+      v-if="isViewerLoading"
+      key="loading"
+      class="h-dvh w-screen flex flex-col md:flex-row absolute left-0 top-0 z-50"
+    >
+      <PresentationLoading />
+    </div>
     <div class="h-dvh w-screen flex flex-col md:flex-row relative">
       <PresentationHeader
         v-if="!hideUi"

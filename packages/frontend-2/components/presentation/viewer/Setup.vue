@@ -3,6 +3,7 @@
     <ViewerCoreSetup
       viewer-host-classes="h-full"
       :disable-selection="disableSelection"
+      :hide-loading-bar="true"
     />
   </div>
 </template>
