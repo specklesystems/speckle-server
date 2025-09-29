@@ -4,10 +4,14 @@ import Intercom, {
   show,
   hide,
   update,
-  trackEvent
+  trackEvent,
+  onShow
 } from '@intercom/messenger-js-sdk'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { useIntercomEnabled } from '~/lib/intercom/composables/enabled'
+import { useActiveWorkspaceSlug } from '~/lib/user/composables/activeWorkspace'
+import { intercomActiveWorkspaceQuery } from '~/lib/intercom/graphql/queries'
+import { useApolloClientFromNuxt } from '~/lib/common/composables/graphql'
 
 export const useIntercom = () => {
   const {
@@ -28,6 +32,8 @@ export const useIntercom = () => {
   const { activeUser: user } = useActiveUser()
   const { isIntercomEnabled, isRouteBlacklisted } = useIntercomEnabled()
   const route = useRoute()
+  const activeWorkspaceSlug = useActiveWorkspaceSlug()
+  const apolloClient = useApolloClientFromNuxt()
 
   const isInitialized = ref(false)
 
@@ -65,6 +71,25 @@ export const useIntercom = () => {
       /* eslint-enable camelcase */
       name: user.value.name || '',
       email: user.value.email || ''
+    })
+
+    onShow(async () => {
+      const result = await apolloClient.query({
+        query: intercomActiveWorkspaceQuery,
+        variables: {
+          slug: activeWorkspaceSlug.value || ''
+        }
+      })
+
+      if (result.data) {
+        updateCompany({
+          id: result.data.workspaceBySlug.id,
+          /* eslint-disable camelcase */
+          plan_name: result.data.workspaceBySlug.plan?.name,
+          plan_status: result.data.workspaceBySlug.plan?.status
+          /* eslint-enable camelcase */
+        })
+      }
     })
   }
 
