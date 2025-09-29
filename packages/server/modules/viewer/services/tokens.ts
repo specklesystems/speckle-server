@@ -67,7 +67,7 @@ export const createSavedViewGroupTokenFactory =
     const apiToken = await deps.getToken(id)
 
     if (!apiToken) {
-      throw new LogicError('Failed to create api token for dashboard')
+      throw new LogicError('Failed to create api token for saved view group')
     }
 
     return {

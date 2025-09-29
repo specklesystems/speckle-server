@@ -8,7 +8,7 @@ export async function up(knex: Knex): Promise<void> {
       .references('id')
       .inTable('api_tokens')
       .onDelete('cascade')
-    table.string('savedViewGroupId').notNullable() // can be a fk due to multiregion
+    table.string('savedViewGroupId').notNullable() // can't be a fk due to multiregionality
     table
       .string('projectId')
       .notNullable()
