@@ -256,10 +256,21 @@ export const useAuthManager = (
   const dashboardToken = computed(() => route.query.dashboardToken as Optional<string>)
 
   /**
+   * Token used for presentation sharing
+   */
+  const presentationToken = computed(
+    () => route.query.presentationToken as Optional<string>
+  )
+
+  /**
    * Get the effective auth token
    */
   const effectiveAuthToken = computed(
-    () => dashboardToken.value || embedToken.value || authToken.value
+    () =>
+      dashboardToken.value ||
+      embedToken.value ||
+      presentationToken.value ||
+      authToken.value
   )
 
   /**

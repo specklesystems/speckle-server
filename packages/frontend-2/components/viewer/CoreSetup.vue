@@ -10,7 +10,7 @@
     </div>
 
     <!-- Global loading bar -->
-    <ViewerLoadingBar :class="loadingBarClasses" />
+    <ViewerLoadingBar v-if="!hideLoadingBar" :class="loadingBarClasses" />
   </div>
 </template>
 <script setup lang="ts">
@@ -22,5 +22,6 @@
 defineProps<{
   viewerHostClasses?: string
   loadingBarClasses?: string
+  hideLoadingBar?: boolean
 }>()
 </script>

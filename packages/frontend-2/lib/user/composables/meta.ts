@@ -6,7 +6,7 @@ export const activeUserMetaQuery = graphql(`
     activeUser {
       meta {
         legacyProjectsExplainerCollapsed
-        intelligenceCommunityStandUpBannerDismissed
+        speckleCon25BannerDismissed
       }
     }
   }
@@ -22,11 +22,11 @@ export const updateLegacyProjectsExplainerMutation = graphql(`
   }
 `)
 
-export const updateIntelligenceCommunityStandUpBannerDismissedMutation = graphql(`
-  mutation UpdateIntelligenceCommunityStandUpBannerDismissed($value: Boolean!) {
+export const updateSpeckleCon25BannerDismissedMutation = graphql(`
+  mutation UpdateSpeckleCon25BannerDismissed($value: Boolean!) {
     activeUserMutations {
       meta {
-        setIntelligenceCommunityStandUpBannerDismissed(value: $value)
+        setSpeckleCon25BannerDismissed(value: $value)
       }
     }
   }
@@ -37,8 +37,8 @@ export function useActiveUserMeta() {
   const { mutate: updateLegacyProjectsExplainer } = useMutation(
     updateLegacyProjectsExplainerMutation
   )
-  const { mutate: updateIntelligenceCommunityStandUpBanner } = useMutation(
-    updateIntelligenceCommunityStandUpBannerDismissedMutation
+  const { mutate: updateSpeckleCon25Banner } = useMutation(
+    updateSpeckleCon25BannerDismissedMutation
   )
   const apollo = useApolloClient().client
   const cache = apollo.cache
@@ -51,8 +51,8 @@ export function useActiveUserMeta() {
     () => meta.value?.legacyProjectsExplainerCollapsed
   )
 
-  const hasDismissedIntelligenceCommunityStandUpBanner = computed(
-    () => meta.value?.intelligenceCommunityStandUpBannerDismissed
+  const hasDismissedSpeckleCon25Banner = computed(
+    () => meta.value?.speckleCon25BannerDismissed
   )
 
   const updateLegacyProjectsExplainerCollapsed = async (value: boolean) => {
@@ -69,8 +69,8 @@ export function useActiveUserMeta() {
     )
   }
 
-  const updateIntelligenceCommunityStandUpBannerDismissed = async (value: boolean) => {
-    await updateIntelligenceCommunityStandUpBanner({ value })
+  const updateSpeckleCon25BannerDismissed = async (value: boolean) => {
+    await updateSpeckleCon25Banner({ value })
 
     modifyObjectField(
       cache,
@@ -78,7 +78,7 @@ export function useActiveUserMeta() {
       'meta',
       ({ helpers: { createUpdatedValue } }) =>
         createUpdatedValue(({ update }) => {
-          update('intelligenceCommunityStandUpBannerDismissed', () => value)
+          update('speckleCon25BannerDismissed', () => value)
         })
     )
   }
@@ -86,7 +86,7 @@ export function useActiveUserMeta() {
   return {
     hasCollapsedLegacyProjectsExplainer,
     updateLegacyProjectsExplainerCollapsed,
-    hasDismissedIntelligenceCommunityStandUpBanner,
-    updateIntelligenceCommunityStandUpBannerDismissed
+    hasDismissedSpeckleCon25Banner,
+    updateSpeckleCon25BannerDismissed
   }
 }

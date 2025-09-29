@@ -63,6 +63,15 @@ const resolvers: Resolvers = {
     }
   },
   SavedViewGroupPermissionChecks: {
+    canCreateToken: async (parent, _args, ctx) => {
+      const savedViewGroupId = parent.savedViewGroup.id
+      const authResult = await ctx.authPolicies.project.savedViews.canUpdateGroup({
+        userId: ctx.userId,
+        projectId: parent.savedViewGroup.projectId,
+        savedViewGroupId
+      })
+      return toGraphqlResult(authResult)
+    },
     canUpdate: async (parent, _args, ctx) => {
       const savedViewGroupId = parent.savedViewGroup.id
       const canUpdate = await ctx.authPolicies.project.savedViews.canUpdateGroup({
