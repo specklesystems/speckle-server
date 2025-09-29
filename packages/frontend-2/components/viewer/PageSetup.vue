@@ -238,7 +238,6 @@ const canEditEmbedOptions = computed(() => {
 })
 
 const hideSpeckleLogo = computed(() => {
-  if (!project.value?.workspace) return true
   if (!canEditEmbedOptions.value) return false
   if (project.value?.embedOptions?.hideSpeckleBranding) return true
   else return hideSpeckleBranding.value
