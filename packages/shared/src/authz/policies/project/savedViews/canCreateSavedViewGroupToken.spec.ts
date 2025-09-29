@@ -208,7 +208,26 @@ describe('canCreateSavedViewGroupTokenPolicy', () => {
       })
     })
 
-    it('succeeds if not owner but author', async () => {
+    it('fails if workspace plan is free', async () => {
+      const sut = buildWorkspacedSUT({
+        getWorkspacePlan: getWorkspacePlanFake({
+          workspaceId: 'workspace-id',
+          name: 'free'
+        })
+      })
+
+      const result = await sut({
+        userId: 'user-id',
+        projectId: 'project-id',
+        savedViewGroupId: 'default-XXX'
+      })
+
+      expect(result).toBeAuthErrorResult({
+        code: WorkspacePlanNoFeatureAccessError.code
+      })
+    })
+
+    it('fails if user is author', async () => {
       const sut = buildWorkspacedSUT({
         getSavedViewGroup: getSavedViewGroupFake({
           projectId: 'project-id',
@@ -223,7 +242,9 @@ describe('canCreateSavedViewGroupTokenPolicy', () => {
         savedViewGroupId: 'saved-group-id'
       })
 
-      expect(result).toBeOKResult()
+      expect(result).toBeAuthErrorResult({
+        code: ProjectNotEnoughPermissionsError.code
+      })
     })
   })
 })
