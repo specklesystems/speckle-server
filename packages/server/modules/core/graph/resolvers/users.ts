@@ -239,6 +239,13 @@ export default {
       })
       return !!metaVal?.value
     },
+    speckleCon25BannerDismissed: async (parent, _args, ctx) => {
+      const metaVal = await ctx.loaders.users.getUserMeta.load({
+        userId: parent.userId,
+        key: UsersMeta.metaKey.speckleCon25BannerDismissed
+      })
+      return !!metaVal?.value
+    },
     legacyProjectsExplainerCollapsed: async (parent, _args, ctx) => {
       const metaVal = await ctx.loaders.users.getUserMeta.load({
         userId: parent.userId,
@@ -547,6 +554,16 @@ export default {
       const res = await meta.set(
         ctx.userId!,
         UsersMeta.metaKey.intelligenceCommunityStandUpBannerDismissed,
+        args.value
+      )
+
+      return !!res.value
+    },
+    setSpeckleCon25BannerDismissed: async (_parent, args, ctx) => {
+      const meta = metaHelpers(Users, db)
+      const res = await meta.set(
+        ctx.userId!,
+        UsersMeta.metaKey.speckleCon25BannerDismissed,
         args.value
       )
 

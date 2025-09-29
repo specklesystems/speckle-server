@@ -47,26 +47,27 @@ const onNext = () => {
 useEventListener(
   'keydown',
   (event) => {
+    // Don't handle arrow keys if an input element is focused
+    if (
+      event.target instanceof HTMLInputElement ||
+      event.target instanceof HTMLTextAreaElement
+    )
+      return
+
+    const targetKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']
+
+    if (targetKeys.includes(event.key)) {
+      if (disablePrevious.value) return
+      onPrevious()
+    }
     if (event.key === 'ArrowLeft') {
-      event.preventDefault()
-      event.stopPropagation()
-      event.stopImmediatePropagation()
       if (disablePrevious.value) return
       onPrevious()
     }
 
     if (event.key === 'ArrowRight') {
-      event.preventDefault()
-      event.stopPropagation()
-      event.stopImmediatePropagation()
       if (disableNext.value) return
       onNext()
-    }
-
-    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-      event.preventDefault()
-      event.stopPropagation()
-      event.stopImmediatePropagation()
     }
   },
   { capture: true }
