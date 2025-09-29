@@ -1922,7 +1922,16 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
             id: testView.id,
             projectId: updatablesProject.id,
             screenshot: 'not-base64',
-            name: 'x'
+            name: 'x',
+            resourceIdString: models[0].id,
+            viewerState: fakeViewerState({
+              projectId: updatablesProject.id,
+              resources: {
+                request: {
+                  resourceIdString: models[0].id
+                }
+              }
+            })
           }
         })
         expect(res).to.haveGraphQLErrors({ code: SavedViewScreenshotError.code })
