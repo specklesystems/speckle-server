@@ -20,5 +20,4 @@ export type GetSavedViewGroupApiTokens = (args: {
 
 export type GetSavedViewGroupApiToken = (args: {
   savedViewGroupId: string
-  tokenId: string
 }) => Promise<SavedViewGroupApiToken | null>

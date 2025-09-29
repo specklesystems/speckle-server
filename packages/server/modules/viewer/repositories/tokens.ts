@@ -66,7 +66,7 @@ export const getSavedViewGroupApiTokensFactory =
 
 export const getSavedViewGroupApiTokenFactory =
   (deps: { db: Knex }): GetSavedViewGroupApiToken =>
-  async ({ savedViewGroupId, tokenId }) => {
+  async ({ savedViewGroupId }) => {
     const token = await tables
       .savedGroupApiTokens(deps.db)
       .orderBy(ApiTokens.col.createdAt)
@@ -78,7 +78,7 @@ export const getSavedViewGroupApiTokenFactory =
         ApiTokens.col.lifespan,
         ApiTokens.col.revoked
       ])
-      .where({ savedViewGroupId, tokenId })
+      .where({ savedViewGroupId })
       .first()
     return token ?? null
   }

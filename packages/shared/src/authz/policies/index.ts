@@ -88,7 +88,7 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
       canCreate: canCreateSavedViewPolicy(loaders),
       canUpdate: canUpdateSavedViewPolicy(loaders),
       canUpdateGroup: canUpdateSavedViewGroupPolicy(loaders),
-      canCreateGroupToken: canCreateSavedViewGroupTokenPolicy(loaders),
+      canCreateToken: canCreateSavedViewGroupTokenPolicy(loaders),
       canRead: canReadSavedViewPolicy(loaders),
       canMove: canMoveSavedViewPolicy(loaders),
       canEditTitle: canEditSavedViewTitlePolicy(loaders),

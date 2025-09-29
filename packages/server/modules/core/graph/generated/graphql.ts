@@ -1098,11 +1098,6 @@ export type CreateSavedViewGroupInput = {
   resourceIdString: Scalars['String']['input'];
 };
 
-export type CreateSavedViewGroupTokenInput = {
-  groupId: Scalars['ID']['input'];
-  projectId: Scalars['ID']['input'];
-};
-
 export type CreateSavedViewInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   /** Group id, if grouping necessary */
@@ -3727,6 +3722,7 @@ export type SavedViewGroup = {
   projectId: Scalars['ID']['output'];
   /** Resources that were used to find this group */
   resourceIds: Array<Scalars['String']['output']>;
+  shareLink?: Maybe<SavedViewGroupShareLink>;
   title: Scalars['String']['output'];
   views: SavedViewCollection;
 };
@@ -3749,21 +3745,24 @@ export type SavedViewGroupPermissionChecks = {
   canUpdate: PermissionCheckResult;
 };
 
-export type SavedViewGroupToken = {
-  __typename?: 'SavedViewGroupToken';
-  createdAt: Scalars['DateTime']['output'];
-  lastUsed: Scalars['DateTime']['output'];
-  lifespan: Scalars['BigInt']['output'];
-  project: Project;
-  savedViewGroupId: Scalars['String']['output'];
-  tokenId: Scalars['String']['output'];
-  user?: Maybe<LimitedUser>;
+export type SavedViewGroupShareInput = {
+  groupId: Scalars['ID']['input'];
+  projectId: Scalars['ID']['input'];
 };
 
-export type SavedViewGroupTokenReturn = {
-  __typename?: 'SavedViewGroupTokenReturn';
-  token: Scalars['String']['output'];
-  tokenMetadata: SavedViewGroupToken;
+export type SavedViewGroupShareLink = {
+  __typename?: 'SavedViewGroupShareLink';
+  content: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  revoked: Scalars['Boolean']['output'];
+  validUntil: Scalars['DateTime']['output'];
+};
+
+export type SavedViewGroupShareUpdateInput = {
+  groupId: Scalars['ID']['input'];
+  projectId: Scalars['ID']['input'];
+  shareId: Scalars['ID']['input'];
 };
 
 export type SavedViewGroupViewsInput = {
@@ -3800,10 +3799,13 @@ export type SavedViewGroupsInput = {
 export type SavedViewMutations = {
   __typename?: 'SavedViewMutations';
   createGroup: SavedViewGroup;
-  createToken: SavedViewGroupTokenReturn;
   createView: SavedView;
   deleteGroup: Scalars['Boolean']['output'];
+  deleteShare: Scalars['Boolean']['output'];
   deleteView: Scalars['Boolean']['output'];
+  disableShare: SavedViewGroupShareLink;
+  enableShare: SavedViewGroupShareLink;
+  share: SavedViewGroupShareLink;
   updateGroup: SavedViewGroup;
   updateView: SavedView;
 };
@@ -3811,11 +3813,6 @@ export type SavedViewMutations = {
 
 export type SavedViewMutationsCreateGroupArgs = {
   input: CreateSavedViewGroupInput;
-};
-
-
-export type SavedViewMutationsCreateTokenArgs = {
-  input: CreateSavedViewGroupTokenInput;
 };
 
 
@@ -3829,8 +3826,28 @@ export type SavedViewMutationsDeleteGroupArgs = {
 };
 
 
+export type SavedViewMutationsDeleteShareArgs = {
+  input: SavedViewGroupShareUpdateInput;
+};
+
+
 export type SavedViewMutationsDeleteViewArgs = {
   input: DeleteSavedViewInput;
+};
+
+
+export type SavedViewMutationsDisableShareArgs = {
+  input: SavedViewGroupShareUpdateInput;
+};
+
+
+export type SavedViewMutationsEnableShareArgs = {
+  input: SavedViewGroupShareUpdateInput;
+};
+
+
+export type SavedViewMutationsShareArgs = {
+  input: SavedViewGroupShareInput;
 };
 
 
@@ -6286,7 +6303,6 @@ export type ResolversTypes = {
   CreateEmbedTokenReturn: ResolverTypeWrapper<Omit<CreateEmbedTokenReturn, 'tokenMetadata'> & { tokenMetadata: ResolversTypes['EmbedToken'] }>;
   CreateModelInput: CreateModelInput;
   CreateSavedViewGroupInput: CreateSavedViewGroupInput;
-  CreateSavedViewGroupTokenInput: CreateSavedViewGroupTokenInput;
   CreateSavedViewInput: CreateSavedViewInput;
   CreateServerRegionInput: CreateServerRegionInput;
   CreateUserEmailInput: CreateUserEmailInput;
@@ -6429,8 +6445,9 @@ export type ResolversTypes = {
   SavedViewGroup: ResolverTypeWrapper<SavedViewGroupGraphQLReturn>;
   SavedViewGroupCollection: ResolverTypeWrapper<Omit<SavedViewGroupCollection, 'items'> & { items: Array<ResolversTypes['SavedViewGroup']> }>;
   SavedViewGroupPermissionChecks: ResolverTypeWrapper<SavedViewGroupPermissionChecksGraphQLReturn>;
-  SavedViewGroupToken: ResolverTypeWrapper<Omit<SavedViewGroupToken, 'project' | 'user'> & { project: ResolversTypes['Project'], user?: Maybe<ResolversTypes['LimitedUser']> }>;
-  SavedViewGroupTokenReturn: ResolverTypeWrapper<Omit<SavedViewGroupTokenReturn, 'tokenMetadata'> & { tokenMetadata: ResolversTypes['SavedViewGroupToken'] }>;
+  SavedViewGroupShareInput: SavedViewGroupShareInput;
+  SavedViewGroupShareLink: ResolverTypeWrapper<SavedViewGroupShareLink>;
+  SavedViewGroupShareUpdateInput: SavedViewGroupShareUpdateInput;
   SavedViewGroupViewsInput: SavedViewGroupViewsInput;
   SavedViewGroupsInput: SavedViewGroupsInput;
   SavedViewMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
@@ -6687,7 +6704,6 @@ export type ResolversParentTypes = {
   CreateEmbedTokenReturn: Omit<CreateEmbedTokenReturn, 'tokenMetadata'> & { tokenMetadata: ResolversParentTypes['EmbedToken'] };
   CreateModelInput: CreateModelInput;
   CreateSavedViewGroupInput: CreateSavedViewGroupInput;
-  CreateSavedViewGroupTokenInput: CreateSavedViewGroupTokenInput;
   CreateSavedViewInput: CreateSavedViewInput;
   CreateServerRegionInput: CreateServerRegionInput;
   CreateUserEmailInput: CreateUserEmailInput;
@@ -6814,8 +6830,9 @@ export type ResolversParentTypes = {
   SavedViewGroup: SavedViewGroupGraphQLReturn;
   SavedViewGroupCollection: Omit<SavedViewGroupCollection, 'items'> & { items: Array<ResolversParentTypes['SavedViewGroup']> };
   SavedViewGroupPermissionChecks: SavedViewGroupPermissionChecksGraphQLReturn;
-  SavedViewGroupToken: Omit<SavedViewGroupToken, 'project' | 'user'> & { project: ResolversParentTypes['Project'], user?: Maybe<ResolversParentTypes['LimitedUser']> };
-  SavedViewGroupTokenReturn: Omit<SavedViewGroupTokenReturn, 'tokenMetadata'> & { tokenMetadata: ResolversParentTypes['SavedViewGroupToken'] };
+  SavedViewGroupShareInput: SavedViewGroupShareInput;
+  SavedViewGroupShareLink: SavedViewGroupShareLink;
+  SavedViewGroupShareUpdateInput: SavedViewGroupShareUpdateInput;
   SavedViewGroupViewsInput: SavedViewGroupViewsInput;
   SavedViewGroupsInput: SavedViewGroupsInput;
   SavedViewMutations: MutationsObjectGraphQLReturn;
@@ -8274,6 +8291,7 @@ export type SavedViewGroupResolvers<ContextType = GraphQLContext, ParentType ext
   permissions?: Resolver<ResolversTypes['SavedViewGroupPermissionChecks'], ParentType, ContextType>;
   projectId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   resourceIds?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  shareLink?: Resolver<Maybe<ResolversTypes['SavedViewGroupShareLink']>, ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   views?: Resolver<ResolversTypes['SavedViewCollection'], ParentType, ContextType, RequireFields<SavedViewGroupViewsArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -8292,29 +8310,24 @@ export type SavedViewGroupPermissionChecksResolvers<ContextType = GraphQLContext
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type SavedViewGroupTokenResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SavedViewGroupToken'] = ResolversParentTypes['SavedViewGroupToken']> = {
+export type SavedViewGroupShareLinkResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SavedViewGroupShareLink'] = ResolversParentTypes['SavedViewGroupShareLink']> = {
+  content?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  lastUsed?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  lifespan?: Resolver<ResolversTypes['BigInt'], ParentType, ContextType>;
-  project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
-  savedViewGroupId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  tokenId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  user?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type SavedViewGroupTokenReturnResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SavedViewGroupTokenReturn'] = ResolversParentTypes['SavedViewGroupTokenReturn']> = {
-  token?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  tokenMetadata?: Resolver<ResolversTypes['SavedViewGroupToken'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  revoked?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  validUntil?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SavedViewMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SavedViewMutations'] = ResolversParentTypes['SavedViewMutations']> = {
   createGroup?: Resolver<ResolversTypes['SavedViewGroup'], ParentType, ContextType, RequireFields<SavedViewMutationsCreateGroupArgs, 'input'>>;
-  createToken?: Resolver<ResolversTypes['SavedViewGroupTokenReturn'], ParentType, ContextType, RequireFields<SavedViewMutationsCreateTokenArgs, 'input'>>;
   createView?: Resolver<ResolversTypes['SavedView'], ParentType, ContextType, RequireFields<SavedViewMutationsCreateViewArgs, 'input'>>;
   deleteGroup?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<SavedViewMutationsDeleteGroupArgs, 'input'>>;
+  deleteShare?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<SavedViewMutationsDeleteShareArgs, 'input'>>;
   deleteView?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<SavedViewMutationsDeleteViewArgs, 'input'>>;
+  disableShare?: Resolver<ResolversTypes['SavedViewGroupShareLink'], ParentType, ContextType, RequireFields<SavedViewMutationsDisableShareArgs, 'input'>>;
+  enableShare?: Resolver<ResolversTypes['SavedViewGroupShareLink'], ParentType, ContextType, RequireFields<SavedViewMutationsEnableShareArgs, 'input'>>;
+  share?: Resolver<ResolversTypes['SavedViewGroupShareLink'], ParentType, ContextType, RequireFields<SavedViewMutationsShareArgs, 'input'>>;
   updateGroup?: Resolver<ResolversTypes['SavedViewGroup'], ParentType, ContextType, RequireFields<SavedViewMutationsUpdateGroupArgs, 'input'>>;
   updateView?: Resolver<ResolversTypes['SavedView'], ParentType, ContextType, RequireFields<SavedViewMutationsUpdateViewArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -9237,8 +9250,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   SavedViewGroup?: SavedViewGroupResolvers<ContextType>;
   SavedViewGroupCollection?: SavedViewGroupCollectionResolvers<ContextType>;
   SavedViewGroupPermissionChecks?: SavedViewGroupPermissionChecksResolvers<ContextType>;
-  SavedViewGroupToken?: SavedViewGroupTokenResolvers<ContextType>;
-  SavedViewGroupTokenReturn?: SavedViewGroupTokenReturnResolvers<ContextType>;
+  SavedViewGroupShareLink?: SavedViewGroupShareLinkResolvers<ContextType>;
   SavedViewMutations?: SavedViewMutationsResolvers<ContextType>;
   SavedViewPermissionChecks?: SavedViewPermissionChecksResolvers<ContextType>;
   Scope?: ScopeResolvers<ContextType>;
