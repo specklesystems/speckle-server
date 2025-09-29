@@ -35,7 +35,7 @@
       roles.
       <NuxtLink
         v-if="isProjectOwner"
-        :to="settingsWorkspaceRoutes.members.route(projectId)"
+        :to="projectRoute(projectId, 'collaborators')"
         class="text-primary"
       >
         Manage project roles.
@@ -55,7 +55,7 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useInjectedPresentationState } from '~~/lib/presentations/composables/setup'
-import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
+import { projectRoute } from '~/lib/common/helpers/route'
 import { Roles } from '@speckle/shared'
 
 const presentationDialogSharePermissionsQuery = graphql(`
