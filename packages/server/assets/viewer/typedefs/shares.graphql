@@ -1,0 +1,31 @@
+extend type SavedViewGroup {
+  shareLink: SavedViewGroupShareLink
+}
+
+type SavedViewGroupShareLink {
+  id: ID!
+  # going to ignore this in the API for now, its in the DB
+  # createdBy: LimitedUser
+  validUntil: DateTime!
+  createdAt: DateTime!
+  content: String!
+  revoked: Boolean!
+}
+
+input SavedViewGroupShareInput {
+  groupId: ID!
+  projectId: ID!
+}
+
+input SavedViewGroupShareUpdateInput {
+  groupId: ID!
+  projectId: ID!
+  shareId: ID!
+}
+
+extend type SavedViewMutations {
+  share(input: SavedViewGroupShareInput!): SavedViewGroupShareLink!
+  deleteShare(input: SavedViewGroupShareUpdateInput!): Boolean!
+  disableShare(input: SavedViewGroupShareUpdateInput!): SavedViewGroupShareLink!
+  enableShare(input: SavedViewGroupShareUpdateInput!): SavedViewGroupShareLink!
+}
