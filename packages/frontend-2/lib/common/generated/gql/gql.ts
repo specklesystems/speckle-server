@@ -421,9 +421,9 @@ type Documents = {
     "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": typeof types.AppAuthorAvatarFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": typeof types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": typeof types.ActiveUserAvatarFragmentDoc,
-    "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        legacyProjectsExplainerCollapsed\n        intelligenceCommunityStandUpBannerDismissed\n      }\n    }\n  }\n": typeof types.ActiveUserMetaDocument,
+    "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        legacyProjectsExplainerCollapsed\n        speckleCon25BannerDismissed\n      }\n    }\n  }\n": typeof types.ActiveUserMetaDocument,
     "\n  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setLegacyProjectsExplainerCollapsed(value: $value)\n      }\n    }\n  }\n": typeof types.UpdateLegacyProjectsExplainerDocument,
-    "\n  mutation UpdateIntelligenceCommunityStandUpBannerDismissed($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setIntelligenceCommunityStandUpBannerDismissed(value: $value)\n      }\n    }\n  }\n": typeof types.UpdateIntelligenceCommunityStandUpBannerDismissedDocument,
+    "\n  mutation UpdateSpeckleCon25BannerDismissed($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setSpeckleCon25BannerDismissed(value: $value)\n      }\n    }\n  }\n": typeof types.UpdateSpeckleCon25BannerDismissedDocument,
     "\n      subscription OnUserProjectsUpdate {\n        userProjectsUpdated {\n          type\n          id\n          project {\n            ...ProjectDashboardItem\n            workspaceId\n          }\n        }\n      }\n    ": typeof types.OnUserProjectsUpdateDocument,
     "\n  mutation UpdateUser($input: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $input) {\n        id\n        name\n        bio\n        company\n        avatar\n      }\n    }\n  }\n": typeof types.UpdateUserDocument,
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": typeof types.UpdateNotificationPreferencesDocument,
@@ -956,9 +956,9 @@ const documents: Documents = {
     "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": types.AppAuthorAvatarFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": types.ActiveUserAvatarFragmentDoc,
-    "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        legacyProjectsExplainerCollapsed\n        intelligenceCommunityStandUpBannerDismissed\n      }\n    }\n  }\n": types.ActiveUserMetaDocument,
+    "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        legacyProjectsExplainerCollapsed\n        speckleCon25BannerDismissed\n      }\n    }\n  }\n": types.ActiveUserMetaDocument,
     "\n  mutation UpdateLegacyProjectsExplainer($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setLegacyProjectsExplainerCollapsed(value: $value)\n      }\n    }\n  }\n": types.UpdateLegacyProjectsExplainerDocument,
-    "\n  mutation UpdateIntelligenceCommunityStandUpBannerDismissed($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setIntelligenceCommunityStandUpBannerDismissed(value: $value)\n      }\n    }\n  }\n": types.UpdateIntelligenceCommunityStandUpBannerDismissedDocument,
+    "\n  mutation UpdateSpeckleCon25BannerDismissed($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setSpeckleCon25BannerDismissed(value: $value)\n      }\n    }\n  }\n": types.UpdateSpeckleCon25BannerDismissedDocument,
     "\n      subscription OnUserProjectsUpdate {\n        userProjectsUpdated {\n          type\n          id\n          project {\n            ...ProjectDashboardItem\n            workspaceId\n          }\n        }\n      }\n    ": types.OnUserProjectsUpdateDocument,
     "\n  mutation UpdateUser($input: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $input) {\n        id\n        name\n        bio\n        company\n        avatar\n      }\n    }\n  }\n": types.UpdateUserDocument,
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": types.UpdateNotificationPreferencesDocument,
@@ -2729,7 +2729,7 @@ export function graphql(source: "\n  fragment ActiveUserAvatar on User {\n    id
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        legacyProjectsExplainerCollapsed\n        intelligenceCommunityStandUpBannerDismissed\n      }\n    }\n  }\n"): (typeof documents)["\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        legacyProjectsExplainerCollapsed\n        intelligenceCommunityStandUpBannerDismissed\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        legacyProjectsExplainerCollapsed\n        speckleCon25BannerDismissed\n      }\n    }\n  }\n"): (typeof documents)["\n  query ActiveUserMeta {\n    activeUser {\n      meta {\n        legacyProjectsExplainerCollapsed\n        speckleCon25BannerDismissed\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -2737,7 +2737,7 @@ export function graphql(source: "\n  mutation UpdateLegacyProjectsExplainer($val
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation UpdateIntelligenceCommunityStandUpBannerDismissed($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setIntelligenceCommunityStandUpBannerDismissed(value: $value)\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateIntelligenceCommunityStandUpBannerDismissed($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setIntelligenceCommunityStandUpBannerDismissed(value: $value)\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  mutation UpdateSpeckleCon25BannerDismissed($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setSpeckleCon25BannerDismissed(value: $value)\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateSpeckleCon25BannerDismissed($value: Boolean!) {\n    activeUserMutations {\n      meta {\n        setSpeckleCon25BannerDismissed(value: $value)\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
