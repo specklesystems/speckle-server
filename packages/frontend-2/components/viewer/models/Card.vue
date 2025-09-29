@@ -350,7 +350,6 @@ const onActionChosen = async (params: { item: LayoutMenuItem }) => {
 
   switch (item.id) {
     case 'copy-link-to-model':
-      mp.track('Branch Action', { type: 'action', name: 'copy-model-link' })
       if (project.value) {
         copyModelLink({ model: { projectId: project.value.id, id: props.model.id } })
       }
