@@ -93,7 +93,11 @@
       :project="projectToModify"
     />
 
-    <ProjectsAdd v-model:open="openNewProject" :workspace="workspace" />
+    <ProjectsAdd
+      v-model:open="openNewProject"
+      :workspace="workspace"
+      @created="onProjectCreated"
+    />
   </div>
 </template>
 
@@ -113,7 +117,7 @@ import { isProject } from '~~/lib/server-management/helpers/utils'
 import { useDebouncedTextInput, type LayoutMenuItem } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
 import { useRouter } from 'vue-router'
-import { projectRoute } from '~/lib/common/helpers/route'
+import { projectRoute, useNavigateToProject } from '~/lib/common/helpers/route'
 import { useCanCreatePersonalProject } from '~/lib/projects/composables/permissions'
 import { useCanCreateWorkspaceProject } from '~/lib/workspaces/composables/projects/permissions'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
@@ -167,6 +171,7 @@ const props = defineProps<{
   workspace: MaybeNullOrUndefined<SettingsSharedProjects_WorkspaceFragment>
 }>()
 
+const navigateToProject = useNavigateToProject()
 const { formattedFullDate } = useDateFormatters()
 const { activeUser } = useActiveUser()
 const canCreatePersonal = useCanCreatePersonalProject({
@@ -265,5 +270,9 @@ const onActionChosen = (
 
 const toggleMenu = (itemId: string) => {
   showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
+}
+
+const onProjectCreated = (project: { id: string }) => {
+  navigateToProject({ id: project.id })
 }
 </script>
