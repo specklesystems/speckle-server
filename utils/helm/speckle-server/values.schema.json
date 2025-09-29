@@ -917,6 +917,21 @@
           "description": "The Docker image to be used for the Speckle Server component. If blank, defaults to speckle/speckle-server:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
           "default": ""
         },
+        "rollingUpdate": {
+          "type": "object",
+          "properties": {
+            "maxUnavailable": {
+              "type": "string",
+              "description": "The maximum number or percentage of pods that can be unavailable during the update process. See https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#max-unavailable",
+              "default": "25%"
+            },
+            "maxSurge": {
+              "type": "string",
+              "description": "The maximum number or percentage of pods that can be created above the desired number of pods during the update process. See https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#max-surge",
+              "default": "25%"
+            }
+          }
+        },
         "enableFe2Messaging": {
           "type": "boolean",
           "description": "If enabled, the related FE1 deployment will show banners/messages about the new frontend",
@@ -1729,6 +1744,21 @@
               "type": "string",
               "description": "The port on which the nodejs inspect feature should be exposed",
               "default": "7000"
+            }
+          }
+        },
+        "rollingUpdate": {
+          "type": "object",
+          "properties": {
+            "maxUnavailable": {
+              "type": "string",
+              "description": "The maximum number or percentage of pods that can be unavailable during the update process. See https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#max-unavailable",
+              "default": "25%"
+            },
+            "maxSurge": {
+              "type": "string",
+              "description": "The maximum number or percentage of pods that can be created above the desired number of pods during the update process. See https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#max-surge",
+              "default": "25%"
             }
           }
         },

@@ -609,6 +609,13 @@ server:
   ##
   image: ''
 
+  rollingUpdate:
+    ## @param server.rollingUpdate.maxUnavailable The maximum number or percentage of pods that can be unavailable during the update process. See https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#max-unavailable
+    ##
+    maxUnavailable: 25%
+    ## @param server.rollingUpdate.maxSurge The maximum number or percentage of pods that can be created above the desired number of pods during the update process. See https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#max-surge
+    maxSurge: 25%
+
   ## @param server.enableFe2Messaging If enabled, the related FE1 deployment will show banners/messages about the new frontend
   ##
   enableFe2Messaging: false
@@ -1026,6 +1033,13 @@ objects:
     enabled: false
     ## @param objects.inspect.port The port on which the nodejs inspect feature should be exposed
     port: '7000'
+
+  rollingUpdate:
+    ## @param objects.rollingUpdate.maxUnavailable The maximum number or percentage of pods that can be unavailable during the update process. See https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#max-unavailable
+    ##
+    maxUnavailable: 25%
+    ## @param objects.rollingUpdate.maxSurge The maximum number or percentage of pods that can be created above the desired number of pods during the update process. See https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#max-surge
+    maxSurge: 25%
 
   requests:
     ## @param objects.requests.cpu The CPU that should be available on a node when scheduling this pod.
