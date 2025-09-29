@@ -260,7 +260,7 @@ const resolvers: Resolvers = {
       const authResult =
         await context.authPolicies.project.canReadAccIntegrationSettings({
           userId: context.userId,
-          projectId: parent.id
+          projectId: parent.streamId
         })
       throwIfAuthNotOk(authResult)
       throwIfResourceAccessNotAllowed({
