@@ -22,8 +22,9 @@
     <LayoutTable
       class="mt-6"
       :columns="[
-        { id: 'name', header: 'Name', classes: 'col-span-3 truncate' },
+        { id: 'name', header: 'Name', classes: 'col-span-2 truncate' },
         { id: 'created', header: 'Created', classes: 'col-span-2' },
+        { id: 'visibility', header: 'Visibility', classes: 'col-span-2' },
         { id: 'modified', header: 'Modified', classes: 'col-span-2' },
         { id: 'models', header: 'Models', classes: 'col-span-1' },
         { id: 'versions', header: 'Versions', classes: 'col-span-1' },
@@ -33,20 +34,28 @@
       :items="projects"
     >
       <template #name="{ item }">
-        <NuxtLink :to="projectRoute(item.id)">
-          {{ isProject(item) ? item.name : '' }}
-        </NuxtLink>
+        <div v-tippy="item.name" class="truncate">
+          <NuxtLink :to="projectRoute(item.id)">
+            {{ isProject(item) ? item.name : '' }}
+          </NuxtLink>
+        </div>
       </template>
 
       <template #created="{ item }">
-        <div class="text-xs">
-          {{ formattedFullDate(item.createdAt) }}
+        <div v-tippy="formattedFullDate(item.createdAt)" class="text-xs inline-block">
+          {{ formattedDateOnly(item.createdAt) }}
+        </div>
+      </template>
+
+      <template #visibility="{ item }">
+        <div class="text-xs capitalize">
+          {{ item.visibility.toLowerCase() }}
         </div>
       </template>
 
       <template #modified="{ item }">
-        <div class="text-xs">
-          {{ formattedFullDate(item.updatedAt) }}
+        <div v-tippy="formattedFullDate(item.updatedAt)" class="text-xs inline-block">
+          {{ formattedDateOnly(item.updatedAt) }}
         </div>
       </template>
 
@@ -167,7 +176,7 @@ const props = defineProps<{
   workspace: MaybeNullOrUndefined<SettingsSharedProjects_WorkspaceFragment>
 }>()
 
-const { formattedFullDate } = useDateFormatters()
+const { formattedFullDate, formattedDateOnly } = useDateFormatters()
 const { activeUser } = useActiveUser()
 const canCreatePersonal = useCanCreatePersonalProject({
   activeUser: computed(() => activeUser.value)
