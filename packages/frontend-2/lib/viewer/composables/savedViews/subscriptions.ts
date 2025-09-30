@@ -1,3 +1,4 @@
+import { isUngroupedGroup } from '@speckle/shared/saved-views'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import { useLock } from '~/lib/common/composables/singleton'
 import { graphql } from '~/lib/common/generated/gql'
@@ -10,14 +11,19 @@ import {
   type CacheObjectReference
 } from '~/lib/common/helpers/graphql'
 import {
+  filterKeys,
   onGroupViewRemovalCacheUpdates,
   onNewGroupViewCacheUpdates
 } from '~/lib/viewer/helpers/savedViews/cache'
 
 /**
  * For group updates: TODO:
- * - What if empty group of other person - shouldnt show up
  * - On new ungroup view (first one), new group is added to end
+ *
+ * TEST:
+ * - W/ tab2 views panel closed (empty cache)
+ * - W/ federated views/groups
+ * - W/ multiple ungrouped groups/views
  */
 
 const onProjectSavedViewsUpdatedSubscription = graphql(`
@@ -50,6 +56,7 @@ export const useOnProjectSavedViewsUpdated = (params: {
 }) => {
   const { projectId } = params
 
+  const { userId } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
   const apollo = useApolloClient().client
   const { hasLock } = useLock(
@@ -61,7 +68,7 @@ export const useOnProjectSavedViewsUpdated = (params: {
     () => ({
       projectId: unref(projectId)
     }),
-    { enabled: isEnabled }
+    () => ({ enabled: !!(isEnabled.value && userId.value) })
   )
 
   onViewsUpdated((res) => {
@@ -253,4 +260,100 @@ export const useOnProjectSavedViewsUpdated = (params: {
       }
     }
   })
+}
+
+const onProjectSavedViewGroupsUpdatedSubscription = graphql(`
+  subscription OnProjectSavedViewGroupsUpdated($projectId: ID!) {
+    projectSavedViewGroupsUpdated(projectId: $projectId) {
+      type
+      id
+      savedViewGroup {
+        id
+        projectId
+        author {
+          id
+        }
+      }
+    }
+  }
+`)
+
+export const useOnProjectSavedViewGroupsUpdated = (params: {
+  projectId: MaybeRef<string>
+}) => {
+  const { projectId } = params
+
+  const { userId } = useActiveUser()
+  const apollo = useApolloClient().client
+  const { hasLock } = useLock(
+    computed(() => `useOnProjectSavedViewGroupsUpdated-${unref(projectId)}`)
+  )
+  const isEnabled = computed(() => hasLock.value)
+  const { onResult: onGroupsUpdated } = useSubscription(
+    onProjectSavedViewGroupsUpdatedSubscription,
+    () => ({
+      projectId: unref(projectId)
+    }),
+    () => ({ enabled: !!(isEnabled.value && userId.value) })
+  )
+
+  onGroupsUpdated((res) => {
+    if (!res.data?.projectSavedViewGroupsUpdated || !hasLock.value) return
+
+    const event = res.data.projectSavedViewGroupsUpdated
+    const { id } = event
+    const cache = apollo.cache
+    const group = event.savedViewGroup
+
+    if (event.type === ProjectSavedViewsUpdatedMessageType.Deleted) {
+      // Views can be moved around, just easier to evict Project.savedViewGroups
+      modifyObjectField(
+        cache,
+        getCacheId('Project', unref(projectId)),
+        'savedViewGroups',
+        ({ helpers: { evict } }) => evict()
+      )
+      // Evict
+      cache.evict({
+        id: getCacheId('SavedViewGroup', id)
+      })
+    } else if (event.type === ProjectSavedViewsUpdatedMessageType.Created && group) {
+      // Project.savedViewGroups +1, but only if owned OR not empty
+      // (and its gonna be empty on create)
+      const isOwner = group.author?.id === userId.value
+      if (isOwner) {
+        modifyObjectField(
+          cache,
+          getCacheId('Project', group.projectId),
+          'savedViewGroups',
+          ({ helpers: { createUpdatedValue, fromRef, ref } }) =>
+            createUpdatedValue(({ update }) => {
+              update('totalCount', (totalCount) => totalCount + 1)
+              update('items', (items) => {
+                const newItems = items.slice()
+
+                // default comes first, then new group
+                const defaultIdx = newItems.findIndex((i) =>
+                  isUngroupedGroup(fromRef(i).id)
+                )
+
+                newItems.splice(defaultIdx + 1, 0, ref('SavedViewGroup', group.id))
+
+                return newItems
+              })
+            }),
+          { autoEvictFiltered: filterKeys }
+        )
+      }
+    } else if (event.type === ProjectSavedViewsUpdatedMessageType.Updated) {
+      // Nothing to do here for now - fields are updated automatically in cache
+    }
+  })
+}
+
+export const useProjectSavedViewsUpdateTracking = (params: {
+  projectId: MaybeRef<string>
+}) => {
+  useOnProjectSavedViewsUpdated(params)
+  useOnProjectSavedViewGroupsUpdated(params)
 }

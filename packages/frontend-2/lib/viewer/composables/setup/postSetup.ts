@@ -74,7 +74,7 @@ import {
   useHighlightingPostSetup,
   HighlightExtension
 } from '~/lib/viewer/composables/setup/highlighting'
-import { useOnProjectSavedViewsUpdated } from '~/lib/viewer/composables/savedViews/subscriptions'
+import { useProjectSavedViewsUpdateTracking } from '~/lib/viewer/composables/savedViews/subscriptions'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -271,7 +271,7 @@ function useViewerSubscriptionEventTracker() {
   })
 
   // Track saved views
-  useOnProjectSavedViewsUpdated({ projectId })
+  useProjectSavedViewsUpdateTracking({ projectId })
 
   // Also track updates to comments
   useViewerCommentUpdateTracking(

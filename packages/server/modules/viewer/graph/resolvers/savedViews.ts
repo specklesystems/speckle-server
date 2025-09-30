@@ -283,6 +283,11 @@ const resolvers: Resolvers = {
           : undefined,
         sortBy
       })
+    },
+    async author(parent, _args, ctx) {
+      return parent.authorId
+        ? await ctx.loaders.users.getUser.load(parent.authorId)
+        : null
     }
   },
   ProjectMutations: {

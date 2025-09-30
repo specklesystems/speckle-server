@@ -14,8 +14,6 @@ import type {
 } from '~/lib/common/generated/gql/graphql'
 import { useStateSerialization } from '~/lib/viewer/composables/serialization'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
-import { filterKeys } from '~/lib/viewer/helpers/savedViews/cache'
-import { isUngroupedGroup } from '@speckle/shared/saved-views'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
 const createSavedViewMutation = graphql(`
@@ -500,29 +498,29 @@ export const useCreateSavedViewGroup = () => {
           const group = res.data?.projectMutations.savedViewMutations.createGroup
           if (!group?.id) return
 
-          // Project.savedViewGroups +1
-          modifyObjectField(
-            cache,
-            getCacheId('Project', input.projectId),
-            'savedViewGroups',
-            ({ helpers: { createUpdatedValue, fromRef, ref } }) =>
-              createUpdatedValue(({ update }) => {
-                update('totalCount', (totalCount) => totalCount + 1)
-                update('items', (items) => {
-                  const newItems = items.slice()
+          // // Project.savedViewGroups +1
+          // modifyObjectField(
+          //   cache,
+          //   getCacheId('Project', input.projectId),
+          //   'savedViewGroups',
+          //   ({ helpers: { createUpdatedValue, fromRef, ref } }) =>
+          //     createUpdatedValue(({ update }) => {
+          //       update('totalCount', (totalCount) => totalCount + 1)
+          //       update('items', (items) => {
+          //         const newItems = items.slice()
 
-                  // default comes first, then new group
-                  const defaultIdx = newItems.findIndex((i) =>
-                    isUngroupedGroup(fromRef(i).id)
-                  )
+          //         // default comes first, then new group
+          //         const defaultIdx = newItems.findIndex((i) =>
+          //           isUngroupedGroup(fromRef(i).id)
+          //         )
 
-                  newItems.splice(defaultIdx + 1, 0, ref('SavedViewGroup', group.id))
+          //         newItems.splice(defaultIdx + 1, 0, ref('SavedViewGroup', group.id))
 
-                  return newItems
-                })
-              }),
-            { autoEvictFiltered: filterKeys }
-          )
+          //         return newItems
+          //       })
+          //     }),
+          //   { autoEvictFiltered: filterKeys }
+          // )
         }
       }
     ).catch(convertThrowIntoFetchResult)
@@ -592,17 +590,17 @@ export const useDeleteSavedViewGroup = () => {
             res.data?.projectMutations.savedViewMutations.deleteGroup
           if (!deleteSuccessful) return
 
-          // Views can be moved around, just easier to evict Project.savedViewGroups
-          modifyObjectField(
-            cache,
-            getCacheId('Project', projectId),
-            'savedViewGroups',
-            ({ helpers: { evict } }) => evict()
-          )
-          // Evict
-          cache.evict({
-            id: getCacheId('SavedViewGroup', groupId)
-          })
+          // // Views can be moved around, just easier to evict Project.savedViewGroups
+          // modifyObjectField(
+          //   cache,
+          //   getCacheId('Project', projectId),
+          //   'savedViewGroups',
+          //   ({ helpers: { evict } }) => evict()
+          // )
+          // // Evict
+          // cache.evict({
+          //   id: getCacheId('SavedViewGroup', groupId)
+          // })
         }
       }
     ).catch(convertThrowIntoFetchResult)

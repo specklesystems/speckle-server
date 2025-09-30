@@ -90,6 +90,7 @@ type SavedViewGroup {
   """
   groupId: ID
   projectId: ID!
+  author: LimitedUser
   """
   Resources that were used to find this group
   """

@@ -3752,6 +3752,7 @@ export type SavedViewCollection = {
 
 export type SavedViewGroup = {
   __typename?: 'SavedViewGroup';
+  author?: Maybe<LimitedUser>;
   /** Only set if this is a real/persisted group. */
   groupId?: Maybe<Scalars['ID']['output']>;
   /** This is always set even for fake/not persisted groups for Apollo caching */
@@ -8377,6 +8378,7 @@ export type SavedViewCollectionResolvers<ContextType = GraphQLContext, ParentTyp
 };
 
 export type SavedViewGroupResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SavedViewGroup'] = ResolversParentTypes['SavedViewGroup']> = {
+  author?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   groupId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   isUngroupedViewsGroup?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
