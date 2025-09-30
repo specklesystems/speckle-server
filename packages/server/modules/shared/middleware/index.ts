@@ -76,6 +76,9 @@ export const getTokenFromRequest = (req: Request | null | undefined): string | n
   const fromCookie = (req?.cookies?.authn as Nullable<string>) || null
   if (fromCookie?.length) return removeBearerPrefix(fromCookie)
 
+  const fromQuery = (req?.query?.embedToken as Nullable<string>) || null
+  if (fromQuery?.length) return fromQuery
+
   return null
 }
 
