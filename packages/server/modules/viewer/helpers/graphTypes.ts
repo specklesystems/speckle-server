@@ -1,7 +1,6 @@
 import type {
   ExtendedViewerResourcesRequest,
-  ProjectSavedViewsUpdatedMessageType,
-  SavedViewUpdateInfo
+  ProjectSavedViewsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
 import type { ViewerResourceGroup } from '@/modules/viewer/domain/types/resources'
 import type {
@@ -11,7 +10,7 @@ import type {
 import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 
 export type SavedViewGraphQLReturn = SavedView
-export type DeletedSavedViewGraphQLReturn = SavedView
+export type BeforeChangeSavedViewGraphQLReturn = SavedView
 export type SavedViewGroupGraphQLReturn = SavedViewGroup
 export type SavedViewPermissionChecksGraphQLReturn = { savedView: SavedView }
 export type SavedViewGroupPermissionChecksGraphQLReturn = {
@@ -30,8 +29,7 @@ export type ProjectSavedViewsUpdatedMessageGraphQLReturn = {
   id: string
   projectId: string
   savedView: Nullable<SavedViewGraphQLReturn>
-  deletedSavedView: Nullable<DeletedSavedViewGraphQLReturn>
-  update: SavedViewUpdateInfo
+  beforeChangeSavedView: Nullable<BeforeChangeSavedViewGraphQLReturn>
 }
 
 export type ProjectSavedViewGroupsUpdatedMessageGraphQLReturn = {

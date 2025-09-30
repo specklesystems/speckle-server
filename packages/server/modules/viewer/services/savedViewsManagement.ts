@@ -635,8 +635,8 @@ export const updateSavedViewFactory =
     }
 
     // Validate groupId - group is a valid and accessible group in the project
-    changes.groupId = (
-      await resolveViewGroupSettingsFactory(deps)({
+    if ('groupId' in changes) {
+      const group = await resolveViewGroupSettingsFactory(deps)({
         groupId: changes.groupId,
         projectId,
         errorMetadata: {
@@ -644,7 +644,13 @@ export const updateSavedViewFactory =
           userId
         }
       })
-    )?.id
+      if (!group) {
+        changes.groupId = group // null or undefined
+      } else {
+        changes.groupId = group.id
+      }
+    }
+
     if (isUndefined(changes.groupId)) {
       delete changes.groupId // the key shouldnt even be there
     }
@@ -800,7 +806,8 @@ export const updateSavedViewFactory =
         payload: {
           savedView: updatedView!,
           updaterId: userId,
-          update
+          update,
+          beforeUpdateSavedView: view
         }
       }),
       ...(newGroup

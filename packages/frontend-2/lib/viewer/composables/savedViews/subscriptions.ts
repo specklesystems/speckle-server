@@ -17,6 +17,7 @@ import {
 /**
  * For group updates: TODO:
  * - What if empty group of other person - shouldnt show up
+ * - On new ungroup view (first one), new group is added to end
  */
 
 const onProjectSavedViewsUpdatedSubscription = graphql(`
@@ -34,13 +35,11 @@ const onProjectSavedViewsUpdatedSubscription = graphql(`
         }
         ...ViewerSavedViewsPanelView_SavedView
       }
-      deletedSavedView {
+      beforeChangeSavedView {
         groupId
         resourceIds
         groupResourceIds
-      }
-      update {
-        positionUpdated
+        position
       }
     }
   }
@@ -70,23 +69,26 @@ export const useOnProjectSavedViewsUpdated = (params: {
 
     const event = res.data.projectSavedViewsUpdated
     const cache = apollo.cache
-    const deletedView = event.deletedSavedView
+    const beforeChangeView = event.beforeChangeSavedView
 
-    if (event.type === ProjectSavedViewsUpdatedMessageType.Deleted && deletedView) {
+    if (
+      event.type === ProjectSavedViewsUpdatedMessageType.Deleted &&
+      beforeChangeView
+    ) {
       onGroupViewRemovalCacheUpdates({
         cache,
         viewId: event.id,
         projectId: unref(projectId),
-        ...(deletedView.groupId
+        ...(beforeChangeView.groupId
           ? {
               group: {
-                id: deletedView.groupId,
-                resourceIds: deletedView.groupResourceIds
+                id: beforeChangeView.groupId,
+                resourceIds: beforeChangeView.groupResourceIds
               }
             }
           : {
               view: {
-                resourceIds: deletedView.resourceIds
+                resourceIds: beforeChangeView.resourceIds
               }
             })
       })
@@ -122,8 +124,55 @@ export const useOnProjectSavedViewsUpdated = (params: {
       })
     } else if (
       event.type === ProjectSavedViewsUpdatedMessageType.Updated &&
-      event.savedView
+      event.savedView &&
+      event.beforeChangeSavedView
     ) {
+      const oldGroupId = event.beforeChangeSavedView.groupId
+      const newGroupId = event.savedView.group.groupId
+      const groupChanged = oldGroupId !== newGroupId
+      const positionChanged =
+        groupChanged ||
+        event.beforeChangeSavedView.position !== event.savedView.position
+
+      if (groupChanged) {
+        // Remove from old group, add to new one
+        onGroupViewRemovalCacheUpdates({
+          cache,
+          viewId: event.savedView.id,
+          projectId: event.savedView.projectId,
+          ...(oldGroupId
+            ? {
+                group: {
+                  id: oldGroupId,
+                  resourceIds: event.beforeChangeSavedView.groupResourceIds
+                }
+              }
+            : {
+                view: {
+                  resourceIds: event.beforeChangeSavedView.resourceIds
+                }
+              })
+        })
+
+        onNewGroupViewCacheUpdates({
+          cache,
+          viewId: event.savedView.id,
+          projectId: event.savedView.projectId,
+          ...(newGroupId
+            ? {
+                group: {
+                  id: newGroupId,
+                  resourceIds: event.savedView.group.resourceIds
+                }
+              }
+            : {
+                view: {
+                  resourceIds: event.savedView.resourceIds
+                }
+              })
+        })
+      }
+
       // If set to home view, clear home view on all other views related to the same resourceIdString
       if (event.savedView.isHomeView && event.savedView.groupResourceIds.length === 1) {
         const allSavedViewKeys = getCachedObjectKeys(cache, 'SavedView')
@@ -151,7 +200,7 @@ export const useOnProjectSavedViewsUpdated = (params: {
       }
 
       // If position changed, recalculate it according to sort dir in vars
-      if (event.update.positionUpdated) {
+      if (positionChanged) {
         // Go through all SavedViewGroup.views, where this view exists and update array position
         iterateObjectField(
           cache,

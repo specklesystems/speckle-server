@@ -19,6 +19,7 @@ export type SavedViewsEvents = StringEnumValues<typeof SavedViewsEvents>
 export type SavedViewsEventsPayloads = {
   [SavedViewsEvents.Created]: { savedView: SavedView; creatorId: string }
   [SavedViewsEvents.Updated]: {
+    beforeUpdateSavedView: SavedView
     savedView: SavedView
     updaterId: string
     update: Partial<SavedView>

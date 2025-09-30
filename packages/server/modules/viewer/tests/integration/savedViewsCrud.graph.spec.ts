@@ -2382,12 +2382,12 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           ProjectSavedViewsUpdatedMessageType.Deleted
         )
         expect(msg.data?.projectSavedViewsUpdated.savedView).to.be.null
-        expect(msg.data?.projectSavedViewsUpdated.deletedSavedView).to.be.ok
-        expect(msg.data?.projectSavedViewsUpdated.deletedSavedView!.groupId).to.eq(
+        expect(msg.data?.projectSavedViewsUpdated.beforeChangeSavedView).to.be.ok
+        expect(msg.data?.projectSavedViewsUpdated.beforeChangeSavedView!.groupId).to.eq(
           deletableView.groupId
         )
         expect(
-          msg.data?.projectSavedViewsUpdated.deletedSavedView!.resourceIds
+          msg.data?.projectSavedViewsUpdated.beforeChangeSavedView!.resourceIds
         ).to.deep.eq(deletableView.resourceIds)
       })
 

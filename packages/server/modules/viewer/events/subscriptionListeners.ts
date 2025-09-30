@@ -6,7 +6,6 @@ import {
   type PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
 import { SavedViewsEvents } from '@/modules/viewer/domain/events/savedViews'
-import { isUndefined } from 'lodash-es'
 
 const reportSavedViewCreatedFactory =
   (deps: { publish: PublishSubscription }) =>
@@ -18,9 +17,8 @@ const reportSavedViewCreatedFactory =
         type: ProjectSavedViewsUpdatedMessageType.Created,
         projectId: savedView.projectId,
         savedView,
-        deletedSavedView: null,
-        id: savedView.id,
-        update: {}
+        beforeChangeSavedView: null,
+        id: savedView.id
       }
     })
   }
@@ -28,18 +26,15 @@ const reportSavedViewCreatedFactory =
 const reportSavedViewUpdatedFactory =
   (deps: { publish: PublishSubscription }) =>
   async (payload: EventPayload<typeof SavedViewsEvents.Updated>) => {
-    const { savedView, update } = payload.payload
+    const { savedView, beforeUpdateSavedView } = payload.payload
 
     await deps.publish(SavedViewSubscriptions.ProjectSavedViewsUpdated, {
       projectSavedViewsUpdated: {
         type: ProjectSavedViewsUpdatedMessageType.Updated,
         projectId: savedView.projectId,
         savedView,
-        deletedSavedView: null,
-        id: savedView.id,
-        update: {
-          positionUpdated: !isUndefined(update.position)
-        }
+        beforeChangeSavedView: beforeUpdateSavedView,
+        id: savedView.id
       }
     })
   }
@@ -53,10 +48,9 @@ const reportSavedViewDeletedFactory =
       projectSavedViewsUpdated: {
         type: ProjectSavedViewsUpdatedMessageType.Deleted,
         projectId: savedView.projectId,
-        deletedSavedView: savedView,
+        beforeChangeSavedView: savedView,
         savedView: null,
-        id: savedView.id,
-        update: {}
+        id: savedView.id
       }
     })
   }

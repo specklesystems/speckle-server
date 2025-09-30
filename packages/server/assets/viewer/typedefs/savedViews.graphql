@@ -289,17 +289,11 @@ enum ProjectSavedViewsUpdatedMessageType {
   DELETED
 }
 
-type DeletedSavedView {
+type BeforeChangeSavedView {
   groupId: ID
   resourceIds: [String!]!
   groupResourceIds: [String!]!
-}
-
-type SavedViewUpdateInfo {
-  """
-  Whether the view was updated to have a new position
-  """
-  positionUpdated: Boolean
+  position: Float!
 }
 
 type ProjectSavedViewsUpdatedMessage {
@@ -309,9 +303,9 @@ type ProjectSavedViewsUpdatedMessage {
   """
   id: ID!
   """
-  Set if view was deleted, allows some limited access into the view
+  Set if view was deleted/updated, allows some limited access into the view before the change (update/delete)
   """
-  deletedSavedView: DeletedSavedView
+  beforeChangeSavedView: BeforeChangeSavedView
   """
   Null if view was deleted
   """
@@ -320,10 +314,6 @@ type ProjectSavedViewsUpdatedMessage {
   The project that the update belongs to
   """
   project: Project!
-  """
-  Some more info about the update, if applicable
-  """
-  update: SavedViewUpdateInfo!
 }
 
 type ProjectSavedViewGroupsUpdatedMessage {

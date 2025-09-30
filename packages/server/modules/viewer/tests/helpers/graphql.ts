@@ -292,7 +292,7 @@ export const onProjectSavedViewsUpdated = gql`
       savedView {
         ...BasicSavedView
       }
-      deletedSavedView {
+      beforeChangeSavedView {
         groupId
         resourceIds
       }
