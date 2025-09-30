@@ -67,9 +67,11 @@ jobs:
     uses: ./.github/workflows/deployment-tests.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
-      REGISTRY_USERNAME: 'speckledevops'
-      IMAGE_PREFIX: 'speckle'
-    secrets: inherit
+      REGISTRY_DOMAIN: 'ghcr.io'
+      REGISTRY_USERNAME: ${{ github.actor }}
+      IMAGE_PREFIX: 'ghcr.io/specklesystems'
+    secrets:
+      REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   deploy:
     needs: [get-version, tests, builds, test-deployments, get-chart-name]
