@@ -36,7 +36,7 @@ jobs:
     uses: ./.github/workflows/builds.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
-      REGISTRY_DOMAIN: 'registry-1.docker.io'
+      REGISTRY_DOMAIN: 'docker.io'
       REGISTRY_USERNAME: 'speckledevops'
       # REGISTRY_DOMAIN, REGISTRY_USERNAME, REGISTRY_TOKEN must allow pushing to the below IMAGE_PREFIX
       IMAGE_PREFIX: 'speckle' # without an explicit host, Docker defaults to pushing Docker Hub
