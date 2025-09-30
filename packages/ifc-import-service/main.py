@@ -1,8 +1,8 @@
 import asyncio
 import logging
 import sys
-import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from multiprocessing import Process
 
 import structlog
 from structlog_to_seq import CelfProcessor
@@ -50,8 +50,8 @@ async def main():
     logger = configure_logger()
     task = asyncio.create_task(job_processor(logger))
     httpd = HTTPServer(("0.0.0.0", 9080), HealthcheckHTTPRequestHandler)
-    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
-    thread.start()
+    healthcheck_server_process = Process(target=httpd.serve_forever, daemon=True)
+    healthcheck_server_process.start()
 
     # we do not need any sort of signal handling logic,
     # cause if the context of the job transaction exits,
@@ -63,6 +63,9 @@ async def main():
             "Execution failed with exception: {message}", message=str(ex), exc_info=ex
         )
         raise
+    finally:
+        healthcheck_server_process.terminate()
+        healthcheck_server_process.join()
 
 
 if __name__ == "__main__":

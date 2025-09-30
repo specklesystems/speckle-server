@@ -35,6 +35,7 @@
     "dev:server": "yarn workspace @speckle/server dev",
     "dev:frontend-2": "yarn workspace @speckle/frontend-2 dev",
     "dev:shared": "yarn workspace @speckle/shared dev",
+    "dev:ifc-import-service": "./packages/ifc-import-service/run.sh",
     "prepare": "husky install",
     "postinstall": "husky install",
     "cm": "cz",
@@ -72,8 +73,9 @@
   "resolutions": {
     "@aws-sdk/client-sts/fast-xml-parser": ">=4.2.5",
     "@aws-sdk/client-s3/fast-xml-parser": ">=4.2.5",
-    "@bull-board/express/express": ">=4.19.2",
+    "@bull-board/express/express": "^4.20.0",
     "@datadog/datadog-ci/ssh2": "^1.16.0",
+    "@datadog/datadog-ci/form-data": "^4.0.4",
     "@microsoft/api-extractor/semver": "^7.5.4",
     "@rushstack/node-core-library/semver": "^7.5.4",
     "@typescript-eslint/eslint-plugin": "^8.20.0",
@@ -81,6 +83,7 @@
     "@types/react": "file:./packages/frontend-2/type-augmentations/stubs/types__react",
     "core-js": "3.22.4",
     "core-js-compat/semver": "^7.5.4",
+    "bull-board/ejs": "^3.1.10",
     "eslint": "^9.20.1",
     "eslint-config-prettier": "^9.1.0",
     "levelup/bl": ">=1.2.3",
@@ -96,11 +99,16 @@
     "typescript-eslint": "^8.20.0",
     "wait-on": ">=7.2.0",
     "vitest": "^3.0.7",
-    "@types/node": "22.16.2"
+    "@types/node": "22.16.2",
+    "bull-board/express": "^4.20.0",
+    "express/path-to-regexp": "^0.1.12"
   },
   "config": {
     "commitizen": {
       "path": "cz-conventional-changelog"
     }
+  },
+  "dependencies": {
+    "node-gyp": "^11.4.2"
   }
 }

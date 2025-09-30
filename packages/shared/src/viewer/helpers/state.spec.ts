@@ -35,7 +35,9 @@ describe('Viewer State helpers', () => {
             isolatedObjectIds: [],
             hiddenObjectIds: [],
             selectedObjectApplicationIds: {},
-            propertyFilter: { key: null, isApplied: false }
+            propertyFilters: [],
+            activeColorFilterId: null,
+            filterLogic: 'all'
           },
           camera: {
             position: [0, 0, 0],
@@ -54,7 +56,7 @@ describe('Viewer State helpers', () => {
           lightConfig: {},
           explodeFactor: 0,
           selection: null,
-          measurement: { enabled: false, options: null }
+          measurement: { enabled: false, options: null, measurements: [] }
         }
       }
       expect(isSerializedViewerState(valid)).toBe(true)
@@ -147,7 +149,9 @@ describe('Viewer State helpers', () => {
             isolatedObjectIds: [],
             hiddenObjectIds: [],
             selectedObjectApplicationIds: {},
-            propertyFilter: { key: null, isApplied: false }
+            propertyFilters: [],
+            activeColorFilterId: null,
+            filterLogic: 'all'
           },
           camera: {
             position: [0, 0, 0],
@@ -166,7 +170,7 @@ describe('Viewer State helpers', () => {
           lightConfig: {},
           explodeFactor: 0,
           selection: null,
-          measurement: { enabled: false, options: null }
+          measurement: { enabled: false, options: null, measurements: [] }
         }
       }
       const result = inputToVersionedState(valid)
@@ -206,7 +210,9 @@ describe('Viewer State helpers', () => {
               isolatedObjectIds: [],
               hiddenObjectIds: [],
               selectedObjectApplicationIds: {},
-              propertyFilter: { key: null, isApplied: false }
+              propertyFilters: [],
+              activeColorFilterId: null,
+              filterLogic: 'all'
             },
             camera: {
               position: [0, 0, 0],
@@ -225,7 +231,7 @@ describe('Viewer State helpers', () => {
             lightConfig: {},
             explodeFactor: 0,
             selection: null,
-            measurement: { enabled: false, options: null }
+            measurement: { enabled: false, options: null, measurements: [] }
           }
         }
       }

@@ -1,34 +1,31 @@
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
 import {
   useThrottleFn,
-  onKeyStroke,
   watchTriggerable,
   useMagicKeys,
   useEventListener
 } from '@vueuse/core'
 import {
-  ExplodeEvent,
-  ExplodeExtension,
-  LoaderEvent,
-  type PropertyInfo,
-  type StringPropertyInfo,
-  type SunLightConfiguration
-} from '@speckle/viewer'
-import {
   ViewerEvent,
   VisualDiffMode,
   CameraController,
+  DiffExtension,
   UpdateFlags,
   SectionOutlines,
   SectionToolEvent,
   SectionTool,
-  SpeckleLoader
+  SpeckleLoader,
+  ExplodeEvent,
+  ExplodeExtension,
+  LoaderEvent,
+  SelectionExtension,
+  type SunLightConfiguration
 } from '@speckle/viewer'
+import { Vector3 } from 'three'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import type { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
 import { ProjectCommentsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
 import {
-  useInjectedViewer,
   useInjectedViewerState,
   useInjectedViewerInterfaceState
 } from '~~/lib/viewer/composables/setup'
@@ -40,7 +37,10 @@ import {
   useViewerCameraTracker,
   useViewerEventListener
 } from '~~/lib/viewer/composables/viewer'
-import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commentManagement'
+import {
+  useCommentContext,
+  useViewerCommentUpdateTracking
+} from '~~/lib/viewer/composables/commentManagement'
 import { getCacheId } from '~~/lib/common/helpers/graphql'
 import {
   useViewerOpenedThreadUpdateEmitter,
@@ -49,21 +49,31 @@ import {
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
-import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
-import { SafeLocalStorage, type Nullable } from '@speckle/shared'
+import { SafeLocalStorage } from '@speckle/shared'
 import {
   useCameraUtilities,
-  useMeasurementUtilities
+  useSectionBoxUtilities
 } from '~~/lib/viewer/composables/ui'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import type { SectionBoxData } from '@speckle/shared/viewer/state'
 import { graphql } from '~/lib/common/generated/gql'
 import { useTreeManagement } from '~~/lib/viewer/composables/tree'
 import { useViewerSavedViewIntegration } from '~/lib/viewer/composables/savedViews/state'
 import { useViewModesPostSetup } from '~/lib/viewer/composables/setup/viewMode'
+import { useMeasurementsPostSetup } from '~/lib/viewer/composables/setup/measurements'
+import { useFilterColoringPostSetup } from '~/lib/viewer/composables/setup/coloring'
+import {
+  usePropertyFilteringPostSetup,
+  useManualFilteringPostSetup
+} from '~/lib/viewer/composables/setup/filters'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { useFilteringSetup } from '~/lib/viewer/composables/filtering/setup'
+import {
+  useHighlightingPostSetup,
+  HighlightExtension
+} from '~/lib/viewer/composables/setup/highlighting'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -98,9 +108,12 @@ function useViewerObjectAutoLoading() {
       hasDoneInitialLoad
     },
     resources: {
-      response: { resourceItems }
+      request: {
+        savedView: { id: savedViewId }
+      },
+      response: { resourceItems, savedView }
     },
-    ui: { loadProgress, loading },
+    ui: { loadProgress, loading, spotlightUserSessionId },
     urlHashState: { focusedThreadId }
   } = useInjectedViewerState()
 
@@ -162,7 +175,15 @@ function useViewerObjectAutoLoading() {
       if (!newIsInitialized) return
 
       const [oldResources] = oldData || [[], false]
-      const zoomToObject = !focusedThreadId.value // we want to zoom to the thread instead
+
+      // we dont want to zoom to object, if we're loading specific coords because of a thread,
+      // or spotlight mode or a saved view etc.
+      const preventZooming =
+        focusedThreadId.value ||
+        savedViewId.value ||
+        savedView.value ||
+        spotlightUserSessionId.value
+      const zoomToObject = !preventZooming
 
       // Viewer initialized - load in all resources
       if (!newHasDoneInitialLoad) {
@@ -173,10 +194,7 @@ function useViewerObjectAutoLoading() {
         for (const i of allObjectIds) {
           res.push(await loadObject(i, false, { zoomToObject }))
         }
-        /** Load in parallel */
-        // const res = await Promise.all(
-        //   allObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
-        // )
+
         if (res.length) {
           hasDoneInitialLoad.value = true
         }
@@ -329,16 +347,6 @@ function useViewerSubscriptionEventTracker() {
   )
 }
 
-function sectionBoxDataEquals(a: SectionBoxData, b: SectionBoxData): boolean {
-  const isEqual = (a: number[], b: number[]) =>
-    a.length === b.length && a.every((v, i) => Math.abs(v - b[i]) < 1e-6)
-  return (
-    isEqual(a.min, b.min) &&
-    isEqual(a.max, b.max) &&
-    (a.rotation && b.rotation ? isEqual(a.rotation, b.rotation) : true)
-  )
-}
-
 function useViewerSectionBoxIntegration() {
   const {
     ui: {
@@ -347,6 +355,8 @@ function useViewerSectionBoxIntegration() {
     },
     viewer: { instance }
   } = useInjectedViewerState()
+
+  const { sectionBoxDataToBox3, sectionBoxDataEquals } = useSectionBoxUtilities()
 
   // Change edited=true when user starts changing the section box by dragging it
   const sectionTool = instance.getExtension(SectionTool)
@@ -369,7 +379,7 @@ function useViewerSectionBoxIntegration() {
         visible.value = false
         edited.value = false
 
-        instance.sectionBoxOff()
+        sectionTool.enabled = false
         instance.requestRender(UpdateFlags.RENDER_RESET)
         return
       }
@@ -378,8 +388,9 @@ function useViewerSectionBoxIntegration() {
         visible.value = true
         edited.value = false
 
-        instance.setSectionBox(newVal)
-        instance.sectionBoxOn()
+        const box3 = sectionBoxDataToBox3(newVal)
+        sectionTool.setBox(box3)
+        sectionTool.enabled = true
         const outlines = instance.getExtension(SectionOutlines)
         if (outlines) outlines.requestUpdate()
         instance.requestRender(UpdateFlags.RENDER_RESET)
@@ -405,7 +416,7 @@ function useViewerSectionBoxIntegration() {
   )
 
   onBeforeUnmount(() => {
-    instance.sectionBoxOff()
+    sectionTool.enabled = false
     sectionTool.removeListener(SectionToolEvent.DragStart, onDragStart)
   })
 }
@@ -418,7 +429,7 @@ function useViewerCameraIntegration() {
       spotlightUserSessionId
     }
   } = useInjectedViewerState()
-  const { forceViewToViewerSync } = useCameraUtilities()
+  const { forceViewToViewerSync, setView, cameraController } = useCameraUtilities()
 
   const hasInitialLoadFired = ref(false)
 
@@ -484,9 +495,9 @@ function useViewerCameraIntegration() {
     }
 
     if (newVal) {
-      instance.setOrthoCameraOn()
+      cameraController.setOrthoCameraOn()
     } else {
-      instance.setPerspectiveCameraOn()
+      cameraController.setPerspectiveCameraOn()
     }
 
     // reset camera pos, cause we've switched cameras now and it might not have the new ones
@@ -509,7 +520,7 @@ function useViewerCameraIntegration() {
       if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
         return
       }
-      instance.setView({
+      setView({
         position: newVal,
         target: target.value
       })
@@ -524,7 +535,7 @@ function useViewerCameraIntegration() {
         return
       }
 
-      instance.setView({
+      setView({
         position: position.value,
         target: newVal
       })
@@ -534,122 +545,14 @@ function useViewerCameraIntegration() {
 }
 
 function useViewerFiltersIntegration() {
+  const state = useInjectedViewerState()
   const {
     viewer: { instance },
-    ui: { filters, highlightedObjectIds }
-  } = useInjectedViewerState()
+    ui: { filters }
+  } = state
 
-  const {
-    metadata: { availableFilters: allFilters }
-  } = useInjectedViewer()
-
-  const stateKey = 'default'
-  let preventFilterWatchers = false
-  const withWatchersDisabled = (fn: () => void) => {
-    const isAlreadyInPreventScope = !!preventFilterWatchers
-    preventFilterWatchers = true
-    fn()
-    if (!isAlreadyInPreventScope) preventFilterWatchers = false
-  }
-
-  const speckleTypeFilter = computed(
-    () => allFilters.value?.find((f) => f.key === 'speckle_type') as StringPropertyInfo
-  )
-
-  // state -> viewer
-  watch(
-    highlightedObjectIds,
-    (newVal, oldVal) => {
-      if (arraysEqual(newVal, oldVal || [])) return
-
-      instance.highlightObjects(newVal)
-    },
-    { immediate: true, flush: 'sync' }
-  )
-
-  watch(
-    filters.isolatedObjectIds,
-    (newVal, oldVal) => {
-      if (preventFilterWatchers) return
-      if (arraysEqual(newVal, oldVal || [])) return
-
-      const isolatable = difference(newVal, oldVal || [])
-      const unisolatable = difference(oldVal || [], newVal)
-
-      if (isolatable.length) {
-        withWatchersDisabled(() => {
-          instance.isolateObjects(isolatable, stateKey, true)
-          filters.hiddenObjectIds.value = []
-        })
-      }
-
-      if (unisolatable.length) {
-        withWatchersDisabled(() => {
-          instance.unIsolateObjects(unisolatable, stateKey, true)
-          filters.hiddenObjectIds.value = []
-        })
-      }
-    },
-    { immediate: true, flush: 'sync' }
-  )
-
-  watch(
-    filters.hiddenObjectIds,
-    (newVal, oldVal) => {
-      if (preventFilterWatchers) return
-      if (arraysEqual(newVal, oldVal || [])) return
-
-      const hidable = difference(newVal, oldVal || [])
-      const showable = difference(oldVal || [], newVal)
-
-      if (hidable.length) {
-        withWatchersDisabled(() => {
-          instance.hideObjects(hidable, stateKey, true)
-          filters.isolatedObjectIds.value = []
-        })
-      }
-      if (showable.length) {
-        withWatchersDisabled(() => {
-          instance.showObjects(showable, stateKey, true)
-          filters.isolatedObjectIds.value = []
-        })
-      }
-    },
-    { immediate: true, flush: 'sync' }
-  )
-
-  const syncColorFilterToViewer = async (
-    filter: Nullable<PropertyInfo>,
-    isApplied: boolean
-  ) => {
-    const targetFilter = filter || speckleTypeFilter.value
-
-    if (isApplied && targetFilter) await instance.setColorFilter(targetFilter)
-    if (!isApplied) await instance.removeColorFilter()
-  }
-
-  watch(
-    () =>
-      <const>[
-        filters.propertyFilter.filter.value,
-        filters.propertyFilter.isApplied.value
-      ],
-    async (newVal) => {
-      const [filter, isApplied] = newVal
-      await syncColorFilterToViewer(filter, isApplied)
-    },
-    { immediate: true, flush: 'sync' }
-  )
-
-  useOnViewerLoadComplete(
-    async () => {
-      const targetFilter =
-        filters.propertyFilter.filter.value || speckleTypeFilter.value
-      const isApplied = filters.propertyFilter.isApplied.value
-      await syncColorFilterToViewer(targetFilter, isApplied)
-    },
-    { initialOnly: true }
-  )
+  useFilteringSetup()
+  useFilterUtilities({ state })
 
   watch(
     filters.selectedObjects,
@@ -662,14 +565,33 @@ function useViewerFiltersIntegration() {
       ).filter(isNonNullable)
       if (arraysEqual(newIds, oldIds)) return
 
-      if (!newVal.length) {
-        instance.resetSelection()
+      const selectionExtension = instance.getExtension(SelectionExtension)
+      const currentViewerSelection = selectionExtension
+        .getSelectedObjects()
+        .map((obj) => obj.id as string)
+
+      if (
+        currentViewerSelection.length === newIds.length &&
+        difference(currentViewerSelection, newIds).length === 0
+      ) {
         return
       }
 
-      instance.selectObjects(newIds)
+      state.ui.highlightedObjectIds.value = []
+      const highlightExtension = instance.getExtension(HighlightExtension)
+      if (highlightExtension) {
+        highlightExtension.clearSelection()
+      }
+
+      selectionExtension.clearSelection()
+      if (newVal.length > 0) {
+        selectionExtension.selectObjects(newIds)
+      }
     },
-    { immediate: true, flush: 'sync' }
+    {
+      immediate: true,
+      flush: 'sync'
+    }
   )
 }
 
@@ -716,33 +638,32 @@ function useExplodeFactorIntegration() {
     viewer: { instance }
   } = useInjectedViewerState()
 
+  const explodeExtension = instance.getExtension(ExplodeExtension)
+
   const updateOutlines = () => {
     const sectionOutlines = instance.getExtension(SectionOutlines)
     if (sectionOutlines && sectionOutlines.enabled) sectionOutlines.requestUpdate(true)
   }
   onMounted(() => {
-    instance.getExtension(ExplodeExtension).on(ExplodeEvent.Finshed, updateOutlines)
+    explodeExtension.on(ExplodeEvent.Finshed, updateOutlines)
   })
 
   onBeforeUnmount(() => {
-    instance
-      .getExtension(ExplodeExtension)
-      .removeListener(ExplodeEvent.Finshed, updateOutlines)
+    explodeExtension.removeListener(ExplodeEvent.Finshed, updateOutlines)
   })
 
   // state -> viewer only. we don't need the reverse.
   watch(
     explodeFactor,
     (newVal) => {
-      /** newVal turns out to be a string. It needs to be a */
-      instance.explode(newVal)
+      explodeExtension.setExplode(newVal)
     },
     { immediate: true }
   )
 
   useOnViewerLoadComplete(
     () => {
-      instance.explode(explodeFactor.value)
+      explodeExtension.setExplode(explodeFactor.value)
     },
     { initialOnly: true }
   )
@@ -754,6 +675,7 @@ function useDiffingIntegration() {
   const getObjectUrl = useGetObjectUrl()
 
   const hasInitialLoadFired = ref(false)
+  const diffExtension = state.viewer.instance.getExtension(DiffExtension)
 
   const { trigger: triggerDiffCommandWatch } = watchTriggerable(
     () => <const>[state.ui.diff.oldVersion.value, state.ui.diff.newVersion.value],
@@ -779,7 +701,7 @@ function useDiffingIntegration() {
         return
 
       if (!newCommand || oldVal) {
-        await state.viewer.instance.undiff()
+        await diffExtension.undiff()
         if (!newCommand) return
       }
 
@@ -793,7 +715,7 @@ function useDiffingIntegration() {
         newVersion?.referencedObject as string
       )
 
-      state.ui.diff.result.value = await state.viewer.instance.diff(
+      state.ui.diff.result.value = await diffExtension.diff(
         oldObjUrl,
         newObjUrl,
         state.ui.diff.mode.value,
@@ -827,7 +749,7 @@ function useDiffingIntegration() {
       if (!hasInitialLoadFired.value) return
       if (!state.ui.diff.result.value) return
 
-      state.viewer.instance.setDiffTime(state.ui.diff.result.value, val)
+      diffExtension.updateVisualDiff(val, state.ui.diff.mode.value)
     }
   )
 
@@ -836,11 +758,7 @@ function useDiffingIntegration() {
       if (!hasInitialLoadFired.value) return
       if (!state.ui.diff.result.value) return
 
-      state.viewer.instance.setVisualDiffMode(state.ui.diff.result.value, val)
-      state.viewer.instance.setDiffTime(
-        state.ui.diff.result.value,
-        state.ui.diff.time.value
-      ) // hmm, why do i need to call diff time again? seems like a minor viewer bug
+      diffExtension.updateVisualDiff(state.ui.diff.time.value, val)
     })
 
   useOnViewerLoadComplete(({ isInitial }) => {
@@ -848,46 +766,6 @@ function useDiffingIntegration() {
     hasInitialLoadFired.value = true
 
     triggerDiffCommandWatch()
-  })
-}
-
-function useViewerMeasurementIntegration() {
-  const {
-    ui: { measurement },
-    viewer: { instance }
-  } = useInjectedViewerState()
-
-  const { clearMeasurements, removeMeasurement } = useMeasurementUtilities()
-
-  onBeforeUnmount(() => {
-    clearMeasurements()
-  })
-
-  watch(
-    () => measurement.enabled.value,
-    (newVal, oldVal) => {
-      if (newVal !== oldVal) {
-        instance.enableMeasurements(newVal)
-      }
-    },
-    { immediate: true }
-  )
-
-  watch(
-    () => ({ ...measurement.options.value }),
-    (newMeasurementState) => {
-      if (newMeasurementState) {
-        instance.setMeasurementOptions(newMeasurementState)
-      }
-    },
-    { immediate: true, deep: true }
-  )
-
-  onKeyStroke('Delete', () => {
-    removeMeasurement()
-  })
-  onKeyStroke('Backspace', () => {
-    removeMeasurement()
   })
 }
 
@@ -977,6 +855,14 @@ function useViewerCursorIntegration() {
   })
 }
 
+const useCommentContextIntegration = () => {
+  const { cleanupThreadContext } = useCommentContext()
+
+  onBeforeUnmount(() => {
+    cleanupThreadContext()
+  })
+}
+
 export function useViewerPostSetup() {
   if (import.meta.server) return
   useViewerObjectAutoLoading()
@@ -993,10 +879,15 @@ export function useViewerPostSetup() {
   useLightConfigIntegration()
   useExplodeFactorIntegration()
   useDiffingIntegration()
-  useViewerMeasurementIntegration()
+  useMeasurementsPostSetup()
+  useFilterColoringPostSetup()
+  usePropertyFilteringPostSetup()
+  useManualFilteringPostSetup()
   useDisableZoomOnEmbed()
   useViewerCursorIntegration()
   useViewerTreeIntegration()
   useViewModesPostSetup()
+  useHighlightingPostSetup()
+  useCommentContextIntegration()
   setupDebugMode()
 }

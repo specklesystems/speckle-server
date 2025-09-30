@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="mb-1.5">
     <div v-if="isVeryFirstLoading" class="flex justify-center">
       <CommonLoadingIcon class="m-4" />
     </div>
@@ -7,7 +7,7 @@
       <template v-if="views.length">
         <div
           v-if="views.length"
-          class="flex flex-col gap-[1px] overflow-y-auto simple-scrollbar"
+          class="flex flex-col gap-[1px] overflow-y-auto overflow-x-hidden simple-scrollbar"
         >
           <ViewerSavedViewsPanelView
             v-for="view in views"
@@ -24,7 +24,7 @@
       </template>
       <template v-else>
         <span
-          class="min-w-full flex justify-center items-center bg-foundation-page text-body-xs rounded-md text-foreground-2 border border-dashed border-outline-2 w-full text-center mx-auto my-2 px-4 h-10"
+          class="flex justify-center items-center bg-foundation-page text-body-2xs rounded-md text-foreground-2 border border-dashed border-outline-2 text-center my-2 mx-1.5 px-4 h-10"
         >
           No views in group
         </span>
@@ -77,6 +77,10 @@ const viewsQuery = graphql(`
   }
 `)
 
+const emit = defineEmits<{
+  'view-count-updated': [count: number]
+}>()
+
 const props = defineProps<{
   group: ViewerSavedViewsPanelViewsGroupInner_SavedViewGroupFragment
   viewsType: ViewsType
@@ -119,4 +123,13 @@ const {
 })
 
 const views = computed(() => result.value?.project.savedViewGroup.views.items || [])
+
+watch(
+  () => views.value.length,
+  (newVal, oldVal) => {
+    if (newVal === oldVal) return
+    emit('view-count-updated', newVal)
+  },
+  { immediate: true }
+)
 </script>

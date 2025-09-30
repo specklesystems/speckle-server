@@ -19,7 +19,6 @@ import {
   getStreamRolesFactory,
   grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
-import { createBranchFactory } from '@/modules/core/repositories/branches'
 import {
   finalizeInvitedServerRegistrationFactory,
   finalizeResourceInviteFactory
@@ -98,6 +97,7 @@ const buildFinalizeProjectInvite = () =>
     getServerInfo
   })
 
+// This is not supporting multiregion
 export const createProject = createStreamReturnRecordFactory({
   inviteUsersToProject: inviteUsersToProjectFactory({
     createAndSendInvite: createAndSendInviteFactory({
@@ -121,7 +121,6 @@ export const createProject = createStreamReturnRecordFactory({
     getUsers
   }),
   createStream: createStreamFactory({ db }),
-  createBranch: createBranchFactory({ db }),
   storeProjectRole: storeProjectRoleFactory({ db }),
   emitEvent: getEventBus().emit
 })

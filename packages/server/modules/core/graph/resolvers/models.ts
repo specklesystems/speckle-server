@@ -41,10 +41,7 @@ import {
   legacyGetPaginatedStreamCommitsPageFactory
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
-import {
-  getStreamFactory,
-  markBranchStreamUpdatedFactory
-} from '@/modules/core/repositories/streams'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 import {
   getProjectDbClient,
   getRegisteredRegionClients
@@ -398,13 +395,12 @@ export default {
       throwIfAuthNotOk(canDelete)
 
       const projectDB = await getProjectDbClient({ projectId })
-      const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db: projectDB })
+
       const getStream = getStreamFactory({ db })
       const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
         getStream,
         getBranchById: getBranchByIdFactory({ db: projectDB }),
         emitEvent: getEventBus().emit,
-        markBranchStreamUpdated,
         deleteBranchById: deleteBranchByIdFactory({ db: projectDB })
       })
       return await withOperationLogging(

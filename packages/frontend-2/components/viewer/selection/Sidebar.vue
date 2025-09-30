@@ -1,7 +1,7 @@
 <template>
   <ViewerCommentsPortalOrDiv class="relative" to="bottomPanel">
     <ViewerControlsRight
-      v-if="isGreaterThanSm"
+      v-if="isGreaterThanSm && showControls"
       :sidebar-open="sidebarOpen && shouldRenderSidebar"
       :sidebar-width="sidebarWidth"
     />
@@ -81,7 +81,8 @@ import { onKeyStroke, useBreakpoints } from '@vueuse/core'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { containsAll } from '~~/lib/common/helpers/utils'
-import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { uniqWith } from 'lodash-es'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
@@ -89,6 +90,7 @@ import { modelRoute } from '~/lib/common/helpers/route'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { Ellipsis } from 'lucide-vue-next'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 enum ActionTypes {
   OpenInNewTab = 'open-in-new-tab'
@@ -99,7 +101,7 @@ const {
   viewer: {
     metadata: { filteringState }
   },
-  ui: { diff, measurement, threads },
+  ui: { diff, measurement, threads, filters },
   urlHashState: { focusedThreadId }
 } = useInjectedViewerState()
 const { objects, clearSelection } = useSelectionUtilities()
@@ -111,6 +113,7 @@ const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isGreaterThanSm = breakpoints.greater('sm')
 const menuId = useId()
 const mp = useMixpanel()
+const { showControls } = useEmbed()
 
 const itemCount = ref(20)
 const sidebarOpen = ref(false)
@@ -133,7 +136,8 @@ const objectsLimited = computed(() => {
 })
 
 const hiddenObjects = computed(() => filteringState.value?.hiddenObjects)
-const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
+// Use singleton isolatedObjectsSet from viewer state
+const { isolatedObjectsSet } = filters
 
 const allTargetIds = computed(() => {
   const ids = []
@@ -150,8 +154,8 @@ const isHidden = computed(() => {
 })
 
 const isIsolated = computed(() => {
-  if (!isolatedObjects.value) return false
-  return containsAll(allTargetIds.value, isolatedObjects.value)
+  if (!isolatedObjectsSet.value) return false
+  return containsAll(allTargetIds.value, isolatedObjectsSet.value)
 })
 
 const actionsItems = computed<LayoutMenuItem[][]>(() => [

@@ -6,6 +6,7 @@ export const activeUserMetaQuery = graphql(`
     activeUser {
       meta {
         legacyProjectsExplainerCollapsed
+        speckleCon25BannerDismissed
       }
     }
   }
@@ -21,10 +22,23 @@ export const updateLegacyProjectsExplainerMutation = graphql(`
   }
 `)
 
+export const updateSpeckleCon25BannerDismissedMutation = graphql(`
+  mutation UpdateSpeckleCon25BannerDismissed($value: Boolean!) {
+    activeUserMutations {
+      meta {
+        setSpeckleCon25BannerDismissed(value: $value)
+      }
+    }
+  }
+`)
+
 export function useActiveUserMeta() {
   const { result } = useQuery(activeUserMetaQuery)
   const { mutate: updateLegacyProjectsExplainer } = useMutation(
     updateLegacyProjectsExplainerMutation
+  )
+  const { mutate: updateSpeckleCon25Banner } = useMutation(
+    updateSpeckleCon25BannerDismissedMutation
   )
   const apollo = useApolloClient().client
   const cache = apollo.cache
@@ -35,6 +49,10 @@ export function useActiveUserMeta() {
 
   const hasCollapsedLegacyProjectsExplainer = computed(
     () => meta.value?.legacyProjectsExplainerCollapsed
+  )
+
+  const hasDismissedSpeckleCon25Banner = computed(
+    () => meta.value?.speckleCon25BannerDismissed
   )
 
   const updateLegacyProjectsExplainerCollapsed = async (value: boolean) => {
@@ -51,8 +69,24 @@ export function useActiveUserMeta() {
     )
   }
 
+  const updateSpeckleCon25BannerDismissed = async (value: boolean) => {
+    await updateSpeckleCon25Banner({ value })
+
+    modifyObjectField(
+      cache,
+      getCacheId('User', activeUserId.value),
+      'meta',
+      ({ helpers: { createUpdatedValue } }) =>
+        createUpdatedValue(({ update }) => {
+          update('speckleCon25BannerDismissed', () => value)
+        })
+    )
+  }
+
   return {
     hasCollapsedLegacyProjectsExplainer,
-    updateLegacyProjectsExplainerCollapsed
+    updateLegacyProjectsExplainerCollapsed,
+    hasDismissedSpeckleCon25Banner,
+    updateSpeckleCon25BannerDismissed
   }
 }

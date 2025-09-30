@@ -27,7 +27,7 @@ const hydrationMismatchReportingEnabled = ['1', 'true', true, 1].includes(
   HYDRATION_MISMATCH_REPORTING
 )
 
-const external = ['ioredis', 'crypto', 'jsdom']
+const external = ['ioredis', 'jsdom']
 
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
@@ -84,7 +84,9 @@ export default defineNuxtConfig({
       datadogService: '',
       datadogEnv: '',
       intercomAppId: '',
-      parallelMiddlewares: true
+      dashboardsOrigin: '',
+      parallelMiddlewares: true,
+      disableViewerActivityBroadcasting: false
     }
   },
 
@@ -159,7 +161,7 @@ export default defineNuxtConfig({
           }
         },
         // Leave imports as is, they're server-side only
-        external: ['jsdom', 'crypto']
+        external: ['jsdom']
       }
       // // optionally disable minification for debugging
       // minify: false,
@@ -229,20 +231,6 @@ export default defineNuxtConfig({
       }
     },
     // Redirect old settings - End
-    '/settings/**': {
-      appMiddleware: ['auth', 'settings']
-    },
-    '/settings/server/*': {
-      appMiddleware: ['auth', 'settings', 'admin']
-    },
-    '/settings/workspaces/:slug/*': {
-      appMiddleware: [
-        'auth',
-        'settings',
-        'requires-workspaces-enabled',
-        'require-valid-workspace'
-      ]
-    },
     '/downloads': {
       redirect: {
         to: 'https://www.speckle.systems/connectors',

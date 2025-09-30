@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="open"
-    title="Edit view details"
+    title="Edit view"
     max-width="sm"
     :buttons="buttons"
     :on-submit="onSubmit"
@@ -9,7 +9,7 @@
     <div class="flex flex-col gap-4">
       <FormTextInput
         name="name"
-        label="View name"
+        label="Name"
         show-label
         color="foundation"
         auto-focus
@@ -30,12 +30,15 @@
         :resource-id-string="resourceIdString"
         :rules="[isRequired]"
       />
-      <FormRadioGroup
-        :options="visibilityOptions"
-        size="sm"
-        name="visibility"
-        :rules="[isRequired, validateVisibility]"
-      />
+      <div v-tippy="canToggleVisibility.message">
+        <FormRadioGroup
+          :options="visibilityOptions"
+          :disabled="!canToggleVisibility.authorized"
+          size="sm"
+          name="visibility"
+          :rules="[isRequired, validateVisibility]"
+        />
+      </div>
     </div>
   </LayoutDialog>
 </template>
@@ -90,9 +93,10 @@ const {
   }
 } = useInjectedViewerState()
 const updateView = useUpdateSavedView()
-const { validateVisibility, visibilityOptions } = useSavedViewValidationHelpers({
-  view: computed(() => props.view)
-})
+const { validateVisibility, visibilityOptions, canToggleVisibility } =
+  useSavedViewValidationHelpers({
+    view: computed(() => props.view)
+  })
 
 const buttons = computed((): LayoutDialogButton[] => [
   {

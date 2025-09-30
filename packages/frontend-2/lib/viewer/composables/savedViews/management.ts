@@ -1,15 +1,17 @@
-import { useMutation } from '@vue/apollo-composable'
+import { useMutation, type MutateResult } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
-import type {
-  CreateSavedViewGroupInput,
-  CreateSavedViewInput,
-  UpdateSavedViewGroupInput,
-  UpdateSavedViewGroupMutationVariables,
-  UpdateSavedViewInput,
-  UseDeleteSavedView_SavedViewFragment,
-  UseDeleteSavedViewGroup_SavedViewGroupFragment,
-  UseUpdateSavedView_SavedViewFragment,
-  UseUpdateSavedViewGroup_SavedViewGroupFragment
+import {
+  SortDirection,
+  type CreateSavedViewGroupInput,
+  type CreateSavedViewInput,
+  type UpdateSavedViewGroupInput,
+  type UpdateSavedViewGroupMutationVariables,
+  type UpdateSavedViewInput,
+  type UpdateSavedViewMutation,
+  type UseDeleteSavedView_SavedViewFragment,
+  type UseDeleteSavedViewGroup_SavedViewGroupFragment,
+  type UseUpdateSavedView_SavedViewFragment,
+  type UseUpdateSavedViewGroup_SavedViewGroupFragment
 } from '~/lib/common/generated/gql/graphql'
 import { useStateSerialization } from '~/lib/viewer/composables/serialization'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
@@ -19,11 +21,12 @@ import {
   onNewGroupViewCacheUpdates
 } from '~/lib/viewer/helpers/savedViews/cache'
 import { isUngroupedGroup } from '@speckle/shared/saved-views'
-import type { Optional } from '@speckle/shared'
 import {
   getCachedObjectKeys,
+  parseObjectReference,
   type CacheObjectReference
 } from '~/lib/common/helpers/graphql'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 const createSavedViewMutation = graphql(`
   mutation CreateSavedView($input: CreateSavedViewInput!) {
@@ -74,9 +77,15 @@ export const useCollectNewSavedViewViewerData = () => {
 export const useCreateSavedView = () => {
   const { mutate } = useMutation(createSavedViewMutation)
   const { userId } = useActiveUser()
-  const { projectId } = useInjectedViewerState()
+  const {
+    projectId,
+    resources: {
+      response: { project }
+    }
+  } = useInjectedViewerState()
   const { triggerNotification } = useGlobalToast()
   const { collect } = useCollectNewSavedViewViewerData()
+  const mp = useMixpanel()
 
   return async (
     input: Omit<
@@ -106,7 +115,10 @@ export const useCreateSavedView = () => {
             projectId: projectId.value,
             ...(res.groupId
               ? {
-                  groupId: res.groupId
+                  group: {
+                    id: res.groupId,
+                    resourceIds: res.group.resourceIds
+                  }
                 }
               : {
                   view: {
@@ -130,6 +142,15 @@ export const useCreateSavedView = () => {
         title: "Couldn't create saved view",
         description: err,
         type: ToastNotificationType.Danger
+      })
+    }
+
+    if (res?.id) {
+      mp.track('Saved View Created', {
+        viewId: res.id,
+        groupId: res.groupId,
+        // eslint-disable-next-line camelcase
+        workspace_id: project.value?.workspaceId
       })
     }
 
@@ -219,6 +240,7 @@ const updateSavedViewMutation = graphql(`
         updateView(input: $input) {
           id
           ...ViewerSavedViewsPanelView_SavedView
+          ...UseViewerSavedViewSetup_SavedView
           group {
             id
             ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup
@@ -245,11 +267,32 @@ export const useUpdateSavedView = () => {
   const { mutate } = useMutation(updateSavedViewMutation)
   const { triggerNotification } = useGlobalToast()
   const { isLoggedIn } = useActiveUser()
+  const mp = useMixpanel()
+  const {
+    resources: {
+      response: { project }
+    }
+  } = useInjectedViewerState()
 
-  return async (params: {
-    view: UseUpdateSavedView_SavedViewFragment
-    input: UpdateSavedViewInput
-  }) => {
+  return async (
+    params: {
+      view: UseUpdateSavedView_SavedViewFragment
+      input: UpdateSavedViewInput
+    },
+    options?: Partial<{
+      /**
+       * Whether to skip toast notifications
+       */
+      skipToast: boolean
+      /**
+       * To get the full response, use this callback
+       */
+      onFullResult?: (
+        res: Awaited<MutateResult<UpdateSavedViewMutation>>,
+        success: boolean
+      ) => void
+    }>
+  ) => {
     if (!isLoggedIn.value) return
     const { input } = params
 
@@ -271,7 +314,6 @@ export const useUpdateSavedView = () => {
               groupId: oldGroupId,
               projectId: params.view.projectId
             })
-
             // Update new group
             onNewGroupViewCacheUpdates(cache, {
               viewId: update.id,
@@ -318,25 +360,97 @@ export const useUpdateSavedView = () => {
               )
             }
           }
+
+          // If position changed, recalculate it according to sort dir in vars
+          if (input.position) {
+            // Go through all SavedViewGroup.views, where this view exists and update array position
+            iterateObjectField(
+              cache,
+              getCacheId('Project', params.view.projectId),
+              'savedViewGroups',
+              ({ value }) => {
+                const items = value.items
+                if (!items) return
+
+                items.forEach((groupRef) => {
+                  const parsed = parseObjectReference(groupRef)
+                  modifyObjectField(
+                    cache,
+                    getCacheId('SavedViewGroup', parsed.id),
+                    'views',
+                    ({ helpers: { createUpdatedValue, readField }, variables }) => {
+                      const sortDir =
+                        variables.input.sortDirection || SortDirection.Desc
+                      const sortBy = (variables.input.sortBy || 'position') as
+                        | 'position'
+                        | 'updatedAt'
+
+                      return createUpdatedValue(({ update }) => {
+                        update('items', (items) => {
+                          const newItems = items.slice().sort((a, b) => {
+                            const process = (
+                              ref: CacheObjectReference<'SavedView'>
+                            ) => {
+                              const val = readField(ref, sortBy)
+                              if (!val) return -1
+
+                              if (sortBy === 'updatedAt') {
+                                return new Date(val).getTime()
+                              }
+                              return val as number
+                            }
+
+                            const aVal = process(a)
+                            const bVal = process(b)
+
+                            if (aVal < bVal)
+                              return sortDir === SortDirection.Asc ? -1 : 1
+                            if (aVal > bVal)
+                              return sortDir === SortDirection.Asc ? 1 : -1
+                            return 0
+                          })
+                          return newItems
+                        })
+                      })
+                    }
+                  )
+                })
+              }
+            )
+          }
         }
       }
     ).catch(convertThrowIntoFetchResult)
 
     const res = result?.data?.projectMutations.savedViewMutations.updateView
-    if (res?.id) {
-      triggerNotification({
-        title: 'View updated',
-        type: ToastNotificationType.Success
-      })
-    } else {
-      const err = getFirstGqlErrorMessage(result?.errors)
-      triggerNotification({
-        title: "Couldn't update saved view",
-        description: err,
-        type: ToastNotificationType.Danger
-      })
+    if (!options?.skipToast) {
+      if (res?.id) {
+        triggerNotification({
+          title: 'View updated',
+          type: ToastNotificationType.Success
+        })
+      } else {
+        const err = getFirstGqlErrorMessage(result?.errors)
+        triggerNotification({
+          title: "Couldn't update view",
+          description: err,
+          type: ToastNotificationType.Danger
+        })
+      }
     }
 
+    if (res?.id) {
+      if ('isHomeView' in input) {
+        mp.track('Saved View Set as Home View', {
+          viewId: res.id,
+          isHomeView: input.isHomeView,
+          // eslint-disable-next-line camelcase
+          workspace_id: project.value?.workspaceId
+        })
+      }
+    }
+
+    options?.onFullResult?.(result, !!res)
     return res
   }
 }
@@ -358,6 +472,12 @@ export const useCreateSavedViewGroup = () => {
   const { mutate } = useMutation(createSavedViewGroupMutation)
   const { triggerNotification } = useGlobalToast()
   const { isLoggedIn } = useActiveUser()
+  const mp = useMixpanel()
+  const {
+    resources: {
+      response: { project }
+    }
+  } = useInjectedViewerState()
 
   return async (input: CreateSavedViewGroupInput) => {
     if (!isLoggedIn.value) return
@@ -411,6 +531,14 @@ export const useCreateSavedViewGroup = () => {
       })
     }
 
+    if (res?.id) {
+      mp.track('Saved View Group Created', {
+        groupId: res.id,
+        // eslint-disable-next-line camelcase
+        workspace_id: project.value?.workspaceId
+      })
+    }
+
     return res
   }
 }
@@ -453,55 +581,13 @@ export const useDeleteSavedViewGroup = () => {
             res.data?.projectMutations.savedViewMutations.deleteGroup
           if (!deleteSuccessful) return
 
-          // Project.savedViewGroups - 1
+          // Views can be moved around, just easier to evict Project.savedViewGroups
           modifyObjectField(
             cache,
             getCacheId('Project', projectId),
             'savedViewGroups',
-            ({ helpers: { createUpdatedValue, fromRef } }) =>
-              createUpdatedValue(({ update }) => {
-                update('totalCount', (totalCount) => totalCount - 1)
-                update('items', (items) => {
-                  const newItems = items.filter((i) => fromRef(i).id !== groupId)
-                  return newItems
-                })
-              }),
-            { autoEvictFiltered: filterKeys }
+            ({ helpers: { evict } }) => evict()
           )
-
-          // Possibly a bunch of views got moved back to Ungrouped as well
-          // Try to find Ungrouped group first
-          let ungroupedGroupRef = undefined as Optional<
-            CacheObjectReference<'SavedViewGroup'>
-          >
-          iterateObjectField(
-            cache,
-            getCacheId('Project', projectId),
-            'savedViewGroups',
-            ({ value, variables, helpers: { fromRef } }) => {
-              if (variables.input.onlyAuthored || variables.input.onlyAuthored) return
-
-              const candidate = value.items?.find((i) =>
-                isUngroupedGroup(fromRef(i).id)
-              )
-              if (candidate) {
-                ungroupedGroupRef = candidate
-              }
-            }
-          )
-
-          if (ungroupedGroupRef) {
-            // Evict SavedViewGroup.views for ungrouped view
-            modifyObjectField(
-              cache,
-              ungroupedGroupRef.__ref,
-              'views',
-              ({ helpers: { evict } }) => {
-                return evict()
-              }
-            )
-          }
-
           // Evict
           cache.evict({
             id: getCacheId('SavedViewGroup', groupId)

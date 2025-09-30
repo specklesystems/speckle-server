@@ -1,9 +1,11 @@
-import { MeasurementType } from '@speckle/viewer'
+import { MeasurementType } from '@speckle/shared/viewer/state'
+import { SelectionExtension } from '@speckle/viewer'
 import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useCameraUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
+import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
 
 function useCollectSelection() {
   const {
@@ -44,6 +46,14 @@ function useSelectOrZoomOnSelection() {
         if (!args) return trackAndClearSelection()
         if (args.hits.length === 0) return trackAndClearSelection()
         if (!args.multiple) clearSelection() // note we're not tracking selectino clearing here
+
+        // Skip if selection disabled or in presentation mode
+        if (
+          !state.viewer.instance.getExtension(SelectionExtension).enabled ||
+          state.pageType.value === ViewerRenderPageType.Presentation
+        ) {
+          return
+        }
 
         if (!firstVisibleSelectionHit) return clearSelection()
         addToSelection(firstVisibleSelectionHit.node.model.raw as SpeckleObject)

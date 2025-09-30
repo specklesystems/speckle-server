@@ -4,11 +4,11 @@ import { SubscriptionClient } from 'subscriptions-transport-ws'
 import type { ApolloConfigResolver } from '~~/lib/core/nuxt-modules/apollo/module'
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs'
 import { WebSocketLink } from '@apollo/client/link/ws'
-import { getMainDefinition } from '@apollo/client/utilities'
+import { getMainDefinition, Observable } from '@apollo/client/utilities'
 import { Kind } from 'graphql'
 import type { GraphQLError, OperationDefinitionNode } from 'graphql'
 import type { CookieRef, NuxtApp } from '#app'
-import type { Optional } from '@speckle/shared'
+import { errorToString, type Optional } from '@speckle/shared'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import {
   buildAbstractCollectionMergeFunction,
@@ -21,7 +21,6 @@ import { useAppErrorState } from '~~/lib/core/composables/error'
 import { isInvalidAuth } from '~~/lib/common/helpers/graphql'
 import { intersection, isArray, isBoolean, omit } from 'lodash-es'
 import { useRequestId } from '~/lib/core/composables/server'
-// import { BatchHttpLink } from '@apollo/client/link/batch-http'
 
 const appName = 'frontend-2'
 
@@ -239,6 +238,9 @@ function createCache(): InMemoryCache {
               ['limit', 'search', 'sortBy', 'sortDirection', 'onlyAuthored']
             ],
             merge: buildAbstractCollectionMergeFunction('SavedViewCollection')
+          },
+          permissions: {
+            merge: mergeAsObjectsFunction
           }
         }
       },
@@ -335,6 +337,9 @@ function createCache(): InMemoryCache {
         merge: true
       },
       ExtendedViewerResources: {
+        merge: true
+      },
+      DashboardPermissionChecks: {
         merge: true
       },
       AutomateFunction: {
@@ -441,7 +446,23 @@ function createLink(params: {
   logout: ReturnType<typeof useAuthManager>['logout']
 }): ApolloLink {
   const { httpEndpoint, wsClient, authToken, nuxtApp, reqId, logout } = params
-  const { registerError, isErrorState } = useAppErrorState()
+  const {
+    registerError,
+    preventHttpCalls,
+    preventWebsocketMessaging,
+    isFullRedirectState
+  } = useAppErrorState()
+
+  const stopLink = new ApolloLink((operation, forward) => {
+    if (preventHttpCalls.value) {
+      // swallow the req, we're blocking them all
+      return new Observable(() => {
+        return () => {}
+      })
+    }
+
+    return forward(operation)
+  })
 
   const errorLink = onError((res) => {
     const logger = nuxtApp.$logger
@@ -473,6 +494,7 @@ function createLink(params: {
       )
       const logContext = {
         ...omit(res, ['forward', 'response']),
+        networkError: res.networkError ? errorToString(res.networkError) : undefined,
         networkErrorMessage: res.networkError?.message,
         gqlErrorMessages: gqlErrors.map((e) => e.message),
         errorMessage: errMsg,
@@ -487,7 +509,7 @@ function createLink(params: {
     }
 
     const { networkError } = res
-    if (networkError && isInvalidAuth(networkError)) {
+    if (networkError && isInvalidAuth(networkError) && !isFullRedirectState.value) {
       // Reset auth
       // since this may happen mid-routing, a standard router.push call may not work - do full reload
       void logout({ skipToast: true, forceFullReload: true })
@@ -526,7 +548,7 @@ function createLink(params: {
   //   uri: httpEndpoint,
   //   batchMax: 10,
   //   batchInterval: 20,
-  //   // Keep batches "compatible" (avoid mixing ops with different auth/headers)
+  //   // Keep batches “compatible” (avoid mixing ops with different auth/headers)
   //   batchKey: (op) =>
   //     JSON.stringify({
   //       uri: op.getContext().uri,
@@ -540,9 +562,6 @@ function createLink(params: {
   //   uploadHttpLink,
   //   batchHttpLink
   // )
-
-  // Temporarily use uploadHttpLink for all operations to benchmark without batching
-  const httpLink = uploadHttpLink
 
   const authLink = setContext((_, ctx) => {
     const { headers } = ctx
@@ -558,7 +577,7 @@ function createLink(params: {
     }
   })
 
-  let link = authLink.concat(httpLink)
+  let link = authLink.concat(uploadHttpLink)
 
   if (wsClient) {
     const wsLink = new WebSocketLink(wsClient)
@@ -577,7 +596,7 @@ function createLink(params: {
     wsClient.use([
       {
         applyMiddleware: (_opt, next) => {
-          if (isErrorState.value) {
+          if (preventWebsocketMessaging.value) {
             return // never invokes next() - essentially stuck
           }
 
@@ -614,7 +633,7 @@ function createLink(params: {
     })
   })
 
-  return from([...(import.meta.server ? [loggerLink] : []), errorLink, link])
+  return from([stopLink, ...(import.meta.server ? [loggerLink] : []), errorLink, link])
 }
 
 const defaultConfigResolver: ApolloConfigResolver = () => {

@@ -438,7 +438,7 @@ export function useCopyModelLink() {
       throw new Error('Not supported in SSR')
     }
 
-    const path = getModelItemRoute(model)
+    const path = getModelItemRoute(model, versionId)
     const url = new URL(path, window.location.toString()).toString()
 
     await copy(url)

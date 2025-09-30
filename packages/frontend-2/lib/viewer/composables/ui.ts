@@ -1,23 +1,27 @@
-import { SpeckleViewer, TIME_MS, timeoutAt } from '@speckle/shared'
-import type {
-  TreeNode,
-  MeasurementOptions,
-  PropertyInfo,
-  ViewMode
+import { SpeckleViewer } from '@speckle/shared'
+import {
+  CameraController,
+  type TreeNode,
+  type ViewMode,
+  type CanonicalView,
+  type InlineView,
+  type SpeckleView,
+  MeasurementsExtension
 } from '@speckle/viewer'
-import { MeasurementsExtension, MeasurementEvent } from '@speckle/viewer'
+import { Box3, Vector3, Matrix3 } from 'three'
+import { OBB } from 'three/examples/jsm/math/OBB'
 import { until } from '@vueuse/shared'
 import { useActiveElement } from '@vueuse/core'
-import { difference, isString, uniq } from 'lodash-es'
+import { isString, isEqualWith } from 'lodash-es'
 import { useEmbedState, useEmbed } from '~/lib/viewer/composables/setup/embed'
 import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
 import {
   useInjectedViewer,
   useInjectedViewerInterfaceState,
-  useInjectedViewerState,
-  type InjectableViewerState
+  useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
+import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
 import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
 import { getKeyboardShortcutTitle, onKeyboardShortcut } from '@speckle/ui-components'
 import { ViewerShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
@@ -26,8 +30,11 @@ import type {
   ViewerShortcutAction
 } from '~/lib/viewer/helpers/shortcuts/types'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { isStringPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
 import type { defaultEdgeColorValue } from '~/lib/viewer/composables/setup/viewMode'
+import {
+  defaultMeasurementOptions,
+  type MeasurementOptions
+} from '@speckle/shared/viewer/state'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -44,14 +51,80 @@ export function useSectionBoxUtilities() {
   const isSectionBoxVisible = computed(() => visible.value)
   const isSectionBoxEdited = computed(() => edited.value)
 
+  /**
+   * Converts a Box3 or OBB to SectionBoxData format
+   */
+  const box3ToSectionBoxData = (
+    box: Box3 | OBB
+  ): SpeckleViewer.ViewerState.SectionBoxData => {
+    if (box instanceof Box3) {
+      return {
+        min: box.min.toArray(),
+        max: box.max.toArray()
+      }
+    } else {
+      // OBB case - calculate min/max from center and halfSize
+      const min = box.center.clone().sub(box.halfSize)
+      const max = box.center.clone().add(box.halfSize)
+
+      return {
+        min: min.toArray(),
+        max: max.toArray(),
+        ...(box.rotation && { rotation: box.rotation.toArray() })
+      }
+    }
+  }
+
+  /**
+   * Converts SectionBoxData to Box3 or OBB format (reverse of box3ToSectionBoxData)
+   */
+  const sectionBoxDataToBox3 = (
+    data: SpeckleViewer.ViewerState.SectionBoxData
+  ): Box3 | OBB => {
+    let box: Box3 | OBB
+
+    if (!data.rotation || !data.rotation.length) {
+      // No rotation, use Box3
+      const min = new Vector3().fromArray(data.min)
+      const max = new Vector3().fromArray(data.max)
+      box = new Box3(min, max)
+    } else {
+      // Has rotation, create OBB
+      box = new OBB()
+      const min = new Vector3().fromArray(data.min)
+      const max = new Vector3().fromArray(data.max)
+
+      const _box3 = new Box3()
+      _box3.set(min, max)
+      _box3.getCenter(box.center)
+      _box3.getSize(box.halfSize)
+      box.halfSize.multiplyScalar(0.5)
+
+      box.rotation = new Matrix3().fromArray(data.rotation)
+    }
+
+    return box
+  }
+
+  /**
+   * Compares two SectionBoxData objects for equality with floating-point tolerance
+   */
+  const sectionBoxDataEquals = (
+    a: SpeckleViewer.ViewerState.SectionBoxData,
+    b: SpeckleViewer.ViewerState.SectionBoxData
+  ): boolean => {
+    return isEqualWith(a, b, (objValue, othValue) => {
+      if (typeof objValue === 'number' && typeof othValue === 'number') {
+        return Math.abs(objValue - othValue) < 1e-6
+      }
+      return undefined
+    })
+  }
+
   const resolveSectionBoxFromSelection = () => {
     const objectIds = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
     const box = instance.getRenderer().boxFromObjects(objectIds)
-    /** When generating a section box from selection we don't apply any rotation */
-    sectionBox.value = {
-      min: box.min.toArray(),
-      max: box.max.toArray()
-    }
+    sectionBox.value = box3ToSectionBoxData(box)
   }
 
   const closeSectionBox = () => {
@@ -98,7 +171,10 @@ export function useSectionBoxUtilities() {
     resetSectionBox,
     resetSectionBoxCompletely,
     sectionBox,
-    closeSectionBox
+    closeSectionBox,
+    box3ToSectionBoxData,
+    sectionBoxDataToBox3,
+    sectionBoxDataEquals
   }
 }
 
@@ -109,35 +185,46 @@ export function useCameraUtilities() {
     camera
   } = useInjectedViewerInterfaceState()
 
-  const zoom = (...args: Parameters<typeof instance.zoom>) => instance.zoom(...args)
+  const cameraController = instance.getExtension(CameraController)
 
-  const setView = (...args: Parameters<typeof instance.setView>) => {
-    instance.setView(...args)
+  const setView = (
+    view: CanonicalView | InlineView | SpeckleView,
+    transition = true
+  ) => {
+    cameraController.setCameraView(view, transition)
   }
 
   const zoomExtentsOrSelection = () => {
     const ids = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
 
     if (ids.length > 0) {
-      return instance.zoom(ids)
+      return cameraController.setCameraView(ids, true)
     }
 
     if (isolatedObjectIds.value.length) {
-      return instance.zoom(isolatedObjectIds.value)
+      return cameraController.setCameraView(isolatedObjectIds.value, true)
     }
 
-    instance.zoom()
+    cameraController.setCameraView(undefined, true)
   }
 
   const toggleProjection = () => {
     camera.isOrthoProjection.value = !camera.isOrthoProjection.value
+    cameraController.toggleCameras()
   }
 
   const forceViewToViewerSync = () => {
-    setView({
-      position: camera.position.value,
-      target: camera.target.value
-    })
+    setView(
+      {
+        position: camera.position.value,
+        target: camera.target.value
+      },
+      true
+    )
+  }
+
+  const zoom = (objectIds?: string[], fit?: number, transition?: boolean) => {
+    cameraController.setCameraView(objectIds, transition, fit)
   }
 
   return {
@@ -146,355 +233,8 @@ export function useCameraUtilities() {
     camera,
     setView,
     zoom,
-    forceViewToViewerSync
-  }
-}
-
-export function useFilterUtilities(
-  options?: Partial<{ state: InjectableViewerState }>
-) {
-  const state = options?.state || useInjectedViewerState()
-  const {
-    viewer,
-    ui: { filters, explodeFactor }
-  } = state
-
-  const isolateObjects = (
-    objectIds: string[],
-    options?: Partial<{
-      replace: boolean
-    }>
-  ) => {
-    filters.isolatedObjectIds.value = uniq([
-      ...(options?.replace ? [] : filters.isolatedObjectIds.value),
-      ...objectIds
-    ])
-    // instance.isolateObjects(objectIds, 'utilities', true)
-  }
-
-  const unIsolateObjects = (objectIds: string[]) => {
-    filters.isolatedObjectIds.value = difference(
-      filters.isolatedObjectIds.value,
-      objectIds
-    )
-    // instance.unIsolateObjects(objectIds, 'utilities', true)
-  }
-
-  const hideObjects = (
-    objectIds: string[],
-    options?: Partial<{
-      replace: boolean
-    }>
-  ) => {
-    filters.hiddenObjectIds.value = uniq([
-      ...(options?.replace ? [] : filters.hiddenObjectIds.value),
-      ...objectIds
-    ])
-    // instance.hideObjects(objectIds, 'utilities', true)
-  }
-
-  const showObjects = (objectIds: string[]) => {
-    filters.hiddenObjectIds.value = difference(filters.hiddenObjectIds.value, objectIds)
-    // instance.showObjects(objectIds, 'utilities', true)
-  }
-
-  /**
-   * Sets the current filter property. Does not apply it (instruct viewer to color objects).
-   */
-  const setPropertyFilter = (property: PropertyInfo) => {
-    filters.propertyFilter.filter.value = property
-  }
-
-  /**
-   * Instructs the viewer to apply the current property filter (color objects).
-   */
-  const applyPropertyFilter = () => {
-    filters.propertyFilter.isApplied.value = true
-  }
-
-  /**
-   * Unsets the current property filter.
-   */
-  const removePropertyFilter = () => {
-    filters.propertyFilter.isApplied.value = false
-    filters.propertyFilter.filter.value = null
-  }
-
-  /**
-   * Unapplies the current property filter - removes object colouring
-   */
-  const unApplyPropertyFilter = () => {
-    filters.propertyFilter.isApplied.value = false
-  }
-
-  const resetFilters = () => {
-    filters.hiddenObjectIds.value = []
-    filters.isolatedObjectIds.value = []
-    filters.propertyFilter.filter.value = null
-    filters.propertyFilter.isApplied.value = false
-    // filters.selectedObjects.value = []
-  }
-
-  const resetExplode = () => {
-    explodeFactor.value = 0
-  }
-
-  const waitForAvailableFilter = async (
-    key: string,
-    options?: Partial<{ timeout: number }>
-  ) => {
-    const timeout = options?.timeout || 10 * TIME_MS.second
-
-    const res = await Promise.race([
-      until(viewer.metadata.availableFilters).toMatch(
-        (filters) => !!filters?.find((p) => p.key === key)
-      ),
-      timeoutAt(timeout, 'Waiting for available filter timed out')
-    ])
-
-    const filter = res?.find((p) => p.key === key)
-    return filter as NonNullable<typeof filter>
-  }
-
-  const hasActiveFilters = computed(() => {
-    return !!filters.propertyFilter.filter.value
-  })
-
-  // Regex patterns for identifying Revit properties
-  const revitPropertyRegex = /^parameters\./
-  // Note: we've split this regex check in two to not clash with navis properties. This makes generally makes dim very sad, as we're layering hacks.
-  // Navis object properties come under `properties`, same as revit ones - as such we can't assume they're the same. Here we're targeting revit's
-  // specific two subcategories of `properties`.
-  const revitPropertyRegexDui3000InstanceProps = /^properties\.Instance/ // note this is partially valid for civil3d, or dim should test against it
-  const revitPropertyRegexDui3000TypeProps = /^properties\.Type/ // note this is partially valid for civil3d, or dim should test against it
-
-  /**
-   * Determines if a property key represents a Revit property
-   */
-  const isRevitProperty = (key: string): boolean => {
-    return (
-      revitPropertyRegex.test(key) ||
-      revitPropertyRegexDui3000InstanceProps.test(key) ||
-      revitPropertyRegexDui3000TypeProps.test(key)
-    )
-  }
-
-  /**
-   * Determines if a property should be excluded from filtering based on its key
-   */
-  const shouldExcludeFromFiltering = (key: string): boolean => {
-    if (
-      key.endsWith('.units') ||
-      key.endsWith('.speckle_type') ||
-      key.includes('.parameters.') ||
-      // key.includes('level.') ||
-      key.includes('renderMaterial') ||
-      key.includes('.domain') ||
-      key.includes('plane.') ||
-      key.includes('baseLine') ||
-      key.includes('referenceLine') ||
-      key.includes('end.') ||
-      key.includes('start.') ||
-      key.includes('endPoint.') ||
-      key.includes('midPoint.') ||
-      key.includes('startPoint.') ||
-      key.includes('.materialName') ||
-      key.includes('.materialClass') ||
-      key.includes('.materialCategory') ||
-      key.includes('displayStyle') ||
-      key.includes('displayValue') ||
-      key.includes('displayMesh')
-    ) {
-      return true
-    }
-
-    // handle revit params: the actual one single value we're interested is in parameters.HOST_BLA BLA_.value, the rest are not needed
-    if (isRevitProperty(key)) {
-      if (key.endsWith('.value')) return false
-      else return true
-    }
-
-    return false
-  }
-
-  /**
-   * Filters the available filters to only include relevant ones for the filter UI
-   */
-  const getRelevantFilters = (
-    allFilters: PropertyInfo[] | null | undefined
-  ): PropertyInfo[] => {
-    return (allFilters || []).filter((f: PropertyInfo) => {
-      return !shouldExcludeFromFiltering(f.key)
-    })
-  }
-
-  /**
-   * Determines if a property key should be filterable
-   * (exists in available filters and is not excluded)
-   */
-  const isPropertyFilterable = (
-    key: string,
-    availableFilters: PropertyInfo[] | null | undefined
-  ): boolean => {
-    const availableFilterKeys = availableFilters?.map((f: PropertyInfo) => f.key) || []
-
-    // First check if it's in available filters
-    if (!availableFilterKeys.includes(key)) {
-      return false
-    }
-
-    // Then check if it should be excluded
-    return !shouldExcludeFromFiltering(key)
-  }
-
-  /**
-   * Gets a user-friendly display name for a property key
-   */
-  const getPropertyName = (key: string): string => {
-    if (!key) return 'Loading'
-
-    if (key === 'level.name') return 'Level Name'
-    if (key === 'speckle_type') return 'Object Type'
-
-    if (isRevitProperty(key) && key.endsWith('.value')) {
-      const correspondingProperty = (viewer.metadata.availableFilters.value || []).find(
-        (f: PropertyInfo) => f.key === key.replace('.value', '.name')
-      )
-      if (correspondingProperty && isStringPropertyInfo(correspondingProperty)) {
-        return (
-          correspondingProperty.valueGroups[0]?.value || key.split('.').pop() || key
-        )
-      }
-    }
-
-    // For all other properties, just return the last part of the path
-    return key.split('.').pop() || key
-  }
-
-  /**
-   * Finds a filter by matching display names (handles complex nested properties)
-   */
-  const findFilterByDisplayName = (
-    displayKey: string,
-    availableFilters: PropertyInfo[] | null | undefined
-  ): PropertyInfo | undefined => {
-    return availableFilters?.find((f) => {
-      const backendDisplayName = getPropertyName(f.key)
-      return backendDisplayName === displayKey || f.key.split('.').pop() === displayKey
-    })
-  }
-
-  /**
-   * Determines if a key-value pair is filterable (with smart matching for nested properties)
-   */
-  const isKvpFilterable = (
-    kvp: { key: string; backendPath?: string },
-    availableFilters: PropertyInfo[] | null | undefined
-  ): boolean => {
-    // Use backendPath if available, otherwise fall back to display key
-    const backendKey = kvp.backendPath || kvp.key
-
-    // First check direct match
-    const directMatch = availableFilters?.some((f) => f.key === backendKey)
-    if (directMatch) {
-      return isPropertyFilterable(backendKey, availableFilters)
-    }
-
-    // For complex nested properties, try to find a match by display name
-    const displayKey = kvp.key as string
-    const matchByDisplayName = findFilterByDisplayName(displayKey, availableFilters)
-
-    if (matchByDisplayName) {
-      return isPropertyFilterable(matchByDisplayName.key, availableFilters)
-    }
-
-    return false
-  }
-
-  /**
-   * Gets a detailed reason why a property is disabled for filtering
-   */
-  const getFilterDisabledReason = (
-    kvp: { key: string; backendPath?: string },
-    availableFilters: PropertyInfo[] | null | undefined
-  ): string => {
-    const backendKey = kvp.backendPath || kvp.key
-    const availableKeys = availableFilters?.map((f) => f.key) || []
-
-    // Check if it's not in available filters
-    if (!availableKeys.includes(backendKey)) {
-      // For debugging: show similar keys that might be available
-      const similarKeys = availableKeys.filter(
-        (key) =>
-          key.toLowerCase().includes('type') ||
-          key.toLowerCase().includes('category') ||
-          key.toLowerCase().includes('class')
-      )
-
-      const debugInfo =
-        similarKeys.length > 0
-          ? ` (Similar available: ${similarKeys.slice(0, 3).join(', ')})`
-          : ''
-
-      return `Property '${backendKey}' is not available in backend filters${debugInfo}`
-    }
-
-    // Check if it's excluded by filtering logic
-    if (shouldExcludeFromFiltering(backendKey)) {
-      return `Property '${backendKey}' is excluded from filtering (technical property)`
-    }
-
-    return 'This property is not available for filtering'
-  }
-
-  /**
-   * Applies a filter for a key-value pair (with smart matching)
-   */
-  const applyKvpFilter = (
-    kvp: { key: string; backendPath?: string },
-    availableFilters: PropertyInfo[] | null | undefined
-  ): void => {
-    // Use backendPath if available, otherwise fall back to display key
-    const backendKey = kvp.backendPath || kvp.key
-
-    // First try direct match
-    let filter = availableFilters?.find((f: PropertyInfo) => f.key === backendKey)
-
-    // If no direct match, try to find by display name using shared logic
-    if (!filter) {
-      const displayKey = kvp.key as string
-      filter = findFilterByDisplayName(displayKey, availableFilters)
-    }
-
-    if (filter) {
-      setPropertyFilter(filter)
-      applyPropertyFilter()
-    }
-  }
-
-  return {
-    isolateObjects,
-    unIsolateObjects,
-    hideObjects,
-    showObjects,
-    filters,
-    setPropertyFilter,
-    applyPropertyFilter,
-    removePropertyFilter,
-    unApplyPropertyFilter,
-    resetFilters,
-    resetExplode,
-    waitForAvailableFilter,
-    hasActiveFilters,
-    isRevitProperty,
-    shouldExcludeFromFiltering,
-    getRelevantFilters,
-    isPropertyFilterable,
-    getPropertyName,
-    findFilterByDisplayName,
-    isKvpFilterable,
-    getFilterDisabledReason,
-    applyKvpFilter
+    forceViewToViewerSync,
+    cameraController
   }
 }
 
@@ -634,10 +374,13 @@ export function useThreadUtilities() {
 
 export function useMeasurementUtilities() {
   const state = useInjectedViewerState()
-
-  const measurementCount = ref(0)
+  const measurementsExtension =
+    state.viewer.instance.getExtension(MeasurementsExtension)
 
   const measurementOptions = computed(() => state.ui.measurement.options.value)
+  const hasMeasurements = computed(
+    () => state.ui.measurement.measurements.value.length > 0
+  )
 
   const enableMeasurements = (enabled: boolean) => {
     state.ui.measurement.enabled.value = enabled
@@ -647,54 +390,29 @@ export function useMeasurementUtilities() {
     state.ui.measurement.options.value = options
   }
 
-  const removeMeasurement = () => {
-    if (state.viewer.instance?.removeMeasurement) {
-      state.viewer.instance.removeMeasurement()
-    }
+  const removeActiveMeasurement = () => {
+    measurementsExtension.removeMeasurement()
   }
 
   const clearMeasurements = () => {
-    state.viewer.instance.getExtension(MeasurementsExtension).clearMeasurements()
+    state.ui.measurement.measurements.value = []
   }
 
-  const getActiveMeasurement = () => {
-    const measurementsExtension =
-      state.viewer.instance.getExtension(MeasurementsExtension)
-    const activeMeasurement = measurementsExtension?.activeMeasurement
-    return activeMeasurement && activeMeasurement.state === 2
-  }
-
-  const hasMeasurements = computed(() => measurementCount.value > 0)
-
-  const setupMeasurementListener = () => {
-    const extension = state.viewer.instance?.getExtension(MeasurementsExtension)
-    if (!extension) return
-
-    const updateCount = () => {
-      measurementCount.value = (
-        extension as unknown as { measurementCount: number }
-      ).measurementCount
-    }
-
-    // Set initial count
-    updateCount()
-
-    // Listen for changes
-    extension.on(MeasurementEvent.CountChanged, updateCount)
-  }
-
-  if (state.viewer.instance) {
-    setupMeasurementListener()
+  const reset = () => {
+    state.ui.measurement.enabled.value = false
+    state.ui.measurement.measurements.value = []
+    state.ui.measurement.options.value = { ...defaultMeasurementOptions }
   }
 
   return {
     measurementOptions,
     enableMeasurements,
     setMeasurementOptions,
-    removeMeasurement,
+    removeActiveMeasurement,
     clearMeasurements,
-    getActiveMeasurement,
-    hasMeasurements
+    hasMeasurements,
+    reset,
+    measurements: state.ui.measurement.measurements
   }
 }
 
@@ -729,10 +447,13 @@ export function useConditionalViewerRendering() {
 
 export function useHighlightedObjectsUtilities() {
   const {
-    ui: { highlightedObjectIds }
+    ui: { highlightedObjectIds },
+    pageType
   } = useInjectedViewerState()
 
   const highlightObjects = (ids: string[]) => {
+    if (pageType.value === ViewerRenderPageType.Presentation) return
+
     highlightedObjectIds.value = [...new Set([...highlightedObjectIds.value, ...ids])]
   }
 

@@ -21,11 +21,13 @@ import {
   deleteSavedViewRecordFactory,
   getGroupSavedViewsPageItemsFactory,
   getGroupSavedViewsTotalCountFactory,
+  getNewViewSpecificPositionFactory,
   getProjectSavedViewGroupsPageItemsFactory,
   getProjectSavedViewGroupsTotalCountFactory,
   getStoredViewCountFactory,
   getStoredViewGroupCountFactory,
   getUngroupedSavedViewsGroupFactory,
+  rebalancingViewPositionsFactory,
   recalculateGroupResourceIdsFactory,
   setNewHomeViewFactory,
   storeSavedViewFactory,
@@ -56,6 +58,7 @@ import {
   getSavedViewGroupFactory
 } from '@/modules/viewer/repositories/dataLoaders/savedViews'
 import type { RequestDataLoaders } from '@/modules/core/loaders'
+import { omit } from 'lodash-es'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   filteredSubscribe,
@@ -190,6 +193,22 @@ const resolvers: Resolvers = {
           modelId: parent.id,
           projectId
         })
+    },
+    resourceIdString: async (parent, _args, ctx) => {
+      const projectId = parent.streamId
+      const projectDb = await getProjectDbClient({ projectId })
+      const homeView = await ctx.loaders
+        .forRegion({ db: projectDb })
+        .savedViews.getModelHomeSavedView.load({
+          modelId: parent.id,
+          projectId
+        })
+
+      if (!homeView) return parent.id
+      return resourceBuilder()
+        .addResources(homeView.resourceIds)
+        .clearVersions() // just use latest version
+        .toString()
     }
   },
   SavedView: {
@@ -299,6 +318,10 @@ const resolvers: Resolvers = {
         setNewHomeView: setNewHomeViewFactory({
           db: projectDb
         }),
+        getNewViewSpecificPosition: getNewViewSpecificPositionFactory({
+          db: projectDb
+        }),
+        rebalanceViewPositions: rebalancingViewPositionsFactory({ db: projectDb }),
         emit: getEventBus().emit
       })
       return await createSavedView({ input: args.input, authorId: ctx.userId! })
@@ -347,12 +370,33 @@ const resolvers: Resolvers = {
         resourceAccessRules: ctx.resourceAccessRules
       })
 
-      const canUpdate = await ctx.authPolicies.project.savedViews.canUpdate({
-        userId: ctx.userId,
-        projectId,
-        savedViewId: args.input.id
-      })
-      throwIfAuthNotOk(canUpdate)
+      // Different keys have different auth checks
+      const updates = omit(args.input, 'id', 'projectId')
+      const updatePolicyMap: Partial<
+        Record<
+          keyof typeof updates,
+          Extract<
+            keyof typeof ctx.authPolicies.project.savedViews,
+            'canMove' | 'canUpdate' | 'canEditTitle' | 'canEditDescription'
+          >
+        >
+      > = {
+        groupId: 'canMove',
+        name: 'canEditTitle',
+        description: 'canEditDescription',
+        position: 'canMove'
+      }
+      const results = await Promise.all(
+        Object.keys(updates).map((key) => {
+          const policyKey = updatePolicyMap[key as keyof typeof updates] || 'canUpdate'
+          return ctx.authPolicies.project.savedViews[policyKey]({
+            userId: ctx.userId,
+            projectId,
+            savedViewId: args.input.id
+          })
+        })
+      )
+      results.forEach(throwIfAuthNotOk)
 
       const updateSavedView = updateSavedViewFactory({
         getViewerResourceGroups: buildGetViewerResourceGroups({
@@ -368,6 +412,10 @@ const resolvers: Resolvers = {
           db: projectDb
         }),
         setNewHomeView: setNewHomeViewFactory({
+          db: projectDb
+        }),
+        rebalanceViewPositions: rebalancingViewPositionsFactory({ db: projectDb }),
+        getNewViewSpecificPosition: getNewViewSpecificPositionFactory({
           db: projectDb
         }),
         emit: getEventBus().emit
@@ -593,7 +641,8 @@ const disabledResolvers: Resolvers = {
     }
   },
   Model: {
-    homeView: () => null // intentional - so we dont have to FF guard the query
+    homeView: () => null, // intentional - so we dont have to FF guard the query
+    resourceIdString: (parent) => parent.id
   },
   ProjectMutations: {
     savedViewMutations: () => {

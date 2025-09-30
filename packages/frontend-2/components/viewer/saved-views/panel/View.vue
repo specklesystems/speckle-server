@@ -1,7 +1,14 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div v-keyboard-clickable :class="wrapperClasses" :view-id="view.id" @click="apply">
+  <div
+    v-keyboard-clickable
+    :class="[wrapperClasses, draggableClasses, draggableTargetClasses]"
+    :view-id="view.id"
+    draggable="true"
+    v-on="{ ...on, ...targetOn }"
+    @click="apply"
+  >
     <div class="flex items-center shrink-0">
       <div class="relative">
         <img
@@ -13,63 +20,25 @@
           v-if="isHomeView && !isFederatedView"
           class="absolute -top-1 -left-1 bg-orange-500 w-4 h-4 flex items-center justify-center rounded-[3px]"
         >
-          <Bookmark class="text-white w-3 h-3" fill="currentColor" stroke-width="0" />
+          <IconHome class="w-3 h-3" />
         </div>
       </div>
     </div>
-    <div class="flex flex-col min-w-0 grow">
-      <div class="text-body-2xs font-medium text-foreground truncate grow-0 pr-1.5">
+    <div class="flex flex-col min-w-0 grow gap-y-0.5">
+      <div class="text-body-2xs font-medium text-foreground truncate grow-0">
         {{ view.name }}
       </div>
-      <div class="flex gap-1 items-center justify-between">
-        <div class="text-body-2xs text-foreground-3 truncate">
-          {{ view.author?.name }}
-        </div>
-        <div class="flex gap-0.5 items-center" @click.stop>
-          <LayoutMenu
-            v-model:open="showMenu"
-            :items="menuItems"
-            :menu-id="menuId"
-            mount-menu-on-body
-            show-ticks="right"
-            :size="230"
-            class="shrink-0 opacity-0 group-hover:opacity-100"
-            @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
-          >
-            <FormButton
-              size="sm"
-              color="subtle"
-              :icon-left="Ellipsis"
-              hide-text
-              name="viewActions"
-              class="shrink-0"
-              @click="showMenu = !showMenu"
-            />
-          </LayoutMenu>
-          <div
-            v-tippy="canUpdate?.errorMessage"
-            class="shrink-0 opacity-0 group-hover:opacity-100"
-          >
-            <FormButton
-              size="sm"
-              color="subtle"
-              :icon-left="SquarePen"
-              hide-text
-              name="editView"
-              class="shrink-0"
-              :disabled="!canUpdate?.authorized || isLoading"
-              @click="onEdit"
-            />
-          </div>
-        </div>
+      <div class="text-body-2xs text-foreground-3 truncate">
+        {{ view.author?.name }}
       </div>
       <div class="w-full flex items-center gap-1">
-        <Component
-          :is="isOnlyVisibleToMe ? User : Globe"
+        <User
+          v-if="isOnlyVisibleToMe"
+          v-tippy="getTooltipProps('Only visible to you')"
           :size="12"
           :stroke-width="1.5"
           :absolute-stroke-width="true"
-          class="w-3 h-3 text-foreground-2"
+          class="w-3 h-3 text-foreground-3 shrink-0"
         />
         <div
           v-tippy="{
@@ -81,8 +50,54 @@
           }"
           class="text-body-2xs text-foreground-3 truncate pr-1.5"
         >
-          {{ formattedRelativeDate(view.updatedAt) }}
+          {{ formattedRelativeDate(view.updatedAt, { capitalize: true }) }}
         </div>
+      </div>
+    </div>
+    <div
+      class="flex gap-0.5 items-center opacity-0 w-0 group-hover:opacity-100 group-hover:w-auto"
+      @click.stop
+    >
+      <LayoutMenu
+        v-model:open="showMenu"
+        :items="menuItems"
+        :menu-id="menuId"
+        mount-menu-on-body
+        show-ticks="right"
+        :size="230"
+        class="shrink-0"
+        @chosen="({ item: actionItem }) => onActionChosen(actionItem)"
+      >
+        <FormButton
+          size="sm"
+          color="subtle"
+          :icon-left="Ellipsis"
+          hide-text
+          name="viewActions"
+          class="shrink-0"
+          @click="showMenu = !showMenu"
+        />
+      </LayoutMenu>
+      <div
+        v-tippy="
+          getTooltipProps(
+            canOpenEditDialog?.authorized
+              ? 'Edit view'
+              : canOpenEditDialog?.errorMessage
+          )
+        "
+        class="shrink-0 opacity-0 group-hover:opacity-100"
+      >
+        <FormButton
+          size="sm"
+          color="subtle"
+          :icon-left="SquarePen"
+          hide-text
+          name="editView"
+          class="shrink-0"
+          :disabled="!canOpenEditDialog?.authorized"
+          @click="onEdit"
+        />
       </div>
     </div>
   </div>
@@ -97,17 +112,22 @@ import {
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { difference } from 'lodash-es'
-import { Ellipsis, SquarePen, Bookmark, Globe, User } from 'lucide-vue-next'
+import { Ellipsis, SquarePen, User } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   SavedViewVisibility,
   type ViewerSavedViewsPanelView_SavedViewFragment
 } from '~/lib/common/generated/gql/graphql'
+import { useMixpanel } from '~/lib/core/composables/mp'
 import { useViewerSavedViewsUtils } from '~/lib/viewer/composables/savedViews/general'
 import {
   useCollectNewSavedViewViewerData,
   useUpdateSavedView
 } from '~/lib/viewer/composables/savedViews/management'
+import {
+  useDraggableView,
+  useDraggableViewTargetView
+} from '~/lib/viewer/composables/savedViews/ui'
 import { useSavedViewValidationHelpers } from '~/lib/viewer/composables/savedViews/validation'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 
@@ -121,6 +141,8 @@ const MenuItems = StringEnum([
   'SetAsHomeView'
 ])
 type MenuItems = StringEnumValues<typeof MenuItems>
+
+const { getTooltipProps } = useSmartTooltipDelay()
 
 graphql(`
   fragment ViewerSavedViewsPanelView_SavedView on SavedView {
@@ -145,6 +167,7 @@ graphql(`
     ...UseUpdateSavedView_SavedView
     ...ViewerSavedViewsPanelViewEditDialog_SavedView
     ...UseSavedViewValidationHelpers_SavedView
+    ...UseDraggableView_SavedView
   }
 `)
 
@@ -154,7 +177,7 @@ const props = defineProps<{
 
 const {
   resources: {
-    response: { savedView, isFederatedView, resourceItemsIds }
+    response: { savedView, isFederatedView, resourceItemsIds, project }
   }
 } = useInjectedViewerState()
 const { collect } = useCollectNewSavedViewViewerData()
@@ -168,10 +191,20 @@ const {
   isOnlyVisibleToMe,
   canSetHomeView,
   isHomeView,
-  canToggleVisibility
+  canToggleVisibility,
+  canMove,
+  canOpenEditDialog
 } = useSavedViewValidationHelpers({
   view: computed(() => props.view)
 })
+const { classes: draggableClasses, on } = useDraggableView({
+  view: computed(() => props.view)
+})
+const { classes: draggableTargetClasses, on: targetOn } = useDraggableViewTargetView({
+  view: computed(() => props.view)
+})
+
+const mp = useMixpanel()
 
 const showMenu = ref(false)
 const menuId = useId()
@@ -197,10 +230,10 @@ const canLoadOriginal = computed(
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
-      id: MenuItems.LoadOriginalVersions,
-      title: 'Load with original model version',
-      disabled: !canLoadOriginal.value.authorized || isLoading.value,
-      disabledTooltip: canLoadOriginal.value.message
+      id: MenuItems.MoveToGroup,
+      title: 'Move to group',
+      disabled: !canMove.value?.authorized || isLoading.value,
+      disabledTooltip: canMove.value?.errorMessage
     },
     {
       id: MenuItems.ReplaceView,
@@ -209,14 +242,14 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
       disabledTooltip: canUpdate.value?.errorMessage
     },
     {
-      id: MenuItems.MoveToGroup,
-      title: 'Move to group',
-      disabled: !canUpdate.value?.authorized || isLoading.value,
-      disabledTooltip: canUpdate.value?.errorMessage
-    },
-    {
       id: MenuItems.CopyLink,
       title: 'Copy link'
+    },
+    {
+      id: MenuItems.LoadOriginalVersions,
+      title: 'Load with original model version',
+      disabled: !canLoadOriginal.value.authorized || isLoading.value,
+      disabledTooltip: canLoadOriginal.value.message
     }
   ],
   [
@@ -237,7 +270,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
   [
     {
       id: MenuItems.Delete,
-      title: 'Delete',
+      title: 'Delete view...',
       disabled: !canUpdate.value?.authorized || isLoading.value,
       disabledTooltip: canUpdate.value?.errorMessage
     }
@@ -245,7 +278,9 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
 ])
 
 const wrapperClasses = computed(() => {
-  const classParts = ['flex gap-2 p-2 pr-0.5 w-full group rounded-md cursor-pointer']
+  const classParts = [
+    'flex items-center gap-2 p-2 w-full group rounded-md cursor-pointer relative transition-all'
+  ]
 
   if (isActive.value) {
     classParts.push('bg-highlight-2 hover:bg-highlight-3')
@@ -270,11 +305,21 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
           id: props.view.id
         }
       })
+      mp.track('Saved View Link Copied', {
+        viewId: props.view.id,
+        // eslint-disable-next-line camelcase
+        workspace_id: project.value?.workspaceId
+      })
       break
     case MenuItems.LoadOriginalVersions:
       applyView({
         id: props.view.id,
         loadOriginal: true
+      })
+      mp.track('Saved View Original Version Loaded', {
+        viewId: props.view.id,
+        // eslint-disable-next-line camelcase
+        workspace_id: project.value?.workspaceId
       })
       break
     case MenuItems.ChangeVisibility:

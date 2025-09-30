@@ -38,7 +38,9 @@ export type WorkspacePlanFeatures =
 export const WorkspaceFeatureFlags = <const>{
   none: 0,
   dashboards: 1,
-  accIntegration: 2
+  accIntegration: 2,
+  // High numbers for internal features
+  presentations: 64
 }
 
 export type WorkspaceFeatureFlags =
@@ -134,135 +136,137 @@ export const WorkspacePaidPlanConfigs: (params: {
   featureFlags: Partial<FeatureFlags> | undefined
 }) => {
   [plan in PaidWorkspacePlans]: WorkspacePlanConfig<plan>
-} = (params) => ({
-  [PaidWorkspacePlans.Team]: {
-    plan: PaidWorkspacePlans.Team,
-    features: [...baseFeatures],
-    limits: {
-      projectCount: 5,
-      modelCount: 25,
-      versionsHistory: { value: 30, unit: 'day' },
-      commentHistory: { value: 30, unit: 'day' }
-    }
-  },
-  [PaidWorkspacePlans.TeamUnlimited]: {
-    plan: PaidWorkspacePlans.TeamUnlimited,
-    features: [...baseFeatures],
-    limits: {
-      projectCount: null,
-      modelCount: null,
-      versionsHistory: { value: 30, unit: 'day' },
-      commentHistory: { value: 30, unit: 'day' }
-    }
-  },
-  [PaidWorkspacePlans.Pro]: {
-    plan: PaidWorkspacePlans.Pro,
-    features: [
-      ...baseFeatures,
-      WorkspacePlanFeatures.DomainSecurity,
-      WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.HideSpeckleBranding,
-      ...(params.featureFlags?.FF_SAVED_VIEWS_ENABLED
-        ? [WorkspacePlanFeatures.SavedViews]
-        : [])
-    ],
-    limits: {
-      projectCount: 10,
-      modelCount: 50,
-      versionsHistory: null,
-      commentHistory: null
-    }
-  },
-  [PaidWorkspacePlans.ProUnlimited]: {
-    plan: PaidWorkspacePlans.ProUnlimited,
-    features: [
-      ...baseFeatures,
-      WorkspacePlanFeatures.DomainSecurity,
-      WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.HideSpeckleBranding,
-      ...(params.featureFlags?.FF_SAVED_VIEWS_ENABLED
-        ? [WorkspacePlanFeatures.SavedViews]
-        : [])
-    ],
-    limits: {
-      projectCount: null,
-      modelCount: null,
-      versionsHistory: null,
-      commentHistory: null
+} = (params) => {
+  const finalBaseFeatures = [
+    ...baseFeatures,
+    ...(params.featureFlags?.FF_SAVED_VIEWS_ENABLED
+      ? [WorkspacePlanFeatures.SavedViews]
+      : [])
+  ]
+
+  return {
+    [PaidWorkspacePlans.Team]: {
+      plan: PaidWorkspacePlans.Team,
+      features: [...finalBaseFeatures],
+      limits: {
+        projectCount: 5,
+        modelCount: 25,
+        versionsHistory: { value: 30, unit: 'day' },
+        commentHistory: { value: 30, unit: 'day' }
+      }
+    },
+    [PaidWorkspacePlans.TeamUnlimited]: {
+      plan: PaidWorkspacePlans.TeamUnlimited,
+      features: [...finalBaseFeatures],
+      limits: {
+        projectCount: null,
+        modelCount: null,
+        versionsHistory: { value: 30, unit: 'day' },
+        commentHistory: { value: 30, unit: 'day' }
+      }
+    },
+    [PaidWorkspacePlans.Pro]: {
+      plan: PaidWorkspacePlans.Pro,
+      features: [
+        ...finalBaseFeatures,
+        WorkspacePlanFeatures.DomainSecurity,
+        WorkspacePlanFeatures.SSO,
+        WorkspacePlanFeatures.CustomDataRegion,
+        WorkspacePlanFeatures.HideSpeckleBranding
+      ],
+      limits: {
+        projectCount: 10,
+        modelCount: 50,
+        versionsHistory: null,
+        commentHistory: null
+      }
+    },
+    [PaidWorkspacePlans.ProUnlimited]: {
+      plan: PaidWorkspacePlans.ProUnlimited,
+      features: [
+        ...finalBaseFeatures,
+        WorkspacePlanFeatures.DomainSecurity,
+        WorkspacePlanFeatures.SSO,
+        WorkspacePlanFeatures.CustomDataRegion,
+        WorkspacePlanFeatures.HideSpeckleBranding
+      ],
+      limits: {
+        projectCount: null,
+        modelCount: null,
+        versionsHistory: null,
+        commentHistory: null
+      }
     }
   }
-})
+}
 
 export const WorkspaceUnpaidPlanConfigs: (params: {
   featureFlags: Partial<FeatureFlags> | undefined
 }) => {
   [plan in UnpaidWorkspacePlans]: WorkspacePlanConfig<plan>
-} = (params) => ({
-  [UnpaidWorkspacePlans.Enterprise]: {
-    plan: UnpaidWorkspacePlans.Enterprise,
-    features: [
-      ...baseFeatures,
-      WorkspacePlanFeatures.DomainSecurity,
-      WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.HideSpeckleBranding,
-      WorkspacePlanFeatures.ExclusiveMembership,
-      ...(params.featureFlags?.FF_SAVED_VIEWS_ENABLED
-        ? [WorkspacePlanFeatures.SavedViews]
-        : [])
-    ],
-    limits: unlimited
-  },
-  [UnpaidWorkspacePlans.Unlimited]: {
-    plan: UnpaidWorkspacePlans.Unlimited,
-    features: [
-      ...baseFeatures,
-      WorkspacePlanFeatures.DomainSecurity,
-      WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.HideSpeckleBranding,
-      WorkspacePlanFeatures.ExclusiveMembership,
-      ...(params.featureFlags?.FF_SAVED_VIEWS_ENABLED
-        ? [WorkspacePlanFeatures.SavedViews]
-        : [])
-    ],
-    limits: unlimited
-  },
-  [UnpaidWorkspacePlans.Academia]: {
-    plan: UnpaidWorkspacePlans.Academia,
-    features: [
-      ...baseFeatures,
-      WorkspacePlanFeatures.DomainSecurity,
-      WorkspacePlanFeatures.SSO,
-      WorkspacePlanFeatures.CustomDataRegion,
-      WorkspacePlanFeatures.HideSpeckleBranding,
-      ...(params.featureFlags?.FF_SAVED_VIEWS_ENABLED
-        ? [WorkspacePlanFeatures.SavedViews]
-        : [])
-    ],
-    limits: unlimited
-  },
-  [UnpaidWorkspacePlans.TeamUnlimitedInvoiced]: {
-    ...WorkspacePaidPlanConfigs(params).teamUnlimited,
-    plan: UnpaidWorkspacePlans.TeamUnlimitedInvoiced
-  },
-  [UnpaidWorkspacePlans.ProUnlimitedInvoiced]: {
-    ...WorkspacePaidPlanConfigs(params).proUnlimited,
-    plan: UnpaidWorkspacePlans.ProUnlimitedInvoiced
-  },
-  [UnpaidWorkspacePlans.Free]: {
-    plan: UnpaidWorkspacePlans.Free,
-    features: baseFeatures,
-    limits: {
-      projectCount: 1,
-      modelCount: 5,
-      versionsHistory: { value: 7, unit: 'day' },
-      commentHistory: { value: 7, unit: 'day' }
+} = (params) => {
+  const finalBaseFeatures = [
+    ...baseFeatures,
+    ...(params.featureFlags?.FF_SAVED_VIEWS_ENABLED
+      ? [WorkspacePlanFeatures.SavedViews]
+      : [])
+  ]
+  return {
+    [UnpaidWorkspacePlans.Enterprise]: {
+      plan: UnpaidWorkspacePlans.Enterprise,
+      features: [
+        ...finalBaseFeatures,
+        WorkspacePlanFeatures.DomainSecurity,
+        WorkspacePlanFeatures.SSO,
+        WorkspacePlanFeatures.CustomDataRegion,
+        WorkspacePlanFeatures.HideSpeckleBranding,
+        WorkspacePlanFeatures.ExclusiveMembership
+      ],
+      limits: unlimited
+    },
+    [UnpaidWorkspacePlans.Unlimited]: {
+      plan: UnpaidWorkspacePlans.Unlimited,
+      features: [
+        ...finalBaseFeatures,
+        WorkspacePlanFeatures.DomainSecurity,
+        WorkspacePlanFeatures.SSO,
+        WorkspacePlanFeatures.CustomDataRegion,
+        WorkspacePlanFeatures.HideSpeckleBranding,
+        WorkspacePlanFeatures.ExclusiveMembership
+      ],
+      limits: unlimited
+    },
+    [UnpaidWorkspacePlans.Academia]: {
+      plan: UnpaidWorkspacePlans.Academia,
+      features: [
+        ...finalBaseFeatures,
+        WorkspacePlanFeatures.DomainSecurity,
+        WorkspacePlanFeatures.SSO,
+        WorkspacePlanFeatures.CustomDataRegion,
+        WorkspacePlanFeatures.HideSpeckleBranding
+      ],
+      limits: unlimited
+    },
+    [UnpaidWorkspacePlans.TeamUnlimitedInvoiced]: {
+      ...WorkspacePaidPlanConfigs(params).teamUnlimited,
+      plan: UnpaidWorkspacePlans.TeamUnlimitedInvoiced
+    },
+    [UnpaidWorkspacePlans.ProUnlimitedInvoiced]: {
+      ...WorkspacePaidPlanConfigs(params).proUnlimited,
+      plan: UnpaidWorkspacePlans.ProUnlimitedInvoiced
+    },
+    [UnpaidWorkspacePlans.Free]: {
+      plan: UnpaidWorkspacePlans.Free,
+      features: finalBaseFeatures,
+      limits: {
+        projectCount: 1,
+        modelCount: 5,
+        versionsHistory: { value: 7, unit: 'day' },
+        commentHistory: { value: 7, unit: 'day' }
+      }
     }
   }
-})
+}
 
 export const WorkspacePlanConfigs = (params: {
   featureFlags: Partial<FeatureFlags> | undefined

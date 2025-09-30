@@ -27,7 +27,7 @@
             <PortalTarget name="primary-actions"></PortalTarget>
           </ClientOnly>
           <HeaderNavNotifications v-if="isLoggedIn" />
-          <div class="flex justify-end gap-x-2">
+          <div v-if="!hideUserNav" class="flex justify-end items-center gap-x-2">
             <FormButton
               v-if="!activeUser"
               :to="loginUrl.fullPath"
@@ -49,6 +49,10 @@
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { loginRoute } from '~~/lib/common/helpers/route'
 import type { Optional } from '@speckle/shared'
+
+defineProps<{
+  hideUserNav?: boolean
+}>()
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { activeUser, isLoggedIn } = useActiveUser()

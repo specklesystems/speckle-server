@@ -21,7 +21,10 @@ import {
 } from '../../../domain/context.js'
 import { Loaders } from '../../../domain/loaders.js'
 import { AuthPolicy } from '../../../domain/policies.js'
-import { ensureCanAccessSavedViewFragment } from '../../../fragments/savedViews.js'
+import {
+  ensureCanAccessSavedViewFragment,
+  WriteTypes
+} from '../../../fragments/savedViews.js'
 
 export const canUpdateSavedViewPolicy: AuthPolicy<
   | typeof Loaders.getSavedView
@@ -33,6 +36,7 @@ export const canUpdateSavedViewPolicy: AuthPolicy<
   | typeof Loaders.getWorkspacePlan
   | typeof Loaders.getWorkspaceSsoProvider
   | typeof Loaders.getWorkspaceSsoSession
+  | typeof Loaders.getAdminOverrideEnabled
   | typeof Loaders.getProjectRole,
   MaybeUserContext & ProjectContext & SavedViewContext,
   InstanceType<
@@ -58,6 +62,6 @@ export const canUpdateSavedViewPolicy: AuthPolicy<
       userId,
       projectId,
       savedViewId,
-      access: 'write'
+      access: WriteTypes.UpdateGeneral
     })
   }

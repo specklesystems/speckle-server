@@ -298,16 +298,27 @@ export const StreamFavorites = buildTableHelper('stream_favorites', [
   'cursor'
 ])
 
+export const UsersMetaFlags = ['presentationsFeatureNudgeDismissed'] as const
+
+type UsersMetaFlag = (typeof UsersMetaFlags)[number]
+
+export const isUsersMetaFlag = (key: string): key is UsersMetaFlag => {
+  return UsersMetaFlags.includes(key as UsersMetaFlag)
+}
+
 export const UsersMeta = buildMetaTableHelper(
   'users_meta',
   ['userId', 'key', 'value', 'createdAt', 'updatedAt'],
   [
+    ...UsersMetaFlags,
     'isOnboardingFinished',
     'onboardingStreamId',
     'activeWorkspace',
     'isProjectsActive',
     'newWorkspaceExplainerDismissed',
     'speckleConBannerDismissed',
+    'intelligenceCommunityStandUpBannerDismissed',
+    'speckleCon25BannerDismissed',
     'legacyProjectsExplainerCollapsed',
     // Used in tests
     'foo',

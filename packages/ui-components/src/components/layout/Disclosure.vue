@@ -2,9 +2,11 @@
   <div>
     <HeadlessDisclosure>
       <DisclosureButton :class="buttonClasses" @click="toggle">
-        <div class="inline-flex items-center space-x-2 w-full">
+        <div class="inline-flex items-center space-x-2 overflow-hidden pr-1 w-full">
           <Component :is="icon" v-if="icon" class="h-5 w-5" />
-          <span v-if="!editTitle" class="text-left w-full">{{ title }}</span>
+          <span v-if="!editTitle" class="text-left w-full truncate">
+            {{ title }}
+          </span>
           <FormTextInput
             v-else
             v-bind="bind"
@@ -12,6 +14,7 @@
             color="fully-transparent"
             :input-classes="buttonTextClasses"
             :auto-focus="true"
+            wrapper-classes="flex-1"
             v-on="on"
             @click.stop
             @blur="onTitleInputBlur"
@@ -109,6 +112,7 @@ const buttonClasses = computed(() => {
     'items-center',
     'transition',
     'group/disclosure',
+
     buttonTextClasses.value
   ]
 
@@ -119,6 +123,7 @@ const buttonClasses = computed(() => {
       'justify-normal',
       'pl-1',
       'pr-0.5',
+
       'rounded-md',
       'hover:bg-highlight-1',
       'ring-none'
@@ -185,7 +190,7 @@ const panelClasses = computed(() => {
 })
 
 const chevronClasses = computed(() => {
-  const baseClasses = 'h-4 w-4 transition-transform duration-200 ease-in-out'
+  const baseClasses = 'h-4 w-4 transition-transform shrink-0 duration-200 ease-in-out'
 
   if (props.color === 'subtle') {
     // Subtle variant: 90° when closed, 0° when open

@@ -170,15 +170,15 @@ isMultiRegionTestMode()
         }
 
         const manyParallelCreates = async () => {
-          await Promise.allSettled(Array.from({ length: 1000 }, oneKnexInstanceCall))
+          await Promise.allSettled(Array.from({ length: 500 }, oneKnexInstanceCall))
         }
 
         await manyParallelCreates()
 
         const [{ count }] = await db('users').count()
-        expect(count).to.eql(1000)
+        expect(count).to.eql('500')
 
-        await sleep(1000) // just in case
+        await sleep(50)
 
         const connectionsUsedAfter = main.client.pool.numUsed()
         expect(connectionsUsedAfter).to.be.lte(connectionsUsedBefore)

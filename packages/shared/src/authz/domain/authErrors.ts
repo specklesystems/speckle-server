@@ -221,6 +221,37 @@ export const UngroupedSavedViewGroupLockError = defineAuthError({
   message: 'The default/ungrouped group cannot be modified.'
 })
 
+export const DashboardsNotEnabledError = defineAuthError({
+  code: 'DashboardsNotEnabled',
+  message: 'Dashboards are not enabled for this server or workspaces.'
+})
+
+export const DashboardNotFoundError = defineAuthError({
+  code: 'DashboardNotFound',
+  message: 'Dashboard not found'
+})
+
+export const DashboardNoProjectsError = defineAuthError({
+  code: 'DashboardNoProjects',
+  message:
+    'Dashboard has no projects added to it. You need to add at least one project before sharing.'
+})
+
+export const DashboardProjectsNotEnoughPermissionsError = defineAuthError<
+  'DashboardProjectsNotEnoughPermissions',
+  {
+    projectIds: string[]
+  }
+>({
+  code: 'DashboardProjectsNotEnoughPermissions',
+  message: 'You do not have sufficient access to some projects in this workspace.'
+})
+
+export const DashboardNotOwnerError = defineAuthError({
+  code: 'DashboardNotOwner',
+  message: 'You must be a dashboard owner to perform this action'
+})
+
 // Resolve all exported error types
 export type AllAuthErrors = ValueOf<{
   [key in keyof typeof import('./authErrors.js')]: typeof import('./authErrors.js')[key] extends new (

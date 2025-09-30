@@ -260,6 +260,11 @@ input PendingWorkspaceCollaboratorsFilter {
   search: String
 }
 
+input WorkspaceIdentifier @oneOf {
+  id: String
+  slug: String
+}
+
 type Workspace {
   id: ID!
   name: String!
@@ -558,7 +563,14 @@ extend type User {
 }
 
 extend type Project {
-  workspace: Workspace
+  """
+  Full workspace information for the project.
+  """
+  workspace: Workspace @hasScope(scope: "workspace:read")
+  """
+  Limited workspace records that exposes public data projects workspaces.
+  """
+  limitedWorkspace: LimitedWorkspace
   """
   Public project-level configuration for embedded viewer
   """
@@ -674,10 +686,6 @@ extend type Subscription {
     @hasScope(scope: "workspace:read")
 }
 
-extend type Mutation {
-  admin: AdminMutations! @hasServerRole(role: SERVER_ADMIN)
-}
-
 input AdminUpdateWorkspacePlanInput {
   workspaceId: ID!
   plan: WorkspacePlans!
@@ -687,6 +695,7 @@ input AdminUpdateWorkspacePlanInput {
 enum WorkspaceFeatureFlagName {
   dashboards
   accIntegration
+  presentations
 }
 
 input AdminAccessToWorkspaceFeatureInput {
@@ -694,7 +703,7 @@ input AdminAccessToWorkspaceFeatureInput {
   featureFlagName: WorkspaceFeatureFlagName!
 }
 
-type AdminMutations {
+extend type AdminMutations {
   updateWorkspacePlan(input: AdminUpdateWorkspacePlanInput!): Boolean!
   giveAccessToWorkspaceFeature(input: AdminAccessToWorkspaceFeatureInput!): Boolean!
   removeAccessToWorkspaceFeature(input: AdminAccessToWorkspaceFeatureInput!): Boolean!

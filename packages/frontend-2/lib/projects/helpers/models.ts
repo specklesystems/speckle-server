@@ -1,4 +1,3 @@
-import { resourceBuilder } from '@speckle/shared/viewer/route'
 import { has } from 'lodash-es'
 import { graphql } from '~/lib/common/generated/gql'
 import { modelRoute } from '~/lib/common/helpers/route'
@@ -7,6 +6,7 @@ import type {
   ProjectModelPageVersionsCardVersionFragment,
   GetModelItemRoute_ModelFragment
 } from '~~/lib/common/generated/gql/graphql'
+import { resourceBuilder } from '@speckle/shared/viewer/route'
 
 export function isPendingModelFragment(i: unknown): i is PendingFileUploadFragment {
   return has(i, 'convertedMessage')
@@ -35,20 +35,31 @@ graphql(`
       id
       resourceIds
     }
+    resourceIdString
   }
 `)
 
 export const getModelItemRoute = (
-  i: GetModelItemRoute_ModelFragment | PendingFileUploadFragment
+  i:
+    | GetModelItemRoute_ModelFragment
+    | PendingFileUploadFragment
+    | { projectId: string; id: string },
+  versionId?: string
 ) => {
   if (isPendingModelFragment(i)) {
     return modelRoute(i.projectId, i.id)
   }
 
-  return modelRoute(
-    i.projectId,
-    i.homeView?.id
-      ? resourceBuilder().addResources(i.homeView.resourceIds).toString()
-      : i.id
-  )
+  if (versionId) {
+    return modelRoute(
+      i.projectId,
+      resourceBuilder().addModel(i.id, versionId).toString()
+    )
+  }
+
+  if (!('resourceIdString' in i)) {
+    return modelRoute(i.projectId, i.id)
+  }
+
+  return modelRoute(i.projectId, i.resourceIdString)
 }

@@ -1,0 +1,33 @@
+name: Get-chart-name
+
+on:
+  workflow_call:
+    outputs:
+      CHART_NAME:
+        description: 'The name of the chart to use for publishing Helm Charts to OCI registry'
+        value: ${{ jobs.get-chart-name.outputs.CHART_NAME }}
+
+jobs:
+  get-chart-name:
+    outputs:
+      CHART_NAME: ${{ steps.export-step.outputs.CHART_NAME }}
+    name: Get chart name
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          sparse-checkout: |
+            .github/workflows/scripts/get_chart_name.sh
+            .github/workflows/scripts/common.sh
+          fetch-depth: 1
+          fetch-tags: 1
+      - run: git fetch origin 'refs/tags/*:refs/tags/*'
+      - run: chmod +x ./get_chart_name.sh ./common.sh
+        working-directory: ./.github/workflows/scripts
+      - run: ./get_chart_name.sh >> result
+        working-directory: ./.github/workflows/scripts
+      - run: echo "CHART_NAME=$(cat result)"
+        working-directory: ./.github/workflows/scripts
+      - id: export-step
+        run: echo "CHART_NAME=$(cat result)" >> "$GITHUB_OUTPUT"
+        working-directory: ./.github/workflows/scripts

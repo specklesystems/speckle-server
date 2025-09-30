@@ -129,7 +129,7 @@ export const onNewGroupViewCacheUpdates = (
 
       const newGroupKeys = groupKeys
         .filter((k) => {
-          if (existingGroupKeys.includes(k.key)) return false // already exists
+          if (existingGroupKeys.includes(k.key) || isUngroupedGroup(k.id)) return false // already exists
           const hasMatch =
             intersection(groupsResourceIds, k.metadata.resourceIds).length > 0
           if (!hasMatch) return false // resourceIds don't match
@@ -140,10 +140,17 @@ export const onNewGroupViewCacheUpdates = (
       if (!newGroupKeys.length) return
 
       return createUpdatedValue(({ update }) => {
-        update('totalCount', (count) => count + newGroupKeys.length)
+        const newUngrouped = newGroupKeys.filter((k) =>
+          isUngroupedGroup(parseObjectKey(k).id)
+        )
+        const newGrouped = newGroupKeys.filter(
+          (k) => !isUngroupedGroup(parseObjectKey(k).id)
+        )
+        update('totalCount', (count) => count + 1)
         update('items', (items) => [
+          ...newGrouped.map((k) => keyToRef(k)),
           ...items,
-          ...newGroupKeys.map((key) => keyToRef(key))
+          ...newUngrouped.map((k) => keyToRef(k))
         ])
       })
     },

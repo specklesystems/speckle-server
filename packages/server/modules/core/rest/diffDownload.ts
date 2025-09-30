@@ -1,9 +1,15 @@
 import zlib from 'zlib'
 import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 import type { Application } from 'express'
-import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
+import {
+  objectDataTransformFactory,
+  SpeckleObjectsStream
+} from '@/modules/core/rest/speckleObjectsStream'
 import { pipeline, PassThrough } from 'stream'
-import { getObjectsStreamFactory } from '@/modules/core/repositories/objects'
+import {
+  getObjectsStreamFactory,
+  getProjectObjectStreamFactory
+} from '@/modules/core/repositories/objects'
 import { db } from '@/db/knex'
 import { validatePermissionsReadStreamFactory } from '@/modules/core/services/streams/auth'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
@@ -12,6 +18,15 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { ensureError } from '@speckle/shared'
 import { DatabaseError } from '@/modules/shared/errors'
+import { validateRequest } from 'zod-express'
+import { z } from 'zod'
+import { authMiddlewareCreator } from '@/modules/shared/middleware'
+import {
+  allowAnonymousUsersOnPublicStreams,
+  allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
+  streamReadPermissionsPipelineFactory
+} from '@/modules/shared/authz'
+import { chunk } from 'lodash-es'
 
 export default (app: Application) => {
   const validatePermissionsReadStream = validatePermissionsReadStreamFactory({
@@ -120,4 +135,100 @@ export default (app: Application) => {
       speckleObjStream.end()
     }
   })
+
+  const reqBody = z
+    .object({
+      objectIds: z.string().array().min(1),
+      attributeMask: z
+        .union([
+          // using strict objects here, to make the two types exclusive
+          z.object({ include: z.string().array().min(1) }).strict(),
+          z.object({ exclude: z.string().array().min(1) }).strict()
+        ])
+        .optional()
+    })
+    .strict()
+
+  app.options('/api/v2/projects/:streamId/object-stream', corsMiddlewareFactory())
+  app.post(
+    '/api/v2/projects/:streamId/object-stream',
+    corsMiddlewareFactory(),
+    authMiddlewareCreator([
+      ...streamReadPermissionsPipelineFactory({
+        getStream: getStreamFactory({ db })
+      }),
+      allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
+      allowAnonymousUsersOnPublicStreams
+    ]),
+    validateRequest({
+      body: reqBody
+    }),
+    async ({ body: { objectIds, attributeMask }, params: { streamId }, log }, res) => {
+      const projectId = streamId
+      const projectDb = await getProjectDbClient({ projectId })
+
+      const streamObjectsFromDb = getProjectObjectStreamFactory({ db: projectDb })
+
+      res.writeHead(200, {
+        'Content-Encoding': 'gzip',
+        'Content-Type': 'text/plain; charset=UTF-8'
+      })
+      const objectDataTransform = objectDataTransformFactory({ attributeMask })
+
+      const gzipStream = zlib.createGzip()
+      //create the response pipeline here, but we're not sending chunks just yet
+      pipeline(
+        objectDataTransform,
+        gzipStream,
+        new PassThrough({ highWaterMark: 16384 * 31 }),
+        res,
+        (err) => {
+          if (err) {
+            switch (err.code) {
+              case 'ERR_STREAM_PREMATURE_CLOSE':
+                log.debug({ err }, 'Stream to client has prematurely closed')
+                break
+              default:
+                log.error(err, 'App error streaming objects')
+                break
+            }
+            return
+          }
+          log.info(
+            {
+              childCount: objectIds.length,
+              mbWritten: gzipStream.bytesWritten / 1000000
+            },
+            'Streamed {childCount} objects (size: {mbWritten} MB)'
+          )
+        }
+      )
+
+      // we start chunking objectId-s here and pipe data to the firts write stream in the pipeline
+      const maxBatchSize = 1000
+
+      // TODO, this could potentially be sped up a bit, if we concurrently
+      // pipe multiple db streams into the transform
+      try {
+        for (const objectIdChunk of chunk(objectIds, maxBatchSize)) {
+          const objectStream = streamObjectsFromDb({
+            projectId,
+            objectIds: objectIdChunk
+          })
+          await new Promise((resolve, reject) => {
+            objectStream.once('end', resolve)
+            objectStream.once('error', reject)
+            // this is here, to make sure event handlers are registerd before piping the stream
+            objectStream.pipe(objectDataTransform, { end: false })
+          })
+        }
+      } catch (err) {
+        log.error(err, `DB Error streaming objects`)
+        objectDataTransform.emit('error', new DatabaseError('Database streaming error'))
+      } finally {
+        // once we're done with streaming data from each chunk, we end the transform stream
+        objectDataTransform.end()
+      }
+    }
+  )
 }

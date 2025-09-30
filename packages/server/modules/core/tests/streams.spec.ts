@@ -10,19 +10,13 @@ import {
 import type { BasicTestUser } from '@/test/authHelper'
 import { createTestUsers } from '@/test/authHelper'
 import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
-import {
-  createTestStream,
-  createTestStreams
-} from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
 import {
-  deleteStreamFactory,
   getStreamFactory,
   getStreamRolesFactory,
   getStreamsCollaboratorsFactory,
   grantStreamPermissionsFactory,
-  markBranchStreamUpdatedFactory,
-  markCommitStreamUpdatedFactory,
   revokeStreamPermissionsFactory,
   updateStreamFactory
 } from '@/modules/core/repositories/streams'
@@ -55,6 +49,7 @@ import {
 } from '@/modules/core/services/commit/management'
 import {
   createCommitFactory,
+  deleteProjectCommitsFactory,
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
@@ -82,11 +77,15 @@ import {
 import { changeUserRoleFactory } from '@/modules/core/services/users/management'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
+import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
+import { deleteProjectFactory } from '@/modules/core/repositories/projects'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { logger } from '@/observability/logging'
+import { getProjectReplicationDbs } from '@/modules/multiregion/utils/dbSelector'
+import type { UpdateStream } from '@/modules/core/domain/streams/operations'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
-const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
-const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db })
 const getStream = getStreamFactory({ db })
 const getStreamBranchByName = getStreamBranchByNameFactory({ db })
 const createBranch = createBranchFactory({ db })
@@ -94,7 +93,6 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getStream,
   getBranchById: getBranchByIdFactory({ db }),
   emitEvent: getEventBus().emit,
-  markBranchStreamUpdated,
   deleteBranchById: deleteBranchByIdFactory({ db })
 })
 
@@ -105,7 +103,6 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   getBranchById: getBranchByIdFactory({ db }),
   insertStreamCommits: insertStreamCommitsFactory({ db }),
   insertBranchCommits: insertBranchCommitsFactory({ db }),
-  markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   emitEvent: getEventBus().emit
 })
@@ -115,18 +112,46 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   getBranchById: getBranchByIdFactory({ db })
 })
-const deleteStream = deleteStreamAndNotifyFactory({
-  deleteStream: deleteStreamFactory({ db }),
-  getStream,
-  emitEvent: getEventBus().emit,
-  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
-})
 
-const updateStream = updateStreamAndNotifyFactory({
-  getStream,
-  updateStream: updateStreamFactory({ db }),
-  emitEvent: getEventBus().emit
-})
+const deleteStream = async (projectId: string, userId: string) =>
+  asMultiregionalOperation(
+    ({ allDbs, mainDb, emit }) => {
+      const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+        deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+          deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+          deleteProjectCommits: replicateFactory(allDbs, deleteProjectCommitsFactory)
+        }),
+        emitEvent: emit,
+        deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db: mainDb }),
+        getStream: getStreamFactory({ db: mainDb })
+      })
+      return deleteStreamAndNotify(projectId, userId)
+    },
+    {
+      logger,
+      name: 'delete project spec',
+      description: `Cascade deleting a project in all regions`,
+      dbs: await getProjectReplicationDbs({ projectId })
+    }
+  )
+
+const updateStream: UpdateStream = async (stream, userId) =>
+  asMultiregionalOperation(
+    async ({ mainDb, allDbs, emit }) => {
+      const updateStreamAndNotify = updateStreamAndNotifyFactory({
+        getStream: getStreamFactory({ db: mainDb }),
+        updateStream: replicateFactory(allDbs, updateStreamFactory),
+        emitEvent: emit
+      })
+
+      return updateStreamAndNotify(stream, userId)
+    },
+    {
+      logger,
+      name: 'updateStream',
+      dbs: await getProjectReplicationDbs({ projectId: stream.id })
+    }
+  )
 
 const revokeStreamPermissions = revokeStreamPermissionsFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({
@@ -163,21 +188,8 @@ describe('Streams @core-streams', () => {
     id: ''
   }
 
-  const testStream: BasicTestStream = {
-    name: 'Test Stream 01',
-    description: 'wonderful test stream',
-    isPublic: true,
-    ownerId: '',
-    id: ''
-  }
-
-  const secondTestStream: BasicTestStream = {
-    name: 'Test Stream 02',
-    description: 'wot',
-    isPublic: false,
-    ownerId: '',
-    id: ''
-  }
+  let testStream: BasicTestStream
+  let secondTestStream: BasicTestStream
 
   let quitters: (() => void)[] = []
 
@@ -190,10 +202,22 @@ describe('Streams @core-streams', () => {
     await beforeEachContext()
 
     await createTestUsers([userOne, userTwo])
-    await createTestStreams([
-      [testStream, userOne],
-      [secondTestStream, userOne]
-    ])
+    testStream = await createTestStream(
+      {
+        name: 'Test Stream 01',
+        description: 'wonderful test stream',
+        isPublic: true
+      },
+      userOne
+    )
+    secondTestStream = await createTestStream(
+      {
+        name: 'Test Stream 02',
+        description: 'wot',
+        isPublic: false
+      },
+      userOne
+    )
   })
 
   afterEach(() => {

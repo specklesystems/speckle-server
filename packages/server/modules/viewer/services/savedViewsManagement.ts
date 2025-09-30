@@ -8,6 +8,7 @@ import type {
   GetGroupSavedViews,
   GetGroupSavedViewsPageItems,
   GetGroupSavedViewsTotalCount,
+  GetNewViewSpecificPosition,
   GetProjectSavedViewGroups,
   GetProjectSavedViewGroupsPageItems,
   GetProjectSavedViewGroupsTotalCount,
@@ -15,6 +16,7 @@ import type {
   GetSavedViewGroup,
   GetStoredViewCount,
   GetStoredViewGroupCount,
+  RebalanceViewPositions,
   RecalculateGroupResourceIds,
   SetNewHomeView,
   StoreSavedView,
@@ -29,6 +31,7 @@ import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
 import {
   SavedViewCreationValidationError,
   SavedViewGroupCreationValidationError,
+  SavedViewGroupNotFoundError,
   SavedViewGroupUpdateValidationError,
   SavedViewInvalidHomeViewSettingsError,
   SavedViewInvalidResourceTargetError,
@@ -44,7 +47,7 @@ import { inputToVersionedState } from '@speckle/shared/viewer/state'
 import { isValidBase64Image } from '@speckle/shared/images/base64'
 import type { GetViewerResourceGroups } from '@/modules/viewer/domain/operations/resources'
 import { formatResourceIdsForGroup } from '@/modules/viewer/helpers/savedViews'
-import { difference, isUndefined, omit } from 'lodash-es'
+import { isString, isUndefined, omit } from 'lodash-es'
 import type { DependenciesOf } from '@/modules/shared/helpers/factory'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { removeNullOrUndefinedKeys, firstDefinedValue } from '@speckle/shared'
@@ -188,6 +191,39 @@ const validateHomeViewSettingsFactory =
     }
   }
 
+const resolveViewGroupSettingsFactory =
+  (deps: { getSavedViewGroup: GetSavedViewGroup }) =>
+  async (params: {
+    groupId: MaybeNullOrUndefined<string>
+    projectId: string
+    errorMetadata: Record<string, unknown>
+  }) => {
+    const { groupId, projectId, errorMetadata } = params
+
+    if (!groupId) return isString(groupId) ? null : groupId // null or undefined (different meanings)
+
+    // Validate groupId - group is a valid and accessible group in the project
+    // Check if default group (actually means - null group)
+    const isDefaultGroup = isUngroupedGroup(groupId)
+    if (isDefaultGroup) {
+      return null
+    } else {
+      const group = await deps.getSavedViewGroup({
+        id: groupId,
+        projectId
+      })
+      if (!group) {
+        throw new SavedViewGroupNotFoundError(
+          'Provided groupId does not exist in the project.',
+          {
+            info: errorMetadata
+          }
+        )
+      }
+      return group
+    }
+  }
+
 export const createSavedViewFactory =
   (deps: {
     getViewerResourceGroups: GetViewerResourceGroups
@@ -196,13 +232,13 @@ export const createSavedViewFactory =
     getSavedViewGroup: GetSavedViewGroup
     recalculateGroupResourceIds: RecalculateGroupResourceIds
     setNewHomeView: SetNewHomeView
+    getNewViewSpecificPosition: GetNewViewSpecificPosition
+    rebalanceViewPositions: RebalanceViewPositions
     emit: EventBusEmit
   }): CreateSavedView =>
   async ({ input, authorId }) => {
-    const { resourceIdString, projectId } = input
+    const { resourceIdString, projectId, position: positionInput } = input
     const visibility = input.visibility || SavedViewVisibility.public // default to public
-    const position = 0 // TODO: Resolve based on existing views
-    const groupId = input.groupId?.trim() || null
     const description = input.description?.trim() || null
     const isHomeView = input.isHomeView || false
 
@@ -241,24 +277,15 @@ export const createSavedViewFactory =
     })
 
     // Validate groupId - group is a valid and accessible group in the project
-    let group: SavedViewGroup | undefined = undefined
-    if (groupId) {
-      group = await deps.getSavedViewGroup({
-        id: groupId,
-        projectId
-      })
-      if (!group) {
-        throw new SavedViewCreationValidationError(
-          'Provided groupId does not exist in the project.',
-          {
-            info: {
-              input,
-              authorId
-            }
-          }
-        )
-      }
-    }
+    let group =
+      (await resolveViewGroupSettingsFactory(deps)({
+        groupId: input.groupId?.trim(),
+        projectId,
+        errorMetadata: {
+          input,
+          authorId
+        }
+      })) || null
 
     // Auto-generate name, if one not set
     let name = input.name?.trim()
@@ -287,6 +314,16 @@ export const createSavedViewFactory =
       },
       resourceIds
     })
+
+    // Resolve new position
+    const { newPosition: position, needsRebalancing } =
+      await deps.getNewViewSpecificPosition({
+        projectId,
+        groupId: group?.id || null,
+        resourceIdString: resourceIds.toString(),
+        beforeId: positionInput?.beforeViewId,
+        afterId: positionInput?.afterViewId
+      })
 
     const concreteResourceIds = resourceIds.toResources().map((r) => r.toString())
     const ret = await deps.storeSavedView({
@@ -321,6 +358,15 @@ export const createSavedViewFactory =
               projectId,
               modelId: homeViewModel.modelId,
               newHomeViewId: ret.id
+            })
+          ]
+        : []),
+      ...(needsRebalancing
+        ? [
+            deps.rebalanceViewPositions({
+              projectId,
+              groupId: ret!.groupId || null,
+              resourceIdString: ret!.resourceIds.join(',')
             })
           ]
         : [])
@@ -506,6 +552,8 @@ export const updateSavedViewFactory =
       updateSavedViewRecord: UpdateSavedViewRecord
       recalculateGroupResourceIds: RecalculateGroupResourceIds
       setNewHomeView: SetNewHomeView
+      getNewViewSpecificPosition: GetNewViewSpecificPosition
+      rebalanceViewPositions: RebalanceViewPositions
       emit: EventBusEmit
     } & DependenciesOf<typeof validateProjectResourceIdStringFactory>
   ): UpdateSavedView =>
@@ -587,28 +635,18 @@ export const updateSavedViewFactory =
     }
 
     // Validate groupId - group is a valid and accessible group in the project
-    if (changes.groupId) {
-      // Check if default group (actually means - null group)
-      const isDefaultGroup = changes.groupId && isUngroupedGroup(changes.groupId)
-      if (isDefaultGroup) {
-        changes.groupId = null
-      } else {
-        const group = await deps.getSavedViewGroup({
-          id: changes.groupId,
-          projectId
-        })
-        if (!group) {
-          throw new SavedViewUpdateValidationError(
-            'Provided groupId does not exist in the project.',
-            {
-              info: {
-                input,
-                userId
-              }
-            }
-          )
+    changes.groupId = (
+      await resolveViewGroupSettingsFactory(deps)({
+        groupId: changes.groupId,
+        projectId,
+        errorMetadata: {
+          input,
+          userId
         }
-      }
+      })
+    )?.id
+    if (isUndefined(changes.groupId)) {
+      delete changes.groupId // the key shouldnt even be there
     }
 
     // Validate screenshot
@@ -652,7 +690,25 @@ export const updateSavedViewFactory =
       resourceIds: resourceIds || resourceBuilder().addResources(view.resourceIds)
     })
 
-    const finalChanges = omit(changes, ['resourceIdString', 'viewerState'])
+    // Position
+    let position: number | undefined = undefined
+    let needsRebalancing = false
+    if ('position' in changes && changes.position) {
+      const posInput = changes.position
+      const newPos = await deps.getNewViewSpecificPosition({
+        projectId,
+        groupId: ('groupId' in changes ? changes.groupId : view.groupId) || null,
+        resourceIdString: resourceIds
+          ? resourceIds.toString()
+          : view.resourceIds.join(','),
+        beforeId: posInput.type === 'between' ? posInput.beforeViewId || null : null,
+        afterId: posInput.type === 'between' ? posInput.afterViewId || null : null
+      })
+      position = newPos.newPosition
+      needsRebalancing = newPos.needsRebalancing
+    }
+
+    const finalChanges = omit(changes, ['resourceIdString', 'viewerState', 'position'])
     const update = {
       ...finalChanges,
       ...(resourceIds
@@ -665,7 +721,8 @@ export const updateSavedViewFactory =
         ? {
             viewerState
           }
-        : {})
+        : {}),
+      ...(!isUndefined(position) ? { position } : {})
     }
 
     // Check if there's any actual changes
@@ -679,9 +736,8 @@ export const updateSavedViewFactory =
       })
     }
 
-    const skipUpdatingDate =
-      difference<keyof typeof update>(updateKeys, ['visibility']).length === 0
-
+    // Only update date on: replace, group change
+    const shouldUpdateDate = hasViewerState || 'groupId' in update
     const updatedView = (await deps.updateSavedViewRecord(
       {
         id,
@@ -689,7 +745,7 @@ export const updateSavedViewFactory =
         update
       },
       {
-        skipUpdatingDate
+        skipUpdatingDate: !shouldUpdateDate
       }
     ))!
 
@@ -724,6 +780,15 @@ export const updateSavedViewFactory =
               projectId,
               newHomeViewId: updatedView.id,
               modelId: homeViewModel.modelId
+            })
+          ]
+        : []),
+      ...(needsRebalancing
+        ? [
+            deps.rebalanceViewPositions({
+              projectId,
+              groupId: updatedView!.groupId || null,
+              resourceIdString: updatedView!.resourceIds.join(',')
             })
           ]
         : [])
