@@ -179,4 +179,91 @@ describe('BatchingQueue', () => {
     expect(queue.count()).toBe(0) // Items were not added due to errored state
     await queue.disposeAsync()
   })
+
+  test('should drain remaining items when disposed', async () => {
+    const processSpy = vi.fn()
+    const queue = new BatchingQueue({
+      batchSize: 5, // Large batch size to prevent automatic processing
+      maxWaitTime: 10000, // Long timeout to prevent timeout-based processing
+      processFunction: async (batch: string[]): Promise<void> => {
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        processSpy(batch)
+      }
+    })
+
+    // Add items that won't trigger automatic processing (less than batch size)
+    queue.add('key1', 'item1')
+    queue.add('key2', 'item2')
+    queue.add('key3', 'item3')
+
+    // Verify items are in queue but haven't been processed yet
+    expect(queue.count()).toBe(3)
+    expect(processSpy).not.toHaveBeenCalled()
+
+    // Dispose should drain the remaining items
+    await queue.disposeAsync()
+
+    // Verify all items were processed during disposal
+    expect(processSpy).toHaveBeenCalledTimes(1)
+    expect(processSpy).toHaveBeenCalledWith(['item1', 'item2', 'item3'])
+    expect(queue.count()).toBe(0)
+    expect(queue.isDisposed()).toBe(true)
+  })
+
+  test('should drain items even with ongoing processing during dispose', async () => {
+    const processSpy = vi.fn()
+    let firstBatchStarted = false
+    let allowFirstBatchToComplete: (() => void) | undefined = undefined
+
+    const queue = new BatchingQueue({
+      batchSize: 2,
+      maxWaitTime: 100,
+      processFunction: async (batch: string[]): Promise<void> => {
+        processSpy(batch)
+
+        // Make the first batch wait for our signal
+        if (!firstBatchStarted) {
+          firstBatchStarted = true
+          await new Promise<void>((resolve) => {
+            allowFirstBatchToComplete = resolve
+          })
+        } else {
+          // Other batches process normally
+          await new Promise((resolve) => setTimeout(resolve, 10))
+        }
+      }
+    })
+
+    // Add first batch that will trigger processing but will be blocked
+    queue.add('key1', 'item1')
+    queue.add('key2', 'item2')
+
+    // Wait for first batch to start processing
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(firstBatchStarted).toBe(true)
+    expect(processSpy).toHaveBeenCalledTimes(1)
+
+    // Add more items while first batch is still processing
+    queue.add('key3', 'item3')
+    queue.add('key4', 'item4')
+
+    // Verify the additional items are queued
+    expect(queue.count()).toBe(2)
+
+    // Start disposal (this should wait for ongoing processing and then drain)
+    const disposePromise = queue.disposeAsync()
+
+    // Allow the first batch to complete
+    allowFirstBatchToComplete?.()
+
+    // Wait for disposal to complete
+    await disposePromise
+
+    // Verify all batches were processed
+    expect(processSpy).toHaveBeenCalledTimes(2)
+    expect(processSpy).toHaveBeenCalledWith(['item1', 'item2'])
+    expect(processSpy).toHaveBeenCalledWith(['item3', 'item4'])
+    expect(queue.count()).toBe(0)
+    expect(queue.isDisposed()).toBe(true)
+  })
 })
