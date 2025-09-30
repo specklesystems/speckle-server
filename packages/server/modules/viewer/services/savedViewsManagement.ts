@@ -799,7 +799,8 @@ export const updateSavedViewFactory =
         eventName: SavedViewsEvents.Updated,
         payload: {
           savedView: updatedView!,
-          updaterId: userId
+          updaterId: userId,
+          update
         }
       }),
       ...(newGroup

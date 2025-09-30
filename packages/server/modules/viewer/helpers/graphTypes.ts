@@ -1,6 +1,7 @@
 import type {
   ExtendedViewerResourcesRequest,
-  ProjectSavedViewsUpdatedMessageType
+  ProjectSavedViewsUpdatedMessageType,
+  SavedViewUpdateInfo
 } from '@/modules/core/graph/generated/graphql'
 import type { ViewerResourceGroup } from '@/modules/viewer/domain/types/resources'
 import type {
@@ -30,6 +31,7 @@ export type ProjectSavedViewsUpdatedMessageGraphQLReturn = {
   projectId: string
   savedView: Nullable<SavedViewGraphQLReturn>
   deletedSavedView: Nullable<DeletedSavedViewGraphQLReturn>
+  update: SavedViewUpdateInfo
 }
 
 export type ProjectSavedViewGroupsUpdatedMessageGraphQLReturn = {

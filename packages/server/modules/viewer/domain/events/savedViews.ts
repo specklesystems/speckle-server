@@ -18,7 +18,11 @@ export type SavedViewsEvents = StringEnumValues<typeof SavedViewsEvents>
 
 export type SavedViewsEventsPayloads = {
   [SavedViewsEvents.Created]: { savedView: SavedView; creatorId: string }
-  [SavedViewsEvents.Updated]: { savedView: SavedView; updaterId: string }
+  [SavedViewsEvents.Updated]: {
+    savedView: SavedView
+    updaterId: string
+    update: Partial<SavedView>
+  }
   [SavedViewsEvents.Deleted]: { savedView: SavedView; deleterId: string }
   [SavedViewsEvents.GroupCreated]: { savedViewGroup: SavedViewGroup; creatorId: string }
   [SavedViewsEvents.GroupUpdated]: {

@@ -295,6 +295,13 @@ type DeletedSavedView {
   groupResourceIds: [String!]!
 }
 
+type SavedViewUpdateInfo {
+  """
+  Whether the view was updated to have a new position
+  """
+  positionUpdated: Boolean
+}
+
 type ProjectSavedViewsUpdatedMessage {
   type: ProjectSavedViewsUpdatedMessageType!
   """
@@ -313,6 +320,10 @@ type ProjectSavedViewsUpdatedMessage {
   The project that the update belongs to
   """
   project: Project!
+  """
+  Some more info about the update, if applicable
+  """
+  update: SavedViewUpdateInfo!
 }
 
 type ProjectSavedViewGroupsUpdatedMessage {

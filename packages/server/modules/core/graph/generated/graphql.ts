@@ -3274,6 +3274,8 @@ export type ProjectSavedViewsUpdatedMessage = {
   /** Null if view was deleted */
   savedView?: Maybe<SavedView>;
   type: ProjectSavedViewsUpdatedMessageType;
+  /** Some more info about the update, if applicable */
+  update: SavedViewUpdateInfo;
 };
 
 export const ProjectSavedViewsUpdatedMessageType = {
@@ -3908,6 +3910,12 @@ export type SavedViewPermissionChecks = {
    * the user may be able to do partial updates (e.g. just change the title)
    */
   canUpdate: PermissionCheckResult;
+};
+
+export type SavedViewUpdateInfo = {
+  __typename?: 'SavedViewUpdateInfo';
+  /** Whether the view was updated to have a new position */
+  positionUpdated?: Maybe<Scalars['Boolean']['output']>;
 };
 
 export const SavedViewVisibility = {
@@ -6515,6 +6523,7 @@ export type ResolversTypes = {
   SavedViewGroupsInput: SavedViewGroupsInput;
   SavedViewMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   SavedViewPermissionChecks: ResolverTypeWrapper<SavedViewPermissionChecksGraphQLReturn>;
+  SavedViewUpdateInfo: ResolverTypeWrapper<SavedViewUpdateInfo>;
   SavedViewVisibility: SavedViewVisibility;
   SavedViewsLoadSettings: SavedViewsLoadSettings;
   Scope: ResolverTypeWrapper<Scope>;
@@ -6903,6 +6912,7 @@ export type ResolversParentTypes = {
   SavedViewGroupsInput: SavedViewGroupsInput;
   SavedViewMutations: MutationsObjectGraphQLReturn;
   SavedViewPermissionChecks: SavedViewPermissionChecksGraphQLReturn;
+  SavedViewUpdateInfo: SavedViewUpdateInfo;
   SavedViewsLoadSettings: SavedViewsLoadSettings;
   Scope: Scope;
   ServerApp: ServerAppGraphQLReturn;
@@ -8253,6 +8263,7 @@ export type ProjectSavedViewsUpdatedMessageResolvers<ContextType = GraphQLContex
   project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
   savedView?: Resolver<Maybe<ResolversTypes['SavedView']>, ParentType, ContextType>;
   type?: Resolver<ResolversTypes['ProjectSavedViewsUpdatedMessageType'], ParentType, ContextType>;
+  update?: Resolver<ResolversTypes['SavedViewUpdateInfo'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -8428,6 +8439,11 @@ export type SavedViewPermissionChecksResolvers<ContextType = GraphQLContext, Par
   canEditTitle?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canMove?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canUpdate?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type SavedViewUpdateInfoResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SavedViewUpdateInfo'] = ResolversParentTypes['SavedViewUpdateInfo']> = {
+  positionUpdated?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -9350,6 +9366,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   SavedViewGroupShareLink?: SavedViewGroupShareLinkResolvers<ContextType>;
   SavedViewMutations?: SavedViewMutationsResolvers<ContextType>;
   SavedViewPermissionChecks?: SavedViewPermissionChecksResolvers<ContextType>;
+  SavedViewUpdateInfo?: SavedViewUpdateInfoResolvers<ContextType>;
   Scope?: ScopeResolvers<ContextType>;
   ServerApp?: ServerAppResolvers<ContextType>;
   ServerAppListItem?: ServerAppListItemResolvers<ContextType>;
