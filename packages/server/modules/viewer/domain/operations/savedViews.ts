@@ -4,8 +4,14 @@ import type {
   SavedViewGroup,
   SavedViewVisibility
 } from '@/modules/viewer/domain/types/savedViews'
-import type { MaybeNullOrUndefined, NullableKeysToOptional } from '@speckle/shared'
+import type { StringEnumValues } from '@speckle/shared'
+import {
+  StringEnum,
+  type MaybeNullOrUndefined,
+  type NullableKeysToOptional
+} from '@speckle/shared'
 import type { SerializedViewerState } from '@speckle/shared/viewer/state'
+import type { Response } from 'express'
 import type { Exact, SetOptional } from 'type-fest'
 
 /////////////////////
@@ -83,7 +89,10 @@ export type GetGroupSavedViewsPageParams = GetGroupSavedViewsBaseParams & {
   limit?: MaybeNullOrUndefined<number>
   cursor?: MaybeNullOrUndefined<string>
   sortDirection?: MaybeNullOrUndefined<'asc' | 'desc'>
-  sortBy?: MaybeNullOrUndefined<'createdAt' | 'name' | 'updatedAt'>
+  /**
+   * Null means - manual positioning
+   */
+  sortBy?: MaybeNullOrUndefined<'createdAt' | 'name' | 'updatedAt' | 'position'>
 }
 
 export type GetGroupSavedViewsTotalCount = (
@@ -176,6 +185,37 @@ export type SetNewHomeView = (params: {
   newHomeViewId: string | null
 }) => Promise<boolean>
 
+/**
+ * Calculate new view position for the beginning or end of the group that it will be a part of
+ */
+export type GetNewViewBoundaryPosition = (params: {
+  projectId: string
+  resourceIdString: string
+  groupId: string | null
+  position: 'last' | 'first'
+}) => Promise<number>
+
+/**
+ * Calculate new view position for a specific position in the group that it will be a part of. Also
+ * returns whether rebalancing is needed (i.e. the gap between before and after positions is too small)
+ */
+export type GetNewViewSpecificPosition = (params: {
+  projectId: string
+  resourceIdString: string
+  groupId: string | null
+  beforeId: MaybeNullOrUndefined<string>
+  afterId: MaybeNullOrUndefined<string>
+}) => Promise<{
+  newPosition: number
+  needsRebalancing: boolean
+}>
+
+export type RebalanceViewPositions = (params: {
+  projectId: string
+  resourceIdString: string
+  groupId: string | null
+}) => Promise<number>
+
 /////////////////////
 // SERVICE OPERATIONS:
 /////////////////////
@@ -198,6 +238,7 @@ export type CreateSavedViewParams = {
     screenshot: string
     isHomeView?: MaybeNullOrUndefined<boolean>
     visibility?: MaybeNullOrUndefined<SavedViewVisibility>
+    position?: MaybeNullOrUndefined<ViewPositionInput>
   }
   authorId: string
 }
@@ -231,6 +272,12 @@ export type DeleteSavedView = (params: {
   userId: string
 }) => Promise<void>
 
+export type ViewPositionInput = {
+  type: 'first' | 'last' | 'between'
+  beforeViewId?: MaybeNullOrUndefined<string>
+  afterViewId?: MaybeNullOrUndefined<string>
+}
+
 export type UpdateSavedViewParams = {
   id: string
   projectId: string
@@ -242,6 +289,7 @@ export type UpdateSavedViewParams = {
   viewerState?: MaybeNullOrUndefined<unknown>
   resourceIdString?: MaybeNullOrUndefined<string>
   screenshot?: MaybeNullOrUndefined<string>
+  position?: MaybeNullOrUndefined<ViewPositionInput>
 }
 
 export type UpdateSavedView = (params: {
@@ -265,3 +313,17 @@ export type UpdateSavedViewGroup = (params: {
   }
   userId: string
 }) => Promise<SavedViewGroup>
+
+export const SavedViewPreviewType = StringEnum(['preview', 'thumbnail'])
+export type SavedViewPreviewType = StringEnumValues<typeof SavedViewPreviewType>
+
+export type OutputSavedViewPreview = (params: {
+  res: Response
+  projectId: string
+  viewId: string
+  type: SavedViewPreviewType
+}) => Promise<void>
+
+export type DownscaleScreenshotForThumbnail = (params: {
+  screenshot: string
+}) => Promise<string>

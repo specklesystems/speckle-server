@@ -66,7 +66,7 @@
                     :active="isActive(dashboardsRoute(activeWorkspaceSlug))"
                   >
                     <template #icon>
-                      <IconProjects class="size-4 text-foreground-2" />
+                      <LayoutDashboard class="size-4 text-foreground-2" />
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
@@ -81,20 +81,6 @@
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
-
-                <div v-if="isWorkspacesEnabled">
-                  <LayoutSidebarMenuGroupItem
-                    label="Getting started"
-                    @click="openExplainerVideoDialog"
-                  >
-                    <template #icon>
-                      <IconPlay class="size-4 text-foreground-2" />
-                    </template>
-                  </LayoutSidebarMenuGroupItem>
-                  <WorkspaceExplainerVideoDialog
-                    v-model:open="showExplainerVideoDialog"
-                  />
-                </div>
               </LayoutSidebarMenuGroup>
 
               <LayoutSidebarMenuGroup title="Resources" collapsible>
@@ -154,11 +140,25 @@
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
+
+                <div v-if="isWorkspacesEnabled">
+                  <LayoutSidebarMenuGroupItem
+                    label="Getting started"
+                    @click="openExplainerVideoDialog"
+                  >
+                    <template #icon>
+                      <IconPlay class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                  <WorkspaceExplainerVideoDialog
+                    v-model:open="showExplainerVideoDialog"
+                  />
+                </div>
               </LayoutSidebarMenuGroup>
             </div>
           </LayoutSidebarMenu>
-          <template v-if="showIntelligenceCommunityStandUpPromo" #promo>
-            <DashboardIntelligencePromo />
+          <template v-if="showSpeckleCon25Promo" #promo>
+            <DashboardSpeckleConPromo />
           </template>
         </LayoutSidebar>
       </div>
@@ -189,6 +189,7 @@ import { graphql } from '~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import dayjs from 'dayjs'
 import { useActiveUserMeta } from '~/lib/user/composables/meta'
+import { LayoutDashboard } from 'lucide-vue-next'
 
 const dashboardSidebarQuery = graphql(`
   query DashboardSidebar {
@@ -233,14 +234,14 @@ const { result: permissionsResult } = useQuery(
 const { result } = useQuery(dashboardSidebarQuery, () => ({}), {
   enabled: isWorkspacesEnabled.value
 })
-const { hasDismissedIntelligenceCommunityStandUpBanner } = useActiveUserMeta()
+const { hasDismissedSpeckleCon25Banner } = useActiveUserMeta()
 
 const isOpenMobile = ref(false)
 const showExplainerVideoDialog = ref(false)
 
-const showIntelligenceCommunityStandUpPromo = computed(() => {
-  if (hasDismissedIntelligenceCommunityStandUpBanner.value) return false
-  return dayjs().isBefore('2025-09-10', 'day')
+const showSpeckleCon25Promo = computed(() => {
+  if (hasDismissedSpeckleCon25Banner.value) return false
+  return dayjs().isBefore('2025-11-07', 'day')
 })
 const activeWorkspace = computed(() => result.value?.activeUser?.activeWorkspace)
 const canListDashboards = computed(() => {

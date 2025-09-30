@@ -4,6 +4,9 @@ import { DashboardContext, MaybeUserContext } from '../../domain/context.js'
 import {
   DashboardNotFoundError,
   DashboardsNotEnabledError,
+  ServerNoAccessError,
+  ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceNotEnoughPermissionsError,
   WorkspacePlanNoFeatureAccessError
 } from '../../domain/authErrors.js'
@@ -14,9 +17,11 @@ import {
 } from '../../fragments/dashboards.js'
 import { hasMinimumWorkspaceRole } from '../../checks/workspaceRole.js'
 import { Roles } from '../../../core/constants.js'
+import { ensureMinimumServerRoleFragment } from '../../fragments/server.js'
 
 type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getEnv
+  | typeof AuthCheckContextLoaderKeys.getServerRole
   | typeof AuthCheckContextLoaderKeys.getDashboard
   | typeof AuthCheckContextLoaderKeys.getWorkspaceRole
   | typeof AuthCheckContextLoaderKeys.getWorkspacePlan
@@ -26,6 +31,9 @@ type PolicyArgs = MaybeUserContext & DashboardContext
 type PolicyErrors = InstanceType<
   | typeof DashboardsNotEnabledError
   | typeof DashboardNotFoundError
+  | typeof ServerNoSessionError
+  | typeof ServerNoAccessError
+  | typeof ServerNotEnoughPermissionsError
   | typeof WorkspaceNotEnoughPermissionsError
   | typeof WorkspacePlanNoFeatureAccessError
 >
@@ -37,6 +45,11 @@ export const canReadDashboardPolicy: AuthPolicy<
 > =
   (loaders) =>
   async ({ userId, dashboardId }) => {
+    const ensuredServerRole = await ensureMinimumServerRoleFragment(loaders)({
+      userId,
+      role: Roles.Server.User
+    })
+    if (ensuredServerRole.isErr) return err(ensuredServerRole.error)
     const isDashboardsEnabled = await ensureDashboardsEnabledFragment(loaders)({})
     if (isDashboardsEnabled.isErr) return err(isDashboardsEnabled.error)
 

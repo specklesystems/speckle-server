@@ -712,9 +712,10 @@ export function useFilterUtilities(
       isApplied: boolean
       selectedValues: string[]
       id: string
-      condition: 'AND' | 'OR'
+      condition: FilterCondition
     }>
     activeColorFilterId: string | null
+    filterLogic?: FilterLogic
   } | null>(null)
 
   /**
@@ -726,9 +727,10 @@ export function useFilterUtilities(
       isApplied: boolean
       selectedValues: string[]
       id: string
-      condition: 'AND' | 'OR'
+      condition: FilterCondition
     }>,
-    activeColorFilterId: string | null
+    activeColorFilterId: string | null,
+    filterLogic?: FilterLogic
   ) => {
     if (!serializedFilters?.length) return
 
@@ -740,11 +742,22 @@ export function useFilterUtilities(
     if (availableProperties.length > 0) {
       applyFiltersFromSerialized(serializedFilters, availableProperties)
       filters.activeColorFilterId.value = activeColorFilterId
+
+      if (filterLogic) {
+        const logicValue =
+          typeof filterLogic === 'string'
+            ? filterLogic === 'any'
+              ? FilterLogic.Any
+              : FilterLogic.All
+            : filterLogic
+        dataStore.setFilterLogic(logicValue)
+      }
     } else {
       // Store filters to restore later when data store is ready
       pendingFiltersToRestore.value = {
         filters: serializedFilters,
-        activeColorFilterId
+        activeColorFilterId,
+        filterLogic
       }
     }
   }
@@ -758,7 +771,7 @@ export function useFilterUtilities(
       isApplied: boolean
       selectedValues: string[]
       id: string
-      condition: 'AND' | 'OR'
+      condition: FilterCondition
     }>,
     availableProperties: ExtendedPropertyInfo[]
   ) => {
@@ -769,6 +782,8 @@ export function useFilterUtilities(
         )
         if (propertyInfo) {
           const filterId = addActiveFilter(propertyInfo, serializedFilter.id)
+
+          updateFilterCondition(filterId, serializedFilter.condition)
 
           if (serializedFilter.selectedValues?.length) {
             updateActiveFilterValues(filterId, serializedFilter.selectedValues)
@@ -905,6 +920,17 @@ export function useFilterUtilities(
       if (pendingFiltersToRestore.value.activeColorFilterId) {
         filters.activeColorFilterId.value =
           pendingFiltersToRestore.value.activeColorFilterId
+      }
+
+      if (pendingFiltersToRestore.value.filterLogic) {
+        const filterLogic = pendingFiltersToRestore.value.filterLogic
+        const logicValue =
+          typeof filterLogic === 'string'
+            ? filterLogic === 'any'
+              ? FilterLogic.Any
+              : FilterLogic.All
+            : filterLogic
+        dataStore.setFilterLogic(logicValue)
       }
 
       pendingFiltersToRestore.value = null

@@ -37,8 +37,8 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { useFilterColoringHelpers } from '~/lib/viewer/composables/filtering/coloringHelpers'
 import type { NumericPropertyInfo } from '@speckle/viewer'
 import { containsAll } from '~~/lib/common/helpers/utils'
 import type { Automate } from '@speckle/shared'
@@ -55,29 +55,30 @@ const props = defineProps<{
 
 const {
   viewer: {
-    metadata: { filteringState, filteringDataStore }
+    metadata: { filteringDataStore }
   }
 } = useInjectedViewerState()
 
-const { isolateObjects, resetFilters, addActiveFilter, toggleFilterApplied, filters } =
-  useFilterUtilities()
-const { setSelectionFromObjectIds, clearSelection } = useSelectionUtilities()
+const { isolateObjects, resetFilters, addActiveFilter, filters } = useFilterUtilities()
+const { setColorFilter, removeColorFilter } = useFilterColoringHelpers()
 
 const hasMetadataGradient = computed(() => {
   if (props.result.metadata?.gradient) return true
   return false
 })
 
-const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
 const isIsolated = computed(() => {
-  if (!isolatedObjects.value?.length) return false
-  if (
-    props.functionId &&
-    filteringState.value?.activePropFilterKey === props.functionId
-  )
-    return false
+  // Gradient results show active via metadataGradientIsSet
+  if (hasMetadataGradient.value) {
+    return metadataGradientIsSet.value
+  }
+
+  // Non-gradient results show active if their objects are isolated
+  const isolatedIds = filters.isolatedObjectIds.value
   const ids = resultObjectIds.value
-  return containsAll(ids, isolatedObjects.value)
+
+  if (!isolatedIds?.length) return false
+  return containsAll(ids, isolatedIds)
 })
 
 const resultObjectIds = computed(() => {
@@ -90,20 +91,19 @@ const handleClick = () => {
     setOrUnsetGradient()
     return
   }
-
   isolateOrUnisolateObjects()
 }
 
 const isolateOrUnisolateObjects = () => {
   const ids = resultObjectIds.value
-  const isCurrentlyIsolated = isIsolated.value
+  const wasIsolated = containsAll(ids, filters.isolatedObjectIds.value || [])
 
   resetFilters()
-  if (isCurrentlyIsolated) {
-    clearSelection()
-  } else {
+  removeColorFilter()
+  metadataGradientIsSet.value = false
+
+  if (!wasIsolated) {
     isolateObjects(ids)
-    setSelectionFromObjectIds(ids)
   }
 }
 
@@ -156,9 +156,11 @@ const computedFilterData = computed((): NumericFilterData | undefined => {
 const setOrUnsetGradient = () => {
   if (metadataGradientIsSet.value) {
     resetFilters()
+    removeColorFilter()
     metadataGradientIsSet.value = false
     return
   }
+
   resetFilters()
   if (!props.result.metadata) return
   if (!computedPropInfo.value) return
@@ -169,7 +171,8 @@ const setOrUnsetGradient = () => {
 
   metadataGradientIsSet.value = true
   const filterId = addActiveFilter(computedPropInfo.value)
-  toggleFilterApplied(filterId)
+
+  setColorFilter(filterId)
 }
 
 const iconAndColor = computed(() => {

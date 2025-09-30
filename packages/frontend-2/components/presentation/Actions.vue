@@ -1,102 +1,53 @@
 <template>
   <div
-    class="bg-foundation border border-outline-3 rounded-xl shadow-md h-10 flex items-center"
+    class="bg-foundation border border-outline-3 rounded-xl shadow-md flex items-center h-10"
   >
     <div class="flex items-center justify-between space-x-1 p-1">
-      <FormButton
-        v-if="!isPresentMode"
-        :icon-left="LucidePlay"
-        @click="emit('togglePresentMode')"
-      >
-        Present
-      </FormButton>
+      <FormButton v-if="isLoggedIn" @click="showShareDialog = true">Share</FormButton>
 
-      <LayoutMenu
-        v-model:open="showMenu"
-        :items="menuItems"
-        :menu-id="menuId"
-        mount-menu-on-body
-        @chosen="onActionChosen"
+      <PresentationFloatingPanelButton
+        class="hidden md:flex touch:hidden"
+        @click="toggleFullscreen"
       >
-        <PresentationFloatingPanelButton @click="showMenu = !showMenu">
-          <LucideEllipsis class="size-4" />
-        </PresentationFloatingPanelButton>
-      </LayoutMenu>
-
-      <PresentationFloatingPanelButton v-if="isPresentMode" @click="toggleFullscreen">
-        <LucideFullscreen class="size-4" />
+        <LucideMinimize
+          v-if="isFullscreen"
+          :size="16"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+        />
+        <LucideMaximize
+          v-else
+          :size="16"
+          :stroke-width="1.5"
+          :absolute-stroke-width="true"
+        />
       </PresentationFloatingPanelButton>
 
       <PresentationFloatingPanelButton
         :is-active="isSidebarOpen"
         @click="emit('toggleSidebar')"
       >
-        <LucideInfo class="size-4" />
+        <LucideInfo :size="16" :stroke-width="1.5" :absolute-stroke-width="true" />
       </PresentationFloatingPanelButton>
     </div>
+
+    <PresentationShareDialog v-model:open="showShareDialog" />
   </div>
 </template>
 
 <script setup lang="ts">
-import {
-  LucideInfo,
-  LucideFullscreen,
-  LucidePlay,
-  LucideEllipsis
-} from 'lucide-vue-next'
-import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
-import { presentationRoute } from '~/lib/common/helpers/route'
-
-const { copy } = useClipboard()
-const { triggerNotification } = useGlobalToast()
-
-const props = defineProps<{
-  presentationId?: string
-}>()
-
-enum MenuItems {
-  CopyLink = 'copy-link',
-  CopyPublicLink = 'copy-public-link'
-}
+import { LucideInfo, LucideMaximize, LucideMinimize } from 'lucide-vue-next'
 
 const emit = defineEmits<{
   (e: 'toggleSidebar'): void
-  (e: 'togglePresentMode'): void
 }>()
 
 const isSidebarOpen = defineModel<boolean>('is-sidebar-open')
-const isPresentMode = defineModel<boolean>('is-present-mode')
 
-const showMenu = ref(false)
-const menuId = useId()
+const { isLoggedIn } = useActiveUser()
 
-const menuItems = computed<LayoutMenuItem[][]>(() => [
-  [
-    {
-      title: 'Copy link',
-      id: MenuItems.CopyLink
-    }
-  ],
-  [
-    {
-      title: 'Copy public link',
-      id: MenuItems.CopyPublicLink
-    }
-  ]
-])
-
-const onActionChosen = async (params: { item: LayoutMenuItem }) => {
-  const { item } = params
-
-  switch (item.id) {
-    case MenuItems.CopyLink:
-      onCopyLink()
-      break
-    case MenuItems.CopyPublicLink:
-      onCopyPublicLink()
-      break
-  }
-}
+const isFullscreen = ref(false)
+const showShareDialog = ref(false)
 
 const toggleFullscreen = () => {
   if (!document.fullscreenElement) {
@@ -106,45 +57,15 @@ const toggleFullscreen = () => {
   }
 }
 
-const onCopyLink = async () => {
-  if (import.meta.server) return
-  const url = presentationRoute(props.presentationId)
-  if (!url) return
-
-  try {
-    await copy(new URL(url, window.location.origin).toString())
-  } catch (e) {
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Link copy failed'
-    })
-    throw e
-  }
-
-  triggerNotification({
-    type: ToastNotificationType.Info,
-    title: 'Copied link'
-  })
+const handleFullscreenChange = () => {
+  isFullscreen.value = !!document.fullscreenElement
 }
 
-const onCopyPublicLink = async () => {
-  if (import.meta.server) return
-  const url = presentationRoute(props.presentationId)
-  if (!url) return
+onMounted(() => {
+  document.addEventListener('fullscreenchange', handleFullscreenChange)
+})
 
-  try {
-    await copy(new URL(url, window.location.origin).toString())
-  } catch (e) {
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Public link copy failed'
-    })
-    throw e
-  }
-
-  triggerNotification({
-    type: ToastNotificationType.Info,
-    title: 'Copied public link'
-  })
-}
+onUnmounted(() => {
+  document.removeEventListener('fullscreenchange', handleFullscreenChange)
+})
 </script>

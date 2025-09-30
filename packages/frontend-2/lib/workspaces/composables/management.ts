@@ -476,10 +476,19 @@ export const useWorkspaceUpdateRole = () => {
               }
             )
           }
+
           modifyObjectField(
             cache,
             getCacheId('Workspace', input.workspaceId),
             'teamByRole',
+            ({ helpers: { evict } }) => {
+              return evict()
+            }
+          )
+          modifyObjectField(
+            cache,
+            getCacheId('Workspace', input.workspaceId),
+            'team',
             ({ helpers: { evict } }) => {
               return evict()
             }
@@ -559,6 +568,14 @@ export const useWorkspaceUpdateSeatType = () => {
             getCacheId('WorkspaceCollaborator', input.userId),
             'seatType',
             () => input.seatType
+          )
+          modifyObjectField(
+            cache,
+            getCacheId('Workspace', input.workspaceId),
+            'team',
+            ({ helpers: { evict } }) => {
+              return evict()
+            }
           )
         }
       }

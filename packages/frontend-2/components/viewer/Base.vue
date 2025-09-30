@@ -7,7 +7,7 @@
 </template>
 <script setup lang="ts">
 import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
-import { useCommentContext } from '~~/lib/viewer/composables/commentManagement'
+import { useResizeObserver } from '@vueuse/core'
 
 const rendererparent = ref<HTMLElement>()
 const {
@@ -15,8 +15,6 @@ const {
   container,
   init: { promise: isInitializedPromise }
 } = useInjectedViewer()
-
-const { cleanupThreadContext } = useCommentContext()
 
 onMounted(async () => {
   if (!import.meta.client) return
@@ -26,14 +24,16 @@ onMounted(async () => {
   rendererparent.value?.appendChild(container)
 
   viewer.resize()
-  // Not needed
-  // viewer.cameraHandler.onWindowResize()
 })
 
 onBeforeUnmount(() => {
   if (!import.meta.client) return
   container.style.display = 'none'
-  cleanupThreadContext()
   document.body.appendChild(container)
+})
+
+useResizeObserver(rendererparent, () => {
+  if (!import.meta.client) return
+  viewer.resize()
 })
 </script>

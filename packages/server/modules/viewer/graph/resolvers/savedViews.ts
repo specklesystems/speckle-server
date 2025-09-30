@@ -15,17 +15,23 @@ import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { LogicError, NotFoundError, NotImplementedError } from '@/modules/shared/errors'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
-import { buildDefaultGroupId } from '@/modules/viewer/helpers/savedViews'
+import {
+  buildDefaultGroupId,
+  getPreviewUrl,
+  getThumbnailUrl
+} from '@/modules/viewer/helpers/savedViews'
 import {
   deleteSavedViewGroupRecordFactory,
   deleteSavedViewRecordFactory,
   getGroupSavedViewsPageItemsFactory,
   getGroupSavedViewsTotalCountFactory,
+  getNewViewSpecificPositionFactory,
   getProjectSavedViewGroupsPageItemsFactory,
   getProjectSavedViewGroupsTotalCountFactory,
   getStoredViewCountFactory,
   getStoredViewGroupCountFactory,
   getUngroupedSavedViewsGroupFactory,
+  rebalancingViewPositionsFactory,
   recalculateGroupResourceIdsFactory,
   setNewHomeViewFactory,
   storeSavedViewFactory,
@@ -57,6 +63,7 @@ import {
 } from '@/modules/viewer/repositories/dataLoaders/savedViews'
 import type { RequestDataLoaders } from '@/modules/core/loaders'
 import { omit } from 'lodash-es'
+import { downscaleScreenshotForThumbnailFactory } from '@/modules/viewer/services/savedViewPreviews'
 
 const buildGetViewerResourceGroups = (params: {
   projectDb: Knex
@@ -236,6 +243,18 @@ const resolvers: Resolvers = {
       }
 
       return group
+    },
+    previewUrl(parent) {
+      return getPreviewUrl({
+        projectId: parent.projectId,
+        viewId: parent.id
+      })
+    },
+    thumbnailUrl(parent) {
+      return getThumbnailUrl({
+        projectId: parent.projectId,
+        viewId: parent.id
+      })
     }
   },
   SavedViewGroup: {
@@ -310,7 +329,12 @@ const resolvers: Resolvers = {
         }),
         setNewHomeView: setNewHomeViewFactory({
           db: projectDb
-        })
+        }),
+        getNewViewSpecificPosition: getNewViewSpecificPositionFactory({
+          db: projectDb
+        }),
+        rebalanceViewPositions: rebalancingViewPositionsFactory({ db: projectDb }),
+        downscaleScreenshotForThumbnail: downscaleScreenshotForThumbnailFactory()
       })
       return await createSavedView({ input: args.input, authorId: ctx.userId! })
     },
@@ -357,23 +381,33 @@ const resolvers: Resolvers = {
         resourceAccessRules: ctx.resourceAccessRules
       })
 
+      // Different keys have different auth checks
       const updates = omit(args.input, 'id', 'projectId')
-      const isJustMove = Object.keys(updates).length === 1 && 'groupId' in updates
-      if (isJustMove) {
-        const canMove = await ctx.authPolicies.project.savedViews.canMove({
-          userId: ctx.userId,
-          projectId,
-          savedViewId: args.input.id
-        })
-        throwIfAuthNotOk(canMove)
-      } else {
-        const canUpdate = await ctx.authPolicies.project.savedViews.canUpdate({
-          userId: ctx.userId,
-          projectId,
-          savedViewId: args.input.id
-        })
-        throwIfAuthNotOk(canUpdate)
+      const updatePolicyMap: Partial<
+        Record<
+          keyof typeof updates,
+          Extract<
+            keyof typeof ctx.authPolicies.project.savedViews,
+            'canMove' | 'canUpdate' | 'canEditTitle' | 'canEditDescription'
+          >
+        >
+      > = {
+        groupId: 'canMove',
+        name: 'canEditTitle',
+        description: 'canEditDescription',
+        position: 'canMove'
       }
+      const results = await Promise.all(
+        Object.keys(updates).map((key) => {
+          const policyKey = updatePolicyMap[key as keyof typeof updates] || 'canUpdate'
+          return ctx.authPolicies.project.savedViews[policyKey]({
+            userId: ctx.userId,
+            projectId,
+            savedViewId: args.input.id
+          })
+        })
+      )
+      results.forEach(throwIfAuthNotOk)
 
       const updateSavedView = updateSavedViewFactory({
         getViewerResourceGroups: buildGetViewerResourceGroups({
@@ -390,7 +424,12 @@ const resolvers: Resolvers = {
         }),
         setNewHomeView: setNewHomeViewFactory({
           db: projectDb
-        })
+        }),
+        rebalanceViewPositions: rebalancingViewPositionsFactory({ db: projectDb }),
+        getNewViewSpecificPosition: getNewViewSpecificPositionFactory({
+          db: projectDb
+        }),
+        downscaleScreenshotForThumbnail: downscaleScreenshotForThumbnailFactory()
       })
 
       const updatedView = await updateSavedView({

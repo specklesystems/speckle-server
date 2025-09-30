@@ -39,9 +39,12 @@ type SavedView {
   """
   viewerState: JSONObject!
   """
-  Encoded screenshot of the view
+  Encoded screenshot of the view. Can be a very large value, its preferred you
+  use the thumbnailUrl or previewUrl fields to load the image from a separate endpoint
   """
-  screenshot: String!
+  screenshot: String! @deprecated(reason: "Use thumbnailUrl or previewUrl instead")
+  thumbnailUrl: String!
+  previewUrl: String!
   """
   For figuring out position in the group
   """
@@ -72,8 +75,8 @@ input SavedViewGroupViewsInput {
   """
   sortDirection: SortDirection
   """
-  Optionally specify sort by field. Default: updatedAt
-  Options: updatedAt, createdAt, name
+  Optionally specify sort by field. Default: position
+  Options: updatedAt, createdAt, name, position
   """
   sortBy: String
   limit: Int
@@ -163,6 +166,7 @@ input CreateSavedViewInput {
   Set visibility of the view. Default: public
   """
   visibility: SavedViewVisibility
+  position: ViewPositionInput
 }
 
 input CreateSavedViewGroupInput {
@@ -182,6 +186,26 @@ input DeleteSavedViewGroupInput {
 input DeleteSavedViewInput {
   id: ID!
   projectId: ID!
+}
+
+enum ViewPositionInputType {
+  between
+}
+
+"""
+If only one is set, the other will be resolved automatically
+If none are set, the view will be added to the end of the list
+"""
+input ViewPositionInput {
+  type: ViewPositionInputType!
+  """
+  The ID of the view that should be after the new position
+  """
+  afterViewId: ID
+  """
+  The ID of the view that should be before the new position
+  """
+  beforeViewId: ID
 }
 
 input UpdateSavedViewInput {
@@ -218,6 +242,7 @@ input UpdateSavedViewInput {
   Optionally change visibility of the view
   """
   visibility: SavedViewVisibility
+  position: ViewPositionInput
 }
 
 input UpdateSavedViewGroupInput {
