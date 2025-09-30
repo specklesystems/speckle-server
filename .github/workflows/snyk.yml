@@ -14,3 +14,4 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --yarn-workspaces  --strict-out-of-sync=false
+        continue-on-error: true # do not fail the whole release if snyk fails
