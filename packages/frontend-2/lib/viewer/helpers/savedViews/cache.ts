@@ -49,6 +49,7 @@ const resolveCacheGroupKeys = (
   metadata: {
     resourceIds: string[]
   }
+  isUngrouped: boolean
 }> => {
   const { cache, projectId } = params
   if ('group' in params) {
@@ -60,19 +61,21 @@ const resolveCacheGroupKeys = (
       {
         key: getCacheKey('SavedViewGroup', group.id),
         id: group.id,
-        metadata: { resourceIds: group.resourceIds }
+        metadata: { resourceIds: group.resourceIds },
+        isUngrouped: false
       }
     ]
   }
 
   const viewResourceIds = params.view.resourceIds
   const allGroupCacheKeys = getCachedObjectKeys(cache, 'SavedViewGroup')
-  const relevantKeys: Array<{
+  const ret: Array<{
     key: ApolloCacheObjectKey<'SavedViewGroup'>
     id: string
     metadata: {
       resourceIds: string[]
     }
+    isUngrouped: boolean
   }> = []
   for (const groupKey of allGroupCacheKeys) {
     const { id } = parseObjectKey(groupKey)
@@ -85,11 +88,11 @@ const resolveCacheGroupKeys = (
     const viewGroupResourceIds = formatResourceIdsForGroup(viewResourceIds)
     const hasMatch = intersection(groupResourceIds, viewGroupResourceIds).length > 0
     if (hasMatch) {
-      relevantKeys.push({ key: groupKey, metadata: defaultGroup, id })
+      ret.push({ key: groupKey, metadata: defaultGroup, id, isUngrouped: true })
     }
   }
 
-  return relevantKeys
+  return ret
 }
 
 /**
@@ -115,7 +118,7 @@ export const onNewGroupViewCacheUpdates = (
     cache,
     getCacheId('Project', projectId),
     'savedViewGroups',
-    ({ helpers: { createUpdatedValue, keyToRef }, value, variables }) => {
+    ({ helpers: { createUpdatedValue, keyToRef, fromRef }, value, variables }) => {
       if (!value.items?.length) return // no groups query at all? skip
 
       /**
@@ -123,13 +126,17 @@ export const onNewGroupViewCacheUpdates = (
        * - 2. If not and vars.resourceIds match w/ new group resourceIds, then add
        */
       const existingGroupKeys = value.items!.map((i) => i.__ref)
+      const hasUngroupedAlready = value.items.some((i) =>
+        isUngroupedGroup(fromRef(i).id)
+      )
       const groupsResourceIds = formatResourceIdsForGroup(
         variables.input.resourceIdString
       )
 
       const newGroupKeys = groupKeys
         .filter((k) => {
-          if (existingGroupKeys.includes(k.key) || isUngroupedGroup(k.id)) return false // already exists
+          if (k.isUngrouped && hasUngroupedAlready) return false // ungrouped already exists
+          if (existingGroupKeys.includes(k.key)) return false // already exists
           const hasMatch =
             intersection(groupsResourceIds, k.metadata.resourceIds).length > 0
           if (!hasMatch) return false // resourceIds don't match
@@ -139,14 +146,16 @@ export const onNewGroupViewCacheUpdates = (
         .map((g) => g.key)
       if (!newGroupKeys.length) return
 
+      const newUngrouped = newGroupKeys.filter((k) =>
+        isUngroupedGroup(parseObjectKey(k).id)
+      )
+      const newGrouped = newGroupKeys.filter(
+        (k) => !isUngroupedGroup(parseObjectKey(k).id)
+      )
+      const extraCount = newGroupKeys.length
+
       return createUpdatedValue(({ update }) => {
-        const newUngrouped = newGroupKeys.filter((k) =>
-          isUngroupedGroup(parseObjectKey(k).id)
-        )
-        const newGrouped = newGroupKeys.filter(
-          (k) => !isUngroupedGroup(parseObjectKey(k).id)
-        )
-        update('totalCount', (count) => count + 1)
+        update('totalCount', (count) => count + extraCount)
         update('items', (items) => [
           ...newGrouped.map((k) => keyToRef(k)),
           ...items,
@@ -197,10 +206,9 @@ export const onGroupViewRemovalCacheUpdates = (
   const { viewId: id, projectId, cache } = params
   const groupKeys = resolveCacheGroupKeys(params)
 
-  // TODO: Match up resourceIds
-  for (const { key: groupKey, id: groupId } of groupKeys) {
+  for (const { key: groupKey, id: groupId, isUngrouped } of groupKeys) {
     // Check if default/ungrouped group
-    const isDefaultGroup = isUngroupedGroup(groupId)
+    const isDefaultGroup = isUngrouped
 
     // If default group and its now empty - remove it as it doesn't exist otherwise
     let shouldEvict

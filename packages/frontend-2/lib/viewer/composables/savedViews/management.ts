@@ -172,8 +172,11 @@ graphql(`
   fragment UseDeleteSavedView_SavedView on SavedView {
     id
     projectId
+    resourceIds
     group {
       id
+      groupId
+      resourceIds
     }
   }
 `)
@@ -185,7 +188,7 @@ export const useDeleteSavedView = () => {
 
   return async (params: { view: UseDeleteSavedView_SavedViewFragment }) => {
     const { id, projectId } = params.view
-    const groupId = params.view.group.id
+    const group = params.view.group
 
     if (!id || !projectId || !isLoggedIn.value) {
       return
@@ -202,10 +205,22 @@ export const useDeleteSavedView = () => {
         update: (cache, res) => {
           if (!res.data?.projectMutations.savedViewMutations.deleteView) return
 
-          onGroupViewRemovalCacheUpdates(cache, {
+          onGroupViewRemovalCacheUpdates({
+            cache,
             viewId: id,
-            groupId,
-            projectId
+            projectId,
+            ...(group.groupId
+              ? {
+                  group: {
+                    id: group.groupId,
+                    resourceIds: group.resourceIds
+                  }
+                }
+              : {
+                  view: {
+                    resourceIds: params.view.resourceIds
+                  }
+                })
           })
 
           // Remove the view from the cache
@@ -241,6 +256,7 @@ const updateSavedViewMutation = graphql(`
           id
           ...ViewerSavedViewsPanelView_SavedView
           ...UseViewerSavedViewSetup_SavedView
+          ...UseUpdateSavedView_SavedView
           group {
             id
             ...ViewerSavedViewsPanelViewsGroup_SavedViewGroup
@@ -257,8 +273,11 @@ graphql(`
     projectId
     isHomeView
     groupResourceIds
+    resourceIds
     group {
       id
+      groupId
+      resourceIds
     }
   }
 `)
@@ -295,8 +314,7 @@ export const useUpdateSavedView = () => {
   ) => {
     if (!isLoggedIn.value) return
     const { input } = params
-
-    const oldGroupId = params.view.group.id
+    const oldGroup = params.view.group
 
     const result = await mutate(
       { input },
@@ -305,35 +323,47 @@ export const useUpdateSavedView = () => {
           const update = res.data?.projectMutations.savedViewMutations.updateView
           if (!update) return
 
-          const newGroupId = update.group.id
-          const groupChanged = oldGroupId !== newGroupId
+          const newGroup = update.group
+          const groupChanged = oldGroup.id !== newGroup.id
           if (groupChanged) {
             // Clean up old group
-            onGroupViewRemovalCacheUpdates(cache, {
+            onGroupViewRemovalCacheUpdates({
+              cache,
               viewId: params.view.id,
-              groupId: oldGroupId,
-              projectId: params.view.projectId
+              projectId: params.view.projectId,
+              ...(oldGroup.groupId
+                ? {
+                    group: {
+                      id: oldGroup.groupId,
+                      resourceIds: oldGroup.resourceIds
+                    }
+                  }
+                : {
+                    view: {
+                      resourceIds: params.view.resourceIds
+                    }
+                  })
             })
+
             // Update new group
-            onNewGroupViewCacheUpdates(cache, {
+            onNewGroupViewCacheUpdates({
+              cache,
               viewId: update.id,
-              groupId: newGroupId,
-              projectId: params.view.projectId
+              projectId: params.view.projectId,
+              ...(newGroup.groupId
+                ? {
+                    group: {
+                      id: newGroup.groupId,
+                      resourceIds: newGroup.resourceIds
+                    }
+                  }
+                : {
+                    view: {
+                      resourceIds: params.view.resourceIds
+                    }
+                  })
             })
           }
-
-          // W/ current filter setup, if u can change visibility, you're gonna see it in all filtered groups
-          // const newVisibility = update.visibility
-          // const visibilityChanged = oldVisibility !== newVisibility
-          // if (visibilityChanged) {
-          //   // Update all SavedViewGroup.views to see if it now should appear in there or not
-          //   modifyObjectField(
-          //     cache,
-          //     getCacheId('SavedViewGroup', newGroupId),
-          //     'views',
-          //     ({ helpers: { evict } }) => evict()
-          //   )
-          // }
 
           // If set to home view, clear home view on all other views related to the same resourceIdString
           if (update.isHomeView && update.groupResourceIds.length === 1) {
