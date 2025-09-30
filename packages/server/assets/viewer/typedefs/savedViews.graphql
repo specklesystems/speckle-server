@@ -39,9 +39,12 @@ type SavedView {
   """
   viewerState: JSONObject!
   """
-  Encoded screenshot of the view
+  Encoded screenshot of the view. Can be a very large value, its preferred you
+  use the thumbnailUrl or previewUrl fields to load the image from a separate endpoint
   """
-  screenshot: String!
+  screenshot: String! @deprecated(reason: "Use thumbnailUrl or previewUrl instead")
+  thumbnailUrl: String!
+  previewUrl: String!
   """
   For figuring out position in the group
   """
