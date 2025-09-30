@@ -167,6 +167,16 @@ describe('BatchingQueue', () => {
 
     expect(processFunction).toHaveBeenCalled()
     expect(queue.count()).toBe(0)
-    expect(queue.isDisposed()).toBe(true)
+    expect(queue.isDisposed()).toBe(false)
+    expect(queue.isErrored()).toBe(true)
+    // Add more items after the exception
+    queue.add('key3', { id: `item-3` })
+    queue.add('key4', { id: `item-4` })
+
+    // Wait to see if second batch gets processed (it shouldn't due to errored state)
+    await new Promise((resolve) => setTimeout(resolve, 200))
+
+    expect(queue.count()).toBe(0) // Items were not added due to errored state
+    await queue.disposeAsync()
   })
 })

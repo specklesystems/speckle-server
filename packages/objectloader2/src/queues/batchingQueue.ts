@@ -47,6 +47,7 @@ export default class BatchingQueue<T> {
   }
 
   async disposeAsync(): Promise<void> {
+    if (this.#isDisposed) return
     this.#isDisposed = true
     if (this.#timeoutId) {
       this.#getClearTimeoutFn()(this.#timeoutId)
