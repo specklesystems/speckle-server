@@ -1314,6 +1314,7 @@ export type DeleteVersionsInput = {
 export type DeletedSavedView = {
   __typename?: 'DeletedSavedView';
   groupId?: Maybe<Scalars['ID']['output']>;
+  groupResourceIds: Array<Scalars['String']['output']>;
   resourceIds: Array<Scalars['String']['output']>;
 };
 
@@ -7632,6 +7633,7 @@ export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversT
 
 export type DeletedSavedViewResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DeletedSavedView'] = ResolversParentTypes['DeletedSavedView']> = {
   groupId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  groupResourceIds?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   resourceIds?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

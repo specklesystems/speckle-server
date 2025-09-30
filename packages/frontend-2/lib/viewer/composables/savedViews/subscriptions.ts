@@ -7,6 +7,11 @@ import {
   onNewGroupViewCacheUpdates
 } from '~/lib/viewer/helpers/savedViews/cache'
 
+/**
+ * For group updates: TODO:
+ * - What if empty group of other person - shouldnt show up
+ */
+
 const onProjectSavedViewsUpdatedSubscription = graphql(`
   subscription OnProjectSavedViewsUpdated($projectId: ID!) {
     projectSavedViewsUpdated(projectId: $projectId) {
@@ -14,17 +19,26 @@ const onProjectSavedViewsUpdatedSubscription = graphql(`
       id
       savedView {
         id
+        resourceIds
+        group {
+          id
+          groupId
+          resourceIds
+        }
         ...ViewerSavedViewsPanelView_SavedView
       }
       deletedSavedView {
         groupId
         resourceIds
+        groupResourceIds
       }
     }
   }
 `)
 
-const useOnProjectSavedViewsUpdated = (params: { projectId: MaybeRef<string> }) => {
+export const useOnProjectSavedViewsUpdated = (params: {
+  projectId: MaybeRef<string>
+}) => {
   const { projectId } = params
 
   const apollo = useApolloClient().client
@@ -45,28 +59,51 @@ const useOnProjectSavedViewsUpdated = (params: { projectId: MaybeRef<string> }) 
 
     const event = res.data.projectSavedViewsUpdated
     const cache = apollo.cache
+    const deletedView = event.deletedSavedView
 
-    if (event.type === ProjectSavedViewsUpdatedMessageType.Deleted) {
+    if (event.type === ProjectSavedViewsUpdatedMessageType.Deleted && deletedView) {
+      onGroupViewRemovalCacheUpdates({
+        cache,
+        viewId: event.id,
+        projectId: unref(projectId),
+        ...(deletedView.groupId
+          ? {
+              group: {
+                id: deletedView.groupId,
+                resourceIds: deletedView.groupResourceIds
+              }
+            }
+          : {
+              view: {
+                resourceIds: deletedView.resourceIds
+              }
+            })
+      })
+
       cache.evict({
         id: getCacheId('SavedView', event.id)
       })
-
-      // onGroupViewRemovalCacheUpdates(cache, {
-      //   viewId: event.id,
-      //   groupId: event.groupId || null,
-      //   projectId: unref(projectId)
-      // })
     } else if (
       event.type === ProjectSavedViewsUpdatedMessageType.Created &&
       event.savedView
     ) {
-      // TODO: What if empty group of other person - shouldnt show up
-      // const groupId = event.groupId || null
-      // onNewGroupViewCacheUpdates(cache, {
-      //   viewId: event.id,
-      //   groupId,
-      //   projectId: unref(projectId)
-      // })
+      onNewGroupViewCacheUpdates({
+        cache,
+        viewId: event.id,
+        projectId: unref(projectId),
+        ...(event.savedView.group.groupId
+          ? {
+              group: {
+                id: event.savedView.group.groupId,
+                resourceIds: event.savedView.group.resourceIds
+              }
+            }
+          : {
+              view: {
+                resourceIds: event.savedView.resourceIds
+              }
+            })
+      })
     }
   })
 }

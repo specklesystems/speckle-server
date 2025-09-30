@@ -15,11 +15,7 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { useStateSerialization } from '~/lib/viewer/composables/serialization'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
-import {
-  filterKeys,
-  onGroupViewRemovalCacheUpdates,
-  onNewGroupViewCacheUpdates
-} from '~/lib/viewer/helpers/savedViews/cache'
+import { filterKeys } from '~/lib/viewer/helpers/savedViews/cache'
 import { isUngroupedGroup } from '@speckle/shared/saved-views'
 import {
   getCachedObjectKeys,
@@ -78,7 +74,6 @@ export const useCreateSavedView = () => {
   const { mutate } = useMutation(createSavedViewMutation)
   const { userId } = useActiveUser()
   const {
-    projectId,
     resources: {
       response: { project }
     }
@@ -107,25 +102,25 @@ export const useCreateSavedView = () => {
           const res = data?.projectMutations.savedViewMutations.createView
           if (!res) return
 
-          const viewId = res.id
+          // const viewId = res.id
 
-          onNewGroupViewCacheUpdates({
-            cache,
-            viewId,
-            projectId: projectId.value,
-            ...(res.groupId
-              ? {
-                  group: {
-                    id: res.groupId,
-                    resourceIds: res.group.resourceIds
-                  }
-                }
-              : {
-                  view: {
-                    resourceIds: res.resourceIds
-                  }
-                })
-          })
+          // onNewGroupViewCacheUpdates({
+          //   cache,
+          //   viewId,
+          //   projectId: projectId.value,
+          //   ...(res.groupId
+          //     ? {
+          //         group: {
+          //           id: res.groupId,
+          //           resourceIds: res.group.resourceIds
+          //         }
+          //       }
+          //     : {
+          //         view: {
+          //           resourceIds: res.resourceIds
+          //         }
+          //       })
+          // })
         }
       }
     ).catch(convertThrowIntoFetchResult)
@@ -188,8 +183,6 @@ export const useDeleteSavedView = () => {
 
   return async (params: { view: UseDeleteSavedView_SavedViewFragment }) => {
     const { id, projectId } = params.view
-    const group = params.view.group
-
     if (!id || !projectId || !isLoggedIn.value) {
       return
     }
@@ -205,26 +198,26 @@ export const useDeleteSavedView = () => {
         update: (cache, res) => {
           if (!res.data?.projectMutations.savedViewMutations.deleteView) return
 
-          onGroupViewRemovalCacheUpdates({
-            cache,
-            viewId: id,
-            projectId,
-            ...(group.groupId
-              ? {
-                  group: {
-                    id: group.groupId,
-                    resourceIds: group.resourceIds
-                  }
-                }
-              : {
-                  view: {
-                    resourceIds: params.view.resourceIds
-                  }
-                })
-          })
+          // onGroupViewRemovalCacheUpdates({
+          //   cache,
+          //   viewId: id,
+          //   projectId,
+          //   ...(group.groupId
+          //     ? {
+          //         group: {
+          //           id: group.groupId,
+          //           resourceIds: group.resourceIds
+          //         }
+          //       }
+          //     : {
+          //         view: {
+          //           resourceIds: params.view.resourceIds
+          //         }
+          //       })
+          // })
 
-          // Remove the view from the cache
-          cache.evict({ id: getCacheId('SavedView', id) })
+          // // Remove the view from the cache
+          // cache.evict({ id: getCacheId('SavedView', id) })
         }
       }
     ).catch(convertThrowIntoFetchResult)
@@ -327,42 +320,41 @@ export const useUpdateSavedView = () => {
           const groupChanged = oldGroup.id !== newGroup.id
           if (groupChanged) {
             // Clean up old group
-            onGroupViewRemovalCacheUpdates({
-              cache,
-              viewId: params.view.id,
-              projectId: params.view.projectId,
-              ...(oldGroup.groupId
-                ? {
-                    group: {
-                      id: oldGroup.groupId,
-                      resourceIds: oldGroup.resourceIds
-                    }
-                  }
-                : {
-                    view: {
-                      resourceIds: params.view.resourceIds
-                    }
-                  })
-            })
-
-            // Update new group
-            onNewGroupViewCacheUpdates({
-              cache,
-              viewId: update.id,
-              projectId: params.view.projectId,
-              ...(newGroup.groupId
-                ? {
-                    group: {
-                      id: newGroup.groupId,
-                      resourceIds: newGroup.resourceIds
-                    }
-                  }
-                : {
-                    view: {
-                      resourceIds: params.view.resourceIds
-                    }
-                  })
-            })
+            // onGroupViewRemovalCacheUpdates({
+            //   cache,
+            //   viewId: params.view.id,
+            //   projectId: params.view.projectId,
+            //   ...(oldGroup.groupId
+            //     ? {
+            //         group: {
+            //           id: oldGroup.groupId,
+            //           resourceIds: oldGroup.resourceIds
+            //         }
+            //       }
+            //     : {
+            //         view: {
+            //           resourceIds: params.view.resourceIds
+            //         }
+            //       })
+            // })
+            // // Update new group
+            // onNewGroupViewCacheUpdates({
+            //   cache,
+            //   viewId: update.id,
+            //   projectId: params.view.projectId,
+            //   ...(newGroup.groupId
+            //     ? {
+            //         group: {
+            //           id: newGroup.groupId,
+            //           resourceIds: newGroup.resourceIds
+            //         }
+            //       }
+            //     : {
+            //         view: {
+            //           resourceIds: params.view.resourceIds
+            //         }
+            //       })
+            // })
           }
 
           // If set to home view, clear home view on all other views related to the same resourceIdString

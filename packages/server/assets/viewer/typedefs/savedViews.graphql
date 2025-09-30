@@ -292,6 +292,7 @@ enum ProjectSavedViewsUpdatedMessageType {
 type DeletedSavedView {
   groupId: ID
   resourceIds: [String!]!
+  groupResourceIds: [String!]!
 }
 
 type ProjectSavedViewsUpdatedMessage {
