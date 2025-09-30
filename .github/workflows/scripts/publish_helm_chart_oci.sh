@@ -2,6 +2,10 @@
 
 set -eo pipefail
 
+if [[ -z "${IMAGE_PREFIX}" ]]; then
+  echo "IMAGE_PREFIX is not set"
+  exit 1
+fi
 if [[ -z "${IMAGE_VERSION_TAG}" ]]; then
   echo "IMAGE_VERSION_TAG is not set"
   exit 1
@@ -35,6 +39,18 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source "${SCRIPT_DIR}/common.sh"
 
 echo "📌 Releasing Helm Chart for application version ${IMAGE_VERSION_TAG} to 'oci://${HELM_REGISTRY_DOMAIN}/${HELM_REPOSITORY_PATH}/${CHART_NAME}:${RELEASE_VERSION}'"
+
+if [[ "${IMAGE_PREFIX}" != "speckle" ]]; then
+  yq e -i ".server.image = \"${IMAGE_PREFIX}/speckle-server:${IMAGE_VERSION_TAG}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
+  yq e -i ".objects.image = \"${IMAGE_PREFIX}/speckle-server:${IMAGE_VERSION_TAG}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
+  yq e -i ".frontend_2.image = \"${IMAGE_PREFIX}/speckle-frontend-2:${IMAGE_VERSION_TAG}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
+  yq e -i ".preview_service.image = \"${IMAGE_PREFIX}/speckle-preview-service:${IMAGE_VERSION_TAG}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
+  yq e -i ".webhook_service.image = \"${IMAGE_PREFIX}/speckle-webhook-service:${IMAGE_VERSION_TAG}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
+  yq e -i ".fileimport_service.image = \"${IMAGE_PREFIX}/speckle-fileimport-service:${IMAGE_VERSION_TAG}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
+  yq e -i ".ifc_import_service.image = \"${IMAGE_PREFIX}/speckle-ifc-import-service:${IMAGE_VERSION_TAG}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
+  yq e -i ".monitoring.image = \"${IMAGE_PREFIX}/speckle-monitor-deployment:${IMAGE_VERSION_TAG}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
+  yq e -i ".test.image = \"${IMAGE_PREFIX}/speckle-test-deployment:${IMAGE_VERSION_TAG}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
+fi
 
 yq e -i ".docker_image_tag = \"${IMAGE_VERSION_TAG}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
 yq e -i ".name = \"${CHART_NAME}\"" "${GIT_REPO}/utils/helm/speckle-server/Chart.yaml"
