@@ -11,9 +11,10 @@ export default class BatchingQueue<T> {
   #batchSize: number
   #processFunction: (batch: T[]) => Promise<void>
   #timeoutId: ReturnType<typeof setTimeout> | null = null
-  #isProcessing = false
 
-  #disposed = false
+  #isProcessing = false
+  #isDisposed = false
+  #isErrored = false
   #batchTimeout: number
 
   // Helper methods for cross-environment timeout handling
@@ -46,7 +47,7 @@ export default class BatchingQueue<T> {
   }
 
   async disposeAsync(): Promise<void> {
-    this.#disposed = true
+    this.#isDisposed = true
     if (this.#timeoutId) {
       this.#getClearTimeoutFn()(this.#timeoutId)
       this.#timeoutId = null
@@ -67,19 +68,19 @@ export default class BatchingQueue<T> {
   }
 
   add(key: string, item: T): void {
-    if (this.#disposed) return
+    if (this.#isDisposed || this.#isErrored) return
     this.#queue.enqueue(key, item)
     this.#addCheck()
   }
 
   addAll(keys: string[], items: T[]): void {
-    if (this.#disposed) return
+    if (this.#isDisposed || this.#isErrored) return
     this.#queue.enqueueAll(keys, items)
     this.#addCheck()
   }
 
   #addCheck(): void {
-    if (this.#disposed) return
+    if (this.#isDisposed) return
     if (this.#queue.size >= this.#batchSize) {
       // Fire and forget, no need to await
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -99,7 +100,7 @@ export default class BatchingQueue<T> {
       this.#timeoutId = null
     }
 
-    if (this.#isProcessing || this.#queue.size === 0) {
+    if (this.#isErrored || this.#isProcessing || this.#queue.size === 0) {
       return
     }
     this.#isProcessing = true
@@ -111,7 +112,7 @@ export default class BatchingQueue<T> {
       await this.#processFunction(batchToProcess)
     } catch (error) {
       console.error('Batch processing failed:', error)
-      this.#disposed = true
+      this.#isErrored = true
     } finally {
       this.#isProcessing = false
     }
@@ -127,7 +128,11 @@ export default class BatchingQueue<T> {
   }
 
   isDisposed(): boolean {
-    return this.#disposed
+    return this.#isDisposed
+  }
+
+  isErrored(): boolean {
+    return this.#isErrored
   }
 
   #getBatch(batchSize: number): T[] {

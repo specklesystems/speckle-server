@@ -146,4 +146,63 @@ describe('BatchingQueue', () => {
       await queue.disposeAsync()
     }
   })
+
+  test('should stop processing when exception occurs in processFunction without disposal', async () => {
+    const processSpy = vi.fn()
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    let callCount = 0
+    const queue = new BatchingQueue({
+      batchSize: 2,
+      maxWaitTime: 100,
+      processFunction: async (batch: string[]): Promise<void> => {
+        callCount++
+        processSpy(batch)
+
+        // Add small delay to simulate async processing
+        await new Promise((resolve) => setTimeout(resolve, 10))
+
+        // Throw error on first batch to simulate exception
+        if (callCount === 1) {
+          throw new Error('Processing failed')
+        }
+      }
+    })
+
+    try {
+      // Add first batch that will cause exception
+      queue.add('key1', 'item1')
+      queue.add('key2', 'item2')
+
+      // Wait for first batch to be processed and fail
+      await new Promise((resolve) => setTimeout(resolve, 200))
+
+      // Verify first batch was attempted and error was logged
+      expect(processSpy).toHaveBeenCalledTimes(1)
+      expect(processSpy).toHaveBeenCalledWith(['item1', 'item2'])
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Batch processing failed:',
+        expect.any(Error)
+      )
+
+      // Verify queue is marked as errored due to the exception
+      expect(queue.isDisposed()).toBe(false)
+      expect(queue.isErrored()).toBe(true)
+
+      // Add more items after the exception
+      queue.add('key3', 'item3')
+      queue.add('key4', 'item4')
+
+      // Wait to see if second batch gets processed (it shouldn't due to errored state)
+      await new Promise((resolve) => setTimeout(resolve, 200))
+
+      // Verify no further processing happened - the queue stopped due to exception
+      expect(processSpy).toHaveBeenCalledTimes(1) // Still only 1 call
+      expect(queue.count()).toBe(0) // Items were not added due to errored state
+    } finally {
+      consoleErrorSpy.mockRestore()
+      // Note: Not calling disposeAsync() here since the queue is already disposed
+      // This demonstrates the problematic behavior - the queue disposed itself due to exception
+    }
+  })
 })
