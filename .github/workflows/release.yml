@@ -94,7 +94,15 @@ jobs:
   npm:
     needs: [get-version, tests, builds, builds-ghcr]
     uses: ./.github/workflows/npm.yml
-    if: startsWith(github.ref, 'refs/tags/') # a tag triggered the workflow
+    # only run if a tag triggered the workflow
+    if: startsWith(github.ref, 'refs/tags/')
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
+    secrets: inherit
+
+  snyk:
+    needs: [tests]
+    uses: ./.github/workflows/snyk.yml
+    # skip snyk on testing branches
+    if: !startsWith(github.ref , 'refs/heads/testing')
     secrets: inherit
