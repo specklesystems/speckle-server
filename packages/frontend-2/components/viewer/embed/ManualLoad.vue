@@ -19,11 +19,14 @@
 
 <script setup lang="ts">
 import { PlayIcon } from '@heroicons/vue/20/solid'
+import { useAuthManager } from '~/lib/auth/composables/auth'
 
 const route = useRoute()
 const {
   public: { apiOrigin }
 } = useRuntimeConfig()
+
+const { embedToken } = useAuthManager()
 
 const projectUrl = route.path
 
@@ -33,9 +36,15 @@ const modelId = route.params.modelId as string
 const previewUrl = computed(() => {
   if (modelId) {
     const url = new URL(`/preview/${projectId}/commits/${modelId}`, apiOrigin)
+    if (embedToken.value) {
+      url.searchParams.set('embedToken', embedToken.value)
+    }
     return url.toString()
   } else if (projectId) {
     const url = new URL(`/preview/${projectId}`, apiOrigin)
+    if (embedToken.value) {
+      url.searchParams.set('embedToken', embedToken.value)
+    }
     return url.toString()
   } else return null
 })

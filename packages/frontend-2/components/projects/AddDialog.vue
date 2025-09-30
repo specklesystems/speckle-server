@@ -26,7 +26,7 @@ const DialogStepId = {
 type DialogStepId = (typeof DialogStepId)[keyof typeof DialogStepId]
 
 const emit = defineEmits<{
-  (e: 'created'): void
+  (e: 'created', project: { id: string }): void
 }>()
 
 const props = defineProps<{
@@ -75,8 +75,8 @@ const onCanceled = () => {
   open.value = false
 }
 
-const onCreated = () => {
-  emit('created')
+const onCreated = (project: { id: string }) => {
+  emit('created', project)
   open.value = false
 }
 

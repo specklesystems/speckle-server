@@ -4,6 +4,7 @@
       <ProjectsAddDialog
         v-model:open="openNewWorkspaceProject"
         :workspace-id="workspaceId"
+        @created="onProjectCreated"
       />
       <WorkspacePlanProjectModelLimitReachedDialog
         v-model:open="openWorkspaceLimitsHit"
@@ -15,7 +16,10 @@
       />
     </template>
     <template v-else>
-      <ProjectsAddDialog v-model:open="openNewPersonalProject" />
+      <ProjectsAddDialog
+        v-model:open="openNewPersonalProject"
+        @created="onProjectCreated"
+      />
     </template>
   </div>
 </template>
@@ -26,6 +30,7 @@ import { useMultipleDialogBranching } from '~/lib/common/composables/dialog'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectsAdd_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { useCanCreateWorkspaceProject } from '~/lib/workspaces/composables/projects/permissions'
+import { useNavigateToProject } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment ProjectsAdd_User on User {
@@ -69,6 +74,8 @@ const props = withDefaults(
   }
 )
 
+const navigateToProject = useNavigateToProject()
+
 const isWorkspaceMode = computed(() => !!props.workspaceSlug)
 const workspaceId = computed(() => props.workspace?.id || undefined)
 
@@ -100,4 +107,8 @@ const { openNewWorkspaceProject, openWorkspaceLimitsHit, openNewPersonalProject 
       newPersonalProject: computed(() => !isWorkspaceMode.value)
     }
   })
+
+const onProjectCreated = (project: { id: string }) => {
+  navigateToProject({ id: project.id })
+}
 </script>
