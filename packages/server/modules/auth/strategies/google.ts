@@ -183,6 +183,7 @@ const googleStrategyBuilderFactory =
           switch (e.constructor.name) {
             case ExpectedAuthFailure.UserInputError:
             case ExpectedAuthFailure.InviteNotFoundError:
+            case ExpectedAuthFailure.BlockedEmailDomainError:
               logger.info({ err: e }, 'Auth error for Google strategy')
               // note; passportjs suggests err should be null for user input errors.
               // We also need to pass the error type in the info parameter
