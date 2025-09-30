@@ -104,5 +104,5 @@ jobs:
     needs: [tests]
     uses: ./.github/workflows/snyk.yml
     # skip snyk on testing branches
-    if: !startsWith(github.ref , 'refs/heads/testing')
+    if: startsWith(github.ref , 'refs/heads/testing') == false
     secrets: inherit
