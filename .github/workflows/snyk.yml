@@ -1,0 +1,16 @@
+on:
+  workflow_call:
+    secrets:
+      SNYK_TOKEN:
+        required: true
+jobs:
+  snyk-node:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@master
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --yarn-workspaces  --strict-out-of-sync=false
