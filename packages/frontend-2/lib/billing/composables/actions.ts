@@ -163,11 +163,11 @@ export const useBillingActions = () => {
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
       }
-      $intercom.track('Workspace Upgraded', {
+      $intercom?.track('Workspace Upgraded', {
         ...metaData,
         isExistingSubscription: true
       })
-      $intercom.updateCompany({
+      $intercom?.updateCompany({
         id: workspaceId,
         /* eslint-disable camelcase */
         plan_name: plan,
@@ -230,12 +230,12 @@ export const useBillingActions = () => {
           // eslint-disable-next-line camelcase
           workspace_id: workspace.id
         }
-        $intercom.track('Workspace Subscription Created')
-        $intercom.track('Workspace Upgraded', {
+        $intercom?.track('Workspace Subscription Created')
+        $intercom?.track('Workspace Upgraded', {
           ...metaData,
           isExistingSubscription: false
         })
-        $intercom.updateCompany({
+        $intercom?.updateCompany({
           id: workspace.id,
           /* eslint-disable camelcase */
           plan_name: workspace.plan?.name,
