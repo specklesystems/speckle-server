@@ -36,63 +36,46 @@ jobs:
     uses: ./.github/workflows/builds.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
-      REGISTRY_DOMAIN: 'docker.io'
-      REGISTRY_USERNAME: 'speckledevops'
+      REGISTRY_DOMAIN: ${{ (github.repository == 'specklesystems/speckle-server') && 'docker.io' || 'ghcr.io' }}
+      REGISTRY_USERNAME: ${{ (github.repository == 'specklesystems/speckle-server') && 'speckledevops' || github.actor }}
       # REGISTRY_DOMAIN, REGISTRY_USERNAME, REGISTRY_TOKEN must allow pushing to the below IMAGE_PREFIX
-      IMAGE_PREFIX: 'speckle' # without an explicit host, Docker defaults to pushing Docker Hub
+      IMAGE_PREFIX: ${{ (github.repository == 'specklesystems/speckle-server') && 'speckle' || 'ghcr.io/specklesystems' }}
       PUBLISH: true # publish the sourcemaps and include the version in frontend-2 builds
       PUBLISH_LATEST: ${{ startsWith(github.ref, 'refs/heads/main') }}
     secrets:
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
-      REGISTRY_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-
-  # Temporary duplicate of builds job to push to ghcr.io
-  builds-ghcr:
-    needs: [get-version]
-    uses: ./.github/workflows/builds.yml
-    with:
-      IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
-      REGISTRY_DOMAIN: 'ghcr.io'
-      REGISTRY_USERNAME: ${{ github.actor }}
-      # REGISTRY_DOMAIN, REGISTRY_USERNAME, REGISTRY_TOKEN must allow pushing to the below IMAGE_PREFIX
-      IMAGE_PREFIX: 'ghcr.io/specklesystems'
-      PUBLISH: true # do not publish the sourcemaps or include the version in frontend-2 builds for pull requests
-      PUBLISH_LATEST: ${{ startsWith(github.ref, 'refs/heads/main') }}
-    secrets:
-      DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
-      REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REGISTRY_TOKEN: ${{ (github.repository == 'specklesystems/speckle-server') && secrets.DOCKERHUB_TOKEN || secrets.GITHUB_TOKEN }}
 
   test-deployments:
-    needs: [get-version, builds, builds-ghcr]
+    needs: [get-version, builds]
     uses: ./.github/workflows/deployment-tests.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
-      REGISTRY_DOMAIN: 'ghcr.io'
-      REGISTRY_USERNAME: ${{ github.actor }}
-      IMAGE_PREFIX: 'ghcr.io/specklesystems'
+      REGISTRY_DOMAIN: ${{ (github.repository == 'specklesystems/speckle-server') && 'docker.io' || 'ghcr.io' }}
+      REGISTRY_USERNAME: ${{ (github.repository == 'specklesystems/speckle-server') && 'speckledevops' || github.actor }}
+      IMAGE_PREFIX: ${{ (github.repository == 'specklesystems/speckle-server') && 'speckle' || 'ghcr.io/specklesystems' }}
     secrets:
-      REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REGISTRY_TOKEN: ${{ (github.repository == 'specklesystems/speckle-server') && secrets.DOCKERHUB_TOKEN || secrets.GITHUB_TOKEN }}
 
   deploy:
     needs: [get-version, tests, builds, test-deployments, get-chart-name]
     uses: ./.github/workflows/publish.yml
     with:
-      IMAGE_PREFIX: 'ghcr.io/specklesystems'
+      IMAGE_PREFIX: ${{ (github.repository == 'specklesystems/speckle-server') && 'speckle' || 'ghcr.io/specklesystems' }}
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-      OCI_REGISTRY_DOMAIN: ghcr.io
-      OCI_REGISTRY_PATH: specklesystems
-      OCI_REGISTRY_USERNAME: ${{ github.actor }}
+      OCI_REGISTRY_DOMAIN: ${{ (github.repository == 'specklesystems/speckle-server') && 'docker.io' || 'ghcr.io' }}
+      OCI_REGISTRY_PATH: ${{ (github.repository == 'specklesystems/speckle-server') && 'speckle' || 'specklesystems' }}
+      OCI_REGISTRY_USERNAME: ${{ (github.repository == 'specklesystems/speckle-server') && 'speckledevops' || github.actor }}
       CHART_NAME: ${{ needs.get-chart-name.outputs.CHART_NAME }}
     secrets:
-      # we do not inherit here as we wish to configure secrets depending on the target registry
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      OCI_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }} # we are pushing helm chart to ghcr
+      OCI_REGISTRY_PASSWORD: ${{ (github.repository == 'specklesystems/speckle-server') && secrets.DOCKERHUB_TOKEN || secrets.GITHUB_TOKEN }}
       GH_DEVOPS_PAT: ${{ secrets.GH_DEVOPS_PAT }}
 
   npm:
-    needs: [get-version, tests, builds, builds-ghcr]
+    needs: [get-version, tests, builds]
     uses: ./.github/workflows/npm.yml
     # only run if a tag triggered the workflow
     if: startsWith(github.ref, 'refs/tags/')
