@@ -34,6 +34,7 @@
       :workspace="workspace"
       :workspace-slug="workspaceSlug"
       location="add-project-menu"
+      @created="onProjectCreated"
     />
     <WorkspaceMoveProject
       v-model:open="showMoveProjectDialog"
@@ -54,6 +55,7 @@ import {
   useCanCreateWorkspaceProject,
   useCanMoveProjectIntoWorkspace
 } from '~/lib/workspaces/composables/projects/permissions'
+import { useNavigateToProject } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment WorkspaceAddProjectMenu_Workspace on Workspace {
@@ -125,6 +127,12 @@ const menuItems = computed<LayoutMenuItem[][]>(() => [
     }
   ]
 ])
+
+const navigateToProject = useNavigateToProject()
+
+const onProjectCreated = (project: { id: string }) => {
+  navigateToProject({ id: project.id })
+}
 
 const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
   const { item } = params
