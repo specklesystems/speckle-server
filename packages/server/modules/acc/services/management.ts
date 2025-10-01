@@ -1,17 +1,15 @@
-import { tryRegisterAccWebhook } from '@/modules/acc/clients/autodesk'
-import {
-  AccSyncItemStatuses,
-  ImporterAutomateFunctions
-} from '@/modules/acc/domain/constants'
-import { AccSyncItemEvents } from '@/modules/acc/domain/events'
+import { tryRegisterAccWebhook } from '@/modules/acc/clients/autodesk/acc'
+import { ImporterAutomateFunctions } from '@/modules/acc/domain/constants'
+import { AccSyncItemStatuses } from '@/modules/acc/domain/acc/constants'
+import { AccSyncItemEvents } from '@/modules/acc/domain/acc/events'
 import type {
   CountAccSyncItems,
   DeleteAccSyncItemById,
   GetAccSyncItemById,
   ListAccSyncItems,
   UpsertAccSyncItem
-} from '@/modules/acc/domain/operations'
-import type { AccSyncItem } from '@/modules/acc/domain/types'
+} from '@/modules/acc/domain/acc/operations'
+import type { AccSyncItem } from '@/modules/acc/domain/acc/types'
 import {
   SyncItemNotFoundError,
   SyncItemUnsupportedFileExtensionError

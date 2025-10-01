@@ -96,7 +96,7 @@ import {
   getAccSyncItemsByIdFactory,
   getAccSyncItemsByModelIdFactory
 } from '@/modules/acc/repositories/accSyncItems'
-import type { AccSyncItem } from '@/modules/acc/domain/types'
+import type { AccSyncItem } from '@/modules/acc/domain/acc/types'
 
 declare module '@/modules/core/loaders' {
   interface ModularizedDataLoaders extends ReturnType<typeof dataLoadersDefinition> {}

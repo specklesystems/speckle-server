@@ -5,7 +5,7 @@ import {
   exchangeCodeForTokens,
   exchangeRefreshTokenForTokens,
   generateCodeVerifier
-} from '@/modules/acc/clients/autodesk'
+} from '@/modules/acc/clients/autodesk/tokens'
 import { sessionMiddlewareFactory } from '@/modules/auth/middleware'
 import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 import {

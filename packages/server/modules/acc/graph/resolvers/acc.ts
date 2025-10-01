@@ -61,7 +61,7 @@ import {
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { AccModuleDisabledError, SyncItemNotFoundError } from '@/modules/acc/errors/acc'
 import { getFeatureFlags } from '@speckle/shared/environment'
-import type { AccRegion } from '@/modules/acc/domain/constants'
+import type { AccRegion } from '@/modules/acc/domain/acc/constants'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 
 const { FF_ACC_INTEGRATION_ENABLED, FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()

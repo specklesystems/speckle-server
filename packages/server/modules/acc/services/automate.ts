@@ -1,9 +1,7 @@
-import {
-  AccSyncItemStatuses,
-  ImporterAutomateFunctions
-} from '@/modules/acc/domain/constants'
-import type { UpdateAccSyncItemStatus } from '@/modules/acc/domain/operations'
-import type { AccSyncItem } from '@/modules/acc/domain/types'
+import { ImporterAutomateFunctions } from '@/modules/acc/domain/constants'
+import { AccSyncItemStatuses } from '@/modules/acc/domain/acc/constants'
+import type { UpdateAccSyncItemStatus } from '@/modules/acc/domain/acc/operations'
+import type { AccSyncItem } from '@/modules/acc/domain/acc/types'
 import {
   SyncItemAutomationTriggerError,
   SyncItemNotFoundError

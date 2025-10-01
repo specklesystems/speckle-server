@@ -1,4 +1,4 @@
-import type { AccRegion, AccSyncItemStatus } from '@/modules/acc/domain/constants'
+import type { AccRegion, AccSyncItemStatus } from '@/modules/acc/domain/acc/constants'
 
 export type AccSyncItem = {
   id: string

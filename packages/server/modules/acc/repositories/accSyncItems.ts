@@ -9,9 +9,9 @@ import type {
   QueryAllAccSyncItems,
   UpdateAccSyncItemStatus,
   UpsertAccSyncItem
-} from '@/modules/acc/domain/operations'
+} from '@/modules/acc/domain/acc/operations'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
-import type { AccSyncItem } from '@/modules/acc/domain/types'
+import type { AccSyncItem } from '@/modules/acc/domain/acc/types'
 import type { Knex } from 'knex'
 import { without } from 'lodash-es'
 

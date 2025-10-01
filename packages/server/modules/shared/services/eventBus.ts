@@ -56,7 +56,7 @@ import type {
 import type {
   accSyncItemEventsNamespace,
   AccSyncItemEventsPayloads
-} from '@/modules/acc/domain/events'
+} from '@/modules/acc/domain/acc/events'
 import type {
   emailsEventNamespace,
   EmailsEventsPayloads

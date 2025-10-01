@@ -1,4 +1,4 @@
-import { AccSyncItemEvents } from '@/modules/acc/domain/events'
+import { AccSyncItemEvents } from '@/modules/acc/domain/acc/events'
 import type { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
 import type { PublishSubscription } from '@/modules/shared/utils/subscriptions'
 import { ProjectSubscriptions } from '@/modules/shared/utils/subscriptions'
