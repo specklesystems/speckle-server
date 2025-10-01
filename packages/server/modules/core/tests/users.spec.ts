@@ -525,7 +525,7 @@ describe('Actors & Tokens @user-services @multiregion', () => {
       const promise = deleteUser(user.id)
 
       await expect(promise).to.eventually.be.rejectedWith(
-        `${workspace}: Workspace subscription must be canceled first`
+        `${workspace.name}: Workspace subscription must be canceled first`
       )
     })
 
@@ -570,7 +570,7 @@ describe('Actors & Tokens @user-services @multiregion', () => {
       const promise = deleteUser(user.id)
 
       await expect(promise).to.eventually.be.rejectedWith(
-        `${workspace.name}: Cannot delete a user if they are the last admin with other members in a workspace`
+        `${workspace.name}: Admin role must be transferred to another member before deleting the user`
       )
     })
 
