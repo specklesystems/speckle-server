@@ -30,3 +30,16 @@ jobs:
     secrets:
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
       REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  #TODO remove after testing
+  npm:
+    needs: [get-version]
+    uses: ./.github/workflows/npm.yml
+    with:
+      GITHUB_REGISTRY_URL: ${{ format('%s%s.git', 'https://github.com/', github.repository) }}
+      GITHUB_ORG: ${{ github.repository_owner }}
+      NPM_REGISTRY_URL: ${{ github.repository == 'specklesystems/speckle-server' && 'https://registry.npmjs.org/' || 'https://npm.pkg.github.com/' }}
+      NPM_PUBLISH_ACCESS: ${{ github.repository == 'specklesystems/speckle-server' && 'public' || 'restricted' }}
+      IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
+    secrets:
+      NPM_TOKEN: ${{ github.repository == 'specklesystems/speckle-server' && secrets.NPM_TOKEN || github.token}}
