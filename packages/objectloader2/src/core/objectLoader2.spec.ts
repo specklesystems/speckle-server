@@ -5,6 +5,7 @@ import { IndexedDatabase } from './stages/indexedDatabase.js'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
 import { MemoryDatabase } from './stages/memory/memoryDatabase.js'
 import { MemoryDownloader } from './stages/memory/memoryDownloader.js'
+import { DefermentManager } from '../deferment/defermentManager.js'
 
 describe('objectloader2', () => {
   test('can get a root object from cache', async () => {
@@ -17,6 +18,7 @@ describe('objectloader2', () => {
     const loader = new ObjectLoader2({
       rootId,
       downloader,
+      deferments: new DefermentManager(() => {}),
       database: new IndexedDatabase({
         indexedDB: new IDBFactory(),
         keyRange: IDBKeyRange
@@ -37,6 +39,7 @@ describe('objectloader2', () => {
     const loader = new ObjectLoader2({
       rootId,
       downloader,
+      deferments: new DefermentManager(() => {}),
       database: new IndexedDatabase({
         indexedDB: new IDBFactory(),
         keyRange: IDBKeyRange
@@ -58,6 +61,7 @@ describe('objectloader2', () => {
     const loader = new ObjectLoader2({
       rootId,
       downloader,
+      deferments: new DefermentManager(() => {}),
       database: new IndexedDatabase({
         indexedDB: new IDBFactory(),
         keyRange: IDBKeyRange
@@ -97,7 +101,8 @@ describe('objectloader2', () => {
     const loader = new ObjectLoader2({
       rootId: root.baseId,
       downloader: new MemoryDownloader(rootId, records),
-      database: new MemoryDatabase({ items: records })
+      database: new MemoryDatabase({ items: records }),
+      deferments: new DefermentManager(() => {})
     })
 
     const r = []
@@ -139,7 +144,8 @@ describe('objectloader2', () => {
     const loader = new ObjectLoader2({
       rootId: root.baseId,
       downloader: new MemoryDownloader(rootId, records),
-      database: new MemoryDatabase({ items: records })
+      database: new MemoryDatabase({ items: records }),
+      deferments: new DefermentManager(() => {})
     })
     const r = []
     const obj = loader.getObject({ id: child1.baseId })
@@ -180,7 +186,8 @@ describe('objectloader2', () => {
       database: new IndexedDatabase({
         indexedDB: new IDBFactory(),
         keyRange: IDBKeyRange
-      })
+      }),
+      deferments: new DefermentManager(() => {})
     })
     const x = await loader.getRootObject()
     await loader.disposeAsync()
