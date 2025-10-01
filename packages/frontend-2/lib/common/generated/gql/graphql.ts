@@ -3336,7 +3336,6 @@ export type Query = {
   authenticatedAsApp?: Maybe<ServerAppListItem>;
   /** Get a single automate function by id. Error will be thrown if function is not found or inaccessible. */
   automateFunction: AutomateFunction;
-  automateFunctions: AutomateFunctionCollection;
   /** Part of the automation/function creation handshake mechanism */
   automateValidateAuthCode: Scalars['Boolean']['output'];
   /** @deprecated Part of the old API surface and will be removed in the future. Use Project.comment instead. */
@@ -3459,13 +3458,6 @@ export type QueryAppArgs = {
 
 export type QueryAutomateFunctionArgs = {
   id: Scalars['ID']['input'];
-};
-
-
-export type QueryAutomateFunctionsArgs = {
-  cursor?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<AutomateFunctionsFilter>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -10323,7 +10315,6 @@ export type QueryFieldArgs = {
   apps: {},
   authenticatedAsApp: {},
   automateFunction: QueryAutomateFunctionArgs,
-  automateFunctions: QueryAutomateFunctionsArgs,
   automateValidateAuthCode: QueryAutomateValidateAuthCodeArgs,
   comment: QueryCommentArgs,
   comments: QueryCommentsArgs,

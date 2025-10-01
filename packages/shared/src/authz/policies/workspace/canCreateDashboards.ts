@@ -15,9 +15,12 @@ import {
 import { hasMinimumWorkspaceRole } from '../../checks/workspaceRole.js'
 import { Roles } from '../../../core/constants.js'
 import { hasEditorSeat } from '../../checks/workspaceSeat.js'
+import { checkIfAdminOverrideEnabledFragment } from '../../fragments/server.js'
 
 type PolicyLoaderKeys =
   | typeof AuthCheckContextLoaderKeys.getEnv
+  | typeof AuthCheckContextLoaderKeys.getServerRole
+  | typeof AuthCheckContextLoaderKeys.getAdminOverrideEnabled
   | typeof AuthCheckContextLoaderKeys.getWorkspacePlan
   | typeof AuthCheckContextLoaderKeys.getWorkspaceRole
   | typeof AuthCheckContextLoaderKeys.getWorkspaceSeat
@@ -45,6 +48,11 @@ export const canCreateDashboardsPolicy: AuthPolicy<
       loaders
     )({ workspaceId })
     if (ensuredFeatureAccess.isErr) return err(ensuredFeatureAccess.error)
+
+    const hasAdminAccess = await checkIfAdminOverrideEnabledFragment(loaders)({
+      userId
+    })
+    if (hasAdminAccess.isOk && hasAdminAccess.value) return ok()
 
     const isWorkspaceMember = await hasMinimumWorkspaceRole(loaders)({
       userId: userId!,
