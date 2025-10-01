@@ -1,10 +1,6 @@
+import { isBrowser } from '../helpers/env.js'
 import { DefermentManager, MemoryOnlyDeferment } from '../deferment/defermentManager.js'
-import {
-  CustomLogger,
-  Fetcher,
-  getFeatureFlag,
-  ObjectLoader2Flags
-} from '../types/functions.js'
+import { CustomLogger, Fetcher } from '../types/functions.js'
 import { Base, ObjectAttributeMask } from '../types/types.js'
 import { ObjectLoader2Flags, flagIsEnabledFromQuery } from './features.js'
 import { ObjectLoader2 } from './objectLoader2.js'
