@@ -200,7 +200,12 @@ const {
 const { classes: draggableClasses, on } = useDraggableView({
   view: computed(() => props.view)
 })
-const { classes: draggableTargetClasses, on: targetOn } = useDraggableViewTargetView({
+const {
+  classes: draggableTargetClasses,
+  on: targetOn,
+  dropPosition,
+  isDragOver: isViewDragOver
+} = useDraggableViewTargetView({
   view: computed(() => props.view)
 })
 
@@ -286,6 +291,16 @@ const wrapperClasses = computed(() => {
     classParts.push('bg-highlight-2 hover:bg-highlight-3')
   } else {
     classParts.push('hover:bg-highlight-1')
+  }
+
+  if (isViewDragOver.value && dropPosition.value === 'top') {
+    classParts.push(
+      'before:absolute before:left-0 before:right-0 before:top-0 before:h-[2px] before:bg-primary before:rounded-full before:z-10 before:-translate-y-1/2'
+    )
+  } else if (isViewDragOver.value && dropPosition.value === 'bottom') {
+    classParts.push(
+      'after:absolute after:left-0 after:right-0 after:bottom-0 after:h-[2px] after:bg-primary after:rounded-full after:z-10 after:translate-y-1/2'
+    )
   }
 
   return classParts.join(' ')

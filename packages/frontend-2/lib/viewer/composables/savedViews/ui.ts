@@ -14,6 +14,9 @@ import { isUngroupedGroup } from '@speckle/shared/dist/esm/saved-views/index.js'
 const isDraggableView = (view: unknown): view is UseDraggableView_SavedViewFragment =>
   isObjectLike(view) && has(view, 'id') && has(view, 'permissions.canUpdate')
 
+// Shared state to track which view is currently being dragged
+const currentlyDraggingViewId = ref<string | null>(null)
+
 graphql(`
   fragment UseDraggableView_SavedView on SavedView {
     id
@@ -57,6 +60,7 @@ export const useDraggableView = (params: {
       }
 
       isDragging.value = true
+      currentlyDraggingViewId.value = params.view.value.id
       event.dataTransfer.setData('application/json', JSON.stringify(params.view.value))
       event.dataTransfer.effectAllowed = 'move'
 
@@ -67,6 +71,7 @@ export const useDraggableView = (params: {
     },
     dragend: () => {
       isDragging.value = false
+      currentlyDraggingViewId.value = null
     }
   }
 
@@ -93,6 +98,7 @@ export const useDraggableViewTargetView = (params: {
 }) => {
   const isDragOver = ref(false)
   const dragCounter = ref(0)
+  const dropPosition = ref<'top' | 'bottom' | null>(null)
   const { triggerNotification } = useGlobalToast()
   const updateView = useUpdateSavedView()
 
@@ -102,6 +108,18 @@ export const useDraggableViewTargetView = (params: {
 
       event.preventDefault()
       event.dataTransfer.dropEffect = 'move'
+
+      // Don't show drop indicator if dragging over itself
+      if (currentlyDraggingViewId.value === params.view.value.id) {
+        dropPosition.value = null
+        return
+      }
+
+      // Track drop position for visual feedback
+      const targetRect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+      const yPosition = event.clientY - targetRect.top
+      const isTopHalf = yPosition < targetRect.height / 2
+      dropPosition.value = isTopHalf ? 'top' : 'bottom'
     },
     drop: async (event: DragEvent) => {
       if (!event.dataTransfer) return
@@ -109,6 +127,7 @@ export const useDraggableViewTargetView = (params: {
       event.preventDefault()
       isDragOver.value = false
       dragCounter.value = 0
+      dropPosition.value = null
 
       try {
         const data = event.dataTransfer.getData('application/json')
@@ -123,8 +142,8 @@ export const useDraggableViewTargetView = (params: {
         // See whether view was dropped closer to top or bottom to figure out
         // whether to put it before or after the target view
         const targetRect = (event.target as HTMLElement).getBoundingClientRect()
-        const dropPosition = event.clientY - targetRect.top
-        const dropInTopHalf = dropPosition < targetRect.height / 2
+        const dropYPosition = event.clientY - targetRect.top
+        const dropInTopHalf = dropYPosition < targetRect.height / 2
 
         await updateView(
           {
@@ -174,6 +193,7 @@ export const useDraggableViewTargetView = (params: {
       dragCounter.value--
       if (dragCounter.value === 0) {
         isDragOver.value = false
+        dropPosition.value = null
       }
     }
   }
@@ -181,17 +201,16 @@ export const useDraggableViewTargetView = (params: {
   const classes = computed(() => {
     const classParts: string[] = ['draggable-view-target']
 
-    if (isDragOver.value) {
-      // classParts.push('rounded-md ring-2 ring-primary ring-opacity-50 bg-primary/5')
-      classParts.push('bg-foundation-2')
-    }
+    // No background color during drag - using drop position indicator line instead
 
     return classParts.join(' ')
   })
 
   return {
     on: vOn,
-    classes
+    classes,
+    dropPosition: readonly(dropPosition),
+    isDragOver: readonly(isDragOver)
   }
 }
 
@@ -205,9 +224,7 @@ graphql(`
 export const useDraggableViewTargetGroup = (params: {
   group: Ref<UseDraggableViewTargetGroup_SavedViewGroupFragment>
   onMoved?: () => void
-  enabled?: boolean | Ref<boolean>
 }) => {
-  const enabled = computed(() => unref(params.enabled) ?? true)
   const isDragOver = ref(false)
   const dragCounter = ref(0)
   const { triggerNotification } = useGlobalToast()
@@ -215,14 +232,21 @@ export const useDraggableViewTargetGroup = (params: {
 
   const vOn = {
     dragover: (event: DragEvent) => {
-      if (!enabled.value) return
       if (!event.dataTransfer) return
 
       event.preventDefault()
       event.dataTransfer.dropEffect = 'move'
+
+      // Only show drop indicator if hovering over the title button (DisclosureButton)
+      const target = event.target as HTMLElement
+      const isOverTitleButton = target.closest('button[class*="group/disclosure"]')
+      if (!isOverTitleButton) {
+        // We're over the content area, not the title - don't show group outline
+        isDragOver.value = false
+        return
+      }
     },
     drop: async (event: DragEvent) => {
-      if (!enabled.value) return
       if (!event.dataTransfer) return
 
       event.preventDefault()
@@ -280,15 +304,17 @@ export const useDraggableViewTargetGroup = (params: {
       }
     },
     dragenter: (event: DragEvent) => {
-      if (!enabled.value) return
-
       event.preventDefault()
       dragCounter.value++
-      isDragOver.value = true
+
+      // Only set isDragOver if we're entering the title button
+      const target = event.target as HTMLElement
+      const isOverTitleButton = target.closest('button[class*="group/disclosure"]')
+      if (isOverTitleButton) {
+        isDragOver.value = true
+      }
     },
     dragleave: () => {
-      if (!enabled.value) return
-
       dragCounter.value--
       if (dragCounter.value === 0) {
         isDragOver.value = false
@@ -299,18 +325,11 @@ export const useDraggableViewTargetGroup = (params: {
   const classes = computed(() => {
     const classParts: string[] = ['draggable-view-target']
 
-    if (isDragOver.value && enabled.value) {
+    if (isDragOver.value) {
       classParts.push('rounded-md ring-2 ring-primary ring-opacity-50 bg-primary/5')
     }
 
     return classParts.join(' ')
-  })
-
-  watch(enabled, (newVal, oldVal) => {
-    if (newVal && !oldVal) {
-      dragCounter.value = 0
-      isDragOver.value = false
-    }
   })
 
   return {
