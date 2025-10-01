@@ -101,10 +101,6 @@ function createCache(): InMemoryCache {
           },
           admin: {
             merge: mergeAsObjectsFunction
-          },
-          automateFunctions: {
-            keyArgs: ['filter', 'limit'],
-            merge: buildAbstractCollectionMergeFunction('AutomateFunctionCollection')
           }
         }
       },
@@ -238,6 +234,9 @@ function createCache(): InMemoryCache {
               ['limit', 'search', 'sortBy', 'sortDirection', 'onlyAuthored']
             ],
             merge: buildAbstractCollectionMergeFunction('SavedViewCollection')
+          },
+          permissions: {
+            merge: mergeAsObjectsFunction
           }
         }
       },

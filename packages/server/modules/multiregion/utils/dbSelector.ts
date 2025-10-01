@@ -276,11 +276,11 @@ const dropReplicationIfExists = async ({
   }
 
   try {
-    const { rows: aivenExists } = await to.public.raw(
+    const { rows: aivenExists } = (await to.public.raw(
       "SELECT * FROM pg_extension WHERE extname = 'aiven_extras';"
-    )
+    )) as { rows: Array<unknown> }
 
-    if (!aivenExists) return
+    if (!aivenExists.length) return
 
     const {
       rows: [sub]

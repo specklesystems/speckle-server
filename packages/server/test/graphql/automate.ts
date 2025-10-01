@@ -103,23 +103,6 @@ export const getProjectAutomationQuery = gql`
   ${automationFragment}
 `
 
-export const getAutomateFunctionsQuery = gql`
-  query GetAutomateFunctions(
-    $cursor: String
-    $limit: Int!
-    $filter: AutomateFunctionsFilter
-  ) {
-    automateFunctions(cursor: $cursor, limit: $limit, filter: $filter) {
-      cursor
-      totalCount
-      items {
-        ...TestAutomateFunction
-      }
-    }
-  }
-  ${automateFunctionFragment}
-`
-
 export const automateValidateAuthCodeQuery = gql`
   query AutomateValidateAuthCode($payload: AutomateAuthCodePayloadTest!) {
     automateValidateAuthCode(payload: $payload)
