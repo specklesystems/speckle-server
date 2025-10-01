@@ -24,16 +24,16 @@ export type Scalars = {
 
 export type AccFolder = {
   __typename?: 'AccFolder';
-  children: Array<AccFolder>;
-  /** TODO ACC: Paginate this if required */
+  children: AccFolderCollection;
   contents: AccItemCollection;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
 };
 
-
-export type AccFolderContentsArgs = {
-  cursor?: InputMaybe<Scalars['Int']['input']>;
+export type AccFolderCollection = {
+  __typename?: 'AccFolderCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<AccFolder>;
 };
 
 export type AccHub = {
@@ -41,18 +41,12 @@ export type AccHub = {
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   project: AccProject;
-  /** TODO ACC: Paginate this if required */
   projects: AccProjectCollection;
 };
 
 
 export type AccHubProjectArgs = {
   id: Scalars['ID']['input'];
-};
-
-
-export type AccHubProjectsArgs = {
-  cursor?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type AccHubCollection = {
@@ -66,6 +60,8 @@ export type AccIntegration = {
   folder: AccFolder;
   hub: AccHub;
   hubs: AccHubCollection;
+  item: AccItem;
+  project: AccProject;
 };
 
 
@@ -79,8 +75,21 @@ export type AccIntegrationHubArgs = {
   id: Scalars['String']['input'];
 };
 
+
+export type AccIntegrationItemArgs = {
+  itemId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
+
+export type AccIntegrationProjectArgs = {
+  hubId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
 export type AccItem = {
   __typename?: 'AccItem';
+  /** lineage urn */
   id: Scalars['ID']['output'];
   latestVersion: AccItemVersion;
   name: Scalars['String']['output'];
@@ -95,6 +104,7 @@ export type AccItemCollection = {
 export type AccItemVersion = {
   __typename?: 'AccItemVersion';
   fileType: Scalars['String']['output'];
+  /** version urn */
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   versionNumber: Scalars['Int']['output'];
@@ -9240,6 +9250,7 @@ export const AutomateFunctionPageWorkspaceDocument = {"kind":"Document","definit
 export const SettingsServerRegionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SettingsServerRegions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"multiRegion"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"regions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsServerRegionsTable_ServerRegionItem"}}]}},{"kind":"Field","name":{"kind":"Name","value":"availableKeys"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsServerRegionsTable_ServerRegionItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ServerRegionItem"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]} as unknown as DocumentNode<SettingsServerRegionsQuery, SettingsServerRegionsQueryVariables>;
 export type AllObjectTypes = {
   AccFolder: AccFolder,
+  AccFolderCollection: AccFolderCollection,
   AccHub: AccHub,
   AccHubCollection: AccHubCollection,
   AccIntegration: AccIntegration,
@@ -9461,15 +9472,19 @@ export type AllObjectTypes = {
 }
 export type AccFolderFieldArgs = {
   children: {},
-  contents: AccFolderContentsArgs,
+  contents: {},
   id: {},
   name: {},
+}
+export type AccFolderCollectionFieldArgs = {
+  cursor: {},
+  items: {},
 }
 export type AccHubFieldArgs = {
   id: {},
   name: {},
   project: AccHubProjectArgs,
-  projects: AccHubProjectsArgs,
+  projects: {},
 }
 export type AccHubCollectionFieldArgs = {
   cursor: {},
@@ -9479,6 +9494,8 @@ export type AccIntegrationFieldArgs = {
   folder: AccIntegrationFolderArgs,
   hub: AccIntegrationHubArgs,
   hubs: {},
+  item: AccIntegrationItemArgs,
+  project: AccIntegrationProjectArgs,
 }
 export type AccItemFieldArgs = {
   id: {},
@@ -11191,6 +11208,7 @@ export type WorkspaceUpdatedMessageFieldArgs = {
 }
 export type AllObjectFieldArgTypes = {
   AccFolder: AccFolderFieldArgs,
+  AccFolderCollection: AccFolderCollectionFieldArgs,
   AccHub: AccHubFieldArgs,
   AccHubCollection: AccHubCollectionFieldArgs,
   AccIntegration: AccIntegrationFieldArgs,

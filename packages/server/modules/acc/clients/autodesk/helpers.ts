@@ -1,5 +1,7 @@
 import type { AccRegion } from '@/modules/acc/domain/acc/constants'
 import { AccRegions } from '@/modules/acc/domain/acc/constants'
+import { AutodeskApiRequestError } from '@/modules/acc/errors/acc'
+import { logger } from '@/observability/logging'
 
 export const invokeJsonRequest = async <T>(params: {
   url: string
@@ -10,17 +12,28 @@ export const invokeJsonRequest = async <T>(params: {
 }) => {
   const { url, method = 'get', body, headers = {}, token } = params
 
-  const response = await fetch(url, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      ...headers
-    },
-    body
-  })
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        ...headers
+      },
+      body
+    })
 
-  return (await response.json()) as T
+    return (await response.json()) as T
+  } catch (e) {
+    logger.error(
+      {
+        ...params,
+        error: e
+      },
+      'Autodesk request failed'
+    )
+    throw new AutodeskApiRequestError(method, url)
+  }
 }
 
 /**

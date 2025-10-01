@@ -13,9 +13,21 @@ export class AccNotAuthorizedError extends BaseError {
 }
 
 export class AccNotYetImplementedError extends BaseError {
-  static defaultMessage = 'This functionality for the ACC integration is not yet implemented'
+  static defaultMessage =
+    'This functionality for the ACC integration is not yet implemented'
   static code = 'ACC_MODULE_NOT_YET_IMPLEMENTED'
   static statusCode = 501
+}
+
+export class AutodeskApiRequestError extends BaseError {
+  static defaultMessage = 'Error during external request to Autodesk'
+  static code = 'ACC_AUTODESK_REQUEST_ERROR'
+  static statusCode = 500
+
+  constructor(method: string, endpoint: string) {
+    super()
+    this.message = `Failed to issue ${method} request to ${endpoint}`
+  }
 }
 
 export class DuplicateSyncItemError extends BaseError {

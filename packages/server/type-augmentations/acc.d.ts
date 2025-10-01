@@ -2,7 +2,7 @@ import type { AccTokens } from '@speckle/shared/acc'
 import type { Session, SessionData } from 'express-session'
 
 declare module 'express-session' {
-  interface SessionData extends AccSessionData { }
+  interface SessionData extends AccSessionData {}
 }
 
 declare module 'http' {

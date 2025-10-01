@@ -15,7 +15,7 @@ import type { ActivityCollectionGraphQLReturn } from '@/modules/activitystream/h
 import type { ServerAppGraphQLReturn, ServerAppListItemGraphQLReturn } from '@/modules/auth/helpers/graphTypes';
 import type { GendoAIRenderGraphQLReturn } from '@/modules/gendo/helpers/types/graphTypes';
 import type { ServerRegionItemGraphQLReturn } from '@/modules/multiregion/helpers/graphTypes';
-import type { AccIntegrationGraphQLReturn, AccFolderGraphQLReturn, AccSyncItemGraphQLReturn, AccSyncItemMutationsGraphQLReturn } from '@/modules/acc/helpers/graphTypes';
+import type { AccIntegrationGraphQLReturn, AccFolderGraphQLReturn, AccItemGraphQLReturn, AccSyncItemGraphQLReturn, AccSyncItemMutationsGraphQLReturn } from '@/modules/acc/helpers/graphTypes';
 import type { SavedViewGraphQLReturn, SavedViewGroupGraphQLReturn, SavedViewPermissionChecksGraphQLReturn, SavedViewGroupPermissionChecksGraphQLReturn, ExtendedViewerResourcesGraphQLReturn } from '@/modules/viewer/helpers/graphTypes';
 import type { DashboardGraphQLReturn, DashboardMutationsGraphQLReturn, DashboardPermissionChecksGraphQLReturn, DashboardTokenGraphQLReturn } from '@/modules/dashboards/helpers/graphTypes';
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
@@ -82,6 +82,8 @@ export type AccIntegration = {
   folder: AccFolder;
   hub: AccHub;
   hubs: AccHubCollection;
+  item: AccItem;
+  project: AccProject;
 };
 
 
@@ -93,6 +95,18 @@ export type AccIntegrationFolderArgs = {
 
 export type AccIntegrationHubArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type AccIntegrationItemArgs = {
+  itemId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
+
+export type AccIntegrationProjectArgs = {
+  hubId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
 };
 
 export type AccItem = {
@@ -6320,8 +6334,8 @@ export type ResolversTypes = {
   AccHub: ResolverTypeWrapper<Omit<AccHub, 'project' | 'projects'> & { project: ResolversTypes['AccProject'], projects: ResolversTypes['AccProjectCollection'] }>;
   AccHubCollection: ResolverTypeWrapper<Omit<AccHubCollection, 'items'> & { items: Array<ResolversTypes['AccHub']> }>;
   AccIntegration: ResolverTypeWrapper<AccIntegrationGraphQLReturn>;
-  AccItem: ResolverTypeWrapper<AccItem>;
-  AccItemCollection: ResolverTypeWrapper<AccItemCollection>;
+  AccItem: ResolverTypeWrapper<AccItemGraphQLReturn>;
+  AccItemCollection: ResolverTypeWrapper<Omit<AccItemCollection, 'items'> & { items: Array<ResolversTypes['AccItem']> }>;
   AccItemVersion: ResolverTypeWrapper<AccItemVersion>;
   AccProject: ResolverTypeWrapper<Omit<AccProject, 'folder' | 'rootFolder'> & { folder: ResolversTypes['AccFolder'], rootFolder: ResolversTypes['AccFolder'] }>;
   AccProjectCollection: ResolverTypeWrapper<Omit<AccProjectCollection, 'items'> & { items: Array<ResolversTypes['AccProject']> }>;
@@ -6737,8 +6751,8 @@ export type ResolversParentTypes = {
   AccHub: Omit<AccHub, 'project' | 'projects'> & { project: ResolversParentTypes['AccProject'], projects: ResolversParentTypes['AccProjectCollection'] };
   AccHubCollection: Omit<AccHubCollection, 'items'> & { items: Array<ResolversParentTypes['AccHub']> };
   AccIntegration: AccIntegrationGraphQLReturn;
-  AccItem: AccItem;
-  AccItemCollection: AccItemCollection;
+  AccItem: AccItemGraphQLReturn;
+  AccItemCollection: Omit<AccItemCollection, 'items'> & { items: Array<ResolversParentTypes['AccItem']> };
   AccItemVersion: AccItemVersion;
   AccProject: Omit<AccProject, 'folder' | 'rootFolder'> & { folder: ResolversParentTypes['AccFolder'], rootFolder: ResolversParentTypes['AccFolder'] };
   AccProjectCollection: Omit<AccProjectCollection, 'items'> & { items: Array<ResolversParentTypes['AccProject']> };
@@ -7174,6 +7188,8 @@ export type AccIntegrationResolvers<ContextType = GraphQLContext, ParentType ext
   folder?: Resolver<ResolversTypes['AccFolder'], ParentType, ContextType, RequireFields<AccIntegrationFolderArgs, 'folderId' | 'projectId'>>;
   hub?: Resolver<ResolversTypes['AccHub'], ParentType, ContextType, RequireFields<AccIntegrationHubArgs, 'id'>>;
   hubs?: Resolver<ResolversTypes['AccHubCollection'], ParentType, ContextType>;
+  item?: Resolver<ResolversTypes['AccItem'], ParentType, ContextType, RequireFields<AccIntegrationItemArgs, 'itemId' | 'projectId'>>;
+  project?: Resolver<ResolversTypes['AccProject'], ParentType, ContextType, RequireFields<AccIntegrationProjectArgs, 'hubId' | 'projectId'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

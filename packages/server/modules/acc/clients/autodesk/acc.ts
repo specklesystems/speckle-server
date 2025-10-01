@@ -6,7 +6,11 @@ import {
 import { getToken } from '@/modules/acc/clients/autodesk/tokens'
 import type { AccRegion } from '@/modules/acc/domain/acc/constants'
 import { AccRegions } from '@/modules/acc/domain/acc/constants'
-import type { ModelDerivativeServiceDesignManifest } from '@/modules/acc/domain/acc/types'
+import type {
+  DataManagementFolderContentsFolder,
+  DataManagementFolderContentsItem,
+  ModelDerivativeServiceDesignManifest
+} from '@/modules/acc/domain/acc/types'
 import { logger } from '@/observability/logging'
 
 type AccWebhookConfig = {
@@ -74,6 +78,38 @@ export const tryRegisterAccWebhook = async (
   }
 
   throw new Error(`Webhook registration failed: ${JSON.stringify(e, null, 2)}`)
+}
+
+type GetFolderContentsResponse = {
+  data: (DataManagementFolderContentsFolder | DataManagementFolderContentsItem)[]
+}
+
+/**
+ * Get the contents (subfolders and items) of a given ACC folder
+ * @see https://aps.autodesk.com/en/docs/data/v2/reference/http/projects-project_id-folders-folder_id-contents-GET/
+ */
+export const getFolderContents = async (
+  params: {
+    projectId: string
+    folderId: string
+  },
+  context: {
+    token: string
+    userId?: string
+  }
+): Promise<
+  (DataManagementFolderContentsFolder | DataManagementFolderContentsItem)[]
+> => {
+  const { projectId, folderId } = params
+  const { token } = context
+
+  const { data } = (await invokeJsonRequest({
+    url: `https://developer.api.autodesk.com/data/v1/projects/${projectId}/folders/${folderId}/contents`,
+    token,
+    method: 'GET'
+  })) as GetFolderContentsResponse
+
+  return data ?? []
 }
 
 /**

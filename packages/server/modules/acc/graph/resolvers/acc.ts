@@ -59,10 +59,21 @@ import {
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
-import { AccModuleDisabledError, AccNotAuthorizedError, AccNotYetImplementedError, SyncItemNotFoundError } from '@/modules/acc/errors/acc'
+import {
+  AccModuleDisabledError,
+  AccNotAuthorizedError,
+  AccNotYetImplementedError,
+  SyncItemNotFoundError
+} from '@/modules/acc/errors/acc'
 import { getFeatureFlags } from '@speckle/shared/environment'
 import type { AccRegion } from '@/modules/acc/domain/acc/constants'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
+import {
+  filterContentsToFolders,
+  filterContentsToItems,
+  mapFolderToGql,
+  mapItemToGql
+} from '@/modules/acc/helpers/acc'
 
 const { FF_ACC_INTEGRATION_ENABLED, FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -86,7 +97,7 @@ const resolvers: Resolvers = {
         id: folderId,
         projectId
       }
-    },
+    }
   },
   AccFolder: {
     name: async (parent) => {
@@ -99,17 +110,33 @@ const resolvers: Resolvers = {
       const { id: folderId, projectId } = parent
       const { accToken } = ctx
 
+      const contents = await ctx.loaders.acc!.getFolderContents.load({
+        projectId,
+        folderId,
+        token: accToken!
+      })
+      const items = filterContentsToItems(contents)
+
       return {
-        items: []
+        items: items.map(mapItemToGql)
       }
     },
     children: async (parent, _args, ctx) => {
       const { id: folderId, projectId } = parent
       const { accToken } = ctx
 
-      return {
-        items: []
-      }
+      const contents = await ctx.loaders.acc!.getFolderContents.load({
+        projectId,
+        folderId,
+        token: accToken!
+      })
+      const folders = filterContentsToFolders(contents)
+      const items = folders.map((folder) => ({
+        ...mapFolderToGql(folder),
+        projectId
+      }))
+
+      return { items }
     }
   },
   Mutation: {
@@ -289,7 +316,7 @@ const resolvers: Resolvers = {
         resourceType: TokenResourceIdentifierType.Project
       })
 
-      const syncItem = await ctx.loaders.acc.getAccSyncItem.load(id)
+      const syncItem = await ctx.loaders.acc!.getAccSyncItem.load(id)
 
       if (!syncItem) {
         throw new SyncItemNotFoundError()
@@ -312,7 +339,9 @@ const resolvers: Resolvers = {
         resourceType: TokenResourceIdentifierType.Project
       })
 
-      const syncItem = await context.loaders.acc.getAccSyncItemByModelId.load(parent.id)
+      const syncItem = await context.loaders.acc!.getAccSyncItemByModelId.load(
+        parent.id
+      )
 
       if (!syncItem) {
         throw new SyncItemNotFoundError()

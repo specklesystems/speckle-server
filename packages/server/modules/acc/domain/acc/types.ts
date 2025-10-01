@@ -22,6 +22,25 @@ export type AccSyncItem = {
   updatedAt: Date
 }
 
+export type DataManagementFolderContentsFolder = {
+  id: string
+  type: 'folders'
+  attributes: {
+    name?: string
+    displayName: string
+    objectCount: number
+  }
+}
+
+export type DataManagementFolderContentsItem = {
+  id: string
+  type: 'items'
+  attributes: {
+    name?: string
+    displayName: string
+  }
+}
+
 export type ModelDerivativeServiceDesignManifest = {
   type: 'manifest'
   region: string

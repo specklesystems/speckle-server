@@ -8,5 +8,9 @@ export type AccFolderGraphQLReturn = {
   name?: string
   objectCount?: number
 }
+export type AccItemGraphQLReturn = {
+  id: string
+  name: string
+}
 export type AccSyncItemGraphQLReturn = AccSyncItem
 export type AccSyncItemMutationsGraphQLReturn = {}
