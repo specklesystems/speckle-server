@@ -62,6 +62,11 @@ import {
 import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
 import { deleteProjectFactory } from '@/modules/core/repositories/projects'
 import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
+import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
+import {
+  countWorkspaceUsersFactory,
+  getUserWorkspacesWithRoleFactory
+} from '@/modules/workspaces/repositories/workspaces'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -349,7 +354,10 @@ export default {
 
               return res
             },
-            emitEvent: emit
+            emitEvent: emit,
+            getUserWorkspacesWithRole: getUserWorkspacesWithRoleFactory({ db: mainDb }),
+            countWorkspaceUsers: countWorkspaceUsersFactory({ db: mainDb }),
+            getWorkspacePlan: getWorkspacePlanFactory({ db: mainDb })
           })
 
           return deleteUser(user.id, context.userId)
@@ -408,7 +416,10 @@ export default {
 
               return res
             },
-            emitEvent: emit
+            emitEvent: emit,
+            getWorkspacePlan: getWorkspacePlanFactory({ db: mainDb }),
+            getUserWorkspacesWithRole: getUserWorkspacesWithRoleFactory({ db: mainDb }),
+            countWorkspaceUsers: countWorkspaceUsersFactory({ db: mainDb })
           })
 
           return deleteUser(user.id, context.userId)

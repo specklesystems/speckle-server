@@ -30,7 +30,7 @@ import type { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import type { UserRecord } from '@/modules/core/helpers/userHelper'
 import { sanitizeImageUrl } from '@/modules/shared/helpers/sanitization'
 import type { NullableKeysToOptional, ServerRoles } from '@speckle/shared'
-import { blockedDomains, isNullOrUndefined, Roles } from '@speckle/shared'
+import { blockedDomains, isNullOrUndefined, isPaidPlan, Roles } from '@speckle/shared'
 import { pick } from 'lodash-es'
 import bcrypt from 'bcrypt'
 import crs from 'crypto-random-string'
@@ -55,6 +55,11 @@ import type {
 } from '@/modules/core/domain/projects/operations'
 import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
 import { v4 } from 'uuid'
+import type {
+  CountWorkspaceUsers,
+  GetUserWorkspacesWithRole
+} from '@/modules/workspaces/domain/operations'
+import type { GetWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
 
 const { FF_NO_PERSONAL_EMAILS_ENABLED } = getFeatureFlags()
 
@@ -296,6 +301,9 @@ export const deleteUserFactory =
     deleteProjectAndCommits: DeleteProjectAndCommits
     logger: Logger
     isLastAdminUser: IsLastAdminUser
+    getUserWorkspacesWithRole: GetUserWorkspacesWithRole
+    countWorkspaceUsers: CountWorkspaceUsers
+    getWorkspacePlan: GetWorkspacePlan
     getUserDeletableStreams: GetUserDeletableStreams
     deleteAllUserInvites: DeleteAllUserInvites
     getUserWorkspaceSeats: GetUserWorkspaceSeatsFactory
@@ -305,9 +313,48 @@ export const deleteUserFactory =
   }): DeleteUser =>
   async (id, invokerId) => {
     deps.logger.info('Deleting user ' + id)
+    // We can't delete a user if:
+    // - is the last server admin
+    // - they are the last admin of a workspace with other users (they must reassign the admin role)
+    // - they are the last admin with a workspace subscription (they must cancel the subscription first)
+
     const isLastAdmin = await deps.isLastAdminUser(id)
     if (isLastAdmin) {
       throw new UserInputError('Cannot remove the last admin role from the server')
+    }
+
+    const workspaces = await deps.getUserWorkspacesWithRole({ userId: id })
+    for (const workspace of workspaces) {
+      if (workspace.role !== 'workspace:admin') continue
+
+      const [totalAdmins, totalMembers] = await Promise.all([
+        deps.countWorkspaceUsers({
+          workspaceId: workspace.id,
+          filter: {
+            workspaceRole: 'workspace:admin'
+          }
+        }),
+        deps.countWorkspaceUsers({
+          workspaceId: workspace.id
+        })
+      ])
+
+      if (totalAdmins > 1) continue
+      if (totalMembers > 1)
+        throw new UserInputError(
+          `${workspace.name}: Admin role must be transferred to another member before deleting the user`
+        )
+
+      const workspacePlan = await deps.getWorkspacePlan({ workspaceId: workspace.id })
+      if (
+        workspacePlan &&
+        isPaidPlan(workspacePlan.name) &&
+        workspacePlan.status === 'valid'
+      ) {
+        throw new UserInputError(
+          `${workspace.name}: Workspace subscription must be canceled first`
+        )
+      }
     }
 
     const streamIds = await deps.getUserDeletableStreams(id)
@@ -356,7 +403,11 @@ export const deleteUserFactory =
     if (deleted) {
       await deps.emitEvent({
         eventName: UserEvents.Deleted,
-        payload: { targetUserId: id, invokerUserId: invokerId || id }
+        payload: {
+          targetUserId: id,
+          invokerUserId: invokerId || id,
+          deletedSeats: workspaceSeats
+        }
       })
     }
 

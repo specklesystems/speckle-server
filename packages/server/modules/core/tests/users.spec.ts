@@ -117,6 +117,17 @@ import type {
 } from '@/modules/core/domain/users/operations'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { deleteProjectFactory } from '@/modules/core/repositories/projects'
+import {
+  countWorkspaceUsersFactory,
+  getUserWorkspacesWithRoleFactory
+} from '@/modules/workspaces/repositories/workspaces'
+import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
+import { buildBasicTestUser, createTestUser } from '@/test/authHelper'
+import {
+  assignToWorkspace,
+  buildBasicTestWorkspace,
+  createTestWorkspace
+} from '@/modules/workspaces/tests/helpers/creation'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -275,7 +286,10 @@ const deleteUser: DeleteUser = async (...input) =>
 
           return res
         },
-        emitEvent: emit
+        emitEvent: emit,
+        getWorkspacePlan: getWorkspacePlanFactory({ db: mainDb }),
+        getUserWorkspacesWithRole: getUserWorkspacesWithRoleFactory({ db: mainDb }),
+        countWorkspaceUsers: countWorkspaceUsersFactory({ db: mainDb })
       })
 
       return deleteUser(...input)
@@ -493,6 +507,71 @@ describe('Actors & Tokens @user-services @multiregion', () => {
           'Cannot remove the last admin role from the server'
         )
       }
+    })
+
+    it('protects from deleting the last admin user if the workspace has valid paid plan', async () => {
+      const user = buildBasicTestUser()
+      const workspace = buildBasicTestWorkspace({
+        ownerId: user.id
+      })
+      await createTestUser(user)
+      await createTestWorkspace(workspace, user, {
+        addPlan: {
+          status: 'valid',
+          name: 'proUnlimited'
+        }
+      })
+
+      const promise = deleteUser(user.id)
+
+      await expect(promise).to.eventually.be.rejectedWith(
+        `${workspace}: Workspace subscription must be canceled first`
+      )
+    })
+
+    it('allows deleting a user if the paid plan is canceled', async () => {
+      const user = buildBasicTestUser()
+      await createTestUser(user)
+      await createTestWorkspace(
+        buildBasicTestWorkspace({
+          ownerId: user.id
+        }),
+        user,
+        {
+          addPlan: {
+            status: 'canceled',
+            name: 'proUnlimited'
+          }
+        }
+      )
+
+      await deleteUser(user.id)
+
+      const deletedUser = await getUser(user.id)
+      expect(deletedUser).to.be.undefined
+    })
+
+    it('protects from deleting the last admin user if the workspace has other members', async () => {
+      const user = buildBasicTestUser()
+      const user2 = buildBasicTestUser()
+      const workspace = buildBasicTestWorkspace({
+        ownerId: user.id
+      })
+      await createTestUser(user)
+      await createTestUser(user2)
+      await createTestWorkspace(workspace, user, {
+        addPlan: {
+          status: 'valid',
+          name: 'proUnlimited'
+        }
+      })
+      await assignToWorkspace(workspace, user2, Roles.Workspace.Member)
+
+      const promise = deleteUser(user.id)
+
+      await expect(promise).to.eventually.be.rejectedWith(
+        `${workspace.name}: Cannot delete a user if they are the last admin with other members in a workspace`
+      )
     })
 
     it('Should get a user', async () => {

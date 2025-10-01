@@ -56,6 +56,11 @@ import { deleteProjectFactory } from '@/modules/core/repositories/projects'
 import type { DeleteUser } from '@/modules/core/domain/users/operations'
 import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import { getAllRegisteredTestDbs } from '@/modules/multiregion/tests/helpers'
+import {
+  countWorkspaceUsersFactory,
+  getUserWorkspacesWithRoleFactory
+} from '@/modules/workspaces/repositories/workspaces'
+import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 const countUsers = legacyGetPaginatedUsersCountFactory({ db })
@@ -116,7 +121,10 @@ const deleteUser: DeleteUser = async (...input) =>
 
           return res
         },
-        emitEvent: emit
+        emitEvent: emit,
+        getWorkspacePlan: getWorkspacePlanFactory({ db: mainDb }),
+        getUserWorkspacesWithRole: getUserWorkspacesWithRoleFactory({ db: mainDb }),
+        countWorkspaceUsers: countWorkspaceUsersFactory({ db: mainDb })
       })
 
       return deleteUser(...input)

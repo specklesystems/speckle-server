@@ -8,6 +8,7 @@ import {
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import type {
+  CountWorkspaceUsers,
   CountWorkspaceRoleWithOptionalProjectRole,
   GetDefaultRegion,
   GetProjectWorkspace,
@@ -26,9 +27,12 @@ import {
   isProjectResourceTarget,
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
-import type { logger } from '@/observability/logging'
+import { logger } from '@/observability/logging'
 import { moduleLogger } from '@/observability/logging'
-import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
+import {
+  addOrUpdateWorkspaceRoleFactory,
+  deleteWorkspaceFactory
+} from '@/modules/workspaces/services/management'
 import type { EventBusEmit, EventPayload } from '@/modules/shared/services/eventBus'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
@@ -46,6 +50,7 @@ import type {
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import type { Knex } from 'knex'
 import {
+  countWorkspaceUsersFactory,
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceCollaboratorsFactory,
   getWorkspaceFactory,
@@ -78,6 +83,7 @@ import type {
 import { isValidSsoSession } from '@/modules/workspaces/domain/sso/logic'
 import { SsoSessionMissingOrExpiredError } from '@/modules/workspaces/errors/sso'
 import {
+  deleteSsoProviderFactory,
   getUserSsoSessionFactory,
   getWorkspaceSsoProviderRecordFactory
 } from '@/modules/workspaces/repositories/sso'
@@ -140,7 +146,17 @@ import { WorkspacePlanStatuses } from '@/modules/core/graph/generated/graphql'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
 import type { GetUser } from '@/modules/core/domain/users/operations'
 import { WorkspacePlans } from '@/modules/core/graph/generated/graphql'
-import { queryAllProjectsFactory } from '@/modules/core/services/projects'
+import {
+  deleteProjectAndCommitsFactory,
+  queryAllProjectsFactory
+} from '@/modules/core/services/projects'
+import { UserEvents } from '@/modules/core/domain/users/events'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { deleteProjectFactory } from '@/modules/core/repositories/projects'
+import { deleteWorkspaceFactory as repoDeleteWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
+import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
+import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
@@ -853,6 +869,46 @@ const blockInvalidWorkspaceProjectRoleUpdatesFactory =
     })
   }
 
+const deleteWorkspacesWithNoUsersFactory =
+  (deps: { countWorkspaceUsers: CountWorkspaceUsers }) =>
+  async ({ payload }: EventPayload<typeof UserEvents.Deleted>) => {
+    for (const workspaceSeat of payload.deletedSeats) {
+      const remainingUsers = await deps.countWorkspaceUsers({
+        workspaceId: workspaceSeat.workspaceId
+      })
+
+      if (remainingUsers !== 0) continue
+
+      await asMultiregionalOperation(
+        async ({ mainDb, allDbs, emit }) =>
+          deleteWorkspaceFactory({
+            deleteWorkspace: replicateFactory(allDbs, repoDeleteWorkspaceFactory),
+            deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+              deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+              deleteProjectCommits: replicateFactory(
+                allDbs,
+                deleteProjectCommitsFactory
+              )
+            }),
+            deleteAllResourceInvites: deleteAllResourceInvitesFactory({
+              db: mainDb
+            }),
+            queryAllProjects: queryAllProjectsFactory({
+              getExplicitProjects: getExplicitProjects({ db: mainDb })
+            }),
+            deleteSsoProvider: deleteSsoProviderFactory({ db: mainDb }),
+            emitWorkspaceEvent: emit
+          })({ workspaceId: workspaceSeat.workspaceId }),
+        {
+          logger,
+          name: 'delete workspace with no users',
+          description: 'Delete workspace with no users',
+          dbs: await getAllRegisteredDbs()
+        }
+      )
+    }
+  }
+
 export const initializeEventListenersFactory =
   ({ db }: { db: Knex }) =>
   () => {
@@ -1084,6 +1140,13 @@ export const initializeEventListenersFactory =
           },
           { db }
         )
+      }),
+      eventBus.listen(UserEvents.Deleted, async (payload) => {
+        const deleteWorkspacesWithNoUsers = deleteWorkspacesWithNoUsersFactory({
+          countWorkspaceUsers: countWorkspaceUsersFactory({ db })
+        })
+
+        return await deleteWorkspacesWithNoUsers(payload)
       }),
       eventBus.listen('**', emitWorkspaceGraphqlSubscriptions),
       eventBus.listen(
