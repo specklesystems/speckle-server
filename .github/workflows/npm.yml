@@ -46,7 +46,7 @@ jobs:
           echo "npmRegistryServer: ${NPM_REGISTRY_URL}" >> .yarnrc.yml
           echo "npmAuthToken: ${NPM_TOKEN}" >> .yarnrc.yml
           echo "npmPublishAccess: ${NPM_PUBLISH_ACCESS}" >> .yarnrc.yml
-          echo "\"@${GITHUB_ORG}:registry\" \"${NPM_REGISTRY_URL}\"" >> .yarnrc.yml
+          echo "\"@${GITHUB_ORG}:registry\": \"${NPM_REGISTRY_URL}\"" >> .yarnrc.yml
       - name: Try login to npm
         run: yarn npm whoami
       - name: Amend package name & git repository to match
