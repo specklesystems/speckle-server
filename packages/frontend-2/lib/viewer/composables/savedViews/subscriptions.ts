@@ -16,16 +16,6 @@ import {
   onNewGroupViewCacheUpdates
 } from '~/lib/viewer/helpers/savedViews/cache'
 
-/**
- * For group updates: TODO:
- * - On new ungroup view (first one), new group is added to end
- *
- * TEST:
- * - W/ tab2 views panel closed (empty cache)
- * - W/ federated views/groups
- * - W/ multiple ungrouped groups/views
- */
-
 const onProjectSavedViewsUpdatedSubscription = graphql(`
   subscription OnProjectSavedViewsUpdated($projectId: ID!) {
     projectSavedViewsUpdated(projectId: $projectId) {

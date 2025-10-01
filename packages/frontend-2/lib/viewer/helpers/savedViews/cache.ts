@@ -119,7 +119,7 @@ export const onNewGroupViewCacheUpdates = (
     getCacheId('Project', projectId),
     'savedViewGroups',
     ({ helpers: { createUpdatedValue, keyToRef, fromRef }, value, variables }) => {
-      if (!value.items?.length) return // no groups query at all? skip
+      if (!value.items) return // no groups query at all? skip
 
       /**
        * - 1. If group already in the list - skip
@@ -157,9 +157,9 @@ export const onNewGroupViewCacheUpdates = (
       return createUpdatedValue(({ update }) => {
         update('totalCount', (count) => count + extraCount)
         update('items', (items) => [
-          ...newGrouped.map((k) => keyToRef(k)),
+          ...newUngrouped.map((k) => keyToRef(k)),
           ...items,
-          ...newUngrouped.map((k) => keyToRef(k))
+          ...newGrouped.map((k) => keyToRef(k))
         ])
       })
     },
