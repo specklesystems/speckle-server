@@ -48,6 +48,7 @@ import type {
   StoreUser,
   StoreUserAcl,
   UpdateUser,
+  UpdateUserEmailVerification,
   UpdateUserServerRole
 } from '@/modules/core/domain/users/operations'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
@@ -219,14 +220,20 @@ export const getUserByEmailFactory =
  */
 export const markUserAsVerifiedFactory =
   (deps: { db: Knex }): MarkUserAsVerified =>
-  async (email: string) => {
+  async (email: string) =>
+    updateUserEmailVerificationFactory(deps)({ email, verified: true })
+
+export const updateUserEmailVerificationFactory =
+  (deps: { db: Knex }): UpdateUserEmailVerification =>
+  async (args) => {
+    const { email, verified } = args
     const UserCols = Users.with({ withoutTablePrefix: true }).col
 
     const usersUpdate = await tables
       .users(deps.db)
       .whereRaw('lower(email) = lower(?)', [email])
       .update({
-        [UserCols.verified]: true
+        [UserCols.verified]: verified
       })
 
     return !!usersUpdate

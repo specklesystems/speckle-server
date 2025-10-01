@@ -209,6 +209,11 @@ export class PerpendicularMeasurement extends Measurement {
   public toMeasurementData(): MeasurementData {
     const data = super.toMeasurementData()
     data.innerPoints = [[this.midPoint.x, this.midPoint.y, this.midPoint.z]]
+    if (this.flipStartNormal) {
+      vec3Buff0.copy(this.startNormal)
+      vec3Buff0.negate()
+      data.startNormal = [vec3Buff0.x, vec3Buff0.y, vec3Buff0.z]
+    }
     return data
   }
 

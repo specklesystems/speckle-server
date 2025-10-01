@@ -1,7 +1,10 @@
 <template>
   <button
-    class="size-8 flex items-center justify-center bg-foundation rounded-xl hover:bg-info-lighter hover:text-primary-focus"
-    :class="{ 'bg-info-lighter text-primary-focus': isActive }"
+    class="size-8 flex items-center text-foreground justify-center bg-foundation rounded-md hover:bg-primary-muted dark:hover:text-foreground-on-primary"
+    :class="{
+      'bg-info-lighter hover:!bg-info-lighter text-primary-focus dark:text-foreground-on-primary':
+        isActive
+    }"
   >
     <slot />
   </button>

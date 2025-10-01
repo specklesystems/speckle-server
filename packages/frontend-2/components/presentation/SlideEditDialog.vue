@@ -4,9 +4,9 @@
     <form @submit="onSubmit">
       <div class="flex flex-col gap-2">
         <img
-          :src="slide?.screenshot"
+          :src="slide?.thumbnailUrl"
           :alt="slide?.name"
-          class="w-full object-cover rounded-lg border border-outline-3"
+          class="w-full object-cover rounded-lg border border-outline-3 h-64"
         />
         <FormTextInput
           v-model="name"
@@ -41,12 +41,13 @@ graphql(`
     projectId
     name
     description
-    screenshot
+    thumbnailUrl
   }
 `)
 
 const props = defineProps<{
   slide: MaybeNullOrUndefined<PresentationSlideEditDialog_SavedViewFragment>
+  workspaceId: MaybeNullOrUndefined<string>
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
@@ -61,10 +62,13 @@ const onSubmit = handleSubmit(async () => {
   if (!props.slide?.id) return
 
   await updateSlide({
-    id: props.slide.id,
-    projectId: props.slide.projectId,
-    name: name.value,
-    description: description.value
+    input: {
+      id: props.slide.id,
+      projectId: props.slide.projectId,
+      name: name.value,
+      description: description.value
+    },
+    workspaceId: props.workspaceId
   })
 
   open.value = false

@@ -1,4 +1,4 @@
-import { DefermentManager } from '../../deferment/defermentManager.js'
+import { Deferment } from '../../deferment/defermentManager.js'
 import BatchingQueue from '../../queues/batchingQueue.js'
 import Queue from '../../queues/queue.js'
 import { CustomLogger } from '../../types/functions.js'
@@ -8,7 +8,7 @@ import { CacheOptions } from '../options.js'
 
 export class CacheReader {
   #database: Database
-  #defermentManager: DefermentManager
+  #defermentManager: Deferment
   #logger: CustomLogger
   #options: CacheOptions
   #readQueue: BatchingQueue<string> | undefined
@@ -17,7 +17,7 @@ export class CacheReader {
 
   constructor(
     database: Database,
-    defermentManager: DefermentManager,
+    defermentManager: Deferment,
     logger: CustomLogger,
     options: CacheOptions
   ) {

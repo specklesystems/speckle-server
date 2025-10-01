@@ -1,6 +1,9 @@
 <template>
   <ViewerStateSetup :init-params="initParams">
-    <PresentationViewerSetup />
+    <PresentationViewerSetup
+      @loading-change="onLoadingChange"
+      @progress-change="onProgressChange"
+    />
   </ViewerStateSetup>
 </template>
 <script setup lang="ts">
@@ -65,6 +68,19 @@ const savedViewId = computed({
 })
 
 const loadOriginal = ref(false)
+
+const emit = defineEmits<{
+  (e: 'loading-change', loading: boolean): void
+  (e: 'progress-change', progress: number): void
+}>()
+
+const onLoadingChange = (loading: boolean) => {
+  emit('loading-change', loading)
+}
+
+const onProgressChange = (progress: number) => {
+  emit('progress-change', progress)
+}
 
 const initParams = computed(
   (): UseSetupViewerParams => ({

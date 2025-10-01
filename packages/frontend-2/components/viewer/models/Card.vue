@@ -10,9 +10,9 @@
         @mouseleave="unhighlightObject"
         @focusin="highlightObject"
         @focusout="unhighlightObject"
-        @click="selectObject"
+        @click="handleClick"
         @dblclick="zoomToModel"
-        @keydown.enter="selectObject"
+        @keydown.enter="handleClick"
       >
         <ViewerExpansionTriangle
           class="h-8"
@@ -104,7 +104,8 @@ import type { Get } from 'type-fest'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import {
   useHighlightedObjectsUtilities,
-  useCameraUtilities
+  useCameraUtilities,
+  useSelectionUtilities
 } from '~~/lib/viewer/composables/ui'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import {
@@ -117,6 +118,7 @@ import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { useLoadLatestVersion } from '~~/lib/viewer/composables/resources'
 import { SpeckleViewer } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 import { Ellipsis } from 'lucide-vue-next'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
@@ -139,6 +141,8 @@ const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
 const { zoom } = useCameraUtilities()
 const { items } = useInjectedViewerRequestedResources()
 const { resourceItems } = useInjectedViewerLoadedResources()
+const { addToSelectionFromObjectIds } = useSelectionUtilities()
+
 const {
   viewer: {
     metadata: { filteringState }
@@ -146,6 +150,7 @@ const {
   ui: { filters }
 } = useInjectedViewerState()
 const mp = useMixpanel()
+const copyModelLink = useCopyModelLink()
 const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const route = useRoute()
@@ -171,14 +176,18 @@ const removeEnabled = computed(() => items.value.length > 1)
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
     {
-      title: 'Load latest version',
-      id: 'load-latest-version',
-      disabled: isLatest.value,
-      disabledTooltip: 'Already on the latest version'
+      title: 'Copy link to model',
+      id: 'copy-link-to-model'
     },
     {
       title: 'Show version history',
       id: 'show-version-history'
+    },
+    {
+      title: 'Load latest version',
+      id: 'load-latest-version',
+      disabled: isLatest.value,
+      disabledTooltip: 'Already on the latest version'
     },
     {
       title: 'Show version changes',
@@ -306,10 +315,11 @@ const unhighlightObject = () => {
   if (refObject && typeof refObject === 'string') unhighlightObjects([refObject])
 }
 
-const selectObject = () => {
-  // Only expand if not already expanded
+const handleClick = () => {
   if (!props.isExpanded) {
     emit('toggle-expansion')
+  } else {
+    addToSelectionFromObjectIds(modelObjectIds.value)
   }
 }
 
@@ -339,6 +349,11 @@ const onActionChosen = async (params: { item: LayoutMenuItem }) => {
   const { item } = params
 
   switch (item.id) {
+    case 'copy-link-to-model':
+      if (project.value) {
+        copyModelLink({ model: { projectId: project.value.id, id: props.model.id } })
+      }
+      break
     case 'load-latest-version':
       if (!isLatest.value) {
         loadLatestVersion()
