@@ -22,6 +22,103 @@ export type Scalars = {
   JSONObject: { input: {}; output: {}; }
 };
 
+export type AccFolder = {
+  __typename?: 'AccFolder';
+  children: Array<AccFolder>;
+  /** TODO ACC: Paginate this if required */
+  contents: AccItemCollection;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
+
+export type AccFolderContentsArgs = {
+  cursor?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type AccHub = {
+  __typename?: 'AccHub';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  project: AccProject;
+  /** TODO ACC: Paginate this if required */
+  projects: AccProjectCollection;
+};
+
+
+export type AccHubProjectArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type AccHubProjectsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AccHubCollection = {
+  __typename?: 'AccHubCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<AccHub>;
+};
+
+export type AccIntegration = {
+  __typename?: 'AccIntegration';
+  folder: AccFolder;
+  hub: AccHub;
+  hubs: AccHubCollection;
+};
+
+
+export type AccIntegrationFolderArgs = {
+  folderId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
+
+export type AccIntegrationHubArgs = {
+  id: Scalars['String']['input'];
+};
+
+export type AccItem = {
+  __typename?: 'AccItem';
+  id: Scalars['ID']['output'];
+  latestVersion: AccItemVersion;
+  name: Scalars['String']['output'];
+};
+
+export type AccItemCollection = {
+  __typename?: 'AccItemCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<AccItem>;
+};
+
+export type AccItemVersion = {
+  __typename?: 'AccItemVersion';
+  fileType: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  versionNumber: Scalars['Int']['output'];
+};
+
+export type AccProject = {
+  __typename?: 'AccProject';
+  folder: AccFolder;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  rootFolder: AccFolder;
+};
+
+
+export type AccProjectFolderArgs = {
+  id: Scalars['String']['input'];
+};
+
+export type AccProjectCollection = {
+  __typename?: 'AccProjectCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<AccProject>;
+};
+
 export type AccSyncItem = {
   __typename?: 'AccSyncItem';
   accFileExtension: Scalars['String']['output'];
@@ -5417,6 +5514,7 @@ export type Workspace = {
   embedOptions: WorkspaceEmbedOptions;
   hasAccessToFeature: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
+  integrations?: Maybe<WorkspaceIntegrations>;
   /** Only available to workspace owners/members */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
   /** Exclusive workspaces do not allow their workspace members to create or join other workspaces as members. */
@@ -5603,6 +5701,16 @@ export type WorkspaceFeatureName = typeof WorkspaceFeatureName[keyof typeof Work
 export type WorkspaceIdentifier = {
   id?: InputMaybe<Scalars['String']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type WorkspaceIntegrations = {
+  __typename?: 'WorkspaceIntegrations';
+  acc?: Maybe<AccIntegration>;
+};
+
+
+export type WorkspaceIntegrationsAccArgs = {
+  token?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type WorkspaceInviteCreateInput = {
@@ -9131,6 +9239,15 @@ export const AutomateFunctionPageDocument = {"kind":"Document","definitions":[{"
 export const AutomateFunctionPageWorkspaceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AutomateFunctionPageWorkspace"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"workspaceId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workspace"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"workspaceId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomateFunctionPageHeader_Workspace"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomateFunctionPageHeader_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}}]}}]} as unknown as DocumentNode<AutomateFunctionPageWorkspaceQuery, AutomateFunctionPageWorkspaceQueryVariables>;
 export const SettingsServerRegionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SettingsServerRegions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"multiRegion"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"regions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsServerRegionsTable_ServerRegionItem"}}]}},{"kind":"Field","name":{"kind":"Name","value":"availableKeys"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsServerRegionsTable_ServerRegionItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ServerRegionItem"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]} as unknown as DocumentNode<SettingsServerRegionsQuery, SettingsServerRegionsQueryVariables>;
 export type AllObjectTypes = {
+  AccFolder: AccFolder,
+  AccHub: AccHub,
+  AccHubCollection: AccHubCollection,
+  AccIntegration: AccIntegration,
+  AccItem: AccItem,
+  AccItemCollection: AccItemCollection,
+  AccItemVersion: AccItemVersion,
+  AccProject: AccProject,
+  AccProjectCollection: AccProjectCollection,
   AccSyncItem: AccSyncItem,
   AccSyncItemCollection: AccSyncItemCollection,
   AccSyncItemMutations: AccSyncItemMutations,
@@ -9317,6 +9434,7 @@ export type AllObjectTypes = {
   WorkspaceCreationState: WorkspaceCreationState,
   WorkspaceDomain: WorkspaceDomain,
   WorkspaceEmbedOptions: WorkspaceEmbedOptions,
+  WorkspaceIntegrations: WorkspaceIntegrations,
   WorkspaceInviteMutations: WorkspaceInviteMutations,
   WorkspaceJoinRequest: WorkspaceJoinRequest,
   WorkspaceJoinRequestCollection: WorkspaceJoinRequestCollection,
@@ -9340,6 +9458,52 @@ export type AllObjectTypes = {
   WorkspaceSubscriptionSeats: WorkspaceSubscriptionSeats,
   WorkspaceTeamByRole: WorkspaceTeamByRole,
   WorkspaceUpdatedMessage: WorkspaceUpdatedMessage,
+}
+export type AccFolderFieldArgs = {
+  children: {},
+  contents: AccFolderContentsArgs,
+  id: {},
+  name: {},
+}
+export type AccHubFieldArgs = {
+  id: {},
+  name: {},
+  project: AccHubProjectArgs,
+  projects: AccHubProjectsArgs,
+}
+export type AccHubCollectionFieldArgs = {
+  cursor: {},
+  items: {},
+}
+export type AccIntegrationFieldArgs = {
+  folder: AccIntegrationFolderArgs,
+  hub: AccIntegrationHubArgs,
+  hubs: {},
+}
+export type AccItemFieldArgs = {
+  id: {},
+  latestVersion: {},
+  name: {},
+}
+export type AccItemCollectionFieldArgs = {
+  cursor: {},
+  items: {},
+}
+export type AccItemVersionFieldArgs = {
+  fileType: {},
+  id: {},
+  name: {},
+  versionNumber: {},
+}
+export type AccProjectFieldArgs = {
+  folder: AccProjectFolderArgs,
+  id: {},
+  name: {},
+  rootFolder: {},
+}
+export type AccProjectCollectionFieldArgs = {
+  cursor: {},
+  items: {},
 }
 export type AccSyncItemFieldArgs = {
   accFileExtension: {},
@@ -10832,6 +10996,7 @@ export type WorkspaceFieldArgs = {
   embedOptions: {},
   hasAccessToFeature: WorkspaceHasAccessToFeatureArgs,
   id: {},
+  integrations: {},
   invitedTeam: WorkspaceInvitedTeamArgs,
   isExclusive: {},
   logo: {},
@@ -10885,6 +11050,9 @@ export type WorkspaceDomainFieldArgs = {
 }
 export type WorkspaceEmbedOptionsFieldArgs = {
   hideSpeckleBranding: {},
+}
+export type WorkspaceIntegrationsFieldArgs = {
+  acc: WorkspaceIntegrationsAccArgs,
 }
 export type WorkspaceInviteMutationsFieldArgs = {
   batchCreate: WorkspaceInviteMutationsBatchCreateArgs,
@@ -11022,6 +11190,15 @@ export type WorkspaceUpdatedMessageFieldArgs = {
   workspace: {},
 }
 export type AllObjectFieldArgTypes = {
+  AccFolder: AccFolderFieldArgs,
+  AccHub: AccHubFieldArgs,
+  AccHubCollection: AccHubCollectionFieldArgs,
+  AccIntegration: AccIntegrationFieldArgs,
+  AccItem: AccItemFieldArgs,
+  AccItemCollection: AccItemCollectionFieldArgs,
+  AccItemVersion: AccItemVersionFieldArgs,
+  AccProject: AccProjectFieldArgs,
+  AccProjectCollection: AccProjectCollectionFieldArgs,
   AccSyncItem: AccSyncItemFieldArgs,
   AccSyncItemCollection: AccSyncItemCollectionFieldArgs,
   AccSyncItemMutations: AccSyncItemMutationsFieldArgs,
@@ -11208,6 +11385,7 @@ export type AllObjectFieldArgTypes = {
   WorkspaceCreationState: WorkspaceCreationStateFieldArgs,
   WorkspaceDomain: WorkspaceDomainFieldArgs,
   WorkspaceEmbedOptions: WorkspaceEmbedOptionsFieldArgs,
+  WorkspaceIntegrations: WorkspaceIntegrationsFieldArgs,
   WorkspaceInviteMutations: WorkspaceInviteMutationsFieldArgs,
   WorkspaceJoinRequest: WorkspaceJoinRequestFieldArgs,
   WorkspaceJoinRequestCollection: WorkspaceJoinRequestCollectionFieldArgs,

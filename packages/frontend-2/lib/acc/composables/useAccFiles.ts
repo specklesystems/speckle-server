@@ -61,6 +61,17 @@ export function useAcc() {
     }
   }
 
+  type HubsResponse = {
+    data: {
+      id: string
+      type: 'hubs'
+      attributes: {
+        name: string
+        region: string
+      }
+    }[]
+  }
+
   /**
    * Fetches all projects for a given hub.
    */
@@ -82,8 +93,8 @@ export function useAcc() {
   }
 
   /**
-   * Fetches the root folder ID for the project.
-   */
+ * Fetches the root folder ID for the project.
+ */
   const getProjectRootFolderId = async (
     hubId: string,
     projectId: string,
@@ -104,6 +115,30 @@ export function useAcc() {
       return undefined
     }
   }
+
+  type ProjectsResponse = {
+    data: {
+      id: string
+      type: 'projects'
+      attributes: {
+        name: string
+      }
+      relationships: {
+        hub: {
+          data: {
+            id: string
+            type: string
+          }
+        }
+        rootFolder: {
+          data: {
+            id: string
+          }
+        }
+      }
+    }[]
+  }
+
 
   /**
    * Fetches the immediate contents (folders and items) of a single folder.
@@ -130,6 +165,27 @@ export function useAcc() {
     }
   }
 
+  type FolderContentsResponse = {
+    data: ({
+      id: string
+    }) & (
+      | {
+        type: 'folders'
+        attributes: {
+          name: string
+          displayName: string
+          objectCount: number
+        }
+      }
+      | {
+        type: 'items'
+        attributes: {
+          displayName: string
+        }
+      }
+    )[]
+  }
+
   /**
    * Fetches the latest version details for a specific item (file).
    * This function is separated for on-demand use.
@@ -152,6 +208,25 @@ export function useAcc() {
     } catch (error) {
       logger.error(error, `Error fetching latest version for item ${itemId}`)
       return null
+    }
+  }
+
+  type ItemLatestVersionResponse = {
+    data: {
+      id: string
+      type: 'versions'
+      attributes: {
+        name: string
+        displayName: string
+        versionNumber: number
+        fileType: string
+        createTime: Date
+        createUserId: string
+        createUserName: string
+        lastModifiedTime: Date
+        lastModifiedUserId: string
+        lastModifiedUserName: string
+      }
     }
   }
 

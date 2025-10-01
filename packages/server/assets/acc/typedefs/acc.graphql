@@ -1,0 +1,74 @@
+extend type WorkspaceIntegrations {
+  acc(token: String): AccIntegration
+}
+
+type AccIntegration {
+  hub(id: String!): AccHub!
+  hubs: AccHubCollection!
+  project(hubId: String!, projectId: String!): AccProject!
+  folder(projectId: String!, folderId: String!): AccFolder!
+  item(projectId: String!, itemId: String!): AccItem!
+}
+
+type AccHub {
+  id: ID!
+  name: String!
+  project(id: ID!): AccProject!
+  projects: AccProjectCollection!
+}
+
+type AccHubCollection {
+  items: [AccHub!]!
+  cursor: String
+}
+
+type AccProject {
+  id: ID!
+  name: String!
+  # hub: AccHub!
+  folder(id: String!): AccFolder!
+  rootFolder: AccFolder!
+}
+
+type AccProjectCollection {
+  items: [AccProject!]!
+  cursor: String
+}
+
+type AccFolder {
+  id: ID!
+  name: String!
+  # project: AccProject!
+  contents: AccItemCollection!
+  children: AccFolderCollection!
+}
+
+type AccFolderCollection {
+  items: [AccFolder!]!
+  cursor: String
+}
+
+type AccItem {
+  """
+  lineage urn
+  """
+  id: ID!
+  name: String!
+  # version(version: Int): AccItemVersion!
+  latestVersion: AccItemVersion!
+}
+
+type AccItemCollection {
+  items: [AccItem!]!
+  cursor: String
+}
+
+type AccItemVersion {
+  """
+  version urn
+  """
+  id: ID!
+  name: String!
+  versionNumber: Int!
+  fileType: String!
+}

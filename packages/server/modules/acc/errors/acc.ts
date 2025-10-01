@@ -6,6 +6,18 @@ export class AccModuleDisabledError extends BaseError {
   static statusCode = 423
 }
 
+export class AccNotAuthorizedError extends BaseError {
+  static defaultMessage = 'ACC token missing or not authorized'
+  static code = 'ACC_MODULE_NOT_AUTHORIZED'
+  static statusCode = 401
+}
+
+export class AccNotYetImplementedError extends BaseError {
+  static defaultMessage = 'This functionality for the ACC integration is not yet implemented'
+  static code = 'ACC_MODULE_NOT_YET_IMPLEMENTED'
+  static statusCode = 501
+}
+
 export class DuplicateSyncItemError extends BaseError {
   static defaultMessage = 'A sync item with this lineage urn already exists.'
   static code = 'ACC_DUPLICATE_SYNC_ITEM_LINEAGE_URN'

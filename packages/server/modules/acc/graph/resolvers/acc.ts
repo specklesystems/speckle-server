@@ -59,7 +59,7 @@ import {
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
-import { AccModuleDisabledError, SyncItemNotFoundError } from '@/modules/acc/errors/acc'
+import { AccModuleDisabledError, AccNotAuthorizedError, AccNotYetImplementedError, SyncItemNotFoundError } from '@/modules/acc/errors/acc'
 import { getFeatureFlags } from '@speckle/shared/environment'
 import type { AccRegion } from '@/modules/acc/domain/acc/constants'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
@@ -69,6 +69,49 @@ const { FF_ACC_INTEGRATION_ENABLED, FF_AUTOMATE_MODULE_ENABLED } = getFeatureFla
 const enableAcc = FF_ACC_INTEGRATION_ENABLED && FF_AUTOMATE_MODULE_ENABLED
 
 const resolvers: Resolvers = {
+  WorkspaceIntegrations: {
+    acc: async (_parent, args, ctx) => {
+      if (!args.token) {
+        throw new AccNotAuthorizedError()
+      }
+      // TODO ACC: Replace with Speckle user - ACC user association
+      ctx.accToken = args.token
+      return {}
+    }
+  },
+  AccIntegration: {
+    folder: async (_parent, args) => {
+      const { projectId, folderId } = args
+      return {
+        id: folderId,
+        projectId
+      }
+    },
+  },
+  AccFolder: {
+    name: async (parent) => {
+      if (parent.name) return parent.name
+
+      // TODO: Fetch folder metadata with loader
+      throw new AccNotYetImplementedError()
+    },
+    contents: async (parent, _args, ctx) => {
+      const { id: folderId, projectId } = parent
+      const { accToken } = ctx
+
+      return {
+        items: []
+      }
+    },
+    children: async (parent, _args, ctx) => {
+      const { id: folderId, projectId } = parent
+      const { accToken } = ctx
+
+      return {
+        items: []
+      }
+    }
+  },
   Mutation: {
     accSyncItemMutations: () => ({})
   },
@@ -307,6 +350,11 @@ const resolvers: Resolvers = {
 }
 
 const disabledResolvers: Resolvers = {
+  WorkspaceIntegrations: {
+    async acc() {
+      throw new AccModuleDisabledError()
+    }
+  },
   Mutation: {
     accSyncItemMutations: () => ({})
   },

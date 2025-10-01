@@ -15,7 +15,7 @@ import type { ActivityCollectionGraphQLReturn } from '@/modules/activitystream/h
 import type { ServerAppGraphQLReturn, ServerAppListItemGraphQLReturn } from '@/modules/auth/helpers/graphTypes';
 import type { GendoAIRenderGraphQLReturn } from '@/modules/gendo/helpers/types/graphTypes';
 import type { ServerRegionItemGraphQLReturn } from '@/modules/multiregion/helpers/graphTypes';
-import type { AccSyncItemGraphQLReturn, AccSyncItemMutationsGraphQLReturn } from '@/modules/acc/helpers/graphTypes';
+import type { AccIntegrationGraphQLReturn, AccFolderGraphQLReturn, AccSyncItemGraphQLReturn, AccSyncItemMutationsGraphQLReturn } from '@/modules/acc/helpers/graphTypes';
 import type { SavedViewGraphQLReturn, SavedViewGroupGraphQLReturn, SavedViewPermissionChecksGraphQLReturn, SavedViewGroupPermissionChecksGraphQLReturn, ExtendedViewerResourcesGraphQLReturn } from '@/modules/viewer/helpers/graphTypes';
 import type { DashboardGraphQLReturn, DashboardMutationsGraphQLReturn, DashboardPermissionChecksGraphQLReturn, DashboardTokenGraphQLReturn } from '@/modules/dashboards/helpers/graphTypes';
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
@@ -42,6 +42,99 @@ export type Scalars = {
   DateTime: { input: Date; output: Date; }
   /** The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
   JSONObject: { input: Record<string, unknown>; output: Record<string, unknown>; }
+};
+
+export type AccFolder = {
+  __typename?: 'AccFolder';
+  children: AccFolderCollection;
+  contents: AccItemCollection;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type AccFolderCollection = {
+  __typename?: 'AccFolderCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<AccFolder>;
+};
+
+export type AccHub = {
+  __typename?: 'AccHub';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  project: AccProject;
+  projects: AccProjectCollection;
+};
+
+
+export type AccHubProjectArgs = {
+  id: Scalars['ID']['input'];
+};
+
+export type AccHubCollection = {
+  __typename?: 'AccHubCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<AccHub>;
+};
+
+export type AccIntegration = {
+  __typename?: 'AccIntegration';
+  folder: AccFolder;
+  hub: AccHub;
+  hubs: AccHubCollection;
+};
+
+
+export type AccIntegrationFolderArgs = {
+  folderId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
+
+export type AccIntegrationHubArgs = {
+  id: Scalars['String']['input'];
+};
+
+export type AccItem = {
+  __typename?: 'AccItem';
+  /** lineage urn */
+  id: Scalars['ID']['output'];
+  latestVersion: AccItemVersion;
+  name: Scalars['String']['output'];
+};
+
+export type AccItemCollection = {
+  __typename?: 'AccItemCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<AccItem>;
+};
+
+export type AccItemVersion = {
+  __typename?: 'AccItemVersion';
+  fileType: Scalars['String']['output'];
+  /** version urn */
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  versionNumber: Scalars['Int']['output'];
+};
+
+export type AccProject = {
+  __typename?: 'AccProject';
+  folder: AccFolder;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  rootFolder: AccFolder;
+};
+
+
+export type AccProjectFolderArgs = {
+  id: Scalars['String']['input'];
+};
+
+export type AccProjectCollection = {
+  __typename?: 'AccProjectCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<AccProject>;
 };
 
 export type AccSyncItem = {
@@ -5444,6 +5537,7 @@ export type Workspace = {
   embedOptions: WorkspaceEmbedOptions;
   hasAccessToFeature: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
+  integrations?: Maybe<WorkspaceIntegrations>;
   /** Only available to workspace owners/members */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
   /** Exclusive workspaces do not allow their workspace members to create or join other workspaces as members. */
@@ -5630,6 +5724,16 @@ export type WorkspaceFeatureName = typeof WorkspaceFeatureName[keyof typeof Work
 export type WorkspaceIdentifier =
   { id: Scalars['String']['input']; slug?: never; }
   |  { id?: never; slug: Scalars['String']['input']; };
+
+export type WorkspaceIntegrations = {
+  __typename?: 'WorkspaceIntegrations';
+  acc?: Maybe<AccIntegration>;
+};
+
+
+export type WorkspaceIntegrationsAccArgs = {
+  token?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type WorkspaceInviteCreateInput = {
   /** Either this or userId must be filled */
@@ -6211,6 +6315,16 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
+  AccFolder: ResolverTypeWrapper<AccFolderGraphQLReturn>;
+  AccFolderCollection: ResolverTypeWrapper<Omit<AccFolderCollection, 'items'> & { items: Array<ResolversTypes['AccFolder']> }>;
+  AccHub: ResolverTypeWrapper<Omit<AccHub, 'project' | 'projects'> & { project: ResolversTypes['AccProject'], projects: ResolversTypes['AccProjectCollection'] }>;
+  AccHubCollection: ResolverTypeWrapper<Omit<AccHubCollection, 'items'> & { items: Array<ResolversTypes['AccHub']> }>;
+  AccIntegration: ResolverTypeWrapper<AccIntegrationGraphQLReturn>;
+  AccItem: ResolverTypeWrapper<AccItem>;
+  AccItemCollection: ResolverTypeWrapper<AccItemCollection>;
+  AccItemVersion: ResolverTypeWrapper<AccItemVersion>;
+  AccProject: ResolverTypeWrapper<Omit<AccProject, 'folder' | 'rootFolder'> & { folder: ResolversTypes['AccFolder'], rootFolder: ResolversTypes['AccFolder'] }>;
+  AccProjectCollection: ResolverTypeWrapper<Omit<AccProjectCollection, 'items'> & { items: Array<ResolversTypes['AccProject']> }>;
   AccSyncItem: ResolverTypeWrapper<AccSyncItemGraphQLReturn>;
   AccSyncItemCollection: ResolverTypeWrapper<Omit<AccSyncItemCollection, 'items'> & { items: Array<ResolversTypes['AccSyncItem']> }>;
   AccSyncItemMutations: ResolverTypeWrapper<AccSyncItemMutationsGraphQLReturn>;
@@ -6568,6 +6682,7 @@ export type ResolversTypes = {
   WorkspaceFeatureFlagName: WorkspaceFeatureFlagName;
   WorkspaceFeatureName: WorkspaceFeatureName;
   WorkspaceIdentifier: WorkspaceIdentifier;
+  WorkspaceIntegrations: ResolverTypeWrapper<Omit<WorkspaceIntegrations, 'acc'> & { acc?: Maybe<ResolversTypes['AccIntegration']> }>;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
   WorkspaceInviteLookupOptions: WorkspaceInviteLookupOptions;
   WorkspaceInviteMutations: ResolverTypeWrapper<WorkspaceInviteMutationsGraphQLReturn>;
@@ -6617,6 +6732,16 @@ export type ResolversTypes = {
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
+  AccFolder: AccFolderGraphQLReturn;
+  AccFolderCollection: Omit<AccFolderCollection, 'items'> & { items: Array<ResolversParentTypes['AccFolder']> };
+  AccHub: Omit<AccHub, 'project' | 'projects'> & { project: ResolversParentTypes['AccProject'], projects: ResolversParentTypes['AccProjectCollection'] };
+  AccHubCollection: Omit<AccHubCollection, 'items'> & { items: Array<ResolversParentTypes['AccHub']> };
+  AccIntegration: AccIntegrationGraphQLReturn;
+  AccItem: AccItem;
+  AccItemCollection: AccItemCollection;
+  AccItemVersion: AccItemVersion;
+  AccProject: Omit<AccProject, 'folder' | 'rootFolder'> & { folder: ResolversParentTypes['AccFolder'], rootFolder: ResolversParentTypes['AccFolder'] };
+  AccProjectCollection: Omit<AccProjectCollection, 'items'> & { items: Array<ResolversParentTypes['AccProject']> };
   AccSyncItem: AccSyncItemGraphQLReturn;
   AccSyncItemCollection: Omit<AccSyncItemCollection, 'items'> & { items: Array<ResolversParentTypes['AccSyncItem']> };
   AccSyncItemMutations: AccSyncItemMutationsGraphQLReturn;
@@ -6942,6 +7067,7 @@ export type ResolversParentTypes = {
   WorkspaceDomainDeleteInput: WorkspaceDomainDeleteInput;
   WorkspaceEmbedOptions: WorkspaceEmbedOptions;
   WorkspaceIdentifier: WorkspaceIdentifier;
+  WorkspaceIntegrations: Omit<WorkspaceIntegrations, 'acc'> & { acc?: Maybe<ResolversParentTypes['AccIntegration']> };
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
   WorkspaceInviteLookupOptions: WorkspaceInviteLookupOptions;
   WorkspaceInviteMutations: WorkspaceInviteMutationsGraphQLReturn;
@@ -7015,6 +7141,76 @@ export type HasWorkspaceRoleDirectiveResolver<Result, Parent, ContextType = Grap
 export type IsOwnerDirectiveArgs = { };
 
 export type IsOwnerDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = IsOwnerDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
+
+export type AccFolderResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccFolder'] = ResolversParentTypes['AccFolder']> = {
+  children?: Resolver<ResolversTypes['AccFolderCollection'], ParentType, ContextType>;
+  contents?: Resolver<ResolversTypes['AccItemCollection'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccFolderCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccFolderCollection'] = ResolversParentTypes['AccFolderCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['AccFolder']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccHubResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccHub'] = ResolversParentTypes['AccHub']> = {
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  project?: Resolver<ResolversTypes['AccProject'], ParentType, ContextType, RequireFields<AccHubProjectArgs, 'id'>>;
+  projects?: Resolver<ResolversTypes['AccProjectCollection'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccHubCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccHubCollection'] = ResolversParentTypes['AccHubCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['AccHub']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccIntegrationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccIntegration'] = ResolversParentTypes['AccIntegration']> = {
+  folder?: Resolver<ResolversTypes['AccFolder'], ParentType, ContextType, RequireFields<AccIntegrationFolderArgs, 'folderId' | 'projectId'>>;
+  hub?: Resolver<ResolversTypes['AccHub'], ParentType, ContextType, RequireFields<AccIntegrationHubArgs, 'id'>>;
+  hubs?: Resolver<ResolversTypes['AccHubCollection'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccItem'] = ResolversParentTypes['AccItem']> = {
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  latestVersion?: Resolver<ResolversTypes['AccItemVersion'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccItemCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccItemCollection'] = ResolversParentTypes['AccItemCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['AccItem']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccItemVersionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccItemVersion'] = ResolversParentTypes['AccItemVersion']> = {
+  fileType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  versionNumber?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccProjectResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccProject'] = ResolversParentTypes['AccProject']> = {
+  folder?: Resolver<ResolversTypes['AccFolder'], ParentType, ContextType, RequireFields<AccProjectFolderArgs, 'id'>>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  rootFolder?: Resolver<ResolversTypes['AccFolder'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccProjectCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccProjectCollection'] = ResolversParentTypes['AccProjectCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['AccProject']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
 
 export type AccSyncItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccSyncItem'] = ResolversParentTypes['AccSyncItem']> = {
   accFileExtension?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -8880,6 +9076,7 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   embedOptions?: Resolver<ResolversTypes['WorkspaceEmbedOptions'], ParentType, ContextType>;
   hasAccessToFeature?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceHasAccessToFeatureArgs, 'featureName'>>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  integrations?: Resolver<Maybe<ResolversTypes['WorkspaceIntegrations']>, ParentType, ContextType>;
   invitedTeam?: Resolver<Maybe<Array<ResolversTypes['PendingWorkspaceCollaborator']>>, ParentType, ContextType, Partial<WorkspaceInvitedTeamArgs>>;
   isExclusive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   logo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -8947,6 +9144,11 @@ export type WorkspaceDomainResolvers<ContextType = GraphQLContext, ParentType ex
 
 export type WorkspaceEmbedOptionsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceEmbedOptions'] = ResolversParentTypes['WorkspaceEmbedOptions']> = {
   hideSpeckleBranding?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type WorkspaceIntegrationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceIntegrations'] = ResolversParentTypes['WorkspaceIntegrations']> = {
+  acc?: Resolver<Maybe<ResolversTypes['AccIntegration']>, ParentType, ContextType, Partial<WorkspaceIntegrationsAccArgs>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -9132,6 +9334,16 @@ export type WorkspaceUpdatedMessageResolvers<ContextType = GraphQLContext, Paren
 };
 
 export type Resolvers<ContextType = GraphQLContext> = {
+  AccFolder?: AccFolderResolvers<ContextType>;
+  AccFolderCollection?: AccFolderCollectionResolvers<ContextType>;
+  AccHub?: AccHubResolvers<ContextType>;
+  AccHubCollection?: AccHubCollectionResolvers<ContextType>;
+  AccIntegration?: AccIntegrationResolvers<ContextType>;
+  AccItem?: AccItemResolvers<ContextType>;
+  AccItemCollection?: AccItemCollectionResolvers<ContextType>;
+  AccItemVersion?: AccItemVersionResolvers<ContextType>;
+  AccProject?: AccProjectResolvers<ContextType>;
+  AccProjectCollection?: AccProjectCollectionResolvers<ContextType>;
   AccSyncItem?: AccSyncItemResolvers<ContextType>;
   AccSyncItemCollection?: AccSyncItemCollectionResolvers<ContextType>;
   AccSyncItemMutations?: AccSyncItemMutationsResolvers<ContextType>;
@@ -9323,6 +9535,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   WorkspaceCreationState?: WorkspaceCreationStateResolvers<ContextType>;
   WorkspaceDomain?: WorkspaceDomainResolvers<ContextType>;
   WorkspaceEmbedOptions?: WorkspaceEmbedOptionsResolvers<ContextType>;
+  WorkspaceIntegrations?: WorkspaceIntegrationsResolvers<ContextType>;
   WorkspaceInviteMutations?: WorkspaceInviteMutationsResolvers<ContextType>;
   WorkspaceJoinRequest?: WorkspaceJoinRequestResolvers<ContextType>;
   WorkspaceJoinRequestCollection?: WorkspaceJoinRequestCollectionResolvers<ContextType>;
