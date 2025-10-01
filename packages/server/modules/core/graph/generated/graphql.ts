@@ -3730,13 +3730,19 @@ export type SavedView = {
   permissions: SavedViewPermissionChecks;
   /** For figuring out position in the group */
   position: Scalars['Float']['output'];
+  previewUrl: Scalars['String']['output'];
   projectId: Scalars['ID']['output'];
   /** Original resource ID string that this view is associated with. */
   resourceIdString: Scalars['String']['output'];
   /** Same as resourceIdString, but split into an array of resource IDs. */
   resourceIds: Array<Scalars['String']['output']>;
-  /** Encoded screenshot of the view */
+  /**
+   * Encoded screenshot of the view. Can be a very large value, its preferred you
+   * use the thumbnailUrl or previewUrl fields to load the image from a separate endpoint
+   * @deprecated Use thumbnailUrl or previewUrl instead
+   */
   screenshot: Scalars['String']['output'];
+  thumbnailUrl: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
   /** Viewer state, the actual view configuration */
   viewerState: Scalars['JSONObject']['output'];
@@ -8360,10 +8366,12 @@ export type SavedViewResolvers<ContextType = GraphQLContext, ParentType extends 
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   permissions?: Resolver<ResolversTypes['SavedViewPermissionChecks'], ParentType, ContextType>;
   position?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  previewUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   projectId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   resourceIdString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   resourceIds?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   screenshot?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  thumbnailUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   viewerState?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
   visibility?: Resolver<ResolversTypes['SavedViewVisibility'], ParentType, ContextType>;

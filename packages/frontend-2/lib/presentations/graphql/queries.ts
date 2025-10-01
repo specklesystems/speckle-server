@@ -38,7 +38,7 @@ export const projectPresentationPageQuery = graphql(`
             id
             name
             description
-            screenshot
+            thumbnailUrl
             projectId
             visibility
             ...PresentationInfoSidebar_SavedView

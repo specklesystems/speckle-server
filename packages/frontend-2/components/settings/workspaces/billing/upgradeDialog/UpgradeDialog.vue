@@ -209,6 +209,7 @@ watch(
         includeUnlimitedAddon.value = undefined
       }
     }
-  }
+  },
+  { immediate: true }
 )
 </script>

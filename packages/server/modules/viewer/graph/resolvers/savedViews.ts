@@ -15,7 +15,11 @@ import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { LogicError, NotFoundError, NotImplementedError } from '@/modules/shared/errors'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
-import { buildDefaultGroupId } from '@/modules/viewer/helpers/savedViews'
+import {
+  buildDefaultGroupId,
+  getPreviewUrl,
+  getThumbnailUrl
+} from '@/modules/viewer/helpers/savedViews'
 import {
   deleteSavedViewGroupRecordFactory,
   deleteSavedViewRecordFactory,
@@ -59,6 +63,7 @@ import {
 } from '@/modules/viewer/repositories/dataLoaders/savedViews'
 import type { RequestDataLoaders } from '@/modules/core/loaders'
 import { omit } from 'lodash-es'
+import { downscaleScreenshotForThumbnailFactory } from '@/modules/viewer/services/savedViewPreviews'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   filteredSubscribe,
@@ -243,6 +248,18 @@ const resolvers: Resolvers = {
       }
 
       return group
+    },
+    previewUrl(parent) {
+      return getPreviewUrl({
+        projectId: parent.projectId,
+        viewId: parent.id
+      })
+    },
+    thumbnailUrl(parent) {
+      return getThumbnailUrl({
+        projectId: parent.projectId,
+        viewId: parent.id
+      })
     }
   },
   SavedViewGroup: {
@@ -327,6 +344,7 @@ const resolvers: Resolvers = {
           db: projectDb
         }),
         rebalanceViewPositions: rebalancingViewPositionsFactory({ db: projectDb }),
+        downscaleScreenshotForThumbnail: downscaleScreenshotForThumbnailFactory(),
         emit: getEventBus().emit
       })
       return await createSavedView({ input: args.input, authorId: ctx.userId! })
@@ -423,6 +441,7 @@ const resolvers: Resolvers = {
         getNewViewSpecificPosition: getNewViewSpecificPositionFactory({
           db: projectDb
         }),
+        downscaleScreenshotForThumbnail: downscaleScreenshotForThumbnailFactory(),
         emit: getEventBus().emit
       })
 
