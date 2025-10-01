@@ -213,7 +213,7 @@ describe('BatchingQueue', () => {
   test('should drain items even with ongoing processing during dispose', async () => {
     const processSpy = vi.fn()
     let firstBatchStarted = false
-    let allowFirstBatchToComplete: (() => void) | undefined = undefined
+    let allowFirstBatchToComplete: (() => void) | null = null
 
     const queue = new BatchingQueue({
       batchSize: 2,
@@ -238,10 +238,11 @@ describe('BatchingQueue', () => {
     queue.add('key1', 'item1')
     queue.add('key2', 'item2')
 
-    // Wait for first batch to start processing
+    // Wait for first batch to start processing and allowFirstBatchToComplete to be assigned
     await new Promise((resolve) => setTimeout(resolve, 50))
     expect(firstBatchStarted).toBe(true)
     expect(processSpy).toHaveBeenCalledTimes(1)
+    expect(allowFirstBatchToComplete).not.toBeNull()
 
     // Add more items while first batch is still processing
     queue.add('key3', 'item3')
@@ -254,7 +255,7 @@ describe('BatchingQueue', () => {
     const disposePromise = queue.disposeAsync()
 
     // Allow the first batch to complete
-    allowFirstBatchToComplete?.()
+    allowFirstBatchToComplete!()
 
     // Wait for disposal to complete
     await disposePromise
