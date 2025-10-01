@@ -125,6 +125,7 @@ export const useDraggableViewTargetView = (params: {
       if (!event.dataTransfer) return
 
       event.preventDefault()
+      event.stopPropagation() // Stop event from bubbling to group drop handler
       isDragOver.value = false
       dragCounter.value = 0
       dropPosition.value = null
@@ -224,11 +225,14 @@ graphql(`
 export const useDraggableViewTargetGroup = (params: {
   group: Ref<UseDraggableViewTargetGroup_SavedViewGroupFragment>
   onMoved?: () => void
+  isGroupOpen?: Ref<boolean>
+  viewCount?: Ref<number>
 }) => {
   const isDragOver = ref(false)
-  const dragCounter = ref(0)
   const { triggerNotification } = useGlobalToast()
   const updateView = useUpdateSavedView()
+  const isGroupOpen = computed(() => unref(params.isGroupOpen) ?? false)
+  const viewCount = computed(() => unref(params.viewCount) ?? 0)
 
   const vOn = {
     dragover: (event: DragEvent) => {
@@ -237,13 +241,20 @@ export const useDraggableViewTargetGroup = (params: {
       event.preventDefault()
       event.dataTransfer.dropEffect = 'move'
 
-      // Only show drop indicator if hovering over the title button (DisclosureButton)
+      // Check if we're over the title button
       const target = event.target as HTMLElement
       const isOverTitleButton = target.closest('button[class*="group/disclosure"]')
-      if (!isOverTitleButton) {
-        // We're over the content area, not the title - don't show group outline
+
+      // If group is open and empty, allow drop anywhere in the group
+      // Otherwise, only allow drop on title button
+      if (isOverTitleButton) {
+        isDragOver.value = true
+      } else if (isGroupOpen.value && viewCount.value === 0) {
+        // Open empty group - allow drop anywhere (not over a view)
+        const isOverView = target.closest('.draggable-view')
+        isDragOver.value = !isOverView
+      } else {
         isDragOver.value = false
-        return
       }
     },
     drop: async (event: DragEvent) => {
@@ -251,7 +262,6 @@ export const useDraggableViewTargetGroup = (params: {
 
       event.preventDefault()
       isDragOver.value = false
-      dragCounter.value = 0
 
       try {
         const data = event.dataTransfer.getData('application/json')
@@ -280,10 +290,6 @@ export const useDraggableViewTargetGroup = (params: {
             skipToast: true,
             onFullResult: (res, success) => {
               if (success) {
-                triggerNotification({
-                  type: ToastNotificationType.Success,
-                  title: `Moved "${view.name}" to "${params.group.value.title}"`
-                })
                 params.onMoved?.()
               } else {
                 triggerNotification({
@@ -305,18 +311,14 @@ export const useDraggableViewTargetGroup = (params: {
     },
     dragenter: (event: DragEvent) => {
       event.preventDefault()
-      dragCounter.value++
-
-      // Only set isDragOver if we're entering the title button
-      const target = event.target as HTMLElement
-      const isOverTitleButton = target.closest('button[class*="group/disclosure"]')
-      if (isOverTitleButton) {
-        isDragOver.value = true
-      }
     },
-    dragleave: () => {
-      dragCounter.value--
-      if (dragCounter.value === 0) {
+    dragleave: (event: DragEvent) => {
+      // Check if we're actually leaving the group element entirely
+      const relatedTarget = event.relatedTarget as HTMLElement
+      const currentTarget = event.currentTarget as HTMLElement
+
+      // If leaving to something outside this group, clear the drag over state
+      if (!currentTarget.contains(relatedTarget)) {
         isDragOver.value = false
       }
     }

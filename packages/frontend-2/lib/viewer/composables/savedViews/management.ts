@@ -295,6 +295,7 @@ export const useUpdateSavedView = () => {
 
           const newGroupId = update.group.id
           const groupChanged = oldGroupId !== newGroupId
+
           if (groupChanged) {
             // Clean up old group
             onGroupViewRemovalCacheUpdates(cache, {
@@ -349,59 +350,39 @@ export const useUpdateSavedView = () => {
             }
           }
 
-          // If position changed, recalculate it according to sort dir in vars
+          // If position changed, re-sort the group
           if (input.position) {
-            // Go through all SavedViewGroup.views, where this view exists and update array position
-            iterateObjectField(
+            modifyObjectField(
               cache,
-              getCacheId('Project', params.view.projectId),
-              'savedViewGroups',
-              ({ value }) => {
-                const items = value.items
-                if (!items) return
+              getCacheId('SavedViewGroup', newGroupId),
+              'views',
+              ({ helpers: { createUpdatedValue, readField }, variables }) => {
+                const sortDir = variables.input.sortDirection || SortDirection.Desc
+                const sortBy = (variables.input.sortBy || 'position') as
+                  | 'position'
+                  | 'updatedAt'
 
-                items.forEach((groupRef) => {
-                  const parsed = parseObjectReference(groupRef)
-                  modifyObjectField(
-                    cache,
-                    getCacheId('SavedViewGroup', parsed.id),
-                    'views',
-                    ({ helpers: { createUpdatedValue, readField }, variables }) => {
-                      const sortDir =
-                        variables.input.sortDirection || SortDirection.Desc
-                      const sortBy = (variables.input.sortBy || 'position') as
-                        | 'position'
-                        | 'updatedAt'
+                return createUpdatedValue(({ update }) => {
+                  update('items', (items) => {
+                    return items.slice().sort((a, b) => {
+                      const process = (ref: CacheObjectReference<'SavedView'>) => {
+                        const val = readField(ref, sortBy)
+                        if (!val) return -1
 
-                      return createUpdatedValue(({ update }) => {
-                        update('items', (items) => {
-                          const newItems = items.slice().sort((a, b) => {
-                            const process = (
-                              ref: CacheObjectReference<'SavedView'>
-                            ) => {
-                              const val = readField(ref, sortBy)
-                              if (!val) return -1
+                        if (sortBy === 'updatedAt') {
+                          return new Date(val).getTime()
+                        }
+                        return val as number
+                      }
 
-                              if (sortBy === 'updatedAt') {
-                                return new Date(val).getTime()
-                              }
-                              return val as number
-                            }
+                      const aVal = process(a)
+                      const bVal = process(b)
 
-                            const aVal = process(a)
-                            const bVal = process(b)
-
-                            if (aVal < bVal)
-                              return sortDir === SortDirection.Asc ? -1 : 1
-                            if (aVal > bVal)
-                              return sortDir === SortDirection.Asc ? 1 : -1
-                            return 0
-                          })
-                          return newItems
-                        })
-                      })
-                    }
-                  )
+                      if (aVal < bVal) return sortDir === SortDirection.Asc ? -1 : 1
+                      if (aVal > bVal) return sortDir === SortDirection.Asc ? 1 : -1
+                      return 0
+                    })
+                  })
                 })
               }
             )

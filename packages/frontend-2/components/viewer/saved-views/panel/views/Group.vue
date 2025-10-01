@@ -168,7 +168,9 @@ const { on, classes: dropZoneClasses } = useDraggableViewTargetGroup({
     if (!open.value) {
       open.value = true
     }
-  }
+  },
+  isGroupOpen: open,
+  viewCount: viewCount
 })
 
 const renameMode = defineModel<boolean>('renameMode')
