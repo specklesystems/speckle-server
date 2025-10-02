@@ -33,19 +33,6 @@
             {{ userInfo.userId }}
           </span>
         </div>
-
-        <!-- <div v-if="tokens?.access_token" class="flex flex-row items-center space-x-2">
-        <FormButton
-          class="mr-2"
-          hide-text
-          :icon-left="DocumentDuplicateIcon"
-          color="outline"
-          @click="copy(tokens?.access_token)"
-        >
-          Copy to clipboard
-        </FormButton>
-        {{ tokens?.access_token.slice(0, 32) }}...
-      </div> -->
       </div>
     </ClientOnly>
   </div>
@@ -54,7 +41,6 @@
 <script setup lang="ts">
 import { useAccAuthManager } from '~/lib/acc/composables/useAccAuthManager'
 import { useAccUser } from '~/lib/acc/composables/useAccUser'
-// import { DocumentDuplicateIcon } from '@heroicons/vue/24/outline'
 
 defineProps<{ projectId: string }>()
 

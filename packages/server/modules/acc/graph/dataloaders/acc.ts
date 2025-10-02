@@ -24,16 +24,46 @@ const dataLoadersDefinition = defineRequestDataloaders(
 
     return {
       acc: {
-        getFolderContents: createLoader<
+        getFolderChildren: createLoader<
           { projectId: string; folderId: string; token: string },
-          (DataManagementFolderContentsFolder | DataManagementFolderContentsItem)[],
+          DataManagementFolderContentsFolder[],
           string
         >(
           async (folderIds) => {
             return await Promise.all(
-              folderIds.map(({ projectId, folderId, token }) =>
-                getFolderContents({ projectId, folderId }, { token })
-              )
+              folderIds.map(async ({ projectId, folderId, token }) => {
+                const items = await getFolderContents(
+                  { projectId, folderId, type: 'folders' },
+                  { token }
+                )
+                return items.filter(
+                  (item): item is DataManagementFolderContentsFolder =>
+                    item.type === 'folders'
+                )
+              })
+            )
+          },
+          {
+            cacheKeyFn: (args) => `${args.projectId}-${args.projectId}`
+          }
+        ),
+        getFolderContents: createLoader<
+          { projectId: string; folderId: string; token: string },
+          DataManagementFolderContentsItem[],
+          string
+        >(
+          async (folderIds) => {
+            return await Promise.all(
+              folderIds.map(async ({ projectId, folderId, token }) => {
+                const items = await getFolderContents(
+                  { projectId, folderId, type: 'items' },
+                  { token }
+                )
+                return items.filter(
+                  (item): item is DataManagementFolderContentsItem =>
+                    item.type === 'items'
+                )
+              })
             )
           },
           {

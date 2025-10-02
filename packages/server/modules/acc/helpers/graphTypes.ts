@@ -11,6 +11,13 @@ export type AccFolderGraphQLReturn = {
 export type AccItemGraphQLReturn = {
   id: string
   name: string
+  projectId: string
+}
+export type AccItemVersionGraphQLReturn = {
+  id: string
+  name: string
+  versionNumber: number
+  fileType: string
 }
 export type AccSyncItemGraphQLReturn = AccSyncItem
 export type AccSyncItemMutationsGraphQLReturn = {}

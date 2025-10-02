@@ -23,6 +23,7 @@
 
       <IntegrationsAccFileSelector
         v-if="selectedProjectId && selectedHubId && tokens"
+        :key="selectedProjectId"
         :hub-id="selectedHubId"
         :project-id="selectedProjectId"
         :tokens="tokens"
@@ -35,19 +36,23 @@
         color="foundation"
         label="Revit view name (Optional)"
         show-label
-        :disabled="!selectedFile"
+        :disabled="!selectedFileVersion"
       ></FormTextInput>
     </div>
   </LayoutDialog>
 </template>
 
 <script setup lang="ts">
-import type { AccHub, AccItem } from '@speckle/shared/acc'
+import type { AccHub } from '@speckle/shared/acc'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useMutation } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
 import { useAccAuthManager } from '~/lib/acc/composables/useAccAuthManager'
-import { useAcc, type AccFolder } from '~/lib/acc/composables/useAccFiles'
+import {
+  useAcc,
+  type AccFolder,
+  type AccItemVersion
+} from '~/lib/acc/composables/useAccFiles'
 import { accSyncItemCreateMutation } from '~/lib/acc/graphql/mutations'
 import { useCreateNewModel } from '~/lib/projects/composables/modelManagement'
 
@@ -93,7 +98,8 @@ const selectedProjectId = ref<string | null>(null)
 const revitViewName = ref<string>()
 
 const selectedFolder = ref<AccFolder | undefined>()
-const selectedFile = ref<AccItem | undefined>()
+const selectedFileId = ref<string | undefined>()
+const selectedFileVersion = ref<AccItemVersion | undefined>()
 
 const {
   hubs,
@@ -102,8 +108,6 @@ const {
   projects,
   fetchProjects,
   loadingProjects,
-  folderTree,
-  fetchItemsForFolder,
   rootProjectFolderId,
   init
 } = useAcc()
@@ -116,44 +120,32 @@ const onHubClick = async (hub: AccHub) => {
   await fetchProjects(hub.id, tokens.value!.access_token)
 }
 
-// Refactored onProjectClick to use the composable's init function
 const onProjectClick = async (hubId: string, projectId: string) => {
   selectedFolder.value = undefined
-  selectedFile.value = undefined
+  selectedFileVersion.value = undefined
   selectedProjectId.value = projectId
   await init(hubId, projectId, tokens.value!.access_token)
-
-  // defaulting to first
-  if (folderTree.value && folderTree.value.children) {
-    selectedFolder.value = folderTree.value?.children[0]
-    await fetchItemsForFolder(
-      selectedFolder.value.id,
-      selectedProjectId.value,
-      tokens.value!.access_token
-    )
-  }
 }
 
-const onFileSelected = (item: AccItem) => {
-  selectedFile.value = item
+const onFileSelected = (fileId: string, fileVersion: AccItemVersion) => {
+  selectedFileId.value = fileId
+  selectedFileVersion.value = fileVersion
 }
 
 const { mutate: createAccSyncItem } = useMutation(accSyncItemCreateMutation)
 
 const addSync = async () => {
   try {
-    // annoying but looks like ACC does not give the exact version number directly
-    const fileVersion = Number(
-      new URLSearchParams(selectedFile.value?.latestVersionId?.split('?')[1]).get(
-        'version'
-      )
-    )
+    if (!selectedFileVersion.value) {
+      return
+    }
+
+    const fileVersion = selectedFileVersion.value.versionNumber
 
     const accFileViewName = revitViewName.value === '' ? undefined : revitViewName.value
 
     const res = await createModel({
-      name: (selectedFile.value?.attributes.displayName ||
-        selectedFile.value?.attributes.name) as string,
+      name: selectedFileVersion.value.name,
       description: '',
       projectId: props.projectId as string
     })
@@ -163,15 +155,14 @@ const addSync = async () => {
         projectId: props.projectId as string,
         modelId: res?.id as string,
         accRegion: selectedHub.value?.attributes?.region as string,
-        accFileExtension: selectedFile.value?.fileExtension as string,
+        accFileExtension: selectedFileVersion.value.fileType,
         accHubId: selectedHubId.value!,
         accProjectId: selectedProjectId.value as string,
         accRootProjectFolderUrn: rootProjectFolderId.value!,
-        accFileLineageUrn: selectedFile.value?.id as string,
-        accFileName: (selectedFile.value?.attributes.displayName ||
-          selectedFile.value?.attributes.name) as string,
+        accFileLineageUrn: selectedFileId.value as string,
+        accFileName: selectedFileVersion.value.name,
         accFileVersionIndex: fileVersion,
-        accFileVersionUrn: selectedFile.value?.latestVersionId as string,
+        accFileVersionUrn: selectedFileVersion.value.id,
         accFileViewName
       }
     })
@@ -201,7 +192,7 @@ onMounted(async () => {
 
 watch(isOpen, (newVal) => {
   if (newVal) {
-    selectedFile.value = undefined
+    selectedFileVersion.value = undefined
   }
 })
 </script>

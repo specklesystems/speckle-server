@@ -6,25 +6,26 @@
         'bg-foundation-focus font-semibold': selectedFolderId === folder.id,
         'hover:bg-primary-muted cursor-pointer': selectedFolderId !== folder.id
       }"
-      @click="select(folder)"
+      @click="emit('select', folderId)"
     >
       <ChevronDownIcon
         :class="`h-4 w-5 transition ${!isExpanded ? '-rotate-90' : 'rotate-0'}`"
         @click.stop="isExpanded = !isExpanded"
       />
-      <span>{{ folder.attributes.name }}</span>
+      <span>{{ folder.name }}</span>
     </button>
-
     <ul
-      v-if="isExpanded && folder.children && folder.children.length > 0"
+      v-if="isExpanded && folder.children && folder.children.items.length > 0"
       class="ml-4 mt-1 space-y-1"
     >
       <IntegrationsAccFolderNode
-        v-for="child in folder.children"
+        v-for="child in folder.children.items"
         :key="child.id"
-        :folder="child"
-        :on-select-folder="onSelectFolder"
+        :folder-id="child.id"
+        :project-id="projectId"
+        :tokens="tokens"
         :selected-folder-id="selectedFolderId"
+        @select="(id) => emit('select', id)"
       />
     </ul>
   </li>
@@ -33,17 +34,71 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
-import type { AccFolder } from '~/lib/acc/composables/useAccFiles'
+import { graphql } from '~/lib/common/generated/gql'
+import { useAccFolder } from '~/lib/acc/composables/useAccFolderData'
+import type { AccTokens } from '@speckle/shared/acc'
+
+graphql(`
+  fragment AccIntegrationFolderNode_AccFolder on AccFolder {
+    id
+    name
+    contents {
+      items {
+        id
+        name
+        latestVersion {
+          id
+          name
+          versionNumber
+          fileType
+        }
+      }
+    }
+    children {
+      items {
+        id
+        name
+        children {
+          items {
+            id
+            name
+          }
+        }
+        contents {
+          items {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+`)
 
 const props = defineProps<{
-  folder: AccFolder
-  onSelectFolder: (folder: AccFolder) => void
+  // TODO ACC Maybe inject from shared local state within file navigation
+  projectId: string
+  folderId: string
+  tokens?: AccTokens
+  // TODO ACC Maybe inject from shared local state within file navigation
   selectedFolderId: string | undefined
 }>()
 
-const isExpanded = ref(false)
+const emit = defineEmits<{
+  select: [folderId: string]
+}>()
 
-const select = (folder: AccFolder) => {
-  props.onSelectFolder(folder)
-}
+const folder = useAccFolder(props.projectId, props.folderId, props.tokens)
+
+// watch(
+//   folder,
+//   (f) => {
+//     console.log({ resultFolder: f })
+//   },
+//   {
+//     immediate: true
+//   }
+// )
+
+const isExpanded = ref(false)
 </script>

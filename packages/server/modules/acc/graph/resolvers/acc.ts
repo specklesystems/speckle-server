@@ -62,18 +62,20 @@ import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import {
   AccModuleDisabledError,
   AccNotAuthorizedError,
-  AccNotYetImplementedError,
   SyncItemNotFoundError
 } from '@/modules/acc/errors/acc'
 import { getFeatureFlags } from '@speckle/shared/environment'
 import type { AccRegion } from '@/modules/acc/domain/acc/constants'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import {
-  filterContentsToFolders,
-  filterContentsToItems,
   mapFolderToGql,
-  mapItemToGql
+  mapItemToGql,
+  mapVersionToGql
 } from '@/modules/acc/helpers/acc'
+import {
+  getFolderMetadata,
+  getItemLatestVersion
+} from '@/modules/acc/clients/autodesk/acc'
 
 const { FF_ACC_INTEGRATION_ENABLED, FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -100,43 +102,72 @@ const resolvers: Resolvers = {
     }
   },
   AccFolder: {
-    name: async (parent) => {
+    name: async (parent, _args, ctx) => {
       if (parent.name) return parent.name
 
-      // TODO: Fetch folder metadata with loader
-      throw new AccNotYetImplementedError()
+      const folderMetadata = await getFolderMetadata(
+        {
+          projectId: parent.projectId,
+          folderId: parent.id
+        },
+        {
+          token: ctx.accToken!
+        }
+      )
+
+      return (
+        folderMetadata.attributes.name ?? folderMetadata.attributes.displayName ?? ''
+      )
     },
     contents: async (parent, _args, ctx) => {
       const { id: folderId, projectId } = parent
       const { accToken } = ctx
 
-      const contents = await ctx.loaders.acc!.getFolderContents.load({
+      const files = await ctx.loaders.acc!.getFolderContents.load({
         projectId,
         folderId,
         token: accToken!
       })
-      const items = filterContentsToItems(contents)
+      const items = files.map((file) => ({
+        ...mapItemToGql(file),
+        projectId
+      }))
 
-      return {
-        items: items.map(mapItemToGql)
-      }
+      return { items }
     },
     children: async (parent, _args, ctx) => {
       const { id: folderId, projectId } = parent
       const { accToken } = ctx
 
-      const contents = await ctx.loaders.acc!.getFolderContents.load({
+      const folders = await ctx.loaders.acc!.getFolderChildren.load({
         projectId,
         folderId,
         token: accToken!
       })
-      const folders = filterContentsToFolders(contents)
       const items = folders.map((folder) => ({
         ...mapFolderToGql(folder),
         projectId
       }))
 
       return { items }
+    }
+  },
+  AccItem: {
+    latestVersion: async (parent, _args, ctx) => {
+      const { id: itemId, projectId } = parent
+      const { accToken } = ctx
+
+      const version = await getItemLatestVersion(
+        {
+          projectId,
+          itemId
+        },
+        {
+          token: accToken!
+        }
+      )
+
+      return mapVersionToGql(version)
     }
   },
   Mutation: {

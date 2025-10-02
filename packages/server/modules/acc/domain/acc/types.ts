@@ -41,6 +41,17 @@ export type DataManagementFolderContentsItem = {
   }
 }
 
+export type DataManagementFolderContentsItemVersion = {
+  id: string
+  type: 'versions'
+  attributes: {
+    name?: string
+    displayName: string
+    versionNumber: number
+    fileType?: string
+  }
+}
+
 export type ModelDerivativeServiceDesignManifest = {
   type: 'manifest'
   region: string

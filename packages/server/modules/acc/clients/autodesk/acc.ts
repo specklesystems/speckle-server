@@ -9,6 +9,7 @@ import { AccRegions } from '@/modules/acc/domain/acc/constants'
 import type {
   DataManagementFolderContentsFolder,
   DataManagementFolderContentsItem,
+  DataManagementFolderContentsItemVersion,
   ModelDerivativeServiceDesignManifest
 } from '@/modules/acc/domain/acc/types'
 import { logger } from '@/observability/logging'
@@ -80,6 +81,34 @@ export const tryRegisterAccWebhook = async (
   throw new Error(`Webhook registration failed: ${JSON.stringify(e, null, 2)}`)
 }
 
+type GetFolderMetadataResponse = { data: DataManagementFolderContentsFolder }
+
+/**
+ * Get information about a given folder, like its name and object count
+ * @see https://aps.autodesk.com/en/docs/data/v2/reference/http/projects-project_id-folders-folder_id-GET/
+ */
+export const getFolderMetadata = async (
+  params: {
+    projectId: string
+    folderId: string
+  },
+  context: {
+    token: string
+    userId?: string
+  }
+): Promise<DataManagementFolderContentsFolder> => {
+  const { projectId, folderId } = params
+  const { token } = context
+
+  const { data } = (await invokeJsonRequest({
+    url: `https://developer.api.autodesk.com/data/v1/projects/${projectId}/folders/${folderId}`,
+    method: 'GET',
+    token
+  })) as GetFolderMetadataResponse
+
+  return data
+}
+
 type GetFolderContentsResponse = {
   data: (DataManagementFolderContentsFolder | DataManagementFolderContentsItem)[]
 }
@@ -89,9 +118,10 @@ type GetFolderContentsResponse = {
  * @see https://aps.autodesk.com/en/docs/data/v2/reference/http/projects-project_id-folders-folder_id-contents-GET/
  */
 export const getFolderContents = async (
-  params: {
+  args: {
     projectId: string
     folderId: string
+    type?: 'items' | 'folders'
   },
   context: {
     token: string
@@ -100,16 +130,57 @@ export const getFolderContents = async (
 ): Promise<
   (DataManagementFolderContentsFolder | DataManagementFolderContentsItem)[]
 > => {
-  const { projectId, folderId } = params
+  const { projectId, folderId } = args
   const { token } = context
 
+  const url = new URL(
+    `https://developer.api.autodesk.com/data/v1/projects/${projectId}/folders/${folderId}/contents`
+  )
+  const params = new URLSearchParams()
+
+  if (args.type) {
+    params.append('filter[type]', args.type)
+  }
+
+  url.search = params.toString()
+
   const { data } = (await invokeJsonRequest({
-    url: `https://developer.api.autodesk.com/data/v1/projects/${projectId}/folders/${folderId}/contents`,
-    token,
-    method: 'GET'
+    url: url.toString(),
+    method: 'GET',
+    token
   })) as GetFolderContentsResponse
 
   return data ?? []
+}
+
+type GetItemLatestVersionResponse = {
+  data: DataManagementFolderContentsItemVersion
+}
+
+/**
+ * Get item version information, like version number and file type, for the latest version of a given file
+ * @see https://aps.autodesk.com/en/docs/data/v2/reference/http/projects-project_id-items-item_id-tip-GET/
+ */
+export const getItemLatestVersion = async (
+  args: {
+    projectId: string
+    itemId: string
+  },
+  context: {
+    token: string
+    userId?: string
+  }
+): Promise<DataManagementFolderContentsItemVersion> => {
+  const { projectId, itemId } = args
+  const { token } = context
+
+  const { data } = (await invokeJsonRequest({
+    url: `https://developer.api.autodesk.com/data/v1/projects/${projectId}/items/${itemId}/tip`,
+    method: 'GET',
+    token
+  })) as GetItemLatestVersionResponse
+
+  return data
 }
 
 /**

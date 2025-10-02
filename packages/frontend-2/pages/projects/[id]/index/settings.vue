@@ -15,7 +15,7 @@ import {
   projectSettingsRoute,
   projectWebhooksRoute,
   projectTokensRoute,
-  projectAccRoute
+  projectIntegrationsRoute
 } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageSettingsTab_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
@@ -80,8 +80,8 @@ const settingsTabItems = computed((): LayoutPageTabItem[] => [
     disabledMessage: canReadEmbedTokens.value.message
   },
   {
-    title: 'ACC',
-    id: 'acc',
+    title: 'Integrations',
+    id: 'integrations',
     disabled: isAccEnabled && !canReadAccIntegrationSettings.value.authorized,
     disabledMessage: canReadAccIntegrationSettings.value.message
   }
@@ -94,7 +94,7 @@ const activeSettingsPageTab = computed({
     const path = route.path
     if (path.includes('/settings/webhooks')) return settingsTabItems.value[1]
     if (path.includes('/settings/tokens')) return settingsTabItems.value[2]
-    if (path.includes('/settings/acc')) return settingsTabItems.value[3]
+    if (path.includes('/settings/integrations')) return settingsTabItems.value[3]
     return settingsTabItems.value[0]
   },
   set: (val: LayoutPageTabItem) => {
@@ -105,8 +105,8 @@ const activeSettingsPageTab = computed({
       case 'tokens':
         router.push(projectTokensRoute(projectId.value))
         break
-      case 'acc':
-        router.push(projectAccRoute(projectId.value))
+      case 'integrations':
+        router.push(projectIntegrationsRoute(projectId.value))
         break
       case 'general':
       default:

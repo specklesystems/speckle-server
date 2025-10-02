@@ -1,10 +1,12 @@
 import type {
   DataManagementFolderContentsFolder,
-  DataManagementFolderContentsItem
+  DataManagementFolderContentsItem,
+  DataManagementFolderContentsItemVersion
 } from '@/modules/acc/domain/acc/types'
 import type {
   AccFolderGraphQLReturn,
-  AccItemGraphQLReturn
+  AccItemGraphQLReturn,
+  AccItemVersionGraphQLReturn
 } from '@/modules/acc/helpers/graphTypes'
 
 export const filterContentsToFolders = (
@@ -33,7 +35,16 @@ export const mapFolderToGql = (
 
 export const mapItemToGql = (
   item: DataManagementFolderContentsItem
-): AccItemGraphQLReturn => ({
+): Omit<AccItemGraphQLReturn, 'projectId'> => ({
   id: item.id,
   name: item.attributes.name ?? item.attributes.displayName
+})
+
+export const mapVersionToGql = (
+  version: DataManagementFolderContentsItemVersion
+): AccItemVersionGraphQLReturn => ({
+  id: version.id,
+  name: version.attributes.name ?? version.attributes.displayName,
+  versionNumber: version.attributes.versionNumber,
+  fileType: version.attributes.fileType!
 })
