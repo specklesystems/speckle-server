@@ -7,7 +7,7 @@ import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import type { Logger } from '@/observability/logging'
 import {
   getNextEmailNotificationFactory,
-  updateUserNotificationsFactory
+  updateUserNotificationFactory
 } from '@/modules/notifications/repositories/userNotification'
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import MentionedInCommentHandler from '@/modules/notifications/tasks/handlers/mentionedInComment'
@@ -55,8 +55,8 @@ const handleNextEmailNotification = async (deps: {
       )
     }
 
-    await updateUserNotificationsFactory({ db: trx })({
-      ids: [notification.id],
+    await updateUserNotificationFactory({ db: trx })({
+      id: notification.id,
       userId: notification.userId,
       update: {
         sendEmailAt: null,

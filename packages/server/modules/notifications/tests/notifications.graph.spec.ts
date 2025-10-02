@@ -11,7 +11,8 @@ import {
   createTestNotification
 } from '@/modules/notifications/tests/helpers'
 import { isNotificationListenerEnabled } from '@/modules/shared/helpers/envHelper'
-import { buildBasicTestUser, createTestUser } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
 import type { TestApolloServer } from '@/test/graphqlHelper'
 import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
@@ -21,13 +22,13 @@ import { times } from 'lodash-es'
 isNotificationListenerEnabled()
   ? describe('Notifications GQL', () => {
       let apollo: TestApolloServer
-      const user = buildBasicTestUser()
-      const anotherUser = buildBasicTestUser()
+      let user: BasicTestUser
+      let anotherUser: BasicTestUser
 
       before(async () => {
         await beforeEachContext()
-        await createTestUser(user)
-        await createTestUser(anotherUser)
+        user = await createTestUser()
+        anotherUser = await createTestUser()
 
         apollo = await testApolloServer({ authUserId: user.id })
       })
@@ -120,7 +121,7 @@ isNotificationListenerEnabled()
         })
 
         expect(data?.activeUser?.notifications.totalCount).to.be.equal(0)
-        expect(data?.activeUser?.notifications.items).to.be.equal(0)
+        expect(data?.activeUser?.notifications.items).to.have.lengthOf(0)
         expect(otherNotifications.items).to.have.lengthOf(1)
       })
 
@@ -147,10 +148,20 @@ isNotificationListenerEnabled()
         await apollo.execute(
           UserBulkUpdateNotificationsDocument,
           {
-            ids: [n1.id, n2.id, n3.id], // n2 shouldn't be updated
-            input: {
-              read: true
-            }
+            input: [
+              {
+                id: n1.id,
+                read: true
+              },
+              {
+                id: n2.id,
+                read: true // n2 shouldn't be updated
+              },
+              {
+                id: n3.id,
+                read: true
+              }
+            ]
           },
           { assertNoErrors: true }
         )

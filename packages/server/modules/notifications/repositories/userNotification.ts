@@ -6,7 +6,7 @@ import type {
   GetUserNotificationsCount,
   MarkCommentNotificationAsRead,
   StoreUserNotifications,
-  UpdateUserNotifications
+  UpdateUserNotification
 } from '@/modules/notifications/domain/operations'
 import {
   NotificationType,
@@ -18,7 +18,7 @@ import {
 } from '@/modules/shared/helpers/dbHelper'
 import { isNullOrUndefined } from '@speckle/shared'
 import { type Knex } from 'knex'
-import { clamp } from 'lodash-es'
+import { clamp, pick } from 'lodash-es'
 
 const tables = {
   userNotifications: (db: Knex) => db<UserNotificationRecord>(UserNotifications.name)
@@ -60,20 +60,34 @@ export const getUserNotificationsCountFactory =
 
 export const storeUserNotificationsFactory =
   (deps: { db: Knex }): StoreUserNotifications =>
-  async (notifications: Array<UserNotificationRecord>) => {
-    await deps.db(UserNotifications.name).insert(notifications)
+  async (args) => {
+    const notifications = await deps.db(UserNotifications.name).insert(args)
+
+    return notifications.length
   }
 
-export const updateUserNotificationsFactory =
-  (deps: { db: Knex }): UpdateUserNotifications =>
-  async ({ userId, ids, update }) => {
-    await deps
-      .db(UserNotifications.name)
-      .where({ userId })
-      .whereIn(UserNotifications.col.id, ids)
-      .update(update)
+export const updateUserNotificationFactory =
+  (deps: { db: Knex }): UpdateUserNotification =>
+  async ({ userId, id, update }) => {
+    const [notification] = await tables
+      .userNotifications(deps.db)
+      .where({ userId, id })
+      .update(
+        pick(
+          update,
+          UserNotifications.withoutTablePrefix.cols
+        ) as Partial<UserNotificationRecord>
+      )
+      .returning('*')
+
+    return notification
   }
 
+/**
+ * This function retrieves the next email notification for a user.
+ * If used from different transactions, it will skip locked rows, and if there is a notification it locks it for the transaction context.
+ * This means that two processes querying for the next email notification (if both use a transaction to send the email etc) will not pick up the same notification.
+ */
 export const getNextEmailNotificationFactory =
   (deps: { db: Knex }): GetNextEmailNotification =>
   async () => {

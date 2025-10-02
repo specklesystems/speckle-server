@@ -4,16 +4,17 @@ import {
   deleteUserNotificationsFactory,
   getUserNotificationsCountFactory,
   getUserNotificationsFactory,
-  updateUserNotificationsFactory
+  updateUserNotificationFactory
 } from '@/modules/notifications/repositories/userNotification'
-import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { asOperation } from '@/modules/shared/command'
+import { chunk } from 'lodash-es'
 
 const getUserNotifications = getUserNotificationsFactory({ db })
 const deleteUserNotifications = deleteUserNotificationsFactory({ db })
-const updateUserNotifications = updateUserNotificationsFactory({ db })
+const updateUserNotification = updateUserNotificationFactory({ db })
 const getUserNotificationsCount = getUserNotificationsCountFactory({ db })
 
-export default {
+const resolvers: Resolvers = {
   User: {
     async notifications(parent, args) {
       const [totalCount, { items, cursor }] = await Promise.all([
@@ -36,7 +37,7 @@ export default {
   },
   NotificationMutations: {
     async bulkDelete(_parent, { ids }, context) {
-      await withOperationLogging(
+      await asOperation(
         async () => {
           await deleteUserNotifications({
             userId: context.userId!,
@@ -45,42 +46,51 @@ export default {
         },
         {
           logger: context.log,
-          operationName: 'userNotificationPreferencesUpdate',
-          operationDescription: 'deleting user notifications'
+          name: 'userNotificationPreferencesUpdate',
+          description: 'deleting user notifications'
         }
       )
 
       return true
     },
-    async bulkUpdate(_parent, { ids, input }, context) {
-      let update = {}
-      if (input.read === false) {
-        update = {
-          read: false,
-          sendEmailAt: null
-        }
-      } else {
-        update = {
-          read: true
-        }
-      }
-
-      await withOperationLogging(
+    async bulkUpdate(_parent, args, context) {
+      await asOperation(
         async () => {
-          await updateUserNotifications({
-            userId: context.userId!,
-            ids,
-            update
-          })
+          const inputBatches = chunk(args.input, 10)
+          for (const batch of inputBatches) {
+            await Promise.all(
+              batch.map(({ id, read }) => {
+                let update = {}
+                if (read === false) {
+                  update = {
+                    read: false,
+                    sendEmailAt: null
+                  }
+                } else {
+                  update = {
+                    read: true
+                  }
+                }
+
+                return updateUserNotification({
+                  userId: context.userId!,
+                  id,
+                  update
+                })
+              })
+            )
+          }
         },
         {
           logger: context.log,
-          operationName: 'userNotificationPreferencesUpdate',
-          operationDescription: 'marking user notifications as read'
+          name: 'userNotificationPreferencesUpdate',
+          description: 'marking user notifications as read'
         }
       )
 
       return true
     }
   }
-} as Resolvers
+}
+
+export default resolvers

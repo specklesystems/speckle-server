@@ -28,12 +28,9 @@ export const deleteUserNotifications = gql`
 `
 
 export const updateUserNotifications = gql`
-  mutation UserBulkUpdateNotifications(
-    $ids: [String!]!
-    $input: NotificationUpdateInput!
-  ) {
+  mutation UserBulkUpdateNotifications($input: [NotificationUpdateInput!]!) {
     notificationMutations {
-      bulkUpdate(ids: $ids, input: $input)
+      bulkUpdate(input: $input)
     }
   }
 `

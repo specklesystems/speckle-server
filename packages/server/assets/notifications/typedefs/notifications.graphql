@@ -14,6 +14,7 @@ type Notification {
 }
 
 input NotificationUpdateInput {
+  id: ID!
   read: Boolean!
 }
 
@@ -41,7 +42,7 @@ type NotificationMutations {
   """
   update notidication
   """
-  bulkUpdate(ids: [String!]!, input: NotificationUpdateInput!): Boolean!
-    @hasServerRole(role: SERVER_USER)
+  bulkUpdate(input: [NotificationUpdateInput!]!): Boolean!
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "notifications:write")
 }

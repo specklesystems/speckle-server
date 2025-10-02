@@ -5,6 +5,7 @@ import type {
   UserNotificationRecord
 } from '@/modules/notifications/helpers/types'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
+import type { Exact } from 'type-fest'
 
 export type GetSavedUserNotificationPreferences = (
   userId: string
@@ -47,12 +48,14 @@ export type DeleteUserNotifications = (args: {
   ids: string[]
 }) => Promise<void>
 
-export type StoreUserNotifications = (
-  notifications: UserNotificationRecord[]
-) => Promise<void>
+export type StoreUserNotifications = <
+  Notification extends Exact<UserNotificationRecord, Notification>
+>(
+  notifications: Notification[]
+) => Promise<number>
 
-export type UpdateUserNotifications = (args: {
-  ids: string[]
+export type UpdateUserNotification = (args: {
+  id: string
   userId: string
   update: Partial<Omit<UserNotificationRecord, 'id' | 'createdAt'>>
-}) => Promise<void>
+}) => Promise<UserNotificationRecord>

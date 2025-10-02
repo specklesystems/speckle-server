@@ -20,7 +20,7 @@ const onEventTriggersNotificationFactory =
   async (event: NotificationEvents) => {
     if (!isNotificationListenerEnabled()) return
 
-    logger.info('Notification triggered for event', event)
+    logger.debug('Notification triggered for event', event)
 
     await publishEventMessage(event)
   }
