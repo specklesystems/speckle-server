@@ -115,10 +115,12 @@ export const deleteUserNotificationsFactory =
 export const markCommentNotificationsAsReadFactory =
   (deps: { db: Knex }): MarkCommentNotificationAsRead =>
   async ({ userId, commentId }) => {
-    await deps
+    const rows = await deps
       .db(UserNotifications.name)
       .where({ userId })
       .andWhere(UserNotifications.col.type, NotificationType.MentionedInComment)
       .whereJsonSupersetOf(UserNotifications.col.payload, { commentId })
       .update({ read: true })
+
+    return rows
   }

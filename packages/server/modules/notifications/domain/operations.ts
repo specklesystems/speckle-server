@@ -42,7 +42,7 @@ export type GetNextEmailNotification = () => Promise<
 export type MarkCommentNotificationAsRead = (args: {
   userId: string
   commentId: string
-}) => Promise<void>
+}) => Promise<number>
 
 export type DeleteUserNotifications = (args: {
   userId: string
