@@ -12,7 +12,7 @@
       />
     </button>
 
-    <p v-if="!hideTitle" class="text-body-3xs font-medium text-foreground mt-1.5 mb-2">
+    <p v-if="!hideTitle" class="text-body-3xs font-medium text-foreground">
       <span class="font-semibold mr-1">{{ slideIndex }}.</span>
       {{ slide.name }}
     </p>
