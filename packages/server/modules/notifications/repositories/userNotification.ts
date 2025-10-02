@@ -12,10 +12,7 @@ import {
   NotificationType,
   type UserNotificationRecord
 } from '@/modules/notifications/helpers/types'
-import {
-  decodeIsoDateCursor,
-  encodeIsoDateCursor
-} from '@/modules/shared/helpers/dbHelper'
+import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
 import { isNullOrUndefined } from '@speckle/shared'
 import { type Knex } from 'knex'
 import { clamp, pick } from 'lodash-es'
@@ -24,29 +21,34 @@ const tables = {
   userNotifications: (db: Knex) => db<UserNotificationRecord>(UserNotifications.name)
 }
 
+const getCursorTools = () =>
+  compositeCursorTools({
+    schema: UserNotifications,
+    cols: ['createdAt', 'id']
+  })
+
 export const getUserNotificationsFactory =
   (deps: { db: Knex }): GetUserNotifications =>
   async (args) => {
-    if (args.limit === 0) return { items: [], cursor: null }
-
-    const cursor = args.cursor ? decodeIsoDateCursor(args.cursor) : null
     const limit = clamp(isNullOrUndefined(args.limit) ? 10 : args.limit, 0, 50)
+    const { applyCursorSortAndFilter, resolveNewCursor } = getCursorTools()
 
     const q = tables
       .userNotifications(deps.db)
       .where({ userId: args.userId })
-      .orderBy(UserNotifications.col.createdAt, 'desc')
       .limit(limit)
 
-    if (cursor) q.andWhere(UserNotifications.col.createdAt, '<', cursor)
+    applyCursorSortAndFilter({
+      query: q,
+      cursor: args.cursor
+    })
 
     const items = await q
+    const newCursor = resolveNewCursor(items)
+
     return {
       items,
-      cursor:
-        items.length === limit
-          ? encodeIsoDateCursor(items[items.length - 1].createdAt)
-          : null
+      cursor: newCursor
     }
   }
 

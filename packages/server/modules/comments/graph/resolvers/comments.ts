@@ -24,7 +24,7 @@ import {
   insertCommentLinksFactory,
   insertCommentsFactory,
   markCommentUpdatedFactory,
-  markCommentViewedFactory,
+  markCommentViewedFactory as markCommentViewedFactoryDb,
   resolvePaginatedProjectCommentsLatestModelResourcesFactory,
   updateCommentFactory
 } from '@/modules/comments/repositories/comments'
@@ -56,7 +56,8 @@ import {
   createCommentThreadAndNotifyFactory,
   createCommentReplyAndNotifyFactory,
   editCommentAndNotifyFactory,
-  archiveCommentAndNotifyFactory
+  archiveCommentAndNotifyFactory,
+  markCommentViewedFactory
 } from '@/modules/comments/services/management'
 import {
   isLegacyData,
@@ -101,7 +102,6 @@ import {
   getModelHomeSavedViewFactory,
   getSavedViewFactory
 } from '@/modules/viewer/repositories/dataLoaders/savedViews'
-import { CommentEvents } from '@/modules/comments/domain/events'
 
 // We can use the main DB for these
 const getStream = getStreamFactory({ db })
@@ -534,15 +534,11 @@ export default {
       throwIfAuthNotOk(canReadProject)
 
       const projectDb = await getProjectDbClient({ projectId: args.input.projectId })
-      const markCommentViewed = markCommentViewedFactory({ db: projectDb })
-      await markCommentViewed(args.input.commentId, ctx.userId!)
-      await getEventBus().emit({
-        eventName: CommentEvents.Viewed,
-        payload: {
-          commentId: args.input.commentId,
-          userId: ctx.userId!
-        }
-      })
+      await markCommentViewedFactory({
+        markCommentViewed: markCommentViewedFactoryDb({ db: projectDb }),
+        emitEvent: getEventBus().emit
+      })(args.input.commentId, ctx.userId!)
+
       return true
     },
     async create(_parent, args, ctx) {
@@ -570,7 +566,7 @@ export default {
       })
       const insertComments = insertCommentsFactory({ db: projectDb })
       const insertCommentLinks = insertCommentLinksFactory({ db: projectDb })
-      const markCommentViewed = markCommentViewedFactory({ db: projectDb })
+      const markCommentViewed = markCommentViewedFactoryDb({ db: projectDb })
 
       const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({
         getViewerResourceItemsUngrouped,
@@ -811,7 +807,7 @@ export default {
         insertComments: insertCommentsFactory({ db: projectDb }),
         insertCommentLinks: insertCommentLinksFactory({ db: projectDb }),
         deleteComment: deleteCommentFactory({ db: projectDb }),
-        markCommentViewed: markCommentViewedFactory({ db: projectDb }),
+        markCommentViewed: markCommentViewedFactoryDb({ db: projectDb }),
         emitEvent: getEventBus().emit,
         getViewerResourcesFromLegacyIdentifiers
       })
@@ -873,7 +869,7 @@ export default {
       throwIfAuthNotOk(canReadProject)
 
       const projectDb = await getProjectDbClient({ projectId: args.streamId })
-      const markCommentViewed = markCommentViewedFactory({ db: projectDb })
+      const markCommentViewed = markCommentViewedFactoryDb({ db: projectDb })
 
       await markCommentViewed(args.commentId, context.userId!)
       return true
