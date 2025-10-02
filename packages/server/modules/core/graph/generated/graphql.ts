@@ -125,7 +125,7 @@ export type AccItemCollection = {
 
 export type AccItemVersion = {
   __typename?: 'AccItemVersion';
-  fileType: Scalars['String']['output'];
+  fileType?: Maybe<Scalars['String']['output']>;
   /** version urn */
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
@@ -7205,7 +7205,7 @@ export type AccItemCollectionResolvers<ContextType = GraphQLContext, ParentType 
 };
 
 export type AccItemVersionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccItemVersion'] = ResolversParentTypes['AccItemVersion']> = {
-  fileType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  fileType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   versionNumber?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;

@@ -103,7 +103,7 @@ export type AccItemCollection = {
 
 export type AccItemVersion = {
   __typename?: 'AccItemVersion';
-  fileType: Scalars['String']['output'];
+  fileType?: Maybe<Scalars['String']['output']>;
   /** version urn */
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
@@ -6379,7 +6379,7 @@ export type HeaderNavNotificationsProjectInvite_PendingStreamCollaboratorFragmen
 
 export type HeaderNavNotificationsWorkspaceInvite_PendingWorkspaceCollaboratorFragment = { __typename?: 'PendingWorkspaceCollaborator', id: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, workspace: { __typename?: 'LimitedWorkspace', id: string, name: string, slug: string, description?: string | null, logo?: string | null, adminTeam: Array<{ __typename?: 'LimitedWorkspaceCollaborator', user: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }>, team?: { __typename?: 'LimitedWorkspaceCollaboratorCollection', totalCount: number, items: Array<{ __typename?: 'LimitedWorkspaceCollaborator', user: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }> } | null }, user?: { __typename?: 'LimitedUser', id: string } | null };
 
-export type AccIntegrationFolderNode_AccFolderFragment = { __typename?: 'AccFolder', id: string, name: string, contents: { __typename?: 'AccItemCollection', items: Array<{ __typename?: 'AccItem', id: string, name: string, latestVersion: { __typename?: 'AccItemVersion', id: string, name: string, versionNumber: number, fileType: string } }> }, children: { __typename?: 'AccFolderCollection', items: Array<{ __typename?: 'AccFolder', id: string, name: string, children: { __typename?: 'AccFolderCollection', items: Array<{ __typename?: 'AccFolder', id: string, name: string }> }, contents: { __typename?: 'AccItemCollection', items: Array<{ __typename?: 'AccItem', id: string, name: string }> } }> } };
+export type AccIntegrationFolderNode_AccFolderFragment = { __typename?: 'AccFolder', id: string, name: string, contents: { __typename?: 'AccItemCollection', items: Array<{ __typename?: 'AccItem', id: string, name: string, latestVersion: { __typename?: 'AccItemVersion', id: string, name: string, versionNumber: number, fileType?: string | null } }> }, children: { __typename?: 'AccFolderCollection', items: Array<{ __typename?: 'AccFolder', id: string, name: string, children: { __typename?: 'AccFolderCollection', items: Array<{ __typename?: 'AccFolder', id: string, name: string }> }, contents: { __typename?: 'AccItemCollection', items: Array<{ __typename?: 'AccItem', id: string, name: string }> } }> } };
 
 export type SyncStatusModelItem_AccSyncItemFragment = { __typename?: 'AccSyncItem', id: string, status: AccSyncItemStatus };
 
@@ -6778,7 +6778,7 @@ export type WorkspaceWizard_WorkspaceFragment = { __typename?: 'Workspace', name
 
 export type WorkspaceWizardStepRegion_ServerInfoFragment = { __typename?: 'ServerInfo', multiRegion: { __typename?: 'ServerMultiRegionConfiguration', regions: Array<{ __typename?: 'ServerRegionItem', id: string, key: string, name: string, description?: string | null }> } };
 
-export type AccFolderContentsFragment = { __typename?: 'AccFolder', id: string, name: string, contents: { __typename?: 'AccItemCollection', items: Array<{ __typename?: 'AccItem', id: string, name: string, latestVersion: { __typename?: 'AccItemVersion', id: string, name: string, versionNumber: number, fileType: string } }> }, children: { __typename?: 'AccFolderCollection', items: Array<{ __typename?: 'AccFolder', id: string, name: string }> } };
+export type AccFolderContentsFragment = { __typename?: 'AccFolder', id: string, name: string, contents: { __typename?: 'AccItemCollection', items: Array<{ __typename?: 'AccItem', id: string, name: string, latestVersion: { __typename?: 'AccItemVersion', id: string, name: string, versionNumber: number, fileType?: string | null } }> }, children: { __typename?: 'AccFolderCollection', items: Array<{ __typename?: 'AccFolder', id: string, name: string }> } };
 
 export type ProjectAccSyncItemFragment = { __typename?: 'AccSyncItem', id: string, accRegion: string, accHubId: string, accProjectId: string, accRootProjectFolderUrn: string, accFileLineageUrn: string, accFileName: string, accFileExtension: string, accFileVersionIndex: number, accFileViewName?: string | null, updatedAt: string, status: AccSyncItemStatus, project: { __typename?: 'Project', id: string }, model?: { __typename?: 'Model', id: string } | null, author?: { __typename?: 'LimitedUser', name: string, avatar?: string | null } | null };
 
@@ -6818,7 +6818,7 @@ export type AccFolderDataQueryVariables = Exact<{
 }>;
 
 
-export type AccFolderDataQuery = { __typename?: 'Query', workspaceBySlug: { __typename?: 'Workspace', id: string, integrations?: { __typename?: 'WorkspaceIntegrations', acc?: { __typename?: 'AccIntegration', folder: { __typename?: 'AccFolder', id: string, name: string, contents: { __typename?: 'AccItemCollection', items: Array<{ __typename?: 'AccItem', id: string, name: string, latestVersion: { __typename?: 'AccItemVersion', id: string, name: string, versionNumber: number, fileType: string } }> }, children: { __typename?: 'AccFolderCollection', items: Array<{ __typename?: 'AccFolder', id: string, name: string, children: { __typename?: 'AccFolderCollection', items: Array<{ __typename?: 'AccFolder', id: string, name: string }> }, contents: { __typename?: 'AccItemCollection', items: Array<{ __typename?: 'AccItem', id: string, name: string }> } }> } } } | null } | null } };
+export type AccFolderDataQuery = { __typename?: 'Query', workspaceBySlug: { __typename?: 'Workspace', id: string, integrations?: { __typename?: 'WorkspaceIntegrations', acc?: { __typename?: 'AccIntegration', folder: { __typename?: 'AccFolder', id: string, name: string, contents: { __typename?: 'AccItemCollection', items: Array<{ __typename?: 'AccItem', id: string, name: string, latestVersion: { __typename?: 'AccItemVersion', id: string, name: string, versionNumber: number, fileType?: string | null } }> }, children: { __typename?: 'AccFolderCollection', items: Array<{ __typename?: 'AccFolder', id: string, name: string, children: { __typename?: 'AccFolderCollection', items: Array<{ __typename?: 'AccFolder', id: string, name: string }> }, contents: { __typename?: 'AccItemCollection', items: Array<{ __typename?: 'AccItem', id: string, name: string }> } }> } } } | null } | null } };
 
 export type OnProjectAccSyncItemUpdatedSubscriptionVariables = Exact<{
   id: Scalars['String']['input'];

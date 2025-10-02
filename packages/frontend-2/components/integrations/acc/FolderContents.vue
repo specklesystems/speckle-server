@@ -47,7 +47,7 @@ const folder = useAccFolder(props.projectId, props.folderId, props.tokens)
 
 const items = computed(() => {
   return folder.value.contents?.items.filter(
-    (item) => item.latestVersion.fileType.toLowerCase() === 'rvt'
+    (item) => item.latestVersion.fileType?.toLowerCase() === 'rvt'
   )
 })
 </script>

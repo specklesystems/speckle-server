@@ -46,5 +46,5 @@ export const mapVersionToGql = (
   id: version.id,
   name: version.attributes.name ?? version.attributes.displayName,
   versionNumber: version.attributes.versionNumber,
-  fileType: version.attributes.fileType!
+  fileType: version.attributes.fileType
 })

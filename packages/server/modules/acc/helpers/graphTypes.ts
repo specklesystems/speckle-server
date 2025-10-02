@@ -19,7 +19,7 @@ export type AccItemVersionGraphQLReturn = {
   id: string
   name: string
   versionNumber: number
-  fileType: string
+  fileType?: string
 }
 export type AccSyncItemGraphQLReturn = AccSyncItem
 export type AccSyncItemMutationsGraphQLReturn = {}

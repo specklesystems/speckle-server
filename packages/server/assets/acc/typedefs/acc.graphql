@@ -70,5 +70,5 @@ type AccItemVersion {
   id: ID!
   name: String!
   versionNumber: Int!
-  fileType: String!
+  fileType: String
 }
