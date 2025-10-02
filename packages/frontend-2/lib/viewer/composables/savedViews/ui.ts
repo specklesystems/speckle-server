@@ -253,13 +253,13 @@ export const useDraggableViewTargetGroup = (params: {
       event.preventDefault()
       event.dataTransfer.dropEffect = 'move'
 
-      // Check if we're over the title button
+      // Check if we're over the group header
       const target = event.target as HTMLElement
-      const isOverTitleButton = target.closest('button[class*="group/disclosure"]')
+      const isOverGroupHeader = target.closest('button[class*="group/disclosure"]')
 
       // If group is open and empty, allow drop anywhere in the group
-      // Otherwise, only allow drop on title button
-      if (isOverTitleButton) {
+      // Otherwise, only allow drop on group header
+      if (isOverGroupHeader) {
         isDragOver.value = true
       } else if (isGroupOpen.value && viewCount.value === 0) {
         // Open empty group - allow drop anywhere (not over a view)
