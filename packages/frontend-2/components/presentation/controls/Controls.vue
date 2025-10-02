@@ -8,7 +8,12 @@
       :disabled="disablePrevious"
       @click="onPrevious"
     />
-    <PresentationControlsButton :icon="LucideRotateCcw" @click="resetView" />
+    <PresentationControlsButton
+      :icon="LucideRotateCcw"
+      :disabled="!hasViewChanged"
+      tooltip="Reset view"
+      @click="resetView"
+    />
     <PresentationControlsButton
       :icon="LucideChevronRight"
       :disabled="disableNext"
@@ -29,7 +34,7 @@ defineProps<{
 
 const {
   ui: { slideIdx: currentVisibleIndex, slideCount },
-  viewer: { resetView }
+  viewer: { resetView, hasViewChanged }
 } = useInjectedPresentationState()
 
 const disablePrevious = computed(() => currentVisibleIndex.value === 0)

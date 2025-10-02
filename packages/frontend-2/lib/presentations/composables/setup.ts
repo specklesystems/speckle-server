@@ -48,6 +48,10 @@ export type InjectablePresentationState = Readonly<{
      * Reset the current view to the saved view state of the current slide
      */
     resetView: () => void
+    /**
+     * Whether the current view has been changed from the saved view state
+     */
+    hasViewChanged: Ref<boolean>
   }
 }>
 
@@ -97,6 +101,10 @@ const setupStateViewer = (initState: ResponseState & UiState): ViewerState => {
     ui: { slideIdx }
   } = initState
 
+  const { emit, on } = useEventBus()
+
+  const hasViewChanged = ref(false)
+
   const resourceIdString = computed(() => {
     const slides = presentation.value?.views.items || []
 
@@ -104,8 +112,6 @@ const setupStateViewer = (initState: ResponseState & UiState): ViewerState => {
       .addResources(slides.at(slideIdx.value)?.resourceIdString || '')
       .toString()
   })
-
-  const { emit } = useEventBus()
 
   const resetView = () => {
     const slides = presentation.value?.views.items || []
@@ -117,9 +123,25 @@ const setupStateViewer = (initState: ResponseState & UiState): ViewerState => {
       id: currentSlide.id,
       loadOriginal: false
     })
+
+    hasViewChanged.value = false
   }
 
-  return { viewer: { resourceIdString, resetView } }
+  on(ViewerEventBusKeys.UserChangedOpenedView, () => {
+    hasViewChanged.value = true
+  })
+
+  watch(slideIdx, () => {
+    hasViewChanged.value = false
+  })
+
+  return {
+    viewer: {
+      resourceIdString,
+      resetView,
+      hasViewChanged
+    }
+  }
 }
 
 const setupStateUi = (initState: ResponseState): UiState => {
