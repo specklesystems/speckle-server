@@ -10,6 +10,7 @@ import {
 import { projectPresentationPageQuery } from '~/lib/presentations/graphql/queries'
 import { useEventBus } from '~/lib/core/composables/eventBus'
 import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
+import { useProjectSavedViewsUpdateTracking } from '~/lib/viewer/composables/savedViews/subscriptions'
 
 type ResponseProject = Optional<Get<ProjectPresentationPageQuery, 'project'>>
 type ResponseWorkspace = Get<ProjectPresentationPageQuery, 'project.limitedWorkspace'>
@@ -155,6 +156,8 @@ export const useSetupPresentationState = (params: UseSetupPresentationParams) =>
     ...uiState,
     ...viewerState
   }
+
+  useProjectSavedViewsUpdateTracking({ projectId: initState.projectId })
 
   // We don't want the state to ever be proxified (e.g. when passed through props),
   // cause that will break composables (refs will be automatically unwrapped as if
