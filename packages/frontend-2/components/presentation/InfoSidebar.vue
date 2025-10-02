@@ -5,7 +5,7 @@
   >
     <div class="hidden lg:flex items-center justify-end space-x-1">
       <FormButton
-        v-if="canUpdateSlide"
+        v-if="canUpdateSlide && isLoggedIn"
         :icon-left="LucidePencilLine"
         color="subtle"
         hide-text
@@ -103,6 +103,7 @@ const {
   ui: { slide: currentSlide },
   response: { workspace }
 } = useInjectedPresentationState()
+const { isLoggedIn } = useActiveUser()
 
 const isSlideEditDialogOpen = ref(false)
 const descriptionRef = ref<HTMLElement>()
