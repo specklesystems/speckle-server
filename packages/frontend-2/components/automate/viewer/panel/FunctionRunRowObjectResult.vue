@@ -171,6 +171,12 @@ const isolateOrUnisolateObjects = () => {
         ids
       )
       isolateObjects(ids)
+
+      // Check if the state was actually updated
+      logger.debug(
+        '[FunctionRunRowObjectResult] After isolateObjects call - isolatedObjectIds length:',
+        filters.isolatedObjectIds.value.length
+      )
     } else {
       logger.debug(
         '[FunctionRunRowObjectResult] Objects were already isolated, not calling isolateObjects'
