@@ -21,7 +21,7 @@
       </PresentationFloatingPanelButton>
       <h1
         v-if="presentation?.title"
-        class="hidden sm:block text-body-xs font-medium text-foreground leading-none sm:pr-3 max-w-64 truncate"
+        class="hidden sm:block text-body-xs font-medium text-foreground leading-tight sm:pr-3 max-w-64 truncate"
       >
         {{ presentation?.title }}
       </h1>
