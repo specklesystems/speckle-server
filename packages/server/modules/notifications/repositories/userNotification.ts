@@ -8,12 +8,10 @@ import type {
   StoreUserNotifications,
   UpdateUserNotification
 } from '@/modules/notifications/domain/operations'
-import {
-  NotificationType,
-  type UserNotificationRecord
-} from '@/modules/notifications/helpers/types'
+import { type UserNotificationRecord } from '@/modules/notifications/helpers/types'
 import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
 import { isNullOrUndefined } from '@speckle/shared'
+import { NotificationType } from '@speckle/shared/notifications'
 import { type Knex } from 'knex'
 import { clamp, pick } from 'lodash-es'
 

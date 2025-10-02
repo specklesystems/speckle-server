@@ -1,5 +1,6 @@
 import { db } from '@/db/knex'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { parseNotificationToLatestVersion } from '@/modules/notifications/helpers/toLatestVersion'
 import {
   deleteUserNotificationsFactory,
   getUserNotificationsCountFactory,
@@ -25,10 +26,11 @@ const resolvers: Resolvers = {
           limit: args.limit || null
         })
       ])
+
       return {
         totalCount,
         cursor,
-        items
+        items: items.map(parseNotificationToLatestVersion)
       }
     }
   },

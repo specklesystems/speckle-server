@@ -5,7 +5,6 @@ import {
   shutdownPublicationQueue
 } from '@/modules/notifications/services/publication/queue'
 import type { NotificationTypeHandlers } from '@/modules/notifications/helpers/types'
-import { NotificationType } from '@/modules/notifications/helpers/types'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { shouldDisableNotificationsConsumption } from '@/modules/shared/helpers/envHelper'
 import { moduleLogger, notificationsLogger } from '@/observability/logging'
@@ -22,6 +21,7 @@ import { notificationListenersFactory } from '@/modules/notifications/events/not
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { scheduleDelayedEmailNotifications } from '@/modules/notifications/tasks/delayedNotifications'
 import type cron from 'node-cron'
+import { NotificationType } from '@speckle/shared/notifications'
 
 let scheduledTasks: cron.ScheduledTask[] = []
 

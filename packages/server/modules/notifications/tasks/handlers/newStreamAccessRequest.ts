@@ -24,7 +24,7 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import type { EmailTemplateParams } from '@/modules/emails/domain/operations'
 import type { StoreUserNotifications } from '@/modules/notifications/domain/operations'
 import type { UserNotificationRecord } from '@/modules/notifications/helpers/types'
-import type { NotificationType } from '@/modules/notifications/helpers/types'
+import type { NotificationType } from '@speckle/shared/notifications'
 import { storeUserNotificationsFactory } from '@/modules/notifications/repositories/userNotification'
 
 type ValidateMessageDeps = {

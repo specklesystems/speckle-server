@@ -37,7 +37,7 @@ import {
   removeStreamCollaboratorFactory,
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
-import { NotificationType } from '@/modules/notifications/helpers/types'
+import { NotificationType } from '@speckle/shared/notifications'
 import { authorizeResolver } from '@/modules/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import type { BasicTestUser } from '@/test/authHelper'

@@ -21,10 +21,7 @@ import type {
   StoreUserNotifications
 } from '@/modules/notifications/domain/operations'
 import { NotificationValidationError } from '@/modules/notifications/errors'
-import {
-  NotificationChannel,
-  NotificationType
-} from '@/modules/notifications/helpers/types'
+import { NotificationChannel } from '@/modules/notifications/helpers/types'
 import { storeUserNotificationsFactory } from '@/modules/notifications/repositories/userNotification'
 import type { MaybeFalsy, Nullable } from '@/modules/shared/helpers/typeHelper'
 import type { EventType } from '@/modules/shared/services/eventBus'
@@ -34,6 +31,7 @@ import type { Knex } from 'knex'
 import { difference } from 'lodash-es'
 import { getUserPreferenceForNotificationTypeFactory } from '@/modules/notifications/services/notificationPreferences'
 import { getSavedUserNotificationPreferencesFactory } from '@/modules/notifications/repositories/userNotificationPreferences'
+import { NotificationType } from '@speckle/shared/notifications'
 
 type ValidatedNotificationState = {
   targetUser: UserWithOptionalRole
@@ -216,6 +214,7 @@ const createdOrUpdatedCommentHandlerFactory =
           userId: state.targetUser.id,
           type: NotificationType.MentionedInComment,
           read: false,
+          version: '1',
           payload: {
             threadId: state.threadComment.id,
             authorId: state.author.id,

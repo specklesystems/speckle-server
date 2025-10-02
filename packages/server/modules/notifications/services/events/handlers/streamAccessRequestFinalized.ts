@@ -8,10 +8,8 @@ import type {
   StoreUserNotifications
 } from '@/modules/notifications/domain/operations'
 import { NotificationValidationError } from '@/modules/notifications/errors'
-import {
-  NotificationChannel,
-  NotificationType
-} from '@/modules/notifications/helpers/types'
+import { NotificationChannel } from '@/modules/notifications/helpers/types'
+import { NotificationType } from '@speckle/shared/notifications'
 import { storeUserNotificationsFactory } from '@/modules/notifications/repositories/userNotification'
 import type { EventBusPayloads, EventType } from '@/modules/shared/services/eventBus'
 import type { Nullable } from '@speckle/shared'
@@ -88,6 +86,7 @@ const steamAccessRequestFinalizedHandlerFactory =
         userId: state.targetUser.id,
         type: NotificationType.StreamAccessRequestApproved,
         read: false,
+        version: '1',
         payload: {
           streamId: state.stream.id
         },

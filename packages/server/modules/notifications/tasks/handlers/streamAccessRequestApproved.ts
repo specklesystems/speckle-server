@@ -14,7 +14,7 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { NotificationValidationError } from '@/modules/notifications/errors'
 import type { UserNotificationRecord } from '@/modules/notifications/helpers/types'
-import type { NotificationType } from '@/modules/notifications/helpers/types'
+import type { NotificationType } from '@speckle/shared/notifications'
 
 type ValidateMessageDeps = {
   getUser: GetUser

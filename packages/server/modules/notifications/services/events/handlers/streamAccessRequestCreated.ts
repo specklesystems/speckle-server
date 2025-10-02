@@ -26,14 +26,12 @@ import type {
   StoreUserNotifications
 } from '@/modules/notifications/domain/operations'
 import type { UserNotificationRecord } from '@/modules/notifications/helpers/types'
-import {
-  NotificationChannel,
-  NotificationType
-} from '@/modules/notifications/helpers/types'
+import { NotificationChannel } from '@/modules/notifications/helpers/types'
 import cryptoRandomString from 'crypto-random-string'
 import { storeUserNotificationsFactory } from '@/modules/notifications/repositories/userNotification'
 import { getUserPreferenceForNotificationTypeFactory } from '@/modules/notifications/services/notificationPreferences'
 import { getSavedUserNotificationPreferencesFactory } from '@/modules/notifications/repositories/userNotificationPreferences'
+import { NotificationType } from '@speckle/shared/notifications'
 
 type ValidateMessageDeps = {
   getPendingAccessRequest: GetPendingAccessRequest
@@ -124,6 +122,7 @@ const streamAccessRequestCreatedHandlerFactory =
         userId: targetUser.id,
         type: NotificationType.NewStreamAccessRequest,
         read: false,
+        version: '1',
         payload: {
           streamId: state.stream.id,
           requesterId: state.requester.id

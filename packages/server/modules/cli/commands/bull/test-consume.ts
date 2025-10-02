@@ -1,5 +1,5 @@
 import { cliLogger } from '@/observability/logging'
-import { NotificationType } from '@/modules/notifications/helpers/types'
+import { NotificationType } from '@speckle/shared/notifications'
 import { initializePublicationConsumption } from '@/modules/notifications/index'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 import { get, noop } from 'lodash-es'

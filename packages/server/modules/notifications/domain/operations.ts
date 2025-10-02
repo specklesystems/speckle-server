@@ -1,10 +1,11 @@
 import type {
+  BaseUserNotification,
   NotificationChannel,
   NotificationPreferences,
-  NotificationType,
   UserNotificationRecord
 } from '@/modules/notifications/helpers/types'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
+import type { NotificationType } from '@speckle/shared/notifications'
 import type { Exact } from 'type-fest'
 
 export type GetSavedUserNotificationPreferences = (
@@ -30,12 +31,12 @@ export type GetUserNotifications = (args: {
   userId: string
   cursor: string | null
   limit: number | null
-}) => Promise<{ items: UserNotificationRecord[]; cursor: string | null }>
+}) => Promise<{ items: BaseUserNotification[]; cursor: string | null }>
 
 export type GetUserNotificationsCount = (args: { userId: string }) => Promise<number>
 
 export type GetNextEmailNotification = () => Promise<
-  MaybeNullOrUndefined<UserNotificationRecord>
+  MaybeNullOrUndefined<BaseUserNotification>
 >
 
 export type MarkCommentNotificationAsRead = (args: {

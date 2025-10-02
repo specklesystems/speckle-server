@@ -1,6 +1,6 @@
 import { cliLogger } from '@/observability/logging'
 import type { MentionedInCommentData } from '@/modules/notifications/helpers/types'
-import { NotificationType } from '@/modules/notifications/helpers/types'
+import { NotificationType } from '@speckle/shared/notifications'
 import { publishNotification } from '@/modules/notifications/services/publication/publishNotification'
 import { initializePublicationQueue } from '@/modules/notifications/services/publication/queue'
 import type { CommandModule } from 'yargs'

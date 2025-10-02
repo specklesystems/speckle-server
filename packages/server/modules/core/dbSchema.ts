@@ -483,6 +483,7 @@ export const UserNotifications = buildTableHelper('user_notifications', [
   'userId',
   'type',
   'read',
+  'version',
   'payload',
   'sendEmailAt',
   'createdAt',

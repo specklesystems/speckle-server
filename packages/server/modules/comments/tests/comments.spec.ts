@@ -32,7 +32,7 @@ import {
   buildNotificationsStateTracker,
   purgeNotifications
 } from '@/test/notificationsHelper'
-import { NotificationType } from '@/modules/notifications/helpers/types'
+import { NotificationType } from '@speckle/shared/notifications'
 import type { ServerAndContext } from '@/test/graphqlHelper'
 import { createAuthedTestContext } from '@/test/graphqlHelper'
 import {

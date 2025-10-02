@@ -1,5 +1,5 @@
 import type { MentionedInCommentData } from '@/modules/notifications/helpers/types'
-import { NotificationType } from '@/modules/notifications/helpers/types'
+import { NotificationType } from '@speckle/shared/notifications'
 import { publishNotification } from '@/modules/notifications/services/publication/publishNotification'
 import type { NotificationsStateManager } from '@/test/notificationsHelper'
 import {

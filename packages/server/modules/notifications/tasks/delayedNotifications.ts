@@ -9,10 +9,11 @@ import {
   getNextEmailNotificationFactory,
   updateUserNotificationFactory
 } from '@/modules/notifications/repositories/userNotification'
-import { NotificationType } from '@/modules/notifications/helpers/types'
+import { NotificationType } from '@speckle/shared/notifications'
 import MentionedInCommentHandler from '@/modules/notifications/tasks/handlers/mentionedInComment'
 import StreamAccessRequestApprovedHandler from '@/modules/notifications/tasks/handlers/streamAccessRequestApproved'
 import NewStreamAccessRequestHandler from '@/modules/notifications/tasks/handlers/newStreamAccessRequest'
+import { ensureNotificationToLatestVersion } from '@/modules/notifications/helpers/toLatestVersion'
 
 type EmailNotificationResult = { notificationId: string } | null
 
@@ -20,7 +21,10 @@ const handleNextEmailNotification = async (deps: {
   logger: Logger
 }): Promise<EmailNotificationResult> =>
   db.transaction(async (trx) => {
-    const notification = await getNextEmailNotificationFactory({ db: trx })()
+    const baseNotification = await getNextEmailNotificationFactory({ db: trx })()
+    if (!baseNotification) return null
+
+    const notification = ensureNotificationToLatestVersion(baseNotification)
     if (!notification) return null
 
     try {

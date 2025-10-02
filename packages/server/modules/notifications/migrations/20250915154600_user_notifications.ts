@@ -14,6 +14,7 @@ export async function up(knex: Knex): Promise<void> {
       .inTable('users')
       .onDelete('cascade')
     table.jsonb('payload').notNullable()
+    table.string('version').notNullable()
     table.timestamp('sendEmailAt', { precision: 3, useTz: true }).nullable()
     table.timestamp('createdAt', { precision: 3, useTz: true }).defaultTo(knex.fn.now())
     table.timestamp('updatedAt', { precision: 3, useTz: true }).defaultTo(knex.fn.now())

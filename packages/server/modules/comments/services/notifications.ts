@@ -2,7 +2,7 @@ import type { CommentRecord } from '@/modules/comments/helpers/types'
 import { ensureCommentSchema } from '@/modules/comments/services/commentTextService'
 import { flatten } from 'lodash-es'
 import type { NotificationPublisher } from '@/modules/notifications/helpers/types'
-import { NotificationType } from '@/modules/notifications/helpers/types'
+import { NotificationType } from '@speckle/shared/notifications'
 import type {
   AddStreamCommentMentionActivity,
   SaveStreamActivity

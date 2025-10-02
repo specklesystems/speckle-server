@@ -8,7 +8,6 @@ import {
 import type {
   NotificationHandler,
   NotificationMessage,
-  NotificationType,
   NotificationTypeHandlers
 } from '@/modules/notifications/helpers/types'
 import { isNotificationMessage } from '@/modules/notifications/helpers/types'
@@ -21,6 +20,7 @@ import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
 import { TIME_MS } from '@speckle/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { NotificationsEvents } from '@/modules/notifications/domain/events'
+import type { NotificationType } from '@speckle/shared/notifications'
 
 export type NotificationJobResult = {
   status: NotificationJobResultsStatus
