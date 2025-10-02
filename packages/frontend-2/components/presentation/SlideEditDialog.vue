@@ -13,6 +13,7 @@
           name="name"
           label="Name"
           color="foundation"
+          placeholder="Add a name…"
           :rules="[isRequired]"
         />
         <FormTextArea
