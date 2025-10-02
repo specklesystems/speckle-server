@@ -23,6 +23,8 @@ import {
 import { isUngroupedGroup } from '@speckle/shared/saved-views'
 import {
   getCachedObjectKeys,
+  iterateObjectField,
+  parseObjectReference,
   type CacheObjectReference
 } from '~/lib/common/helpers/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
@@ -349,39 +351,59 @@ export const useUpdateSavedView = () => {
             }
           }
 
-          // If position changed, re-sort the group
+          // If position changed, recalculate it according to sort dir in vars
           if (input.position) {
-            modifyObjectField(
+            // Go through all SavedViewGroup.views, where this view exists and update array position
+            iterateObjectField(
               cache,
-              getCacheId('SavedViewGroup', newGroupId),
-              'views',
-              ({ helpers: { createUpdatedValue, readField }, variables }) => {
-                const sortDir = variables.input.sortDirection || SortDirection.Desc
-                const sortBy = (variables.input.sortBy || 'position') as
-                  | 'position'
-                  | 'updatedAt'
+              getCacheId('Project', params.view.projectId),
+              'savedViewGroups',
+              ({ value }) => {
+                const items = value.items
+                if (!items) return
 
-                return createUpdatedValue(({ update }) => {
-                  update('items', (items) => {
-                    return items.slice().sort((a, b) => {
-                      const process = (ref: CacheObjectReference<'SavedView'>) => {
-                        const val = readField(ref, sortBy)
-                        if (!val) return -1
+                items.forEach((groupRef) => {
+                  const parsed = parseObjectReference(groupRef)
+                  modifyObjectField(
+                    cache,
+                    getCacheId('SavedViewGroup', parsed.id),
+                    'views',
+                    ({ helpers: { createUpdatedValue, readField }, variables }) => {
+                      const sortDir =
+                        variables.input.sortDirection || SortDirection.Desc
+                      const sortBy = (variables.input.sortBy || 'position') as
+                        | 'position'
+                        | 'updatedAt'
 
-                        if (sortBy === 'updatedAt') {
-                          return new Date(val).getTime()
-                        }
-                        return val as number
-                      }
+                      return createUpdatedValue(({ update }) => {
+                        update('items', (items) => {
+                          const newItems = items.slice().sort((a, b) => {
+                            const process = (
+                              ref: CacheObjectReference<'SavedView'>
+                            ) => {
+                              const val = readField(ref, sortBy)
+                              if (!val) return -1
 
-                      const aVal = process(a)
-                      const bVal = process(b)
+                              if (sortBy === 'updatedAt') {
+                                return new Date(val).getTime()
+                              }
+                              return val as number
+                            }
 
-                      if (aVal < bVal) return sortDir === SortDirection.Asc ? -1 : 1
-                      if (aVal > bVal) return sortDir === SortDirection.Asc ? 1 : -1
-                      return 0
-                    })
-                  })
+                            const aVal = process(a)
+                            const bVal = process(b)
+
+                            if (aVal < bVal)
+                              return sortDir === SortDirection.Asc ? -1 : 1
+                            if (aVal > bVal)
+                              return sortDir === SortDirection.Asc ? 1 : -1
+                            return 0
+                          })
+                          return newItems
+                        })
+                      })
+                    }
+                  )
                 })
               }
             )
