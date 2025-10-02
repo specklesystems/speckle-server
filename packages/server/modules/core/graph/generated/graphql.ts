@@ -173,6 +173,12 @@ export type AdminMutations = {
   __typename?: 'AdminMutations';
   giveAccessToWorkspaceFeature: Scalars['Boolean']['output'];
   removeAccessToWorkspaceFeature: Scalars['Boolean']['output'];
+  /**
+   * A server administrator can update the verification status of an user's email.
+   * The server administrator is recommended to confirm ownership of the email address
+   * with the user before performing this action.
+   */
+  updateEmailVerification: Scalars['Boolean']['output'];
   updateWorkspacePlan: Scalars['Boolean']['output'];
 };
 
@@ -184,6 +190,11 @@ export type AdminMutationsGiveAccessToWorkspaceFeatureArgs = {
 
 export type AdminMutationsRemoveAccessToWorkspaceFeatureArgs = {
   input: AdminAccessToWorkspaceFeatureInput;
+};
+
+
+export type AdminMutationsUpdateEmailVerificationArgs = {
+  input: AdminUpdateEmailVerificationInput;
 };
 
 
@@ -229,6 +240,12 @@ export type AdminQueriesWorkspaceListArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
   query?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AdminUpdateEmailVerificationInput = {
+  email: Scalars['String']['input'];
+  /** Defaults to true. If set to false, the email will be marked as unverified. */
+  verified?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type AdminUpdateWorkspacePlanInput = {
@@ -1089,6 +1106,7 @@ export type CreateSavedViewInput = {
   isHomeView?: InputMaybe<Scalars['Boolean']['input']>;
   /** Auto-generated name, if not specified */
   name?: InputMaybe<Scalars['String']['input']>;
+  position?: InputMaybe<ViewPositionInput>;
   projectId: Scalars['ID']['input'];
   resourceIdString: Scalars['String']['input'];
   /** Encoded screenshot of the view */
@@ -1141,6 +1159,7 @@ export type Dashboard = {
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   permissions: DashboardPermissionChecks;
+  shareLink?: Maybe<DashboardShareLink>;
   /** If null, this is a new dashboard and should be initialized by the client */
   state?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
@@ -1163,6 +1182,10 @@ export type DashboardMutations = {
   create: Dashboard;
   createToken: CreateDashboardTokenReturn;
   delete: Scalars['Boolean']['output'];
+  deleteShare: Scalars['Boolean']['output'];
+  disableShare: DashboardShareLink;
+  enableShare: DashboardShareLink;
+  share: DashboardShareLink;
   update: Dashboard;
 };
 
@@ -1183,6 +1206,26 @@ export type DashboardMutationsDeleteArgs = {
 };
 
 
+export type DashboardMutationsDeleteShareArgs = {
+  input: DashboardShareInput;
+};
+
+
+export type DashboardMutationsDisableShareArgs = {
+  input: DashboardShareInput;
+};
+
+
+export type DashboardMutationsEnableShareArgs = {
+  input: DashboardShareInput;
+};
+
+
+export type DashboardMutationsShareArgs = {
+  dashboardId: Scalars['String']['input'];
+};
+
+
 export type DashboardMutationsUpdateArgs = {
   input: DashboardUpdateInput;
 };
@@ -1193,6 +1236,20 @@ export type DashboardPermissionChecks = {
   canDelete: PermissionCheckResult;
   canEdit: PermissionCheckResult;
   canRead: PermissionCheckResult;
+};
+
+export type DashboardShareInput = {
+  dashboardId: Scalars['ID']['input'];
+  shareId: Scalars['ID']['input'];
+};
+
+export type DashboardShareLink = {
+  __typename?: 'DashboardShareLink';
+  content: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  revoked: Scalars['Boolean']['output'];
+  validUntil: Scalars['DateTime']['output'];
 };
 
 export type DashboardToken = {
@@ -1311,7 +1368,7 @@ export type ExtendedViewerResources = {
   /** The groups of viewer resources themselves */
   groups: Array<ViewerResourceGroup>;
   /** Metadata about the request that was made to resolve this. */
-  request?: Maybe<ExtendedViewerResourcesRequest>;
+  request: ExtendedViewerResourcesRequest;
   /** Final/adjusted/resolved resource id string */
   resourceIdString: Scalars['String']['output'];
   /**
@@ -2524,6 +2581,8 @@ export type Project = {
   invitableCollaborators: WorkspaceCollaboratorCollection;
   /** Collaborators who have been invited, but not yet accepted. */
   invitedTeam?: Maybe<Array<PendingStreamCollaborator>>;
+  /** Limited workspace records that exposes public data projects workspaces. */
+  limitedWorkspace?: Maybe<LimitedWorkspace>;
   /** Returns a specific model by its ID */
   model: Model;
   /** Retrieve a specific project model by its ID */
@@ -2571,6 +2630,7 @@ export type Project = {
   viewerResourcesExtended: ExtendedViewerResources;
   visibility: ProjectVisibility;
   webhooks: WebhookCollection;
+  /** Full workspace information for the project. */
   workspace?: Maybe<Workspace>;
   workspaceId?: Maybe<Scalars['String']['output']>;
 };
@@ -3337,7 +3397,6 @@ export type Query = {
   authenticatedAsApp?: Maybe<ServerAppListItem>;
   /** Get a single automate function by id. Error will be thrown if function is not found or inaccessible. */
   automateFunction: AutomateFunction;
-  automateFunctions: AutomateFunctionCollection;
   /** Part of the automation/function creation handshake mechanism */
   automateValidateAuthCode: Scalars['Boolean']['output'];
   /** @deprecated Part of the old API surface and will be removed in the future. Use Project.comment instead. */
@@ -3460,13 +3519,6 @@ export type QueryAppArgs = {
 
 export type QueryAutomateFunctionArgs = {
   id: Scalars['ID']['input'];
-};
-
-
-export type QueryAutomateFunctionsArgs = {
-  cursor?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<AutomateFunctionsFilter>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -3665,13 +3717,19 @@ export type SavedView = {
   permissions: SavedViewPermissionChecks;
   /** For figuring out position in the group */
   position: Scalars['Float']['output'];
+  previewUrl: Scalars['String']['output'];
   projectId: Scalars['ID']['output'];
   /** Original resource ID string that this view is associated with. */
   resourceIdString: Scalars['String']['output'];
   /** Same as resourceIdString, but split into an array of resource IDs. */
   resourceIds: Array<Scalars['String']['output']>;
-  /** Encoded screenshot of the view */
+  /**
+   * Encoded screenshot of the view. Can be a very large value, its preferred you
+   * use the thumbnailUrl or previewUrl fields to load the image from a separate endpoint
+   * @deprecated Use thumbnailUrl or previewUrl instead
+   */
   screenshot: Scalars['String']['output'];
+  thumbnailUrl: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
   /** Viewer state, the actual view configuration */
   viewerState: Scalars['JSONObject']['output'];
@@ -3696,6 +3754,7 @@ export type SavedViewGroup = {
   projectId: Scalars['ID']['output'];
   /** Resources that were used to find this group */
   resourceIds: Array<Scalars['String']['output']>;
+  shareLink?: Maybe<SavedViewGroupShareLink>;
   title: Scalars['String']['output'];
   views: SavedViewCollection;
 };
@@ -3714,7 +3773,28 @@ export type SavedViewGroupCollection = {
 
 export type SavedViewGroupPermissionChecks = {
   __typename?: 'SavedViewGroupPermissionChecks';
+  canCreateToken: PermissionCheckResult;
   canUpdate: PermissionCheckResult;
+};
+
+export type SavedViewGroupShareInput = {
+  groupId: Scalars['ID']['input'];
+  projectId: Scalars['ID']['input'];
+};
+
+export type SavedViewGroupShareLink = {
+  __typename?: 'SavedViewGroupShareLink';
+  content: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  revoked: Scalars['Boolean']['output'];
+  validUntil: Scalars['DateTime']['output'];
+};
+
+export type SavedViewGroupShareUpdateInput = {
+  groupId: Scalars['ID']['input'];
+  projectId: Scalars['ID']['input'];
+  shareId: Scalars['ID']['input'];
 };
 
 export type SavedViewGroupViewsInput = {
@@ -3727,8 +3807,8 @@ export type SavedViewGroupViewsInput = {
   /** Whether to only include views matching this search term */
   search?: InputMaybe<Scalars['String']['input']>;
   /**
-   * Optionally specify sort by field. Default: updatedAt
-   * Options: updatedAt, createdAt, name
+   * Optionally specify sort by field. Default: position
+   * Options: updatedAt, createdAt, name, position
    */
   sortBy?: InputMaybe<Scalars['String']['input']>;
   /** Optionally specify sort direction. Default: descending */
@@ -3753,7 +3833,11 @@ export type SavedViewMutations = {
   createGroup: SavedViewGroup;
   createView: SavedView;
   deleteGroup: Scalars['Boolean']['output'];
+  deleteShare: Scalars['Boolean']['output'];
   deleteView: Scalars['Boolean']['output'];
+  disableShare: SavedViewGroupShareLink;
+  enableShare: SavedViewGroupShareLink;
+  share: SavedViewGroupShareLink;
   updateGroup: SavedViewGroup;
   updateView: SavedView;
 };
@@ -3774,8 +3858,28 @@ export type SavedViewMutationsDeleteGroupArgs = {
 };
 
 
+export type SavedViewMutationsDeleteShareArgs = {
+  input: SavedViewGroupShareUpdateInput;
+};
+
+
 export type SavedViewMutationsDeleteViewArgs = {
   input: DeleteSavedViewInput;
+};
+
+
+export type SavedViewMutationsDisableShareArgs = {
+  input: SavedViewGroupShareUpdateInput;
+};
+
+
+export type SavedViewMutationsEnableShareArgs = {
+  input: SavedViewGroupShareUpdateInput;
+};
+
+
+export type SavedViewMutationsShareArgs = {
+  input: SavedViewGroupShareInput;
 };
 
 
@@ -3790,7 +3894,13 @@ export type SavedViewMutationsUpdateViewArgs = {
 
 export type SavedViewPermissionChecks = {
   __typename?: 'SavedViewPermissionChecks';
+  canEditDescription: PermissionCheckResult;
+  canEditTitle: PermissionCheckResult;
   canMove: PermissionCheckResult;
+  /**
+   * Can the current user fully update everything about this view. Even if this fails,
+   * the user may be able to do partial updates (e.g. just change the title)
+   */
   canUpdate: PermissionCheckResult;
 };
 
@@ -3852,6 +3962,8 @@ export type ServerAutomateInfo = {
 export type ServerConfiguration = {
   __typename?: 'ServerConfiguration';
   blobSizeLimitBytes: Scalars['Int']['output'];
+  /** Email verification code timeout in minutes */
+  emailVerificationTimeoutMinutes: Scalars['Int']['output'];
   /** Whether the email feature is enabled on this server */
   isEmailEnabled: Scalars['Boolean']['output'];
   objectMultipartUploadSizeLimitBytes: Scalars['Int']['output'];
@@ -4635,6 +4747,7 @@ export type UpdateSavedViewInput = {
   isHomeView?: InputMaybe<Scalars['Boolean']['input']>;
   /** New name for the view */
   name?: InputMaybe<Scalars['String']['input']>;
+  position?: InputMaybe<ViewPositionInput>;
   projectId: Scalars['ID']['input'];
   /** New resource targets, if necessary. Must be set together w/ viewerState & screenshot. */
   resourceIdString?: InputMaybe<Scalars['String']['input']>;
@@ -4960,18 +5073,33 @@ export type UserGendoAiCredits = {
 
 export type UserMeta = {
   __typename?: 'UserMeta';
+  flag: Scalars['Boolean']['output'];
   intelligenceCommunityStandUpBannerDismissed: Scalars['Boolean']['output'];
   legacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   newWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
+  speckleCon25BannerDismissed: Scalars['Boolean']['output'];
   speckleConBannerDismissed: Scalars['Boolean']['output'];
+};
+
+
+export type UserMetaFlagArgs = {
+  key: Scalars['String']['input'];
 };
 
 export type UserMetaMutations = {
   __typename?: 'UserMetaMutations';
+  setFlag: Scalars['Boolean']['output'];
   setIntelligenceCommunityStandUpBannerDismissed: Scalars['Boolean']['output'];
   setLegacyProjectsExplainerCollapsed: Scalars['Boolean']['output'];
   setNewWorkspaceExplainerDismissed: Scalars['Boolean']['output'];
+  setSpeckleCon25BannerDismissed: Scalars['Boolean']['output'];
   setSpeckleConBannerDismissed: Scalars['Boolean']['output'];
+};
+
+
+export type UserMetaMutationsSetFlagArgs = {
+  key: Scalars['String']['input'];
+  value: Scalars['Boolean']['input'];
 };
 
 
@@ -4986,6 +5114,11 @@ export type UserMetaMutationsSetLegacyProjectsExplainerCollapsedArgs = {
 
 
 export type UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs = {
+  value: Scalars['Boolean']['input'];
+};
+
+
+export type UserMetaMutationsSetSpeckleCon25BannerDismissedArgs = {
   value: Scalars['Boolean']['input'];
 };
 
@@ -5186,6 +5319,23 @@ export type VersionPermissionChecks = {
   canUpdate: PermissionCheckResult;
 };
 
+/**
+ * If only one is set, the other will be resolved automatically
+ * If none are set, the view will be added to the end of the list
+ */
+export type ViewPositionInput = {
+  /** The ID of the view that should be after the new position */
+  afterViewId?: InputMaybe<Scalars['ID']['input']>;
+  /** The ID of the view that should be before the new position */
+  beforeViewId?: InputMaybe<Scalars['ID']['input']>;
+  type: ViewPositionInputType;
+};
+
+export const ViewPositionInputType = {
+  Between: 'between'
+} as const;
+
+export type ViewPositionInputType = typeof ViewPositionInputType[keyof typeof ViewPositionInputType];
 export type ViewerResourceGroup = {
   __typename?: 'ViewerResourceGroup';
   /** Resource identifier used to refer to a collection of resource items */
@@ -5509,7 +5659,8 @@ export type WorkspaceEmbedOptions = {
 
 export const WorkspaceFeatureFlagName = {
   AccIntegration: 'accIntegration',
-  Dashboards: 'dashboards'
+  Dashboards: 'dashboards',
+  Presentations: 'presentations'
 } as const;
 
 export type WorkspaceFeatureFlagName = typeof WorkspaceFeatureFlagName[keyof typeof WorkspaceFeatureFlagName];
@@ -5520,6 +5671,7 @@ export const WorkspaceFeatureName = {
   ExclusiveMembership: 'exclusiveMembership',
   HideSpeckleBranding: 'hideSpeckleBranding',
   OidcSso: 'oidcSso',
+  Presentations: 'presentations',
   SavedViews: 'savedViews',
   WorkspaceDataRegionSpecificity: 'workspaceDataRegionSpecificity'
 } as const;
@@ -6121,6 +6273,7 @@ export type ResolversTypes = {
   AdminInviteList: ResolverTypeWrapper<Omit<AdminInviteList, 'items'> & { items: Array<ResolversTypes['ServerInvite']> }>;
   AdminMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   AdminQueries: ResolverTypeWrapper<GraphQLEmptyReturn>;
+  AdminUpdateEmailVerificationInput: AdminUpdateEmailVerificationInput;
   AdminUpdateWorkspacePlanInput: AdminUpdateWorkspacePlanInput;
   AdminUserList: ResolverTypeWrapper<AdminUserList>;
   AdminUserListItem: ResolverTypeWrapper<AdminUserListItem>;
@@ -6219,6 +6372,8 @@ export type ResolversTypes = {
   DashboardCreateInput: DashboardCreateInput;
   DashboardMutations: ResolverTypeWrapper<DashboardMutationsGraphQLReturn>;
   DashboardPermissionChecks: ResolverTypeWrapper<DashboardPermissionChecksGraphQLReturn>;
+  DashboardShareInput: DashboardShareInput;
+  DashboardShareLink: ResolverTypeWrapper<DashboardShareLink>;
   DashboardToken: ResolverTypeWrapper<DashboardTokenGraphQLReturn>;
   DashboardTokenCollection: ResolverTypeWrapper<Omit<DashboardTokenCollection, 'items'> & { items: Array<ResolversTypes['DashboardToken']> }>;
   DashboardTokenCreateInput: DashboardTokenCreateInput;
@@ -6351,6 +6506,9 @@ export type ResolversTypes = {
   SavedViewGroup: ResolverTypeWrapper<SavedViewGroupGraphQLReturn>;
   SavedViewGroupCollection: ResolverTypeWrapper<Omit<SavedViewGroupCollection, 'items'> & { items: Array<ResolversTypes['SavedViewGroup']> }>;
   SavedViewGroupPermissionChecks: ResolverTypeWrapper<SavedViewGroupPermissionChecksGraphQLReturn>;
+  SavedViewGroupShareInput: SavedViewGroupShareInput;
+  SavedViewGroupShareLink: ResolverTypeWrapper<SavedViewGroupShareLink>;
+  SavedViewGroupShareUpdateInput: SavedViewGroupShareUpdateInput;
   SavedViewGroupViewsInput: SavedViewGroupViewsInput;
   SavedViewGroupsInput: SavedViewGroupsInput;
   SavedViewMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
@@ -6434,6 +6592,8 @@ export type ResolversTypes = {
   VersionCreatedTriggerDefinition: ResolverTypeWrapper<AutomationRevisionTriggerDefinitionGraphQLReturn>;
   VersionMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   VersionPermissionChecks: ResolverTypeWrapper<VersionPermissionChecksGraphQLReturn>;
+  ViewPositionInput: ViewPositionInput;
+  ViewPositionInputType: ViewPositionInputType;
   ViewerResourceGroup: ResolverTypeWrapper<ViewerResourceGroup>;
   ViewerResourceItem: ResolverTypeWrapper<ViewerResourceItem>;
   ViewerUpdateTrackingTarget: ViewerUpdateTrackingTarget;
@@ -6522,6 +6682,7 @@ export type ResolversParentTypes = {
   AdminInviteList: Omit<AdminInviteList, 'items'> & { items: Array<ResolversParentTypes['ServerInvite']> };
   AdminMutations: MutationsObjectGraphQLReturn;
   AdminQueries: GraphQLEmptyReturn;
+  AdminUpdateEmailVerificationInput: AdminUpdateEmailVerificationInput;
   AdminUpdateWorkspacePlanInput: AdminUpdateWorkspacePlanInput;
   AdminUserList: AdminUserList;
   AdminUserListItem: AdminUserListItem;
@@ -6615,6 +6776,8 @@ export type ResolversParentTypes = {
   DashboardCreateInput: DashboardCreateInput;
   DashboardMutations: DashboardMutationsGraphQLReturn;
   DashboardPermissionChecks: DashboardPermissionChecksGraphQLReturn;
+  DashboardShareInput: DashboardShareInput;
+  DashboardShareLink: DashboardShareLink;
   DashboardToken: DashboardTokenGraphQLReturn;
   DashboardTokenCollection: Omit<DashboardTokenCollection, 'items'> & { items: Array<ResolversParentTypes['DashboardToken']> };
   DashboardTokenCreateInput: DashboardTokenCreateInput;
@@ -6732,6 +6895,9 @@ export type ResolversParentTypes = {
   SavedViewGroup: SavedViewGroupGraphQLReturn;
   SavedViewGroupCollection: Omit<SavedViewGroupCollection, 'items'> & { items: Array<ResolversParentTypes['SavedViewGroup']> };
   SavedViewGroupPermissionChecks: SavedViewGroupPermissionChecksGraphQLReturn;
+  SavedViewGroupShareInput: SavedViewGroupShareInput;
+  SavedViewGroupShareLink: SavedViewGroupShareLink;
+  SavedViewGroupShareUpdateInput: SavedViewGroupShareUpdateInput;
   SavedViewGroupViewsInput: SavedViewGroupViewsInput;
   SavedViewGroupsInput: SavedViewGroupsInput;
   SavedViewMutations: MutationsObjectGraphQLReturn;
@@ -6808,6 +6974,7 @@ export type ResolversParentTypes = {
   VersionCreatedTriggerDefinition: AutomationRevisionTriggerDefinitionGraphQLReturn;
   VersionMutations: MutationsObjectGraphQLReturn;
   VersionPermissionChecks: VersionPermissionChecksGraphQLReturn;
+  ViewPositionInput: ViewPositionInput;
   ViewerResourceGroup: ViewerResourceGroup;
   ViewerResourceItem: ViewerResourceItem;
   ViewerUpdateTrackingTarget: ViewerUpdateTrackingTarget;
@@ -6982,6 +7149,7 @@ export type AdminInviteListResolvers<ContextType = GraphQLContext, ParentType ex
 export type AdminMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AdminMutations'] = ResolversParentTypes['AdminMutations']> = {
   giveAccessToWorkspaceFeature?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<AdminMutationsGiveAccessToWorkspaceFeatureArgs, 'input'>>;
   removeAccessToWorkspaceFeature?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<AdminMutationsRemoveAccessToWorkspaceFeatureArgs, 'input'>>;
+  updateEmailVerification?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<AdminMutationsUpdateEmailVerificationArgs, 'input'>>;
   updateWorkspacePlan?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<AdminMutationsUpdateWorkspacePlanArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -7398,6 +7566,7 @@ export type DashboardResolvers<ContextType = GraphQLContext, ParentType extends 
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   permissions?: Resolver<ResolversTypes['DashboardPermissionChecks'], ParentType, ContextType>;
+  shareLink?: Resolver<Maybe<ResolversTypes['DashboardShareLink']>, ParentType, ContextType>;
   state?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   workspace?: Resolver<ResolversTypes['LimitedWorkspace'], ParentType, ContextType>;
@@ -7415,6 +7584,10 @@ export type DashboardMutationsResolvers<ContextType = GraphQLContext, ParentType
   create?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<DashboardMutationsCreateArgs, 'input' | 'workspace'>>;
   createToken?: Resolver<ResolversTypes['CreateDashboardTokenReturn'], ParentType, ContextType, RequireFields<DashboardMutationsCreateTokenArgs, 'dashboardId'>>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<DashboardMutationsDeleteArgs, 'id'>>;
+  deleteShare?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<DashboardMutationsDeleteShareArgs, 'input'>>;
+  disableShare?: Resolver<ResolversTypes['DashboardShareLink'], ParentType, ContextType, RequireFields<DashboardMutationsDisableShareArgs, 'input'>>;
+  enableShare?: Resolver<ResolversTypes['DashboardShareLink'], ParentType, ContextType, RequireFields<DashboardMutationsEnableShareArgs, 'input'>>;
+  share?: Resolver<ResolversTypes['DashboardShareLink'], ParentType, ContextType, RequireFields<DashboardMutationsShareArgs, 'dashboardId'>>;
   update?: Resolver<ResolversTypes['Dashboard'], ParentType, ContextType, RequireFields<DashboardMutationsUpdateArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -7424,6 +7597,15 @@ export type DashboardPermissionChecksResolvers<ContextType = GraphQLContext, Par
   canDelete?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canEdit?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canRead?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type DashboardShareLinkResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DashboardShareLink'] = ResolversParentTypes['DashboardShareLink']> = {
+  content?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  revoked?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  validUntil?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -7469,7 +7651,7 @@ export type EmbedTokenCollectionResolvers<ContextType = GraphQLContext, ParentTy
 
 export type ExtendedViewerResourcesResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ExtendedViewerResources'] = ResolversParentTypes['ExtendedViewerResources']> = {
   groups?: Resolver<Array<ResolversTypes['ViewerResourceGroup']>, ParentType, ContextType>;
-  request?: Resolver<Maybe<ResolversTypes['ExtendedViewerResourcesRequest']>, ParentType, ContextType>;
+  request?: Resolver<ResolversTypes['ExtendedViewerResourcesRequest'], ParentType, ContextType>;
   resourceIdString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   savedView?: Resolver<Maybe<ResolversTypes['SavedView']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -7865,6 +8047,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   invitableCollaborators?: Resolver<ResolversTypes['WorkspaceCollaboratorCollection'], ParentType, ContextType, RequireFields<ProjectInvitableCollaboratorsArgs, 'limit'>>;
   invitedTeam?: Resolver<Maybe<Array<ResolversTypes['PendingStreamCollaborator']>>, ParentType, ContextType>;
+  limitedWorkspace?: Resolver<Maybe<ResolversTypes['LimitedWorkspace']>, ParentType, ContextType>;
   model?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<ProjectModelArgs, 'id'>>;
   modelByName?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<ProjectModelByNameArgs, 'name'>>;
   modelChildrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType, RequireFields<ProjectModelChildrenTreeArgs, 'fullName'>>;
@@ -8107,7 +8290,6 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   apps?: Resolver<Maybe<Array<Maybe<ResolversTypes['ServerAppListItem']>>>, ParentType, ContextType>;
   authenticatedAsApp?: Resolver<Maybe<ResolversTypes['ServerAppListItem']>, ParentType, ContextType>;
   automateFunction?: Resolver<ResolversTypes['AutomateFunction'], ParentType, ContextType, RequireFields<QueryAutomateFunctionArgs, 'id'>>;
-  automateFunctions?: Resolver<ResolversTypes['AutomateFunctionCollection'], ParentType, ContextType, Partial<QueryAutomateFunctionsArgs>>;
   automateValidateAuthCode?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<QueryAutomateValidateAuthCodeArgs, 'payload'>>;
   comment?: Resolver<Maybe<ResolversTypes['Comment']>, ParentType, ContextType, RequireFields<QueryCommentArgs, 'id' | 'streamId'>>;
   comments?: Resolver<Maybe<ResolversTypes['CommentCollection']>, ParentType, ContextType, RequireFields<QueryCommentsArgs, 'archived' | 'limit' | 'streamId'>>;
@@ -8167,10 +8349,12 @@ export type SavedViewResolvers<ContextType = GraphQLContext, ParentType extends 
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   permissions?: Resolver<ResolversTypes['SavedViewPermissionChecks'], ParentType, ContextType>;
   position?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  previewUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   projectId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   resourceIdString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   resourceIds?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   screenshot?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  thumbnailUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   viewerState?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
   visibility?: Resolver<ResolversTypes['SavedViewVisibility'], ParentType, ContextType>;
@@ -8191,6 +8375,7 @@ export type SavedViewGroupResolvers<ContextType = GraphQLContext, ParentType ext
   permissions?: Resolver<ResolversTypes['SavedViewGroupPermissionChecks'], ParentType, ContextType>;
   projectId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   resourceIds?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  shareLink?: Resolver<Maybe<ResolversTypes['SavedViewGroupShareLink']>, ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   views?: Resolver<ResolversTypes['SavedViewCollection'], ParentType, ContextType, RequireFields<SavedViewGroupViewsArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -8204,7 +8389,17 @@ export type SavedViewGroupCollectionResolvers<ContextType = GraphQLContext, Pare
 };
 
 export type SavedViewGroupPermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SavedViewGroupPermissionChecks'] = ResolversParentTypes['SavedViewGroupPermissionChecks']> = {
+  canCreateToken?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canUpdate?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type SavedViewGroupShareLinkResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SavedViewGroupShareLink'] = ResolversParentTypes['SavedViewGroupShareLink']> = {
+  content?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  revoked?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  validUntil?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -8212,13 +8407,19 @@ export type SavedViewMutationsResolvers<ContextType = GraphQLContext, ParentType
   createGroup?: Resolver<ResolversTypes['SavedViewGroup'], ParentType, ContextType, RequireFields<SavedViewMutationsCreateGroupArgs, 'input'>>;
   createView?: Resolver<ResolversTypes['SavedView'], ParentType, ContextType, RequireFields<SavedViewMutationsCreateViewArgs, 'input'>>;
   deleteGroup?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<SavedViewMutationsDeleteGroupArgs, 'input'>>;
+  deleteShare?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<SavedViewMutationsDeleteShareArgs, 'input'>>;
   deleteView?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<SavedViewMutationsDeleteViewArgs, 'input'>>;
+  disableShare?: Resolver<ResolversTypes['SavedViewGroupShareLink'], ParentType, ContextType, RequireFields<SavedViewMutationsDisableShareArgs, 'input'>>;
+  enableShare?: Resolver<ResolversTypes['SavedViewGroupShareLink'], ParentType, ContextType, RequireFields<SavedViewMutationsEnableShareArgs, 'input'>>;
+  share?: Resolver<ResolversTypes['SavedViewGroupShareLink'], ParentType, ContextType, RequireFields<SavedViewMutationsShareArgs, 'input'>>;
   updateGroup?: Resolver<ResolversTypes['SavedViewGroup'], ParentType, ContextType, RequireFields<SavedViewMutationsUpdateGroupArgs, 'input'>>;
   updateView?: Resolver<ResolversTypes['SavedView'], ParentType, ContextType, RequireFields<SavedViewMutationsUpdateViewArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type SavedViewPermissionChecksResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SavedViewPermissionChecks'] = ResolversParentTypes['SavedViewPermissionChecks']> = {
+  canEditDescription?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canEditTitle?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canMove?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canUpdate?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -8265,6 +8466,7 @@ export type ServerAutomateInfoResolvers<ContextType = GraphQLContext, ParentType
 
 export type ServerConfigurationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerConfiguration'] = ResolversParentTypes['ServerConfiguration']> = {
   blobSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  emailVerificationTimeoutMinutes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   isEmailEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   objectMultipartUploadSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   objectSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -8574,17 +8776,21 @@ export type UserGendoAiCreditsResolvers<ContextType = GraphQLContext, ParentType
 };
 
 export type UserMetaResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserMeta'] = ResolversParentTypes['UserMeta']> = {
+  flag?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaFlagArgs, 'key'>>;
   intelligenceCommunityStandUpBannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   legacyProjectsExplainerCollapsed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   newWorkspaceExplainerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  speckleCon25BannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   speckleConBannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type UserMetaMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserMetaMutations'] = ResolversParentTypes['UserMetaMutations']> = {
+  setFlag?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetFlagArgs, 'key' | 'value'>>;
   setIntelligenceCommunityStandUpBannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetIntelligenceCommunityStandUpBannerDismissedArgs, 'value'>>;
   setLegacyProjectsExplainerCollapsed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetLegacyProjectsExplainerCollapsedArgs, 'value'>>;
   setNewWorkspaceExplainerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs, 'value'>>;
+  setSpeckleCon25BannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetSpeckleCon25BannerDismissedArgs, 'value'>>;
   setSpeckleConBannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetSpeckleConBannerDismissedArgs, 'value'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -9068,6 +9274,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   DashboardCollection?: DashboardCollectionResolvers<ContextType>;
   DashboardMutations?: DashboardMutationsResolvers<ContextType>;
   DashboardPermissionChecks?: DashboardPermissionChecksResolvers<ContextType>;
+  DashboardShareLink?: DashboardShareLinkResolvers<ContextType>;
   DashboardToken?: DashboardTokenResolvers<ContextType>;
   DashboardTokenCollection?: DashboardTokenCollectionResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
@@ -9139,6 +9346,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   SavedViewGroup?: SavedViewGroupResolvers<ContextType>;
   SavedViewGroupCollection?: SavedViewGroupCollectionResolvers<ContextType>;
   SavedViewGroupPermissionChecks?: SavedViewGroupPermissionChecksResolvers<ContextType>;
+  SavedViewGroupShareLink?: SavedViewGroupShareLinkResolvers<ContextType>;
   SavedViewMutations?: SavedViewMutationsResolvers<ContextType>;
   SavedViewPermissionChecks?: SavedViewPermissionChecksResolvers<ContextType>;
   Scope?: ScopeResolvers<ContextType>;
@@ -9407,6 +9615,18 @@ export type SetIntelligenceCommunityStandUpBannerDismissedMutationVariables = Ex
 
 export type SetIntelligenceCommunityStandUpBannerDismissedMutation = { __typename?: 'Mutation', activeUserMutations: { __typename?: 'ActiveUserMutations', meta: { __typename?: 'UserMetaMutations', setIntelligenceCommunityStandUpBannerDismissed: boolean } } };
 
+export type GetSpeckleCon25BannerDismissedQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetSpeckleCon25BannerDismissedQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', meta: { __typename?: 'UserMeta', speckleCon25BannerDismissed: boolean } } | null };
+
+export type SetSpeckleCon25BannerDismissedMutationVariables = Exact<{
+  input: Scalars['Boolean']['input'];
+}>;
+
+
+export type SetSpeckleCon25BannerDismissedMutation = { __typename?: 'Mutation', activeUserMutations: { __typename?: 'ActiveUserMutations', meta: { __typename?: 'UserMetaMutations', setSpeckleCon25BannerDismissed: boolean } } };
+
 export type GetLegacyProjectsExplainerCollapsedQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -9418,6 +9638,13 @@ export type SetLegacyProjectsExplainerCollapsedMutationVariables = Exact<{
 
 
 export type SetLegacyProjectsExplainerCollapsedMutation = { __typename?: 'Mutation', activeUserMutations: { __typename?: 'ActiveUserMutations', meta: { __typename?: 'UserMetaMutations', setLegacyProjectsExplainerCollapsed: boolean } } };
+
+export type AdminMutationsMutationVariables = Exact<{
+  input: AdminUpdateEmailVerificationInput;
+}>;
+
+
+export type AdminMutationsMutation = { __typename?: 'Mutation', admin: { __typename?: 'AdminMutations', updateEmailVerification: boolean } };
 
 export type LimitedPersonalProjectCommentFragment = { __typename?: 'Comment', id: string, rawText?: string | null, createdAt: Date, text?: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, type: string } | null };
 
@@ -9951,15 +10178,6 @@ export type GetProjectAutomationQueryVariables = Exact<{
 
 
 export type GetProjectAutomationQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, automation: { __typename?: 'Automation', id: string, name: string, enabled: boolean, createdAt: Date, updatedAt: Date, runs: { __typename?: 'AutomateRunCollection', totalCount: number, items: Array<{ __typename?: 'AutomateRun', id: string, status: AutomateRunStatus, createdAt: Date, updatedAt: Date, trigger: { __typename?: 'VersionCreatedTrigger', version?: { __typename?: 'Version', id: string } | null, model?: { __typename?: 'Model', id: string } | null }, functionRuns: Array<{ __typename?: 'AutomateFunctionRun', id: string, status: AutomateRunStatus, statusMessage?: string | null, contextView?: string | null, elapsed: number, results?: Record<string, unknown> | null, function?: { __typename?: 'AutomateFunction', id: string } | null }> }> }, currentRevision?: { __typename?: 'AutomationRevision', id: string, triggerDefinitions: Array<{ __typename?: 'VersionCreatedTriggerDefinition', type: AutomateRunTriggerType, model?: { __typename?: 'Model', id: string } | null }>, functions: Array<{ __typename?: 'AutomationRevisionFunction', parameters?: Record<string, unknown> | null, release: { __typename?: 'AutomateFunctionRelease', id: string, versionTag: string, createdAt: Date, inputSchema?: Record<string, unknown> | null, commitId: string, function: { __typename?: 'AutomateFunction', id: string } } }> } | null } } };
-
-export type GetAutomateFunctionsQueryVariables = Exact<{
-  cursor?: InputMaybe<Scalars['String']['input']>;
-  limit: Scalars['Int']['input'];
-  filter?: InputMaybe<AutomateFunctionsFilter>;
-}>;
-
-
-export type GetAutomateFunctionsQuery = { __typename?: 'Query', automateFunctions: { __typename?: 'AutomateFunctionCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'AutomateFunction', id: string, name: string, isFeatured: boolean, description: string, logo?: string | null, supportedSourceApps: Array<string>, tags: Array<string>, repo: { __typename?: 'BasicGitRepositoryMetadata', id: string, owner: string, name: string }, releases: { __typename?: 'AutomateFunctionReleaseCollection', totalCount: number, items: Array<{ __typename?: 'AutomateFunctionRelease', id: string, versionTag: string, createdAt: Date, inputSchema?: Record<string, unknown> | null, commitId: string }> } }> } };
 
 export type AutomateValidateAuthCodeQueryVariables = Exact<{
   payload: AutomateAuthCodePayloadTest;
@@ -10778,8 +10996,11 @@ export const GetSpeckleConBannerDismissedDocument = {"kind":"Document","definiti
 export const SetSpeckleConBannerDismissedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SetSpeckleConBannerDismissed"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUserMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setSpeckleConBannerDismissed"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"value"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]}}]} as unknown as DocumentNode<SetSpeckleConBannerDismissedMutation, SetSpeckleConBannerDismissedMutationVariables>;
 export const GetIntelligenceCommunityStandUpBannerDismissedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetIntelligenceCommunityStandUpBannerDismissed"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"intelligenceCommunityStandUpBannerDismissed"}}]}}]}}]}}]} as unknown as DocumentNode<GetIntelligenceCommunityStandUpBannerDismissedQuery, GetIntelligenceCommunityStandUpBannerDismissedQueryVariables>;
 export const SetIntelligenceCommunityStandUpBannerDismissedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SetIntelligenceCommunityStandUpBannerDismissed"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUserMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setIntelligenceCommunityStandUpBannerDismissed"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"value"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]}}]} as unknown as DocumentNode<SetIntelligenceCommunityStandUpBannerDismissedMutation, SetIntelligenceCommunityStandUpBannerDismissedMutationVariables>;
+export const GetSpeckleCon25BannerDismissedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetSpeckleCon25BannerDismissed"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"speckleCon25BannerDismissed"}}]}}]}}]}}]} as unknown as DocumentNode<GetSpeckleCon25BannerDismissedQuery, GetSpeckleCon25BannerDismissedQueryVariables>;
+export const SetSpeckleCon25BannerDismissedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SetSpeckleCon25BannerDismissed"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUserMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setSpeckleCon25BannerDismissed"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"value"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]}}]} as unknown as DocumentNode<SetSpeckleCon25BannerDismissedMutation, SetSpeckleCon25BannerDismissedMutationVariables>;
 export const GetLegacyProjectsExplainerCollapsedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetLegacyProjectsExplainerCollapsed"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"legacyProjectsExplainerCollapsed"}}]}}]}}]}}]} as unknown as DocumentNode<GetLegacyProjectsExplainerCollapsedQuery, GetLegacyProjectsExplainerCollapsedQueryVariables>;
 export const SetLegacyProjectsExplainerCollapsedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SetLegacyProjectsExplainerCollapsed"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUserMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setLegacyProjectsExplainerCollapsed"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"value"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]}}]} as unknown as DocumentNode<SetLegacyProjectsExplainerCollapsedMutation, SetLegacyProjectsExplainerCollapsedMutationVariables>;
+export const AdminMutationsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"AdminMutations"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"AdminUpdateEmailVerificationInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"admin"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateEmailVerification"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]} as unknown as DocumentNode<AdminMutationsMutation, AdminMutationsMutationVariables>;
 export const GetLimitedPersonalProjectVersionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetLimitedPersonalProjectVersions"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"versions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedPersonalProjectVersion"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"LimitedPersonalProjectComment"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"rawText"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"text"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"doc"}},{"kind":"Field","name":{"kind":"Name","value":"type"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"LimitedPersonalProjectVersion"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Version"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}},{"kind":"Field","name":{"kind":"Name","value":"commentThreads"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedPersonalProjectComment"}}]}}]}}]}}]} as unknown as DocumentNode<GetLimitedPersonalProjectVersionsQuery, GetLimitedPersonalProjectVersionsQueryVariables>;
 export const GetLimitedPersonalProjectVersionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetLimitedPersonalProjectVersion"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"versionId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"version"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"versionId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedPersonalProjectVersion"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"LimitedPersonalProjectComment"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"rawText"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"text"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"doc"}},{"kind":"Field","name":{"kind":"Name","value":"type"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"LimitedPersonalProjectVersion"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Version"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}},{"kind":"Field","name":{"kind":"Name","value":"commentThreads"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedPersonalProjectComment"}}]}}]}}]}}]} as unknown as DocumentNode<GetLimitedPersonalProjectVersionQuery, GetLimitedPersonalProjectVersionQueryVariables>;
 export const GetLimitedPersonalStreamCommitsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetLimitedPersonalStreamCommits"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"commits"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedPersonalStreamCommit"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"LimitedPersonalStreamCommit"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Commit"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]} as unknown as DocumentNode<GetLimitedPersonalStreamCommitsQuery, GetLimitedPersonalStreamCommitsQueryVariables>;
@@ -10847,7 +11068,6 @@ export const RevokeTokenDocument = {"kind":"Document","definitions":[{"kind":"Op
 export const TokenAppInfoDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"TokenAppInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authenticatedAsApp"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]} as unknown as DocumentNode<TokenAppInfoQuery, TokenAppInfoQueryVariables>;
 export const AppTokenCreateDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"AppTokenCreate"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"token"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"AppTokenCreateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"appTokenCreate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"token"},"value":{"kind":"Variable","name":{"kind":"Name","value":"token"}}}]}]}}]} as unknown as DocumentNode<AppTokenCreateMutation, AppTokenCreateMutationVariables>;
 export const GetProjectAutomationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetProjectAutomation"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"automationId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"automation"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"automationId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"TestAutomation"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"TestAutomation"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Automation"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"runs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"trigger"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"VersionCreatedTrigger"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"version"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"model"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"functionRuns"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"statusMessage"}},{"kind":"Field","name":{"kind":"Name","value":"contextView"}},{"kind":"Field","name":{"kind":"Name","value":"function"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"elapsed"}},{"kind":"Field","name":{"kind":"Name","value":"results"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"currentRevision"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"triggerDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"VersionCreatedTriggerDefinition"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"model"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"functions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"parameters"}},{"kind":"Field","name":{"kind":"Name","value":"release"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"function"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"versionTag"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"inputSchema"}},{"kind":"Field","name":{"kind":"Name","value":"commitId"}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetProjectAutomationQuery, GetProjectAutomationQueryVariables>;
-export const GetAutomateFunctionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetAutomateFunctions"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filter"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunctionsFilter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"automateFunctions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"TestAutomateFunction"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"TestAutomateFunction"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunction"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"repo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"isFeatured"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}},{"kind":"Field","name":{"kind":"Name","value":"releases"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"5"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"versionTag"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"inputSchema"}},{"kind":"Field","name":{"kind":"Name","value":"commitId"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"supportedSourceApps"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}}]}}]} as unknown as DocumentNode<GetAutomateFunctionsQuery, GetAutomateFunctionsQueryVariables>;
 export const AutomateValidateAuthCodeDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AutomateValidateAuthCode"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"payload"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateAuthCodePayloadTest"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"automateValidateAuthCode"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"payload"},"value":{"kind":"Variable","name":{"kind":"Name","value":"payload"}}}]}]}}]} as unknown as DocumentNode<AutomateValidateAuthCodeQuery, AutomateValidateAuthCodeQueryVariables>;
 export const CreateCommentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateComment"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CommentCreateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"commentCreate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]} as unknown as DocumentNode<CreateCommentMutation, CreateCommentMutationVariables>;
 export const CreateReplyDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateReply"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ReplyCreateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"commentReply"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]} as unknown as DocumentNode<CreateReplyMutation, CreateReplyMutationVariables>;

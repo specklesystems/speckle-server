@@ -1,13 +1,17 @@
 <template>
   <div
-    class="relative flex"
-    :class="labelPosition === 'left' ? 'flex-row-reverse items-center' : 'items-start'"
+    class="relative flex items-center"
+    :class="[
+      labelPosition === 'left' && 'flex-row-reverse items-center',
+      labelPosition === 'top' && 'items-start',
+      labelPosition === 'right' && 'items-center'
+    ]"
   >
     <div
-      class="flex items-center h-6"
+      class="flex items-center h-3.5 w-3.5"
       :class="labelPosition === 'left' ? 'w-1/2 justify-end mr-2' : ''"
     >
-      <div class="relative w-3.5 h-3.5">
+      <div class="relative flex h-full w-full">
         <input
           :id="finalId"
           :checked="coreChecked"

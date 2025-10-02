@@ -19,13 +19,16 @@ jobs:
     name: Get version
     uses: ./.github/workflows/get-version.yml
 
+  get-chart-name:
+    name: Get Chart Name
+    uses: ./.github/workflows/get-chart-name.yml
+
   tests:
     needs: [get-version]
     uses: ./.github/workflows/tests.yml
     with:
-      IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
-      DOCKERHUB_USERNAME: 'speckledevops'
       CONTINUE_ON_ERROR: ${{ startsWith(github.ref, 'refs/heads/testing') }} # allows releasing on testing even if test fail
+      DISABLE_SKIPPING: ${{ startsWith(github.ref, 'refs/heads/main') }} # disable test skip on main
     secrets: inherit
 
   builds:
@@ -33,34 +36,73 @@ jobs:
     uses: ./.github/workflows/builds.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
-      DOCKERHUB_USERNAME: 'speckledevops'
+      REGISTRY_DOMAIN: 'docker.io'
+      REGISTRY_USERNAME: 'speckledevops'
+      # REGISTRY_DOMAIN, REGISTRY_USERNAME, REGISTRY_TOKEN must allow pushing to the below IMAGE_PREFIX
       IMAGE_PREFIX: 'speckle' # without an explicit host, Docker defaults to pushing Docker Hub
       PUBLISH: true # publish the sourcemaps and include the version in frontend-2 builds
       PUBLISH_LATEST: ${{ startsWith(github.ref, 'refs/heads/main') }}
-    secrets: inherit
+    secrets:
+      DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+      REGISTRY_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  # Temporary duplicate of builds job to push to ghcr.io
+  builds-ghcr:
+    needs: [get-version]
+    uses: ./.github/workflows/builds.yml
+    with:
+      IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
+      REGISTRY_DOMAIN: 'ghcr.io'
+      REGISTRY_USERNAME: ${{ github.actor }}
+      # REGISTRY_DOMAIN, REGISTRY_USERNAME, REGISTRY_TOKEN must allow pushing to the below IMAGE_PREFIX
+      IMAGE_PREFIX: 'ghcr.io/specklesystems'
+      PUBLISH: true # do not publish the sourcemaps or include the version in frontend-2 builds for pull requests
+      PUBLISH_LATEST: ${{ startsWith(github.ref, 'refs/heads/main') }}
+    secrets:
+      DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+      REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   test-deployments:
-    needs: [get-version, builds]
+    needs: [get-version, builds, builds-ghcr]
     uses: ./.github/workflows/deployment-tests.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
-      DOCKERHUB_USERNAME: 'speckledevops'
-      IMAGE_PREFIX: 'speckle'
-    secrets: inherit
+      REGISTRY_DOMAIN: 'ghcr.io'
+      REGISTRY_USERNAME: ${{ github.actor }}
+      IMAGE_PREFIX: 'ghcr.io/specklesystems'
+    secrets:
+      REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   deploy:
-    needs: [get-version, tests, builds, test-deployments]
+    needs: [get-version, tests, builds, test-deployments, get-chart-name]
     uses: ./.github/workflows/publish.yml
     with:
+      IMAGE_PREFIX: 'ghcr.io/specklesystems'
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-      DOCKERHUB_USERNAME: 'speckledevops'
-    secrets: inherit
+      OCI_REGISTRY_DOMAIN: ghcr.io
+      OCI_REGISTRY_PATH: specklesystems
+      OCI_REGISTRY_USERNAME: ${{ github.actor }}
+      CHART_NAME: ${{ needs.get-chart-name.outputs.CHART_NAME }}
+    secrets:
+      # we do not inherit here as we wish to configure secrets depending on the target registry
+      DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      OCI_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }} # we are pushing helm chart to ghcr
+      GH_DEVOPS_PAT: ${{ secrets.GH_DEVOPS_PAT }}
 
   npm:
-    needs: [get-version, tests, builds]
+    needs: [get-version, tests, builds, builds-ghcr]
     uses: ./.github/workflows/npm.yml
-    if: startsWith(github.ref, 'refs/tags/') # a tag triggered the workflow
+    # only run if a tag triggered the workflow
+    if: startsWith(github.ref, 'refs/tags/')
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
+    secrets: inherit
+
+  snyk:
+    needs: [tests]
+    uses: ./.github/workflows/snyk.yml
+    # skip snyk on testing branches
+    if: startsWith(github.ref , 'refs/heads/testing') == false
     secrets: inherit

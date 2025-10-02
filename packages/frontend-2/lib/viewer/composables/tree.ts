@@ -36,10 +36,10 @@ const isReferencedIdArray = (value: unknown): value is { referencedId: string }[
 }
 
 export type UnifiedVirtualItem = {
-  type: 'model-header' | 'tree-item'
+  type: 'model-header' | 'tree-item' | 'detached-object-header'
   id: string
   modelId: string
-  data: ExplorerNode | ModelWithVersion
+  data: ExplorerNode | ModelWithVersion | { objectId: string }
   indent?: number
   hasChildren?: boolean
   isExpanded?: boolean
@@ -51,7 +51,7 @@ export type UnifiedVirtualItem = {
 }
 
 function createTreeStateManager() {
-  const flattenedTreeCache = reactive(new Map<string, UnifiedVirtualItem[]>())
+  const flattenedTreeCache = new Map<string, UnifiedVirtualItem[]>()
   const lastCacheKey = ref('')
   const isInitialized = ref(false)
 
@@ -75,7 +75,8 @@ function createTreeStateManager() {
     modelsAndVersionIds: { model: ModelItem; versionId: string }[],
     expandedModels: Set<string>,
     expandedNodes: Set<string>,
-    selectedObjects: { id: string }[]
+    selectedObjects: { id: string }[],
+    detachedObjects: { objectId: string }[]
   ): string => {
     const parts = [
       modelsAndVersionIds
@@ -85,6 +86,10 @@ function createTreeStateManager() {
       Array.from(expandedNodes).sort().join(','),
       selectedObjects
         .map((o) => o.id)
+        .sort()
+        .join(','),
+      detachedObjects
+        .map((o) => o.objectId)
         .sort()
         .join(',')
     ]
@@ -115,6 +120,7 @@ function createTreeStateManager() {
     selectedObjects: { id: string }[],
     worldTree: WorldTree | null,
     stateResourceItems: { objectId: string; modelId?: string }[],
+    detachedObjects: { objectId: string }[],
     getRootNodesForModel: (
       modelId: string,
       worldTree: WorldTree | null,
@@ -134,7 +140,8 @@ function createTreeStateManager() {
       modelsAndVersionIds,
       expandedModels,
       expandedNodes,
-      selectedObjects
+      selectedObjects,
+      detachedObjects
     )
 
     if (lastCacheKey.value === cacheKey && flattenedTreeCache.has(cacheKey)) {
@@ -164,6 +171,44 @@ function createTreeStateManager() {
           const treeItems = flattenModelTree(
             modelRootNodes,
             model.id,
+            expandedNodes,
+            selectedObjects
+          )
+
+          if (treeItems.length > 0) {
+            treeItems[0].isFirstChildOfModel = true
+            treeItems[treeItems.length - 1].isLastChildOfModel = true
+            result.push(...treeItems)
+          }
+        }
+      }
+    })
+
+    // Handle detached objects
+    detachedObjects.forEach((detachedObject, index) => {
+      const objectId = detachedObject.objectId
+      const isFirstDetachedObject = index === 0 && modelsAndVersionIds.length === 0
+
+      result.push({
+        type: 'detached-object-header',
+        id: `detached-${objectId}`,
+        modelId: objectId, // Use objectId as modelId for detached objects
+        data: { objectId },
+        isFirstModel: isFirstDetachedObject
+      })
+
+      if (expandedModels.has(objectId)) {
+        const detachedRootNodes = getRootNodesForModel(
+          objectId,
+          worldTree,
+          stateResourceItems,
+          modelsAndVersionIds
+        )
+
+        if (detachedRootNodes.length > 0) {
+          const treeItems = flattenModelTree(
+            detachedRootNodes,
+            objectId,
             expandedNodes,
             selectedObjects
           )
@@ -419,22 +464,26 @@ export function useTreeManagement() {
     modelId: string,
     expandedNodes: Set<string>,
     depth = 0
-  ): boolean => {
-    if (!nodes?.length || depth > MAX_EXPANSION_DEPTH) return false
+  ): { found: boolean; nodesToExpand: string[] } => {
+    if (!nodes?.length || depth > MAX_EXPANSION_DEPTH)
+      return { found: false, nodesToExpand: [] }
 
-    return nodes.some((node) => {
+    const nodesToExpand: string[] = []
+
+    const found = nodes.some((node) => {
       if (node.raw?.id === objectId) return true
 
       if (node.children?.length) {
-        const found = expandNodesToShowObject(
+        const result = expandNodesToShowObject(
           node.children,
           objectId,
           modelId,
           expandedNodes,
           depth + 1
         )
-        if (found) {
-          if (node.raw?.id) expandedNodes.add(node.raw.id)
+        if (result.found) {
+          if (node.raw?.id) nodesToExpand.push(node.raw.id)
+          nodesToExpand.push(...result.nodesToExpand)
 
           // Handle array collections
           const speckleData = node.raw
@@ -449,7 +498,7 @@ export function useTreeManagement() {
               if (isReferencedIdArray(val)) {
                 const ids = new Set(val.map((ref) => ref.referencedId))
                 if (node.children?.some((child) => ids.has(child.raw?.id as string))) {
-                  expandedNodes.add(k)
+                  nodesToExpand.push(k)
                 }
               }
             })
@@ -459,6 +508,8 @@ export function useTreeManagement() {
       }
       return false
     })
+
+    return { found, nodesToExpand }
   }
 
   return {

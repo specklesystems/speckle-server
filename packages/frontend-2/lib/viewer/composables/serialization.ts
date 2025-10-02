@@ -5,10 +5,15 @@ import {
 import { isUndefinedOrVoid, SpeckleViewer } from '@speckle/shared'
 import { get } from 'lodash-es'
 import { Vector3 } from 'three'
-import { useDiffUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useDiffUtilities,
+  useSelectionUtilities,
+  useSectionBoxUtilities
+} from '~~/lib/viewer/composables/ui'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
-import { CameraController, VisualDiffMode } from '@speckle/viewer'
-import { StringFilterCondition } from '~/lib/viewer/helpers/filters/types'
+import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
+import { CameraController, SectionTool, VisualDiffMode } from '@speckle/viewer'
+import type { FilterLogic, FilterCondition } from '~/lib/viewer/helpers/filters/types'
 import type { Merge, PartialDeep } from 'type-fest'
 import {
   defaultMeasurementOptions,
@@ -29,6 +34,8 @@ export function useStateSerialization() {
   const { objects: selectedObjects } = useSelectionUtilities()
   const { serializeDiffCommand } = useDiffUtilities()
   const { filters } = useFilterUtilities()
+  const dataStore = useFilteringDataStore()
+  const { box3ToSectionBoxData } = useSectionBoxUtilities()
 
   /**
    * We don't want to save a comment w/ implicit identifiers like ones that only have a model ID or a folder prefix, because
@@ -62,7 +69,9 @@ export function useStateSerialization() {
     const { concreteResourceIdString } = options || {}
 
     const camControls = state.viewer.instance.getExtension(CameraController).controls
-    const box = state.viewer.instance.getCurrentSectionBox()
+
+    const rawBox = state.viewer.instance.getExtension(SectionTool).getBox()
+    const box = rawBox ? box3ToSectionBoxData(rawBox) : null
 
     const ret: SerializedViewerState = {
       projectId: state.projectId.value,
@@ -108,23 +117,8 @@ export function useStateSerialization() {
             isApplied: filterData.isApplied,
             selectedValues: filterData.selectedValues,
             id: filterData.id,
-            condition:
-              filterData.condition === StringFilterCondition.Is
-                ? ('AND' as const)
-                : ('OR' as const)
+            condition: filterData.condition
           }))
-
-          // Create legacy-compatible propertyFilter from first item in propertyFilters
-          const propertyFilter =
-            propertyFilters.length > 0
-              ? {
-                  key: propertyFilters[0].key,
-                  isApplied: propertyFilters[0].isApplied
-                }
-              : {
-                  key: null,
-                  isApplied: false
-                }
 
           return {
             isolatedObjectIds: state.ui.filters.isolatedObjectIds.value,
@@ -133,8 +127,9 @@ export function useStateSerialization() {
               ret[obj.id] = obj.applicationId ?? null
               return ret
             }, {} as Record<string, string | null>),
-            propertyFilter, // ← Preserve legacy format for backwards compatibility
-            propertyFilters
+            propertyFilters,
+            activeColorFilterId: state.ui.filters.activeColorFilterId.value,
+            filterLogic: dataStore.currentFilterLogic.value
           }
         })(),
         camera: {
@@ -284,7 +279,7 @@ export function useApplySerializedState() {
 
     // We want to make sure the final resources have been loaded before we continue on
     // with applying the rest of the state
-    if (newResourceIdString) {
+    if (newResourceIdString && newResourceIdString !== resourceIdString.value) {
       await until(loading).toBe(false)
       await resourceIdString.update(newResourceIdString)
       await until(loading).toBe(false)
@@ -322,7 +317,17 @@ export function useApplySerializedState() {
     }
 
     if (filters.propertyFilters?.length) {
-      restoreFilters(filters.propertyFilters)
+      restoreFilters(
+        filters.propertyFilters as Array<{
+          key: string | null
+          isApplied: boolean
+          selectedValues: string[]
+          id: string
+          condition: FilterCondition
+        }>,
+        filters.activeColorFilterId,
+        filters.filterLogic as FilterLogic
+      )
     } else {
       resetFilters()
     }

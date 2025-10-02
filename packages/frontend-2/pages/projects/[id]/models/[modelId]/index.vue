@@ -2,7 +2,7 @@
   <div :class="isTransparent ? 'viewer-transparent' : ''">
     <ClientOnly>
       <ViewerEmbedManualLoad v-if="isManualLoad" @play="isManualLoad = false" />
-      <LazyViewerPreSetupWrapper v-else @setup="state = $event" />
+      <LazyViewerPageWrapper v-else @setup="state = $event" />
       <Component
         :is="state ? ViewerScope : 'div'"
         :state="state"
@@ -31,10 +31,10 @@ definePageMeta({
 })
 
 const ViewerScope = resolveComponent('ViewerScope')
+const route = useRoute()
 
 const isManualLoad = ref(false)
 const isTransparent = ref(false)
-const route = useRoute()
 const state = ref<InjectableViewerState>()
 
 const checkUrlForEmbedManualLoadSettings = () => {

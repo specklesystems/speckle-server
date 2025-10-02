@@ -1,18 +1,18 @@
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import type {
   NumericPropertyInfo,
-  PropertyInfo,
   SpeckleObject,
   SpeckleReference,
   StringPropertyInfo
 } from '@speckle/viewer'
 import type { Raw } from 'vue'
+import type { ExtendedPropertyInfo } from '~/lib/viewer/helpers/filters/types'
 
 export const isStringPropertyInfo = (
-  info: MaybeNullOrUndefined<PropertyInfo>
+  info: MaybeNullOrUndefined<ExtendedPropertyInfo>
 ): info is StringPropertyInfo => info?.type === 'string'
 export const isNumericPropertyInfo = (
-  info: MaybeNullOrUndefined<PropertyInfo>
+  info: MaybeNullOrUndefined<ExtendedPropertyInfo>
 ): info is NumericPropertyInfo => info?.type === 'number'
 
 export type ExplorerNode = {

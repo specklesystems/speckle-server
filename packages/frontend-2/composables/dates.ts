@@ -68,6 +68,14 @@ const formattedFullDate = (date: ConfigType, tz: Optional<string>): string =>
   createDayjs(date, tz).format('MMM D, YYYY, H:mm')
 
 /**
+ * Formats a given date input into a date string without time
+ * @example
+ * formattedDateOnly('2023-12-01') - returns "Dec 12, 2023"
+ */
+const formattedDateOnly = (date: ConfigType, tz: Optional<string>): string =>
+  createDayjs(date, tz).format('MMM D, YYYY')
+
+/**
  * Formats a given date input into a relative time string with optional prefix
  * @example
  * Assuming today is January 1st 2024
@@ -127,6 +135,13 @@ export const useDateFormatters = () => {
      * formattedFullDate('2023-12-01') - returns "Dec 12, 2023"
      */
     formattedFullDate: (date: ConfigType): string =>
-      formattedFullDate(date, timeZone.value)
+      formattedFullDate(date, timeZone.value),
+    /**
+     * Formats a given date input into a date string without time
+     * @example
+     * formattedDateOnly('2023-12-01') - returns "Dec 12, 2023"
+     */
+    formattedDateOnly: (date: ConfigType): string =>
+      formattedDateOnly(date, timeZone.value)
   }
 }

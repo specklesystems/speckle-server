@@ -14,36 +14,37 @@ import {
 } from '@/modules/core/repositories/commits'
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
-import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import {
   getModelHomeSavedViewFactory,
   getSavedViewFactory
 } from '@/modules/viewer/repositories/dataLoaders/savedViews'
 import { getViewerResourceGroupsFactory } from '@/modules/viewer/services/viewerResources'
+import { isErr } from 'true-myth/result'
 
 const extendedViewerResourcesResolver = async (
   parent: ProjectGraphQLReturn,
-  {
-    resourceIdString,
-    loadedVersionsOnly,
-    savedViewId,
-    savedViewSettings
-  }: ProjectViewerResourcesExtendedArgs,
+  args: ProjectViewerResourcesExtendedArgs,
   ctx: GraphQLContext
 ) => {
   const projectId = parent.id
   const projectDB = await getProjectDbClient({ projectId })
+
+  const { resourceIdString, loadedVersionsOnly, savedViewSettings } = args
+  let savedViewId = args.savedViewId
 
   // If savedViewId set, check for access
   if (savedViewId) {
     const canRead = await ctx.authPolicies.project.savedViews.canRead({
       userId: ctx.userId,
       projectId,
-      savedViewId,
-      allowNonExistent: true // ignore missing view
+      savedViewId
     })
-    throwIfAuthNotOk(canRead)
+    if (isErr(canRead)) {
+      // we dont want to throw here, just act as if no view id set, otherwise the entire viewer fails
+      // to load because of a broken view id
+      savedViewId = null
+    }
   }
 
   // TODO: Home view gets implicitly resolved inside the service, in the future
@@ -61,14 +62,17 @@ const extendedViewerResourcesResolver = async (
     getModelHomeSavedView: getModelHomeSavedViewFactory({ loaders: ctx.loaders })
   })
 
-  return await getViewerResourceGroups({
-    projectId: parent.id,
-    resourceIdString,
-    loadedVersionsOnly,
-    savedViewId,
-    savedViewSettings,
-    applyHomeView: true
-  })
+  return {
+    ...(await getViewerResourceGroups({
+      projectId: parent.id,
+      resourceIdString,
+      loadedVersionsOnly,
+      savedViewId,
+      savedViewSettings,
+      applyHomeView: true
+    })),
+    request: { savedViewId: args.savedViewId }
+  }
 }
 
 const resolvers: Resolvers = {

@@ -611,7 +611,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.featureFlags.accIntegrationEnabled | quote }}
 
 - name: FF_NO_PERSONAL_EMAILS_ENABLED
-  value: {{ .Values.server.noPersonalEmailsEnabled }}
+  value: {{ .Values.featureFlags.noPersonalEmailsEnabled | quote }}
 
 - name: FF_NOTIFICATION_LISTENER_ENABLED
   value: {{ .Values.featureFlags.notificationListenerEnabled | quote }}

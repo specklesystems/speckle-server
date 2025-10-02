@@ -1,4 +1,3 @@
-import { CustomLogger } from '../types/functions.js'
 import KeyedQueue from './keyedQueue.js'
 
 /**
@@ -12,10 +11,10 @@ export default class BatchingQueue<T> {
   #batchSize: number
   #processFunction: (batch: T[]) => Promise<void>
   #timeoutId: ReturnType<typeof setTimeout> | null = null
-  #isProcessing = false
-  #logger: CustomLogger
 
-  #disposed = false
+  #isProcessing = false
+  #isDisposed = false
+  #isErrored = false
   #batchTimeout: number
 
   // Helper methods for cross-environment timeout handling
@@ -41,16 +40,15 @@ export default class BatchingQueue<T> {
     batchSize: number
     maxWaitTime: number
     processFunction: (batch: T[]) => Promise<void>
-    logger?: CustomLogger
   }) {
     this.#batchSize = params.batchSize
     this.#processFunction = params.processFunction
     this.#batchTimeout = params.maxWaitTime
-    this.#logger = params.logger || ((): void => {})
   }
 
   async disposeAsync(): Promise<void> {
-    this.#disposed = true
+    if (this.#isDisposed) return
+    this.#isDisposed = true
     if (this.#timeoutId) {
       this.#getClearTimeoutFn()(this.#timeoutId)
       this.#timeoutId = null
@@ -66,54 +64,54 @@ export default class BatchingQueue<T> {
     // After any ongoing flush is completed, there might be items in the queue.
     // We should flush them.
     if (this.#queue.size > 0) {
-      await this.#flush()
+      await this.flush()
     }
   }
 
   add(key: string, item: T): void {
-    if (this.#disposed) return
+    if (this.#isDisposed || this.#isErrored) return
     this.#queue.enqueue(key, item)
     this.#addCheck()
   }
 
   addAll(keys: string[], items: T[]): void {
-    if (this.#disposed) return
+    if (this.#isDisposed || this.#isErrored) return
     this.#queue.enqueueAll(keys, items)
     this.#addCheck()
   }
 
   #addCheck(): void {
-    if (this.#disposed) return
+    if (this.#isDisposed) return
     if (this.#queue.size >= this.#batchSize) {
       // Fire and forget, no need to await
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.#flush()
+      this.flush()
     } else {
       if (this.#timeoutId) {
         this.#getClearTimeoutFn()(this.#timeoutId)
       }
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      this.#timeoutId = this.#getSetTimeoutFn()(() => this.#flush(), this.#batchTimeout)
+      this.#timeoutId = this.#getSetTimeoutFn()(() => this.flush(), this.#batchTimeout)
     }
   }
 
-  async #flush(): Promise<void> {
+  async flush(): Promise<void> {
     if (this.#timeoutId) {
       this.#getClearTimeoutFn()(this.#timeoutId)
       this.#timeoutId = null
     }
 
-    if (this.#isProcessing || this.#queue.size === 0) {
+    if (this.#isErrored || this.#isProcessing || this.#queue.size === 0) {
       return
     }
     this.#isProcessing = true
 
-    const batchToProcess = this.#getBatch(this.#batchSize)
-
     try {
+      const batchToProcess = this.#getBatch(this.#batchSize)
       await this.#processFunction(batchToProcess)
     } catch (error) {
-      this.#logger('Batch processing failed:', error)
+      console.error('Batch processing failed:', error)
+      this.#isErrored = true
     } finally {
       this.#isProcessing = false
     }
@@ -129,7 +127,11 @@ export default class BatchingQueue<T> {
   }
 
   isDisposed(): boolean {
-    return this.#disposed
+    return this.#isDisposed
+  }
+
+  isErrored(): boolean {
+    return this.#isErrored
   }
 
   #getBatch(batchSize: number): T[] {

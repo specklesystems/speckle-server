@@ -231,6 +231,12 @@ export const DashboardNotFoundError = defineAuthError({
   message: 'Dashboard not found'
 })
 
+export const DashboardNoProjectsError = defineAuthError({
+  code: 'DashboardNoProjects',
+  message:
+    'Dashboard has no projects added to it. You need to add at least one project before sharing.'
+})
+
 export const DashboardProjectsNotEnoughPermissionsError = defineAuthError<
   'DashboardProjectsNotEnoughPermissions',
   {

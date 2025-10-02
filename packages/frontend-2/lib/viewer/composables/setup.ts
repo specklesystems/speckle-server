@@ -8,7 +8,6 @@ import {
 import type {
   ViewMode,
   FilteringState,
-  PropertyInfo,
   SunLightConfiguration,
   SpeckleView,
   DiffResult,
@@ -91,6 +90,7 @@ import {
 import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
 import type { FilterData } from '~/lib/viewer/helpers/filters/types'
 import {
+  useBuildSavedViewsCoreState,
   useBuildSavedViewsUIState,
   type SavedViewsUIState
 } from '~/lib/viewer/composables/savedViews/state'
@@ -99,6 +99,8 @@ import { useViewModesSetup } from '~/lib/viewer/composables/setup/viewMode'
 import { useMeasurementsSetup } from '~/lib/viewer/composables/setup/measurements'
 import { useFiltersSetup } from '~/lib/viewer/composables/setup/filters'
 import { useViewerPanelsSetup } from '~/lib/viewer/composables/setup/panels'
+import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
+import { HighlightExtension } from '~/lib/viewer/composables/setup/highlighting'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -123,6 +125,13 @@ export type InjectableViewerState = Readonly<{
    * This is used to ignore user activity messages from the same tab.
    */
   sessionId: ComputedRef<string>
+  /**
+   * The type of page that this state is powering. Based on this, certain features/UIs
+   * can be toggled.
+   *
+   * Default: Viewer (main viewer page), but can also be Presentation
+   */
+  pageType: ComputedRef<ViewerRenderPageType>
   /**
    * The actual Viewer instance and related objects.
    * Note: This is going to be undefined in SSR!
@@ -151,7 +160,6 @@ export type InjectableViewerState = Readonly<{
        * Based on a shallow ref
        */
       worldTree: ComputedRef<Optional<WorldTree>>
-      availableFilters: ComputedRef<Optional<PropertyInfo[]>>
       views: ComputedRef<SpeckleView[]>
       filteringState: ComputedRef<Optional<FilteringState>>
       filteringDataStore: ReturnType<typeof useCreateViewerFilteringDataStore>
@@ -400,9 +408,9 @@ type CachedViewerState = Pick<
   initPromise: Promise<void>
 }
 
-type InitialSetupState = Pick<
+export type InitialSetupState = Pick<
   InjectableViewerState,
-  'projectId' | 'viewer' | 'sessionId' | 'urlHashState'
+  'projectId' | 'viewer' | 'sessionId' | 'urlHashState' | 'pageType'
 >
 
 type InitialStateWithRequest = InitialSetupState & {
@@ -439,6 +447,7 @@ function createViewerDataBuilder(params: { viewerDebug: boolean }) {
       ...DefaultViewerParams,
       verbose: !!(import.meta.client && params.viewerDebug)
     })
+    viewer.createExtension(HighlightExtension)
     viewer.createExtension(PassReader)
     const initPromise = viewer.init()
 
@@ -456,7 +465,6 @@ function setupViewerMetadata(params: {
   const { viewer } = params
 
   const worldTree = shallowRef(undefined as Optional<WorldTree>)
-  const availableFilters = shallowRef(undefined as Optional<PropertyInfo[]>)
   const filteringState = shallowRef(undefined as Optional<FilteringState>)
   const views = ref([] as SpeckleView[])
 
@@ -464,11 +472,12 @@ function setupViewerMetadata(params: {
 
   const refreshWorldTreeAndFilters = async () => {
     worldTree.value = viewer.getWorldTree()
-    availableFilters.value = await viewer.getObjectProperties()
     views.value = viewer.getViews()
   }
-  const updateFilteringState = (newState: FilteringState) => {
-    filteringState.value = newState
+  const updateFilteringState = (newState: MaybeNullOrUndefined<FilteringState>) => {
+    // treating {}, null, undefined as the same, to avoid unnecessary updates
+    filteringState.value =
+      newState && Object.keys(newState).length > 0 ? newState : undefined
   }
 
   onMounted(() => {
@@ -487,7 +496,6 @@ function setupViewerMetadata(params: {
 
   return {
     worldTree: computed(() => worldTree.value),
-    availableFilters: computed(() => availableFilters.value),
     filteringState: computed(() => filteringState.value),
     views: computed(() => views.value),
     filteringDataStore
@@ -502,16 +510,20 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
     public: { viewerDebug }
   } = useRuntimeConfig()
 
+  const route = useRoute()
   const sessionId = computed(() => nanoid())
   const isInitialized = ref(false)
   const { instance, initPromise, container } = useScopedState(
     GlobalViewerDataKey,
-    createViewerDataBuilder({ viewerDebug })
+    createViewerDataBuilder({
+      viewerDebug: viewerDebug || route.query.viewerVerbose === '1'
+    })
   ) || { initPromise: Promise.resolve() }
   initPromise.then(() => (isInitialized.value = true))
   const hasDoneInitialLoad = ref(false)
 
   return {
+    pageType: computed(() => params.pageType),
     projectId: params.projectId,
     sessionId,
     viewer: import.meta.server
@@ -524,7 +536,6 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
           },
           metadata: {
             worldTree: computed(() => undefined),
-            availableFilters: computed(() => undefined),
             views: computed(() => []),
             filteringState: computed(() => undefined)
           },
@@ -547,47 +558,19 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
 /**
  * Setup resource requests (tied to URL resource identifier param)
  */
-function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest {
-  const route = useRoute()
-  const router = useSafeRouter()
-  const getParam = computed(() => route.params.modelId as string)
+function setupResourceRequest(
+  state: InitialSetupState,
+  params: UseSetupViewerParams
+): InitialStateWithRequest {
+  const resourceIdString = params.resourceIdString
 
   const resources = writableAsyncComputed({
-    get: () => parseUrlParameters(getParam.value),
+    get: () => resourceBuilder().addResources(resourceIdString.value).toResources(),
     set: async (newResources) => {
-      const modelId = createGetParamFromResources(newResources)
-      await router.push(
-        () => ({
-          params: { modelId },
-          query: route.query,
-          hash: route.hash
-        }),
-        {
-          skipIf: (to) => {
-            if (to.params.modelId !== getParam.value) return false
-            if (to.query !== route.query) return false
-            if (to.hash !== route.hash) return false
-            return true
-          }
-        }
-      )
+      const newIdString = createGetParamFromResources(newResources)
+      await resourceIdString.update(newIdString)
     },
     initialState: [],
-    asyncRead: false
-  })
-
-  // we could use getParam, but `createGetParamFromResources` does sorting and de-duplication AFAIK
-  // + we can skip duplicate updates
-  const resourceIdString = writableAsyncComputed({
-    get: () => createGetParamFromResources(resources.value),
-    set: async (newVal) => {
-      const newResources = resourceBuilder().addResources(parseUrlParameters(newVal))
-      const currentResources = resourceBuilder().addResources(resources.value)
-      if (newResources.toString() === currentResources.toString()) return
-
-      await resources.update(newResources.toResources())
-    },
-    initialState: '',
     asyncRead: false
   })
 
@@ -631,25 +614,11 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     }
   )
 
-  const savedViewId = ref<string | null | undefined>(undefined)
-
-  // // For debugging uncomment:
-  // watch(
-  //   savedViewId,
-  //   (newVal, oldVal) => {
-  //     devTrace('savedViewId', { newVal, oldVal })
-  //   },
-  //   { flush: 'sync' }
-  // )
-
   return {
     ...state,
     resources: {
       request: {
-        savedView: {
-          id: savedViewId,
-          loadOriginal: ref<boolean>(false)
-        },
+        savedView: useBuildSavedViewsCoreState(state, params),
         items: resources,
         resourceIdString,
         threadFilters,
@@ -683,7 +652,8 @@ function setupResponseResourceItems(
         resourceIdString,
         savedView: { id: savedViewId, loadOriginal }
       }
-    }
+    },
+    urlHashState: { savedView: urlHashSavedView }
   } = state
 
   const initLoadDone = ref(import.meta.server ? false : true)
@@ -732,17 +702,24 @@ function setupResponseResourceItems(
   onResult(async (res) => {
     initLoadDone.value = true
 
+    const data = res.data?.project?.viewerResourcesExtended
+    if (!data) return
+
     // If saved view resolved, update resourceIdString from response
     // cause it may have changed
-    const data = res.data?.project?.viewerResourcesExtended
-    if (data?.savedView?.id) {
-      const incomingResourceIdString = resourceBuilder().addResources(
-        data.resourceIdString
-      )
-      const existing = resourceBuilder().addResources(resourceIdString.value)
-      if (!incomingResourceIdString.isEqualTo(existing)) {
-        await resourceIdString.update(incomingResourceIdString.toString())
-      }
+    const incomingResourceIdString = resourceBuilder().addResources(
+      data.resourceIdString
+    )
+    const existing = resourceBuilder().addResources(resourceIdString.value)
+    if (!incomingResourceIdString.isEqualTo(existing)) {
+      await resourceIdString.update(incomingResourceIdString.toString())
+    }
+
+    // Check if savedViewId refered to an invalid one
+    if (data.request?.savedViewId && data.request.savedViewId !== data.savedView?.id) {
+      // switch to "no view"
+      savedViewId.value = null
+      void urlHashSavedView.update(null)
     }
   })
 
@@ -1055,7 +1032,11 @@ function setupResponseResourceData(
         resourceIdString: resourceIdString.value
       }
     }),
-    { keepPreviousResult: true }
+    () => ({
+      keepPreviousResult: true,
+      // Dont need threads when in presentation mode
+      enabled: state.pageType.value !== ViewerRenderPageType.Presentation
+    })
   )
 
   const commentThreadsMetadata = computed(
@@ -1216,13 +1197,24 @@ function setupInterfaceState(
   }
 }
 
-type UseSetupViewerParams = { projectId: AsyncWritableComputedRef<string> }
+export type UseSetupViewerParams = {
+  projectId: AsyncWritableComputedRef<string>
+  resourceIdString: AsyncWritableComputedRef<string>
+  pageType: ViewerRenderPageType
+  /**
+   * Optionally override savedView source of truth
+   */
+  savedView?: {
+    id: InjectableViewerState['resources']['request']['savedView']['id']
+    loadOriginal: InjectableViewerState['resources']['request']['savedView']['loadOriginal']
+  }
+}
 
 export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerState {
   // Initialize full state object - each subsequent state initialization depends on
   // the results of the previous ones until we have the final full object
   const initState = setupInitialState(params)
-  const initialStateWithRequest = setupResourceRequest(initState)
+  const initialStateWithRequest = setupResourceRequest(initState, params)
   const stateWithResources = setupResourceResponse(initialStateWithRequest)
   const state: InjectableViewerState = setupInterfaceState(stateWithResources)
 

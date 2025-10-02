@@ -64,7 +64,8 @@ describe('Activity digest notifications @notifications', () => {
     configuration: {
       objectMultipartUploadSizeLimitBytes: 1_000_000,
       objectSizeLimitBytes: 1_000_000,
-      isEmailEnabled: true
+      isEmailEnabled: true,
+      emailVerificationTimeoutMinutes: 5
     }
   }
 
