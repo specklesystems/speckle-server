@@ -23,7 +23,6 @@ import {
 import { isUngroupedGroup } from '@speckle/shared/saved-views'
 import {
   getCachedObjectKeys,
-  parseObjectReference,
   type CacheObjectReference
 } from '~/lib/common/helpers/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
