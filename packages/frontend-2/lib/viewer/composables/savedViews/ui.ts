@@ -14,8 +14,8 @@ import { isUngroupedGroup } from '@speckle/shared/dist/esm/saved-views/index.js'
 const isDraggableView = (view: unknown): view is UseDraggableView_SavedViewFragment =>
   isObjectLike(view) && has(view, 'id') && has(view, 'permissions.canUpdate')
 
-// Track dragged view ID to prevent drop indicator on itself during dragover
-// (getData() doesn't work during dragover, only during drop)
+// Track dragged view ID to hide drop indicator when hovering over itself
+// (needed during dragover for real-time visual feedback - getData() only works during drop)
 const useDraggingViewId = () => useState<string | null>('dragging-view-id', () => null)
 
 graphql(`
@@ -344,6 +344,12 @@ export const useDraggableViewTargetGroup = (params: {
     }
 
     return classParts.join(' ')
+  })
+
+  watch(enabled, (newVal, oldVal) => {
+    if (newVal && !oldVal) {
+      isDragOver.value = false
+    }
   })
 
   return {
