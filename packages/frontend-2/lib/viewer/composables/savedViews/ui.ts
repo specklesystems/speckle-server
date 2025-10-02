@@ -206,16 +206,22 @@ export const useDraggableViewTargetView = (params: {
   const classes = computed(() => {
     const classParts: string[] = ['draggable-view-target']
 
-    // No background color during drag - using drop position indicator line instead
+    if (isDragOver.value && dropPosition.value === 'top') {
+      classParts.push(
+        'before:absolute before:left-0 before:right-0 before:top-0 before:h-[2px] before:bg-primary before:rounded-full before:z-10 before:-translate-y-1/2'
+      )
+    } else if (isDragOver.value && dropPosition.value === 'bottom') {
+      classParts.push(
+        'after:absolute after:left-0 after:right-0 after:bottom-0 after:h-[2px] after:bg-primary after:rounded-full after:z-10 after:translate-y-1/2'
+      )
+    }
 
     return classParts.join(' ')
   })
 
   return {
     on: vOn,
-    classes,
-    dropPosition: readonly(dropPosition),
-    isDragOver: readonly(isDragOver)
+    classes
   }
 }
 
