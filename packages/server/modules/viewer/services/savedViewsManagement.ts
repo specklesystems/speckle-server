@@ -13,6 +13,9 @@ import type {
   GetProjectSavedViewGroups,
   GetProjectSavedViewGroupsPageItems,
   GetProjectSavedViewGroupsTotalCount,
+  GetProjectSavedViews,
+  GetProjectSavedViewsPageItems,
+  GetProjectSavedViewsTotalCount,
   GetSavedView,
   GetSavedViewGroup,
   GetStoredViewCount,
@@ -829,4 +832,24 @@ export const updateSavedViewGroupFactory =
     })
 
     return updatedGroup! // should exist, we checked before
+  }
+
+export const getProjectSavedViewsFactory =
+  (deps: {
+    getProjectSavedViewsPageItems: GetProjectSavedViewsPageItems
+    getProjectSavedViewsTotalCount: GetProjectSavedViewsTotalCount
+  }): GetProjectSavedViews =>
+  async (params) => {
+    const noItemsNeeded = params.limit === 0
+    const [totalCount, pageItems] = await Promise.all([
+      deps.getProjectSavedViewsTotalCount(params),
+      noItemsNeeded
+        ? Promise.resolve({ items: [], cursor: null })
+        : deps.getProjectSavedViewsPageItems(params)
+    ])
+
+    return {
+      totalCount,
+      ...pageItems
+    }
   }

@@ -280,3 +280,20 @@ export const getModelHomeViewQuery = gql`
 
   ${basicSavedViewFragment}
 `
+
+export const getProjectSavedViewsQuery = gql`
+  query GetProjectSavedViews($projectId: String!, $input: ProjectSavedViewsInput!) {
+    project(id: $projectId) {
+      id
+      savedViews(input: $input) {
+        totalCount
+        cursor
+        items {
+          ...BasicSavedView
+        }
+      }
+    }
+  }
+
+  ${basicSavedViewFragment}
+`

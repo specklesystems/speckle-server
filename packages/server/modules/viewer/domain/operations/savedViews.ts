@@ -43,6 +43,38 @@ export type GetStoredViewCount = (params: { projectId: string }) => Promise<numb
 
 export type GetStoredViewGroupCount = (params: { projectId: string }) => Promise<number>
 
+export type GetProjectSavedViewsBaseParams = {
+  /**
+   * Falsy means - anonymous user (so no onlyAuthored filtering)
+   */
+  userId?: MaybeNullOrUndefined<string>
+  projectId: string
+  /**
+   * If not provided, views from all resources in the project will be returned.
+   */
+  resourceIdString?: MaybeNullOrUndefined<string>
+  onlyVisibility?: MaybeNullOrUndefined<SavedViewVisibility>
+  search?: MaybeNullOrUndefined<string>
+}
+
+export type GetProjectSavedViewsPageParams = GetProjectSavedViewsBaseParams & {
+  limit?: MaybeNullOrUndefined<number>
+  cursor?: MaybeNullOrUndefined<string>
+  sortDirection?: MaybeNullOrUndefined<'asc' | 'desc'>
+  /**
+   * Null means - manual positioning
+   */
+  sortBy?: MaybeNullOrUndefined<'createdAt' | 'name' | 'updatedAt' | 'position'>
+}
+
+export type GetProjectSavedViewsTotalCount = (
+  params: GetProjectSavedViewsBaseParams
+) => Promise<number>
+
+export type GetProjectSavedViewsPageItems = (
+  params: GetProjectSavedViewsPageParams
+) => Promise<Omit<Collection<SavedView>, 'totalCount'>>
+
 export type GetProjectSavedViewGroupsBaseParams = {
   /**
    * Falsy means - anonymous user (so no onlyAuthored filtering)
@@ -261,6 +293,10 @@ export type CreateSavedViewGroup = (
 export type GetProjectSavedViewGroups = (
   params: GetProjectSavedViewGroupsPageParams
 ) => Promise<Collection<SavedViewGroup>>
+
+export type GetProjectSavedViews = (
+  params: GetProjectSavedViewsPageParams
+) => Promise<Collection<SavedView>>
 
 export type GetGroupSavedViews = (
   params: GetGroupSavedViewsPageParams

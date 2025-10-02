@@ -83,6 +83,33 @@ input SavedViewGroupViewsInput {
   cursor: String
 }
 
+input ProjectSavedViewsInput {
+  """
+  Viewer resource ID string that identifies which resources should be loaded. If not specified,
+  views from all resources in the project will be returned.
+  """
+  resourceIdString: String
+  """
+  Optionally filter by visibility.
+  """
+  onlyVisibility: SavedViewVisibility
+  """
+  Whether to only include views matching this search term
+  """
+  search: String
+  """
+  Optionally specify sort direction. Default: descending
+  """
+  sortDirection: SortDirection
+  """
+  Optionally specify sort by field. Default: position
+  Options: updatedAt, createdAt, name, position
+  """
+  sortBy: String
+  limit: Int
+  cursor: String
+}
+
 type SavedViewGroup {
   """
   This is always set even for fake/not persisted groups for Apollo caching
@@ -265,6 +292,7 @@ extend type ProjectMutations {
 }
 
 extend type Project {
+  savedViews(input: ProjectSavedViewsInput!): SavedViewCollection!
   savedViewGroups(input: SavedViewGroupsInput!): SavedViewGroupCollection!
   savedViewGroup(id: ID!): SavedViewGroup!
   ungroupedViewGroup(input: GetUngroupedViewGroupInput!): SavedViewGroup!

@@ -11,10 +11,10 @@ import {
 
 export const useAreSavedViewsEnabled = () => {
   const {
-    public: { FF_SAVED_VIEWS_ENABLED }
+    public: { FF_SAVED_VIEWS_ENABLED, FF_WORKSPACES_MODULE_ENABLED }
   } = useRuntimeConfig()
 
-  return FF_SAVED_VIEWS_ENABLED
+  return !!(FF_SAVED_VIEWS_ENABLED && FF_WORKSPACES_MODULE_ENABLED)
 }
 
 export const useViewerSavedViewsUtils = () => {

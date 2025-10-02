@@ -138,7 +138,8 @@ const MenuItems = StringEnum([
   'ChangeVisibility',
   'ReplaceView',
   'MoveToGroup',
-  'SetAsHomeView'
+  'SetAsHomeView',
+  'Embed'
 ])
 type MenuItems = StringEnumValues<typeof MenuItems>
 
@@ -265,6 +266,10 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
       title: isOnlyVisibleToMe.value ? 'Make view shared' : 'Make view private',
       disabled: !canToggleVisibility.value.authorized,
       disabledTooltip: canToggleVisibility.value.message
+    },
+    {
+      id: MenuItems.Embed,
+      title: 'Embed view'
     }
   ],
   [
@@ -359,6 +364,9 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
           isHomeView: !isHomeView.value
         }
       })
+      break
+    case MenuItems.Embed:
+      // TODO:
       break
     default:
       throwUncoveredError(item.id)

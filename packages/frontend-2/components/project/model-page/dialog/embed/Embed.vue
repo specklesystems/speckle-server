@@ -51,11 +51,20 @@
           <FormClipboardInput class="mb-4" :value="updatedUrl" />
           <LayoutDialogSection border-b border-t title="Options">
             <div class="flex flex-col gap-1.5 sm:gap-2 text-body-xs cursor-default">
+              <div v-if="areSavedViewsEnabled">
+                <label for="option-saved-view" :class="optionLabelClasses">
+                  <FormCheckbox
+                    id="option-saved-view"
+                    v-model="embedSavedView"
+                    name="Embed a saved view"
+                    hide-label
+                    class="cursor-pointer"
+                  />
+                  <span>Embed a saved view</span>
+                </label>
+              </div>
               <div v-for="option in embedDialogOptions" :key="option.id">
-                <label
-                  :for="`option-${option.id}`"
-                  class="flex items-center gap-1 cursor-pointer max-w-max"
-                >
+                <label :for="`option-${option.id}`" :class="optionLabelClasses">
                   <FormCheckbox
                     :id="`option-${option.id}`"
                     :model-value="option.value.value"
@@ -70,10 +79,7 @@
                 </label>
               </div>
               <div v-if="isWorkspacesEnabled">
-                <label
-                  :for="`option-hide-logo`"
-                  class="flex items-center gap-1 cursor-pointer max-w-max"
-                >
+                <label :for="`option-hide-logo`" :class="optionLabelClasses">
                   <FormCheckbox
                     id="option-hide-logo"
                     v-model="hideSpeckleBranding"
@@ -175,6 +181,7 @@ import {
   castToSupportedVisibility
 } from '~/lib/projects/helpers/visibility'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { useAreSavedViewsEnabled } from '~/lib/viewer/composables/savedViews/general'
 
 graphql(`
   fragment ProjectsModelPageEmbed_Project on Project {
@@ -217,6 +224,7 @@ const {
 } = useRuntimeConfig()
 const createEmbedToken = useCreateEmbedToken()
 
+const areSavedViewsEnabled = useAreSavedViewsEnabled()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
@@ -227,8 +235,12 @@ const disableModelLink = ref(false)
 const preventScrolling = ref(false)
 const manuallyLoadModel = ref(false)
 const hideSpeckleBranding = ref(false)
+const embedSavedView = ref(false)
 const embedToken = ref<string | null>(null)
 
+const optionLabelClasses = computed(
+  () => 'flex items-center gap-1 cursor-pointer max-w-max'
+)
 const isAdmin = computed(() => props.project.workspace?.role === Roles.Workspace.Admin)
 
 const routeModelId = computed(() => route.params.modelId as string)
