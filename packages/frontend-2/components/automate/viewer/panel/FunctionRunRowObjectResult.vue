@@ -165,6 +165,9 @@ const isolateOrUnisolateObjects = () => {
     logger.debug('[FunctionRunRowObjectResult] Setting metadataGradientIsSet to false')
     metadataGradientIsSet.value = false
 
+    // Clear isolated objects first to ensure watcher fires
+    filters.isolatedObjectIds.value = []
+
     if (!wasIsolated) {
       logger.debug(
         '[FunctionRunRowObjectResult] Objects were not isolated, calling isolateObjects with ids:',
