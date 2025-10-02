@@ -200,6 +200,12 @@ const config: CodegenConfig = {
             '@/modules/viewer/helpers/graphTypes#SavedViewPermissionChecksGraphQLReturn',
           SavedViewGroupPermissionChecks:
             '@/modules/viewer/helpers/graphTypes#SavedViewGroupPermissionChecksGraphQLReturn',
+          ProjectSavedViewsUpdatedMessage:
+            '@/modules/viewer/helpers/graphTypes#ProjectSavedViewsUpdatedMessageGraphQLReturn',
+          ProjectSavedViewGroupsUpdatedMessage:
+            '@/modules/viewer/helpers/graphTypes#ProjectSavedViewGroupsUpdatedMessageGraphQLReturn',
+          BeforeChangeSavedView:
+            '@/modules/viewer/helpers/graphTypes#BeforeChangeSavedViewGraphQLReturn',
           ExtendedViewerResources:
             '@/modules/viewer/helpers/graphTypes#ExtendedViewerResourcesGraphQLReturn',
           Dashboard: '@/modules/dashboards/helpers/graphTypes#DashboardGraphQLReturn',
