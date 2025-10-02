@@ -36,6 +36,7 @@
       <PresentationLeftSidebar
         v-if="isLeftSidebarOpen"
         class="absolute left-0 top-0 md:relative flex-shrink-0 z-30"
+        @close="isLeftSidebarOpen = false"
       />
 
       <div class="flex-1 z-0 flex flex-col lg:flex-row pb-[11rem] lg:pb-0">

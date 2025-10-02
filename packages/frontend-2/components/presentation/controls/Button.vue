@@ -1,5 +1,5 @@
 <template>
-  <div v-tippy="tooltip">
+  <div v-tippy="getTooltipProps(tooltip)">
     <button
       :disabled="disabled"
       class="bg-foundation size-8 rounded-md flex items-center justify-center hover:bg-primary-muted disabled:hover:bg-transparent text-foreground disabled:text-foreground-3"
@@ -19,4 +19,6 @@ defineProps<{
   disabled?: boolean
   tooltip?: string
 }>()
+
+const { getTooltipProps } = useSmartTooltipDelay()
 </script>

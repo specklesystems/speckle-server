@@ -67,6 +67,11 @@ useEventListener(
       event.preventDefault()
       event.stopPropagation()
       event.stopImmediatePropagation()
+
+      // Remove focus from any currently focused element to prevent blue outline
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur()
+      }
     }
     if (event.key === 'ArrowLeft') {
       if (disablePrevious.value) return
