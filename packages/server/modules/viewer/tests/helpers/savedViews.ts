@@ -10,6 +10,7 @@ import {
   getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   SavedViewVisibility,
   type SavedView
@@ -142,7 +143,8 @@ export const createTestSavedView = async (params?: {
       db
     }),
     rebalanceViewPositions: rebalancingViewPositionsFactory({ db }),
-    downscaleScreenshotForThumbnail: downscaleScreenshotForThumbnailFactory()
+    downscaleScreenshotForThumbnail: downscaleScreenshotForThumbnailFactory(),
+    emit: getEventBus().emit
   })
 
   const createdView = await createSavedView({
