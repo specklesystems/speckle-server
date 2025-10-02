@@ -1,8 +1,8 @@
 <template>
   <li class="w-full" :class="{ 'pb-0': hideTitle }">
     <button
-      class="bg-foundation-page rounded-md overflow-hidden border border-outline-3 transition-all duration-200 hover:!border-outline-4 w-full"
-      :class="[isCurrentSlide ? '!border-outline-5' : '']"
+      class="bg-foundation-page rounded-md overflow-hidden border border-outline-3 transition-all duration-200 hover:!border-outline-5 w-full"
+      :class="[isCurrentSlide ? '!border-outline-1' : '']"
       @click="onSelectSlide"
     >
       <img
@@ -12,7 +12,7 @@
       />
     </button>
 
-    <p v-if="!hideTitle" class="text-body-3xs font-medium text-foreground mt-1.5 mb-2">
+    <p v-if="!hideTitle" class="text-body-3xs font-medium text-foreground mb-2">
       <span class="font-semibold mr-1">{{ slideIndex }}.</span>
       {{ slide.name }}
     </p>
