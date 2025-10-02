@@ -15,7 +15,7 @@ import type { ActivityCollectionGraphQLReturn } from '@/modules/activitystream/h
 import type { ServerAppGraphQLReturn, ServerAppListItemGraphQLReturn } from '@/modules/auth/helpers/graphTypes';
 import type { GendoAIRenderGraphQLReturn } from '@/modules/gendo/helpers/types/graphTypes';
 import type { ServerRegionItemGraphQLReturn } from '@/modules/multiregion/helpers/graphTypes';
-import type { AccIntegrationGraphQLReturn, AccFolderGraphQLReturn, AccItemGraphQLReturn, AccSyncItemGraphQLReturn, AccSyncItemMutationsGraphQLReturn } from '@/modules/acc/helpers/graphTypes';
+import type { WorkspaceIntegrationsGraphQLReturn, AccIntegrationGraphQLReturn, AccFolderGraphQLReturn, AccItemGraphQLReturn, AccSyncItemGraphQLReturn, AccSyncItemMutationsGraphQLReturn } from '@/modules/acc/helpers/graphTypes';
 import type { SavedViewGraphQLReturn, SavedViewGroupGraphQLReturn, SavedViewPermissionChecksGraphQLReturn, SavedViewGroupPermissionChecksGraphQLReturn, ExtendedViewerResourcesGraphQLReturn } from '@/modules/viewer/helpers/graphTypes';
 import type { DashboardGraphQLReturn, DashboardMutationsGraphQLReturn, DashboardPermissionChecksGraphQLReturn, DashboardTokenGraphQLReturn } from '@/modules/dashboards/helpers/graphTypes';
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
@@ -6694,7 +6694,7 @@ export type ResolversTypes = {
   WorkspaceFeatureFlagName: WorkspaceFeatureFlagName;
   WorkspaceFeatureName: WorkspaceFeatureName;
   WorkspaceIdentifier: WorkspaceIdentifier;
-  WorkspaceIntegrations: ResolverTypeWrapper<Omit<WorkspaceIntegrations, 'acc'> & { acc?: Maybe<ResolversTypes['AccIntegration']> }>;
+  WorkspaceIntegrations: ResolverTypeWrapper<WorkspaceIntegrationsGraphQLReturn>;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
   WorkspaceInviteLookupOptions: WorkspaceInviteLookupOptions;
   WorkspaceInviteMutations: ResolverTypeWrapper<WorkspaceInviteMutationsGraphQLReturn>;
@@ -7079,7 +7079,7 @@ export type ResolversParentTypes = {
   WorkspaceDomainDeleteInput: WorkspaceDomainDeleteInput;
   WorkspaceEmbedOptions: WorkspaceEmbedOptions;
   WorkspaceIdentifier: WorkspaceIdentifier;
-  WorkspaceIntegrations: Omit<WorkspaceIntegrations, 'acc'> & { acc?: Maybe<ResolversParentTypes['AccIntegration']> };
+  WorkspaceIntegrations: WorkspaceIntegrationsGraphQLReturn;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
   WorkspaceInviteLookupOptions: WorkspaceInviteLookupOptions;
   WorkspaceInviteMutations: WorkspaceInviteMutationsGraphQLReturn;

@@ -1,5 +1,7 @@
 import type { AccSyncItem } from '@/modules/acc/domain/acc/types'
 
+export type WorkspaceIntegrationsGraphQLReturn = {}
+
 export type AccIntegrationGraphQLReturn = {}
 export type AccFolderGraphQLReturn = {
   id: string

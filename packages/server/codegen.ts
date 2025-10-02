@@ -186,6 +186,8 @@ const config: CodegenConfig = {
             '@/modules/core/helpers/graphTypes#RootPermissionChecksGraphQLReturn',
           WorkspacePermissionChecks:
             '@/modules/workspacesCore/helpers/graphTypes#WorkspacePermissionChecksGraphQLReturn',
+          WorkspaceIntegrations:
+            '@/modules/acc/helpers/graphTypes#WorkspaceIntegrationsGraphQLReturn',
           AccIntegration:
             '@/modules/acc/helpers/graphTypes#AccIntegrationGraphQLReturn',
           AccFolder: '@/modules/acc/helpers/graphTypes#AccFolderGraphQLReturn',
