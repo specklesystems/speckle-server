@@ -50,7 +50,7 @@ export type InjectablePresentationState = Readonly<{
     /**
      * Whether the current view has been changed from the saved view state
      */
-    hasViewChanged: ComputedRef<boolean>
+    hasViewChanged: Ref<boolean>
   }
 }>
 
@@ -138,7 +138,7 @@ const setupStateViewer = (initState: ResponseState & UiState): ViewerState => {
     viewer: {
       resourceIdString,
       resetView,
-      hasViewChanged: computed(() => hasViewChanged.value)
+      hasViewChanged
     }
   }
 }
