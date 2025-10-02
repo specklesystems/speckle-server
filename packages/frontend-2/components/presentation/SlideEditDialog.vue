@@ -12,6 +12,7 @@
           v-model="name"
           name="name"
           label="Name"
+          placeholder="Add a name..."
           color="foundation"
           :rules="[isRequired]"
         />
