@@ -2,7 +2,7 @@
   <li class="w-full" :class="{ 'pb-0': hideTitle }">
     <button
       class="bg-foundation-page rounded-md overflow-hidden border border-outline-3 transition-all duration-200 hover:!border-outline-4 w-full"
-      :class="[isCurrentSlide ? '!border-outline-5 hover:!border-outline-4' : '']"
+      :class="[isCurrentSlide ? '!border-outline-1 hover:!border-outline-4' : '']"
       @click="onSelectSlide"
     >
       <img
