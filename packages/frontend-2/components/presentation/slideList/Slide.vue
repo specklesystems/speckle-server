@@ -6,7 +6,7 @@
       @click="onSelectSlide"
     >
       <img
-        :src="slide.thumbnailUrl"
+        :src="thumbnailUrlWithToken"
         :alt="slide.name"
         class="w-full aspect-[3/2] md:aspect-video object-cover"
       />
@@ -23,6 +23,7 @@
 import { graphql } from '~~/lib/common/generated/gql'
 import type { PresentationSlideListSlide_SavedViewFragment } from '~~/lib/common/generated/gql/graphql'
 import { useInjectedPresentationState } from '~/lib/presentations/composables/setup'
+import { useAuthManager } from '~~/lib/auth/composables/auth'
 
 graphql(`
   fragment PresentationSlideListSlide_SavedView on SavedView {
@@ -42,8 +43,19 @@ const {
   ui: { slideIdx: currentSlideIdx, slide: currentSlide },
   viewer: { resetView }
 } = useInjectedPresentationState()
+const { presentationToken } = useAuthManager()
 
 const isCurrentSlide = computed(() => currentSlide.value?.id === props.slide.id)
+
+const thumbnailUrlWithToken = computed(() => {
+  if (!props.slide.thumbnailUrl) return props.slide.thumbnailUrl
+
+  const url = new URL(props.slide.thumbnailUrl)
+  if (presentationToken.value) {
+    url.searchParams.set('embedToken', presentationToken.value)
+  }
+  return url.toString()
+})
 
 const onSelectSlide = () => {
   const wasCurrentSlide = isCurrentSlide.value
