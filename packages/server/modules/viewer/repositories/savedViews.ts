@@ -69,6 +69,7 @@ export const SavedViews = buildTableHelper('saved_views', [
   'visibility',
   'viewerState',
   'screenshot',
+  'thumbnail',
   'position',
   'createdAt',
   'updatedAt'

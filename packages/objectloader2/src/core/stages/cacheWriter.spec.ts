@@ -42,7 +42,7 @@ describe('CacheWriter', () => {
       ttlms: 60000
     }
     memoryCache = new MemoryCache(memoryCacheOptions, logger)
-    defermentManager = new DefermentManager(memoryCache, logger)
+    defermentManager = new DefermentManager(logger, memoryCache)
     requestItemMock = vi.fn()
 
     options = {

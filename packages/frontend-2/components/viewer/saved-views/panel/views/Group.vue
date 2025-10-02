@@ -40,14 +40,19 @@
             @click="showMenu = !showMenu"
           />
         </LayoutMenu>
-        <div v-if="canPresent">
+        <div
+          v-if="canPresent && !isUngroupedGroup"
+          v-tippy="
+            viewCount === 0 ? 'Cannot present empty group' : getTooltipProps('Present')
+          "
+        >
           <FormButton
-            v-tippy="getTooltipProps('Present')"
             size="sm"
             color="subtle"
             :icon-left="Play"
             hide-text
             name="presentGroup"
+            :disabled="viewCount === 0"
             @click="onPresentGroup"
           />
         </div>
@@ -169,7 +174,8 @@ const { on, classes: dropZoneClasses } = useDraggableViewTargetGroup({
       open.value = true
     }
   },
-  enabled: computed(() => !open.value || !viewCount.value)
+  isGroupOpen: computed(() => !!open.value),
+  viewCount
 })
 
 const renameMode = defineModel<boolean>('renameMode')

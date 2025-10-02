@@ -10,6 +10,7 @@ import {
 import { projectPresentationPageQuery } from '~/lib/presentations/graphql/queries'
 import { useEventBus } from '~/lib/core/composables/eventBus'
 import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
+import { useProjectSavedViewsUpdateTracking } from '~/lib/viewer/composables/savedViews/subscriptions'
 
 type ResponseProject = Optional<Get<ProjectPresentationPageQuery, 'project'>>
 type ResponseWorkspace = Get<ProjectPresentationPageQuery, 'project.limitedWorkspace'>
@@ -47,6 +48,10 @@ export type InjectablePresentationState = Readonly<{
      * Reset the current view to the saved view state of the current slide
      */
     resetView: () => void
+    /**
+     * Whether the current view has been changed from the saved view state
+     */
+    hasViewChanged: Ref<boolean>
   }
 }>
 
@@ -96,6 +101,10 @@ const setupStateViewer = (initState: ResponseState & UiState): ViewerState => {
     ui: { slideIdx }
   } = initState
 
+  const { emit, on } = useEventBus()
+
+  const hasViewChanged = ref(false)
+
   const resourceIdString = computed(() => {
     const slides = presentation.value?.views.items || []
 
@@ -103,8 +112,6 @@ const setupStateViewer = (initState: ResponseState & UiState): ViewerState => {
       .addResources(slides.at(slideIdx.value)?.resourceIdString || '')
       .toString()
   })
-
-  const { emit } = useEventBus()
 
   const resetView = () => {
     const slides = presentation.value?.views.items || []
@@ -116,9 +123,25 @@ const setupStateViewer = (initState: ResponseState & UiState): ViewerState => {
       id: currentSlide.id,
       loadOriginal: false
     })
+
+    hasViewChanged.value = false
   }
 
-  return { viewer: { resourceIdString, resetView } }
+  on(ViewerEventBusKeys.UserChangedOpenedView, () => {
+    hasViewChanged.value = true
+  })
+
+  watch(slideIdx, () => {
+    hasViewChanged.value = false
+  })
+
+  return {
+    viewer: {
+      resourceIdString,
+      resetView,
+      hasViewChanged
+    }
+  }
 }
 
 const setupStateUi = (initState: ResponseState): UiState => {
@@ -155,6 +178,8 @@ export const useSetupPresentationState = (params: UseSetupPresentationParams) =>
     ...uiState,
     ...viewerState
   }
+
+  useProjectSavedViewsUpdateTracking({ projectId: initState.projectId })
 
   // We don't want the state to ever be proxified (e.g. when passed through props),
   // cause that will break composables (refs will be automatically unwrapped as if

@@ -365,11 +365,6 @@ input AutomateAuthCodeResources {
 }
 
 extend type Query {
-  automateFunctions(
-    filter: AutomateFunctionsFilter
-    cursor: String
-    limit: Int
-  ): AutomateFunctionCollection! @hasScope(scope: "automate-functions:read")
   """
   Get a single automate function by id. Error will be thrown if function is not found or inaccessible.
   """

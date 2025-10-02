@@ -51,6 +51,7 @@ import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { getThumbnailUrl } from '@/modules/viewer/helpers/savedViews'
 
 export default {
   User: {
@@ -199,7 +200,10 @@ export default {
           })
 
         if (homeView) {
-          return homeView.screenshot
+          return getThumbnailUrl({
+            projectId: parent.streamId,
+            viewId: homeView.id
+          })
         }
       }
 

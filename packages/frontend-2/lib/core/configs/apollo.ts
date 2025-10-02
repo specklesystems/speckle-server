@@ -101,10 +101,6 @@ function createCache(): InMemoryCache {
           },
           admin: {
             merge: mergeAsObjectsFunction
-          },
-          automateFunctions: {
-            keyArgs: ['filter', 'limit'],
-            merge: buildAbstractCollectionMergeFunction('AutomateFunctionCollection')
           }
         }
       },

@@ -65,6 +65,10 @@ import type {
   notificationsEventNamespace,
   NotificationsEventsPayloads
 } from '@/modules/notifications/domain/events'
+import type {
+  savedViewsEventNamespace,
+  SavedViewsEventsPayloads
+} from '@/modules/viewer/domain/events/savedViews'
 
 type AllEventsWildcard = '**'
 type EventWildcard = '*'
@@ -98,6 +102,7 @@ type EventsByNamespace = {
   [fileuploadEventNamespace]: FileuploadEventsPayloads
   [emailsEventNamespace]: EmailsEventsPayloads
   [notificationsEventNamespace]: NotificationsEventsPayloads
+  [savedViewsEventNamespace]: SavedViewsEventsPayloads
 }
 
 type EventTypes = UnionToIntersection<EventsByNamespace[keyof EventsByNamespace]>

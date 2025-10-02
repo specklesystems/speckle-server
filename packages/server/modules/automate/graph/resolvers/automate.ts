@@ -1229,9 +1229,6 @@ export default (FF_AUTOMATE_MODULE_ENABLED
         },
         automateFunction: () => {
           throw new AutomateApiDisabledError()
-        },
-        automateFunctions: () => {
-          throw new AutomateApiDisabledError()
         }
       },
       User: {

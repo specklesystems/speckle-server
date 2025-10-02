@@ -1,6 +1,6 @@
 <template>
   <div class="w-full sm:w-auto">
-    <div class="fixed inset-0 z-10 md:hidden">
+    <div class="fixed inset-0 z-10 lg:hidden">
       <div class="absolute inset-0 bg-black/20" />
     </div>
 

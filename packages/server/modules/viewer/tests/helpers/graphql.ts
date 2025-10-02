@@ -280,3 +280,44 @@ export const getModelHomeViewQuery = gql`
 
   ${basicSavedViewFragment}
 `
+
+export const onProjectSavedViewsUpdated = gql`
+  subscription onProjectSavedViewsUpdated($projectId: ID!) {
+    projectSavedViewsUpdated(projectId: $projectId) {
+      type
+      id
+      project {
+        id
+      }
+      savedView {
+        ...BasicSavedView
+      }
+      beforeChangeSavedView {
+        groupId
+        resourceIds
+      }
+    }
+  }
+
+  ${basicSavedViewFragment}
+`
+
+export const onProjectSavedViewGroupsUpdated = gql`
+  subscription onProjectSavedViewGroupsUpdated(
+    $projectId: ID!
+    $viewsInput: SavedViewGroupViewsInput! = { limit: 10 }
+  ) {
+    projectSavedViewGroupsUpdated(projectId: $projectId) {
+      type
+      id
+      project {
+        id
+      }
+      savedViewGroup {
+        ...BasicSavedViewGroup
+      }
+    }
+  }
+
+  ${basicSavedViewGroupFragment}
+`

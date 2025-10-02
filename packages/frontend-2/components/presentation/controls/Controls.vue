@@ -6,12 +6,19 @@
     <PresentationControlsButton
       :icon="LucideChevronLeft"
       :disabled="disablePrevious"
+      tooltip="Previous slide"
       @click="onPrevious"
     />
-    <PresentationControlsButton :icon="LucideRotateCcw" @click="resetView" />
+    <PresentationControlsButton
+      :icon="LucideRotateCcw"
+      :disabled="!hasViewChanged"
+      tooltip="Reset slide"
+      @click="resetView"
+    />
     <PresentationControlsButton
       :icon="LucideChevronRight"
       :disabled="disableNext"
+      tooltip="Next slide"
       @click="onNext"
     />
   </div>
@@ -29,7 +36,7 @@ defineProps<{
 
 const {
   ui: { slideIdx: currentVisibleIndex, slideCount },
-  viewer: { resetView }
+  viewer: { resetView, hasViewChanged }
 } = useInjectedPresentationState()
 
 const disablePrevious = computed(() => currentVisibleIndex.value === 0)
@@ -57,8 +64,9 @@ useEventListener(
     const targetKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']
 
     if (targetKeys.includes(event.key)) {
-      if (disablePrevious.value) return
-      onPrevious()
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation()
     }
     if (event.key === 'ArrowLeft') {
       if (disablePrevious.value) return
