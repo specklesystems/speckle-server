@@ -314,11 +314,11 @@ export const useDraggableViewTargetGroup = (params: {
     },
     dragleave: (event: DragEvent) => {
       // Check if we're actually leaving the group element entirely
-      const relatedTarget = event.relatedTarget as HTMLElement
+      const relatedTarget = event.relatedTarget as HTMLElement | null
       const currentTarget = event.currentTarget as HTMLElement
 
-      // If leaving to something outside this group, clear the drag over state
-      if (!currentTarget.contains(relatedTarget)) {
+      // If leaving to something outside this group (or leaving the window), clear the drag over state
+      if (!relatedTarget || !currentTarget.contains(relatedTarget)) {
         isDragOver.value = false
       }
     }
