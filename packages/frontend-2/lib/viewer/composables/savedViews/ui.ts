@@ -14,8 +14,9 @@ import { isUngroupedGroup } from '@speckle/shared/dist/esm/saved-views/index.js'
 const isDraggableView = (view: unknown): view is UseDraggableView_SavedViewFragment =>
   isObjectLike(view) && has(view, 'id') && has(view, 'permissions.canUpdate')
 
-// Shared state to track which view is currently being dragged
-const currentlyDraggingViewId = ref<string | null>(null)
+// Track dragged view ID to prevent drop indicator on itself during dragover
+// (getData() doesn't work during dragover, only during drop)
+const useDraggingViewId = () => useState<string | null>('dragging-view-id', () => null)
 
 graphql(`
   fragment UseDraggableView_SavedView on SavedView {
@@ -40,6 +41,7 @@ export const useDraggableView = (params: {
 }) => {
   const isDragging = ref(false)
   const isLoading = useMutationLoading()
+  const draggingViewId = useDraggingViewId()
 
   const classes = computed(() => {
     const classParts: string[] = ['draggable-view']
@@ -60,7 +62,7 @@ export const useDraggableView = (params: {
       }
 
       isDragging.value = true
-      currentlyDraggingViewId.value = params.view.value.id
+      draggingViewId.value = params.view.value.id
       event.dataTransfer.setData('application/json', JSON.stringify(params.view.value))
       event.dataTransfer.effectAllowed = 'move'
 
@@ -71,7 +73,7 @@ export const useDraggableView = (params: {
     },
     dragend: () => {
       isDragging.value = false
-      currentlyDraggingViewId.value = null
+      draggingViewId.value = null
     }
   }
 
@@ -101,6 +103,7 @@ export const useDraggableViewTargetView = (params: {
   const dropPosition = ref<'top' | 'bottom' | null>(null)
   const { triggerNotification } = useGlobalToast()
   const updateView = useUpdateSavedView()
+  const draggingViewId = useDraggingViewId()
 
   const vOn = {
     dragover: (event: DragEvent) => {
@@ -110,7 +113,7 @@ export const useDraggableViewTargetView = (params: {
       event.dataTransfer.dropEffect = 'move'
 
       // Don't show drop indicator if dragging over itself
-      if (currentlyDraggingViewId.value === params.view.value.id) {
+      if (draggingViewId.value === params.view.value.id) {
         dropPosition.value = null
         return
       }
