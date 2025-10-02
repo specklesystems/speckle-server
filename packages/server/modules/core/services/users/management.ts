@@ -46,7 +46,11 @@ import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { UserEvents } from '@/modules/core/domain/users/events'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-import type { GetUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/domain/operations'
+import type {
+  CountWorkspaceUsers,
+  GetUserWorkspaceSeatsFactory,
+  GetUserWorkspacesWithRole
+} from '@/modules/workspacesCore/domain/operations'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import type {
@@ -55,10 +59,6 @@ import type {
 } from '@/modules/core/domain/projects/operations'
 import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
 import { v4 } from 'uuid'
-import type {
-  CountWorkspaceUsers,
-  GetUserWorkspacesWithRole
-} from '@/modules/workspaces/domain/operations'
 import type { GetWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
 
 const { FF_NO_PERSONAL_EMAILS_ENABLED } = getFeatureFlags()

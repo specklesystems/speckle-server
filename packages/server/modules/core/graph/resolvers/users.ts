@@ -54,7 +54,11 @@ import {
 import { setUserOnboardingChoicesFactory } from '@/modules/core/services/users/tracking'
 import { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
-import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
+import {
+  countWorkspaceUsersFactory,
+  getUserWorkspaceSeatsFactory,
+  getUserWorkspacesWithRoleFactory
+} from '@/modules/workspacesCore/repositories/workspaces'
 import {
   deleteProjectAndCommitsFactory,
   queryAllProjectsFactory
@@ -63,10 +67,6 @@ import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
 import { deleteProjectFactory } from '@/modules/core/repositories/projects'
 import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
-import {
-  countWorkspaceUsersFactory,
-  getUserWorkspacesWithRoleFactory
-} from '@/modules/workspaces/repositories/workspaces'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })

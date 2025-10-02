@@ -44,7 +44,11 @@ import { dbLogger } from '@/observability/logging'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { expect } from 'chai'
-import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
+import {
+  countWorkspaceUsersFactory,
+  getUserWorkspaceSeatsFactory,
+  getUserWorkspacesWithRoleFactory
+} from '@/modules/workspacesCore/repositories/workspaces'
 import {
   deleteProjectAndCommitsFactory,
   queryAllProjectsFactory
@@ -56,10 +60,6 @@ import { deleteProjectFactory } from '@/modules/core/repositories/projects'
 import type { DeleteUser } from '@/modules/core/domain/users/operations'
 import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import { getAllRegisteredTestDbs } from '@/modules/multiregion/tests/helpers'
-import {
-  countWorkspaceUsersFactory,
-  getUserWorkspacesWithRoleFactory
-} from '@/modules/workspaces/repositories/workspaces'
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })

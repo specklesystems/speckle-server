@@ -102,7 +102,11 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getPaginatedBranchCommitsItemsByNameFactory } from '@/modules/core/services/commit/retrieval'
 import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branch/retrieval'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
-import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
+import {
+  countWorkspaceUsersFactory,
+  getUserWorkspaceSeatsFactory,
+  getUserWorkspacesWithRoleFactory
+} from '@/modules/workspacesCore/repositories/workspaces'
 import {
   deleteProjectAndCommitsFactory,
   queryAllProjectsFactory
@@ -117,10 +121,7 @@ import type {
 } from '@/modules/core/domain/users/operations'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { deleteProjectFactory } from '@/modules/core/repositories/projects'
-import {
-  countWorkspaceUsersFactory,
-  getUserWorkspacesWithRoleFactory
-} from '@/modules/workspaces/repositories/workspaces'
+
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 import { buildBasicTestUser, createTestUser } from '@/test/authHelper'
 import {

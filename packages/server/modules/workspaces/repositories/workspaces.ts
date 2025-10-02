@@ -44,12 +44,9 @@ import type {
   UpsertWorkspace,
   UpsertWorkspaceCreationState,
   UpsertWorkspaceRole,
-  BulkUpsertWorkspaces,
-  GetUserWorkspacesWithRole,
-  CountWorkspaceUsers
+  BulkUpsertWorkspaces
 } from '@/modules/workspaces/domain/operations'
 import type { Knex } from 'knex'
-import type { WorkspaceRoles } from '@speckle/shared'
 import { isNullOrUndefined, Roles } from '@speckle/shared'
 import type {
   ServerAclRecord,
@@ -926,38 +923,6 @@ export const getPaginatedWorkspaceProjectsFactory =
       ...items,
       totalCount
     }
-  }
-
-export const countWorkspaceUsersFactory =
-  ({ db }: { db: Knex }): CountWorkspaceUsers =>
-  async (args) => {
-    const query = tables
-      .workspaces(db)
-      .innerJoin(DbWorkspaceAcl.name, DbWorkspaceAcl.col.workspaceId, Workspaces.col.id)
-      .where(Workspaces.col.id, args.workspaceId)
-
-    if (args.filter?.workspaceRole) {
-      query.where(DbWorkspaceAcl.col.role, args.filter.workspaceRole)
-    }
-
-    const [res] = await query.count()
-    const count = parseInt(res.count.toString())
-    return count
-  }
-
-export const getUserWorkspacesWithRoleFactory =
-  ({ db }: { db: Knex }): GetUserWorkspacesWithRole =>
-  async (args) => {
-    const workspaces = tables
-      .workspacesAcl(db)
-      .innerJoin(Workspaces.name, Workspaces.col.id, DbWorkspaceAcl.col.workspaceId)
-      .where(DbWorkspaceAcl.col.userId, args.userId)
-      .select<Array<Workspace & { role: WorkspaceRoles }>>([
-        Workspaces.col,
-        DbWorkspaceAcl.col.role
-      ])
-
-    return await workspaces
   }
 
 export const getAllWorkspaceChecksumFactory =

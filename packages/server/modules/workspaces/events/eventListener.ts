@@ -8,7 +8,6 @@ import {
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import type {
-  CountWorkspaceUsers,
   CountWorkspaceRoleWithOptionalProjectRole,
   GetDefaultRegion,
   GetProjectWorkspace,
@@ -50,7 +49,6 @@ import type {
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import type { Knex } from 'knex'
 import {
-  countWorkspaceUsersFactory,
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceCollaboratorsFactory,
   getWorkspaceFactory,
@@ -157,6 +155,8 @@ import { deleteWorkspaceFactory as repoDeleteWorkspaceFactory } from '@/modules/
 import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
 import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
+import { countWorkspaceUsersFactory } from '@/modules/workspacesCore/repositories/workspaces'
+import type { CountWorkspaceUsers } from '@/modules/workspacesCore/domain/operations'
 
 const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
