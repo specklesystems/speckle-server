@@ -59,6 +59,7 @@ export const useManualFilteringPostSetup = () => {
     ui: { filters },
     viewer: { instance }
   } = useInjectedViewerState()
+  const logger = useLogger()
 
   const filteringExtension = () => instance.getExtension(FilteringExtension)
 
@@ -77,6 +78,11 @@ export const useManualFilteringPostSetup = () => {
     const highlightedObjects =
       highlightExtension?.getSelectedObjects().map((obj) => obj.id as string) || []
 
+    logger.debug('[FilterSetup] preserveSelectionHighlightFilter - saving state', {
+      selectedObjectsCount: selectedObjects.length,
+      highlightedObjectsCount: highlightedObjects.length
+    })
+
     // 2. CLEAR viewer extensions directly
     if (selectedObjects.length) selectionExtension.clearSelection()
     if (highlightedObjects.length && highlightExtension) {
@@ -84,11 +90,25 @@ export const useManualFilteringPostSetup = () => {
     }
 
     // 3. EXECUTE the filtering operation
+    logger.debug(
+      '[FilterSetup] preserveSelectionHighlightFilter - executing filter function'
+    )
     const result = filterFn()
+    logger.debug(
+      '[FilterSetup] preserveSelectionHighlightFilter - filter function completed'
+    )
 
     // 4. RESTORE to viewer extensions directly
-    if (selectedObjects.length) selectionExtension.selectObjects(selectedObjects)
+    if (selectedObjects.length) {
+      logger.debug(
+        '[FilterSetup] preserveSelectionHighlightFilter - restoring selection'
+      )
+      selectionExtension.selectObjects(selectedObjects)
+    }
     if (highlightedObjects.length && highlightExtension) {
+      logger.debug(
+        '[FilterSetup] preserveSelectionHighlightFilter - restoring highlights'
+      )
       highlightExtension.selectObjects(highlightedObjects)
     }
 
@@ -101,18 +121,39 @@ export const useManualFilteringPostSetup = () => {
   const { trigger: triggerIsolationWatch } = watchTriggerable(
     filters.isolatedObjectIds,
     (newIds, oldIds) => {
-      if (!newIds || !oldIds) return
+      logger.debug('[FilterSetup] isolatedObjectIds watcher triggered', {
+        newIdsLength: newIds?.length || 0,
+        oldIdsLength: oldIds?.length || 0,
+        newIds: newIds?.slice(0, 3),
+        oldIds: oldIds?.slice(0, 3)
+      })
+
+      if (!newIds || !oldIds) {
+        logger.debug('[FilterSetup] Early return - missing newIds or oldIds')
+        return
+      }
 
       preserveSelectionHighlightFilter(() => {
         const extension = filteringExtension()
+        logger.debug('[FilterSetup] Got filtering extension:', !!extension)
 
         const toIsolate = newIds.filter((id) => !oldIds.includes(id))
         if (toIsolate.length > 0) {
+          logger.debug(
+            '[FilterSetup] Calling extension.isolateObjects with',
+            toIsolate.length,
+            'objects'
+          )
           extension.isolateObjects(toIsolate, 'manual-isolation', true, true)
         }
 
         const toUnIsolate = oldIds.filter((id) => !newIds.includes(id))
         if (toUnIsolate.length > 0) {
+          logger.debug(
+            '[FilterSetup] Calling extension.unIsolateObjects with',
+            toUnIsolate.length,
+            'objects'
+          )
           extension.unIsolateObjects(toUnIsolate, 'manual-isolation', true, true)
         }
       })
