@@ -305,6 +305,7 @@ export const useUpdateSavedView = () => {
 
           const newGroup = update.group
           const groupChanged = oldGroup.id !== newGroup.id
+
           if (groupChanged) {
             // Clean up old group
             // onGroupViewRemovalCacheUpdates({
