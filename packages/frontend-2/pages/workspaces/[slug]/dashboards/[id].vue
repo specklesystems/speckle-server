@@ -27,6 +27,9 @@
     </Portal>
     <Portal to="primary-actions">
       <div class="flex items-center gap-2">
+        <FormButton v-if="canEdit" size="sm" @click="editMode = !editMode">
+          {{ editModeButtonText }}
+        </FormButton>
         <DashboardsShare
           v-if="canRead && !hasDashboardToken"
           :id="dashboard?.id"
@@ -46,6 +49,7 @@
     </Portal>
     <div class="w-screen h-[calc(100vh-3rem)]">
       <iframe
+        :key="`dashboard-${id}-${editMode ? 'edit' : 'view'}`"
         :src="dashboardUrl"
         class="w-full h-full border-0"
         frameborder="0"
@@ -111,6 +115,11 @@ const {
 const { isLoggedIn } = useActiveUser()
 
 const editDialogOpen = ref(false)
+const editMode = ref(false)
+
+const editModeButtonText = computed(() => {
+  return editMode.value ? 'View' : 'Edit'
+})
 
 const hasDashboardToken = computed(() => !!dashboardToken.value)
 const canEdit = computed(
@@ -123,7 +132,9 @@ const workspace = computed(() => result.value?.dashboard?.workspace)
 const dashboard = computed(() => result.value?.dashboard)
 const dashboardUrl = computed(
   () =>
-    `${dashboardsOrigin}/${dashboardToken.value ? 'view' : 'dashboards'}/${id}?token=${
+    `${dashboardsOrigin}/${
+      dashboardToken.value ? 'view' : editMode.value ? 'dashboards' : 'view'
+    }/${id}?token=${
       dashboardToken.value || effectiveAuthToken.value
     }&isEmbed=true&theme=${isDarkTheme.value ? 'dark' : 'light'}`
 )
