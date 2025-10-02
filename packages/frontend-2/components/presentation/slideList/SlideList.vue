@@ -1,5 +1,5 @@
 <template>
-  <ul ref="slideListRef" class="flex flex-col gap-3 w-full">
+  <ul ref="slideListRef" class="flex flex-col gap-1 w-full">
     <PresentationSlideListSlide
       v-for="(slide, index) in visibleSlides"
       :key="slide.id"
