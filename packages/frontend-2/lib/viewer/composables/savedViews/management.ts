@@ -14,18 +14,6 @@ import type {
 } from '~/lib/common/generated/gql/graphql'
 import { useStateSerialization } from '~/lib/viewer/composables/serialization'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
-import {
-  filterKeys,
-  onGroupViewRemovalCacheUpdates,
-  onNewGroupViewCacheUpdates
-} from '~/lib/viewer/helpers/savedViews/cache'
-import { isUngroupedGroup } from '@speckle/shared/saved-views'
-import {
-  getCachedObjectKeys,
-  iterateObjectField,
-  parseObjectReference,
-  type CacheObjectReference
-} from '~/lib/common/helpers/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
 const createSavedViewMutation = graphql(`
@@ -306,7 +294,7 @@ export const useUpdateSavedView = () => {
   ) => {
     if (!isLoggedIn.value) return
     const { input } = params
-    const oldGroup = params.view.group
+    const oldGroupId = params.view.group
 
     const result = await mutate(
       { input },
