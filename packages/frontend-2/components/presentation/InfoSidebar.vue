@@ -92,7 +92,10 @@ graphql(`
     name
     description
     permissions {
-      canUpdate {
+      canEditTitle {
+        ...FullPermissionCheckResult
+      }
+      canEditDescription {
         ...FullPermissionCheckResult
       }
     }
@@ -109,6 +112,9 @@ const descriptionRef = ref<HTMLElement>()
 const isExpanded = ref(false)
 
 const canUpdateSlide = computed(() => {
-  return currentSlide.value?.permissions?.canUpdate.authorized
+  return (
+    currentSlide.value?.permissions?.canEditTitle.authorized ||
+    currentSlide.value?.permissions?.canEditDescription.authorized
+  )
 })
 </script>
