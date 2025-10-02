@@ -235,9 +235,11 @@ graphql(`
 export const useDraggableViewTargetGroup = (params: {
   group: Ref<UseDraggableViewTargetGroup_SavedViewGroupFragment>
   onMoved?: () => void
+  enabled?: Ref<boolean>
   isGroupOpen?: Ref<boolean>
   viewCount?: Ref<number>
 }) => {
+  const enabled = computed(() => unref(params.enabled) ?? true)
   const isDragOver = ref(false)
   const { triggerNotification } = useGlobalToast()
   const updateView = useUpdateSavedView()
@@ -246,7 +248,7 @@ export const useDraggableViewTargetGroup = (params: {
 
   const vOn = {
     dragover: (event: DragEvent) => {
-      if (!event.dataTransfer) return
+      if (!event.dataTransfer || !enabled.value) return
 
       event.preventDefault()
       event.dataTransfer.dropEffect = 'move'
@@ -268,7 +270,7 @@ export const useDraggableViewTargetGroup = (params: {
       }
     },
     drop: async (event: DragEvent) => {
-      if (!event.dataTransfer) return
+      if (!event.dataTransfer || !enabled.value) return
 
       event.preventDefault()
       isDragOver.value = false
