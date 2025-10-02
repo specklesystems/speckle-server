@@ -99,7 +99,9 @@ const {
   response: { presentation, workspace }
 } = useInjectedPresentationState()
 const mixpanel = useMixpanel()
-const isMobile = useBreakpoints(TailwindBreakpoints).smaller('sm')
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('sm')
+const isXlOrLarger = breakpoints.greaterOrEqual('xl')
 const { $intercom } = useNuxtApp()
 
 const isInfoSidebarOpen = ref(false)
@@ -121,7 +123,7 @@ const onLoadingChange = (loading: boolean) => {
   if (!loading) {
     hideUi.value = false
 
-    isLeftSidebarOpen.value = false
+    isLeftSidebarOpen.value = isXlOrLarger.value
     isInfoSidebarOpen.value = !isMobile.value
   }
 }

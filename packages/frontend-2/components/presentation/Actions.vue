@@ -6,6 +6,7 @@
       <FormButton v-if="isLoggedIn" @click="showShareDialog = true">Share</FormButton>
 
       <PresentationFloatingPanelButton
+        v-tippy="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
         class="hidden md:flex touch:hidden"
         @click="toggleFullscreen"
       >
@@ -24,6 +25,7 @@
       </PresentationFloatingPanelButton>
 
       <PresentationFloatingPanelButton
+        v-tippy="isSidebarOpen ? 'Hide slide info' : 'Show slide info'"
         :is-active="isSidebarOpen"
         @click="emit('toggleSidebar')"
       >

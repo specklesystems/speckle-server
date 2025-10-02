@@ -2,6 +2,7 @@
   <PresentationFloatingPanel>
     <div class="flex items-center justify-between space-x-2">
       <PresentationFloatingPanelButton
+        v-tippy="isSidebarOpen ? 'Hide slides list' : 'Show slides list'"
         :active="isSidebarOpen"
         @click="emit('toggleSidebar')"
       >
