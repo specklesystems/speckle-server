@@ -142,7 +142,8 @@ export const useDraggableViewTargetView = (params: {
 
         // See whether view was dropped closer to top or bottom to figure out
         // whether to put it before or after the target view
-        const targetRect = (event.target as HTMLElement).getBoundingClientRect()
+        // Use currentTarget to match the dragover calculation
+        const targetRect = (event.currentTarget as HTMLElement).getBoundingClientRect()
         const dropYPosition = event.clientY - targetRect.top
         const dropInTopHalf = dropYPosition < targetRect.height / 2
 
