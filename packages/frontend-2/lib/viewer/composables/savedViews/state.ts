@@ -80,15 +80,13 @@ export const useViewerSavedViewIntegration = () => {
   }
 
   const reset = async () => {
-    // In presentation mode, we don't reset the saved view ID since we always have a view active
-    if (pageType.value !== ViewerRenderPageType.Presentation) {
-      savedViewId.value = null
-      loadOriginal.value = false
-      await resetUrlHashState()
-    }
+    // No such thing as a reset in presentation mode - we always have a view active
+    if (pageType.value === ViewerRenderPageType.Presentation) return
 
-    // Always reset the saved view state ID when user changes the view
+    savedViewId.value = null
+    loadOriginal.value = false
     savedViewStateId.value = undefined
+    await resetUrlHashState()
   }
 
   // Allow force update
