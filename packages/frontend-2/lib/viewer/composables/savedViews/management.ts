@@ -294,7 +294,7 @@ export const useUpdateSavedView = () => {
   ) => {
     if (!isLoggedIn.value) return
     const { input } = params
-    const oldGroupId = params.view.group
+    const oldGroup = params.view.group
 
     const result = await mutate(
       { input },
@@ -303,8 +303,8 @@ export const useUpdateSavedView = () => {
           const update = res.data?.projectMutations.savedViewMutations.updateView
           if (!update) return
 
-          const newGroupId = update.group.id
-          const groupChanged = oldGroupId !== newGroupId
+          const newGroup = update.group
+          const groupChanged = oldGroup.id !== newGroup.id
 
           if (groupChanged) {
             // Clean up old group
