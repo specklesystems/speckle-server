@@ -28,7 +28,6 @@ jobs:
     uses: ./.github/workflows/tests.yml
     with:
       CONTINUE_ON_ERROR: ${{ startsWith(github.ref, 'refs/heads/testing') }} # allows releasing on testing even if test fail
-      DISABLE_SKIPPING: ${{ startsWith(github.ref, 'refs/heads/main') }} # disable test skip on main
     secrets: inherit
 
   builds:
