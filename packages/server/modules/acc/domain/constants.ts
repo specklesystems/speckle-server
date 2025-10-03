@@ -4,7 +4,7 @@ export const ImporterAutomateFunctions = {
     functionReleaseId: '470ec84b63'
   },
   rvt: {
-    functionId: '0659f470f5',
-    functionReleaseId: 'a3c288a1b8'
+    functionId: '0725cb0ac6',
+    functionReleaseId: 'b5c16a1606'
   }
 }
