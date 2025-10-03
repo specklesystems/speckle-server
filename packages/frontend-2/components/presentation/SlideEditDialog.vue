@@ -109,6 +109,7 @@ watch(
   () => {
     name.value = props.slide?.name || ''
     description.value = props.slide?.description || ''
-  }
+  },
+  { immediate: true }
 )
 </script>
