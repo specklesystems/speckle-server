@@ -85,6 +85,23 @@ jobs:
         with:
           node-version: 22
           cache: yarn
+      - name: Cache Yarn dependencies
+        uses: useblacksmith/stickydisk@v1
+        with:
+          path: |
+            ./node_modules
+            ./packages/fileimport-service/node_modules
+            ./packages/frontend-2/node_modules
+            ./packages/monitor-deployment/node_modules
+            ./packages/objectsender/node_modules
+            ./packages/preview-frontend/node_modules
+            ./packages/preview-service/node_modules
+            ./packages/server/node_modules
+            ./packages/shared/node_modules
+            ./packages/ui-components/node_modules
+            ./packages/viewer/node_modules
+            ./packages/viewer-sandbox/node_modules
+          key: ${{ github.repository }}-yarn-${{ hashFiles('yarn.lock') }}
       - name: Install hardened (no HARD flag)
         run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
@@ -121,7 +138,7 @@ jobs:
     name: Frontend
     runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: changes
-    if: ${{ needs.changes.outputs.frontend-2 == 'true' || inputs.DISABLE_SKIPPING }}
+    # if: ${{ needs.changes.outputs.frontend-2 == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -129,6 +146,23 @@ jobs:
         with:
           node-version: 22
           cache: yarn
+      - name: Cache Yarn dependencies
+        uses: useblacksmith/stickydisk@v1
+        with:
+          path: |
+            ./node_modules
+            ./packages/fileimport-service/node_modules
+            ./packages/frontend-2/node_modules
+            ./packages/monitor-deployment/node_modules
+            ./packages/objectsender/node_modules
+            ./packages/preview-frontend/node_modules
+            ./packages/preview-service/node_modules
+            ./packages/server/node_modules
+            ./packages/shared/node_modules
+            ./packages/ui-components/node_modules
+            ./packages/viewer/node_modules
+            ./packages/viewer-sandbox/node_modules
+          key: ${{ github.repository }}-yarn-${{ hashFiles('yarn.lock') }}
       - name: Install dependencies
         run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
@@ -141,7 +175,7 @@ jobs:
     name: Viewer
     runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: changes
-    if: ${{ needs.changes.outputs.viewer == 'true' || inputs.DISABLE_SKIPPING }}
+    #if: ${{ needs.changes.outputs.viewer == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -149,6 +183,23 @@ jobs:
         with:
           node-version: 22
           cache: yarn
+      - name: Cache Yarn dependencies
+        uses: useblacksmith/stickydisk@v1
+        with:
+          path: |
+            ./node_modules
+            ./packages/fileimport-service/node_modules
+            ./packages/frontend-2/node_modules
+            ./packages/monitor-deployment/node_modules
+            ./packages/objectsender/node_modules
+            ./packages/preview-frontend/node_modules
+            ./packages/preview-service/node_modules
+            ./packages/server/node_modules
+            ./packages/shared/node_modules
+            ./packages/ui-components/node_modules
+            ./packages/viewer/node_modules
+            ./packages/viewer-sandbox/node_modules
+          key: ${{ github.repository }}-yarn-${{ hashFiles('yarn.lock') }}
       - name: Install dependencies
         run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
@@ -170,7 +221,7 @@ jobs:
     name: Shared
     runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: changes
-    if: ${{ needs.changes.outputs.shared == 'true' || inputs.DISABLE_SKIPPING }}
+    # if: ${{ needs.changes.outputs.shared == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -180,6 +231,23 @@ jobs:
           cache: yarn
       - name: Install dependencies
         run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
+      - name: Cache Yarn dependencies
+        uses: useblacksmith/stickydisk@v1
+        with:
+          path: |
+            ./node_modules
+            ./packages/fileimport-service/node_modules
+            ./packages/frontend-2/node_modules
+            ./packages/monitor-deployment/node_modules
+            ./packages/objectsender/node_modules
+            ./packages/preview-frontend/node_modules
+            ./packages/preview-service/node_modules
+            ./packages/server/node_modules
+            ./packages/shared/node_modules
+            ./packages/ui-components/node_modules
+            ./packages/viewer/node_modules
+            ./packages/viewer-sandbox/node_modules
+          key: ${{ github.repository }}-yarn-${{ hashFiles('yarn.lock') }}
       - name: Lint
         run: yarn lint:ci
         working-directory: 'packages/shared'
@@ -209,7 +277,7 @@ jobs:
     name: Object Sender
     runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: changes
-    if: ${{ needs.changes.outputs.objectsender == 'true' || inputs.DISABLE_SKIPPING }}
+    # if: ${{ needs.changes.outputs.objectsender == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -217,6 +285,23 @@ jobs:
         with:
           node-version: 22
           cache: yarn
+      - name: Cache Yarn dependencies
+        uses: useblacksmith/stickydisk@v1
+        with:
+          path: |
+            ./node_modules
+            ./packages/fileimport-service/node_modules
+            ./packages/frontend-2/node_modules
+            ./packages/monitor-deployment/node_modules
+            ./packages/objectsender/node_modules
+            ./packages/preview-frontend/node_modules
+            ./packages/preview-service/node_modules
+            ./packages/server/node_modules
+            ./packages/shared/node_modules
+            ./packages/ui-components/node_modules
+            ./packages/viewer/node_modules
+            ./packages/viewer-sandbox/node_modules
+          key: ${{ github.repository }}-yarn-${{ hashFiles('yarn.lock') }}
       - name: Install dependencies
         run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
@@ -264,7 +349,7 @@ jobs:
     name: Preview service
     runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: changes
-    if: ${{ needs.changes.outputs.preview-service == 'true' || inputs.DISABLE_SKIPPING }}
+    # if: ${{ needs.changes.outputs.preview-service == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     container:
       image: ghcr.io/specklesystems/speckle-ubuntu-chromium:latest
@@ -288,6 +373,23 @@ jobs:
           cache: yarn
       - name: Install dependencies
         run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0 yarn --immutable
+      - name: Cache Yarn dependencies
+        uses: useblacksmith/stickydisk@v1
+        with:
+          path: |
+            ./node_modules
+            ./packages/fileimport-service/node_modules
+            ./packages/frontend-2/node_modules
+            ./packages/monitor-deployment/node_modules
+            ./packages/objectsender/node_modules
+            ./packages/preview-frontend/node_modules
+            ./packages/preview-service/node_modules
+            ./packages/server/node_modules
+            ./packages/shared/node_modules
+            ./packages/ui-components/node_modules
+            ./packages/viewer/node_modules
+            ./packages/viewer-sandbox/node_modules
+          key: ${{ github.repository }}-yarn-${{ hashFiles('yarn.lock') }}
       - name: Build public packages
         run: yarn build:public
       - run: dbus-daemon --system &> /dev/null
@@ -315,7 +417,7 @@ jobs:
     name: Server
     runs-on: blacksmith-8vcpu-ubuntu-2404
     needs: changes
-    if: ${{ needs.changes.outputs.server == 'true' || inputs.DISABLE_SKIPPING }}
+    # if: ${{ needs.changes.outputs.server == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
       redis:
@@ -379,6 +481,23 @@ jobs:
         with:
           node-version: 22
           cache: yarn
+      - name: Cache Yarn dependencies
+        uses: useblacksmith/stickydisk@v1
+        with:
+          path: |
+            ./node_modules
+            ./packages/fileimport-service/node_modules
+            ./packages/frontend-2/node_modules
+            ./packages/monitor-deployment/node_modules
+            ./packages/objectsender/node_modules
+            ./packages/preview-frontend/node_modules
+            ./packages/preview-service/node_modules
+            ./packages/server/node_modules
+            ./packages/shared/node_modules
+            ./packages/ui-components/node_modules
+            ./packages/viewer/node_modules
+            ./packages/viewer-sandbox/node_modules
+          key: ${{ github.repository }}-yarn-${{ hashFiles('yarn.lock') }}
       - name: Install dependencies
         run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
@@ -498,7 +617,7 @@ jobs:
   test-server-multiregion:
     name: Server multiregion
     needs: changes
-    if: ${{ needs.changes.outputs.server == 'true' || inputs.DISABLE_SKIPPING }}
+    # if: ${{ needs.changes.outputs.server == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     services:
@@ -622,6 +741,23 @@ jobs:
         with:
           node-version: 22
           cache: yarn
+      - name: Cache Yarn dependencies
+        uses: useblacksmith/stickydisk@v1
+        with:
+          path: |
+            ./node_modules
+            ./packages/fileimport-service/node_modules
+            ./packages/frontend-2/node_modules
+            ./packages/monitor-deployment/node_modules
+            ./packages/objectsender/node_modules
+            ./packages/preview-frontend/node_modules
+            ./packages/preview-service/node_modules
+            ./packages/server/node_modules
+            ./packages/shared/node_modules
+            ./packages/ui-components/node_modules
+            ./packages/viewer/node_modules
+            ./packages/viewer-sandbox/node_modules
+          key: ${{ github.repository }}-yarn-${{ hashFiles('yarn.lock') }}
       - name: Install dependencies
         run: YARN_ENABLE_HARDENED_MODE=0 PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Build public packages
