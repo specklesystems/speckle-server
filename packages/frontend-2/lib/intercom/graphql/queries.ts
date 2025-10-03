@@ -8,6 +8,65 @@ export const intercomActiveWorkspaceQuery = graphql(`
         name
         status
       }
+      planPrices {
+        team {
+          monthly {
+            amount
+            currency
+            currencySymbol
+          }
+          yearly {
+            amount
+            currency
+            currencySymbol
+          }
+        }
+        teamUnlimited {
+          monthly {
+            amount
+            currency
+            currencySymbol
+          }
+          yearly {
+            amount
+            currency
+            currencySymbol
+          }
+        }
+        pro {
+          monthly {
+            amount
+            currency
+            currencySymbol
+          }
+          yearly {
+            amount
+            currency
+            currencySymbol
+          }
+        }
+        proUnlimited {
+          monthly {
+            amount
+            currency
+            currencySymbol
+          }
+          yearly {
+            amount
+            currency
+            currencySymbol
+          }
+        }
+      }
+      subscription {
+        billingInterval
+      }
+      seats {
+        editors {
+          assigned
+          available
+        }
+      }
     }
   }
 `)
