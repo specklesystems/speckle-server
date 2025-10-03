@@ -31,17 +31,21 @@ async def get_next_job(connection: Connection) -> FileimportJob | None:
                 "updatedAt" = NOW()
             WHERE id = (
                 SELECT id FROM background_jobs
-                WHERE ( -- job in a QUEUED state which has not yet exceeded maximum attempts and has a positive remaining compute budget
+                WHERE ( -- job in a QUEUED state which has not yet
+                        -- exceeded maximum attempts
+                        -- and has a positive remaining compute budget
                     payload ->> 'fileType' = 'ifc'
                     AND status = $2
                     AND "attempt" < "maxAttempt"
                     AND "remainingComputeBudgetSeconds"::int > 0
                 )
-                OR ( -- any job left in a PROCESSING state for more than its timeout period
+                OR ( -- any job left in a PROCESSING state
+                     -- for more than its timeout period
                     payload ->> 'fileType' = 'ifc'
                     AND status = $1
                     AND "attempt" <= "maxAttempt"
-                    AND "updatedAt" < NOW() - (payload ->> 'timeOutSeconds')::int * interval '1 second'
+                    AND "updatedAt" < NOW() - (payload ->> 'timeOutSeconds')::int
+                        * interval '1 second'
                 )
                 ORDER BY "createdAt"
                 FOR UPDATE SKIP LOCKED
@@ -96,7 +100,8 @@ async def deduct_from_compute_budget(
     used_compute_time_seconds: int,
 ) -> None:
     logger.info(
-        "updating job: {job_id}'s remaining compute budget by deducting {used_compute_time_seconds} seconds",
+        "updating job: {job_id}'s remaining compute budget by deducting"
+        + " {used_compute_time_seconds} seconds",
         job_id=job_id,
         used_compute_time_seconds=used_compute_time_seconds,
     )
