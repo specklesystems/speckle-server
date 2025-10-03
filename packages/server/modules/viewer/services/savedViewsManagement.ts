@@ -43,7 +43,11 @@ import type {
   ResourceBuilder,
   ViewerResourcesTarget
 } from '@speckle/shared/viewer/route'
-import { isModelResource, resourceBuilder } from '@speckle/shared/viewer/route'
+import {
+  isModelResource,
+  isObjectResource,
+  resourceBuilder
+} from '@speckle/shared/viewer/route'
 import type { VersionedSerializedViewerState } from '@speckle/shared/viewer/state'
 import { inputToVersionedState } from '@speckle/shared/viewer/state'
 import { isValidBase64Image } from '@speckle/shared/images/base64'
@@ -78,9 +82,9 @@ const formatIncomingScreenshotFactory =
   }
 
 /**
- * Validates an incoming resourceIdString against the resources in the project and returns the validated list (as a builder)
+ * Validates & formats an incoming resourceIdString against the resources in the project and returns the final list (as a builder)
  */
-const validateProjectResourceIdStringFactory =
+const validateAndFormatProjectResourceIdStringFactory =
   (deps: { getViewerResourceGroups: GetViewerResourceGroups }) =>
   async (params: {
     resourceIdString: ViewerResourcesTarget
@@ -89,9 +93,8 @@ const validateProjectResourceIdStringFactory =
   }) => {
     const { resourceIdString, errorMetadata, projectId } = params
 
-    // Validate resourceIdString - it should only point to valid resources belonging to the project
-    const resourceIds = resourceBuilder().addResources(resourceIdString)
-    if (!resourceIds.length) {
+    const inputResourceIds = resourceBuilder().addResources(resourceIdString)
+    if (!inputResourceIds.length) {
       throw new SavedViewInvalidResourceTargetError(
         "No valid resources referenced in 'resourceIdString'",
         {
@@ -100,34 +103,64 @@ const validateProjectResourceIdStringFactory =
       )
     }
 
+    // It could be a `$prefix` string, in which case we need to resolve the final resources there
     const { groups: resourceGroups } = await deps.getViewerResourceGroups({
       projectId,
       loadedVersionsOnly: true,
-      resourceIdString: resourceIds.toString(),
+      resourceIdString: inputResourceIds.toString(),
       allowEmptyModels: true
     })
 
+    const finalResourceIds = resourceBuilder()
+    for (const resourceGroup of resourceGroups) {
+      for (const resourceItem of resourceGroup.items) {
+        if (resourceItem.modelId) {
+          finalResourceIds.addModel(
+            resourceItem.modelId,
+            resourceItem.versionId || undefined
+          )
+        } else {
+          finalResourceIds.addObject(resourceItem.objectId)
+        }
+      }
+    }
+
     // Check if any of the resources could not be found
-    const failingResources = resourceIds.clone().filter((rId) => {
-      const resourceGroup = resourceGroups.find(
-        (rg) => rg.identifier === rId.toString()
-      )
-      if (!resourceGroup) return true
-      return false
-    })
-    if (failingResources.length) {
+    let hasMissingResource = false
+    for (const resourceId of inputResourceIds) {
+      // Only check actual model/object resources
+      if (isModelResource(resourceId) || isObjectResource(resourceId)) {
+        const matchingResource = finalResourceIds.toResources().find((r) => {
+          // only compare modelId, if original didnt have version id set
+          if (isModelResource(resourceId) && isModelResource(r)) {
+            if (!resourceId.versionId) {
+              return `${r.modelId}` === `${resourceId.modelId}`
+            }
+          }
+
+          return `${r}` === `${resourceId}`
+        })
+
+        if (!matchingResource) {
+          hasMissingResource = true
+        }
+      }
+    }
+
+    if (hasMissingResource) {
       throw new SavedViewInvalidResourceTargetError(
         'One or more resources could not be found in the project: {resourceIdString}',
         {
           info: {
             ...errorMetadata,
-            resourceIdString: failingResources.toString()
+            resourceIdString,
+            finalResourceIds: finalResourceIds.toString()
           }
         }
       )
     }
 
-    return resourceIds
+    return finalResourceIds
   }
 
 const validateViewerStateFactory =
@@ -265,7 +298,7 @@ export const createSavedViewFactory =
     const isHomeView = input.isHomeView || false
 
     // Validate resourceIdString - it should only point to valid resources belonging to the project
-    const resourceIds = await validateProjectResourceIdStringFactory(deps)({
+    const resourceIds = await validateAndFormatProjectResourceIdStringFactory(deps)({
       resourceIdString,
       projectId,
       errorMetadata: {
@@ -440,14 +473,16 @@ export const createSavedViewGroupFactory =
     }
 
     // Validate resourceIdString - it should only point to valid resources belonging to the project
-    const resourceIds = await validateProjectResourceIdStringFactory(deps)({
-      resourceIdString: formatResourceIdsForGroup(resourceIdString),
-      projectId,
-      errorMetadata: {
-        input,
-        authorId
-      }
-    })
+    const resourceIds = formatResourceIdsForGroup(
+      await validateAndFormatProjectResourceIdStringFactory(deps)({
+        resourceIdString,
+        projectId,
+        errorMetadata: {
+          input,
+          authorId
+        }
+      })
+    )
 
     // Insert
     const group = await deps.storeSavedViewGroup({
@@ -571,7 +606,7 @@ export const updateSavedViewFactory =
       rebalanceViewPositions: RebalanceViewPositions
       downscaleScreenshotForThumbnail: DownscaleScreenshotForThumbnail
       emit: EventBusEmit
-    } & DependenciesOf<typeof validateProjectResourceIdStringFactory>
+    } & DependenciesOf<typeof validateAndFormatProjectResourceIdStringFactory>
   ): UpdateSavedView =>
   async (params) => {
     const { input, userId } = params
@@ -624,7 +659,7 @@ export const updateSavedViewFactory =
     // Validate updated resourceIds
     let resourceIds: ResourceBuilder | undefined = undefined
     if ('resourceIdString' in changes && changes.resourceIdString) {
-      const validate = validateProjectResourceIdStringFactory(deps)
+      const validate = validateAndFormatProjectResourceIdStringFactory(deps)
       resourceIds = await validate({
         resourceIdString: changes.resourceIdString,
         projectId: input.projectId,
