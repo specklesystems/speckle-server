@@ -20,7 +20,7 @@ export function usePasswordReset() {
       triggerNotification({
         type: ToastNotificationType.Info,
         title: 'Password reset email sent',
-        description: `We've sent the password reset instructions to ${email}`
+        description: `If the email address '${email}' is already registered to an user, we've sent the password reset instructions to that address.`
       })
     } catch (e) {
       triggerNotification({
