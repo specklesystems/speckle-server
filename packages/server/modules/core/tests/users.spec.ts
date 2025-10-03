@@ -129,6 +129,7 @@ import {
   buildBasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -342,6 +343,8 @@ const createObject = createObjectFactory({
   storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
+const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
+
 describe('Actors & Tokens @user-services @multiregion', () => {
   const myTestActor = {
     name: 'Dimitrie Stefanescu',
@@ -525,6 +528,14 @@ describe('Actors & Tokens @user-services @multiregion', () => {
 
       const promise = deleteUser(user.id)
 
+      if (!FF_WORKSPACES_MODULE_ENABLED) {
+        // with no workspaces it works as intended
+        await expect(promise).to.eventually.be.fulfilled
+        const deletedUser = await getUser(user.id)
+        expect(deletedUser).to.be.undefined
+        return
+      }
+
       await expect(promise).to.eventually.be.rejectedWith(
         `${workspace.name}: Workspace subscription must be canceled first`
       )
@@ -552,28 +563,33 @@ describe('Actors & Tokens @user-services @multiregion', () => {
       expect(deletedUser).to.be.undefined
     })
 
-    it('protects from deleting the last admin user if the workspace has other members', async () => {
-      const user = buildBasicTestUser()
-      const user2 = buildBasicTestUser()
-      const workspace = buildBasicTestWorkspace({
-        ownerId: user.id
-      })
-      await createTestUser(user)
-      await createTestUser(user2)
-      await createTestWorkspace(workspace, user, {
-        addPlan: {
-          status: 'valid',
-          name: 'proUnlimited'
-        }
-      })
-      await assignToWorkspace(workspace, user2, Roles.Workspace.Member)
+    // without workspaces, users can't be added to a workspace
+    FF_WORKSPACES_MODULE_ENABLED
+      ? it('protects from deleting the last admin user if the workspace has other members', async () => {
+          const user = buildBasicTestUser()
+          const user2 = buildBasicTestUser()
+          const workspace = buildBasicTestWorkspace({
+            ownerId: user.id
+          })
+          await createTestUser(user)
+          await createTestUser(user2)
+          await createTestWorkspace(workspace, user, {
+            addPlan: {
+              status: 'valid',
+              name: 'proUnlimited'
+            }
+          })
+          console.log('assign?', workspace)
+          await assignToWorkspace(workspace, user2, Roles.Workspace.Member)
+          console.log('assign? ok')
 
-      const promise = deleteUser(user.id)
+          const promise = deleteUser(user.id)
 
-      await expect(promise).to.eventually.be.rejectedWith(
-        `${workspace.name}: Admin role must be transferred to another member before deleting the user`
-      )
-    })
+          await expect(promise).to.eventually.be.rejectedWith(
+            `${workspace.name}: Admin role must be transferred to another member before deleting the user`
+          )
+        })
+      : {}
 
     it('Should get a user', async () => {
       const actor = await getUser(myTestActor.id)
