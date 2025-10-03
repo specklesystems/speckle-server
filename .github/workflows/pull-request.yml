@@ -71,6 +71,8 @@ jobs:
             monitor-deployment:
               - 'packages/monitor-deployment/**'
               - 'packages/shared/**'
+            utils:
+              - 'utils/**'
 
   tests:
     needs: [get-version, changes]
@@ -105,6 +107,7 @@ jobs:
       SKIP_FILEIMPORT_SERVICE: ${{ needs.changes.outputs.fileimport-service == 'false' }}
       SKIP_IFC_IMPORT_SERVICE: ${{ needs.changes.outputs.ifc-import-service == 'false' }}
       SKIP_MONITOR_DEPLOYMENT: ${{ needs.changes.outputs.monitor-deployment == 'false' }}
+      SKIP_UTILS: ${{ needs.changes.outputs.utils == 'false' }}
     secrets:
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
       REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}

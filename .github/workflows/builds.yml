@@ -51,6 +51,10 @@ on:
         required: false
         default: false
         type: boolean
+      SKIP_UTILS:
+        required: false
+        default: false
+        type: boolean
     secrets:
       DATADOG_API_KEY:
         required: true
@@ -202,6 +206,7 @@ jobs:
   docker-build-test-deploy:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Test deploy util
+    if: ${{ inputs.SKIP_UTILS == 'false' }}
     steps:
       - name: Login to Helm Chart & Container Image Registry
         uses: docker/login-action@v3
@@ -241,6 +246,7 @@ jobs:
   docker-build-docker-compose-ingress:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Docker compose ingress
+    if: ${{ inputs.SKIP_UTILS == 'false' }}
     steps:
       - name: Login to Helm Chart & Container Image Registry
         uses: docker/login-action@v3
