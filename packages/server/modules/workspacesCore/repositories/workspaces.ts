@@ -45,7 +45,7 @@ export const getUserWorkspacesWithRoleFactory =
       .innerJoin(Workspaces.name, Workspaces.col.id, WorkspaceAclDb.col.workspaceId)
       .where(WorkspaceAclDb.col.userId, args.userId)
       .select<Array<Workspace & { role: WorkspaceRoles }>>([
-        Workspaces.col,
+        ...Workspaces.cols,
         WorkspaceAclDb.col.role
       ])
 

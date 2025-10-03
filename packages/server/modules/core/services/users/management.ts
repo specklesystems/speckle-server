@@ -26,7 +26,7 @@ import {
   PasswordTooShortError,
   UserInputError
 } from '@/modules/core/errors/userinput'
-import type { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
+import { type UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import type { UserRecord } from '@/modules/core/helpers/userHelper'
 import { sanitizeImageUrl } from '@/modules/shared/helpers/sanitization'
 import type { NullableKeysToOptional, ServerRoles } from '@speckle/shared'
@@ -325,13 +325,13 @@ export const deleteUserFactory =
 
     const workspaces = await deps.getUserWorkspacesWithRole({ userId: id })
     for (const workspace of workspaces) {
-      if (workspace.role !== 'workspace:admin') continue
+      if (workspace.role !== Roles.Workspace.Admin) continue
 
       const [totalAdmins, totalMembers] = await Promise.all([
         deps.countWorkspaceUsers({
           workspaceId: workspace.id,
           filter: {
-            workspaceRole: 'workspace:admin'
+            workspaceRole: Roles.Workspace.Admin
           }
         }),
         deps.countWorkspaceUsers({

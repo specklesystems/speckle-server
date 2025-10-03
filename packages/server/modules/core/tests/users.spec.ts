@@ -579,9 +579,7 @@ describe('Actors & Tokens @user-services @multiregion', () => {
               name: 'proUnlimited'
             }
           })
-          console.log('assign?', workspace)
           await assignToWorkspace(workspace, user2, Roles.Workspace.Member)
-          console.log('assign? ok')
 
           const promise = deleteUser(user.id)
 
