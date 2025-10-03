@@ -118,7 +118,7 @@ const editDialogOpen = ref(false)
 const editMode = ref(false)
 
 const editModeButtonText = computed(() => {
-  return editMode.value ? 'View' : 'Edit'
+  return editMode.value ? 'Exit edit mode' : 'Edit'
 })
 
 const hasDashboardToken = computed(() => !!dashboardToken.value)
