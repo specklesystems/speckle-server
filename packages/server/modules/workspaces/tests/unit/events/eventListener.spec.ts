@@ -401,6 +401,7 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       await workspaceTracking({
         eventName: WorkspaceEvents.Deleted,
         payload: {
+          userId: null,
           workspaceId: workspace.id
         }
       })
@@ -422,6 +423,7 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       await workspaceTracking({
         eventName: WorkspaceEvents.Deleted,
         payload: {
+          userId: null,
           workspaceId: workspace.id
         }
       })

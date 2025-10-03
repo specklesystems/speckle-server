@@ -25,6 +25,6 @@ export const deleteWorkspacesNonCompleteFactory =
     logger.info({ workspaceIds }, 'Deleting non complete workspaces')
 
     for (const workspaceId of workspaceIds) {
-      await deleteWorkspace({ workspaceId })
+      await deleteWorkspace({ workspaceId, userId: null })
     }
   }

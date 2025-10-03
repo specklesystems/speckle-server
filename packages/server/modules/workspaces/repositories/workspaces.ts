@@ -10,7 +10,6 @@ import type {
   CountDomainsByWorkspaceId,
   CountWorkspaceRoleWithOptionalProjectRole,
   CountWorkspaces,
-  DeleteWorkspace,
   DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
   EligibleWorkspace,
@@ -389,8 +388,8 @@ export const bulkUpsertWorkspacesFactory =
   }
 
 export const deleteWorkspaceFactory =
-  ({ db }: { db: Knex }): DeleteWorkspace =>
-  async ({ workspaceId }) => {
+  ({ db }: { db: Knex }) =>
+  async ({ workspaceId }: { workspaceId: string }) => {
     await tables.workspaces(db).where({ id: workspaceId }).delete()
   }
 

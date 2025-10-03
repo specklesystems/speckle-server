@@ -50,10 +50,7 @@ import { omit } from 'lodash-es'
 import { createAndStoreTestWorkspaceFactory } from '@/test/speckle-helpers/workspaces'
 import { WorkspaceJoinRequests } from '@/modules/workspacesCore/helpers/db'
 import { insertInviteAndDeleteOldFactory } from '@/modules/serverinvites/repositories/serverInvites'
-import type {
-  DeleteWorkspace,
-  UpsertWorkspace
-} from '@/modules/workspaces/domain/operations'
+import type { UpsertWorkspace } from '@/modules/workspaces/domain/operations'
 import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
 import { logger } from '@/observability/logging'
@@ -62,9 +59,9 @@ const getWorkspace = getWorkspaceFactory({ db })
 const getWorkspaces = getWorkspacesFactory({ db })
 const getWorkspaceBySlug = getWorkspaceBySlugFactory({ db })
 const getWorkspaceCollaborators = getWorkspaceCollaboratorsFactory({ db })
-const deleteWorkspace: DeleteWorkspace = async (...args) =>
+const deleteWorkspace = async (args: { workspaceId: string }) =>
   asMultiregionalOperation(
-    ({ allDbs }) => replicateFactory(allDbs, deleteWorkspaceFactory)(...args),
+    ({ allDbs }) => replicateFactory(allDbs, deleteWorkspaceFactory)(args),
     {
       logger,
       name: 'delete workspace spec',
