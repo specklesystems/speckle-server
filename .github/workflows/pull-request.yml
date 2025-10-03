@@ -36,7 +36,7 @@ jobs:
     needs: [get-version]
     uses: ./.github/workflows/npm.yml
     with:
-      GITHUB_REGISTRY_URL: ${{ format('%s%s.git', 'https://github.com/', github.repository) }}
+      GITHUB_REGISTRY_URL: ${{ format('{0}{1}.git', 'https://github.com/', github.repository) }}
       GITHUB_ORG: ${{ github.repository_owner }}
       NPM_REGISTRY_URL: ${{ github.repository == 'specklesystems/speckle-server' && 'https://registry.npmjs.org/' || 'https://npm.pkg.github.com/' }}
       NPM_PUBLISH_ACCESS: ${{ github.repository == 'specklesystems/speckle-server' && 'public' || 'restricted' }}
