@@ -429,7 +429,7 @@ export default class Sandbox {
         this.selectionList.map((val) => val.hits[0].node.model.raw.id) as string[]
       )
       if (!box) {
-        box = this.viewer.getRenderer().sceneBox
+        box = this.viewer.getRenderer().visibleSceneBox
       }
       this.viewer.getExtension(SectionTool).setBox(box)
       this.viewer.getExtension(SectionTool).toggle()

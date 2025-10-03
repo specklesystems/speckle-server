@@ -18,13 +18,17 @@ import {
   AllBatchUpdateRange,
   type Batch,
   type BatchUpdateRange,
-  type DrawGroup,
+  DrawGroup,
   GeometryType,
+  isAllBatchUpdateRange,
+  isNoneBatchUpdateRange,
   NoneBatchUpdateRange
 } from './Batch.js'
 import { ObjectLayers } from '../../IViewer.js'
 import Materials from '../materials/Materials.js'
 import { ChunkArray } from '../converter/VirtualArray.js'
+
+const vec4Buffer = new Vector4()
 
 export default class LineBatch implements Batch {
   public id: string
@@ -37,7 +41,7 @@ export default class LineBatch implements Batch {
   protected mesh: LineSegments2
   public colorBuffer: InstancedInterleavedBuffer
 
-  private static readonly vector4Buffer: Vector4 = new Vector4()
+  protected visibilityRanges: { [offset: number]: boolean } = {}
 
   public get bounds(): Box3 {
     if (!this.geometry.boundingBox) this.geometry.computeBoundingBox()
@@ -65,6 +69,11 @@ export default class LineBatch implements Batch {
     this.subtreeId = subtreeId
     this.renderViews = renderViews
   }
+
+  get groups(): DrawGroup[] {
+    return []
+  }
+
   public get pointCount(): number {
     return 0
   }
@@ -88,10 +97,6 @@ export default class LineBatch implements Batch {
     return this.mesh.material as unknown as Material[]
   }
 
-  public get groups(): DrawGroup[] {
-    return []
-  }
-
   public getCount(): number {
     return this.geometry.attributes.position.array.length / 6
   }
@@ -112,23 +117,16 @@ export default class LineBatch implements Batch {
   }
 
   public setVisibleRange(ranges: BatchUpdateRange[]) {
-    if (
-      ranges.length === 1 &&
-      ranges[0].offset === NoneBatchUpdateRange.offset &&
-      ranges[0].count === NoneBatchUpdateRange.count
-    ) {
+    if (ranges.length === 1 && isNoneBatchUpdateRange(ranges[0])) {
       this.mesh.visible = false
       return
     }
 
-    if (
-      ranges.length === 1 &&
-      ranges[0].offset === AllBatchUpdateRange.offset &&
-      ranges[0].count === AllBatchUpdateRange.count
-    ) {
+    if (ranges.length === 1 && isAllBatchUpdateRange(ranges[0], this.getCount())) {
       this.mesh.visible = true
       return
     }
+
     this.mesh.visible = true
     const data = this.colorBuffer.array as number[]
     for (let k = 0; k < data.length; k += 4) {
@@ -150,9 +148,11 @@ export default class LineBatch implements Batch {
     this.geometry.attributes['instanceColorEnd'].needsUpdate = true
   }
 
+  /** Line batches do not sort their ranges. This means we can have hidden/transparent objects anywhere inside the batch.
+   */
   public getVisibleRange() {
+    if (!this.mesh.visible) return NoneBatchUpdateRange
     return AllBatchUpdateRange
-    // TO DO if required
   }
 
   public getOpaque(): BatchUpdateRange {
@@ -199,17 +199,26 @@ export default class LineBatch implements Batch {
         ranges[i].offset * this.colorBuffer.stride +
         ranges[i].count * this.colorBuffer.stride
 
-      LineBatch.vector4Buffer.set(color.r, color.g, color.b, alpha)
+      vec4Buffer.set(color.r, color.g, color.b, alpha)
       this.updateColorBuffer(
         start,
         ranges[i].count === Infinity ? this.colorBuffer.array.length : len,
-        LineBatch.vector4Buffer
+        vec4Buffer
       )
+      this.visibilityRanges[ranges[i].offset] = material.visible
     }
     this.colorBuffer.updateRange = { offset: 0, count: data.length }
     this.colorBuffer.needsUpdate = true
     this.geometry.attributes['instanceColorStart'].needsUpdate = true
     this.geometry.attributes['instanceColorEnd'].needsUpdate = true
+
+    const visibility = Object.values(this.visibilityRanges)
+    let anyVisible = false
+    for (let k = 0; k < visibility.length; k++) {
+      anyVisible ||= visibility[k]
+    }
+    if (anyVisible) this.setVisibleRange([AllBatchUpdateRange])
+    else this.setVisibleRange([NoneBatchUpdateRange])
   }
 
   public setDrawRanges(ranges: BatchUpdateRange[]) {
@@ -220,14 +229,16 @@ export default class LineBatch implements Batch {
     this.setDrawRanges([
       {
         offset: 0,
-        count: Infinity,
+        count: this.getCount(),
         material: this.batchMaterial
       }
     ])
+
     this.mesh.material = this.batchMaterial
     this.mesh.visible = true
     this.batchMaterial.transparent = this.batchTransparent
     this.batchMaterial.opacity = this.batchOpacity
+    this.visibilityRanges = { 0: this.batchMaterial.visible }
   }
 
   public buildBatch() {
@@ -304,6 +315,9 @@ export default class LineBatch implements Batch {
 
     this.mesh.uuid = this.id
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_LINE)
+
+    this.visibilityRanges = { 0: this.batchMaterial.visible }
+
     return Promise.resolve()
   }
 
