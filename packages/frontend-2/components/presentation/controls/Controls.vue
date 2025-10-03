@@ -61,6 +61,14 @@ useEventListener(
     )
       return
 
+    // Don't handle arrow keys if a dialog is open
+    if (document.querySelector('[role="dialog"]')) {
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation()
+      return
+    }
+
     const targetKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']
 
     if (targetKeys.includes(event.key)) {
