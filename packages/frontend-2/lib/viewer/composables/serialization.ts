@@ -37,26 +37,6 @@ export function useStateSerialization() {
   const dataStore = useFilteringDataStore()
   const { box3ToSectionBoxData } = useSectionBoxUtilities()
 
-  /**
-   * We don't want to save a comment w/ implicit identifiers like ones that only have a model ID or a folder prefix, because
-   * those can resolve to completely different versions/objects as time goes on
-   */
-  const buildConcreteResourceIdString = () => {
-    const resources = state.resources.response.resourceItems
-    const builder = SpeckleViewer.ViewerRoute.resourceBuilder()
-
-    for (const resource of resources.value) {
-      if (resource.modelId && resource.versionId) {
-        builder.addModel(resource.modelId, resource.versionId)
-      } else {
-        builder.addObject(resource.objectId)
-      }
-    }
-
-    const finalString = builder.toString()
-    return finalString || state.resources.request.resourceIdString.value
-  }
-
   const serialize = (
     options?: Partial<{
       /**
@@ -89,7 +69,7 @@ export function useStateSerialization() {
       resources: {
         request: {
           resourceIdString: concreteResourceIdString
-            ? buildConcreteResourceIdString()
+            ? state.resources.response.concreteResourceIdString.value
             : state.resources.request.resourceIdString.value,
           threadFilters: { ...state.resources.request.threadFilters.value }
         }
@@ -159,7 +139,7 @@ export function useStateSerialization() {
     return ret
   }
 
-  return { serialize, buildConcreteResourceIdString }
+  return { serialize }
 }
 
 export enum StateApplyMode {
