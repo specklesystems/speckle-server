@@ -231,13 +231,11 @@ export function useFilterUtilities(
     }
 
     const uniqueValues = Array.from(valueToObjectIds.keys())
-    const firstValue = uniqueValues[0]
 
     const isBooleanProperty =
       uniqueValues.every((v) => isValueBoolean(v)) && uniqueValues.length <= 2
 
-    const isNumeric =
-      typeof firstValue === 'number' || uniqueValues.every((v) => isValueNumeric(v))
+    const isNumeric = uniqueValues.every((v) => isValueNumeric(v))
 
     if (isBooleanProperty) {
       return {

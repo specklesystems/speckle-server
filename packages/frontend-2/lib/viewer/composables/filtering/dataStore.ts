@@ -1,5 +1,5 @@
 import type { SpeckleObject, TreeNode, Viewer } from '@speckle/viewer'
-import { uniq, flatten, compact } from 'lodash-es'
+import { uniq, flatten, compact, isString } from 'lodash-es'
 import {
   FilterLogic,
   FilterType,
@@ -57,7 +57,7 @@ function processBatchedPropertyUpdates(
       // Property exists - check if we need to update type due to conflicting evidence
       if (
         existingProperty.type === FilterType.Numeric &&
-        typeof update.value === 'string' &&
+        isString(update.value) &&
         !isValueNumeric(update.value)
       ) {
         existingProperty.type = FilterType.String
