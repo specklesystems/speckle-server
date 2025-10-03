@@ -99,7 +99,11 @@ const resolvers: Resolvers = {
         }),
         getProjectSavedViewGroupsTotalCount: getProjectSavedViewGroupsTotalCountFactory(
           { db: projectDb }
-        )
+        ),
+        getViewerResourceGroups: buildGetViewerResourceGroups({
+          projectDb,
+          loaders: ctx.loaders
+        })
       })
 
       return await getProjectSavedViewGroups({
