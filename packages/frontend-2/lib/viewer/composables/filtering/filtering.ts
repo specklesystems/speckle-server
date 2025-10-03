@@ -35,7 +35,8 @@ import {
   isKvpFilterable,
   getFilterDisabledReason,
   findFilterByKvp,
-  isValueNumeric
+  isValueNumeric,
+  isValueBoolean
 } from '~/lib/viewer/helpers/filters/utils'
 import { useFilterColoringHelpers } from '~/lib/viewer/composables/filtering/coloringHelpers'
 import {
@@ -233,8 +234,7 @@ export function useFilterUtilities(
     const firstValue = uniqueValues[0]
 
     const isBooleanProperty =
-      uniqueValues.every((v) => v === 'true' || v === 'false') &&
-      uniqueValues.length <= 2
+      uniqueValues.every((v) => isValueBoolean(v)) && uniqueValues.length <= 2
 
     const isNumeric =
       typeof firstValue === 'number' || uniqueValues.every((v) => isValueNumeric(v))
@@ -245,7 +245,7 @@ export function useFilterUtilities(
         type: 'boolean',
         objectCount: valueToObjectIds.size,
         valueGroups: uniqueValues.map((value) => ({
-          value: value === 'true',
+          value: String(value).toLowerCase() === 'true',
           ids: valueToObjectIds.get(value) || []
         }))
       } as BooleanPropertyInfo

@@ -21,7 +21,9 @@ import {
   shouldExcludeFromFiltering,
   extractNestedProperties,
   isParameter,
-  isValueNumeric
+  isValueNumeric,
+  isValueBooleanTrue,
+  isValueBooleanFalse
 } from '~/lib/viewer/helpers/filters/utils'
 import { DEEP_EXTRACTION_CONFIG } from '~/lib/viewer/helpers/filters/constants'
 
@@ -263,7 +265,7 @@ export function useCreateViewerFilteringDataStore() {
           dataSource.objectProperties
         )) {
           const value = objProps[criteria.propertyKey]
-          if (value === true || value === 'true') {
+          if (isValueBooleanTrue(value)) {
             matchingIds.push(objectId)
           }
         }
@@ -273,7 +275,7 @@ export function useCreateViewerFilteringDataStore() {
           dataSource.objectProperties
         )) {
           const value = objProps[criteria.propertyKey]
-          if (value === false || value === 'false') {
+          if (isValueBooleanFalse(value)) {
             matchingIds.push(objectId)
           }
         }

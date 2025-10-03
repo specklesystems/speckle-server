@@ -277,6 +277,33 @@ export const isValueNumeric = (value: unknown): boolean => {
 }
 
 /**
+ * Determines if a value should be treated as boolean for filtering (case-insensitive)
+ */
+export const isValueBoolean = (value: unknown): boolean => {
+  const str = String(value).toLowerCase()
+  return str === 'true' || str === 'false'
+}
+
+/**
+ * Checks if a value represents boolean true (case-insensitive)
+ */
+export const isValueBooleanTrue = (value: unknown): boolean => {
+  return (
+    value === true || (isValueBoolean(value) && String(value).toLowerCase() === 'true')
+  )
+}
+
+/**
+ * Checks if a value represents boolean false (case-insensitive)
+ */
+export const isValueBooleanFalse = (value: unknown): boolean => {
+  return (
+    value === false ||
+    (isValueBoolean(value) && String(value).toLowerCase() === 'false')
+  )
+}
+
+/**
  * Get count for a specific filter value
  */
 export function getFilterValueCount(
