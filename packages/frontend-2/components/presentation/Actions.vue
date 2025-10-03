@@ -6,8 +6,9 @@
       <FormButton v-if="isLoggedIn" @click="showShareDialog = true">Share</FormButton>
 
       <PresentationFloatingPanelButton
-        v-tippy="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
-        class="hidden md:flex touch:hidden"
+        v-if="isMdOrLarger"
+        v-tippy="getTooltipProps(isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen')"
+        class="touch:hidden"
         @click="toggleFullscreen"
       >
         <LucideMinimize
@@ -25,7 +26,7 @@
       </PresentationFloatingPanelButton>
 
       <PresentationFloatingPanelButton
-        v-tippy="isSidebarOpen ? 'Hide slide info' : 'Show slide info'"
+        v-tippy="getTooltipProps(isSidebarOpen ? 'Hide slide info' : 'Show slide info')"
         :is-active="isSidebarOpen"
         @click="emit('toggleSidebar')"
       >
@@ -39,6 +40,8 @@
 
 <script setup lang="ts">
 import { LucideInfo, LucideMaximize, LucideMinimize } from 'lucide-vue-next'
+import { useBreakpoints } from '@vueuse/core'
+import { TailwindBreakpoints } from '~/lib/common/helpers/tailwind'
 
 const emit = defineEmits<{
   (e: 'toggleSidebar'): void
@@ -47,6 +50,9 @@ const emit = defineEmits<{
 const isSidebarOpen = defineModel<boolean>('is-sidebar-open')
 
 const { isLoggedIn } = useActiveUser()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMdOrLarger = breakpoints.greaterOrEqual('md')
+const { getTooltipProps } = useSmartTooltipDelay()
 
 const isFullscreen = ref(false)
 const showShareDialog = ref(false)

@@ -40,19 +40,13 @@
             @click="showMenu = !showMenu"
           />
         </LayoutMenu>
-        <div
-          v-if="canPresent && !isUngroupedGroup"
-          v-tippy="
-            viewCount === 0 ? 'Cannot present empty group' : getTooltipProps('Present')
-          "
-        >
+        <div v-if="!isUngroupedGroup" v-tippy="getTooltipProps('Present')">
           <FormButton
             size="sm"
             color="subtle"
             :icon-left="Play"
             hide-text
             name="presentGroup"
-            :disabled="viewCount === 0"
             @click="onPresentGroup"
           />
         </div>
@@ -185,7 +179,6 @@ const menuId = useId()
 const isUngroupedGroup = computed(() => props.group.isUngroupedViewsGroup)
 const canUpdate = computed(() => props.group.permissions.canUpdate)
 const canCreateView = computed(() => props.project.permissions.canCreateSavedView)
-const canPresent = computed(() => props.project.workspace?.hasAccessToFeature)
 
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => {
   const items: LayoutMenuItem<MenuItems>[][] = []
