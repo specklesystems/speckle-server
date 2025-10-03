@@ -96,6 +96,7 @@ const unwrapResourceIdStringFactory =
 
     const finalResourceIds = resourceBuilder()
     for (const resourceGroup of resourceGroups) {
+      // If there's any items in there, add them
       for (const resourceItem of resourceGroup.items) {
         if (resourceItem.modelId) {
           finalResourceIds.addModel(
@@ -105,6 +106,11 @@ const unwrapResourceIdStringFactory =
         } else {
           finalResourceIds.addObject(resourceItem.objectId)
         }
+      }
+
+      if (!resourceGroup.items.length) {
+        // If there were no items, its an empty model
+        finalResourceIds.addResources(resourceGroup.identifier)
       }
     }
 
