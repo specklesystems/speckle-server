@@ -5,7 +5,17 @@ export const accSyncItemCreateMutation = graphql(`
     accSyncItemMutations {
       create(input: $input) {
         id
+        model {
+          id
+          name
+        }
+        author {
+          id
+          name
+        }
+        accFileName
         accFileLineageUrn
+        accFileViewName
         status
       }
     }
