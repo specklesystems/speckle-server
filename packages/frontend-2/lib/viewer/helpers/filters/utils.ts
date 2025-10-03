@@ -267,6 +267,16 @@ export const isBooleanProperty = (filter: ExtendedPropertyInfo): boolean => {
 }
 
 /**
+ * Determines if a value should be treated as numeric for filtering
+ */
+export const isValueNumeric = (value: unknown): boolean => {
+  return (
+    typeof value === 'number' ||
+    (!isNaN(Number(value)) && String(value) !== '' && !/[a-zA-Z-]/.test(String(value)))
+  )
+}
+
+/**
  * Get count for a specific filter value
  */
 export function getFilterValueCount(

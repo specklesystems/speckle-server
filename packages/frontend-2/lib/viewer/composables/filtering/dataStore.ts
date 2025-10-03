@@ -20,7 +20,8 @@ import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import {
   shouldExcludeFromFiltering,
   extractNestedProperties,
-  isParameter
+  isParameter,
+  isValueNumeric
 } from '~/lib/viewer/helpers/filters/utils'
 import { DEEP_EXTRACTION_CONFIG } from '~/lib/viewer/helpers/filters/constants'
 
@@ -32,7 +33,9 @@ function processBatchedPropertyUpdates(
   propertyMap: Record<string, FilteringPropertyInfo>
 ) {
   for (const update of updates) {
-    if (!propertyMap[update.path]) {
+    const existingProperty = propertyMap[update.path]
+
+    if (!existingProperty) {
       // Convert string type to FilterType
       let filterType: FilterType
       if (update.type === 'number') {
@@ -47,6 +50,15 @@ function processBatchedPropertyUpdates(
         concatenatedPath: update.path,
         value: update.value as string | number,
         type: filterType
+      }
+    } else {
+      // Property exists - check if we need to update type due to conflicting evidence
+      if (
+        existingProperty.type === FilterType.Numeric &&
+        typeof update.value === 'string' &&
+        !isValueNumeric(update.value)
+      ) {
+        existingProperty.type = FilterType.String
       }
     }
   }
@@ -193,6 +205,7 @@ export function useCreateViewerFilteringDataStore() {
 
           if (pendingPropertyUpdates.length > 0) {
             processBatchedPropertyUpdates(pendingPropertyUpdates, propertyMap)
+            pendingPropertyUpdates.length = 0
           }
 
           objectProperties[objectId] = objProps
