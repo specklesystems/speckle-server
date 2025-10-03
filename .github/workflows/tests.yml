@@ -136,6 +136,9 @@ jobs:
       - name: Lint everything
         run: yarn lint:ci
         working-directory: 'packages/frontend-2'
+      - name: Show failure build logs
+        if: failure()
+        run: cat /tmp/xfs-*/build.log || true
 
   test-viewer:
     name: Viewer
@@ -165,6 +168,9 @@ jobs:
       - name: Build viewer-sandbox
         run: yarn build
         working-directory: 'packages/viewer-sandbox'
+      - name: Show failure build logs
+        if: failure()
+        run: cat /tmp/xfs-*/build.log || true
 
   test-shared:
     name: Shared
@@ -204,6 +210,9 @@ jobs:
       - name: Ensure CJS require works
         run: node ./e2e/testCjs.cjs
         working-directory: 'packages/shared'
+      - name: Show failure build logs
+        if: failure()
+        run: cat /tmp/xfs-*/build.log || true
 
   test-objectsender:
     name: Object Sender
@@ -230,6 +239,9 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
           files: packages/objectsender/coverage/coverage-final.json
+      - name: Show failure build logs
+        if: failure()
+        run: cat /tmp/xfs-*/build.log || true
 
   test-ui-components:
     name: UI Components
@@ -259,6 +271,9 @@ jobs:
       - name: Test via Storybook
         run: yarn storybook:test:ci
         working-directory: 'packages/ui-components'
+      - name: Show failure build logs
+        if: failure()
+        run: cat /tmp/xfs-*/build.log || true
 
   test-preview-service:
     name: Preview service
@@ -310,6 +325,9 @@ jobs:
           name: preview-service-logs-on-failure
           path: /tmp/**/*.log
           retention-days: 5
+      - name: Show failure build logs
+        if: failure()
+        run: cat /tmp/xfs-*/build.log || true
 
   test-server:
     name: Server
@@ -407,6 +425,9 @@ jobs:
       - name: Checking for GQL schema breakages against latest.speckle.systems
         run: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
         working-directory: 'packages/server'
+      - name: Show failure build logs
+        if: failure()
+        run: cat /tmp/xfs-*/build.log || true
 
   test-server-no-ff:
     name: Server no ff
@@ -494,6 +515,9 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
           files: packages/server/coverage/lcov.info
+      - name: Show failure build logs
+        if: failure()
+        run: cat /tmp/xfs-*/build.log || true
 
   test-server-multiregion:
     name: Server multiregion
@@ -638,3 +662,6 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
           files: packages/server/coverage/lcov.info
+      - name: Show failure build logs
+        if: failure()
+        run: cat /tmp/xfs-*/build.log || true

@@ -6,17 +6,19 @@
     <PresentationControlsButton
       :icon="LucideChevronLeft"
       :disabled="disablePrevious"
+      tooltip="Previous slide"
       @click="onPrevious"
     />
     <PresentationControlsButton
       :icon="LucideRotateCcw"
       :disabled="!hasViewChanged"
-      tooltip="Reset view"
+      tooltip="Reset slide"
       @click="resetView"
     />
     <PresentationControlsButton
       :icon="LucideChevronRight"
       :disabled="disableNext"
+      tooltip="Next slide"
       @click="onNext"
     />
   </div>
@@ -61,11 +63,25 @@ useEventListener(
     )
       return
 
+    // Don't handle arrow keys if a dialog is open
+    if (document.querySelector('[role="dialog"]')) {
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation()
+      return
+    }
+
     const targetKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']
 
     if (targetKeys.includes(event.key)) {
-      if (disablePrevious.value) return
-      onPrevious()
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation()
+
+      // Remove focus from any currently focused element to prevent blue outline
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur()
+      }
     }
     if (event.key === 'ArrowLeft') {
       if (disablePrevious.value) return

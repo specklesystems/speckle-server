@@ -32,7 +32,7 @@
           </svg>
         </div>
 
-        <div class="text-heading-sm mb-10">Fetching the 3D data…</div>
+        <div class="text-heading-sm mb-10">Loading presentation…</div>
 
         <div class="max-w-[220px] flex items-center gap-x-2">
           <WorkspaceAvatar :name="workspace?.name" :logo="workspace?.logo" size="lg" />

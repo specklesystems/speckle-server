@@ -26,6 +26,7 @@
       class="mb-6"
       :value="shareUrl"
       cta-color="primary"
+      cta-text="Copy link"
     />
 
     <hr class="mb-6 border-outline-3" />
