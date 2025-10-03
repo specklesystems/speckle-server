@@ -1,0 +1,126 @@
+import { UserNotifications } from '@/modules/core/dbSchema'
+import type {
+  DeleteUserNotifications,
+  GetNextEmailNotification,
+  GetUserNotifications,
+  GetUserNotificationsCount,
+  MarkCommentNotificationAsRead,
+  StoreUserNotifications,
+  UpdateUserNotification
+} from '@/modules/notifications/domain/operations'
+import { type UserNotificationRecord } from '@/modules/notifications/helpers/types'
+import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
+import { isNullOrUndefined } from '@speckle/shared'
+import { NotificationType } from '@speckle/shared/notifications'
+import { type Knex } from 'knex'
+import { clamp, pick } from 'lodash-es'
+
+const tables = {
+  userNotifications: (db: Knex) => db<UserNotificationRecord>(UserNotifications.name)
+}
+
+const getCursorTools = () =>
+  compositeCursorTools({
+    schema: UserNotifications,
+    cols: ['createdAt', 'id']
+  })
+
+export const getUserNotificationsFactory =
+  (deps: { db: Knex }): GetUserNotifications =>
+  async (args) => {
+    const limit = clamp(isNullOrUndefined(args.limit) ? 10 : args.limit, 0, 50)
+    const { applyCursorSortAndFilter, resolveNewCursor } = getCursorTools()
+
+    const q = tables
+      .userNotifications(deps.db)
+      .where({ userId: args.userId })
+      .limit(limit)
+
+    applyCursorSortAndFilter({
+      query: q,
+      cursor: args.cursor
+    })
+
+    const items = await q
+    const newCursor = resolveNewCursor(items)
+
+    return {
+      items,
+      cursor: newCursor
+    }
+  }
+
+export const getUserNotificationsCountFactory =
+  (deps: { db: Knex }): GetUserNotificationsCount =>
+  async ({ userId }) => {
+    const [res] = await tables.userNotifications(deps.db).where({ userId }).count()
+
+    return parseInt(res.count.toString())
+  }
+
+export const storeUserNotificationsFactory =
+  (deps: { db: Knex }): StoreUserNotifications =>
+  async (args) => {
+    const notifications = await deps.db(UserNotifications.name).insert(args)
+
+    return notifications.length
+  }
+
+export const updateUserNotificationFactory =
+  (deps: { db: Knex }): UpdateUserNotification =>
+  async ({ userId, id, update }) => {
+    const [notification] = await tables
+      .userNotifications(deps.db)
+      .where({ userId, id })
+      .update(
+        pick(
+          update,
+          UserNotifications.withoutTablePrefix.cols
+        ) as Partial<UserNotificationRecord>
+      )
+      .returning('*')
+
+    return notification
+  }
+
+/**
+ * This function retrieves the next email notification for a user.
+ * If used from different transactions, it will skip locked rows, and if there is a notification it locks it for the transaction context.
+ * This means that two processes querying for the next email notification (if both use a transaction to send the email etc) will not pick up the same notification.
+ */
+export const getNextEmailNotificationFactory =
+  (deps: { db: Knex }): GetNextEmailNotification =>
+  async () => {
+    const notification = await tables
+      .userNotifications(deps.db)
+      .where(UserNotifications.col.sendEmailAt, '<=', new Date())
+      .andWhere(UserNotifications.col.read, false)
+      .forUpdate()
+      .skipLocked()
+      .first()
+
+    return notification
+  }
+
+export const deleteUserNotificationsFactory =
+  (deps: { db: Knex }): DeleteUserNotifications =>
+  async ({ userId, ids }) => {
+    await tables
+      .userNotifications(deps.db)
+      .where({ userId })
+      .whereIn(UserNotifications.col.id, ids)
+      .delete()
+  }
+
+export const markCommentNotificationsAsReadFactory =
+  (deps: { db: Knex }): MarkCommentNotificationAsRead =>
+  async ({ userId, commentId }) => {
+    const rows = await deps
+      .db(UserNotifications.name)
+      .where({ userId })
+      .andWhere(UserNotifications.col.type, NotificationType.MentionedInComment)
+      .whereJsonSupersetOf(UserNotifications.col.payload, { commentId })
+      .update({ read: true })
+
+    return rows
+  }

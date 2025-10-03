@@ -1,14 +1,13 @@
 import type { NotificationPreferences } from '@/modules/notifications/helpers/types'
-import {
-  NotificationChannel,
-  NotificationType
-} from '@/modules/notifications/helpers/types'
+import { NotificationChannel } from '@/modules/notifications/helpers/types'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import type {
   GetSavedUserNotificationPreferences,
   GetUserNotificationPreferences,
+  GetUserPreferenceForNotificationType,
   SaveUserNotificationPreferences
 } from '@/modules/notifications/domain/operations'
+import { NotificationType } from '@speckle/shared/notifications'
 
 export const getUserNotificationPreferencesFactory =
   (deps: {
@@ -34,6 +33,18 @@ function addDefaultPreferenceValues(
   })
   return savedPreferences
 }
+
+export const getUserPreferenceForNotificationTypeFactory =
+  (deps: {
+    getSavedUserNotificationPreferences: GetSavedUserNotificationPreferences
+  }): GetUserPreferenceForNotificationType =>
+  async (userId, notificationType, notificationChannel) => {
+    const preferences = await deps.getSavedUserNotificationPreferences(userId)
+    if (!preferences) return true
+
+    const notificationTypeSettings = preferences[notificationType]
+    return notificationTypeSettings?.[notificationChannel] ?? false
+  }
 
 export const updateNotificationPreferencesFactory =
   (deps: { saveUserNotificationPreferences: SaveUserNotificationPreferences }) =>

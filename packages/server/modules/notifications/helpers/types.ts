@@ -4,13 +4,8 @@ import type { MaybeAsync, Optional } from '@/modules/shared/helpers/typeHelper'
 import type { Job } from 'bull'
 import { isObject, has } from 'lodash-es'
 import type { Logger } from 'pino'
-
-export enum NotificationType {
-  ActivityDigest = 'activityDigest',
-  MentionedInComment = 'mentionedInComment',
-  NewStreamAccessRequest = 'newStreamAccessRequest',
-  StreamAccessRequestApproved = 'streamAccessRequestApproved'
-}
+import type { NotificationPayloadMap } from '@speckle/shared/notifications'
+import { NotificationType } from '@speckle/shared/notifications'
 
 export enum NotificationChannel {
   Email = 'email'
@@ -23,6 +18,37 @@ export type NotificationPreferences = Partial<
 export type UserNotificationPreferencesRecord = {
   userId: string
   preferences: NotificationPreferences
+}
+
+export type BaseUserNotification = {
+  id: string
+  userId: string
+  type: NotificationType
+  read: boolean
+  version: string
+  payload: object
+  sendEmailAt: Date | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type UserNotificationRecord = {
+  [K in keyof NotificationPayloadMap]: Omit<
+    BaseUserNotification,
+    'payload' | 'version' | 'type'
+  > & {
+    type: K
+    version: (typeof LatestNotificationVersions)[K]
+    payload: NotificationPayloadMap[K]
+  }
+}[keyof NotificationPayloadMap]
+
+const DEFAULT_VERSION = '1' as const
+export const LatestNotificationVersions = {
+  [NotificationType.MentionedInComment]: DEFAULT_VERSION,
+  [NotificationType.NewStreamAccessRequest]: DEFAULT_VERSION,
+  [NotificationType.StreamAccessRequestApproved]: DEFAULT_VERSION,
+  [NotificationType.ActivityDigest]: DEFAULT_VERSION
 }
 
 // Add mappings between NotificationTypes and expected Message types here

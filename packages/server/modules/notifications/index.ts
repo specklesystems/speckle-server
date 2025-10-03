@@ -1,20 +1,31 @@
 import {
-  initializeQueue,
+  initializePublicationQueue,
   consumeIncomingNotifications,
   registerNotificationHandlers,
-  shutdownQueue
-} from '@/modules/notifications/services/queue'
+  shutdownPublicationQueue
+} from '@/modules/notifications/services/publication/queue'
 import type { NotificationTypeHandlers } from '@/modules/notifications/helpers/types'
-import { NotificationType } from '@/modules/notifications/helpers/types'
 import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { shouldDisableNotificationsConsumption } from '@/modules/shared/helpers/envHelper'
-import { moduleLogger } from '@/observability/logging'
-import MentionedInCommentHandler from '@/modules/notifications/services/handlers/mentionedInComment'
-import NewStreamAccessRequestHandler from '@/modules/notifications/services/handlers/newStreamAccessRequest'
-import StreamAccessRequestApprovedHandler from '@/modules/notifications/services/handlers/streamAccessRequestApproved'
-import ActivityDigestHandler from '@/modules/notifications/services/handlers/activityDigest'
+import { moduleLogger, notificationsLogger } from '@/observability/logging'
+import MentionedInCommentHandler from '@/modules/notifications/services/publication/handlers/mentionedInComment'
+import NewStreamAccessRequestHandler from '@/modules/notifications/services/publication/handlers/newStreamAccessRequest'
+import StreamAccessRequestApprovedHandler from '@/modules/notifications/services/publication/handlers/streamAccessRequestApproved'
+import ActivityDigestHandler from '@/modules/notifications/services/publication/handlers/activityDigest'
+import {
+  initializeNotificationEventsConsumption,
+  initializeNotificationEventsQueue,
+  shutdownEventQueue
+} from '@/modules/notifications/services/events/queue'
+import { notificationListenersFactory } from '@/modules/notifications/events/notificationListener'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { scheduleDelayedEmailNotifications } from '@/modules/notifications/tasks/delayedNotifications'
+import type cron from 'node-cron'
+import { NotificationType } from '@speckle/shared/notifications'
 
-export async function initializeConsumption(
+let scheduledTasks: cron.ScheduledTask[] = []
+
+export async function initializePublicationConsumption(
   customHandlers?: Partial<NotificationTypeHandlers>
 ) {
   moduleLogger.info('📞 Initializing notification queue consumption...')
@@ -28,7 +39,7 @@ export async function initializeConsumption(
 
   registerNotificationHandlers(customHandlers || allHandlers)
 
-  await initializeQueue()
+  await initializePublicationQueue()
 
   if (shouldDisableNotificationsConsumption()) {
     moduleLogger.info('Skipping notification consumption...')
@@ -40,10 +51,24 @@ export async function initializeConsumption(
 export const init: SpeckleModule['init'] = async ({ isInitial }) => {
   moduleLogger.info('📞 Init notifications module')
   if (isInitial) {
-    await initializeConsumption()
+    await initializePublicationConsumption()
+
+    await initializeNotificationEventsQueue()
+    await initializeNotificationEventsConsumption()
+
+    notificationListenersFactory({
+      eventBus: getEventBus(),
+      logger: notificationsLogger
+    })()
+
+    scheduledTasks = [await scheduleDelayedEmailNotifications()]
   }
 }
 
 export const shutdown: SpeckleModule['shutdown'] = async () => {
-  await shutdownQueue()
+  await shutdownPublicationQueue()
+  await shutdownEventQueue()
+  scheduledTasks.forEach((task) => {
+    task.stop()
+  })
 }

@@ -154,6 +154,14 @@ export type EventPayload<T extends EventSubscriptionKey> = T extends AllEventsWi
   ? EventPayloadsMap[T]
   : never
 
+/**
+ * To single specify which event to use
+ */
+export type EventType<EventName extends EventNames> = {
+  eventName: EventName
+  payload: EventTypes[EventName]
+}
+
 export function initializeEventBus() {
   const emitter = new EventEmitter({ wildcard: true })
 
@@ -163,10 +171,9 @@ export function initializeEventBus() {
      * execute. Any errors thrown in the listeners will bubble up and throw from
      * the part of code that triggers this emit() call.
      */
-    emit: async <EventName extends EventNames>(args: {
-      eventName: EventName
-      payload: EventTypes[EventName]
-    }): Promise<void> => {
+    emit: async <EventName extends EventNames>(
+      args: EventType<EventName>
+    ): Promise<void> => {
       // curate the proper payload here and eventName object here, before emitting
       await emitter.emitAsync(args.eventName, args)
     },

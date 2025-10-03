@@ -108,6 +108,7 @@
       "./acc": "./src/acc/index.ts",
       "./dist/*": "./dist/*",
       "./images/base64": "./src/images/base64.ts",
+      "./notifications": "./src/notifications/index.ts",
       "./saved-views": "./src/saved-views/index.ts"
     },
     "exclude": [
@@ -343,6 +344,16 @@
       "require": {
         "types": "./dist/commonjs/images/base64.d.ts",
         "default": "./dist/commonjs/images/base64.js"
+      }
+    },
+    "./notifications": {
+      "import": {
+        "types": "./dist/esm/notifications/index.d.ts",
+        "default": "./dist/esm/notifications/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/notifications/index.d.ts",
+        "default": "./dist/commonjs/notifications/index.js"
       }
     },
     "./saved-views": {

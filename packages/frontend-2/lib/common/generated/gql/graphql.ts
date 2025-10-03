@@ -2064,6 +2064,7 @@ export type Mutation = {
    */
   inviteResend: Scalars['Boolean']['output'];
   modelMutations: ModelMutations;
+  notificationMutations: NotificationMutations;
   /** @deprecated Part of the old API surface and will be removed in the future. */
   objectCreate: Array<Scalars['String']['output']>;
   projectMutations: ProjectMutations;
@@ -2455,6 +2456,39 @@ export type MutationWebhookDeleteArgs = {
 
 export type MutationWebhookUpdateArgs = {
   webhook: WebhookUpdateInput;
+};
+
+export type Notification = {
+  __typename?: 'Notification';
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  payload: Scalars['JSONObject']['output'];
+  read: Scalars['Boolean']['output'];
+  type: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type NotificationMutations = {
+  __typename?: 'NotificationMutations';
+  /** Delete an existing notification */
+  bulkDelete: Scalars['Boolean']['output'];
+  /** update notidication */
+  bulkUpdate: Scalars['Boolean']['output'];
+};
+
+
+export type NotificationMutationsBulkDeleteArgs = {
+  ids: Array<Scalars['String']['input']>;
+};
+
+
+export type NotificationMutationsBulkUpdateArgs = {
+  ids: Array<Scalars['String']['input']>;
+  input: NotificationUpdateInput;
+};
+
+export type NotificationUpdateInput = {
+  read: Scalars['Boolean']['input'];
 };
 
 export type Object = {
@@ -4944,6 +4978,8 @@ export type User = {
   meta: UserMeta;
   name: Scalars['String']['output'];
   notificationPreferences: Scalars['JSONObject']['output'];
+  /** List all notifications for the user */
+  notifications: UserNotificationCollection;
   permissions: RootPermissionChecks;
   profiles?: Maybe<Scalars['JSONObject']['output']>;
   /** Get pending project access request, that the user made */
@@ -5026,6 +5062,16 @@ export type UserCommitsArgs = {
 export type UserFavoriteStreamsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
+};
+
+
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
+export type UserNotificationsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -5217,6 +5263,13 @@ export type UserMetaMutationsSetSpeckleCon25BannerDismissedArgs = {
 
 export type UserMetaMutationsSetSpeckleConBannerDismissedArgs = {
   value: Scalars['Boolean']['input'];
+};
+
+export type UserNotificationCollection = {
+  __typename?: 'UserNotificationCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<Notification>;
+  totalCount: Scalars['Int']['output'];
 };
 
 export type UserProjectCollection = {
@@ -9470,6 +9523,8 @@ export type AllObjectTypes = {
   ModelsTreeItem: ModelsTreeItem,
   ModelsTreeItemCollection: ModelsTreeItemCollection,
   Mutation: Mutation,
+  Notification: Notification,
+  NotificationMutations: NotificationMutations,
   Object: Object,
   ObjectCollection: ObjectCollection,
   PasswordStrengthCheckFeedback: PasswordStrengthCheckFeedback,
@@ -9550,6 +9605,7 @@ export type AllObjectTypes = {
   UserGendoAICredits: UserGendoAiCredits,
   UserMeta: UserMeta,
   UserMetaMutations: UserMetaMutations,
+  UserNotificationCollection: UserNotificationCollection,
   UserProjectCollection: UserProjectCollection,
   UserProjectsUpdatedMessage: UserProjectsUpdatedMessage,
   UserSearchResultCollection: UserSearchResultCollection,
@@ -10299,6 +10355,7 @@ export type MutationFieldArgs = {
   inviteDelete: MutationInviteDeleteArgs,
   inviteResend: MutationInviteResendArgs,
   modelMutations: {},
+  notificationMutations: {},
   objectCreate: MutationObjectCreateArgs,
   projectMutations: {},
   requestVerification: {},
@@ -10333,6 +10390,18 @@ export type MutationFieldArgs = {
   webhookUpdate: MutationWebhookUpdateArgs,
   workspaceJoinRequestMutations: {},
   workspaceMutations: {},
+}
+export type NotificationFieldArgs = {
+  createdAt: {},
+  id: {},
+  payload: {},
+  read: {},
+  type: {},
+  updatedAt: {},
+}
+export type NotificationMutationsFieldArgs = {
+  bulkDelete: NotificationMutationsBulkDeleteArgs,
+  bulkUpdate: NotificationMutationsBulkUpdateArgs,
 }
 export type ObjectFieldArgs = {
   applicationId: {},
@@ -10986,6 +11055,7 @@ export type UserFieldArgs = {
   meta: {},
   name: {},
   notificationPreferences: {},
+  notifications: UserNotificationsArgs,
   permissions: {},
   profiles: {},
   projectAccessRequest: UserProjectAccessRequestArgs,
@@ -11039,6 +11109,11 @@ export type UserMetaMutationsFieldArgs = {
   setNewWorkspaceExplainerDismissed: UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs,
   setSpeckleCon25BannerDismissed: UserMetaMutationsSetSpeckleCon25BannerDismissedArgs,
   setSpeckleConBannerDismissed: UserMetaMutationsSetSpeckleConBannerDismissedArgs,
+}
+export type UserNotificationCollectionFieldArgs = {
+  cursor: {},
+  items: {},
+  totalCount: {},
 }
 export type UserProjectCollectionFieldArgs = {
   cursor: {},
@@ -11455,6 +11530,8 @@ export type AllObjectFieldArgTypes = {
   ModelsTreeItem: ModelsTreeItemFieldArgs,
   ModelsTreeItemCollection: ModelsTreeItemCollectionFieldArgs,
   Mutation: MutationFieldArgs,
+  Notification: NotificationFieldArgs,
+  NotificationMutations: NotificationMutationsFieldArgs,
   Object: ObjectFieldArgs,
   ObjectCollection: ObjectCollectionFieldArgs,
   PasswordStrengthCheckFeedback: PasswordStrengthCheckFeedbackFieldArgs,
@@ -11535,6 +11612,7 @@ export type AllObjectFieldArgTypes = {
   UserGendoAICredits: UserGendoAiCreditsFieldArgs,
   UserMeta: UserMetaFieldArgs,
   UserMetaMutations: UserMetaMutationsFieldArgs,
+  UserNotificationCollection: UserNotificationCollectionFieldArgs,
   UserProjectCollection: UserProjectCollectionFieldArgs,
   UserProjectsUpdatedMessage: UserProjectsUpdatedMessageFieldArgs,
   UserSearchResultCollection: UserSearchResultCollectionFieldArgs,

@@ -1,5 +1,5 @@
 import type { NotificationPublisher } from '@/modules/notifications/helpers/types'
-import { NotificationType } from '@/modules/notifications/helpers/types'
+import { NotificationType } from '@speckle/shared/notifications'
 import type {
   CreateActivitySummary,
   GetActiveUserStreams,

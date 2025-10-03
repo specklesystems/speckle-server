@@ -251,3 +251,21 @@ export const archiveCommentAndNotifyFactory =
 
     return updatedComment
   }
+
+export const markCommentViewedFactory =
+  (deps: {
+    markCommentViewed: MarkCommentViewed
+    emitEvent: EventBusEmit
+  }): MarkCommentViewed =>
+  async (commentId: string, userId: string) => {
+    const updated = await deps.markCommentViewed(commentId, userId)
+    await deps.emitEvent({
+      eventName: CommentEvents.Viewed,
+      payload: {
+        commentId,
+        userId
+      }
+    })
+
+    return updated
+  }
