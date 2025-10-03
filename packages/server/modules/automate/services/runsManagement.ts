@@ -92,66 +92,113 @@ export const reportFunctionRunStatusFactory =
     automationRunUpdater: UpdateAutomationRun
     emitEvent: EventBusEmit
   }) =>
-  async (
-    params: Pick<
-      AutomationFunctionRunRecord,
-      'runId' | 'status' | 'statusMessage' | 'contextView' | 'results'
-    > & { projectId: string }
-  ): Promise<boolean> => {
-    const {
-      getAutomationFunctionRunRecord,
-      upsertAutomationFunctionRunRecord,
-      automationRunUpdater,
-      emitEvent
-    } = deps
-    const { projectId, runId, ...statusReportData } = params
+    async (
+      params: Pick<
+        AutomationFunctionRunRecord,
+        'runId' | 'status' | 'statusMessage' | 'contextView' | 'results'
+      > & { projectId: string }
+    ): Promise<boolean> => {
+      const {
+        getAutomationFunctionRunRecord,
+        upsertAutomationFunctionRunRecord,
+        automationRunUpdater,
+        emitEvent
+      } = deps
+      const { projectId, runId, ...statusReportData } = params
 
-    const currentFunctionRunRecordResult = await getAutomationFunctionRunRecord(runId)
+      const currentFunctionRunRecordResult = await getAutomationFunctionRunRecord(runId)
 
-    if (!currentFunctionRunRecordResult) {
-      throw new FunctionRunNotFoundError()
-    }
-
-    const { automationId, ...currentFunctionRunRecord } = currentFunctionRunRecordResult
-
-    if (statusReportData.results) {
-      statusReportData.results = Automate.AutomateTypes.formatResultsSchema(
-        statusReportData.results
-      )
-    }
-
-    if (statusReportData.contextView) validateContextView(statusReportData.contextView)
-
-    const currentStatus = currentFunctionRunRecord.status
-    const nextStatus = statusReportData.status
-
-    validateStatusChange(currentStatus, nextStatus)
-
-    const elapsed = new Date().getTime() - currentFunctionRunRecord.createdAt.getTime()
-
-    const nextFunctionRunRecord = {
-      ...currentFunctionRunRecord,
-      ...statusReportData,
-      elapsed
-    }
-
-    await upsertAutomationFunctionRunRecord(nextFunctionRunRecord)
-
-    const updatedRun = await automationRunUpdater({
-      id: currentFunctionRunRecord.runId,
-      status: resolveStatusFromFunctionRunStatuses([nextStatus]),
-      updatedAt: new Date()
-    })
-
-    await emitEvent({
-      eventName: AutomationRunEvents.StatusUpdated,
-      payload: {
-        run: updatedRun,
-        functionRun: nextFunctionRunRecord,
-        automationId,
-        projectId
+      if (!currentFunctionRunRecordResult) {
+        throw new FunctionRunNotFoundError()
       }
-    })
 
-    return true
-  }
+      const { automationId, ...currentFunctionRunRecord } = currentFunctionRunRecordResult
+
+      if (statusReportData.results) {
+        statusReportData.results = Automate.AutomateTypes.formatResultsSchema(
+          statusReportData.results
+        )
+      }
+
+      if (statusReportData.contextView) validateContextView(statusReportData.contextView)
+
+      const currentStatus = currentFunctionRunRecord.status
+      const nextStatus = statusReportData.status
+
+      validateStatusChange(currentStatus, nextStatus)
+
+      const elapsed = new Date().getTime() - currentFunctionRunRecord.createdAt.getTime()
+
+      const nextFunctionRunRecord = {
+        ...currentFunctionRunRecord,
+        ...statusReportData,
+        elapsed
+      }
+
+      await upsertAutomationFunctionRunRecord(nextFunctionRunRecord)
+
+      const updatedRun = await automationRunUpdater({
+        id: currentFunctionRunRecord.runId,
+        status: resolveStatusFromFunctionRunStatuses([nextStatus]),
+        updatedAt: new Date()
+      })
+
+      await emitEvent({
+        eventName: AutomationRunEvents.StatusUpdated,
+        payload: {
+          run: updatedRun,
+          functionRun: nextFunctionRunRecord,
+          automationId,
+          projectId
+        }
+      })
+
+      return true
+    }
+
+export const reportFunctionRunProgressFactory =
+  (deps: {
+    getAutomationFunctionRunRecord: GetFunctionRun,
+    upsertAutomationFunctionRunRecord: UpsertAutomationFunctionRun,
+    updateAutomationRun: UpdateAutomationRun
+    emitEvent: EventBusEmit
+  }) =>
+    async (params: Pick<AutomationFunctionRunRecord, 'runId' | 'progress'> & { projectId: string }): Promise<boolean> => {
+      const { getAutomationFunctionRunRecord, upsertAutomationFunctionRunRecord, updateAutomationRun, emitEvent } = deps
+      const { projectId, runId, progress } = params
+
+      const currentFunctionRun = await getAutomationFunctionRunRecord(runId)
+
+      if (!currentFunctionRun) {
+        throw new FunctionRunNotFoundError()
+      }
+
+      if (currentFunctionRun.status !== 'running' || currentFunctionRun.progress > progress) {
+        return true
+      }
+
+      const nextFunctionRun = {
+        ...currentFunctionRun,
+        progress
+      }
+
+      await upsertAutomationFunctionRunRecord(nextFunctionRun)
+
+      const updatedRun = await updateAutomationRun({
+        id: currentFunctionRun.runId,
+        status: 'running',
+        updatedAt: new Date()
+      })
+
+      await emitEvent({
+        eventName: AutomationRunEvents.StatusUpdated,
+        payload: {
+          run: updatedRun,
+          functionRun: nextFunctionRun,
+          automationId: currentFunctionRun.automationId,
+          projectId
+        }
+      })
+
+      return true
+    }

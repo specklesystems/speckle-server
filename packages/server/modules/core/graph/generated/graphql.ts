@@ -558,11 +558,19 @@ export type AutomateFunctionRun = {
   functionId?: Maybe<Scalars['String']['output']>;
   functionReleaseId?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  progress: Scalars['Float']['output'];
   /** AutomateTypes.ResultsSchema type from @speckle/shared */
   results?: Maybe<Scalars['JSONObject']['output']>;
   status: AutomateRunStatus;
   statusMessage?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
+};
+
+export type AutomateFunctionRunProgressReportInput = {
+  functionRunId: Scalars['String']['input'];
+  /** Completion progress as a value between 0 and 1 */
+  progress: Scalars['Float']['input'];
+  projectId: Scalars['String']['input'];
 };
 
 export type AutomateFunctionRunStatusReportInput = {
@@ -2024,6 +2032,7 @@ export type Mutation = {
   appTokenCreate: Scalars['String']['output'];
   /** Update an existing third party application. **Note: This will invalidate all existing tokens, refresh tokens and access codes and will require existing users to re-authorize it.** */
   appUpdate: Scalars['Boolean']['output'];
+  automateFunctionRunProgressReport: Scalars['Boolean']['output'];
   automateFunctionRunStatusReport: Scalars['Boolean']['output'];
   automateMutations: AutomateMutations;
   /** @deprecated Part of the old API surface and will be removed in the future. Use ModelMutations.create instead. */
@@ -2237,6 +2246,11 @@ export type MutationAppTokenCreateArgs = {
 
 export type MutationAppUpdateArgs = {
   app: AppUpdateInput;
+};
+
+
+export type MutationAutomateFunctionRunProgressReportArgs = {
+  input: AutomateFunctionRunProgressReportInput;
 };
 
 
@@ -6431,6 +6445,7 @@ export type ResolversTypes = {
   AutomateFunctionReleaseCollection: ResolverTypeWrapper<Omit<AutomateFunctionReleaseCollection, 'items'> & { items: Array<ResolversTypes['AutomateFunctionRelease']> }>;
   AutomateFunctionReleasesFilter: AutomateFunctionReleasesFilter;
   AutomateFunctionRun: ResolverTypeWrapper<AutomateFunctionRunGraphQLReturn>;
+  AutomateFunctionRunProgressReportInput: AutomateFunctionRunProgressReportInput;
   AutomateFunctionRunStatusReportInput: AutomateFunctionRunStatusReportInput;
   AutomateFunctionTemplate: ResolverTypeWrapper<AutomateFunctionTemplate>;
   AutomateFunctionTemplateLanguage: AutomateFunctionTemplateLanguage;
@@ -6851,6 +6866,7 @@ export type ResolversParentTypes = {
   AutomateFunctionReleaseCollection: Omit<AutomateFunctionReleaseCollection, 'items'> & { items: Array<ResolversParentTypes['AutomateFunctionRelease']> };
   AutomateFunctionReleasesFilter: AutomateFunctionReleasesFilter;
   AutomateFunctionRun: AutomateFunctionRunGraphQLReturn;
+  AutomateFunctionRunProgressReportInput: AutomateFunctionRunProgressReportInput;
   AutomateFunctionRunStatusReportInput: AutomateFunctionRunStatusReportInput;
   AutomateFunctionTemplate: AutomateFunctionTemplate;
   AutomateFunctionToken: AutomateFunctionToken;
@@ -7491,6 +7507,7 @@ export type AutomateFunctionRunResolvers<ContextType = GraphQLContext, ParentTyp
   functionId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   functionReleaseId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  progress?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   results?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['AutomateRunStatus'], ParentType, ContextType>;
   statusMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -8100,6 +8117,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   appRevokeAccess?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationAppRevokeAccessArgs, 'appId'>>;
   appTokenCreate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationAppTokenCreateArgs, 'token'>>;
   appUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationAppUpdateArgs, 'app'>>;
+  automateFunctionRunProgressReport?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationAutomateFunctionRunProgressReportArgs, 'input'>>;
   automateFunctionRunStatusReport?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationAutomateFunctionRunStatusReportArgs, 'input'>>;
   automateMutations?: Resolver<ResolversTypes['AutomateMutations'], ParentType, ContextType>;
   branchCreate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationBranchCreateArgs, 'branch'>>;

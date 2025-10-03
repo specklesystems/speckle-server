@@ -76,6 +76,7 @@ type AutomateFunctionRun {
   id: ID!
   status: AutomateRunStatus!
   statusMessage: String
+  progress: Float!
   contextView: String
   functionId: String
   functionReleaseId: String
@@ -235,6 +236,15 @@ input AutomateFunctionRunStatusReportInput {
   results: JSONObject
 }
 
+input AutomateFunctionRunProgressReportInput {
+  projectId: String!
+  functionRunId: String!
+  """
+  Completion progress as a value between 0 and 1
+  """
+  progress: Float!
+}
+
 input CreateAutomateFunctionInput {
   name: String!
   template: AutomateFunctionTemplateLanguage!
@@ -385,6 +395,9 @@ extend type Mutation {
   ): Boolean!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "automate:report-results")
+  automateFunctionRunProgressReport(
+    input: AutomateFunctionRunProgressReportInput!
+  ): Boolean!
   automateMutations: AutomateMutations! @hasServerRole(role: SERVER_GUEST)
 }
 

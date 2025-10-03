@@ -10,15 +10,15 @@ export type AutomationRecord = {
   updatedAt: Date
   isDeleted: boolean
 } & (
-  | {
+    | {
       executionEngineAutomationId: string
       isTestAutomation: false
     }
-  | {
+    | {
       executionEngineAutomationId: null
       isTestAutomation: true
     }
-)
+  )
 
 export type TestAutomation<R extends AutomationRecord> = R & {
   isTestAutomation: true
@@ -151,6 +151,7 @@ export type AutomationFunctionRunRecord = {
   functionId: string
   elapsed: number
   status: AutomationRunStatus
+  progress: number
   createdAt: Date
   updatedAt: Date
   contextView: string | null
