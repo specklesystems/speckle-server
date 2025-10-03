@@ -30,7 +30,13 @@ import { type UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import type { UserRecord } from '@/modules/core/helpers/userHelper'
 import { sanitizeImageUrl } from '@/modules/shared/helpers/sanitization'
 import type { NullableKeysToOptional, ServerRoles } from '@speckle/shared'
-import { blockedDomains, isNullOrUndefined, isPaidPlan, Roles } from '@speckle/shared'
+import {
+  blockedDomains,
+  isNullOrUndefined,
+  isPaidPlan,
+  PaidWorkspacePlanStatuses,
+  Roles
+} from '@speckle/shared'
 import { pick } from 'lodash-es'
 import bcrypt from 'bcrypt'
 import crs from 'crypto-random-string'
@@ -349,7 +355,7 @@ export const deleteUserFactory =
       if (
         workspacePlan &&
         isPaidPlan(workspacePlan.name) &&
-        workspacePlan.status === 'valid'
+        workspacePlan.status === PaidWorkspacePlanStatuses.Valid
       ) {
         throw new UserInputError(
           `${workspace.name}: Workspace subscription must be canceled first`
