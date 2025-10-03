@@ -39,7 +39,8 @@ export const WriteTypes = StringEnum([
   'UpdateGeneral',
   'MoveView',
   'EditTitle',
-  'EditDescription'
+  'EditDescription',
+  'SetHomeView'
 ])
 export type WriteTypes = StringEnumValues<typeof WriteTypes>
 
@@ -144,6 +145,7 @@ export const ensureCanAccessSavedViewFragment: AuthPolicyEnsureFragment<
       case WriteTypes.MoveView:
       case WriteTypes.EditTitle:
       case WriteTypes.EditDescription:
+      case WriteTypes.SetHomeView:
         return ok()
       case WriteTypes.UpdateGeneral:
         return err(

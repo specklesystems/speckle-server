@@ -1911,6 +1911,25 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(update?.name).to.equal(newName)
       })
 
+      it('succeeds if non author contributor is updating the view to be a home view', async () => {
+        const res = await updateView(
+          {
+            input: {
+              id: testView.id,
+              projectId: updatablesProject.id,
+              isHomeView: true
+            }
+          },
+          { authUserId: notAuthorButContributor.id }
+        )
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.be.ok
+
+        const update = res.data?.projectMutations.savedViewMutations.updateView
+        expect(update?.isHomeView).to.be.true
+      })
+
       it('succeeds if non author contributor is updating the description of the view', async () => {
         const newDescription = 'Updated View Description'
 
