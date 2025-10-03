@@ -1,3 +1,4 @@
+import { isObject } from 'lodash-es'
 import mitt from 'mitt'
 import type {
   EventBusKeyPayloadMap,
@@ -19,7 +20,7 @@ export default defineNuxtPlugin(() => {
           handler?: (event: EventBusKeyPayloadMap[T]) => void
         ) => emitter.off(key, handler),
         emit: <T extends EventBusKeys>(key: T, payload: EventBusKeyPayloadMap[T]) =>
-          emitter.emit(key, payload)
+          emitter.emit(key, isObject(payload) ? toRaw(payload) : payload)
       }
     }
   }
