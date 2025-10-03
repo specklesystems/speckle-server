@@ -11,12 +11,12 @@
     />
 
     <CommonLoadingBar v-if="loading" loading />
-    <ProjectPageAccModelItem
+    <IntegrationsAccModelItem
       v-for="model in models"
       :key="model.id"
       :model="model"
       :selected="model.id === selectedModel?.id"
-      :disabled="!!props.accSyncItems?.find((i) => i.modelId === model.id)"
+      :disabled="!!props.accSyncItems?.find((i) => i.model?.id === model.id)"
       @click="onModelItemClicked(model)"
     />
     <button

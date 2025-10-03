@@ -88,7 +88,8 @@ export const getSavedViewFake = fakeGetFactory<SavedView>(() => ({
   authorId: nanoid(10),
   projectId: nanoid(10),
   groupId: null,
-  visibility: SavedViewVisibility.public
+  visibility: SavedViewVisibility.public,
+  resourceIds: [nanoid(10)]
 }))
 
 export const getSavedViewGroupFake = fakeGetFactory<SavedViewGroup>(() => ({

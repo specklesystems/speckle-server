@@ -43,7 +43,11 @@ import type {
   ResourceBuilder,
   ViewerResourcesTarget
 } from '@speckle/shared/viewer/route'
-import { isModelResource, resourceBuilder } from '@speckle/shared/viewer/route'
+import {
+  isModelResource,
+  isObjectResource,
+  resourceBuilder
+} from '@speckle/shared/viewer/route'
 import type { VersionedSerializedViewerState } from '@speckle/shared/viewer/state'
 import { inputToVersionedState } from '@speckle/shared/viewer/state'
 import { isValidBase64Image } from '@speckle/shared/images/base64'
@@ -77,11 +81,47 @@ const formatIncomingScreenshotFactory =
     }
   }
 
-/**
- * Validates an incoming resourceIdString against the resources in the project and returns the validated list (as a builder)
- */
-const validateProjectResourceIdStringFactory =
+const unwrapResourceIdStringFactory =
   (deps: { getViewerResourceGroups: GetViewerResourceGroups }) =>
+  async (params: { resourceIdString: ViewerResourcesTarget; projectId: string }) => {
+    const { resourceIdString, projectId } = params
+
+    // It could be a `$prefix` string, in which case we need to resolve the final resources there
+    const { groups: resourceGroups } = await deps.getViewerResourceGroups({
+      projectId,
+      loadedVersionsOnly: true,
+      resourceIdString: resourceIdString.toString(),
+      allowEmptyModels: true
+    })
+
+    const finalResourceIds = resourceBuilder()
+    for (const resourceGroup of resourceGroups) {
+      // If there's any items in there, add them
+      for (const resourceItem of resourceGroup.items) {
+        if (resourceItem.modelId) {
+          finalResourceIds.addModel(
+            resourceItem.modelId,
+            resourceItem.versionId || undefined
+          )
+        } else {
+          finalResourceIds.addObject(resourceItem.objectId)
+        }
+      }
+
+      if (!resourceGroup.items.length) {
+        // If there were no items, its an empty model
+        finalResourceIds.addResources(resourceGroup.identifier)
+      }
+    }
+
+    return finalResourceIds
+  }
+
+/**
+ * Validates & formats an incoming resourceIdString against the resources in the project and returns the final list (as a builder)
+ */
+const validateAndFormatProjectResourceIdStringFactory =
+  (deps: DependenciesOf<typeof unwrapResourceIdStringFactory>) =>
   async (params: {
     resourceIdString: ViewerResourcesTarget
     projectId: string
@@ -89,9 +129,8 @@ const validateProjectResourceIdStringFactory =
   }) => {
     const { resourceIdString, errorMetadata, projectId } = params
 
-    // Validate resourceIdString - it should only point to valid resources belonging to the project
-    const resourceIds = resourceBuilder().addResources(resourceIdString)
-    if (!resourceIds.length) {
+    const inputResourceIds = resourceBuilder().addResources(resourceIdString)
+    if (!inputResourceIds.length) {
       throw new SavedViewInvalidResourceTargetError(
         "No valid resources referenced in 'resourceIdString'",
         {
@@ -100,34 +139,47 @@ const validateProjectResourceIdStringFactory =
       )
     }
 
-    const { groups: resourceGroups } = await deps.getViewerResourceGroups({
-      projectId,
-      loadedVersionsOnly: true,
-      resourceIdString: resourceIds.toString(),
-      allowEmptyModels: true
+    const finalResourceIds = await unwrapResourceIdStringFactory(deps)({
+      resourceIdString: inputResourceIds.toString(),
+      projectId
     })
 
     // Check if any of the resources could not be found
-    const failingResources = resourceIds.clone().filter((rId) => {
-      const resourceGroup = resourceGroups.find(
-        (rg) => rg.identifier === rId.toString()
-      )
-      if (!resourceGroup) return true
-      return false
-    })
-    if (failingResources.length) {
+    let hasMissingResource = false
+    for (const resourceId of inputResourceIds) {
+      // Only check actual model/object resources
+      if (isModelResource(resourceId) || isObjectResource(resourceId)) {
+        const matchingResource = finalResourceIds.toResources().find((r) => {
+          // only compare modelId, if original didnt have version id set
+          if (isModelResource(resourceId) && isModelResource(r)) {
+            if (!resourceId.versionId) {
+              return `${r.modelId}` === `${resourceId.modelId}`
+            }
+          }
+
+          return `${r}` === `${resourceId}`
+        })
+
+        if (!matchingResource) {
+          hasMissingResource = true
+        }
+      }
+    }
+
+    if (hasMissingResource) {
       throw new SavedViewInvalidResourceTargetError(
         'One or more resources could not be found in the project: {resourceIdString}',
         {
           info: {
             ...errorMetadata,
-            resourceIdString: failingResources.toString()
+            resourceIdString,
+            finalResourceIds: finalResourceIds.toString()
           }
         }
       )
     }
 
-    return resourceIds
+    return finalResourceIds
   }
 
 const validateViewerStateFactory =
@@ -265,7 +317,7 @@ export const createSavedViewFactory =
     const isHomeView = input.isHomeView || false
 
     // Validate resourceIdString - it should only point to valid resources belonging to the project
-    const resourceIds = await validateProjectResourceIdStringFactory(deps)({
+    const resourceIds = await validateAndFormatProjectResourceIdStringFactory(deps)({
       resourceIdString,
       projectId,
       errorMetadata: {
@@ -440,14 +492,16 @@ export const createSavedViewGroupFactory =
     }
 
     // Validate resourceIdString - it should only point to valid resources belonging to the project
-    const resourceIds = await validateProjectResourceIdStringFactory(deps)({
-      resourceIdString: formatResourceIdsForGroup(resourceIdString),
-      projectId,
-      errorMetadata: {
-        input,
-        authorId
-      }
-    })
+    const resourceIds = formatResourceIdsForGroup(
+      await validateAndFormatProjectResourceIdStringFactory(deps)({
+        resourceIdString,
+        projectId,
+        errorMetadata: {
+          input,
+          authorId
+        }
+      })
+    )
 
     // Insert
     const group = await deps.storeSavedViewGroup({
@@ -471,11 +525,20 @@ export const createSavedViewGroupFactory =
   }
 
 export const getProjectSavedViewGroupsFactory =
-  (deps: {
-    getProjectSavedViewGroupsPageItems: GetProjectSavedViewGroupsPageItems
-    getProjectSavedViewGroupsTotalCount: GetProjectSavedViewGroupsTotalCount
-  }): GetProjectSavedViewGroups =>
+  (
+    deps: {
+      getProjectSavedViewGroupsPageItems: GetProjectSavedViewGroupsPageItems
+      getProjectSavedViewGroupsTotalCount: GetProjectSavedViewGroupsTotalCount
+    } & DependenciesOf<typeof unwrapResourceIdStringFactory>
+  ): GetProjectSavedViewGroups =>
   async (params) => {
+    // Resolve final resourceIdString from input one (may contain $prefix ids that need unwrapping)
+    const finalResourceIds = await unwrapResourceIdStringFactory(deps)({
+      resourceIdString: params.resourceIdString,
+      projectId: params.projectId
+    })
+    params.resourceIdString = finalResourceIds.toString()
+
     const noItemsNeeded = params.limit === 0
     const [totalCount, pageItems] = await Promise.all([
       deps.getProjectSavedViewGroupsTotalCount(params),
@@ -571,7 +634,7 @@ export const updateSavedViewFactory =
       rebalanceViewPositions: RebalanceViewPositions
       downscaleScreenshotForThumbnail: DownscaleScreenshotForThumbnail
       emit: EventBusEmit
-    } & DependenciesOf<typeof validateProjectResourceIdStringFactory>
+    } & DependenciesOf<typeof validateAndFormatProjectResourceIdStringFactory>
   ): UpdateSavedView =>
   async (params) => {
     const { input, userId } = params
@@ -624,7 +687,7 @@ export const updateSavedViewFactory =
     // Validate updated resourceIds
     let resourceIds: ResourceBuilder | undefined = undefined
     if ('resourceIdString' in changes && changes.resourceIdString) {
-      const validate = validateProjectResourceIdStringFactory(deps)
+      const validate = validateAndFormatProjectResourceIdStringFactory(deps)
       resourceIds = await validate({
         resourceIdString: changes.resourceIdString,
         projectId: input.projectId,

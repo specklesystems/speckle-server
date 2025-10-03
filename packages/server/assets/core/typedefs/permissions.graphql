@@ -10,7 +10,6 @@ type ProjectPermissionChecks {
   canDelete: PermissionCheckResult!
   canUpdateAllowPublicComments: PermissionCheckResult!
   canReadSettings: PermissionCheckResult!
-  canReadAccIntegrationSettings: PermissionCheckResult!
   canReadWebhooks: PermissionCheckResult!
   canLeave: PermissionCheckResult!
   canRequestRender: PermissionCheckResult!

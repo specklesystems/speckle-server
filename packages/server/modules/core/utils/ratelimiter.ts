@@ -167,6 +167,16 @@ export const LIMITS = <const>{
       duration: 1 * TIME.minute
     }
   },
+  'POST /auth/pwdreset/request': {
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
+      duration: 10 * TIME.minute
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '10'),
+      duration: 30 * TIME.minute
+    }
+  },
   '/auth/local/login': {
     regularOptions: {
       limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),

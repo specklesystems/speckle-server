@@ -1,4 +1,4 @@
-import type { AccRegion, AccSyncItemStatus } from '@/modules/acc/domain/constants'
+import type { AccRegion, AccSyncItemStatus } from '@/modules/acc/domain/acc/constants'
 
 export type AccSyncItem = {
   id: string
@@ -20,6 +20,36 @@ export type AccSyncItem = {
   authorId: string
   createdAt: Date
   updatedAt: Date
+}
+
+export type DataManagementFolderContentsFolder = {
+  id: string
+  type: 'folders'
+  attributes: {
+    name?: string
+    displayName: string
+    objectCount: number
+  }
+}
+
+export type DataManagementFolderContentsItem = {
+  id: string
+  type: 'items'
+  attributes: {
+    name?: string
+    displayName: string
+  }
+}
+
+export type DataManagementFolderContentsItemVersion = {
+  id: string
+  type: 'versions'
+  attributes: {
+    name?: string
+    displayName: string
+    versionNumber: number
+    fileType?: string
+  }
 }
 
 export type ModelDerivativeServiceDesignManifest = {
