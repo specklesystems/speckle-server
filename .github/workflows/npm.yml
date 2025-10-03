@@ -61,5 +61,5 @@ jobs:
       - name: Cat package.json for testing
         run: |
           yarn workspaces foreach -pvW exec 'cat package.json'
-      # - name: publish to npm
-      #   run: 'yarn workspaces foreach -pvW --no-private npm publish --access ${NPM_PUBLISH_ACCESS}'
+      - name: publish to npm
+        run: 'yarn workspaces foreach -pvW --no-private npm publish --access ${NPM_PUBLISH_ACCESS}'
