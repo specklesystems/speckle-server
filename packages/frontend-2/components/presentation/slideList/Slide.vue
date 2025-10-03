@@ -23,6 +23,7 @@
 import { graphql } from '~~/lib/common/generated/gql'
 import type { PresentationSlideListSlide_SavedViewFragment } from '~~/lib/common/generated/gql/graphql'
 import { useInjectedPresentationState } from '~/lib/presentations/composables/setup'
+import { useResetViewUtils } from '~/lib/presentations/composables/utils'
 
 graphql(`
   fragment PresentationSlideListSlide_SavedView on SavedView {
@@ -39,9 +40,9 @@ const props = defineProps<{
 }>()
 
 const {
-  ui: { slideIdx: currentSlideIdx, slide: currentSlide },
-  viewer: { resetView }
+  ui: { slideIdx: currentSlideIdx, slide: currentSlide }
 } = useInjectedPresentationState()
+const { resetView } = useResetViewUtils()
 
 const isCurrentSlide = computed(() => currentSlide.value?.id === props.slide.id)
 

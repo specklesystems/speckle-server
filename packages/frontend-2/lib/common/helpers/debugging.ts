@@ -23,7 +23,7 @@ export function wrapRefWithTracking<R extends Ref<unknown>>(
     },
     set: (newVal) => {
       if (!readsOnly) {
-        logger().debug(`debugging: '${name}' written to`, newVal, getTrace())
+        logger().debug(`debugging: '${name}' written to`, { newVal }, getTrace())
       }
 
       ref.value = newVal

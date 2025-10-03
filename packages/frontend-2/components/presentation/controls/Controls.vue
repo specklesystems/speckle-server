@@ -27,6 +27,7 @@ import { LucideChevronLeft, LucideChevronRight, LucideRotateCcw } from 'lucide-v
 import { useInjectedPresentationState } from '~/lib/presentations/composables/setup'
 import { clamp } from 'lodash-es'
 import { useEventListener } from '@vueuse/core'
+import { useResetViewUtils } from '~/lib/presentations/composables/utils'
 
 defineProps<{
   hideUi?: boolean
@@ -34,8 +35,9 @@ defineProps<{
 
 const {
   ui: { slideIdx: currentVisibleIndex, slideCount },
-  viewer: { resetView, hasViewChanged }
+  viewer: { hasViewChanged }
 } = useInjectedPresentationState()
+const { resetView } = useResetViewUtils()
 
 const disablePrevious = computed(() => currentVisibleIndex.value === 0)
 const disableNext = computed(() =>
