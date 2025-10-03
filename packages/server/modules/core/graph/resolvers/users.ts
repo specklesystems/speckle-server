@@ -54,7 +54,11 @@ import {
 import { setUserOnboardingChoicesFactory } from '@/modules/core/services/users/tracking'
 import { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
-import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
+import {
+  countWorkspaceUsersFactory,
+  getUserWorkspaceSeatsFactory,
+  getUserWorkspacesWithRoleFactory
+} from '@/modules/workspacesCore/repositories/workspaces'
 import {
   deleteProjectAndCommitsFactory,
   queryAllProjectsFactory
@@ -62,6 +66,7 @@ import {
 import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
 import { deleteProjectFactory } from '@/modules/core/repositories/projects'
 import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
+import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -349,7 +354,10 @@ export default {
 
               return res
             },
-            emitEvent: emit
+            emitEvent: emit,
+            getUserWorkspacesWithRole: getUserWorkspacesWithRoleFactory({ db: mainDb }),
+            countWorkspaceUsers: countWorkspaceUsersFactory({ db: mainDb }),
+            getWorkspacePlan: getWorkspacePlanFactory({ db: mainDb })
           })
 
           return deleteUser(user.id, context.userId)
@@ -408,7 +416,10 @@ export default {
 
               return res
             },
-            emitEvent: emit
+            emitEvent: emit,
+            getWorkspacePlan: getWorkspacePlanFactory({ db: mainDb }),
+            getUserWorkspacesWithRole: getUserWorkspacesWithRoleFactory({ db: mainDb }),
+            countWorkspaceUsers: countWorkspaceUsersFactory({ db: mainDb })
           })
 
           return deleteUser(user.id, context.userId)

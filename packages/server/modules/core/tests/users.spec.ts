@@ -102,7 +102,11 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getPaginatedBranchCommitsItemsByNameFactory } from '@/modules/core/services/commit/retrieval'
 import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branch/retrieval'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
-import { getUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/repositories/workspaces'
+import {
+  countWorkspaceUsersFactory,
+  getUserWorkspaceSeatsFactory,
+  getUserWorkspacesWithRoleFactory
+} from '@/modules/workspacesCore/repositories/workspaces'
 import {
   deleteProjectAndCommitsFactory,
   queryAllProjectsFactory
@@ -117,6 +121,15 @@ import type {
 } from '@/modules/core/domain/users/operations'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { deleteProjectFactory } from '@/modules/core/repositories/projects'
+
+import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
+import { buildBasicTestUser, createTestUser } from '@/test/authHelper'
+import {
+  assignToWorkspace,
+  buildBasicTestWorkspace,
+  createTestWorkspace
+} from '@/modules/workspaces/tests/helpers/creation'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -275,7 +288,10 @@ const deleteUser: DeleteUser = async (...input) =>
 
           return res
         },
-        emitEvent: emit
+        emitEvent: emit,
+        getWorkspacePlan: getWorkspacePlanFactory({ db: mainDb }),
+        getUserWorkspacesWithRole: getUserWorkspacesWithRoleFactory({ db: mainDb }),
+        countWorkspaceUsers: countWorkspaceUsersFactory({ db: mainDb })
       })
 
       return deleteUser(...input)
@@ -326,6 +342,8 @@ const getBranchesByStreamId = getPaginatedStreamBranchesFactory({
 const createObject = createObjectFactory({
   storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
+
+const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
 describe('Actors & Tokens @user-services @multiregion', () => {
   const myTestActor = {
@@ -494,6 +512,82 @@ describe('Actors & Tokens @user-services @multiregion', () => {
         )
       }
     })
+
+    it('protects from deleting the last admin user if the workspace has valid paid plan', async () => {
+      const user = buildBasicTestUser()
+      const workspace = buildBasicTestWorkspace({
+        ownerId: user.id
+      })
+      await createTestUser(user)
+      await createTestWorkspace(workspace, user, {
+        addPlan: {
+          status: 'valid',
+          name: 'proUnlimited'
+        }
+      })
+
+      const promise = deleteUser(user.id)
+
+      if (!FF_WORKSPACES_MODULE_ENABLED) {
+        // with no workspaces it works as intended
+        await expect(promise).to.eventually.be.fulfilled
+        const deletedUser = await getUser(user.id)
+        expect(deletedUser).to.be.undefined
+        return
+      }
+
+      await expect(promise).to.eventually.be.rejectedWith(
+        `${workspace.name}: Workspace subscription must be canceled first`
+      )
+    })
+
+    it('allows deleting a user if the paid plan is canceled', async () => {
+      const user = buildBasicTestUser()
+      await createTestUser(user)
+      await createTestWorkspace(
+        buildBasicTestWorkspace({
+          ownerId: user.id
+        }),
+        user,
+        {
+          addPlan: {
+            status: 'canceled',
+            name: 'proUnlimited'
+          }
+        }
+      )
+
+      await deleteUser(user.id)
+
+      const deletedUser = await getUser(user.id)
+      expect(deletedUser).to.be.undefined
+    })
+
+    // without workspaces, users can't be added to a workspace
+    FF_WORKSPACES_MODULE_ENABLED
+      ? it('protects from deleting the last admin user if the workspace has other members', async () => {
+          const user = buildBasicTestUser()
+          const user2 = buildBasicTestUser()
+          const workspace = buildBasicTestWorkspace({
+            ownerId: user.id
+          })
+          await createTestUser(user)
+          await createTestUser(user2)
+          await createTestWorkspace(workspace, user, {
+            addPlan: {
+              status: 'valid',
+              name: 'proUnlimited'
+            }
+          })
+          await assignToWorkspace(workspace, user2, Roles.Workspace.Member)
+
+          const promise = deleteUser(user.id)
+
+          await expect(promise).to.eventually.be.rejectedWith(
+            `${workspace.name}: Admin role must be transferred to another member before deleting the user`
+          )
+        })
+      : {}
 
     it('Should get a user', async () => {
       const actor = await getUser(myTestActor.id)
