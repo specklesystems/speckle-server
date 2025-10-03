@@ -7,7 +7,8 @@ import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
 
 export enum ViewerEventBusKeys {
   ApplySavedView = 'UpdateSavedView',
-  MarkSavedViewForEdit = 'MarkSavedViewForEdit'
+  MarkSavedViewForEdit = 'MarkSavedViewForEdit',
+  UserChangedOpenedView = 'UserChangedOpenedView'
 }
 
 export type ViewerSavedViewEventBusPayloads = {
@@ -19,6 +20,9 @@ export type ViewerSavedViewEventBusPayloads = {
       }
     | { type: 'move'; view: ViewerSavedViewsPanelViewMoveDialog_SavedViewFragment }
     | { type: 'delete'; view: ViewerSavedViewsPanelViewDeleteDialog_SavedViewFragment }
+  [ViewerEventBusKeys.UserChangedOpenedView]: {
+    viewId: string
+  }
 }
 
 // Add mappings between event keys and expected payloads here

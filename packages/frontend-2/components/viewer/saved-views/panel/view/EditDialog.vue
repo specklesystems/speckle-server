@@ -165,7 +165,7 @@ watch(open, (newVal, oldVal) => {
       name: props.view.name,
       description: props.view.description,
       visibility: props.view.visibility,
-      group: props.view.group
+      group: markRaw({ ...props.view.group }) // vue-validate doesnt like this read-only proxified object
     })
   }
 })

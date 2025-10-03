@@ -87,7 +87,9 @@ export const useManualFilteringPostSetup = () => {
     const result = filterFn()
 
     // 4. RESTORE to viewer extensions directly
-    if (selectedObjects.length) selectionExtension.selectObjects(selectedObjects)
+    if (selectedObjects.length) {
+      selectionExtension.selectObjects(selectedObjects)
+    }
     if (highlightedObjects.length && highlightExtension) {
       highlightExtension.selectObjects(highlightedObjects)
     }
@@ -101,7 +103,9 @@ export const useManualFilteringPostSetup = () => {
   const { trigger: triggerIsolationWatch } = watchTriggerable(
     filters.isolatedObjectIds,
     (newIds, oldIds) => {
-      if (!newIds || !oldIds) return
+      if (!newIds || !oldIds) {
+        return
+      }
 
       preserveSelectionHighlightFilter(() => {
         const extension = filteringExtension()

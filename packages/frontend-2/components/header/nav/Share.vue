@@ -74,7 +74,6 @@ import { SpeckleViewer } from '@speckle/shared'
 import { keyboardClick } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql/gql'
 import type { HeaderNavShare_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
-import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 
 graphql(`
   fragment HeaderNavShare_Project on Project {
@@ -90,7 +89,6 @@ const props = defineProps<{
 }>()
 
 const { copy } = useClipboard()
-const copyModelLink = useCopyModelLink()
 const menuButtonId = useId()
 
 const embedDialogOpen = ref(false)
@@ -99,37 +97,16 @@ const parsedResourceIds = computed(() =>
   SpeckleViewer.ViewerRoute.parseUrlParameters(props.resourceIdString)
 )
 
-const firstResource = computed(() => parsedResourceIds.value[0] || {})
-
-const versionId = computed(() => {
-  if (SpeckleViewer.ViewerRoute.isModelResource(firstResource.value)) {
-    return firstResource.value.versionId
-  }
-  return ''
-})
-
-const modelId = computed(() => {
-  if (SpeckleViewer.ViewerRoute.isModelResource(firstResource.value)) {
-    return firstResource.value.modelId // Assuming your firstResource object has a modelId property
-  }
-  return ''
-})
-
 const isFederated = computed(() => parsedResourceIds.value.length > 1)
 
-const handleCopyId = () => {
-  copy(props.resourceIdString, { successMessage: 'ID copied to clipboard' })
+const handleCopyId = async () => {
+  await copy(props.resourceIdString, { successMessage: 'ID copied to clipboard' })
 }
 
-const handleCopyLink = () => {
-  const modelIdValue = modelId.value
-  const versionIdValue = versionId.value ? versionId.value : undefined
-  void copyModelLink({
-    model: {
-      projectId: props.project.id,
-      id: modelIdValue
-    },
-    versionId: versionIdValue
+const handleCopyLink = async () => {
+  if (import.meta.server) return
+  await copy(window.location.href, {
+    successMessage: 'Copied link to clipboard'
   })
 }
 

@@ -36,6 +36,7 @@
       <PresentationLeftSidebar
         v-if="isLeftSidebarOpen"
         class="absolute left-0 top-0 md:relative flex-shrink-0 z-30"
+        @close="isLeftSidebarOpen = false"
       />
 
       <div class="flex-1 z-0 flex flex-col lg:flex-row pb-[11rem] lg:pb-0">
@@ -99,7 +100,9 @@ const {
   response: { presentation, workspace }
 } = useInjectedPresentationState()
 const mixpanel = useMixpanel()
-const isMobile = useBreakpoints(TailwindBreakpoints).smaller('sm')
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('sm')
+const isXlOrLarger = breakpoints.greaterOrEqual('xl')
 const { $intercom } = useNuxtApp()
 
 const isInfoSidebarOpen = ref(false)
@@ -121,7 +124,7 @@ const onLoadingChange = (loading: boolean) => {
   if (!loading) {
     hideUi.value = false
 
-    isLeftSidebarOpen.value = false
+    isLeftSidebarOpen.value = isXlOrLarger.value
     isInfoSidebarOpen.value = !isMobile.value
   }
 }

@@ -27,6 +27,7 @@ import type {
   UpdateSavedViewGroupRecord,
   UpdateSavedViewRecord
 } from '@/modules/viewer/domain/operations/savedViews'
+import type { SavedViewGroup } from '@/modules/viewer/domain/types/savedViews'
 import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
 import {
   SavedViewCreationValidationError,
@@ -48,12 +49,14 @@ import { inputToVersionedState } from '@speckle/shared/viewer/state'
 import { isValidBase64Image } from '@speckle/shared/images/base64'
 import type { GetViewerResourceGroups } from '@/modules/viewer/domain/operations/resources'
 import { formatResourceIdsForGroup } from '@/modules/viewer/helpers/savedViews'
-import { isUndefined, omit } from 'lodash-es'
+import { isString, isUndefined, omit } from 'lodash-es'
 import type { DependenciesOf } from '@/modules/shared/helpers/factory'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { removeNullOrUndefinedKeys, firstDefinedValue } from '@speckle/shared'
 import { isUngroupedGroup } from '@speckle/shared/saved-views'
 import { NotFoundError } from '@/modules/shared/errors'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { SavedViewsEvents } from '@/modules/viewer/domain/events/savedViews'
 
 const formatIncomingScreenshotFactory =
   (deps: { downscaleScreenshotForThumbnail: DownscaleScreenshotForThumbnail }) =>
@@ -218,7 +221,7 @@ const resolveViewGroupSettingsFactory =
   }) => {
     const { groupId, projectId, errorMetadata } = params
 
-    if (!groupId) return groupId // null or undefined (different meanings)
+    if (!groupId) return isString(groupId) ? null : groupId // null or undefined (different meanings)
 
     // Validate groupId - group is a valid and accessible group in the project
     // Check if default group (actually means - null group)
@@ -238,7 +241,7 @@ const resolveViewGroupSettingsFactory =
           }
         )
       }
-      return group.id
+      return group
     }
   }
 
@@ -253,11 +256,11 @@ export const createSavedViewFactory =
     getNewViewSpecificPosition: GetNewViewSpecificPosition
     rebalanceViewPositions: RebalanceViewPositions
     downscaleScreenshotForThumbnail: DownscaleScreenshotForThumbnail
+    emit: EventBusEmit
   }): CreateSavedView =>
   async ({ input, authorId }) => {
     const { resourceIdString, projectId, position: positionInput } = input
     const visibility = input.visibility || SavedViewVisibility.public // default to public
-    let groupId = input.groupId?.trim() || null
     const description = input.description?.trim() || null
     const isHomeView = input.isHomeView || false
 
@@ -288,9 +291,9 @@ export const createSavedViewFactory =
     })
 
     // Validate groupId - group is a valid and accessible group in the project
-    groupId =
+    let group =
       (await resolveViewGroupSettingsFactory(deps)({
-        groupId,
+        groupId: input.groupId?.trim(),
         projectId,
         errorMetadata: {
           input,
@@ -330,7 +333,7 @@ export const createSavedViewFactory =
     const { newPosition: position, needsRebalancing } =
       await deps.getNewViewSpecificPosition({
         projectId,
-        groupId,
+        groupId: group?.id || null,
         resourceIdString: resourceIds.toString(),
         beforeId: positionInput?.beforeViewId,
         afterId: positionInput?.afterViewId
@@ -342,7 +345,7 @@ export const createSavedViewFactory =
         projectId,
         resourceIds: concreteResourceIds,
         groupResourceIds: formatResourceIdsForGroup(concreteResourceIds),
-        groupId,
+        groupId: group?.id,
         name,
         description,
         viewerState: state,
@@ -356,7 +359,14 @@ export const createSavedViewFactory =
     })
 
     await Promise.all([
-      ...(groupId ? [deps.recalculateGroupResourceIds({ groupId })] : []),
+      ...(group?.id
+        ? [
+            deps.recalculateGroupResourceIds({ groupId: group.id }).then((g) => {
+              // Update reference to have new ids
+              group = g || group
+            })
+          ]
+        : []),
       ...(homeViewModel
         ? [
             deps.setNewHomeView({
@@ -377,10 +387,27 @@ export const createSavedViewFactory =
         : [])
     ])
 
-    // If grouped view, recalculate its resourceIds
-    if (groupId) {
-      await deps.recalculateGroupResourceIds({ groupId })
-    }
+    await Promise.all([
+      ...(group?.id
+        ? [
+            deps.emit({
+              eventName: SavedViewsEvents.GroupUpdated,
+              payload: {
+                savedViewGroup: group,
+                updaterId: authorId,
+                isIndirectUpdate: true
+              }
+            })
+          ]
+        : []),
+      deps.emit({
+        eventName: SavedViewsEvents.Created,
+        payload: {
+          savedView: ret,
+          creatorId: authorId
+        }
+      })
+    ])
 
     return ret
   }
@@ -390,6 +417,7 @@ export const createSavedViewGroupFactory =
     storeSavedViewGroup: StoreSavedViewGroup
     getViewerResourceGroups: GetViewerResourceGroups
     getStoredViewGroupCount: GetStoredViewGroupCount
+    emit: EventBusEmit
   }): CreateSavedViewGroup =>
   async ({ input, authorId }) => {
     const { projectId, resourceIdString } = input
@@ -428,6 +456,14 @@ export const createSavedViewGroupFactory =
         resourceIds: resourceIds.map((r) => r.toString()),
         name: groupName,
         authorId
+      }
+    })
+
+    await deps.emit({
+      eventName: SavedViewsEvents.GroupCreated,
+      payload: {
+        savedViewGroup: group,
+        creatorId: authorId
       }
     })
 
@@ -479,9 +515,10 @@ export const deleteSavedViewFactory =
     getSavedView: GetSavedView
     deleteSavedViewRecord: DeleteSavedViewRecord
     recalculateGroupResourceIds: RecalculateGroupResourceIds
+    emit: EventBusEmit
   }): DeleteSavedView =>
   async (params) => {
-    const { id, projectId } = params
+    const { id, projectId, userId } = params
     const view = await deps.getSavedView({
       id,
       projectId
@@ -494,9 +531,32 @@ export const deleteSavedViewFactory =
 
     await deps.deleteSavedViewRecord({ savedViewId: id })
 
+    let group: SavedViewGroup | undefined = undefined
     if (view.groupId) {
-      await deps.recalculateGroupResourceIds({ groupId: view.groupId })
+      group = await deps.recalculateGroupResourceIds({ groupId: view.groupId })
     }
+
+    await Promise.all([
+      deps.emit({
+        eventName: SavedViewsEvents.Deleted,
+        payload: {
+          savedView: view,
+          deleterId: userId
+        }
+      }),
+      ...(group
+        ? [
+            deps.emit({
+              eventName: SavedViewsEvents.GroupUpdated,
+              payload: {
+                savedViewGroup: group,
+                updaterId: userId,
+                isIndirectUpdate: true
+              }
+            })
+          ]
+        : [])
+    ])
   }
 
 export const updateSavedViewFactory =
@@ -510,6 +570,7 @@ export const updateSavedViewFactory =
       getNewViewSpecificPosition: GetNewViewSpecificPosition
       rebalanceViewPositions: RebalanceViewPositions
       downscaleScreenshotForThumbnail: DownscaleScreenshotForThumbnail
+      emit: EventBusEmit
     } & DependenciesOf<typeof validateProjectResourceIdStringFactory>
   ): UpdateSavedView =>
   async (params) => {
@@ -590,14 +651,22 @@ export const updateSavedViewFactory =
     }
 
     // Validate groupId - group is a valid and accessible group in the project
-    changes.groupId = await resolveViewGroupSettingsFactory(deps)({
-      groupId: changes.groupId,
-      projectId,
-      errorMetadata: {
-        input,
-        userId
+    if ('groupId' in changes) {
+      const group = await resolveViewGroupSettingsFactory(deps)({
+        groupId: changes.groupId,
+        projectId,
+        errorMetadata: {
+          input,
+          userId
+        }
+      })
+      if (!group) {
+        changes.groupId = group // null or undefined
+      } else {
+        changes.groupId = group.id
       }
-    })
+    }
+
     if (isUndefined(changes.groupId)) {
       delete changes.groupId // the key shouldnt even be there
     }
@@ -691,7 +760,7 @@ export const updateSavedViewFactory =
 
     // Only update date on: replace, group change
     const shouldUpdateDate = hasViewerState || 'groupId' in update
-    const updatedView = await deps.updateSavedViewRecord(
+    const updatedView = (await deps.updateSavedViewRecord(
       {
         id,
         projectId,
@@ -700,23 +769,29 @@ export const updateSavedViewFactory =
       {
         skipUpdatingDate: !shouldUpdateDate
       }
-    )
+    ))!
 
+    let newGroup: SavedViewGroup | undefined = undefined
+    let oldGroup: SavedViewGroup | undefined = undefined
     await Promise.all([
-      ...(updatedView?.groupId !== view.groupId
+      ...(updatedView.groupId !== view.groupId || update.resourceIds?.length
         ? [
-            ...(updatedView?.groupId
+            ...(updatedView.groupId
               ? [
-                  deps.recalculateGroupResourceIds({
-                    groupId: updatedView.groupId
-                  })
+                  deps
+                    .recalculateGroupResourceIds({
+                      groupId: updatedView.groupId
+                    })
+                    .then((g) => (newGroup = g))
                 ]
               : []),
-            ...(view.groupId
+            ...(view.groupId && updatedView.groupId !== view.groupId
               ? [
-                  deps.recalculateGroupResourceIds({
-                    groupId: view.groupId
-                  })
+                  deps
+                    .recalculateGroupResourceIds({
+                      groupId: view.groupId
+                    })
+                    .then((g) => (oldGroup = g))
                 ]
               : [])
           ]
@@ -725,7 +800,7 @@ export const updateSavedViewFactory =
         ? [
             deps.setNewHomeView({
               projectId,
-              newHomeViewId: updatedView!.id,
+              newHomeViewId: updatedView.id,
               modelId: homeViewModel.modelId
             })
           ]
@@ -741,14 +816,52 @@ export const updateSavedViewFactory =
         : [])
     ])
 
-    return updatedView! // should exist, we checked before
+    await Promise.all([
+      deps.emit({
+        eventName: SavedViewsEvents.Updated,
+        payload: {
+          savedView: updatedView!,
+          updaterId: userId,
+          update,
+          beforeUpdateSavedView: view
+        }
+      }),
+      ...(newGroup
+        ? [
+            deps.emit({
+              eventName: SavedViewsEvents.GroupUpdated,
+              payload: {
+                savedViewGroup: newGroup,
+                updaterId: userId,
+                isIndirectUpdate: true
+              }
+            })
+          ]
+        : []),
+      ...(oldGroup
+        ? [
+            deps.emit({
+              eventName: SavedViewsEvents.GroupUpdated,
+              payload: {
+                savedViewGroup: oldGroup,
+                updaterId: userId,
+                isIndirectUpdate: true
+              }
+            })
+          ]
+        : [])
+    ])
+
+    return updatedView
   }
 
 export const deleteSavedViewGroupFactory =
   (deps: {
     deleteSavedViewGroupRecord: DeleteSavedViewGroupRecord
+    emit: EventBusEmit
+    getSavedViewGroup: GetSavedViewGroup
   }): DeleteSavedViewGroup =>
-  async ({ input }) => {
+  async ({ input, userId }) => {
     const { groupId, projectId } = input
 
     if (isUngroupedGroup(groupId)) {
@@ -757,16 +870,42 @@ export const deleteSavedViewGroupFactory =
       )
     }
 
-    return deps.deleteSavedViewGroupRecord({
+    const group = await deps.getSavedViewGroup({
+      id: groupId,
+      projectId
+    })
+    if (!group) {
+      throw new SavedViewGroupUpdateValidationError('Group not found', {
+        info: {
+          input,
+          userId
+        }
+      })
+    }
+
+    const ret = await deps.deleteSavedViewGroupRecord({
       groupId,
       projectId
     })
+
+    if (ret) {
+      await deps.emit({
+        eventName: SavedViewsEvents.GroupDeleted,
+        payload: {
+          savedViewGroup: group,
+          deleterId: userId
+        }
+      })
+    }
+
+    return ret
   }
 
 export const updateSavedViewGroupFactory =
   (deps: {
     updateSavedViewGroupRecord: UpdateSavedViewGroupRecord
     getSavedViewGroup: GetSavedViewGroup
+    emit: EventBusEmit
   }): UpdateSavedViewGroup =>
   async ({ input, userId }) => {
     const { groupId, projectId } = input
@@ -822,11 +961,20 @@ export const updateSavedViewGroupFactory =
     }
 
     // Update the saved view group
-    const updatedGroup = await deps.updateSavedViewGroupRecord({
+    const updatedGroup = (await deps.updateSavedViewGroupRecord({
       groupId,
       projectId,
       update: changes
+    }))!
+
+    await deps.emit({
+      eventName: SavedViewsEvents.GroupUpdated,
+      payload: {
+        savedViewGroup: updatedGroup,
+        updaterId: userId,
+        isIndirectUpdate: false
+      }
     })
 
-    return updatedGroup! // should exist, we checked before
+    return updatedGroup
   }

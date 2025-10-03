@@ -159,7 +159,7 @@ const parentEl = ref(null as Nullable<HTMLElement>)
 const { isLoggedIn } = useActiveUser()
 const viewerState = useInjectedViewerState()
 const { sessionId } = viewerState
-const { users } = useViewerUserActivityTracking({ parentEl })
+const { users } = useViewerUserActivityTracking({ anchoredPointsParentEl: parentEl })
 const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
 const {
   filters: { hasAnyFiltersApplied },
