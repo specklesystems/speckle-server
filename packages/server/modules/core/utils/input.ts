@@ -6,4 +6,4 @@ export const sanitizeUserInput = <T extends Record<string, unknown>>(input: T) =
       key,
       typeof value === 'string' ? sanitizeHtml(value) : value
     ])
-  )
+  ) as T
