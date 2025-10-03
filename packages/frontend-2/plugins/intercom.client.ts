@@ -84,6 +84,9 @@ export const useIntercom = () => {
         })
 
         if (result.data) {
+          const editorSeatCount =
+            result.data.workspaceBySlug.seats?.editors.assigned ||
+            0 + (result.data.workspaceBySlug.seats?.editors.available || 0)
           updateCompany({
             id: result.data.workspaceBySlug.id,
             /* eslint-disable camelcase */
@@ -93,10 +96,9 @@ export const useIntercom = () => {
               planName: result.data.workspaceBySlug.plan?.name,
               interval: result.data.workspaceBySlug.subscription?.billingInterval,
               prices: result.data.workspaceBySlug.planPrices,
-              seats:
-                result.data.workspaceBySlug.seats?.editors.assigned ||
-                0 + (result.data.workspaceBySlug.seats?.editors.available || 0)
-            })
+              seats: editorSeatCount
+            }),
+            editor_seat_count: editorSeatCount
             /* eslint-enable camelcase */
           })
         }
@@ -129,7 +131,9 @@ export const useIntercom = () => {
 
   // Update the 'company' (workspace) in Intercom with additional data
   const updateCompany = async (
-    data: { id: string } & Record<string, MaybeNullOrUndefined<string>> = { id: '' }
+    data: { id: string } & Record<string, MaybeNullOrUndefined<string | number>> = {
+      id: ''
+    }
   ) => {
     update({
       company: {
