@@ -8,8 +8,6 @@ import {
   SavedViewVisibility
 } from '~/lib/common/generated/gql/graphql'
 import { projectPresentationPageQuery } from '~/lib/presentations/graphql/queries'
-import { useEventBus } from '~/lib/core/composables/eventBus'
-import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
 import { useProjectSavedViewsUpdateTracking } from '~/lib/viewer/composables/savedViews/subscriptions'
 
 type ResponseProject = Optional<Get<ProjectPresentationPageQuery, 'project'>>
@@ -44,10 +42,6 @@ export type InjectablePresentationState = Readonly<{
      * active slide etc.
      */
     resourceIdString: ComputedRef<string>
-    /**
-     * Reset the current view to the saved view state of the current slide
-     */
-    resetView: () => void
     /**
      * Whether the current view has been changed from the saved view state
      */
@@ -101,8 +95,6 @@ const setupStateViewer = (initState: ResponseState & UiState): ViewerState => {
     ui: { slideIdx }
   } = initState
 
-  const { emit, on } = useEventBus()
-
   const hasViewChanged = ref(false)
 
   const resourceIdString = computed(() => {
@@ -113,32 +105,9 @@ const setupStateViewer = (initState: ResponseState & UiState): ViewerState => {
       .toString()
   })
 
-  const resetView = () => {
-    const slides = presentation.value?.views.items || []
-    const currentSlide = slides.at(slideIdx.value)
-
-    if (!currentSlide?.id) return
-
-    emit(ViewerEventBusKeys.ApplySavedView, {
-      id: currentSlide.id,
-      loadOriginal: false
-    })
-
-    hasViewChanged.value = false
-  }
-
-  on(ViewerEventBusKeys.UserChangedOpenedView, () => {
-    hasViewChanged.value = true
-  })
-
-  watch(slideIdx, () => {
-    hasViewChanged.value = false
-  })
-
   return {
     viewer: {
       resourceIdString,
-      resetView,
       hasViewChanged
     }
   }

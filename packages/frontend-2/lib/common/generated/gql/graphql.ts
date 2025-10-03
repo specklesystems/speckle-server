@@ -135,9 +135,11 @@ export type AddDomainToWorkspaceInput = {
   workspaceId: Scalars['ID']['input'];
 };
 
+/** Either the ID or slug must be set */
 export type AdminAccessToWorkspaceFeatureInput = {
   featureFlagName: WorkspaceFeatureFlagName;
-  workspaceId: Scalars['ID']['input'];
+  workspaceId?: InputMaybe<Scalars['ID']['input']>;
+  workspaceSlug?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type AdminInviteList = {

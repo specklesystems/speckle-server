@@ -698,8 +698,12 @@ enum WorkspaceFeatureFlagName {
   presentations
 }
 
+"""
+Either the ID or slug must be set
+"""
 input AdminAccessToWorkspaceFeatureInput {
-  workspaceId: ID!
+  workspaceId: ID
+  workspaceSlug: String
   featureFlagName: WorkspaceFeatureFlagName!
 }
 

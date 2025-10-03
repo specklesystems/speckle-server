@@ -24,15 +24,14 @@ export const useViewerSavedViewIntegration = () => {
       },
       response: { savedView }
     },
-    urlHashState: { savedView: urlHashStateSavedViewSettings }
+    urlHashState: { savedView: urlHashStateSavedViewSettings },
+    ui: {
+      savedViews: { savedViewStateId }
+    }
   } = useInjectedViewerState()
   const applyState = useApplySerializedState()
   const { serializedStateId } = useViewerRealtimeActivityTracker()
   const { on, emit } = useEventBus()
-
-  // Saved View ID will be unset, once the user does anything to the viewer that
-  // changes it from the saved view
-  const savedViewStateId = ref<string>()
 
   const validState = (state: unknown) => (isSerializedViewerState(state) ? state : null)
 
@@ -131,6 +130,7 @@ export type SavedViewsUIState = ReturnType<typeof useBuildSavedViewsUIState>
 
 export const useBuildSavedViewsUIState = () => {
   const openedGroupState = ref<Map<string, true>>(new Map())
+  const savedViewStateId = ref<string>()
 
   onUnmounted(() => {
     openedGroupState.value = new Map()
@@ -140,7 +140,12 @@ export const useBuildSavedViewsUIState = () => {
     /**
      * Groups that should currently be expanded/open
      */
-    openedGroupState
+    openedGroupState,
+    /**
+     * A kind of a "viewer snapshot" ID associated w/ the saved view being loaded. Helps track
+     * if user has changed the view since loading the saved view
+     */
+    savedViewStateId
   }
 }
 

@@ -262,7 +262,13 @@ export function useSelectionUtilities() {
   const addToSelectionFromObjectIds = (objectIds: string[]) => {
     const originalObjects = selectedObjects.value.slice()
     setSelectionFromObjectIds(objectIds)
-    selectedObjects.value = [...originalObjects, ...selectedObjects.value]
+
+    // Filter out duplicates by checking if objects with the same ID already exist
+    const newObjects = selectedObjects.value.filter(
+      (newObj) => !originalObjects.some((existingObj) => existingObj.id === newObj.id)
+    )
+
+    selectedObjects.value = [...originalObjects, ...newObjects]
   }
 
   const removeFromSelectionObjectIds = (objectIds: string[]) => {
