@@ -1,5 +1,5 @@
 import type { SpeckleObject, TreeNode, Viewer } from '@speckle/viewer'
-import { uniq, flatten, compact } from 'lodash-es'
+import { uniq, flatten, compact, isString } from 'lodash-es'
 import {
   FilterLogic,
   FilterType,
@@ -20,7 +20,10 @@ import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import {
   shouldExcludeFromFiltering,
   extractNestedProperties,
-  isParameter
+  isParameter,
+  isValueNumeric,
+  isValueBooleanTrue,
+  isValueBooleanFalse
 } from '~/lib/viewer/helpers/filters/utils'
 import { DEEP_EXTRACTION_CONFIG } from '~/lib/viewer/helpers/filters/constants'
 
@@ -32,7 +35,9 @@ function processBatchedPropertyUpdates(
   propertyMap: Record<string, FilteringPropertyInfo>
 ) {
   for (const update of updates) {
-    if (!propertyMap[update.path]) {
+    const existingProperty = propertyMap[update.path]
+
+    if (!existingProperty) {
       // Convert string type to FilterType
       let filterType: FilterType
       if (update.type === 'number') {
@@ -47,6 +52,15 @@ function processBatchedPropertyUpdates(
         concatenatedPath: update.path,
         value: update.value as string | number,
         type: filterType
+      }
+    } else {
+      // Property exists - check if we need to update type due to conflicting evidence
+      if (
+        existingProperty.type === FilterType.Numeric &&
+        isString(update.value) &&
+        !isValueNumeric(update.value)
+      ) {
+        existingProperty.type = FilterType.String
       }
     }
   }
@@ -193,6 +207,7 @@ export function useCreateViewerFilteringDataStore() {
 
           if (pendingPropertyUpdates.length > 0) {
             processBatchedPropertyUpdates(pendingPropertyUpdates, propertyMap)
+            pendingPropertyUpdates.length = 0
           }
 
           objectProperties[objectId] = objProps
@@ -250,7 +265,7 @@ export function useCreateViewerFilteringDataStore() {
           dataSource.objectProperties
         )) {
           const value = objProps[criteria.propertyKey]
-          if (value === true || value === 'true') {
+          if (isValueBooleanTrue(value)) {
             matchingIds.push(objectId)
           }
         }
@@ -260,7 +275,7 @@ export function useCreateViewerFilteringDataStore() {
           dataSource.objectProperties
         )) {
           const value = objProps[criteria.propertyKey]
-          if (value === false || value === 'false') {
+          if (isValueBooleanFalse(value)) {
             matchingIds.push(objectId)
           }
         }
