@@ -3905,6 +3905,7 @@ export type SavedViewPermissionChecks = {
   canEditDescription: PermissionCheckResult;
   canEditTitle: PermissionCheckResult;
   canMove: PermissionCheckResult;
+  canSetAsHomeView: PermissionCheckResult;
   /**
    * Can the current user fully update everything about this view. Even if this fails,
    * the user may be able to do partial updates (e.g. just change the title)
@@ -8432,6 +8433,7 @@ export type SavedViewPermissionChecksResolvers<ContextType = GraphQLContext, Par
   canEditDescription?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canEditTitle?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canMove?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canSetAsHomeView?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canUpdate?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
