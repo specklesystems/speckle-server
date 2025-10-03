@@ -7,7 +7,7 @@ import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ModelEvents } from '@/modules/core/domain/branches/events'
 import { fileUploadsLogger as logger } from '@/observability/logging'
 import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
-import { FileUploadInternalError } from '@/modules/fileuploads/helpers/errors'
+import { FileUploadInternalError } from '@/modules/fileuploads/errors'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 
 type OnFileImportProcessedDeps = {

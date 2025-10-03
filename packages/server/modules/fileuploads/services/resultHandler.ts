@@ -1,16 +1,24 @@
 import type { Logger } from '@/observability/logging'
-import type {
-  GetFileInfoV2,
-  ProcessFileImportResult,
-  UpdateFileUpload
+import {
+  ProcessFileImportProgressResult,
+  type GetFileInfoV2,
+  type ProcessFileImportProgress,
+  type ProcessFileImportResult,
+  type UpdateFileUpload
 } from '@/modules/fileuploads/domain/operations'
 import {
   jobResultStatusToFileUploadStatus,
   jobResultToConvertedMessage
 } from '@/modules/fileuploads/helpers/convert'
 import { ensureError } from '@speckle/shared'
-import type { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
-import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
+import {
+  FileUploadConvertedStatus,
+  type FileUploadRecord
+} from '@/modules/fileuploads/helpers/types'
+import {
+  FileImportInvalidJobProgressPayload,
+  FileImportJobNotFoundError
+} from '@/modules/fileuploads/errors'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 import {
@@ -93,7 +101,7 @@ export const onFileImportResultFactory =
         })
       } catch (e) {
         const err = ensureError(e)
-        logger.error(
+        boundLogger.error(
           { err, blobId },
           'Error updating background jobs status in database. Blob ID: {blobId}'
         )
@@ -113,13 +121,15 @@ export const onFileImportResultFactory =
           performanceData: {
             durationSeconds: jobResult.result.durationSeconds,
             downloadDurationSeconds: jobResult.result.downloadDurationSeconds,
-            parseDurationSeconds: jobResult.result.parseDurationSeconds
+            parseDurationSeconds: jobResult.result.parseDurationSeconds,
+            parser: jobResult.result.parser,
+            versionId: jobResult.result.versionId ?? undefined
           }
         }
       })
     } catch (e) {
       const err = ensureError(e)
-      logger.error(
+      boundLogger.error(
         { err, info: { fileId: blobId } },
         'Error updating imported file status in database. File ID: {fileId}'
       )
@@ -145,5 +155,125 @@ export const onFileImportResultFactory =
       }
     })
 
-    logger.info('File upload status updated')
+    boundLogger.info('File upload status updated')
+  }
+
+type OnFileImportProgressUpdateDeps = {
+  getFileInfo: GetFileInfoV2
+  updateFileUpload: UpdateFileUpload
+  eventEmit: EventBusEmit
+  logger: Logger
+  FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
+}
+
+export const onFileImportProgressUpdateFactory =
+  (deps: OnFileImportProgressUpdateDeps): ProcessFileImportProgress =>
+  async (params) => {
+    const { logger } = deps
+    const { blobId, progressPercentage, attempt, result, message } = params
+
+    const fileInfo = await deps.getFileInfo({ fileId: blobId })
+    if (!fileInfo) {
+      throw new FileImportJobNotFoundError(`File upload with ID ${blobId} not found`)
+    }
+
+    if (
+      [FileUploadConvertedStatus.Completed, FileUploadConvertedStatus.Error].includes(
+        fileInfo.convertedStatus
+      )
+    ) {
+      // nothing to do here, the job is already in a final state
+      logger.warn(
+        'Received progress update for a file that is already in a final state'
+      )
+      return ProcessFileImportProgressResult.cancelled
+    }
+
+    if (attempt < fileInfo.convertedAttempt) {
+      // stale attempt, ignore
+      logger.warn(
+        {
+          receivedAttempt: attempt,
+          existingAttempt: fileInfo.convertedAttempt
+        },
+        'Received progress update for a stale attempt (existing: {existingAttempt}, received: {receivedAttempt})'
+      )
+      return ProcessFileImportProgressResult.ignored
+    }
+
+    if (
+      attempt === fileInfo.convertedAttempt &&
+      progressPercentage < fileInfo.convertedProgress
+    ) {
+      // stale progress, ignore
+      logger.warn(
+        {
+          receivedReportedProgress: progressPercentage,
+          existingReportedProgress: fileInfo.convertedProgress
+        },
+        'Received progress update with a stale progress value (existing: {existingReportedProgress}, received: {receivedReportedProgress})'
+      )
+      return ProcessFileImportProgressResult.ignored
+    }
+
+    if (progressPercentage < 0 || progressPercentage > 100) {
+      throw new FileImportInvalidJobProgressPayload(
+        'Progress value must be between 0 and 100. Received: {progressPercentage}',
+        { info: { progressPercentage } }
+      )
+    }
+
+    const boundLogger = logger.child({
+      blobId,
+      fileId: fileInfo.id,
+      fileSize: fileInfo.fileSize,
+      fileName: fileInfo.fileName,
+      fileType: fileInfo.fileType,
+      projectId: fileInfo.projectId,
+      streamId: fileInfo.projectId, // legacy for backwards compatibility
+      modelId: fileInfo.modelId,
+      branchId: fileInfo.modelId, // legacy for backwards compatibility
+      userId: fileInfo.userId
+    })
+
+    let updatedFile: FileUploadRecord
+    try {
+      updatedFile = await deps.updateFileUpload({
+        id: blobId,
+        upload: {
+          convertedStatus: FileUploadConvertedStatus.Converting,
+          convertedLastUpdate: new Date(),
+          convertedMessage: message ?? fileInfo.convertedMessage,
+          convertedProgress: progressPercentage,
+          convertedAttempt: attempt,
+          performanceData: {
+            durationSeconds: result?.durationSeconds ?? 0,
+            downloadDurationSeconds: result?.downloadDurationSeconds ?? 0,
+            parseDurationSeconds: result?.parseDurationSeconds ?? 0,
+            parser: result?.parser ?? fileInfo.performanceData?.parser,
+            versionId: result?.versionId ?? fileInfo.performanceData?.versionId
+          }
+        }
+      })
+    } catch (e) {
+      const err = ensureError(e)
+      boundLogger.error(
+        { err, info: { fileId: blobId } },
+        'Error updating imported file status in database. File ID: {fileId}'
+      )
+      throw err
+    }
+
+    await deps.eventEmit({
+      eventName: FileuploadEvents.Updated,
+      payload: {
+        upload: {
+          ...updatedFile,
+          projectId: updatedFile.streamId
+        },
+        isNewModel: false // next gen file uploads don't support this
+      }
+    })
+
+    return ProcessFileImportProgressResult.received
   }

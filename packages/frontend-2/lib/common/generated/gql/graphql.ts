@@ -1367,6 +1367,17 @@ export type ExtendedViewerResourcesRequest = {
   savedViewId?: Maybe<Scalars['ID']['output']>;
 };
 
+export type FileImportProgressReportInput = {
+  currentState?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * This is the blob Id of the uploaded file. For legacy reasons it is named jobId.
+   * Note: This is the not the background job Id.
+   */
+  jobId: Scalars['String']['input'];
+  progress: Scalars['Int']['input'];
+  projectId: Scalars['String']['input'];
+};
+
 export type FileImportResultInput = {
   /** Duration of the file download before parsing started in seconds */
   downloadDurationSeconds: Scalars['Float']['input'];
@@ -1424,7 +1435,7 @@ export type FileUploadMutations = {
   /**
    * Marks the file import flow as completed for that specific job
    * recording the provided status, and emitting the needed subscriptions.
-   * Mostly for internal service usage.
+   * For internal service usage.
    */
   finishFileImport: Scalars['Boolean']['output'];
   /**
@@ -1432,6 +1443,11 @@ export type FileUploadMutations = {
    * After uploading the file, call mutation startFileImport to register the completed upload.
    */
   generateUploadUrl: GenerateFileUploadUrlOutput;
+  /**
+   * Report progress of an ongoing file import job.
+   * For internal service usage.
+   */
+  reportProgress: Scalars['Boolean']['output'];
   /**
    * Before calling this mutation, call generateUploadUrl to get the
    * pre-signed url and blobId. Then upload the file to that url.
@@ -1449,6 +1465,11 @@ export type FileUploadMutationsFinishFileImportArgs = {
 
 export type FileUploadMutationsGenerateUploadUrlArgs = {
   input: GenerateFileUploadUrlInput;
+};
+
+
+export type FileUploadMutationsReportProgressArgs = {
+  input: FileImportProgressReportInput;
 };
 
 
@@ -9921,6 +9942,7 @@ export type FileUploadCollectionFieldArgs = {
 export type FileUploadMutationsFieldArgs = {
   finishFileImport: FileUploadMutationsFinishFileImportArgs,
   generateUploadUrl: FileUploadMutationsGenerateUploadUrlArgs,
+  reportProgress: FileUploadMutationsReportProgressArgs,
   startFileImport: FileUploadMutationsStartFileImportArgs,
 }
 export type GendoAiRenderFieldArgs = {

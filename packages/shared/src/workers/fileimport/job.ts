@@ -32,7 +32,12 @@ const baseFileImportResult = z.object({
     .describe(
       'Duration to parse the file, in seconds. This is a sub-component of the total duration.'
     ),
-  parser: z.string().describe('The parser used for the import')
+  parser: z.string().describe('The parser used for the import'),
+  versionId: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('The parser version used for the import')
 })
 
 export const JobResultStatus = {
@@ -45,7 +50,7 @@ export type FileImportResult = z.infer<typeof baseFileImportResult>
 const fileImportSuccessPayload = z.object({
   status: z.literal(JobResultStatus.Success),
   warnings: z.array(z.string()), //ok to be empty
-  result: baseFileImportResult.merge(z.object({ versionId: z.string() }))
+  result: baseFileImportResult
 })
 
 export type FileImportSuccessPayload = z.infer<typeof fileImportSuccessPayload>
