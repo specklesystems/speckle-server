@@ -2,6 +2,9 @@
   <PresentationFloatingPanel>
     <div class="flex items-center justify-between space-x-2">
       <PresentationFloatingPanelButton
+        v-tippy="
+          getTooltipProps(isSidebarOpen ? 'Hide slides list' : 'Show slides list')
+        "
         :active="isSidebarOpen"
         @click="emit('toggleSidebar')"
       >
@@ -20,7 +23,7 @@
       </PresentationFloatingPanelButton>
       <h1
         v-if="presentation?.title"
-        class="hidden sm:block text-body-xs font-medium text-foreground leading-none sm:pr-3 max-w-64 truncate"
+        class="hidden sm:block text-body-xs font-medium text-foreground leading-tight sm:pr-3 max-w-64 truncate"
       >
         {{ presentation?.title }}
       </h1>
@@ -49,4 +52,5 @@ const isSidebarOpen = defineModel<boolean>('is-sidebar-open')
 const {
   response: { presentation }
 } = useInjectedPresentationState()
+const { getTooltipProps } = useSmartTooltipDelay()
 </script>

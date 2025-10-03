@@ -556,6 +556,7 @@ export const useAuthManager = (
   return {
     authToken,
     embedToken,
+    presentationToken,
     effectiveAuthToken,
     loginWithEmail,
     signUpWithEmail,

@@ -12,11 +12,6 @@ repos:
       - id: shellcheck-system
         name: shellcheck
 
-  - repo: https://github.com/syntaqx/git-hooks
-    rev: 'v0.0.17'
-    hooks:
-      - id: circleci-config-validate
-
   - repo: https://github.com/specklesystems/pre-commit
     rev: '0.2.0'
     hooks:

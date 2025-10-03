@@ -136,7 +136,7 @@ const { mutate: createAccSyncItem } = useMutation(accSyncItemCreateMutation)
 
 const addSync = async () => {
   try {
-    if (!selectedFileVersion.value) {
+    if (!selectedFileVersion.value || !selectedFileVersion.value.fileType) {
       return
     }
 

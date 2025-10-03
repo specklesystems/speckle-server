@@ -23,7 +23,7 @@ export interface AccFolder extends AccItem {
 export type AccItemVersion = {
   id: string
   name: string
-  fileType: string
+  fileType?: string
   versionNumber: number
 }
 

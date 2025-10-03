@@ -8,8 +8,7 @@ import {
   SavedViewVisibility
 } from '~/lib/common/generated/gql/graphql'
 import { projectPresentationPageQuery } from '~/lib/presentations/graphql/queries'
-import { useEventBus } from '~/lib/core/composables/eventBus'
-import { ViewerEventBusKeys } from '~/lib/viewer/helpers/eventBus'
+import { useProjectSavedViewsUpdateTracking } from '~/lib/viewer/composables/savedViews/subscriptions'
 
 type ResponseProject = Optional<Get<ProjectPresentationPageQuery, 'project'>>
 type ResponseWorkspace = Get<ProjectPresentationPageQuery, 'project.limitedWorkspace'>
@@ -44,9 +43,9 @@ export type InjectablePresentationState = Readonly<{
      */
     resourceIdString: ComputedRef<string>
     /**
-     * Reset the current view to the saved view state of the current slide
+     * Whether the current view has been changed from the saved view state
      */
-    resetView: () => void
+    hasViewChanged: Ref<boolean>
   }
 }>
 
@@ -96,6 +95,8 @@ const setupStateViewer = (initState: ResponseState & UiState): ViewerState => {
     ui: { slideIdx }
   } = initState
 
+  const hasViewChanged = ref(false)
+
   const resourceIdString = computed(() => {
     const slides = presentation.value?.views.items || []
 
@@ -104,21 +105,12 @@ const setupStateViewer = (initState: ResponseState & UiState): ViewerState => {
       .toString()
   })
 
-  const { emit } = useEventBus()
-
-  const resetView = () => {
-    const slides = presentation.value?.views.items || []
-    const currentSlide = slides.at(slideIdx.value)
-
-    if (!currentSlide?.id) return
-
-    emit(ViewerEventBusKeys.ApplySavedView, {
-      id: currentSlide.id,
-      loadOriginal: false
-    })
+  return {
+    viewer: {
+      resourceIdString,
+      hasViewChanged
+    }
   }
-
-  return { viewer: { resourceIdString, resetView } }
 }
 
 const setupStateUi = (initState: ResponseState): UiState => {
@@ -155,6 +147,8 @@ export const useSetupPresentationState = (params: UseSetupPresentationParams) =>
     ...uiState,
     ...viewerState
   }
+
+  useProjectSavedViewsUpdateTracking({ projectId: initState.projectId })
 
   // We don't want the state to ever be proxified (e.g. when passed through props),
   // cause that will break composables (refs will be automatically unwrapped as if

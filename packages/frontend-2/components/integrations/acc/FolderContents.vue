@@ -11,7 +11,9 @@
         >
           <button
             class="flex items-center space-x-1 p-1 rounded-md transition-colors w-full"
-            @click="emit('select', item.id, item.latestVersion)"
+            @click="
+              emit('select', item.id, removeNullOrUndefinedKeys(item.latestVersion))
+            "
           >
             <span>
               {{ item.name }}
@@ -28,6 +30,7 @@
 </template>
 
 <script setup lang="ts">
+import { removeNullOrUndefinedKeys } from '@speckle/shared'
 import type { AccTokens } from '@speckle/shared/acc'
 import type { AccItemVersion } from '~/lib/acc/composables/useAccFiles'
 import { useAccFolder } from '~/lib/acc/composables/useAccFolderData'
