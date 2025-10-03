@@ -6,7 +6,7 @@ import {
   enableNewFrontendMessaging
 } from '@/modules/shared/helpers/envHelper'
 import {
-  updateServerInfoFactory,
+  updateServerInfoFactory as updateServerInfoRepoFactory,
   getPublicRolesFactory,
   getPublicScopesFactory,
   getCachedServerInfoFactory
@@ -14,9 +14,12 @@ import {
 import { db } from '@/db/knex'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { updateServerInfoFactory } from '@/modules/core/services/server/serverInfo'
 
 const getServerInfo = getCachedServerInfoFactory({ db })
-const updateServerInfo = updateServerInfoFactory({ db })
+const updateServerInfo = updateServerInfoFactory({
+  updateServerInfo: updateServerInfoRepoFactory({ db })
+})
 const getPublicRoles = getPublicRolesFactory({ db })
 const getPublicScopes = getPublicScopesFactory({ db })
 
@@ -57,12 +60,14 @@ export default {
       await throwForNotHavingServerRole(context, Roles.Server.Admin)
       await validateScopes(context.scopes, Scopes.Server.Setup)
 
-      const update = removeNullOrUndefinedKeys(args.info)
-      await withOperationLogging(async () => await updateServerInfo(update), {
-        logger: context.log,
-        operationName: 'updateServerInfo',
-        operationDescription: `Update server info`
-      })
+      await withOperationLogging(
+        async () => await updateServerInfo(removeNullOrUndefinedKeys(args.info)),
+        {
+          logger: context.log,
+          operationName: 'updateServerInfo',
+          operationDescription: `Update server info`
+        }
+      )
 
       // clear cache
       await getServerInfo.clear()
