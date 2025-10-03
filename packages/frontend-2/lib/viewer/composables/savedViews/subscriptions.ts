@@ -303,11 +303,16 @@ export const useOnProjectSavedViewGroupsUpdated = (params: {
         'savedViewGroups',
         ({ helpers: { evict } }) => evict()
       )
+
+      // Evict all 'default' groups - items will fall in there
       modifyObjectField(
         cache,
         getCacheId('Project', unref(projectId)),
         'savedViewGroup',
-        ({ helpers: { evict } }) => evict()
+        ({ helpers: { evict, fromRef }, value }) => {
+          const { id } = fromRef(value)
+          if (isUngroupedGroup(id)) return evict()
+        }
       )
 
       // Evict
