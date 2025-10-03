@@ -83,13 +83,24 @@ export const getWorkspaceWithPlanFactory =
 
 export const getWorkspacePlanFactory =
   ({ db }: { db: Knex }): GetWorkspacePlan =>
-  async ({ workspaceId }) => {
-    const workspacePlan = await tables
+  async (params) => {
+    const q = tables
       .workspacePlans(db)
-      .select()
-      .where({ workspaceId })
+      .select<WorkspacePlan[]>(WorkspacePlans.cols)
       .first()
-    return workspacePlan ?? null
+
+    if ('workspaceId' in params) {
+      q.where({ workspaceId: params.workspaceId })
+    } else {
+      q.innerJoin(
+        Workspaces.name,
+        Workspaces.col.id,
+        WorkspacePlans.col.workspaceId
+      ).where({ [Workspaces.col.slug]: params.workspaceSlug })
+    }
+
+    const ret = await q
+    return ret ?? null
   }
 
 export const getWorkspacePlansByWorkspaceIdFactory =
