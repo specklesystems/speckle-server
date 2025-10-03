@@ -1,6 +1,8 @@
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div class="w-full sm:w-auto">
-    <div class="fixed inset-0 z-10 lg:hidden">
+    <div class="fixed inset-0 z-10 lg:hidden" tabindex="-1" @click="emit('close')">
       <div class="absolute inset-0 bg-black/20" />
     </div>
 
@@ -58,6 +60,10 @@ graphql(`
     slug
   }
 `)
+
+const emit = defineEmits<{
+  (e: 'close'): void
+}>()
 
 const { isLoggedIn } = useActiveUser()
 const {
