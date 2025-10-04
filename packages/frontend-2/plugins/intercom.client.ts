@@ -12,7 +12,6 @@ import { useIntercomEnabled } from '~/lib/intercom/composables/enabled'
 import { useActiveWorkspaceSlug } from '~/lib/user/composables/activeWorkspace'
 import { intercomActiveWorkspaceQuery } from '~/lib/intercom/graphql/queries'
 import { useApolloClientFromNuxt } from '~/lib/common/composables/graphql'
-import { estimatedMonthlySpend } from '~/lib/intercom/helpers/billing'
 
 export const useIntercom = () => {
   const {
@@ -92,12 +91,6 @@ export const useIntercom = () => {
             /* eslint-disable camelcase */
             plan_name: result.data.workspaceBySlug.plan?.name,
             plan_status: result.data.workspaceBySlug.plan?.status,
-            estimated_monthly_spend: estimatedMonthlySpend({
-              planName: result.data.workspaceBySlug.plan?.name,
-              interval: result.data.workspaceBySlug.subscription?.billingInterval,
-              prices: result.data.workspaceBySlug.planPrices,
-              seats: editorSeatCount
-            }),
             editor_seat_count: editorSeatCount
             /* eslint-enable camelcase */
           })
