@@ -8,6 +8,12 @@ export const intercomActiveWorkspaceQuery = graphql(`
         name
         status
       }
+      seats {
+        editors {
+          assigned
+          available
+        }
+      }
     }
   }
 `)
