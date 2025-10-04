@@ -5,9 +5,11 @@ export const projectAccSyncItemFragment = graphql(`
     id
     project {
       id
+      name
     }
     model {
       id
+      name
     }
     accRegion
     accHubId
