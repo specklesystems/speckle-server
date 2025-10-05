@@ -60,6 +60,16 @@ const resolvers: Resolvers = {
           savedViewId
         })
       return toGraphqlResult(canEditDescription)
+    },
+    canSetAsHomeView: async (parent, _args, ctx) => {
+      const savedViewId = parent.savedView.id
+      const canSetAsHomeView =
+        await ctx.authPolicies.project.savedViews.canSetAsHomeView({
+          userId: ctx.userId,
+          projectId: parent.savedView.projectId,
+          savedViewId
+        })
+      return toGraphqlResult(canSetAsHomeView)
     }
   },
   SavedViewGroupPermissionChecks: {

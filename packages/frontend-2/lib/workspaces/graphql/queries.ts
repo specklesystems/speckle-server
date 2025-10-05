@@ -1,5 +1,13 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
+export const workspaceFeatureEnabledCheckQuery = graphql(`
+  query Workspace($featureName: WorkspaceFeatureName!, $workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      hasAccessToFeature(featureName: $featureName)
+    }
+  }
+`)
+
 export const workspaceAccessCheckQuery = graphql(`
   query WorkspaceAccessCheck($slug: String!) {
     workspaceBySlug(slug: $slug) {

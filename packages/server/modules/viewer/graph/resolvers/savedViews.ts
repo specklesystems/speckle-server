@@ -99,7 +99,11 @@ const resolvers: Resolvers = {
         }),
         getProjectSavedViewGroupsTotalCount: getProjectSavedViewGroupsTotalCountFactory(
           { db: projectDb }
-        )
+        ),
+        getViewerResourceGroups: buildGetViewerResourceGroups({
+          projectDb,
+          loaders: ctx.loaders
+        })
       })
 
       return await getProjectSavedViewGroups({
@@ -400,14 +404,19 @@ const resolvers: Resolvers = {
           keyof typeof updates,
           Extract<
             keyof typeof ctx.authPolicies.project.savedViews,
-            'canMove' | 'canUpdate' | 'canEditTitle' | 'canEditDescription'
+            | 'canMove'
+            | 'canUpdate'
+            | 'canEditTitle'
+            | 'canEditDescription'
+            | 'canSetAsHomeView'
           >
         >
       > = {
         groupId: 'canMove',
         name: 'canEditTitle',
         description: 'canEditDescription',
-        position: 'canMove'
+        position: 'canMove',
+        isHomeView: 'canSetAsHomeView'
       }
       const results = await Promise.all(
         Object.keys(updates).map((key) => {

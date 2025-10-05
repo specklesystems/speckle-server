@@ -38,9 +38,12 @@ const createSavedViewMutation = graphql(`
 export const useCollectNewSavedViewViewerData = () => {
   const {
     projectId,
-    viewer: { instance: viewerInstance }
+    viewer: { instance: viewerInstance },
+    resources: {
+      response: { concreteResourceIdString }
+    }
   } = useInjectedViewerState()
-  const { serialize, buildConcreteResourceIdString } = useStateSerialization()
+  const { serialize } = useStateSerialization()
 
   const collect = async (): Promise<
     Pick<
@@ -51,7 +54,7 @@ export const useCollectNewSavedViewViewerData = () => {
     const screenshot = await viewerInstance.screenshot()
     return {
       projectId: projectId.value,
-      resourceIdString: buildConcreteResourceIdString(),
+      resourceIdString: concreteResourceIdString.value,
       viewerState: serialize({ concreteResourceIdString: true }),
       screenshot
     }
@@ -82,40 +85,12 @@ export const useCreateSavedView = () => {
   ) => {
     if (!userId.value) return
 
-    const result = await mutate(
-      {
-        input: {
-          ...input,
-          ...(await collect())
-        }
-      },
-      {
-        update: (cache, { data }) => {
-          const res = data?.projectMutations.savedViewMutations.createView
-          if (!res) return
-
-          // const viewId = res.id
-
-          // onNewGroupViewCacheUpdates({
-          //   cache,
-          //   viewId,
-          //   projectId: projectId.value,
-          //   ...(res.groupId
-          //     ? {
-          //         group: {
-          //           id: res.groupId,
-          //           resourceIds: res.group.resourceIds
-          //         }
-          //       }
-          //     : {
-          //         view: {
-          //           resourceIds: res.resourceIds
-          //         }
-          //       })
-          // })
-        }
+    const result = await mutate({
+      input: {
+        ...input,
+        ...(await collect())
       }
-    ).catch(convertThrowIntoFetchResult)
+    }).catch(convertThrowIntoFetchResult)
 
     const res = result?.data?.projectMutations.savedViewMutations.createView
     if (!res?.id) {
@@ -174,40 +149,12 @@ export const useDeleteSavedView = () => {
       return
     }
 
-    const result = await mutate(
-      {
-        input: {
-          projectId,
-          id
-        }
-      },
-      {
-        update: (cache, res) => {
-          if (!res.data?.projectMutations.savedViewMutations.deleteView) return
-
-          // onGroupViewRemovalCacheUpdates({
-          //   cache,
-          //   viewId: id,
-          //   projectId,
-          //   ...(group.groupId
-          //     ? {
-          //         group: {
-          //           id: group.groupId,
-          //           resourceIds: group.resourceIds
-          //         }
-          //       }
-          //     : {
-          //         view: {
-          //           resourceIds: params.view.resourceIds
-          //         }
-          //       })
-          // })
-
-          // // Remove the view from the cache
-          // cache.evict({ id: getCacheId('SavedView', id) })
-        }
+    const result = await mutate({
+      input: {
+        projectId,
+        id
       }
-    ).catch(convertThrowIntoFetchResult)
+    }).catch(convertThrowIntoFetchResult)
 
     const res = result?.data?.projectMutations.savedViewMutations.deleteView
     if (res) {
@@ -294,143 +241,7 @@ export const useUpdateSavedView = () => {
   ) => {
     if (!isLoggedIn.value) return
     const { input } = params
-    const oldGroup = params.view.group
-
-    const result = await mutate(
-      { input },
-      {
-        update: (cache, res) => {
-          const update = res.data?.projectMutations.savedViewMutations.updateView
-          if (!update) return
-
-          const newGroup = update.group
-          const groupChanged = oldGroup.id !== newGroup.id
-
-          if (groupChanged) {
-            // Clean up old group
-            // onGroupViewRemovalCacheUpdates({
-            //   cache,
-            //   viewId: params.view.id,
-            //   projectId: params.view.projectId,
-            //   ...(oldGroup.groupId
-            //     ? {
-            //         group: {
-            //           id: oldGroup.groupId,
-            //           resourceIds: oldGroup.resourceIds
-            //         }
-            //       }
-            //     : {
-            //         view: {
-            //           resourceIds: params.view.resourceIds
-            //         }
-            //       })
-            // })
-            // // Update new group
-            // onNewGroupViewCacheUpdates({
-            //   cache,
-            //   viewId: update.id,
-            //   projectId: params.view.projectId,
-            //   ...(newGroup.groupId
-            //     ? {
-            //         group: {
-            //           id: newGroup.groupId,
-            //           resourceIds: newGroup.resourceIds
-            //         }
-            //       }
-            //     : {
-            //         view: {
-            //           resourceIds: params.view.resourceIds
-            //         }
-            //       })
-            // })
-          }
-
-          // // If set to home view, clear home view on all other views related to the same resourceIdString
-          // if (update.isHomeView && update.groupResourceIds.length === 1) {
-          //   const allSavedViewKeys = getCachedObjectKeys(cache, 'SavedView')
-          //   const modelId = update.groupResourceIds[0]
-
-          //   for (const savedViewKey of allSavedViewKeys) {
-          //     modifyObjectField(
-          //       cache,
-          //       savedViewKey,
-          //       'isHomeView',
-          //       ({ value: isHomeView, helpers: { readObject } }) => {
-          //         const view = readObject()
-          //         const groupIds = view.groupResourceIds
-          //         const viewId = view.id
-          //         const projectId = view.projectId
-          //         if (viewId === update.id) return
-          //         if (update.projectId !== projectId) return
-
-          //         if (isHomeView && groupIds?.length === 1 && groupIds[0] === modelId) {
-          //           return false
-          //         }
-          //       }
-          //     )
-          //   }
-          // }
-
-          // // If position changed, recalculate it according to sort dir in vars
-          // if (input.position) {
-          //   // Go through all SavedViewGroup.views, where this view exists and update array position
-          //   iterateObjectField(
-          //     cache,
-          //     getCacheId('Project', params.view.projectId),
-          //     'savedViewGroups',
-          //     ({ value }) => {
-          //       const items = value.items
-          //       if (!items) return
-
-          //       items.forEach((groupRef) => {
-          //         const parsed = parseObjectReference(groupRef)
-          //         modifyObjectField(
-          //           cache,
-          //           getCacheId('SavedViewGroup', parsed.id),
-          //           'views',
-          //           ({ helpers: { createUpdatedValue, readField }, variables }) => {
-          //             const sortDir =
-          //               variables.input.sortDirection || SortDirection.Desc
-          //             const sortBy = (variables.input.sortBy || 'position') as
-          //               | 'position'
-          //               | 'updatedAt'
-
-          //             return createUpdatedValue(({ update }) => {
-          //               update('items', (items) => {
-          //                 const newItems = items.slice().sort((a, b) => {
-          //                   const process = (
-          //                     ref: CacheObjectReference<'SavedView'>
-          //                   ) => {
-          //                     const val = readField(ref, sortBy)
-          //                     if (!val) return -1
-
-          //                     if (sortBy === 'updatedAt') {
-          //                       return new Date(val).getTime()
-          //                     }
-          //                     return val as number
-          //                   }
-
-          //                   const aVal = process(a)
-          //                   const bVal = process(b)
-
-          //                   if (aVal < bVal)
-          //                     return sortDir === SortDirection.Asc ? -1 : 1
-          //                   if (aVal > bVal)
-          //                     return sortDir === SortDirection.Asc ? 1 : -1
-          //                   return 0
-          //                 })
-          //                 return newItems
-          //               })
-          //             })
-          //           }
-          //         )
-          //       })
-          //     }
-          //   )
-          // }
-        }
-      }
-    ).catch(convertThrowIntoFetchResult)
+    const result = await mutate({ input }).catch(convertThrowIntoFetchResult)
 
     const res = result?.data?.projectMutations.savedViewMutations.updateView
     if (!options?.skipToast) {
@@ -492,40 +303,7 @@ export const useCreateSavedViewGroup = () => {
   return async (input: CreateSavedViewGroupInput) => {
     if (!isLoggedIn.value) return
 
-    const ret = await mutate(
-      { input },
-      {
-        update: (cache, res) => {
-          const group = res.data?.projectMutations.savedViewMutations.createGroup
-          if (!group?.id) return
-
-          // // Project.savedViewGroups +1
-          // modifyObjectField(
-          //   cache,
-          //   getCacheId('Project', input.projectId),
-          //   'savedViewGroups',
-          //   ({ helpers: { createUpdatedValue, fromRef, ref } }) =>
-          //     createUpdatedValue(({ update }) => {
-          //       update('totalCount', (totalCount) => totalCount + 1)
-          //       update('items', (items) => {
-          //         const newItems = items.slice()
-
-          //         // default comes first, then new group
-          //         const defaultIdx = newItems.findIndex((i) =>
-          //           isUngroupedGroup(fromRef(i).id)
-          //         )
-
-          //         newItems.splice(defaultIdx + 1, 0, ref('SavedViewGroup', group.id))
-
-          //         return newItems
-          //       })
-          //     }),
-          //   { autoEvictFiltered: filterKeys }
-          // )
-        }
-      }
-    ).catch(convertThrowIntoFetchResult)
-
+    const ret = await mutate({ input }).catch(convertThrowIntoFetchResult)
     const res = ret?.data?.projectMutations.savedViewMutations.createGroup
     if (res?.id) {
       triggerNotification({
@@ -583,28 +361,9 @@ export const useDeleteSavedViewGroup = () => {
     const projectId = group.projectId
     if (!groupId || group.isUngroupedViewsGroup) return // not real group
 
-    const result = await mutate(
-      { input: { groupId, projectId } },
-      {
-        update: (cache, res) => {
-          const deleteSuccessful =
-            res.data?.projectMutations.savedViewMutations.deleteGroup
-          if (!deleteSuccessful) return
-
-          // // Views can be moved around, just easier to evict Project.savedViewGroups
-          // modifyObjectField(
-          //   cache,
-          //   getCacheId('Project', projectId),
-          //   'savedViewGroups',
-          //   ({ helpers: { evict } }) => evict()
-          // )
-          // // Evict
-          // cache.evict({
-          //   id: getCacheId('SavedViewGroup', groupId)
-          // })
-        }
-      }
-    ).catch(convertThrowIntoFetchResult)
+    const result = await mutate({ input: { groupId, projectId } }).catch(
+      convertThrowIntoFetchResult
+    )
 
     const res = result?.data?.projectMutations.savedViewMutations.deleteGroup
     if (res) {

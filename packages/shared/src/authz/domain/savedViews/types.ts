@@ -10,6 +10,7 @@ export type SavedView = {
   groupId: string | null
   projectId: string
   visibility: SavedViewVisibility
+  resourceIds: string[]
 }
 
 export type SavedViewGroup = {

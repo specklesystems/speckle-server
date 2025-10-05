@@ -1,4 +1,4 @@
-import type { AccSyncItem } from '@/modules/acc/domain/types'
+import type { AccSyncItem } from '@/modules/acc/domain/acc/types'
 
 export const accSyncItemEventsNamespace = 'accSyncItems' as const
 

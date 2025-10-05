@@ -48,6 +48,7 @@ import { canMoveSavedViewPolicy } from './project/savedViews/canMove.js'
 import { canEditSavedViewTitlePolicy } from './project/savedViews/canEditTitle.js'
 import { canEditSavedViewDescriptionPolicy } from './project/savedViews/canEditDescription.js'
 import { canCreateSavedViewGroupTokenPolicy } from './project/savedViews/canCreateSavedViewGroupToken.js'
+import { canSetSavedViewAsHomeViewPolicy } from './project/savedViews/canSetAsHomeView.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
   automate: {
@@ -92,7 +93,8 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
       canRead: canReadSavedViewPolicy(loaders),
       canMove: canMoveSavedViewPolicy(loaders),
       canEditTitle: canEditSavedViewTitlePolicy(loaders),
-      canEditDescription: canEditSavedViewDescriptionPolicy(loaders)
+      canEditDescription: canEditSavedViewDescriptionPolicy(loaders),
+      canSetAsHomeView: canSetSavedViewAsHomeViewPolicy(loaders)
     },
     canBroadcastActivity: canBroadcastProjectActivityPolicy(loaders),
     canRead: canReadProjectPolicy(loaders),
