@@ -1,6 +1,6 @@
 <template>
   <LayoutDialog
-    v-model:open="isOpen"
+    :open="isOpen"
     :title="dialogTitle"
     :buttons="dialogButtons"
     max-width="lg"

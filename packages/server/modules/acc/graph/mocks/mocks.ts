@@ -20,6 +20,9 @@ const mocks: SpeckleModuleMocksConfig = {
         } as any
       }
     },
+    Model: {
+      accSyncItem: () => store.get('AccSyncItem') as any
+    },
     AccSyncItem: {
       project: () => store.get('Project') as any,
       model: () => store.get('Model') as any,

@@ -1,13 +1,12 @@
 <template>
-  <div v-tippy="statusLabel">
-    <CommonBadge
-      :color-classes="
-        [runStatusClasses(status), 'shrink-0 grow-0 text-foreground'].join(' ')
-      "
-    >
-      ACC
-    </CommonBadge>
-  </div>
+  <CommonBadge
+    class="bg-"
+    :color-classes="
+      [runStatusClasses(status), 'shrink-0 grow-0 text-foreground'].join(' ')
+    "
+  >
+    {{ statusLabel }}
+  </CommonBadge>
 </template>
 
 <script setup lang="ts">
@@ -21,6 +20,8 @@ graphql(`
   fragment SyncStatusModelItem_AccSyncItem on AccSyncItem {
     id
     status
+    updatedAt
+    accFileVersionIndex
   }
 `)
 
@@ -29,20 +30,16 @@ const props = defineProps<{
 }>()
 
 const status = computed(() => props.item.status)
-const statusLabel = computed(
-  () => status.value.charAt(0).toUpperCase() + status.value.slice(1)
-)
+const statusLabel = computed(() => `V${props.item.accFileVersionIndex}`)
 
 const runStatusClasses = (run: AccSyncItemStatus) => {
-  const classParts = ['w-24 justify-center']
+  const classParts = ['w-12 justify-center']
 
   switch (run) {
     case 'syncing':
       classParts.push('bg-info-lighter')
       break
     case 'pending':
-      classParts.push('bg-warning-lighter')
-      break
     case 'paused':
       classParts.push('bg-warning-lighter')
       break
@@ -50,7 +47,7 @@ const runStatusClasses = (run: AccSyncItemStatus) => {
       classParts.push('bg-danger-lighter')
       break
     case 'succeeded':
-      classParts.push('bg-success-lighter')
+      classParts.push('bg-foundation-2')
       break
   }
 

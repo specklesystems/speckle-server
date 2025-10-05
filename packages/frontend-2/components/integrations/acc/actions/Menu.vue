@@ -23,12 +23,10 @@
 import { HorizontalDirection, type LayoutMenuItem } from '@speckle/ui-components'
 import { useMutation } from '@vue/apollo-composable'
 import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
-import {
-  accSyncItemDeleteMutation,
-  accSyncItemUpdateMutation
-} from '~/lib/acc/graphql/mutations'
+import { accSyncItemUpdateMutation } from '~/lib/acc/graphql/mutations'
 import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsProjectIntegrationsActionsMenu_AccSyncItemFragment } from '~/lib/common/generated/gql/graphql'
+import { useDeleteAccSyncItem } from '~/lib/acc/composables/useDeleteAccSyncItem'
 
 graphql(`
   fragment SettingsProjectIntegrationsActionsMenu_AccSyncItem on AccSyncItem {
@@ -64,23 +62,10 @@ const actionItems = computed<LayoutMenuItem[][]>(() => [
   ]
 ])
 
-const { mutate: deleteAccSyncItem } = useMutation(accSyncItemDeleteMutation)
+const deleteAccSyncItem = useDeleteAccSyncItem()
 
 const handleDeleteSyncItem = async (id: string) => {
-  try {
-    await deleteAccSyncItem({
-      input: {
-        projectId: projectId.value,
-        id
-      }
-    })
-  } catch (error) {
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Delete sync item failed',
-      description: error instanceof Error ? error.message : 'Unexpected error'
-    })
-  }
+  await deleteAccSyncItem(projectId.value, id)
 }
 
 const { mutate: updateAccSyncItem } = useMutation(accSyncItemUpdateMutation)

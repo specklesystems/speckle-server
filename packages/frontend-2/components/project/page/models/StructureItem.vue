@@ -55,9 +55,6 @@
             submodel
           </FormButton>
         </div>
-        <div v-if="accSyncItem" class="flex items-center ml-2">
-          <IntegrationsAccSyncStatusModelItem :item="accSyncItem" />
-        </div>
         <!-- Spacer -->
         <div class="flex-grow"></div>
 
@@ -78,7 +75,7 @@
             />
             <!-- Import area must exist even if hidden, so that we can trigger uploads from actions -->
             <ProjectCardImportFileArea
-              v-show="!pendingVersion"
+              v-show="!pendingVersion && !accSyncItem"
               ref="importArea"
               empty-state-variant="modelList"
               :project="project"
@@ -87,6 +84,22 @@
               class="h-full w-full"
               @uploading="onVersionUploading"
             />
+          </div>
+        </template>
+        <template v-if="accSyncItem">
+          <div class="flex items-center justify-end h-full">
+            <p class="text-foreground-2 text-xs mr-2">
+              {{ syncStatusMessage }}
+            </p>
+            <IntegrationsAccSyncStatusModelItem class="mr-2 bg-" :item="accSyncItem" />
+            <FormButton
+              v-tippy="'Configure ACC Sync'"
+              color="outline"
+              class="!px-2"
+              @click="editSyncItemDialogOpen = true"
+            >
+              <LinkIcon class="w-4 h-4" />
+            </FormButton>
           </div>
         </template>
         <div v-else-if="hasVersions" class="hidden sm:flex items-center gap-x-2">
@@ -252,12 +265,17 @@
         <div v-if="canEdit" class="mr-8"></div>
       </div>
     </div>
+    <LazyIntegrationsAccDialogEditSync
+      v-if="accSyncItem"
+      v-model:open="editSyncItemDialogOpen"
+      :sync-item="accSyncItem"
+    />
   </div>
 </template>
 <script lang="ts" setup>
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid'
-import { ExclamationCircleIcon, FolderIcon } from '@heroicons/vue/24/outline'
+import { ExclamationCircleIcon, FolderIcon, LinkIcon } from '@heroicons/vue/24/outline'
 import type {
   PendingFileUploadFragment,
   ProjectPageModelsStructureItem_ProjectFragment,
@@ -313,17 +331,15 @@ graphql(`
       ...ProjectCardImportFileArea_Model
       ...ProjectPageModelsCard_Model
       accSyncItem {
+        id
         ...SyncStatusModelItem_AccSyncItem
+        ...IntegrationsAccEditSyncDialog_AccSyncItem
       }
     }
     hasChildren
     updatedAt
   }
 `)
-
-const isPendingFileUpload = (
-  i: SingleLevelModelTreeItemFragment | PendingFileUploadFragment
-): i is PendingFileUploadFragment => has(i, 'uploadDate')
 
 const emit = defineEmits<{
   (e: 'model-updated'): void
@@ -342,6 +358,31 @@ const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 const accSyncItem = computed(() =>
   props.item.__typename === 'ModelsTreeItem' ? props.item.model?.accSyncItem : undefined
 )
+const syncStatusMessage = computed(() => {
+  if (!accSyncItem.value) return
+
+  const timeAgo = formattedRelativeDate(accSyncItem.value.updatedAt)
+
+  switch (accSyncItem.value?.status) {
+    case 'failed':
+      return `Sync failed ${timeAgo}`
+    case 'pending':
+      return `Sync scheduled ${timeAgo}`
+    case 'paused':
+      return `Sync paused ${timeAgo}`
+    case 'succeeded':
+      return `Last updated ${timeAgo}`
+    case 'syncing':
+      return `Processing since ${timeAgo}`
+    default:
+      return ''
+  }
+})
+const editSyncItemDialogOpen = ref(false)
+
+const isPendingFileUpload = (
+  i: SingleLevelModelTreeItemFragment | PendingFileUploadFragment
+): i is PendingFileUploadFragment => has(i, 'uploadDate')
 
 const importArea = ref(
   null as Nullable<{
