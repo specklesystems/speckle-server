@@ -66,6 +66,7 @@ import type {
   DeleteProjectAndCommits,
   QueryAllProjects
 } from '@/modules/core/domain/projects/operations'
+import sanitizeHtml from 'sanitize-html'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -154,7 +155,11 @@ export const createWorkspaceFactory =
       slug = await generateValidSlug(workspaceInput)
     }
     const workspace = {
-      ...workspaceInput,
+      name: sanitizeHtml(workspaceInput.name),
+      description: workspaceInput.description
+        ? sanitizeHtml(workspaceInput.description)
+        : null,
+      logo: workspaceInput.logo ? sanitizeHtml(workspaceInput.logo) : null,
       slug,
       id: cryptoRandomString({ length: 10 }),
       createdAt: new Date(),

@@ -28,6 +28,7 @@ import type {
 import type { GetStream } from '@/modules/core/domain/streams/operations'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ModelEvents } from '@/modules/core/domain/branches/events'
+import { sanitizeUserInput } from '@/modules/core/utils/input'
 
 const isBranchCreateInput = (
   i: BranchCreateInput | CreateModelInput
@@ -46,10 +47,12 @@ export const createBranchAndNotifyFactory =
       throw new BranchCreateError('A branch with this name already exists')
     }
 
+    const sanitizedInput = sanitizeUserInput(input)
+
     const branch = await deps.createBranch({
-      name: input.name,
-      description: input.description ?? null,
-      streamId: isBranchCreateInput(input) ? input.streamId : input.projectId,
+      name: sanitizedInput.name,
+      description: sanitizedInput.description ?? null,
+      streamId,
       authorId: creatorId
     })
 
