@@ -1,8 +1,10 @@
 <template>
   <div class="flex flex-row h-full overflow-hidden border rounded-lg bg-foundation">
     <!-- Left Pane for tree -->
-    <div class="w-1/4 p-2 overflow-y-auto border-r">
-      <h3 class="font-semibold text-lg text-center">Folders</h3>
+    <div class="w-1/4 p-2 pt-0 h-80 overflow-y-auto border-r">
+      <h3 class="font-semibold pt-2 text-lg text-center sticky top-0 bg-foundation">
+        Folders
+      </h3>
       <hr class="mb-1" />
       <div v-if="!rootFolder"></div>
       <ul
