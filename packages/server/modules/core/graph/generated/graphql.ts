@@ -15,8 +15,8 @@ import type { ActivityCollectionGraphQLReturn } from '@/modules/activitystream/h
 import type { ServerAppGraphQLReturn, ServerAppListItemGraphQLReturn } from '@/modules/auth/helpers/graphTypes';
 import type { GendoAIRenderGraphQLReturn } from '@/modules/gendo/helpers/types/graphTypes';
 import type { ServerRegionItemGraphQLReturn } from '@/modules/multiregion/helpers/graphTypes';
-import type { AccSyncItemGraphQLReturn, AccSyncItemMutationsGraphQLReturn } from '@/modules/acc/helpers/graphTypes';
-import type { SavedViewGraphQLReturn, SavedViewGroupGraphQLReturn, SavedViewPermissionChecksGraphQLReturn, SavedViewGroupPermissionChecksGraphQLReturn, ExtendedViewerResourcesGraphQLReturn } from '@/modules/viewer/helpers/graphTypes';
+import type { WorkspaceIntegrationsGraphQLReturn, AccIntegrationGraphQLReturn, AccFolderGraphQLReturn, AccItemGraphQLReturn, AccSyncItemGraphQLReturn, AccSyncItemMutationsGraphQLReturn } from '@/modules/acc/helpers/graphTypes';
+import type { SavedViewGraphQLReturn, SavedViewGroupGraphQLReturn, SavedViewPermissionChecksGraphQLReturn, SavedViewGroupPermissionChecksGraphQLReturn, ProjectSavedViewsUpdatedMessageGraphQLReturn, ProjectSavedViewGroupsUpdatedMessageGraphQLReturn, BeforeChangeSavedViewGraphQLReturn, ExtendedViewerResourcesGraphQLReturn } from '@/modules/viewer/helpers/graphTypes';
 import type { DashboardGraphQLReturn, DashboardMutationsGraphQLReturn, DashboardPermissionChecksGraphQLReturn, DashboardTokenGraphQLReturn } from '@/modules/dashboards/helpers/graphTypes';
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
@@ -44,6 +44,113 @@ export type Scalars = {
   JSONObject: { input: Record<string, unknown>; output: Record<string, unknown>; }
 };
 
+export type AccFolder = {
+  __typename?: 'AccFolder';
+  children: AccFolderCollection;
+  contents: AccItemCollection;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type AccFolderCollection = {
+  __typename?: 'AccFolderCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<AccFolder>;
+};
+
+export type AccHub = {
+  __typename?: 'AccHub';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  project: AccProject;
+  projects: AccProjectCollection;
+};
+
+
+export type AccHubProjectArgs = {
+  id: Scalars['ID']['input'];
+};
+
+export type AccHubCollection = {
+  __typename?: 'AccHubCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<AccHub>;
+};
+
+export type AccIntegration = {
+  __typename?: 'AccIntegration';
+  folder: AccFolder;
+  hub: AccHub;
+  hubs: AccHubCollection;
+  item: AccItem;
+  project: AccProject;
+};
+
+
+export type AccIntegrationFolderArgs = {
+  folderId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
+
+export type AccIntegrationHubArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type AccIntegrationItemArgs = {
+  itemId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
+
+export type AccIntegrationProjectArgs = {
+  hubId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
+export type AccItem = {
+  __typename?: 'AccItem';
+  /** lineage urn */
+  id: Scalars['ID']['output'];
+  latestVersion: AccItemVersion;
+  name: Scalars['String']['output'];
+};
+
+export type AccItemCollection = {
+  __typename?: 'AccItemCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<AccItem>;
+};
+
+export type AccItemVersion = {
+  __typename?: 'AccItemVersion';
+  fileType?: Maybe<Scalars['String']['output']>;
+  /** version urn */
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  versionNumber: Scalars['Int']['output'];
+};
+
+export type AccProject = {
+  __typename?: 'AccProject';
+  folder: AccFolder;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  rootFolder: AccFolder;
+};
+
+
+export type AccProjectFolderArgs = {
+  id: Scalars['String']['input'];
+};
+
+export type AccProjectCollection = {
+  __typename?: 'AccProjectCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<AccProject>;
+};
+
 export type AccSyncItem = {
   __typename?: 'AccSyncItem';
   accFileExtension: Scalars['String']['output'];
@@ -60,8 +167,8 @@ export type AccSyncItem = {
   author?: Maybe<LimitedUser>;
   createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
-  modelId: Scalars['String']['output'];
-  projectId: Scalars['String']['output'];
+  model?: Maybe<Model>;
+  project: Project;
   status: AccSyncItemStatus;
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -157,9 +264,11 @@ export type AddDomainToWorkspaceInput = {
   workspaceId: Scalars['ID']['input'];
 };
 
+/** Either the ID or slug must be set */
 export type AdminAccessToWorkspaceFeatureInput = {
   featureFlagName: WorkspaceFeatureFlagName;
-  workspaceId: Scalars['ID']['input'];
+  workspaceId?: InputMaybe<Scalars['ID']['input']>;
+  workspaceSlug?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type AdminInviteList = {
@@ -625,6 +734,14 @@ export type BasicGitRepositoryMetadata = {
   name: Scalars['String']['output'];
   owner: Scalars['String']['output'];
   url: Scalars['String']['output'];
+};
+
+export type BeforeChangeSavedView = {
+  __typename?: 'BeforeChangeSavedView';
+  groupId?: Maybe<Scalars['ID']['output']>;
+  groupResourceIds: Array<Scalars['String']['output']>;
+  position: Scalars['Float']['output'];
+  resourceIds: Array<Scalars['String']['output']>;
 };
 
 export const BillingInterval = {
@@ -1752,6 +1869,7 @@ export type MarkReceivedVersionInput = {
 
 export type Model = {
   __typename?: 'Model';
+  accSyncItem?: Maybe<AccSyncItem>;
   author?: Maybe<LimitedUser>;
   automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** Return a model tree of children */
@@ -3279,6 +3397,37 @@ export type ProjectRole = {
   role: Scalars['String']['output'];
 };
 
+export type ProjectSavedViewGroupsUpdatedMessage = {
+  __typename?: 'ProjectSavedViewGroupsUpdatedMessage';
+  /** SavedViewGroup ID */
+  id: Scalars['ID']['output'];
+  /** The project that the update belongs to */
+  project: Project;
+  /** Null if group was deleted */
+  savedViewGroup?: Maybe<SavedViewGroup>;
+  type: ProjectSavedViewsUpdatedMessageType;
+};
+
+export type ProjectSavedViewsUpdatedMessage = {
+  __typename?: 'ProjectSavedViewsUpdatedMessage';
+  /** Set if view was deleted/updated, allows some limited access into the view before the change (update/delete) */
+  beforeChangeSavedView?: Maybe<BeforeChangeSavedView>;
+  /** SavedView ID */
+  id: Scalars['ID']['output'];
+  /** The project that the update belongs to */
+  project: Project;
+  /** Null if view was deleted */
+  savedView?: Maybe<SavedView>;
+  type: ProjectSavedViewsUpdatedMessageType;
+};
+
+export const ProjectSavedViewsUpdatedMessageType = {
+  Created: 'CREATED',
+  Deleted: 'DELETED',
+  Updated: 'UPDATED'
+} as const;
+
+export type ProjectSavedViewsUpdatedMessageType = typeof ProjectSavedViewsUpdatedMessageType[keyof typeof ProjectSavedViewsUpdatedMessageType];
 export type ProjectTestAutomationCreateInput = {
   modelId: Scalars['String']['input'];
   name: Scalars['String']['input'];
@@ -3745,6 +3894,7 @@ export type SavedViewCollection = {
 
 export type SavedViewGroup = {
   __typename?: 'SavedViewGroup';
+  author?: Maybe<LimitedUser>;
   /** Only set if this is a real/persisted group. */
   groupId?: Maybe<Scalars['ID']['output']>;
   /** This is always set even for fake/not persisted groups for Apollo caching */
@@ -3897,6 +4047,7 @@ export type SavedViewPermissionChecks = {
   canEditDescription: PermissionCheckResult;
   canEditTitle: PermissionCheckResult;
   canMove: PermissionCheckResult;
+  canSetAsHomeView: PermissionCheckResult;
   /**
    * Can the current user fully update everything about this view. Even if this fails,
    * the user may be able to do partial updates (e.g. just change the title)
@@ -4463,6 +4614,10 @@ export type Subscription = {
   projectPendingModelsUpdated: ProjectPendingModelsUpdatedMessage;
   /** Subscribe to changes to a project's pending versions */
   projectPendingVersionsUpdated: ProjectPendingVersionsUpdatedMessage;
+  /** Subscribe to changes to a project's saved view groups. */
+  projectSavedViewGroupsUpdated: ProjectSavedViewGroupsUpdatedMessage;
+  /** Subscribe to changes to a project's saved views. */
+  projectSavedViewsUpdated: ProjectSavedViewsUpdatedMessage;
   /** Subscribe to updates to any triggered automations statuses in the project */
   projectTriggeredAutomationsStatusUpdated: ProjectTriggeredAutomationsStatusUpdatedMessage;
   /** Track updates to a specific project */
@@ -4595,6 +4750,16 @@ export type SubscriptionProjectPendingModelsUpdatedArgs = {
 
 export type SubscriptionProjectPendingVersionsUpdatedArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type SubscriptionProjectSavedViewGroupsUpdatedArgs = {
+  projectId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionProjectSavedViewsUpdatedArgs = {
+  projectId: Scalars['ID']['input'];
 };
 
 
@@ -5494,6 +5659,7 @@ export type Workspace = {
   embedOptions: WorkspaceEmbedOptions;
   hasAccessToFeature: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
+  integrations?: Maybe<WorkspaceIntegrations>;
   /** Only available to workspace owners/members */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
   /** Exclusive workspaces do not allow their workspace members to create or join other workspaces as members. */
@@ -5680,6 +5846,16 @@ export type WorkspaceFeatureName = typeof WorkspaceFeatureName[keyof typeof Work
 export type WorkspaceIdentifier =
   { id: Scalars['String']['input']; slug?: never; }
   |  { id?: never; slug: Scalars['String']['input']; };
+
+export type WorkspaceIntegrations = {
+  __typename?: 'WorkspaceIntegrations';
+  acc?: Maybe<AccIntegration>;
+};
+
+
+export type WorkspaceIntegrationsAccArgs = {
+  token?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type WorkspaceInviteCreateInput = {
   /** Either this or userId must be filled */
@@ -6261,6 +6437,16 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
+  AccFolder: ResolverTypeWrapper<AccFolderGraphQLReturn>;
+  AccFolderCollection: ResolverTypeWrapper<Omit<AccFolderCollection, 'items'> & { items: Array<ResolversTypes['AccFolder']> }>;
+  AccHub: ResolverTypeWrapper<Omit<AccHub, 'project' | 'projects'> & { project: ResolversTypes['AccProject'], projects: ResolversTypes['AccProjectCollection'] }>;
+  AccHubCollection: ResolverTypeWrapper<Omit<AccHubCollection, 'items'> & { items: Array<ResolversTypes['AccHub']> }>;
+  AccIntegration: ResolverTypeWrapper<AccIntegrationGraphQLReturn>;
+  AccItem: ResolverTypeWrapper<AccItemGraphQLReturn>;
+  AccItemCollection: ResolverTypeWrapper<Omit<AccItemCollection, 'items'> & { items: Array<ResolversTypes['AccItem']> }>;
+  AccItemVersion: ResolverTypeWrapper<AccItemVersion>;
+  AccProject: ResolverTypeWrapper<Omit<AccProject, 'folder' | 'rootFolder'> & { folder: ResolversTypes['AccFolder'], rootFolder: ResolversTypes['AccFolder'] }>;
+  AccProjectCollection: ResolverTypeWrapper<Omit<AccProjectCollection, 'items'> & { items: Array<ResolversTypes['AccProject']> }>;
   AccSyncItem: ResolverTypeWrapper<AccSyncItemGraphQLReturn>;
   AccSyncItemCollection: ResolverTypeWrapper<Omit<AccSyncItemCollection, 'items'> & { items: Array<ResolversTypes['AccSyncItem']> }>;
   AccSyncItemMutations: ResolverTypeWrapper<AccSyncItemMutationsGraphQLReturn>;
@@ -6317,6 +6503,7 @@ export type ResolversTypes = {
   AutomationRevisionTriggerDefinition: ResolverTypeWrapper<AutomationRevisionTriggerDefinitionGraphQLReturn>;
   AutomationRunTrigger: ResolverTypeWrapper<AutomationRunTriggerGraphQLReturn>;
   BasicGitRepositoryMetadata: ResolverTypeWrapper<BasicGitRepositoryMetadata>;
+  BeforeChangeSavedView: ResolverTypeWrapper<BeforeChangeSavedViewGraphQLReturn>;
   BigInt: ResolverTypeWrapper<Scalars['BigInt']['output']>;
   BillingInterval: BillingInterval;
   BlobMetadata: ResolverTypeWrapper<BlobStorageItem>;
@@ -6483,6 +6670,9 @@ export type ResolversTypes = {
   ProjectPendingVersionsUpdatedMessageType: ProjectPendingVersionsUpdatedMessageType;
   ProjectPermissionChecks: ResolverTypeWrapper<ProjectPermissionChecksGraphQLReturn>;
   ProjectRole: ResolverTypeWrapper<ProjectRoleGraphQLReturn>;
+  ProjectSavedViewGroupsUpdatedMessage: ResolverTypeWrapper<ProjectSavedViewGroupsUpdatedMessageGraphQLReturn>;
+  ProjectSavedViewsUpdatedMessage: ResolverTypeWrapper<ProjectSavedViewsUpdatedMessageGraphQLReturn>;
+  ProjectSavedViewsUpdatedMessageType: ProjectSavedViewsUpdatedMessageType;
   ProjectTestAutomationCreateInput: ProjectTestAutomationCreateInput;
   ProjectTriggeredAutomationsStatusUpdatedMessage: ResolverTypeWrapper<ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn>;
   ProjectTriggeredAutomationsStatusUpdatedMessageType: ProjectTriggeredAutomationsStatusUpdatedMessageType;
@@ -6622,6 +6812,7 @@ export type ResolversTypes = {
   WorkspaceFeatureFlagName: WorkspaceFeatureFlagName;
   WorkspaceFeatureName: WorkspaceFeatureName;
   WorkspaceIdentifier: WorkspaceIdentifier;
+  WorkspaceIntegrations: ResolverTypeWrapper<WorkspaceIntegrationsGraphQLReturn>;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
   WorkspaceInviteLookupOptions: WorkspaceInviteLookupOptions;
   WorkspaceInviteMutations: ResolverTypeWrapper<WorkspaceInviteMutationsGraphQLReturn>;
@@ -6671,6 +6862,16 @@ export type ResolversTypes = {
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
+  AccFolder: AccFolderGraphQLReturn;
+  AccFolderCollection: Omit<AccFolderCollection, 'items'> & { items: Array<ResolversParentTypes['AccFolder']> };
+  AccHub: Omit<AccHub, 'project' | 'projects'> & { project: ResolversParentTypes['AccProject'], projects: ResolversParentTypes['AccProjectCollection'] };
+  AccHubCollection: Omit<AccHubCollection, 'items'> & { items: Array<ResolversParentTypes['AccHub']> };
+  AccIntegration: AccIntegrationGraphQLReturn;
+  AccItem: AccItemGraphQLReturn;
+  AccItemCollection: Omit<AccItemCollection, 'items'> & { items: Array<ResolversParentTypes['AccItem']> };
+  AccItemVersion: AccItemVersion;
+  AccProject: Omit<AccProject, 'folder' | 'rootFolder'> & { folder: ResolversParentTypes['AccFolder'], rootFolder: ResolversParentTypes['AccFolder'] };
+  AccProjectCollection: Omit<AccProjectCollection, 'items'> & { items: Array<ResolversParentTypes['AccProject']> };
   AccSyncItem: AccSyncItemGraphQLReturn;
   AccSyncItemCollection: Omit<AccSyncItemCollection, 'items'> & { items: Array<ResolversParentTypes['AccSyncItem']> };
   AccSyncItemMutations: AccSyncItemMutationsGraphQLReturn;
@@ -6723,6 +6924,7 @@ export type ResolversParentTypes = {
   AutomationRevisionTriggerDefinition: AutomationRevisionTriggerDefinitionGraphQLReturn;
   AutomationRunTrigger: AutomationRunTriggerGraphQLReturn;
   BasicGitRepositoryMetadata: BasicGitRepositoryMetadata;
+  BeforeChangeSavedView: BeforeChangeSavedViewGraphQLReturn;
   BigInt: Scalars['BigInt']['output'];
   BlobMetadata: BlobStorageItem;
   BlobMetadataCollection: Omit<BlobMetadataCollection, 'items'> & { items?: Maybe<Array<ResolversParentTypes['BlobMetadata']>> };
@@ -6877,6 +7079,8 @@ export type ResolversParentTypes = {
   ProjectPendingVersionsUpdatedMessage: Omit<ProjectPendingVersionsUpdatedMessage, 'version'> & { version: ResolversParentTypes['FileUpload'] };
   ProjectPermissionChecks: ProjectPermissionChecksGraphQLReturn;
   ProjectRole: ProjectRoleGraphQLReturn;
+  ProjectSavedViewGroupsUpdatedMessage: ProjectSavedViewGroupsUpdatedMessageGraphQLReturn;
+  ProjectSavedViewsUpdatedMessage: ProjectSavedViewsUpdatedMessageGraphQLReturn;
   ProjectTestAutomationCreateInput: ProjectTestAutomationCreateInput;
   ProjectTriggeredAutomationsStatusUpdatedMessage: ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn;
   ProjectUpdateInput: ProjectUpdateInput;
@@ -7000,6 +7204,7 @@ export type ResolversParentTypes = {
   WorkspaceDomainDeleteInput: WorkspaceDomainDeleteInput;
   WorkspaceEmbedOptions: WorkspaceEmbedOptions;
   WorkspaceIdentifier: WorkspaceIdentifier;
+  WorkspaceIntegrations: WorkspaceIntegrationsGraphQLReturn;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
   WorkspaceInviteLookupOptions: WorkspaceInviteLookupOptions;
   WorkspaceInviteMutations: WorkspaceInviteMutationsGraphQLReturn;
@@ -7074,6 +7279,78 @@ export type IsOwnerDirectiveArgs = { };
 
 export type IsOwnerDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = IsOwnerDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
+export type AccFolderResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccFolder'] = ResolversParentTypes['AccFolder']> = {
+  children?: Resolver<ResolversTypes['AccFolderCollection'], ParentType, ContextType>;
+  contents?: Resolver<ResolversTypes['AccItemCollection'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccFolderCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccFolderCollection'] = ResolversParentTypes['AccFolderCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['AccFolder']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccHubResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccHub'] = ResolversParentTypes['AccHub']> = {
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  project?: Resolver<ResolversTypes['AccProject'], ParentType, ContextType, RequireFields<AccHubProjectArgs, 'id'>>;
+  projects?: Resolver<ResolversTypes['AccProjectCollection'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccHubCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccHubCollection'] = ResolversParentTypes['AccHubCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['AccHub']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccIntegrationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccIntegration'] = ResolversParentTypes['AccIntegration']> = {
+  folder?: Resolver<ResolversTypes['AccFolder'], ParentType, ContextType, RequireFields<AccIntegrationFolderArgs, 'folderId' | 'projectId'>>;
+  hub?: Resolver<ResolversTypes['AccHub'], ParentType, ContextType, RequireFields<AccIntegrationHubArgs, 'id'>>;
+  hubs?: Resolver<ResolversTypes['AccHubCollection'], ParentType, ContextType>;
+  item?: Resolver<ResolversTypes['AccItem'], ParentType, ContextType, RequireFields<AccIntegrationItemArgs, 'itemId' | 'projectId'>>;
+  project?: Resolver<ResolversTypes['AccProject'], ParentType, ContextType, RequireFields<AccIntegrationProjectArgs, 'hubId' | 'projectId'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccItem'] = ResolversParentTypes['AccItem']> = {
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  latestVersion?: Resolver<ResolversTypes['AccItemVersion'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccItemCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccItemCollection'] = ResolversParentTypes['AccItemCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['AccItem']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccItemVersionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccItemVersion'] = ResolversParentTypes['AccItemVersion']> = {
+  fileType?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  versionNumber?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccProjectResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccProject'] = ResolversParentTypes['AccProject']> = {
+  folder?: Resolver<ResolversTypes['AccFolder'], ParentType, ContextType, RequireFields<AccProjectFolderArgs, 'id'>>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  rootFolder?: Resolver<ResolversTypes['AccFolder'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AccProjectCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccProjectCollection'] = ResolversParentTypes['AccProjectCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['AccProject']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type AccSyncItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AccSyncItem'] = ResolversParentTypes['AccSyncItem']> = {
   accFileExtension?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   accFileLineageUrn?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -7089,8 +7366,8 @@ export type AccSyncItemResolvers<ContextType = GraphQLContext, ParentType extend
   author?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  modelId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
+  project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['AccSyncItemStatus'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -7377,6 +7654,14 @@ export type BasicGitRepositoryMetadataResolvers<ContextType = GraphQLContext, Pa
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   owner?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BeforeChangeSavedViewResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BeforeChangeSavedView'] = ResolversParentTypes['BeforeChangeSavedView']> = {
+  groupId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  groupResourceIds?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  position?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
+  resourceIds?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -7801,6 +8086,7 @@ export type LimitedWorkspaceJoinRequestCollectionResolvers<ContextType = GraphQL
 };
 
 export type ModelResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Model'] = ResolversParentTypes['Model']> = {
+  accSyncItem?: Resolver<Maybe<ResolversTypes['AccSyncItem']>, ParentType, ContextType>;
   author?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   automationsStatus?: Resolver<Maybe<ResolversTypes['TriggeredAutomationsStatus']>, ParentType, ContextType>;
   childrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
@@ -8249,6 +8535,23 @@ export type ProjectRoleResolvers<ContextType = GraphQLContext, ParentType extend
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type ProjectSavedViewGroupsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectSavedViewGroupsUpdatedMessage'] = ResolversParentTypes['ProjectSavedViewGroupsUpdatedMessage']> = {
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
+  savedViewGroup?: Resolver<Maybe<ResolversTypes['SavedViewGroup']>, ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ProjectSavedViewsUpdatedMessageType'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectSavedViewsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectSavedViewsUpdatedMessage'] = ResolversParentTypes['ProjectSavedViewsUpdatedMessage']> = {
+  beforeChangeSavedView?: Resolver<Maybe<ResolversTypes['BeforeChangeSavedView']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
+  savedView?: Resolver<Maybe<ResolversTypes['SavedView']>, ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ProjectSavedViewsUpdatedMessageType'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type ProjectTriggeredAutomationsStatusUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectTriggeredAutomationsStatusUpdatedMessage'] = ResolversParentTypes['ProjectTriggeredAutomationsStatusUpdatedMessage']> = {
   model?: Resolver<ResolversTypes['Model'], ParentType, ContextType>;
   project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
@@ -8369,6 +8672,7 @@ export type SavedViewCollectionResolvers<ContextType = GraphQLContext, ParentTyp
 };
 
 export type SavedViewGroupResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['SavedViewGroup'] = ResolversParentTypes['SavedViewGroup']> = {
+  author?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   groupId?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   isUngroupedViewsGroup?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -8421,6 +8725,7 @@ export type SavedViewPermissionChecksResolvers<ContextType = GraphQLContext, Par
   canEditDescription?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canEditTitle?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canMove?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
+  canSetAsHomeView?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   canUpdate?: Resolver<ResolversTypes['PermissionCheckResult'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -8651,6 +8956,8 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
   projectModelsUpdated?: SubscriptionResolver<ResolversTypes['ProjectModelsUpdatedMessage'], "projectModelsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectModelsUpdatedArgs, 'id'>>;
   projectPendingModelsUpdated?: SubscriptionResolver<ResolversTypes['ProjectPendingModelsUpdatedMessage'], "projectPendingModelsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectPendingModelsUpdatedArgs, 'id'>>;
   projectPendingVersionsUpdated?: SubscriptionResolver<ResolversTypes['ProjectPendingVersionsUpdatedMessage'], "projectPendingVersionsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectPendingVersionsUpdatedArgs, 'id'>>;
+  projectSavedViewGroupsUpdated?: SubscriptionResolver<ResolversTypes['ProjectSavedViewGroupsUpdatedMessage'], "projectSavedViewGroupsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectSavedViewGroupsUpdatedArgs, 'projectId'>>;
+  projectSavedViewsUpdated?: SubscriptionResolver<ResolversTypes['ProjectSavedViewsUpdatedMessage'], "projectSavedViewsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectSavedViewsUpdatedArgs, 'projectId'>>;
   projectTriggeredAutomationsStatusUpdated?: SubscriptionResolver<ResolversTypes['ProjectTriggeredAutomationsStatusUpdatedMessage'], "projectTriggeredAutomationsStatusUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs, 'projectId'>>;
   projectUpdated?: SubscriptionResolver<ResolversTypes['ProjectUpdatedMessage'], "projectUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectUpdatedArgs, 'id'>>;
   projectVersionGendoAIRenderCreated?: SubscriptionResolver<ResolversTypes['GendoAIRender'], "projectVersionGendoAIRenderCreated", ParentType, ContextType, RequireFields<SubscriptionProjectVersionGendoAiRenderCreatedArgs, 'id' | 'versionId'>>;
@@ -8963,6 +9270,7 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   embedOptions?: Resolver<ResolversTypes['WorkspaceEmbedOptions'], ParentType, ContextType>;
   hasAccessToFeature?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceHasAccessToFeatureArgs, 'featureName'>>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  integrations?: Resolver<Maybe<ResolversTypes['WorkspaceIntegrations']>, ParentType, ContextType>;
   invitedTeam?: Resolver<Maybe<Array<ResolversTypes['PendingWorkspaceCollaborator']>>, ParentType, ContextType, Partial<WorkspaceInvitedTeamArgs>>;
   isExclusive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   logo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -9030,6 +9338,11 @@ export type WorkspaceDomainResolvers<ContextType = GraphQLContext, ParentType ex
 
 export type WorkspaceEmbedOptionsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceEmbedOptions'] = ResolversParentTypes['WorkspaceEmbedOptions']> = {
   hideSpeckleBranding?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type WorkspaceIntegrationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceIntegrations'] = ResolversParentTypes['WorkspaceIntegrations']> = {
+  acc?: Resolver<Maybe<ResolversTypes['AccIntegration']>, ParentType, ContextType, Partial<WorkspaceIntegrationsAccArgs>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -9215,6 +9528,16 @@ export type WorkspaceUpdatedMessageResolvers<ContextType = GraphQLContext, Paren
 };
 
 export type Resolvers<ContextType = GraphQLContext> = {
+  AccFolder?: AccFolderResolvers<ContextType>;
+  AccFolderCollection?: AccFolderCollectionResolvers<ContextType>;
+  AccHub?: AccHubResolvers<ContextType>;
+  AccHubCollection?: AccHubCollectionResolvers<ContextType>;
+  AccIntegration?: AccIntegrationResolvers<ContextType>;
+  AccItem?: AccItemResolvers<ContextType>;
+  AccItemCollection?: AccItemCollectionResolvers<ContextType>;
+  AccItemVersion?: AccItemVersionResolvers<ContextType>;
+  AccProject?: AccProjectResolvers<ContextType>;
+  AccProjectCollection?: AccProjectCollectionResolvers<ContextType>;
   AccSyncItem?: AccSyncItemResolvers<ContextType>;
   AccSyncItemCollection?: AccSyncItemCollectionResolvers<ContextType>;
   AccSyncItemMutations?: AccSyncItemMutationsResolvers<ContextType>;
@@ -9250,6 +9573,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   AutomationRevisionTriggerDefinition?: AutomationRevisionTriggerDefinitionResolvers<ContextType>;
   AutomationRunTrigger?: AutomationRunTriggerResolvers<ContextType>;
   BasicGitRepositoryMetadata?: BasicGitRepositoryMetadataResolvers<ContextType>;
+  BeforeChangeSavedView?: BeforeChangeSavedViewResolvers<ContextType>;
   BigInt?: GraphQLScalarType;
   BlobMetadata?: BlobMetadataResolvers<ContextType>;
   BlobMetadataCollection?: BlobMetadataCollectionResolvers<ContextType>;
@@ -9333,6 +9657,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ProjectPendingVersionsUpdatedMessage?: ProjectPendingVersionsUpdatedMessageResolvers<ContextType>;
   ProjectPermissionChecks?: ProjectPermissionChecksResolvers<ContextType>;
   ProjectRole?: ProjectRoleResolvers<ContextType>;
+  ProjectSavedViewGroupsUpdatedMessage?: ProjectSavedViewGroupsUpdatedMessageResolvers<ContextType>;
+  ProjectSavedViewsUpdatedMessage?: ProjectSavedViewsUpdatedMessageResolvers<ContextType>;
   ProjectTriggeredAutomationsStatusUpdatedMessage?: ProjectTriggeredAutomationsStatusUpdatedMessageResolvers<ContextType>;
   ProjectUpdatedMessage?: ProjectUpdatedMessageResolvers<ContextType>;
   ProjectVersionsPreviewGeneratedMessage?: ProjectVersionsPreviewGeneratedMessageResolvers<ContextType>;
@@ -9409,6 +9735,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   WorkspaceCreationState?: WorkspaceCreationStateResolvers<ContextType>;
   WorkspaceDomain?: WorkspaceDomainResolvers<ContextType>;
   WorkspaceEmbedOptions?: WorkspaceEmbedOptionsResolvers<ContextType>;
+  WorkspaceIntegrations?: WorkspaceIntegrationsResolvers<ContextType>;
   WorkspaceInviteMutations?: WorkspaceInviteMutationsResolvers<ContextType>;
   WorkspaceJoinRequest?: WorkspaceJoinRequestResolvers<ContextType>;
   WorkspaceJoinRequestCollection?: WorkspaceJoinRequestCollectionResolvers<ContextType>;
@@ -9867,6 +10194,21 @@ export type GetModelHomeViewQueryVariables = Exact<{
 
 
 export type GetModelHomeViewQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, model: { __typename?: 'Model', id: string, resourceIdString: string, homeView?: { __typename?: 'SavedView', id: string, name: string, description?: string | null, groupId?: string | null, createdAt: Date, updatedAt: Date, resourceIdString: string, resourceIds: Array<string>, isHomeView: boolean, visibility: SavedViewVisibility, viewerState: Record<string, unknown>, screenshot: string, position: number, projectId: string, author?: { __typename?: 'LimitedUser', id: string } | null, group: { __typename?: 'SavedViewGroup', id: string, title: string, isUngroupedViewsGroup: boolean } } | null } } };
+
+export type OnProjectSavedViewsUpdatedSubscriptionVariables = Exact<{
+  projectId: Scalars['ID']['input'];
+}>;
+
+
+export type OnProjectSavedViewsUpdatedSubscription = { __typename?: 'Subscription', projectSavedViewsUpdated: { __typename?: 'ProjectSavedViewsUpdatedMessage', type: ProjectSavedViewsUpdatedMessageType, id: string, project: { __typename?: 'Project', id: string }, savedView?: { __typename?: 'SavedView', id: string, name: string, description?: string | null, groupId?: string | null, createdAt: Date, updatedAt: Date, resourceIdString: string, resourceIds: Array<string>, isHomeView: boolean, visibility: SavedViewVisibility, viewerState: Record<string, unknown>, screenshot: string, position: number, projectId: string, author?: { __typename?: 'LimitedUser', id: string } | null, group: { __typename?: 'SavedViewGroup', id: string, title: string, isUngroupedViewsGroup: boolean } } | null, beforeChangeSavedView?: { __typename?: 'BeforeChangeSavedView', groupId?: string | null, resourceIds: Array<string> } | null } };
+
+export type OnProjectSavedViewGroupsUpdatedSubscriptionVariables = Exact<{
+  projectId: Scalars['ID']['input'];
+  viewsInput?: SavedViewGroupViewsInput;
+}>;
+
+
+export type OnProjectSavedViewGroupsUpdatedSubscription = { __typename?: 'Subscription', projectSavedViewGroupsUpdated: { __typename?: 'ProjectSavedViewGroupsUpdatedMessage', type: ProjectSavedViewsUpdatedMessageType, id: string, project: { __typename?: 'Project', id: string }, savedViewGroup?: { __typename?: 'SavedViewGroup', id: string, projectId: string, resourceIds: Array<string>, title: string, isUngroupedViewsGroup: boolean, views: { __typename?: 'SavedViewCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'SavedView', id: string, name: string, description?: string | null, groupId?: string | null, createdAt: Date, updatedAt: Date, resourceIdString: string, resourceIds: Array<string>, isHomeView: boolean, visibility: SavedViewVisibility, viewerState: Record<string, unknown>, screenshot: string, position: number, projectId: string, author?: { __typename?: 'LimitedUser', id: string } | null, group: { __typename?: 'SavedViewGroup', id: string, title: string, isUngroupedViewsGroup: boolean } }> } } | null } };
 
 export type BasicWorkspaceFragment = { __typename?: 'Workspace', id: string, name: string, slug: string, updatedAt: Date, createdAt: Date, role?: string | null, readOnly: boolean };
 
@@ -11027,6 +11369,8 @@ export const DeleteSavedViewGroupDocument = {"kind":"Document","definitions":[{"
 export const CanUpdateSavedViewGroupDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"CanUpdateSavedViewGroup"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"groupId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"savedViewGroup"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"groupId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canUpdate"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authorized"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"payload"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<CanUpdateSavedViewGroupQuery, CanUpdateSavedViewGroupQueryVariables>;
 export const UpdateSavedViewGroupDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateSavedViewGroup"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateSavedViewGroupInput"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"viewsInput"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SavedViewGroupViewsInput"}}},"defaultValue":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"10"}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"savedViewMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateGroup"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicSavedViewGroup"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicSavedView"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SavedView"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"groupId"}},{"kind":"Field","name":{"kind":"Name","value":"group"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"isUngroupedViewsGroup"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"resourceIdString"}},{"kind":"Field","name":{"kind":"Name","value":"resourceIds"}},{"kind":"Field","name":{"kind":"Name","value":"isHomeView"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"viewerState"}},{"kind":"Field","name":{"kind":"Name","value":"screenshot"}},{"kind":"Field","name":{"kind":"Name","value":"position"}},{"kind":"Field","name":{"kind":"Name","value":"projectId"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicSavedViewGroup"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SavedViewGroup"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"projectId"}},{"kind":"Field","name":{"kind":"Name","value":"resourceIds"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"isUngroupedViewsGroup"}},{"kind":"Field","name":{"kind":"Name","value":"views"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"viewsInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicSavedView"}}]}}]}}]}}]} as unknown as DocumentNode<UpdateSavedViewGroupMutation, UpdateSavedViewGroupMutationVariables>;
 export const GetModelHomeViewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetModelHomeView"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"modelId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"model"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"modelId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"homeView"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicSavedView"}}]}},{"kind":"Field","name":{"kind":"Name","value":"resourceIdString"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicSavedView"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SavedView"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"groupId"}},{"kind":"Field","name":{"kind":"Name","value":"group"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"isUngroupedViewsGroup"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"resourceIdString"}},{"kind":"Field","name":{"kind":"Name","value":"resourceIds"}},{"kind":"Field","name":{"kind":"Name","value":"isHomeView"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"viewerState"}},{"kind":"Field","name":{"kind":"Name","value":"screenshot"}},{"kind":"Field","name":{"kind":"Name","value":"position"}},{"kind":"Field","name":{"kind":"Name","value":"projectId"}}]}}]} as unknown as DocumentNode<GetModelHomeViewQuery, GetModelHomeViewQueryVariables>;
+export const OnProjectSavedViewsUpdatedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"onProjectSavedViewsUpdated"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectSavedViewsUpdated"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"projectId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"project"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"savedView"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicSavedView"}}]}},{"kind":"Field","name":{"kind":"Name","value":"beforeChangeSavedView"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"groupId"}},{"kind":"Field","name":{"kind":"Name","value":"resourceIds"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicSavedView"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SavedView"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"groupId"}},{"kind":"Field","name":{"kind":"Name","value":"group"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"isUngroupedViewsGroup"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"resourceIdString"}},{"kind":"Field","name":{"kind":"Name","value":"resourceIds"}},{"kind":"Field","name":{"kind":"Name","value":"isHomeView"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"viewerState"}},{"kind":"Field","name":{"kind":"Name","value":"screenshot"}},{"kind":"Field","name":{"kind":"Name","value":"position"}},{"kind":"Field","name":{"kind":"Name","value":"projectId"}}]}}]} as unknown as DocumentNode<OnProjectSavedViewsUpdatedSubscription, OnProjectSavedViewsUpdatedSubscriptionVariables>;
+export const OnProjectSavedViewGroupsUpdatedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"onProjectSavedViewGroupsUpdated"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"viewsInput"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SavedViewGroupViewsInput"}}},"defaultValue":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"10"}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectSavedViewGroupsUpdated"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"projectId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"project"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"savedViewGroup"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicSavedViewGroup"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicSavedView"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SavedView"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"groupId"}},{"kind":"Field","name":{"kind":"Name","value":"group"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"isUngroupedViewsGroup"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"resourceIdString"}},{"kind":"Field","name":{"kind":"Name","value":"resourceIds"}},{"kind":"Field","name":{"kind":"Name","value":"isHomeView"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"viewerState"}},{"kind":"Field","name":{"kind":"Name","value":"screenshot"}},{"kind":"Field","name":{"kind":"Name","value":"position"}},{"kind":"Field","name":{"kind":"Name","value":"projectId"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicSavedViewGroup"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SavedViewGroup"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"projectId"}},{"kind":"Field","name":{"kind":"Name","value":"resourceIds"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"isUngroupedViewsGroup"}},{"kind":"Field","name":{"kind":"Name","value":"views"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"viewsInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicSavedView"}}]}}]}}]}}]} as unknown as DocumentNode<OnProjectSavedViewGroupsUpdatedSubscription, OnProjectSavedViewGroupsUpdatedSubscriptionVariables>;
 export const CreateWorkspaceInviteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateWorkspaceInvite"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"workspaceId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"WorkspaceInviteCreateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workspaceMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"invites"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"create"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"workspaceId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"workspaceId"}}},{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicWorkspace"}},{"kind":"Field","name":{"kind":"Name","value":"invitedTeam"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicPendingWorkspaceCollaborator"}}]}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicWorkspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"readOnly"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicPendingWorkspaceCollaborator"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"PendingWorkspaceCollaborator"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"inviteId"}},{"kind":"Field","name":{"kind":"Name","value":"workspace"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"invitedBy"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"token"}}]}}]} as unknown as DocumentNode<CreateWorkspaceInviteMutation, CreateWorkspaceInviteMutationVariables>;
 export const BatchCreateWorkspaceInvitesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"BatchCreateWorkspaceInvites"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"workspaceId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"WorkspaceInviteCreateInput"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workspaceMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"invites"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"batchCreate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"workspaceId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"workspaceId"}}},{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicWorkspace"}},{"kind":"Field","name":{"kind":"Name","value":"invitedTeam"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicPendingWorkspaceCollaborator"}}]}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicWorkspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"readOnly"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicPendingWorkspaceCollaborator"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"PendingWorkspaceCollaborator"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"inviteId"}},{"kind":"Field","name":{"kind":"Name","value":"workspace"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"invitedBy"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"token"}}]}}]} as unknown as DocumentNode<BatchCreateWorkspaceInvitesMutation, BatchCreateWorkspaceInvitesMutationVariables>;
 export const GetWorkspaceWithTeamDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetWorkspaceWithTeam"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"workspaceId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workspace"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"workspaceId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicWorkspace"}},{"kind":"Field","name":{"kind":"Name","value":"invitedTeam"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicPendingWorkspaceCollaborator"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicWorkspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"readOnly"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicPendingWorkspaceCollaborator"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"PendingWorkspaceCollaborator"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"inviteId"}},{"kind":"Field","name":{"kind":"Name","value":"workspace"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"invitedBy"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"token"}}]}}]} as unknown as DocumentNode<GetWorkspaceWithTeamQuery, GetWorkspaceWithTeamQueryVariables>;

@@ -24,15 +24,14 @@ export const useViewerSavedViewIntegration = () => {
       },
       response: { savedView }
     },
-    urlHashState: { savedView: urlHashStateSavedViewSettings }
+    urlHashState: { savedView: urlHashStateSavedViewSettings },
+    ui: {
+      savedViews: { savedViewStateId }
+    }
   } = useInjectedViewerState()
   const applyState = useApplySerializedState()
   const { serializedStateId } = useViewerRealtimeActivityTracker()
-  const { on } = useEventBus()
-
-  // Saved View ID will be unset, once the user does anything to the viewer that
-  // changes it from the saved view
-  const savedViewStateId = ref<string>()
+  const { on, emit } = useEventBus()
 
   const validState = (state: unknown) => (isSerializedViewerState(state) ? state : null)
 
@@ -113,8 +112,13 @@ export const useViewerSavedViewIntegration = () => {
     () => serializedStateId.value,
     async (newVal, oldVal) => {
       if (newVal === oldVal) return
-      // If the saved view state ID is different from the current serialized state ID (user interaction), reset the saved view
+      // If the saved view state ID is different from the current serialized state ID (user interaction) -
+      // user has changed the state from the view's state
       if (savedViewStateId.value && newVal !== savedViewStateId.value) {
+        // emit event that this happened
+        emit(ViewerEventBusKeys.UserChangedOpenedView, { viewId: savedViewId.value })
+
+        // reset the saved view - its no longer active
         await reset()
       }
     },
@@ -126,6 +130,7 @@ export type SavedViewsUIState = ReturnType<typeof useBuildSavedViewsUIState>
 
 export const useBuildSavedViewsUIState = () => {
   const openedGroupState = ref<Map<string, true>>(new Map())
+  const savedViewStateId = ref<string>()
 
   onUnmounted(() => {
     openedGroupState.value = new Map()
@@ -135,7 +140,12 @@ export const useBuildSavedViewsUIState = () => {
     /**
      * Groups that should currently be expanded/open
      */
-    openedGroupState
+    openedGroupState,
+    /**
+     * A kind of a "viewer snapshot" ID associated w/ the saved view being loaded. Helps track
+     * if user has changed the view since loading the saved view
+     */
+    savedViewStateId
   }
 }
 

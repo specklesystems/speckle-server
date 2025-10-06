@@ -625,6 +625,15 @@ Generate the environment variables for Speckle server and Speckle objects deploy
     secretKeyRef:
       name: {{ default .Values.secretName .Values.server.accIntegration.clientSecret.secretName }}
       key: {{ default "acc_integration_client_secret" .Values.server.accIntegration.clientSecret.secretKey }}
+
+- name: ODA_USER_ID
+  value: {{ default "user_id" .Values.server.oda.userId }}
+
+- name: ODA_USER_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: {{ default .Values.secretName .Values.server.oda.userSecret.secretName }}
+      key: {{ default "user_secret" .Values.server.oda.userSecret.secretKey }}
 {{- end }}
 
 - name: FF_DASHBOARDS_MODULE_ENABLED

@@ -26,9 +26,13 @@ export type {
   GetWorkspaceRolesAndSeats
 } from '@/modules/workspacesCore/domain/operations'
 
-export type GetWorkspacePlan = (args: {
-  workspaceId: string
-}) => Promise<WorkspacePlan | null>
+export type GetWorkspacePlan = (
+  args:
+    | {
+        workspaceId: string
+      }
+    | { workspaceSlug: string }
+) => Promise<WorkspacePlan | null>
 
 export type GetWorkspacePlansByWorkspaceId = (args: {
   workspaceIds: string[]

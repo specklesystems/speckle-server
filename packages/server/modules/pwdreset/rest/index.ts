@@ -22,12 +22,14 @@ import { BadRequestError } from '@/modules/shared/errors'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { ensureError } from '@speckle/shared'
 import type { Express } from 'express'
+import { UserNotFoundError } from '@/modules/core/errors/user'
 
 export default function (app: Express) {
   const getUserByEmail = getUserByEmailFactory({ db })
 
   // sends a password recovery email.
   app.post('/auth/pwdreset/request', async (req, res) => {
+    const responseMessage = 'Password reset email sent.'
     try {
       const email = req.body.email
       const logger = req.log.child({ email })
@@ -46,10 +48,16 @@ export default function (app: Express) {
         operationDescription: `Requesting password recovery`
       })
 
-      return res.status(200).send('Password reset email sent.')
+      return res.status(200).send(responseMessage)
     } catch (e: unknown) {
-      req.log.info({ err: e }, 'Error while requesting password recovery.')
-      res.status(400).send(ensureError(e).message)
+      const err = ensureError(e, 'Unknown error while requesting password recovery')
+      req.log.info({ err }, 'Error while requesting password recovery.')
+      if (err instanceof UserNotFoundError) {
+        // always 200 and use same response message to avoid user enumeration
+        res.status(200).send(responseMessage)
+      } else {
+        res.status(400).send(err.message)
+      }
     }
   })
 

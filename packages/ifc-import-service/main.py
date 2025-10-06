@@ -5,6 +5,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from multiprocessing import Process
 
 import structlog
+from prometheus_client import start_http_server
 from structlog_to_seq import CelfProcessor
 
 from ifc_importer.job_processor import job_processor
@@ -52,6 +53,7 @@ async def main():
     httpd = HTTPServer(("0.0.0.0", 9080), HealthcheckHTTPRequestHandler)
     healthcheck_server_process = Process(target=httpd.serve_forever, daemon=True)
     healthcheck_server_process.start()
+    start_http_server(9093)
 
     # we do not need any sort of signal handling logic,
     # cause if the context of the job transaction exits,

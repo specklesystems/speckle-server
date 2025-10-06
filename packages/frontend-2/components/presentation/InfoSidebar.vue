@@ -5,7 +5,7 @@
   >
     <div class="hidden lg:flex items-center justify-end space-x-1">
       <FormButton
-        v-if="canUpdateSlide"
+        v-if="canUpdateSlide && isLoggedIn"
         :icon-left="LucidePencilLine"
         color="subtle"
         hide-text
@@ -92,7 +92,10 @@ graphql(`
     name
     description
     permissions {
-      canUpdate {
+      canEditTitle {
+        ...FullPermissionCheckResult
+      }
+      canEditDescription {
         ...FullPermissionCheckResult
       }
     }
@@ -103,12 +106,16 @@ const {
   ui: { slide: currentSlide },
   response: { workspace }
 } = useInjectedPresentationState()
+const { isLoggedIn } = useActiveUser()
 
 const isSlideEditDialogOpen = ref(false)
 const descriptionRef = ref<HTMLElement>()
 const isExpanded = ref(false)
 
 const canUpdateSlide = computed(() => {
-  return currentSlide.value?.permissions?.canUpdate.authorized
+  return (
+    currentSlide.value?.permissions?.canEditTitle.authorized ||
+    currentSlide.value?.permissions?.canEditDescription.authorized
+  )
 })
 </script>

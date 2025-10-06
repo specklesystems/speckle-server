@@ -59,15 +59,117 @@ import {
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
-import { AccModuleDisabledError, SyncItemNotFoundError } from '@/modules/acc/errors/acc'
+import {
+  AccModuleDisabledError,
+  AccNotAuthorizedError,
+  SyncItemNotFoundError
+} from '@/modules/acc/errors/acc'
 import { getFeatureFlags } from '@speckle/shared/environment'
-import type { AccRegion } from '@/modules/acc/domain/constants'
+import type { AccRegion } from '@/modules/acc/domain/acc/constants'
+import { ProjectNotFoundError } from '@/modules/core/errors/projects'
+import {
+  mapFolderToGql,
+  mapItemToGql,
+  mapVersionToGql
+} from '@/modules/acc/helpers/acc'
+import {
+  getFolderMetadata,
+  getItemLatestVersion
+} from '@/modules/acc/clients/autodesk/acc'
 
 const { FF_ACC_INTEGRATION_ENABLED, FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
 const enableAcc = FF_ACC_INTEGRATION_ENABLED && FF_AUTOMATE_MODULE_ENABLED
 
 const resolvers: Resolvers = {
+  WorkspaceIntegrations: {
+    acc: async (_parent, args, ctx) => {
+      if (!args.token) {
+        throw new AccNotAuthorizedError()
+      }
+      // TODO ACC: Replace with Speckle user - ACC user association
+      ctx.accToken = args.token
+      return {}
+    }
+  },
+  AccIntegration: {
+    folder: async (_parent, args) => {
+      const { projectId, folderId } = args
+      return {
+        id: folderId,
+        projectId
+      }
+    }
+  },
+  AccFolder: {
+    name: async (parent, _args, ctx) => {
+      if (parent.name) return parent.name
+
+      const folderMetadata = await getFolderMetadata(
+        {
+          projectId: parent.projectId,
+          folderId: parent.id
+        },
+        {
+          token: ctx.accToken!
+        }
+      )
+
+      return (
+        folderMetadata.attributes.name ?? folderMetadata.attributes.displayName ?? ''
+      )
+    },
+    contents: async (parent, _args, ctx) => {
+      const { id: folderId, projectId } = parent
+      const { accToken } = ctx
+
+      const files = await ctx.loaders.acc!.getFolderContents.load({
+        projectId,
+        folderId,
+        token: accToken!
+      })
+      const items = files.map((file) => ({
+        ...mapItemToGql(file),
+        projectId
+      }))
+
+      return { items }
+    },
+    children: async (parent, _args, ctx) => {
+      const { id: folderId, projectId } = parent
+      const { accToken } = ctx
+
+      const folders = await ctx.loaders.acc!.getFolderChildren.load({
+        projectId,
+        folderId,
+        token: accToken!
+      })
+      const items = folders.map((folder) => ({
+        ...mapFolderToGql(folder),
+        projectId
+      }))
+
+      return { items }
+    }
+  },
+  AccItem: {
+    latestVersion: async (parent, _args, ctx) => {
+      const { id: itemId, projectId } = parent
+      const { accToken } = ctx
+
+      const version = await getItemLatestVersion(
+        {
+          projectId,
+          itemId
+        },
+        {
+          token: accToken!
+        }
+      )
+
+      return mapVersionToGql(version)
+    }
+  },
   Mutation: {
     accSyncItemMutations: () => ({})
   },
@@ -193,6 +295,14 @@ const resolvers: Resolvers = {
     }
   },
   AccSyncItem: {
+    project: async (parent, _args, context) => {
+      const project = await context.loaders.streams.getStream.load(parent.projectId)
+      if (!project) throw new ProjectNotFoundError()
+      return project
+    },
+    model: async (parent, _args, context) => {
+      return await context.loaders.branches.getById.load(parent.modelId)
+    },
     author: async (parent, _args, context) => {
       return await context.loaders.users.getUser.load(parent.authorId)
     }
@@ -237,7 +347,32 @@ const resolvers: Resolvers = {
         resourceType: TokenResourceIdentifierType.Project
       })
 
-      const syncItem = await ctx.loaders.acc.getAccSyncItem.load(id)
+      const syncItem = await ctx.loaders.acc!.getAccSyncItem.load(id)
+
+      if (!syncItem) {
+        throw new SyncItemNotFoundError()
+      }
+
+      return syncItem
+    }
+  },
+  Model: {
+    accSyncItem: async (parent, _args, context) => {
+      const authResult =
+        await context.authPolicies.project.canReadAccIntegrationSettings({
+          userId: context.userId,
+          projectId: parent.streamId
+        })
+      throwIfAuthNotOk(authResult)
+      throwIfResourceAccessNotAllowed({
+        resourceId: parent.streamId,
+        resourceAccessRules: context.resourceAccessRules,
+        resourceType: TokenResourceIdentifierType.Project
+      })
+
+      const syncItem = await context.loaders.acc!.getAccSyncItemByModelId.load(
+        parent.id
+      )
 
       if (!syncItem) {
         throw new SyncItemNotFoundError()
@@ -275,6 +410,11 @@ const resolvers: Resolvers = {
 }
 
 const disabledResolvers: Resolvers = {
+  WorkspaceIntegrations: {
+    async acc() {
+      throw new AccModuleDisabledError()
+    }
+  },
   Mutation: {
     accSyncItemMutations: () => ({})
   },
@@ -295,6 +435,11 @@ const disabledResolvers: Resolvers = {
     },
     async accSyncItems() {
       throw new AccModuleDisabledError()
+    }
+  },
+  Model: {
+    async accSyncItem() {
+      return null
     }
   },
   Subscription: {

@@ -342,7 +342,6 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       {
         err: error,
         info,
-        isAppError: true,
         vm: _vm?.$options.name,
         errString: errorToString(error),
         vueErrorHandler: true,
