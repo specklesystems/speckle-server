@@ -1,5 +1,5 @@
 import { emailLogger } from '@/observability/logging'
-import type { SendEmail, SendEmailParams } from '@/modules/emails/domain/operations'
+import type { SendEmail } from '@/modules/emails/domain/operations'
 import { getTransporter } from '@/modules/emails/clients/transportBuilder'
 import { getEmailFromAddress } from '@/modules/shared/helpers/envHelper'
 import { ensureError, resolveMixpanelUserId } from '@speckle/shared'
@@ -12,17 +12,12 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { EmailsEvents } from '@/modules/emails/domain/events'
 import type { EmailOptions } from '@/modules/emails/domain/types'
 import cryptoRandomString from 'crypto-random-string'
+import { SentEmailDeliveryStatus } from '@/modules/emails/domain/consts'
 
 /**
  * Send out an e-mail
  */
-export const sendEmail: SendEmail = async ({
-  from,
-  to,
-  subject,
-  text,
-  html
-}: SendEmailParams): Promise<boolean> => {
+export const sendEmail: SendEmail = async ({ from, to, subject, text, html }) => {
   const eventBus = getEventBus()
   const logger = getRequestLogger() || loggerWithMaybeContext({ logger: emailLogger })
   const context = getRequestContext()
@@ -43,7 +38,11 @@ export const sendEmail: SendEmail = async ({
     const transporter = getTransporter()
     if (!transporter) {
       logger.warn('No email transport present. Cannot send emails. Skipping send...')
-      return false
+      return {
+        messageId: '',
+        status: SentEmailDeliveryStatus.FAILED,
+        errorMessages: ['No email transport present']
+      }
     }
 
     const emailFrom = getEmailFromAddress()
@@ -83,12 +82,16 @@ export const sendEmail: SendEmail = async ({
       'Email "{subject}" sent out to distinctIds {distinctIds}; status: {deliveryStatus}'
     )
 
-    return true
+    return sentEmailResponse
   } catch (error) {
     const err = ensureError(error, 'Unknown error when sending email')
     logger.error(err, 'Error sending email')
+    return {
+      messageId: '',
+      status: SentEmailDeliveryStatus.FAILED,
+      errorMessages: [err.message]
+    }
   }
-  return false
 }
 
 export type { SendEmailParams } from '@/modules/emails/domain/operations'

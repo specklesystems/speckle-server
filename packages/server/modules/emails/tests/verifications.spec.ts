@@ -197,6 +197,7 @@ describe('Email verifications @emails', () => {
 
       expect(result).to.haveGraphQLErrors('must provide an auth token')
       expect(result.data?.requestVerification).to.not.be.ok
+      expect(result.data?.requestVerification.status).to.be('FAILED')
     })
 
     describe('and finalizing verification', () => {

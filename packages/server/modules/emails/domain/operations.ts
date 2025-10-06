@@ -1,5 +1,5 @@
 import type { UserRecord } from '@/modules/core/helpers/types'
-import type { EmailVerification } from '@/modules/emails/domain/types'
+import type { EmailVerification, SentEmailInfo } from '@/modules/emails/domain/types'
 import type { EmailVerificationRecord } from '@/modules/emails/repositories'
 
 /**
@@ -19,9 +19,9 @@ export type DeleteOldAndInsertNewVerification = (email: string) => Promise<strin
  * Services
  */
 
-export type RequestNewEmailVerification = (emailId: string) => Promise<void>
+export type RequestNewEmailVerification = (emailId: string) => Promise<SentEmailInfo>
 
-export type RequestEmailVerification = (userId: string) => Promise<void>
+export type RequestEmailVerification = (userId: string) => Promise<SentEmailInfo>
 
 export type SendEmailParams = {
   from?: string
@@ -30,7 +30,7 @@ export type SendEmailParams = {
   text: string
   html: string
 }
-export type SendEmail = (args: SendEmailParams) => Promise<boolean>
+export type SendEmail = (args: SendEmailParams) => Promise<SentEmailInfo>
 
 export type EmailTemplateServerInfo = {
   name: string

@@ -32,6 +32,7 @@ import {
 import { commandFactory } from '@/modules/shared/command'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { emailVerificationTimeoutMinutes } from '@/modules/shared/helpers/envHelper'
+import { convertEmailStatusToEnum } from '@/modules/emails/graph/utils'
 
 const getUser = getUserFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
@@ -128,7 +129,7 @@ export default {
       const logger = ctx.log.child({
         userIdToOperateOn
       })
-      await withOperationLogging(
+      const result = await withOperationLogging(
         async () => await requestNewEmailVerification(userIdToOperateOn),
         {
           logger,
@@ -136,7 +137,7 @@ export default {
           operationDescription: `Request a new email verification`
         }
       )
-      return null
+      return { ...result, status: convertEmailStatusToEnum(result.status) }
     },
     verify: async (_parent, args, ctx) => {
       const logger = ctx.log

@@ -134,7 +134,10 @@ const getPendingEmailVerificationStatusQuery = gql`
 
 const requestVerificationMutation = gql`
   mutation RequestVerification {
-    requestVerification
+    requestVerification {
+      status
+      errorMessages
+    }
   }
 `
 

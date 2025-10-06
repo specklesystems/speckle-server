@@ -238,7 +238,7 @@ type Documents = {
     "\n  query ActiveUserProjectsToMove($filter: UserProjectsFilter) {\n    activeUser {\n      id\n      projects(filter: $filter) {\n        totalCount\n      }\n    }\n  }\n": typeof types.ActiveUserProjectsToMoveDocument,
     "\n  fragment FullPermissionCheckResult on PermissionCheckResult {\n    authorized\n    code\n    message\n    payload\n    errorMessage\n  }\n": typeof types.FullPermissionCheckResultFragmentDoc,
     "\n  mutation FinishOnboarding($input: OnboardingCompletionInput) {\n    activeUserMutations {\n      finishOnboarding(input: $input)\n    }\n  }\n": typeof types.FinishOnboardingDocument,
-    "\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email)\n  }\n": typeof types.RequestVerificationByEmailDocument,
+    "\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email){\n      status\n      errorMessages\n    }\n  }\n": typeof types.RequestVerificationByEmailDocument,
     "\n  query AuthLoginPanel {\n    serverInfo {\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n    }\n  }\n": typeof types.AuthLoginPanelDocument,
     "\n  query AuthRegisterPanel($token: String) {\n    serverInfo {\n      inviteOnly\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n      ...ServerTermsOfServicePrivacyPolicyFragment\n    }\n    serverInviteByToken(token: $token) {\n      id\n      email\n    }\n  }\n": typeof types.AuthRegisterPanelDocument,
     "\n  query AuthLoginPanelWorkspaceInvite($token: String) {\n    workspaceInvite(token: $token) {\n      id\n      email\n      ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator\n      ...AuthLoginWithEmailBlock_PendingWorkspaceCollaborator\n    }\n  }\n": typeof types.AuthLoginPanelWorkspaceInviteDocument,
@@ -786,7 +786,7 @@ const documents: Documents = {
     "\n  query ActiveUserProjectsToMove($filter: UserProjectsFilter) {\n    activeUser {\n      id\n      projects(filter: $filter) {\n        totalCount\n      }\n    }\n  }\n": types.ActiveUserProjectsToMoveDocument,
     "\n  fragment FullPermissionCheckResult on PermissionCheckResult {\n    authorized\n    code\n    message\n    payload\n    errorMessage\n  }\n": types.FullPermissionCheckResultFragmentDoc,
     "\n  mutation FinishOnboarding($input: OnboardingCompletionInput) {\n    activeUserMutations {\n      finishOnboarding(input: $input)\n    }\n  }\n": types.FinishOnboardingDocument,
-    "\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email)\n  }\n": types.RequestVerificationByEmailDocument,
+    "\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email){\n      status\n      errorMessages\n    }\n  }\n": types.RequestVerificationByEmailDocument,
     "\n  query AuthLoginPanel {\n    serverInfo {\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n    }\n  }\n": types.AuthLoginPanelDocument,
     "\n  query AuthRegisterPanel($token: String) {\n    serverInfo {\n      inviteOnly\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n      ...ServerTermsOfServicePrivacyPolicyFragment\n    }\n    serverInviteByToken(token: $token) {\n      id\n      email\n    }\n  }\n": types.AuthRegisterPanelDocument,
     "\n  query AuthLoginPanelWorkspaceInvite($token: String) {\n    workspaceInvite(token: $token) {\n      id\n      email\n      ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator\n      ...AuthLoginWithEmailBlock_PendingWorkspaceCollaborator\n    }\n  }\n": types.AuthLoginPanelWorkspaceInviteDocument,
@@ -2023,7 +2023,7 @@ export function graphql(source: "\n  mutation FinishOnboarding($input: Onboardin
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email)\n  }\n"): (typeof documents)["\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email)\n  }\n"];
+export function graphql(source: "\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email){\n      status\n      errorMessages\n    }\n  }\n"): (typeof documents)["\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email){\n      status\n      errorMessages\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
