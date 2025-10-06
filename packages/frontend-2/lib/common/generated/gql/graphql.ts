@@ -2457,7 +2457,6 @@ export type MutationWebhookUpdateArgs = {
   webhook: WebhookUpdateInput;
 };
 
-<<<<<<< HEAD
 export type Notification = {
   __typename?: 'Notification';
   createdAt: Scalars['DateTime']['output'];
@@ -2491,8 +2490,6 @@ export type NotificationUpdateInput = {
   read: Scalars['Boolean']['input'];
 };
 
-=======
->>>>>>> parent of 3ca4a11ca (feat(notifications): basic listener structure, notification record, delayed mechanism (#5432))
 export type Object = {
   __typename?: 'Object';
   /** @deprecated Not implemented. */
@@ -11621,4 +11618,3 @@ export type AllObjectFieldArgTypes = {
   WorkspaceTeamByRole: WorkspaceTeamByRoleFieldArgs,
   WorkspaceUpdatedMessage: WorkspaceUpdatedMessageFieldArgs,
 }
-
