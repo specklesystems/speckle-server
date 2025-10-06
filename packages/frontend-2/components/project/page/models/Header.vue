@@ -126,7 +126,10 @@
       </div>
     </div>
     <ProjectModelsAdd v-model:open="showNewDialog" :project="project" />
-    <IntegrationsAccDialogCreateSync :open="showNewAccSync" :project-id="project?.id" />
+    <IntegrationsAccDialogCreateSync
+      v-model:open="showNewAccSync"
+      :project-id="project?.id"
+    />
   </div>
 </template>
 <script setup lang="ts">
