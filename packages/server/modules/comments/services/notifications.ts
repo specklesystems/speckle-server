@@ -1,8 +1,10 @@
 import type { CommentRecord } from '@/modules/comments/helpers/types'
 import { ensureCommentSchema } from '@/modules/comments/services/commentTextService'
-import { flatten } from 'lodash-es'
+import type { JSONContent } from '@tiptap/core'
+import { iterateContentNodes } from '@/modules/core/services/richTextEditorService'
+import { difference, flatten } from 'lodash-es'
 import type { NotificationPublisher } from '@/modules/notifications/helpers/types'
-import { NotificationType } from '@speckle/shared/notifications'
+import { NotificationType } from '@/modules/notifications/helpers/types'
 import type {
   AddStreamCommentMentionActivity,
   SaveStreamActivity
@@ -13,7 +15,30 @@ import {
   StreamActionTypes,
   StreamResourceTypes
 } from '@/modules/activitystream/helpers/types'
-import { processCommentMentions } from '@/modules/notifications/services/events/handlers/createdOrUpdatedComment'
+
+function findMentionedUserIds(doc: JSONContent) {
+  const mentionedUserIds = new Set<string>()
+
+  for (const node of iterateContentNodes(doc)) {
+    if (node.type === 'mention') {
+      const uid = node.attrs?.id
+      if (uid) {
+        mentionedUserIds.add(uid)
+      }
+    }
+  }
+
+  return [...mentionedUserIds]
+}
+
+function collectMentionedUserIds(comment: CommentRecord): string[] {
+  if (!comment.text) return []
+
+  const { doc } = ensureCommentSchema(comment.text)
+  if (!doc) return []
+
+  return findMentionedUserIds(doc)
+}
 
 /**
  * Save "user mentioned in stream comment" activity item
@@ -80,6 +105,20 @@ const sendNotificationsForUsersFactory =
     )
   }
 
+const processCommentMentionsFactory =
+  (deps: SendNotificationsForUsersDeps) =>
+  async (newComment: CommentRecord, previousComment?: CommentRecord) => {
+    const newMentionedUserIds = collectMentionedUserIds(newComment)
+    const previouslyMentionedUserIds = previousComment
+      ? collectMentionedUserIds(previousComment)
+      : []
+
+    const newMentions = difference(newMentionedUserIds, previouslyMentionedUserIds)
+    if (!newMentions.length) return
+
+    await sendNotificationsForUsersFactory(deps)(newMentions, newComment)
+  }
+
 /**
  * Hook into the comments lifecycle to generate notifications accordingly
  * @returns Callback to invoke when you wish to stop listening for comments events
@@ -92,22 +131,19 @@ export const notifyUsersOnCommentEventsFactory =
   }) =>
   async () => {
     const addStreamCommentMentionActivity = addStreamCommentMentionActivityFactory(deps)
-    const sendNotificationsForUsers = sendNotificationsForUsersFactory({
+    const processCommentMentions = processCommentMentionsFactory({
       ...deps,
       addStreamCommentMentionActivity
     })
 
     const exitCbs = [
       deps.eventBus.listen(CommentEvents.Created, async ({ payload: { comment } }) => {
-        const newMentions = processCommentMentions(comment)
-        if (newMentions.length) await sendNotificationsForUsers(newMentions, comment)
+        await processCommentMentions(comment)
       }),
       deps.eventBus.listen(
         CommentEvents.Updated,
         async ({ payload: { newComment, previousComment } }) => {
-          const newMentions = processCommentMentions(newComment, previousComment)
-          if (newMentions.length)
-            await sendNotificationsForUsers(newMentions, newComment)
+          await processCommentMentions(newComment, previousComment)
         }
       )
     ]

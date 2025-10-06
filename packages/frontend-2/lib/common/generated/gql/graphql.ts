@@ -2064,7 +2064,6 @@ export type Mutation = {
    */
   inviteResend: Scalars['Boolean']['output'];
   modelMutations: ModelMutations;
-  notificationMutations: NotificationMutations;
   /** @deprecated Part of the old API surface and will be removed in the future. */
   objectCreate: Array<Scalars['String']['output']>;
   projectMutations: ProjectMutations;
@@ -2483,11 +2482,11 @@ export type NotificationMutationsBulkDeleteArgs = {
 
 
 export type NotificationMutationsBulkUpdateArgs = {
-  ids: Array<Scalars['String']['input']>;
-  input: NotificationUpdateInput;
+  input: Array<NotificationUpdateInput>;
 };
 
 export type NotificationUpdateInput = {
+  id: Scalars['ID']['input'];
   read: Scalars['Boolean']['input'];
 };
 
@@ -4978,8 +4977,6 @@ export type User = {
   meta: UserMeta;
   name: Scalars['String']['output'];
   notificationPreferences: Scalars['JSONObject']['output'];
-  /** List all notifications for the user */
-  notifications: UserNotificationCollection;
   permissions: RootPermissionChecks;
   profiles?: Maybe<Scalars['JSONObject']['output']>;
   /** Get pending project access request, that the user made */
@@ -5062,16 +5059,6 @@ export type UserCommitsArgs = {
 export type UserFavoriteStreamsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
-};
-
-
-/**
- * Full user type, should only be used in the context of admin operations or
- * when a user is reading/writing info about himself
- */
-export type UserNotificationsArgs = {
-  cursor?: InputMaybe<Scalars['String']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -5263,13 +5250,6 @@ export type UserMetaMutationsSetSpeckleCon25BannerDismissedArgs = {
 
 export type UserMetaMutationsSetSpeckleConBannerDismissedArgs = {
   value: Scalars['Boolean']['input'];
-};
-
-export type UserNotificationCollection = {
-  __typename?: 'UserNotificationCollection';
-  cursor?: Maybe<Scalars['String']['output']>;
-  items: Array<Notification>;
-  totalCount: Scalars['Int']['output'];
 };
 
 export type UserProjectCollection = {
@@ -7282,7 +7262,7 @@ export type IntercomActiveWorkspaceQueryVariables = Exact<{
 }>;
 
 
-export type IntercomActiveWorkspaceQuery = { __typename?: 'Query', workspaceBySlug: { __typename?: 'Workspace', id: string, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans, status: WorkspacePlanStatuses } | null } };
+export type IntercomActiveWorkspaceQuery = { __typename?: 'Query', workspaceBySlug: { __typename?: 'Workspace', id: string, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans, status: WorkspacePlanStatuses } | null, seats?: { __typename?: 'WorkspaceSubscriptionSeats', editors: { __typename?: 'WorkspaceSubscriptionSeatCount', assigned: number, available: number } } | null } };
 
 export type InviteUserSearchQueryVariables = Exact<{
   input: UsersRetrievalInput;
@@ -9228,7 +9208,7 @@ export const DeveloperSettingsApplicationsDocument = {"kind":"Document","definit
 export const DeveloperSettingsAuthorizedAppsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"DeveloperSettingsAuthorizedApps"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"authorizedApps"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}}]}}]}}]}}]} as unknown as DocumentNode<DeveloperSettingsAuthorizedAppsQuery, DeveloperSettingsAuthorizedAppsQueryVariables>;
 export const SearchProjectsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SearchProjects"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"search"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"onlyWithRoles"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},"defaultValue":{"kind":"NullValue"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"workspaceId"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projects"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"10"}},{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"search"},"value":{"kind":"Variable","name":{"kind":"Name","value":"search"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"onlyWithRoles"},"value":{"kind":"Variable","name":{"kind":"Name","value":"onlyWithRoles"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"workspaceId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"workspaceId"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FormSelectProjects_Project"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FormSelectProjects_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]} as unknown as DocumentNode<SearchProjectsQuery, SearchProjectsQueryVariables>;
 export const SearchProjectModelsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SearchProjectModels"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"search"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"models"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"10"}},{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"search"},"value":{"kind":"Variable","name":{"kind":"Name","value":"search"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FormSelectModels_Model"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FormSelectModels_Model"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Model"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]} as unknown as DocumentNode<SearchProjectModelsQuery, SearchProjectModelsQueryVariables>;
-export const IntercomActiveWorkspaceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"IntercomActiveWorkspace"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"slug"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workspaceBySlug"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"slug"},"value":{"kind":"Variable","name":{"kind":"Name","value":"slug"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"plan"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}}]}}]}}]} as unknown as DocumentNode<IntercomActiveWorkspaceQuery, IntercomActiveWorkspaceQueryVariables>;
+export const IntercomActiveWorkspaceDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"IntercomActiveWorkspace"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"slug"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workspaceBySlug"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"slug"},"value":{"kind":"Variable","name":{"kind":"Name","value":"slug"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"plan"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}},{"kind":"Field","name":{"kind":"Name","value":"seats"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"editors"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"assigned"}},{"kind":"Field","name":{"kind":"Name","value":"available"}}]}}]}}]}}]}}]} as unknown as DocumentNode<IntercomActiveWorkspaceQuery, IntercomActiveWorkspaceQueryVariables>;
 export const InviteUserSearchDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"InviteUserSearch"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UsersRetrievalInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"users"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}}]}}]}}]} as unknown as DocumentNode<InviteUserSearchQuery, InviteUserSearchQueryVariables>;
 export const CreateNewRegionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateNewRegion"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateServerRegionInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverInfoMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"multiRegion"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"create"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsServerRegionsAddEditDialog_ServerRegionItem"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsServerRegionsTable_ServerRegionItem"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsServerRegionsAddEditDialog_ServerRegionItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ServerRegionItem"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"key"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsServerRegionsTable_ServerRegionItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ServerRegionItem"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]} as unknown as DocumentNode<CreateNewRegionMutation, CreateNewRegionMutationVariables>;
 export const UpdateRegionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateRegion"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateServerRegionInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverInfoMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"multiRegion"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"update"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsServerRegionsAddEditDialog_ServerRegionItem"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"SettingsServerRegionsTable_ServerRegionItem"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsServerRegionsAddEditDialog_ServerRegionItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ServerRegionItem"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"key"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SettingsServerRegionsTable_ServerRegionItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ServerRegionItem"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"key"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]} as unknown as DocumentNode<UpdateRegionMutation, UpdateRegionMutationVariables>;
@@ -9523,8 +9503,6 @@ export type AllObjectTypes = {
   ModelsTreeItem: ModelsTreeItem,
   ModelsTreeItemCollection: ModelsTreeItemCollection,
   Mutation: Mutation,
-  Notification: Notification,
-  NotificationMutations: NotificationMutations,
   Object: Object,
   ObjectCollection: ObjectCollection,
   PasswordStrengthCheckFeedback: PasswordStrengthCheckFeedback,
@@ -9605,7 +9583,6 @@ export type AllObjectTypes = {
   UserGendoAICredits: UserGendoAiCredits,
   UserMeta: UserMeta,
   UserMetaMutations: UserMetaMutations,
-  UserNotificationCollection: UserNotificationCollection,
   UserProjectCollection: UserProjectCollection,
   UserProjectsUpdatedMessage: UserProjectsUpdatedMessage,
   UserSearchResultCollection: UserSearchResultCollection,
@@ -10355,7 +10332,6 @@ export type MutationFieldArgs = {
   inviteDelete: MutationInviteDeleteArgs,
   inviteResend: MutationInviteResendArgs,
   modelMutations: {},
-  notificationMutations: {},
   objectCreate: MutationObjectCreateArgs,
   projectMutations: {},
   requestVerification: {},
@@ -10390,18 +10366,6 @@ export type MutationFieldArgs = {
   webhookUpdate: MutationWebhookUpdateArgs,
   workspaceJoinRequestMutations: {},
   workspaceMutations: {},
-}
-export type NotificationFieldArgs = {
-  createdAt: {},
-  id: {},
-  payload: {},
-  read: {},
-  type: {},
-  updatedAt: {},
-}
-export type NotificationMutationsFieldArgs = {
-  bulkDelete: NotificationMutationsBulkDeleteArgs,
-  bulkUpdate: NotificationMutationsBulkUpdateArgs,
 }
 export type ObjectFieldArgs = {
   applicationId: {},
@@ -11055,7 +11019,6 @@ export type UserFieldArgs = {
   meta: {},
   name: {},
   notificationPreferences: {},
-  notifications: UserNotificationsArgs,
   permissions: {},
   profiles: {},
   projectAccessRequest: UserProjectAccessRequestArgs,
@@ -11109,11 +11072,6 @@ export type UserMetaMutationsFieldArgs = {
   setNewWorkspaceExplainerDismissed: UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs,
   setSpeckleCon25BannerDismissed: UserMetaMutationsSetSpeckleCon25BannerDismissedArgs,
   setSpeckleConBannerDismissed: UserMetaMutationsSetSpeckleConBannerDismissedArgs,
-}
-export type UserNotificationCollectionFieldArgs = {
-  cursor: {},
-  items: {},
-  totalCount: {},
 }
 export type UserProjectCollectionFieldArgs = {
   cursor: {},
@@ -11530,8 +11488,6 @@ export type AllObjectFieldArgTypes = {
   ModelsTreeItem: ModelsTreeItemFieldArgs,
   ModelsTreeItemCollection: ModelsTreeItemCollectionFieldArgs,
   Mutation: MutationFieldArgs,
-  Notification: NotificationFieldArgs,
-  NotificationMutations: NotificationMutationsFieldArgs,
   Object: ObjectFieldArgs,
   ObjectCollection: ObjectCollectionFieldArgs,
   PasswordStrengthCheckFeedback: PasswordStrengthCheckFeedbackFieldArgs,
@@ -11612,7 +11568,6 @@ export type AllObjectFieldArgTypes = {
   UserGendoAICredits: UserGendoAiCreditsFieldArgs,
   UserMeta: UserMetaFieldArgs,
   UserMetaMutations: UserMetaMutationsFieldArgs,
-  UserNotificationCollection: UserNotificationCollectionFieldArgs,
   UserProjectCollection: UserProjectCollectionFieldArgs,
   UserProjectsUpdatedMessage: UserProjectsUpdatedMessageFieldArgs,
   UserSearchResultCollection: UserSearchResultCollectionFieldArgs,
@@ -11663,4 +11618,3 @@ export type AllObjectFieldArgTypes = {
   WorkspaceTeamByRole: WorkspaceTeamByRoleFieldArgs,
   WorkspaceUpdatedMessage: WorkspaceUpdatedMessageFieldArgs,
 }
-

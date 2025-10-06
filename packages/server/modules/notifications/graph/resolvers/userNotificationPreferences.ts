@@ -3,7 +3,7 @@ import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   getSavedUserNotificationPreferencesFactory,
   saveUserNotificationPreferencesFactory
-} from '@/modules/notifications/repositories/userNotificationPreferences'
+} from '@/modules/notifications/repositories'
 import {
   getUserNotificationPreferencesFactory,
   updateNotificationPreferencesFactory
@@ -30,7 +30,7 @@ export default {
   Mutation: {
     async userNotificationPreferencesUpdate(_parent, args, context) {
       const logger = context.log
-      await withOperationLogging(
+      await await withOperationLogging(
         async () => updateNotificationPreferences(context.userId!, args.preferences),
         {
           logger,

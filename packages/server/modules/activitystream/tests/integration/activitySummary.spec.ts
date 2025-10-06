@@ -13,9 +13,9 @@ import {
 } from '@/modules/activitystream/helpers/types'
 import type {
   ActivityDigestMessage,
+  NotificationType,
   NotificationTypeMessageMap
 } from '@/modules/notifications/helpers/types'
-import type { NotificationType } from '@speckle/shared/notifications'
 import {
   geUserStreamActivityFactory,
   saveStreamActivityFactory

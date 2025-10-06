@@ -1,6 +1,6 @@
 import type { CommandModule } from 'yargs'
-import { initializePublicationQueue } from '@/modules/notifications/services/publication/queue'
-import { publishNotification } from '@/modules/notifications/services/publication/publishNotification'
+import { initializeQueue } from '@/modules/notifications/services/queue'
+import { publishNotification } from '@/modules/notifications/services/publication'
 import { cliLogger } from '@/observability/logging'
 import { sendActivityNotificationsFactory } from '@/modules/activitystream/services/summary'
 import { getActiveUserStreamsFactory } from '@/modules/activitystream/repositories'
@@ -18,7 +18,7 @@ const command: CommandModule = {
     })
   },
   handler: async (argv) => {
-    await initializePublicationQueue()
+    await initializeQueue()
     const numberOfDays = argv.days as number
     const end = new Date()
     const start = new Date(end.getTime())

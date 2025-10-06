@@ -1,6 +1,6 @@
 import type cron from 'node-cron'
 import type { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { publishNotification } from '@/modules/notifications/services/publication/publishNotification'
+import { publishNotification } from '@/modules/notifications/services/publication'
 import { moduleLogger } from '@/observability/logging'
 import { weeklyEmailDigestEnabled } from '@/modules/shared/helpers/envHelper'
 import type { EventBus } from '@/modules/shared/services/eventBus'

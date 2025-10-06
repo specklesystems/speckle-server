@@ -1,6 +1,6 @@
 import { notificationsLogger as logger } from '@/observability/logging'
-import type { NotificationJobResult } from '@/modules/notifications/services/publication/queue'
-import { getQueue } from '@/modules/notifications/services/publication/queue'
+import type { NotificationJobResult } from '@/modules/notifications/services/queue'
+import { getQueue } from '@/modules/notifications/services/queue'
 import { EventEmitter } from 'events'
 import type { CompletedEventCallback, FailedEventCallback, JobId } from 'bull'
 import { pick } from 'lodash-es'
