@@ -11,14 +11,85 @@ jobs:
     name: Get version
     uses: ./.github/workflows/get-version.yml
 
+  changes:
+    name: Get modified files
+    runs-on: blacksmith
+    outputs:
+      server: ${{ steps.changes.outputs.server }}
+      frontend-2: ${{ steps.changes.outputs.frontend-2 }}
+      preview-service: ${{ steps.changes.outputs.preview-service }}
+      viewer: ${{ steps.changes.outputs.viewer }}
+      ui-components: ${{ steps.changes.outputs.ui-components }}
+      objectsender: ${{ steps.changes.outputs.objectsender }}
+      shared: ${{ steps.changes.outputs.shared }}
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36
+        id: changes
+        with:
+          filters: |
+            server:
+              - 'packages/server/**'
+              - 'packages/shared/**'
+              - 'packages/objectloader2/**'
+            frontend-2:
+              - 'packages/frontend-2/**'
+              - 'packages/shared/**'
+              - 'packages/tailwind-theme/**'
+              - 'packages/ui-components/**'
+              - 'packages/ui-components-nuxt/**'
+              - 'packages/viewer/**'
+              - 'packages/objectloader2/**'
+            preview-service:
+              - 'packages/preview-service/**'
+              - 'packages/objectloader2/**'
+              - 'packages/preview-frontend/**'
+              - 'packages/shared/**'
+              - 'packages/viewer/**'
+            viewer:
+              - 'packages/viewer/**'
+              - 'packages/shared/**'
+            ui-components:
+              - 'packages/ui-components/**'
+              - 'packages/shared/**'
+            objectsender:
+              - 'packages/objectsender/**'
+              - 'packages/shared/**'
+            shared:
+              - 'packages/shared/**'
+            webhook-service:
+              - 'packages/webhook-service/**'
+              - 'packages/shared/**'
+            fileimport-service:
+              - 'packages/fileimport-service/**'
+              - 'packages/shared/**'
+            ifc-import-service:
+              - 'packages/ifc-import-service/**'
+              - 'packages/shared/**'
+            monitor-deployment:
+              - 'packages/monitor-deployment/**'
+              - 'packages/shared/**'
+            utils:
+              - 'utils/**'
+
   tests:
-    needs: [get-version]
+    needs: [get-version, changes]
     uses: ./.github/workflows/tests.yml
-    with: {}
+    with:
+      # skipping logic only on prs
+      SKIP_SERVER: ${{ needs.changes.outputs.server == 'false' }}
+      SKIP_FRONTEND_2: ${{ needs.changes.outputs.frontend-2 == 'false' }}
+      SKIP_PREVIEW_SERVICE: ${{ needs.changes.outputs.preview-service == 'false' }}
+      SKIP_VIEWER: ${{ needs.changes.outputs.viewer == 'false' }}
+      SKIP_UI_COMPONENTS: ${{ needs.changes.outputs.ui-components == 'false' }}
+      SKIP_OBJECTSENDER: ${{ needs.changes.outputs.objectsender == 'false' }}
+      SKIP_SHARED: ${{ needs.changes.outputs.shared == 'false' }}
     secrets: inherit
 
   builds:
-    needs: [get-version]
+    needs: [get-version, changes]
     uses: ./.github/workflows/builds.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
@@ -27,6 +98,16 @@ jobs:
       # REGISTRY_DOMAIN, REGISTRY_USERNAME, REGISTRY_TOKEN must be configured to match the below IMAGE_PREFIX
       IMAGE_PREFIX: 'ghcr.io/specklesystems'
       PUBLISH: false # do not publish the sourcemaps or include the version in frontend-2 builds for pull requests
+
+      # skipping logic only on prs
+      SKIP_SERVER: ${{ needs.changes.outputs.server == 'false' }}
+      SKIP_FRONTEND_2: ${{ needs.changes.outputs.frontend-2 == 'false' }}
+      SKIP_PREVIEW_SERVICE: ${{ needs.changes.outputs.preview-service == 'false' }}
+      SKIP_WEBHOOK_SERVICE: ${{ needs.changes.outputs.webhook-service == 'false' }}
+      SKIP_FILEIMPORT_SERVICE: ${{ needs.changes.outputs.fileimport-service == 'false' }}
+      SKIP_IFC_IMPORT_SERVICE: ${{ needs.changes.outputs.ifc-import-service == 'false' }}
+      SKIP_MONITOR_DEPLOYMENT: ${{ needs.changes.outputs.monitor-deployment == 'false' }}
+      SKIP_UTILS: ${{ needs.changes.outputs.utils == 'false' }}
     secrets:
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
       REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}

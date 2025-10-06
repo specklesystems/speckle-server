@@ -7,10 +7,35 @@ on:
         required: false
         default: false
         type: boolean
-      DISABLE_SKIPPING:
+      SKIP_SERVER:
         required: false
         default: false
         type: boolean
+      SKIP_FRONTEND_2:
+        required: false
+        default: false
+        type: boolean
+      SKIP_PREVIEW_SERVICE:
+        required: false
+        default: false
+        type: boolean
+      SKIP_VIEWER:
+        required: false
+        default: false
+        type: boolean
+      SKIP_UI_COMPONENTS:
+        required: false
+        default: false
+        type: boolean
+      SKIP_OBJECTSENDER:
+        required: false
+        default: false
+        type: boolean
+      SKIP_SHARED:
+        required: false
+        default: false
+        type: boolean
+
     secrets:
       LICENSE_TOKEN:
         required: true
@@ -26,55 +51,6 @@ on:
         required: true
 
 jobs:
-  changes:
-    name: Get modified files
-    runs-on: blacksmith
-    outputs:
-      server: ${{ steps.changes.outputs.server }}
-      frontend-2: ${{ steps.changes.outputs.frontend-2 }}
-      preview-service: ${{ steps.changes.outputs.preview-service }}
-      viewer: ${{ steps.changes.outputs.viewer }}
-      ui-components: ${{ steps.changes.outputs.ui-components }}
-      objectsender: ${{ steps.changes.outputs.objectsender }}
-      shared: ${{ steps.changes.outputs.shared }}
-    steps:
-      - uses: actions/checkout@v4.2.2
-        with:
-          fetch-depth: 0
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36
-        id: changes
-        with:
-          filters: |
-            server:
-              - 'packages/server/**'
-              - 'packages/shared/**'
-              - 'packages/objectloader2/**'
-            frontend-2:
-              - 'packages/frontend-2/**'
-              - 'packages/shared/**'
-              - 'packages/tailwind-theme/**'
-              - 'packages/ui-components/**'
-              - 'packages/ui-components-nuxt/**'
-              - 'packages/viewer/**'
-              - 'packages/objectloader2/**'
-            preview-service:
-              - 'packages/preview-service/**'
-              - 'packages/objectloader2/**'
-              - 'packages/preview-frontend/**'
-              - 'packages/shared/**'
-              - 'packages/viewer/**'
-            viewer:
-              - 'packages/viewer/**'
-              - 'packages/shared/**'
-            ui-components:
-              - 'packages/ui-components/**'
-              - 'packages/shared/**'
-            objectsender:
-              - 'packages/objectsender/**'
-              - 'packages/shared/**'
-            shared:
-              - 'packages/shared/**'
-
   lint-and-prettier:
     name: Lint and prettier
     runs-on: blacksmith-4vcpu-ubuntu-2404
@@ -120,8 +96,7 @@ jobs:
   test-frontend-2:
     name: Frontend
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    needs: changes
-    if: ${{ needs.changes.outputs.frontend-2 == 'true' || inputs.DISABLE_SKIPPING }}
+    if: ${{ inputs.SKIP_FRONTEND_2 == 'false' }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -143,8 +118,7 @@ jobs:
   test-viewer:
     name: Viewer
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    needs: changes
-    if: ${{ needs.changes.outputs.viewer == 'true' || inputs.DISABLE_SKIPPING }}
+    if: ${{ inputs.SKIP_VIEWER == 'false' }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -175,8 +149,7 @@ jobs:
   test-shared:
     name: Shared
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    needs: changes
-    if: ${{ needs.changes.outputs.shared == 'true' || inputs.DISABLE_SKIPPING }}
+    if: ${{ inputs.SKIP_SHARED == 'false' }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -217,8 +190,7 @@ jobs:
   test-objectsender:
     name: Object Sender
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    needs: changes
-    if: ${{ needs.changes.outputs.objectsender == 'true' || inputs.DISABLE_SKIPPING }}
+    if: ${{ inputs.SKIP_OBJECTSENDER == 'false' }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -246,8 +218,7 @@ jobs:
   test-ui-components:
     name: UI Components
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    needs: changes
-    if: ${{ needs.changes.outputs.ui-components == 'true' || inputs.DISABLE_SKIPPING }}
+    if: ${{ inputs.SKIP_UI_COMPONENTS == 'false' }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -278,8 +249,7 @@ jobs:
   test-preview-service:
     name: Preview service
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    needs: changes
-    if: ${{ needs.changes.outputs.preview-service == 'true' || inputs.DISABLE_SKIPPING }}
+    if: ${{ inputs.SKIP_PREVIEW_SERVICE == 'false' }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     container:
       image: ghcr.io/specklesystems/speckle-ubuntu-chromium:latest
@@ -332,8 +302,7 @@ jobs:
   test-server:
     name: Server
     runs-on: blacksmith-8vcpu-ubuntu-2404
-    needs: changes
-    if: ${{ needs.changes.outputs.server == 'true' || inputs.DISABLE_SKIPPING }}
+    if: ${{ inputs.SKIP_SERVER == 'false' }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
       redis:
@@ -432,8 +401,7 @@ jobs:
   test-server-no-ff:
     name: Server no ff
     runs-on: blacksmith-8vcpu-ubuntu-2404
-    needs: changes
-    if: ${{ needs.changes.outputs.server == 'true' || inputs.DISABLE_SKIPPING }}
+    if: ${{ inputs.SKIP_SERVER == 'false' }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
       redis:
@@ -521,8 +489,7 @@ jobs:
 
   test-server-multiregion:
     name: Server multiregion
-    needs: changes
-    if: ${{ needs.changes.outputs.server == 'true' || inputs.DISABLE_SKIPPING }}
+    if: ${{ inputs.SKIP_SERVER == 'false' }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     services:
