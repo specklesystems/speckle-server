@@ -1,5 +1,12 @@
 <template>
   <div class="relative">
+    <div
+      v-if="isViewerLoading"
+      key="loading"
+      class="h-dvh w-screen flex flex-col md:flex-row absolute left-0 top-0 z-50"
+    >
+      <PresentationLoading />
+    </div>
     <div class="h-dvh w-screen flex flex-col md:flex-row relative">
       <PresentationHeader
         v-if="!hideUi"
@@ -7,17 +14,6 @@
         class="absolute top-3 z-40"
         :class="[isLeftSidebarOpen ? 'left-56 md:left-[15.75rem]' : 'left-3']"
         @toggle-sidebar="isLeftSidebarOpen = !isLeftSidebarOpen"
-      />
-
-      <PresentationActions
-        v-if="!hideUi"
-        v-model:is-sidebar-open="isInfoSidebarOpen"
-        class="absolute bottom-3 lg:top-3 right-3 z-20"
-        :class="{
-          'bottom-52 lg:bottom-auto lg:right-[17rem] xl:right-[21rem]':
-            isInfoSidebarOpen
-        }"
-        @toggle-sidebar="isInfoSidebarOpen = !isInfoSidebarOpen"
       />
 
       <PresentationSlideIndicator
@@ -40,15 +36,38 @@
       <PresentationLeftSidebar
         v-if="isLeftSidebarOpen"
         class="absolute left-0 top-0 md:relative flex-shrink-0 z-30"
+        @close="isLeftSidebarOpen = false"
       />
 
-      <div class="flex-1 z-0 flex flex-col lg:flex-row">
+      <div
+        class="flex-1 z-0 flex flex-col lg:flex-row lg:pb-0"
+        :class="{ 'pb-[11rem]': isInfoSidebarOpen }"
+      >
         <Component
           :is="presentation ? ViewerWrapper : 'div'"
           :group="presentation"
           class="h-full w-full object-cover"
-          @loading-change="onLoadingChange"
-          @progress-change="onProgressChange"
+          @setup="onViewerWrapperSetup"
+        />
+
+        <PresentationControls
+          :hide-ui="hideUi"
+          class="absolute left-3 lg:left-1/2 lg:-translate-x-1/2 z-10"
+          :class="[
+            isInfoSidebarOpen ? 'bottom-48 lg:bottom-3' : 'bottom-3',
+            isLeftSidebarOpen ? 'hidden md:flex md:left-[252px]' : ''
+          ]"
+        />
+
+        <PresentationActions
+          v-if="!hideUi"
+          v-model:is-sidebar-open="isInfoSidebarOpen"
+          class="absolute bottom-3 lg:top-3 right-3 z-20"
+          :class="{
+            'bottom-48 lg:bottom-auto lg:right-[17rem] xl:right-[21rem]':
+              isInfoSidebarOpen
+          }"
+          @toggle-sidebar="isInfoSidebarOpen = !isInfoSidebarOpen"
         />
 
         <PresentationInfoSidebar
@@ -57,15 +76,6 @@
           @close="isInfoSidebarOpen = false"
         />
       </div>
-
-      <PresentationControls
-        :hide-ui="hideUi"
-        class="absolute left-3 lg:left-1/2 lg:-translate-x-1/2"
-        :class="[
-          isInfoSidebarOpen ? 'bottom-52 lg:bottom-3' : 'bottom-3',
-          isLeftSidebarOpen ? 'hidden md:flex md:left-[252px]' : ''
-        ]"
-      />
     </div>
   </div>
 </template>
@@ -76,6 +86,7 @@ import { useEventListener, useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { graphql } from '~~/lib/common/generated/gql'
+import type { InjectableViewerState } from '~/lib/viewer/composables/setup/core'
 
 graphql(`
   fragment PresentationPageWrapper_SavedViewGroup on SavedViewGroup {
@@ -91,15 +102,18 @@ graphql(`
 const {
   response: { presentation, workspace }
 } = useInjectedPresentationState()
+const viewerState = shallowRef<InjectableViewerState>()
+
 const mixpanel = useMixpanel()
-const isMobile = useBreakpoints(TailwindBreakpoints).smaller('sm')
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('sm')
+const isXlOrLarger = breakpoints.greaterOrEqual('xl')
 const { $intercom } = useNuxtApp()
 
 const isInfoSidebarOpen = ref(false)
 const isLeftSidebarOpen = ref(false)
 const hideUi = ref(true)
 const isViewerLoading = ref(true)
-const viewerProgress = ref(0)
 
 const ViewerWrapper = resolveComponent('PresentationViewerWrapper')
 
@@ -114,13 +128,9 @@ const onLoadingChange = (loading: boolean) => {
   if (!loading) {
     hideUi.value = false
 
-    isLeftSidebarOpen.value = false
+    isLeftSidebarOpen.value = isXlOrLarger.value
     isInfoSidebarOpen.value = !isMobile.value
   }
-}
-
-const onProgressChange = (progress: number) => {
-  viewerProgress.value = progress
 }
 
 const handleKeydown = (event: KeyboardEvent) => {
@@ -129,6 +139,10 @@ const handleKeydown = (event: KeyboardEvent) => {
     isLeftSidebarOpen.value = !hideUi.value
     isInfoSidebarOpen.value = !hideUi.value
   }
+}
+
+const onViewerWrapperSetup = (state: InjectableViewerState) => {
+  viewerState.value = state
 }
 
 useEventListener('keydown', handleKeydown)
@@ -146,4 +160,15 @@ onMounted(() => {
     canEditPresentation: canEditPresentation.value
   })
 })
+
+watch(
+  () =>
+    viewerState.value?.ui.loading.value ||
+    !viewerState.value?.ui.hasLoadedQueuedUpModels.value,
+  (newLoading) => {
+    if (newLoading !== undefined) {
+      onLoadingChange(newLoading)
+    }
+  }
+)
 </script>

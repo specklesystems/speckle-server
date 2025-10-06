@@ -78,8 +78,8 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
       return new NotFoundError(e.message)
     case Authz.PersonalProjectsLimitedError.code:
     case Authz.UngroupedSavedViewGroupLockError.code:
-      return new BadRequestError(e.message)
     case Authz.DashboardNoProjectsError.code:
+    case Authz.SavedViewInvalidUpdateError.code:
       return new BadRequestError(e.message)
     default:
       throwUncoveredError(e)

@@ -1,4 +1,5 @@
 import { isStringPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
+import { isNumber, isString, isBoolean, toNumber } from 'lodash-es'
 import {
   ExistenceFilterCondition,
   FilterType,
@@ -267,6 +268,50 @@ export const isBooleanProperty = (filter: ExtendedPropertyInfo): boolean => {
 }
 
 /**
+ * Determines if a value should be treated as numeric for filtering
+ */
+export const isValueNumeric = (value: unknown): boolean => {
+  if (isNumber(value)) return Number.isFinite(value)
+
+  if (isString(value)) {
+    const trimmed = value.trim()
+    if (trimmed === '') return false
+    if (/[a-zA-Z-]/.test(trimmed)) return false
+
+    const converted = toNumber(trimmed)
+    return Number.isFinite(converted)
+  }
+
+  return false
+}
+
+/**
+ * Determines if a value should be treated as boolean for filtering (case-insensitive)
+ */
+export const isValueBoolean = (value: unknown): boolean => {
+  if (isBoolean(value)) return true
+  if (isString(value)) {
+    const str = value.toLowerCase()
+    return str === 'true' || str === 'false'
+  }
+  return false
+}
+
+/**
+ * Checks if a value represents boolean true (case-insensitive)
+ */
+export const isValueBooleanTrue = (value: unknown): boolean => {
+  return value === true || (isString(value) && value.toLowerCase() === 'true')
+}
+
+/**
+ * Checks if a value represents boolean false (case-insensitive)
+ */
+export const isValueBooleanFalse = (value: unknown): boolean => {
+  return value === false || (isString(value) && value.toLowerCase() === 'false')
+}
+
+/**
  * Get count for a specific filter value
  */
 export function getFilterValueCount(
@@ -467,7 +512,11 @@ export const extractNestedProperties = (
 function getValueType(value: unknown): string {
   if (value === null) return 'null'
   if (Array.isArray(value)) return 'array'
-  return typeof value
+
+  if (isValueBoolean(value)) return 'boolean'
+  if (isValueNumeric(value)) return 'number'
+
+  return 'string'
 }
 
 function extractMaterialProperties(

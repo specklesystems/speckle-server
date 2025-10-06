@@ -7,6 +7,9 @@ import type {
 } from '@/modules/gatekeeper/domain/billing'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 import type { Stripe } from 'stripe'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+
+const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
 
 export const createCheckoutSessionFactory =
   ({
@@ -28,6 +31,9 @@ export const createCheckoutSessionFactory =
     isCreateFlow,
     currency
   }) => {
+    if (!FF_BILLING_INTEGRATION_ENABLED)
+      throw new EnvironmentResourceError('Billing Integration is not enabled')
+
     const resultUrl = getResultUrl({ frontendOrigin, workspaceId, workspaceSlug })
     const price = getWorkspacePlanPrice({ billingInterval, workspacePlan, currency })
     const costLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [

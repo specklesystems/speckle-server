@@ -243,6 +243,7 @@ import {
 } from '@/modules/core/services/projects'
 import { WorkspacePlanNotFoundError } from '@/modules/gatekeeper/errors/billing'
 import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -623,13 +624,20 @@ export default FF_WORKSPACES_MODULE_ENABLED
           return true
         },
         giveAccessToWorkspaceFeature: async (_parent, { input }, ctx) => {
-          const { workspaceId, featureFlagName } = input
+          const { workspaceId, featureFlagName, workspaceSlug } = input
           const userId = ctx.userId
           if (!userId) throw new UnauthorizedError()
+          if (!workspaceId && !workspaceSlug) {
+            throw new UserInputError(
+              'Either workspaceId or workspaceSlug must be provided'
+            )
+          }
 
           const featureFlag = WorkspaceFeatureFlags[featureFlagName]
-
-          const workspacePlan = await getWorkspacePlanFactory({ db })({ workspaceId })
+          const getWorkspacePlan = getWorkspacePlanFactory({ db })
+          const workspacePlan = await (workspaceId
+            ? getWorkspacePlan({ workspaceId })
+            : getWorkspacePlan({ workspaceSlug: workspaceSlug! }))
           if (!workspacePlan) throw new WorkspacePlanNotFoundError()
 
           workspacePlan.featureFlags |= featureFlag
@@ -641,13 +649,21 @@ export default FF_WORKSPACES_MODULE_ENABLED
           return true
         },
         removeAccessToWorkspaceFeature: async (_parent, { input }, ctx) => {
-          const { workspaceId, featureFlagName } = input
+          const { workspaceId, featureFlagName, workspaceSlug } = input
           const userId = ctx.userId
           if (!userId) throw new UnauthorizedError()
+          if (!workspaceId && !workspaceSlug) {
+            throw new UserInputError(
+              'Either workspaceId or workspaceSlug must be provided'
+            )
+          }
 
           const featureFlag = WorkspaceFeatureFlags[featureFlagName]
 
-          const workspacePlan = await getWorkspacePlanFactory({ db })({ workspaceId })
+          const getWorkspacePlan = getWorkspacePlanFactory({ db })
+          const workspacePlan = await (workspaceId
+            ? getWorkspacePlan({ workspaceId })
+            : getWorkspacePlan({ workspaceSlug: workspaceSlug! }))
           if (!workspacePlan) throw new WorkspacePlanNotFoundError()
 
           workspacePlan.featureFlags ^= featureFlag
@@ -842,7 +858,7 @@ export default FF_WORKSPACES_MODULE_ENABLED
                 }),
                 deleteSsoProvider: deleteSsoProviderFactory({ db: mainDb }),
                 emitWorkspaceEvent: emit
-              })({ workspaceId }),
+              })({ workspaceId, userId: context.userId! }),
             {
               logger,
               name: 'delete workspace',
@@ -2091,8 +2107,8 @@ export default FF_WORKSPACES_MODULE_ENABLED
 
           await authorizeResolver(
             context.userId,
-            parent.workspaceId,
-            Roles.Workspace.Guest,
+            parent.id,
+            Roles.Stream.Reviewer,
             context.resourceAccessRules
           )
 

@@ -66,16 +66,6 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
           version: store.get('Version') as any
         },
         Query: {
-          automateFunctions: () => {
-            const forceZero = false
-            const count = forceZero ? 0 : faker.number.int({ min: 0, max: 20 })
-
-            return {
-              cursor: null,
-              totalCount: count,
-              items: times(count, () => store.get('AutomateFunction'))
-            } as any
-          },
           automateFunction: (_parent, args) => {
             const id = args.id
             if (id === '404') {

@@ -25,7 +25,8 @@ import {
   SortMode,
   type DataSlice,
   type QueryCriteria,
-  type ExtendedPropertyInfo
+  type ExtendedPropertyInfo,
+  type SerializedFilterData
 } from '~/lib/viewer/helpers/filters/types'
 import { getConditionLabel } from '~/lib/viewer/helpers/filters/constants'
 import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
@@ -34,7 +35,9 @@ import {
   getPropertyName,
   isKvpFilterable,
   getFilterDisabledReason,
-  findFilterByKvp
+  findFilterByKvp,
+  isValueNumeric,
+  isValueBoolean
 } from '~/lib/viewer/helpers/filters/utils'
 import { useFilterColoringHelpers } from '~/lib/viewer/composables/filtering/coloringHelpers'
 import {
@@ -229,15 +232,11 @@ export function useFilterUtilities(
     }
 
     const uniqueValues = Array.from(valueToObjectIds.keys())
-    const firstValue = uniqueValues[0]
 
     const isBooleanProperty =
-      uniqueValues.every((v) => v === 'true' || v === 'false') &&
-      uniqueValues.length <= 2
+      uniqueValues.every((v) => isValueBoolean(v)) && uniqueValues.length <= 2
 
-    const isNumeric =
-      typeof firstValue === 'number' ||
-      (!isNaN(Number(firstValue)) && String(firstValue) !== '')
+    const isNumeric = uniqueValues.every((v) => isValueNumeric(v))
 
     if (isBooleanProperty) {
       return {
@@ -245,7 +244,7 @@ export function useFilterUtilities(
         type: 'boolean',
         objectCount: valueToObjectIds.size,
         valueGroups: uniqueValues.map((value) => ({
-          value: value === 'true',
+          value: String(value).toLowerCase() === 'true',
           ids: valueToObjectIds.get(value) || []
         }))
       } as BooleanPropertyInfo
@@ -707,13 +706,7 @@ export function useFilterUtilities(
 
   // Store filters that need to be restored once data store is ready
   const pendingFiltersToRestore = ref<{
-    filters: Array<{
-      key: string | null
-      isApplied: boolean
-      selectedValues: string[]
-      id: string
-      condition: FilterCondition
-    }>
+    filters: SerializedFilterData[]
     activeColorFilterId: string | null
     filterLogic?: FilterLogic
   } | null>(null)
@@ -722,13 +715,7 @@ export function useFilterUtilities(
    * Restores filters from serialized state
    */
   const restoreFilters = async (
-    serializedFilters: Array<{
-      key: string | null
-      isApplied: boolean
-      selectedValues: string[]
-      id: string
-      condition: FilterCondition
-    }>,
+    serializedFilters: SerializedFilterData[],
     activeColorFilterId: string | null,
     filterLogic?: FilterLogic
   ) => {
@@ -766,13 +753,7 @@ export function useFilterUtilities(
    * Actually applies the filters once we have the property data
    */
   const applyFiltersFromSerialized = (
-    serializedFilters: Array<{
-      key: string | null
-      isApplied: boolean
-      selectedValues: string[]
-      id: string
-      condition: FilterCondition
-    }>,
+    serializedFilters: SerializedFilterData[],
     availableProperties: ExtendedPropertyInfo[]
   ) => {
     for (const serializedFilter of serializedFilters) {
@@ -787,6 +768,14 @@ export function useFilterUtilities(
 
           if (serializedFilter.selectedValues?.length) {
             updateActiveFilterValues(filterId, serializedFilter.selectedValues)
+          }
+
+          if (serializedFilter.numericRange) {
+            setNumericRange(
+              filterId,
+              serializedFilter.numericRange.min,
+              serializedFilter.numericRange.max
+            )
           }
 
           if (!serializedFilter.isApplied) {
@@ -829,19 +818,17 @@ export function useFilterUtilities(
         }
 
         const propertyInfo = dataSource.propertyMap[propertyKey]
-        const value = propertyInfo.value
-        const isBoolean = String(value) === 'true' || String(value) === 'false'
-        const isNumeric =
-          typeof value === 'number' || (!isNaN(Number(value)) && String(value) !== '')
 
-        if (isBoolean) {
+        const filterType = propertyInfo.type
+
+        if (filterType === FilterType.Boolean) {
           allProperties.set(propertyKey, {
             key: propertyKey,
             type: 'boolean',
             objectCount: 0,
             valueGroups: []
           } as BooleanPropertyInfo)
-        } else if (isNumeric) {
+        } else if (filterType === FilterType.Numeric) {
           allProperties.set(propertyKey, {
             key: propertyKey,
             type: 'number',
@@ -856,7 +843,7 @@ export function useFilterUtilities(
           allProperties.set(propertyKey, {
             key: propertyKey,
             type: 'string',
-            objectCount: 0, // Not needed for selection
+            objectCount: 0,
             valueGroups: []
           } as StringPropertyInfo)
         }

@@ -4,7 +4,7 @@
     <form @submit="onSubmit">
       <div class="flex flex-col gap-2">
         <img
-          :src="slide?.screenshot"
+          :src="thumbnailUrlWithToken"
           :alt="slide?.name"
           class="w-full object-cover rounded-lg border border-outline-3 h-64"
         />
@@ -12,6 +12,7 @@
           v-model="name"
           name="name"
           label="Name"
+          placeholder="Add a name..."
           color="foundation"
           :rules="[isRequired]"
         />
@@ -34,6 +35,7 @@ import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { isRequired } from '~/lib/common/helpers/validation'
 import { useUpdatePresentationSlide } from '~/lib/presentations/composables/mangament'
 import { useForm } from 'vee-validate'
+import { useAuthManager } from '~~/lib/auth/composables/auth'
 
 graphql(`
   fragment PresentationSlideEditDialog_SavedView on SavedView {
@@ -41,7 +43,7 @@ graphql(`
     projectId
     name
     description
-    screenshot
+    thumbnailUrl
   }
 `)
 
@@ -54,9 +56,20 @@ const open = defineModel<boolean>('open', { required: true })
 
 const { mutate: updateSlide, loading } = useUpdatePresentationSlide()
 const { handleSubmit } = useForm()
+const { presentationToken } = useAuthManager()
 
 const name = ref<string>('')
 const description = ref<string>('')
+
+const thumbnailUrlWithToken = computed(() => {
+  if (!props.slide?.thumbnailUrl) return props.slide?.thumbnailUrl
+
+  const url = new URL(props.slide.thumbnailUrl)
+  if (presentationToken.value) {
+    url.searchParams.set('embedToken', presentationToken.value)
+  }
+  return url.toString()
+})
 
 const onSubmit = handleSubmit(async () => {
   if (!props.slide?.id) return
@@ -96,6 +109,7 @@ watch(
   () => {
     name.value = props.slide?.name || ''
     description.value = props.slide?.description || ''
-  }
+  },
+  { immediate: true }
 )
 </script>

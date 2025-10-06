@@ -59,31 +59,37 @@ const {
   }
 } = useInjectedViewerState()
 
-const { isolateObjects, resetFilters, addActiveFilter, filters } = useFilterUtilities()
+const { isolateObjects, unIsolateObjects, resetFilters, addActiveFilter, filters } =
+  useFilterUtilities()
 const { setColorFilter, removeColorFilter } = useFilterColoringHelpers()
 
 const hasMetadataGradient = computed(() => {
-  if (props.result.metadata?.gradient) return true
-  return false
+  const hasGradient = !!props.result.metadata?.gradient
+  return hasGradient
 })
 
 const isIsolated = computed(() => {
   // Gradient results show active via metadataGradientIsSet
   if (hasMetadataGradient.value) {
-    return metadataGradientIsSet.value
+    const isolated = metadataGradientIsSet.value
+    return isolated
   }
 
   // Non-gradient results show active if their objects are isolated
   const isolatedIds = filters.isolatedObjectIds.value
   const ids = resultObjectIds.value
+  const isolated = isolatedIds?.length ? containsAll(ids, isolatedIds) : false
 
-  if (!isolatedIds?.length) return false
-  return containsAll(ids, isolatedIds)
+  return isolated
 })
 
 const resultObjectIds = computed(() => {
-  if ('objectIds' in props.result) return props.result.objectIds
-  return Object.keys(props.result.objectAppIds)
+  const ids =
+    'objectIds' in props.result
+      ? props.result.objectIds
+      : Object.keys(props.result.objectAppIds)
+
+  return ids
 })
 
 const handleClick = () => {
@@ -91,19 +97,18 @@ const handleClick = () => {
     setOrUnsetGradient()
     return
   }
+
   isolateOrUnisolateObjects()
 }
 
 const isolateOrUnisolateObjects = () => {
   const ids = resultObjectIds.value
-  const wasIsolated = containsAll(ids, filters.isolatedObjectIds.value || [])
+  if (ids.length === 0) return
 
-  resetFilters()
-  removeColorFilter()
-  metadataGradientIsSet.value = false
-
-  if (!wasIsolated) {
+  if (!isIsolated.value) {
     isolateObjects(ids)
+  } else {
+    unIsolateObjects(ids)
   }
 }
 
@@ -162,14 +167,25 @@ const setOrUnsetGradient = () => {
   }
 
   resetFilters()
-  if (!props.result.metadata) return
-  if (!computedPropInfo.value) return
-  if (!props.functionId) return
+
+  if (!props.result.metadata) {
+    return
+  }
+
+  if (!computedPropInfo.value) {
+    return
+  }
+
+  if (!props.functionId) {
+    return
+  }
 
   const gradientValues = props.result.metadata?.gradientValues || {}
+
   injectGradientDataIntoDataStore(filteringDataStore, props.functionId, gradientValues)
 
   metadataGradientIsSet.value = true
+
   const filterId = addActiveFilter(computedPropInfo.value)
 
   setColorFilter(filterId)

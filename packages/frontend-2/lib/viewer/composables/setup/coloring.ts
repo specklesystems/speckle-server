@@ -3,6 +3,7 @@ import type { NumericPropertyInfo } from '@speckle/viewer'
 import { watchTriggerable } from '@vueuse/core'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { useOnViewerLoadComplete } from '~/lib/viewer/composables/viewer'
+import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 
 /**
  * Integration composable that sets up watchers to sync state with the viewer.
@@ -14,6 +15,7 @@ export const useFilterColoringPostSetup = () => {
     viewer
   } = useInjectedViewerState()
 
+  const dataStore = useFilteringDataStore()
   const filteringExtension = () => viewer.instance.getExtension(FilteringExtension)
 
   /**
@@ -29,13 +31,18 @@ export const useFilterColoringPostSetup = () => {
     const min = parseFloat(filter.numericRange.min.toFixed(4))
     const max = parseFloat(filter.numericRange.max.toFixed(4))
 
+    // Get the final filtered object IDs from all active filters to ensure coloring respects all filters
+    const finalFilteredObjectIds = new Set(dataStore.getFinalObjectIds())
+
     const colorGroups =
       numericFilter.valueGroups
         ?.filter((vg) => {
           // Apply the same rounding precision to valueGroup values for consistent comparison
           const roundedValue = parseFloat(vg.value.toFixed(4))
           const inRange = roundedValue >= min && roundedValue <= max
-          return inRange
+          // Only include objects that are in the final filtered set (intersection of all active filters)
+          const isInFinalFilteredSet = finalFilteredObjectIds.has(vg.id)
+          return inRange && isInFinalFilteredSet
         })
         ?.map((vg) => {
           const normalizedValue =

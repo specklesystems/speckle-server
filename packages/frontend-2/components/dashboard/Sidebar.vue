@@ -157,8 +157,8 @@
               </LayoutSidebarMenuGroup>
             </div>
           </LayoutSidebarMenu>
-          <template v-if="showIntelligenceCommunityStandUpPromo" #promo>
-            <DashboardIntelligencePromo />
+          <template v-if="showSpeckleCon25Promo" #promo>
+            <DashboardSpeckleConPromo />
           </template>
         </LayoutSidebar>
       </div>
@@ -234,14 +234,14 @@ const { result: permissionsResult } = useQuery(
 const { result } = useQuery(dashboardSidebarQuery, () => ({}), {
   enabled: isWorkspacesEnabled.value
 })
-const { hasDismissedIntelligenceCommunityStandUpBanner } = useActiveUserMeta()
+const { hasDismissedSpeckleCon25Banner } = useActiveUserMeta()
 
 const isOpenMobile = ref(false)
 const showExplainerVideoDialog = ref(false)
 
-const showIntelligenceCommunityStandUpPromo = computed(() => {
-  if (hasDismissedIntelligenceCommunityStandUpBanner.value) return false
-  return dayjs().isBefore('2025-09-10', 'day')
+const showSpeckleCon25Promo = computed(() => {
+  if (hasDismissedSpeckleCon25Banner.value) return false
+  return dayjs().isBefore('2025-11-07', 'day')
 })
 const activeWorkspace = computed(() => result.value?.activeUser?.activeWorkspace)
 const canListDashboards = computed(() => {

@@ -3,6 +3,7 @@ type UserMeta {
   newWorkspaceExplainerDismissed: Boolean!
   speckleConBannerDismissed: Boolean!
   intelligenceCommunityStandUpBannerDismissed: Boolean!
+  speckleCon25BannerDismissed: Boolean!
   legacyProjectsExplainerCollapsed: Boolean!
 }
 
@@ -11,6 +12,7 @@ type UserMetaMutations {
   setNewWorkspaceExplainerDismissed(value: Boolean!): Boolean!
   setSpeckleConBannerDismissed(value: Boolean!): Boolean!
   setIntelligenceCommunityStandUpBannerDismissed(value: Boolean!): Boolean!
+  setSpeckleCon25BannerDismissed(value: Boolean!): Boolean!
   setLegacyProjectsExplainerCollapsed(value: Boolean!): Boolean!
 }
 

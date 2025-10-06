@@ -3,14 +3,15 @@ import type {
   CountAccSyncItems,
   DeleteAccSyncItemById,
   GetAccSyncItemById,
+  GetAccSyncItemByModelId,
   GetAccSyncItemsById,
   ListAccSyncItems,
   QueryAllAccSyncItems,
   UpdateAccSyncItemStatus,
   UpsertAccSyncItem
-} from '@/modules/acc/domain/operations'
+} from '@/modules/acc/domain/acc/operations'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
-import type { AccSyncItem } from '@/modules/acc/domain/types'
+import type { AccSyncItem } from '@/modules/acc/domain/acc/types'
 import type { Knex } from 'knex'
 import { without } from 'lodash-es'
 
@@ -30,12 +31,35 @@ export const getAccSyncItemByIdFactory =
     )
   }
 
+export const getAccSyncItemByModelIdFactory =
+  (deps: { db: Knex }): GetAccSyncItemByModelId =>
+  async ({ modelId }) => {
+    return (
+      (await tables
+        .accSyncItems(deps.db)
+        .select()
+        .where(AccSyncItems.col.modelId, modelId)
+        .first()) ?? null
+    )
+  }
+
 export const getAccSyncItemsByIdFactory =
   (deps: { db: Knex }): GetAccSyncItemsById =>
   async ({ ids }) => {
     if (!ids.length) return []
 
     return await tables.accSyncItems(deps.db).select().whereIn(AccSyncItems.col.id, ids)
+  }
+
+export const getAccSyncItemsByModelIdFactory =
+  (deps: { db: Knex }): GetAccSyncItemsById =>
+  async ({ ids }) => {
+    if (!ids.length) return []
+
+    return await tables
+      .accSyncItems(deps.db)
+      .select()
+      .whereIn(AccSyncItems.col.modelId, ids)
   }
 
 export const upsertAccSyncItemFactory =

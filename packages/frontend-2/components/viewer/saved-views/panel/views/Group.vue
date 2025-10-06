@@ -40,6 +40,16 @@
             @click="showMenu = !showMenu"
           />
         </LayoutMenu>
+        <div v-if="!isUngroupedGroup" v-tippy="getTooltipProps('Present')">
+          <FormButton
+            size="sm"
+            color="subtle"
+            :icon-left="Play"
+            hide-text
+            name="presentGroup"
+            @click="onPresentGroup"
+          />
+        </div>
         <div v-tippy="canCreateView?.errorMessage">
           <FormButton
             v-tippy="getTooltipProps('Create view')"
@@ -53,6 +63,12 @@
           />
         </div>
       </div>
+
+      <PresentationShareDialog
+        v-model:open="showShareDialog"
+        :project-id="project.id"
+        :presentation-id="group.id"
+      />
     </template>
   </LayoutDisclosure>
 </template>
@@ -60,7 +76,7 @@
 import { StringEnum, throwUncoveredError, type StringEnumValues } from '@speckle/shared'
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
-import { Ellipsis, Plus } from 'lucide-vue-next'
+import { Ellipsis, Plus, Play } from 'lucide-vue-next'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   UseUpdateSavedViewGroup_SavedViewGroupFragment,
@@ -79,7 +95,7 @@ import { presentationRoute } from '~/lib/common/helpers/route'
 
 const { getTooltipProps } = useSmartTooltipDelay()
 
-const MenuItems = StringEnum(['Delete', 'Rename', 'Presentation'])
+const MenuItems = StringEnum(['Delete', 'Share', 'Rename'])
 type MenuItems = StringEnumValues<typeof MenuItems>
 
 graphql(`
@@ -158,36 +174,34 @@ const { on, classes: dropZoneClasses } = useDraggableViewTargetGroup({
       open.value = true
     }
   },
-  enabled: computed(() => !open.value || !viewCount.value)
+  isGroupOpen: computed(() => !!open.value),
+  viewCount
 })
+const menuId = useId()
 
 const renameMode = defineModel<boolean>('renameMode')
+
 const showMenu = ref(false)
-const menuId = useId()
+const showShareDialog = ref(false)
 
 const isUngroupedGroup = computed(() => props.group.isUngroupedViewsGroup)
 const canUpdate = computed(() => props.group.permissions.canUpdate)
 const canCreateView = computed(() => props.project.permissions.canCreateSavedView)
-const canPresent = computed(() => props.project.workspace?.hasAccessToFeature)
 
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => {
   const items: LayoutMenuItem<MenuItems>[][] = []
-
-  if (canPresent.value) {
-    items.push([
-      {
-        id: MenuItems.Presentation,
-        title: 'Present',
-        disabled: isLoading.value
-      }
-    ])
-  }
 
   items.push([
     {
       id: MenuItems.Rename,
       title: 'Rename group',
       disabled: !canUpdate.value?.authorized || isLoading.value,
+      disabledTooltip: canUpdate.value.errorMessage
+    },
+    {
+      id: MenuItems.Share,
+      title: 'Share presentation...',
+      disabled: isLoading.value,
       disabledTooltip: canUpdate.value.errorMessage
     },
     {
@@ -209,12 +223,16 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
     case MenuItems.Rename:
       emit('rename-group', props.group)
       break
-    case MenuItems.Presentation:
-      window.open(presentationRoute(props.project.id, props.group.id), '_blank')
+    case MenuItems.Share:
+      showShareDialog.value = true
       break
     default:
       throwUncoveredError(item.id)
   }
+}
+
+const onPresentGroup = () => {
+  window.open(presentationRoute(props.project.id, props.group.id), '_blank')
 }
 
 const onAddGroupView = async () => {

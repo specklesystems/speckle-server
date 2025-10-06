@@ -74,6 +74,7 @@ import {
   useHighlightingPostSetup,
   HighlightExtension
 } from '~/lib/viewer/composables/setup/highlighting'
+import { useProjectSavedViewsUpdateTracking } from '~/lib/viewer/composables/savedViews/subscriptions'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -113,7 +114,7 @@ function useViewerObjectAutoLoading() {
       },
       response: { resourceItems, savedView }
     },
-    ui: { loadProgress, loading, spotlightUserSessionId },
+    ui: { loadProgress, loading, spotlightUserSessionId, hasLoadedQueuedUpModels },
     urlHashState: { focusedThreadId }
   } = useInjectedViewerState()
 
@@ -197,6 +198,7 @@ function useViewerObjectAutoLoading() {
 
         if (res.length) {
           hasDoneInitialLoad.value = true
+          hasLoadedQueuedUpModels.value = true
         }
 
         return
@@ -208,10 +210,16 @@ function useViewerObjectAutoLoading() {
       const removableObjectIds = difference(oldObjectIds, newObjectIds)
       const addableObjectIds = difference(newObjectIds, oldObjectIds)
 
+      if (addableObjectIds.length) {
+        hasLoadedQueuedUpModels.value = true
+      }
+
       await Promise.all(removableObjectIds.map((i) => loadObject(i, true)))
       await Promise.all(
         addableObjectIds.map((i) => loadObject(i, false, { zoomToObject: false }))
       )
+
+      hasLoadedQueuedUpModels.value = true
     },
     { deep: true, immediate: true }
   )
@@ -268,6 +276,9 @@ function useViewerSubscriptionEventTracker() {
   useGeneralProjectPageUpdateTracking({
     projectId
   })
+
+  // Track saved views
+  useProjectSavedViewsUpdateTracking({ projectId })
 
   // Also track updates to comments
   useViewerCommentUpdateTracking(

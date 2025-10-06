@@ -1,6 +1,8 @@
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div class="w-full sm:w-auto">
-    <div class="fixed inset-0 z-10 md:hidden">
+    <div class="fixed inset-0 z-10 lg:hidden" tabindex="-1" @click="emit('close')">
       <div class="absolute inset-0 bg-black/20" />
     </div>
 
@@ -32,21 +34,13 @@
         >
           <PresentationSlideList />
         </section>
-
-        <section
-          v-if="!isLoggedIn"
-          class="flex items-center gap-x-2 w-full h-14 border-t border-outline-3 p-3"
-        >
-          <FormButton color="outline" full-width :to="loginRoute">Log in</FormButton>
-          <FormButton full-width :to="registerRoute">Sign up</FormButton>
-        </section>
       </div>
     </aside>
   </div>
 </template>
 
 <script setup lang="ts">
-import { loginRoute, registerRoute, workspaceRoute } from '~~/lib/common/helpers/route'
+import { workspaceRoute } from '~~/lib/common/helpers/route'
 import { useInjectedPresentationState } from '~/lib/presentations/composables/setup'
 import { graphql } from '~~/lib/common/generated/gql'
 
@@ -59,7 +53,10 @@ graphql(`
   }
 `)
 
-const { isLoggedIn } = useActiveUser()
+const emit = defineEmits<{
+  (e: 'close'): void
+}>()
+
 const {
   response: { workspace }
 } = useInjectedPresentationState()
