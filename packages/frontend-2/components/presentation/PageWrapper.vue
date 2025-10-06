@@ -47,8 +47,7 @@
           :is="presentation ? ViewerWrapper : 'div'"
           :group="presentation"
           class="h-full w-full object-cover"
-          @loading-change="onLoadingChange"
-          @progress-change="onProgressChange"
+          @setup="onViewerWrapperSetup"
         />
 
         <PresentationControls
@@ -87,6 +86,7 @@ import { useEventListener, useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { graphql } from '~~/lib/common/generated/gql'
+import type { InjectableViewerState } from '~/lib/viewer/composables/setup/core'
 
 graphql(`
   fragment PresentationPageWrapper_SavedViewGroup on SavedViewGroup {
@@ -102,6 +102,8 @@ graphql(`
 const {
   response: { presentation, workspace }
 } = useInjectedPresentationState()
+const viewerState = shallowRef<InjectableViewerState>()
+
 const mixpanel = useMixpanel()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('sm')
@@ -112,7 +114,6 @@ const isInfoSidebarOpen = ref(false)
 const isLeftSidebarOpen = ref(false)
 const hideUi = ref(true)
 const isViewerLoading = ref(true)
-const viewerProgress = ref(0)
 
 const ViewerWrapper = resolveComponent('PresentationViewerWrapper')
 
@@ -132,16 +133,16 @@ const onLoadingChange = (loading: boolean) => {
   }
 }
 
-const onProgressChange = (progress: number) => {
-  viewerProgress.value = progress
-}
-
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'i' || event.key === 'I') {
     hideUi.value = !hideUi.value
     isLeftSidebarOpen.value = !hideUi.value
     isInfoSidebarOpen.value = !hideUi.value
   }
+}
+
+const onViewerWrapperSetup = (state: InjectableViewerState) => {
+  viewerState.value = state
 }
 
 useEventListener('keydown', handleKeydown)
@@ -159,4 +160,15 @@ onMounted(() => {
     canEditPresentation: canEditPresentation.value
   })
 })
+
+watch(
+  () =>
+    viewerState.value?.ui.loading.value ||
+    !viewerState.value?.ui.hasLoadedQueuedUpModels.value,
+  (newLoading) => {
+    if (newLoading !== undefined) {
+      onLoadingChange(newLoading)
+    }
+  }
+)
 </script>

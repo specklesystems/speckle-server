@@ -34,7 +34,11 @@
       </PresentationFloatingPanelButton>
     </div>
 
-    <PresentationShareDialog v-model:open="showShareDialog" />
+    <PresentationShareDialog
+      v-model:open="showShareDialog"
+      :project-id="projectId"
+      :presentation-id="presentationId"
+    />
   </div>
 </template>
 
@@ -42,6 +46,7 @@
 import { LucideInfo, LucideMaximize, LucideMinimize } from 'lucide-vue-next'
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~/lib/common/helpers/tailwind'
+import { useInjectedPresentationState } from '~/lib/presentations/composables/setup'
 
 const emit = defineEmits<{
   (e: 'toggleSidebar'): void
@@ -49,6 +54,7 @@ const emit = defineEmits<{
 
 const isSidebarOpen = defineModel<boolean>('is-sidebar-open')
 
+const { projectId, presentationId } = useInjectedPresentationState()
 const { isLoggedIn } = useActiveUser()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMdOrLarger = breakpoints.greaterOrEqual('md')

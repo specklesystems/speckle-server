@@ -13,7 +13,10 @@ import {
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 import { CameraController, SectionTool, VisualDiffMode } from '@speckle/viewer'
-import type { FilterLogic, FilterCondition } from '~/lib/viewer/helpers/filters/types'
+import type {
+  FilterLogic,
+  SerializedFilterData
+} from '~/lib/viewer/helpers/filters/types'
 import type { Merge, PartialDeep } from 'type-fest'
 import {
   defaultMeasurementOptions,
@@ -97,7 +100,9 @@ export function useStateSerialization() {
             isApplied: filterData.isApplied,
             selectedValues: filterData.selectedValues,
             id: filterData.id,
-            condition: filterData.condition
+            condition: filterData.condition,
+            numericRange:
+              filterData.type === 'numeric' ? filterData.numericRange : undefined
           }))
 
           return {
@@ -298,13 +303,7 @@ export function useApplySerializedState() {
 
     if (filters.propertyFilters?.length) {
       restoreFilters(
-        filters.propertyFilters as Array<{
-          key: string | null
-          isApplied: boolean
-          selectedValues: string[]
-          id: string
-          condition: FilterCondition
-        }>,
+        filters.propertyFilters as SerializedFilterData[],
         filters.activeColorFilterId,
         filters.filterLogic as FilterLogic
       )
