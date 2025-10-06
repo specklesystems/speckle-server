@@ -2107,8 +2107,8 @@ export default FF_WORKSPACES_MODULE_ENABLED
 
           await authorizeResolver(
             context.userId,
-            parent.workspaceId,
-            Roles.Workspace.Guest,
+            parent.id,
+            Roles.Stream.Reviewer,
             context.resourceAccessRules
           )
 
