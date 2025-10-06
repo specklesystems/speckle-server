@@ -135,7 +135,8 @@
 
     "vue.complete.casing.props": "kebab",
     "vue.inlayHints.missingProps": true,
-    "circleci.persistedProjectSelection": ["gh/specklesystems/speckle-server"]
+    "circleci.persistedProjectSelection": ["gh/specklesystems/speckle-server"],
+    "vue.suggest.componentNameCasing": "alwaysPascalCase"
     // "vitest.nodeEnv": {
     //   "DISABLE_ALL_FFS": "1"
     // }

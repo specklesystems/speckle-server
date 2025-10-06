@@ -1,9 +1,7 @@
-import {
-  AccSyncItemStatuses,
-  ImporterAutomateFunctions
-} from '@/modules/acc/domain/constants'
-import type { UpdateAccSyncItemStatus } from '@/modules/acc/domain/operations'
-import type { AccSyncItem } from '@/modules/acc/domain/types'
+import { ImporterAutomateFunctions } from '@/modules/acc/domain/constants'
+import { AccSyncItemStatuses } from '@/modules/acc/domain/acc/constants'
+import type { UpdateAccSyncItemStatus } from '@/modules/acc/domain/acc/operations'
+import type { AccSyncItem } from '@/modules/acc/domain/acc/types'
 import {
   SyncItemAutomationTriggerError,
   SyncItemNotFoundError
@@ -22,7 +20,9 @@ import type { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operat
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import {
   getAutodeskIntegrationClientId,
-  getAutodeskIntegrationClientSecret
+  getAutodeskIntegrationClientSecret,
+  getOdaUserId,
+  getOdaUserSecret
 } from '@/modules/shared/helpers/envHelper'
 import { logger } from '@/observability/logging'
 import { Scopes } from '@speckle/shared'
@@ -92,8 +92,8 @@ export const triggerSyncItemAutomationFactory =
       functionRuns: [
         {
           id: cryptoRandomString({ length: 15 }),
-          functionId: ImporterAutomateFunctions.svf2.functionId,
-          functionReleaseId: ImporterAutomateFunctions.svf2.functionReleaseId,
+          functionId: ImporterAutomateFunctions.rvt.functionId,
+          functionReleaseId: ImporterAutomateFunctions.rvt.functionReleaseId,
           status: 'pending' as const,
           elapsed: 0,
           results: null,
@@ -148,9 +148,12 @@ export const triggerSyncItemAutomationFactory =
           modelId: syncItem.modelId,
           versionUrn: syncItem.accFileVersionUrn,
           viewName: syncItem.accFileViewName ?? null,
+          autodeskProjectId: syncItem.accProjectId.replace('b.', ''),
           autodeskRegion: syncItem.accRegion === 'EMEA' ? 1 : 0,
           autodeskClientId: getAutodeskIntegrationClientId(),
-          autodeskClientSecret: getAutodeskIntegrationClientSecret()
+          autodeskClientSecret: getAutodeskIntegrationClientSecret(),
+          odaUserId: getOdaUserId(),
+          odaUserSignature: getOdaUserSecret()
         }
       })),
       manifests: [

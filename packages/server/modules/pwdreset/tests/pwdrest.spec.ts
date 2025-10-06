@@ -7,6 +7,8 @@ import { localAuthRestApi } from '@/modules/auth/tests/helpers/registration'
 import { expectToThrow } from '@/test/assertionHelper'
 import { expect } from 'chai'
 import { createTestUser } from '@/test/authHelper'
+import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
+import cryptoRandomString from 'crypto-random-string'
 
 const ResetTokens = () => knex('pwdreset_tokens')
 
@@ -19,9 +21,9 @@ describe('Password reset requests @passwordresets', () => {
 
   it('Should carefully send a password request email', async () => {
     const userA = await createTestUser({
-      name: 'd1',
-      email: 'd@speckle.systems',
-      password: 'wowwow8charsplease',
+      name: cryptoRandomString({ length: 10 }),
+      email: createRandomEmail(),
+      password: cryptoRandomString({ length: 8 }),
       id: ''
     })
 
@@ -31,8 +33,8 @@ describe('Password reset requests @passwordresets', () => {
     // non-existent user
     await request(app)
       .post('/auth/pwdreset/request')
-      .send({ email: 'doesnot@exist.here' })
-      .expect(400)
+      .send({ email: createRandomEmail() }) // does not exist
+      .expect(200) // always 200 to prevent user enumeration
 
     // good request
     await request(app)
@@ -43,20 +45,20 @@ describe('Password reset requests @passwordresets', () => {
     // already has expiration token, fall back
     await request(app)
       .post('/auth/pwdreset/request')
-      .send({ email: 'd@speckle.systems' })
+      .send({ email: userA.email })
       .expect(400)
   })
 
   it('Should reset passwords', async () => {
     const userB = await createTestUser({
-      name: 'd2',
-      email: 'd2@speckle.systems',
-      password: 'w0ww0w8charsplease',
+      name: cryptoRandomString({ length: 10 }),
+      email: createRandomEmail(),
+      password: cryptoRandomString({ length: 8 }),
       id: ''
     })
 
     const authRestApi = localAuthRestApi({ express: app })
-    const newPassword = '12345678'
+    const newPassword = cryptoRandomString({ length: 8 })
 
     // trigger request
     await request(app)
@@ -88,7 +90,7 @@ describe('Password reset requests @passwordresets', () => {
     // token used up, should fail
     await request(app)
       .post('/auth/pwdreset/finalize')
-      .send({ tokenId: token.id, password: 'abc12345678' })
+      .send({ tokenId: token.id, password: cryptoRandomString({ length: 8 }) })
       .expect(400)
 
     // should be able to log in with new pw

@@ -213,7 +213,7 @@ export const localAuthRestApi = (params: { express: Express }) => {
 
     const user = await authCheck({ token })
     expect(user).to.be.ok
-    expect(user.email).to.equal(params.email)
+    expect(user.email.toLowerCase()).to.equal(params.email.toLowerCase())
 
     return user
   }

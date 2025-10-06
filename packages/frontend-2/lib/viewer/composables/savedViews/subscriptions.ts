@@ -296,13 +296,25 @@ export const useOnProjectSavedViewGroupsUpdated = (params: {
     const group = event.savedViewGroup
 
     if (event.type === ProjectSavedViewsUpdatedMessageType.Deleted) {
-      // Views can be moved around, just easier to evict Project.savedViewGroups
+      // Views can be moved around, just easier to evict Project groups
       modifyObjectField(
         cache,
         getCacheId('Project', unref(projectId)),
         'savedViewGroups',
         ({ helpers: { evict } }) => evict()
       )
+
+      // Evict all 'default' groups - items will fall in there
+      modifyObjectField(
+        cache,
+        getCacheId('Project', unref(projectId)),
+        'savedViewGroup',
+        ({ helpers: { evict, fromRef }, value }) => {
+          const { id } = fromRef(value)
+          if (isUngroupedGroup(id)) return evict()
+        }
+      )
+
       // Evict
       cache.evict({
         id: getCacheId('SavedViewGroup', id)

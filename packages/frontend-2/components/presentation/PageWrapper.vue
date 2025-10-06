@@ -36,9 +36,13 @@
       <PresentationLeftSidebar
         v-if="isLeftSidebarOpen"
         class="absolute left-0 top-0 md:relative flex-shrink-0 z-30"
+        @close="isLeftSidebarOpen = false"
       />
 
-      <div class="flex-1 z-0 flex flex-col lg:flex-row pb-[11rem] lg:pb-0">
+      <div
+        class="flex-1 z-0 flex flex-col lg:flex-row lg:pb-0"
+        :class="{ 'pb-[11rem]': isInfoSidebarOpen }"
+      >
         <Component
           :is="presentation ? ViewerWrapper : 'div'"
           :group="presentation"
@@ -51,7 +55,7 @@
           :hide-ui="hideUi"
           class="absolute left-3 lg:left-1/2 lg:-translate-x-1/2 z-10"
           :class="[
-            isInfoSidebarOpen ? 'bottom-52 lg:bottom-3' : 'bottom-3',
+            isInfoSidebarOpen ? 'bottom-48 lg:bottom-3' : 'bottom-3',
             isLeftSidebarOpen ? 'hidden md:flex md:left-[252px]' : ''
           ]"
         />
@@ -61,7 +65,7 @@
           v-model:is-sidebar-open="isInfoSidebarOpen"
           class="absolute bottom-3 lg:top-3 right-3 z-20"
           :class="{
-            'bottom-52 lg:bottom-auto lg:right-[17rem] xl:right-[21rem]':
+            'bottom-48 lg:bottom-auto lg:right-[17rem] xl:right-[21rem]':
               isInfoSidebarOpen
           }"
           @toggle-sidebar="isInfoSidebarOpen = !isInfoSidebarOpen"
@@ -99,7 +103,9 @@ const {
   response: { presentation, workspace }
 } = useInjectedPresentationState()
 const mixpanel = useMixpanel()
-const isMobile = useBreakpoints(TailwindBreakpoints).smaller('sm')
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('sm')
+const isXlOrLarger = breakpoints.greaterOrEqual('xl')
 const { $intercom } = useNuxtApp()
 
 const isInfoSidebarOpen = ref(false)
@@ -121,7 +127,7 @@ const onLoadingChange = (loading: boolean) => {
   if (!loading) {
     hideUi.value = false
 
-    isLeftSidebarOpen.value = false
+    isLeftSidebarOpen.value = isXlOrLarger.value
     isInfoSidebarOpen.value = !isMobile.value
   }
 }

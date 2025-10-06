@@ -40,7 +40,7 @@ const slideListRef = ref<HTMLUListElement>()
 
 const containerRef = computed(() => slideListRef.value?.parentElement)
 
-const scrollToActiveSlide = () => {
+const scrollToActiveSlide = (scrollBehavior: ScrollBehavior) => {
   if (!slideListRef.value || !containerRef.value) return
 
   const activeSlideElement = slideListRef.value.children[slideIdx.value] as HTMLElement
@@ -54,7 +54,7 @@ const scrollToActiveSlide = () => {
 
   containerRef.value.scrollTo({
     top: Math.max(0, scrollTop),
-    behavior: 'smooth'
+    behavior: scrollBehavior
   })
 }
 
@@ -63,8 +63,12 @@ const throttledScrollToActiveSlide = useThrottleFn(scrollToActiveSlide, 100)
 watch(
   slideIdx,
   () => {
-    throttledScrollToActiveSlide()
+    throttledScrollToActiveSlide('smooth')
   },
   { immediate: true }
 )
+
+onMounted(() => {
+  scrollToActiveSlide('instant')
+})
 </script>

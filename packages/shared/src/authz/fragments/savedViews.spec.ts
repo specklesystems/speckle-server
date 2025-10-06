@@ -243,6 +243,26 @@ describe('ensureCanAccessSavedViewFragment', () => {
         success: 'succeeds',
         error: SavedViewNoAccessError.code,
         access: WriteTypes.EditDescription
+      },
+      // Home view:
+      { author: 'author', success: 'succeeds', access: WriteTypes.SetHomeView },
+      {
+        author: 'not author',
+        success: 'succeeds',
+        error: SavedViewNoAccessError.code,
+        access: WriteTypes.SetHomeView
+      },
+      {
+        author: 'author but no longer contributor',
+        success: 'fails',
+        error: ProjectNotEnoughPermissionsError.code,
+        access: WriteTypes.SetHomeView
+      },
+      {
+        author: 'not author but is workspace admin',
+        success: 'succeeds',
+        error: SavedViewNoAccessError.code,
+        access: WriteTypes.SetHomeView
       }
     ])(
       '$success if asking for $access type write access to private (as $author)',

@@ -2,8 +2,9 @@ export type AccTokens = {
   access_token: string
   refresh_token: string
   token_type: string
-  id_token: string
+  id_token?: string | undefined
   expires_in: number
+  timestamp: number
 }
 
 export type AccUserInfo = {

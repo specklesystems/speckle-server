@@ -1,9 +1,11 @@
 <template>
   <ViewerStateSetup :init-params="initParams">
-    <PresentationViewerSetup
-      @loading-change="onLoadingChange"
-      @progress-change="onProgressChange"
-    />
+    <PresentationViewerPostSetup>
+      <PresentationViewerSetup
+        @loading-change="onLoadingChange"
+        @progress-change="onProgressChange"
+      />
+    </PresentationViewerPostSetup>
   </ViewerStateSetup>
 </template>
 <script setup lang="ts">

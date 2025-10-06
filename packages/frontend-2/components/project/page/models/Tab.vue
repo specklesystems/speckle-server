@@ -10,6 +10,7 @@
       :disabled="loading"
       class="z-[1] relative"
     />
+
     <ProjectPageModelsResults
       v-model:grid-or-list="gridOrList"
       v-model:search="search"

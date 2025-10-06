@@ -1,5 +1,6 @@
 import type { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
 import type { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import type { Nullable } from '@speckle/shared'
 
 export const workspaceEventNamespace = 'workspace' as const
 
@@ -51,7 +52,7 @@ export type WorkspaceEventsPayloads = {
   [WorkspaceEvents.Authorizing]: WorkspaceAuthorizedPayload
   [WorkspaceEvents.Created]: WorkspaceCreatedPayload
   [WorkspaceEvents.Updated]: WorkspaceUpdatedPayload
-  [WorkspaceEvents.Deleted]: { workspaceId: string }
+  [WorkspaceEvents.Deleted]: { userId: Nullable<string>; workspaceId: string }
   [WorkspaceEvents.RoleDeleted]: WorkspaceRoleDeletedPayload
   [WorkspaceEvents.RoleUpdated]: WorkspaceRoleUpdatedPayload
   [WorkspaceEvents.SeatUpdated]: WorkspaceSeatUpdatedPayload

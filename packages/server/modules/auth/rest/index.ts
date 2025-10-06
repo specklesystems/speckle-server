@@ -172,6 +172,11 @@ export default function (app: Express) {
             logger: req.log
           }
         )
+
+        // the token should not be cached by the user's browser or intermediate proxies
+        res.header('Cache-Control', 'no-cache, no-store')
+        res.header('Expires', '0')
+        res.header('Pragma', 'no-cache')
         return res.send(authResponse)
       }
 

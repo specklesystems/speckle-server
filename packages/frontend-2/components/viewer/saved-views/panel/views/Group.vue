@@ -40,9 +40,8 @@
             @click="showMenu = !showMenu"
           />
         </LayoutMenu>
-        <div v-if="canPresent">
+        <div v-if="!isUngroupedGroup" v-tippy="getTooltipProps('Present')">
           <FormButton
-            v-tippy="getTooltipProps('Present')"
             size="sm"
             color="subtle"
             :icon-left="Play"
@@ -169,7 +168,8 @@ const { on, classes: dropZoneClasses } = useDraggableViewTargetGroup({
       open.value = true
     }
   },
-  enabled: computed(() => !open.value || !viewCount.value)
+  isGroupOpen: computed(() => !!open.value),
+  viewCount
 })
 
 const renameMode = defineModel<boolean>('renameMode')
@@ -179,7 +179,6 @@ const menuId = useId()
 const isUngroupedGroup = computed(() => props.group.isUngroupedViewsGroup)
 const canUpdate = computed(() => props.group.permissions.canUpdate)
 const canCreateView = computed(() => props.project.permissions.canCreateSavedView)
-const canPresent = computed(() => props.project.workspace?.hasAccessToFeature)
 
 const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => {
   const items: LayoutMenuItem<MenuItems>[][] = []

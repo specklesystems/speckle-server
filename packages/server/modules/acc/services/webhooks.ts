@@ -1,8 +1,8 @@
-import { AccSyncItemStatuses } from '@/modules/acc/domain/constants'
+import { AccSyncItemStatuses } from '@/modules/acc/domain/acc/constants'
 import type {
   QueryAllAccSyncItems,
   UpsertAccSyncItem
-} from '@/modules/acc/domain/operations'
+} from '@/modules/acc/domain/acc/operations'
 import { logger } from '@/observability/logging'
 
 type OnVersionAdded = (params: {
