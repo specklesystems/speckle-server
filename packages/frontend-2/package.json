@@ -21,7 +21,8 @@
     "lint:ci": "yarn lint:tsc && yarn lint:css",
     "gqlgen": "graphql-codegen",
     "gqlgen:watch": "graphql-codegen --watch",
-    "eslint:inspect": "eslint-config-inspector"
+    "eslint:inspect": "eslint-config-inspector",
+    "datadog:publish-sourcemaps:dev": "DATADOG_SITE=\"datadoghq.eu\" datadog-ci sourcemaps upload ./.output/public/_nuxt --service=\"fe2-dev/test\" --release-version=\"unknown\" --minified-path-prefix=/_nuxt"
   },
   "dependencies": {
     "@apollo/client": "^3.13.8",
@@ -60,7 +61,7 @@
     "@vueuse/core": "^10.9.0",
     "apollo-upload-client": "^18.0.1",
     "dayjs": "^1.11.7",
-    "dompurify": "^3.2.7",
+    "dompurify": "^3.0.4",
     "graphql": "^16.6.0",
     "ioredis": "^5.7.0",
     "js-cookie": "^3.0.1",
@@ -87,6 +88,7 @@
     "ws": "^8.17.1"
   },
   "devDependencies": {
+    "@datadog/datadog-ci": "^3.5.0",
     "@eslint/config-inspector": "^0.4.10",
     "@graphql-codegen/cli": "^5.0.5",
     "@graphql-codegen/client-preset": "^4.6.4",
