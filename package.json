@@ -86,8 +86,6 @@
     "bull-board/ejs": "^3.1.10",
     "eslint": "^9.20.1",
     "eslint-config-prettier": "^9.1.0",
-    "levelup/bl": ">=1.2.3",
-    "levelup/semver": ">=5.7.2",
     "mocha/serialize-javascript": ">=6.0.2",
     "prettier": "^2.8.7",
     "puppeteer-core/ws": "^8.17.1",
