@@ -14474,6 +14474,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/trusted-types@npm:^2.0.7":
+  version: 2.0.7
+  resolution: "@types/trusted-types@npm:2.0.7"
+  checksum: 10/8e4202766a65877efcf5d5a41b7dd458480b36195e580a3b1085ad21e948bc417d55d6f8af1fd2a7ad008015d4117d5fdfe432731157da3c68678487174e4ba3
+  languageName: node
+  linkType: hard
+
 "@types/tryghost__content-api@npm:^1":
   version: 1.3.16
   resolution: "@types/tryghost__content-api@npm:1.3.16"
@@ -20687,9 +20694,14 @@ __metadata:
   linkType: hard
 
 "dompurify@npm:^3.0.4":
-  version: 3.0.11
-  resolution: "dompurify@npm:3.0.11"
-  checksum: 10/fc7027ef5cc09ad906625e8aa39b3ca50570fd05aec9fd5995349f0be866385122265c7a823c416694c7bb4c3415e9172cce03b92a153a16c7d1d27165b2a0fd
+  version: 3.2.7
+  resolution: "dompurify@npm:3.2.7"
+  dependencies:
+    "@types/trusted-types": "npm:^2.0.7"
+  dependenciesMeta:
+    "@types/trusted-types":
+      optional: true
+  checksum: 10/51b7866fb834ee62d6c415f41ece5ce11db7b463f60a822932a1f832573a40b98be7715550298690e7647988fbe086db1098bda9b10548b3166fc975eb9bd849
   languageName: node
   linkType: hard
 
