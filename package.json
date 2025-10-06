@@ -71,8 +71,6 @@
     "zx": "^8.1.2"
   },
   "resolutions": {
-    "@aws-sdk/client-sts/fast-xml-parser": ">=4.2.5",
-    "@aws-sdk/client-s3/fast-xml-parser": ">=4.2.5",
     "@bull-board/express/express": "^4.20.0",
     "@datadog/datadog-ci/ssh2": "^1.16.0",
     "@datadog/datadog-ci/form-data": "^4.0.4",
