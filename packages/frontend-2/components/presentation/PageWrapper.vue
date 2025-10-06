@@ -39,7 +39,10 @@
         @close="isLeftSidebarOpen = false"
       />
 
-      <div class="flex-1 z-0 flex flex-col lg:flex-row pb-[11rem] lg:pb-0">
+      <div
+        class="flex-1 z-0 flex flex-col lg:flex-row lg:pb-0"
+        :class="{ 'pb-[11rem]': isInfoSidebarOpen }"
+      >
         <Component
           :is="presentation ? ViewerWrapper : 'div'"
           :group="presentation"
@@ -52,7 +55,7 @@
           :hide-ui="hideUi"
           class="absolute left-3 lg:left-1/2 lg:-translate-x-1/2 z-10"
           :class="[
-            isInfoSidebarOpen ? 'bottom-52 lg:bottom-3' : 'bottom-3',
+            isInfoSidebarOpen ? 'bottom-48 lg:bottom-3' : 'bottom-3',
             isLeftSidebarOpen ? 'hidden md:flex md:left-[252px]' : ''
           ]"
         />
@@ -62,7 +65,7 @@
           v-model:is-sidebar-open="isInfoSidebarOpen"
           class="absolute bottom-3 lg:top-3 right-3 z-20"
           :class="{
-            'bottom-52 lg:bottom-auto lg:right-[17rem] xl:right-[21rem]':
+            'bottom-48 lg:bottom-auto lg:right-[17rem] xl:right-[21rem]':
               isInfoSidebarOpen
           }"
           @toggle-sidebar="isInfoSidebarOpen = !isInfoSidebarOpen"

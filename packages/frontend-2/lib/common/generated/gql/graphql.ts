@@ -2483,11 +2483,11 @@ export type NotificationMutationsBulkDeleteArgs = {
 
 
 export type NotificationMutationsBulkUpdateArgs = {
-  ids: Array<Scalars['String']['input']>;
-  input: NotificationUpdateInput;
+  input: Array<NotificationUpdateInput>;
 };
 
 export type NotificationUpdateInput = {
+  id: Scalars['ID']['input'];
   read: Scalars['Boolean']['input'];
 };
 
