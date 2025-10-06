@@ -8,7 +8,6 @@ import {
 import type {
   NotificationHandler,
   NotificationMessage,
-  NotificationType,
   NotificationTypeHandlers
 } from '@/modules/notifications/helpers/types'
 import { isNotificationMessage } from '@/modules/notifications/helpers/types'
@@ -21,6 +20,7 @@ import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
 import { TIME_MS } from '@speckle/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { NotificationsEvents } from '@/modules/notifications/domain/events'
+import type { NotificationType } from '@speckle/shared/notifications'
 
 export type NotificationJobResult = {
   status: NotificationJobResultsStatus
@@ -87,7 +87,7 @@ export function getQueue(): Bull.Queue {
 /**
  * Initialize notifications queue
  */
-export async function initializeQueue() {
+export async function initializePublicationQueue() {
   queue = await buildNotificationsQueue(NOTIFICATIONS_QUEUE)
 }
 
@@ -186,7 +186,7 @@ export async function consumeIncomingNotifications() {
   })
 }
 
-export async function shutdownQueue() {
+export async function shutdownPublicationQueue() {
   if (!queue) return
   await queue.close()
 }

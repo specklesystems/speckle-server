@@ -22,4 +22,5 @@ export type FeatureFlags = {
   FF_DASHBOARDS_MODULE_ENABLED: boolean
   FF_SAVED_VIEWS_ENABLED: boolean
   FF_USERS_INVITE_SCOPE_IS_PUBLIC: boolean
+  FF_NOTIFICATION_LISTENER_ENABLED: boolean
 }

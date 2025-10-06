@@ -6,7 +6,7 @@ import { BullAdapter } from '@bull-board/api/bullAdapter'
 import {
   NOTIFICATIONS_QUEUE,
   buildNotificationsQueue
-} from '@/modules/notifications/services/queue'
+} from '@/modules/notifications/services/publication/queue'
 import { noop } from 'lodash-es'
 import { cliLogger } from '@/observability/logging'
 
