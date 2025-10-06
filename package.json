@@ -84,6 +84,7 @@
     "bull-board/ejs": "^3.1.10",
     "@eslint/config-inspector/esbuild": "^0.25.0",
     "@storybook/core-common/esbuild": "^0.25.0",
+    "@storybook/builder-manager/esbuild": "^0.25.0",
     "vite/esbuild": "^0.25.0",
     "wrangler/esbuild": "^0.25.0",
     "eslint": "^9.20.1",
