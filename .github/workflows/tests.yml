@@ -96,7 +96,7 @@ jobs:
   test-frontend-2:
     name: Frontend
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    if: ${{ inputs.SKIP_FRONTEND_2 == 'false' }}
+    if: ${{ !inputs.SKIP_FRONTEND_2 }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -118,7 +118,7 @@ jobs:
   test-viewer:
     name: Viewer
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    if: ${{ inputs.SKIP_VIEWER == 'false' }}
+    if: ${{ !inputs.SKIP_VIEWER }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -149,7 +149,7 @@ jobs:
   test-shared:
     name: Shared
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    if: ${{ inputs.SKIP_SHARED == 'false' }}
+    if: ${{ !inputs.SKIP_SHARED }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -190,7 +190,7 @@ jobs:
   test-objectsender:
     name: Object Sender
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    if: ${{ inputs.SKIP_OBJECTSENDER == 'false' }}
+    if: ${{ !inputs.SKIP_OBJECTSENDER }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -218,7 +218,7 @@ jobs:
   test-ui-components:
     name: UI Components
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    if: ${{ inputs.SKIP_UI_COMPONENTS == 'false' }}
+    if: ${{ !inputs.SKIP_UI_COMPONENTS }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -249,7 +249,7 @@ jobs:
   test-preview-service:
     name: Preview service
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    if: ${{ inputs.SKIP_PREVIEW_SERVICE == 'false' }}
+    if: ${{ !inputs.SKIP_PREVIEW_SERVICE }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     container:
       image: ghcr.io/specklesystems/speckle-ubuntu-chromium:latest
@@ -302,7 +302,7 @@ jobs:
   test-server:
     name: Server
     runs-on: blacksmith-8vcpu-ubuntu-2404
-    if: ${{ inputs.SKIP_SERVER == 'false' }}
+    if: ${{ !inputs.SKIP_SERVER }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
       redis:
@@ -401,7 +401,7 @@ jobs:
   test-server-no-ff:
     name: Server no ff
     runs-on: blacksmith-8vcpu-ubuntu-2404
-    if: ${{ inputs.SKIP_SERVER == 'false' }}
+    if: ${{ !inputs.SKIP_SERVER  }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
       redis:
@@ -489,7 +489,7 @@ jobs:
 
   test-server-multiregion:
     name: Server multiregion
-    if: ${{ inputs.SKIP_SERVER == 'false' }}
+    if: ${{ !inputs.SKIP_SERVER }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     services:
