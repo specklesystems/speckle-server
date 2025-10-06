@@ -2457,6 +2457,39 @@ export type MutationWebhookUpdateArgs = {
   webhook: WebhookUpdateInput;
 };
 
+export type Notification = {
+  __typename?: 'Notification';
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  payload: Scalars['JSONObject']['output'];
+  read: Scalars['Boolean']['output'];
+  type: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type NotificationMutations = {
+  __typename?: 'NotificationMutations';
+  /** Delete an existing notification */
+  bulkDelete: Scalars['Boolean']['output'];
+  /** update notidication */
+  bulkUpdate: Scalars['Boolean']['output'];
+};
+
+
+export type NotificationMutationsBulkDeleteArgs = {
+  ids: Array<Scalars['String']['input']>;
+};
+
+
+export type NotificationMutationsBulkUpdateArgs = {
+  input: Array<NotificationUpdateInput>;
+};
+
+export type NotificationUpdateInput = {
+  id: Scalars['ID']['input'];
+  read: Scalars['Boolean']['input'];
+};
+
 export type Object = {
   __typename?: 'Object';
   /** @deprecated Not implemented. */
@@ -11602,4 +11635,3 @@ export type AllObjectFieldArgTypes = {
   WorkspaceTeamByRole: WorkspaceTeamByRoleFieldArgs,
   WorkspaceUpdatedMessage: WorkspaceUpdatedMessageFieldArgs,
 }
-
