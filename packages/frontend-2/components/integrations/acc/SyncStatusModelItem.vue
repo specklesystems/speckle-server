@@ -1,11 +1,12 @@
 <template>
   <CommonBadge
+    v-tippy="statusTooltip"
     class="bg-"
     :color-classes="
       [runStatusClasses(status), 'shrink-0 grow-0 text-foreground'].join(' ')
     "
   >
-    {{ statusLabel }}
+    ACC
   </CommonBadge>
 </template>
 
@@ -29,8 +30,32 @@ const props = defineProps<{
   item: SyncStatusModelItem_AccSyncItemFragment
 }>()
 
+const { formattedRelativeDate } = useDateFormatters()
+
 const status = computed(() => props.item.status)
-const statusLabel = computed(() => `V${props.item.accFileVersionIndex}`)
+const statusTooltip = computed(
+  () =>
+    `V${props.item.accFileVersionIndex} ${getStatusDescription(
+      props.item.status
+    )} ${formattedRelativeDate(props.item.updatedAt)}`
+)
+
+const getStatusDescription = (status: AccSyncItemStatus): string => {
+  switch (status) {
+    case 'failed':
+      return 'failed to sync'
+    case 'pending':
+      return 'scheduled for sync'
+    case 'paused':
+      return 'sync paused'
+    case 'succeeded':
+      return 'updated'
+    case 'syncing':
+      return 'processing since'
+    default:
+      return ''
+  }
+}
 
 const runStatusClasses = (run: AccSyncItemStatus) => {
   const classParts = ['w-12 justify-center']

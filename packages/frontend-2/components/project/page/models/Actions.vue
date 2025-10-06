@@ -73,6 +73,10 @@ graphql(`
         ...FullPermissionCheckResult
       }
     }
+    accSyncItem {
+      id
+      ...ProjectPageModelsActions_AccSyncItem
+    }
     ...UseCopyModelLink_Model
   }
 `)
@@ -84,7 +88,20 @@ graphql(`
       id
       slug
     }
+    permissions {
+      canReadAccIntegrationSettings {
+        ...FullPermissionCheckResult
+      }
+    }
     ...ProjectsModelPageEmbed_Project
+  }
+`)
+
+graphql(`
+  fragment ProjectPageModelsActions_AccSyncItem on AccSyncItem {
+    id
+    accFileName
+    status
   }
 `)
 
@@ -94,6 +111,8 @@ enum ActionTypes {
   Share = 'share',
   ViewVersions = 'view-versions',
   UploadVersion = 'upload-version',
+  ToggleSyncPause = 'toggle-sync-pause',
+  DeleteSync = 'delete-sync',
   CopyId = 'copy-id',
   Embed = 'embed',
   ViewUploads = 'view-uploads'
@@ -125,9 +144,14 @@ const { statusIsCanceled } = useWorkspacePlan(props.project.workspace?.slug || '
 const showActionsMenu = ref(false)
 const openDialog = ref(null as Nullable<ActionTypes>)
 
+const accSyncItem = computed(() => props.model.accSyncItem)
+
 const canEdit = computed(() => props.model.permissions.canUpdate)
 const canDelete = computed(() => props.model.permissions.canDelete)
 const canCreateVersion = computed(() => props.model.permissions.canCreateVersion)
+const canEditAccSync = computed(
+  () => props.project.permissions.canReadAccIntegrationSettings
+)
 
 const uploadVersionDisabled = computed(() => {
   if (canCreateVersion.value.code === 'WORKSPACES_NOT_AUTHORIZED_ERROR') {
@@ -169,26 +193,42 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
         ]
       ]
     : []),
-  [
-    {
-      title: 'View versions',
-      id: ActionTypes.ViewVersions
-    },
-    {
-      title: 'View uploads',
-      id: ActionTypes.ViewUploads
-    },
-    ...(isLoggedIn.value
-      ? [
-          {
-            title: 'Upload new version...',
-            id: ActionTypes.UploadVersion,
-            disabled: uploadVersionDisabled.value.disabled,
-            disabledTooltip: uploadVersionDisabled.value.tooltip
-          }
-        ]
-      : [])
-  ],
+  accSyncItem.value
+    ? [
+        {
+          title:
+            accSyncItem.value?.status === 'paused' ? 'Resume sync...' : 'Pause sync...',
+          id: ActionTypes.ToggleSyncPause,
+          disabled: !canEditAccSync.value.authorized,
+          disabledTooltip: canEditAccSync.value.message
+        },
+        {
+          title: 'Remove sync...',
+          id: ActionTypes.DeleteSync,
+          disabled: !canEditAccSync.value.authorized,
+          disabledTooltip: canEditAccSync.value.message
+        }
+      ]
+    : [
+        {
+          title: 'View versions',
+          id: ActionTypes.ViewVersions
+        },
+        {
+          title: 'View uploads',
+          id: ActionTypes.ViewUploads
+        },
+        ...(isLoggedIn.value
+          ? [
+              {
+                title: 'Upload new version...',
+                id: ActionTypes.UploadVersion,
+                disabled: uploadVersionDisabled.value.disabled,
+                disabledTooltip: uploadVersionDisabled.value.tooltip
+              }
+            ]
+          : [])
+      ],
   [
     { title: 'Copy link', id: ActionTypes.Share },
     { title: 'Copy ID', id: ActionTypes.CopyId },
