@@ -74,7 +74,7 @@ import { ObjLoader } from './modules/loaders/OBJ/ObjLoader.js'
 import { LegacyViewer } from './modules/LegacyViewer.js'
 import { GeometryConverter, SpeckleType } from './modules/loaders/GeometryConverter.js'
 import Input, { InputEvent, InputEventPayload } from './modules/input/Input.js'
-import { GeometryType } from './modules/batching/Batch.js'
+import { Batch, GeometryType } from './modules/batching/Batch.js'
 import { MeshBatch } from './modules/batching/MeshBatch.js'
 import SpeckleStandardMaterial from './modules/materials/SpeckleStandardMaterial.js'
 import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial.js'
@@ -231,6 +231,7 @@ export {
   InputEvent,
   ObjectLayers,
   GeometryType,
+  Batch,
   MeshBatch,
   InstancedMeshBatch,
   LineBatch,
