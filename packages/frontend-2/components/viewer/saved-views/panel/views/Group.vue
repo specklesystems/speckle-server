@@ -200,7 +200,7 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => {
     },
     {
       id: MenuItems.Share,
-      title: 'Share presentation',
+      title: 'Share presentation...',
       disabled: isLoading.value,
       disabledTooltip: canUpdate.value.errorMessage
     },
