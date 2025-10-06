@@ -19,24 +19,30 @@
             v-tippy="canCreateModel.cantClickCreateReason.value"
             class="grow inline-flex sm:grow-0 lg:hidden"
           >
-            <FormButton
-              :disabled="!canCreateModel.canClickCreate.value"
-              @click="handleCreateModelClick"
+            <LayoutMenu
+              v-if="showAccIntegration"
+              v-model:open="showMenu"
+              :items="menuItems"
+              :menu-position="HorizontalDirection.Left"
+              :menu-id="menuId"
+              @click.stop.prevent
+              @chosen="onActionChosen"
             >
-              New model
-            </FormButton>
-          </div>
-          <!-- I believe for now sync limits corralate with model limit since new sync creates new model, once we have limits for syncs, this should change -->
-          <div
-            v-tippy="canCreateModel.cantClickCreateReason.value"
-            class="grow inline-flex sm:grow-0 lg:hidden"
-          >
-            <FormButton
-              :disabled="!canCreateModel.canClickCreate.value"
-              @click="showNewAccSync = true"
-            >
-              New sync
-            </FormButton>
+              <FormButton color="primary" @click="showMenu = !showMenu">
+                <div class="flex items-center gap-1">
+                  Add model
+                  <ChevronDownIcon class="h-3 w-3" />
+                </div>
+              </FormButton>
+            </LayoutMenu>
+            <div v-else v-tippy="canCreateModel.cantClickCreateReason.value">
+              <FormButton
+                :disabled="!canCreateModel.canClickCreate.value"
+                @click="handleCreateModelClick"
+              >
+                New model
+              </FormButton>
+            </div>
           </div>
         </div>
       </div>
@@ -90,30 +96,31 @@
           >
             View all in 3D
           </FormButton>
-          <LayoutMenu
-            v-if="showAccIntegration"
-            v-model:open="showMenu"
-            :items="menuItems"
-            :menu-position="HorizontalDirection.Left"
-            :menu-id="menuId"
-            @click.stop.prevent
-            @chosen="onActionChosen"
-          >
-            <FormButton color="primary" @click="showMenu = !showMenu">
-              <div class="flex items-center gap-1">
-                Add model
-                <ChevronDownIcon class="h-3 w-3" />
-              </div>
-            </FormButton>
-          </LayoutMenu>
-          <div v-else v-tippy="canCreateModel.cantClickCreateReason.value">
-            <FormButton
-              :disabled="!canCreateModel.canClickCreate.value"
-              class="hidden lg:inline-flex shrink-0"
-              @click="handleCreateModelClick"
+          <div class="hidden lg:inline-flex shrink-0">
+            <LayoutMenu
+              v-if="showAccIntegration"
+              v-model:open="showMenu"
+              :items="menuItems"
+              :menu-position="HorizontalDirection.Left"
+              :menu-id="menuId"
+              @click.stop.prevent
+              @chosen="onActionChosen"
             >
-              New model
-            </FormButton>
+              <FormButton color="primary" @click="showMenu = !showMenu">
+                <div class="flex items-center gap-1">
+                  Add model
+                  <ChevronDownIcon class="h-3 w-3" />
+                </div>
+              </FormButton>
+            </LayoutMenu>
+            <div v-else v-tippy="canCreateModel.cantClickCreateReason.value">
+              <FormButton
+                :disabled="!canCreateModel.canClickCreate.value"
+                @click="handleCreateModelClick"
+              >
+                New model
+              </FormButton>
+            </div>
           </div>
         </div>
       </div>
