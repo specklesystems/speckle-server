@@ -125,7 +125,7 @@ const onSubmit = handleSubmit(async (values) => {
       : undefined
   const description =
     values.description?.trim() !== (props.view.description || undefined)
-      ? values.description?.trim() || null
+      ? values.description?.trim() || ''
       : undefined
   const visibility =
     values.visibility !== props.view.visibility ? values.visibility : undefined
