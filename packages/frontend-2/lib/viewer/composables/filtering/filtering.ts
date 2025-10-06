@@ -25,7 +25,8 @@ import {
   SortMode,
   type DataSlice,
   type QueryCriteria,
-  type ExtendedPropertyInfo
+  type ExtendedPropertyInfo,
+  type SerializedFilterData
 } from '~/lib/viewer/helpers/filters/types'
 import { getConditionLabel } from '~/lib/viewer/helpers/filters/constants'
 import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
@@ -707,13 +708,7 @@ export function useFilterUtilities(
 
   // Store filters that need to be restored once data store is ready
   const pendingFiltersToRestore = ref<{
-    filters: Array<{
-      key: string | null
-      isApplied: boolean
-      selectedValues: string[]
-      id: string
-      condition: FilterCondition
-    }>
+    filters: SerializedFilterData[]
     activeColorFilterId: string | null
     filterLogic?: FilterLogic
   } | null>(null)
@@ -722,13 +717,7 @@ export function useFilterUtilities(
    * Restores filters from serialized state
    */
   const restoreFilters = async (
-    serializedFilters: Array<{
-      key: string | null
-      isApplied: boolean
-      selectedValues: string[]
-      id: string
-      condition: FilterCondition
-    }>,
+    serializedFilters: SerializedFilterData[],
     activeColorFilterId: string | null,
     filterLogic?: FilterLogic
   ) => {
@@ -766,13 +755,7 @@ export function useFilterUtilities(
    * Actually applies the filters once we have the property data
    */
   const applyFiltersFromSerialized = (
-    serializedFilters: Array<{
-      key: string | null
-      isApplied: boolean
-      selectedValues: string[]
-      id: string
-      condition: FilterCondition
-    }>,
+    serializedFilters: SerializedFilterData[],
     availableProperties: ExtendedPropertyInfo[]
   ) => {
     for (const serializedFilter of serializedFilters) {
@@ -787,6 +770,14 @@ export function useFilterUtilities(
 
           if (serializedFilter.selectedValues?.length) {
             updateActiveFilterValues(filterId, serializedFilter.selectedValues)
+          }
+
+          if (serializedFilter.numericRange) {
+            setNumericRange(
+              filterId,
+              serializedFilter.numericRange.min,
+              serializedFilter.numericRange.max
+            )
           }
 
           if (!serializedFilter.isApplied) {
