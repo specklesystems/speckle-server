@@ -63,6 +63,12 @@
           />
         </div>
       </div>
+
+      <PresentationShareDialog
+        v-model:open="showShareDialog"
+        :project-id="project.id"
+        :presentation-id="group.id"
+      />
     </template>
   </LayoutDisclosure>
 </template>
@@ -89,7 +95,7 @@ import { presentationRoute } from '~/lib/common/helpers/route'
 
 const { getTooltipProps } = useSmartTooltipDelay()
 
-const MenuItems = StringEnum(['Delete', 'Rename'])
+const MenuItems = StringEnum(['Delete', 'Share', 'Rename'])
 type MenuItems = StringEnumValues<typeof MenuItems>
 
 graphql(`
@@ -171,10 +177,12 @@ const { on, classes: dropZoneClasses } = useDraggableViewTargetGroup({
   isGroupOpen: computed(() => !!open.value),
   viewCount
 })
+const menuId = useId()
 
 const renameMode = defineModel<boolean>('renameMode')
+
 const showMenu = ref(false)
-const menuId = useId()
+const showShareDialog = ref(false)
 
 const isUngroupedGroup = computed(() => props.group.isUngroupedViewsGroup)
 const canUpdate = computed(() => props.group.permissions.canUpdate)
@@ -188,6 +196,12 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => {
       id: MenuItems.Rename,
       title: 'Rename group',
       disabled: !canUpdate.value?.authorized || isLoading.value,
+      disabledTooltip: canUpdate.value.errorMessage
+    },
+    {
+      id: MenuItems.Share,
+      title: 'Share presentation',
+      disabled: isLoading.value,
       disabledTooltip: canUpdate.value.errorMessage
     },
     {
@@ -208,6 +222,9 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
       break
     case MenuItems.Rename:
       emit('rename-group', props.group)
+      break
+    case MenuItems.Share:
+      showShareDialog.value = true
       break
     default:
       throwUncoveredError(item.id)
