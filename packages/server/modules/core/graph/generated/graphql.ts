@@ -2091,7 +2091,6 @@ export type Mutation = {
    */
   inviteResend: Scalars['Boolean']['output'];
   modelMutations: ModelMutations;
-  notificationMutations: NotificationMutations;
   /** @deprecated Part of the old API surface and will be removed in the future. */
   objectCreate: Array<Scalars['String']['output']>;
   projectMutations: ProjectMutations;
@@ -2483,39 +2482,6 @@ export type MutationWebhookDeleteArgs = {
 
 export type MutationWebhookUpdateArgs = {
   webhook: WebhookUpdateInput;
-};
-
-export type Notification = {
-  __typename?: 'Notification';
-  createdAt: Scalars['DateTime']['output'];
-  id: Scalars['ID']['output'];
-  payload: Scalars['JSONObject']['output'];
-  read: Scalars['Boolean']['output'];
-  type: Scalars['String']['output'];
-  updatedAt: Scalars['DateTime']['output'];
-};
-
-export type NotificationMutations = {
-  __typename?: 'NotificationMutations';
-  /** Delete an existing notification */
-  bulkDelete: Scalars['Boolean']['output'];
-  /** update notidication */
-  bulkUpdate: Scalars['Boolean']['output'];
-};
-
-
-export type NotificationMutationsBulkDeleteArgs = {
-  ids: Array<Scalars['String']['input']>;
-};
-
-
-export type NotificationMutationsBulkUpdateArgs = {
-  input: Array<NotificationUpdateInput>;
-};
-
-export type NotificationUpdateInput = {
-  id: Scalars['ID']['input'];
-  read: Scalars['Boolean']['input'];
 };
 
 export type Object = {
@@ -5005,8 +4971,6 @@ export type User = {
   meta: UserMeta;
   name: Scalars['String']['output'];
   notificationPreferences: Scalars['JSONObject']['output'];
-  /** List all notifications for the user */
-  notifications: UserNotificationCollection;
   permissions: RootPermissionChecks;
   profiles?: Maybe<Scalars['JSONObject']['output']>;
   /** Get pending project access request, that the user made */
@@ -5089,16 +5053,6 @@ export type UserCommitsArgs = {
 export type UserFavoriteStreamsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
-};
-
-
-/**
- * Full user type, should only be used in the context of admin operations or
- * when a user is reading/writing info about himself
- */
-export type UserNotificationsArgs = {
-  cursor?: InputMaybe<Scalars['String']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -5290,13 +5244,6 @@ export type UserMetaMutationsSetSpeckleCon25BannerDismissedArgs = {
 
 export type UserMetaMutationsSetSpeckleConBannerDismissedArgs = {
   value: Scalars['Boolean']['input'];
-};
-
-export type UserNotificationCollection = {
-  __typename?: 'UserNotificationCollection';
-  cursor?: Maybe<Scalars['String']['output']>;
-  items: Array<Notification>;
-  totalCount: Scalars['Int']['output'];
 };
 
 export type UserProjectCollection = {
@@ -6619,9 +6566,6 @@ export type ResolversTypes = {
   ModelsTreeItemCollection: ResolverTypeWrapper<Omit<ModelsTreeItemCollection, 'items'> & { items: Array<ResolversTypes['ModelsTreeItem']> }>;
   MoveVersionsInput: MoveVersionsInput;
   Mutation: ResolverTypeWrapper<{}>;
-  Notification: ResolverTypeWrapper<Notification>;
-  NotificationMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
-  NotificationUpdateInput: NotificationUpdateInput;
   Object: ResolverTypeWrapper<ObjectGraphQLReturn>;
   ObjectCollection: ResolverTypeWrapper<Omit<ObjectCollection, 'objects'> & { objects: Array<ResolversTypes['Object']> }>;
   ObjectCreateInput: ObjectCreateInput;
@@ -6764,7 +6708,6 @@ export type ResolversTypes = {
   UserGendoAICredits: ResolverTypeWrapper<UserGendoAiCredits>;
   UserMeta: ResolverTypeWrapper<UserMetaGraphQLReturn>;
   UserMetaMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
-  UserNotificationCollection: ResolverTypeWrapper<UserNotificationCollection>;
   UserProjectCollection: ResolverTypeWrapper<Omit<UserProjectCollection, 'items'> & { items: Array<ResolversTypes['Project']> }>;
   UserProjectsFilter: UserProjectsFilter;
   UserProjectsUpdatedMessage: ResolverTypeWrapper<Omit<UserProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
@@ -7036,9 +6979,6 @@ export type ResolversParentTypes = {
   ModelsTreeItemCollection: Omit<ModelsTreeItemCollection, 'items'> & { items: Array<ResolversParentTypes['ModelsTreeItem']> };
   MoveVersionsInput: MoveVersionsInput;
   Mutation: {};
-  Notification: Notification;
-  NotificationMutations: MutationsObjectGraphQLReturn;
-  NotificationUpdateInput: NotificationUpdateInput;
   Object: ObjectGraphQLReturn;
   ObjectCollection: Omit<ObjectCollection, 'objects'> & { objects: Array<ResolversParentTypes['Object']> };
   ObjectCreateInput: ObjectCreateInput;
@@ -7161,7 +7101,6 @@ export type ResolversParentTypes = {
   UserGendoAICredits: UserGendoAiCredits;
   UserMeta: UserMetaGraphQLReturn;
   UserMetaMutations: MutationsObjectGraphQLReturn;
-  UserNotificationCollection: UserNotificationCollection;
   UserProjectCollection: Omit<UserProjectCollection, 'items'> & { items: Array<ResolversParentTypes['Project']> };
   UserProjectsFilter: UserProjectsFilter;
   UserProjectsUpdatedMessage: Omit<UserProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversParentTypes['Project']> };
@@ -8184,7 +8123,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   inviteDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteDeleteArgs, 'inviteId'>>;
   inviteResend?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteResendArgs, 'inviteId'>>;
   modelMutations?: Resolver<ResolversTypes['ModelMutations'], ParentType, ContextType>;
-  notificationMutations?: Resolver<ResolversTypes['NotificationMutations'], ParentType, ContextType>;
   objectCreate?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType, RequireFields<MutationObjectCreateArgs, 'objectInput'>>;
   projectMutations?: Resolver<ResolversTypes['ProjectMutations'], ParentType, ContextType>;
   requestVerification?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -8219,22 +8157,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   webhookUpdate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationWebhookUpdateArgs, 'webhook'>>;
   workspaceJoinRequestMutations?: Resolver<ResolversTypes['WorkspaceJoinRequestMutations'], ParentType, ContextType>;
   workspaceMutations?: Resolver<ResolversTypes['WorkspaceMutations'], ParentType, ContextType>;
-};
-
-export type NotificationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Notification'] = ResolversParentTypes['Notification']> = {
-  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  payload?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
-  read?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type NotificationMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['NotificationMutations'] = ResolversParentTypes['NotificationMutations']> = {
-  bulkDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<NotificationMutationsBulkDeleteArgs, 'ids'>>;
-  bulkUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<NotificationMutationsBulkUpdateArgs, 'input'>>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type ObjectResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Object'] = ResolversParentTypes['Object']> = {
@@ -9033,7 +8955,6 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   meta?: Resolver<ResolversTypes['UserMeta'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   notificationPreferences?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
-  notifications?: Resolver<ResolversTypes['UserNotificationCollection'], ParentType, ContextType, Partial<UserNotificationsArgs>>;
   permissions?: Resolver<ResolversTypes['RootPermissionChecks'], ParentType, ContextType>;
   profiles?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   projectAccessRequest?: Resolver<Maybe<ResolversTypes['ProjectAccessRequest']>, ParentType, ContextType, RequireFields<UserProjectAccessRequestArgs, 'projectId'>>;
@@ -9099,13 +9020,6 @@ export type UserMetaMutationsResolvers<ContextType = GraphQLContext, ParentType 
   setNewWorkspaceExplainerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetNewWorkspaceExplainerDismissedArgs, 'value'>>;
   setSpeckleCon25BannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetSpeckleCon25BannerDismissedArgs, 'value'>>;
   setSpeckleConBannerDismissed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<UserMetaMutationsSetSpeckleConBannerDismissedArgs, 'value'>>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type UserNotificationCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserNotificationCollection'] = ResolversParentTypes['UserNotificationCollection']> = {
-  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  items?: Resolver<Array<ResolversTypes['Notification']>, ParentType, ContextType>;
-  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -9627,8 +9541,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ModelsTreeItem?: ModelsTreeItemResolvers<ContextType>;
   ModelsTreeItemCollection?: ModelsTreeItemCollectionResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
-  Notification?: NotificationResolvers<ContextType>;
-  NotificationMutations?: NotificationMutationsResolvers<ContextType>;
   Object?: ObjectResolvers<ContextType>;
   ObjectCollection?: ObjectCollectionResolvers<ContextType>;
   PasswordStrengthCheckFeedback?: PasswordStrengthCheckFeedbackResolvers<ContextType>;
@@ -9709,7 +9621,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   UserGendoAICredits?: UserGendoAiCreditsResolvers<ContextType>;
   UserMeta?: UserMetaResolvers<ContextType>;
   UserMetaMutations?: UserMetaMutationsResolvers<ContextType>;
-  UserNotificationCollection?: UserNotificationCollectionResolvers<ContextType>;
   UserProjectCollection?: UserProjectCollectionResolvers<ContextType>;
   UserProjectsUpdatedMessage?: UserProjectsUpdatedMessageResolvers<ContextType>;
   UserSearchResultCollection?: UserSearchResultCollectionResolvers<ContextType>;
@@ -10726,28 +10637,6 @@ export type GetRegionalProjectBlobQueryVariables = Exact<{
 
 export type GetRegionalProjectBlobQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, blob?: { __typename?: 'BlobMetadata', id: string, fileName: string } | null } };
 
-export type GetUserNotificationsQueryVariables = Exact<{
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  cursor?: InputMaybe<Scalars['String']['input']>;
-}>;
-
-
-export type GetUserNotificationsQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', notifications: { __typename?: 'UserNotificationCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'Notification', id: string, type: string, createdAt: Date, payload: Record<string, unknown>, read: boolean, updatedAt: Date }> } } | null };
-
-export type UserBulkDeleteNotidicationMutationVariables = Exact<{
-  ids: Array<Scalars['String']['input']> | Scalars['String']['input'];
-}>;
-
-
-export type UserBulkDeleteNotidicationMutation = { __typename?: 'Mutation', notificationMutations: { __typename?: 'NotificationMutations', bulkDelete: boolean } };
-
-export type UserBulkUpdateNotificationsMutationVariables = Exact<{
-  input: Array<NotificationUpdateInput> | NotificationUpdateInput;
-}>;
-
-
-export type UserBulkUpdateNotificationsMutation = { __typename?: 'Mutation', notificationMutations: { __typename?: 'NotificationMutations', bulkUpdate: boolean } };
-
 export type BasicProjectAccessRequestFieldsFragment = { __typename?: 'ProjectAccessRequest', id: string, requesterId: string, projectId: string, createdAt: Date, requester: { __typename?: 'LimitedUser', id: string, name: string } };
 
 export type CreateProjectAccessRequestMutationVariables = Exact<{
@@ -11438,9 +11327,6 @@ export const GetRegionalProjectAutomationDocument = {"kind":"Document","definiti
 export const GetRegionalProjectCommentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetRegionalProjectComment"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"commentId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"comment"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"commentId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<GetRegionalProjectCommentQuery, GetRegionalProjectCommentQueryVariables>;
 export const GetRegionalProjectWebhookDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetRegionalProjectWebhook"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"webhookId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"webhooks"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"webhookId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetRegionalProjectWebhookQuery, GetRegionalProjectWebhookQueryVariables>;
 export const GetRegionalProjectBlobDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetRegionalProjectBlob"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"blobId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"blob"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"blobId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"fileName"}}]}}]}}]}}]} as unknown as DocumentNode<GetRegionalProjectBlobQuery, GetRegionalProjectBlobQueryVariables>;
-export const GetUserNotificationsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetUserNotifications"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"notifications"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"payload"}},{"kind":"Field","name":{"kind":"Name","value":"read"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}}]}}]}}]} as unknown as DocumentNode<GetUserNotificationsQuery, GetUserNotificationsQueryVariables>;
-export const UserBulkDeleteNotidicationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UserBulkDeleteNotidication"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ids"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"notificationMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"bulkDelete"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"ids"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ids"}}}]}]}}]}}]} as unknown as DocumentNode<UserBulkDeleteNotidicationMutation, UserBulkDeleteNotidicationMutationVariables>;
-export const UserBulkUpdateNotificationsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UserBulkUpdateNotifications"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"NotificationUpdateInput"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"notificationMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"bulkUpdate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]}}]} as unknown as DocumentNode<UserBulkUpdateNotificationsMutation, UserBulkUpdateNotificationsMutationVariables>;
 export const CreateProjectAccessRequestDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateProjectAccessRequest"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"accessRequestMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"create"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"projectId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicProjectAccessRequestFields"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicProjectAccessRequestFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ProjectAccessRequest"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"requester"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"requesterId"}},{"kind":"Field","name":{"kind":"Name","value":"projectId"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]} as unknown as DocumentNode<CreateProjectAccessRequestMutation, CreateProjectAccessRequestMutationVariables>;
 export const GetActiveUserProjectAccessRequestDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetActiveUserProjectAccessRequest"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectAccessRequest"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"projectId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicProjectAccessRequestFields"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicProjectAccessRequestFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ProjectAccessRequest"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"requester"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"requesterId"}},{"kind":"Field","name":{"kind":"Name","value":"projectId"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]} as unknown as DocumentNode<GetActiveUserProjectAccessRequestQuery, GetActiveUserProjectAccessRequestQueryVariables>;
 export const GetActiveUserFullProjectAccessRequestDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetActiveUserFullProjectAccessRequest"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectAccessRequest"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"projectId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicProjectAccessRequestFields"}},{"kind":"Field","name":{"kind":"Name","value":"project"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicProjectAccessRequestFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ProjectAccessRequest"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"requester"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"requesterId"}},{"kind":"Field","name":{"kind":"Name","value":"projectId"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]} as unknown as DocumentNode<GetActiveUserFullProjectAccessRequestQuery, GetActiveUserFullProjectAccessRequestQueryVariables>;

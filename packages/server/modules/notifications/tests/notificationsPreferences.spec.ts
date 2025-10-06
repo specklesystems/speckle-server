@@ -3,8 +3,10 @@ import { UserNotificationPreferences, Users } from '@/modules/core/dbSchema'
 import type { BasicTestUser } from '@/test/authHelper'
 import { createTestUsers } from '@/test/authHelper'
 import { expect } from 'chai'
-import { NotificationType } from '@speckle/shared/notifications'
-import { NotificationChannel } from '@/modules/notifications/helpers/types'
+import {
+  NotificationType,
+  NotificationChannel
+} from '@/modules/notifications/helpers/types'
 import { BaseError } from '@/modules/shared/errors'
 import {
   getUserNotificationPreferencesFactory,
@@ -13,7 +15,7 @@ import {
 import {
   getSavedUserNotificationPreferencesFactory,
   saveUserNotificationPreferencesFactory
-} from '@/modules/notifications/repositories/userNotificationPreferences'
+} from '@/modules/notifications/repositories'
 import { db } from '@/db/knex'
 
 const getSavedUserNotificationPreferences = getSavedUserNotificationPreferencesFactory({

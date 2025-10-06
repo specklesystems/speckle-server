@@ -67,8 +67,6 @@ const config: CodegenConfig = {
             '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
           AdminMutations:
             '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
-          NotificationMutations:
-            '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn',
           AdminQueries: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn',
           ServerStatistics: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn',
           ServerStats: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn',
