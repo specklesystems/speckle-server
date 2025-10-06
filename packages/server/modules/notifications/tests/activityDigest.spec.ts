@@ -16,7 +16,7 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import type {
   DigestTopic,
   Digest
-} from '@/modules/notifications/services/publication/handlers/activityDigest'
+} from '@/modules/notifications/services/handlers/activityDigest'
 import {
   digestMostActiveStream,
   mostActiveComment,
@@ -26,7 +26,7 @@ import {
   digestActiveStreams,
   closingOverview,
   prepareSummaryEmailFactory
-} from '@/modules/notifications/services/publication/handlers/activityDigest'
+} from '@/modules/notifications/services/handlers/activityDigest'
 import { expect } from 'chai'
 import { range } from 'lodash-es'
 

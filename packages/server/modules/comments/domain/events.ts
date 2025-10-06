@@ -11,7 +11,6 @@ export const commentEventsNamespace = 'comments' as const
 export const CommentEvents = {
   Created: `${commentEventsNamespace}.created`,
   Updated: `${commentEventsNamespace}.updated`,
-  Viewed: `${commentEventsNamespace}.viewed`,
   Archived: `${commentEventsNamespace}.archived`
 } as const
 
@@ -25,10 +24,6 @@ export type CommentEventsPayloads = {
   [CommentEvents.Updated]: {
     previousComment: CommentRecord
     newComment: CommentRecord
-  }
-  [CommentEvents.Viewed]: {
-    userId: string
-    commentId: string
   }
   [CommentEvents.Archived]: {
     userId: string

@@ -3,7 +3,7 @@ import { isStreamAccessRequest } from '@/modules/accessrequests/repositories'
 import type { GetStreamCollaborators } from '@/modules/core/domain/streams/operations'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import type { NotificationPublisher } from '@/modules/notifications/helpers/types'
-import { NotificationType } from '@speckle/shared/notifications'
+import { NotificationType } from '@/modules/notifications/helpers/types'
 import type { EventBus, EventPayload } from '@/modules/shared/services/eventBus'
 
 type OnServerAccessRequestCreatedDeps = {

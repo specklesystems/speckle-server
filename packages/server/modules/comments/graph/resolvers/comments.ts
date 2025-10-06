@@ -24,7 +24,7 @@ import {
   insertCommentLinksFactory,
   insertCommentsFactory,
   markCommentUpdatedFactory,
-  markCommentViewedFactory as markCommentViewedFactoryDb,
+  markCommentViewedFactory,
   resolvePaginatedProjectCommentsLatestModelResourcesFactory,
   updateCommentFactory
 } from '@/modules/comments/repositories/comments'
@@ -56,8 +56,7 @@ import {
   createCommentThreadAndNotifyFactory,
   createCommentReplyAndNotifyFactory,
   editCommentAndNotifyFactory,
-  archiveCommentAndNotifyFactory,
-  markCommentViewedFactory
+  archiveCommentAndNotifyFactory
 } from '@/modules/comments/services/management'
 import {
   isLegacyData,
@@ -534,10 +533,8 @@ export default {
       throwIfAuthNotOk(canReadProject)
 
       const projectDb = await getProjectDbClient({ projectId: args.input.projectId })
-      await markCommentViewedFactory({
-        markCommentViewed: markCommentViewedFactoryDb({ db: projectDb }),
-        emitEvent: getEventBus().emit
-      })(args.input.commentId, ctx.userId!)
+      const markCommentViewed = markCommentViewedFactory({ db: projectDb })
+      await markCommentViewed(args.input.commentId, ctx.userId!)
 
       return true
     },
@@ -566,7 +563,7 @@ export default {
       })
       const insertComments = insertCommentsFactory({ db: projectDb })
       const insertCommentLinks = insertCommentLinksFactory({ db: projectDb })
-      const markCommentViewed = markCommentViewedFactoryDb({ db: projectDb })
+      const markCommentViewed = markCommentViewedFactory({ db: projectDb })
 
       const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({
         getViewerResourceItemsUngrouped,
@@ -807,7 +804,7 @@ export default {
         insertComments: insertCommentsFactory({ db: projectDb }),
         insertCommentLinks: insertCommentLinksFactory({ db: projectDb }),
         deleteComment: deleteCommentFactory({ db: projectDb }),
-        markCommentViewed: markCommentViewedFactoryDb({ db: projectDb }),
+        markCommentViewed: markCommentViewedFactory({ db: projectDb }),
         emitEvent: getEventBus().emit,
         getViewerResourcesFromLegacyIdentifiers
       })
@@ -869,7 +866,7 @@ export default {
       throwIfAuthNotOk(canReadProject)
 
       const projectDb = await getProjectDbClient({ projectId: args.streamId })
-      const markCommentViewed = markCommentViewedFactoryDb({ db: projectDb })
+      const markCommentViewed = markCommentViewedFactory({ db: projectDb })
 
       await markCommentViewed(args.commentId, context.userId!)
       return true

@@ -150,11 +150,6 @@ export const parseFeatureFlags = (
       description:
         'Enables Personal Access Tokens (PAT) to be created with users:invite scope. **WARNING** This can be used to spam invitations to any email address. It is not advised to enable this on servers which are open to public account registration or to which untrusted users have been, or can be, invited.',
       defaults: { _: false }
-    },
-    FF_NOTIFICATION_LISTENER_ENABLED: {
-      schema: z.boolean(),
-      description: 'Enables notifications being triggered by server event listeners',
-      defaults: { _: false }
     }
   })
 
