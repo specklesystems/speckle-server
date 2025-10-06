@@ -46,7 +46,9 @@ import type { NumericFilterData } from '~/lib/viewer/helpers/filters/types'
 import { isNumericFilter } from '~/lib/viewer/helpers/filters/types'
 import { injectGradientDataIntoDataStore } from '~/lib/viewer/helpers/filters/utils'
 
-type ObjectResult = Automate.AutomateTypes.ResultsSchema['values']['objectResults'][0]
+type ObjectResult = Required<
+  Automate.AutomateTypes.ResultsSchema['values']
+>['objectResults'][number]
 
 const props = defineProps<{
   result: ObjectResult
@@ -64,7 +66,7 @@ const { isolateObjects, unIsolateObjects, resetFilters, addActiveFilter, filters
 const { setColorFilter, removeColorFilter } = useFilterColoringHelpers()
 
 const hasMetadataGradient = computed(() => {
-  const hasGradient = !!props.result.metadata?.gradient
+  const hasGradient = !!props.result?.metadata?.gradient
   return hasGradient
 })
 
