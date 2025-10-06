@@ -215,3 +215,12 @@ export type ColorGroup = {
   value: string
   color: string
 }
+
+export type SerializedFilterData = {
+  key: Nullable<string>
+  isApplied: boolean
+  selectedValues: string[]
+  id: string
+  condition: FilterCondition
+  numericRange?: { min: number; max: number }
+}
