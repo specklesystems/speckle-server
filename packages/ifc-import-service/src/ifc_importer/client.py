@@ -2,7 +2,7 @@ from specklepy.core.api.client import (  # pyright: ignore[reportMissingTypeStub
     SpeckleClient,
 )
 
-from src.ifc_importer.domain import FileimportPayload
+from ifc_importer.domain import FileimportPayload
 
 
 def setup_client(job_payload: FileimportPayload) -> SpeckleClient:

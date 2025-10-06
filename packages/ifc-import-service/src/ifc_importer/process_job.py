@@ -6,13 +6,13 @@ from pprint import pprint
 from speckleifc.main import open_and_convert_file
 from specklepy.logging import metrics
 
+from ifc_importer.client import setup_client
 from ifc_importer.domain import (
     FileimportError,
     FileimportPayload,
     FileimportResult,
     FileimportSuccess,
 )
-from src.ifc_importer.client import setup_client
 
 
 def process_job(
