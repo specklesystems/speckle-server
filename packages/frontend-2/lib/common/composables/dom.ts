@@ -4,7 +4,7 @@ import DOMPurify from 'dompurify'
 import type { ShallowRef } from 'vue'
 
 const purify = async (source: string) => {
-  let purify: typeof DOMPurify
+  let purify: DOMPurify.DOMPurifyI
 
   if (import.meta.server) {
     const jsdom = await import('jsdom')

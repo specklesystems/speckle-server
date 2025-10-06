@@ -60,7 +60,7 @@
     "@vueuse/core": "^10.9.0",
     "apollo-upload-client": "^18.0.1",
     "dayjs": "^1.11.7",
-    "dompurify": "^3.2.7",
+    "dompurify": "^3.0.4",
     "graphql": "^16.6.0",
     "ioredis": "^5.7.0",
     "js-cookie": "^3.0.1",
