@@ -11,7 +11,10 @@ import {
   getCacheId,
   modifyObjectField
 } from '~/lib/common/helpers/graphql'
-import type { UserEmail } from '~/lib/common/generated/gql/graphql'
+import {
+  SentEmailDeliveryStatus,
+  type UserEmail
+} from '~/lib/common/generated/gql/graphql'
 import { useGlobalToast } from '~/lib/common/composables/toast'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import {
@@ -69,10 +72,35 @@ export function useUserEmails() {
       input: { id: email.id }
     }).catch(convertThrowIntoFetchResult)
 
-    if (result?.data) {
+    const deliveryStatus =
+      result?.data?.activeUserMutations.emailMutations.requestNewEmailVerification
+        .status
+    if (!deliveryStatus || deliveryStatus === SentEmailDeliveryStatus.Failed) {
+      const errorMessage =
+        result?.data?.activeUserMutations?.emailMutations?.requestNewEmailVerification?.errorMessages?.join(
+          ', '
+        ) || getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: `Error sending verification email to ${email.email}`,
+        description: errorMessage
+      })
+      return false
+    } else if (deliveryStatus === SentEmailDeliveryStatus.Sent) {
       triggerNotification({
         type: ToastNotificationType.Success,
         title: `Verification email sent to ${email.email}`
+      })
+      navigateTo(verifyEmailRoute)
+      return true
+    } else if (
+      [SentEmailDeliveryStatus.Pending, SentEmailDeliveryStatus.Queued].includes(
+        deliveryStatus
+      )
+    ) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: `Verification email is currently being sent to  to ${email.email}`
       })
       navigateTo(verifyEmailRoute)
       return true

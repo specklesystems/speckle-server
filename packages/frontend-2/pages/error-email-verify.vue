@@ -46,6 +46,7 @@ import { ValidationHelpers } from '@speckle/ui-components'
 import { useMutation } from '@vue/apollo-composable'
 import { requestVerificationByEmailMutation } from '~/lib/auth/graphql/mutations'
 import { useGlobalToast, ToastNotificationType } from '~/lib/common/composables/toast'
+import { SentEmailDeliveryStatus } from '~/lib/common/generated/gql/graphql'
 import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
@@ -73,10 +74,30 @@ const onResend = async () => {
   const res = await resendVerificationEmail({ email: emailAddress }).catch(
     convertThrowIntoFetchResult
   )
-  if (res?.data?.requestVerificationByEmail) {
+  const deliveryStatus = res?.data?.requestVerificationByEmail?.status
+  if (!deliveryStatus || deliveryStatus === SentEmailDeliveryStatus.Failed) {
+    const errMsg =
+      res?.data?.requestVerificationByEmail?.errorMessages?.join(', ') ||
+      getFirstErrorMessage(res?.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Error sending verification email',
+      description: errMsg
+    })
+    return
+  } else if (deliveryStatus === SentEmailDeliveryStatus.Sent) {
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Verification email (re-)sent successfully'
+    })
+  } else if (
+    [SentEmailDeliveryStatus.Queued, SentEmailDeliveryStatus.Pending].includes(
+      deliveryStatus
+    )
+  ) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      description: 'Verification email is currently being (re-)sent.'
     })
   } else {
     const errMsg = getFirstErrorMessage(res?.errors)

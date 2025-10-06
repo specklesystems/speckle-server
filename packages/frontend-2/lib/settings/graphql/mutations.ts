@@ -71,7 +71,10 @@ export const settingsNewEmailVerificationMutation = graphql(`
   mutation SettingsNewEmailVerification($input: EmailVerificationRequestInput!) {
     activeUserMutations {
       emailMutations {
-        requestNewEmailVerification(input: $input)
+        requestNewEmailVerification(input: $input) {
+          status
+          errorMessages
+        }
       }
     }
   }
