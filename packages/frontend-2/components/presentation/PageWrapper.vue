@@ -39,7 +39,10 @@
         @close="isLeftSidebarOpen = false"
       />
 
-      <div class="flex-1 z-0 flex flex-col lg:flex-row pb-[11rem] lg:pb-0">
+      <div
+        class="flex-1 z-0 flex flex-col lg:flex-row lg:pb-0"
+        :class="{ 'pb-[11rem]': isInfoSidebarOpen }"
+      >
         <Component
           :is="presentation ? ViewerWrapper : 'div'"
           :group="presentation"
