@@ -3,10 +3,9 @@
     <LayoutTable
       class="mt-6 bg-foundation"
       :columns="[
-        { id: 'model', header: 'Model', classes: 'col-span-3' },
-        { id: 'accFileName', header: 'File', classes: 'col-span-3' },
-        { id: 'status', header: 'Status', classes: 'col-span-3' },
-        { id: 'createdBy', header: 'Created by', classes: 'col-span-2' },
+        { id: 'file', header: 'File', classes: 'col-span-4' },
+        { id: 'status', header: 'Status', classes: 'col-span-4' },
+        { id: 'createdBy', header: 'Created by', classes: 'col-span-3' },
         {
           id: 'actions',
           header: '',
@@ -15,17 +14,14 @@
       ]"
       :items="accSyncItems"
     >
-      <template #model="{ item }">
-        <NuxtLink
-          class="text-foreground-1 hover:text-blue-500 underline"
-          :to="`/projects/${projectId}/models/${item.model?.id}`"
-        >
-          {{ item.model?.name }}
-        </NuxtLink>
-      </template>
-      <template #accFileName="{ item }">
+      <template #file="{ item }">
         <div class="flex flex-col items-start overflow-hidden">
-          <p>{{ item.accFileName }}</p>
+          <NuxtLink
+            class="text-foreground-1 hover:text-blue-500 underline"
+            :to="`/projects/${projectId}/models/${item.model?.id}`"
+          >
+            {{ item.accFileName }}
+          </NuxtLink>
           <p
             v-if="item.accFileViewName"
             v-tippy="getViewNameLabel(item.accFileViewName)"
