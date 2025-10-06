@@ -20,10 +20,10 @@ import {
   S3ServiceException
 } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
-import type { Command } from '@aws-sdk/smithy-client'
 import { ensureError } from '@speckle/shared'
 import { get } from 'lodash-es'
 import type stream from 'stream'
+import type { Command } from '@smithy/smithy-client'
 
 const sendCommand = async <CommandOutput extends ServiceOutputTypes>(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -1170,19 +1170,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/lib-storage@npm:^3.100.0":
-  version: 3.110.0
-  resolution: "@aws-sdk/lib-storage@npm:3.110.0"
+"@aws-sdk/lib-storage@npm:^3.903.0":
+  version: 3.903.0
+  resolution: "@aws-sdk/lib-storage@npm:3.903.0"
   dependencies:
-    "@aws-sdk/smithy-client": "npm:3.110.0"
+    "@smithy/abort-controller": "npm:^4.2.0"
+    "@smithy/middleware-endpoint": "npm:^4.3.0"
+    "@smithy/smithy-client": "npm:^4.7.0"
     buffer: "npm:5.6.0"
     events: "npm:3.3.0"
     stream-browserify: "npm:3.0.0"
-    tslib: "npm:^2.3.1"
+    tslib: "npm:^2.6.2"
   peerDependencies:
-    "@aws-sdk/abort-controller": ^3.0.0
-    "@aws-sdk/client-s3": ^3.0.0
-  checksum: 10/65dd6759464e7b84707da430d3a9ff83f8c088e55c38c60e9fca014a5501c68361ce18b066ddcd740b6feec616b2b551ecaeb1541a02fc40aa40e4e410d9a905
+    "@aws-sdk/client-s3": ^3.901.0
+  checksum: 10/867c9de9d1691b8b3b6276e3fc61399e63abd70eb8f84a865525242d5f7486b2fb07c61a1e8e84a262148a25851bf5d977f623938cbb7fa12feb930876f570de
   languageName: node
   linkType: hard
 
@@ -1346,15 +1347,6 @@ __metadata:
     "@smithy/types": "npm:^4.6.0"
     tslib: "npm:^2.6.2"
   checksum: 10/e02b8f0294cdd5031371f16024d7c594960e15c71dce864dfe9ccc47923ea675d0312722f3c3f6518609acbeb9c4a224556d6664102a21d3dfd19b6a43c78b74
-  languageName: node
-  linkType: hard
-
-"@aws-sdk/middleware-stack@npm:3.110.0":
-  version: 3.110.0
-  resolution: "@aws-sdk/middleware-stack@npm:3.110.0"
-  dependencies:
-    tslib: "npm:^2.3.1"
-  checksum: 10/07c38a2932a3f62c455df5e6831ded499739eade91ef4aa2bcf04da61cb8e2e0894953df7774f4b993ef5f25d228c69932a4155b80934e7a4b348d3ea28d1f3b
   languageName: node
   linkType: hard
 
@@ -1538,17 +1530,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/smithy-client@npm:3.110.0":
-  version: 3.110.0
-  resolution: "@aws-sdk/smithy-client@npm:3.110.0"
-  dependencies:
-    "@aws-sdk/middleware-stack": "npm:3.110.0"
-    "@aws-sdk/types": "npm:3.110.0"
-    tslib: "npm:^2.3.1"
-  checksum: 10/d055add0e553de9ca5c896a54ac2d0f77b2c190e7c781e8ead4303ecb441340a0122543d753d03b2e4ce80a7f1e35975050bfb0fcf2dbed7397c49263ce75dfd
-  languageName: node
-  linkType: hard
-
 "@aws-sdk/token-providers@npm:3.808.0":
   version: 3.808.0
   resolution: "@aws-sdk/token-providers@npm:3.808.0"
@@ -1575,13 +1556,6 @@ __metadata:
     "@smithy/types": "npm:^4.6.0"
     tslib: "npm:^2.6.2"
   checksum: 10/68a6ad9f8435a3b2510d88dba71dc04fd09ca130d0076e62e4e2ccb668a64e512f620daee0ff9d5319d9990f2bd48bae00ac629cbbf799bcd22bdcd8e03451e3
-  languageName: node
-  linkType: hard
-
-"@aws-sdk/types@npm:3.110.0":
-  version: 3.110.0
-  resolution: "@aws-sdk/types@npm:3.110.0"
-  checksum: 10/6fa16ebf2ec4bd11897e2ae1a6242498612c58f13d9541ff2e67bd19d09aa6b6a5b2914dbd78cd9bd660404d9fdbf84afbb0333da517330f0895c0cb10f5ca10
   languageName: node
   linkType: hard
 
@@ -11427,7 +11401,7 @@ __metadata:
     "@apollo/rover": "npm:^0.36.1"
     "@apollo/server": "npm:^4.11.0"
     "@aws-sdk/client-s3": "npm:^3.901.0"
-    "@aws-sdk/lib-storage": "npm:^3.100.0"
+    "@aws-sdk/lib-storage": "npm:^3.903.0"
     "@aws-sdk/s3-request-presigner": "npm:3.901.0"
     "@bull-board/express": "npm:^6.12.7"
     "@faker-js/faker": "npm:^8.4.1"
