@@ -139,7 +139,10 @@ import type {
   FormUsersSelectItemFragment,
   ProjectModelsPageHeader_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { modelRoute } from '~~/lib/common/helpers/route'
+import {
+  modelRoute,
+  workspaceIntegrationSettingsRoute
+} from '~~/lib/common/helpers/route'
 import type {
   GridListToggleValue,
   LayoutMenuItem
@@ -147,6 +150,7 @@ import type {
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useCanCreateModel } from '~/lib/projects/composables/permissions'
 import { HorizontalDirection } from '@speckle/ui-components'
+import { useAccIntegration } from '~/lib/integrations/composables/useAccIntegration'
 
 const emit = defineEmits<{
   (e: 'update:selected-members', val: FormUsersSelectItemFragment[]): void
@@ -275,6 +279,8 @@ enum AddNewModelActionTypes {
   NewAccSyncItem = 'new-acc-sync-item'
 }
 
+const { integration, checkConnection } = useAccIntegration()
+
 const menuItems = computed<LayoutMenuItem[][]>(() => [
   [
     {
@@ -295,7 +301,7 @@ const menuItems = computed<LayoutMenuItem[][]>(() => [
   ]
 ])
 
-const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
+const onActionChosen = async (params: { item: LayoutMenuItem; event: MouseEvent }) => {
   const { item } = params
 
   switch (item.id) {
@@ -303,7 +309,17 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       handleCreateModelClick()
       break
     case AddNewModelActionTypes.NewAccSyncItem:
-      showNewAccSync.value = true
+      // need to check connection before meaningful action. it will refresh the crediantials
+      await checkConnection(
+        props.project?.workspace?.slug as string,
+        props.project?.workspace?.id as string
+      )
+      if (integration.value.status === 'connected') {
+        showNewAccSync.value = true
+      } else {
+        router.push(workspaceIntegrationSettingsRoute(props.project?.workspace?.slug))
+      }
+
       break
   }
 }

@@ -173,6 +173,9 @@ export const workspaceJoinRoute = '/workspaces/actions/join'
 export const workspaceFunctionsRoute = (slug?: string) =>
   `/workspaces/${slug}/functions`
 
+export const workspaceIntegrationSettingsRoute = (slug?: string) =>
+  `/settings/workspaces/${slug}/integrations`
+
 export const presentationRoute = (projectId?: string, presentationId?: string) =>
   `/projects/${projectId}/presentations/${presentationId}`
 
