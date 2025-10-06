@@ -40,6 +40,12 @@
       :project-id="project.id"
       :model-id="model.id"
     />
+    <ProjectPageModelsCardRemoveSyncDialog
+      v-if="accSyncItem"
+      v-model:open="isRemoveSyncDialogOpen"
+      :project-id="project.id"
+      :sync-item="accSyncItem"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -57,6 +63,7 @@ import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { modelVersionsRoute } from '~/lib/common/helpers/route'
 import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
+import { useUpdateAccSyncItem } from '~/lib/acc/composables/useUpdateAccSyncItem'
 
 graphql(`
   fragment ProjectPageModelsActions on Model {
@@ -145,6 +152,7 @@ const showActionsMenu = ref(false)
 const openDialog = ref(null as Nullable<ActionTypes>)
 
 const accSyncItem = computed(() => props.model.accSyncItem)
+const updateAccSyncItem = useUpdateAccSyncItem()
 
 const canEdit = computed(() => props.model.permissions.canUpdate)
 const canDelete = computed(() => props.model.permissions.canDelete)
@@ -265,6 +273,10 @@ const isUploadsDialogOpen = computed({
   get: () => openDialog.value === ActionTypes.ViewUploads,
   set: (isOpen) => (openDialog.value = isOpen ? ActionTypes.ViewUploads : null)
 })
+const isRemoveSyncDialogOpen = computed({
+  get: () => openDialog.value === ActionTypes.DeleteSync,
+  set: (isOpen) => (openDialog.value = isOpen ? ActionTypes.DeleteSync : null)
+})
 
 const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
   const { item } = params
@@ -274,7 +286,16 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
     case ActionTypes.Delete:
     case ActionTypes.Embed:
     case ActionTypes.ViewUploads:
+    case ActionTypes.DeleteSync:
       openDialog.value = item.id
+      break
+    case ActionTypes.ToggleSyncPause:
+      if (!accSyncItem.value) return
+      updateAccSyncItem(
+        props.project.id,
+        accSyncItem.value?.id,
+        accSyncItem.value.status === 'paused' ? 'pending' : 'paused'
+      )
       break
     case ActionTypes.Share:
       mp.track('Branch Action', { type: 'action', name: 'share' })

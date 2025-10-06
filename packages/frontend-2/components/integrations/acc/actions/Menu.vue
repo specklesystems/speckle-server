@@ -21,12 +21,11 @@
 
 <script setup lang="ts">
 import { HorizontalDirection, type LayoutMenuItem } from '@speckle/ui-components'
-import { useMutation } from '@vue/apollo-composable'
 import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
-import { accSyncItemUpdateMutation } from '~/lib/acc/graphql/mutations'
 import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsProjectIntegrationsActionsMenu_AccSyncItemFragment } from '~/lib/common/generated/gql/graphql'
 import { useDeleteAccSyncItem } from '~/lib/acc/composables/useDeleteAccSyncItem'
+import { useUpdateAccSyncItem } from '~/lib/acc/composables/useUpdateAccSyncItem'
 
 graphql(`
   fragment SettingsProjectIntegrationsActionsMenu_AccSyncItem on AccSyncItem {
@@ -43,8 +42,6 @@ const props = defineProps<{
 }>()
 
 const showMenu = ref(false)
-
-const { triggerNotification } = useGlobalToast()
 
 const projectId = computed(() => props.targetSyncItem.project.id)
 const isPaused = computed(() => props.targetSyncItem.status === 'paused')
@@ -68,24 +65,10 @@ const handleDeleteSyncItem = async (id: string) => {
   await deleteAccSyncItem(projectId.value, id)
 }
 
-const { mutate: updateAccSyncItem } = useMutation(accSyncItemUpdateMutation)
+const updateAccSyncItem = useUpdateAccSyncItem()
 
 const handleStatusSyncItem = async (id: string) => {
-  try {
-    await updateAccSyncItem({
-      input: {
-        projectId: projectId.value,
-        id,
-        status: isPaused.value ? 'pending' : 'paused'
-      }
-    })
-  } catch (error) {
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Update sync item failed',
-      description: error instanceof Error ? error.message : 'Unexpected error'
-    })
-  }
+  await updateAccSyncItem(projectId.value, id, isPaused.value ? 'pending' : 'paused')
 }
 
 const onActionChosen = (actionItem: string) => {

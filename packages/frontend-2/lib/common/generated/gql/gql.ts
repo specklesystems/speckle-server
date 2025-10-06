@@ -127,6 +127,7 @@ type Documents = {
     "\n  query GetModelUploads(\n    $projectId: String!\n    $modelId: String!\n    $input: GetModelUploadsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      model(id: $modelId) {\n        id\n        uploads(input: $input) {\n          totalCount\n          cursor\n          items {\n            id\n            ...ProjectPageModelsUploadsDialog_FileUpload\n          }\n        }\n      }\n    }\n  }\n": typeof types.GetModelUploadsDocument,
     "\n  fragment ProjectPageModelsCardDeleteDialog on Model {\n    id\n    name\n  }\n": typeof types.ProjectPageModelsCardDeleteDialogFragmentDoc,
     "\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n    description\n  }\n": typeof types.ProjectPageModelsCardRenameDialogFragmentDoc,
+    "\n  fragment ProjectPageModelRemoveSyncDialog_AccSyncItem on AccSyncItem {\n    id\n    accFileName\n  }\n": typeof types.ProjectPageModelRemoveSyncDialog_AccSyncItemFragmentDoc,
     "\n  fragment ProjectPageSettingsIntegrations_Project on Project {\n    id\n    permissions {\n      canReadAccIntegrationSettings {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.ProjectPageSettingsIntegrations_ProjectFragmentDoc,
     "\n  query ProjectPageSettingsGeneral($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageSettingsGeneralBlockProjectInfo_Project\n      ...ProjectPageSettingsGeneralBlockAccess_Project\n      ...ProjectPageSettingsGeneralBlockDiscussions_Project\n      ...ProjectPageSettingsGeneralBlockLeave_Project\n      ...ProjectPageSettingsGeneralBlockDelete_Project\n      ...ProjectPageTeamInternals_Project\n    }\n  }\n": typeof types.ProjectPageSettingsGeneralDocument,
     "\n  fragment ProjectPageSettingsGeneralBlockAccess_Project on Project {\n    id\n    visibility\n    workspaceId\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.ProjectPageSettingsGeneralBlockAccess_ProjectFragmentDoc,
@@ -679,6 +680,7 @@ const documents: Documents = {
     "\n  query GetModelUploads(\n    $projectId: String!\n    $modelId: String!\n    $input: GetModelUploadsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      model(id: $modelId) {\n        id\n        uploads(input: $input) {\n          totalCount\n          cursor\n          items {\n            id\n            ...ProjectPageModelsUploadsDialog_FileUpload\n          }\n        }\n      }\n    }\n  }\n": types.GetModelUploadsDocument,
     "\n  fragment ProjectPageModelsCardDeleteDialog on Model {\n    id\n    name\n  }\n": types.ProjectPageModelsCardDeleteDialogFragmentDoc,
     "\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n    description\n  }\n": types.ProjectPageModelsCardRenameDialogFragmentDoc,
+    "\n  fragment ProjectPageModelRemoveSyncDialog_AccSyncItem on AccSyncItem {\n    id\n    accFileName\n  }\n": types.ProjectPageModelRemoveSyncDialog_AccSyncItemFragmentDoc,
     "\n  fragment ProjectPageSettingsIntegrations_Project on Project {\n    id\n    permissions {\n      canReadAccIntegrationSettings {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.ProjectPageSettingsIntegrations_ProjectFragmentDoc,
     "\n  query ProjectPageSettingsGeneral($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageSettingsGeneralBlockProjectInfo_Project\n      ...ProjectPageSettingsGeneralBlockAccess_Project\n      ...ProjectPageSettingsGeneralBlockDiscussions_Project\n      ...ProjectPageSettingsGeneralBlockLeave_Project\n      ...ProjectPageSettingsGeneralBlockDelete_Project\n      ...ProjectPageTeamInternals_Project\n    }\n  }\n": types.ProjectPageSettingsGeneralDocument,
     "\n  fragment ProjectPageSettingsGeneralBlockAccess_Project on Project {\n    id\n    visibility\n    workspaceId\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.ProjectPageSettingsGeneralBlockAccess_ProjectFragmentDoc,
@@ -1584,6 +1586,10 @@ export function graphql(source: "\n  fragment ProjectPageModelsCardDeleteDialog 
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n    description\n  }\n"): (typeof documents)["\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n    description\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ProjectPageModelRemoveSyncDialog_AccSyncItem on AccSyncItem {\n    id\n    accFileName\n  }\n"): (typeof documents)["\n  fragment ProjectPageModelRemoveSyncDialog_AccSyncItem on AccSyncItem {\n    id\n    accFileName\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
