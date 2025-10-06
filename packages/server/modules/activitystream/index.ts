@@ -1,13 +1,9 @@
 import type cron from 'node-cron'
 import type { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { publishNotification } from '@/modules/notifications/services/publication/publishNotification'
 import { moduleLogger } from '@/observability/logging'
-import { weeklyEmailDigestEnabled } from '@/modules/shared/helpers/envHelper'
 import type { EventBus } from '@/modules/shared/services/eventBus'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { sendActivityNotificationsFactory } from '@/modules/activitystream/services/summary'
 import {
-  getActiveUserStreamsFactory,
   saveActivityFactory,
   saveStreamActivityFactory
 } from '@/modules/activitystream/repositories'
@@ -28,7 +24,6 @@ import { reportCommentActivityFactory } from '@/modules/activitystream/events/co
 import { reportStreamInviteActivityFactory } from '@/modules/activitystream/events/streamInviteListeners'
 import { getProjectInviteProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { reportStreamActivityFactory } from '@/modules/activitystream/events/streamListeners'
-import { TIME_MS } from '@speckle/shared'
 import { reportGatekeeperActivityFactory } from '@/modules/activitystream/events/gatekeeperListeners'
 import { reportWorkspaceActivityFactory } from '@/modules/activitystream/events/workspaceListeners'
 import { backfillMissingActivityFactory } from '@/modules/activitystream/services/backfillActivity'
@@ -105,34 +100,6 @@ const initializeEventListeners = ({
   return () => quitCbs.forEach((quit) => quit())
 }
 
-const scheduleWeeklyActivityNotifications = (scheduleExecution: ScheduleExecution) => {
-  // just to test stuff
-  // every 1000 seconds
-  // const cronExpression = '*/1000 * * * * *'
-  // at 00 minutest, 10 (am) hours, every month, every year,
-  // every 1st day of the week (monday)
-  // cheat sheet https://crontab.guru
-  const cronExpression = '00 10 * * 1'
-  // configure the number of days, the activities are scraped for
-  const numberOfDays = 7
-  return scheduleExecution(
-    cronExpression,
-    'weeklyActivityNotification',
-    //task should be locked for 10 minutes
-    async (now: Date, { logger }) => {
-      logger.info('Sending weekly activity digests notifications.')
-      const end = now
-      const start = new Date(end.getTime())
-      start.setDate(start.getDate() - numberOfDays)
-      await sendActivityNotificationsFactory({
-        publishNotification,
-        getActiveUserStreams: getActiveUserStreamsFactory({ db })
-      })(start, end)
-    },
-    10 * TIME_MS.minute
-  )
-}
-
 const scheduleDailyAcitivty = (scheduleExecution: ScheduleExecution) => {
   const dailyAtMidnight = '0 0 * * *'
 
@@ -160,8 +127,6 @@ const activityModule: SpeckleModule = {
       })
 
       scheduledTask.push(scheduleDailyAcitivty(scheduleExecution))
-      if (weeklyEmailDigestEnabled())
-        scheduledTask.push(scheduleWeeklyActivityNotifications(scheduleExecution))
     }
   },
   shutdown: () => {

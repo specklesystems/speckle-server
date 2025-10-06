@@ -292,10 +292,6 @@ export function speckleAutomateUrl() {
   return automateUrl
 }
 
-export function weeklyEmailDigestEnabled() {
-  return getBooleanFromEnv('WEEKLY_DIGEST_ENABLED')
-}
-
 /**
  * Useful in some CLI scenarios when you aren't doing anything with the DB
  */

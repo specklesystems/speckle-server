@@ -860,11 +860,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: "true"
 {{- end }}
 
-{{- if .Values.server.weeklyDigestEnabled }}
-- name: WEEKLY_DIGEST_ENABLED
-  value: "true"
-{{- end }}
-
 {{- if (quote .Values.server.monitoring.mp.enabled) }}
 - name: ENABLE_MP
   value: {{ .Values.server.monitoring.mp.enabled | quote }}

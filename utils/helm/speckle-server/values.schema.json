@@ -972,11 +972,6 @@
           "description": "Enables the server side admin authz override",
           "default": false
         },
-        "weeklyDigestEnabled": {
-          "type": "boolean",
-          "description": "Enables sending out the serevr weekly digest emails",
-          "default": false
-        },
         "max_object_size_mb": {
           "type": "number",
           "description": "The maximum size of an individual object which can be uploaded to the server",

@@ -1,8 +1,4 @@
 export enum NotificationType {
-  /**
-   * @deprecated ActivityDigest will be removed in a future release
-   */
-  ActivityDigest = 'activityDigest',
   MentionedInComment = 'mentionedInComment',
   NewStreamAccessRequest = 'newStreamAccessRequest',
   StreamAccessRequestApproved = 'streamAccessRequestApproved'
@@ -22,5 +18,4 @@ export type NotificationPayloadMap = {
   [NotificationType.StreamAccessRequestApproved]: {
     streamId: string
   }
-  [NotificationType.ActivityDigest]: Record<string, unknown>
 }

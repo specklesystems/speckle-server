@@ -47,8 +47,7 @@ const DEFAULT_VERSION = '1' as const
 export const LatestNotificationVersions = {
   [NotificationType.MentionedInComment]: DEFAULT_VERSION,
   [NotificationType.NewStreamAccessRequest]: DEFAULT_VERSION,
-  [NotificationType.StreamAccessRequestApproved]: DEFAULT_VERSION,
-  [NotificationType.ActivityDigest]: DEFAULT_VERSION
+  [NotificationType.StreamAccessRequestApproved]: DEFAULT_VERSION
 }
 
 // Add mappings between NotificationTypes and expected Message types here
@@ -56,7 +55,6 @@ export type NotificationTypeMessageMap = {
   [NotificationType.MentionedInComment]: MentionedInCommentMessage
   [NotificationType.NewStreamAccessRequest]: NewStreamAccessRequestMessage
   [NotificationType.StreamAccessRequestApproved]: StreamAccessRequestApprovedMessage
-  [NotificationType.ActivityDigest]: ActivityDigestMessage
 } & { [k in NotificationType]: unknown }
 
 export type NotificationMessage<
@@ -122,15 +120,4 @@ export type StreamAccessRequestApprovedData = {
 export type StreamAccessRequestApprovedMessage = NotificationMessage<
   NotificationType.StreamAccessRequestApproved,
   StreamAccessRequestApprovedData
->
-
-export type ActivityDigestData = {
-  streamIds: string[]
-  start: Date
-  end: Date
-}
-
-export type ActivityDigestMessage = NotificationMessage<
-  NotificationType.ActivityDigest,
-  ActivityDigestData
 >

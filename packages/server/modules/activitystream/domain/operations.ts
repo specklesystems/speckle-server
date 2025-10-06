@@ -39,16 +39,6 @@ export type GetUserStreamActivity = (
   filteredUser: string | null
 ) => Promise<StreamScopeActivity[]>
 
-export type GetActiveUserStreams = (
-  start: Date,
-  end: Date
-) => Promise<
-  {
-    userId: string
-    streamIds: string[]
-  }[]
->
-
 export type GetStreamActivity = (args: {
   streamId: string
   actionType: StreamActionType

@@ -1,5 +1,4 @@
 import type {
-  GetActiveUserStreams,
   GetActivities,
   GetActivityCountByResourceId,
   GetActivityCountByStreamId,
@@ -12,16 +11,12 @@ import type {
   SaveActivity,
   SaveStreamActivity
 } from '@/modules/activitystream/domain/operations'
-import type {
-  StreamActivityRecord,
-  StreamScopeActivity
-} from '@/modules/activitystream/helpers/types'
+import type { StreamActivityRecord } from '@/modules/activitystream/helpers/types'
 import {
   Activity as ActivityModel,
   StreamAcl,
   StreamActivity
 } from '@/modules/core/dbSchema'
-import { Roles } from '@/modules/core/helpers/mainConstants'
 import type { StreamAclRecord } from '@/modules/core/helpers/types'
 import {
   createWebhookEventFactory,
@@ -41,46 +36,6 @@ const tables = {
     db<T>(StreamActivity.name),
   streamAcl: (db: Knex) => db<StreamAclRecord>(StreamAcl.name)
 }
-
-export const geUserStreamActivityFactory =
-  ({ db }: { db: Knex }) =>
-  async (
-    streamId: string,
-    start: Date,
-    end: Date,
-    filteredUser: string | null = null
-  ): Promise<StreamScopeActivity[]> => {
-    let query = tables
-      .streamActivity<StreamScopeActivity>(db)
-      .where(StreamActivity.col.streamId, '=', streamId)
-      .whereBetween(StreamActivity.col.time, [start, end])
-    if (filteredUser) query = query.andWhereNot(StreamActivity.col.userId, filteredUser)
-    return await query
-  }
-
-export const getActiveUserStreamsFactory =
-  ({ db }: { db: Knex }): GetActiveUserStreams =>
-  async (start: Date, end: Date) => {
-    const query = tables
-      .streamAcl(db)
-      .select(StreamActivity.col.userId)
-      // creates the UserSteams type by aggregating the streamId-s, grouped by userId
-      .select(
-        db.raw(`array_agg(distinct ${StreamActivity.name}."streamId") as "streamIds"`)
-      )
-      .groupBy(StreamActivity.col.userId)
-      .join(
-        StreamActivity.name,
-        StreamActivity.col.streamId,
-        '=',
-        'stream_acl.resourceId'
-      )
-      .whereBetween(StreamActivity.col.time, [start, end])
-      // make sure archived users do not counted for activity
-      .join('server_acl', 'server_acl.userId', '=', StreamActivity.col.userId)
-      .whereNot('server_acl.role', '=', Roles.Server.ArchivedUser)
-    return (await query) as Awaited<ReturnType<GetActiveUserStreams>>
-  }
 
 export const getStreamActivityFactory =
   ({ db }: { db: Knex }): GetStreamActivity =>

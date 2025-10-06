@@ -11,7 +11,6 @@ import { moduleLogger, notificationsLogger } from '@/observability/logging'
 import MentionedInCommentHandler from '@/modules/notifications/services/publication/handlers/mentionedInComment'
 import NewStreamAccessRequestHandler from '@/modules/notifications/services/publication/handlers/newStreamAccessRequest'
 import StreamAccessRequestApprovedHandler from '@/modules/notifications/services/publication/handlers/streamAccessRequestApproved'
-import ActivityDigestHandler from '@/modules/notifications/services/publication/handlers/activityDigest'
 import {
   initializeNotificationEventsConsumption,
   initializeNotificationEventsQueue,
@@ -33,8 +32,7 @@ export async function initializePublicationConsumption(
   const allHandlers: Partial<NotificationTypeHandlers> = {
     [NotificationType.MentionedInComment]: MentionedInCommentHandler,
     [NotificationType.NewStreamAccessRequest]: NewStreamAccessRequestHandler,
-    [NotificationType.StreamAccessRequestApproved]: StreamAccessRequestApprovedHandler,
-    [NotificationType.ActivityDigest]: ActivityDigestHandler
+    [NotificationType.StreamAccessRequestApproved]: StreamAccessRequestApprovedHandler
   }
 
   registerNotificationHandlers(customHandlers || allHandlers)

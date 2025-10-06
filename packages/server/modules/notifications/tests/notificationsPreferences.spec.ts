@@ -57,20 +57,19 @@ describe('User notification preferences @notifications', () => {
     })
     it('store notification settings', async () => {
       await updateNotificationPreferences(userA.id, {
-        activityDigest: { email: false }
+        mentionedInComment: { email: false }
       })
       let preferences = await getUserNotificationPreferences(userA.id)
       expect(preferences).to.not.be.empty
-      expect(preferences.activityDigest?.email).to.be.false
+      expect(preferences.mentionedInComment?.email).to.be.false
       await updateNotificationPreferences(userA.id, {
-        activityDigest: { email: true }
+        mentionedInComment: { email: true }
       })
       preferences = await getUserNotificationPreferences(userA.id)
-      expect(preferences.activityDigest?.email).to.be.true
+      expect(preferences.mentionedInComment?.email).to.be.true
     })
     it("doesn't store invalid preference keys", async () => {
       const invalidKeys = <const>[
-        [NotificationType.ActivityDigest, 'mailPigeon', true],
         ['birthdayParty', NotificationChannel.Email, false],
         [
           NotificationType.MentionedInComment,

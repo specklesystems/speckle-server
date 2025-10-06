@@ -14,6 +14,7 @@ import MentionedInCommentHandler from '@/modules/notifications/tasks/handlers/me
 import StreamAccessRequestApprovedHandler from '@/modules/notifications/tasks/handlers/streamAccessRequestApproved'
 import NewStreamAccessRequestHandler from '@/modules/notifications/tasks/handlers/newStreamAccessRequest'
 import { ensureNotificationToLatestVersion } from '@/modules/notifications/helpers/toLatestVersion'
+import { throwUncoveredError } from '@speckle/shared'
 
 type EmailNotificationResult = { notificationId: string } | null
 
@@ -39,14 +40,7 @@ const handleNextEmailNotification = async (deps: {
           await NewStreamAccessRequestHandler(notification)
           break
         default:
-          deps.logger.error(
-            {
-              type: notification.type,
-              notificationId: notification.id
-            },
-            `No handler scheduled notification type. Skipping.`
-          )
-          break
+          throwUncoveredError(notification)
       }
     } catch (error) {
       deps.logger.error(

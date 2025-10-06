@@ -66,7 +66,6 @@ const { mutate, loading } = useUpdateNotificationPreferences()
 const { activeUser: user } = useActiveUser()
 
 const notificationTypeMapping = ref({
-  activityDigest: 'Weekly activity digest',
   mentionedInComment: 'Mentioned in comment',
   newStreamAccessRequest: 'Project access request',
   streamAccessRequestApproved: 'Project access request approved'
