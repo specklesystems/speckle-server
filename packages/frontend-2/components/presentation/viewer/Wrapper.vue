@@ -1,10 +1,7 @@
 <template>
-  <ViewerStateSetup :init-params="initParams">
+  <ViewerStateSetup :init-params="initParams" @setup="(state) => emit('setup', state)">
     <PresentationViewerPostSetup>
-      <PresentationViewerSetup
-        @loading-change="onLoadingChange"
-        @progress-change="onProgressChange"
-      />
+      <PresentationViewerSetup />
     </PresentationViewerPostSetup>
   </ViewerStateSetup>
 </template>
@@ -14,7 +11,10 @@ import { writableAsyncComputed } from '~/lib/common/composables/async'
 import { graphql } from '~/lib/common/generated/gql/gql'
 import { useInjectedPresentationState } from '~/lib/presentations/composables/setup'
 import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
-import type { UseSetupViewerParams } from '~~/lib/viewer/composables/setup'
+import type {
+  InjectableViewerState,
+  UseSetupViewerParams
+} from '~~/lib/viewer/composables/setup'
 
 /**
  * Don't put much logic here, the viewer state is unavailable here so do as much as u can in PresentationViewerSetup instead
@@ -32,6 +32,10 @@ graphql(`
     }
   }
 `)
+
+const emit = defineEmits<{
+  (e: 'setup', state: InjectableViewerState): void
+}>()
 
 const {
   projectId,
@@ -70,19 +74,6 @@ const savedViewId = computed({
 })
 
 const loadOriginal = ref(false)
-
-const emit = defineEmits<{
-  (e: 'loading-change', loading: boolean): void
-  (e: 'progress-change', progress: number): void
-}>()
-
-const onLoadingChange = (loading: boolean) => {
-  emit('loading-change', loading)
-}
-
-const onProgressChange = (progress: number) => {
-  emit('progress-change', progress)
-}
 
 const initParams = computed(
   (): UseSetupViewerParams => ({

@@ -114,7 +114,7 @@ function useViewerObjectAutoLoading() {
       },
       response: { resourceItems, savedView }
     },
-    ui: { loadProgress, loading, spotlightUserSessionId },
+    ui: { loadProgress, loading, spotlightUserSessionId, hasLoadedQueuedUpModels },
     urlHashState: { focusedThreadId }
   } = useInjectedViewerState()
 
@@ -198,6 +198,7 @@ function useViewerObjectAutoLoading() {
 
         if (res.length) {
           hasDoneInitialLoad.value = true
+          hasLoadedQueuedUpModels.value = true
         }
 
         return
@@ -209,10 +210,16 @@ function useViewerObjectAutoLoading() {
       const removableObjectIds = difference(oldObjectIds, newObjectIds)
       const addableObjectIds = difference(newObjectIds, oldObjectIds)
 
+      if (addableObjectIds.length) {
+        hasLoadedQueuedUpModels.value = true
+      }
+
       await Promise.all(removableObjectIds.map((i) => loadObject(i, true)))
       await Promise.all(
         addableObjectIds.map((i) => loadObject(i, false, { zoomToObject: false }))
       )
+
+      hasLoadedQueuedUpModels.value = true
     },
     { deep: true, immediate: true }
   )
