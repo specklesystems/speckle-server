@@ -149,7 +149,8 @@ describe('Email verifications @emails', () => {
 
         const result = await invokeRequestVerification(userA)
         expect(result).to.not.haveGraphQLErrors()
-        expect(result.data?.requestVerification).to.be.true
+        expect(result.data?.requestVerification.status).to.equal('SENT')
+        expect(result.data?.requestVerification.errorMessages).to.be.empty
 
         const sentEmails = getSends()
         expect(sentEmails.length).to.eq(1)
@@ -192,12 +193,12 @@ describe('Email verifications @emails', () => {
       }
     })
 
-    it('cant request an account verification', async () => {
+    it('cannot request an account verification', async () => {
       const result = await requestVerification(apollo)
 
       expect(result).to.haveGraphQLErrors('must provide an auth token')
       expect(result.data?.requestVerification).to.not.be.ok
-      expect(result.data?.requestVerification.status).to.be('FAILED')
+      expect(result.data?.requestVerification.status).to.equal('FAILED')
     })
 
     describe('and finalizing verification', () => {
