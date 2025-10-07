@@ -35,15 +35,14 @@ spec:
             protocol: TCP
 
         startupProbe:
-          periodSeconds: 10
-          failureThreshold: 18 # 10 * 18 = 180s to startup
+          periodSeconds: 5
+          failureThreshold: 36 # 5 * 36 = 180s to startup
           timeoutSeconds: 3
           httpGet:
             path: /healthz
             port: 9080
 
         livenessProbe:
-          initialDelaySeconds: 60
           periodSeconds: 60
           timeoutSeconds: 3
           httpGet:
@@ -51,7 +50,6 @@ spec:
             port: 9080
 
         readinessProbe:
-          initialDelaySeconds: 60
           periodSeconds: 10
           timeoutSeconds: 3
           httpGet:

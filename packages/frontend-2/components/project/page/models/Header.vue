@@ -19,24 +19,30 @@
             v-tippy="canCreateModel.cantClickCreateReason.value"
             class="grow inline-flex sm:grow-0 lg:hidden"
           >
-            <FormButton
-              :disabled="!canCreateModel.canClickCreate.value"
-              @click="handleCreateModelClick"
+            <LayoutMenu
+              v-if="showAccIntegration"
+              v-model:open="showMenu"
+              :items="menuItems"
+              :menu-position="HorizontalDirection.Left"
+              :menu-id="menuId"
+              @click.stop.prevent
+              @chosen="onActionChosen"
             >
-              New model
-            </FormButton>
-          </div>
-          <!-- I believe for now sync limits corralate with model limit since new sync creates new model, once we have limits for syncs, this should change -->
-          <div
-            v-tippy="canCreateModel.cantClickCreateReason.value"
-            class="grow inline-flex sm:grow-0 lg:hidden"
-          >
-            <FormButton
-              :disabled="!canCreateModel.canClickCreate.value"
-              @click="showNewAccSync = true"
-            >
-              New sync
-            </FormButton>
+              <FormButton color="primary" @click="showMenu = !showMenu">
+                <div class="flex items-center gap-1">
+                  Add model
+                  <ChevronDownIcon class="h-3 w-3" />
+                </div>
+              </FormButton>
+            </LayoutMenu>
+            <div v-else v-tippy="canCreateModel.cantClickCreateReason.value">
+              <FormButton
+                :disabled="!canCreateModel.canClickCreate.value"
+                @click="handleCreateModelClick"
+              >
+                New model
+              </FormButton>
+            </div>
           </div>
         </div>
       </div>
@@ -90,36 +96,40 @@
           >
             View all in 3D
           </FormButton>
-          <LayoutMenu
-            v-if="showAccIntegration"
-            v-model:open="showMenu"
-            :items="menuItems"
-            :menu-position="HorizontalDirection.Left"
-            :menu-id="menuId"
-            @click.stop.prevent
-            @chosen="onActionChosen"
-          >
-            <FormButton color="primary" @click="showMenu = !showMenu">
-              <div class="flex items-center gap-1">
-                Add model
-                <ChevronDownIcon class="h-3 w-3" />
-              </div>
-            </FormButton>
-          </LayoutMenu>
-          <div v-else v-tippy="canCreateModel.cantClickCreateReason.value">
-            <FormButton
-              :disabled="!canCreateModel.canClickCreate.value"
-              class="hidden lg:inline-flex shrink-0"
-              @click="handleCreateModelClick"
+          <div class="hidden lg:inline-flex shrink-0">
+            <LayoutMenu
+              v-if="showAccIntegration"
+              v-model:open="showMenu"
+              :items="menuItems"
+              :menu-position="HorizontalDirection.Left"
+              :menu-id="menuId"
+              @click.stop.prevent
+              @chosen="onActionChosen"
             >
-              New model
-            </FormButton>
+              <FormButton color="primary" @click="showMenu = !showMenu">
+                <div class="flex items-center gap-1">
+                  Add model
+                  <ChevronDownIcon class="h-3 w-3" />
+                </div>
+              </FormButton>
+            </LayoutMenu>
+            <div v-else v-tippy="canCreateModel.cantClickCreateReason.value">
+              <FormButton
+                :disabled="!canCreateModel.canClickCreate.value"
+                @click="handleCreateModelClick"
+              >
+                New model
+              </FormButton>
+            </div>
           </div>
         </div>
       </div>
     </div>
     <ProjectModelsAdd v-model:open="showNewDialog" :project="project" />
-    <IntegrationsAccDialogCreateSync :open="showNewAccSync" :project-id="project?.id" />
+    <IntegrationsAccDialogCreateSync
+      v-model:open="showNewAccSync"
+      :project-id="project?.id"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -132,7 +142,10 @@ import type {
   FormUsersSelectItemFragment,
   ProjectModelsPageHeader_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { modelRoute } from '~~/lib/common/helpers/route'
+import {
+  modelRoute,
+  workspaceIntegrationSettingsRoute
+} from '~~/lib/common/helpers/route'
 import type {
   GridListToggleValue,
   LayoutMenuItem
@@ -140,6 +153,7 @@ import type {
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useCanCreateModel } from '~/lib/projects/composables/permissions'
 import { HorizontalDirection } from '@speckle/ui-components'
+import { useAccIntegration } from '~/lib/integrations/composables/useAccIntegration'
 
 const emit = defineEmits<{
   (e: 'update:selected-members', val: FormUsersSelectItemFragment[]): void
@@ -268,6 +282,8 @@ enum AddNewModelActionTypes {
   NewAccSyncItem = 'new-acc-sync-item'
 }
 
+const { integration, checkConnection } = useAccIntegration()
+
 const menuItems = computed<LayoutMenuItem[][]>(() => [
   [
     {
@@ -288,7 +304,7 @@ const menuItems = computed<LayoutMenuItem[][]>(() => [
   ]
 ])
 
-const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
+const onActionChosen = async (params: { item: LayoutMenuItem; event: MouseEvent }) => {
   const { item } = params
 
   switch (item.id) {
@@ -296,7 +312,17 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       handleCreateModelClick()
       break
     case AddNewModelActionTypes.NewAccSyncItem:
-      showNewAccSync.value = true
+      // need to check connection before meaningful action. it will refresh the crediantials
+      await checkConnection(
+        props.project?.workspace?.slug as string,
+        props.project?.workspace?.id as string
+      )
+      if (integration.value.status === 'connected') {
+        showNewAccSync.value = true
+      } else {
+        router.push(workspaceIntegrationSettingsRoute(props.project?.workspace?.slug))
+      }
+
       break
   }
 }
