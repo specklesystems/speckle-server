@@ -18,14 +18,11 @@ const { resetHiddenAndIsolations, hasAnyIsolationsApplied, hasAnyHiddenApplied }
   useFilterUtilities({ state: viewerState })
 
 const buttonText = computed(() => {
-  const hasIsolations = hasAnyIsolationsApplied.value
-  const hasHidden = hasAnyHiddenApplied.value
-
-  if (hasIsolations && hasHidden) {
+  if (hasAnyIsolationsApplied.value && hasAnyHiddenApplied.value) {
     return 'Reset isolations/hidden'
-  } else if (hasIsolations) {
+  } else if (hasAnyIsolationsApplied.value) {
     return 'Reset isolations'
-  } else if (hasHidden) {
+  } else if (hasAnyHiddenApplied.value) {
     return 'Reset hidden'
   }
   return 'Reset'
@@ -33,20 +30,17 @@ const buttonText = computed(() => {
 
 const mp = useMixpanel()
 const trackAndReset = () => {
-  const hasIsolations = hasAnyIsolationsApplied.value
-  const hasHidden = hasAnyHiddenApplied.value
-
   resetHiddenAndIsolations()
 
-  if (hasIsolations && hasHidden) {
+  if (hasAnyIsolationsApplied.value && hasAnyHiddenApplied.value) {
     mp.track('Viewer Action', {
       type: 'action',
       name: 'isolations-hidden',
       action: 'reset'
     })
-  } else if (hasIsolations) {
+  } else if (hasAnyIsolationsApplied.value) {
     mp.track('Viewer Action', { type: 'action', name: 'isolations', action: 'reset' })
-  } else if (hasHidden) {
+  } else if (hasAnyHiddenApplied.value) {
     mp.track('Viewer Action', { type: 'action', name: 'hidden', action: 'reset' })
   }
 }
