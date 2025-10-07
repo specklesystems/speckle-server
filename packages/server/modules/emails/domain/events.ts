@@ -13,7 +13,7 @@ export type EmailsEventsPayloads = {
   [EmailsEvents.Sent]: {
     options: Mail.Options
     deliveryStatus: SentEmailDeliveryStatus
-    deliverErrorMessages?: string[]
+    deliverErrorMessages: string[]
   }
   [EmailsEvents.PreparingToSend]: { options: Omit<Mail.Options, 'from'> }
 }

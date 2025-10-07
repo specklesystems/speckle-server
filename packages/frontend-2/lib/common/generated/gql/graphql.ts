@@ -4026,7 +4026,7 @@ export type SentEmailDeliveryStatus = typeof SentEmailDeliveryStatus[keyof typeo
 export type SentEmailInfo = {
   __typename?: 'SentEmailInfo';
   /** Any error messages encountered during sending (if any) */
-  errorMessages: Array<Scalars['String']['output']>;
+  errorMessages?: Maybe<Array<Scalars['String']['output']>>;
   /** The ID of the sent message (if available) */
   messageId: Scalars['String']['output'];
   /** The status of the delivery attempt */
@@ -6937,7 +6937,7 @@ export type RequestVerificationByEmailMutationVariables = Exact<{
 }>;
 
 
-export type RequestVerificationByEmailMutation = { __typename?: 'Mutation', requestVerificationByEmail: { __typename?: 'SentEmailInfo', status: SentEmailDeliveryStatus, errorMessages: Array<string> } };
+export type RequestVerificationByEmailMutation = { __typename?: 'Mutation', requestVerificationByEmail: { __typename?: 'SentEmailInfo', status: SentEmailDeliveryStatus, errorMessages?: Array<string> | null } };
 
 export type AuthLoginPanelQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -7987,7 +7987,7 @@ export type SettingsNewEmailVerificationMutationVariables = Exact<{
 }>;
 
 
-export type SettingsNewEmailVerificationMutation = { __typename?: 'Mutation', activeUserMutations: { __typename?: 'ActiveUserMutations', emailMutations: { __typename?: 'UserEmailMutations', requestNewEmailVerification: { __typename?: 'SentEmailInfo', status: SentEmailDeliveryStatus, errorMessages: Array<string> } } } };
+export type SettingsNewEmailVerificationMutation = { __typename?: 'Mutation', activeUserMutations: { __typename?: 'ActiveUserMutations', emailMutations: { __typename?: 'UserEmailMutations', requestNewEmailVerification: { __typename?: 'SentEmailInfo', status: SentEmailDeliveryStatus, errorMessages?: Array<string> | null } } } };
 
 export type SettingsUpdateWorkspaceSecurityMutationVariables = Exact<{
   input: WorkspaceUpdateInput;

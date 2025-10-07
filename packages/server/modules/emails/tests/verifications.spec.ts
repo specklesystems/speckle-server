@@ -150,7 +150,7 @@ describe('Email verifications @emails', () => {
         const result = await invokeRequestVerification(userA)
         expect(result).to.not.haveGraphQLErrors()
         expect(result.data?.requestVerification.status).to.equal('SENT')
-        expect(result.data?.requestVerification.errorMessages).to.be.empty
+        expect(result.data?.requestVerification.errorMessages).lengthOf(0)
 
         const sentEmails = getSends()
         expect(sentEmails.length).to.eq(1)
@@ -198,7 +198,7 @@ describe('Email verifications @emails', () => {
 
       expect(result).to.haveGraphQLErrors('must provide an auth token')
       expect(result.data?.requestVerification).to.not.be.ok
-      expect(result.data?.requestVerification.status).to.equal('FAILED')
+      expect(result).to.haveGraphQLErrors('Must provide an auth token')
     })
 
     describe('and finalizing verification', () => {
