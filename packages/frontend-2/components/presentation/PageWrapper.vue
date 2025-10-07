@@ -112,7 +112,7 @@ const { $intercom } = useNuxtApp()
 
 const isInfoSidebarOpen = ref(false)
 const isLeftSidebarOpen = ref(false)
-const hideUi = ref(true)
+const hideUi = ref(false)
 const isViewerLoading = ref(true)
 
 const ViewerWrapper = resolveComponent('PresentationViewerWrapper')
