@@ -68,20 +68,6 @@
       ></ViewerControlsButtonToggle>
 
       <ViewerControlsButtonToggle
-        v-tippy="
-          getTooltipProps(
-            getShortcutDisplayText(shortcuts.ToggleAnnotations, { format: 'separate' }),
-            {
-              placement: 'right'
-            }
-          )
-        "
-        :active="annotationsEnabled"
-        :icon="LineSquiggle"
-        @click="handleAnnotationsToggle"
-      ></ViewerControlsButtonToggle>
-
-      <ViewerControlsButtonToggle
         v-if="allAutomationRuns.length !== 0"
         v-tippy="{
           content: summary.longSummary,
@@ -222,13 +208,10 @@ import {
   Box,
   ListFilter,
   MessageSquareText,
-  CircleQuestionMark,
-  LineSquiggle
+  CircleQuestionMark
 } from 'lucide-vue-next'
 import { useViewerPanelsUtilities } from '~/lib/viewer/composables/setup/panels'
 import type { ActivePanel } from '~/lib/viewer/helpers/sceneExplorer'
-import { useAnnotationsEnabledState } from '~/lib/annotations'
-import { useCanvasStore } from '@speckle/draw'
 
 // TODO: Refactor all of this event business and just read/write panels state directly
 const emit = defineEmits<{
@@ -259,8 +242,6 @@ const {
 } = useInjectedViewerState()
 
 const { onPanelButtonClick } = useViewerPanelsUtilities()
-
-const annotationsEnabled = useAnnotationsEnabledState()
 
 const width = ref(264)
 const panelExtensionWidth = ref(isMobile.value ? 200 : isLargerThanLg.value ? 300 : 256)
@@ -372,26 +353,11 @@ registerShortcuts({
   ToggleFilters: () => toggleActivePanel('filters'),
   ToggleDiscussions: () => toggleActivePanel('discussions'),
   ToggleDevMode: () => toggleActivePanel('devMode'),
-  ToggleSavedViews: () => isSavedViewsEnabled && toggleActivePanel('savedViews'),
-  ToggleAnnotations: () => handleAnnotationsToggle()
+  ToggleSavedViews: () => isSavedViewsEnabled && toggleActivePanel('savedViews')
 })
 
 const toggleActivePanel = (panel: ActivePanel) => {
   onPanelButtonClick(panel)
-}
-
-const handleAnnotationsToggle = () => {
-  activePanel.value = 'none'
-  const canvasStore = useCanvasStore()
-  if (annotationsEnabled.value) {
-    canvasStore.deletePaper('broccoli')
-  } else {
-    const w = width.value || 264
-    const h = height.value || 600
-    canvasStore.createPaper('broccoli', 'adaptive', w, h)
-    canvasStore.createViewerContainer('broccoli', 0, 0, w, h)
-  }
-  annotationsEnabled.value = !annotationsEnabled.value
 }
 
 const forceClosePanel = () => {
