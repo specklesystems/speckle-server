@@ -114,7 +114,7 @@ function useViewerObjectAutoLoading() {
       },
       response: { resourceItems, savedView }
     },
-    ui: { loadProgress, loading, spotlightUserSessionId },
+    ui: { loadProgress, loading, spotlightUserSessionId, hasLoadedQueuedUpModels },
     urlHashState: { focusedThreadId }
   } = useInjectedViewerState()
 
@@ -177,6 +177,8 @@ function useViewerObjectAutoLoading() {
 
       const [oldResources] = oldData || [[], false]
 
+      hasLoadedQueuedUpModels.value = false
+
       // we dont want to zoom to object, if we're loading specific coords because of a thread,
       // or spotlight mode or a saved view etc.
       const preventZooming =
@@ -198,6 +200,7 @@ function useViewerObjectAutoLoading() {
 
         if (res.length) {
           hasDoneInitialLoad.value = true
+          hasLoadedQueuedUpModels.value = true
         }
 
         return
@@ -213,6 +216,8 @@ function useViewerObjectAutoLoading() {
       await Promise.all(
         addableObjectIds.map((i) => loadObject(i, false, { zoomToObject: false }))
       )
+
+      hasLoadedQueuedUpModels.value = true
     },
     { deep: true, immediate: true }
   )

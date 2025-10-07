@@ -1,53 +1,52 @@
 <template>
   <div class="flex flex-col space-y-2">
-    <div class="flex text-body-xs text-foreground font-medium">Sync models</div>
     <LayoutTable
-      class="bg-foundation"
+      class="mt-6 bg-foundation"
       :columns="[
-        { id: 'status', header: 'Status', classes: 'col-span-2' },
-        { id: 'accFileName', header: 'File name', classes: 'col-span-2' },
-        { id: 'accFileViewName', header: 'View name', classes: 'col-span-2' },
-        { id: 'modelId', header: 'Model id', classes: 'col-span-2' },
-        { id: 'createdBy', header: 'Created by', classes: 'col-span-2' },
-        { id: 'actions', header: 'Actions', classes: 'col-span-2' }
+        { id: 'file', header: 'File', classes: 'col-span-4' },
+        { id: 'status', header: 'Status', classes: 'col-span-4' },
+        { id: 'createdBy', header: 'Created by', classes: 'col-span-3' },
+        {
+          id: 'actions',
+          header: '',
+          classes: 'col-span-1 flex items-center justify-end'
+        }
       ]"
       :items="accSyncItems"
     >
+      <template #file="{ item }">
+        <div class="flex flex-col items-start overflow-hidden">
+          <NuxtLink
+            class="text-foreground-1 hover:text-blue-500 underline"
+            :to="`/projects/${projectId}/models/${item.model?.id}`"
+          >
+            {{ item.accFileName }}
+          </NuxtLink>
+          <p
+            v-if="item.accFileViewName"
+            v-tippy="getViewNameLabel(item.accFileViewName)"
+            class="text-ellipsis w-full whitespace-nowrap text-foreground-2 overflow-hidden"
+          >
+            {{ item.accFileViewName }}
+          </p>
+        </div>
+      </template>
       <template #status="{ item }">
-        <IntegrationsAccSyncStatus :status="item.status" />
-      </template>
-      <template #accFileName="{ item }">
-        {{ item.accFileName }}
-      </template>
-      <template #accFileViewName="{ item }">
-        {{ item.accFileViewName || '-' }}
-      </template>
-      <template #modelId="{ item }">
-        <NuxtLink
-          class="text-foreground-1 hover:text-blue-500 underline"
-          :to="`/projects/${projectId}/models/${item.model?.id}`"
-        >
-          {{ item.model?.id }}
-        </NuxtLink>
+        <div class="flex items-center space-x-1">
+          <CommonBadge
+            v-tippy="formattedFullDate(item.updatedAt)"
+            color-classes="w-12 bg-info-lighter justify-center"
+          >
+            {{ getVersionLabel(item.accFileVersionIndex) }}
+          </CommonBadge>
+          <IntegrationsAccSyncStatus :status="item.status" />
+        </div>
       </template>
       <template #createdBy="{ item }">
         {{ item.author?.name }}
       </template>
       <template #actions="{ item }">
-        <div class="space-x-2">
-          <FormButton
-            hide-text
-            color="outline"
-            :icon-left="item.status === 'paused' ? PlayIcon : PauseIcon"
-            @click="handleStatusSyncItem(item.id, item.status === 'paused')"
-          />
-          <FormButton
-            hide-text
-            color="outline"
-            :icon-left="TrashIcon"
-            @click="handleDeleteSyncItem(item.id)"
-          />
-        </div>
+        <IntegrationsAccActionsMenu :target-sync-item="item" />
       </template>
     </LayoutTable>
   </div>
@@ -55,15 +54,9 @@
 
 <script setup lang="ts">
 import type { AccTokens } from '@speckle/shared/acc'
-import { useMutation, useQuery, useSubscription } from '@vue/apollo-composable'
-import {
-  accSyncItemDeleteMutation,
-  accSyncItemUpdateMutation
-} from '~/lib/acc/graphql/mutations'
+import { useQuery, useSubscription } from '@vue/apollo-composable'
 import { projectAccSyncItemsQuery } from '~/lib/acc/graphql/queries'
 import { onProjectAccSyncItemUpdatedSubscription } from '~/lib/acc/graphql/subscriptions'
-import { PauseIcon } from '@heroicons/vue/24/solid'
-import { TrashIcon, PlayIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
   projectId: string
@@ -72,6 +65,7 @@ const props = defineProps<{
 }>()
 
 const { triggerNotification } = useGlobalToast()
+const { formattedFullDate } = useDateFormatters()
 
 const { result: accSyncItemsResult, refetch: refetchAccSyncItems } = useQuery(
   projectAccSyncItemsQuery,
@@ -91,6 +85,14 @@ const { onResult: onProjectAccSyncItemsUpdated } = useSubscription(
   })
 )
 
+const getVersionLabel = (versionNumber: number): string => {
+  return `V${versionNumber}`
+}
+
+const getViewNameLabel = (viewName: string): string => {
+  return `Revit View: ${viewName}`
+}
+
 onProjectAccSyncItemsUpdated((res) => {
   // TODO ACC: Mutate local cache instead of refetch
   refetchAccSyncItems()
@@ -100,43 +102,4 @@ onProjectAccSyncItemsUpdated((res) => {
     description: res.data?.projectAccSyncItemsUpdated.accSyncItem?.accFileName
   })
 })
-
-const { mutate: deleteAccSyncItem } = useMutation(accSyncItemDeleteMutation)
-
-const handleDeleteSyncItem = async (id: string) => {
-  try {
-    await deleteAccSyncItem({
-      input: {
-        projectId: props.projectId,
-        id
-      }
-    })
-  } catch (error) {
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Delete sync item failed',
-      description: error instanceof Error ? error.message : 'Unexpected error'
-    })
-  }
-}
-
-const { mutate: updateAccSyncItem } = useMutation(accSyncItemUpdateMutation)
-
-const handleStatusSyncItem = async (id: string, isPaused: boolean) => {
-  try {
-    await updateAccSyncItem({
-      input: {
-        projectId: props.projectId,
-        id,
-        status: isPaused ? 'pending' : 'paused'
-      }
-    })
-  } catch (error) {
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Update sync item failed',
-      description: error instanceof Error ? error.message : 'Unexpected error'
-    })
-  }
-}
 </script>

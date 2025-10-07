@@ -858,7 +858,7 @@ export default FF_WORKSPACES_MODULE_ENABLED
                 }),
                 deleteSsoProvider: deleteSsoProviderFactory({ db: mainDb }),
                 emitWorkspaceEvent: emit
-              })({ workspaceId }),
+              })({ workspaceId, userId: context.userId! }),
             {
               logger,
               name: 'delete workspace',
@@ -2107,8 +2107,8 @@ export default FF_WORKSPACES_MODULE_ENABLED
 
           await authorizeResolver(
             context.userId,
-            parent.workspaceId,
-            Roles.Workspace.Guest,
+            parent.id,
+            Roles.Stream.Reviewer,
             context.resourceAccessRules
           )
 

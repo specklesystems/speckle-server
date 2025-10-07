@@ -288,10 +288,6 @@ export const updateWorkspaceFactory =
     return workspace
   }
 
-type WorkspaceDeleteArgs = {
-  workspaceId: string
-}
-
 export const deleteWorkspaceFactory =
   ({
     deleteWorkspace,
@@ -301,14 +297,14 @@ export const deleteWorkspaceFactory =
     deleteSsoProvider,
     emitWorkspaceEvent
   }: {
-    deleteWorkspace: DeleteWorkspace
+    deleteWorkspace: (args: { workspaceId: string }) => Promise<void>
     deleteProjectAndCommits: DeleteProjectAndCommits
     queryAllProjects: QueryAllProjects
     deleteAllResourceInvites: DeleteAllResourceInvites
     deleteSsoProvider: DeleteSsoProvider
     emitWorkspaceEvent: EventBus['emit']
-  }) =>
-  async ({ workspaceId }: WorkspaceDeleteArgs): Promise<void> => {
+  }): DeleteWorkspace =>
+  async ({ workspaceId, userId }): Promise<void> => {
     // Delete workspace SSO provider, if present
     await deleteSsoProvider({ workspaceId })
 
@@ -341,7 +337,7 @@ export const deleteWorkspaceFactory =
     }
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.Deleted,
-      payload: { workspaceId }
+      payload: { workspaceId, userId }
     })
   }
 

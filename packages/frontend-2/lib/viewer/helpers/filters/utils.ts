@@ -1,4 +1,5 @@
 import { isStringPropertyInfo } from '~/lib/viewer/helpers/sceneExplorer'
+import { isNumber, isString, isBoolean, toNumber } from 'lodash-es'
 import {
   ExistenceFilterCondition,
   FilterType,
@@ -267,6 +268,53 @@ export const isBooleanProperty = (filter: ExtendedPropertyInfo): boolean => {
 }
 
 /**
+ * Determines if a value should be treated as numeric for filtering
+ */
+export const isValueNumeric = (value: unknown): boolean => {
+  if (isNumber(value)) return Number.isFinite(value)
+
+  if (isString(value)) {
+    const trimmed = value.trim()
+    if (trimmed === '') return false
+
+    // Allow: digits, decimal points, minus sign at start
+    if (/-.*-/.test(trimmed)) return false // Multiple dashes (UUID pattern)
+    if (trimmed.includes('-') && !trimmed.startsWith('-')) return false // Dash not at the start
+
+    const converted = toNumber(trimmed)
+    return Number.isFinite(converted)
+  }
+
+  return false
+}
+
+/**
+ * Determines if a value should be treated as boolean for filtering (case-insensitive)
+ */
+export const isValueBoolean = (value: unknown): boolean => {
+  if (isBoolean(value)) return true
+  if (isString(value)) {
+    const str = value.toLowerCase()
+    return str === 'true' || str === 'false'
+  }
+  return false
+}
+
+/**
+ * Checks if a value represents boolean true (case-insensitive)
+ */
+export const isValueBooleanTrue = (value: unknown): boolean => {
+  return value === true || (isString(value) && value.toLowerCase() === 'true')
+}
+
+/**
+ * Checks if a value represents boolean false (case-insensitive)
+ */
+export const isValueBooleanFalse = (value: unknown): boolean => {
+  return value === false || (isString(value) && value.toLowerCase() === 'false')
+}
+
+/**
  * Get count for a specific filter value
  */
 export function getFilterValueCount(
@@ -430,10 +478,12 @@ export const extractNestedProperties = (
 
     const value = obj[key]
     const newPath = [...currentPath, key]
-    const valueType = getValueType(value)
     const isParam = value && isParameter(value)
 
-    if (valueType === 'object' && value !== null && !isParam) {
+    const isActualObject =
+      typeof value === 'object' && value !== null && !Array.isArray(value) && !isParam
+
+    if (isActualObject) {
       properties.push(
         ...extractNestedProperties(
           value as Record<string, unknown>,
@@ -453,6 +503,7 @@ export const extractNestedProperties = (
         units: param.units
       })
     } else {
+      const valueType = getValueType(value)
       properties.push({
         name: key,
         path: newPath,
@@ -467,7 +518,11 @@ export const extractNestedProperties = (
 function getValueType(value: unknown): string {
   if (value === null) return 'null'
   if (Array.isArray(value)) return 'array'
-  return typeof value
+
+  if (isValueBoolean(value)) return 'boolean'
+  if (isValueNumeric(value)) return 'number'
+
+  return 'string'
 }
 
 function extractMaterialProperties(

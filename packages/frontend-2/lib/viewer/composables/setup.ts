@@ -374,6 +374,11 @@ export type InjectableViewerState = Readonly<{
     explodeFactor: Ref<number>
     loading: WritableComputedRef<boolean>
     loadProgress: Ref<number>
+    /**
+     * Similar to hasDoneInitialLoad, but also updated for following loads. Useful for tracking
+     * if an entire set of models (e.g. federated view) has loaded.
+     */
+    hasLoadedQueuedUpModels: Ref<boolean>
     selection: Ref<Nullable<Vector3>>
     measurement: {
       enabled: Ref<boolean>
@@ -1134,6 +1139,7 @@ function setupInterfaceState(
   })
 
   const loadProgress = ref(0)
+  const hasLoadedQueuedUpModels = ref(false)
 
   const { filters } = useFiltersSetup()
   const { viewMode } = useViewModesSetup()
@@ -1213,7 +1219,8 @@ function setupInterfaceState(
       highlightedObjectIds,
       measurement: useMeasurementsSetup(),
       savedViews: useBuildSavedViewsUIState(),
-      panels: useViewerPanelsSetup()
+      panels: useViewerPanelsSetup(),
+      hasLoadedQueuedUpModels
     }
   }
 }
