@@ -6,6 +6,28 @@ extend type Mutation {
   dashboardMutations: DashboardMutations! @hasServerRole(role: SERVER_GUEST)
 }
 
+type DashboardMutations {
+  create(workspace: WorkspaceIdentifier!, input: DashboardCreateInput!): Dashboard!
+  delete(id: String!): Boolean!
+  update(input: DashboardUpdateInput!): Dashboard!
+}
+
+extend type Workspace {
+  dashboards(
+    limit: Int! = 50
+    cursor: String
+    filter: WorkspaceDashboardsFilter
+  ): DashboardCollection!
+}
+
+extend type Project {
+  dashboards(
+    limit: Int! = 50
+    cursor: String
+    filter: ProjectDashboardsFilter
+  ): DashboardCollection!
+}
+
 type Dashboard {
   id: String!
   name: String!
@@ -25,14 +47,13 @@ type DashboardCollection {
   totalCount: Int!
 }
 
-extend type Workspace {
-  dashboards(limit: Int! = 50, cursor: String): DashboardCollection!
+input WorkspaceDashboardsFilter {
+  projectIds: [String!]
+  search: String
 }
 
-type DashboardMutations {
-  create(workspace: WorkspaceIdentifier!, input: DashboardCreateInput!): Dashboard!
-  delete(id: String!): Boolean!
-  update(input: DashboardUpdateInput!): Dashboard!
+input ProjectDashboardsFilter {
+  search: String
 }
 
 input DashboardCreateInput {
