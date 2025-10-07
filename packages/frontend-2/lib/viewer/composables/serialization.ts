@@ -14,7 +14,13 @@ import {
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 import { CameraController, SectionTool, VisualDiffMode } from '@speckle/viewer'
-import type { FilterLogic } from '~/lib/viewer/helpers/filters/types'
+import type {
+  FilterLogic,
+  NumericFilterCondition,
+  StringFilterCondition,
+  BooleanFilterCondition,
+  ExistenceFilterCondition
+} from '~/lib/viewer/helpers/filters/types'
 import type { Merge, PartialDeep } from 'type-fest'
 import {
   defaultMeasurementOptions,
@@ -98,26 +104,34 @@ export function useStateSerialization() {
               key: filterData.filter?.key || null,
               isApplied: filterData.isApplied,
               selectedValues: filterData.selectedValues,
-              id: filterData.id,
-              condition: filterData.condition
+              id: filterData.id
             }
 
-            // Add type field for discriminated union
+            // Add type field and cast condition for discriminated union
             if (filterData.type === 'numeric') {
               return {
                 ...base,
                 type: 'numeric' as const,
+                condition: filterData.condition as
+                  | NumericFilterCondition
+                  | ExistenceFilterCondition,
                 numericRange: filterData.numericRange
               }
             } else if (filterData.type === 'boolean') {
               return {
                 ...base,
-                type: 'boolean' as const
+                type: 'boolean' as const,
+                condition: filterData.condition as
+                  | BooleanFilterCondition
+                  | ExistenceFilterCondition
               }
             } else {
               return {
                 ...base,
-                type: 'string' as const
+                type: 'string' as const,
+                condition: filterData.condition as
+                  | StringFilterCondition
+                  | ExistenceFilterCondition
               }
             }
           })
