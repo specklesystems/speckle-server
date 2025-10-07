@@ -1174,8 +1174,14 @@ function setupInterfaceState(
    */
   const diffState = setupUiDiffState(state)
 
-  const position = ref(new Vector3())
-  const target = ref(new Vector3())
+  const position = refLogged(
+    { name: 'position', reads: false, enabled: true, transform: JSON.stringify },
+    new Vector3()
+  )
+  const target = refLogged(
+    { name: 'target', reads: false, enabled: false, transform: JSON.stringify },
+    new Vector3()
+  )
   const isOrthoProjection = ref(false as boolean)
 
   return {

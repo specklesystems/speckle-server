@@ -1,6 +1,6 @@
 import type { RouteLocationNormalized } from 'vue-router'
 import { noop } from 'lodash-es'
-import { wrapRefWithTracking } from '~/lib/common/helpers/debugging'
+import { refLogged, makeRefLogged } from '~/lib/common/helpers/debugging'
 import { ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
   convertThrowIntoFetchResult,
@@ -30,7 +30,8 @@ export const getRouteDefinition = (route?: RouteLocationNormalized) => {
 }
 export {
   ToastNotificationType,
-  wrapRefWithTracking,
+  makeRefLogged,
+  refLogged,
   noop,
   convertThrowIntoFetchResult,
   getFirstGqlErrorMessage,

@@ -437,7 +437,8 @@ function useViewerCameraIntegration() {
     viewer: { instance },
     ui: {
       camera: { isOrthoProjection, position, target },
-      spotlightUserSessionId
+      spotlightUserSessionId,
+      loading
     }
   } = useInjectedViewerState()
   const { forceViewToViewerSync, setView, cameraController } = useCameraUtilities()
@@ -446,21 +447,18 @@ function useViewerCameraIntegration() {
 
   const loadCameraDataFromViewer = () => {
     const extension: CameraController = instance.getExtension(CameraController)
-    let cameraManuallyChanged = false
 
     const viewerPos = new Vector3().copy(extension.getPosition())
     const viewerTarget = new Vector3().copy(extension.getTarget())
 
-    if (!areVectorsLooselyEqual(position.value, viewerPos)) {
-      if (hasInitialLoadFired.value) position.value = viewerPos.clone()
-      cameraManuallyChanged = true
+    if (hasInitialLoadFired.value && !loading.value) {
+      if (!areVectorsLooselyEqual(position.value, viewerPos)) {
+        position.value = viewerPos.clone()
+      }
+      if (!areVectorsLooselyEqual(target.value, viewerTarget)) {
+        target.value = viewerTarget.clone()
+      }
     }
-    if (!areVectorsLooselyEqual(target.value, viewerTarget)) {
-      if (hasInitialLoadFired.value) target.value = viewerTarget.clone()
-      cameraManuallyChanged = true
-    }
-
-    return cameraManuallyChanged
   }
 
   // viewer -> state
