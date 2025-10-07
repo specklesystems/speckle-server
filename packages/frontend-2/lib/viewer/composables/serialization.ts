@@ -219,6 +219,7 @@ export function useApplySerializedState() {
   const { diffModelVersions, deserializeDiffCommand, endDiff } = useDiffUtilities()
   const { setSelectionFromObjectIds } = useSelectionUtilities()
   const { update } = useViewerRealtimeActivityTracker()
+  const logger = useLogger()
 
   return async <Mode extends StateApplyMode>(
     state: PartialDeep<SerializedViewerState>,
@@ -343,8 +344,7 @@ export function useApplySerializedState() {
           filters.filterLogic as FilterLogic
         )
       } else {
-        // eslint-disable-next-line no-console
-        console.error(
+        logger.error(
           'Invalid filter data from saved view:',
           validationResult.error.format()
         )

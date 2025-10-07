@@ -7,41 +7,72 @@ import type {
   SpeckleObject
 } from '@speckle/viewer'
 
-// Filter Conditions
-export enum NumericFilterCondition {
-  IsBetween = 'is_between',
-  IsEqualTo = 'is_equal_to',
-  IsNotEqualTo = 'is_not_equal_to',
-  IsGreaterThan = 'is_greater_than',
-  IsLessThan = 'is_less_than'
-}
+import type {
+  NumericFilterCondition as NumericFilterConditionType,
+  StringFilterCondition as StringFilterConditionType,
+  ExistenceFilterCondition as ExistenceFilterConditionType,
+  BooleanFilterCondition as BooleanFilterConditionType,
+  FilterCondition as FilterConditionType,
+  FilterLogic as FilterLogicType
+} from '@speckle/shared/viewer/filters'
 
-export enum StringFilterCondition {
-  Is = 'is',
-  IsNot = 'is_not'
-}
+import {
+  NumericFilterConditionValues as _NumericValues,
+  StringFilterConditionValues as _StringValues,
+  ExistenceFilterConditionValues as _ExistenceValues,
+  BooleanFilterConditionValues as _BooleanValues,
+  FilterLogicValues as _FilterLogicValues
+} from '@speckle/shared/viewer/filters'
 
-export enum ExistenceFilterCondition {
-  IsSet = 'is_set',
-  IsNotSet = 'is_not_set'
-}
+export {
+  NumericFilterConditionValues,
+  StringFilterConditionValues,
+  ExistenceFilterConditionValues,
+  BooleanFilterConditionValues,
+  FilterLogicValues
+} from '@speckle/shared/viewer/filters'
 
-export enum BooleanFilterCondition {
-  IsTrue = 'is_true',
-  IsFalse = 'is_false'
-}
+export type { QueryCriteria } from '@speckle/shared/viewer/filters'
+export type { SerializedFilterData } from '@speckle/shared/viewer/filters'
 
-export type FilterCondition =
-  | NumericFilterCondition
-  | StringFilterCondition
-  | ExistenceFilterCondition
-  | BooleanFilterCondition
+// For backward compatibility: create enum-like objects that can be used with dot notation
+// e.g., NumericFilterCondition.IsBetween
+// These provide runtime values; use type exports below for type-only contexts
+export const NumericFilterCondition = {
+  IsBetween: _NumericValues.is_between,
+  IsEqualTo: _NumericValues.is_equal_to,
+  IsNotEqualTo: _NumericValues.is_not_equal_to,
+  IsGreaterThan: _NumericValues.is_greater_than,
+  IsLessThan: _NumericValues.is_less_than
+} as const
 
-// Filter Enums
-export enum FilterLogic {
-  All = 'all',
-  Any = 'any'
-}
+export const StringFilterCondition = {
+  Is: _StringValues.is,
+  IsNot: _StringValues.is_not
+} as const
+
+export const ExistenceFilterCondition = {
+  IsSet: _ExistenceValues.is_set,
+  IsNotSet: _ExistenceValues.is_not_set
+} as const
+
+export const BooleanFilterCondition = {
+  IsTrue: _BooleanValues.is_true,
+  IsFalse: _BooleanValues.is_false
+} as const
+
+export const FilterLogic = {
+  All: _FilterLogicValues.all,
+  Any: _FilterLogicValues.any
+} as const
+
+// Re-export types for use in type annotations
+export type NumericFilterCondition = NumericFilterConditionType
+export type StringFilterCondition = StringFilterConditionType
+export type ExistenceFilterCondition = ExistenceFilterConditionType
+export type BooleanFilterCondition = BooleanFilterConditionType
+export type FilterCondition = FilterConditionType
+export type FilterLogic = FilterLogicType
 
 export enum FilterType {
   String = 'string',
@@ -182,14 +213,6 @@ export type DataSlice = {
   intersectedObjectIds?: string[]
 }
 
-export type QueryCriteria = {
-  propertyKey: string
-  condition: FilterCondition
-  values: string[]
-  minValue?: number
-  maxValue?: number
-}
-
 export type DataSource = {
   resourceUrl: string
   viewerInstance: Viewer
@@ -215,7 +238,3 @@ export type ColorGroup = {
   value: string
   color: string
 }
-
-// Import serialization types from shared (for saved views, API, etc.)
-// The shared types use discriminated unions for better type safety
-export type { SerializedFilterData } from '@speckle/shared/viewer/filters'

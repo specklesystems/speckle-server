@@ -764,8 +764,7 @@ export function useFilterUtilities(
         if (propertyInfo) {
           const filterId = addActiveFilter(propertyInfo, serializedFilter.id)
 
-          // Condition values from Zod match enum values (both use snake_case)
-          updateFilterCondition(filterId, serializedFilter.condition as FilterCondition)
+          updateFilterCondition(filterId, serializedFilter.condition)
 
           if (serializedFilter.selectedValues?.length) {
             updateActiveFilterValues(filterId, serializedFilter.selectedValues)

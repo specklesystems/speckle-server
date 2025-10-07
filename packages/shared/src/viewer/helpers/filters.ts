@@ -77,7 +77,6 @@ export const BooleanSerializedFilterSchema = BaseSerializedFilterSchema.extend({
 
 /**
  * Discriminated union of all filter types
- * TypeScript can now narrow the type based on the 'type' field
  */
 export const SerializedFilterDataSchema = z.discriminatedUnion('type', [
   NumericSerializedFilterSchema,
@@ -87,8 +86,6 @@ export const SerializedFilterDataSchema = z.discriminatedUnion('type', [
 
 /**
  * Query criteria for filtering objects
- *
- * This is used when executing filters to find matching objects
  */
 export const QueryCriteriaSchema = z.object({
   propertyKey: z.string(),

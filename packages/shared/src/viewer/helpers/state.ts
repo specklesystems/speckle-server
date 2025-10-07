@@ -72,6 +72,8 @@ export interface SectionBoxData {
  * - ui.filters.propertyFilters.condition updated
  * v1.7 -> 1.8
  * - ui.filters.propertyFilters.numericRange added
+ * v1.8 -> 1.9
+ * - ui.filters.propertyFilters.type added
  */
 export const SERIALIZED_VIEWER_STATE_VERSION = 1.8
 
