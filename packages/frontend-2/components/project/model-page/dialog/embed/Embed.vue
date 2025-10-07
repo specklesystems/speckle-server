@@ -49,7 +49,12 @@
           </p>
           <h4 class="text-heading-sm text-foreground-2 mb-1 ml-0.5">Embed URL</h4>
           <FormClipboardInput class="mb-4" :value="updatedUrl" />
-          <LayoutDialogSection border-b border-t title="Options">
+          <LayoutDialogSection
+            v-model:open="areOptionsExpanded"
+            border-b
+            border-t
+            title="Options"
+          >
             <div class="flex flex-col gap-1.5 sm:gap-2 text-body-xs cursor-default">
               <div v-if="areSavedViewsEnabled" class="flex flex-col gap-1">
                 <label for="option-saved-view" :class="optionLabelClasses">
@@ -229,6 +234,7 @@ const props = defineProps<{
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
+const areOptionsExpanded = ref(false)
 
 const mixpanel = useMixpanel()
 const route = useRoute()
@@ -480,9 +486,13 @@ watch(
   { immediate: true }
 )
 
-watch(embeddedSavedView, (newVal) => {
+watch(embeddedSavedView, (newVal, oldVal) => {
   if (newVal) {
     shouldEmbedSavedView.value = true
+
+    if (!oldVal || newVal.id !== oldVal.id) {
+      areOptionsExpanded.value = true
+    }
   }
 })
 </script>
