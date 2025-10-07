@@ -22,7 +22,8 @@ import type {
   ProjectUpdateInput,
   StreamUpdateInput,
   UpdateModelInput,
-  UpdateVersionInput
+  UpdateVersionInput,
+  WorkspacePlan
 } from '@/modules/core/graph/generated/graphql'
 import type {
   BranchRecord,
@@ -281,6 +282,12 @@ export type SaveActivity = <
 >(
   args: Omit<Activity<T, R>, 'createdAt' | 'id'>
 ) => Promise<Activity<T, R>>
+
+export type GetWorkspaceSummary = (workspaceId: string) => Promise<{
+  plan: Pick<WorkspacePlan, 'name' | 'status'>
+  totalEditorSeats: number
+  totalViewerSeats: number
+}>
 
 type GetActivitiesArgs = Partial<{
   workspaceId: string

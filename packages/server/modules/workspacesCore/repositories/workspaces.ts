@@ -1,4 +1,5 @@
 import type {
+  CountWorkspaceUsers,
   GetTotalWorkspaceCountFactory,
   GetUserWorkspaceCountFactory,
   GetUserWorkspaceSeatsFactory
@@ -32,6 +33,32 @@ export const getUserWorkspaceCountFactory =
     // knex types are off here
     const [{ count }] = (await q) as unknown as { count: string }[]
     return parseInt(count)
+  }
+
+export const countWorkspaceUsersFactory =
+  ({ db }: { db: Knex }): CountWorkspaceUsers =>
+  async (args) => {
+    const query = tables
+      .workspaceAcl(db)
+      .innerJoin(WorkspaceSeats.name, function () {
+        this.on(WorkspaceAclDb.col.userId, WorkspaceSeats.col.userId).on(
+          WorkspaceAclDb.col.workspaceId,
+          WorkspaceSeats.col.workspaceId
+        )
+      })
+      .where(WorkspaceSeats.col.workspaceId, args.workspaceId)
+
+    if (args.filter?.role) {
+      query.where(WorkspaceAclDb.col.role, args.filter.role)
+    }
+
+    if (args.filter?.seatType) {
+      query.where(WorkspaceSeats.col.type, args.filter.seatType)
+    }
+
+    const [res] = await query.count()
+    const count = parseInt(res.count.toString())
+    return count
   }
 
 export const getUserWorkspaceSeatsFactory =

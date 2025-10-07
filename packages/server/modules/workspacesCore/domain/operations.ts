@@ -1,4 +1,9 @@
-import type { WorkspaceAcl, WorkspaceSeat } from '@/modules/workspacesCore/domain/types'
+import type {
+  WorkspaceAcl,
+  WorkspaceSeat,
+  WorkspaceSeatType
+} from '@/modules/workspacesCore/domain/types'
+import type { WorkspaceRoles } from '@speckle/shared'
 
 export type GetWorkspaceRolesAndSeats = (params: {
   workspaceId: string
@@ -25,6 +30,14 @@ export type GetWorkspaceRoleAndSeat = (params: {
 
 export type GetUserWorkspaceCountFactory = (params: {
   userId: string
+}) => Promise<number>
+
+export type CountWorkspaceUsers = (args: {
+  workspaceId: string
+  filter?: Partial<{
+    role: WorkspaceRoles
+    seatType: WorkspaceSeatType
+  }>
 }) => Promise<number>
 
 export type GetUserWorkspaceSeatsFactory = (params: {

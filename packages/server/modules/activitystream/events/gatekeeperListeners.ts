@@ -1,6 +1,9 @@
 import type { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
 import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
-import type { SaveActivity } from '@/modules/activitystream/domain/operations'
+import type {
+  GetWorkspaceSummary,
+  SaveActivity
+} from '@/modules/activitystream/domain/operations'
 
 const addWorkspacePlanCreatedActivityFactory =
   ({ saveActivity }: { saveActivity: SaveActivity }) =>
@@ -23,17 +26,31 @@ const addWorkspacePlanCreatedActivityFactory =
   }
 
 const addWorkspacePlanUpdatedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }) =>
+  ({
+    saveActivity,
+    getWorkspaceSummary
+  }: {
+    saveActivity: SaveActivity
+    getWorkspaceSummary: GetWorkspaceSummary
+  }) =>
   async ({
     payload: { userId, workspacePlan, previousWorkspacePlan }
   }: EventPayload<typeof GatekeeperEvents.WorkspacePlanUpdated>) => {
+    const { totalEditorSeats, totalViewerSeats } = await getWorkspaceSummary(
+      workspacePlan.workspaceId
+    )
+
     await saveActivity({
       userId,
       contextResourceType: 'workspace',
       eventType: 'workspace_plan_updated',
       contextResourceId: workspacePlan.workspaceId,
       payload: {
-        version: '1' as const,
+        workspace: {
+          totalEditorSeats,
+          totalViewerSeats
+        },
+        version: '1.1' as const,
         new: {
           name: workspacePlan.name,
           status: workspacePlan.status
@@ -79,7 +96,12 @@ const addWorkspaceSubscriptionUpdatedActivityFactory =
   }
 
 export const reportGatekeeperActivityFactory =
-  (deps: { eventListen: EventBusListen; saveActivity: SaveActivity }) => () => {
+  (deps: {
+    eventListen: EventBusListen
+    saveActivity: SaveActivity
+    getWorkspaceSummary: GetWorkspaceSummary
+  }) =>
+  () => {
     const addWorkspaceSubscriptionUpdatedActivity =
       addWorkspaceSubscriptionUpdatedActivityFactory(deps)
     const addWorkspacePlanUpdatedActivity = addWorkspacePlanUpdatedActivityFactory(deps)

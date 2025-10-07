@@ -91,11 +91,28 @@ export const WorkspacePlanCreatedActivity = z.object({
   new: workspacePlan
 })
 
-export const WorkspacePlanUpdatedActivity = z.object({
-  version: z.literal('1'),
-  new: workspacePlan,
-  old: workspacePlan
-})
+/**
+ * 1 -> 1.1
+ * Added
+ *  - workspace.totalEditorSeats
+ *  - workspace.totalViewerSeats
+ */
+export const WorkspacePlanUpdatedActivity = z.discriminatedUnion('version', [
+  z.object({
+    version: z.literal('1'),
+    new: workspacePlan,
+    old: workspacePlan
+  }),
+  z.object({
+    version: z.literal('1.1'),
+    workspace: z.object({
+      totalEditorSeats: z.number().int(),
+      totalViewerSeats: z.number().int()
+    }),
+    new: workspacePlan,
+    old: workspacePlan
+  })
+])
 
 export const WorkspaceSubscriptionUpdatedActivity = z.object({
   version: z.literal('1'),
@@ -103,20 +120,68 @@ export const WorkspaceSubscriptionUpdatedActivity = z.object({
   old: z.union([workspacePlan, z.intersection(workspaceSubscription, workspacePlan)])
 })
 
-export const WorkspaceSeatUpdatedActivity = z.object({
-  version: z.literal('1'),
-  new: workspaceSeat,
-  old: z.nullable(workspaceSeat)
+export const workspaceSeatsSnapshot = z.object({
+  plan: workspacePlan,
+  totalEditorSeats: z.number().int(),
+  totalViewerSeats: z.number().int()
 })
 
-export const WorkspaceSeatDeletedActivity = z.object({
-  version: z.literal('1'),
-  old: workspaceSeat
-})
+/**
+ * 1 -> 1.1
+ * Added
+ *  - workspace.totalEditorSeats
+ *  - workspace.totalViewerSeats
+ *  - workspace.plan
+ */
+export const WorkspaceSeatUpdatedActivity = z.discriminatedUnion('version', [
+  z.object({
+    version: z.literal('1'),
+    new: workspaceSeat,
+    old: z.nullable(workspaceSeat)
+  }),
+  z.object({
+    version: z.literal('1.1'),
+    workspace: workspaceSeatsSnapshot,
+    new: workspaceSeat,
+    old: z.nullable(workspaceSeat)
+  })
+])
 
-export const WorkspaceDeletedActivity = z.object({
-  version: z.literal('1')
-})
+/**
+ * 1 -> 1.1
+ * Added
+ *  - workspace.totalEditorSeats
+ *  - workspace.totalViewerSeats
+ *  - workspace.plan
+ */
+export const WorkspaceSeatDeletedActivity = z.discriminatedUnion('version', [
+  z.object({
+    version: z.literal('1'),
+    old: workspaceSeat
+  }),
+  z.object({
+    version: z.literal('1.1'),
+    workspace: workspaceSeatsSnapshot,
+    old: workspaceSeat
+  })
+])
+
+/**
+ * 1 -> 1.1
+ * Added
+ *  - workspace.totalEditorSeats
+ *  - workspace.totalViewerSeats
+ *  - workspace.plan
+ */
+export const WorkspaceDeletedActivity = z.discriminatedUnion('version', [
+  z.object({
+    version: z.literal('1')
+  }),
+  z.object({
+    version: z.literal('1.1'),
+    workspace: workspaceSeatsSnapshot
+  })
+])
 
 export const ProjectRoleUpdatedActivity = z.object({
   version: z.literal('1'),

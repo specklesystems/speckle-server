@@ -32,6 +32,9 @@ import { TIME_MS } from '@speckle/shared'
 import { reportGatekeeperActivityFactory } from '@/modules/activitystream/events/gatekeeperListeners'
 import { reportWorkspaceActivityFactory } from '@/modules/activitystream/events/workspaceListeners'
 import { backfillMissingActivityFactory } from '@/modules/activitystream/services/backfillActivity'
+import { getWorkspaceSummaryFactory } from '@/modules/activitystream/services/workspace'
+import { countWorkspaceUsersFactory } from '@/modules/workspacesCore/repositories/workspaces'
+import { getWorkspacePlansByWorkspaceIdFactory } from '@/modules/gatekeeper/repositories/billing'
 
 const scheduledTask: cron.ScheduledTask[] = []
 let quitEventListeners: Optional<() => void> = undefined
@@ -83,11 +86,19 @@ const initializeEventListeners = ({
   })
   const reportGatekeeperActivity = reportGatekeeperActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity
+    saveActivity,
+    getWorkspaceSummary: getWorkspaceSummaryFactory({
+      countWorkspaceUsers: countWorkspaceUsersFactory({ db }),
+      getWorkspacePlansByWorkspaceId: getWorkspacePlansByWorkspaceIdFactory({ db })
+    })
   })
   const reportWorkspaceActivity = reportWorkspaceActivityFactory({
     eventListen: eventBus.listen,
-    saveActivity
+    saveActivity,
+    getWorkspaceSummary: getWorkspaceSummaryFactory({
+      countWorkspaceUsers: countWorkspaceUsersFactory({ db }),
+      getWorkspacePlansByWorkspaceId: getWorkspacePlansByWorkspaceIdFactory({ db })
+    })
   })
 
   const quitCbs = [

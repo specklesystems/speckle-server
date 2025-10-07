@@ -43,6 +43,7 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
   'workspaceTrackingFactory creates a function, that @workspaceEventListener',
   () => {
     const workspace = buildTestWorkspaceWithOptionalRole()
+    const plan = buildTestWorkspacePlan()
     const user = buildTestUserWithOptionalRole()
     const email = {
       id: user.id,
@@ -401,6 +402,9 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       await workspaceTracking({
         eventName: WorkspaceEvents.Deleted,
         payload: {
+          plan,
+          totalEditorSeats: 1,
+          totalViewerSeats: 0,
           userId: null,
           workspaceId: workspace.id
         }
@@ -423,6 +427,9 @@ const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
       await workspaceTracking({
         eventName: WorkspaceEvents.Deleted,
         payload: {
+          plan,
+          totalEditorSeats: 1,
+          totalViewerSeats: 0,
           userId: null,
           workspaceId: workspace.id
         }

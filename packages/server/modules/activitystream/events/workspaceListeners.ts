@@ -1,19 +1,31 @@
 import type { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
-import type { SaveActivity } from '@/modules/activitystream/domain/operations'
+import type {
+  GetWorkspaceSummary,
+  SaveActivity
+} from '@/modules/activitystream/domain/operations'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 
 const addWorkspaceSeatUpdatedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }) =>
+  ({
+    saveActivity,
+    getWorkspaceSummary
+  }: {
+    saveActivity: SaveActivity
+    getWorkspaceSummary: GetWorkspaceSummary
+  }) =>
   async ({
     payload: { updatedByUserId, seat, previousSeat }
   }: EventPayload<typeof WorkspaceEvents.SeatUpdated>) => {
+    const workspace = await getWorkspaceSummary(seat.workspaceId)
+
     await saveActivity({
       userId: updatedByUserId,
       contextResourceType: 'workspace',
       eventType: 'workspace_seat_updated',
       contextResourceId: seat.workspaceId,
       payload: {
-        version: '1' as const,
+        version: '1.1' as const,
+        workspace,
         new: {
           type: seat.type,
           userId: seat.userId
@@ -29,17 +41,26 @@ const addWorkspaceSeatUpdatedActivityFactory =
   }
 
 const addWorkspaceSeatDeletedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }) =>
+  ({
+    saveActivity,
+    getWorkspaceSummary
+  }: {
+    saveActivity: SaveActivity
+    getWorkspaceSummary: GetWorkspaceSummary
+  }) =>
   async ({
     payload: { updatedByUserId, previousSeat }
   }: EventPayload<typeof WorkspaceEvents.SeatDeleted>) => {
+    const workspace = await getWorkspaceSummary(previousSeat.workspaceId)
+
     await saveActivity({
       userId: updatedByUserId,
       contextResourceType: 'workspace',
       eventType: 'workspace_seat_deleted',
       contextResourceId: previousSeat.workspaceId,
       payload: {
-        version: '1' as const,
+        version: '1.1' as const,
+        workspace,
         old: {
           type: previousSeat.type,
           userId: previousSeat.userId
@@ -50,22 +71,33 @@ const addWorkspaceSeatDeletedActivityFactory =
 
 const addWorkspaceDeletedActivityFactory =
   ({ saveActivity }: { saveActivity: SaveActivity }) =>
-  async ({
-    payload: { userId, workspaceId }
-  }: EventPayload<typeof WorkspaceEvents.Deleted>) => {
+  async ({ payload }: EventPayload<typeof WorkspaceEvents.Deleted>) => {
     await saveActivity({
-      userId,
+      userId: payload.userId,
       contextResourceType: 'workspace',
       eventType: 'workspace_deleted',
-      contextResourceId: workspaceId,
+      contextResourceId: payload.workspaceId,
       payload: {
-        version: '1' as const
+        workspace: {
+          plan: {
+            name: payload.plan.name,
+            status: payload.plan.status
+          },
+          totalEditorSeats: payload.totalEditorSeats,
+          totalViewerSeats: payload.totalViewerSeats
+        },
+        version: '1.1' as const
       }
     })
   }
 
 export const reportWorkspaceActivityFactory =
-  (deps: { eventListen: EventBusListen; saveActivity: SaveActivity }) => () => {
+  (deps: {
+    eventListen: EventBusListen
+    saveActivity: SaveActivity
+    getWorkspaceSummary: GetWorkspaceSummary
+  }) =>
+  () => {
     const addWorkspaceSeatUpdatedActivity = addWorkspaceSeatUpdatedActivityFactory(deps)
     const addWorkspaceSeatDeletedActivity = addWorkspaceSeatDeletedActivityFactory(deps)
     const addWorkspaceDeletedActivity = addWorkspaceDeletedActivityFactory(deps)

@@ -14,11 +14,12 @@ import type {
   EnsureValidWorkspaceRoleSeat,
   AssignWorkspaceSeat
 } from '@/modules/workspaces/domain/operations'
-import type {
-  Workspace,
-  WorkspaceAcl,
-  WorkspaceDomain,
-  WorkspaceWithDomains
+import {
+  WorkspaceSeatType,
+  type Workspace,
+  type WorkspaceAcl,
+  type WorkspaceDomain,
+  type WorkspaceWithDomains
 } from '@/modules/workspacesCore/domain/types'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { generateSlugFromName, Roles, validateWorkspaceSlug } from '@speckle/shared'
@@ -66,6 +67,8 @@ import type {
   DeleteProjectAndCommits,
   QueryAllProjects
 } from '@/modules/core/domain/projects/operations'
+import type { CountWorkspaceUsers } from '@/modules/workspacesCore/domain/operations'
+import type { GetWorkspacePlansByWorkspaceId } from '@/modules/gatekeeper/domain/billing'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -290,13 +293,17 @@ export const deleteWorkspaceFactory =
     queryAllProjects,
     deleteAllResourceInvites,
     deleteSsoProvider,
-    emitWorkspaceEvent
+    emitWorkspaceEvent,
+    countWorkspaceUsers,
+    getWorkspacePlansByWorkspaceId
   }: {
     deleteWorkspace: (args: { workspaceId: string }) => Promise<void>
     deleteProjectAndCommits: DeleteProjectAndCommits
     queryAllProjects: QueryAllProjects
     deleteAllResourceInvites: DeleteAllResourceInvites
     deleteSsoProvider: DeleteSsoProvider
+    countWorkspaceUsers: CountWorkspaceUsers
+    getWorkspacePlansByWorkspaceId: GetWorkspacePlansByWorkspaceId
     emitWorkspaceEvent: EventBus['emit']
   }): DeleteWorkspace =>
   async ({ workspaceId, userId }): Promise<void> => {
@@ -308,6 +315,18 @@ export const deleteWorkspaceFactory =
     for await (const projects of queryAllProjects({ workspaceId })) {
       projectIds.push(...projects.map((project) => project.id))
     }
+
+    const [totalEditorSeats, totalViewerSeats, plans] = await Promise.all([
+      countWorkspaceUsers({
+        workspaceId,
+        filter: { seatType: WorkspaceSeatType.Editor }
+      }),
+      countWorkspaceUsers({
+        workspaceId,
+        filter: { seatType: WorkspaceSeatType.Viewer }
+      }),
+      getWorkspacePlansByWorkspaceId({ workspaceIds: [workspaceId] })
+    ])
 
     await Promise.all([
       deleteWorkspace({ workspaceId }),
@@ -332,7 +351,13 @@ export const deleteWorkspaceFactory =
     }
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.Deleted,
-      payload: { workspaceId, userId }
+      payload: {
+        workspaceId,
+        userId,
+        totalEditorSeats,
+        totalViewerSeats,
+        plan: plans[workspaceId]
+      }
     })
   }
 

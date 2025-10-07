@@ -184,6 +184,7 @@ import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regio
 import { convertFunctionToGraphQLReturn } from '@/modules/automate/services/functionManagement'
 import {
   getWorkspacePlanFactory,
+  getWorkspacePlansByWorkspaceIdFactory,
   getWorkspaceSubscriptionFactory,
   getWorkspaceWithPlanFactory,
   upsertWorkspacePlanFactory
@@ -244,6 +245,7 @@ import {
 import { WorkspacePlanNotFoundError } from '@/modules/gatekeeper/errors/billing'
 import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
 import { UserInputError } from '@/modules/core/errors/userinput'
+import { countWorkspaceUsersFactory } from '@/modules/workspacesCore/repositories/workspaces'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -857,6 +859,10 @@ export default FF_WORKSPACES_MODULE_ENABLED
                   getExplicitProjects: getExplicitProjects({ db: mainDb })
                 }),
                 deleteSsoProvider: deleteSsoProviderFactory({ db: mainDb }),
+                countWorkspaceUsers: countWorkspaceUsersFactory({ db: mainDb }),
+                getWorkspacePlansByWorkspaceId: getWorkspacePlansByWorkspaceIdFactory({
+                  db: mainDb
+                }),
                 emitWorkspaceEvent: emit
               })({ workspaceId, userId: context.userId! }),
             {

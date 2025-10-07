@@ -29,6 +29,8 @@ import { deleteProjectFactory } from '@/modules/core/repositories/projects'
 import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
 import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
 import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
+import { countWorkspaceUsersFactory } from '@/modules/workspacesCore/repositories/workspaces'
+import { getWorkspacePlansByWorkspaceIdFactory } from '@/modules/gatekeeper/repositories/billing'
 
 const updateAWorkspaceCreatedAt = async (
   workspaceId: string,
@@ -64,6 +66,10 @@ describe('WorkspaceCreationState services', () => {
               getExplicitProjects: getExplicitProjects({ db: mainDb })
             }),
             deleteSsoProvider: deleteSsoProviderFactory({ db: mainDb }),
+            countWorkspaceUsers: countWorkspaceUsersFactory({ db: mainDb }),
+            getWorkspacePlansByWorkspaceId: getWorkspacePlansByWorkspaceIdFactory({
+              db: mainDb
+            }),
             emitWorkspaceEvent: emit
           })
         })
