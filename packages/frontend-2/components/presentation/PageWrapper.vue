@@ -124,13 +124,6 @@ const canEditPresentation = computed(() => {
 
 const onLoadingChange = (loading: boolean) => {
   isViewerLoading.value = loading
-
-  if (!loading) {
-    hideUi.value = false
-
-    isLeftSidebarOpen.value = isXlOrLarger.value
-    isInfoSidebarOpen.value = !isMobile.value
-  }
 }
 
 const handleKeydown = (event: KeyboardEvent) => {
@@ -159,6 +152,9 @@ onMounted(() => {
   $intercom.track('Presentation Viewed', {
     canEditPresentation: canEditPresentation.value
   })
+
+  isLeftSidebarOpen.value = isXlOrLarger.value
+  isInfoSidebarOpen.value = !isMobile.value
 })
 
 watch(
