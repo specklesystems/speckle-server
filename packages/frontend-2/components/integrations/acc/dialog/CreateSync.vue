@@ -45,7 +45,6 @@
 <script setup lang="ts">
 import type { AccHub } from '@speckle/shared/acc'
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import { useMutation } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
 import { useAccAuthManager } from '~/lib/acc/composables/useAccAuthManager'
 import {
@@ -53,8 +52,7 @@ import {
   type AccFolder,
   type AccItemVersion
 } from '~/lib/acc/composables/useAccFiles'
-import { accSyncItemCreateMutation } from '~/lib/acc/graphql/mutations'
-import { useCreateNewModel } from '~/lib/projects/composables/modelManagement'
+import { useCreateAccSyncItem } from '~/lib/acc/composables/useCreateAccSyncItem'
 
 type FormValues = { feedback: string }
 
@@ -68,21 +66,26 @@ const props = defineProps<{
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
+const isCreatingSyncItem = ref(false)
+const disableCreateButton = computed(() => !!isCreatingSyncItem.value)
+
 const { handleSubmit } = useForm<FormValues>()
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Create',
-    props: { color: 'primary' },
+    props: { color: 'primary', loading: isCreatingSyncItem.value },
     onClick: () => {
       onSubmit()
     },
+    disabled: disableCreateButton.value,
+    disabledMessage: 'Creating ACC sync...',
     id: 'createAccSync'
   }
 ])
 
 const { triggerNotification } = useGlobalToast()
-const createModel = useCreateNewModel()
+const createAccSyncItem = useCreateAccSyncItem()
 
 const dialogTitle = computed(() => props.title || 'Create sync from ACC')
 
@@ -132,39 +135,28 @@ const onFileSelected = (fileId: string, fileVersion: AccItemVersion) => {
   selectedFileVersion.value = fileVersion
 }
 
-const { mutate: createAccSyncItem } = useMutation(accSyncItemCreateMutation)
-
 const addSync = async () => {
   try {
     if (!selectedFileVersion.value || !selectedFileVersion.value.fileType) {
       return
     }
+    isCreatingSyncItem.value = true
 
     const fileVersion = selectedFileVersion.value.versionNumber
-
     const accFileViewName = revitViewName.value === '' ? undefined : revitViewName.value
 
-    const res = await createModel({
-      name: selectedFileVersion.value.name,
-      description: '',
-      projectId: props.projectId as string
-    })
-
     await createAccSyncItem({
-      input: {
-        projectId: props.projectId as string,
-        modelId: res?.id as string,
-        accRegion: selectedHub.value?.attributes?.region as string,
-        accFileExtension: selectedFileVersion.value.fileType,
-        accHubId: selectedHubId.value!,
-        accProjectId: selectedProjectId.value as string,
-        accRootProjectFolderUrn: rootProjectFolderId.value!,
-        accFileLineageUrn: selectedFileId.value as string,
-        accFileName: selectedFileVersion.value.name,
-        accFileVersionIndex: fileVersion,
-        accFileVersionUrn: selectedFileVersion.value.id,
-        accFileViewName
-      }
+      projectId: props.projectId as string,
+      accRegion: selectedHub.value?.attributes?.region as string,
+      accFileExtension: selectedFileVersion.value.fileType,
+      accHubId: selectedHubId.value!,
+      accProjectId: selectedProjectId.value as string,
+      accRootProjectFolderUrn: rootProjectFolderId.value!,
+      accFileLineageUrn: selectedFileId.value as string,
+      accFileName: selectedFileVersion.value.name,
+      accFileVersionIndex: fileVersion,
+      accFileVersionUrn: selectedFileVersion.value.id,
+      accFileViewName
     })
   } catch (error) {
     triggerNotification({
@@ -173,6 +165,7 @@ const addSync = async () => {
       description: error instanceof Error ? error.message : 'Unexpected error'
     })
   } finally {
+    isCreatingSyncItem.value = false
     revitViewName.value = undefined
   }
 }

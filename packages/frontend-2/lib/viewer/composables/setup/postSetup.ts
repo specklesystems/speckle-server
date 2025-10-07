@@ -177,6 +177,8 @@ function useViewerObjectAutoLoading() {
 
       const [oldResources] = oldData || [[], false]
 
+      hasLoadedQueuedUpModels.value = false
+
       // we dont want to zoom to object, if we're loading specific coords because of a thread,
       // or spotlight mode or a saved view etc.
       const preventZooming =
@@ -209,10 +211,6 @@ function useViewerObjectAutoLoading() {
       const oldObjectIds = getUniqueObjectIds(oldResources)
       const removableObjectIds = difference(oldObjectIds, newObjectIds)
       const addableObjectIds = difference(newObjectIds, oldObjectIds)
-
-      if (addableObjectIds.length) {
-        hasLoadedQueuedUpModels.value = true
-      }
 
       await Promise.all(removableObjectIds.map((i) => loadObject(i, true)))
       await Promise.all(

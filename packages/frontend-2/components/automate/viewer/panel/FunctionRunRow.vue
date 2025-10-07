@@ -70,29 +70,23 @@
         </div>
       </div>
       <!-- Results -->
-      <div
-        v-if="!!results?.values.objectResults.length"
-        class="border-t pt-2 border-outline-2"
-      >
+      <div v-if="!!objectResults.length" class="border-t pt-2 border-outline-2">
         <div class="text-body-2xs font-medium text-foreground-2 mb-2">Results</div>
         <div class="space-y-1">
           <AutomateViewerPanelFunctionRunRowObjectResult
-            v-for="(result, index) in results.values.objectResults.slice(
-              0,
-              pageRunLimit
-            )"
+            v-for="(result, index) in objectResults.slice(0, pageRunLimit)"
             :key="index"
             :function-id="functionRun.function?.id"
             :result="result"
           />
           <FormButton
-            v-if="pageRunLimit < results.values.objectResults.length"
+            v-if="pageRunLimit < objectResults.length"
             size="sm"
             color="outline"
             class="w-full"
             @click="pageRunLimit += 10"
           >
-            Load more ({{ results.values.objectResults.length - pageRunLimit }}
+            Load more ({{ objectResults.length - pageRunLimit }}
             hidden results)
           </FormButton>
         </div>
@@ -147,6 +141,7 @@ const expanded = ref(false)
 const attachments = computed(() =>
   (results.value?.values.blobIds || []).filter((b) => !!b)
 )
+const objectResults = computed(() => results.value?.values.objectResults ?? [])
 const hasValidContextView = computed(() => {
   const ctxView = props.functionRun.contextView
   if (!ctxView?.length) return false
