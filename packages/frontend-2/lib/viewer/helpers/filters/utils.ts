@@ -276,7 +276,10 @@ export const isValueNumeric = (value: unknown): boolean => {
   if (isString(value)) {
     const trimmed = value.trim()
     if (trimmed === '') return false
-    if (/[a-zA-Z-]/.test(trimmed)) return false
+
+    // Allow: digits, decimal points, minus sign at start
+    if (/-.*-/.test(trimmed)) return false // Multiple dashes (UUID pattern)
+    if (/-(?!^)/.test(trimmed)) return false // Dash not at the start
 
     const converted = toNumber(trimmed)
     return Number.isFinite(converted)
