@@ -764,13 +764,14 @@ export function useFilterUtilities(
         if (propertyInfo) {
           const filterId = addActiveFilter(propertyInfo, serializedFilter.id)
 
-          updateFilterCondition(filterId, serializedFilter.condition)
+          // Condition values from Zod match enum values (both use snake_case)
+          updateFilterCondition(filterId, serializedFilter.condition as FilterCondition)
 
           if (serializedFilter.selectedValues?.length) {
             updateActiveFilterValues(filterId, serializedFilter.selectedValues)
           }
 
-          if (serializedFilter.numericRange) {
+          if (serializedFilter.type === 'numeric' && serializedFilter.numericRange) {
             setNumericRange(
               filterId,
               serializedFilter.numericRange.min,

@@ -216,11 +216,6 @@ export type ColorGroup = {
   color: string
 }
 
-export type SerializedFilterData = {
-  key: Nullable<string>
-  isApplied: boolean
-  selectedValues: string[]
-  id: string
-  condition: FilterCondition
-  numericRange?: { min: number; max: number }
-}
+// Import serialization types from shared (for saved views, API, etc.)
+// The shared types use discriminated unions for better type safety
+export type { SerializedFilterData } from '@speckle/shared/viewer/filters'

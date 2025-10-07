@@ -3,6 +3,7 @@ import {
   useResetUiState
 } from '~~/lib/viewer/composables/setup'
 import { isUndefinedOrVoid, SpeckleViewer } from '@speckle/shared'
+import { parseSerializedFilters } from '@speckle/shared/viewer/filters'
 import { get } from 'lodash-es'
 import { Vector3 } from 'three'
 import {
@@ -13,10 +14,7 @@ import {
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 import { CameraController, SectionTool, VisualDiffMode } from '@speckle/viewer'
-import type {
-  FilterLogic,
-  SerializedFilterData
-} from '~/lib/viewer/helpers/filters/types'
+import type { FilterLogic } from '~/lib/viewer/helpers/filters/types'
 import type { Merge, PartialDeep } from 'type-fest'
 import {
   defaultMeasurementOptions,
@@ -94,16 +92,35 @@ export function useStateSerialization() {
         },
         spotlightUserSessionId: state.ui.spotlightUserSessionId.value,
         filters: (() => {
-          // Convert current FilterData to serializable format
-          const propertyFilters = filters.propertyFilters.value.map((filterData) => ({
-            key: filterData.filter?.key || null,
-            isApplied: filterData.isApplied,
-            selectedValues: filterData.selectedValues,
-            id: filterData.id,
-            condition: filterData.condition,
-            numericRange:
-              filterData.type === 'numeric' ? filterData.numericRange : undefined
-          }))
+          // Convert current FilterData to serializable format (discriminated union)
+          const propertyFilters = filters.propertyFilters.value.map((filterData) => {
+            const base = {
+              key: filterData.filter?.key || null,
+              isApplied: filterData.isApplied,
+              selectedValues: filterData.selectedValues,
+              id: filterData.id,
+              condition: filterData.condition
+            }
+
+            // Add type field for discriminated union
+            if (filterData.type === 'numeric') {
+              return {
+                ...base,
+                type: 'numeric' as const,
+                numericRange: filterData.numericRange
+              }
+            } else if (filterData.type === 'boolean') {
+              return {
+                ...base,
+                type: 'boolean' as const
+              }
+            } else {
+              return {
+                ...base,
+                type: 'string' as const
+              }
+            }
+          })
 
           return {
             isolatedObjectIds: state.ui.filters.isolatedObjectIds.value,
@@ -302,11 +319,24 @@ export function useApplySerializedState() {
     }
 
     if (filters.propertyFilters?.length) {
-      restoreFilters(
-        filters.propertyFilters as SerializedFilterData[],
-        filters.activeColorFilterId,
-        filters.filterLogic as FilterLogic
-      )
+      // Validate filter data using Zod schema from shared package
+      const validationResult = parseSerializedFilters(filters.propertyFilters)
+
+      if (validationResult.success) {
+        restoreFilters(
+          validationResult.data,
+          filters.activeColorFilterId,
+          filters.filterLogic as FilterLogic
+        )
+      } else {
+        // eslint-disable-next-line no-console
+        console.error(
+          'Invalid filter data from saved view:',
+          validationResult.error.format()
+        )
+        // Fallback: reset filters instead of crashing
+        resetFilters()
+      }
     } else {
       resetFilters()
     }
