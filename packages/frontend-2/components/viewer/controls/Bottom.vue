@@ -121,7 +121,6 @@ const panels = shallowRef({
     tooltip: getShortcutDisplayText(shortcuts.ToggleMeasurements, {
       format: 'separate'
     }),
-    // Show on all breakpoints
     extraClasses: ''
   },
   [ActivePanel.sectionBox]: {
