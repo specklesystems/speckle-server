@@ -6,6 +6,7 @@ import type {
   ProjectModelPageVersionsCardVersionFragment,
   GetModelItemRoute_ModelFragment
 } from '~~/lib/common/generated/gql/graphql'
+import { resourceBuilder } from '@speckle/shared/viewer/route'
 
 export function isPendingModelFragment(i: unknown): i is PendingFileUploadFragment {
   return has(i, 'convertedMessage')
@@ -42,10 +43,18 @@ export const getModelItemRoute = (
   i:
     | GetModelItemRoute_ModelFragment
     | PendingFileUploadFragment
-    | { projectId: string; id: string }
+    | { projectId: string; id: string },
+  versionId?: string
 ) => {
   if (isPendingModelFragment(i)) {
     return modelRoute(i.projectId, i.id)
+  }
+
+  if (versionId) {
+    return modelRoute(
+      i.projectId,
+      resourceBuilder().addModel(i.id, versionId).toString()
+    )
   }
 
   if (!('resourceIdString' in i)) {

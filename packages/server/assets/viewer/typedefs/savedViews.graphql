@@ -39,9 +39,12 @@ type SavedView {
   """
   viewerState: JSONObject!
   """
-  Encoded screenshot of the view
+  Encoded screenshot of the view. Can be a very large value, its preferred you
+  use the thumbnailUrl or previewUrl fields to load the image from a separate endpoint
   """
-  screenshot: String!
+  screenshot: String! @deprecated(reason: "Use thumbnailUrl or previewUrl instead")
+  thumbnailUrl: String!
+  previewUrl: String!
   """
   For figuring out position in the group
   """
@@ -72,8 +75,8 @@ input SavedViewGroupViewsInput {
   """
   sortDirection: SortDirection
   """
-  Optionally specify sort by field. Default: updatedAt
-  Options: updatedAt, createdAt, name
+  Optionally specify sort by field. Default: position
+  Options: updatedAt, createdAt, name, position
   """
   sortBy: String
   limit: Int
@@ -90,6 +93,7 @@ type SavedViewGroup {
   """
   groupId: ID
   projectId: ID!
+  author: LimitedUser
   """
   Resources that were used to find this group
   """
@@ -163,6 +167,7 @@ input CreateSavedViewInput {
   Set visibility of the view. Default: public
   """
   visibility: SavedViewVisibility
+  position: ViewPositionInput
 }
 
 input CreateSavedViewGroupInput {
@@ -182,6 +187,26 @@ input DeleteSavedViewGroupInput {
 input DeleteSavedViewInput {
   id: ID!
   projectId: ID!
+}
+
+enum ViewPositionInputType {
+  between
+}
+
+"""
+If only one is set, the other will be resolved automatically
+If none are set, the view will be added to the end of the list
+"""
+input ViewPositionInput {
+  type: ViewPositionInputType!
+  """
+  The ID of the view that should be after the new position
+  """
+  afterViewId: ID
+  """
+  The ID of the view that should be before the new position
+  """
+  beforeViewId: ID
 }
 
 input UpdateSavedViewInput {
@@ -218,6 +243,7 @@ input UpdateSavedViewInput {
   Optionally change visibility of the view
   """
   visibility: SavedViewVisibility
+  position: ViewPositionInput
 }
 
 input UpdateSavedViewGroupInput {
@@ -259,4 +285,64 @@ extend type Model {
   The resourceIdString to use when building links to this model in the viewer. Takes home view settings into account.
   """
   resourceIdString: String!
+}
+
+enum ProjectSavedViewsUpdatedMessageType {
+  CREATED
+  UPDATED
+  DELETED
+}
+
+type BeforeChangeSavedView {
+  groupId: ID
+  resourceIds: [String!]!
+  groupResourceIds: [String!]!
+  position: Float!
+}
+
+type ProjectSavedViewsUpdatedMessage {
+  type: ProjectSavedViewsUpdatedMessageType!
+  """
+  SavedView ID
+  """
+  id: ID!
+  """
+  Set if view was deleted/updated, allows some limited access into the view before the change (update/delete)
+  """
+  beforeChangeSavedView: BeforeChangeSavedView
+  """
+  Null if view was deleted
+  """
+  savedView: SavedView
+  """
+  The project that the update belongs to
+  """
+  project: Project!
+}
+
+type ProjectSavedViewGroupsUpdatedMessage {
+  type: ProjectSavedViewsUpdatedMessageType!
+  """
+  SavedViewGroup ID
+  """
+  id: ID!
+  """
+  Null if group was deleted
+  """
+  savedViewGroup: SavedViewGroup
+  """
+  The project that the update belongs to
+  """
+  project: Project!
+}
+
+extend type Subscription {
+  """
+  Subscribe to changes to a project's saved views.
+  """
+  projectSavedViewsUpdated(projectId: ID!): ProjectSavedViewsUpdatedMessage!
+  """
+  Subscribe to changes to a project's saved view groups.
+  """
+  projectSavedViewGroupsUpdated(projectId: ID!): ProjectSavedViewGroupsUpdatedMessage!
 }

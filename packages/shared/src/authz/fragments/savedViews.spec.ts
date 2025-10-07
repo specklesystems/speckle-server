@@ -170,6 +170,8 @@ describe('ensureCanAccessSavedViewFragment', () => {
     it.each(<const>[
       { author: 'author', success: 'succeeds', access: WriteTypes.UpdateGeneral },
       { author: 'author', success: 'succeeds', access: WriteTypes.MoveView },
+      { author: 'author', success: 'succeeds', access: WriteTypes.EditTitle },
+      { author: 'author', success: 'succeeds', access: WriteTypes.EditDescription },
       {
         author: 'not author',
         success: 'fails',
@@ -181,6 +183,18 @@ describe('ensureCanAccessSavedViewFragment', () => {
         success: 'succeeds',
         error: SavedViewNoAccessError.code,
         access: WriteTypes.MoveView
+      },
+      {
+        author: 'not author',
+        success: 'succeeds',
+        error: SavedViewNoAccessError.code,
+        access: WriteTypes.EditTitle
+      },
+      {
+        author: 'not author',
+        success: 'succeeds',
+        error: SavedViewNoAccessError.code,
+        access: WriteTypes.EditDescription
       },
       {
         author: 'author but no longer contributor',
@@ -195,6 +209,18 @@ describe('ensureCanAccessSavedViewFragment', () => {
         access: WriteTypes.MoveView
       },
       {
+        author: 'author but no longer contributor',
+        success: 'fails',
+        error: ProjectNotEnoughPermissionsError.code,
+        access: WriteTypes.EditTitle
+      },
+      {
+        author: 'author but no longer contributor',
+        success: 'fails',
+        error: ProjectNotEnoughPermissionsError.code,
+        access: WriteTypes.EditDescription
+      },
+      {
         author: 'not author but is workspace admin',
         success: 'fails',
         error: SavedViewNoAccessError.code,
@@ -205,6 +231,38 @@ describe('ensureCanAccessSavedViewFragment', () => {
         success: 'succeeds',
         error: SavedViewNoAccessError.code,
         access: WriteTypes.MoveView
+      },
+      {
+        author: 'not author but is workspace admin',
+        success: 'succeeds',
+        error: SavedViewNoAccessError.code,
+        access: WriteTypes.EditTitle
+      },
+      {
+        author: 'not author but is workspace admin',
+        success: 'succeeds',
+        error: SavedViewNoAccessError.code,
+        access: WriteTypes.EditDescription
+      },
+      // Home view:
+      { author: 'author', success: 'succeeds', access: WriteTypes.SetHomeView },
+      {
+        author: 'not author',
+        success: 'succeeds',
+        error: SavedViewNoAccessError.code,
+        access: WriteTypes.SetHomeView
+      },
+      {
+        author: 'author but no longer contributor',
+        success: 'fails',
+        error: ProjectNotEnoughPermissionsError.code,
+        access: WriteTypes.SetHomeView
+      },
+      {
+        author: 'not author but is workspace admin',
+        success: 'succeeds',
+        error: SavedViewNoAccessError.code,
+        access: WriteTypes.SetHomeView
       }
     ])(
       '$success if asking for $access type write access to private (as $author)',

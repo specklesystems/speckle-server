@@ -611,7 +611,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.featureFlags.accIntegrationEnabled | quote }}
 
 - name: FF_NO_PERSONAL_EMAILS_ENABLED
-  value: {{ .Values.server.noPersonalEmailsEnabled }}
+  value: {{ .Values.featureFlags.noPersonalEmailsEnabled | quote }}
 
 {{- if .Values.featureFlags.accIntegrationEnabled }}
 - name: AUTODESK_INTEGRATION_CLIENT_ID
@@ -622,6 +622,15 @@ Generate the environment variables for Speckle server and Speckle objects deploy
     secretKeyRef:
       name: {{ default .Values.secretName .Values.server.accIntegration.clientSecret.secretName }}
       key: {{ default "acc_integration_client_secret" .Values.server.accIntegration.clientSecret.secretKey }}
+
+- name: ODA_USER_ID
+  value: {{ default "user_id" .Values.server.oda.userId }}
+
+- name: ODA_USER_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: {{ default .Values.secretName .Values.server.oda.userSecret.secretName }}
+      key: {{ default "user_secret" .Values.server.oda.userSecret.secretKey }}
 {{- end }}
 
 - name: FF_DASHBOARDS_MODULE_ENABLED
@@ -971,18 +980,22 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: EMAIL
   value: "true"
 - name: EMAIL_HOST
-  value: "{{ .Values.server.email.host }}"
+  value: {{ .Values.server.email.host | quote }}
 - name: EMAIL_PORT
-  value: "{{ .Values.server.email.port }}"
+  value: {{ .Values.server.email.port | quote }}
 - name: EMAIL_USERNAME
-  value: "{{ .Values.server.email.username }}"
+  value: {{ .Values.server.email.username | quote }}
 - name: EMAIL_PASSWORD
   valueFrom:
     secretKeyRef:
       name: {{ default .Values.secretName .Values.server.email.password.secretName }}
       key: {{ default "email_password" .Values.server.email.password.secretKey }}
 - name: EMAIL_FROM
-  value: "{{ .Values.server.email.from }}"
+  value: {{ .Values.server.email.from | quote }}
+- name: EMAIL_SECURE
+  value: {{ .Values.server.email.secure | quote }}
+- name: EMAIL_REQUIRE_TLS
+  value: {{ .Values.server.email.requireTLS | quote }}
 - name: EMAIL_VERIFICATION_TIMEOUT_MINUTES
   value: {{ .Values.server.email.verificationTimeoutMinutes | quote }}
 {{- end }}

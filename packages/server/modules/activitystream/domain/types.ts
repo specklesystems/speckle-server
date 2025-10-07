@@ -22,6 +22,7 @@ export type ResourceEventsToPayloadMap = {
     workspace_subscription_updated: z.infer<typeof WorkspaceSubscriptionUpdatedActivity>
     workspace_seat_updated: z.infer<typeof WorkspaceSeatUpdatedActivity>
     workspace_seat_deleted: z.infer<typeof WorkspaceSeatDeletedActivity>
+    workspace_deleted: z.infer<typeof WorkspaceDeletedActivity>
   }
   project: {
     project_role_updated: z.infer<typeof ProjectRoleUpdatedActivity>
@@ -111,6 +112,10 @@ export const WorkspaceSeatUpdatedActivity = z.object({
 export const WorkspaceSeatDeletedActivity = z.object({
   version: z.literal('1'),
   old: workspaceSeat
+})
+
+export const WorkspaceDeletedActivity = z.object({
+  version: z.literal('1')
 })
 
 export const ProjectRoleUpdatedActivity = z.object({

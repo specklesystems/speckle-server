@@ -1,8 +1,18 @@
 import { SpeckleViewer } from '@speckle/shared'
-import type { TreeNode, ViewMode } from '@speckle/viewer'
+import {
+  CameraController,
+  type TreeNode,
+  type ViewMode,
+  type CanonicalView,
+  type InlineView,
+  type SpeckleView,
+  MeasurementsExtension
+} from '@speckle/viewer'
+import { Box3, Vector3, Matrix3 } from 'three'
+import { OBB } from 'three/examples/jsm/math/OBB'
 import { until } from '@vueuse/shared'
 import { useActiveElement } from '@vueuse/core'
-import { isString } from 'lodash-es'
+import { isString, isEqualWith } from 'lodash-es'
 import { useEmbedState, useEmbed } from '~/lib/viewer/composables/setup/embed'
 import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
@@ -11,6 +21,7 @@ import {
   useInjectedViewerInterfaceState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
+import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
 import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
 import { getKeyboardShortcutTitle, onKeyboardShortcut } from '@speckle/ui-components'
 import { ViewerShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
@@ -40,14 +51,80 @@ export function useSectionBoxUtilities() {
   const isSectionBoxVisible = computed(() => visible.value)
   const isSectionBoxEdited = computed(() => edited.value)
 
+  /**
+   * Converts a Box3 or OBB to SectionBoxData format
+   */
+  const box3ToSectionBoxData = (
+    box: Box3 | OBB
+  ): SpeckleViewer.ViewerState.SectionBoxData => {
+    if (box instanceof Box3) {
+      return {
+        min: box.min.toArray(),
+        max: box.max.toArray()
+      }
+    } else {
+      // OBB case - calculate min/max from center and halfSize
+      const min = box.center.clone().sub(box.halfSize)
+      const max = box.center.clone().add(box.halfSize)
+
+      return {
+        min: min.toArray(),
+        max: max.toArray(),
+        ...(box.rotation && { rotation: box.rotation.toArray() })
+      }
+    }
+  }
+
+  /**
+   * Converts SectionBoxData to Box3 or OBB format (reverse of box3ToSectionBoxData)
+   */
+  const sectionBoxDataToBox3 = (
+    data: SpeckleViewer.ViewerState.SectionBoxData
+  ): Box3 | OBB => {
+    let box: Box3 | OBB
+
+    if (!data.rotation || !data.rotation.length) {
+      // No rotation, use Box3
+      const min = new Vector3().fromArray(data.min)
+      const max = new Vector3().fromArray(data.max)
+      box = new Box3(min, max)
+    } else {
+      // Has rotation, create OBB
+      box = new OBB()
+      const min = new Vector3().fromArray(data.min)
+      const max = new Vector3().fromArray(data.max)
+
+      const _box3 = new Box3()
+      _box3.set(min, max)
+      _box3.getCenter(box.center)
+      _box3.getSize(box.halfSize)
+      box.halfSize.multiplyScalar(0.5)
+
+      box.rotation = new Matrix3().fromArray(data.rotation)
+    }
+
+    return box
+  }
+
+  /**
+   * Compares two SectionBoxData objects for equality with floating-point tolerance
+   */
+  const sectionBoxDataEquals = (
+    a: SpeckleViewer.ViewerState.SectionBoxData,
+    b: SpeckleViewer.ViewerState.SectionBoxData
+  ): boolean => {
+    return isEqualWith(a, b, (objValue, othValue) => {
+      if (typeof objValue === 'number' && typeof othValue === 'number') {
+        return Math.abs(objValue - othValue) < 1e-6
+      }
+      return undefined
+    })
+  }
+
   const resolveSectionBoxFromSelection = () => {
     const objectIds = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
     const box = instance.getRenderer().boxFromObjects(objectIds)
-    /** When generating a section box from selection we don't apply any rotation */
-    sectionBox.value = {
-      min: box.min.toArray(),
-      max: box.max.toArray()
-    }
+    sectionBox.value = box3ToSectionBoxData(box)
   }
 
   const closeSectionBox = () => {
@@ -94,7 +171,10 @@ export function useSectionBoxUtilities() {
     resetSectionBox,
     resetSectionBoxCompletely,
     sectionBox,
-    closeSectionBox
+    closeSectionBox,
+    box3ToSectionBoxData,
+    sectionBoxDataToBox3,
+    sectionBoxDataEquals
   }
 }
 
@@ -105,35 +185,46 @@ export function useCameraUtilities() {
     camera
   } = useInjectedViewerInterfaceState()
 
-  const zoom = (...args: Parameters<typeof instance.zoom>) => instance.zoom(...args)
+  const cameraController = instance.getExtension(CameraController)
 
-  const setView = (...args: Parameters<typeof instance.setView>) => {
-    instance.setView(...args)
+  const setView = (
+    view: CanonicalView | InlineView | SpeckleView,
+    transition = true
+  ) => {
+    cameraController.setCameraView(view, transition)
   }
 
   const zoomExtentsOrSelection = () => {
     const ids = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
 
     if (ids.length > 0) {
-      return instance.zoom(ids)
+      return cameraController.setCameraView(ids, true)
     }
 
     if (isolatedObjectIds.value.length) {
-      return instance.zoom(isolatedObjectIds.value)
+      return cameraController.setCameraView(isolatedObjectIds.value, true)
     }
 
-    instance.zoom()
+    cameraController.setCameraView(undefined, true)
   }
 
   const toggleProjection = () => {
     camera.isOrthoProjection.value = !camera.isOrthoProjection.value
+    cameraController.toggleCameras()
   }
 
   const forceViewToViewerSync = () => {
-    setView({
-      position: camera.position.value,
-      target: camera.target.value
-    })
+    setView(
+      {
+        position: camera.position.value,
+        target: camera.target.value
+      },
+      true
+    )
+  }
+
+  const zoom = (objectIds?: string[], fit?: number, transition?: boolean) => {
+    cameraController.setCameraView(objectIds, transition, fit)
   }
 
   return {
@@ -142,7 +233,8 @@ export function useCameraUtilities() {
     camera,
     setView,
     zoom,
-    forceViewToViewerSync
+    forceViewToViewerSync,
+    cameraController
   }
 }
 
@@ -170,7 +262,13 @@ export function useSelectionUtilities() {
   const addToSelectionFromObjectIds = (objectIds: string[]) => {
     const originalObjects = selectedObjects.value.slice()
     setSelectionFromObjectIds(objectIds)
-    selectedObjects.value = [...originalObjects, ...selectedObjects.value]
+
+    // Filter out duplicates by checking if objects with the same ID already exist
+    const newObjects = selectedObjects.value.filter(
+      (newObj) => !originalObjects.some((existingObj) => existingObj.id === newObj.id)
+    )
+
+    selectedObjects.value = [...originalObjects, ...newObjects]
   }
 
   const removeFromSelectionObjectIds = (objectIds: string[]) => {
@@ -282,6 +380,8 @@ export function useThreadUtilities() {
 
 export function useMeasurementUtilities() {
   const state = useInjectedViewerState()
+  const measurementsExtension =
+    state.viewer.instance.getExtension(MeasurementsExtension)
 
   const measurementOptions = computed(() => state.ui.measurement.options.value)
   const hasMeasurements = computed(
@@ -297,9 +397,7 @@ export function useMeasurementUtilities() {
   }
 
   const removeActiveMeasurement = () => {
-    if (state.viewer.instance?.removeMeasurement) {
-      state.viewer.instance.removeMeasurement()
-    }
+    measurementsExtension.removeMeasurement()
   }
 
   const clearMeasurements = () => {
@@ -355,10 +453,13 @@ export function useConditionalViewerRendering() {
 
 export function useHighlightedObjectsUtilities() {
   const {
-    ui: { highlightedObjectIds }
+    ui: { highlightedObjectIds },
+    pageType
   } = useInjectedViewerState()
 
   const highlightObjects = (ids: string[]) => {
+    if (pageType.value === ViewerRenderPageType.Presentation) return
+
     highlightedObjectIds.value = [...new Set([...highlightedObjectIds.value, ...ids])]
   }
 

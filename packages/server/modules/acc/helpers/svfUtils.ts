@@ -1,4 +1,4 @@
-import type { ModelDerivativeServiceDesignManifest } from '@/modules/acc/domain/types'
+import type { ModelDerivativeServiceDesignManifest } from '@/modules/acc/domain/acc/types'
 
 export const isReadyForImport = (
   manifest: ModelDerivativeServiceDesignManifest

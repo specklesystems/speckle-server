@@ -18,14 +18,26 @@ import {
   createTestSubscriptionData,
   createTestWorkspaceSubscription
 } from '@/modules/gatekeeper/tests/helpers'
+import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import type { UpsertWorkspace } from '@/modules/workspaces/domain/operations'
 import { upsertWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import { logger } from '@/observability/logging'
 import { truncateTables } from '@/test/hooks'
 import { createAndStoreTestWorkspaceFactory } from '@/test/speckle-helpers/workspaces'
 import { PaidWorkspacePlans, WorkspaceFeatureFlags } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
-const upsertWorkspace = upsertWorkspaceFactory({ db })
+const upsertWorkspace: UpsertWorkspace = async (...args) =>
+  asMultiregionalOperation(
+    ({ allDbs }) => replicateFactory(allDbs, upsertWorkspaceFactory)(...args),
+    {
+      logger,
+      name: 'delete workspace spec',
+      dbs: await getAllRegisteredDbs()
+    }
+  )
 const createAndStoreTestWorkspace = createAndStoreTestWorkspaceFactory({
   upsertWorkspace
 })

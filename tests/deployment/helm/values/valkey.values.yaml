@@ -1,3 +1,11 @@
 architecture: standalone
 auth:
   password: valkey
+image:
+  repository: bitnamilegacy/valkey
+kubectl:
+  image:
+    repository: bitnamilegacy/kubectl
+global:
+  security:
+    allowInsecureImages: true # needed for bitnamilegacy images

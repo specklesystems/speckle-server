@@ -2,20 +2,27 @@
 <template>
   <div
     ref="resizableElement"
-    class="relative sm:absolute z-10 right-0 overflow-hidden w-screen bottom-0 sm:bottom-auto sm:top-[3.5rem] lg:top-[3rem] sm:right-2 lg:right-0 h-[40dvh] sm:h-[calc(100dvh-8rem)] lg:h-[calc(100dvh-3rem)] sm:max-w-[264px]"
+    class="relative sm:absolute z-10 right-0 overflow-hidden w-screen bottom-0 sm:bottom-auto sm:right-2 h-[40dvh] sm:max-w-[276px]"
     :style="isLgOrLarger ? { maxWidth: width + 'px' } : {}"
-    :class="[open ? '' : 'pointer-events-none']"
+    :class="[
+      open ? '' : 'pointer-events-none',
+      isEmbedEnabled
+        ? 'sm:top-2 sm:h-[calc(100dvh-8rem)]'
+        : 'sm:top-[3.5rem] lg:h-[calc(100dvh-3rem)] lg:top-[3rem] lg:right-0 sm:h-[calc(100dvh-8rem)]'
+    ]"
   >
     <div class="flex h-full" :class="open ? '' : 'sm:translate-x-[100%]'">
       <!-- Resize Handle -->
       <div
+        v-if="!isEmbedEnabled"
         ref="resizeHandle"
         class="absolute h-full max-h-[calc(100dvh-3rem)] w-4 transition border-l sm:rounded-lg lg:rounded-none hover:border-l-[2px] border-outline-2 hover:border-primary hidden lg:flex items-center cursor-ew-resize z-30"
         @mousedown="startResizing"
       />
 
       <div
-        class="flex flex-col w-full h-full relative z-20 overflow-hidden sm:rounded-lg lg:rounded-none border-l border-t sm:border lg:border-0 lg:border-l border-outline-2 bg-foundation"
+        class="flex flex-col w-full h-full relative z-20 overflow-hidden sm:rounded-lg border-l border-t sm:border border-outline-2 bg-foundation"
+        :class="!isEmbedEnabled ? 'lg:rounded-none lg:border-0 lg:border-l' : ''"
       >
         <div
           class="h-10 pl-4 pr-2 flex items-center justify-between border-b border-outline-2"
@@ -39,6 +46,7 @@
 import { ref, onMounted } from 'vue'
 import { useEventListener, useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 defineProps<{
   open: boolean
@@ -52,12 +60,13 @@ const emit = defineEmits<{
 const resizableElement = ref(null)
 const resizeHandle = ref(null)
 const isResizing = ref(false)
-const width = ref(280)
+const width = ref(276)
 let startWidth = 0
 let startX = 0
 
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isLgOrLarger = breakpoints.greaterOrEqual('lg')
+const { isEnabled: isEmbedEnabled } = useEmbed()
 
 const startResizing = (event: MouseEvent) => {
   event.preventDefault()

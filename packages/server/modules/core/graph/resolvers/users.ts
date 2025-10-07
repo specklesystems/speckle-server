@@ -17,7 +17,7 @@ import {
   lookupUsersFactory,
   bulkLookupUsersFactory
 } from '@/modules/core/repositories/users'
-import { Users, UsersMeta } from '@/modules/core/dbSchema'
+import { isUsersMetaFlag, Users, UsersMeta } from '@/modules/core/dbSchema'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import {
   deleteAllUserInvitesFactory,
@@ -25,7 +25,7 @@ import {
   findServerInvitesFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import db from '@/db/knex'
-import { BadRequestError } from '@/modules/shared/errors'
+import { BadRequestError, InvalidArgumentError } from '@/modules/shared/errors'
 import {
   updateUserAndNotifyFactory,
   deleteUserFactory,
@@ -236,6 +236,13 @@ export default {
       const metaVal = await ctx.loaders.users.getUserMeta.load({
         userId: parent.userId,
         key: UsersMeta.metaKey.intelligenceCommunityStandUpBannerDismissed
+      })
+      return !!metaVal?.value
+    },
+    speckleCon25BannerDismissed: async (parent, _args, ctx) => {
+      const metaVal = await ctx.loaders.users.getUserMeta.load({
+        userId: parent.userId,
+        key: UsersMeta.metaKey.speckleCon25BannerDismissed
       })
       return !!metaVal?.value
     },
@@ -502,6 +509,16 @@ export default {
     meta: () => ({})
   },
   UserMetaMutations: {
+    setFlag: async (_parent, { key, value }, ctx) => {
+      if (!isUsersMetaFlag(key)) {
+        throw new InvalidArgumentError(`User flag ${key} is not known.`)
+      }
+
+      const meta = metaHelpers(Users, db)
+      const res = await meta.set(ctx.userId!, key, value)
+
+      return !!res.value
+    },
     setLegacyProjectsExplainerCollapsed: async (_parent, args, ctx) => {
       const meta = metaHelpers(Users, db)
       const res = await meta.set(
@@ -537,6 +554,16 @@ export default {
       const res = await meta.set(
         ctx.userId!,
         UsersMeta.metaKey.intelligenceCommunityStandUpBannerDismissed,
+        args.value
+      )
+
+      return !!res.value
+    },
+    setSpeckleCon25BannerDismissed: async (_parent, args, ctx) => {
+      const meta = metaHelpers(Users, db)
+      const res = await meta.set(
+        ctx.userId!,
+        UsersMeta.metaKey.speckleCon25BannerDismissed,
         args.value
       )
 

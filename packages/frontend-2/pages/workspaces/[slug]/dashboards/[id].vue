@@ -3,6 +3,7 @@
     <Portal to="navigation">
       <div class="flex items-center">
         <HeaderNavLink
+          v-if="isLoggedIn"
           :to="dashboardsRoute(workspace?.slug)"
           name="Dashboard"
           :separator="false"
@@ -10,8 +11,10 @@
         <HeaderNavLink
           :to="dashboardRoute(workspace?.slug, id as string)"
           :name="dashboard?.name"
+          :separator="isLoggedIn ? true : false"
         />
         <FormButton
+          v-if="canEdit && !hasDashboardToken"
           v-tippy="'Edit name'"
           size="sm"
           color="subtle"
@@ -24,7 +27,14 @@
     </Portal>
     <Portal to="primary-actions">
       <div class="flex items-center gap-2">
-        <DashboardsShare :id="dashboard?.id" />
+        <FormButton v-if="canEdit" size="sm" @click="editMode = !editMode">
+          {{ editModeButtonText }}
+        </FormButton>
+        <DashboardsShare
+          v-if="canRead && !hasDashboardToken"
+          :id="dashboard?.id"
+          :workspace-slug="workspace?.slug"
+        />
         <FormButton
           v-tippy="'Toggle fullscreen'"
           size="sm"
@@ -39,6 +49,7 @@
     </Portal>
     <div class="w-screen h-[calc(100vh-3rem)]">
       <iframe
+        :key="`dashboard-${id}-${editMode ? 'edit' : 'view'}`"
         :src="dashboardUrl"
         class="w-full h-full border-0"
         frameborder="0"
@@ -77,11 +88,20 @@ graphql(`
       slug
       logo
     }
+    permissions {
+      canEdit {
+        ...FullPermissionCheckResult
+      }
+      canRead {
+        ...FullPermissionCheckResult
+      }
+    }
   }
 `)
 
 definePageMeta({
-  layout: 'dashboard'
+  layout: 'dashboard',
+  middleware: ['require-valid-dashboard']
 })
 
 const { id } = useRoute().params
@@ -92,14 +112,29 @@ const { isDarkTheme } = useTheme()
 const {
   public: { dashboardsOrigin }
 } = useRuntimeConfig()
+const { isLoggedIn } = useActiveUser()
 
 const editDialogOpen = ref(false)
+const editMode = ref(false)
 
+const editModeButtonText = computed(() => {
+  return editMode.value ? 'Exit edit mode' : 'Edit'
+})
+
+const hasDashboardToken = computed(() => !!dashboardToken.value)
+const canEdit = computed(
+  () => result.value?.dashboard?.permissions?.canEdit?.authorized
+)
+const canRead = computed(
+  () => result.value?.dashboard?.permissions?.canRead?.authorized
+)
 const workspace = computed(() => result.value?.dashboard?.workspace)
 const dashboard = computed(() => result.value?.dashboard)
 const dashboardUrl = computed(
   () =>
-    `${dashboardsOrigin}/dashboards/${id}?token=${
+    `${dashboardsOrigin}/${
+      dashboardToken.value ? 'view' : editMode.value ? 'dashboards' : 'view'
+    }/${id}?token=${
       dashboardToken.value || effectiveAuthToken.value
     }&isEmbed=true&theme=${isDarkTheme.value ? 'dark' : 'light'}`
 )

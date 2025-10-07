@@ -3,8 +3,15 @@ extend type ProjectPermissionChecks {
 }
 
 type SavedViewPermissionChecks {
+  """
+  Can the current user fully update everything about this view. Even if this fails,
+  the user may be able to do partial updates (e.g. just change the title)
+  """
   canUpdate: PermissionCheckResult!
   canMove: PermissionCheckResult!
+  canEditTitle: PermissionCheckResult!
+  canEditDescription: PermissionCheckResult!
+  canSetAsHomeView: PermissionCheckResult!
 }
 
 extend type SavedView {
@@ -12,6 +19,7 @@ extend type SavedView {
 }
 
 type SavedViewGroupPermissionChecks {
+  canCreateToken: PermissionCheckResult!
   canUpdate: PermissionCheckResult!
 }
 

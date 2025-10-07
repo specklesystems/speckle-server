@@ -7,14 +7,16 @@ import { ensureError } from '@speckle/shared'
 export function getStringFromEnv(
   envVarKey: string,
   options?: Partial<{
+    default?: string
     /**
      * If set to true, wont throw if the env var is not set
      */
-    unsafe: boolean
+    unsafe?: boolean
   }>
 ): string {
   const envVar = process.env[envVarKey]
   if (!envVar) {
+    if (options?.default !== undefined) return options.default
     if (options?.unsafe) return ''
     throw new MisconfiguredEnvironmentError(`${envVarKey} env var not configured`)
   }
@@ -334,10 +336,6 @@ export function getOnboardingStreamCacheBustNumber() {
   return parseInt(val) || 1
 }
 
-export function getEmailFromAddress() {
-  return getStringFromEnv('EMAIL_FROM')
-}
-
 export function getMaximumProjectModelsPerPage() {
   return getIntFromEnv('MAX_PROJECT_MODELS_PER_PAGE', '500')
 }
@@ -371,6 +369,34 @@ export function getLicenseToken(): string | undefined {
 
 export function isEmailEnabled() {
   return getBooleanFromEnv('EMAIL')
+}
+
+export function getEmailFromAddress() {
+  return getStringFromEnv('EMAIL_FROM')
+}
+
+export function getEmailHost() {
+  return getStringFromEnv('EMAIL_HOST', { default: '127.0.0.1' })
+}
+
+export function getEmailPort() {
+  return getIntFromEnv('EMAIL_PORT', '587')
+}
+
+export function isSSLEmailEnabled() {
+  return getBooleanFromEnv('EMAIL_SECURE', false) // see EMAIL_REQUIRE_TLS
+}
+
+export function isTLSEmailRequired() {
+  return getBooleanFromEnv('EMAIL_REQUIRE_TLS', true) // default to true
+}
+
+export function getEmailUsername() {
+  return getStringFromEnv('EMAIL_USERNAME', { unsafe: true }) // can be empty
+}
+
+export function getEmailPassword() {
+  return getStringFromEnv('EMAIL_PASSWORD', { unsafe: true }) // can be empty
 }
 
 export const getFileImporterQueuePostgresUrl = () =>
@@ -520,6 +546,14 @@ export function getAutodeskIntegrationClientId() {
 
 export function getAutodeskIntegrationClientSecret() {
   return getStringFromEnv('AUTODESK_INTEGRATION_CLIENT_SECRET')
+}
+
+export function getOdaUserId() {
+  return getStringFromEnv('ODA_USER_ID')
+}
+
+export function getOdaUserSecret() {
+  return getStringFromEnv('ODA_USER_SECRET')
 }
 
 export const areSavedViewsEnabled = (): boolean =>

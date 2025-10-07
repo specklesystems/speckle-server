@@ -56,7 +56,6 @@ const createViewer = async (containerName: string, _stream: string) => {
   const boxSelect = viewer.createExtension(BoxSelection)
   boxSelect.realtimeSelection = false
   viewer.createExtension(PassReader)
-  // viewer.createExtension(SectionCaps)
 
   const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 
@@ -635,6 +634,12 @@ const getStream = () => {
 
     // Half a million circles + others stuff
     // 'https://app.speckle.systems/projects/18d51359fe/models/9f4c5f5947'
+
+    // Revit v3 instances
+    // 'https://app.speckle.systems/projects/03074a2834/models/a013d06fe1@cc11e1ead1'
+
+    // Gergo's new house
+    // 'https://app.speckle.systems/projects/4743372784/models/2aeaa357e6'
   )
 }
 

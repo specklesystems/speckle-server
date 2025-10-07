@@ -89,9 +89,10 @@ export const passportAuthenticationCallbackFactory =
     // Unfortunately openid-client <6.0.0 does not provide a third 'info' parameter
     // so we rely on user-input problems being passed to callback as errors.
     // This is a workaround until we upgrade to openid-client >=6.0.0
-    if (e && strategy === 'oidc' && failureType === null) {
+    if (e && ['oidc', 'google'].includes(strategy.toString()) && failureType === null) {
       switch (e.constructor.name) {
         case ExpectedAuthFailure.UserInputError:
+        case ExpectedAuthFailure.BlockedEmailDomainError:
         case ExpectedAuthFailure.InviteNotFoundError:
         case ExpectedAuthFailure.UnverifiedEmailSSOLoginError:
           // the error was being overloaded with user input problem information
@@ -181,6 +182,18 @@ export const passportAuthenticationCallbackFactory =
           })
         )
         return
+      case ExpectedAuthFailure.BlockedEmailDomainError:
+        res.redirect(
+          buildRedirectUrl({
+            resolveAuthRedirectPath,
+            path: defaultErrorPath(
+              infoMsg ||
+                'Please use your work email instead of a personal email address'
+            )
+          })
+        )
+        return
+
       case ExpectedAuthFailure.UnverifiedEmailSSOLoginError:
         const email = resolveEmail(info)
         res.redirect(

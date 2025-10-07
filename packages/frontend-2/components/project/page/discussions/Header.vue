@@ -9,6 +9,7 @@
           name="includeArchived"
           :value="true"
           label="Include resolved"
+          label-position="right"
         />
       </div>
     </div>

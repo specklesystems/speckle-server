@@ -30,12 +30,15 @@
         :resource-id-string="resourceIdString"
         :rules="[isRequired]"
       />
-      <FormRadioGroup
-        :options="visibilityOptions"
-        size="sm"
-        name="visibility"
-        :rules="[isRequired, validateVisibility]"
-      />
+      <div v-tippy="canToggleVisibility.message">
+        <FormRadioGroup
+          :options="visibilityOptions"
+          :disabled="!canToggleVisibility.authorized"
+          size="sm"
+          name="visibility"
+          :rules="[isRequired, validateVisibility]"
+        />
+      </div>
     </div>
   </LayoutDialog>
 </template>
@@ -90,9 +93,10 @@ const {
   }
 } = useInjectedViewerState()
 const updateView = useUpdateSavedView()
-const { validateVisibility, visibilityOptions } = useSavedViewValidationHelpers({
-  view: computed(() => props.view)
-})
+const { validateVisibility, visibilityOptions, canToggleVisibility } =
+  useSavedViewValidationHelpers({
+    view: computed(() => props.view)
+  })
 
 const buttons = computed((): LayoutDialogButton[] => [
   {
@@ -121,7 +125,7 @@ const onSubmit = handleSubmit(async (values) => {
       : undefined
   const description =
     values.description?.trim() !== (props.view.description || undefined)
-      ? values.description?.trim() || null
+      ? values.description?.trim() || ''
       : undefined
   const visibility =
     values.visibility !== props.view.visibility ? values.visibility : undefined
@@ -161,7 +165,7 @@ watch(open, (newVal, oldVal) => {
       name: props.view.name,
       description: props.view.description,
       visibility: props.view.visibility,
-      group: props.view.group
+      group: markRaw({ ...props.view.group }) // vue-validate doesnt like this read-only proxified object
     })
   }
 })

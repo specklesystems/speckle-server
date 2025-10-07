@@ -7,7 +7,7 @@
       <template v-if="views.length">
         <div
           v-if="views.length"
-          class="flex flex-col gap-[1px] overflow-y-auto overflow-x-hidden simple-scrollbar"
+          class="flex flex-col py-[2px] overflow-y-auto overflow-x-hidden simple-scrollbar"
         >
           <ViewerSavedViewsPanelView
             v-for="view in views"
@@ -77,6 +77,10 @@ const viewsQuery = graphql(`
   }
 `)
 
+const emit = defineEmits<{
+  'view-count-updated': [count: number]
+}>()
+
 const props = defineProps<{
   group: ViewerSavedViewsPanelViewsGroupInner_SavedViewGroupFragment
   viewsType: ViewsType
@@ -119,4 +123,13 @@ const {
 })
 
 const views = computed(() => result.value?.project.savedViewGroup.views.items || [])
+
+watch(
+  () => views.value.length,
+  (newVal, oldVal) => {
+    if (newVal === oldVal) return
+    emit('view-count-updated', newVal)
+  },
+  { immediate: true }
+)
 </script>

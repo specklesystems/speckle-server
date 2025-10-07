@@ -355,6 +355,22 @@ export const projectWebhooksQuery = graphql(`
   }
 `)
 
+export const projectIntegrationsQuery = graphql(`
+  query ProjectIntegrations($projectId: String!) {
+    project(id: $projectId) {
+      id
+      name
+      ...ProjectPageSettingsIntegrations_Project
+      accSyncItems {
+        items {
+          id
+        }
+        totalCount
+      }
+    }
+  }
+`)
+
 export const projectEmbedTokensQuery = graphql(`
   query ProjectEmbedTokens($projectId: String!, $cursor: String = null) {
     project(id: $projectId) {

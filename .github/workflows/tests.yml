@@ -3,13 +3,11 @@ name: Run all tests
 on:
   workflow_call:
     inputs:
-      IMAGE_VERSION_TAG:
-        required: true
-        type: string
-      DOCKERHUB_USERNAME:
-        required: true
-        type: string
       CONTINUE_ON_ERROR:
+        required: false
+        default: false
+        type: boolean
+      DISABLE_SKIPPING:
         required: false
         default: false
         type: boolean
@@ -26,10 +24,57 @@ on:
         required: true
       CODECOV_TOKEN:
         required: true
-      DOCKERHUB_TOKEN:
-        required: true
 
 jobs:
+  changes:
+    name: Get modified files
+    runs-on: blacksmith
+    outputs:
+      server: ${{ steps.changes.outputs.server }}
+      frontend-2: ${{ steps.changes.outputs.frontend-2 }}
+      preview-service: ${{ steps.changes.outputs.preview-service }}
+      viewer: ${{ steps.changes.outputs.viewer }}
+      ui-components: ${{ steps.changes.outputs.ui-components }}
+      objectsender: ${{ steps.changes.outputs.objectsender }}
+      shared: ${{ steps.changes.outputs.shared }}
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36
+        id: changes
+        with:
+          filters: |
+            server:
+              - 'packages/server/**'
+              - 'packages/shared/**'
+              - 'packages/objectloader2/**'
+            frontend-2:
+              - 'packages/frontend-2/**'
+              - 'packages/shared/**'
+              - 'packages/tailwind-theme/**'
+              - 'packages/ui-components/**'
+              - 'packages/ui-components-nuxt/**'
+              - 'packages/viewer/**'
+              - 'packages/objectloader2/**'
+            preview-service:
+              - 'packages/preview-service/**'
+              - 'packages/objectloader2/**'
+              - 'packages/preview-frontend/**'
+              - 'packages/shared/**'
+              - 'packages/viewer/**'
+            viewer:
+              - 'packages/viewer/**'
+              - 'packages/shared/**'
+            ui-components:
+              - 'packages/ui-components/**'
+              - 'packages/shared/**'
+            objectsender:
+              - 'packages/objectsender/**'
+              - 'packages/shared/**'
+            shared:
+              - 'packages/shared/**'
+
   lint-and-prettier:
     name: Lint and prettier
     runs-on: blacksmith-4vcpu-ubuntu-2404
@@ -75,6 +120,8 @@ jobs:
   test-frontend-2:
     name: Frontend
     runs-on: blacksmith-4vcpu-ubuntu-2404
+    needs: changes
+    if: ${{ needs.changes.outputs.frontend-2 == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -89,10 +136,15 @@ jobs:
       - name: Lint everything
         run: yarn lint:ci
         working-directory: 'packages/frontend-2'
+      - name: Show failure build logs
+        if: failure()
+        run: cat /tmp/xfs-*/build.log || true
 
   test-viewer:
     name: Viewer
     runs-on: blacksmith-4vcpu-ubuntu-2404
+    needs: changes
+    if: ${{ needs.changes.outputs.viewer == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -116,10 +168,15 @@ jobs:
       - name: Build viewer-sandbox
         run: yarn build
         working-directory: 'packages/viewer-sandbox'
+      - name: Show failure build logs
+        if: failure()
+        run: cat /tmp/xfs-*/build.log || true
 
   test-shared:
     name: Shared
     runs-on: blacksmith-4vcpu-ubuntu-2404
+    needs: changes
+    if: ${{ needs.changes.outputs.shared == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -153,10 +210,15 @@ jobs:
       - name: Ensure CJS require works
         run: node ./e2e/testCjs.cjs
         working-directory: 'packages/shared'
+      - name: Show failure build logs
+        if: failure()
+        run: cat /tmp/xfs-*/build.log || true
 
   test-objectsender:
     name: Object Sender
     runs-on: blacksmith-4vcpu-ubuntu-2404
+    needs: changes
+    if: ${{ needs.changes.outputs.objectsender == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -177,10 +239,15 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
           files: packages/objectsender/coverage/coverage-final.json
+      - name: Show failure build logs
+        if: failure()
+        run: cat /tmp/xfs-*/build.log || true
 
   test-ui-components:
     name: UI Components
     runs-on: blacksmith-4vcpu-ubuntu-2404
+    needs: changes
+    if: ${{ needs.changes.outputs.ui-components == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     steps:
       - uses: actions/checkout@v4.2.2
@@ -204,10 +271,15 @@ jobs:
       - name: Test via Storybook
         run: yarn storybook:test:ci
         working-directory: 'packages/ui-components'
+      - name: Show failure build logs
+        if: failure()
+        run: cat /tmp/xfs-*/build.log || true
 
   test-preview-service:
     name: Preview service
     runs-on: blacksmith-4vcpu-ubuntu-2404
+    needs: changes
+    if: ${{ needs.changes.outputs.preview-service == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     container:
       image: ghcr.io/specklesystems/speckle-ubuntu-chromium:latest
@@ -253,10 +325,15 @@ jobs:
           name: preview-service-logs-on-failure
           path: /tmp/**/*.log
           retention-days: 5
+      - name: Show failure build logs
+        if: failure()
+        run: cat /tmp/xfs-*/build.log || true
 
   test-server:
     name: Server
     runs-on: blacksmith-8vcpu-ubuntu-2404
+    needs: changes
+    if: ${{ needs.changes.outputs.server == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
       redis:
@@ -283,7 +360,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       minio:
-        image: bitnami/minio
+        image: minio/minio:edge-cicd
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
@@ -348,10 +425,15 @@ jobs:
       - name: Checking for GQL schema breakages against latest.speckle.systems
         run: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
         working-directory: 'packages/server'
+      - name: Show failure build logs
+        if: failure()
+        run: cat /tmp/xfs-*/build.log || true
 
   test-server-no-ff:
     name: Server no ff
     runs-on: blacksmith-8vcpu-ubuntu-2404
+    needs: changes
+    if: ${{ needs.changes.outputs.server == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     services:
       redis:
@@ -378,7 +460,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       minio:
-        image: bitnami/minio
+        image: minio/minio:edge-cicd
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
@@ -433,9 +515,14 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
           files: packages/server/coverage/lcov.info
+      - name: Show failure build logs
+        if: failure()
+        run: cat /tmp/xfs-*/build.log || true
 
   test-server-multiregion:
     name: Server multiregion
+    needs: changes
+    if: ${{ needs.changes.outputs.server == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     services:
@@ -463,6 +550,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
       postgres1:
         image: postgres:16.4-alpine3.20
         env:
@@ -477,6 +565,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
       postgres2:
         image: postgres:16.4-alpine3.20
         env:
@@ -491,8 +580,9 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
       minio0:
-        image: bitnami/minio
+        image: minio/minio:edge-cicd
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
@@ -501,7 +591,7 @@ jobs:
           - 9000:9000
 
       minio1:
-        image: bitnami/minio
+        image: minio/minio:edge-cicd
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
@@ -510,7 +600,7 @@ jobs:
           - 9001:9000
 
       minio2:
-        image: bitnami/minio
+        image: minio/minio:edge-cicd
         env:
           MINIO_ROOT_USER: minioadmin
           MINIO_ROOT_PASSWORD: minioadmin
@@ -572,3 +662,6 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
           files: packages/server/coverage/lcov.info
+      - name: Show failure build logs
+        if: failure()
+        run: cat /tmp/xfs-*/build.log || true

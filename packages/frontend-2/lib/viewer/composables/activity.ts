@@ -167,6 +167,9 @@ export function useViewerUserActivityBroadcasting(
       response: { project }
     }
   } = options?.state || useInjectedViewerState()
+  const {
+    public: { disableViewerActivityBroadcasting }
+  } = useRuntimeConfig()
   const { activeUser } = useActiveUser()
   const { update, activity, status, activityId } = useViewerRealtimeActivityTracker()
   const apollo = useApolloClient().client
@@ -186,7 +189,7 @@ export function useViewerUserActivityBroadcasting(
   }
 
   const invokeMutation = async () => {
-    if (!activeUser.value?.id) return false
+    if (!activeUser.value?.id || disableViewerActivityBroadcasting) return false
 
     const result = await apollo
       .mutate({
@@ -258,10 +261,19 @@ export type UserActivityModel = Merge<
 /**
  * Track other user activity and emit viewing/disconnected updates
  */
-export function useViewerUserActivityTracking(params: {
-  parentEl: Ref<Nullable<HTMLElement>>
-}) {
-  const { parentEl } = params
+export function useViewerUserActivityTracking(
+  params?: Partial<{
+    /**
+     * Set if you need users to be positioned correctly in viewer world space in an overlaid anchored points element
+     */
+    anchoredPointsParentEl: Ref<Nullable<HTMLElement>>
+    /**
+     * Whether to only track viewer state changes, without broadcasting it to other users or getting updates from them
+     */
+    trackInternallyOnly: boolean
+  }>
+) {
+  const { anchoredPointsParentEl: parentEl, trackInternallyOnly } = params || {}
 
   const {
     projectId,
@@ -272,9 +284,26 @@ export function useViewerUserActivityTracking(params: {
   } = useInjectedViewerState()
   const { isLoggedIn } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
+  const { update } = useViewerRealtimeActivityTracker()
   const sendUpdate = useViewerUserActivityBroadcasting()
   const { isEnabled: isEmbedEnabled } = useEmbed()
   const { activeUser } = useActiveUser()
+
+  const processViewerViewing = async () => {
+    if (trackInternallyOnly) {
+      update({ status: ViewerUserActivityStatus.Viewing })
+    } else {
+      await sendUpdate.emitViewing()
+    }
+  }
+
+  const processViewerDisconnected = async () => {
+    if (trackInternallyOnly) {
+      update({ status: ViewerUserActivityStatus.Disconnected })
+    } else {
+      await sendUpdate.emitDisconnected()
+    }
+  }
 
   // TODO: For some reason subscription is set up twice? Vue Apollo bug?
   const { onResult: onUserActivity } = useSubscription(
@@ -288,7 +317,7 @@ export function useViewerUserActivityTracking(params: {
       sessionId: sessionId.value
     }),
     () => ({
-      enabled: isLoggedIn.value
+      enabled: isLoggedIn.value && !trackInternallyOnly
     })
   )
 
@@ -375,53 +404,61 @@ export function useViewerUserActivityTracking(params: {
     }
   })
 
-  useViewerAnchoredPoints<UserActivityModel, Partial<{ smoothTranslation: boolean }>>({
-    parentEl,
-    points: computed(() => Object.values(users.value)),
-    pointLocationGetter: (user) => {
-      const selection = user.state.ui.selection
-      const selectionVector = selection
-        ? new Vector3(selection[0], selection[1], selection[2])
-        : null
+  if (parentEl) {
+    useViewerAnchoredPoints<UserActivityModel, Partial<{ smoothTranslation: boolean }>>(
+      {
+        parentEl,
+        points: computed(() => Object.values(users.value)),
+        pointLocationGetter: (user) => {
+          const selection = user.state.ui.selection
+          const selectionVector = selection
+            ? new Vector3(selection[0], selection[1], selection[2])
+            : null
 
-      function getPointInBetweenByPerc(
-        pointA: Vector3,
-        pointB: Vector3,
-        percentage: number
-      ) {
-        let dir = pointB.clone().sub(pointA)
-        const len = dir.length()
-        dir = dir.normalize().multiplyScalar(len * percentage)
-        return pointA.clone().add(dir)
-      }
+          function getPointInBetweenByPerc(
+            pointA: Vector3,
+            pointB: Vector3,
+            percentage: number
+          ) {
+            let dir = pointB.clone().sub(pointA)
+            const len = dir.length()
+            dir = dir.normalize().multiplyScalar(len * percentage)
+            return pointA.clone().add(dir)
+          }
 
-      // If there is no selection location, return to a blended location based on the camera's target and location.
-      // This ensures that rotation and zoom will have an effect on the users' cursors and create a lively environment.
-      if (!selectionVector) {
-        const camPos = user.state.ui.camera.position
-        const camPosVector = new Vector3(camPos[0], camPos[1], camPos[2])
+          // If there is no selection location, return to a blended location based on the camera's target and location.
+          // This ensures that rotation and zoom will have an effect on the users' cursors and create a lively environment.
+          if (!selectionVector) {
+            const camPos = user.state.ui.camera.position
+            const camPosVector = new Vector3(camPos[0], camPos[1], camPos[2])
 
-        const camTarget = user.state.ui.camera.target
-        const camTargetVector = new Vector3(camTarget[0], camTarget[1], camTarget[2])
+            const camTarget = user.state.ui.camera.target
+            const camTargetVector = new Vector3(
+              camTarget[0],
+              camTarget[1],
+              camTarget[2]
+            )
 
-        return getPointInBetweenByPerc(camTargetVector, camPosVector, 0.2)
-      }
+            return getPointInBetweenByPerc(camTargetVector, camPosVector, 0.2)
+          }
 
-      return selectionVector.clone()
-    },
-    updatePositionCallback: (user, result, options) => {
-      user.isOccluded = result.isOccluded
-      user.style = {
-        ...user.style,
-        target: {
-          ...user.style.target,
-          ...result.style,
-          transition: options?.smoothTranslation === false ? '' : 'all 0.1s ease'
-          // opacity: user.isOccluded ? '0.5' : user.isStale ? '0.2' : '1.0' // note: handled in component via css
+          return selectionVector.clone()
+        },
+        updatePositionCallback: (user, result, options) => {
+          user.isOccluded = result.isOccluded
+          user.style = {
+            ...user.style,
+            target: {
+              ...user.style.target,
+              ...result.style,
+              transition: options?.smoothTranslation === false ? '' : 'all 0.1s ease'
+              // opacity: user.isOccluded ? '0.5' : user.isStale ? '0.2' : '1.0' // note: handled in component via css
+            }
+          }
         }
       }
-    }
-  })
+    )
+  }
 
   const hideStaleUsers = () => {
     if (!Object.values(users.value).length) return
@@ -448,7 +485,7 @@ export function useViewerUserActivityTracking(params: {
   // Debounced disconnect function - 30 second delay
   const debouncedDisconnect = debounce(
     async () => {
-      await sendUpdate.emitDisconnected()
+      await processViewerDisconnected()
     },
     30 * 1000 // 30 seconds
   )
@@ -460,13 +497,13 @@ export function useViewerUserActivityTracking(params: {
     } else {
       // Window regained focus - cancel any pending disconnect and emit viewing
       debouncedDisconnect.cancel()
-      await sendUpdate.emitViewing()
+      await processViewerViewing()
     }
   })
   const sendUpdateAndHideStaleUsers = () => {
     if (!focused.value) return
     hideStaleUsers()
-    sendUpdate.emitViewing()
+    processViewerViewing()
   }
 
   useIntervalFn(sendUpdateAndHideStaleUsers, OWN_ACTIVITY_UPDATE_INTERVAL)
@@ -481,22 +518,22 @@ export function useViewerUserActivityTracking(params: {
     doubleClickCallback: selectionCallback
   })
 
-  useViewerCameraControlEndTracker(() => sendUpdate.emitViewing())
+  useViewerCameraControlEndTracker(() => processViewerViewing())
 
   useOnBeforeWindowUnload(async () => {
     // Cancel any pending debounced disconnect since we're actually leaving
     debouncedDisconnect.cancel()
-    await sendUpdate.emitDisconnected()
+    await processViewerDisconnected()
   })
 
   onMounted(() => {
-    sendUpdate.emitViewing()
+    processViewerViewing()
   })
 
   onBeforeUnmount(() => {
     // Cancel any pending debounced disconnect
     debouncedDisconnect.cancel()
-    sendUpdate.emitDisconnected()
+    void processViewerDisconnected()
   })
 
   const state = useInjectedViewerState()
@@ -516,7 +553,7 @@ export function useViewerUserActivityTracking(params: {
 
   watch(resourceIdString, (newVal, oldVal) => {
     if (newVal !== oldVal) {
-      sendUpdate.emitViewing()
+      void processViewerViewing()
     }
   })
 

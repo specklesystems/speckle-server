@@ -24,6 +24,11 @@
             >
               <ExclamationCircleIcon class="w-4 h-4" />
             </NuxtLink>
+            <IntegrationsAccSyncStatusModelItem
+              v-if="accSyncItem"
+              v-tippy=""
+              :item="accSyncItem"
+            />
             <ProjectPageModelsActions
               ref="actions"
               v-model:open="showActionsMenu"
@@ -57,6 +62,7 @@
         </div>
         <!-- Spacer -->
         <div class="flex-grow"></div>
+
         <template v-if="!isPendingFileUpload(item)">
           <div
             v-show="
@@ -74,7 +80,7 @@
             />
             <!-- Import area must exist even if hidden, so that we can trigger uploads from actions -->
             <ProjectCardImportFileArea
-              v-show="!pendingVersion"
+              v-show="!pendingVersion && !accSyncItem"
               ref="importArea"
               empty-state-variant="modelList"
               :project="project"
@@ -138,7 +144,7 @@
       >
         <NuxtLink
           :to="modelLink || ''"
-          class="h-full w-full block bg-foundation-page rounded-lg border border-outline-3 hover:border-outline-5"
+          class="h-full w-full block bg-foundation-page rounded-lg border border-outline-3 hover:border-outline-5 overflow-hidden"
         >
           <PreviewImage
             v-if="item.model?.previewUrl"
@@ -308,15 +314,15 @@ graphql(`
       ...ProjectPageLatestItemsModelItem
       ...ProjectCardImportFileArea_Model
       ...ProjectPageModelsCard_Model
+      accSyncItem {
+        id
+        ...SyncStatusModelItem_AccSyncItem
+      }
     }
     hasChildren
     updatedAt
   }
 `)
-
-const isPendingFileUpload = (
-  i: SingleLevelModelTreeItemFragment | PendingFileUploadFragment
-): i is PendingFileUploadFragment => has(i, 'uploadDate')
 
 const emit = defineEmits<{
   (e: 'model-updated'): void
@@ -331,6 +337,14 @@ const props = defineProps<{
 
 const router = useRouter()
 const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
+
+const accSyncItem = computed(() =>
+  props.item.__typename === 'ModelsTreeItem' ? props.item.model?.accSyncItem : undefined
+)
+
+const isPendingFileUpload = (
+  i: SingleLevelModelTreeItemFragment | PendingFileUploadFragment
+): i is PendingFileUploadFragment => has(i, 'uploadDate')
 
 const importArea = ref(
   null as Nullable<{

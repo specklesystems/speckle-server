@@ -41,9 +41,47 @@ const resolvers: Resolvers = {
         savedViewId
       })
       return toGraphqlResult(canMove)
+    },
+    canEditTitle: async (parent, _args, ctx) => {
+      const savedViewId = parent.savedView.id
+      const canEditTitle = await ctx.authPolicies.project.savedViews.canEditTitle({
+        userId: ctx.userId,
+        projectId: parent.savedView.projectId,
+        savedViewId
+      })
+      return toGraphqlResult(canEditTitle)
+    },
+    canEditDescription: async (parent, _args, ctx) => {
+      const savedViewId = parent.savedView.id
+      const canEditDescription =
+        await ctx.authPolicies.project.savedViews.canEditDescription({
+          userId: ctx.userId,
+          projectId: parent.savedView.projectId,
+          savedViewId
+        })
+      return toGraphqlResult(canEditDescription)
+    },
+    canSetAsHomeView: async (parent, _args, ctx) => {
+      const savedViewId = parent.savedView.id
+      const canSetAsHomeView =
+        await ctx.authPolicies.project.savedViews.canSetAsHomeView({
+          userId: ctx.userId,
+          projectId: parent.savedView.projectId,
+          savedViewId
+        })
+      return toGraphqlResult(canSetAsHomeView)
     }
   },
   SavedViewGroupPermissionChecks: {
+    canCreateToken: async (parent, _args, ctx) => {
+      const savedViewGroupId = parent.savedViewGroup.id
+      const authResult = await ctx.authPolicies.project.savedViews.canUpdateGroup({
+        userId: ctx.userId,
+        projectId: parent.savedViewGroup.projectId,
+        savedViewGroupId
+      })
+      return toGraphqlResult(authResult)
+    },
     canUpdate: async (parent, _args, ctx) => {
       const savedViewGroupId = parent.savedViewGroup.id
       const canUpdate = await ctx.authPolicies.project.savedViews.canUpdateGroup({

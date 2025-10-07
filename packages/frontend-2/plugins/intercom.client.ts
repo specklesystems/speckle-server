@@ -4,10 +4,14 @@ import Intercom, {
   show,
   hide,
   update,
-  trackEvent
+  trackEvent,
+  onShow
 } from '@intercom/messenger-js-sdk'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { useIntercomEnabled } from '~/lib/intercom/composables/enabled'
+import { useActiveWorkspaceSlug } from '~/lib/user/composables/activeWorkspace'
+import { intercomActiveWorkspaceQuery } from '~/lib/intercom/graphql/queries'
+import { useApolloClientFromNuxt } from '~/lib/common/composables/graphql'
 
 export const useIntercom = () => {
   const {
@@ -28,6 +32,8 @@ export const useIntercom = () => {
   const { activeUser: user } = useActiveUser()
   const { isIntercomEnabled, isRouteBlacklisted } = useIntercomEnabled()
   const route = useRoute()
+  const activeWorkspaceSlug = useActiveWorkspaceSlug()
+  const apolloClient = useApolloClientFromNuxt()
 
   const isInitialized = ref(false)
 
@@ -54,16 +60,45 @@ export const useIntercom = () => {
 
     // Hide default launcher on viewer routes (/models/)
     const isViewerRoute = route.path.includes('/models/')
+    const isPresentationRoute = route.path.includes('/presentations/')
+    const isDashboardRoute = route.path.includes('/dashboards/')
 
     Intercom({
       /* eslint-disable camelcase */
       app_id: intercomAppId,
       user_id: user.value.id || '',
       created_at: Math.floor(new Date(user.value.createdAt || '').getTime() / 1000),
-      hide_default_launcher: isViewerRoute,
+      hide_default_launcher: isViewerRoute || isPresentationRoute || isDashboardRoute,
       /* eslint-enable camelcase */
       name: user.value.name || '',
       email: user.value.email || ''
+    })
+
+    onShow(async () => {
+      try {
+        const result = await apolloClient.query({
+          query: intercomActiveWorkspaceQuery,
+          variables: {
+            slug: activeWorkspaceSlug.value || ''
+          }
+        })
+
+        if (result.data) {
+          const editorSeatCount =
+            result.data.workspaceBySlug.seats?.editors.assigned ||
+            0 + (result.data.workspaceBySlug.seats?.editors.available || 0)
+          updateCompany({
+            id: result.data.workspaceBySlug.id,
+            /* eslint-disable camelcase */
+            plan_name: result.data.workspaceBySlug.plan?.name,
+            plan_status: result.data.workspaceBySlug.plan?.status,
+            editor_seat_count: editorSeatCount
+            /* eslint-enable camelcase */
+          })
+        }
+      } catch {
+        // Silently fail - we don't want Intercom initialization to break
+      }
     })
   }
 
@@ -90,7 +125,9 @@ export const useIntercom = () => {
 
   // Update the 'company' (workspace) in Intercom with additional data
   const updateCompany = async (
-    data: { id: string } & Record<string, MaybeNullOrUndefined<string>> = { id: '' }
+    data: { id: string } & Record<string, MaybeNullOrUndefined<string | number>> = {
+      id: ''
+    }
   ) => {
     update({
       company: {
@@ -104,9 +141,12 @@ export const useIntercom = () => {
     if (!isInitialized.value) return
 
     const isViewerRoute = route.path.includes('/models/')
+    const isPresentationRoute = route.path.includes('/presentations/')
+    const isDashboardRoute = route.path.includes('/dashboards/')
+
     update({
       /* eslint-disable camelcase */
-      hide_default_launcher: isViewerRoute
+      hide_default_launcher: isViewerRoute || isPresentationRoute || isDashboardRoute
       /* eslint-enable camelcase */
     })
   }

@@ -40,7 +40,7 @@ const open = defineModel<boolean>('open', {
 const {
   projectId,
   resources: {
-    request: { resourceIdString }
+    response: { concreteResourceIdString }
   }
 } = useInjectedViewerState()
 const isLoading = useMutationLoading()
@@ -70,7 +70,7 @@ const onSubmit = handleSubmit(async (values) => {
 
   const group = await createGroup({
     projectId: projectId.value,
-    resourceIdString: resourceIdString.value,
+    resourceIdString: concreteResourceIdString.value,
     groupName: values.name
   })
   if (group) {

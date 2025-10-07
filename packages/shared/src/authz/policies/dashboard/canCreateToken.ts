@@ -2,6 +2,7 @@ import { err, ok } from 'true-myth/result'
 import { AuthCheckContextLoaderKeys } from '../../domain/loaders.js'
 import { DashboardContext, MaybeUserContext } from '../../domain/context.js'
 import {
+  DashboardNoProjectsError,
   DashboardNotFoundError,
   DashboardProjectsNotEnoughPermissionsError,
   DashboardsNotEnabledError,
@@ -40,6 +41,7 @@ type PolicyErrors = InstanceType<
   | typeof WorkspacePlanNoFeatureAccessError
   | typeof WorkspaceNoEditorSeatError
   | typeof DashboardNotFoundError
+  | typeof DashboardNoProjectsError
   | typeof DashboardProjectsNotEnoughPermissionsError
 >
 
@@ -76,6 +78,7 @@ export const canCreateDashboardTokenPolicy: AuthPolicy<
     })
     if (!isWorkspaceEditorSeat) return err(new WorkspaceNoEditorSeatError())
 
+    if (!dashboard.projectIds.length) return err(new DashboardNoProjectsError())
     const ensuredProjectAccess = await ensureDashboardProjectsReadAccess(loaders)({
       userId: userId!,
       dashboardId

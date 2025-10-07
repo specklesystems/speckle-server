@@ -1,4 +1,5 @@
 import { db } from '@/db/knex'
+import { ViewPositionInputType } from '@/modules/core/graph/generated/graphql'
 import {
   getBranchesByIdsFactory,
   getBranchLatestCommitsFactory,
@@ -9,6 +10,7 @@ import {
   getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   SavedViewVisibility,
   type SavedView
@@ -16,13 +18,16 @@ import {
 import { formatResourceIdsForGroup } from '@/modules/viewer/helpers/savedViews'
 import {
   getModelHomeSavedViewFactory,
+  getNewViewSpecificPositionFactory,
   getSavedViewFactory,
   getSavedViewGroupFactory,
   getStoredViewCountFactory,
+  rebalancingViewPositionsFactory,
   recalculateGroupResourceIdsFactory,
   setNewHomeViewFactory,
   storeSavedViewFactory
 } from '@/modules/viewer/repositories/savedViews'
+import { downscaleScreenshotForThumbnailFactory } from '@/modules/viewer/services/savedViewPreviews'
 import { createSavedViewFactory } from '@/modules/viewer/services/savedViewsManagement'
 import { getViewerResourceGroupsFactory } from '@/modules/viewer/services/viewerResources'
 import type { BasicTestUser } from '@/test/authHelper'
@@ -37,7 +42,7 @@ export const fakeScreenshot =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PiQ2YQAAAABJRU5ErkJggg=='
 
 export const fakeScreenshot2 =
-  'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAICAgICAgICAgICAgICAwUDAwMDAwYEBAMFBQYGBQYGBwcICQoJCQkJCQoMCgsMDAwMDAwP/2wBDAwMDAwQDBAgEBAgQEBAgMCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgP/wAARCAABAAEDAREAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAHEAP/EABQQAQAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAQUCf//EABQRAQAAAAAAAAAAAAAAAAAAAD/2gAIAQMBAT8BP//EABQRAQAAAAAAAAAAAAAAAAAAAD/2gAIAQIBAT8BP//Z'
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAQ0lEQVR4nGLW+WrL4H6p2dAx/J4S05cr7eGufmJpqo8vsDGlf7q0bGK4Nu88wc+rGb79lZDwi7y6X3x15VpAAAAA//85FRbiEsMfqwAAAABJRU5ErkJggg=='
 
 export const buildFakeSerializedViewerState = (
   overrides?: PartialDeep<ViewerState.SerializedViewerState>
@@ -90,6 +95,7 @@ export const buildTestSavedView = (overrides?: Partial<SavedView>): SavedView =>
         })
       ),
       screenshot: fakeScreenshot,
+      thumbnail: fakeScreenshot,
       position: 0,
       createdAt: new Date(Date.now() - 10000),
       updatedAt: new Date(Date.now() - 10000)
@@ -132,12 +138,21 @@ export const createTestSavedView = async (params?: {
     }),
     setNewHomeView: setNewHomeViewFactory({
       db
-    })
+    }),
+    getNewViewSpecificPosition: getNewViewSpecificPositionFactory({
+      db
+    }),
+    rebalanceViewPositions: rebalancingViewPositionsFactory({ db }),
+    downscaleScreenshotForThumbnail: downscaleScreenshotForThumbnailFactory(),
+    emit: getEventBus().emit
   })
 
   const createdView = await createSavedView({
     input: {
       ...view,
+      position: {
+        type: ViewPositionInputType.Between
+      },
       resourceIdString: view.resourceIds.join(','),
       viewerState: view.viewerState.state
     },

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="w-full h-5" :style="props.style">
+    <div class="w-full h-5 max-w-96" :style="props.style">
       <div class="relative">
         <!-- Min range input -->
         <input
@@ -44,13 +44,14 @@
 
         <!-- Visual track highlight between handles -->
         <div
-          class="absolute top-0.5 h-3 w-full pointer-events-none z-0 rounded-full overflow-hidden"
+          class="absolute top-0.5 h-3 w-full pointer-events-none z-0 overflow-hidden"
           style="background: transparent"
         >
           <div
-            class="absolute inset-0 bg-gray-300/60 dark:bg-gray-200/40 rounded-full"
+            class="absolute inset-0 bg-gray-300/60 dark:bg-gray-200/40"
             :style="{
-              clipPath: `inset(0 ${100 - maxPercentage}% 0 ${minPercentage}%)`
+              left: trackLeft,
+              right: trackRight
             }"
           />
         </div>
@@ -142,6 +143,20 @@ const maxPercentage = computed(() => {
     ((modelValue.value.max - props.min) / (props.max - props.min)) * 100
   const thumbOffset = 0.5
   return Math.min(100, basePercentage + thumbOffset)
+})
+
+const trackLeft = computed(() => {
+  const percentage = minPercentage.value
+  if (percentage < 25) return `${percentage + 2.5}%`
+  if (percentage > 75) return `${percentage - 2.5}%`
+  return `${percentage}%`
+})
+
+const trackRight = computed(() => {
+  const percentage = 100 - maxPercentage.value
+  if (percentage < 25) return `${percentage + 2.5}%`
+  if (percentage > 75) return `${percentage - 2.5}%`
+  return `${percentage}%`
 })
 
 const handleMinInput = (event: Event) => {

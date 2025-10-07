@@ -3,8 +3,14 @@ import { graphql } from '~~/lib/common/generated/gql'
 export const projectAccSyncItemFragment = graphql(`
   fragment ProjectAccSyncItem on AccSyncItem {
     id
-    projectId
-    modelId
+    project {
+      id
+      name
+    }
+    model {
+      id
+      name
+    }
     accRegion
     accHubId
     accProjectId

@@ -13,8 +13,8 @@
           <IconSidebarClose v-else class="h-4 w-4 -ml-1 -mr-1" />
         </FormButton>
 
-        <NuxtLink :to="exitSettingsRoute" class="flex items-center gap-x-1 pl-0.5">
-          <ChevronLeftIcon class="h-4 w-4 text-foreground-2" />
+        <NuxtLink :to="exitSettingsRoute" class="flex items-center">
+          <FormButton :icon-left="ChevronLeftIcon" hide-text color="subtle" />
           <p class="text-body-xs font-medium text-foreground">Settings</p>
         </NuxtLink>
       </div>

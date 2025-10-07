@@ -50,11 +50,25 @@ import { omit } from 'lodash-es'
 import { createAndStoreTestWorkspaceFactory } from '@/test/speckle-helpers/workspaces'
 import { WorkspaceJoinRequests } from '@/modules/workspacesCore/helpers/db'
 import { insertInviteAndDeleteOldFactory } from '@/modules/serverinvites/repositories/serverInvites'
+import type { UpsertWorkspace } from '@/modules/workspaces/domain/operations'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
+import { logger } from '@/observability/logging'
+
 const getWorkspace = getWorkspaceFactory({ db })
 const getWorkspaces = getWorkspacesFactory({ db })
 const getWorkspaceBySlug = getWorkspaceBySlugFactory({ db })
 const getWorkspaceCollaborators = getWorkspaceCollaboratorsFactory({ db })
-const deleteWorkspace = deleteWorkspaceFactory({ db })
+const deleteWorkspace = async (args: { workspaceId: string }) =>
+  asMultiregionalOperation(
+    ({ allDbs }) => replicateFactory(allDbs, deleteWorkspaceFactory)(args),
+    {
+      logger,
+      name: 'delete workspace spec',
+      dbs: await getAllRegisteredDbs()
+    }
+  )
+
 const deleteWorkspaceRole = deleteWorkspaceRoleFactory({ db })
 const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
 const getWorkspaceRoleForUser = getWorkspaceRoleForUserFactory({ db })
@@ -67,7 +81,16 @@ const getUserDiscoverableWorkspaces = getUserDiscoverableWorkspacesFactory({ db 
 const getUserEligibleWorkspaces = getUserEligibleWorkspacesFactory({ db })
 const upsertProjectRole = upsertProjectRoleFactory({ db })
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
-const upsertWorkspace = upsertWorkspaceFactory({ db })
+const upsertWorkspace: UpsertWorkspace = async (...args) =>
+  asMultiregionalOperation(
+    ({ allDbs }) => replicateFactory(allDbs, upsertWorkspaceFactory)(...args),
+    {
+      logger,
+      name: 'delete workspace spec',
+      dbs: await getAllRegisteredDbs()
+    }
+  )
+
 const insertInviteAndDeleteOld = insertInviteAndDeleteOldFactory({ db })
 
 const createAndStoreTestWorkspace = createAndStoreTestWorkspaceFactory({

@@ -188,6 +188,48 @@ export default class SpeckleRenderer {
     return bounds
   }
 
+  public get visibleSceneBox(): Box3 {
+    const bounds: Box3 = new Box3()
+    const batches = this.batcher.getBatches()
+    for (let k = 0; k < batches.length; k++) {
+      const batch = batches[k]
+      const rvs = batch.renderViews.slice()
+      rvs.sort((a, b) => {
+        return a.batchStart - b.batchStart
+      })
+      let batchObjects = null
+      if (isAcceleratedBatchType(batch)) {
+        batchObjects = batch.mesh.batchObjects.slice()
+        batchObjects.sort((a, b) => {
+          return a.renderView.batchStart - b.renderView.batchStart
+        })
+      }
+
+      const visibleRange = batch.getVisibleRange()
+      let lo = 0,
+        hi = rvs.length
+      while (lo < hi) {
+        const mid = (lo + hi) >>> 1
+        if (rvs[mid].batchStart < visibleRange.offset) lo = mid + 1
+        else hi = mid
+      }
+
+      const qStart = visibleRange.offset
+      const qEnd = visibleRange.offset + visibleRange.count
+
+      for (; lo < rvs.length; lo++) {
+        const s = rvs[lo]
+        const b = batchObjects ? batchObjects[lo] : null
+        if (s.batchStart >= qEnd) break
+        const sEnd = s.batchStart + s.batchCount
+        if (s.batchStart >= qStart && sEnd <= qEnd) {
+          bounds.union(b ? b.aabb : s.aabb)
+        }
+      }
+    }
+    return bounds
+  }
+
   public get sceneSphere(): Sphere {
     return this.sceneBox.getBoundingSphere(new Sphere())
   }
@@ -199,7 +241,7 @@ export default class SpeckleRenderer {
   public get clippingVolume(): OBB {
     return !this._clippingVolume.isEmpty() && this._renderer.localClippingEnabled
       ? this._clippingVolume
-      : new OBB().fromBox3(this.sceneBox)
+      : new OBB().fromBox3(this.visibleSceneBox)
   }
 
   public set clippingVolume(box: Box3 | OBB) {
@@ -1215,7 +1257,7 @@ export default class SpeckleRenderer {
             rvs.push(...this.tree.getRenderTree().getRenderViewsForNode(node))
           })
       }
-    } else box = this.sceneBox
+    } else box = this.visibleSceneBox
     for (let k = 0; k < rvs.length; k++) {
       const object = this.getObject(rvs[k])
       const aabb = object ? object.aabb : rvs[k].aabb

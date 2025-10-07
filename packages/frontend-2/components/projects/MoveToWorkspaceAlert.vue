@@ -17,7 +17,7 @@
               Personal projects are being phased out. Move your projects to a workspace
               to create new projects and models, invite new project collaborators, and
               view comments and versions older than 7 days. By January 1st 2026, all
-              projects will be archived if not moved into a workspace.
+              projects will be deleted if not moved into a workspace.
             </div>
             <div class="flex gap-2">
               <div

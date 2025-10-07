@@ -230,6 +230,7 @@ source = { editable = "." }
 dependencies = [
     { name = "asyncpg" },
     { name = "colorful" },
+    { name = "prometheus-client" },
     { name = "pydantic" },
     { name = "python-dotenv" },
     { name = "specklepy", extra = ["speckleifc"] },
@@ -249,9 +250,10 @@ dev = [
 requires-dist = [
     { name = "asyncpg", specifier = ">=0.30.0" },
     { name = "colorful", specifier = ">=0.5.7" },
+    { name = "prometheus-client", specifier = ">=0.23.1" },
     { name = "pydantic", specifier = ">=2.11.7" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
-    { name = "specklepy", extras = ["speckleifc"], specifier = ">=3.0.5" },
+    { name = "specklepy", extras = ["speckleifc"], specifier = ">=3.0.7" },
     { name = "structlog", specifier = ">=25.4.0" },
     { name = "structlog-to-seq", specifier = ">=21.0.0" },
     { name = "typed-settings", specifier = ">=24.5.0" },
@@ -412,6 +414,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/14/ba/5b5c9978c4bb161034148ade2de9db44ec316fab89ce8c400db0e0c81f86/numpy-2.3.2-cp314-cp314t-win32.whl", hash = "sha256:6f1ae3dcb840edccc45af496f312528c15b1f79ac318169d094e85e4bb35fdf1", size = 6514777, upload-time = "2025-07-24T20:55:57.66Z" },
     { url = "https://files.pythonhosted.org/packages/eb/46/3dbaf0ae7c17cdc46b9f662c56da2054887b8d9e737c1476f335c83d33db/numpy-2.3.2-cp314-cp314t-win_amd64.whl", hash = "sha256:087ffc25890d89a43536f75c5fe8770922008758e8eeeef61733957041ed2f9b", size = 13111856, upload-time = "2025-07-24T20:56:17.318Z" },
     { url = "https://files.pythonhosted.org/packages/c1/9e/1652778bce745a67b5fe05adde60ed362d38eb17d919a540e813d30f6874/numpy-2.3.2-cp314-cp314t-win_arm64.whl", hash = "sha256:092aeb3449833ea9c0bf0089d70c29ae480685dd2377ec9cdbbb620257f84631", size = 10544226, upload-time = "2025-07-24T20:56:34.509Z" },
+]
+
+[[package]]
+name = "prometheus-client"
+version = "0.23.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/23/53/3edb5d68ecf6b38fcbcc1ad28391117d2a322d9a1a3eff04bfdb184d8c3b/prometheus_client-0.23.1.tar.gz", hash = "sha256:6ae8f9081eaaaf153a2e959d2e6c4f4fb57b12ef76c8c7980202f1e57b48b2ce", size = 80481, upload-time = "2025-09-18T20:47:25.043Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b8/db/14bafcb4af2139e046d03fd00dea7873e48eafe18b7d2797e73d6681f210/prometheus_client-0.23.1-py3-none-any.whl", hash = "sha256:dd1913e6e76b59cfe44e7a4b83e01afc9873c1bdfd2ed8739f1e76aeca115f99", size = 61145, upload-time = "2025-09-18T20:47:23.875Z" },
 ]
 
 [[package]]
@@ -632,7 +643,7 @@ wheels = [
 
 [[package]]
 name = "specklepy"
-version = "3.0.5"
+version = "3.0.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "appdirs" },
@@ -644,9 +655,9 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "ujson" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d2/d2/989517884c32a1432b0e72f9647992de38f27ee9e2d63f1ad9896166f4ad/specklepy-3.0.5.tar.gz", hash = "sha256:9641494131deaee4f2b58bc7074a4b08a0a30c00510dcec30d87ad144bfe3379", size = 94263, upload-time = "2025-09-08T14:04:56.343Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/16/fe/ef7fc472faf9399a1490ab20681fb81024c5f5a1eb48aeea8d68bb5832d8/specklepy-3.0.9.tar.gz", hash = "sha256:530215a87a625fd4975fc5b9a50aa94ea96f43dc86c2dd2ac4402f14635bce7d", size = 94543, upload-time = "2025-10-02T15:48:29.721Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f8/47/a8facb3be657b1a90ec3d465f644a1e75d97a24371621aa9f70b1afffffd/specklepy-3.0.5-py3-none-any.whl", hash = "sha256:2f91e512f2f2e4e77d86b85025e56012b30c18080329202575735b16236383de", size = 143227, upload-time = "2025-09-08T14:04:54.859Z" },
+    { url = "https://files.pythonhosted.org/packages/46/8b/4247e750bc1fc1ee52219c72e8cfc661a50c9d917e9079928970dc6d610b/specklepy-3.0.9-py3-none-any.whl", hash = "sha256:66f32c84e3a9a114e327dbab755515fe4f206b8584cc1142e43d2c480f7b45a6", size = 143527, upload-time = "2025-10-02T15:48:28.544Z" },
 ]
 
 [package.optional-dependencies]

@@ -3,6 +3,7 @@ import type { NumericPropertyInfo } from '@speckle/viewer'
 import { watchTriggerable } from '@vueuse/core'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { useOnViewerLoadComplete } from '~/lib/viewer/composables/viewer'
+import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
 
 /**
  * Integration composable that sets up watchers to sync state with the viewer.
@@ -14,6 +15,7 @@ export const useFilterColoringPostSetup = () => {
     viewer
   } = useInjectedViewerState()
 
+  const dataStore = useFilteringDataStore()
   const filteringExtension = () => viewer.instance.getExtension(FilteringExtension)
 
   /**
@@ -29,16 +31,22 @@ export const useFilterColoringPostSetup = () => {
     const min = parseFloat(filter.numericRange.min.toFixed(4))
     const max = parseFloat(filter.numericRange.max.toFixed(4))
 
+    // Get the final filtered object IDs from all active filters to ensure coloring respects all filters
+    const finalFilteredObjectIds = new Set(dataStore.getFinalObjectIds())
+
     const colorGroups =
       numericFilter.valueGroups
         ?.filter((vg) => {
           // Apply the same rounding precision to valueGroup values for consistent comparison
           const roundedValue = parseFloat(vg.value.toFixed(4))
           const inRange = roundedValue >= min && roundedValue <= max
-          return inRange
+          // Only include objects that are in the final filtered set (intersection of all active filters)
+          const isInFinalFilteredSet = finalFilteredObjectIds.has(vg.id)
+          return inRange && isInFinalFilteredSet
         })
         ?.map((vg) => {
-          const normalizedValue = (vg.value - min) / (max - min)
+          const normalizedValue =
+            (vg.value - numericFilter.min) / (numericFilter.max - numericFilter.min)
           const fromColor = { r: 59, g: 130, b: 246 } // #3b82f6
           const toColor = { r: 236, g: 72, b: 153 } // #ec4899
 
@@ -139,6 +147,29 @@ export const useFilterColoringPostSetup = () => {
             setStringColorFilter(activeFilterId)
           }
         }
+      }
+    },
+    { deep: true }
+  )
+
+  /**
+   * Watch for changes to numeric range values and re-apply color filter
+   */
+  watchTriggerable(
+    () =>
+      filters.propertyFilters.value
+        .map((f) => (f.type === 'numeric' ? { id: f.id, range: f.numericRange } : null))
+        .filter(Boolean),
+    () => {
+      const activeFilterId = filters.activeColorFilterId.value
+      if (!activeFilterId) return
+
+      const activeFilter = filters.propertyFilters.value.find(
+        (f) => f.id === activeFilterId
+      )
+
+      if (activeFilter?.filter && activeFilter.type === 'numeric') {
+        setNumericColorFilter(activeFilterId)
       }
     },
     { deep: true }

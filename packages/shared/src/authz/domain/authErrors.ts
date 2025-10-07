@@ -211,6 +211,11 @@ export const SavedViewNoAccessError = defineAuthError({
   message: 'You do not have access to this saved view'
 })
 
+export const SavedViewInvalidUpdateError = defineAuthError({
+  code: 'SavedViewInvalidUpdate',
+  message: 'The requested update is invalid'
+})
+
 export const SavedViewGroupNotFoundError = defineAuthError({
   code: 'SavedViewGroupNotFound',
   message: 'Saved view group not found'
@@ -229,6 +234,12 @@ export const DashboardsNotEnabledError = defineAuthError({
 export const DashboardNotFoundError = defineAuthError({
   code: 'DashboardNotFound',
   message: 'Dashboard not found'
+})
+
+export const DashboardNoProjectsError = defineAuthError({
+  code: 'DashboardNoProjects',
+  message:
+    'Dashboard has no projects added to it. You need to add at least one project before sharing.'
 })
 
 export const DashboardProjectsNotEnoughPermissionsError = defineAuthError<

@@ -3,6 +3,7 @@ import type { GenericValidateFunction } from 'vee-validate'
 import { graphql } from '~/lib/common/generated/gql/gql'
 import {
   SavedViewVisibility,
+  type FullPermissionCheckResultFragment,
   type UseSavedViewValidationHelpers_SavedViewFragment
 } from '~/lib/common/generated/gql/graphql'
 import { Globe, User } from 'lucide-vue-next'
@@ -20,6 +21,15 @@ graphql(`
         ...FullPermissionCheckResult
       }
       canMove {
+        ...FullPermissionCheckResult
+      }
+      canEditTitle {
+        ...FullPermissionCheckResult
+      }
+      canEditDescription {
+        ...FullPermissionCheckResult
+      }
+      canSetAsHomeView {
         ...FullPermissionCheckResult
       }
     }
@@ -40,8 +50,31 @@ export const useSavedViewValidationHelpers = (params: {
     }
   } = useInjectedViewerState()
 
-  const canUpdate = computed(() => params.view.value?.permissions.canUpdate)
-  const canMove = computed(() => params.view.value?.permissions.canMove)
+  const permissions = computed(() => params.view.value?.permissions)
+  const canUpdate = computed(() => permissions.value?.canUpdate)
+  const canMove = computed(() => permissions.value?.canMove)
+  const canEditTitle = computed(() => permissions.value?.canEditTitle)
+  const canEditDescription = computed(() => permissions.value?.canEditDescription)
+
+  const canOpenEditDialog = computed(
+    (): FullPermissionCheckResultFragment | undefined => {
+      if (isLoading.value) {
+        return {
+          authorized: false,
+          errorMessage: undefined,
+          code: 'LOADING',
+          message: ''
+        }
+      }
+
+      if (canUpdate.value?.authorized) return canUpdate.value
+      if (canEditTitle.value?.authorized) return canEditTitle.value
+      if (canEditDescription.value?.authorized) return canEditDescription.value
+      if (canMove.value?.authorized) return canMove.value
+      return canMove.value
+    }
+  )
+
   const isOnlyVisibleToMe = computed(
     () => params.view.value?.visibility === SavedViewVisibility.AuthorOnly
   )
@@ -73,10 +106,10 @@ export const useSavedViewValidationHelpers = (params: {
 
   const canSetHomeView = computed(
     (): { authorized: boolean; message: Optional<string> } => {
-      if (!canUpdate.value?.authorized || isLoading.value) {
+      if (!permissions.value?.canSetAsHomeView.authorized || isLoading.value) {
         return {
           authorized: false,
-          message: canUpdate.value?.errorMessage || undefined
+          message: permissions.value?.canSetAsHomeView.errorMessage || undefined
         }
       }
 
@@ -84,13 +117,6 @@ export const useSavedViewValidationHelpers = (params: {
         return {
           authorized: false,
           message: "Home view settings can't be updated while in a federated view"
-        }
-      }
-
-      if (isOnlyVisibleToMe.value) {
-        return {
-          authorized: false,
-          message: 'A view must be shared to be set as home view'
         }
       }
 
@@ -134,6 +160,9 @@ export const useSavedViewValidationHelpers = (params: {
     canSetHomeView,
     isHomeView,
     canToggleVisibility,
-    canMove
+    canMove,
+    canEditTitle,
+    canEditDescription,
+    canOpenEditDialog
   }
 }

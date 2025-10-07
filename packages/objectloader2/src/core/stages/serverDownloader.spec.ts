@@ -257,4 +257,126 @@ describe('downloader', () => {
     })
     await downloader.disposeAsync()
   })
+
+  test('nothing is frozen when validateResponse returns 403', async () => {
+    const fetchMocker = createFetchMock(vi)
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    // Mock a 403 Forbidden response
+    fetchMocker.mockResponseOnce('', { status: 403, statusText: 'Forbidden' })
+
+    const gathered = new AsyncGeneratorQueue<Item>()
+    const downloader = new ServerDownloader({
+      serverUrl: 'http://speckle.test',
+      streamId: 'streamId',
+      objectId: 'objectId',
+      token: 'invalid-token',
+      fetch: fetchMocker,
+      logger: (): void => {}
+    })
+
+    try {
+      downloader.initialize({
+        results: gathered,
+        total: 2,
+        maxDownloadBatchWait: 100
+      })
+
+      // Add items to trigger batch processing
+      downloader.add('id1')
+      downloader.add('id2')
+
+      // Wait for the batch to be processed and fail with 403
+      await new Promise((resolve) => setTimeout(resolve, 200))
+
+      // Verify that the error was logged (indicating the batch processing failed)
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Batch processing failed:',
+        expect.any(Error)
+      )
+
+      // The key test: verify we can still dispose the downloader properly
+      // This ensures the system isn't frozen and can clean up resources
+      const disposePromise = downloader.disposeAsync()
+
+      // Add a timeout to ensure disposal doesn't hang indefinitely
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Disposal timed out')), 5000)
+      })
+
+      // This should complete without timing out or throwing
+      await Promise.race([disposePromise, timeoutPromise])
+
+      // Additional verification: the batching queue should be marked as disposed
+      // We can't directly access the private field, but we can verify disposal completed
+      expect(true).toBe(true) // If we reach here, disposal succeeded
+    } finally {
+      consoleErrorSpy.mockRestore()
+    }
+  })
+
+  test('system remains functional after 403 error and can be properly cleaned up', async () => {
+    const fetchMocker = createFetchMock(vi)
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    // First call returns 403, subsequent calls should not be made due to queue disposal
+    fetchMocker.mockResponseOnce('', { status: 403, statusText: 'Forbidden' })
+
+    const gathered = new AsyncGeneratorQueue<Item>()
+    const downloader = new ServerDownloader({
+      serverUrl: 'http://speckle.test',
+      streamId: 'streamId',
+      objectId: 'objectId',
+      token: 'invalid-token',
+      fetch: fetchMocker,
+      logger: (): void => {}
+    })
+
+    try {
+      downloader.initialize({
+        results: gathered,
+        total: 5,
+        maxDownloadBatchWait: 50
+      })
+
+      // Add first batch that will trigger the 403 error
+      downloader.add('id1')
+      downloader.add('id2')
+
+      // Wait for first batch to fail
+      await new Promise((resolve) => setTimeout(resolve, 100))
+
+      // Verify error was logged
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Batch processing failed:',
+        expect.any(Error)
+      )
+
+      // Try to add more items after the failure
+      // These should be ignored since the queue is now disposed
+      downloader.add('id3')
+      downloader.add('id4')
+      downloader.add('id5')
+
+      // Wait a bit more to ensure no additional processing attempts
+      await new Promise((resolve) => setTimeout(resolve, 100))
+
+      // Note: The batching queue might make multiple attempts before disposal
+      // The key is that disposal should still work regardless of how many calls were made
+      expect(fetchMocker).toHaveBeenCalled()
+
+      // Critical test: disposal should complete without hanging
+      const start = Date.now()
+      await downloader.disposeAsync()
+      const elapsed = Date.now() - start
+
+      // Disposal should be quick (under 1 second) and not hang
+      expect(elapsed).toBeLessThan(1000)
+
+      // Verify that the results queue can also be disposed properly
+      await gathered.disposeAsync()
+    } finally {
+      consoleErrorSpy.mockRestore()
+    }
+  })
 })

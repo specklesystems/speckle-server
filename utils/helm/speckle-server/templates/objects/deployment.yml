@@ -14,6 +14,9 @@ spec:
       project: speckle-server
   strategy:
     type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: {{ .Values.objects.rollingUpdate.maxUnavailable | quote }}
+      maxSurge: {{ .Values.objects.rollingUpdate.maxSurge | quote }}
   template:
     metadata:
       labels:

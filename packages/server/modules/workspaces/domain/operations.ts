@@ -113,6 +113,7 @@ export type GetWorkspaceDomains = (args: {
 
 type DeleteWorkspaceArgs = {
   workspaceId: string
+  userId: Nullable<string>
 }
 
 export type CountDomainsByWorkspaceId = (args: {

@@ -1,7 +1,13 @@
 image:
+  repository: bitnamilegacy/postgresql
   debug: true
 volumePermissions:
   enabled: true
+  image:
+    repository: bitnamilegacy/os-shell
+metrics:
+  image:
+    repository: bitnamilegacy/postgres-exporter
 primary:
   auth:
     username: postgres
@@ -35,3 +41,6 @@ primary:
             TABLESPACE = pg_default
             CONNECTION LIMIT = -1;
         -- End Speckle Server Tests
+global:
+  security:
+    allowInsecureImages: true # needed for bitnamilegacy images

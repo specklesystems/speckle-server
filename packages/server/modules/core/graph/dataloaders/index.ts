@@ -92,8 +92,6 @@ import type {
 import { logger } from '@/observability/logging'
 import { getLastVersionsByProjectIdFactory } from '@/modules/core/repositories/versions'
 import type { StreamRoles } from '@speckle/shared'
-import { getAccSyncItemsByIdFactory } from '@/modules/acc/repositories/accSyncItems'
-import type { AccSyncItem } from '@/modules/acc/domain/types'
 
 declare module '@/modules/core/loaders' {
   interface ModularizedDataLoaders extends ReturnType<typeof dataLoadersDefinition> {}
@@ -141,7 +139,6 @@ const dataLoadersDefinition = defineRequestDataloaders(
     const getStreamsCollaboratorCounts = getStreamsCollaboratorCountsFactory({
       db
     })
-    const getAccSyncItemsById = getAccSyncItemsByIdFactory({ db })
 
     return {
       streams: {
@@ -549,15 +546,6 @@ const dataLoadersDefinition = defineRequestDataloaders(
         getAppScopes: createLoader<string, Array<Scope>>(async (appIds) => {
           const results = await getAppScopes(appIds.slice())
           return appIds.map((i) => results[i] || [])
-        })
-      },
-      acc: {
-        getAccSyncItem: createLoader<string, Nullable<AccSyncItem>>(async (ids) => {
-          const results = keyBy(
-            await getAccSyncItemsById({ ids: ids.slice() }),
-            (i) => i.id
-          )
-          return ids.map((i) => results[i] || null)
         })
       },
       automations: {

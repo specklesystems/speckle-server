@@ -64,10 +64,15 @@ export interface SectionBoxData {
  * v1.4 -> 1.5
  * - ui.measurement.measurements added
  * v1.5 -> 1.6
- * - ui.filters.propertyFilters unified with propertyFilter (propertyFilter now computed from first propertyFilters item)
- * - Migration logic added to convert legacy propertyFilter to propertyFilters array format
+ * - ui.filters.propertyFilter -> propertyFilters
+ * - activeColorFilterId added
+ * v1.6 -> 1.7
+ * - ui.filters.filterLogic added
+ * - ui.filters.propertyFilters.condition updated
+ * v1.7 -> 1.8
+ * - ui.filters.propertyFilters.numericRange added
  */
-export const SERIALIZED_VIEWER_STATE_VERSION = 1.6
+export const SERIALIZED_VIEWER_STATE_VERSION = 1.8
 
 export type SerializedViewerState = {
   projectId: string
@@ -108,17 +113,16 @@ export type SerializedViewerState = {
       hiddenObjectIds: string[]
       /** Map of object id => application id or null, if no application id */
       selectedObjectApplicationIds: Record<string, string | null>
-      propertyFilter?: {
-        key: Nullable<string>
-        isApplied: boolean
-      }
-      propertyFilters?: Array<{
+      propertyFilters: Array<{
         key: Nullable<string>
         isApplied: boolean
         selectedValues: string[]
         id: string
-        condition: 'AND' | 'OR'
+        condition: string
+        numericRange?: { min: number; max: number }
       }>
+      activeColorFilterId: Nullable<string>
+      filterLogic: string
     }
     camera: {
       position: number[]
@@ -271,7 +275,8 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
           ...(state.ui?.filters || {}),
           isolatedObjectIds: state.ui?.filters?.isolatedObjectIds || [],
           hiddenObjectIds: state.ui?.filters?.hiddenObjectIds || [],
-          selectedObjectApplicationIds
+          selectedObjectApplicationIds,
+          activeColorFilterId: state.ui?.filters?.activeColorFilterId || null
         }
 
         // Migration logic: handle legacy propertyFilter and new propertyFilters
@@ -280,7 +285,8 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
           isApplied: boolean
           selectedValues: string[]
           id: string
-          condition: 'AND' | 'OR'
+          condition: string
+          numericRange?: { min: number; max: number }
         }> = []
 
         // If new propertyFilters exist and are not empty, use them
@@ -289,7 +295,16 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
           Array.isArray(state.ui.filters.propertyFilters) &&
           state.ui.filters.propertyFilters.length > 0
         ) {
-          propertyFilters = state.ui.filters.propertyFilters
+          // Map legacy condition values to new format
+          propertyFilters = state.ui.filters.propertyFilters.map((filter) => ({
+            ...filter,
+            condition:
+              filter.condition === 'AND'
+                ? 'is'
+                : filter.condition === 'OR'
+                ? 'is'
+                : filter.condition
+          }))
         }
         // If legacy propertyFilter exists but no propertyFilters (or empty propertyFilters), migrate it
         else if (state.ui?.filters?.propertyFilter?.key) {
@@ -299,27 +314,15 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
               isApplied: state.ui.filters.propertyFilter.isApplied || false,
               selectedValues: [], // Legacy didn't have selectedValues
               id: 'legacy-filter', // Generate a consistent ID for legacy filter
-              condition: 'AND' as const
+              condition: 'is'
             }
           ]
         }
 
-        // Create legacy-compatible propertyFilter from first item in propertyFilters
-        const propertyFilter =
-          propertyFilters.length > 0
-            ? {
-                key: propertyFilters[0].key,
-                isApplied: propertyFilters[0].isApplied
-              }
-            : {
-                key: null,
-                isApplied: false
-              }
-
         return {
           ...baseFilters,
           propertyFilters,
-          propertyFilter
+          filterLogic: state.ui?.filters?.filterLogic || 'all'
         }
       })(),
       camera: {
