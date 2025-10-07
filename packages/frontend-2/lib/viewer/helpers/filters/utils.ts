@@ -276,7 +276,10 @@ export const isValueNumeric = (value: unknown): boolean => {
   if (isString(value)) {
     const trimmed = value.trim()
     if (trimmed === '') return false
-    if (/[a-zA-Z-]/.test(trimmed)) return false
+
+    // Allow: digits, decimal points, minus sign at start
+    if (/-.*-/.test(trimmed)) return false // Multiple dashes (UUID pattern)
+    if (/-(?!^)/.test(trimmed)) return false // Dash not at the start
 
     const converted = toNumber(trimmed)
     return Number.isFinite(converted)
@@ -475,10 +478,12 @@ export const extractNestedProperties = (
 
     const value = obj[key]
     const newPath = [...currentPath, key]
-    const valueType = getValueType(value)
     const isParam = value && isParameter(value)
 
-    if (valueType === 'object' && value !== null && !isParam) {
+    const isActualObject =
+      typeof value === 'object' && value !== null && !Array.isArray(value) && !isParam
+
+    if (isActualObject) {
       properties.push(
         ...extractNestedProperties(
           value as Record<string, unknown>,
@@ -498,6 +503,7 @@ export const extractNestedProperties = (
         units: param.units
       })
     } else {
+      const valueType = getValueType(value)
       properties.push({
         name: key,
         path: newPath,

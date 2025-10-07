@@ -27,6 +27,21 @@ class FileimportPayload(JobBase):
     time_out_seconds: int
 
 
+class FileimportSuccess(JobBase):
+    download_duration_seconds: float
+    parse_duration_seconds: float
+    version_id: str
+
+
+class FileimportError(JobBase):
+    reason: str
+    stack_trace: str
+
+
+class FileimportResult(JobBase):
+    outcome: FileimportSuccess | FileimportError
+
+
 class JobStatus(StrEnum):
     """Status enumeration for the job."""
 
