@@ -279,7 +279,7 @@ export const isValueNumeric = (value: unknown): boolean => {
 
     // Allow: digits, decimal points, minus sign at start
     if (/-.*-/.test(trimmed)) return false // Multiple dashes (UUID pattern)
-    if (/-(?!^)/.test(trimmed)) return false // Dash not at the start
+    if (trimmed.includes('-') && !trimmed.startsWith('-')) return false // Dash not at the start
 
     const converted = toNumber(trimmed)
     return Number.isFinite(converted)
