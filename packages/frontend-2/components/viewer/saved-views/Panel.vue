@@ -102,11 +102,6 @@
       v-model:open="showCreateGroupDialog"
       @success="onAddGroup"
     />
-    <ProjectModelPageDialogEmbed
-      v-if="project"
-      v-model:open="showEmbedDialog"
-      :project="project"
-    />
   </ViewerLayoutSidePanel>
 </template>
 <script setup lang="ts">
@@ -162,7 +157,6 @@ const hideViewerSeatDisclaimer = useSynchronizedCookie<boolean>(
 )
 const searchMode = ref(false)
 const showCreateGroupDialog = ref(false)
-const showEmbedDialog = ref(false)
 
 const { getTooltipProps } = useSmartTooltipDelay()
 useKeepAliveScrollState(useTemplateRef('groupsScrollArea'))

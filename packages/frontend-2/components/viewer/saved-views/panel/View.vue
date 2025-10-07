@@ -194,7 +194,8 @@ const {
   isHomeView,
   canToggleVisibility,
   canMove,
-  canOpenEditDialog
+  canOpenEditDialog,
+  canEmbed
 } = useSavedViewValidationHelpers({
   view: computed(() => props.view)
 })
@@ -269,7 +270,9 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
     },
     {
       id: MenuItems.Embed,
-      title: 'Embed view'
+      title: 'Embed view',
+      disabled: !canEmbed.value?.authorized,
+      disabledTooltip: canEmbed.value?.errorMessage
     }
   ],
   [
@@ -366,7 +369,9 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
       })
       break
     case MenuItems.Embed:
-      // TODO:
+      eventBus.emit(ViewerEventBusKeys.MarkSavedViewForEmbed, {
+        view: props.view
+      })
       break
     default:
       throwUncoveredError(item.id)

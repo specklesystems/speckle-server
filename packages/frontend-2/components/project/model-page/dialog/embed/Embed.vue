@@ -251,7 +251,10 @@ const manuallyLoadModel = ref(false)
 const hideSpeckleBranding = ref(false)
 const embedToken = ref<string | null>(null)
 const shouldEmbedSavedView = ref(false)
-const embeddedSavedView = ref<FormSelectSavedView_SavedViewFragment>()
+
+const embeddedSavedView = defineModel<FormSelectSavedView_SavedViewFragment>('view', {
+  required: false
+})
 
 const optionLabelClasses = computed(
   () => 'flex items-center gap-1 cursor-pointer max-w-max'
@@ -476,4 +479,10 @@ watch(
   },
   { immediate: true }
 )
+
+watch(embeddedSavedView, (newVal) => {
+  if (newVal) {
+    shouldEmbedSavedView.value = true
+  }
+})
 </script>
