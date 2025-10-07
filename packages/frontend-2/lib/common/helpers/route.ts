@@ -70,6 +70,11 @@ export const settingsWorkspaceRoutes = {
     route: (slug: MaybeNullOrUndefined<string>) =>
       slug ? `/settings/workspaces/${slug}/projects` : '/'
   },
+  integrations: {
+    name: 'settings-workspaces-slug-integrations',
+    route: (slug: MaybeNullOrUndefined<string>) =>
+      slug ? `/settings/workspaces/${slug}/integrations` : '/'
+  },
   automation: {
     name: 'settings-workspaces-slug-automation',
     route: (slug?: string) => `/settings/workspaces/${slug}/automation`
@@ -133,6 +138,9 @@ export const projectWebhooksRoute = (projectId: string) =>
 
 export const projectTokensRoute = (projectId: string) =>
   `/projects/${projectId}/settings/tokens`
+
+export const projectIntegrationsRoute = (projectId: string) =>
+  `/projects/${projectId}/settings/integrations`
 
 export const threadRedirectRoute = (projectId: string, threadId: string) =>
   `/projects/${projectId}/threads/${threadId}`

@@ -26,6 +26,7 @@
       class="mb-6"
       :value="shareUrl"
       cta-color="primary"
+      cta-text="Copy link"
     />
 
     <hr class="mb-6 border-outline-3" />
@@ -54,7 +55,6 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { useInjectedPresentationState } from '~~/lib/presentations/composables/setup'
 import { projectRoute } from '~/lib/common/helpers/route'
 import { Roles } from '@speckle/shared'
 
@@ -126,13 +126,16 @@ const presentationDialogShareDisableTokenMutation = graphql(`
   }
 `)
 
+const props = defineProps<{
+  projectId: string
+  presentationId: string
+}>()
+
 const open = defineModel<boolean>('open', { required: true })
 
-const { projectId, presentationId } = useInjectedPresentationState()
-
 const { result, refetch } = useQuery(presentationDialogSharePermissionsQuery, () => ({
-  projectId: projectId.value,
-  savedViewGroupId: presentationId.value
+  projectId: props.projectId,
+  savedViewGroupId: props.presentationId
 }))
 const { mutate: createToken } = useMutation(presentationDialogShareTokenMutation)
 const { mutate: disableToken } = useMutation(
@@ -153,10 +156,10 @@ const isRevoked = computed(
 )
 const shareLink = computed(() => result.value?.project?.savedViewGroup?.shareLink)
 const shareUrl = computed(() => {
-  if (!shareLink.value?.id || !projectId.value || !presentationId.value) return ''
+  if (!shareLink.value?.id || !props.projectId || !props.presentationId) return ''
 
   const url = new URL(
-    presentationRoute(projectId.value, presentationId.value),
+    presentationRoute(props.projectId, props.presentationId),
     window.location.toString()
   )
   url.searchParams.set('presentationToken', shareLink.value.content)
@@ -171,13 +174,13 @@ const enablePublicUrl = computed({
 })
 
 const onEnablePublicUrl = async (value: boolean) => {
-  if (!projectId.value || !presentationId.value) return
+  if (!props.projectId || !props.presentationId) return
 
   if (value) {
     // If enabling and no share link exists, create one first
     if (!shareLink.value?.id) {
       const result = await createToken({
-        input: { projectId: projectId.value, groupId: presentationId.value }
+        input: { projectId: props.projectId, groupId: props.presentationId }
       }).catch(convertThrowIntoFetchResult)
 
       if (!result?.data?.projectMutations.savedViewMutations.share.id) {
@@ -195,8 +198,8 @@ const onEnablePublicUrl = async (value: boolean) => {
     if (shareLink.value?.id) {
       await enableToken({
         input: {
-          projectId: projectId.value,
-          groupId: presentationId.value,
+          projectId: props.projectId,
+          groupId: props.presentationId,
           shareId: shareLink.value.id
         }
       })
@@ -205,8 +208,8 @@ const onEnablePublicUrl = async (value: boolean) => {
     if (shareLink.value?.id) {
       await disableToken({
         input: {
-          projectId: projectId.value,
-          groupId: presentationId.value,
+          projectId: props.projectId,
+          groupId: props.presentationId,
           shareId: shareLink.value.id
         }
       })
@@ -216,8 +219,8 @@ const onEnablePublicUrl = async (value: boolean) => {
   // Track the sharing toggle event
   mixpanel.track('Presentation Sharing Toggled', {
     public: value,
-    projectId: projectId.value,
-    savedViewGroupId: presentationId.value
+    projectId: props.projectId,
+    savedViewGroupId: props.presentationId
   })
 
   await refetch()

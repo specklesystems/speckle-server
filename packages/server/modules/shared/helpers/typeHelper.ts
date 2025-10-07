@@ -56,6 +56,8 @@ export type GraphQLContext = BaseContext &
     authPolicies: AuthPolicies & {
       clearCache: () => void
     }
+    // TODO: Remove in favor of `x-user-id` header
+    accToken?: string
     /**
      * Request-scoped GraphQL dataloaders
      * @see https://github.com/graphql/dataloader

@@ -295,6 +295,11 @@ export type InjectableViewerState = Readonly<{
        * but if none of them actually exist and are loaded then I wouldn't count that as a federated view.
        */
       isFederatedView: ComputedRef<boolean>
+      /**
+       * We don't want to save a comment or view w/ implicit identifiers like ones that only have a model ID or a folder prefix, because
+       * those can resolve to completely different versions/objects as time goes on
+       */
+      concreteResourceIdString: ComputedRef<string>
     }
   }
   /**
@@ -369,6 +374,11 @@ export type InjectableViewerState = Readonly<{
     explodeFactor: Ref<number>
     loading: WritableComputedRef<boolean>
     loadProgress: Ref<number>
+    /**
+     * Similar to hasDoneInitialLoad, but also updated for following loads. Useful for tracking
+     * if an entire set of models (e.g. federated view) has loaded.
+     */
+    hasLoadedQueuedUpModels: Ref<boolean>
     selection: Ref<Nullable<Vector3>>
     measurement: {
       enabled: Ref<boolean>
@@ -643,6 +653,7 @@ function setupResponseResourceItems(
   | 'isFederatedView'
   | 'resourceItemsExtended'
   | 'resourceItemsIds'
+  | 'concreteResourceIdString'
 > {
   const globalError = useError()
   const {
@@ -819,6 +830,20 @@ function setupResponseResourceItems(
   })
 
   const isFederatedView = computed(() => resourceItems.value.length > 1)
+  const concreteResourceIdString = computed(() => {
+    const builder = resourceBuilder()
+
+    for (const resource of resourceItems.value) {
+      if (resource.modelId && resource.versionId) {
+        builder.addModel(resource.modelId, resource.versionId)
+      } else {
+        builder.addObject(resource.objectId)
+      }
+    }
+
+    const finalString = builder.toString()
+    return finalString || resourceIdString.value
+  })
 
   return {
     resourceItemsExtended,
@@ -827,7 +852,8 @@ function setupResponseResourceItems(
     resourceItemsQueryVariables: computed(() => resourceItemsQueryVariables.value),
     resourceItemsLoaded,
     savedView,
-    isFederatedView
+    isFederatedView,
+    concreteResourceIdString
   }
 }
 
@@ -1113,6 +1139,7 @@ function setupInterfaceState(
   })
 
   const loadProgress = ref(0)
+  const hasLoadedQueuedUpModels = ref(false)
 
   const { filters } = useFiltersSetup()
   const { viewMode } = useViewModesSetup()
@@ -1192,7 +1219,8 @@ function setupInterfaceState(
       highlightedObjectIds,
       measurement: useMeasurementsSetup(),
       savedViews: useBuildSavedViewsUIState(),
-      panels: useViewerPanelsSetup()
+      panels: useViewerPanelsSetup(),
+      hasLoadedQueuedUpModels
     }
   }
 }

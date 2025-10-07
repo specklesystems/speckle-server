@@ -55,8 +55,12 @@
             submodel
           </FormButton>
         </div>
+        <div v-if="accSyncItem" class="flex items-center ml-2">
+          <IntegrationsAccSyncStatusModelItem :item="accSyncItem" />
+        </div>
         <!-- Spacer -->
         <div class="flex-grow"></div>
+
         <template v-if="!isPendingFileUpload(item)">
           <div
             v-show="
@@ -308,6 +312,9 @@ graphql(`
       ...ProjectPageLatestItemsModelItem
       ...ProjectCardImportFileArea_Model
       ...ProjectPageModelsCard_Model
+      accSyncItem {
+        ...SyncStatusModelItem_AccSyncItem
+      }
     }
     hasChildren
     updatedAt
@@ -331,6 +338,10 @@ const props = defineProps<{
 
 const router = useRouter()
 const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
+
+const accSyncItem = computed(() =>
+  props.item.__typename === 'ModelsTreeItem' ? props.item.model?.accSyncItem : undefined
+)
 
 const importArea = ref(
   null as Nullable<{

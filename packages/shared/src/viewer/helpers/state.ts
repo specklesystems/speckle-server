@@ -69,8 +69,10 @@ export interface SectionBoxData {
  * v1.6 -> 1.7
  * - ui.filters.filterLogic added
  * - ui.filters.propertyFilters.condition updated
+ * v1.7 -> 1.8
+ * - ui.filters.propertyFilters.numericRange added
  */
-export const SERIALIZED_VIEWER_STATE_VERSION = 1.7
+export const SERIALIZED_VIEWER_STATE_VERSION = 1.8
 
 export type SerializedViewerState = {
   projectId: string
@@ -117,6 +119,7 @@ export type SerializedViewerState = {
         selectedValues: string[]
         id: string
         condition: string
+        numericRange?: { min: number; max: number }
       }>
       activeColorFilterId: Nullable<string>
       filterLogic: string
@@ -283,6 +286,7 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
           selectedValues: string[]
           id: string
           condition: string
+          numericRange?: { min: number; max: number }
         }> = []
 
         // If new propertyFilters exist and are not empty, use them

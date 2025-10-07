@@ -953,9 +953,15 @@ export const errorsToAuthResult = (params: {
   }
 }
 
+export const parseObjectKey = <Type extends keyof AllObjectTypes>(
+  key: ApolloCacheObjectKey<Type>
+): { type: Type; id: string } => {
+  const [type, id] = key.split(':')
+  return { type: type as Type, id }
+}
+
 export const parseObjectReference = <Type extends keyof AllObjectTypes>(
   ref: CacheObjectReference<Type>
 ): { type: Type; id: string } => {
-  const [type, id] = ref.__ref.split(':')
-  return { type: type as Type, id }
+  return parseObjectKey(ref.__ref as ApolloCacheObjectKey<Type>)
 }

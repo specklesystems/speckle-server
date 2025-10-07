@@ -34,6 +34,9 @@ import {
   GetProjectSavedViewIfExistsDocument,
   GetProjectSavedViewsDocument,
   GetProjectUngroupedViewGroupDocument,
+  OnProjectSavedViewGroupsUpdatedDocument,
+  OnProjectSavedViewsUpdatedDocument,
+  ProjectSavedViewsUpdatedMessageType,
   UpdateSavedViewDocument,
   UpdateSavedViewGroupDocument,
   ViewPositionInputType
@@ -74,8 +77,13 @@ import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import { itEach } from '@/test/assertionHelper'
 import type { BasicTestUser } from '@/test/authHelper'
 import { buildBasicTestUser, createTestUser } from '@/test/authHelper'
-import type { ExecuteOperationOptions, TestApolloServer } from '@/test/graphqlHelper'
-import { testApolloServer } from '@/test/graphqlHelper'
+import type {
+  ExecuteOperationOptions,
+  TestApolloServer,
+  TestApolloSubscriptionClient,
+  TestApolloSubscriptionServer
+} from '@/test/graphqlHelper'
+import { testApolloServer, testApolloSubscriptionServer } from '@/test/graphqlHelper'
 import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { createTestObject } from '@/test/speckle-helpers/commitHelper'
@@ -120,7 +128,6 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
   )
 
 ;(FF_SAVED_VIEWS_ENABLED ? describe : describe.skip)('Saved Views GraphQL CRUD', () => {
-  let apollo: TestApolloServer
   let me: BasicTestUser
   let guest: BasicTestUser
   let otherGuy: BasicTestUser
@@ -130,6 +137,10 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
   let myModel1: BasicTestBranch
   let myModel2: BasicTestBranch
   let testGroup1: BasicSavedViewGroupFragment
+
+  let subServer: TestApolloSubscriptionServer
+  let apollo: TestApolloServer
+  let meSubClient: TestApolloSubscriptionClient
 
   const buildCreateInput = (params: {
     resourceIdString: string
@@ -316,7 +327,10 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
     ])
     myModel1 = modelCreate[0]
     myModel2 = modelCreate[1]
+
     apollo = await testApolloServer({ authUserId: me.id })
+    subServer = await testApolloSubscriptionServer()
+    meSubClient = await subServer.buildClient({ authUserId: me.id })
 
     // We only run a small subset of tests if the module is disabled, and we dont need this stuff:
     if (FF_WORKSPACES_MODULE_ENABLED) {
@@ -333,6 +347,10 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         )
       )?.data?.projectMutations.savedViewMutations.createGroup!
     }
+  })
+
+  after(async () => {
+    subServer.quit()
   })
 
   if (FF_WORKSPACES_MODULE_ENABLED) {
@@ -385,6 +403,12 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         const resourceIds = model1ResourceIds()
         const resourceIdString = resourceIds.toString()
 
+        const onGroupsUpdated = await meSubClient.subscribe(
+          OnProjectSavedViewGroupsUpdatedDocument,
+          { projectId: myProject.id }
+        )
+        await meSubClient.waitForReadiness()
+
         const res = await createSavedViewGroup({
           input: {
             projectId: myProject.id,
@@ -404,6 +428,22 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         )
         expect(group!.title).to.equal('Test Group')
         expect(group!.isUngroupedViewsGroup).to.be.false
+
+        await onGroupsUpdated.waitForMessage()
+        expect(onGroupsUpdated.getMessages()).to.have.length(1)
+
+        const groupUpdatedMsg = onGroupsUpdated.getMessages()[0]
+        expect(groupUpdatedMsg).to.not.haveGraphQLErrors()
+        expect(groupUpdatedMsg.data?.projectSavedViewGroupsUpdated.type).to.eq(
+          ProjectSavedViewsUpdatedMessageType.Created
+        )
+        expect(groupUpdatedMsg.data?.projectSavedViewGroupsUpdated.id).to.eq(group!.id)
+        expect(groupUpdatedMsg.data?.projectSavedViewGroupsUpdated.project.id).to.equal(
+          myProject.id
+        )
+        expect(
+          groupUpdatedMsg.data?.projectSavedViewGroupsUpdated.savedViewGroup?.id
+        ).to.eq(group!.id)
       })
 
       it('should successfully create a group w/o a name', async () => {
@@ -573,6 +613,17 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           }
         })
 
+        const onViewsCreated = await meSubClient.subscribe(
+          OnProjectSavedViewsUpdatedDocument,
+          { projectId: myProject.id }
+        )
+        // we should also get a group updated sub from this
+        const onGroupsUpdated = await meSubClient.subscribe(
+          OnProjectSavedViewGroupsUpdatedDocument,
+          { projectId: myProject.id }
+        )
+        await meSubClient.waitForReadiness()
+
         const res = await createSavedView(
           buildCreateInput({
             resourceIdString,
@@ -596,6 +647,31 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(view!.description).to.equal(description)
         expect(view!.groupId).to.equal(groupId)
         expect(view!.visibility).to.equal(visibility)
+
+        await onGroupsUpdated.waitForMessage()
+        const msgs = onGroupsUpdated.getMessages()
+        expect(msgs).to.have.lengthOf(1) // should be just one message
+        const groupMsg = msgs[0]
+        expect(groupMsg).to.not.haveGraphQLErrors()
+        expect(groupMsg.data?.projectSavedViewGroupsUpdated.type).to.equal(
+          ProjectSavedViewsUpdatedMessageType.Updated
+        )
+        expect(groupMsg.data?.projectSavedViewGroupsUpdated.id).to.eq(groupId)
+        expect(groupMsg.data?.projectSavedViewGroupsUpdated.savedViewGroup?.id).to.eq(
+          groupId
+        )
+
+        await onViewsCreated.waitForMessage()
+        expect(onViewsCreated.getMessages()).to.have.lengthOf(1)
+
+        const viewMsg = onViewsCreated.getMessages()[0]
+        expect(viewMsg).to.not.haveGraphQLErrors()
+        expect(viewMsg.data?.projectSavedViewsUpdated.type).to.equal(
+          ProjectSavedViewsUpdatedMessageType.Created
+        )
+        expect(viewMsg.data?.projectSavedViewsUpdated.id).to.eq(view!.id)
+        expect(viewMsg.data?.projectSavedViewsUpdated.project.id).to.equal(myProject.id)
+        expect(viewMsg.data?.projectSavedViewsUpdated.savedView?.id).to.eq(view!.id)
       })
 
       it('should fail to create view if no access', async () => {
@@ -1493,6 +1569,17 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           isHomeView: false,
           visibility: SavedViewVisibility.authorOnly
         }
+
+        const onViewsUpdated = await meSubClient.subscribe(
+          OnProjectSavedViewsUpdatedDocument,
+          { projectId: updatablesProject.id }
+        )
+        const onGroupsUpdated = await meSubClient.subscribe(
+          OnProjectSavedViewGroupsUpdatedDocument,
+          { projectId: updatablesProject.id }
+        )
+        await meSubClient.waitForReadiness()
+
         const res = await updateView({
           input
         })
@@ -1514,6 +1601,39 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         const initUpdatedAt = dayjs(testView.updatedAt)
         const newUpdatedAt = dayjs(updatedView!.updatedAt)
         expect(newUpdatedAt.isAfter(initUpdatedAt)).to.be.true // date should be updated cause of full replace
+
+        await onViewsUpdated.waitForMessage()
+        expect(onViewsUpdated.getMessages()).to.have.lengthOf(1)
+        const updateMsg = onViewsUpdated.getMessages()[0]
+        expect(updateMsg).to.not.haveGraphQLErrors()
+
+        expect(updateMsg.data?.projectSavedViewsUpdated.id).to.eq(updatedView!.id)
+        expect(updateMsg.data?.projectSavedViewsUpdated.project.id).to.equal(
+          updatablesProject.id
+        )
+        expect(updateMsg.data?.projectSavedViewsUpdated.savedView?.id).to.eq(
+          updatedView!.id
+        )
+        expect(updateMsg.data?.projectSavedViewsUpdated.type).to.eq(
+          ProjectSavedViewsUpdatedMessageType.Updated
+        )
+
+        await onGroupsUpdated.waitForMessage()
+        const groupUpdateMsg = onGroupsUpdated.getMessages()[0]
+        expect(groupUpdateMsg).to.not.haveGraphQLErrors()
+
+        expect(groupUpdateMsg.data?.projectSavedViewGroupsUpdated.id).to.eq(
+          input.groupId
+        )
+        expect(groupUpdateMsg.data?.projectSavedViewGroupsUpdated.project.id).to.equal(
+          updatablesProject.id
+        )
+        expect(
+          groupUpdateMsg.data?.projectSavedViewGroupsUpdated.savedViewGroup?.id
+        ).to.eq(input.groupId)
+        expect(groupUpdateMsg.data?.projectSavedViewGroupsUpdated.type).to.eq(
+          ProjectSavedViewsUpdatedMessageType.Updated
+        )
       })
 
       it('successfully sets and unsets a group', async () => {
@@ -1793,6 +1913,25 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         expect(update?.name).to.equal(newName)
       })
 
+      it('succeeds if non author contributor is updating the view to be a home view', async () => {
+        const res = await updateView(
+          {
+            input: {
+              id: testView.id,
+              projectId: updatablesProject.id,
+              isHomeView: true
+            }
+          },
+          { authUserId: notAuthorButContributor.id }
+        )
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.projectMutations.savedViewMutations.updateView).to.be.ok
+
+        const update = res.data?.projectMutations.savedViewMutations.updateView
+        expect(update?.isHomeView).to.be.true
+      })
+
       it('succeeds if non author contributor is updating the description of the view', async () => {
         const newDescription = 'Updated View Description'
 
@@ -2010,6 +2149,12 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         it('successfully update the name', async () => {
           const updatedname = 'babababababababa123'
 
+          const onGroupsUpdated = await meSubClient.subscribe(
+            OnProjectSavedViewGroupsUpdatedDocument,
+            { projectId: updatableGroup.projectId }
+          )
+          await meSubClient.waitForReadiness()
+
           const res = await updateSavedViewGroup({
             input: {
               groupId: updatableGroup.id,
@@ -2023,6 +2168,18 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           const group = res.data?.projectMutations.savedViewMutations.updateGroup
           expect(group?.id).to.be.ok
           expect(group?.title).to.equal(updatedname)
+
+          await onGroupsUpdated.waitForMessage()
+          expect(onGroupsUpdated.getMessages()).to.have.lengthOf(1)
+          const msg = onGroupsUpdated.getMessages()[0]
+          expect(msg).to.not.haveGraphQLErrors()
+          expect(msg.data?.projectSavedViewGroupsUpdated.id).to.eq(updatableGroup.id)
+          expect(msg.data?.projectSavedViewGroupsUpdated.type).to.eq(
+            ProjectSavedViewsUpdatedMessageType.Updated
+          )
+          expect(msg.data?.projectSavedViewGroupsUpdated.savedViewGroup?.id).to.eq(
+            updatableGroup.id
+          )
         })
 
         it('fail invalid name length', async () => {
@@ -2225,6 +2382,12 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
         const foundView = await findView(deletableView.id)
         expect(foundView).to.be.ok
 
+        const onViewsCreated = await meSubClient.subscribe(
+          OnProjectSavedViewsUpdatedDocument,
+          { projectId: deletablesProject.id }
+        )
+        await meSubClient.waitForReadiness()
+
         const deleteRes = await deleteView(
           {
             input: {
@@ -2239,6 +2402,23 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
         const deletedView = await findView(deletableView.id)
         expect(deletedView).to.not.be.ok
+
+        await onViewsCreated.waitForMessage()
+        expect(onViewsCreated.getMessages()).to.have.lengthOf(1)
+        const msg = onViewsCreated.getMessages()[0]
+        expect(msg).to.not.haveGraphQLErrors()
+        expect(msg.data?.projectSavedViewsUpdated.id).to.eq(deletableView.id)
+        expect(msg.data?.projectSavedViewsUpdated.type).to.eq(
+          ProjectSavedViewsUpdatedMessageType.Deleted
+        )
+        expect(msg.data?.projectSavedViewsUpdated.savedView).to.be.null
+        expect(msg.data?.projectSavedViewsUpdated.beforeChangeSavedView).to.be.ok
+        expect(msg.data?.projectSavedViewsUpdated.beforeChangeSavedView!.groupId).to.eq(
+          deletableView.groupId
+        )
+        expect(
+          msg.data?.projectSavedViewsUpdated.beforeChangeSavedView!.resourceIds
+        ).to.deep.eq(deletableView.resourceIds)
       })
 
       it('should fail to delete a view if not found', async () => {
@@ -2273,6 +2453,12 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
       describe('of groups', async () => {
         it('allow deleting a group', async () => {
+          const onViewsUpdated = await meSubClient.subscribe(
+            OnProjectSavedViewGroupsUpdatedDocument,
+            { projectId: deletablesProject.id }
+          )
+          await meSubClient.waitForReadiness()
+
           const deleteRes = await deleteSavedViewGroup(
             {
               input: {
@@ -2287,6 +2473,16 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
 
           const deletedGroup = await findGroup(deletableGroup.id)
           expect(deletedGroup).to.not.be.ok
+
+          await onViewsUpdated.waitForMessage()
+          expect(onViewsUpdated.getMessages()).to.have.lengthOf(1)
+          const msg = onViewsUpdated.getMessages()[0]
+          expect(msg).to.not.haveGraphQLErrors()
+          expect(msg.data?.projectSavedViewGroupsUpdated.savedViewGroup).to.be.null
+          expect(msg.data?.projectSavedViewGroupsUpdated.id).to.eq(deletableGroup.id)
+          expect(msg.data?.projectSavedViewGroupsUpdated.type).to.eq(
+            ProjectSavedViewsUpdatedMessageType.Deleted
+          )
         })
 
         it('should fail to delete a group if not found', async () => {

@@ -11,6 +11,7 @@ type SavedViewPermissionChecks {
   canMove: PermissionCheckResult!
   canEditTitle: PermissionCheckResult!
   canEditDescription: PermissionCheckResult!
+  canSetAsHomeView: PermissionCheckResult!
 }
 
 extend type SavedView {
