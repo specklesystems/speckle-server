@@ -22,7 +22,7 @@ const parseNameOrOptions = <R extends Ref<unknown>>(
   const transform = options.transform || ((val) => val)
   const enabled = options.enabled ?? true
   const writes = options.writes ?? true
-  const reads = options.reads ?? true
+  const reads = options.reads ?? false // usually interested in just writes
 
   return { name, transform, enabled, writes, reads }
 }
@@ -73,6 +73,8 @@ export const refLogged = <T>(
 ) => {
   return makeRefLogged<Ref<T>>(ref<T>(value) as Ref<T>, nameOrOptions)
 }
+
+export const refWithLogging = refLogged
 
 export function getCurrentTrace() {
   return (new Error('Trace:').stack || '').substring(7)

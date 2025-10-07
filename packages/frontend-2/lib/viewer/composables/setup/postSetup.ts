@@ -169,6 +169,7 @@ function useViewerObjectAutoLoading() {
   const getUniqueObjectIds = (resourceItems: ViewerResourceItem[]) =>
     uniq(resourceItems.map((i) => i.objectId))
 
+  const activeLoads = new Set<Promise<void>>()
   watch(
     () => <const>[resourceItems.value, isInitialized.value, hasDoneInitialLoad.value],
     async ([newResources, newIsInitialized, newHasDoneInitialLoad], oldData) => {
@@ -194,30 +195,48 @@ function useViewerObjectAutoLoading() {
 
         /** Load sequentially */
         const res = []
-        for (const i of allObjectIds) {
-          res.push(await loadObject(i, false, { zoomToObject }))
+        const loadAll = async () => {
+          for (const i of allObjectIds) {
+            res.push(await loadObject(i, false, { zoomToObject }))
+          }
         }
+
+        // Register for accurate 'is anything loading' reporting
+        const promise = loadAll().then(() => {
+          activeLoads.delete(promise)
+        })
+        activeLoads.add(promise)
+        await promise
 
         if (res.length) {
           hasDoneInitialLoad.value = true
-          hasLoadedQueuedUpModels.value = true
+          if (!activeLoads.size) hasLoadedQueuedUpModels.value = true
         }
 
         return
       }
 
       // Resources changed?
-      const newObjectIds = getUniqueObjectIds(newResources)
-      const oldObjectIds = getUniqueObjectIds(oldResources)
-      const removableObjectIds = difference(oldObjectIds, newObjectIds)
-      const addableObjectIds = difference(newObjectIds, oldObjectIds)
+      const loadAndUnloadChanged = async () => {
+        const newObjectIds = getUniqueObjectIds(newResources)
+        const oldObjectIds = getUniqueObjectIds(oldResources)
+        const removableObjectIds = difference(oldObjectIds, newObjectIds)
+        const addableObjectIds = difference(newObjectIds, oldObjectIds)
 
-      await Promise.all(removableObjectIds.map((i) => loadObject(i, true)))
-      await Promise.all(
-        addableObjectIds.map((i) => loadObject(i, false, { zoomToObject: false }))
-      )
+        await Promise.all(removableObjectIds.map((i) => loadObject(i, true)))
+        await Promise.all(
+          addableObjectIds.map((i) => loadObject(i, false, { zoomToObject: false }))
+        )
+      }
 
-      hasLoadedQueuedUpModels.value = true
+      // Register for accurate 'is anything loading' reporting
+      const promise = loadAndUnloadChanged().then(() => {
+        activeLoads.delete(promise)
+      })
+      activeLoads.add(promise)
+      await promise
+
+      if (!activeLoads.size) hasLoadedQueuedUpModels.value = true
     },
     { deep: true, immediate: true }
   )
@@ -435,8 +454,7 @@ function useViewerCameraIntegration() {
     viewer: { instance },
     ui: {
       camera: { isOrthoProjection, position, target },
-      spotlightUserSessionId,
-      loading
+      spotlightUserSessionId
     }
   } = useInjectedViewerState()
   const { forceViewToViewerSync, setView, cameraController } = useCameraUtilities()
@@ -449,7 +467,7 @@ function useViewerCameraIntegration() {
     const viewerPos = new Vector3().copy(extension.getPosition())
     const viewerTarget = new Vector3().copy(extension.getTarget())
 
-    if (hasInitialLoadFired.value && !loading.value) {
+    if (hasInitialLoadFired.value) {
       if (!areVectorsLooselyEqual(position.value, viewerPos)) {
         position.value = viewerPos.clone()
       }
