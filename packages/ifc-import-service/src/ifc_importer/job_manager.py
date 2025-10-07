@@ -89,7 +89,16 @@ async def job_manager(logger: structlog.stdlib.BoundLogger):
                 process = await asyncio.create_subprocess_shell(
                     cmd,
                 )
-                exit_code = await asyncio.wait_for(process.wait(), timeout=job_timeout)
+                try:
+                    exit_code = await asyncio.wait_for(
+                        process.wait(), timeout=job_timeout
+                    )
+                except TimeoutError as te:
+                    process.kill()
+                    raise Exception(
+                        "Job was cancelled due to reaching the"
+                        + f" {job_timeout} second timeout"
+                    ) from te
                 # this should never happen, as the job processor is handling errors
                 # when the process is killed with a timeout we raise a TimeoutError
                 if exit_code != 0:
