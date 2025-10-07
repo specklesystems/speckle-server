@@ -116,7 +116,8 @@ export const useViewerSavedViewIntegration = () => {
       // user has changed the state from the view's state
       if (savedViewStateId.value && newVal !== savedViewStateId.value) {
         // emit event that this happened
-        emit(ViewerEventBusKeys.UserChangedOpenedView, { viewId: savedViewId.value })
+        if (savedViewId.value)
+          emit(ViewerEventBusKeys.UserChangedOpenedView, { viewId: savedViewId.value })
 
         // reset the saved view - its no longer active
         await reset()

@@ -812,6 +812,7 @@ graphql(`
   fragment UseViewerSavedViewSetup_SavedView on SavedView {
     id
     viewerState
+    ...ViewerPageSetup_SavedView
   }
 `)
 
