@@ -9,6 +9,7 @@ import {
   type InitialSetupState,
   type UseSetupViewerParams
 } from '~/lib/viewer/composables/setup'
+import { useEmbedState } from '~/lib/viewer/composables/setup/embed'
 import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
 import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
 
@@ -32,6 +33,7 @@ export const useViewerSavedViewIntegration = () => {
   const applyState = useApplySerializedState()
   const { serializedStateId } = useViewerRealtimeActivityTracker()
   const { on, emit } = useEventBus()
+  const { embedOptions } = useEmbedState()
 
   const validState = (state: unknown) => (isSerializedViewerState(state) ? state : null)
 
@@ -112,6 +114,8 @@ export const useViewerSavedViewIntegration = () => {
     () => serializedStateId.value,
     async (newVal, oldVal) => {
       if (newVal === oldVal) return
+      if (embedOptions.value?.isEnabled) return // we never reset in embed mode
+
       // If the saved view state ID is different from the current serialized state ID (user interaction) -
       // user has changed the state from the view's state
       if (savedViewStateId.value && newVal !== savedViewStateId.value) {
