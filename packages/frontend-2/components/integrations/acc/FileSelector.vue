@@ -1,9 +1,12 @@
 <template>
   <div class="flex flex-row h-full overflow-hidden border rounded-lg bg-foundation">
     <!-- Left Pane for tree -->
-    <div class="w-1/4 p-2 overflow-y-auto border-r">
-      <h3 class="font-semibold text-lg text-center">Folders</h3>
-      <hr class="mb-1" />
+    <div class="w-1/4 p-2 pt-0 h-80 overflow-y-auto border-r">
+      <div class="z-10 sticky top-0 bg-foundation pb-1">
+        <h3 class="font-semibold pt-2 text-lg text-center">Folders</h3>
+        <hr />
+      </div>
+
       <div v-if="!rootFolder"></div>
       <ul
         v-else-if="rootFolder && rootFolder.children?.items.length"
@@ -21,9 +24,12 @@
       </ul>
     </div>
     <!-- Right Pane for content -->
-    <div class="w-3/4 p-2 overflow-y-auto">
-      <h3 class="font-semibold text-lg text-center">Files</h3>
-      <hr class="mb-1" />
+    <div class="w-3/4 h-80 p-2 pt-0 overflow-y-auto">
+      <div class="z-10 sticky top-0 bg-foundation pb-1">
+        <h3 class="pt-2 font-semibold text-lg text-center">Files</h3>
+        <hr />
+      </div>
+
       <IntegrationsAccFolderContents
         v-if="!!selectedFolderId"
         :key="`contents-${selectedFolderId}`"
