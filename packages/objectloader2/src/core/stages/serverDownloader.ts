@@ -1,3 +1,4 @@
+import { getBodyReader } from '../../helpers/streams.js'
 import BatchingQueue from '../../queues/batchingQueue.js'
 import Queue from '../../queues/queue.js'
 import { ObjectLoaderRuntimeError } from '../../types/errors.js'
@@ -132,15 +133,15 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
       throw new Error('ReadableStream not supported or response has no body.')
     }
 
-    const reader = response.body.getReader()
-    let leftover = new Uint8Array(0)
+    const reader = getBodyReader(response)
+    let leftover: Uint8Array<ArrayBufferLike> = new Uint8Array(0)
 
     let count = 0
     while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
+      const read = await reader.read()
+      if (read.done) break
 
-      leftover = await this.#processArray(leftover, value, keys, async () => {
+      leftover = await this.#processArray(leftover, read.value, keys, async () => {
         count++
         if (count % 1000 === 0) {
           await new Promise((resolve) => setTimeout(resolve, 100)) //allow other stuff to happen

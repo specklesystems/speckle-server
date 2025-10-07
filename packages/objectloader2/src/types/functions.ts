@@ -50,38 +50,6 @@ export function take<T>(it: Iterator<T>, count: number): T[] {
   return result
 }
 
-export enum ObjectLoader2Flags {
-  DEBUG = 'debug',
-  USE_CACHE = 'useCache'
-}
-
-const defaultValues: Record<ObjectLoader2Flags, string> = {
-  [ObjectLoader2Flags.DEBUG]: 'false',
-  [ObjectLoader2Flags.USE_CACHE]: 'true'
-}
-
-export function getFeatureFlag(
-  paramName: ObjectLoader2Flags,
-  useDefault: boolean = true
-): string | undefined {
-  // Check if the code is running in a browser environment 🌐
-  const isBrowser =
-    typeof window !== 'undefined' && typeof window.document !== 'undefined'
-
-  if (!isBrowser) {
-    // If in Node.js or another server environment, return the default
-    return useDefault ? defaultValues[paramName] : undefined
-  }
-
-  // In a browser, parse the query string
-  const params = new URLSearchParams(window.location.search)
-
-  // .get() returns the value, or null if it's not found.
-  // The nullish coalescing operator (??) provides the default value
-  // if the left-hand side is null or undefined.
-  return params.get(paramName) ?? (useDefault ? defaultValues[paramName] : undefined)
-}
-
 /**
  * Finds the first index of a "needle" Uint8Array within a "haystack" Uint8Array.
  * @param haystack The larger array to search within.

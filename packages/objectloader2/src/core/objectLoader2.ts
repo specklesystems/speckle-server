@@ -130,7 +130,10 @@ export class ObjectLoader2 {
     this.#cacheReader.requestAll(children)
     let count = 0
     for await (const item of this.#gathered.consume()) {
-      yield item.base! //always defined, as we add it to the queue
+      if (item.base) {
+        //nullable objects are filtered out because they could be RawEncoding or something else
+        yield item.base //always defined, as we add it to the queue
+      }
       count++
       if (count >= total) {
         break

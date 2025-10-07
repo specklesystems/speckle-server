@@ -33,7 +33,9 @@
   "author": "AEC Systems",
   "license": "Apache-2.0",
   "dependencies": {
-    "@speckle/shared": "workspace:^"
+    "@speckle/shared": "workspace:^",
+    "lodash": "^4.17.6",
+    "lodash-es": "^4.17.6"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.5",
@@ -41,6 +43,7 @@
     "@typescript-eslint/eslint-plugin": "^7.12.0",
     "@typescript-eslint/parser": "^7.12.0",
     "@vitest/ui": "^3.0.9",
+    "cross-fetch": "^3.1.5",
     "eslint": "^9.4.0",
     "eslint-config-prettier": "^9.1.0",
     "fake-indexeddb": "^6.0.0",
@@ -61,6 +64,12 @@
         "types": "./dist/commonjs/index.d.ts",
         "default": "./dist/commonjs/index.js"
       }
+    }
+  },
+  "imports": {
+    "#lodash": {
+      "require": "lodash",
+      "import": "lodash-es"
     }
   },
   "tshy": {

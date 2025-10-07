@@ -32,7 +32,7 @@ Please answer the following questions before submitting an issue.
 ## What package are you referring to?
 
 <!---
-Is it related to the server (backend) only, or does this bug relate to the frontend, viewer, objectloader or any other package?
+Is it related to the server (backend) only, or does this bug relate to the frontend, viewer, objectloader2 or any other package?
 -->
 
 ## Describe the bug

@@ -9,7 +9,8 @@
     "hbenl.vscode-mocha-test-adapter",
     "ryanluker.vscode-coverage-gutters",
     "Vue.volar",
-    "bradlc.vscode-tailwindcss"
+    "bradlc.vscode-tailwindcss",
+    "vitest.explorer"
   ],
   // List of extensions recommended by VS Code that should not be recommended for users of this workspace.
   "unwantedRecommendations": ["octref.vetur", "vscode.typescript-language-features"]

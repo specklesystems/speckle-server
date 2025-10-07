@@ -54,7 +54,7 @@ import { Euler, Vector3, Box3, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
 import {
-  getFeatureFlag,
+  flagIsEnabledFromQuery,
   ObjectLoader2Flags,
   ObjectLoader2Factory
 } from '@speckle/objectloader2'
@@ -1298,7 +1298,7 @@ export default class Sandbox {
       let dataProgress = 0
       let renderedCount = 0
       let traversedCount = 0
-      const shouldLog = getFeatureFlag(ObjectLoader2Flags.DEBUG) === 'true' // means we're not already logging
+      const shouldLog = flagIsEnabledFromQuery(ObjectLoader2Flags.DEBUG) === true // means we're not already logging
       /** Too spammy */
       loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
         const p = Math.floor(arg.progress * 100)

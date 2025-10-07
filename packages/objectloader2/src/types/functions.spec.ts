@@ -1,12 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import {
-  isBase,
-  isReference,
-  isScalar,
-  take,
-  getFeatureFlag,
-  ObjectLoader2Flags
-} from './functions.js'
+import { isBase, isReference, isScalar, take } from './functions.js'
+import { flagIsEnabledFromQuery, ObjectLoader2Flags } from '../core/features.js'
 
 describe('isBase', () => {
   it('should return true for valid Base objects', () => {
@@ -103,11 +97,11 @@ describe('take', () => {
 describe('getFeatureFlag', () => {
   describe('in a non-browser environment', () => {
     it('should return the default value', () => {
-      expect(getFeatureFlag(ObjectLoader2Flags.USE_CACHE)).toBe('true')
+      expect(flagIsEnabledFromQuery(ObjectLoader2Flags.USE_CACHE)).toBe(false)
     })
 
-    it('should return undefined when useDefault is false', () => {
-      expect(getFeatureFlag(ObjectLoader2Flags.USE_CACHE, false)).toBe(undefined)
+    it('should return false when useDefault is false', () => {
+      expect(flagIsEnabledFromQuery(ObjectLoader2Flags.USE_CACHE)).toBe(false)
     })
   })
 
@@ -129,27 +123,27 @@ describe('getFeatureFlag', () => {
 
     it('should return the parameter value from the URL', () => {
       mockWindow.location.search = '?debug=value'
-      expect(getFeatureFlag(ObjectLoader2Flags.DEBUG)).toBe('value')
+      expect(flagIsEnabledFromQuery(ObjectLoader2Flags.DEBUG)).toBe(false)
     })
 
     it('should return the default value if the parameter is not in the URL', () => {
       mockWindow.location.search = '?otherparam=value'
-      expect(getFeatureFlag(ObjectLoader2Flags.DEBUG)).toBe('false')
+      expect(flagIsEnabledFromQuery(ObjectLoader2Flags.DEBUG)).toBe(false)
     })
 
     it('should return the default value if the URL has no query string', () => {
       mockWindow.location.search = ''
-      expect(getFeatureFlag(ObjectLoader2Flags.DEBUG)).toBe('false')
+      expect(flagIsEnabledFromQuery(ObjectLoader2Flags.DEBUG)).toBe(false)
     })
 
-    it('should return undefined if useDefault is false and parameter is not in URL', () => {
+    it('should return false if useDefault is false and parameter is not in URL', () => {
       mockWindow.location.search = '?otherparam=value'
-      expect(getFeatureFlag(ObjectLoader2Flags.DEBUG, false)).toBe(undefined)
+      expect(flagIsEnabledFromQuery(ObjectLoader2Flags.DEBUG)).toBe(false)
     })
 
     it('should still return the parameter value from URL when useDefault is false', () => {
       mockWindow.location.search = '?debug=custom'
-      expect(getFeatureFlag(ObjectLoader2Flags.DEBUG, false)).toBe('custom')
+      expect(flagIsEnabledFromQuery(ObjectLoader2Flags.DEBUG)).toBe(false)
     })
   })
 })
