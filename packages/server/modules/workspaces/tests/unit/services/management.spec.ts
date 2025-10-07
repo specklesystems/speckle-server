@@ -242,6 +242,27 @@ describe('Workspace services', () => {
         createdByUserId: userId
       })
     })
+    it('sanitizes user input', async () => {
+      const { userId, workspaceInput } = getCreateWorkspaceInput()
+      const { context, createWorkspace } = buildCreateWorkspaceWithTestContext()
+      const workspace = await createWorkspace({
+        userId,
+        workspaceInput: {
+          ...workspaceInput,
+          name: '<script>alert("xss")</script>Safe workspace name',
+          description: '<script>alert("xss")</script>Safe description',
+          logo: '<script>alert("xss")</script>Safe logo'
+        },
+        userResourceAccessLimits: null
+      })
+
+      expect(workspace.name).to.equal('Safe workspace name')
+      expect(context.storedWorkspaces[0].name).to.equal('Safe workspace name')
+      expect(workspace.description).to.equal('Safe description')
+      expect(context.storedWorkspaces[0].description).to.equal('Safe description')
+      expect(workspace.logo).to.equal('Safe logo')
+      expect(context.storedWorkspaces[0].logo).to.equal('Safe logo')
+    })
   })
   describe('updateWorkspaceFactory creates a function, that', () => {
     const createTestWorkspaceWithDomainsData = (
@@ -494,6 +515,48 @@ describe('Workspace services', () => {
       expect(updatedWorkspace!.discoverabilityEnabled).to.be.equal(
         workspaceInput.discoverabilityEnabled
       )
+    })
+
+    it('sanitizes user input', async () => {
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const workspace = createTestWorkspaceWithDomainsData({
+        id: workspaceId,
+        domains: [
+          {
+            createdAt: new Date(),
+            createdByUserId: cryptoRandomString({ length: 10 }),
+            domain: 'example.com',
+            updatedAt: new Date(),
+            id: cryptoRandomString({ length: 10 }),
+            verified: true,
+            workspaceId
+          }
+        ]
+      })
+
+      let updatedWorkspace
+
+      const workspaceInput = {
+        name: '<script>alert("xss")</script>Safe workspace name',
+        description: '<script>alert("xss")</script>Safe workspace description',
+        logo: '<script>alert("xss")</script>Safe workspace logo'
+      }
+
+      await updateWorkspaceFactory({
+        getWorkspace: async () => workspace,
+        getWorkspaceSsoProviderRecord: async () => null,
+        emitWorkspaceEvent: async () => {},
+        validateSlug: async () => {},
+        upsertWorkspace: async ({ workspace }) => {
+          updatedWorkspace = workspace
+        }
+      })({
+        workspaceId,
+        workspaceInput
+      })
+      expect(updatedWorkspace!.name).to.be.equal('Safe workspace name')
+      expect(updatedWorkspace!.description).to.be.equal('Safe workspace description')
+      expect(updatedWorkspace!.logo).to.be.equal('Safe workspace logo')
     })
   })
 })

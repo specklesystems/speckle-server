@@ -233,7 +233,14 @@ const sanitizeInput = (input: Partial<Workspace>) => {
     delete sanitizedInput.name
   }
 
-  return removeNullOrUndefinedKeys(sanitizedInput)
+  const cleanedInput = removeNullOrUndefinedKeys(sanitizedInput)
+  if (cleanedInput.name) {
+    cleanedInput.name = sanitizeHtml(cleanedInput.name)
+  }
+  if (cleanedInput.description) {
+    cleanedInput.description = sanitizeHtml(cleanedInput.description)
+  }
+  return cleanedInput
 }
 
 export const updateWorkspaceFactory =

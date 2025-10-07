@@ -7,6 +7,10 @@ import type { StreamRoles } from '@speckle/shared'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+import {
+  createStreamReturnRecordFactory,
+  updateStreamAndNotifyFactory
+} from '@/modules/core/services/streams/management'
 
 describe('project services @core', () => {
   describe('createNewProjectFactory creates a function, that', () => {
@@ -123,6 +127,88 @@ describe('project services @core', () => {
         project,
         input: { description: '', name: project.name, visibility: 'PRIVATE' }
       })
+    })
+  })
+  describe('createStreamReturnRecordFactory creates a function, that', () => {
+    it('sanitizes user input', async () => {
+      const streamId = cryptoRandomString({ length: 10 })
+      const SUT = createStreamReturnRecordFactory({
+        createStream: async (input) => {
+          expect(input.name).to.equal('A safe name')
+          expect(input.description).to.eq('A safe description')
+          return {
+            ...input,
+            id: streamId,
+            clonedFrom: null,
+            workspaceId: null,
+            regionKey: null,
+            visibility: ProjectRecordVisibility.Private,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        },
+        storeProjectRole: async () => {},
+        inviteUsersToProject: async () => true,
+        emitEvent: async () => {}
+      })
+
+      await SUT({
+        name: '<script>alert("xss")</script>A safe name',
+        description: '<script>alert("xss")</script>A safe description',
+        ownerId: cryptoRandomString({ length: 10 })
+      })
+    })
+  })
+
+  describe('updateStreamAndNotifyFactory creates a function, that', () => {
+    it('sanitizes user input', async () => {
+      const streamId = cryptoRandomString({ length: 10 })
+      const SUT = updateStreamAndNotifyFactory({
+        getStream: async (input) => {
+          expect(input.streamId).to.equal(streamId)
+          return {
+            id: streamId,
+            name: 'Old name',
+            description: 'Old description',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            visibility: ProjectRecordVisibility.Private,
+            clonedFrom: null,
+            workspaceId: null,
+            regionKey: null,
+            allowPublicComments: false
+          }
+        },
+        updateStream: async (input) => {
+          expect(input.name).to.equal('A safe name')
+          expect(input.description).to.eq('A safe description')
+          return {
+            ...input,
+            id: streamId,
+            streamId,
+            authorId: cryptoRandomString({ length: 10 }),
+            name: input.name!,
+            clonedFrom: null,
+            workspaceId: null,
+            regionKey: null,
+            visibility: ProjectRecordVisibility.Private,
+            allowPublicComments: false,
+            description: input.description!,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        },
+        emitEvent: async () => {}
+      })
+
+      await SUT(
+        {
+          name: '<script>alert("xss")</script>A safe name',
+          description: '<script>alert("xss")</script>A safe description',
+          id: streamId
+        },
+        cryptoRandomString({ length: 10 })
+      )
     })
   })
 })
