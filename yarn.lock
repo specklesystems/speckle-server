@@ -10102,7 +10102,7 @@ __metadata:
     node-cron: "npm:^3.0.2"
     node-machine-id: "npm:^1.1.12"
     node-mocks-http: "npm:^1.12.1"
-    nodemailer: "npm:^6.5.0"
+    nodemailer: "npm:^7.0.7"
     nodemon: "npm:^3.1.9"
     openid-client: "npm:^5.1.7"
     passport: "npm:^0.6.0"
@@ -28021,10 +28021,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nodemailer@npm:^6.5.0":
-  version: 6.9.9
-  resolution: "nodemailer@npm:6.9.9"
-  checksum: 10/d81f8613c35785aeb60dd0e3ead2c2c0171c709381fde17ada112f5ac635630814ad09492dacaf0fd30158492ed834abb82d9c58b49e9b495e5c675fbc5fffef
+"nodemailer@npm:^7.0.7":
+  version: 7.0.9
+  resolution: "nodemailer@npm:7.0.9"
+  checksum: 10/88883c58afe356d2b4c24b1e976c04857e8a7a7145e1752dab69072900b0cc2e3daa0964a08c653e692fb64382453e1cfcee3d863828844c8d6f6239727b9023
   languageName: node
   linkType: hard
 
