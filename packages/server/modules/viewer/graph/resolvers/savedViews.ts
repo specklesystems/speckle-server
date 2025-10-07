@@ -102,6 +102,10 @@ const resolvers: Resolvers = {
         }),
         getProjectSavedViewsTotalCount: getProjectSavedViewsTotalCountFactory({
           db: projectDb
+        }),
+        getViewerResourceGroups: buildGetViewerResourceGroups({
+          projectDb,
+          loaders: ctx.loaders
         })
       })
 

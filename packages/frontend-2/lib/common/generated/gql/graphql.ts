@@ -2457,39 +2457,6 @@ export type MutationWebhookUpdateArgs = {
   webhook: WebhookUpdateInput;
 };
 
-export type Notification = {
-  __typename?: 'Notification';
-  createdAt: Scalars['DateTime']['output'];
-  id: Scalars['ID']['output'];
-  payload: Scalars['JSONObject']['output'];
-  read: Scalars['Boolean']['output'];
-  type: Scalars['String']['output'];
-  updatedAt: Scalars['DateTime']['output'];
-};
-
-export type NotificationMutations = {
-  __typename?: 'NotificationMutations';
-  /** Delete an existing notification */
-  bulkDelete: Scalars['Boolean']['output'];
-  /** update notidication */
-  bulkUpdate: Scalars['Boolean']['output'];
-};
-
-
-export type NotificationMutationsBulkDeleteArgs = {
-  ids: Array<Scalars['String']['input']>;
-};
-
-
-export type NotificationMutationsBulkUpdateArgs = {
-  input: Array<NotificationUpdateInput>;
-};
-
-export type NotificationUpdateInput = {
-  id: Scalars['ID']['input'];
-  read: Scalars['Boolean']['input'];
-};
-
 export type Object = {
   __typename?: 'Object';
   /** @deprecated Not implemented. */
@@ -2702,6 +2669,7 @@ export type Project = {
   savedViewGroups: SavedViewGroupCollection;
   /** Same as savedView(), but won't throw if view isn't found */
   savedViewIfExists?: Maybe<SavedView>;
+  savedViews: SavedViewCollection;
   /** Source apps used in any models of this project */
   sourceApps: Array<Scalars['String']['output']>;
   team: Array<ProjectCollaborator>;
@@ -2858,6 +2826,11 @@ export type ProjectSavedViewGroupsArgs = {
 
 export type ProjectSavedViewIfExistsArgs = {
   id?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type ProjectSavedViewsArgs = {
+  input: ProjectSavedViewsInput;
 };
 
 
@@ -3378,6 +3351,27 @@ export type ProjectSavedViewGroupsUpdatedMessage = {
   /** Null if group was deleted */
   savedViewGroup?: Maybe<SavedViewGroup>;
   type: ProjectSavedViewsUpdatedMessageType;
+};
+
+export type ProjectSavedViewsInput = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  /** Optionally filter by visibility. */
+  onlyVisibility?: InputMaybe<SavedViewVisibility>;
+  /**
+   * Viewer resource ID string that identifies which resources should be loaded. If not specified,
+   * views from all resources in the project will be returned.
+   */
+  resourceIdString?: InputMaybe<Scalars['String']['input']>;
+  /** Whether to only include views matching this search term */
+  search?: InputMaybe<Scalars['String']['input']>;
+  /**
+   * Optionally specify sort by field. Default: position
+   * Options: updatedAt, createdAt, name, position
+   */
+  sortBy?: InputMaybe<Scalars['String']['input']>;
+  /** Optionally specify sort direction. Default: descending */
+  sortDirection?: InputMaybe<SortDirection>;
 };
 
 export type ProjectSavedViewsUpdatedMessage = {
@@ -6441,6 +6435,16 @@ export type FormSelectModels_ModelFragment = { __typename?: 'Model', id: string,
 
 export type FormSelectProjects_ProjectFragment = { __typename?: 'Project', id: string, name: string };
 
+export type FormSelectSavedView_SavedViewFragment = { __typename?: 'SavedView', id: string, name: string, thumbnailUrl: string };
+
+export type FormSelectSavedView_SavedViewsQueryVariables = Exact<{
+  projectId: Scalars['String']['input'];
+  input: ProjectSavedViewsInput;
+}>;
+
+
+export type FormSelectSavedView_SavedViewsQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, savedViews: { __typename?: 'SavedViewCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'SavedView', id: string, name: string, thumbnailUrl: string }> } } };
+
 export type FormSelectSavedViewGroup_SavedViewGroupFragment = { __typename?: 'SavedViewGroup', id: string, title: string, isUngroupedViewsGroup: boolean };
 
 export type FormSelectSavedViewGroup_SavedViewGroupsQueryVariables = Exact<{
@@ -8881,6 +8885,7 @@ export const FullPermissionCheckResultFragmentDoc = {"kind":"Document","definiti
 export const DashboardsCard_DashboardFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"DashboardsCard_Dashboard"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Dashboard"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"workspace"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdBy"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canDelete"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FullPermissionCheckResult"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"PermissionCheckResult"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authorized"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"payload"}},{"kind":"Field","name":{"kind":"Name","value":"errorMessage"}}]}}]} as unknown as DocumentNode<DashboardsCard_DashboardFragment, unknown>;
 export const FormSelectModels_ModelFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FormSelectModels_Model"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Model"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]} as unknown as DocumentNode<FormSelectModels_ModelFragment, unknown>;
 export const FormSelectProjects_ProjectFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FormSelectProjects_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]} as unknown as DocumentNode<FormSelectProjects_ProjectFragment, unknown>;
+export const FormSelectSavedView_SavedViewFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FormSelectSavedView_SavedView"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SavedView"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"thumbnailUrl"}}]}}]} as unknown as DocumentNode<FormSelectSavedView_SavedViewFragment, unknown>;
 export const HeaderWorkspaceSwitcherWorkspaceListItem_WorkspaceFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"HeaderWorkspaceSwitcherWorkspaceListItem_Workspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Workspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"creationState"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"completed"}}]}},{"kind":"Field","name":{"kind":"Name","value":"plan"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]} as unknown as DocumentNode<HeaderWorkspaceSwitcherWorkspaceListItem_WorkspaceFragment, unknown>;
 export const WorkspaceSwitcherActiveWorkspace_LimitedWorkspaceFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"WorkspaceSwitcherActiveWorkspace_LimitedWorkspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"LimitedWorkspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"role"}}]}}]} as unknown as DocumentNode<WorkspaceSwitcherActiveWorkspace_LimitedWorkspaceFragment, unknown>;
 export const HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspaceFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspace"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"LimitedWorkspace"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"slug"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}}]}}]} as unknown as DocumentNode<HeaderWorkspaceSwitcherHeaderExpiredSso_LimitedWorkspaceFragment, unknown>;
@@ -9143,6 +9148,7 @@ export const DashboardsSharDialogPermissionsDocument = {"kind":"Document","defin
 export const DashboardsShareTokenDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DashboardsShareToken"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"dashboardId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"dashboardMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"share"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"dashboardId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"dashboardId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"revoked"}},{"kind":"Field","name":{"kind":"Name","value":"content"}}]}}]}}]}}]} as unknown as DocumentNode<DashboardsShareTokenMutation, DashboardsShareTokenMutationVariables>;
 export const DashboardsShareEnableTokenDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DashboardsShareEnableToken"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"DashboardShareInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"dashboardMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"enableShare"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"revoked"}},{"kind":"Field","name":{"kind":"Name","value":"content"}}]}}]}}]}}]} as unknown as DocumentNode<DashboardsShareEnableTokenMutation, DashboardsShareEnableTokenMutationVariables>;
 export const DashboardsShareDisableTokenDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DashboardsShareDisableToken"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"DashboardShareInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"dashboardMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"disableShare"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"revoked"}},{"kind":"Field","name":{"kind":"Name","value":"content"}}]}}]}}]}}]} as unknown as DocumentNode<DashboardsShareDisableTokenMutation, DashboardsShareDisableTokenMutationVariables>;
+export const FormSelectSavedView_SavedViewsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"FormSelectSavedView_SavedViews"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ProjectSavedViewsInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"savedViews"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"FormSelectSavedView_SavedView"}}]}},{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FormSelectSavedView_SavedView"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SavedView"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"thumbnailUrl"}}]}}]} as unknown as DocumentNode<FormSelectSavedView_SavedViewsQuery, FormSelectSavedView_SavedViewsQueryVariables>;
 export const FormSelectSavedViewGroup_SavedViewGroupsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"FormSelectSavedViewGroup_SavedViewGroups"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SavedViewGroupsInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"savedViewGroups"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"FormSelectSavedViewGroup_SavedViewGroup"}}]}},{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FormSelectSavedViewGroup_SavedViewGroup"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SavedViewGroup"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"isUngroupedViewsGroup"}}]}}]} as unknown as DocumentNode<FormSelectSavedViewGroup_SavedViewGroupsQuery, FormSelectSavedViewGroup_SavedViewGroupsQueryVariables>;
 export const InviteDialogProjectRowProjectCollaboratorsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"InviteDialogProjectRowProjectCollaborators"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filter"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"InvitableCollaboratorsFilter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"invitableCollaborators"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"InviteProjectItem_WorkspaceCollaborator"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"InviteProjectItem_WorkspaceCollaborator"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"WorkspaceCollaborator"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"seatType"}},{"kind":"Field","name":{"kind":"Name","value":"role"}}]}}]} as unknown as DocumentNode<InviteDialogProjectRowProjectCollaboratorsQuery, InviteDialogProjectRowProjectCollaboratorsQueryVariables>;
 export const PresentationShareDialogPermissionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"PresentationShareDialogPermissions"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"savedViewGroupId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"savedViewGroup"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"savedViewGroupId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"groupId"}},{"kind":"Field","name":{"kind":"Name","value":"shareLink"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"content"}},{"kind":"Field","name":{"kind":"Name","value":"revoked"}}]}},{"kind":"Field","name":{"kind":"Name","value":"permissions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"canCreateToken"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FullPermissionCheckResult"}}]}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FullPermissionCheckResult"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"PermissionCheckResult"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authorized"}},{"kind":"Field","name":{"kind":"Name","value":"code"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"payload"}},{"kind":"Field","name":{"kind":"Name","value":"errorMessage"}}]}}]} as unknown as DocumentNode<PresentationShareDialogPermissionsQuery, PresentationShareDialogPermissionsQueryVariables>;
@@ -10464,6 +10470,7 @@ export type ProjectFieldArgs = {
   savedViewGroup: ProjectSavedViewGroupArgs,
   savedViewGroups: ProjectSavedViewGroupsArgs,
   savedViewIfExists: ProjectSavedViewIfExistsArgs,
+  savedViews: ProjectSavedViewsArgs,
   sourceApps: {},
   team: {},
   ungroupedViewGroup: ProjectUngroupedViewGroupArgs,
@@ -11618,3 +11625,4 @@ export type AllObjectFieldArgTypes = {
   WorkspaceTeamByRole: WorkspaceTeamByRoleFieldArgs,
   WorkspaceUpdatedMessage: WorkspaceUpdatedMessageFieldArgs,
 }
+

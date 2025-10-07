@@ -1046,11 +1046,22 @@ export const updateSavedViewGroupFactory =
   }
 
 export const getProjectSavedViewsFactory =
-  (deps: {
-    getProjectSavedViewsPageItems: GetProjectSavedViewsPageItems
-    getProjectSavedViewsTotalCount: GetProjectSavedViewsTotalCount
-  }): GetProjectSavedViews =>
+  (
+    deps: {
+      getProjectSavedViewsPageItems: GetProjectSavedViewsPageItems
+      getProjectSavedViewsTotalCount: GetProjectSavedViewsTotalCount
+    } & DependenciesOf<typeof unwrapResourceIdStringFactory>
+  ): GetProjectSavedViews =>
   async (params) => {
+    // Resolve final resourceIdString from input one (may contain $prefix ids that need unwrapping)
+    if (params.resourceIdString) {
+      const finalResourceIds = await unwrapResourceIdStringFactory(deps)({
+        resourceIdString: params.resourceIdString,
+        projectId: params.projectId
+      })
+      params.resourceIdString = finalResourceIds.toString()
+    }
+
     const noItemsNeeded = params.limit === 0
     const [totalCount, pageItems] = await Promise.all([
       deps.getProjectSavedViewsTotalCount(params),

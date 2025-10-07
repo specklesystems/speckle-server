@@ -52,6 +52,8 @@ type Documents = {
     "\n  mutation DashboardsShareDisableToken($input: DashboardShareInput!) {\n    dashboardMutations {\n      disableShare(input: $input) {\n        id\n        revoked\n        content\n      }\n    }\n  }\n": typeof types.DashboardsShareDisableTokenDocument,
     "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n": typeof types.FormSelectModels_ModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": typeof types.FormSelectProjects_ProjectFragmentDoc,
+    "\n  fragment FormSelectSavedView_SavedView on SavedView {\n    id\n    name\n    thumbnailUrl\n  }\n": typeof types.FormSelectSavedView_SavedViewFragmentDoc,
+    "\n  query FormSelectSavedView_SavedViews(\n    $projectId: String!\n    $input: ProjectSavedViewsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      savedViews(input: $input) {\n        items {\n          id\n          ...FormSelectSavedView_SavedView\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n": typeof types.FormSelectSavedView_SavedViewsDocument,
     "\n  fragment FormSelectSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    title\n    isUngroupedViewsGroup\n  }\n": typeof types.FormSelectSavedViewGroup_SavedViewGroupFragmentDoc,
     "\n  query FormSelectSavedViewGroup_SavedViewGroups(\n    $projectId: String!\n    $input: SavedViewGroupsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      savedViewGroups(input: $input) {\n        items {\n          id\n          ...FormSelectSavedViewGroup_SavedViewGroup\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n": typeof types.FormSelectSavedViewGroup_SavedViewGroupsDocument,
     "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n": typeof types.FormUsersSelectItemFragmentDoc,
@@ -600,6 +602,8 @@ const documents: Documents = {
     "\n  mutation DashboardsShareDisableToken($input: DashboardShareInput!) {\n    dashboardMutations {\n      disableShare(input: $input) {\n        id\n        revoked\n        content\n      }\n    }\n  }\n": types.DashboardsShareDisableTokenDocument,
     "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n": types.FormSelectModels_ModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": types.FormSelectProjects_ProjectFragmentDoc,
+    "\n  fragment FormSelectSavedView_SavedView on SavedView {\n    id\n    name\n    thumbnailUrl\n  }\n": types.FormSelectSavedView_SavedViewFragmentDoc,
+    "\n  query FormSelectSavedView_SavedViews(\n    $projectId: String!\n    $input: ProjectSavedViewsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      savedViews(input: $input) {\n        items {\n          id\n          ...FormSelectSavedView_SavedView\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n": types.FormSelectSavedView_SavedViewsDocument,
     "\n  fragment FormSelectSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    title\n    isUngroupedViewsGroup\n  }\n": types.FormSelectSavedViewGroup_SavedViewGroupFragmentDoc,
     "\n  query FormSelectSavedViewGroup_SavedViewGroups(\n    $projectId: String!\n    $input: SavedViewGroupsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      savedViewGroups(input: $input) {\n        items {\n          id\n          ...FormSelectSavedViewGroup_SavedViewGroup\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n": types.FormSelectSavedViewGroup_SavedViewGroupsDocument,
     "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.FormUsersSelectItemFragmentDoc,
@@ -1276,6 +1280,14 @@ export function graphql(source: "\n  fragment FormSelectModels_Model on Model {\
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n"): (typeof documents)["\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment FormSelectSavedView_SavedView on SavedView {\n    id\n    name\n    thumbnailUrl\n  }\n"): (typeof documents)["\n  fragment FormSelectSavedView_SavedView on SavedView {\n    id\n    name\n    thumbnailUrl\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query FormSelectSavedView_SavedViews(\n    $projectId: String!\n    $input: ProjectSavedViewsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      savedViews(input: $input) {\n        items {\n          id\n          ...FormSelectSavedView_SavedView\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n"): (typeof documents)["\n  query FormSelectSavedView_SavedViews(\n    $projectId: String!\n    $input: ProjectSavedViewsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      savedViews(input: $input) {\n        items {\n          id\n          ...FormSelectSavedView_SavedView\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
