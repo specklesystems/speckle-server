@@ -121,7 +121,7 @@ const panels = shallowRef({
     tooltip: getShortcutDisplayText(shortcuts.ToggleMeasurements, {
       format: 'separate'
     }),
-    extraClasses: 'hidden md:flex'
+    extraClasses: ''
   },
   [ActivePanel.sectionBox]: {
     id: ActivePanel.sectionBox,
