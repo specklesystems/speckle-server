@@ -492,6 +492,7 @@ export default class Sandbox {
     const screenshot = this.tabs.pages[0].addButton({
       title: 'Screenshot'
     })
+
     screenshot.on('click', async () => {
       console.warn(await this.viewer.screenshot())
 

@@ -142,6 +142,7 @@ export default class SpeckleRenderer {
 
   protected container: HTMLElement
   protected rootGroup: Group
+  protected disabledRootGroup: Group
   protected _pipeline: Pipeline
 
   protected sun: DirectionalLight
@@ -193,6 +194,8 @@ export default class SpeckleRenderer {
     const batches = this.batcher.getBatches()
     for (let k = 0; k < batches.length; k++) {
       const batch = batches[k]
+      if (this.disabledRootGroup.getObjectByName(batch.subtreeId)) continue
+
       const rvs = batch.renderViews.slice()
       rvs.sort((a, b) => {
         return a.batchStart - b.batchStart
@@ -399,6 +402,9 @@ export default class SpeckleRenderer {
     this.rootGroup.name = 'ContentGroup'
     this.rootGroup.layers.set(ObjectLayers.STREAM_CONTENT)
     this._scene.add(this.rootGroup)
+
+    this.disabledRootGroup = new Group()
+    this.disabledRootGroup.name = 'DisabledContentGroup'
 
     this._intersections = new Intersections()
     this.viewer = viewer
@@ -732,6 +738,28 @@ export default class SpeckleRenderer {
     }
 
     this.viewer.World.expandWorld(batch.bounds)
+  }
+
+  public enableRenderTree(subtreeId: string, enable: boolean): boolean {
+    const renderTreeRoot =
+      this.rootGroup.getObjectByName(subtreeId) ||
+      this.disabledRootGroup.getObjectByName(subtreeId)
+
+    if (!renderTreeRoot) return false
+
+    if (!enable) {
+      this.rootGroup.remove(renderTreeRoot)
+      this.disabledRootGroup.add(renderTreeRoot)
+    } else {
+      this.disabledRootGroup.remove(renderTreeRoot)
+      this.rootGroup.add(renderTreeRoot)
+    }
+    this.needsRender = true
+    return true
+  }
+
+  public isRenderTreeEnabled(subtreeId: string): boolean {
+    return this.rootGroup.getObjectByName(subtreeId) !== undefined
   }
 
   public removeRenderTree(subtreeId: string) {
