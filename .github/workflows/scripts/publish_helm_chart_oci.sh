@@ -55,7 +55,7 @@ fi
 yq e -i ".docker_image_tag = \"${IMAGE_VERSION_TAG}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
 yq e -i ".name = \"${CHART_NAME}\"" "${GIT_REPO}/utils/helm/speckle-server/Chart.yaml"
 
-echo "Logging in to Helm registry ${HELM_REGISTRY_DOMAIN} with user ${REGISTRY_USERNAME}"
+echo "Logging in to Helm registry ${HELM_REGISTRY_DOMAIN} with user ${REGISTRY_USERNAME}. Password: ****${REGISTRY_PASSWORD: -3}"
 echo "${REGISTRY_PASSWORD}" | helm registry login "${HELM_REGISTRY_DOMAIN}" --username "${REGISTRY_USERNAME}" --password-stdin
 helm package "${GIT_REPO}/utils/helm/speckle-server" --version "${RELEASE_VERSION}" --app-version "${IMAGE_VERSION_TAG}" --destination "/tmp"
 echo "Publishing chart to oci://${HELM_REGISTRY_DOMAIN}/${HELM_REPOSITORY_PATH}/${CHART_NAME}"
