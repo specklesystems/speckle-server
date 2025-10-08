@@ -276,7 +276,7 @@ export const useAuthManager = (
   /**
    * Trigger full redirect that causes a full reload, instead of an in-session navigation
    */
-  const sendFullRedirect = async (relativeUrl: string) => {
+  const sendFullRedirect = async (relativeUrl: string, clearAuth: boolean) => {
     if (isFullRedirectState.value) return
 
     isFullRedirectState.value = true
@@ -284,7 +284,11 @@ export const useAuthManager = (
     if (import.meta.client) {
       window.location.href = relativeUrl
     } else if (ssrEvent) {
-      const { sendRedirect } = await import('h3')
+      // Sort of hacky, but otherwise it doesnt really do a full/clean redirect
+      // We may also need to forcefully clear some server cookies (auth cookie) to ensure we dont
+      // get stuck in a redirect loop, cause they only get written on server response end usually
+      const { sendRedirect, deleteCookie } = await import('h3')
+      if (clearAuth) deleteCookie(ssrEvent, CookieKeys.AuthToken)
       await sendRedirect(ssrEvent, relativeUrl)
     } else {
       logger().fatal('Failed to send full redirect')
@@ -548,7 +552,7 @@ export const useAuthManager = (
       if (!options?.forceFullReload) {
         await goToLogin()
       } else {
-        await sendFullRedirect(loginRoute)
+        await sendFullRedirect(loginRoute, true)
       }
     }
   }
