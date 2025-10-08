@@ -88,7 +88,6 @@ jobs:
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       OCI_REGISTRY_PASSWORD: ${{ (github.repository == 'specklesystems/speckle-server') && secrets.DOCKERHUB_TOKEN || secrets.GITHUB_TOKEN }}
-      GH_DEVOPS_PAT: ${{ secrets.GH_DEVOPS_PAT }}
 
   #HACK temporary job to publish helm charts to ghcr.io until we migrate everything
   ghcr-helm-chart-oci:
