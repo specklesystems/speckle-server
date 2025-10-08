@@ -1,5 +1,8 @@
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type {
+  Resolvers,
+  WorkspaceFeatureName
+} from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
 import {
   Roles,
@@ -66,6 +69,41 @@ const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
 
 const getWorkspacePlan = getWorkspacePlanFactory({ db })
 
+const hasAccessToFeatureResolver = async ({
+  featureName,
+  workspaceId
+}: {
+  workspaceId: string
+  featureName: WorkspaceFeatureName
+}) => {
+  const workspaceFeature = (() => {
+    switch (featureName) {
+      case 'dashboards':
+        return WorkspaceFeatureFlags.dashboards
+      case 'accIntegration':
+        return WorkspaceFeatureFlags.accIntegration
+      case 'presentations':
+        return WorkspaceFeatureFlags.presentations
+      case WorkspacePlanFeatures.DomainSecurity:
+      case WorkspacePlanFeatures.ExclusiveMembership:
+      case WorkspacePlanFeatures.HideSpeckleBranding:
+      case WorkspacePlanFeatures.SSO:
+      case WorkspacePlanFeatures.CustomDataRegion:
+      case WorkspacePlanFeatures.SavedViews:
+        return featureName
+      default:
+        throwUncoveredError(featureName)
+    }
+  })()
+  const hasAccess = await canWorkspaceAccessFeatureFactory({
+    getWorkspacePlan: getWorkspacePlanFactory({ db })
+  })({
+    workspaceId,
+    workspaceFeature
+  })
+  return hasAccess
+}
+
 export default FF_GATEKEEPER_MODULE_ENABLED
   ? ({
       Workspace: {
@@ -125,32 +163,10 @@ export default FF_GATEKEEPER_MODULE_ENABLED
           })
         },
         hasAccessToFeature: async (parent, args) => {
-          const workspaceFeature = (() => {
-            switch (args.featureName) {
-              case 'dashboards':
-                return WorkspaceFeatureFlags.dashboards
-              case 'accIntegration':
-                return WorkspaceFeatureFlags.accIntegration
-              case 'presentations':
-                return WorkspaceFeatureFlags.presentations
-              case WorkspacePlanFeatures.DomainSecurity:
-              case WorkspacePlanFeatures.ExclusiveMembership:
-              case WorkspacePlanFeatures.HideSpeckleBranding:
-              case WorkspacePlanFeatures.SSO:
-              case WorkspacePlanFeatures.CustomDataRegion:
-              case WorkspacePlanFeatures.SavedViews:
-                return args.featureName
-              default:
-                throwUncoveredError(args.featureName)
-            }
-          })()
-          const hasAccess = await canWorkspaceAccessFeatureFactory({
-            getWorkspacePlan: getWorkspacePlanFactory({ db })
-          })({
+          return await hasAccessToFeatureResolver({
             workspaceId: parent.id,
-            workspaceFeature
+            featureName: args.featureName
           })
-          return hasAccess
         },
         readOnly: async (parent) => {
           if (!FF_BILLING_INTEGRATION_ENABLED) return false
@@ -190,21 +206,10 @@ export default FF_GATEKEEPER_MODULE_ENABLED
           if (!parent.workspaceId) {
             return false
           }
-
-          switch (args.featureName) {
-            case WorkspacePlanFeatures.HideSpeckleBranding: {
-              return await canWorkspaceAccessFeatureFactory({
-                getWorkspacePlan: getWorkspacePlanFactory({ db })
-              })({
-                workspaceId: parent.workspaceId,
-                workspaceFeature: args.featureName
-              })
-            }
-            default: {
-              // Only publicly validate embed-related features at the project level
-              return false
-            }
-          }
+          return await hasAccessToFeatureResolver({
+            workspaceId: parent.workspaceId,
+            featureName: args.featureName
+          })
         }
       },
       WorkspacePlan: {
