@@ -260,7 +260,9 @@ describe('Workspace services', () => {
       expect(context.storedWorkspaces[0].name).to.equal('Safe workspace name')
       expect(workspace.description).to.equal('Safe description')
       expect(context.storedWorkspaces[0].description).to.equal('Safe description')
-      expect(workspace.logo).to.equal('Safe logo')
+      expect(workspace.logo).to.equal(
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII'
+      )
       expect(context.storedWorkspaces[0].logo).to.equal(
         'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII'
       )
