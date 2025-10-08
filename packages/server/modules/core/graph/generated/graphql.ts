@@ -5491,6 +5491,11 @@ export type ViewerResourceGroup = {
   __typename?: 'ViewerResourceGroup';
   /** Resource identifier used to refer to a collection of resource items */
   identifier: Scalars['String']['output'];
+  /**
+   * True, if the group was resolved only for preloading purposes, not because the main
+   * resourceIdString referred to it
+   */
+  isPreloadOnly?: Maybe<Scalars['Boolean']['output']>;
   /** Viewer resources that the identifier refers to */
   items: Array<ViewerResourceItem>;
 };
@@ -9162,6 +9167,7 @@ export type VersionPermissionChecksResolvers<ContextType = GraphQLContext, Paren
 
 export type ViewerResourceGroupResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ViewerResourceGroup'] = ResolversParentTypes['ViewerResourceGroup']> = {
   identifier?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  isPreloadOnly?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   items?: Resolver<Array<ResolversTypes['ViewerResourceItem']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

@@ -321,6 +321,142 @@ describe('Viewer Route Helpers', () => {
       expect(builder.toString()).toBe('$newFolder,abc,def,xyz') // $newFolder should keep casing
     })
 
+    describe('difference', () => {
+      it('returns empty array when no new resources', () => {
+        const builder = resourceBuilder().addModel('abc').addModel('def')
+        const diff = builder.difference(['abc', 'def'])
+        expect(diff).toEqual([])
+      })
+
+      it('returns new resources that are not in builder', () => {
+        const builder = resourceBuilder().addModel('abc')
+        const diff = builder.difference(['abc', 'def', 'xyz'])
+        expect(diff).toHaveLength(2)
+        expect(diff.map((r) => r.toString()).sort()).toEqual(['def', 'xyz'])
+      })
+
+      it('returns all resources when builder is empty', () => {
+        const builder = resourceBuilder()
+        const diff = builder.difference(['abc', 'def'])
+        expect(diff).toHaveLength(2)
+        expect(diff.map((r) => r.toString()).sort()).toEqual(['abc', 'def'])
+      })
+
+      it('handles different resource types', () => {
+        const objectId = '1234567890abcdef1234567890abcdef'
+        const builder = resourceBuilder().addModel('abc')
+        const diff = builder.difference(['abc', 'def@ver', '$folder', objectId, 'all'])
+        expect(diff).toHaveLength(4)
+        expect(diff.some((r) => r.type === 'Model')).toBe(true)
+        expect(diff.some((r) => r.type === 'ModelFolder')).toBe(true)
+        expect(diff.some((r) => r.type === 'Object')).toBe(true)
+        expect(diff.some((r) => r.type === 'all-models')).toBe(true)
+      })
+
+      it('by default does not require exact version match for model resources', () => {
+        const builder = resourceBuilder().addModel('abc', 'ver1')
+        const diff = builder.difference(['abc@ver2'])
+        expect(diff).toEqual([]) // Should not add because modelId matches
+      })
+
+      it('with requireExactMatch=true requires exact version match', () => {
+        const builder = resourceBuilder().addModel('abc', 'ver1')
+        const diff = builder.difference(['abc@ver2'], { requireExactMatch: true })
+        expect(diff).toHaveLength(1)
+        expect(diff[0].toString()).toBe('abc@ver2')
+      })
+
+      it('with requireExactMatch=true does not add exact same model+version', () => {
+        const builder = resourceBuilder().addModel('abc', 'ver1')
+        const diff = builder.difference(['abc@ver1'], { requireExactMatch: true })
+        expect(diff).toEqual([])
+      })
+
+      it('with requireExactMatch=true adds model without version to builder with versioned model', () => {
+        const builder = resourceBuilder().addModel('abc', 'ver1')
+        const diff = builder.difference(['abc'], { requireExactMatch: true })
+        expect(diff).toHaveLength(1)
+        expect(diff[0].toString()).toBe('abc')
+      })
+
+      it('handles model without version when builder has different version', () => {
+        const builder = resourceBuilder().addModel('abc', 'ver1')
+        const diff = builder.difference(['abc']) // without version
+        expect(diff).toEqual([]) // Should not add because modelId matches (requireExactMatch=false)
+      })
+
+      it('handles versioned model when builder has model without version', () => {
+        const builder = resourceBuilder().addModel('abc') // no version
+        const diff = builder.difference(['abc@ver1'])
+        expect(diff).toEqual([]) // Should not add because modelId matches (requireExactMatch=false)
+      })
+
+      it('handles non-model resources with exact string matching', () => {
+        const objectId1 = '1234567890abcdef1234567890abcdef'
+        const objectId2 = 'abcdef1234567890abcdef1234567890'
+        const builder = resourceBuilder().addObject(objectId1).addModelFolder('folder1')
+        const diff = builder.difference([objectId1, objectId2, '$folder1', '$folder2'])
+        expect(diff).toHaveLength(2)
+        expect(diff.map((r) => r.toString()).sort()).toEqual(
+          [objectId2, '$folder2'].sort()
+        )
+      })
+
+      it('can take ViewerResource array as input', () => {
+        const builder = resourceBuilder().addModel('abc')
+        const resources = [
+          parseResourceFromString('def'),
+          parseResourceFromString('xyz')
+        ]
+        const diff = builder.difference(resources)
+        expect(diff).toHaveLength(2)
+        expect(diff.map((r) => r.toString()).sort()).toEqual(['def', 'xyz'])
+      })
+
+      it('can take another builder as input', () => {
+        const builder1 = resourceBuilder().addModel('abc').addModel('def')
+        const builder2 = resourceBuilder().addModel('def').addModel('xyz')
+        const diff = builder1.difference(builder2)
+        expect(diff).toHaveLength(1)
+        expect(diff[0].toString()).toBe('xyz')
+      })
+
+      it('handles case sensitivity correctly', () => {
+        const builder = resourceBuilder().addModel('ABC')
+        const diff = builder.difference(['abc', 'ABC', 'Abc']) // All should be treated as same
+        expect(diff).toEqual([])
+      })
+
+      it('preserves order of new resources found', () => {
+        const builder = resourceBuilder().addModel('abc')
+        const diff = builder.difference(['xyz', 'def', 'ghi'])
+        expect(diff.map((r) => r.toString())).toEqual(['xyz', 'def', 'ghi'])
+      })
+
+      it('handles mixed resource types with exact matching', () => {
+        const objectId = '1234567890abcdef1234567890abcdef'
+        const builder = resourceBuilder()
+          .addModel('abc', 'ver1')
+          .addObject(objectId)
+          .addModelFolder('folder1')
+
+        const diff = builder.difference([
+          'abc@ver1', // exact match - should not be added
+          'abc@ver2', // same model, different version - should not be added (requireExactMatch=false)
+          'def@ver1', // different model - should be added
+          objectId, // exact object match - should not be added
+          'fedcba0987654321fedcba0987654321', // different object - should be added
+          '$folder1', // exact folder match - should not be added
+          '$folder2' // different folder - should be added
+        ])
+
+        expect(diff).toHaveLength(3)
+        expect(diff.map((r) => r.toString()).sort()).toEqual(
+          ['def@ver1', 'fedcba0987654321fedcba0987654321', '$folder2'].sort()
+        )
+      })
+    })
+
     it('addResources can add any kind of ViewerResources', () => {
       const resources = [
         'abc',

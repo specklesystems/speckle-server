@@ -27,9 +27,17 @@ import type {
 import type { SavedView } from '@/modules/viewer/domain/types/savedViews'
 import type { ExtendedViewerResourcesGraphQLReturn } from '@/modules/viewer/helpers/graphTypes'
 import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
-import { SpeckleViewer } from '@speckle/shared'
+import type {
+  ViewerAllModelsResource,
+  ViewerModelFolderResource,
+  ViewerObjectResource,
+  ViewerResource
+} from '@speckle/shared/viewer/route'
 import {
+  isAllModelsResource,
+  isModelFolderResource,
   isModelResource,
+  isObjectResource,
   resourceBuilder,
   ViewerModelResource
 } from '@speckle/shared/viewer/route'
@@ -42,6 +50,11 @@ export function isResourceItemEqual(a: ViewerResourceItem, b: ViewerResourceItem
   return true
 }
 
+type ResourceWithMetadata<R extends ViewerResource> = {
+  resource: R
+  isPreloadOnly: boolean
+}
+
 export type GetObjectResourceGroupsDeps = {
   getStreamObjects: GetStreamObjects
 }
@@ -50,23 +63,27 @@ export const getObjectResourceGroupsFactory =
   (deps: GetObjectResourceGroupsDeps) =>
   async (
     projectId: string,
-    resources: SpeckleViewer.ViewerRoute.ViewerObjectResource[]
+    resources: ResourceWithMetadata<ViewerObjectResource>[]
   ) => {
     const objects = keyBy(
       await deps.getStreamObjects(
         projectId,
-        resources.map((r) => r.objectId)
+        resources.map((r) => r.resource.objectId)
       ),
       'id'
     )
 
     const results: ViewerResourceGroup[] = []
     for (const objectResource of resources) {
-      if (!objects[objectResource.objectId]) continue
+      if (!objects[objectResource.resource.objectId]) continue
 
+      const isPreloadOnly = objectResource.isPreloadOnly
       results.push({
-        identifier: objectResource.toString(),
-        items: [{ modelId: null, versionId: null, objectId: objectResource.objectId }]
+        identifier: objectResource.resource.toString(),
+        items: [
+          { modelId: null, versionId: null, objectId: objectResource.resource.objectId }
+        ],
+        isPreloadOnly
       })
     }
 
@@ -78,15 +95,14 @@ type GetVersionResourceGroupsIncludingAllVersionsFactoryDeps = {
   getAllBranchCommits: GetAllBranchCommits
 }
 
+type SpecificVersionResourceGroupsInputs = {
+  modelResources?: ResourceWithMetadata<ViewerModelResource>[]
+  folderResources?: ResourceWithMetadata<ViewerModelFolderResource>[]
+}
+
 const getVersionResourceGroupsIncludingAllVersionsFactory =
   (deps: GetVersionResourceGroupsIncludingAllVersionsFactoryDeps) =>
-  async (
-    projectId: string,
-    params: {
-      modelResources?: SpeckleViewer.ViewerRoute.ViewerModelResource[]
-      folderResources?: SpeckleViewer.ViewerRoute.ViewerModelFolderResource[]
-    }
-  ) => {
+  async (projectId: string, params: SpecificVersionResourceGroupsInputs) => {
     // by default we pull all versions of all relevant branches, but if loadedVersionsOnly is set, we only pull
     // specifically requested versions (if version isn't set in identifier, then latest version)
 
@@ -95,20 +111,21 @@ const getVersionResourceGroupsIncludingAllVersionsFactory =
 
     const foldersModels = await deps.getStreamBranchesByName(
       projectId,
-      folderResources.map((r) => r.folderName),
+      folderResources.map((r) => r.resource.folderName),
       { startsWithName: true }
     )
 
     const allBranchIds = [
       ...foldersModels.map((m) => m.id),
-      ...modelResources.map((m) => m.modelId)
+      ...modelResources.map((m) => m.resource.modelId)
     ]
 
     // get all versions of all referenced branches
     const branchCommits = await deps.getAllBranchCommits({ branchIds: allBranchIds })
 
     for (const folderResource of folderResources) {
-      const prefix = folderResource.folderName
+      const isPreloadOnly = folderResource.isPreloadOnly
+      const prefix = folderResource.resource.folderName
       const folderModels = foldersModels.filter((m) =>
         m.name.toLowerCase().startsWith(prefix)
       )
@@ -129,25 +146,26 @@ const getVersionResourceGroupsIncludingAllVersionsFactory =
       }
 
       results.push({
-        identifier: folderResource.toString(),
-        items
+        identifier: folderResource.resource.toString(),
+        items,
+        isPreloadOnly
       })
     }
 
     for (const modelResource of modelResources) {
-      const modelVersions = branchCommits[modelResource.modelId] || []
+      const modelVersions = branchCommits[modelResource.resource.modelId] || []
 
       const items: ViewerResourceItem[] = []
       for (const modelVersion of modelVersions) {
         items.push({
-          modelId: modelResource.modelId,
+          modelId: modelResource.resource.modelId,
           versionId: modelVersion.id,
           objectId: modelVersion.referencedObject
         })
       }
 
       results.push({
-        identifier: modelResource.toString(),
+        identifier: modelResource.resource.toString(),
         items
       })
     }
@@ -167,10 +185,8 @@ const getVersionResourceGroupsLoadedVersionsOnlyFactory =
   async (
     projectId: string,
     params: {
-      modelResources?: SpeckleViewer.ViewerRoute.ViewerModelResource[]
-      folderResources?: SpeckleViewer.ViewerRoute.ViewerModelFolderResource[]
       allowEmptyModels?: boolean
-    }
+    } & SpecificVersionResourceGroupsInputs
   ) => {
     // by default we pull all versions of all relevant branches, but if loadedVersionsOnly is set, we only pull
     // specifically requested versions (if version isn't set in identifier, then latest version)
@@ -180,21 +196,19 @@ const getVersionResourceGroupsLoadedVersionsOnlyFactory =
 
     const foldersModels = await deps.getStreamBranchesByName(
       projectId,
-      folderResources.map((r) => r.folderName),
+      folderResources.map((r) => r.resource.folderName),
       { startsWithName: true }
     )
 
     const specificVersionPairs = modelResources
-      .filter(
-        (
-          r
-        ): r is SpeckleViewer.ViewerRoute.ViewerModelResource & { versionId: string } =>
-          !!r.versionId
-      )
+      .map((r) => r.resource)
+      .filter((r): r is ViewerModelResource & { versionId: string } => !!r.versionId)
       .map((r) => ({ branchId: r.modelId, commitId: r.versionId }))
 
     const latestVersionModelIds = uniq([
-      ...modelResources.filter((r) => !r.versionId).map((r) => r.modelId),
+      ...modelResources
+        .filter((r) => !r.resource.versionId)
+        .map((r) => r.resource.modelId),
       ...foldersModels.map((m) => m.id)
     ])
 
@@ -205,7 +219,9 @@ const getVersionResourceGroupsLoadedVersionsOnlyFactory =
     const modelLatestVersions = keyBy(latestVersions, 'branchId')
 
     for (const folderResource of folderResources) {
-      const prefix = folderResource.folderName
+      const prefix = folderResource.resource.folderName
+      const isPreloadOnly = folderResource.isPreloadOnly
+
       const folderModels = foldersModels.filter((m) =>
         m.name.toLowerCase().startsWith(prefix)
       )
@@ -224,53 +240,63 @@ const getVersionResourceGroupsLoadedVersionsOnlyFactory =
       }
 
       results.push({
-        identifier: folderResource.toString(),
-        items
+        identifier: folderResource.resource.toString(),
+        items,
+        isPreloadOnly
       })
     }
 
-    const emptyModels: ViewerModelResource[] = []
+    const emptyModels: ResourceWithMetadata<ViewerModelResource>[] = []
     for (const modelResource of modelResources) {
+      const isPreloadOnly = modelResource.isPreloadOnly
+
       let item: Optional<CommitRecord & { branchId: string }> = undefined
-      if (modelResource.versionId) {
+      if (modelResource.resource.versionId) {
         item = specificVersions.find(
           (v) =>
-            v.branchId === modelResource.modelId && v.id === modelResource.versionId
+            v.branchId === modelResource.resource.modelId &&
+            v.id === modelResource.resource.versionId
         )
       } else {
-        item = modelLatestVersions[modelResource.modelId]
+        item = modelLatestVersions[modelResource.resource.modelId]
       }
 
       if (!item) {
-        if (allowEmptyModels && !modelResource.versionId) {
+        if (allowEmptyModels && !modelResource.resource.versionId) {
           emptyModels.push(modelResource)
         }
         continue
       }
 
       results.push({
-        identifier: modelResource.toString(),
+        identifier: modelResource.resource.toString(),
         items: [
           {
             modelId: item.branchId,
             versionId: item.id,
             objectId: item.referencedObject
           }
-        ]
+        ],
+        isPreloadOnly
       })
     }
 
     // Validate that empty model resources are actually real models
     if (emptyModels.length && allowEmptyModels) {
       const emptyModelRecords = await deps.getBranchesByIds(
-        emptyModels.map((r) => r.modelId),
+        emptyModels.map((r) => r.resource.modelId),
         { streamId: projectId }
       )
       const emptyModelIds = new Set(emptyModelRecords.map((m) => m.id))
       for (const emptyModelId of emptyModelIds) {
+        const isPreloadOnly =
+          emptyModels.find((r) => r.resource.modelId === emptyModelId)?.isPreloadOnly ||
+          false
+
         results.push({
           identifier: emptyModelId,
-          items: []
+          items: [],
+          isPreloadOnly
         })
       }
     }
@@ -302,6 +328,10 @@ type GetVersionResourceGroupsDeps = GetAllModelsResourceGroupDeps &
   GetVersionResourceGroupsLoadedVersionsOnlyDeps &
   GetVersionResourceGroupsIncludingAllVersionsFactoryDeps
 
+type VersionResourceGroupsInputs = SpecificVersionResourceGroupsInputs & {
+  allModelsResource?: ResourceWithMetadata<ViewerAllModelsResource>
+}
+
 /**
  * Version resources can be resolved 2 ways:
  * * Default - Specific version IDs referenced in identifiers are ignored and the identifiers always
@@ -315,12 +345,9 @@ const getVersionResourceGroupsFactory =
   async (
     projectId: string,
     params: {
-      modelResources?: SpeckleViewer.ViewerRoute.ViewerModelResource[]
-      folderResources?: SpeckleViewer.ViewerRoute.ViewerModelFolderResource[]
-      allModelsResource?: SpeckleViewer.ViewerRoute.ViewerAllModelsResource
       loadedVersionsOnly?: boolean
       allowEmptyModels?: boolean
-    }
+    } & VersionResourceGroupsInputs
   ) => {
     const allModelsGroup = params.allModelsResource
       ? await getAllModelsResourceGroupFactory(deps)(projectId)
@@ -520,6 +547,7 @@ export const getViewerResourceGroupsFactory =
       applyHomeView
     } = params
 
+    // Saved view may add extra resources (e.g. federated view)
     let resourceIdStringWithSavedView: ResourceIdStringWithSavedView = {
       resourceIdString: params.resourceIdString,
       savedView: undefined
@@ -534,27 +562,64 @@ export const getViewerResourceGroupsFactory =
           applyHomeView
         })
     }
-
-    const { resourceIdString } = resourceIdStringWithSavedView
+    const { resourceIdString, savedView } = resourceIdStringWithSavedView
     const ret: ExtendedViewerResourcesGraphQLReturn = {
       groups: [],
-      savedView: resourceIdStringWithSavedView.savedView,
+      savedView,
       request: { savedViewId },
-      resourceIdString: resourceIdStringWithSavedView.resourceIdString
+      resourceIdString
     }
 
+    // If empty resource ids, return empty result
     if (!resourceIdString?.trim().length) return ret
 
-    const resources = SpeckleViewer.ViewerRoute.parseUrlParameters(resourceIdString)
+    // Combine w/ preloadables (TODO: extrat to fn)
+    const preloadResources = resourceBuilder().addResources(
+      params.preloadResourceIdString || ''
+    )
+    const resources = resourceBuilder().addResources(resourceIdString)
+    const uniquePreloadResources = resources.difference(preloadResources)
 
-    const allModelsResource = resources.find(
-      SpeckleViewer.ViewerRoute.isAllModelsResource
-    )
-    const objectResources = resources.filter(SpeckleViewer.ViewerRoute.isObjectResource)
-    const modelResources = resources.filter(SpeckleViewer.ViewerRoute.isModelResource)
-    const folderResources = resources.filter(
-      SpeckleViewer.ViewerRoute.isModelFolderResource
-    )
+    const buildExtendedResources = (
+      resources: ViewerResource[],
+      isPreloadOnly: boolean
+    ) => {
+      const allModelsResource = resources.find(isAllModelsResource)
+      const objectResources = resources.filter(isObjectResource)
+      const modelResources = resources.filter(isModelResource)
+      const folderResources = resources.filter(isModelFolderResource)
+
+      return {
+        allModelsResource: allModelsResource
+          ? {
+              resource: allModelsResource,
+              isPreloadOnly
+            }
+          : undefined,
+        objectResources: objectResources.map((r) => ({ resource: r, isPreloadOnly })),
+        modelResources: modelResources.map((r) => ({ resource: r, isPreloadOnly })),
+        folderResources: folderResources.map((r) => ({ resource: r, isPreloadOnly }))
+      }
+    }
+
+    // Build extended versions & merge
+    const typedResources = buildExtendedResources(resources.toResources(), false)
+    const typedPreloadResources = buildExtendedResources(uniquePreloadResources, true)
+
+    const allModelsResource =
+      typedResources.allModelsResource || typedPreloadResources.allModelsResource
+    const objectResources = [
+      ...typedResources.objectResources,
+      ...typedPreloadResources.objectResources
+    ]
+    const modelResources = [
+      ...typedResources.modelResources,
+      ...typedPreloadResources.modelResources
+    ]
+    const folderResources = [
+      ...typedResources.folderResources,
+      ...typedPreloadResources.folderResources
+    ]
 
     const results: ViewerResourceGroup[] = flatten(
       await Promise.all([
@@ -606,7 +671,7 @@ export function doViewerResourcesFit(
 }
 
 export function viewerResourcesToString(resources: ViewerResourceItem[]): string {
-  const builder = SpeckleViewer.ViewerRoute.resourceBuilder()
+  const builder = resourceBuilder()
   for (const resource of resources) {
     if (resource.modelId && resource.versionId) {
       builder.addModel(resource.modelId, resource.versionId)

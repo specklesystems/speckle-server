@@ -15,6 +15,11 @@ type ViewerResourceGroup {
   Viewer resources that the identifier refers to
   """
   items: [ViewerResourceItem!]!
+  """
+  True, if the group was resolved only for preloading purposes, not because the main
+  resourceIdString referred to it
+  """
+  isPreloadOnly: Boolean
 }
 
 type ViewerResourceItem {

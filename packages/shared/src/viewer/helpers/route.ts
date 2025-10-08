@@ -201,9 +201,9 @@ class ViewerResourceBuilder implements Iterable<ViewerResource> {
   }
 
   /**
-   * Only add those resources that are not already in the builder.
+   * Get back only those resources that are not already in the builder
    */
-  addNew(
+  difference(
     incoming: ViewerResourcesTarget,
     options?: {
       /**
@@ -216,24 +216,47 @@ class ViewerResourceBuilder implements Iterable<ViewerResource> {
     const { requireExactMatch = false } = options || {}
     const resources = toViewerResourceArray(incoming)
 
-    const newResources: ViewerResource[] = this.#resources.slice()
+    const newResources: ViewerResource[] = []
+    const allResources: ViewerResource[] = this.#resources.slice()
+
+    const add = (r: ViewerResource) => {
+      newResources.push(r)
+      allResources.push(r)
+    }
+
     for (const resource of resources) {
       // check if newResources has a resource w/ same modelId (check w/ isModelResource)
       if (isModelResource(resource) && !requireExactMatch) {
-        const existing = newResources.find(
+        const existing = allResources.find(
           (r) => isModelResource(r) && r.modelId === resource.modelId
         )
         if (!existing) {
-          newResources.push(resource)
+          add(resource)
         }
-      } else if (!newResources.some((r) => r.toString() === resource.toString())) {
-        newResources.push(resource)
+      } else if (!allResources.some((r) => r.toString() === resource.toString())) {
+        add(resource)
       }
     }
 
-    this.#resources = newResources
-    this.#order()
+    return newResources
+  }
 
+  /**
+   * Only add those resources that are not already in the builder.
+   */
+  addNew(
+    incoming: ViewerResourcesTarget,
+    options?: {
+      /**
+       * If true, will require exact version matches for model resources
+       * Default: false
+       */
+      requireExactMatch?: boolean
+    }
+  ) {
+    const newResources = this.difference(incoming, options)
+    this.#resources = [...this.#resources, ...newResources]
+    this.#order()
     return this
   }
 
