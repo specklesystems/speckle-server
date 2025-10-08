@@ -230,7 +230,7 @@ export function useProjectModelUpdateTracking(
     () => ({
       id: unref(projectId)
     }),
-    { enabled: isEnabled }
+    { enabled: isEnabled, errorPolicy: 'all' }
   )
 
   const apollo = useApolloClient().client
@@ -349,7 +349,7 @@ export function useProjectPendingModelUpdateTracking(
     () => ({
       id: unref(projectId)
     }),
-    { enabled: isEnabled }
+    { enabled: isEnabled, errorPolicy: 'all' }
   )
   const apollo = useApolloClient().client
   const { addFailedJob } = useGlobalFileImportManager()

@@ -62,6 +62,9 @@ export function useViewerCommentUpdateTracking(
         resourceIdString: unref(params.resourceIdString),
         loadedVersionsOnly: unref(params.loadedVersionsOnly)
       }
+    }),
+    () => ({
+      errorPolicy: 'all'
     })
   )
 

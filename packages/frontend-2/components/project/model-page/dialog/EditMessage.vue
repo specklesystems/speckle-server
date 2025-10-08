@@ -78,7 +78,7 @@ watch(
   (newVersion) => {
     message.value = newVersion?.message || ''
   },
-  { deep: true }
+  { deep: true, immediate: true }
 )
 const mp = useMixpanel()
 const onSubmit = handleSubmit(async ({ newMessage }) => {

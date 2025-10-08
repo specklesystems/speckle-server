@@ -82,7 +82,35 @@ const resolvers: Resolvers = {
         workspaceId: parent.id,
         filter: {
           limit: args.limit,
-          cursor: args.cursor ?? null
+          cursor: args.cursor ?? null,
+          projectIds: args.filter?.projectIds ?? [],
+          search: args.filter?.search ?? null
+        }
+      })
+    }
+  },
+  Project: {
+    dashboards: async (parent, args, context) => {
+      const authResult = await context.authPolicies.workspace.canListDashboards({
+        userId: context.userId,
+        workspaceId: parent.id
+      })
+      throwIfAuthNotOk(authResult)
+
+      if (!parent.workspaceId) {
+        throw new WorkspaceNotFoundError()
+      }
+
+      return await getPaginatedDashboardsFactory({
+        listDashboards: listDashboardsFactory({ db }),
+        countDashboards: countDashboardsFactory({ db })
+      })({
+        workspaceId: parent.workspaceId,
+        filter: {
+          limit: args.limit,
+          cursor: args.cursor ?? null,
+          projectIds: [parent.id],
+          search: args.filter?.search ?? null
         }
       })
     }

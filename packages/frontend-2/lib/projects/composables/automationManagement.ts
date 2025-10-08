@@ -283,7 +283,7 @@ export const useProjectTriggeredAutomationsStatusUpdateTracking = (params: {
     () => ({
       id: unref(projectId)
     }),
-    { enabled: isEnabled }
+    { enabled: isEnabled, errorPolicy: 'all' }
   )
 
   onResult((res) => {
@@ -373,7 +373,7 @@ export const useProjectAutomationsUpdateTracking = (params: {
     () => ({
       id: unref(projectId)
     }),
-    { enabled: isEnabled }
+    { enabled: isEnabled, errorPolicy: 'all' }
   )
 
   onResult((res) => {
