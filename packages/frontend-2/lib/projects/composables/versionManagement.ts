@@ -79,7 +79,7 @@ export function useProjectVersionUpdateTracking(
     () => ({
       id: unref(projectId)
     }),
-    { enabled: isEnabled }
+    { enabled: isEnabled, errorPolicy: 'all' }
   )
 
   // Cache updates that should only be invoked once
@@ -636,7 +636,7 @@ export function useProjectPendingVersionUpdateTracking(
     () => ({
       id: unref(projectId)
     }),
-    { enabled: isEnabled }
+    { enabled: isEnabled, errorPolicy: 'all' }
   )
 
   const apollo = useApolloClient().client

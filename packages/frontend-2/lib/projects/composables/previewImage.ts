@@ -139,7 +139,8 @@ export function usePreviewImageBlob(
     }),
     () => ({
       enabled:
-        !!projectId.value && hasLock.value && isEnabled.value && !import.meta.server
+        !!projectId.value && hasLock.value && isEnabled.value && !import.meta.server,
+      errorPolicy: 'all'
     })
   )
 

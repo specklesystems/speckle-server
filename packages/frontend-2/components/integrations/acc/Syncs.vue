@@ -82,6 +82,9 @@ const { onResult: onProjectAccSyncItemsUpdated } = useSubscription(
   onProjectAccSyncItemUpdatedSubscription,
   () => ({
     id: props.projectId
+  }),
+  () => ({
+    errorPolicy: 'all'
   })
 )
 

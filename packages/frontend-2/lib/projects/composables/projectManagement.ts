@@ -79,7 +79,7 @@ export function useProjectUpdateTracking(
     () => ({
       id: unref(projectId)
     }),
-    { enabled: isEnabled }
+    { enabled: isEnabled, errorPolicy: 'all' }
   )
 
   onProjectUpdated((res) => {

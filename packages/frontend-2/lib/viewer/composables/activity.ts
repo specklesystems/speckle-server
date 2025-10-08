@@ -317,7 +317,8 @@ export function useViewerUserActivityTracking(
       sessionId: sessionId.value
     }),
     () => ({
-      enabled: isLoggedIn.value && !trackInternallyOnly
+      enabled: isLoggedIn.value && !trackInternallyOnly,
+      errorPolicy: 'all'
     })
   )
 
@@ -604,7 +605,8 @@ export function useViewerThreadTypingTracking(threadId: MaybeRef<string>) {
       sessionId: sessionId.value
     }),
     () => ({
-      enabled: isLoggedIn.value
+      enabled: isLoggedIn.value,
+      errorPolicy: 'all'
     })
   )
 
