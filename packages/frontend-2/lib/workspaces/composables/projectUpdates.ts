@@ -30,7 +30,7 @@ export function useWorkspaceProjectsUpdatedTracking(
       }
     `),
     () => ({ slug: workspaceSlug.value }),
-    { enabled: isEnabled }
+    { enabled: isEnabled, errorPolicy: 'all' }
   )
 
   onWorkspaceProjectsUpdate((res) => {

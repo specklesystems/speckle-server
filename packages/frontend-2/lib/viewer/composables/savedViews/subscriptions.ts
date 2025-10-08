@@ -58,7 +58,7 @@ export const useOnProjectSavedViewsUpdated = (params: {
     () => ({
       projectId: unref(projectId)
     }),
-    () => ({ enabled: !!(isEnabled.value && userId.value) })
+    () => ({ enabled: !!(isEnabled.value && userId.value), errorPolicy: 'all' })
   )
 
   onViewsUpdated((res) => {
@@ -284,7 +284,7 @@ export const useOnProjectSavedViewGroupsUpdated = (params: {
     () => ({
       projectId: unref(projectId)
     }),
-    () => ({ enabled: !!(isEnabled.value && userId.value) })
+    () => ({ enabled: !!(isEnabled.value && userId.value), errorPolicy: 'all' })
   )
 
   onGroupsUpdated((res) => {
