@@ -86,8 +86,12 @@ const formatIncomingScreenshotFactory =
 
 const unwrapResourceIdStringFactory =
   (deps: { getViewerResourceGroups: GetViewerResourceGroups }) =>
-  async (params: { resourceIdString: ViewerResourcesTarget; projectId: string }) => {
-    const { resourceIdString, projectId } = params
+  async (params: {
+    resourceIdString: ViewerResourcesTarget
+    projectId: string
+    allowInvalid?: boolean
+  }) => {
+    const { resourceIdString, projectId, allowInvalid } = params
 
     // It could be a `$prefix` string, in which case we need to resolve the final resources there
     const { groups: resourceGroups } = await deps.getViewerResourceGroups({
@@ -96,6 +100,10 @@ const unwrapResourceIdStringFactory =
       resourceIdString: resourceIdString.toString(),
       allowEmptyModels: true
     })
+
+    // If completely empty - invalid string, return as is
+    if (resourceGroups.length === 0 && allowInvalid)
+      return resourceBuilder().addResources(resourceIdString)
 
     const finalResourceIds = resourceBuilder()
     for (const resourceGroup of resourceGroups) {
@@ -1057,7 +1065,8 @@ export const getProjectSavedViewsFactory =
     if (params.resourceIdString) {
       const finalResourceIds = await unwrapResourceIdStringFactory(deps)({
         resourceIdString: params.resourceIdString,
-        projectId: params.projectId
+        projectId: params.projectId,
+        allowInvalid: true // so that user gets empty results instead of results for empty resourceIdString
       })
       params.resourceIdString = finalResourceIds.toString()
     }

@@ -178,8 +178,6 @@ function useViewerObjectAutoLoading() {
 
       const [oldResources] = oldData || [[], false]
 
-      hasLoadedQueuedUpModels.value = false
-
       // we dont want to zoom to object, if we're loading specific coords because of a thread,
       // or spotlight mode or a saved view etc.
       const preventZooming =
@@ -192,6 +190,10 @@ function useViewerObjectAutoLoading() {
       // Viewer initialized - load in all resources
       if (!newHasDoneInitialLoad) {
         const allObjectIds = getUniqueObjectIds(newResources)
+        if (allObjectIds.length) {
+          // only mark, if anything to load
+          hasLoadedQueuedUpModels.value = false
+        }
 
         /** Load sequentially */
         const res = []
@@ -222,6 +224,11 @@ function useViewerObjectAutoLoading() {
         const oldObjectIds = getUniqueObjectIds(oldResources)
         const removableObjectIds = difference(oldObjectIds, newObjectIds)
         const addableObjectIds = difference(newObjectIds, oldObjectIds)
+
+        if (addableObjectIds.length) {
+          // only mark, if anything to load
+          hasLoadedQueuedUpModels.value = false
+        }
 
         await Promise.all(removableObjectIds.map((i) => loadObject(i, true)))
         await Promise.all(
