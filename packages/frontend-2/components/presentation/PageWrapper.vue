@@ -112,7 +112,7 @@ const { $intercom } = useNuxtApp()
 
 const isInfoSidebarOpen = ref(false)
 const isLeftSidebarOpen = ref(false)
-const hideUi = ref(true)
+const hideUi = ref(false)
 const isViewerLoading = ref(true)
 
 const ViewerWrapper = resolveComponent('PresentationViewerWrapper')
@@ -124,13 +124,6 @@ const canEditPresentation = computed(() => {
 
 const onLoadingChange = (loading: boolean) => {
   isViewerLoading.value = loading
-
-  if (!loading) {
-    hideUi.value = false
-
-    isLeftSidebarOpen.value = isXlOrLarger.value
-    isInfoSidebarOpen.value = !isMobile.value
-  }
 }
 
 const handleKeydown = (event: KeyboardEvent) => {
@@ -159,6 +152,9 @@ onMounted(() => {
   $intercom.track('Presentation Viewed', {
     canEditPresentation: canEditPresentation.value
   })
+
+  isLeftSidebarOpen.value = isXlOrLarger.value
+  isInfoSidebarOpen.value = !isMobile.value
 })
 
 watch(

@@ -36,13 +36,14 @@ ENV PATH=/app/bin:$PATH
 
 # Don't run your app as root.
 RUN groupadd -r app && \
-useradd -r -d /app -g app -N app
+    useradd -r -d /app -g app -N app
 
 
 STOPSIGNAL SIGINT
 
 COPY --from=build --chown=app:app /app /app
 COPY --chown=app:app ./packages/ifc-import-service/main.py /app
+COPY --chown=app:app ./packages/ifc-import-service/job_processor.py /app
 # COPY --chown=appuser:appuser . .
 #
 # Switch to non-root user

@@ -24,6 +24,11 @@
             >
               <ExclamationCircleIcon class="w-4 h-4" />
             </NuxtLink>
+            <IntegrationsAccSyncStatusModelItem
+              v-if="accSyncItem"
+              v-tippy=""
+              :item="accSyncItem"
+            />
             <ProjectPageModelsActions
               ref="actions"
               v-model:open="showActionsMenu"
@@ -55,9 +60,6 @@
             submodel
           </FormButton>
         </div>
-        <div v-if="accSyncItem" class="flex items-center ml-2">
-          <IntegrationsAccSyncStatusModelItem :item="accSyncItem" />
-        </div>
         <!-- Spacer -->
         <div class="flex-grow"></div>
 
@@ -78,7 +80,7 @@
             />
             <!-- Import area must exist even if hidden, so that we can trigger uploads from actions -->
             <ProjectCardImportFileArea
-              v-show="!pendingVersion"
+              v-show="!pendingVersion && !accSyncItem"
               ref="importArea"
               empty-state-variant="modelList"
               :project="project"
@@ -313,6 +315,7 @@ graphql(`
       ...ProjectCardImportFileArea_Model
       ...ProjectPageModelsCard_Model
       accSyncItem {
+        id
         ...SyncStatusModelItem_AccSyncItem
       }
     }
@@ -320,10 +323,6 @@ graphql(`
     updatedAt
   }
 `)
-
-const isPendingFileUpload = (
-  i: SingleLevelModelTreeItemFragment | PendingFileUploadFragment
-): i is PendingFileUploadFragment => has(i, 'uploadDate')
 
 const emit = defineEmits<{
   (e: 'model-updated'): void
@@ -342,6 +341,10 @@ const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 const accSyncItem = computed(() =>
   props.item.__typename === 'ModelsTreeItem' ? props.item.model?.accSyncItem : undefined
 )
+
+const isPendingFileUpload = (
+  i: SingleLevelModelTreeItemFragment | PendingFileUploadFragment
+): i is PendingFileUploadFragment => has(i, 'uploadDate')
 
 const importArea = ref(
   null as Nullable<{

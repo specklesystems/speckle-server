@@ -296,9 +296,13 @@ export function useApplySerializedState() {
     }
 
     const filters = formattedState.ui?.filters || {}
+
+    resetFilters()
+
     if (filters.hiddenObjectIds?.length) {
-      resetFilters()
       hideObjects(filters.hiddenObjectIds, { replace: true })
+    } else {
+      hideObjects([], { replace: true })
     }
 
     if (filters.propertyFilters?.length) {

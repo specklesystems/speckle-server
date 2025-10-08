@@ -13,6 +13,9 @@ import type {
   GetProjectSavedViewGroups,
   GetProjectSavedViewGroupsPageItems,
   GetProjectSavedViewGroupsTotalCount,
+  GetProjectSavedViews,
+  GetProjectSavedViewsPageItems,
+  GetProjectSavedViewsTotalCount,
   GetSavedView,
   GetSavedViewGroup,
   GetStoredViewCount,
@@ -83,8 +86,12 @@ const formatIncomingScreenshotFactory =
 
 const unwrapResourceIdStringFactory =
   (deps: { getViewerResourceGroups: GetViewerResourceGroups }) =>
-  async (params: { resourceIdString: ViewerResourcesTarget; projectId: string }) => {
-    const { resourceIdString, projectId } = params
+  async (params: {
+    resourceIdString: ViewerResourcesTarget
+    projectId: string
+    allowInvalid?: boolean
+  }) => {
+    const { resourceIdString, projectId, allowInvalid } = params
 
     // It could be a `$prefix` string, in which case we need to resolve the final resources there
     const { groups: resourceGroups } = await deps.getViewerResourceGroups({
@@ -93,6 +100,10 @@ const unwrapResourceIdStringFactory =
       resourceIdString: resourceIdString.toString(),
       allowEmptyModels: true
     })
+
+    // If completely empty - invalid string, return as is
+    if (resourceGroups.length === 0 && allowInvalid)
+      return resourceBuilder().addResources(resourceIdString)
 
     const finalResourceIds = resourceBuilder()
     for (const resourceGroup of resourceGroups) {
@@ -1040,4 +1051,36 @@ export const updateSavedViewGroupFactory =
     })
 
     return updatedGroup
+  }
+
+export const getProjectSavedViewsFactory =
+  (
+    deps: {
+      getProjectSavedViewsPageItems: GetProjectSavedViewsPageItems
+      getProjectSavedViewsTotalCount: GetProjectSavedViewsTotalCount
+    } & DependenciesOf<typeof unwrapResourceIdStringFactory>
+  ): GetProjectSavedViews =>
+  async (params) => {
+    // Resolve final resourceIdString from input one (may contain $prefix ids that need unwrapping)
+    if (params.resourceIdString) {
+      const finalResourceIds = await unwrapResourceIdStringFactory(deps)({
+        resourceIdString: params.resourceIdString,
+        projectId: params.projectId,
+        allowInvalid: true // so that user gets empty results instead of results for empty resourceIdString
+      })
+      params.resourceIdString = finalResourceIds.toString()
+    }
+
+    const noItemsNeeded = params.limit === 0
+    const [totalCount, pageItems] = await Promise.all([
+      deps.getProjectSavedViewsTotalCount(params),
+      noItemsNeeded
+        ? Promise.resolve({ items: [], cursor: null })
+        : deps.getProjectSavedViewsPageItems(params)
+    ])
+
+    return {
+      totalCount,
+      ...pageItems
+    }
   }

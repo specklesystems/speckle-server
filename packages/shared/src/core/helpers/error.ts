@@ -39,12 +39,26 @@ export function createUncoveredError(e: unknown) {
 }
 
 /**
+ * A custom error class that produces a cleaner stack trace when instantiated.
+ */
+export class CleanStackTrace extends Error {
+  constructor() {
+    super('')
+    this.name = 'Stack trace:'
+  }
+}
+
+/**
  * Note: Only V8 and Node.js support controlling the stack trace limit
  */
 export const collectLongTrace = (limit?: number) => {
   const originalLimit = Error.stackTraceLimit
   Error.stackTraceLimit = limit || 30
-  const trace = (new Error().stack || '').split('\n').slice(1).join('\n').trim()
+  const trace = (new CleanStackTrace().stack || '')
+    .split('\n')
+    .slice(2) // remove "Error" and this function's own frame
+    .join('\n')
+    .trim()
   Error.stackTraceLimit = originalLimit
   return trace
 }

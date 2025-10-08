@@ -41,7 +41,7 @@
         </div>
       </div>
       <div v-else>
-        <FormButton size="sm" @click="$emit('upgrade')">Upgrade</FormButton>
+        <FormButton size="sm" @click="openLearnMore">Learn more</FormButton>
       </div>
     </div>
   </div>
@@ -78,6 +78,10 @@ const statusText = () => {
     default:
       break
   }
+}
+
+const openLearnMore = () => {
+  window.open('https://docs.speckle.systems/beta/acc/overview', '_blank')
 }
 
 const handleCTA = async () => {

@@ -5,6 +5,6 @@ export const ImporterAutomateFunctions = {
   },
   rvt: {
     functionId: '0725cb0ac6',
-    functionReleaseId: 'b5c16a1606'
+    functionReleaseId: 'cf671accd1'
   }
 }

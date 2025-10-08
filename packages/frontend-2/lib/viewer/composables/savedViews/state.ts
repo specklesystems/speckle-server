@@ -9,6 +9,7 @@ import {
   type InitialSetupState,
   type UseSetupViewerParams
 } from '~/lib/viewer/composables/setup'
+import { useEmbedState } from '~/lib/viewer/composables/setup/embed'
 import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
 import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
 
@@ -32,6 +33,7 @@ export const useViewerSavedViewIntegration = () => {
   const applyState = useApplySerializedState()
   const { serializedStateId } = useViewerRealtimeActivityTracker()
   const { on, emit } = useEventBus()
+  const { embedOptions } = useEmbedState()
 
   const validState = (state: unknown) => (isSerializedViewerState(state) ? state : null)
 
@@ -45,6 +47,10 @@ export const useViewerSavedViewIntegration = () => {
     savedViewStateId.value = serializedStateId.value
   }
 
+  const resetUrlHashState = async () => {
+    await urlHashStateSavedViewSettings.update(null)
+  }
+
   const update = async (params: { settings: SavedViewUrlSettings }) => {
     const { settings } = params
 
@@ -52,12 +58,17 @@ export const useViewerSavedViewIntegration = () => {
 
     // If passing in viewId and it differs, apply and wait for that to finish
     if (settings.id && settings.id !== savedViewId.value) {
-      // wipe hash state, if any exists, otherwise the state will be stale
-      await resetUrlHashState()
+      if (embedOptions.value?.isEnabled) {
+        // in embed mode we want clicking views to actually show selected view in the URL
+        await urlHashStateSavedViewSettings.update({ id: settings.id })
+      } else {
+        // wipe hash state, if any exists, otherwise the state will be stale
+        await resetUrlHashState()
+        savedViewId.value = settings.id
+      }
 
       // this acts as a reset of the state id too, cause it only applies to active view
       savedViewStateId.value = undefined
-      savedViewId.value = settings.id
       reapplyState = false
     }
 
@@ -72,10 +83,6 @@ export const useViewerSavedViewIntegration = () => {
       if (!state) return
       await apply()
     }
-  }
-
-  const resetUrlHashState = async () => {
-    await urlHashStateSavedViewSettings.update(null)
   }
 
   const reset = async () => {
@@ -112,11 +119,14 @@ export const useViewerSavedViewIntegration = () => {
     () => serializedStateId.value,
     async (newVal, oldVal) => {
       if (newVal === oldVal) return
+      if (embedOptions.value?.isEnabled) return // we never reset in embed mode
+
       // If the saved view state ID is different from the current serialized state ID (user interaction) -
       // user has changed the state from the view's state
       if (savedViewStateId.value && newVal !== savedViewStateId.value) {
         // emit event that this happened
-        emit(ViewerEventBusKeys.UserChangedOpenedView, { viewId: savedViewId.value })
+        if (savedViewId.value)
+          emit(ViewerEventBusKeys.UserChangedOpenedView, { viewId: savedViewId.value })
 
         // reset the saved view - its no longer active
         await reset()
