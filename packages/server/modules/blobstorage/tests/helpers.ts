@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 import crs from 'crypto-random-string'
-import { range } from 'lodash'
+import { range } from 'lodash-es'
 import { knex } from '@/db/knex'
 
 const BlobStorage = () => knex('blob_storage')

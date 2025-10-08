@@ -1,12 +1,17 @@
 <template>
-  <div class="px-2 divide-y divide-dashed divide-outline-3">
-    <div v-for="obj in rootObjs" :key="String(obj.referencedId)" class="py-3">
-      <div class="font-medium text-body-2xs pl-1 mb-2 text-foreground-1">
-        {{ obj.name }}
+  <ViewerLayoutSidePanel>
+    <template #title>
+      <span>Dev mode</span>
+    </template>
+    <div class="px-2 divide-y divide-dashed divide-outline-3">
+      <div v-for="obj in rootObjs" :key="String(obj.referencedId)" class="py-3">
+        <div class="font-medium text-body-2xs pl-1 mb-2 text-foreground-1">
+          {{ obj.name }}
+        </div>
+        <ViewerDataviewerObject :object="obj" />
       </div>
-      <ViewerDataviewerObject :object="obj" />
     </div>
-  </div>
+  </ViewerLayoutSidePanel>
 </template>
 <script setup lang="ts">
 import { useSelectionUtilities } from '~/lib/viewer/composables/ui'

@@ -1,11 +1,12 @@
 import { Router } from 'express'
 import { ensureError } from '@speckle/shared'
-import { Stripe } from 'stripe'
+import type { Stripe } from 'stripe'
 import { getStripeEndpointSigningKey } from '@/modules/shared/helpers/envHelper'
 import { db } from '@/db/knex'
 import { completeCheckoutSessionFactory } from '@/modules/gatekeeper/services/checkout'
 import {
-  getSubscriptionDataFactory,
+  getStripeClient,
+  getStripeSubscriptionDataFactory,
   parseSubscriptionData
 } from '@/modules/gatekeeper/clients/stripe'
 import {
@@ -15,12 +16,15 @@ import {
   upsertWorkspaceSubscriptionFactory,
   updateCheckoutSessionStatusFactory,
   upsertPaidWorkspacePlanFactory,
-  getWorkspaceSubscriptionBySubscriptionIdFactory
+  getWorkspaceSubscriptionBySubscriptionIdFactory,
+  getWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { WorkspaceAlreadyPaidError } from '@/modules/gatekeeper/errors/billing'
-import { getStripeClient } from '@/modules/gatekeeper/stripe'
 import { handleSubscriptionUpdateFactory } from '@/modules/gatekeeper/services/subscriptions'
-import { SubscriptionData } from '@/modules/gatekeeper/domain/billing'
+import type {
+  GetStripeClient,
+  SubscriptionData
+} from '@/modules/gatekeeper/domain/billing'
 import { extendLoggerComponent } from '@/observability/logging'
 import {
   OperationName,
@@ -130,8 +134,9 @@ export const getBillingRouter = (): Router => {
                       db
                     }),
                     getWorkspacePlan: getWorkspacePlanFactory({ db }),
-                    getSubscriptionData: getSubscriptionDataFactory({
-                      stripe
+                    getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
+                    getSubscriptionData: getStripeSubscriptionDataFactory({
+                      getStripeClient
                     }),
                     emitEvent: emit
                   })
@@ -203,7 +208,7 @@ export const getBillingRouter = (): Router => {
                 getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
               upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db }),
               emitEvent: getEventBus().emit
-            })({ subscriptionData: parseSubscriptionData(event.data.object) }),
+            })({ subscriptionData: parseSubscriptionData(event.data.object), logger }),
           {
             logger,
             operationName: 'handleSubscriptionUpdate',
@@ -213,9 +218,9 @@ export const getBillingRouter = (): Router => {
         )
         break
       case 'invoice.created':
-        const subscriptionData = await getSubscriptionFromEventFactory({ stripe })(
-          event
-        )
+        const subscriptionData = await getSubscriptionFromEventFactory({
+          getStripeClient
+        })(event)
         if (!subscriptionData) break
         await withOperationLogging(
           async () =>
@@ -226,7 +231,7 @@ export const getBillingRouter = (): Router => {
                 getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
               upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db }),
               emitEvent: getEventBus().emit
-            })({ subscriptionData }),
+            })({ subscriptionData, logger }),
           {
             logger,
             operationName: 'handleSubscriptionUpdate',
@@ -247,14 +252,14 @@ export const getBillingRouter = (): Router => {
 }
 
 const getSubscriptionFromEventFactory =
-  ({ stripe }: { stripe: Stripe }) =>
+  ({ getStripeClient }: { getStripeClient: GetStripeClient }) =>
   async (event: Stripe.InvoiceCreatedEvent): Promise<SubscriptionData | null> => {
     const subscription = event.data.object.subscription
     if (!subscription) {
       return null
     }
     if (typeof subscription === 'string') {
-      return await getSubscriptionDataFactory({ stripe })({
+      return await getStripeSubscriptionDataFactory({ getStripeClient })({
         subscriptionId: subscription
       })
     }

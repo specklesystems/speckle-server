@@ -1,4 +1,4 @@
-import { WorkspaceAcl, WorkspaceSeat } from '@/modules/workspacesCore/domain/types'
+import type { WorkspaceAcl, WorkspaceSeat } from '@/modules/workspacesCore/domain/types'
 
 export type GetWorkspaceRolesAndSeats = (params: {
   workspaceId: string
@@ -26,5 +26,9 @@ export type GetWorkspaceRoleAndSeat = (params: {
 export type GetUserWorkspaceCountFactory = (params: {
   userId: string
 }) => Promise<number>
+
+export type GetUserWorkspaceSeatsFactory = (params: {
+  userId: string
+}) => Promise<WorkspaceSeat[]>
 
 export type GetTotalWorkspaceCountFactory = () => Promise<number>

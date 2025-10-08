@@ -43,6 +43,10 @@ input ApiTokenCreateInput {
   scopes: [String!]!
   name: String!
   lifespan: BigInt
+  """
+  Optionally limit the token to only have access to specific resources
+  """
+  limitResources: [TokenResourceIdentifierInput!]
 }
 
 input AppTokenCreateInput {
@@ -53,6 +57,33 @@ input AppTokenCreateInput {
   Optionally limit the token to only have access to specific resources
   """
   limitResources: [TokenResourceIdentifierInput!]
+}
+
+"""
+A token used to enable an embedded viewer for a private project
+"""
+type EmbedToken {
+  tokenId: String!
+  projectId: String!
+  user: LimitedUser
+  resourceIdString: String!
+  createdAt: DateTime!
+  lifespan: BigInt!
+  lastUsed: DateTime!
+}
+
+input EmbedTokenCreateInput {
+  projectId: String!
+  """
+  The model(s) and version(s) string used in the embed url
+  """
+  resourceIdString: String!
+  lifespan: BigInt
+}
+
+type CreateEmbedTokenReturn {
+  token: String!
+  tokenMetadata: EmbedToken!
 }
 
 extend type Mutation {
@@ -76,4 +107,22 @@ extend type Mutation {
   appTokenCreate(token: AppTokenCreateInput!): String!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "tokens:write")
+}
+
+extend type ProjectMutations {
+  createEmbedToken(token: EmbedTokenCreateInput!): CreateEmbedTokenReturn!
+    @hasScope(scope: "tokens:write")
+  revokeEmbedToken(token: String!, projectId: String!): Boolean!
+    @hasScope(scope: "tokens:write")
+  revokeEmbedTokens(projectId: String!): Boolean! @hasScope(scope: "tokens:write")
+}
+
+type EmbedTokenCollection {
+  items: [EmbedToken!]!
+  totalCount: Int!
+  cursor: String
+}
+
+extend type Project {
+  embedTokens(cursor: String, limit: Int): EmbedTokenCollection!
 }

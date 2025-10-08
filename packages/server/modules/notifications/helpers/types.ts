@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { StreamAccessRequestRecord } from '@/modules/accessrequests/repositories'
-import { MaybeAsync, Optional } from '@/modules/shared/helpers/typeHelper'
-import { Job } from 'bull'
-import { isObject, has } from 'lodash'
-import { Logger } from 'pino'
+import type { StreamAccessRequestRecord } from '@/modules/accessrequests/repositories'
+import type { MaybeAsync, Optional } from '@/modules/shared/helpers/typeHelper'
+import type { Job } from 'bull'
+import { isObject, has } from 'lodash-es'
+import type { Logger } from 'pino'
 
 export enum NotificationType {
   ActivityDigest = 'activityDigest',

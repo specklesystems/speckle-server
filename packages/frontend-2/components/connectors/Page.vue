@@ -60,6 +60,7 @@
             v-for="connector in filteredConnectors"
             :key="connector.title"
             :connector="connector"
+            :can-download="isLoggedIn"
           />
         </div>
         <p
@@ -96,6 +97,7 @@ const {
 
 const labelId = useId()
 const buttonId = useId()
+const { isLoggedIn } = useActiveUser()
 
 const selectedCategory = ref<CategoryFilter>()
 const connectors = shallowRef<ConnectorItem[]>(connectorItems)

@@ -1,5 +1,5 @@
-import { Knex } from 'knex'
-import { chunk } from 'lodash'
+import type { Knex } from 'knex'
+import { chunk } from 'lodash-es'
 
 const INVITES_TABLE = 'server_invites'
 

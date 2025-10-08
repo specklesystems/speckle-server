@@ -1,8 +1,8 @@
-<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div class="group h-full">
-    <template v-if="showSidebar">
+    <template v-if="isLoggedIn">
       <Portal to="mobile-navigation">
         <div class="lg:hidden">
           <FormButton
@@ -30,13 +30,20 @@
           class="border-r border-outline-3 px-2 pt-3 pb-2 bg-foundation-page"
         >
           <LayoutSidebarMenu>
-            <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" class="lg:hidden mb-4">
+            <LayoutSidebarMenuGroup
+              v-if="isWorkspacesEnabled && isLoggedIn"
+              class="lg:hidden mb-4"
+            >
               <HeaderWorkspaceSwitcher />
             </LayoutSidebarMenuGroup>
 
             <div class="flex flex-col gap-y-2 lg:gap-y-4">
               <LayoutSidebarMenuGroup>
-                <NuxtLink :to="projectsLink" @click="isOpenMobile = false">
+                <NuxtLink
+                  v-if="showWorkspaceLinks"
+                  :to="projectsLink"
+                  @click="isOpenMobile = false"
+                >
                   <LayoutSidebarMenuGroupItem
                     label="Projects"
                     :active="
@@ -45,6 +52,21 @@
                   >
                     <template #icon>
                       <IconProjects class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
+
+                <NuxtLink
+                  v-if="showWorkspaceLinks && canListDashboards"
+                  :to="dashboardsRoute(activeWorkspaceSlug)"
+                  @click="isOpenMobile = false"
+                >
+                  <LayoutSidebarMenuGroupItem
+                    label="Intelligence"
+                    :active="isActive(dashboardsRoute(activeWorkspaceSlug))"
+                  >
+                    <template #icon>
+                      <LayoutDashboard class="size-4 text-foreground-2" />
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
@@ -59,37 +81,18 @@
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
-
-                <div v-if="isWorkspacesEnabled">
-                  <div @click="openExplainerVideoDialog">
-                    <LayoutSidebarMenuGroupItem label="Getting started">
-                      <template #icon>
-                        <IconPlay class="size-4 text-foreground-2" />
-                      </template>
-                    </LayoutSidebarMenuGroupItem>
-                  </div>
-                  <WorkspaceExplainerVideoDialog
-                    v-model:open="showExplainerVideoDialog"
-                  />
-                </div>
               </LayoutSidebarMenuGroup>
 
               <LayoutSidebarMenuGroup title="Resources" collapsible>
-                <CalPopUp v-if="isWorkspacesEnabled">
-                  <LayoutSidebarMenuGroupItem label="Book an intro call">
-                    <template #icon>
-                      <IconCalendar class="size-4 text-foreground-2" />
-                    </template>
-                  </LayoutSidebarMenuGroupItem>
-                </CalPopUp>
-
-                <div v-if="isWorkspacesEnabled" @click="openChat">
-                  <LayoutSidebarMenuGroupItem label="Give us feedback">
-                    <template #icon>
-                      <IconFeedback class="size-4 text-foreground-2" />
-                    </template>
-                  </LayoutSidebarMenuGroupItem>
-                </div>
+                <LayoutSidebarMenuGroupItem
+                  v-if="isWorkspacesEnabled"
+                  label="Give us feedback"
+                  @click="openChat"
+                >
+                  <template #icon>
+                    <IconFeedback class="size-4 text-foreground-2" />
+                  </template>
+                </LayoutSidebarMenuGroupItem>
 
                 <NuxtLink :to="tutorialsRoute" @click="isOpenMobile = false">
                   <LayoutSidebarMenuGroupItem
@@ -127,7 +130,7 @@
                 </NuxtLink>
 
                 <NuxtLink
-                  to="https://speckle.community/c/making-speckle/changelog"
+                  to="https://speckle.systems/updates"
                   target="_blank"
                   @click="isOpenMobile = false"
                 >
@@ -137,11 +140,25 @@
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
+
+                <div v-if="isWorkspacesEnabled">
+                  <LayoutSidebarMenuGroupItem
+                    label="Getting started"
+                    @click="openExplainerVideoDialog"
+                  >
+                    <template #icon>
+                      <IconPlay class="size-4 text-foreground-2" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                  <WorkspaceExplainerVideoDialog
+                    v-model:open="showExplainerVideoDialog"
+                  />
+                </div>
               </LayoutSidebarMenuGroup>
             </div>
           </LayoutSidebarMenu>
-          <template v-if="showSpeckleConPromo" #promo>
-            <DashboardPromo />
+          <template v-if="showSpeckleCon25Promo" #promo>
+            <DashboardSpeckleConPromo />
           </template>
         </LayoutSidebar>
       </div>
@@ -161,25 +178,84 @@ import {
   connectorsRoute,
   workspaceRoute,
   tutorialsRoute,
-  docsPageUrl
+  docsPageUrl,
+  dashboardsRoute
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { useNavigation } from '~~/lib/navigation/composables/navigation'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useActiveWorkspaceSlug } from '~/lib/user/composables/activeWorkspace'
+import { graphql } from '~/lib/common/generated/gql'
+import { useQuery } from '@vue/apollo-composable'
 import dayjs from 'dayjs'
 import { useActiveUserMeta } from '~/lib/user/composables/meta'
+import { LayoutDashboard } from 'lucide-vue-next'
+
+const dashboardSidebarQuery = graphql(`
+  query DashboardSidebar {
+    activeUser {
+      id
+      activeWorkspace {
+        id
+        role
+      }
+    }
+  }
+`)
+
+const sidebarPermissionsQuery = graphql(`
+  query SidebarPermissions($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      permissions {
+        canListDashboards {
+          ...FullPermissionCheckResult
+        }
+      }
+    }
+  }
+`)
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const isDashboardsEnabled = useIsDashboardsModuleEnabled()
 const route = useRoute()
-const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
+const activeWorkspaceSlug = useActiveWorkspaceSlug()
 const { $intercom } = useNuxtApp()
 const mixpanel = useMixpanel()
-const { hasDismissedSpeckleConBanner } = useActiveUserMeta()
+const { result: permissionsResult } = useQuery(
+  sidebarPermissionsQuery,
+  () => ({
+    slug: activeWorkspaceSlug.value || ''
+  }),
+  () => ({
+    enabled: isDashboardsEnabled.value && !!activeWorkspaceSlug.value
+  })
+)
+const { result } = useQuery(dashboardSidebarQuery, () => ({}), {
+  enabled: isWorkspacesEnabled.value
+})
+const { hasDismissedSpeckleCon25Banner } = useActiveUserMeta()
 
 const isOpenMobile = ref(false)
 const showExplainerVideoDialog = ref(false)
+
+const showSpeckleCon25Promo = computed(() => {
+  if (hasDismissedSpeckleCon25Banner.value) return false
+  return dayjs().isBefore('2025-11-07', 'day')
+})
+const activeWorkspace = computed(() => result.value?.activeUser?.activeWorkspace)
+const canListDashboards = computed(() => {
+  return permissionsResult.value?.workspaceBySlug?.permissions?.canListDashboards
+    ?.authorized
+})
+
+const showWorkspaceLinks = computed(() => {
+  return isWorkspacesEnabled.value
+    ? activeWorkspace.value
+      ? !!activeWorkspace.value?.role
+      : true
+    : isLoggedIn.value
+})
 
 const projectsLink = computed(() => {
   return isWorkspacesEnabled.value
@@ -187,17 +263,6 @@ const projectsLink = computed(() => {
       ? workspaceRoute(activeWorkspaceSlug.value)
       : projectsRoute
     : projectsRoute
-})
-
-const showSidebar = computed(() => {
-  return isWorkspacesEnabled.value
-    ? (!!activeWorkspaceSlug.value || isProjectsActive.value) && isLoggedIn.value
-    : isLoggedIn.value
-})
-
-const showSpeckleConPromo = computed(() => {
-  if (hasDismissedSpeckleConBanner.value) return false
-  return dayjs('2025-11-08').isAfter(dayjs())
 })
 
 const openChat = () => {

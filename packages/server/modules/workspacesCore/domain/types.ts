@@ -1,6 +1,6 @@
-import { InviteResourceTarget } from '@/modules/serverinvites/domain/types'
-import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
-import { WorkspaceRoles } from '@speckle/shared'
+import type { InviteResourceTarget } from '@/modules/serverinvites/domain/types'
+import type { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
+import type { WorkspaceRoles } from '@speckle/shared'
 
 declare module '@/modules/serverinvites/domain/types' {
   interface InviteResourceTargetTypeMap {
@@ -33,11 +33,18 @@ export type Workspace = {
   defaultSeatType: WorkspaceSeatType | null
   // TODO: Create new table/structure if embeds get more workspace-level configuration
   isEmbedSpeckleBrandingHidden: boolean
+  isExclusive: boolean
 }
 
 export type LimitedWorkspace = Pick<
   Workspace,
-  'id' | 'slug' | 'name' | 'description' | 'logo' | 'discoverabilityAutoJoinEnabled'
+  | 'id'
+  | 'slug'
+  | 'name'
+  | 'description'
+  | 'logo'
+  | 'discoverabilityAutoJoinEnabled'
+  | 'isExclusive'
 >
 
 export type WorkspaceWithDomains = Workspace & { domains: WorkspaceDomain[] }

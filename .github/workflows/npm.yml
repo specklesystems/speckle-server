@@ -1,6 +1,18 @@
 on:
   workflow_call:
     inputs:
+      GITHUB_REGISTRY_URL:
+        required: true
+        type: string
+      GITHUB_ORG:
+        required: true
+        type: string
+      NPM_REGISTRY_URL:
+        required: true
+        type: string
+      NPM_PUBLISH_ACCESS:
+        required: true
+        type: string
       IMAGE_VERSION_TAG:
         required: true
         type: string
@@ -11,10 +23,14 @@ on:
 jobs:
   publish:
     name: Publish to npm
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     env:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      GITHUB_REGISTRY_URL: ${{ inputs.GITHUB_REGISTRY_URL }}
+      GITHUB_ORG: ${{ inputs.GITHUB_ORG }}
+      NPM_REGISTRY_URL: ${{ inputs.NPM_REGISTRY_URL }}
+      NPM_PUBLISH_ACCESS: ${{ inputs.NPM_PUBLISH_ACCESS }}
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v4.2.2
         with:
@@ -25,15 +41,22 @@ jobs:
           cache: yarn
       - name: Install hardened (no HARD flag)
         run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
-      - name: Auth to npm as Speckle
+      - name: Auth to npm
         run: |
-          echo "npmRegistryServer: https://registry.npmjs.org/" >> .yarnrc.yml
-          echo "npmAuthToken: $NPM_TOKEN" >> .yarnrc.yml
+          echo "npmRegistryServer: ${NPM_REGISTRY_URL}" >> .yarnrc.yml
+          echo "npmAuthToken: ${NPM_TOKEN}" >> .yarnrc.yml
+          echo "npmPublishAccess: ${NPM_PUBLISH_ACCESS}" >> .yarnrc.yml
       - name: Try login to npm
         run: yarn npm whoami
+      - name: Amend package name & git repository to match
+        # required as per https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#publishing-a-package-using-a-local-npmrc-file
+        run: |
+          if [ "${NPM_REGISTRY_URL}" != "https://registry.npmjs.org/" ]; then
+            yarn workspaces foreach -tvW --no-private exec "jq '.name |= sub(\"@speckle\"; \"${GITHUB_ORG}\"), .repository.url = \"${GITHUB_REGISTRY_URL}\"' package.json > tmp.json && mv tmp.json package.json"
+          fi
       - name: Build public packages
         run: yarn workspaces foreach -ptvW --no-private run build
       - name: Bump all versions
-        run: yarn workspaces foreach -tvW version $IMAGE_VERSION_TAG
+        run: yarn workspaces foreach -tvW version ${IMAGE_VERSION_TAG}
       - name: publish to npm
-        run: 'yarn workspaces foreach -pvW --no-private npm publish --access public'
+        run: 'yarn workspaces foreach -pvW --no-private npm publish --access ${NPM_PUBLISH_ACCESS}'

@@ -1,17 +1,21 @@
-import {
+import type {
   GetCheckoutSession,
   UpdateCheckoutSessionStatus,
   UpsertWorkspaceSubscription,
   UpsertPaidWorkspacePlan,
-  GetSubscriptionData
+  GetSubscriptionData,
+  GetWorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
+import { getSubscriptionState } from '@/modules/gatekeeper/domain/billing'
 import {
   CheckoutSessionNotFoundError,
-  WorkspaceAlreadyPaidError
+  WorkspaceAlreadyPaidError,
+  WorkspacePlanNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
 import { throwUncoveredError } from '@speckle/shared'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import { GetWorkspacePlan } from '@speckle/shared/dist/commonjs/authz/domain/workspaces/operations.js'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { GetWorkspacePlan } from '@speckle/shared/authz'
+import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
 
 export const completeCheckoutSessionFactory =
   ({
@@ -20,6 +24,7 @@ export const completeCheckoutSessionFactory =
     upsertWorkspaceSubscription,
     upsertPaidWorkspacePlan,
     getWorkspacePlan,
+    getWorkspaceSubscription,
     getSubscriptionData,
     emitEvent
   }: {
@@ -27,6 +32,7 @@ export const completeCheckoutSessionFactory =
     updateCheckoutSessionStatus: UpdateCheckoutSessionStatus
     upsertWorkspaceSubscription: UpsertWorkspaceSubscription
     getWorkspacePlan: GetWorkspacePlan
+    getWorkspaceSubscription: GetWorkspaceSubscription
     upsertPaidWorkspacePlan: UpsertPaidWorkspacePlan
     getSubscriptionData: GetSubscriptionData
     emitEvent: EventBusEmit
@@ -44,6 +50,16 @@ export const completeCheckoutSessionFactory =
     const checkoutSession = await getCheckoutSession({ sessionId })
     if (!checkoutSession) throw new CheckoutSessionNotFoundError()
 
+    const previousWorkspacePlan = await getWorkspacePlan({
+      workspaceId: checkoutSession.workspaceId
+    })
+    if (!previousWorkspacePlan) throw new WorkspacePlanNotFoundError()
+
+    // on states like cancellations, there is a subscription
+    const previousSubscription = await getWorkspaceSubscription({
+      workspaceId: checkoutSession.workspaceId
+    })
+
     switch (checkoutSession.paymentStatus) {
       case 'paid':
         // if the session is already paid, we do not need to provision anything
@@ -56,16 +72,15 @@ export const completeCheckoutSessionFactory =
     // TODO: make sure, the subscription data price plan matches the checkout session workspacePlan
 
     await updateCheckoutSessionStatus({ sessionId, paymentStatus: 'paid' })
-    const previousPlan = await getWorkspacePlan({
-      workspaceId: checkoutSession.workspaceId
-    })
+
     // a plan determines the workspace feature set
     const workspacePlan = {
       createdAt: new Date(),
       updatedAt: new Date(),
       workspaceId: checkoutSession.workspaceId,
       name: checkoutSession.workspacePlan,
-      status: 'valid'
+      status: 'valid',
+      featureFlags: previousWorkspacePlan.featureFlags
     } as const
     await upsertPaidWorkspacePlan({
       workspacePlan
@@ -82,23 +97,30 @@ export const completeCheckoutSessionFactory =
       workspaceId: checkoutSession.workspaceId,
       billingInterval: checkoutSession.billingInterval,
       currency: checkoutSession.currency,
+      updateIntent: null,
       subscriptionData
     }
-
     await upsertWorkspaceSubscription({
       workspaceSubscription
     })
     await emitEvent({
-      eventName: 'gatekeeper.workspace-plan-updated',
+      eventName: GatekeeperEvents.WorkspacePlanUpdated,
       payload: {
-        workspacePlan: {
-          workspaceId: checkoutSession.workspaceId,
-          status: workspacePlan.status,
-          name: workspacePlan.name
-        },
-        ...(previousPlan && {
-          previousPlan: { name: previousPlan.name }
-        })
+        userId: checkoutSession.userId,
+        workspacePlan,
+        previousWorkspacePlan
+      }
+    })
+    await emitEvent({
+      eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
+      payload: {
+        userId: checkoutSession.userId,
+        workspacePlan,
+        previousWorkspacePlan,
+        subscription: getSubscriptionState(workspaceSubscription),
+        previousSubscription: previousSubscription
+          ? getSubscriptionState(previousSubscription)
+          : null
       }
     })
   }

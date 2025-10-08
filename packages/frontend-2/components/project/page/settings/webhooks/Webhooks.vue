@@ -9,7 +9,6 @@
     <template #top-buttons>
       <FormButton
         color="outline"
-        :icon-left="BookOpenIcon"
         to="https://speckle.guide/server/server-webhooks.html"
         external
         target="_blank"
@@ -24,7 +23,7 @@
       <LayoutTable
         class="mt-6"
         :columns="[
-          { id: 'enabled', header: 'State', classes: 'col-span-1' },
+          { id: 'enabled', header: 'Enabled', classes: 'col-span-1' },
           { id: 'data', header: 'Data', classes: 'col-span-5' },
           {
             id: 'triggers',
@@ -38,15 +37,13 @@
             icon: PencilIcon,
             label: 'Edit',
             disabled: !canUpdate?.authorized,
-            action: openEditWebhookDialog,
-            class: '!text-primary'
+            action: openEditWebhookDialog
           },
           {
             icon: TrashIcon,
             label: 'Delete',
             disabled: !canUpdate?.authorized,
-            action: openDeleteWebhookDialog,
-            class: '!text-danger'
+            action: openDeleteWebhookDialog
           }
         ]"
       >
@@ -60,7 +57,7 @@
           />
         </template>
         <template #data="{ item }">
-          <div class="flex flex-col">
+          <div class="flex flex-col gap-1">
             <h3
               class="font-medium text-sm truncate"
               :class="{ 'opacity-60': !item.enabled }"
@@ -129,7 +126,7 @@ import {
   CheckCircleIcon,
   XCircleIcon
 } from '@heroicons/vue/20/solid'
-import { TrashIcon, PencilIcon, BookOpenIcon } from '@heroicons/vue/24/outline'
+import { TrashIcon, PencilIcon } from '@heroicons/vue/24/outline'
 import { FormSwitch, LayoutTable } from '@speckle/ui-components'
 import { projectWebhooksQuery } from '~~/lib/projects/graphql/queries'
 import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'

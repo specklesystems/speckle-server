@@ -21,10 +21,13 @@
 </template>
 
 <script setup lang="ts">
-import { useQuery } from '@vue/apollo-composable'
-import { Roles, WorkspacePlanStatuses } from '@speckle/shared'
-import { workspaceDashboardQuery } from '~~/lib/workspaces/graphql/queries'
+import {
+  Roles,
+  WorkspacePlanStatuses,
+  type MaybeNullOrUndefined
+} from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
+import type { WorkspaceDashboard_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import type { WorkspaceWizardState } from '~/lib/workspaces/helpers/types'
@@ -47,52 +50,48 @@ graphql(`
 `)
 
 const props = defineProps<{
+  workspace?: MaybeNullOrUndefined<WorkspaceDashboard_WorkspaceFragment>
   workspaceSlug: string
 }>()
 
 const { validateCheckoutSession } = useBillingActions()
 const { finalizeWizard } = useWorkspacesWizard()
-const pageFetchPolicy = usePageQueryStandardFetchPolicy()
-const { result: workspaceResult, onResult } = useQuery(
-  workspaceDashboardQuery,
-  () => ({
-    workspaceSlug: props.workspaceSlug
-  }),
-  () => ({
-    fetchPolicy: pageFetchPolicy.value
-  })
-)
+const workspaceTitle = ref<string>('')
 
+useHead({
+  title: workspaceTitle
+})
 const hasFinalized = ref(false)
 
-const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
 const showBillingAlert = computed(
   () =>
-    workspace?.value?.role !== Roles.Workspace.Guest &&
-    (workspace.value?.plan?.status === WorkspacePlanStatuses.PaymentFailed ||
-      workspace.value?.plan?.status === WorkspacePlanStatuses.Canceled ||
-      workspace.value?.plan?.status === WorkspacePlanStatuses.CancelationScheduled)
+    props.workspace?.role !== Roles.Workspace.Guest &&
+    (props.workspace?.plan?.status === WorkspacePlanStatuses.PaymentFailed ||
+      props.workspace?.plan?.status === WorkspacePlanStatuses.Canceled ||
+      props.workspace?.plan?.status === WorkspacePlanStatuses.CancelationScheduled)
 )
 
-onResult((queryResult) => {
-  if (
-    queryResult.data?.workspaceBySlug.creationState?.completed === false &&
-    queryResult.data.workspaceBySlug.creationState.state &&
-    !hasFinalized.value &&
-    import.meta.client
-  ) {
-    hasFinalized.value = true
-    finalizeWizard(
-      queryResult.data.workspaceBySlug.creationState.state as WorkspaceWizardState,
-      queryResult.data.workspaceBySlug.id
-    )
-  }
+watch(
+  () => props.workspace,
+  (newWorkspace) => {
+    if (newWorkspace) {
+      if (
+        newWorkspace.creationState?.completed === false &&
+        newWorkspace.creationState.state &&
+        !hasFinalized.value &&
+        import.meta.client
+      ) {
+        hasFinalized.value = true
+        finalizeWizard(
+          newWorkspace.creationState.state as WorkspaceWizardState,
+          newWorkspace.id
+        )
+      }
 
-  if (queryResult.data?.workspaceBySlug) {
-    useHeadSafe({
-      title: queryResult.data.workspaceBySlug.name
-    })
-    validateCheckoutSession(queryResult.data.workspaceBySlug)
-  }
-})
+      workspaceTitle.value = newWorkspace.name
+      validateCheckoutSession(newWorkspace)
+    }
+  },
+  { immediate: true }
+)
 </script>

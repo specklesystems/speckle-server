@@ -1,5 +1,6 @@
-import { BaseError, Info } from '@/modules/shared/errors'
-import { Options } from 'verror'
+import type { Info } from '@/modules/shared/errors'
+import { BaseError } from '@/modules/shared/errors'
+import type { Options } from 'verror'
 
 export class UserInputError<I extends Info = Info> extends BaseError<I> {
   static defaultMessage = 'Invalid user input.'

@@ -1,4 +1,5 @@
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
 import { createTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   createRandomEmail,
@@ -16,8 +17,7 @@ import {
   getWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { getWorkspaceModelCountFactory } from '@/modules/workspaces/services/workspaceLimits'
-import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
-import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { getExplicitProjects } from '@/modules/core/repositories/streams'
 import { db } from '@/db/knex'
 import { getPaginatedProjectModelsTotalCountFactory } from '@/modules/core/repositories/branches'
 import { updateAllWorkspacesTackingPropertiesFactory } from '@/modules/workspaces/services/tracking'
@@ -26,6 +26,7 @@ import { buildMixpanelFake } from '@/modules/shared/test/helpers/mixpanel'
 import { expect } from 'chai'
 import { truncateTables } from '@/test/hooks'
 import { Workspaces } from '@/modules/workspaces/helpers/db'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 describe('Tracking Workspaces', () => {
   const testUser: BasicTestUser = {
@@ -41,8 +42,8 @@ describe('Tracking Workspaces', () => {
       getWorkspacePlan: getWorkspacePlanFactory({ db }),
       getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
       getWorkspaceModelCount: getWorkspaceModelCountFactory({
-        queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-          getStreams: legacyGetStreamsFactory({ db })
+        queryAllProjects: queryAllProjectsFactory({
+          getExplicitProjects: getExplicitProjects({ db })
         }),
         getPaginatedProjectModelsTotalCount: getPaginatedProjectModelsTotalCountFactory(
           {
@@ -58,19 +59,17 @@ describe('Tracking Workspaces', () => {
   before(async () => {
     await truncateTables([Workspaces.name])
     await createTestUser(testUser)
-    await Promise.all(
-      [...Array(30)].map(() =>
-        createTestWorkspace(
-          {
-            id: createRandomString(),
-            ownerId: createRandomString(),
-            slug: createRandomString(),
-            name: createRandomString()
-          },
-          testUser
-        )
+    for (let i = 0; i < 30; i++) {
+      await createTestWorkspace(
+        {
+          id: createRandomString(),
+          ownerId: createRandomString(),
+          slug: createRandomString(),
+          name: createRandomString()
+        },
+        testUser
       )
-    )
+    }
   })
 
   it('updates all existing workspaces an update workpspace', async () => {

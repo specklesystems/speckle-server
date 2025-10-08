@@ -1,82 +1,148 @@
-import { Logger } from '@/observability/logging'
-import {
+import type { Logger } from '@/observability/logging'
+import type {
+  GetFileInfoV2,
   ProcessFileImportResult,
-  UpdateFileStatus
+  UpdateFileUpload
 } from '@/modules/fileuploads/domain/operations'
-import {
-  FileImportSubscriptions,
-  PublishSubscription
-} from '@/modules/shared/utils/subscriptions'
-import {
-  ProjectFileImportUpdatedMessageType,
-  ProjectPendingVersionsUpdatedMessageType
-} from '@/test/graphql/generated/graphql'
 import {
   jobResultStatusToFileUploadStatus,
   jobResultToConvertedMessage
 } from '@/modules/fileuploads/helpers/convert'
 import { ensureError } from '@speckle/shared'
+import type { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
+import { FileImportJobNotFoundError } from '@/modules/fileuploads/helpers/errors'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
+import {
+  BackgroundJobStatus,
+  type UpdateBackgroundJob
+} from '@/modules/backgroundjobs/domain/types'
+import {
+  type FileImportJobPayloadV1,
+  JobResultStatus
+} from '@speckle/shared/workers/fileimport'
 
 type OnFileImportResultDeps = {
-  updateFileStatus: UpdateFileStatus
-  publish: PublishSubscription
+  getFileInfo: GetFileInfoV2
+  updateFileUpload: UpdateFileUpload
+  updateBackgroundJob: UpdateBackgroundJob<FileImportJobPayloadV1>
+  eventEmit: EventBusEmit
   logger: Logger
+  FF_NEXT_GEN_FILE_IMPORTER_ENABLED: boolean
 }
 
 export const onFileImportResultFactory =
   (deps: OnFileImportResultDeps): ProcessFileImportResult =>
   async (params) => {
     const { logger } = deps
-    const { jobId, jobResult } = params
+    const { blobId, jobResult } = params
 
-    logger.info('Processing result for file upload')
+    const fileInfo = await deps.getFileInfo({ fileId: blobId })
+    if (!fileInfo) {
+      throw new FileImportJobNotFoundError(`File upload with ID ${blobId} not found`)
+    }
+
+    const boundLogger = logger.child({
+      blobId,
+      fileId: fileInfo.id,
+      fileSize: fileInfo.fileSize,
+      fileName: fileInfo.fileName,
+      fileType: fileInfo.fileType,
+      projectId: fileInfo.projectId,
+      streamId: fileInfo.projectId, // legacy for backwards compatibility
+      modelId: fileInfo.modelId,
+      branchId: fileInfo.modelId, // legacy for backwards compatibility
+      userId: fileInfo.userId
+    })
+
+    let convertedCommitId = null
+    let newStatusForBackgroundJob: BackgroundJobStatus = BackgroundJobStatus.Processing
+
+    switch (jobResult.status) {
+      case JobResultStatus.Error:
+        boundLogger.warn(
+          {
+            duration: jobResult.result.durationSeconds,
+            err: { message: jobResult.reason }
+          },
+          'Processing error result for file upload'
+        )
+        newStatusForBackgroundJob = BackgroundJobStatus.Failed
+        break
+      case JobResultStatus.Success:
+        convertedCommitId = jobResult.result.versionId
+        newStatusForBackgroundJob = BackgroundJobStatus.Succeeded
+        boundLogger.info(
+          {
+            duration: jobResult.result.durationSeconds,
+            versionId: jobResult.result.versionId
+          },
+          'Processing success result for file upload'
+        )
+        break
+    }
 
     const status = jobResultStatusToFileUploadStatus(jobResult.status)
     const convertedMessage = jobResultToConvertedMessage(jobResult)
 
-    let convertedCommitId = null
-    switch (jobResult.status) {
-      case 'error':
-        break
-      case 'success':
-        convertedCommitId = jobResult.result.versionId
+    if (deps.FF_NEXT_GEN_FILE_IMPORTER_ENABLED) {
+      try {
+        await deps.updateBackgroundJob({
+          payloadFilter: { blobId },
+          status: newStatusForBackgroundJob
+        })
+      } catch (e) {
+        const err = ensureError(e)
+        logger.error(
+          { err, blobId },
+          'Error updating background jobs status in database. Blob ID: {blobId}'
+        )
+        throw err
+      }
     }
 
-    let updatedFile
+    let updatedFile: FileUploadRecord
     try {
-      updatedFile = await deps.updateFileStatus({
-        fileId: jobId,
-        status,
-        convertedMessage,
-        convertedCommitId
+      updatedFile = await deps.updateFileUpload({
+        id: blobId,
+        upload: {
+          convertedStatus: status,
+          convertedLastUpdate: new Date(),
+          convertedMessage,
+          convertedCommitId,
+          performanceData: {
+            durationSeconds: jobResult.result.durationSeconds,
+            downloadDurationSeconds: jobResult.result.downloadDurationSeconds,
+            parseDurationSeconds: jobResult.result.parseDurationSeconds
+          }
+        }
       })
     } catch (e) {
       const err = ensureError(e)
       logger.error(
-        { err },
-        'Error updating imported file status in database. File ID: %s',
-        jobId
+        { err, info: { fileId: blobId } },
+        'Error updating imported file status in database. File ID: {fileId}'
       )
       throw err
     }
 
-    await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
-      projectPendingVersionsUpdated: {
-        id: updatedFile.id,
-        type: ProjectPendingVersionsUpdatedMessageType.Updated,
-        version: updatedFile
-      },
-      projectId: updatedFile.streamId,
-      branchName: updatedFile.branchName
+    await deps.eventEmit({
+      eventName: FileuploadEvents.Updated,
+      payload: {
+        upload: {
+          ...updatedFile,
+          projectId: updatedFile.streamId
+        },
+        isNewModel: false // next gen file uploads don't support this
+      }
     })
 
-    await deps.publish(FileImportSubscriptions.ProjectFileImportUpdated, {
-      projectFileImportUpdated: {
-        id: updatedFile.id,
-        type: ProjectFileImportUpdatedMessageType.Updated,
-        upload: updatedFile
-      },
-      projectId: updatedFile.streamId
+    await deps.eventEmit({
+      eventName: FileuploadEvents.Finished,
+      payload: {
+        jobId: blobId,
+        jobResult
+      }
     })
 
     logger.info('File upload status updated')

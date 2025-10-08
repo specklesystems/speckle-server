@@ -1,6 +1,6 @@
 import { logger, moduleLogger } from '@/observability/logging'
 import { getDefaultApp } from '@/modules/auth/defaultApps'
-import {
+import type {
   CreateApp,
   CreateAuthorizationCode,
   CreateRefreshToken,
@@ -21,13 +21,13 @@ import {
   UpdateApp,
   UpdateDefaultApp
 } from '@/modules/auth/domain/operations'
-import {
+import type {
   ScopeRecord,
   ServerAppsScopesRecord,
   TokenScopeRecord,
   UserServerAppTokenRecord
 } from '@/modules/auth/helpers/types'
-import {
+import type {
   ApiTokenRecord,
   AuthorizationCodeRecord,
   RefreshTokenRecord
@@ -43,10 +43,10 @@ import {
   Users,
   UserServerAppTokens
 } from '@/modules/core/dbSchema'
-import { ServerAppRecord, UserRecord } from '@/modules/core/helpers/types'
+import type { ServerAppRecord, UserRecord } from '@/modules/core/helpers/types'
 import cryptoRandomString from 'crypto-random-string'
-import { Knex } from 'knex'
-import { difference, omit } from 'lodash'
+import type { Knex } from 'knex'
+import { difference, omit } from 'lodash-es'
 import { AppCreateError } from '@/modules/auth/errors'
 import { UserInputError } from '@/modules/core/errors/userinput'
 

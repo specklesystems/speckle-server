@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import { isArray } from 'lodash'
+import { isArray } from '#lodash'
 import { computed, ref } from 'vue'
 import type { Ref, ToRefs } from 'vue'
 import type { Nullable } from '@speckle/shared'

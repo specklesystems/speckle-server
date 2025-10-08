@@ -1,8 +1,6 @@
 <template>
   <div>
-    <CommonCard
-      class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3 h-full hover:bg-foundation"
-    >
+    <CommonCard class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3 h-full">
       <div class="flex gap-2 items-center">
         <div v-if="connector.images" class="relative flex items-start mr-2">
           <div
@@ -29,20 +27,32 @@
         {{ connector.description }}
       </p>
       <div class="flex gap-1 mt-2">
-        <FormButton
-          color="outline"
-          size="sm"
-          :disabled="enableButton"
-          external
-          :to="latestAvailableVersion?.Url"
-          @click="
-            mixpanel.track('Connector Card Install Clicked', {
-              connector: props.connector.slug
-            })
+        <div
+          v-tippy="
+            canDownload
+              ? undefined
+              : {
+                  content: `Please <a href='${loginRoute}'>login</a> or <a href='${registerRoute}'>register</a> to download connectors`,
+                  allowHTML: true,
+                  interactive: true
+                }
           "
         >
-          {{ connector.isComingSoon ? 'Coming soon' : 'Install for Windows' }}
-        </FormButton>
+          <FormButton
+            color="outline"
+            size="sm"
+            :disabled="enableButton"
+            external
+            :to="canDownload ? latestAvailableVersion?.Url : undefined"
+            @click="
+              mixpanel.track('Connector Card Install Clicked', {
+                connector: props.connector.slug
+              })
+            "
+          >
+            {{ connector.isComingSoon ? 'Coming soon' : 'Install for Windows' }}
+          </FormButton>
+        </div>
         <FormButton
           v-if="connector.url"
           color="subtle"
@@ -66,20 +76,22 @@
 <script setup lang="ts">
 import type { ConnectorItem, Version, Versions } from '~~/lib/dashboard/helpers/types'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { loginRoute, registerRoute } from '~~/lib/common/helpers/route'
 
 const props = defineProps<{
   connector: ConnectorItem
+  canDownload: boolean
 }>()
 
 const mixpanel = useMixpanel()
 const { data: versionData, status } = useFetch(
   `https://releases.speckle.dev/manager2/feeds/${props.connector.slug}-v3.json`,
   {
-    immediate: !props.connector.isComingSoon
+    immediate: !props.connector.isComingSoon && props.canDownload
   }
 )
 
-const enableButton = computed(() => status.value !== 'success')
+const enableButton = computed(() => status.value !== 'success' || !props.canDownload)
 
 const latestAvailableVersion = computed<Version | null>(() => {
   if (versionData.value) {

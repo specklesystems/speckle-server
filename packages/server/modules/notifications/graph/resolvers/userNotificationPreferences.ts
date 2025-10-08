@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   getSavedUserNotificationPreferencesFactory,
   saveUserNotificationPreferencesFactory
@@ -20,7 +20,7 @@ const updateNotificationPreferences = updateNotificationPreferencesFactory({
   saveUserNotificationPreferences: saveUserNotificationPreferencesFactory({ db })
 })
 
-export = {
+export default {
   User: {
     async notificationPreferences(parent) {
       const preferences = await getUserNotificationPreferences(parent.id)

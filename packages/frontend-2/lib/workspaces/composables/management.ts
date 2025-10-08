@@ -3,6 +3,7 @@ import {
   SeatTypes,
   waitForever,
   type MaybeAsync,
+  type MaybeNullOrUndefined,
   type Optional,
   type WorkspaceSeatType
 } from '@speckle/shared'
@@ -49,7 +50,6 @@ import { useLock } from '~/lib/common/composables/singleton'
 import type { Get } from 'type-fest'
 import type { ApolloCache } from '@apollo/client/core'
 import { workspaceLastAdminCheckQuery } from '../graphql/queries'
-import { useNavigation } from '~/lib/navigation/composables/navigation'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -192,17 +192,25 @@ export const useProcessWorkspaceInvite = () => {
               'workspaceInvite',
               ({ value, variables, helpers: { readField } }) => {
                 if (value) {
-                  const inviteWorkspaceId = readField(value, 'workspaceId')
-                  if (inviteWorkspaceId === workspaceId) return null
+                  const workspaceRef = readField(value, 'workspace')
+
+                  if (workspaceRef) {
+                    const workspaceId = readField(workspaceRef, 'id')
+                    const inviteWorkspaceId = workspaceId
+                    if (inviteWorkspaceId === workspaceId) return null
+                  }
                 } else {
                   if (variables.workspaceId === workspaceId) return null
                 }
               }
             )
 
-            // Evict invite itself
+            // Evict invite itself (because of implicit workspace invites, we need to also evict equivalent project invite)
             cache.evict({
               id: getCacheId('PendingWorkspaceCollaborator', inviteId)
+            })
+            cache.evict({
+              id: getCacheId('PendingStreamCollaborator', inviteId)
             })
 
             if (options?.callback) await options.callback()
@@ -251,8 +259,9 @@ graphql(`
   fragment UseWorkspaceInviteManager_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
     id
     token
-    workspaceId
-    workspaceSlug
+    workspace {
+      ...WorkspaceInviteCard_LimitedWorkspace
+    }
     user {
       id
     }
@@ -284,7 +293,6 @@ export const useWorkspaceInviteManager = <
   const route = options?.route || useRoute()
   const goHome = useNavigateToHome()
   const { activeUser } = useActiveUser()
-  const { mutateActiveWorkspaceSlug } = useNavigation()
 
   const loading = ref(false)
 
@@ -317,8 +325,8 @@ export const useWorkspaceInviteManager = <
     if (!isWorkspacesEnabled.value) return false
     if (!token.value || !invite.value) return false
 
-    const workspaceId = invite.value.workspaceId
-    const workspaceSlug = invite.value.workspaceSlug
+    const workspaceId = invite.value.workspace.id
+    const workspaceSlug = invite.value.workspace.slug
     const shouldAddNewEmail = canAddNewEmail.value && addNewEmail
 
     loading.value = true
@@ -339,7 +347,6 @@ export const useWorkspaceInviteManager = <
             if (accept) {
               if (workspaceSlug) {
                 navigateTo(workspaceRoute(workspaceSlug))
-                mutateActiveWorkspaceSlug(workspaceSlug)
               } else {
                 window.location.reload()
               }
@@ -374,7 +381,6 @@ export function useCreateWorkspace() {
   const { triggerNotification } = useGlobalToast()
   const { activeUser } = useActiveUser()
   const router = useRouter()
-  const { mutateActiveWorkspaceSlug } = useNavigation()
 
   return async (
     input: WorkspaceCreateInput,
@@ -427,7 +433,6 @@ export function useCreateWorkspace() {
 
       if (options?.navigateOnSuccess === true) {
         router.push(workspaceRoute(res.data?.workspaceMutations.create.slug))
-        mutateActiveWorkspaceSlug(res.data?.workspaceMutations.create.slug)
       }
     } else {
       const err = getFirstErrorMessage(res.errors)
@@ -471,6 +476,7 @@ export const useWorkspaceUpdateRole = () => {
               }
             )
           }
+
           modifyObjectField(
             cache,
             getCacheId('Workspace', input.workspaceId),
@@ -481,10 +487,26 @@ export const useWorkspaceUpdateRole = () => {
           )
           modifyObjectField(
             cache,
+            getCacheId('Workspace', input.workspaceId),
+            'team',
+            ({ helpers: { evict } }) => {
+              return evict()
+            }
+          )
+          modifyObjectField(
+            cache,
             getCacheId('WorkspaceCollaborator', input.userId),
             'seatType',
             () => SeatTypes.Editor
           )
+          if (input.role) {
+            modifyObjectField(
+              cache,
+              getCacheId('WorkspaceCollaborator', input.userId),
+              'role',
+              () => input.role!
+            )
+          }
         }
       }
     ).catch(convertThrowIntoFetchResult)
@@ -546,6 +568,14 @@ export const useWorkspaceUpdateSeatType = () => {
             getCacheId('WorkspaceCollaborator', input.userId),
             'seatType',
             () => input.seatType
+          )
+          modifyObjectField(
+            cache,
+            getCacheId('Workspace', input.workspaceId),
+            'team',
+            ({ helpers: { evict } }) => {
+              return evict()
+            }
           )
         }
       }
@@ -656,12 +686,20 @@ export const useOnWorkspaceUpdated = (params: {
   }
 }
 
-export const useWorkspaceLastAdminCheck = (params: { workspaceSlug: string }) => {
+export const useWorkspaceLastAdminCheck = (params: {
+  workspaceSlug: Ref<MaybeNullOrUndefined<string>>
+}) => {
   const { workspaceSlug } = params
 
-  const { result } = useQuery(workspaceLastAdminCheckQuery, {
-    slug: workspaceSlug
-  })
+  const { result } = useQuery(
+    workspaceLastAdminCheckQuery,
+    () => ({
+      slug: workspaceSlug.value || ''
+    }),
+    () => ({
+      enabled: !!workspaceSlug.value
+    })
+  )
 
   const isLastAdmin = computed(
     () => result.value?.workspaceBySlug?.teamByRole?.admins?.totalCount === 1

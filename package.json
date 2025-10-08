@@ -6,7 +6,7 @@
   "name": "root",
   "private": true,
   "engines": {
-    "node": "^22.6.0"
+    "node": "^22.17.1"
   },
   "scripts": {
     "build": "yarn workspaces foreach --parallel --topological --verbose --worktree run build",
@@ -23,11 +23,11 @@
     "dev:docker:down": "docker compose -f ./docker-compose-deps.yml down",
     "dev:docker:down:volumes": "docker compose -f ./docker-compose-deps.yml down --volumes",
     "dev:docker:restart": "yarn dev:docker:down && yarn dev:docker:up",
-    "dev:kind:up": "ctlptl apply --filename ./.circleci/deployment/cluster-config.yaml",
-    "dev:kind:down": "ctlptl delete -f ./.circleci/deployment/cluster-config.yaml",
-    "dev:kind:helm:up": "yarn dev:kind:up && tilt up --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server",
-    "dev:kind:helm:down": "tilt down --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server",
-    "dev:kind:helm:ci": "tilt ci --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server --timeout 10m",
+    "dev:kind:up": "ctlptl apply --filename ./tests/deployment/helm/cluster-config.yaml",
+    "dev:kind:down": "ctlptl delete -f ./tests/deployment/helm/cluster-config.yaml",
+    "dev:kind:helm:up": "yarn dev:kind:up && tilt up --file ./tests/deployment/helm/Tiltfile --context kind-speckle-server",
+    "dev:kind:helm:down": "tilt down --file ./tests/deployment/helm/Tiltfile --context kind-speckle-server",
+    "dev:kind:helm:ci": "tilt ci --file ./tests/deployment/helm/Tiltfile --context kind-speckle-server --timeout 10m",
     "dev": "yarn workspaces foreach --parallel --interlaced --verbose --worktree --jobs unlimited run dev",
     "dev:no-server": "yarn workspaces foreach --exclude @speckle/server --parallel --interlaced --verbose --worktree --jobs unlimited run dev",
     "dev:minimal": "yarn workspaces foreach --parallel --interlaced --verbose --worktree --jobs unlimited --include '{@speckle/server,@speckle/frontend-2}' run dev",
@@ -35,6 +35,7 @@
     "dev:server": "yarn workspace @speckle/server dev",
     "dev:frontend-2": "yarn workspace @speckle/frontend-2 dev",
     "dev:shared": "yarn workspace @speckle/shared dev",
+    "dev:ifc-import-service": "./packages/ifc-import-service/run.sh",
     "prepare": "husky install",
     "postinstall": "husky install",
     "cm": "cz",
@@ -72,8 +73,7 @@
   "resolutions": {
     "@aws-sdk/client-sts/fast-xml-parser": ">=4.2.5",
     "@aws-sdk/client-s3/fast-xml-parser": ">=4.2.5",
-    "@bull-board/express/express": ">=4.19.2",
-    "@datadog/datadog-ci/ssh2": "^1.16.0",
+    "@bull-board/express/express": "^4.20.0",
     "@microsoft/api-extractor/semver": "^7.5.4",
     "@rushstack/node-core-library/semver": "^7.5.4",
     "@typescript-eslint/eslint-plugin": "^8.20.0",
@@ -81,10 +81,9 @@
     "@types/react": "file:./packages/frontend-2/type-augmentations/stubs/types__react",
     "core-js": "3.22.4",
     "core-js-compat/semver": "^7.5.4",
+    "bull-board/ejs": "^3.1.10",
     "eslint": "^9.20.1",
     "eslint-config-prettier": "^9.1.0",
-    "levelup/bl": ">=1.2.3",
-    "levelup/semver": ">=5.7.2",
     "mocha/serialize-javascript": ">=6.0.2",
     "prettier": "^2.8.7",
     "puppeteer-core/ws": "^8.17.1",
@@ -95,11 +94,17 @@
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",
     "wait-on": ">=7.2.0",
-    "vitest": "^3.0.7"
+    "vitest": "^3.0.7",
+    "@types/node": "22.16.2",
+    "bull-board/express": "^4.20.0",
+    "express/path-to-regexp": "^0.1.12"
   },
   "config": {
     "commitizen": {
       "path": "cz-conventional-changelog"
     }
+  },
+  "dependencies": {
+    "node-gyp": "^11.4.2"
   }
 }

@@ -1,22 +1,52 @@
-import { MaybeAsync, Optional, md5, wait } from '@speckle/shared'
+import type { MaybeAsync, Optional } from '@speckle/shared'
+import { md5, wait } from '@speckle/shared'
 import { dbNotificationLogger } from '@/observability/logging'
-import { knex } from '@/modules/core/dbSchema'
-import * as Knex from 'knex'
-import * as pg from 'pg'
+import pg from 'pg'
 import { createRedisClient } from '@/modules/shared/redis/redis'
-import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
-import Redis from 'ioredis'
-import { LogicError } from '@/modules/shared/errors'
+import {
+  getRedisUrl,
+  isProdEnv,
+  postgresConnectionCreateTimeoutMillis
+} from '@/modules/shared/helpers/envHelper'
+import type Redis from 'ioredis'
+import { LogicError, MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+import { mainDb } from '@/db/knex'
+import type { PartialDeep } from 'type-fest'
+import { merge } from 'lodash-es'
+import {
+  getConnectionSettings,
+  obfuscateConnectionString
+} from '@speckle/shared/environment/db'
+import { getMainRegionConfig } from '@/modules/multiregion/regionConfig'
+import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 
-export type MessageType = { channel: string; payload: string }
+export type MessageType = pg.Notification
 export type ListenerType = (msg: MessageType) => MaybeAsync<void>
+type ConnectionStateItem = {
+  setupListeners: {
+    [listenerName: string]: boolean | undefined
+  }
+}
 
 let shuttingDown = false
-let connection: Optional<pg.Connection> = undefined
+let connection: Optional<pg.Client> = undefined
 let redisClient: Optional<Redis> = undefined
+let activeReconnect: Optional<Promise<void>> = undefined
 
-const listeners: Record<string, { setup: boolean; listener: ListenerType }> = {}
+const connectionState = new WeakMap<pg.Client, ConnectionStateItem>()
+const listeners: Record<string, { listener: ListenerType }> = {}
 const lockName = 'server_postgres_listener_lock'
+
+const updateConnectionState = (
+  connection: pg.Client,
+  update: PartialDeep<ConnectionStateItem>
+) => {
+  const state = connectionState.get(connection) || {
+    setupListeners: {}
+  }
+  const newState = merge(state, update)
+  connectionState.set(connection, newState)
+}
 
 function getMessageId(msg: MessageType) {
   const str = JSON.stringify(msg)
@@ -71,64 +101,148 @@ async function messageProcessor(msg: MessageType) {
   }
 }
 
-function setupListeners(connection: pg.Connection) {
-  for (const [key, val] of Object.entries(listeners)) {
-    if (val.setup) continue
+const setupListeners = async (connection: pg.Client) => {
+  for (const [key] of Object.entries(listeners)) {
+    const isSetupAlready = !!connectionState.get(connection)?.setupListeners?.[key]
+    dbNotificationLogger.info(
+      {
+        key,
+        setup: isSetupAlready
+      },
+      'Setting up PG listener for channel {key}...'
+    )
+    if (isSetupAlready) continue
 
-    connection.query(`LISTEN ${key}`)
-    listeners[key].setup = true
+    await connection.query(`LISTEN ${key}`)
+    updateConnectionState(connection, {
+      setupListeners: {
+        [key]: true
+      }
+    })
   }
 }
 
-function setupConnection(connection: pg.Connection) {
-  Object.values(listeners).forEach((l) => (l.setup = false))
-  connection.on('notification', messageProcessor)
+const setupConnection = async (connection: pg.Client) => {
+  connection.on('notification', (msg) => {
+    dbNotificationLogger.info({ msg }, 'Message incoming...')
+    void messageProcessor(msg).catch((err) => {
+      dbNotificationLogger.error({ err, msg }, `Error processing notification...`)
+    })
+  })
 
   connection.on('end', () => {
-    if (!shuttingDown) reconnectClient()
+    dbNotificationLogger.info(
+      {
+        shuttingDown
+      },
+      'Notification listener connection ended'
+    )
+
+    if (!shuttingDown) void memoizedReconnect()
   })
+
   connection.on('error', (err: unknown) => {
     dbNotificationLogger.error(err, 'Notification listener connection error')
   })
-  setupListeners(connection)
+
+  await setupListeners(connection)
 }
 
-function reconnectClient() {
-  const reconnect = async () => {
-    try {
-      await endConnection()
+/**
+ * We have to skip the connection pool, cause it breaks LISTEN/NOTIFY. Thus, if available,
+ * we're using the main DB connection settings from the multiRegion config
+ */
+const getDbConnectionSettings = async (): Promise<pg.ClientConfig> => {
+  const base = getConnectionSettings(mainDb)
 
-      dbNotificationLogger.info('Attempting to (re-)connect...')
-
-      const newConnection = await (
-        knex.client as Knex.Knex.Client
-      ).acquireRawConnection()
-
-      connection = newConnection
-      redisClient = createRedisClient(getRedisUrl(), {})
-
-      setupConnection(newConnection)
-    } catch (e: unknown) {
-      dbNotificationLogger.error(
-        e,
-        'Notification listener connection acquisition failed'
-      )
-      throw e
+  if (isMultiRegionEnabled() && isProdEnv()) {
+    const {
+      postgres: { privateConnectionUri }
+    } = await getMainRegionConfig()
+    if (privateConnectionUri) {
+      return {
+        ...base,
+        connectionString: privateConnectionUri
+      }
     }
   }
 
-  void reconnect().catch(async () => {
+  return base
+}
+
+const reconnect = async () => {
+  try {
+    await endConnection()
+
+    const connectionSettings = await getDbConnectionSettings()
+    const mainDbConnectionString = obfuscateConnectionString(
+      connectionSettings.connectionString || ''
+    )
+
+    dbNotificationLogger.info(
+      {
+        mainDbConnectionString
+      },
+      'Attempting to (re-)connect...'
+    )
+
+    // creating externally managed PG connection from knex mainDB connection settings
+    const newConnection = new pg.Client({
+      ...connectionSettings,
+      connectionTimeoutMillis: postgresConnectionCreateTimeoutMillis()
+    })
+
+    // connect and test
+    await newConnection.connect()
+    const test = await newConnection.query('SELECT NOW()')
+    if (!test || !test.rows || test.rows.length === 0) {
+      throw new MisconfiguredEnvironmentError(
+        'Failed to acquire a valid connection to the database'
+      )
+    }
+
+    connection = newConnection
+    redisClient = createRedisClient(getRedisUrl(), {})
+
+    await setupConnection(newConnection)
+  } catch (e: unknown) {
+    dbNotificationLogger.error(e, 'Notification listener connection acquisition failed')
+    throw e
+  }
+
+  dbNotificationLogger.info('Client reconnect successful!')
+}
+
+const reconnectUntilSuccessful = async (): Promise<void> => {
+  try {
+    await reconnect()
+  } catch {
+    dbNotificationLogger.info('Retrying reconnection in 5 seconds...')
     await wait(5000) // Wait 5s and retry
-    reconnectClient()
-  })
+    return reconnectUntilSuccessful()
+  }
+}
+
+const memoizedReconnect = (): Promise<void> => {
+  if (!activeReconnect) {
+    activeReconnect = reconnectUntilSuccessful()
+      .catch((e) => {
+        dbNotificationLogger.error(e, 'Error during reconnect attempt')
+        throw e
+      })
+      .finally(() => {
+        activeReconnect = undefined
+      })
+  }
+
+  return activeReconnect
 }
 
 const endConnection = async () => {
   dbNotificationLogger.info('Ending connection...')
 
   if (connection) {
-    connection.end()
-    connection = undefined
+    await connection.end()
   }
 
   if (redisClient) {
@@ -137,9 +251,9 @@ const endConnection = async () => {
   }
 }
 
-export function setupResultListener() {
+export async function setupResultListener() {
   dbNotificationLogger.info('🔔 Initializing postgres notification listening...')
-  reconnectClient()
+  await memoizedReconnect()
 }
 
 export async function shutdownResultListener() {
@@ -148,18 +262,17 @@ export async function shutdownResultListener() {
   await endConnection()
 }
 
-export function listenFor(eventName: string, cb: ListenerType) {
+export async function listenFor(eventName: string, cb: ListenerType) {
   dbNotificationLogger.info(
     { eventName },
     'Registering postgres event listener for {eventName}'
   )
 
   listeners[eventName] = {
-    setup: false,
     listener: cb
   }
 
   if (connection) {
-    setupListeners(connection)
+    await setupListeners(connection)
   }
 }

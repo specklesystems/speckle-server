@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type {
-  OperationVariables,
-  QueryOptions,
-  WatchQueryFetchPolicy
+import {
+  NetworkStatus,
+  type OperationVariables,
+  type QueryOptions,
+  type WatchQueryFetchPolicy
 } from '@apollo/client/core'
 import type {
   DocumentParameter,
@@ -37,7 +38,12 @@ export const usePreloadApolloQueries = () => {
     const { queries } = params
 
     const promises = queries.map((q) =>
-      client.query(q).catch(convertThrowIntoFetchResult)
+      client
+        .query({
+          ...q,
+          errorPolicy: 'all'
+        })
+        .catch(convertThrowIntoFetchResult)
     )
     return await Promise.all(promises)
   }
@@ -68,6 +74,9 @@ type SerializableObject = {
     | SerializableObject
     | SerializableValue[]
     | SerializableObject[]
+    | Array<SerializableValue | SerializableObject>
+    | undefined
+    | null
 }
 
 type BasicCursorContainer = {
@@ -106,6 +115,8 @@ export const usePaginatedQuery = <
     | SerializableObject
     | SerializableValue[]
     | SerializableObject[]
+    | Array<SerializableValue | SerializableObject>
+
   /**
    * Predicate for resolving the current paginated result from the query result. Return undefined
    * if query hasn't finished loading yet.
@@ -136,10 +147,10 @@ export const usePaginatedQuery = <
     options,
     resolveCurrentResult,
     resolveNextPageVariables,
-    resolveInitialResult,
-    resolveCursorFromVariables
+    resolveInitialResult
   } = params
   const cacheBusterKey = ref(0)
+  const loadingCompleted = ref(false)
 
   // can't be a computed, because we have to invoke it on the result of the fetchMore call,
   // before the result has been merged into the cache and the results become merged with results
@@ -164,6 +175,10 @@ export const usePaginatedQuery = <
     resolveCurrentResult(useQueryReturn.result.value)
   )
 
+  const isVeryFirstLoading = computed(
+    () => useQueryReturn.loading.value && !currentResult.value?.items.length
+  )
+
   const getCursorForNextPage = () => {
     const currRes = currentResult.value
     const initRes = resolveInitialResult?.()
@@ -174,9 +189,14 @@ export const usePaginatedQuery = <
   }
 
   const onInfiniteLoad = async (state: InfiniteLoaderState) => {
+    const loadComplete = () => {
+      state.complete()
+      loadingCompleted.value = true
+    }
+
     const cursor = getCursorForNextPage()
     let loadMore = hasMoreToLoad(currentResult.value)
-    if (!loadMore || !cursor) return state.complete()
+    if (!loadMore || !cursor) return loadComplete()
 
     try {
       const res = await useQueryReturn.fetchMore({
@@ -191,22 +211,24 @@ export const usePaginatedQuery = <
 
     state.loaded()
     if (!loadMore) {
-      state.complete()
+      loadComplete()
     }
   }
 
   const bustCache = () => {
     cacheBusterKey.value++
+    loadingCompleted.value = false
   }
 
-  // If for some reason the query is invoked w/ baseVariables & null cursor, we should bust the cache,
-  // & reset loader state, cause a refetch was triggered for some reason (maybe a cache eviction)
-  useQueryReturn.onResult(() => {
-    const vars = useQueryReturn.variables.value
-    const cursor = vars ? resolveCursorFromVariables(vars) : undefined
+  // If after the query runs there is still more to load, but loading is marked as complete (which can happen
+  // if cache is evicted and initial query reruns) - we should bust the cache,
+  // & reset loader state, so infinite loader restarts
+  useQueryReturn.onResult((res) => {
+    if (res.loading) return
 
-    if (!cursor) {
-      // TODO: Maybe add check to skip this on initial result? Lets see how well this works first
+    // If more to load & loading completed, bust cache
+    const moreToLoad = hasMoreToLoad(resolveCurrentResult(res?.data))
+    if (moreToLoad && loadingCompleted.value) {
       bustCache()
     }
   })
@@ -215,7 +237,8 @@ export const usePaginatedQuery = <
     query: useQueryReturn,
     identifier: queryKey,
     onInfiniteLoad,
-    bustCache
+    bustCache,
+    isVeryFirstLoading
   }
 }
 
@@ -247,4 +270,27 @@ export const usePageQueryStandardFetchPolicy = () => {
     // we only wanna do this when transitioning between CSR routes
     return hasNavigatedInCSR.value ? 'cache-and-network' : undefined
   })
+}
+
+/**
+ * By default 'variables' off useQuery updates the moment variables are updated. This returns the variables
+ * associated with the active result. So if the result is still loading, the variables are gonna be undefined too.
+ */
+export const useQueryResultVariables = <
+  TResult = any,
+  TVariables extends OperationVariables = OperationVariables
+>(
+  useQueryRet: ReturnType<typeof useQuery<TResult, TVariables>>
+) => {
+  const { variables, onResult } = useQueryRet
+
+  const currentVariables = shallowRef<(typeof variables)['value']>()
+  onResult((res) => {
+    if (res.networkStatus !== NetworkStatus.ready) return
+    currentVariables.value = variables.value
+  })
+
+  const resultVariables = computed(() => currentVariables.value)
+
+  return resultVariables
 }

@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 'use strict'
 
-exports.up = async (knex) => {
+const up = async (knex) => {
   await knex.schema.createTable('object_preview', (table) => {
     table.string('streamId', 10).references('id').inTable('streams').onDelete('cascade')
     table.string('objectId').notNullable()
@@ -19,7 +19,9 @@ exports.up = async (knex) => {
   })
 }
 
-exports.down = async (knex) => {
+const down = async (knex) => {
   await knex.schema.dropTableIfExists('object_preview')
   await knex.schema.dropTableIfExists('previews')
 }
+
+export { up, down }

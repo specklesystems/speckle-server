@@ -1,5 +1,5 @@
 import { BaseError } from '@/modules/shared/errors'
-import { VError } from 'verror'
+import VError from 'verror'
 
 /**
  * Generic VError-enhanced error for usage in tests

@@ -1,4 +1,4 @@
-import { CommandModule } from 'yargs'
+import type { CommandModule } from 'yargs'
 import { cliLogger as logger } from '@/observability/logging'
 import * as ModulesSetup from '@/modules/index'
 import { printSchema } from 'graphql/utilities'
@@ -18,7 +18,7 @@ const command: CommandModule<unknown, { file: string }> = {
   },
   handler: async ({ file }) => {
     logger.info('Loading GQL schema...')
-    const schema = ModulesSetup.graphSchema()
+    const schema = await ModulesSetup.graphSchema()
     const schemaString = printSchema(schema)
 
     logger.info(`Saving to "${file}"...`)

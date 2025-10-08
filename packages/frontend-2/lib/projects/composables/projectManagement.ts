@@ -79,7 +79,7 @@ export function useProjectUpdateTracking(
     () => ({
       id: unref(projectId)
     }),
-    { enabled: isEnabled }
+    { enabled: isEnabled, errorPolicy: 'all' }
   )
 
   onProjectUpdated((res) => {
@@ -477,9 +477,12 @@ export function useProcessProjectInvite() {
           if (!data?.projectMutations.invites.use) return
 
           if (options?.inviteId) {
-            // Evict PendingStreamCollaborator
+            // Evict invite itself (because of implicit workspace invites, we need to also evict equivalent workspace invite)
             cache.evict({
               id: getCacheId('PendingStreamCollaborator', options.inviteId)
+            })
+            cache.evict({
+              id: getCacheId('PendingWorkspaceCollaborator', options.inviteId)
             })
           }
         }

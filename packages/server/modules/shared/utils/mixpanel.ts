@@ -1,15 +1,16 @@
-import { MaybeNullOrUndefined, Optional, resolveMixpanelUserId } from '@speckle/shared'
+import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
+import { resolveMixpanelUserId } from '@speckle/shared'
 import * as MixpanelUtils from '@speckle/shared/observability/mixpanel'
 import {
   enableMixpanel,
   getServerOrigin,
   getServerVersion
 } from '@/modules/shared/helpers/envHelper'
-import Mixpanel from 'mixpanel'
+import type Mixpanel from 'mixpanel'
 import type express from 'express'
 import type http from 'http'
 import { mixpanelLogger } from '@/observability/logging'
-import { WorkspacePlanStatuses } from '@/modules/cross-server-sync/graph/generated/graphql'
+import { WorkspacePlanStatuses } from '@/modules/core/graph/generated/graphql'
 
 let client: Optional<MixpanelClient> = undefined
 let baseTrackingProperties: Optional<Record<string, string>> = undefined

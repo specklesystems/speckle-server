@@ -1,6 +1,7 @@
 /* istanbul ignore file */
 import passport from 'passport'
-import { OIDCStrategy, IProfile, VerifyCallback } from 'passport-azure-ad'
+import type { IProfile, VerifyCallback } from 'passport-azure-ad'
+import { OIDCStrategy } from 'passport-azure-ad'
 
 import {
   UserInputError,
@@ -9,7 +10,7 @@ import {
 
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
-import { AuthStrategyBuilder } from '@/modules/auth/helpers/types'
+import type { AuthStrategyBuilder } from '@/modules/auth/helpers/types'
 import {
   getAzureAdClientId,
   getAzureAdClientSecret,
@@ -18,19 +19,20 @@ import {
   getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
 import type { Request } from 'express'
-import { ensureError, Optional } from '@speckle/shared'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
-import {
+import type { Optional } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
+import type { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import type {
   FinalizeInvitedServerRegistration,
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
-import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
-import {
+import type { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
+import type {
   FindOrCreateValidatedUser,
   LegacyGetUserByEmail
 } from '@/modules/core/domain/users/operations'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 import { InviteNotFoundError } from '@/modules/serverinvites/errors'
 
@@ -38,7 +40,7 @@ const azureAdStrategyBuilderFactory =
   (deps: {
     getServerInfo: GetServerInfo
     getUserByEmail: LegacyGetUserByEmail
-    findOrCreateUser: FindOrCreateValidatedUser
+    buildFindOrCreateUser: () => Promise<FindOrCreateValidatedUser>
     validateServerInvite: ValidateServerInvite
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
@@ -100,6 +102,8 @@ const azureAdStrategyBuilderFactory =
           serverVersion: serverInfo.version
         })
 
+        const findOrCreateUser = await deps.buildFindOrCreateUser()
+
         try {
           // This is the only strategy that does its own type for req.user - easier to force type cast for now
           // than to refactor everything
@@ -128,7 +132,7 @@ const azureAdStrategyBuilderFactory =
           // if there is an existing user, go ahead and log them in (regardless of
           // whether the server is invite only or not).
           if (existingUser) {
-            const myUser = await deps.findOrCreateUser({
+            const myUser = await findOrCreateUser({
               user
             })
             // ID is used later for verifying access token
@@ -154,7 +158,7 @@ const azureAdStrategyBuilderFactory =
           }
 
           // create the user
-          const myUser = await deps.findOrCreateUser({
+          const myUser = await findOrCreateUser({
             user: {
               ...user,
               role: invite
@@ -223,4 +227,4 @@ const azureAdStrategyBuilderFactory =
     }
   }
 
-export = azureAdStrategyBuilderFactory
+export default azureAdStrategyBuilderFactory

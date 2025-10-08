@@ -20,19 +20,17 @@ export default {
   }
 } as Meta
 
-export const Default: StoryObj = {
-  render: (args) => ({
-    components: { Table, ShieldCheckIcon, ShieldExclamationIcon, TrashIcon },
-    setup() {
-      return { args }
-    },
-    template: `
+const buildRender = (
+  options?: Partial<{
+    wrapTemplate: (core: string) => string
+    style?: string
+  }>
+): StoryObj['render'] => {
+  const { wrapTemplate = (val: string) => val } = options || {}
+  const template = wrapTemplate(`
       <Table 
-        :items="args.items"
-        :buttons="args.buttons"
-        :columns="args.columns"
-        :overflow-cells="args.overflowCells"
-        :on-row-click="args.onRowClick"
+        v-bind="args"
+        style="${options?.style || ''}"
       >
         <template #name="{ item }">
           <div class="flex items-center gap-2">
@@ -68,8 +66,19 @@ export const Default: StoryObj = {
           </select>
         </template>
       </Table>
-    `
-  }),
+    `)
+
+  return (args) => ({
+    components: { Table, ShieldCheckIcon, ShieldExclamationIcon, TrashIcon },
+    setup() {
+      return { args }
+    },
+    template
+  })
+}
+
+export const Default: StoryObj = {
+  render: buildRender(),
   args: {
     columns: [
       { id: 'name', header: 'Name', classes: 'col-span-3 truncate' },
@@ -190,7 +199,8 @@ export const Default: StoryObj = {
     ],
     overflowCells: false,
     onRowClick: (item: unknown) => console.log('Row clicked', item),
-    roles: ['Admin', 'User', 'Guest']
+    roles: ['Admin', 'User', 'Guest'],
+    maxHeight: undefined
   }
 }
 
@@ -226,5 +236,15 @@ export const NoItems: StoryObj = {
   args: {
     ...Default.args,
     items: []
+  }
+}
+
+export const WithLimitedSpace: StoryObj = {
+  render: buildRender({
+    style: 'width: 400px; height: 200px;'
+  }),
+  args: {
+    ...Default.args
+    // maxHeight: 200
   }
 }

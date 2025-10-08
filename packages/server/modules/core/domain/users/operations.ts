@@ -1,14 +1,14 @@
-import {
+import type {
   LimitedUser,
   User,
   UserOnboardingChoices,
   UserSignUpContext,
   UserWithOptionalRole
 } from '@/modules/core/domain/users/types'
-import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
-import { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes'
-import { ServerAclRecord, UserWithRole } from '@/modules/core/helpers/types'
-import {
+import type { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
+import type { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes'
+import type { ServerAclRecord, UserWithRole } from '@/modules/core/helpers/types'
+import type {
   MaybeNullOrUndefined,
   Nullable,
   NullableKeysToOptional,
@@ -85,6 +85,16 @@ export type StoreUserAcl = (params: {
 export type UpdateUserServerRole = (params: {
   userId: string
   role: ServerRoles
+}) => Promise<boolean>
+
+export type AdminUpdateEmailVerification = (args: {
+  email: string
+  verified?: MaybeNullOrUndefined<boolean>
+}) => Promise<boolean>
+
+export type UpdateUserEmailVerification = (params: {
+  email: string
+  verified: boolean
 }) => Promise<boolean>
 
 export type MarkUserAsVerified = (email: string) => Promise<boolean>
@@ -265,3 +275,15 @@ export type SetUserOnboardingChoices = (params: {
   userId: string
   choices: UserOnboardingChoices
 }) => Promise<void>
+
+export type BulkUpsertUsers = (params: {
+  users: Array<NullableKeysToOptional<User>>
+}) => Promise<void>
+
+export type GetAllUsers = (args: {
+  limit: number
+  cursor: Nullable<string>
+}) => Promise<{
+  items: User[]
+  cursor: Nullable<string>
+}>

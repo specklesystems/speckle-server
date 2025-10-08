@@ -1,4 +1,4 @@
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   filteredSubscribe,
   TestSubscriptions
@@ -12,7 +12,9 @@ export default {
   },
   Subscription: {
     ping: {
-      subscribe: filteredSubscribe(TestSubscriptions.Ping, () => true)
+      subscribe: filteredSubscribe(TestSubscriptions.Ping, () => {
+        return true // allow for all subs
+      })
     }
   }
 } as Resolvers

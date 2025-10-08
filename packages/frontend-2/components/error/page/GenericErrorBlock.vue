@@ -2,63 +2,62 @@
 <template>
   <div class="flex flex-col items-center space-y-4">
     <!-- <ErrorPageProjectInviteBanner /> -->
-    <h1 class="text-heading-2xl">Error {{ error.statusCode || 500 }}</h1>
+    <h1 v-if="!isGenericErrorPage" class="text-heading-2xl">
+      Error {{ error.statusCode || 500 }}
+    </h1>
     <div class="flex flex-col items-center space-y-2">
-      <h2 class="text-heading-lg text-foreground-2 mx-4 break-words max-w-full">
+      <h2 :class="messageClasses">
         {{ error.message }}
       </h2>
-      <button
-        class="text-foreground-2 hover:text-foreground text-body-3xs flex space-x-1 items-center"
-        @click="onReferenceClick"
-      >
-        <div class="break-all">{{ errorReference }}</div>
-        <ClipboardIcon class="w-3 h-3 shrink-0" />
-      </button>
+      <ErrorReference @click="() => copyReference({ date: dayjs(errorDate) })" />
     </div>
 
     <div
       v-if="isDev && error.stack"
-      class="max-w-xl text-body-xs text-foreground-2"
-      v-html="error.stack"
-    />
+      class="whitespace-pre-line font-mono max-w-xl text-body-xs text-foreground-2"
+    >
+      {{ error.stack.trim() }}
+    </div>
     <FormButton :to="homeRoute">Go home</FormButton>
   </div>
 </template>
 <script setup lang="ts">
-import { useRequestId, useServerRequestId } from '~/lib/core/composables/server'
 import type { SimpleError } from '~/lib/core/helpers/observability'
 import { homeRoute } from '~~/lib/common/helpers/route'
-import { ClipboardIcon } from '@heroicons/vue/24/outline'
+import { useGenerateErrorReference } from '~/lib/core/composables/error'
+import dayjs from 'dayjs'
 
 const SSR_DATE_STATE_KEY = 'ssr_error_page_generic_block_static_date'
 const getDate = () => new Date().toISOString()
 
-defineProps<{ error: SimpleError }>()
+const props = defineProps<{
+  error: SimpleError
+  /**
+   * We have an /error page for rendering various errors that we don't really know much about (like their
+   * actual status code), e.g. for auth errors. This makes the renderer place less of an emphasis on the status code.
+   */
+  isGenericErrorPage?: boolean
+}>()
 
 const isDev = ref(import.meta.dev)
-const reqId = useRequestId({ forceFrontendValue: true })
-const serverReqId = useServerRequestId()
-const { copy } = useClipboard()
+const messageClasses = computed(() => {
+  const classParts = ['text-foreground-2 mx-4 break-words max-w-full']
+
+  if (props.isGenericErrorPage) {
+    classParts.push('text-heading-xl')
+  } else {
+    classParts.push('text-heading-lg')
+  }
+
+  return classParts.join(' ')
+})
 
 // storing in state to avoid hydration mismatch when date gets regenerated in CSR
 const ssrErrorDate = useState(SSR_DATE_STATE_KEY, () => getDate())
 const errorDate = ref(
   import.meta.client && ssrErrorDate.value ? ssrErrorDate.value : getDate()
 )
-
-const errorReference = computed(() => {
-  let base = `Reference: #${reqId}`
-  if (serverReqId.value) base += ` | #${serverReqId.value}`
-  base += ` | ${errorDate.value}`
-  return base
-})
-
-const onReferenceClick = async () => {
-  if (!import.meta.client) return
-
-  const val = errorReference.value + ` | URL: ${window.location.href}`
-  await copy(val)
-}
+const { copyReference } = useGenerateErrorReference()
 
 onMounted(() => {
   // Immediately wipe the SSR date when page is loaded in CSR

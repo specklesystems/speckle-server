@@ -11,7 +11,12 @@
 </template>
 <script setup lang="ts">
 import { LayoutTabsVertical, type LayoutPageTabItem } from '@speckle/ui-components'
-import { projectSettingsRoute, projectWebhooksRoute } from '~~/lib/common/helpers/route'
+import {
+  projectSettingsRoute,
+  projectWebhooksRoute,
+  projectTokensRoute,
+  projectIntegrationsRoute
+} from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageSettingsTab_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 
@@ -27,6 +32,12 @@ graphql(`
       canReadWebhooks {
         ...FullPermissionCheckResult
       }
+      canReadEmbedTokens {
+        ...FullPermissionCheckResult
+      }
+      canReadAccIntegrationSettings {
+        ...FullPermissionCheckResult
+      }
     }
   }
 `)
@@ -37,9 +48,14 @@ const attrs = useAttrs() as {
 const route = useRoute()
 const router = useRouter()
 
+const canReadEmbedTokens = computed(() => attrs.project.permissions.canReadEmbedTokens)
 const canReadWebhooks = computed(() => attrs.project.permissions.canReadWebhooks)
 const projectName = computed(() =>
   attrs.project.name.length ? attrs.project.name : ''
+)
+const isAccEnabled = useIsAccModuleEnabled() // check permission over project
+const canReadAccIntegrationSettings = computed(
+  () => attrs.project.permissions.canReadAccIntegrationSettings
 )
 
 useHead({
@@ -56,6 +72,18 @@ const settingsTabItems = computed((): LayoutPageTabItem[] => [
     id: 'webhooks',
     disabled: !canReadWebhooks.value.authorized,
     disabledMessage: canReadWebhooks.value.message
+  },
+  {
+    title: 'Tokens',
+    id: 'tokens',
+    disabled: !canReadEmbedTokens.value.authorized,
+    disabledMessage: canReadEmbedTokens.value.message
+  },
+  {
+    title: 'Integrations',
+    id: 'integrations',
+    disabled: isAccEnabled && !canReadAccIntegrationSettings.value.authorized,
+    disabledMessage: canReadAccIntegrationSettings.value.message
   }
 ])
 
@@ -65,12 +93,20 @@ const activeSettingsPageTab = computed({
   get: () => {
     const path = route.path
     if (path.includes('/settings/webhooks')) return settingsTabItems.value[1]
+    if (path.includes('/settings/tokens')) return settingsTabItems.value[2]
+    if (path.includes('/settings/integrations')) return settingsTabItems.value[3]
     return settingsTabItems.value[0]
   },
   set: (val: LayoutPageTabItem) => {
     switch (val.id) {
       case 'webhooks':
         router.push(projectWebhooksRoute(projectId.value))
+        break
+      case 'tokens':
+        router.push(projectTokensRoute(projectId.value))
+        break
+      case 'integrations':
+        router.push(projectIntegrationsRoute(projectId.value))
         break
       case 'general':
       default:

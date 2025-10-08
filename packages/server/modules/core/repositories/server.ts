@@ -1,15 +1,16 @@
-import { ScopeRecord } from '@/modules/auth/helpers/types'
+import type { ScopeRecord } from '@/modules/auth/helpers/types'
 import { buildTableHelper, Scopes, UserRoles } from '@/modules/core/dbSchema'
-import {
+import type {
   GetPublicRoles,
   GetPublicScopes,
   GetServerInfo,
   UpdateServerInfo
 } from '@/modules/core/domain/server/operations'
-import { ServerInfo } from '@/modules/core/domain/server/types'
-import { ServerConfigRecord } from '@/modules/core/helpers/types'
-import { UserRole } from '@/modules/shared/domain/rolesAndScopes/types'
+import type { ServerInfo } from '@/modules/core/domain/server/types'
+import type { ServerConfigRecord } from '@/modules/core/helpers/types'
+import type { UserRole } from '@/modules/shared/domain/rolesAndScopes/types'
 import {
+  emailVerificationTimeoutMinutes,
   getFileSizeLimitMB,
   getMaximumObjectSizeMB,
   getServerMovedFrom,
@@ -23,7 +24,7 @@ import {
   wrapFactoryWithCache
 } from '@/modules/shared/utils/caching'
 import { TIME_MS } from '@speckle/shared'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 const ServerConfig = buildTableHelper('server_config', [
   'id',
@@ -58,7 +59,8 @@ export const getServerInfoFactory =
       configuration: {
         objectSizeLimitBytes: getMaximumObjectSizeMB() * 1024 * 1024,
         objectMultipartUploadSizeLimitBytes: getFileSizeLimitMB() * 1024 * 1024,
-        isEmailEnabled: isEmailEnabled()
+        isEmailEnabled: isEmailEnabled(),
+        emailVerificationTimeoutMinutes: emailVerificationTimeoutMinutes()
       },
       ...(movedTo || movedFrom
         ? {

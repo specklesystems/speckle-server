@@ -1,19 +1,17 @@
-import { ProjectVisibility, Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { ProjectVisibility } from '@/modules/core/graph/generated/graphql'
 import {
   mockedApiModules,
   isProdEnv,
   isTestEnv
 } from '@/modules/shared/helpers/envHelper'
-import { has, reduce } from 'lodash'
-import { IMockStore, IMocks } from '@graphql-tools/mock'
+import { has, reduce } from 'lodash-es'
+import type { IMockStore, IMocks } from '@graphql-tools/mock'
 
 import { moduleMockConfigs } from '@/modules/index'
 import { isNonNullable, Roles, SourceAppNames } from '@speckle/shared'
-import {
-  getRandomDbRecords,
-  mockStoreHelpers,
-  SpeckleModuleMocksConfig
-} from '@/modules/shared/helpers/mocks'
+import type { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
+import { getRandomDbRecords, mockStoreHelpers } from '@/modules/shared/helpers/mocks'
 import { Streams } from '@/modules/core/dbSchema'
 
 /**
@@ -21,7 +19,7 @@ import { Streams } from '@/modules/core/dbSchema'
  */
 const buildBaseConfig = async (): Promise<SpeckleModuleMocksConfig> => {
   // Async import so that we only import this when envs actually have mocks on
-  const { faker } = require('@faker-js/faker') as typeof import('@faker-js/faker')
+  const { faker } = await import('@faker-js/faker')
 
   return {
     resolvers: ({ helpers: { getFieldValue }, store }) => ({
@@ -96,7 +94,7 @@ export async function buildMocksConfig(): Promise<{
     return { mocks: false, mockEntireSchema: false }
   }
 
-  const configs = moduleMockConfigs(mockableModuleList)
+  const configs = await moduleMockConfigs(mockableModuleList)
   if (!Object.keys(configs).length) {
     return { mocks: false, mockEntireSchema: false }
   }

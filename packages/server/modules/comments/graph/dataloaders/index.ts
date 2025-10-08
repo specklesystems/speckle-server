@@ -1,7 +1,7 @@
 import { defineRequestDataloaders } from '@/modules/shared/helpers/graphqlHelper'
-import { keyBy } from 'lodash'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
+import { keyBy } from 'lodash-es'
+import type { Nullable } from '@/modules/shared/helpers/typeHelper'
+import type { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
 import {
   getCommentParentsFactory,
   getCommentReplyAuthorIdsFactory,
@@ -11,7 +11,7 @@ import {
   getCommentsViewedAtFactory
 } from '@/modules/comments/repositories/comments'
 
-import { CommentRecord } from '@/modules/comments/helpers/types'
+import type { CommentRecord } from '@/modules/comments/helpers/types'
 
 declare module '@/modules/core/loaders' {
   interface ModularizedDataLoaders extends ReturnType<typeof dataLoadersDefinition> {}

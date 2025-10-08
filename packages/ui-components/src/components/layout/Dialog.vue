@@ -39,7 +39,7 @@
                 ? 'translate-y-[100%]'
                 : 'translate-y-4'
             } md:translate-y-4`"
-            @after-leave="$emit('fully-closed')"
+            @after-leave="onFullyClosed"
           >
             <DialogPanel
               :class="dialogPanelClasses"
@@ -86,7 +86,12 @@
               >
                 <XMarkIcon class="h-6 w-6" />
               </FormButton>
-              <div ref="slotContainer" :class="slotContainerClasses" @scroll="onScroll">
+              <div
+                ref="slotContainer"
+                v-memo="isClosing ? [memoKey] : [(memoKey = Math.random())]"
+                :class="slotContainerClasses"
+                @scroll="onScroll"
+              >
                 <slot>Put your content here!</slot>
               </div>
               <div
@@ -132,10 +137,10 @@
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { FormButton, type LayoutDialogButton } from '~~/src/lib'
 import { XMarkIcon, ChevronLeftIcon } from '@heroicons/vue/24/outline'
-import { useResizeObserver, type ResizeObserverCallback } from '@vueuse/core'
-import { computed, ref, useSlots, watch, onUnmounted, type SetupContext } from 'vue'
-import { throttle } from 'lodash'
-import { isClient } from '@vueuse/core'
+import { isClient, useResizeObserver, type ResizeObserverCallback } from '@vueuse/core'
+import { computed, onUnmounted, ref, useSlots, watch, type SetupContext } from 'vue'
+import { throttle } from '#lodash'
+import { directive as vTippy } from 'vue-tippy'
 
 type MaxWidthValue = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 type FullscreenValues = 'mobile' | 'desktop' | 'all' | 'none'
@@ -178,6 +183,9 @@ const props = withDefaults(
 )
 
 const slots: SetupContext['slots'] = useSlots()
+
+const isClosing = ref(false)
+const memoKey = ref(Math.random())
 
 const scrolledFromTop = ref(false)
 const scrolledToBottom = ref(true)
@@ -301,6 +309,11 @@ const onClose = () => {
   open.value = false
 }
 
+const onFullyClosed = () => {
+  emit('fully-closed')
+  isClosing.value = false
+}
+
 const onFormSubmit = (e: SubmitEvent) => {
   props.onSubmit?.(e)
 }
@@ -314,27 +327,32 @@ const onScroll = throttle((e: { target: EventTarget | null }) => {
   scrolledToBottom.value = scrollTop + offsetHeight >= scrollHeight
 }, 60)
 
-// Toggle 'dialog-open' class on <html> to prevent scroll jumping and disable background scroll.
-// This maintains user scroll position when Headless UI dialogs are activated.
-watch(open, (newValue) => {
-  if (isClient) {
-    const html = document.documentElement
-    if (newValue) {
-      html.classList.add('dialog-open')
-    } else {
-      html.classList.remove('dialog-open')
+watch(
+  open,
+  (newValue, oldValue) => {
+    if (isClient) {
+      // Toggle 'dialog-open' class on <html> to prevent scroll jumping and disable background scroll.
+      // This maintains user scroll position when Headless UI dialogs are activated.
+      const html = document.documentElement
+      if (newValue) {
+        html.classList.add('dialog-open')
+      } else {
+        html.classList.remove('dialog-open')
+      }
     }
-  }
-})
+
+    if (!newValue && oldValue) {
+      isClosing.value = true
+    }
+  },
+  { flush: 'sync' }
+)
 
 // Clean up when the component unmounts
 onUnmounted(() => {
-  if (isClient) {
-    document.documentElement.classList.remove('dialog-open')
-  }
+  document.documentElement.classList.remove('dialog-open')
 })
 </script>
-
 <style>
 html.dialog-open {
   overflow: visible !important;

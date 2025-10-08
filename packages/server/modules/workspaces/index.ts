@@ -1,9 +1,10 @@
-import cron from 'node-cron'
+import type cron from 'node-cron'
+import type { Logger } from '@/observability/logging'
 import { moduleLogger } from '@/observability/logging'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import db from '@/db/knex'
-import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { workspaceRoles } from '@/modules/workspaces/roles'
 import { workspaceScopes } from '@/modules/workspaces/scopes'
 import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
@@ -11,7 +12,7 @@ import { initializeEventListenersFactory } from '@/modules/workspaces/events/eve
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
 import { getSsoRouter } from '@/modules/workspaces/rest/sso'
 import { InvalidLicenseError } from '@/modules/gatekeeper/errors/license'
-import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
+import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
   acquireTaskLockFactory,
@@ -19,18 +20,21 @@ import {
 } from '@/modules/core/repositories/scheduledTasks'
 import { getWorkspacesNonCompleteFactory } from '@/modules/workspaces/repositories/workspaces'
 import { deleteWorkspacesNonCompleteFactory } from '@/modules/workspaces/services/workspaceCreationState'
-import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
-import {
-  deleteStreamFactory,
-  legacyGetStreamsFactory
-} from '@/modules/core/repositories/streams'
+import { getExplicitProjects } from '@/modules/core/repositories/streams'
 import { deleteSsoProviderFactory } from '@/modules/workspaces/repositories/sso'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { deleteWorkspaceFactory as repoDeleteWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { deleteWorkspaceFactory } from '@/modules/workspaces/services/management'
 import { scheduleUpdateAllWorkspacesTracking } from '@/modules/workspaces/services/tracking'
 import { getClient } from '@/modules/shared/utils/mixpanel'
+import {
+  deleteProjectAndCommitsFactory,
+  queryAllProjectsFactory
+} from '@/modules/core/services/projects'
+import { deleteProjectFactory } from '@/modules/core/repositories/projects'
+import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
 
 const {
   FF_WORKSPACES_MODULE_ENABLED,
@@ -56,19 +60,39 @@ const scheduleDeleteWorkspacesNonComplete = ({
 }: {
   scheduleExecution: ScheduleExecution
 }) => {
-  const deleteWorkspacesNonComplete = deleteWorkspacesNonCompleteFactory({
-    getWorkspacesNonComplete: getWorkspacesNonCompleteFactory({ db }),
-    deleteWorkspace: deleteWorkspaceFactory({
-      deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
-      deleteProject: deleteStreamFactory({ db }),
-      deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-      queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-        getStreams: legacyGetStreamsFactory({ db })
-      }),
-      deleteSsoProvider: deleteSsoProviderFactory({ db }),
-      emitWorkspaceEvent: getEventBus().emit
-    })
-  })
+  const deleteWorkspacesNonComplete = async ({ logger }: { logger: Logger }) =>
+    asMultiregionalOperation(
+      ({ allDbs, mainDb, emit }) => {
+        const deleteWorkspacesNonComplete = deleteWorkspacesNonCompleteFactory({
+          getWorkspacesNonComplete: getWorkspacesNonCompleteFactory({ db: mainDb }),
+          deleteWorkspace: deleteWorkspaceFactory({
+            deleteWorkspace: replicateFactory(allDbs, repoDeleteWorkspaceFactory),
+            deleteProjectAndCommits: deleteProjectAndCommitsFactory({
+              deleteProject: replicateFactory(allDbs, deleteProjectFactory),
+              deleteProjectCommits: replicateFactory(
+                allDbs,
+                deleteProjectCommitsFactory
+              )
+            }),
+            deleteAllResourceInvites: deleteAllResourceInvitesFactory({
+              db: mainDb
+            }),
+            queryAllProjects: queryAllProjectsFactory({
+              getExplicitProjects: getExplicitProjects({ db: mainDb })
+            }),
+            deleteSsoProvider: deleteSsoProviderFactory({ db: mainDb }),
+            emitWorkspaceEvent: emit
+          })
+        })
+
+        return deleteWorkspacesNonComplete({ logger })
+      },
+      {
+        logger,
+        name: 'deleteWorkspacesNonComplete',
+        dbs: await getAllRegisteredDbs()
+      }
+    )
 
   const every30Mins = '*/30 * * * *'
   return scheduleExecution(
@@ -121,4 +145,4 @@ const workspacesModule: SpeckleModule = {
   }
 }
 
-export = workspacesModule
+export default workspacesModule

@@ -11,31 +11,30 @@ import {
   editCommentFactory,
   archiveCommentFactory
 } from '@/modules/comments/services/index'
+import type { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import { convertBasicStringToDocument } from '@/modules/core/services/richTextEditorService'
 import {
   ensureCommentSchema,
   buildCommentTextFromInput,
   validateInputAttachmentsFactory
 } from '@/modules/comments/services/commentTextService'
-import { get, range } from 'lodash'
+import { get, range } from 'lodash-es'
 import { buildApolloServer } from '@/app'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
-import { createAuthTokenForUser } from '@/test/authHelper'
-import { uploadBlob, UploadedBlob } from '@/test/blobHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createAuthTokenForUser, createTestUser } from '@/test/authHelper'
+import type { UploadedBlob } from '@/test/blobHelper'
+import { uploadBlob } from '@/test/blobHelper'
 import { Comments } from '@/modules/core/dbSchema'
 import * as CommentsGraphQLClient from '@/test/graphql/comments'
+import type { NotificationsStateManager } from '@/test/notificationsHelper'
 import {
   buildNotificationsStateTracker,
-  NotificationsStateManager,
   purgeNotifications
 } from '@/test/notificationsHelper'
 import { NotificationType } from '@/modules/notifications/helpers/types'
-import {
-  EmailSendingServiceMock,
-  CommentsRepositoryMock,
-  StreamsRepositoryMock
-} from '@/test/mocks/global'
-import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
+import type { ServerAndContext } from '@/test/graphqlHelper'
+import { createAuthedTestContext } from '@/test/graphqlHelper'
 import {
   checkStreamResourceAccessFactory,
   markCommentViewedFactory,
@@ -52,12 +51,7 @@ import {
 } from '@/modules/comments/repositories/comments'
 import { db } from '@/db/knex'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
-import {
-  getStreamFactory,
-  createStreamFactory,
-  markCommitStreamUpdatedFactory,
-  grantStreamPermissionsFactory
-} from '@/modules/core/repositories/streams'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 import {
   createCommitByBranchIdFactory,
   createCommitByBranchNameFactory
@@ -71,89 +65,40 @@ import {
 import {
   getBranchByIdFactory,
   markCommitBranchUpdatedFactory,
-  getStreamBranchByNameFactory,
-  createBranchFactory
+  getStreamBranchByNameFactory
 } from '@/modules/core/repositories/branches'
 import {
   getObjectFactory,
   storeSingleObjectIfNotFoundFactory,
   getStreamObjectsFactory
 } from '@/modules/core/repositories/objects'
-import {
-  legacyCreateStreamFactory,
-  createStreamReturnRecordFactory
-} from '@/modules/core/services/streams/management'
-import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
-import {
-  findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory,
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory,
-  findInviteFactory,
-  deleteInvitesByTargetFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import {
-  getUsersFactory,
-  getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory
-} from '@/modules/core/repositories/users'
-import {
-  findEmailFactory,
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory
-} from '@/modules/core/repositories/userEmails'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import {
-  finalizeInvitedServerRegistrationFactory,
-  finalizeResourceInviteFactory
-} from '@/modules/serverinvites/services/processing'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import type express from 'express'
 import { ResourceType } from '@/modules/comments/domain/types'
-import {
+import type {
   CommentCreateInput,
   LegacyCommentViewerData,
   ReplyCreateInput
 } from '@/modules/core/graph/generated/graphql'
-import { CommentRecord } from '@/modules/comments/helpers/types'
-import { MaybeNullOrUndefined, TIME_MS } from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { TIME_MS } from '@speckle/shared'
 import { CommentEvents } from '@/modules/comments/domain/events'
 import {
   getViewerResourcesForCommentFactory,
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
-import { StreamRecord } from '@/modules/core/helpers/types'
+import type { TestEmailListener } from '@/test/speckle-helpers/email'
+import { createEmailListener } from '@/test/speckle-helpers/email'
 import {
-  processFinalizedProjectInviteFactory,
-  validateProjectInviteBeforeFinalizationFactory
-} from '@/modules/serverinvites/services/coreFinalization'
-import {
-  addOrUpdateStreamCollaboratorFactory,
-  validateStreamAccessFactory
-} from '@/modules/core/services/streams/access'
-import { authorizeResolver } from '@/modules/shared'
+  buildBasicTestProject,
+  buildTestProject
+} from '@/modules/core/tests/helpers/creation'
+import type { GetCommentsQueryVariables } from '@/modules/core/graph/generated/graphql'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 
-type LegacyCommentRecord = CommentRecord & {
-  total_count: string
-  resources: Array<{ resourceId: string; resourceType: string }>
-}
-
-const getServerInfo = getServerInfoFactory({ db })
-const getUser = getUserFactory({ db })
-const getUsers = getUsersFactory({ db })
 const getStream = getStreamFactory({ db })
 const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
@@ -219,7 +164,6 @@ const getComments = getCommentsLegacyFactory({ db })
 const getResourceCommentCount = getResourceCommentCountFactory({ db })
 const getStreamCommentCount = getStreamCommentCountFactory({ db })
 
-const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getObject = getObjectFactory({ db })
 const createCommitByBranchId = createCommitByBranchIdFactory({
   createCommit: createCommitFactory({ db }),
@@ -227,7 +171,6 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   getBranchById: getBranchByIdFactory({ db }),
   insertStreamCommits: insertStreamCommitsFactory({ db }),
   insertBranchCommits: insertBranchCommitsFactory({ db }),
-  markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   emitEvent: getEventBus().emit
 })
@@ -238,107 +181,6 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getBranchById: getBranchByIdFactory({ db })
 })
 
-const buildFinalizeProjectInvite = () =>
-  finalizeResourceInviteFactory({
-    findInvite: findInviteFactory({ db }),
-    validateInvite: validateProjectInviteBeforeFinalizationFactory({
-      getProject: getStream
-    }),
-    processInvite: processFinalizedProjectInviteFactory({
-      getProject: getStream,
-      addProjectRole: addOrUpdateStreamCollaboratorFactory({
-        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
-        getUser,
-        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-        emitEvent: getEventBus().emit
-      })
-    }),
-    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    emitEvent: (...args) => getEventBus().emit(...args),
-    findEmail: findEmailFactory({ db }),
-    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-      createUserEmail: createUserEmailFactory({ db }),
-      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-      findEmail: findEmailFactory({ db }),
-      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-      }),
-      requestNewEmailVerification: requestNewEmailVerificationFactory({
-        findEmail: findEmailFactory({ db }),
-        getUser,
-        getServerInfo,
-        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-          db
-        }),
-        renderEmail,
-        sendEmail
-      })
-    }),
-    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-      getStream
-    }),
-    getUser,
-    getServerInfo
-  })
-
-const createStream = legacyCreateStreamFactory({
-  createStreamReturnRecord: createStreamReturnRecordFactory({
-    inviteUsersToProject: inviteUsersToProjectFactory({
-      createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory({ db }),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-          getStream
-        }),
-        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-          getStream
-        }),
-        emitEvent: ({ eventName, payload }) =>
-          getEventBus().emit({
-            eventName,
-            payload
-          }),
-        getUser,
-        getServerInfo,
-        finalizeInvite: buildFinalizeProjectInvite()
-      }),
-      getUsers
-    }),
-    createStream: createStreamFactory({ db }),
-    createBranch: createBranchFactory({ db }),
-    emitEvent: getEventBus().emit
-  })
-})
-
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 const createObject = createObjectFactory({
   storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
@@ -351,34 +193,17 @@ function generateRandomCommentText() {
   return buildCommentInputFromString(crs({ length: 10 }))
 }
 
-const mailerMock = EmailSendingServiceMock
-const commentRepoMock = CommentsRepositoryMock
-const streamsRepoMock = StreamsRepositoryMock
+const buildTestStream = () =>
+  buildTestProject({ workspaceId: undefined, regionKey: undefined })
 
 describe('Comments @comments', () => {
   let app: express.Express
 
   let notificationsState: NotificationsStateManager
 
-  const user = {
-    name: 'The comment wizard',
-    email: 'comment@wizard.ry',
-    password: 'i did not like Rivendel wine :(',
-    id: ''
-  }
-
-  const otherUser = {
-    name: 'Fondalf The Brey',
-    email: 'totalnotfakegandalf87@mordor.com',
-    password: 'what gandalf puts in his pipe stays in his pipe',
-    id: ''
-  }
-
-  const stream = {
-    name: 'Commented stream',
-    description: 'Chit chats over here',
-    id: ''
-  }
+  let user: BasicTestUser
+  let otherUser: BasicTestUser
+  let stream: BasicTestStream
 
   const testObject1 = {
     foo: 'bar',
@@ -400,10 +225,27 @@ describe('Comments @comments', () => {
     const { app: express } = await beforeEachContext()
     app = express
 
-    user.id = await createUser(user)
-    otherUser.id = await createUser(otherUser)
+    user = await createTestUser({
+      name: 'The comment wizard',
+      email: 'comment@wizard.ry',
+      password: 'i did not like Rivendel wine :(',
+      id: ''
+    })
+    otherUser = await createTestUser({
+      name: 'Fondalf The Brey',
+      email: 'totalnotfakegandalf87@mordor.com',
+      password: 'what gandalf puts in his pipe stays in his pipe',
+      id: ''
+    })
 
-    stream.id = await createStream({ ...stream, ownerId: user.id })
+    stream = await createTestStream(
+      {
+        name: 'Commented stream',
+        description: 'Chit chats over here',
+        id: ''
+      },
+      user
+    )
 
     testObject1.id = await createObject({ streamId: stream.id, object: testObject1 })
     testObject2.id = await createObject({ streamId: stream.id, object: testObject2 })
@@ -432,13 +274,6 @@ describe('Comments @comments', () => {
 
   after(() => {
     notificationsState.destroy()
-    commentRepoMock.destroy()
-    streamsRepoMock.destroy()
-  })
-
-  afterEach(() => {
-    commentRepoMock.disable()
-    commentRepoMock.resetMockedFunctions()
   })
 
   it('Should be able to create a comment and a reply', async () => {
@@ -519,8 +354,10 @@ describe('Comments @comments', () => {
     const throwawayCommentText = buildCommentInputFromString('whatever')
 
     // Stream A belongs to user
-    const streamA = { name: 'Stream A', id: '' }
-    streamA.id = await createStream({ ...streamA, ownerId: user.id })
+    const streamA = await createTestStream(
+      buildBasicTestProject({ name: 'Stream A' }),
+      user
+    )
     const objA = { foo: 'bar', id: '' }
     objA.id = await createObject({ streamId: streamA.id, object: objA })
     const commA = { id: '' }
@@ -535,8 +372,10 @@ describe('Comments @comments', () => {
     ).id
 
     // Stream B belongs to otherUser
-    const streamB = { name: 'Stream B', id: '' }
-    streamB.id = await createStream({ ...streamB, ownerId: otherUser.id })
+    const streamB = await createTestStream(
+      buildBasicTestProject({ name: 'Stream B' }),
+      otherUser
+    )
     const objB = { qux: 'mux', id: '' }
     objB.id = await createObject({ streamId: streamB.id, object: objB })
     const commB = { id: '' }
@@ -636,14 +475,17 @@ describe('Comments @comments', () => {
   })
 
   it('Should return comment counts for streams, commits and objects', async () => {
-    const stream = { name: 'Bean Counter', id: '' }
-    stream.id = await createStream({ ...stream, ownerId: user.id })
+    const newStream = await createTestStream(
+      buildBasicTestProject({ name: 'Bean Counter' }),
+      user
+    )
+
     const obj = { foo: 'bar', id: '' }
-    obj.id = await createObject({ streamId: stream.id, object: obj })
+    obj.id = await createObject({ streamId: newStream.id, object: obj })
     const commit = { id: '' }
     commit.id = (
       await createCommitByBranchName({
-        streamId: stream.id,
+        streamId: newStream.id,
         branchName: 'main',
         message: 'baz',
         objectId: obj.id,
@@ -660,7 +502,7 @@ describe('Comments @comments', () => {
           userId: user.id,
           input: {
             text: buildCommentInputFromString('bar'),
-            streamId: stream.id,
+            streamId: newStream.id,
             resources: [
               { resourceId: commit.id, resourceType: ResourceType.Commit },
               { resourceId: obj.id, resourceType: ResourceType.Object }
@@ -676,7 +518,7 @@ describe('Comments @comments', () => {
           userId: user.id,
           input: {
             text: buildCommentInputFromString('baz'),
-            streamId: stream.id,
+            streamId: newStream.id,
             resources: [{ resourceId: commit.id, resourceType: ResourceType.Commit }],
             blobIds: [],
             data: {}
@@ -689,7 +531,7 @@ describe('Comments @comments', () => {
           userId: user.id,
           input: {
             text: buildCommentInputFromString('qux'),
-            streamId: stream.id,
+            streamId: newStream.id,
             resources: [{ resourceId: obj.id, resourceType: ResourceType.Object }],
             blobIds: [],
             data: {}
@@ -702,7 +544,7 @@ describe('Comments @comments', () => {
     await createCommentReply({
       authorId: user.id,
       parentCommentId: commentIds[0],
-      streamId: stream.id,
+      streamId: newStream.id,
       text: buildCommentInputFromString(),
       data: {},
       blobIds: []
@@ -710,7 +552,7 @@ describe('Comments @comments', () => {
     await createCommentReply({
       authorId: user.id,
       parentCommentId: commentIds[1],
-      streamId: stream.id,
+      streamId: newStream.id,
       text: buildCommentInputFromString(),
       data: {},
       blobIds: []
@@ -718,7 +560,7 @@ describe('Comments @comments', () => {
     await createCommentReply({
       authorId: user.id,
       parentCommentId: commentIds[2],
-      streamId: stream.id,
+      streamId: newStream.id,
       text: buildCommentInputFromString(),
       data: {},
       blobIds: []
@@ -728,11 +570,11 @@ describe('Comments @comments', () => {
     await archiveComment({
       commentId: commentIds[commentIds.length - 1],
       userId: user.id,
-      streamId: stream.id,
+      streamId: newStream.id,
       archived: true
     })
 
-    const count = await getStreamCommentCount(stream.id, { threadsOnly: true }) // should be 30
+    const count = await getStreamCommentCount(newStream.id, { threadsOnly: true }) // should be 30
     expect(count).to.equal(commCount * 3 - 1)
 
     const objCount = await getResourceCommentCount({ resourceId: obj.id })
@@ -741,8 +583,10 @@ describe('Comments @comments', () => {
     const commitCount = await getResourceCommentCount({ resourceId: commit.id })
     expect(commitCount).to.equal(commCount * 2)
 
-    const streamOther = { name: 'Bean Counter', id: '' }
-    streamOther.id = await createStream({ ...streamOther, ownerId: user.id })
+    const streamOther = await createTestStream(
+      buildBasicTestProject({ name: 'Bean Counter' }),
+      user
+    )
     const objOther = { 'are you bored': 'yes', id: '' }
     objOther.id = await createObject({ streamId: streamOther.id, object: objOther })
     const commitOther = { id: '' }
@@ -1496,7 +1340,7 @@ describe('Comments @comments', () => {
       )
     })
 
-    const createComment = (input = {}) =>
+    const createCommentGql = (input = {}) =>
       CommentsGraphQLClient.createComment(apollo, {
         input: {
           streamId: stream.id,
@@ -1507,7 +1351,7 @@ describe('Comments @comments', () => {
         }
       })
 
-    const createReply = (input?: ReplyCreateInput) =>
+    const createReplyGql = (input?: ReplyCreateInput) =>
       CommentsGraphQLClient.createReply(apollo, {
         input: {
           streamId: stream.id,
@@ -1526,7 +1370,7 @@ describe('Comments @comments', () => {
         await truncateTables([Comments.name])
 
         // Create a single comment with a blob
-        const createCommentResult = await createComment({
+        const createCommentResult = await createCommentGql({
           text: generateRandomCommentText(),
           blobIds: [blob1.blobId]
         })
@@ -1534,7 +1378,7 @@ describe('Comments @comments', () => {
         if (!parentCommentId) throw new Error('Comment creation failed!')
 
         // Create a reply with a blob
-        await createReply({
+        await createReplyGql({
           text: generateRandomCommentText(),
           blobIds: [blob1.blobId],
           parentComment: parentCommentId,
@@ -1542,7 +1386,7 @@ describe('Comments @comments', () => {
         })
 
         // Create a reply with a blob, but no text
-        const emptyCommentResult = await createReply({
+        const emptyCommentResult = await createReplyGql({
           blobIds: [blob1.blobId],
           parentComment: parentCommentId,
           streamId: stream.id
@@ -1557,7 +1401,7 @@ describe('Comments @comments', () => {
           ...(input || { id: '' })
         })
 
-      const readComments = (input = {}) =>
+      const readComments = (input: Partial<GetCommentsQueryVariables> = {}) =>
         CommentsGraphQLClient.getComments(apollo, {
           cursor: null,
           streamId: stream.id,
@@ -1565,66 +1409,110 @@ describe('Comments @comments', () => {
         })
 
       it('both legacy (string) comments and new (ProseMirror) documents are formatted as SmartTextEditorValue values', async () => {
-        commentRepoMock.enable()
-        commentRepoMock.mockFunction('getCommentsLegacyFactory', () => {
-          return async () => ({
-            items: [
-              // Legacy
-              {
-                id: 'a',
-                text: 'hey dude! welcome to my legacy-type comment!',
-                streamId: stream.id
-              },
-              // New
-              {
-                id: 'b',
+        const { id: streamId } = await createTestStream(buildTestStream(), user)
+
+        await Promise.all([
+          // Legacy
+          createComment(
+            {
+              userId: user.id,
+              input: {
+                streamId,
+                resources: [
+                  { resourceId: streamId, resourceType: ResourceType.Stream }
+                ],
+                text: 'hey dude! welcome to my legacy-type comment!' as unknown as SmartTextEditorValueSchema,
+                data: {},
+                blobIds: []
+              }
+            },
+            { skipTextValidation: true }
+          ),
+          // New
+          createComment(
+            {
+              userId: user.id,
+              input: {
+                streamId,
+                resources: [
+                  { resourceId: streamId, resourceType: ResourceType.Stream }
+                ],
                 text: JSON.stringify(
                   buildCommentTextFromInput({
                     doc: buildCommentInputFromString('new comment schema here')
                   })
-                ),
-                streamId: stream.id
-              },
-              // New, but for some reason the text object is already deserialized
-              {
-                id: 'c',
+                ) as unknown as SmartTextEditorValueSchema,
+                data: {},
+                blobIds: []
+              }
+            },
+            { skipTextValidation: true }
+          ),
+          // New, but for some reason the text object is already deserialized
+          createComment(
+            {
+              userId: user.id,
+              input: {
+                streamId,
+                resources: [
+                  { resourceId: streamId, resourceType: ResourceType.Stream }
+                ],
                 text: buildCommentTextFromInput({
                   doc: buildCommentInputFromString('another new comment schema here')
                 }),
-                streamId: stream.id
+                data: {},
+                blobIds: []
               }
-            ] as unknown as Array<LegacyCommentRecord>,
-            cursor: new Date().toISOString(),
-            totalCount: 3
-          })
-        })
+            },
+            { skipTextValidation: true }
+          )
+        ])
 
-        const { data, errors } = await readComments()
+        const { data, errors } = await readComments({
+          streamId
+        })
 
         expect(errors?.length || 0).to.eq(0)
         expect(data?.comments?.items?.length || 0).to.eq(3)
       })
 
       it('legacy comment with a single link is formatted correctly', async () => {
+        const { id: streamId } = await createTestStream(buildTestStream(), user)
+
+        // Low-level insert cause all we need are just the main DB entries
         const item = {
-          id: '1',
-          text: 'https://aaa.com:3000/h3ll0-world/_?a=1&b=2#aaa',
-          streamId: stream.id
-        } as unknown as LegacyCommentRecord
+          text: 'https://aaa.com:3000/h3ll0-world/_?a=1&b=2#aaa' as unknown as SmartTextEditorValueSchema,
+          streamId,
+          authorId: user.id
+        }
+        await createComment(
+          {
+            userId: user.id,
+            input: {
+              streamId,
+              resources: [{ resourceId: streamId, resourceType: ResourceType.Stream }],
+              text: item.text,
+              data: {},
+              blobIds: []
+            }
+          },
+          { skipTextValidation: true }
+        )
 
-        commentRepoMock.enable()
-        commentRepoMock.mockFunction('getCommentsLegacyFactory', () => async () => ({
-          items: [item],
-          cursor: new Date().toISOString(),
-          totalCount: 1
-        }))
-
-        const { data, errors } = await readComments()
+        const { data, errors } = await readComments({
+          streamId
+        })
 
         expect(data?.comments?.items?.length || 0).to.eq(1)
         expect(errors?.length || 0).to.eq(0)
 
-        const textNode = get(data, 'comments.items[0].text.doc.content[0].content[0]')
+        const textNode = get(
+          data,
+          'comments.items[0].text.doc.content[0].content[0]'
+        ) as unknown as {
+          text: string
+          marks: Array<{ type: string; attrs: Record<string, unknown> }>
+        }
         expect(textNode.text).to.eq(item.text)
         expect(textNode.marks).to.deep.equalInAnyOrder([
           {
@@ -1635,6 +1523,8 @@ describe('Comments @comments', () => {
       })
 
       it('legacy comment with multiple links formats them correctly', async () => {
+        const { id: streamId } = await createTestStream(buildTestStream(), user)
+
         const textParts = [
           "Here's one ",
           // The period and comma def shouldn't belong to the following URL, but we have a pretty basic
@@ -1646,20 +1536,26 @@ describe('Comments @comments', () => {
           'http://agag.com:3000'
         ]
 
+        // Low-level insert cause all we need are just the main DB entries
         const item = {
-          id: '1',
-          text: textParts.join(''),
-          streamId: stream.id
-        } as unknown as LegacyCommentRecord
-
-        commentRepoMock.enable()
-        commentRepoMock.mockFunction('getCommentsLegacyFactory', () => async () => ({
-          items: [item],
-          cursor: new Date().toISOString(),
-          totalCount: 1
-        }))
-
-        const { data, errors } = await readComments()
+          text: textParts.join('') as unknown as SmartTextEditorValueSchema,
+          streamId,
+          authorId: user.id
+        }
+        await createComment(
+          {
+            userId: user.id,
+            input: {
+              streamId,
+              resources: [{ resourceId: streamId, resourceType: ResourceType.Stream }],
+              text: item.text,
+              data: {},
+              blobIds: []
+            }
+          },
+          { skipTextValidation: true }
+        )
+        const { data, errors } = await readComments({ streamId })
 
         const runExpectationsOnTextNode = (idx: number, shouldBeLink: boolean) => {
           expect(textNodes[idx].text).to.eq(textParts[idx])
@@ -1677,7 +1573,13 @@ describe('Comments @comments', () => {
         expect(data?.comments?.items?.length || 0).to.eq(1)
         expect(errors?.length || 0).to.eq(0)
 
-        const textNodes = get(data, 'comments.items[0].text.doc.content[0].content')
+        const textNodes = get(
+          data,
+          'comments.items[0].text.doc.content[0].content'
+        ) as unknown as Array<{
+          text: string
+          marks: Array<{ type: string; attrs: Record<string, unknown> }>
+        }>
         expect(textNodes.length).to.eq(textParts.length)
 
         range(textParts.length).forEach((i) => {
@@ -1722,7 +1624,7 @@ describe('Comments @comments', () => {
       })
 
       it('returns raw text correctly', async () => {
-        const { data } = await createReply({
+        const { data } = await createReplyGql({
           text: {
             type: 'doc',
             content: [
@@ -1759,43 +1661,6 @@ describe('Comments @comments', () => {
         expect(data?.comment?.text?.doc).to.be.null
         expect(data?.comment?.text?.attachments?.length).to.be.greaterThan(0)
       })
-
-      const unexpectedValDataset = [
-        { display: 'number', value: 3 },
-        { display: 'random object', value: { a: 1, b: 2 } }
-      ]
-      unexpectedValDataset.forEach(({ display, value }) => {
-        it(`unexpected text value (${display}) in DB throw sanitized errors`, async () => {
-          streamsRepoMock.enable()
-          streamsRepoMock.mockFunction('getStreamsFactory', () => async () => [
-            {
-              id: stream.id,
-              workspaceId: ''
-            } as unknown as StreamRecord
-          ])
-          const item = {
-            id: '1',
-            text: value,
-            streamId: stream.id,
-            createdAt: new Date()
-          } as unknown as LegacyCommentRecord
-
-          commentRepoMock.enable()
-          commentRepoMock.mockFunction('getCommentsLegacyFactory', () => async () => ({
-            items: [item],
-            cursor: new Date().toISOString(),
-            totalCount: 1
-          }))
-
-          const { errors } = await readComments()
-
-          expect((errors || []).map((e) => e.message).join(';')).to.contain(
-            'Unexpected comment schema format'
-          )
-          streamsRepoMock.disable()
-          streamsRepoMock.resetMockedFunctions()
-        })
-      })
     })
 
     const creatingOrReplyingDataSet = [
@@ -1807,8 +1672,8 @@ describe('Comments @comments', () => {
 
       const createOrReplyComment = (input = {}) =>
         creating
-          ? createComment(input)
-          : createReply({
+          ? createCommentGql(input)
+          : createReplyGql({
               parentComment: parentCommentId,
               blobIds: [],
               streamId: stream.id,
@@ -1823,7 +1688,7 @@ describe('Comments @comments', () => {
         before(async () => {
           if (replying) {
             // Create comment for attaching replies to
-            const { data } = await createComment({
+            const { data } = await createCommentGql({
               text: generateRandomCommentText()
             })
 
@@ -1918,6 +1783,20 @@ describe('Comments @comments', () => {
         })
 
         describe('and mentioning a user', () => {
+          let emailListener: TestEmailListener
+
+          before(async () => {
+            emailListener = await createEmailListener()
+          })
+
+          after(async () => {
+            await emailListener.destroy()
+          })
+
+          afterEach(() => {
+            emailListener.reset()
+          })
+
           const createOrReplyCommentWithMention = (targetUserId: string, input = {}) =>
             createOrReplyComment({
               text: {
@@ -1940,10 +1819,7 @@ describe('Comments @comments', () => {
             })
 
           it('a valid mention triggers a notification', async () => {
-            const sendEmailInvocations = mailerMock.hijackFunction(
-              'sendEmail',
-              async () => false
-            )
+            const { getSends } = emailListener.listen({ times: 2 })
 
             const waitForAck = notificationsState.waitForAck(
               (e) => e.result?.type === NotificationType.MentionedInComment
@@ -1958,7 +1834,8 @@ describe('Comments @comments', () => {
             // Wait for
             await waitForAck
 
-            const emailParams = sendEmailInvocations.args[0][0]
+            const emailSends = getSends()
+            const emailParams = emailSends[0]
             expect(emailParams).to.be.ok
             expect(emailParams.subject).to.contain('mentioned in a Speckle comment')
             expect(emailParams.to).to.eq(otherUser.email)

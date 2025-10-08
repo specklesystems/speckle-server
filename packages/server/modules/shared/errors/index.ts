@@ -157,5 +157,30 @@ export class LoaderUnsupportedError extends BaseError {
   static statusCode = 500
 }
 
+export class TestOnlyLogicError extends BaseError {
+  static code = 'TEST_ONLY_LOGIC_ERROR'
+  static defaultMessage = 'This code should only be executed during tests'
+  static statusCode = 500
+}
+
+// 2PC failed and we failed to rollback. A prepared transaction may have been left behind.
+export class RegionalTransactionFatalError extends BaseError {
+  static code = 'REGIONAL_TRANSACTION_FATAL_ERROR'
+  static defaultMessage = 'Failed to rollback 2PC operation'
+  static statusCode = 500
+
+  constructor(
+    message: string | null,
+    { gid, clients }: { gid: string; clients: Knex[] }
+  ) {
+    super(message, {
+      info: {
+        gid,
+        dbs: clients.map(retrieveMetadataFromDatabaseClient)
+      }
+    })
+  }
+}
+
 export { BaseError }
 export type { Info }

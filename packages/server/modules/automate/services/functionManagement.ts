@@ -1,42 +1,41 @@
-import {
+import type {
   CreateFunctionBody,
-  ExecutionEngineFunctionTemplateId,
   createFunction,
   getFunctionFactory,
+  regenerateFunctionToken,
   updateFunction as updateExecEngineFunction
 } from '@/modules/automate/clients/executionEngine'
+import { ExecutionEngineFunctionTemplateId } from '@/modules/automate/clients/executionEngine'
 import {
   AutomateFunctionCreationError,
   AutomateFunctionUpdateError
 } from '@/modules/automate/errors/management'
 
-import {
+import type {
   BasicGitRepositoryMetadata,
   UpdateAutomateFunctionInput,
-  CreateAutomateFunctionInput,
-  AutomateFunctionTemplateLanguage
+  CreateAutomateFunctionInput
 } from '@/modules/core/graph/generated/graphql'
-import {
+import { AutomateFunctionTemplateLanguage } from '@/modules/core/graph/generated/graphql'
+import type {
   MaybeNullOrUndefined,
   Nullable,
   Optional,
-  SourceAppName,
-  removeNullOrUndefinedKeys
+  SourceAppName
 } from '@speckle/shared'
-import {
+import { removeNullOrUndefinedKeys } from '@speckle/shared'
+import type {
   AutomateFunctionGraphQLReturn,
   AutomateFunctionReleaseGraphQLReturn
 } from '@/modules/automate/helpers/graphTypes'
-import {
+import type {
   FunctionReleaseSchemaType,
   FunctionSchemaType
 } from '@/modules/automate/helpers/executionEngine'
-import { Request, Response } from 'express'
+import type { Request, Response } from 'express'
 import { UnauthorizedError } from '@/modules/shared/errors'
-import {
-  AuthCodePayload,
-  AuthCodePayloadAction
-} from '@/modules/automate/services/authCode'
+import type { AuthCodePayload } from '@/modules/automate/services/authCode'
+import { AuthCodePayloadAction } from '@/modules/automate/services/authCode'
 import {
   getServerOrigin,
   isDevEnv,
@@ -44,9 +43,9 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
 import type { Logger } from '@/observability/logging'
-import { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
-import { GetUser } from '@/modules/core/domain/users/operations'
-import { noop } from 'lodash'
+import type { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
+import type { GetUser } from '@/modules/core/domain/users/operations'
+import { noop } from 'lodash-es'
 import { UnknownFunctionTemplateError } from '@/modules/automate/errors/functions'
 import { UserInputError } from '@/modules/core/errors/userinput'
 
@@ -107,7 +106,7 @@ export const convertFunctionToGraphQLReturn = (
     tags: fn.tags,
     supportedSourceApps: fn.supportedSourceApps,
     functionCreator,
-    workspaceIds: fn.workspaceIds
+    workspaceIds: fn.workspaceIds ?? []
   }
 
   return ret
@@ -185,7 +184,8 @@ export const createFunctionFromTemplateFactory =
       functionCreator: {
         speckleServerOrigin: getServerOrigin(),
         speckleUserId: user.id
-      }
+      },
+      workspaceIds: []
     }
 
     return {
@@ -289,4 +289,31 @@ export const handleAutomateFunctionCreatorAuthCallbackFactory =
     req.session?.destroy?.(noop)
 
     return res.redirect(redirectUrl.toString())
+  }
+
+export const regenerateFunctionTokenFactory =
+  (deps: {
+    regenerateFunctionToken: typeof regenerateFunctionToken
+    getFunction: ReturnType<typeof getFunctionFactory>
+    createStoredAuthCode: CreateStoredAuthCode
+  }) =>
+  async (params: { functionId: string; userId: string }) => {
+    const { functionId, userId } = params
+
+    const existingFunction = await deps.getFunction({ functionId })
+    if (!existingFunction) {
+      throw new AutomateFunctionUpdateError('Function not found')
+    }
+
+    const authCode = await deps.createStoredAuthCode({
+      userId,
+      action: AuthCodePayloadAction.GenerateFunctionToken
+    })
+
+    const res = await deps.regenerateFunctionToken({
+      functionId,
+      authCode
+    })
+
+    return res.token
   }

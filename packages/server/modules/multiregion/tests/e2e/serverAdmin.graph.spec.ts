@@ -1,31 +1,37 @@
-import { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
-import { DataRegionsConfig } from '@/modules/multiregion/domain/types'
-import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import { mainDb } from '@/db/knex'
+import { getMainObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
+import type { DataRegionsConfig } from '@/modules/multiregion/domain/types'
+import {
+  getMultiRegionConfig,
+  setMultiRegionConfig
+} from '@/modules/multiregion/regionConfig'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
+import type {
+  CreateServerRegionInput,
+  UpdateServerRegionInput
+} from '@/modules/core/graph/generated/graphql'
 import {
   CreateNewRegionDocument,
-  CreateServerRegionInput,
   GetAvailableRegionKeysDocument,
   GetRegionsDocument,
-  UpdateRegionDocument,
-  UpdateServerRegionInput
-} from '@/test/graphql/generated/graphql'
-import {
-  ExecuteOperationOptions,
-  testApolloServer,
-  TestApolloServer
-} from '@/test/graphqlHelper'
+  UpdateRegionDocument
+} from '@/modules/core/graph/generated/graphql'
+import type { ExecuteOperationOptions, TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext, getRegionKeys } from '@/test/hooks'
 import {
-  MultiRegionBlobStorageSelectorMock,
-  MultiRegionConfigMock,
-  MultiRegionDbSelectorMock
-} from '@/test/mocks/global'
-import { truncateRegionsSafely } from '@/test/speckle-helpers/regions'
+  isMultiRegionTestMode,
+  truncateRegionsSafely
+} from '@/test/speckle-helpers/regions'
 import { Roles } from '@speckle/shared'
+import type { MultiRegionConfig } from '@speckle/shared/environment/db'
+import { getConnectionSettings } from '@speckle/shared/environment/db'
 import { expect } from 'chai'
+import { merge } from 'lodash-es'
+import { resetRegisteredRegions } from '@/modules/multiregion/utils/dbSelector'
 
-const isEnabled = isMultiRegionEnabled()
+const isEnabled = isMultiRegionTestMode()
 
 isEnabled
   ? describe('Multi Region Server Settings @multiregion', () => {
@@ -65,17 +71,37 @@ isEnabled
         }
       }
 
+      let originalConfig: MultiRegionConfig
+
       before(async () => {
-        MultiRegionConfigMock.mockFunction(
-          'getAvailableRegionConfig',
-          async () => fakeRegionConfig
-        )
-        MultiRegionDbSelectorMock.mockFunction('initializeRegion', async () =>
-          Promise.resolve()
-        )
-        MultiRegionBlobStorageSelectorMock.mockFunction('initializeRegion', async () =>
-          Promise.resolve(undefined as unknown as ObjectStorage)
-        )
+        // Faking multi region config (but retain active config, in case were running multiregion tests)
+        originalConfig = await getMultiRegionConfig()
+
+        const connectionUri = getConnectionSettings(mainDb).connectionString!
+        const mainStorage = getMainObjectStorage()
+
+        const regionConfig = {
+          postgres: {
+            connectionUri,
+            skipInitialization: true
+          },
+          blobStorage: {
+            accessKey: mainStorage.params.credentials.accessKeyId,
+            secretKey: mainStorage.params.credentials.secretAccessKey,
+            s3Region: mainStorage.params.region,
+            bucket: mainStorage.params.bucket,
+            endpoint: mainStorage.params.endpoint,
+            createBucketIfNotExists: false
+          }
+        }
+        const regionsConfig = {
+          regions: {
+            [fakeRegionKey1]: regionConfig,
+            [fakeRegionKey2]: regionConfig
+          }
+        }
+
+        setMultiRegionConfig(merge({}, originalConfig, regionsConfig))
 
         await beforeEachContext()
         testAdminUser = await createTestUser({ role: Roles.Server.Admin })
@@ -83,10 +109,10 @@ isEnabled
         apollo = await testApolloServer({ authUserId: testAdminUser.id })
       })
 
-      after(() => {
-        MultiRegionConfigMock.resetMockedFunctions()
-        MultiRegionDbSelectorMock.resetMockedFunctions()
-        MultiRegionBlobStorageSelectorMock.resetMockedFunctions()
+      after(async () => {
+        setMultiRegionConfig(originalConfig)
+        await truncateRegionsSafely()
+        resetRegisteredRegions()
       })
 
       describe('server config', () => {

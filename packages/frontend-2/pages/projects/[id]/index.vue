@@ -86,7 +86,6 @@ import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { useCopyProjectLink } from '~~/lib/projects/composables/projectManagement'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { useNavigation } from '~/lib/navigation/composables/navigation'
 
 graphql(`
   fragment ProjectPageProject on Project {
@@ -145,7 +144,6 @@ enum ActionTypes {
   Move = 'move'
 }
 
-const { mutateActiveWorkspaceSlug, mutateIsProjectsActive } = useNavigation()
 const route = useRoute()
 const router = useRouter()
 const copyProjectLink = useCopyProjectLink()
@@ -181,6 +179,7 @@ const modelCount = computed(() => project.value?.modelCount.totalCount)
 const commentCount = computed(() => project.value?.commentThreadCount.totalCount)
 
 const canReadSettings = computed(() => project.value?.permissions.canReadSettings)
+
 const canUpdate = computed(() => project.value?.permissions.canUpdate)
 const hasRole = computed(() => project.value?.role)
 const teamUsers = computed(() => project.value?.team.map((t) => t.user) || [])
@@ -286,6 +285,7 @@ const activePageTab = computed({
     const path = router.currentRoute.value.path
     if (/\/discussions\/?$/i.test(path)) return findTabById('discussions')
     if (/\/automations\/?.*$/i.test(path)) return findTabById('automations')
+    if (/\/acc\/?.*$/i.test(path)) return findTabById('acc')
     if (/\/collaborators\/?/i.test(path) && canReadSettings.value?.authorized)
       return findTabById('collaborators')
     if (/\/settings\/?/i.test(path) && canReadSettings.value?.authorized)
@@ -300,6 +300,9 @@ const activePageTab = computed({
         break
       case 'discussions':
         router.push({ path: projectRoute(projectId.value, 'discussions') })
+        break
+      case 'acc':
+        router.push({ path: projectRoute(projectId.value, 'acc') })
         break
       case 'automations':
         router.push({ path: projectRoute(projectId.value, 'automations') })
@@ -349,18 +352,4 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       break
   }
 }
-
-watch(
-  project,
-  (newVal) => {
-    if (newVal && isWorkspacesEnabled.value) {
-      if (newVal.workspace?.slug) {
-        mutateActiveWorkspaceSlug(newVal.workspace.slug)
-      } else {
-        mutateIsProjectsActive(true)
-      }
-    }
-  },
-  { immediate: true }
-)
 </script>

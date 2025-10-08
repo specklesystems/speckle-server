@@ -29,8 +29,8 @@
           <span>{{ errorMessage }}</span>
         </span>
         <div
-          v-if="fileUpload.progress > 0"
-          :class="[' w-full mt-2', progressBarClasses]"
+          v-else
+          :class="['w-full mt-2', progressBarClasses]"
           :style="progressBarStyle"
         />
       </div>
@@ -50,8 +50,17 @@
               <span class="underline">connectors</span>
             </NuxtLink>
             to publish a {{ modelName ? '' : 'new model' }} version to
-            {{ modelName ? 'this model' : 'this project' }}, or drag and drop a
-            IFC/OBJ/STL file here.
+            {{ modelName ? 'this model' : 'this project' }}, or drag and drop
+            <span
+              v-if="isRhinoFileImporterEnabled"
+              v-tippy="
+                ['ifc', ...Array.from(rhinoImporterSupportedFileExtensions)].join(', ')
+              "
+              class="underline"
+            >
+              a supported file here.
+            </span>
+            <span v-else>an IFC file.</span>
           </p>
           <div v-if="showEmptyState && !isDisabled" :class="buttonsClasses">
             <FormButton :to="connectorsRoute" size="sm" color="outline">
@@ -67,17 +76,17 @@
     <ProjectPageModelsNewDialog
       v-model:open="showNewModelDialog"
       :project-id="project.id"
-      :model-name="selectedFile?.file.name"
+      :model-name="fileUpload?.file.name"
       @submit="onModelCreate"
     />
   </FormFileUploadZone>
 </template>
 <script setup lang="ts">
-import { useFileImport } from '~~/lib/core/composables/fileImport'
 import {
-  useFileUploadProgressCore,
-  type UploadableFileItem
-} from '~~/lib/form/composables/fileUpload'
+  useFileImport,
+  useGlobalFileImportManager
+} from '~~/lib/core/composables/fileImport'
+import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
 import { connectorsRoute } from '~/lib/common/helpers/route'
 import type { Nullable } from '@speckle/shared'
@@ -87,6 +96,8 @@ import type {
   ProjectCardImportFileArea_ProjectFragment,
   ProjectPageLatestItemsModelItemFragment
 } from '~/lib/common/generated/gql/graphql'
+import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
+import { rhinoImporterSupportedFileExtensions } from '@speckle/shared/blobs'
 
 type EmptyStateVariants = 'modelGrid' | 'modelList' | 'modelsSection'
 
@@ -115,6 +126,13 @@ graphql(`
   }
 `)
 
+const emit = defineEmits<{
+  /**
+   * Emits when files start/finish uploading
+   */
+  uploading: [payload: FileAreaUploadingPayload]
+}>()
+
 const props = defineProps<{
   project: ProjectCardImportFileArea_ProjectFragment
   model?: ProjectCardImportFileArea_ModelFragment
@@ -122,13 +140,37 @@ const props = defineProps<{
   emptyStateVariant?: EmptyStateVariants
 }>()
 
+const isRhinoFileImporterEnabled = useIsRhinoFileImporterEnabled()
+const { addFailedJob } = useGlobalFileImportManager()
 const {
   maxSizeInBytes,
-  onFilesSelected: onFilesSelectedInternal,
+  onFilesSelected,
   accept,
   upload: fileUpload,
-  isUploading
-} = useFileImport(toRefs(props))
+  isUploading,
+  uploadSelected,
+  resetSelected,
+  isUploadable: isFileUploadUploadable
+} = useFileImport({
+  ...toRefs(props),
+  manuallyTriggerUpload: true,
+  fileSelectedCallback: () => {
+    if (props.model) {
+      // Uploading inside an existing model - trigger upload immediately
+      uploadSelected()
+    } else {
+      if (!fileUpload.value?.error) {
+        // Only if upload is valid, trigger model creation dialog
+        showNewModelDialog.value = true
+      }
+    }
+  },
+  errorCallback: ({ failedJob }) => {
+    // Register global file upload error and reset upload
+    addFailedJob(failedJob)
+    resetSelected()
+  }
+})
 
 const { errorMessage, progressBarClasses, progressBarStyle } =
   useFileUploadProgressCore({
@@ -140,17 +182,7 @@ const uploadZone = ref(
     triggerPicker: () => void
   }>
 )
-
-const selectedFile = shallowRef<Nullable<UploadableFileItem>>(null)
-
-const showNewModelDialog = computed({
-  get: () => !!selectedFile.value,
-  set: (newVal) => {
-    if (!newVal) {
-      selectedFile.value = null
-    }
-  }
-})
+const showNewModelDialog = ref(false)
 
 const modelName = computed(() => props.modelName || props.model?.name)
 const accessCheck = computed(() => {
@@ -196,7 +228,7 @@ const containerClasses = computed(() => {
   if (props.emptyStateVariant === 'modelGrid') {
     classParts.push('p-4 gap-4')
   } else if (props.emptyStateVariant === 'modelList') {
-    classParts.push('p-4 gap-4 text-center')
+    classParts.push('gap-4 text-center')
   } else if (props.emptyStateVariant === 'modelsSection') {
     classParts.push('p-4 gap-4 text-balance')
   } else {
@@ -261,34 +293,40 @@ const getDashedBorderClasses = (isDraggingFiles: boolean) => {
   return 'border-outline-2'
 }
 
-const onFilesSelected = (params: { files: UploadableFileItem[] }) => {
-  const firstFile = params.files[0]
-  if (!firstFile) return
-
-  if (props.model) {
-    // Uploading version to specific model, trigger upload instantly
-    onFilesSelectedInternal({ files: [firstFile] })
-    return
-  }
-
-  // Otherwise store selected file and show model create dialog
-  selectedFile.value = firstFile
-}
-
 const onModelCreate = (params: { model: ProjectPageLatestItemsModelItemFragment }) => {
-  if (!selectedFile.value) return
+  if (!isFileUploadUploadable.value) return
 
-  onFilesSelectedInternal({
-    files: [selectedFile.value],
-    modelName: params.model.name
+  uploadSelected({
+    model: params.model
   })
-
-  selectedFile.value = null
 }
 
 const triggerPicker = () => {
   uploadZone.value?.triggerPicker()
 }
+
+watch(showNewModelDialog, (newVal, oldVal) => {
+  if (oldVal && !newVal) {
+    // Should we unselect file? Only if model was not created
+    if (!isUploading.value) {
+      resetSelected()
+    }
+  }
+})
+
+watch(isUploading, (newVal, oldVal) => {
+  // fileUpload is always gonna be non-null when isUploading changes
+  emit('uploading', {
+    isUploading: newVal,
+    upload: fileUpload.value!,
+    error: errorMessage.value
+  })
+
+  if (!newVal && oldVal) {
+    // Reset file upload state when upload finishes
+    resetSelected()
+  }
+})
 
 defineExpose({
   triggerPicker

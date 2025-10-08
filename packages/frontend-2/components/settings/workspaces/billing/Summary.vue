@@ -1,4 +1,3 @@
-<!-- TODO: Some content still missing, needs to be updated as functionality is added -->
 <template>
   <div class="border border-outline-3 rounded-lg">
     <div
@@ -100,8 +99,9 @@ const nextPaymentHeadingText = computed(() => {
 
 const showBillingPortalLink = computed(
   () =>
-    plan.value?.status === WorkspacePlanStatuses.Valid ||
-    plan.value?.status === WorkspacePlanStatuses.PaymentFailed ||
-    plan.value?.status === WorkspacePlanStatuses.CancelationScheduled
+    isPaidPlan.value &&
+    (plan.value?.status === WorkspacePlanStatuses.Valid ||
+      plan.value?.status === WorkspacePlanStatuses.PaymentFailed ||
+      plan.value?.status === WorkspacePlanStatuses.CancelationScheduled)
 )
 </script>

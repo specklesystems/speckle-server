@@ -4,24 +4,33 @@
 import fs from 'fs'
 import path from 'path'
 import { appRoot, packageRoot } from '@/bootstrap'
-import { values, merge, camelCase, reduce, intersection, difference, set } from 'lodash'
+import {
+  values,
+  merge,
+  camelCase,
+  reduce,
+  intersection,
+  difference,
+  set
+} from 'lodash-es'
 import baseTypeDefs from '@/modules/core/graph/schema/baseTypeDefs'
 import { scalarResolvers } from '@/modules/core/graph/scalars'
 import { makeExecutableSchema } from '@graphql-tools/schema'
 import { moduleLogger } from '@/observability/logging'
 import { addMocksToSchema } from '@graphql-tools/mock'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-import { isNonNullable, Optional, TIME_MS } from '@speckle/shared'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { Optional } from '@speckle/shared'
+import { Authz, isNonNullable, TIME_MS } from '@speckle/shared'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import type { Express } from 'express'
-import { RequestDataLoadersBuilder } from '@/modules/shared/helpers/graphqlHelper'
-import { ApolloServerOptions } from '@apollo/server'
-import {
+import type { RequestDataLoadersBuilder } from '@/modules/shared/helpers/graphqlHelper'
+import type { ApolloServerOptions } from '@apollo/server'
+import type {
   GraphqlDirectiveBuilder,
   SchemaTransformer
 } from '@/modules/core/graph/helpers/directiveHelper'
-import { AppMocksConfig } from '@/modules/mocks'
-import { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
+import type { AppMocksConfig } from '@/modules/mocks'
+import type { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
 import { LoaderConfigurationError, LogicError } from '@/modules/shared/errors'
 import type { Registry } from 'prom-client'
 import type {
@@ -35,12 +44,14 @@ import {
   wrapWithCache
 } from '@/modules/shared/utils/caching'
 import TTLCache from '@isaacs/ttlcache'
-import { buildRequestLoaders, RequestDataLoaders } from '@/modules/core/loaders'
-import {
+import type { RequestDataLoaders } from '@/modules/core/loaders'
+import { buildRequestLoaders } from '@/modules/core/loaders'
+import type {
   AllAuthCheckContextLoaders,
-  AuthCheckContextLoaderKeys,
   AuthCheckContextLoaders
 } from '@speckle/shared/authz'
+import { AuthCheckContextLoaderKeys } from '@speckle/shared/authz'
+import type { AuthContext } from '@/modules/shared/authz'
 
 /**
  * Cached speckle module requires
@@ -53,7 +64,7 @@ const loadedModules: SpeckleModule[] = []
  */
 let hasInitializationOccurred = false
 
-function autoloadFromDirectory(dirPath: string) {
+async function autoloadFromDirectory(dirPath: string) {
   if (!fs.existsSync(dirPath)) return
 
   const results: Record<string, any> = {}
@@ -65,7 +76,7 @@ function autoloadFromDirectory(dirPath: string) {
       const ext = path.extname(file)
       if (['.js', '.ts'].includes(ext)) {
         const name = camelCase(path.basename(file, ext))
-        results[name] = require(pathToFile)
+        results[name] = await import(pathToFile)
       }
     }
   }
@@ -81,14 +92,17 @@ const getEnabledModuleNames = () => {
     FF_GATEKEEPER_MODULE_ENABLED
   } = getFeatureFlags()
   const moduleNames = [
+    'acc',
     'accessrequests',
     'activitystream',
     'apiexplorer',
     'auth',
+    'backgroundjobs',
     'blobstorage',
     'comments',
     'core',
     'cross-server-sync',
+    'dashboards',
     'emails',
     'fileuploads',
     'notifications',
@@ -99,9 +113,11 @@ const getEnabledModuleNames = () => {
     'webhooks',
     'workspacesCore',
     'gatekeeperCore',
-    'multiregion'
+    'multiregion',
+    'viewer'
   ]
 
+  // TODO: add acc with feature flag?
   if (FF_AUTOMATE_MODULE_ENABLED) moduleNames.push('automate')
   if (FF_GENDOAI_MODULE_ENABLED) moduleNames.push('gendo')
   // the order of the event listeners matters
@@ -116,7 +132,7 @@ async function getSpeckleModules() {
   const moduleNames = getEnabledModuleNames()
 
   for (const dir of moduleNames) {
-    const moduleIndex = require(`./${dir}/index`)
+    const moduleIndex = await import(`./${dir}/index`)
 
     // CJS/ESM interop is weird
     let moduleDefinition: SpeckleModule
@@ -178,26 +194,28 @@ export const shutdown = async () => {
 /**
  * Autoloads dataloaders from all modules
  */
-export const graphDataloadersBuilders = (): RequestDataLoadersBuilder<any>[] => {
+export const graphDataloadersBuilders = async (): Promise<
+  RequestDataLoadersBuilder<any>[]
+> => {
   let dataLoaders: RequestDataLoadersBuilder<any>[] = []
   const enabledModuleNames = getEnabledModuleNames()
 
   // load code modules from /modules
   const codeModuleDirs = fs.readdirSync(`${appRoot}/modules`)
-  codeModuleDirs.forEach((file) => {
-    if (!enabledModuleNames.includes(file)) return
+  for (const file of codeModuleDirs) {
+    if (!enabledModuleNames.includes(file)) continue
     const modulePath = path.join(`${appRoot}/modules`, file)
 
     // load dataloaders
     const fullPath = path.join(modulePath, 'graph', 'dataloaders')
     if (fs.existsSync(fullPath)) {
-      const newLoaders = values(autoloadFromDirectory(fullPath))
+      const newLoaders = values(await autoloadFromDirectory(fullPath))
         .map((l) => l.default)
         .filter(isNonNullable)
 
       dataLoaders = [...dataLoaders, ...newLoaders]
     }
-  })
+  }
 
   return dataLoaders
 }
@@ -206,10 +224,12 @@ export const graphDataloadersBuilders = (): RequestDataLoadersBuilder<any>[] => 
  * GQL components - typedefs, resolvers, directives
  * (assets & directives will be loaded from even disabled components cause the schema must be static)
  */
-const graphComponents = (): Pick<ApolloServerOptions<any>, 'resolvers'> & {
-  directiveBuilders: Record<string, GraphqlDirectiveBuilder>
-  typeDefs: string[]
-} => {
+const graphComponents = async (): Promise<
+  Pick<ApolloServerOptions<any>, 'resolvers'> & {
+    directiveBuilders: Record<string, GraphqlDirectiveBuilder>
+    typeDefs: string[]
+  }
+> => {
   const enabledModuleNames = getEnabledModuleNames()
 
   // Base query and mutation to allow for type extension by modules.
@@ -232,15 +252,15 @@ const graphComponents = (): Pick<ApolloServerOptions<any>, 'resolvers'> & {
 
   // load code modules from /modules
   const codeModuleDirs = fs.readdirSync(`${appRoot}/modules`)
-  codeModuleDirs.forEach((file) => {
+  for (const file of codeModuleDirs) {
     const isEnabledModule = enabledModuleNames.includes(file)
     const fullPath = path.join(`${appRoot}/modules`, file)
 
     // first pass load of resolvers
     const resolversPath = path.join(fullPath, 'graph', 'resolvers')
     if (isEnabledModule && fs.existsSync(resolversPath)) {
-      const newResolverObjs = values(autoloadFromDirectory(resolversPath)).map((o) =>
-        'default' in o ? o.default : o
+      const newResolverObjs = values(await autoloadFromDirectory(resolversPath)).map(
+        (o) => ('default' in o ? o.default : o)
       )
       resolverObjs = [...resolverObjs, ...newResolverObjs]
     }
@@ -251,7 +271,7 @@ const graphComponents = (): Pick<ApolloServerOptions<any>, 'resolvers'> & {
       directiveBuilders = {
         ...directiveBuilders,
         ...reduce(
-          values(autoloadFromDirectory(directivesPath)),
+          values(await autoloadFromDirectory(directivesPath)),
           (acc, directivesObj) => {
             return { ...acc, ...directivesObj }
           },
@@ -259,7 +279,7 @@ const graphComponents = (): Pick<ApolloServerOptions<any>, 'resolvers'> & {
         )
       }
     }
-  })
+  }
 
   const resolvers = { ...scalarResolvers }
   resolverObjs.forEach((o) => {
@@ -269,8 +289,8 @@ const graphComponents = (): Pick<ApolloServerOptions<any>, 'resolvers'> & {
   return { resolvers, typeDefs, directiveBuilders }
 }
 
-export const graphSchema = (mocksConfig?: AppMocksConfig) => {
-  const { resolvers, typeDefs, directiveBuilders } = graphComponents()
+export const graphSchema = async (mocksConfig?: AppMocksConfig) => {
+  const { resolvers, typeDefs, directiveBuilders } = await graphComponents()
 
   const directiveTypedefs: string[] = []
   const directiveSchemaTransformers: SchemaTransformer[] = []
@@ -310,9 +330,9 @@ export const graphSchema = (mocksConfig?: AppMocksConfig) => {
 /**
  * Load GQL mock configs from speckle modules
  */
-export const moduleMockConfigs = (
+export const moduleMockConfigs = async (
   moduleWhitelist: string[]
-): Record<string, SpeckleModuleMocksConfig> => {
+): Promise<Record<string, SpeckleModuleMocksConfig>> => {
   const enabledModuleNames = intersection(getEnabledModuleNames(), moduleWhitelist)
 
   // Config default exports keyed by module name
@@ -321,15 +341,15 @@ export const moduleMockConfigs = (
 
   // load code modules from /modules
   const codeModuleDirs = fs.readdirSync(`${appRoot}/modules`)
-  codeModuleDirs.forEach((moduleName) => {
+  for (const moduleName of codeModuleDirs) {
     const fullPath = path.join(`${appRoot}/modules`, moduleName)
-    if (!enabledModuleNames.includes(moduleName)) return
+    if (!enabledModuleNames.includes(moduleName)) continue
 
     // load mock config
     const mocksFolderPath = path.join(fullPath, 'graph', 'mocks')
     if (fs.existsSync(mocksFolderPath)) {
       // We only take the first mocks.ts file we find (for now)
-      const mainConfig = values(autoloadFromDirectory(mocksFolderPath))
+      const mainConfig = values(await autoloadFromDirectory(mocksFolderPath))
         .map((l) => l.default)
         .filter(isNonNullable)[0]
 
@@ -337,7 +357,7 @@ export const moduleMockConfigs = (
         mockConfigs[moduleName] = mainConfig
       }
     }
-  })
+  }
 
   return mockConfigs
 }
@@ -362,7 +382,9 @@ export const moduleAuthLoaders = async (params: {
     if (!fs.existsSync(loadersFolderPath)) continue
 
     // We only take the first loaders.ts file we find (for now)
-    const moduleLoadersBuilderFn = values(autoloadFromDirectory(loadersFolderPath))
+    const moduleLoadersBuilderFn = values(
+      await autoloadFromDirectory(loadersFolderPath)
+    )
       .map((l) => l.default)
       .filter(isNonNullable)[0] as Optional<ReturnType<typeof defineModuleLoaders>>
 
@@ -440,4 +462,18 @@ export const moduleAuthLoaders = async (params: {
     },
     internalCache: cache
   }
+}
+
+export const buildAuthPolicies = async (params: {
+  /**
+   * Undefined means - treat it as an anonymous req
+   */
+  authContext?: AuthContext
+}) => {
+  const dataLoaders: RequestDataLoaders | undefined = params.authContext
+    ? await buildRequestLoaders(params.authContext)
+    : undefined
+
+  const authLoaders = await moduleAuthLoaders({ dataLoaders })
+  return Authz.authPoliciesFactory(authLoaders.loaders)
 }

@@ -1,33 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// eslint-disable-next-line no-restricted-imports
-import '../bootstrap'
+/* eslint-disable no-restricted-imports */
+import '../bootstrap.js'
 
 // Register global mocks as early as possible
 import '@/test/mocks/global'
 
-import chai from 'chai'
 import chaiAsPromised from 'chai-as-promised'
 import chaiHttp from 'chai-http'
 import deepEqualInAnyOrder from 'deep-equal-in-any-order'
-import { knex as mainDb } from '@/db/knex'
-import { init, startHttp, shutdown } from '@/app'
 import graphqlChaiPlugin from '@/test/plugins/graphql'
+import { knex as mainDb } from '@/db/knex'
+import chai from 'chai'
+import { init, startHttp, shutdown } from '@/app'
 import { testLogger as logger } from '@/observability/logging'
 import { once } from 'events'
 import type http from 'http'
 import type express from 'express'
 import type net from 'net'
-import {
-  ensureError,
-  MaybeAsync,
-  MaybeNullOrUndefined,
-  Nullable,
-  Optional,
-  retry,
-  TIME_MS,
-  wait
-} from '@speckle/shared'
-import * as mocha from 'mocha'
+import type { MaybeAsync, MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import { ensureError, retry } from '@speckle/shared'
 import {
   getAvailableRegionKeysFactory,
   getFreeRegionKeysFactory
@@ -44,27 +35,29 @@ import {
   getRegisteredRegionClients,
   initializeRegion
 } from '@/modules/multiregion/utils/dbSelector'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
-import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-import { ApolloServer } from '@apollo/server'
-import { ReadinessHandler } from '@/healthchecks/types'
-import { set } from 'lodash'
+import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import type { ApolloServer } from '@apollo/server'
+import type { ReadinessHandler } from '@/healthchecks/types'
+import { set } from 'lodash-es'
 import { fixStackTrace } from '@/test/speckle-helpers/error'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
-
-// why is server config only created once!????
-// because its done in a migration, to not override existing configs
-// similarly wiping regions will break multi region setup
-const protectedTables = ['server_config', 'regions']
-let regionClients: Record<string, Knex> = {}
+import * as mocha from 'mocha'
+import { getStalePreparedTransactionsFactory } from '@/modules/multiregion/repositories/transactions'
+import { rollbackPreparedTransaction } from '@/modules/shared/helpers/dbHelper'
 
 // Register chai plugins
 chai.use(chaiAsPromised)
 chai.use(chaiHttp)
 chai.use(deepEqualInAnyOrder)
 chai.use(graphqlChaiPlugin)
+
+// why is server config only created once!????
+// because its done in a migration, to not override existing configs
+// similarly wiping regions will break multi region setup
+const protectedTables = ['server_config', 'regions']
+let regionClients: Record<string, Knex> = {}
 
 // Please forgive me god for what I'm about to do, but Mocha's ancient API sucks ass
 // and there's NO OTHER WAY to format errors across all reporters
@@ -107,10 +100,6 @@ const inEachDb = async (fn: (db: Knex) => MaybeAsync<void>) => {
   for (const regionClient of Object.values(regionClients)) {
     await fn(regionClient)
   }
-}
-
-const ensureAivenExtrasFactory = (deps: { db: Knex }) => async () => {
-  await deps.db.raw('CREATE EXTENSION IF NOT EXISTS "aiven_extras";')
 }
 
 const setupDatabases = async () => {
@@ -170,60 +159,6 @@ const unlockFactory = (deps: { db: Knex }) => async () => {
 
 export const getRegionKeys = () => Object.keys(regionClients)
 
-export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
-  // We wanna reset even outside of multiregion test mode, as long as multi region is generally enabled
-  if (!isMultiRegionEnabled()) {
-    return { drop: async () => {}, reenable: async () => {} }
-  }
-
-  const ensureAivenExtras = ensureAivenExtrasFactory(deps)
-  await ensureAivenExtras()
-
-  type SubInfo = {
-    subname: string
-    subconninfo: string
-    subpublications: string[]
-    subslotname: string
-  }
-
-  const subscriptions = (await deps.db.raw(
-    `SELECT subname, subconninfo, subpublications, subslotname FROM aiven_extras.pg_list_all_subscriptions() WHERE subname ILIKE 'test_%';`
-  )) as {
-    rows: Array<SubInfo>
-  }
-  const publications = (await deps.db.raw(
-    `SELECT pubname FROM pg_publication WHERE pubname ILIKE 'test_%';`
-  )) as {
-    rows: Array<{ pubname: string }>
-  }
-
-  // If we do not wait, the following call occasionally fails because a replication slot is still in use.
-  const dropSubs = async (info: SubInfo) => {
-    await wait(TIME_MS.second)
-    await deps.db.raw(
-      `SELECT * FROM aiven_extras.pg_alter_subscription_disable('${info.subname}');`
-    )
-    await wait(TIME_MS.second)
-    await deps.db.raw(
-      `SELECT * FROM aiven_extras.pg_drop_subscription('${info.subname}');`
-    )
-    await wait(TIME_MS.second)
-    await deps.db.raw(
-      `SELECT * FROM aiven_extras.dblink_slot_create_or_drop('${info.subconninfo}', '${info.subslotname}', 'drop');`
-    )
-  }
-
-  // Drop all subs
-  for (const sub of subscriptions.rows) {
-    await dropSubs(sub)
-  }
-
-  // Drop all pubs
-  for (const pub of publications.rows) {
-    await deps.db.raw(`DROP PUBLICATION ${pub.pubname};`)
-  }
-}
-
 const truncateTablesFactory = (deps: { db: Knex }) => async (tableNames?: string[]) => {
   if (!tableNames?.length) {
     tableNames = (
@@ -263,11 +198,16 @@ const resetSchemaFactory =
   (deps: { db: Knex; regionKey: Nullable<string> }) => async () => {
     const { regionKey } = deps
 
-    const resetPubSub = resetPubSubFactory(deps)
     const truncate = truncateTablesFactory(deps)
 
+    const pendingTransactions = await getStalePreparedTransactionsFactory({
+      db: deps.db
+    })({ interval: '1 second' })
+    await Promise.all(
+      pendingTransactions.map(({ gid }) => rollbackPreparedTransaction(deps.db, gid))
+    )
+
     await unlockFactory(deps)()
-    await resetPubSub()
     await truncate() // otherwise some rollbacks will fail
 
     // Reset schema
@@ -286,27 +226,8 @@ const resetSchemaFactory =
     }
   }
 
-export const truncateTables = async (
-  tableNames?: string[],
-  options?: Partial<{
-    /**
-     * Whether to also reset pubsub before truncate. Pubsub only gets re-initialized on app
-     * init so don't do this if not needed!
-     * Defaults to: false
-     */
-    resetPubSub: boolean
-  }>
-) => {
-  const { resetPubSub = false } = options || {}
+export const truncateTables = async (tableNames?: string[]) => {
   const dbs = [mainDb, ...Object.values(regionClients)]
-
-  // First reset pubsubs, if needed
-  if (resetPubSub) {
-    for (const db of dbs) {
-      const resetPubSub = resetPubSubFactory({ db })
-      await resetPubSub()
-    }
-  }
 
   // Now truncate
   for (const db of dbs) {
@@ -350,36 +271,55 @@ export const initializeTestServer = async (params: {
   }
 }
 
-let graphqlServer: Optional<ApolloServer<GraphQLContext>> = undefined
-
-export const mochaHooks: mocha.RootHookObject = {
-  beforeAll: async () => {
-    if (isMultiRegionTestMode()) {
-      logger.info('Running tests in multi-region mode...')
-    }
-
-    logger.info('running before all')
-
-    // Init (or cleanup) test databases
-    await setupDatabases()
-
-    // Init app
-    ;({ graphqlServer } = await init())
-  },
-  afterAll: async () => {
-    logger.info('running after all')
-    await inEachDb(async (db) => {
-      await unlockFactory({ db })()
-    })
-    await shutdown({ graphqlServer })
-  }
-}
+let builtApps: Array<Awaited<ReturnType<typeof init>>> = []
 
 export const buildApp = async () => {
-  return await init()
+  const ret = await init()
+  builtApps.push(ret)
+  return ret
 }
 
 export const beforeEachContext = async () => {
-  await truncateTables(undefined, { resetPubSub: true })
+  await truncateTables(undefined)
   return await buildApp()
+}
+
+export const shutdownAll = async () => {
+  await Promise.all(
+    builtApps.map(async ({ graphqlServer, server, subscriptionServer }) => {
+      await graphqlServer.stop()
+      server.closeAllConnections()
+      subscriptionServer.close()
+    })
+  )
+  builtApps = []
+  await shutdown({ graphqlServer: undefined })
+}
+
+export const beforeEntireTestRun = async () => {
+  if (isMultiRegionTestMode()) {
+    logger.info('Running tests in multi-region mode...')
+  }
+
+  logger.info('🔧 Global setup: runs once before all tests')
+
+  // Init (or cleanup) test databases
+  await setupDatabases()
+
+  // Init app
+  await buildApp()
+}
+
+export const afterEntireTestRun = async () => {
+  logger.info('🧹 Global teardown: runs once after all tests')
+
+  await inEachDb(async (db) => {
+    await unlockFactory({ db })()
+  })
+  await shutdownAll()
+}
+
+export const mochaHooks: mocha.RootHookObject = {
+  beforeAll: beforeEntireTestRun,
+  afterAll: afterEntireTestRun
 }

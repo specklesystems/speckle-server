@@ -1,10 +1,10 @@
-import { Nullable, Optional } from '@speckle/shared'
-import {
+import type { Nullable, Optional } from '@speckle/shared'
+import type {
   ModelVersionsFilter,
   StreamCommitsArgs
 } from '@/modules/core/graph/generated/graphql'
 import { BadRequestError } from '@/modules/shared/errors'
-import {
+import type {
   GetBranchCommitsTotalCount,
   GetBranchCommitsTotalCountByName,
   GetPaginatedBranchCommits,
@@ -17,11 +17,11 @@ import {
   LegacyGetPaginatedStreamCommitsPage,
   PaginatedBranchCommitsParams
 } from '@/modules/core/domain/commits/operations'
-import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
+import type { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { getAllRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 import { getTotalVersionCountFactory } from '@/modules/core/repositories/commits'
-import { sum } from 'lodash'
+import { sum } from 'lodash-es'
 
 export const legacyGetPaginatedStreamCommitsFactory =
   (deps: {

@@ -66,7 +66,7 @@ type GenericInviteItem = {
   invitedBy?: AvatarUserType
   workspace?: {
     id: string
-    logo?: string
+    logo?: MaybeNullOrUndefined<string>
     name: string
   }
   user?: MaybeNullOrUndefined<{

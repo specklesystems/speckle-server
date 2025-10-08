@@ -4,7 +4,7 @@ import {
   BranchDeleteError,
   BranchUpdateError
 } from '@/modules/core/errors/branch'
-import {
+import type {
   BranchCreateInput,
   BranchDeleteInput,
   BranchUpdateInput,
@@ -12,10 +12,10 @@ import {
   DeleteModelInput,
   UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
-import { BranchRecord } from '@/modules/core/helpers/types'
-import { has } from 'lodash'
+import type { BranchRecord } from '@/modules/core/helpers/types'
+import { has } from 'lodash-es'
 import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
-import {
+import type {
   CreateBranchAndNotify,
   DeleteBranchAndNotify,
   DeleteBranchById,
@@ -25,11 +25,8 @@ import {
   UpdateBranch,
   UpdateBranchAndNotify
 } from '@/modules/core/domain/branches/operations'
-import {
-  GetStream,
-  MarkBranchStreamUpdated
-} from '@/modules/core/domain/streams/operations'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { GetStream } from '@/modules/core/domain/streams/operations'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ModelEvents } from '@/modules/core/domain/branches/events'
 
 const isBranchCreateInput = (
@@ -131,7 +128,6 @@ export const deleteBranchAndNotifyFactory =
     getStream: GetStream
     getBranchById: GetBranchById
     emitEvent: EventBusEmit
-    markBranchStreamUpdated: MarkBranchStreamUpdated
     deleteBranchById: DeleteBranchById
   }): DeleteBranchAndNotify =>
   async (input: BranchDeleteInput | DeleteModelInput, userId: string) => {
@@ -167,19 +163,16 @@ export const deleteBranchAndNotifyFactory =
 
     const isDeleted = !!(await deps.deleteBranchById(existingBranch.id))
     if (isDeleted) {
-      await Promise.all([
-        deps.markBranchStreamUpdated(input.id),
-        deps.emitEvent({
-          eventName: ModelEvents.Deleted,
-          payload: {
-            modelId: existingBranch.id,
-            model: existingBranch,
-            projectId: streamId,
-            input,
-            userId
-          }
-        })
-      ])
+      await deps.emitEvent({
+        eventName: ModelEvents.Deleted,
+        payload: {
+          modelId: existingBranch.id,
+          model: existingBranch,
+          projectId: streamId,
+          input,
+          userId
+        }
+      })
     }
 
     return isDeleted

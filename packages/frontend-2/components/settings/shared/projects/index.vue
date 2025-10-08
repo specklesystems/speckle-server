@@ -22,8 +22,9 @@
     <LayoutTable
       class="mt-6"
       :columns="[
-        { id: 'name', header: 'Name', classes: 'col-span-3 truncate' },
+        { id: 'name', header: 'Name', classes: 'col-span-2 truncate' },
         { id: 'created', header: 'Created', classes: 'col-span-2' },
+        { id: 'visibility', header: 'Visibility', classes: 'col-span-2' },
         { id: 'modified', header: 'Modified', classes: 'col-span-2' },
         { id: 'models', header: 'Models', classes: 'col-span-1' },
         { id: 'versions', header: 'Versions', classes: 'col-span-1' },
@@ -33,20 +34,28 @@
       :items="projects"
     >
       <template #name="{ item }">
-        <NuxtLink :to="projectRoute(item.id)">
-          {{ isProject(item) ? item.name : '' }}
-        </NuxtLink>
+        <div v-tippy="item.name" class="truncate">
+          <NuxtLink :to="projectRoute(item.id)">
+            {{ isProject(item) ? item.name : '' }}
+          </NuxtLink>
+        </div>
       </template>
 
       <template #created="{ item }">
-        <div class="text-xs">
-          {{ formattedFullDate(item.createdAt) }}
+        <div v-tippy="formattedFullDate(item.createdAt)" class="text-xs inline-block">
+          {{ formattedDateOnly(item.createdAt) }}
+        </div>
+      </template>
+
+      <template #visibility="{ item }">
+        <div class="text-xs capitalize">
+          {{ item.visibility.toLowerCase() }}
         </div>
       </template>
 
       <template #modified="{ item }">
-        <div class="text-xs">
-          {{ formattedFullDate(item.updatedAt) }}
+        <div v-tippy="formattedFullDate(item.updatedAt)" class="text-xs inline-block">
+          {{ formattedDateOnly(item.updatedAt) }}
         </div>
       </template>
 
@@ -93,7 +102,11 @@
       :project="projectToModify"
     />
 
-    <ProjectsAdd v-model:open="openNewProject" :workspace="workspace" />
+    <ProjectsAdd
+      v-model:open="openNewProject"
+      :workspace="workspace"
+      @created="onProjectCreated"
+    />
   </div>
 </template>
 
@@ -113,7 +126,7 @@ import { isProject } from '~~/lib/server-management/helpers/utils'
 import { useDebouncedTextInput, type LayoutMenuItem } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
 import { useRouter } from 'vue-router'
-import { projectRoute } from '~/lib/common/helpers/route'
+import { projectRoute, useNavigateToProject } from '~/lib/common/helpers/route'
 import { useCanCreatePersonalProject } from '~/lib/projects/composables/permissions'
 import { useCanCreateWorkspaceProject } from '~/lib/workspaces/composables/projects/permissions'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
@@ -167,6 +180,8 @@ const props = defineProps<{
   workspace: MaybeNullOrUndefined<SettingsSharedProjects_WorkspaceFragment>
 }>()
 
+const { formattedFullDate, formattedDateOnly } = useDateFormatters()
+const navigateToProject = useNavigateToProject()
 const { activeUser } = useActiveUser()
 const canCreatePersonal = useCanCreatePersonalProject({
   activeUser: computed(() => activeUser.value)
@@ -264,5 +279,9 @@ const onActionChosen = (
 
 const toggleMenu = (itemId: string) => {
   showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
+}
+
+const onProjectCreated = (project: { id: string }) => {
+  navigateToProject({ id: project.id })
 }
 </script>

@@ -2,21 +2,27 @@ import { buildApolloServer } from '@/app'
 import { db } from '@/db/knex'
 import { Commits, Streams, Users } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import {
+  getStreamRolesFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import {
   addOrUpdateStreamCollaboratorFactory,
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import type { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
 import { readOtherUsersCommits, readOwnCommits } from '@/test/graphql/commits'
-import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
+import type { ServerAndContext } from '@/test/graphqlHelper'
+import { createAuthedTestContext } from '@/test/graphqlHelper'
 import { truncateTables } from '@/test/hooks'
 import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
-import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
 
 const getUser = getUserFactory({ db })
@@ -25,6 +31,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 

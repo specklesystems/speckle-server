@@ -1,10 +1,10 @@
-import { MaybeAsync, Nullable } from '@speckle/shared'
+import type { MaybeAsync, Nullable } from '@speckle/shared'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
 import { RedisPubSub } from 'graphql-redis-subscriptions'
 import Redis from 'ioredis'
 import { withFilter } from 'graphql-subscriptions'
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-import {
+import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import type {
   ProjectCommentsUpdatedMessage,
   ProjectFileImportUpdatedMessage,
   ProjectModelsUpdatedMessage,
@@ -54,24 +54,33 @@ import {
   SubscriptionWorkspaceProjectsUpdatedArgs,
   WorkspaceProjectsUpdatedMessage,
   SubscriptionWorkspaceUpdatedArgs,
-  WorkspaceUpdatedMessage
+  WorkspaceUpdatedMessage,
+  ProjectAccSyncItemsUpdatedMessage,
+  SubscriptionProjectAccSyncItemsUpdatedArgs,
+  SubscriptionProjectSavedViewsUpdatedArgs,
+  SubscriptionProjectSavedViewGroupsUpdatedArgs
 } from '@/modules/core/graph/generated/graphql'
-import { Merge, OverrideProperties } from 'type-fest'
-import {
+import type { Merge, OverrideProperties, SetNonNullable } from 'type-fest'
+import type {
   ModelGraphQLReturn,
   ProjectGraphQLReturn,
   VersionGraphQLReturn
 } from '@/modules/core/helpers/graphTypes'
-import { CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes'
-import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types'
-import {
+import type { CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes'
+import type { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types'
+import type {
   ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn,
   ProjectAutomationsUpdatedMessageGraphQLReturn
 } from '@/modules/automate/helpers/graphTypes'
-import { CommentRecord } from '@/modules/comments/helpers/types'
-import { CommitRecord } from '@/modules/core/helpers/types'
-import { BranchRecord } from '@/modules/core/helpers/types'
-import { WorkspaceGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
+import type { CommentRecord } from '@/modules/comments/helpers/types'
+import type { CommitRecord } from '@/modules/core/helpers/types'
+import type { BranchRecord } from '@/modules/core/helpers/types'
+import type { WorkspaceGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
+import type { AccSyncItemGraphQLReturn } from '@/modules/acc/helpers/graphTypes'
+import type {
+  ProjectSavedViewGroupsUpdatedMessageGraphQLReturn,
+  ProjectSavedViewsUpdatedMessageGraphQLReturn
+} from '@/modules/viewer/helpers/graphTypes'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -122,6 +131,7 @@ export enum ProjectSubscriptions {
   ProjectVersionsUpdated = 'PROJECT_VERSIONS_UPDATED',
   ProjectVersionsPreviewGenerated = 'PROJECT_VERSIONS_PREVIEW_GENERATED',
   ProjectCommentsUpdated = 'PROJECT_COMMENTS_UPDATED',
+  ProjectAccSyncItemUpdated = 'PROJECT_ACC_SYNC_ITEM_UPDATED',
   // old beta subscription:
   ProjectTriggeredAutomationsStatusUpdated = 'PROJECT_TRIGGERED_AUTOMATION_STATUS_UPDATED',
   ProjectAutomationsUpdated = 'PROJECT_AUTOMATIONS_UPDATED',
@@ -146,6 +156,11 @@ export enum TestSubscriptions {
 export enum WorkspaceSubscriptions {
   WorkspaceProjectsUpdated = 'WORKSPACE_PROJECTS_UPDATED',
   WorkspaceUpdated = 'WORKSPACE_UPDATED'
+}
+
+export enum SavedViewSubscriptions {
+  ProjectSavedViewsUpdated = 'PROJECT_SAVED_VIEWS_UPDATED',
+  ProjectSavedViewGroupsUpdated = 'PROJECT_SAVED_VIEW_GROUPS_UPDATED'
 }
 
 type NoVariables = Record<string, never>
@@ -211,7 +226,7 @@ type SubscriptionTypeMap = {
   }
   [ViewerSubscriptions.UserActivityBroadcasted]: {
     payload: {
-      viewerUserActivityBroadcasted: ViewerUserActivityMessage
+      viewerUserActivityBroadcasted: SetNonNullable<ViewerUserActivityMessage, 'userId'>
       projectId: string
       resourceItems: ViewerResourceItem[]
       userId: Nullable<string>
@@ -228,6 +243,16 @@ type SubscriptionTypeMap = {
       resourceItems: ViewerResourceItem[]
     }
     variables: SubscriptionProjectCommentsUpdatedArgs
+  }
+  [ProjectSubscriptions.ProjectAccSyncItemUpdated]: {
+    payload: {
+      projectAccSyncItemsUpdated: Merge<
+        ProjectAccSyncItemsUpdatedMessage,
+        { accSyncItem: Nullable<AccSyncItemGraphQLReturn> }
+      >
+      projectId: string
+    }
+    variables: SubscriptionProjectAccSyncItemsUpdatedArgs
   }
   [FileImportSubscriptions.ProjectPendingModelsUpdated]: {
     payload: {
@@ -246,7 +271,6 @@ type SubscriptionTypeMap = {
         { version: FileUploadGraphQLReturn }
       >
       projectId: string
-      branchName: string
     }
     variables: SubscriptionProjectPendingVersionsUpdatedArgs
   }
@@ -304,6 +328,18 @@ type SubscriptionTypeMap = {
       resourceIds: string
     }
     variables: SubscriptionCommentActivityArgs
+  }
+  [SavedViewSubscriptions.ProjectSavedViewsUpdated]: {
+    payload: {
+      projectSavedViewsUpdated: ProjectSavedViewsUpdatedMessageGraphQLReturn
+    }
+    variables: SubscriptionProjectSavedViewsUpdatedArgs
+  }
+  [SavedViewSubscriptions.ProjectSavedViewGroupsUpdated]: {
+    payload: {
+      projectSavedViewGroupsUpdated: ProjectSavedViewGroupsUpdatedMessageGraphQLReturn
+    }
+    variables: SubscriptionProjectSavedViewGroupsUpdatedArgs
   }
   /**
    * OLD ONES
@@ -400,6 +436,7 @@ type SubscriptionEvent =
   | BranchSubscriptions
   | TestSubscriptions
   | WorkspaceSubscriptions
+  | SavedViewSubscriptions
 
 /**
  * Publish a GQL subscription event

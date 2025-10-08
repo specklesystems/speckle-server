@@ -96,9 +96,16 @@ export function getTargetObjectIds(object: Record<string, unknown> | SpeckleObje
   if (object.speckle_type === 'Array Collection' && Array.isArray(object.children)) {
     return object.children
       .map((k) => (k as { referencedId: string }).referencedId)
-      .filter((id) => !!id)
+      .filter((id) => !!id && typeof id === 'string')
   }
   // Handles both actual collection objecs( ala IFC) and individual objects
-  if (object.id) return [object.id as string]
+  if (object.id && typeof object.id === 'string') {
+    // Extract object ID from URL if it's a full URL
+    // or return the ID as-is if it's already just an object ID
+    const objectId = object.id.includes('/objects/')
+      ? object.id.split('/').reverse()[0]
+      : object.id
+    return [objectId]
+  }
   return []
 }

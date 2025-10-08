@@ -50,7 +50,8 @@ import LayoutDisclosure from '~~/src/components/layout/Disclosure.vue'
 import LayoutGridListToggle from '~~/src/components/layout/GridListToggle.vue'
 import type {
   LayoutPageTabItem,
-  LayoutDialogButton
+  LayoutDialogButton,
+  LayoutHeaderButton
 } from '~~/src/helpers/layout/components'
 import { GridListToggleValue } from '~~/src/helpers/layout/components'
 import {
@@ -87,13 +88,20 @@ import UserAvatar from '~~/src/components/user/Avatar.vue'
 import UserAvatarGroup from '~~/src/components/user/AvatarGroup.vue'
 import UserAvatarEditable from '~~/src/components/user/AvatarEditable.vue'
 import FormFileUploadZone from '~~/src/components/form/file-upload/Zone.vue'
-import { BlobUploadStatus } from '~~/src/composables/form/fileUpload'
-import type {
-  UploadableFileItem,
-  UploadFileItem,
-  BlobPostResultItem
+import {
+  type UploadableFileItem,
+  type UploadFileItem,
+  type BlobPostResultItem,
+  FileTooLargeError
 } from '~~/src/composables/form/fileUpload'
-import { UniqueFileTypeSpecifier, prettyFileSize } from '~~/src/helpers/form/file'
+import {
+  MissingFileExtensionError,
+  ForbiddenFileTypeError,
+  UniqueFileTypeSpecifier,
+  prettyFileSize,
+  resolveFileExtension,
+  generateFileId
+} from '~~/src/helpers/form/file'
 import type { FileTypeSpecifier } from '~~/src/helpers/form/file'
 export * from '~~/src/helpers/common/error'
 import CommonLoadingIcon from '~~/src/components/common/loading/Icon.vue'
@@ -103,12 +111,19 @@ export { vKeyboardClickable } from '~~/src/directives/accessibility'
 export { useAvatarSizeClasses } from '~~/src/composables/user/avatar'
 export type { UserAvatarSize } from '~~/src/composables/user/avatar'
 import CommonProgressBar from '~~/src/components/common/ProgressBar.vue'
+import CommonPromoAlert from '~~/src/components/common/PromoAlert.vue'
+import FormRange from '~~/src/components/form/Range.vue'
+import FormDualRange from '~~/src/components/form/DualRange.vue'
+import type { FormRadioGroupItem } from '~~/src/helpers/common/components'
 
 export {
+  CommonPromoAlert,
+  MissingFileExtensionError,
+  ForbiddenFileTypeError,
+  FileTooLargeError,
   CommonLoadingIcon,
   UniqueFileTypeSpecifier,
   prettyFileSize,
-  BlobUploadStatus,
   FormFileUploadZone,
   UserAvatar,
   UserAvatarGroup,
@@ -173,10 +188,16 @@ export {
   keyboardClick,
   useDebouncedTextInput,
   buildManualPromise,
-  CommonProgressBar
+  CommonProgressBar,
+  resolveFileExtension,
+  generateFileId,
+  FormRange,
+  FormDualRange
 }
 export type {
+  FormRadioGroupItem,
   LayoutDialogButton,
+  LayoutHeaderButton,
   ToastNotification,
   BulletStepType,
   NumberStepType,

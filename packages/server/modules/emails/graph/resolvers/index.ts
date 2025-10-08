@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { findPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
 import {
@@ -26,7 +26,7 @@ const requestEmailVerification = requestEmailVerificationFactory({
 })
 const getUserByEmail = getUserByEmailFactory({ db })
 
-export = {
+export default {
   User: {
     async hasPendingVerification(parent) {
       const email = parent.email

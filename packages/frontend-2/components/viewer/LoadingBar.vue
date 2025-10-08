@@ -1,10 +1,6 @@
 <template>
-  <div :class="`${loadProgress < 1 && viewerBusy ? 'mt-0' : '-mt-5'} transition-all`">
-    <div
-      :class="`absolute w-full max-w-screen flex justify-center ${
-        !isEmbedEnabled ? 'mt-14' : 'mt-0'
-      }  z-50`"
-    >
+  <div :class="containerClasses">
+    <div v-show="loading" class="absolute w-full max-w-screen flex justify-center z-50">
       <div
         class="relative bg-blue-500/50 mt-0 h-4 rounded-b-lg select-none px-2 py-1 w-2/3 lg:w-1/3 overflow-hidden"
       >
@@ -22,8 +18,19 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
-const { isEnabled: isEmbedEnabled } = useEmbed()
-const { viewerBusy, loadProgress } = useInjectedViewerInterfaceState()
+
+const { loading, loadProgress } = useInjectedViewerInterfaceState()
+
+const containerClasses = computed(() => {
+  const classParts = ['absolute left-0 right-0 z-40 h-30', 'transition-all']
+
+  if (loadProgress.value < 1 && loading.value) {
+    classParts.push('mt-0')
+  } else {
+    classParts.push('-mt-5')
+  }
+
+  return classParts.join(' ')
+})
 </script>

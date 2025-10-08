@@ -8,7 +8,7 @@ import type { GenReqId } from 'pino-http'
 import type { IncomingMessage, ServerResponse } from 'http'
 import { ensureError, type Optional } from '@speckle/shared'
 import { getRequestParameters, getRequestPath } from '@/modules/core/helpers/server'
-import { get } from 'lodash'
+import { get } from 'lodash-es'
 
 export const REQUEST_ID_HEADER = 'x-request-id'
 
@@ -145,7 +145,7 @@ export const LoggingExpressMiddleware = HttpLogger({
           headers: Record<string, string>
         }
       }
-      const serverRes = get(res, 'raw.raw') as ServerResponse
+      const serverRes = get(res, 'raw.raw') as unknown as ServerResponse
       const auth = serverRes.req.context
       const statusCode = res.statusCode || res.raw.statusCode || serverRes.statusCode
 

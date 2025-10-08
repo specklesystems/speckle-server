@@ -2,15 +2,15 @@ import { getEncryptionKeyPair } from '@/modules/automate/services/encryption'
 import { base64Decode } from '@/modules/shared/helpers/cryptoHelper'
 import { getFrontendOrigin, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { buildDecryptor, buildEncryptor } from '@/modules/shared/utils/libsodium'
-import { SsoSessionState } from '@/modules/workspaces/domain/sso/types'
+import type { SsoSessionState } from '@/modules/workspaces/domain/sso/types'
 import {
   OidcStateInvalidError,
   OidcStateMissingError,
   SsoVerificationCodeMissingError
 } from '@/modules/workspaces/errors/sso'
-import { OidcProvider } from '@/modules/workspaces/domain/sso/types'
-import { Request } from 'express'
-import { omit } from 'lodash'
+import type { OidcProvider } from '@/modules/workspaces/domain/sso/types'
+import type { Request } from 'express'
+import { omit } from 'lodash-es'
 
 declare module 'express-session' {
   interface SessionData {

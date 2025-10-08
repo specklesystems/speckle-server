@@ -4,7 +4,7 @@
       title="Unlimited projects and models"
       :subtitle="`${addonPrice} per editor/month`"
       info="Power through with unlimited projects and models in your workspace."
-      disclaimer="Only on Starter & Business plans"
+      disclaimer="Only on Business plan"
       :button="unlimitedAddOnButton"
     />
 
@@ -51,7 +51,7 @@ const props = defineProps<{
 }>()
 
 const {
-  isPaidPlan,
+  isBusinessPlan,
   currency,
   plan,
   intervalIsYearly,
@@ -78,14 +78,14 @@ const addOnButtonTooltip = computed(() => {
     return 'You must be a workspace admin in order to purchase the add-on'
   if (hasUnlimitedAddon.value)
     return 'The add-on is already included in your subscription'
-  if (!isPaidPlan.value) return 'Only available for Starter & Business plans'
+  if (!isBusinessPlan.value) return 'Only available for the Business plan'
   return undefined
 })
 
 const unlimitedAddOnButton = computed(() => ({
   text: 'Buy add-on',
   id: 'buy-add-on',
-  disabled: !isPaidPlan.value || hasUnlimitedAddon.value || !isAdmin.value,
+  disabled: !isBusinessPlan.value || hasUnlimitedAddon.value || !isAdmin.value,
   disabledMessage: addOnButtonTooltip.value,
   onClick: () => {
     isUpgradeDialogOpen.value = true

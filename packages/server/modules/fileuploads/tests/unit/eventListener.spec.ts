@@ -1,13 +1,12 @@
 import { buildTestProject } from '@/modules/core/tests/helpers/creation'
-import {
-  buildMixpanelFake,
-  MixpanelFakeEventRecord
-} from '@/modules/shared/test/helpers/mixpanel'
+import type { MixpanelFakeEventRecord } from '@/modules/shared/test/helpers/mixpanel'
+import { buildMixpanelFake } from '@/modules/shared/test/helpers/mixpanel'
 import { fileuploadTrackingFactory } from '@/modules/fileuploads/events/eventListener'
 import { buildTestUserWithOptionalRole } from '@/test/authHelper'
 import { MixpanelEvents } from '@/modules/shared/utils/mixpanel'
 import { FileuploadEvents } from '@/modules/fileuploads/domain/events'
 import { expect } from 'chai'
+import { buildFileUploadRecord } from '@/modules/fileuploads/tests/helpers/creation'
 
 describe('fileuploadsTrackingFactory creates a function, that @fileuploads', () => {
   const workspaceId = 'some_workspace_id'
@@ -27,10 +26,12 @@ describe('fileuploadsTrackingFactory creates a function, that @fileuploads', () 
     await workspaceTracking({
       eventName: FileuploadEvents.Started,
       payload: {
-        userId: user.id,
-        projectId: project.id,
-        fileSize: 1240,
-        fileType: 'test/type'
+        upload: buildFileUploadRecord({
+          userId: user.id,
+          projectId: project.id,
+          fileSize: 1240,
+          fileType: 'test/type'
+        })
       }
     })
 
@@ -56,10 +57,12 @@ describe('fileuploadsTrackingFactory creates a function, that @fileuploads', () 
     await workspaceTracking({
       eventName: FileuploadEvents.Started,
       payload: {
-        userId: user.id,
-        projectId: projectWithoutWorkspace.id,
-        fileSize: 1240,
-        fileType: 'test/type'
+        upload: buildFileUploadRecord({
+          userId: user.id,
+          projectId: projectWithoutWorkspace.id,
+          fileSize: 1240,
+          fileType: 'test/type'
+        })
       }
     })
 

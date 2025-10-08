@@ -1,6 +1,9 @@
 import { Box3, Material, Object3D, WebGLRenderer } from 'three'
 import { type FilterMaterialOptions } from '../materials/Materials.js'
 import { NodeRenderView } from '../tree/NodeRenderView.js'
+import { MeshBatch } from './MeshBatch.js'
+import { InstancedMeshBatch } from './InstancedMeshBatch.js'
+import TextBatch from './TextBatch.js'
 
 export enum GeometryType {
   MESH,
@@ -77,4 +80,29 @@ export const INSTANCE_GRADIENT_BUFFER_STRIDE = 1
 let BATCH_INDEX_COUNTER = 0
 export const getNextBatchIndex = () => {
   return ++BATCH_INDEX_COUNTER
+}
+
+export type AcceleratedBatchTypes = MeshBatch | InstancedMeshBatch | TextBatch
+
+export function isAcceleratedBatchType(batch: Batch): batch is AcceleratedBatchTypes {
+  return (
+    batch &&
+    (batch.geometryType === GeometryType.MESH ||
+      batch.geometryType === GeometryType.TEXT)
+  )
+}
+
+export function isNoneBatchUpdateRange(range: BatchUpdateRange) {
+  return (
+    range.offset === NoneBatchUpdateRange.offset &&
+    range.count === NoneBatchUpdateRange.count
+  )
+}
+
+export function isAllBatchUpdateRange(range: BatchUpdateRange, totalCount?: number) {
+  return (
+    range.offset === AllBatchUpdateRange.offset &&
+    (range.count === AllBatchUpdateRange.count ||
+      (totalCount ? range.count === totalCount : true))
+  )
 }

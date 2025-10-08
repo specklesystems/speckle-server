@@ -1,11 +1,12 @@
-import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import type { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { WorkspaceDomainsInvalidState } from '@/modules/workspaces/errors/workspace'
-import {
+import type {
   LimitedWorkspace,
   Workspace,
   WorkspaceDomain
 } from '@/modules/workspacesCore/domain/types'
-import { Roles, WorkspaceRoles } from '@speckle/shared'
+import type { WorkspaceRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 
 export const userEmailsCompliantWithWorkspaceDomains = ({
   userEmails,
@@ -50,6 +51,7 @@ export const toLimitedWorkspace = (workspace: Workspace): LimitedWorkspace => {
     name: workspace.name,
     description: workspace.description,
     logo: workspace.logo,
-    discoverabilityAutoJoinEnabled: workspace.discoverabilityAutoJoinEnabled
+    discoverabilityAutoJoinEnabled: workspace.discoverabilityAutoJoinEnabled,
+    isExclusive: workspace.isExclusive
   }
 }

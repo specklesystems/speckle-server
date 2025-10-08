@@ -3,34 +3,13 @@ import {
   createRandomEmail,
   createRandomPassword
 } from '@/modules/core/helpers/testHelpers'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import {
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory,
-  findEmailFactory
-} from '@/modules/core/repositories/userEmails'
-import {
-  countAdminUsersFactory,
-  legacyGetUserFactory,
-  storeUserAclFactory,
-  storeUserFactory
-} from '@/modules/core/repositories/users'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import {
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { legacyGetUserFactory } from '@/modules/core/repositories/users'
 import { createTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import { beforeEachContext } from '@/test/hooks'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import request from 'supertest'
-import { Express } from 'express'
+import type { Express } from 'express'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import {
   storeApiTokenFactory,
@@ -41,41 +20,9 @@ import {
 import { PaidWorkspacePlans, Scopes } from '@speckle/shared'
 import { expect } from 'chai'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-import { getEventBus } from '@/modules/shared/services/eventBus'
+import { createTestUser } from '@/test/authHelper'
 
-const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail: findEmailFactory({ db }),
-  getUser,
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-
-const createUserEmail = validateAndCreateUserEmailFactory({
-  createUserEmail: createUserEmailFactory({ db }),
-  ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-  findEmail: findEmailFactory({ db }),
-  updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-    deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-    updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-  }),
-  requestNewEmailVerification
-})
-
-const findEmail = findEmailFactory({ db })
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: createUserEmail,
-  emitEvent: getEventBus().emit
-})
-
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
   storeTokenScopes: storeTokenScopesFactory({ db }),
@@ -95,7 +42,7 @@ describe('Objects REST @core', () => {
   ;(FF_BILLING_INTEGRATION_ENABLED ? it : it.skip)(
     'should return an error if the project is read-only',
     async () => {
-      const userId = await createUser({
+      const { id: userId } = await createTestUser({
         name: 'emails user',
         email: createRandomEmail(),
         password: createRandomPassword()

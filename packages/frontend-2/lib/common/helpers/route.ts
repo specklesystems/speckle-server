@@ -2,6 +2,7 @@ import type { LocationQueryRaw } from 'vue-router'
 import { usePostAuthRedirect } from '~/lib/auth/composables/postAuthRedirect'
 import { deserializeHashState, serializeHashState } from '~~/lib/common/composables/url'
 import type { ViewerHashStateKeys } from '~~/lib/viewer/composables/setup/urlHashState'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 export const profileRoute = '/profile'
 export const authBlockedDueToVerificationRoute = '/error-email-verify'
@@ -14,15 +15,15 @@ export const forgottenPasswordRoute = '/authn/forgotten-password'
 export const verifyEmailRoute = '/verify-email'
 export const verifyEmailCountdownRoute = '/verify-email?source=registration'
 export const serverManagementRoute = '/server-management'
+export const accLoginRoute = '/authn/acc'
+export const accRoute = '/acc'
 export const connectorsRoute = '/connectors'
 export const tutorialsRoute = '/tutorials'
 export const docsPageUrl = 'https://docs.speckle.systems/'
 export const forumPageUrl = 'https://speckle.community/'
-export const defaultZapierWebhookUrl =
-  'https://hooks.zapier.com/hooks/catch/12120532/2m4okri/'
 export const guideBillingUrl = 'https://docs.speckle.systems/workspaces/billing'
-export const bookDemoRoute = '/book-a-demo'
 export const onboardingRoute = '/onboarding'
+export const viewerDocsRoute = 'https://docs.speckle.systems/3d-viewer/interface-nav'
 
 export const settingsUserRoutes = {
   profile: '/settings/user/profile',
@@ -41,45 +42,63 @@ export const settingsServerRoutes = {
 export const settingsWorkspaceRoutes = {
   general: {
     name: 'settings-workspaces-slug-general',
-    route: (slug?: string) => `/settings/workspaces/${slug}/general`
+    route: (slug: MaybeNullOrUndefined<string>) =>
+      slug ? `/settings/workspaces/${slug}/general` : '/'
   },
   members: {
     name: 'settings-workspaces-slug-members',
-    route: (slug?: string) => `/settings/workspaces/${slug}/members`
+    route: (slug: MaybeNullOrUndefined<string>) =>
+      slug ? `/settings/workspaces/${slug}/members` : '/'
   },
   membersGuests: {
     name: 'settings-workspaces-slug-members-guests',
-    route: (slug?: string) => `/settings/workspaces/${slug}/members/guests`
+    route: (slug: MaybeNullOrUndefined<string>) =>
+      slug ? `/settings/workspaces/${slug}/members/guests` : '/'
   },
   membersInvites: {
     name: 'settings-workspaces-slug-members-invites',
-    route: (slug?: string) => `/settings/workspaces/${slug}/members/invites`
+    route: (slug: MaybeNullOrUndefined<string>) =>
+      slug ? `/settings/workspaces/${slug}/members/invites` : '/'
   },
   membersRequests: {
     name: 'settings-workspaces-slug-members-requests',
-    route: (slug?: string) => `/settings/workspaces/${slug}/members/requests`
+    route: (slug: MaybeNullOrUndefined<string>) =>
+      slug ? `/settings/workspaces/${slug}/members/requests` : '/'
   },
   projects: {
     name: 'settings-workspaces-slug-projects',
-    route: (slug?: string) => `/settings/workspaces/${slug}/projects`
+    route: (slug: MaybeNullOrUndefined<string>) =>
+      slug ? `/settings/workspaces/${slug}/projects` : '/'
+  },
+  integrations: {
+    name: 'settings-workspaces-slug-integrations',
+    route: (slug: MaybeNullOrUndefined<string>) =>
+      slug ? `/settings/workspaces/${slug}/integrations` : '/'
+  },
+  automation: {
+    name: 'settings-workspaces-slug-automation',
+    route: (slug?: string) => `/settings/workspaces/${slug}/automation`
   },
   security: {
     name: 'settings-workspaces-slug-security',
-    route: (slug?: string) => `/settings/workspaces/${slug}/security`
+    route: (slug: MaybeNullOrUndefined<string>) =>
+      slug ? `/settings/workspaces/${slug}/security` : '/'
   },
   billing: {
     name: 'settings-workspaces-slug-billing',
-    route: (slug?: string) => `/settings/workspaces/${slug}/billing`
+    route: (slug: MaybeNullOrUndefined<string>) =>
+      slug ? `/settings/workspaces/${slug}/billing` : '/'
   },
   regions: {
     name: 'settings-workspaces-slug-regions',
-    route: (slug?: string) => `/settings/workspaces/${slug}/regions`
+    route: (slug: MaybeNullOrUndefined<string>) =>
+      slug ? `/settings/workspaces/${slug}/regions` : '/'
   }
 }
 
 export const projectRoute = (
   id: string,
-  tab?: 'models' | 'discussions' | 'automations' | 'collaborators' | 'settings'
+  tab?: 'models' | 'discussions' | 'automations' | 'collaborators' | 'settings' | 'acc'
 ) => {
   let res = `/projects/${id}`
   if (tab && tab !== 'models') {
@@ -100,6 +119,8 @@ export const modelRoute = (
   `/projects/${projectId}/models/${resourceIdString}${
     hashState ? serializeHashState(hashState) || '' : ''
   }`
+export const viewerRoute = modelRoute
+
 export const modelVersionsRoute = (projectId: string, modelId: string) =>
   `/projects/${projectId}/models/${modelId}/versions`
 
@@ -115,6 +136,12 @@ export const projectSettingsRoute = (projectId: string) =>
 export const projectWebhooksRoute = (projectId: string) =>
   `/projects/${projectId}/settings/webhooks`
 
+export const projectTokensRoute = (projectId: string) =>
+  `/projects/${projectId}/settings/tokens`
+
+export const projectIntegrationsRoute = (projectId: string) =>
+  `/projects/${projectId}/settings/integrations`
+
 export const threadRedirectRoute = (projectId: string, threadId: string) =>
   `/projects/${projectId}/threads/${threadId}`
 
@@ -129,14 +156,28 @@ export const publicAutomateFunctionsRoute = '/functions'
 export const automateFunctionRoute = (functionId: string) =>
   `${publicAutomateFunctionsRoute}/${functionId}`
 
-export const workspaceRoute = (slug?: string) => `/workspaces/${slug}`
+export const workspaceRoute = (slug: MaybeNullOrUndefined<string>) =>
+  slug ? `/workspaces/${slug}` : '/'
 export const workspaceSsoRoute = (slug: string) => `/workspaces/${slug}/sso`
+
+export const dashboardsRoute = (slug?: MaybeNullOrUndefined<string>) =>
+  `/workspaces/${slug}/dashboards`
+
+export const dashboardRoute = (slug?: MaybeNullOrUndefined<string>, id?: string) =>
+  `/workspaces/${slug}/dashboards/${id}`
 
 export const workspaceCreateRoute = '/workspaces/actions/create'
 
 export const workspaceJoinRoute = '/workspaces/actions/join'
 
-export const workspaceFunctionsRoute = (slug: string) => `/workspaces/${slug}/functions`
+export const workspaceFunctionsRoute = (slug?: string) =>
+  `/workspaces/${slug}/functions`
+
+export const workspaceIntegrationSettingsRoute = (slug?: string) =>
+  `/settings/workspaces/${slug}/integrations`
+
+export const presentationRoute = (projectId?: string, presentationId?: string) =>
+  `/projects/${projectId}/presentations/${presentationId}`
 
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()
@@ -183,7 +224,7 @@ export const doesRouteFitTarget = (fullPathA: string, fullPathB: string) => {
     urlA = new URL(fullPathA, fakeOrigin)
     urlB = new URL(fullPathB, fakeOrigin)
   } catch (e) {
-    useLogger().warn('Failed to parse URLs', e)
+    useSafeLogger().logger().warn('Failed to parse URLs', e)
     return false
   }
 

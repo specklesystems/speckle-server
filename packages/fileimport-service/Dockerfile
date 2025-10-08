@@ -12,6 +12,7 @@ WORKDIR /speckle-server
 
 # configure tini
 ARG TINI_VERSION=v0.19.0
+ARG SPECKLE_IFC_VERSION=0.2.2
 
 # hadolint ignore=DL3008
 RUN apt-get update -y \
@@ -19,7 +20,11 @@ RUN apt-get update -y \
      --no-install-recommends \
      ca-certificates=20240203 \
      curl=8.5.0-2ubuntu10.6 \
-     gosu=1.17-1ubuntu0.24.04.2 \
+     gosu=1.17-1ubuntu0.24.04.3 \
+    && curl -L -o speckleifc.tar.gz https://github.com/specklesystems/speckleifc/archive/refs/tags/v${SPECKLE_IFC_VERSION}.tar.gz \
+    && mkdir speckleifc \
+    && tar --strip-components=1 -C speckleifc -xzf speckleifc.tar.gz speckleifc-${SPECKLE_IFC_VERSION} \
+    && rm speckleifc.tar.gz \
     && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /usr/bin/tini \
     && chmod +x /usr/bin/tini \
     && curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh \
@@ -53,8 +58,8 @@ RUN yarn workspaces foreach -W run build
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
-     python3.12=3.12.3-1ubuntu0.5 \
-     python3-pip=24.0+dfsg-1ubuntu1.1 \
+     python3.12=3.12.3-1ubuntu0.8 \
+     python3-pip=24.0+dfsg-1ubuntu1.3 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

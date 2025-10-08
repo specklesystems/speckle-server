@@ -21,7 +21,7 @@ import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh.js'
 import { SpeckleType } from '../loaders/GeometryConverter.js'
 import { type TreeNode, WorldTree } from '../../index.js'
 import { InstancedMeshBatch } from './InstancedMeshBatch.js'
-import { Geometry } from '../converter/Geometry.js'
+import { Geometry, GeometryData } from '../converter/Geometry.js'
 import { MeshBatch } from './MeshBatch.js'
 import { PointBatch } from './PointBatch.js'
 import Logger from '../utils/Logger.js'
@@ -40,6 +40,7 @@ export default class Batcher {
   private maxBatchObjects = 0
   private maxBatchVertices = 500000
   private minInstancedBatchVertices = 10000
+  private maxBatchTextObjects = 5000
   public materials: Materials
   public batches: { [id: string]: Batch } = {}
 
@@ -138,23 +139,27 @@ export default class Batcher {
           needsRTE
         ) {
           rvs.forEach((nodeRv) => {
-            const geometry = nodeRv.renderData.geometry
+            const geometry = nodeRv.renderData.geometry as GeometryData
             geometry.instanced = false
-            const attribs = geometry.attributes
-            geometry.attributes = {
-              POSITION: attribs.POSITION.slice(),
-              INDEX: attribs.INDEX.slice(),
-              ...(attribs.COLOR && {
-                COLOR: attribs.COLOR.slice()
-              })
-            }
-            /**  - I don't particularly like this branch -
-             *  All instances should have a transform. But it's the easiest thing we can do
-             *  until we figure out the viewer <-> connector object duplication inconsistency
-             */
-            if (geometry.transform)
-              Geometry.transformGeometryData(geometry, geometry.transform)
-            nodeRv.computeAABB()
+            nodeRv.computeAABB(geometry.transform)
+            if ((geometry.transform?.determinant() ?? 0) < 0)
+              geometry.flipNormals = true
+            /** I don't think we need to duplicate geometry here, now that we're transforming the batch position directly */
+            // const attribs = geometry.attributes
+            // geometry.attributes = {
+            //   POSITION: attribs.POSITION.slice(),
+            //   INDEX: attribs.INDEX.slice(),
+            //   ...(attribs.COLOR && {
+            //     COLOR: attribs.COLOR.slice()
+            //   })
+            // }
+            // /**  - I don't particularly like this branch -
+            //  *  All instances should have a transform. But it's the easiest thing we can do
+            //  *  until we figure out the viewer <-> connector object duplication inconsistency
+            //  */
+            // if (geometry.transform)
+            //   Geometry.transformGeometryData(geometry, geometry.transform)
+            // nodeRv.computeAABB()
           })
           continue
         }
@@ -284,25 +289,35 @@ export default class Batcher {
     }
     /** Finally we're splitting again based on the batch's max object count */
     const geometryType = renderViews[0].geometryType
-    if (geometryType === GeometryType.MESH) {
-      const oSplit = []
-      for (let i = 0; i < vSplit.length; i++) {
-        const objCount = vSplit[i].length
-        const div = Math.floor(objCount / this.maxBatchObjects)
-        const mod = objCount % this.maxBatchObjects
-        let index = 0
-        for (let k = 0; k < div; k++) {
-          oSplit.push(vSplit[i].slice(index, index + this.maxBatchObjects))
-          index += this.maxBatchObjects
-        }
-        if (mod > 0) {
-          oSplit.push(vSplit[i].slice(index, index + mod))
-        }
-      }
-      return oSplit
-    }
+    const maxCount = this.getMaxObjectCount(geometryType)
+    if (!maxCount) return vSplit
 
-    return vSplit
+    const oSplit = []
+    for (let i = 0; i < vSplit.length; i++) {
+      const objCount = vSplit[i].length
+      const div = Math.floor(objCount / maxCount)
+      const mod = objCount % maxCount
+      let index = 0
+      for (let k = 0; k < div; k++) {
+        oSplit.push(vSplit[i].slice(index, index + maxCount))
+        index += maxCount
+      }
+      if (mod > 0) {
+        oSplit.push(vSplit[i].slice(index, index + mod))
+      }
+    }
+    return oSplit
+  }
+
+  private getMaxObjectCount(geometryType: GeometryType) {
+    switch (geometryType) {
+      case GeometryType.MESH:
+        return this.maxBatchObjects
+      case GeometryType.TEXT:
+        return this.maxBatchTextObjects
+      default:
+        return 0
+    }
   }
 
   private async buildInstancedBatch(
@@ -372,7 +387,9 @@ export default class Batcher {
     } else if (geometryType === GeometryType.POINT_CLOUD) {
       matRef = renderViews[0].renderData.renderMaterial
     } else if (geometryType === GeometryType.TEXT) {
-      matRef = renderViews[0].renderData.displayStyle
+      matRef = renderViews[0].renderData.colorMaterial
+        ? renderViews[0].renderData.colorMaterial
+        : renderViews[0].renderData.displayStyle
     }
 
     const material = this.materials.getMaterial(materialHash, matRef, geometryType)
@@ -454,6 +471,9 @@ export default class Batcher {
         return this.getStencil()
       case ObjectVisibility.DEPTH:
         return this.getDepth()
+      case ObjectVisibility.CUSTOM:
+        Logger.error('Custom visibility requires visibility function')
+        return {}
     }
   }
 
@@ -539,6 +559,15 @@ export default class Batcher {
   public getBatches<K extends GeometryType>(
     subtreeId?: string,
     geometryType?: K
+  ): BatchTypeMap[K][]
+  public getBatches<K extends GeometryType>(
+    subtreeId?: string,
+    geometryType?: Array<K>
+  ): BatchTypeMap[K][]
+
+  public getBatches<K extends GeometryType>(
+    subtreeId?: string,
+    geometryType?: K | Array<K>
   ): BatchTypeMap[K][] {
     const batches: Batch[] = Object.values(this.batches)
     return batches.filter((value: Batch) => {
@@ -551,23 +580,34 @@ export default class Batcher {
 
   private isBatchType<K extends GeometryType>(
     batch: Batch,
-    geometryType?: K
+    geometryType?: K | Array<K>
   ): batch is BatchTypeMap[K] {
     if (geometryType === undefined) return true
-    switch (geometryType) {
-      case GeometryType.MESH:
-        return batch instanceof MeshBatch || batch instanceof InstancedMeshBatch
-      case GeometryType.LINE:
-        return batch instanceof LineBatch
-      case GeometryType.POINT:
-        return batch instanceof PointBatch
-      case GeometryType.POINT_CLOUD:
-        return batch instanceof PointBatch
-      case GeometryType.TEXT:
-        return batch instanceof TextBatch
-      default:
-        return false
-    }
+    let isBatchType = false
+    const array = Array.isArray(geometryType) ? geometryType : [geometryType]
+    array.forEach((value: K) => {
+      switch (value) {
+        case GeometryType.MESH:
+          isBatchType ||=
+            batch instanceof MeshBatch || batch instanceof InstancedMeshBatch
+          break
+        case GeometryType.LINE:
+          isBatchType ||= batch instanceof LineBatch
+          break
+        case GeometryType.POINT:
+          isBatchType ||= batch instanceof PointBatch
+          break
+        case GeometryType.POINT_CLOUD:
+          isBatchType ||= batch instanceof PointBatch
+          break
+        case GeometryType.TEXT:
+          isBatchType ||= batch instanceof TextBatch
+          break
+        default:
+          isBatchType = false
+      }
+    })
+    return isBatchType
   }
 
   public getBatch(rv: NodeRenderView): Batch | undefined {

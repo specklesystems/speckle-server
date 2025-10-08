@@ -87,9 +87,13 @@
       "./package.json": "./package.json",
       "./pinoPrettyTransport.cjs": "./pinoPrettyTransport.cjs",
       "./environment": "./src/environment/index.ts",
-      "./environment/multiRegionConfig": "./src/environment/multiRegionConfig.ts",
+      "./environment/featureFlags": "./src/environment/featureFlags.ts",
+      "./environment/db": "./src/environment/db.ts",
+      "./environment/node": "./src/environment/node.ts",
+      "./environment/multiRegionConfig": "./src/environment/db.ts",
       "./observability": "./src/observability/index.ts",
       "./observability/mixpanel": "./src/observability/mixpanel.ts",
+      "./blobs": "./src/blobs/index.ts",
       "./previews": "./src/previews/index.ts",
       "./authz": "./src/authz/index.ts",
       "./queue": "./src/queue/index.ts",
@@ -99,7 +103,12 @@
       "./workers/fileimport": "./src/workers/fileimport/index.ts",
       "./viewer": "./src/viewer/index.ts",
       "./viewer/route": "./src/viewer/helpers/route.ts",
-      "./dist/*": "./dist/*"
+      "./viewer/state": "./src/viewer/helpers/state.ts",
+      "./automate": "./src/automate/index.ts",
+      "./acc": "./src/acc/index.ts",
+      "./dist/*": "./dist/*",
+      "./images/base64": "./src/images/base64.ts",
+      "./saved-views": "./src/saved-views/index.ts"
     },
     "exclude": [
       "**/*.spec.ts",
@@ -135,14 +144,44 @@
         "default": "./dist/commonjs/environment/index.js"
       }
     },
-    "./environment/multiRegionConfig": {
+    "./environment/featureFlags": {
       "import": {
-        "types": "./dist/esm/environment/multiRegionConfig.d.ts",
-        "default": "./dist/esm/environment/multiRegionConfig.js"
+        "types": "./dist/esm/environment/featureFlags.d.ts",
+        "default": "./dist/esm/environment/featureFlags.js"
       },
       "require": {
-        "types": "./dist/commonjs/environment/multiRegionConfig.d.ts",
-        "default": "./dist/commonjs/environment/multiRegionConfig.js"
+        "types": "./dist/commonjs/environment/featureFlags.d.ts",
+        "default": "./dist/commonjs/environment/featureFlags.js"
+      }
+    },
+    "./environment/db": {
+      "import": {
+        "types": "./dist/esm/environment/db.d.ts",
+        "default": "./dist/esm/environment/db.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/environment/db.d.ts",
+        "default": "./dist/commonjs/environment/db.js"
+      }
+    },
+    "./environment/node": {
+      "import": {
+        "types": "./dist/esm/environment/node.d.ts",
+        "default": "./dist/esm/environment/node.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/environment/node.d.ts",
+        "default": "./dist/commonjs/environment/node.js"
+      }
+    },
+    "./environment/multiRegionConfig": {
+      "import": {
+        "types": "./dist/esm/environment/db.d.ts",
+        "default": "./dist/esm/environment/db.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/environment/db.d.ts",
+        "default": "./dist/commonjs/environment/db.js"
       }
     },
     "./observability": {
@@ -163,6 +202,16 @@
       "require": {
         "types": "./dist/commonjs/observability/mixpanel.d.ts",
         "default": "./dist/commonjs/observability/mixpanel.js"
+      }
+    },
+    "./blobs": {
+      "import": {
+        "types": "./dist/esm/blobs/index.d.ts",
+        "default": "./dist/esm/blobs/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/blobs/index.d.ts",
+        "default": "./dist/commonjs/blobs/index.js"
       }
     },
     "./previews": {
@@ -255,6 +304,56 @@
         "default": "./dist/commonjs/viewer/helpers/route.js"
       }
     },
-    "./dist/*": "./dist/*"
+    "./viewer/state": {
+      "import": {
+        "types": "./dist/esm/viewer/helpers/state.d.ts",
+        "default": "./dist/esm/viewer/helpers/state.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/viewer/helpers/state.d.ts",
+        "default": "./dist/commonjs/viewer/helpers/state.js"
+      }
+    },
+    "./automate": {
+      "import": {
+        "types": "./dist/esm/automate/index.d.ts",
+        "default": "./dist/esm/automate/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/automate/index.d.ts",
+        "default": "./dist/commonjs/automate/index.js"
+      }
+    },
+    "./acc": {
+      "import": {
+        "types": "./dist/esm/acc/index.d.ts",
+        "default": "./dist/esm/acc/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/acc/index.d.ts",
+        "default": "./dist/commonjs/acc/index.js"
+      }
+    },
+    "./dist/*": "./dist/*",
+    "./images/base64": {
+      "import": {
+        "types": "./dist/esm/images/base64.d.ts",
+        "default": "./dist/esm/images/base64.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/images/base64.d.ts",
+        "default": "./dist/commonjs/images/base64.js"
+      }
+    },
+    "./saved-views": {
+      "import": {
+        "types": "./dist/esm/saved-views/index.d.ts",
+        "default": "./dist/esm/saved-views/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/saved-views/index.d.ts",
+        "default": "./dist/commonjs/saved-views/index.js"
+      }
+    }
   }
 }

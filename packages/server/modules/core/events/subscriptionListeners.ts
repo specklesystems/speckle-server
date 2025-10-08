@@ -1,9 +1,9 @@
 import { ModelEvents } from '@/modules/core/domain/branches/events'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
-import { GetStreamCollaborators } from '@/modules/core/domain/streams/operations'
+import type { GetStreamCollaborators } from '@/modules/core/domain/streams/operations'
+import type { CommitUpdateInput } from '@/modules/core/graph/generated/graphql'
 import {
-  CommitUpdateInput,
   ProjectModelsUpdatedMessageType,
   ProjectUpdatedMessageType,
   ProjectVersionsUpdatedMessageType,
@@ -16,15 +16,15 @@ import {
   CommitPubsubEvents,
   StreamPubsubEvents
 } from '@/modules/shared'
-import { DependenciesOf } from '@/modules/shared/helpers/factory'
-import { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
+import type { DependenciesOf } from '@/modules/shared/helpers/factory'
+import type { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
+import type { PublishSubscription } from '@/modules/shared/utils/subscriptions'
 import {
   ProjectSubscriptions,
-  PublishSubscription,
   UserSubscriptions,
   WorkspaceSubscriptions
 } from '@/modules/shared/utils/subscriptions'
-import { chunk, flatten } from 'lodash'
+import { chunk, flatten } from 'lodash-es'
 
 const reportModelCreatedFactory =
   (deps: { publish: PublishSubscription }) =>

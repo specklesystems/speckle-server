@@ -5,6 +5,7 @@ import {
   type Batch,
   type BatchUpdateRange,
   GeometryType,
+  isNoneBatchUpdateRange,
   NoneBatchUpdateRange
 } from './Batch.js'
 import { type DrawGroup } from './Batch.js'
@@ -85,7 +86,7 @@ export abstract class PrimitiveBatch implements Batch {
 
   public setVisibleRange(ranges: BatchUpdateRange[]) {
     /** Entire batch needs to NOT be drawn */
-    if (ranges.length === 1 && ranges[0] === NoneBatchUpdateRange) {
+    if (ranges.length === 1 && isNoneBatchUpdateRange(ranges[0])) {
       this.primitive.geometry.setDrawRange(0, 0)
       /** We unset the 'visible' flag, otherwise three.js will still run pointless buffer binding commands*/
       this.primitive.visible = false
@@ -184,7 +185,7 @@ export abstract class PrimitiveBatch implements Batch {
         offset: transparentGroup.start,
         count:
           hiddenGroup !== undefined
-            ? hiddenGroup.start
+            ? hiddenGroup.start - transparentGroup.start
             : this.getCount() - transparentGroup.start
       }
     }

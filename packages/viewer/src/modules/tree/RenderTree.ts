@@ -3,7 +3,6 @@ import { type TreeNode, WorldTree } from './WorldTree.js'
 import Materials from '../materials/Materials.js'
 import { type NodeRenderData, NodeRenderView } from './NodeRenderView.js'
 import { GeometryConverter, SpeckleType } from '../loaders/GeometryConverter.js'
-import { Geometry } from '../converter/Geometry.js'
 import Logger from '../utils/Logger.js'
 
 export class RenderTree {
@@ -15,6 +14,7 @@ export class RenderTree {
   public convertTime = 0
   public getNodeTime = 0
   public otherTime = 0
+  private count = 0
 
   public get id(): string {
     return this.root.model.id
@@ -31,11 +31,11 @@ export class RenderTree {
 
   public buildRenderTree(
     geometryConverter: GeometryConverter,
-    callback?: () => void
+    countCallback?: (count: number) => void
   ): Promise<boolean> {
     const p = this.tree.walkAsync((node: TreeNode): boolean => {
       let start = performance.now()
-      const rendeNode = this.buildRenderNode(node, geometryConverter, callback)
+      const rendeNode = this.buildRenderNode(node, geometryConverter, countCallback)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
       this.buildNodeTime += performance.now() - start
       start = performance.now()
@@ -50,24 +50,29 @@ export class RenderTree {
   private applyTransforms(node: TreeNode) {
     if (node.model.renderView) {
       const transform = this.computeTransform(node)
-      if (node.model.renderView.hasGeometry) {
+      if (node.model.renderView.hasGeometry || node.model.renderView.hasMetadata) {
         if (node.model.renderView.renderData.geometry.bakeTransform) {
           transform.multiply(node.model.renderView.renderData.geometry.bakeTransform)
         }
-        if (
-          node.model.instanced &&
-          node.model.renderView.speckleType === SpeckleType.Mesh
-        )
-          node.model.renderView.renderData.geometry.transform = transform
-        else {
-          Geometry.transformGeometryData(
-            node.model.renderView.renderData.geometry,
-            transform
-          )
-        }
-        node.model.renderView.computeAABB()
-      } else if (node.model.renderView.hasMetadata) {
-        node.model.renderView.renderData.geometry.bakeTransform.premultiply(transform)
+        node.model.renderView.renderData.geometry.transform = transform
+        node.model.renderView.computeAABB(!node.model.instanced ? transform : undefined)
+        /** I like that this is gone now! */
+        //   if (
+        //     node.model.instanced &&
+        //     node.model.renderView.speckleType === SpeckleType.Mesh
+        //   )
+        //     node.model.renderView.renderData.geometry.transform = transform
+        //   else {
+        //     Geometry.transformGeometryData(
+        //       node.model.renderView.renderData.geometry,
+        //       transform
+        //     )
+        //   }
+        //   node.model.renderView.computeAABB()
+        // } else if (node.model.renderView.hasMetadata) {
+        //   node.model.renderView.renderData.geometry.bakeTransform.premultiply(transform)
+        //   node.model.renderView.computeAABB()
+        // }
       }
     }
   }
@@ -75,12 +80,12 @@ export class RenderTree {
   private buildRenderNode(
     node: TreeNode,
     geometryConverter: GeometryConverter,
-    callback?: () => void
+    countCallback?: (count: number) => void
   ): NodeRenderData | null {
     let ret: NodeRenderData | null = null
     let start = performance.now()
     const geometryData = geometryConverter.convertNodeToGeometryData(node.model)
-    if (callback) callback()
+    countCallback?.(this.count++)
     this.convertTime += performance.now() - start
     if (geometryData) {
       start = performance.now()
@@ -171,6 +176,10 @@ export class RenderTree {
 
   public getInstances() {
     return this.tree.getInstances(this.root.model.subtreeId)
+  }
+
+  public getDuplicates() {
+    return this.tree.getDuplicates(this.root.model.subtreeId)
   }
 
   public getRenderableRenderViews(...types: SpeckleType[]): NodeRenderView[] {

@@ -29,10 +29,7 @@
             v-if="!hasDoneFirstLoad || !finalPreviewUrl?.length"
             :class="[mainPreviewClasses, 'flex items-center justify-center']"
           >
-            <div class="lds-ripple">
-              <div></div>
-              <div></div>
-            </div>
+            <CommonLoadingIcon class="opacity-50" />
           </div>
           <div
             v-else
@@ -55,6 +52,7 @@
         v-show="shouldShowPanoramicPreview"
         ref="panorama"
         :style="{
+          display: shouldShowPanoramicPreview ? 'block' : 'none',
           backgroundImage: panoramaPreviewUrl
             ? `url('${panoramaPreviewUrl}')`
             : undefined,
@@ -82,6 +80,7 @@
 </template>
 <script setup lang="ts">
 import type { Nullable } from '@speckle/shared'
+import { CommonLoadingIcon } from '@speckle/ui-components'
 import { useElementVisibility, useResizeObserver } from '@vueuse/core'
 import { usePreviewImageBlob } from '~~/lib/projects/composables/previewImage'
 
@@ -91,9 +90,11 @@ const props = withDefaults(
   defineProps<{
     previewUrl: string
     panoramaOnHover?: boolean
+    eagerLoad?: boolean
   }>(),
   {
-    panoramaOnHover: true
+    panoramaOnHover: true,
+    eagerLoad: true
   }
 )
 
@@ -102,6 +103,7 @@ const finalPreviewTransitioner = ref(
   null as Nullable<{ triggerTransition: () => Promise<void> }>
 )
 
+const { $isAppHydrated } = useNuxtApp()
 const isInViewport = useElementVisibility(parent)
 const basePreviewUrl = computed(() => props.previewUrl)
 const {
@@ -109,8 +111,12 @@ const {
   panoramaPreviewUrl,
   shouldLoadPanorama,
   isLoadingPanorama,
-  hasDoneFirstLoad
-} = usePreviewImageBlob(basePreviewUrl, { enabled: isInViewport })
+  hasDoneFirstLoad,
+  isPanoramaPlaceholder
+} = usePreviewImageBlob(basePreviewUrl, {
+  enabled: computed(() => props.eagerLoad || isInViewport.value),
+  eagerLoad: props.eagerLoad
+})
 
 const hovered = ref(false)
 const panorama = ref(null as Nullable<HTMLDivElement>)
@@ -152,10 +158,18 @@ const shouldShowMainPreview = computed(
   () =>
     (!hovered.value && finalPreviewUrl.value) ||
     isLoadingPanorama.value ||
-    !props.panoramaOnHover
+    !props.panoramaOnHover ||
+    isPanoramaPlaceholder.value ||
+    !panoramaPreviewUrl.value
 )
+
 const shouldShowPanoramicPreview = computed(
-  () => hovered.value && panoramaPreviewUrl.value && props.panoramaOnHover
+  () =>
+    hovered.value &&
+    panoramaPreviewUrl.value &&
+    props.panoramaOnHover &&
+    !isPanoramaPlaceholder.value &&
+    $isAppHydrated.value
 )
 
 onMounted(() => setParentDimensions())
@@ -181,60 +195,6 @@ if (import.meta.client) {
     finalPreviewTransitioner.value?.triggerTransition()
   })
 }
+
+// await init()
 </script>
-<style>
-/** https://loading.io/css/ */
-
-.lds-ripple {
-  display: inline-block;
-  position: relative;
-  width: 80px;
-  height: 80px;
-}
-
-.lds-ripple div {
-  position: absolute;
-  border: 4px solid #cef;
-  opacity: 1;
-  border-radius: 50%;
-  animation: lds-ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
-}
-
-.lds-ripple div:nth-child(2) {
-  animation-delay: -0.5s;
-}
-
-@keyframes lds-ripple {
-  0% {
-    top: 36px;
-    left: 36px;
-    width: 0;
-    height: 0;
-    opacity: 0;
-  }
-
-  4.9% {
-    top: 36px;
-    left: 36px;
-    width: 0;
-    height: 0;
-    opacity: 0;
-  }
-
-  5% {
-    top: 36px;
-    left: 36px;
-    width: 0;
-    height: 0;
-    opacity: 1;
-  }
-
-  100% {
-    top: 0;
-    left: 0;
-    width: 72px;
-    height: 72px;
-    opacity: 0;
-  }
-}
-</style>

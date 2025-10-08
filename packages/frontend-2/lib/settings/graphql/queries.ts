@@ -88,10 +88,15 @@ export const settingsWorkspacesMembersTableQuery = graphql(`
 `)
 
 export const settingsWorkspacesMembersSearchQuery = graphql(`
-  query SettingsWorkspacesMembersSearch($slug: String!, $filter: WorkspaceTeamFilter) {
+  query SettingsWorkspacesMembersSearch(
+    $slug: String!
+    $filter: WorkspaceTeamFilter
+    $limit: Int
+    $cursor: String
+  ) {
     workspaceBySlug(slug: $slug) {
       id
-      team(filter: $filter, limit: 250) {
+      team(filter: $filter, limit: $limit, cursor: $cursor) {
         items {
           id
           ...SettingsWorkspacesMembersTable_WorkspaceCollaborator
@@ -139,6 +144,24 @@ export const settingsWorkspacesSecurityQuery = graphql(`
   query SettingsWorkspaceSecurity($slug: String!) {
     workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesSecurity_Workspace
+    }
+  }
+`)
+
+export const settingsWorkspacesAutomationQuery = graphql(`
+  query SettingsWorkspaceAutomation($slug: String!, $cursor: String = null) {
+    workspaceBySlug(slug: $slug) {
+      id
+      automateFunctions(
+        limit: 10
+        cursor: $cursor
+        filter: { includeFeatured: false }
+      ) {
+        items {
+          ...SettingsWorkspacesAutomationFunctions_AutomateFunction
+        }
+        totalCount
+      }
     }
   }
 `)

@@ -1,12 +1,10 @@
-import { Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import { knex, Objects } from '@/modules/core/dbSchema'
-import { ObjectRecord } from '@/modules/core/helpers/types'
-import {
-  BatchedSelectOptions,
-  executeBatchedSelect
-} from '@/modules/shared/helpers/dbHelper'
-import { Knex } from 'knex'
-import {
+import type { ObjectRecord } from '@/modules/core/helpers/types'
+import type { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
+import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
+import type { Knex } from 'knex'
+import type {
   GetBatchedStreamObjects,
   GetFormattedObject,
   GetObject,
@@ -21,9 +19,9 @@ import {
   StoreObjectsIfNotFound,
   StoreSingleObjectIfNotFound
 } from '@/modules/core/domain/objects/operations'
-import { SpeckleObject } from '@/modules/core/domain/objects/types'
-import { SetOptional } from 'type-fest'
-import { get, set, toNumber } from 'lodash'
+import type { SpeckleObject } from '@/modules/core/domain/objects/types'
+import type { SetOptional } from 'type-fest'
+import { get, set, toNumber } from 'lodash-es'
 import { UserInputError } from '@/modules/core/errors/userinput'
 
 const tables = {
@@ -176,6 +174,18 @@ export const getObjectsStreamFactory =
         )
       )
     return res.stream({ highWaterMark: 500 })
+  }
+
+export const getProjectObjectStreamFactory =
+  (deps: { db: Knex }) =>
+  ({ projectId, objectIds }: { projectId: string; objectIds: string[] }) => {
+    const res = tables
+      .objects(deps.db)
+      .whereIn('id', objectIds)
+      .andWhere({ streamId: projectId })
+      .orderBy('id')
+      .select(knex.raw('"id", data::text as "dataText"'))
+    return res.stream({})
   }
 
 export const hasObjectsFactory =

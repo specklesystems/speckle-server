@@ -9,7 +9,7 @@ import {
   getUserPersonalAccessTokensFactory,
   revokeUserTokenByIdFactory
 } from '@/modules/core/repositories/tokens'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 
@@ -51,7 +51,8 @@ const resolvers = {
             context.userId!,
             args.token.name,
             args.token.scopes.filter(isValidScope),
-            args.token.lifespan || undefined
+            args.token.lifespan || undefined,
+            args.token.limitResources || null
           ),
         {
           logger: context.log,
@@ -77,4 +78,4 @@ const resolvers = {
   }
 } as Resolvers
 
-export = resolvers
+export default resolvers

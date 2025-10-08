@@ -7,8 +7,8 @@ import { expectToThrow } from '@/test/assertionHelper'
 import { mockRedisCacheProviderFactory } from '@/test/redisHelper'
 import { PaidWorkspacePlans, WorkspacePlanBillingIntervals } from '@speckle/shared'
 import { expect } from 'chai'
-import { flatten } from 'lodash'
-import { WorkspacePlanProductAndPriceIds } from '@/modules/gatekeeper/domain/billing'
+import { flatten } from 'lodash-es'
+import type { WorkspacePlanProductAndPriceIds } from '@/modules/gatekeeper/domain/billing'
 
 const testProductAndPriceIds: WorkspacePlanProductAndPriceIds = {
   [PaidWorkspacePlans.Team]: {

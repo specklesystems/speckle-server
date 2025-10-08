@@ -1,9 +1,12 @@
-import { DeleteExistingUserAuthTokens } from '@/modules/auth/domain/operations'
-import {
+import type { DeleteExistingUserAuthTokens } from '@/modules/auth/domain/operations'
+import type {
   ChangeUserPassword,
   GetUserByEmail
 } from '@/modules/core/domain/users/operations'
-import { DeleteTokens, GetPendingToken } from '@/modules/pwdreset/domain/operations'
+import type {
+  DeleteTokens,
+  GetPendingToken
+} from '@/modules/pwdreset/domain/operations'
 import { PasswordRecoveryFinalizationError } from '@/modules/pwdreset/errors'
 
 type InitializeStateDeps = {

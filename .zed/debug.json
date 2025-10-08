@@ -12,5 +12,33 @@
     "skipFiles": ["<node_internals>/**"],
     "env": {},
     "stop_on_entry": false
+  },
+  {
+    "adapter": "JavaScript",
+    "label": "ZED yarn test (server)",
+    "request": "launch",
+    "console": "integratedTerminal",
+    "program": "test",
+    "runtimeExecutable": "yarn",
+    "args": [],
+    "type": "pwa-node",
+    "cwd": "$ZED_WORKTREE_ROOT/packages/server",
+    "skipFiles": ["<node_internals>/**"],
+    "env": {},
+    "stop_on_entry": false
+  },
+  {
+    "adapter": "JavaScript",
+    "label": "ZED yarn test (shared)",
+    "request": "launch",
+    "console": "integratedTerminal",
+    "program": "test",
+    "runtimeExecutable": "yarn",
+    "args": [],
+    "type": "pwa-node",
+    "cwd": "$ZED_WORKTREE_ROOT/packages/shared",
+    "skipFiles": ["<node_internals>/**"],
+    "env": {},
+    "stop_on_entry": false
   }
 ]

@@ -1,46 +1,26 @@
-import {
+import type {
   ConvertLegacyDataToState,
   GetViewerResourcesForComments
 } from '@/modules/comments/domain/operations'
-import { LegacyCommentViewerData } from '@/modules/core/graph/generated/graphql'
-import { viewerResourcesToString } from '@/modules/core/services/commit/viewerResources'
-import { Nullable, SpeckleViewer } from '@speckle/shared'
-import { has, get, intersection, isObjectLike } from 'lodash'
-
-type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
+import type { LegacyCommentViewerData } from '@/modules/core/graph/generated/graphql'
+import { viewerResourcesToString } from '@/modules/viewer/services/viewerResources'
+import type {
+  VersionedSerializedViewerState,
+  SerializedViewerState
+} from '@speckle/shared/viewer/state'
+import {
+  formatSerializedViewerState,
+  isVersionedSerializedViewerState,
+  inputToVersionedState
+} from '@speckle/shared/viewer/state'
+import { intersection, isObjectLike } from 'lodash-es'
 
 export type LegacyData = Partial<LegacyCommentViewerData>
+export type DataStruct = VersionedSerializedViewerState
 
-export type DataStruct = {
-  version: number
-  state: SerializedViewerState
-}
-
-export function inputToDataStruct(
-  inputSerializedViewerState: unknown
-): Nullable<DataStruct> {
-  const state = SpeckleViewer.ViewerState.isSerializedViewerState(
-    inputSerializedViewerState
-  )
-    ? inputSerializedViewerState
-    : null
-  if (!state) return null
-
-  return {
-    version: SpeckleViewer.ViewerState.SERIALIZED_VIEWER_STATE_VERSION,
-    state
-  }
-}
-
-export function isDataStruct(data: unknown): data is DataStruct {
-  if (!data) return false
-  if (!has(data, 'version')) return false
-  const stateRaw = get(data, 'state')
-  return SpeckleViewer.ViewerState.isSerializedViewerState(stateRaw)
-}
-
-export const formatSerializedViewerState =
-  SpeckleViewer.ViewerState.formatSerializedViewerState
+export { formatSerializedViewerState }
+export const inputToDataStruct = inputToVersionedState
+export const isDataStruct = isVersionedSerializedViewerState
 
 export function isLegacyData(data: unknown): data is LegacyData {
   if (!data) return false
@@ -90,7 +70,7 @@ export function convertStateToLegacyData(state: SerializedViewerState): LegacyDa
           1, 0, 0, 0, 1, 0, 0, 0, 1
         ]
       },
-      propertyInfoKey: state.ui.filters.propertyFilter.key
+      propertyInfoKey: state.ui.filters.propertyFilters[0]?.key || null
     },
     location: {
       x: selectionLocation[0] || 0,
@@ -153,10 +133,17 @@ export const convertLegacyDataToStateFactory =
           isolatedObjectIds: data.filters?.isolatedIds || [],
           hiddenObjectIds: data.filters?.hiddenIds || [],
           selectedObjectApplicationIds: {},
-          propertyFilter: {
-            key: data.filters?.propertyInfoKey || null,
-            isApplied: true
-          }
+          propertyFilters: [
+            {
+              key: data.filters?.propertyInfoKey || null,
+              isApplied: true,
+              id: 'legacy-filter',
+              selectedValues: [],
+              condition: 'is'
+            }
+          ],
+          activeColorFilterId: null,
+          filterLogic: 'all'
         },
         camera: {
           position: [
@@ -168,7 +155,13 @@ export const convertLegacyDataToStateFactory =
           isOrthoProjection: !!data.camPos?.[6],
           zoom: data.camPos?.[7] || 1
         },
-        viewMode: 0,
+        viewMode: {
+          mode: 0,
+          edgesColor: 0,
+          edgesEnabled: true,
+          outlineOpacity: 0.75,
+          edgesWeight: 1
+        },
         sectionBox: sectionBox
           ? {
               min: (sectionBox.min as number[]) || [0, 0, 0],
@@ -191,7 +184,8 @@ export const convertLegacyDataToStateFactory =
         },
         measurement: {
           enabled: false,
-          options: null
+          options: null,
+          measurements: []
         }
       }
     }

@@ -5,7 +5,8 @@ import {
 } from '@/modules/core/services/tokens'
 import { validateScopes } from '@/modules/shared'
 import { InvalidAccessCodeRequestError } from '@/modules/auth/errors'
-import { ensureError, Optional, Scopes } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
+import { ensureError, Scopes } from '@speckle/shared'
 import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
 import {
   getAppFactory,
@@ -22,7 +23,7 @@ import {
   createAppTokenFromAccessCodeFactory,
   refreshAppTokenFactory
 } from '@/modules/auth/services/serverApps'
-import { Express } from 'express'
+import type { Express } from 'express'
 import {
   getApiTokenByIdFactory,
   getTokenResourceAccessDefinitionsByIdFactory,
@@ -171,6 +172,11 @@ export default function (app: Express) {
             logger: req.log
           }
         )
+
+        // the token should not be cached by the user's browser or intermediate proxies
+        res.header('Cache-Control', 'no-cache, no-store')
+        res.header('Expires', '0')
+        res.header('Pragma', 'no-cache')
         return res.send(authResponse)
       }
 

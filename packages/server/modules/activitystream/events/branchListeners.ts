@@ -1,27 +1,34 @@
-import {
+import type {
   AddBranchCreatedActivity,
   AddBranchDeletedActivity,
   AddBranchUpdatedActivity,
-  SaveActivity
+  SaveStreamActivity
 } from '@/modules/activitystream/domain/operations'
-import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
+import {
+  StreamActionTypes,
+  StreamResourceTypes
+} from '@/modules/activitystream/helpers/types'
 import { ModelEvents } from '@/modules/core/domain/branches/events'
 import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
-import { EventBusListen } from '@/modules/shared/services/eventBus'
+import type { EventBusListen } from '@/modules/shared/services/eventBus'
 
 /**
  * Save "branch created" activity
  */
 const addBranchCreatedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }): AddBranchCreatedActivity =>
+  ({
+    saveStreamActivity
+  }: {
+    saveStreamActivity: SaveStreamActivity
+  }): AddBranchCreatedActivity =>
   async (params) => {
     const { branch } = params
 
-    await saveActivity({
+    await saveStreamActivity({
       streamId: branch.streamId,
-      resourceType: ResourceTypes.Branch,
+      resourceType: StreamResourceTypes.Branch,
       resourceId: branch.id,
-      actionType: ActionTypes.Branch.Create,
+      actionType: StreamActionTypes.Branch.Create,
       userId: branch.authorId,
       info: { branch },
       message: `Branch created: ${branch.name} (${branch.id})`
@@ -29,16 +36,20 @@ const addBranchCreatedActivityFactory =
   }
 
 const addBranchUpdatedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }): AddBranchUpdatedActivity =>
+  ({
+    saveStreamActivity
+  }: {
+    saveStreamActivity: SaveStreamActivity
+  }): AddBranchUpdatedActivity =>
   async (params) => {
     const { update, userId, oldBranch } = params
 
     const streamId = isBranchUpdateInput(update) ? update.streamId : update.projectId
-    await saveActivity({
+    await saveStreamActivity({
       streamId,
-      resourceType: ResourceTypes.Branch,
+      resourceType: StreamResourceTypes.Branch,
       resourceId: update.id,
-      actionType: ActionTypes.Branch.Update,
+      actionType: StreamActionTypes.Branch.Update,
       userId,
       info: { old: oldBranch, new: update },
       message: `Branch metadata changed for branch ${update.id}`
@@ -46,17 +57,21 @@ const addBranchUpdatedActivityFactory =
   }
 
 const addBranchDeletedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }): AddBranchDeletedActivity =>
+  ({
+    saveStreamActivity
+  }: {
+    saveStreamActivity: SaveStreamActivity
+  }): AddBranchDeletedActivity =>
   async (params) => {
     const { input, userId, branchName } = params
 
     const streamId = isBranchDeleteInput(input) ? input.streamId : input.projectId
     await Promise.all([
-      saveActivity({
+      saveStreamActivity({
         streamId,
-        resourceType: ResourceTypes.Branch,
+        resourceType: StreamResourceTypes.Branch,
         resourceId: input.id,
-        actionType: ActionTypes.Branch.Delete,
+        actionType: StreamActionTypes.Branch.Delete,
         userId,
         info: { branch: { ...input, name: branchName } },
         message: `Branch deleted: '${branchName}' (${input.id})`
@@ -65,7 +80,8 @@ const addBranchDeletedActivityFactory =
   }
 
 export const reportBranchActivityFactory =
-  (deps: { eventListen: EventBusListen; saveActivity: SaveActivity }) => () => {
+  (deps: { eventListen: EventBusListen; saveStreamActivity: SaveStreamActivity }) =>
+  () => {
     const addBranchCreatedActivity = addBranchCreatedActivityFactory(deps)
     const addBranchUpdatedActivity = addBranchUpdatedActivityFactory(deps)
     const addBranchDeletedActivity = addBranchDeletedActivityFactory(deps)

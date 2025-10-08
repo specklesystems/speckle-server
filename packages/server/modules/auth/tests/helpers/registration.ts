@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker'
 import { RelativeURL } from '@speckle/shared'
 import { expect } from 'chai'
 import type { Express } from 'express'
-import { has, isString } from 'lodash'
+import { has, isString } from 'lodash-es'
 import request from 'supertest'
 
 export const appId = 'spklwebapp' // same values as on FE
@@ -213,7 +213,7 @@ export const localAuthRestApi = (params: { express: Express }) => {
 
     const user = await authCheck({ token })
     expect(user).to.be.ok
-    expect(user.email).to.equal(params.email)
+    expect(user.email.toLowerCase()).to.equal(params.email.toLowerCase())
 
     return user
   }

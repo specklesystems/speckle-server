@@ -22,7 +22,11 @@ export function useUserProjectsUpdatedTracking() {
           }
         }
       }
-    `)
+    `),
+    {},
+    () => ({
+      errorPolicy: 'all'
+    })
   )
 
   onUserProjectsUpdate((res) => {

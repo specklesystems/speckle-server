@@ -1,6 +1,6 @@
-import { GetWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
-import { GetWorkspacePlanByProjectId } from '@/modules/gatekeeper/domain/operations'
-import { Workspace } from '@/modules/workspacesCore/domain/types'
+import type { GetWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
+import type { GetWorkspacePlanByProjectId } from '@/modules/gatekeeper/domain/operations'
+import type { Workspace } from '@/modules/workspacesCore/domain/types'
 import { isWorkspacePlanStatusReadOnly } from '@speckle/shared'
 
 export const isWorkspaceReadOnlyFactory =

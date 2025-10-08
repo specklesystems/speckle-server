@@ -1,4 +1,4 @@
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 
 import { validateScopes } from '@/modules/shared'
 import { Roles, Scopes } from '@speckle/shared'
@@ -19,7 +19,7 @@ const dummyHistory = [
   { '11': 0 }
 ]
 
-export = {
+export default {
   Query: {
     /**
      * @deprecated('Use admin.serverStatistics')

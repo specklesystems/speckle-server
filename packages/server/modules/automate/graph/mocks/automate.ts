@@ -5,19 +5,19 @@ import {
   FunctionNotFoundError
 } from '@/modules/automate/errors/management'
 import { functionTemplateRepos } from '@/modules/automate/helpers/executionEngine'
-import {
+import type {
   AutomationRevisionTriggerDefinitionGraphQLReturn,
   AutomationRunTriggerGraphQLReturn
 } from '@/modules/automate/helpers/graphTypes'
 import { VersionCreationTriggerType } from '@/modules/automate/helpers/types'
 import { BranchCommits, Branches, Commits } from '@/modules/core/dbSchema'
 import { AutomateRunStatus } from '@/modules/core/graph/generated/graphql'
-import { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
+import type { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { faker } from '@faker-js/faker'
 import { Automate, isNullOrUndefined, SourceAppNames } from '@speckle/shared'
 import dayjs from 'dayjs'
-import { times } from 'lodash'
+import { times } from 'lodash-es'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -66,16 +66,6 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
           version: store.get('Version') as any
         },
         Query: {
-          automateFunctions: () => {
-            const forceZero = false
-            const count = forceZero ? 0 : faker.number.int({ min: 0, max: 20 })
-
-            return {
-              cursor: null,
-              totalCount: count,
-              items: times(count, () => store.get('AutomateFunction'))
-            } as any
-          },
           automateFunction: (_parent, args) => {
             const id = args.id
             if (id === '404') {
@@ -254,6 +244,14 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
             return {}
           }),
           releases: () => store.get('AutomateFunctionReleaseCollection') as any
+        },
+        AutomateFunctionPermissionChecks: {
+          canRegenerateToken: () => ({
+            authorized: faker.datatype.boolean(),
+            code: faker.string.alphanumeric(10),
+            message: faker.lorem.words(10),
+            payload: null
+          })
         },
         AutomateFunctionRelease: {
           function: () => store.get('AutomateFunction') as any

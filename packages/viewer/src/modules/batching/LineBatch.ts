@@ -18,12 +18,17 @@ import {
   AllBatchUpdateRange,
   type Batch,
   type BatchUpdateRange,
-  type DrawGroup,
+  DrawGroup,
   GeometryType,
+  isAllBatchUpdateRange,
+  isNoneBatchUpdateRange,
   NoneBatchUpdateRange
 } from './Batch.js'
 import { ObjectLayers } from '../../IViewer.js'
 import Materials from '../materials/Materials.js'
+import { ChunkArray } from '../converter/VirtualArray.js'
+
+const vec4Buffer = new Vector4()
 
 export default class LineBatch implements Batch {
   public id: string
@@ -36,7 +41,7 @@ export default class LineBatch implements Batch {
   protected mesh: LineSegments2
   public colorBuffer: InstancedInterleavedBuffer
 
-  private static readonly vector4Buffer: Vector4 = new Vector4()
+  protected visibilityRanges: { [offset: number]: boolean } = {}
 
   public get bounds(): Box3 {
     if (!this.geometry.boundingBox) this.geometry.computeBoundingBox()
@@ -64,6 +69,11 @@ export default class LineBatch implements Batch {
     this.subtreeId = subtreeId
     this.renderViews = renderViews
   }
+
+  get groups(): DrawGroup[] {
+    return []
+  }
+
   public get pointCount(): number {
     return 0
   }
@@ -87,10 +97,6 @@ export default class LineBatch implements Batch {
     return this.mesh.material as unknown as Material[]
   }
 
-  public get groups(): DrawGroup[] {
-    return []
-  }
-
   public getCount(): number {
     return this.geometry.attributes.position.array.length / 6
   }
@@ -111,23 +117,16 @@ export default class LineBatch implements Batch {
   }
 
   public setVisibleRange(ranges: BatchUpdateRange[]) {
-    if (
-      ranges.length === 1 &&
-      ranges[0].offset === NoneBatchUpdateRange.offset &&
-      ranges[0].count === NoneBatchUpdateRange.count
-    ) {
+    if (ranges.length === 1 && isNoneBatchUpdateRange(ranges[0])) {
       this.mesh.visible = false
       return
     }
 
-    if (
-      ranges.length === 1 &&
-      ranges[0].offset === AllBatchUpdateRange.offset &&
-      ranges[0].count === AllBatchUpdateRange.count
-    ) {
+    if (ranges.length === 1 && isAllBatchUpdateRange(ranges[0], this.getCount())) {
       this.mesh.visible = true
       return
     }
+
     this.mesh.visible = true
     const data = this.colorBuffer.array as number[]
     for (let k = 0; k < data.length; k += 4) {
@@ -149,9 +148,11 @@ export default class LineBatch implements Batch {
     this.geometry.attributes['instanceColorEnd'].needsUpdate = true
   }
 
+  /** Line batches do not sort their ranges. This means we can have hidden/transparent objects anywhere inside the batch.
+   */
   public getVisibleRange() {
+    if (!this.mesh.visible) return NoneBatchUpdateRange
     return AllBatchUpdateRange
-    // TO DO if required
   }
 
   public getOpaque(): BatchUpdateRange {
@@ -198,17 +199,26 @@ export default class LineBatch implements Batch {
         ranges[i].offset * this.colorBuffer.stride +
         ranges[i].count * this.colorBuffer.stride
 
-      LineBatch.vector4Buffer.set(color.r, color.g, color.b, alpha)
+      vec4Buffer.set(color.r, color.g, color.b, alpha)
       this.updateColorBuffer(
         start,
         ranges[i].count === Infinity ? this.colorBuffer.array.length : len,
-        LineBatch.vector4Buffer
+        vec4Buffer
       )
+      this.visibilityRanges[ranges[i].offset] = material.visible
     }
     this.colorBuffer.updateRange = { offset: 0, count: data.length }
     this.colorBuffer.needsUpdate = true
     this.geometry.attributes['instanceColorStart'].needsUpdate = true
     this.geometry.attributes['instanceColorEnd'].needsUpdate = true
+
+    const visibility = Object.values(this.visibilityRanges)
+    let anyVisible = false
+    for (let k = 0; k < visibility.length; k++) {
+      anyVisible ||= visibility[k]
+    }
+    if (anyVisible) this.setVisibleRange([AllBatchUpdateRange])
+    else this.setVisibleRange([NoneBatchUpdateRange])
   }
 
   public setDrawRanges(ranges: BatchUpdateRange[]) {
@@ -219,18 +229,21 @@ export default class LineBatch implements Batch {
     this.setDrawRanges([
       {
         offset: 0,
-        count: Infinity,
+        count: this.getCount(),
         material: this.batchMaterial
       }
     ])
+
     this.mesh.material = this.batchMaterial
     this.mesh.visible = true
     this.batchMaterial.transparent = this.batchTransparent
     this.batchMaterial.opacity = this.batchOpacity
+    this.visibilityRanges = { 0: this.batchMaterial.visible }
   }
 
   public buildBatch() {
     let attributeCount = 0
+    const rvAABB: Box3 = new Box3()
     const bounds = new Box3()
     this.renderViews.forEach((val: NodeRenderView) => {
       if (!val.renderData.geometry.attributes) {
@@ -241,14 +254,18 @@ export default class LineBatch implements Batch {
         : val.renderData.geometry.attributes.POSITION.length
       bounds.union(val.aabb)
     })
-    const position = new Float64Array(attributeCount)
+    const needsRTE = Geometry.needsRTE(bounds)
+
+    const position = needsRTE
+      ? new Float64Array(attributeCount)
+      : new Float32Array(attributeCount)
     let offset = 0
     for (let k = 0; k < this.renderViews.length; k++) {
       const geometry = this.renderViews[k].renderData.geometry
       if (!geometry.attributes) {
         throw new Error(`Cannot build batch ${this.id}. Invalid geometry`)
       }
-      let points: Array<number>
+      let points: Array<number> | ChunkArray
       /** We need to make sure the line geometry has a layout of :
        *  start(x,y,z), end(x,y,z), start(x,y,z), end(x,y,z)... etc
        *  Some geometries have that inherent form, some don't
@@ -258,19 +275,30 @@ export default class LineBatch implements Batch {
         points = new Array(2 * length)
 
         for (let i = 0; i < length; i += 3) {
-          points[2 * i] = geometry.attributes.POSITION[i]
-          points[2 * i + 1] = geometry.attributes.POSITION[i + 1]
-          points[2 * i + 2] = geometry.attributes.POSITION[i + 2]
+          points[2 * i] = geometry.attributes.POSITION.get(i)
+          points[2 * i + 1] = geometry.attributes.POSITION.get(i + 1)
+          points[2 * i + 2] = geometry.attributes.POSITION.get(i + 2)
 
-          points[2 * i + 3] = geometry.attributes.POSITION[i + 3]
-          points[2 * i + 4] = geometry.attributes.POSITION[i + 4]
-          points[2 * i + 5] = geometry.attributes.POSITION[i + 5]
+          points[2 * i + 3] = geometry.attributes.POSITION.get(i + 3)
+          points[2 * i + 4] = geometry.attributes.POSITION.get(i + 4)
+          points[2 * i + 5] = geometry.attributes.POSITION.get(i + 5)
         }
+        position.set(points, offset)
       } else {
         points = geometry.attributes.POSITION
+        geometry.attributes.POSITION.copyToBuffer(position, offset)
       }
 
-      position.set(points, offset)
+      const positionSubArray = position.subarray(offset, offset + points.length)
+      Geometry.transformArray(positionSubArray, geometry.transform, 0, points.length)
+      /** We re-compute the render view aabb based on transformed geometry
+       *  We do this because some transforms like non-uniform scaling can produce incorrect results
+       *  if we compute an aabb from original geometry then apply the transform. That's why we compute
+       *  an aabb from the transformed geometry here and set it in the rv
+       */
+      rvAABB.setFromArray(positionSubArray)
+      this.renderViews[k].aabb = rvAABB
+
       this.renderViews[k].setBatchData(this.id, offset / 6, points.length / 6)
 
       offset += points.length
@@ -287,6 +315,9 @@ export default class LineBatch implements Batch {
 
     this.mesh.uuid = this.id
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_LINE)
+
+    this.visibilityRanges = { 0: this.batchMaterial.visible }
+
     return Promise.resolve()
   }
 
@@ -319,10 +350,15 @@ export default class LineBatch implements Batch {
     return material
   }
 
-  private makeLineGeometry(position: Float64Array): LineSegmentsGeometry {
+  private makeLineGeometry(
+    position: Float64Array | Float32Array
+  ): LineSegmentsGeometry {
     const geometry = new LineSegmentsGeometry()
     /** This will set the instanceStart and instanceEnd attributes. These will be our high parts */
-    geometry.setPositions(new Float32Array(position))
+    if (position instanceof Float64Array)
+      /** We need to re-allocate because there is no way to cast it down to float32. If we pass in a Float64Array, three.js will do it anyway */
+      geometry.setPositions(new Float32Array(position))
+    else geometry.setPositions(position)
 
     const buffer = new Float32Array(position.length + position.length / 3)
     this.colorBuffer = new InstancedInterleavedBuffer(buffer, 8, 1) // rgba, rgba

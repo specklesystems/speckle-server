@@ -1,4 +1,5 @@
-import { MaybeAsync, Roles, StreamRoles } from '@speckle/shared'
+import type { MaybeAsync, StreamRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 
 import { buildUserTarget } from '@/modules/serverinvites/helpers/core'
 import {
@@ -11,8 +12,8 @@ import {
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
-import { BasicTestUser } from '@/test/authHelper'
-import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -20,17 +21,18 @@ import {
   ProjectInviteResourceType,
   ServerInviteResourceType
 } from '@/modules/serverinvites/domain/constants'
-import { sendEmail, SendEmailParams } from '@/modules/emails/services/sending'
+import type { SendEmailParams } from '@/modules/emails/services/sending'
+import { sendEmail } from '@/modules/emails/services/sending'
 import { db } from '@/db/knex'
 import { expect } from 'chai'
-import {
+import type {
   PrimaryInviteResourceTarget,
   ServerInviteRecord,
   ServerInviteResourceTarget
 } from '@/modules/serverinvites/domain/types'
-import { EmailSendingServiceMock } from '@/test/mocks/global'
 import {
   getStreamFactory,
+  getStreamRolesFactory,
   grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
@@ -57,6 +59,8 @@ import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userE
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { createEmailListener } from '@/test/speckle-helpers/email'
+import type Mail from 'nodemailer/lib/mailer'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -74,6 +78,7 @@ const buildFinalizeProjectInvite = () =>
         validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
         getUser,
         grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        getStreamRoles: getStreamRolesFactory({ db }),
         emitEvent: getEventBus().emit
       })
     }),
@@ -197,13 +202,15 @@ export const createStreamInviteDirectly = async (
   )
 }
 
-function getInviteTokenFromEmailParams(emailParams: SendEmailParams) {
+function getInviteTokenFromEmailParams(emailParams: SendEmailParams | Mail.Options) {
   const { text } = emailParams
-  const [, inviteId] = text.match(/\?token=(.*?)(\s|&)/i) || []
+  const [, inviteId] = (text?.toString() || '').match(/\?token=(.*?)(\s|&)/i) || []
   return inviteId
 }
 
-export async function validateInviteExistanceFromEmail(emailParams: SendEmailParams) {
+export async function validateInviteExistanceFromEmail(
+  emailParams: SendEmailParams | Mail.Options
+) {
   const findInviteByToken = findInviteByTokenFactory({ db })
 
   // Validate that invite exists
@@ -220,15 +227,14 @@ export async function validateInviteExistanceFromEmail(emailParams: SendEmailPar
  * created through whatever logic is passed in the createInvite function
  */
 export const captureCreatedInvite = async (createInvite: () => MaybeAsync<unknown>) => {
-  const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
-    'sendEmail',
-    async () => true
-  )
+  const emailListener = await createEmailListener({ destroyWhenNoListeners: true })
+  const { getSends } = emailListener.listen({ times: 1 })
 
   await Promise.resolve(createInvite())
 
-  expect(sendEmailInvocations.args).to.have.lengthOf(1)
-  const emailParams = sendEmailInvocations.args[0][0]
+  const emails = getSends()
+  expect(emails).to.have.lengthOf(1)
+  const emailParams = emails[0]
   expect(emailParams).to.be.ok
 
   return await validateInviteExistanceFromEmail(emailParams)

@@ -18,36 +18,16 @@ import { authorizeResolver } from '@/modules/shared'
 import {
   getStreamFactory,
   revokeStreamPermissionsFactory,
-  grantStreamPermissionsFactory
+  grantStreamPermissionsFactory,
+  getStreamRolesFactory
 } from '@/modules/core/repositories/streams'
 import {
   getUserFactory,
   legacyGetPaginatedUsersFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory,
   isLastAdminUserFactory,
   updateUserServerRoleFactory
 } from '@/modules/core/repositories/users'
-import {
-  findEmailFactory,
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory
-} from '@/modules/core/repositories/userEmails'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import {
-  createUserFactory,
-  changeUserRoleFactory
-} from '@/modules/core/services/users/management'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import {
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
+import { changeUserRoleFactory } from '@/modules/core/services/users/management'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import {
   storeApiTokenFactory,
@@ -57,14 +37,25 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { Express } from 'express'
-import { Server } from 'http'
-import { omit } from 'lodash'
+import type { Express } from 'express'
+import type { Server } from 'http'
+import { omit } from 'lodash-es'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { GetAllAvailableScopesDocument } from '@/modules/core/graph/generated/graphql'
+import {
+  createTestContext,
+  testApolloServer,
+  type TestApolloServer
+} from '@/test/graphqlHelper'
+import { AllScopes } from '@/modules/core/helpers/mainConstants'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
 
-const { FF_PERSONAL_PROJECTS_LIMITS_ENABLED } = getFeatureFlags()
+const { FF_PERSONAL_PROJECTS_LIMITS_ENABLED, FF_USERS_INVITE_SCOPE_IS_PUBLIC } =
+  getFeatureFlags()
 
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -76,6 +67,7 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 
@@ -83,38 +75,12 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 
 const getServerInfo = getServerInfoFactory({ db })
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -128,6 +94,7 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
 let app: Express
 let server: Server
 let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
+let apollo: TestApolloServer
 
 const changeUserRole = changeUserRoleFactory({
   getServerInfo,
@@ -138,27 +105,13 @@ const changeUserRole = changeUserRoleFactory({
 ;(FF_PERSONAL_PROJECTS_LIMITS_ENABLED ? describe.skip : describe)(
   'GraphQL API Core @core-api (Legacy)',
   () => {
-    const userA = {
-      id: '',
-      token: '',
-      name: 'd1',
-      email: 'd.1@speckle.systems',
-      password: 'wowwowwowwowwow'
-    }
-    const userB = {
-      id: '',
-      token: '',
-      name: 'd2',
-      email: 'd.2@speckle.systems',
-      password: 'wowwowwowwowwow'
-    }
-    const userC = {
-      id: '',
-      token: '',
-      name: 'd3',
-      email: 'd.3@speckle.systems',
-      password: 'wowwowwowwowwow'
-    }
+    let userA: BasicTestUser
+    let userB: BasicTestUser
+    let userC: BasicTestUser
+
+    let tokenUserA: string
+    let tokenUserB: string
+    let tokenUserC: string
 
     // set up app & two basic users to ping pong permissions around
     before(async () => {
@@ -167,8 +120,14 @@ const changeUserRole = changeUserRoleFactory({
       app = ctx.app
       ;({ sendRequest } = await initializeTestServer(ctx))
 
-      userA.id = await createUser(userA)
-      userA.token = `Bearer ${await createPersonalAccessToken(
+      userA = await createTestUser({
+        id: '',
+        name: 'd1',
+        email: 'd.1@speckle.systems',
+        password: 'wowwowwowwowwow'
+      })
+
+      tokenUserA = `Bearer ${await createPersonalAccessToken(
         userA.id,
         'test token user A',
         [
@@ -183,8 +142,15 @@ const changeUserRole = changeUserRoleFactory({
           Scopes.Profile.Email
         ]
       )}`
-      userB.id = await createUser(userB)
-      userB.token = `Bearer ${await createPersonalAccessToken(
+
+      userB = await createTestUser({
+        id: '',
+        name: 'd2',
+        email: 'd.2@speckle.systems',
+        password: 'wowwowwowwowwow'
+      })
+
+      tokenUserB = `Bearer ${await createPersonalAccessToken(
         userB.id,
         'test token user B',
         [
@@ -198,8 +164,13 @@ const changeUserRole = changeUserRoleFactory({
           Scopes.Profile.Email
         ]
       )}`
-      userC.id = await createUser(userC)
-      userC.token = `Bearer ${await createPersonalAccessToken(
+      userC = await createTestUser({
+        id: '',
+        name: 'd3',
+        email: 'd.3@speckle.systems',
+        password: 'wowwowwowwowwow'
+      })
+      tokenUserC = `Bearer ${await createPersonalAccessToken(
         userC.id,
         'test token user B',
         [
@@ -214,20 +185,30 @@ const changeUserRole = changeUserRoleFactory({
         ]
       )}`
 
+      apollo = await testApolloServer({
+        context: await createTestContext({
+          auth: true,
+          userId: userA.id,
+          role: Roles.Server.Admin,
+          token: 'asd',
+          scopes: AllScopes
+        })
+      })
+
       // Prepare API tokens for use in tests
-      const res1 = await sendRequest(userA.token, {
+      const res1 = await sendRequest(tokenUserA, {
         query:
           'mutation { apiTokenCreate(token: {name:"Token 1", scopes: ["streams:read", "users:read", "tokens:read"]}) }'
       })
       token1 = `Bearer ${res1.body.data.apiTokenCreate}`
 
-      const res2 = await sendRequest(userA.token, {
+      const res2 = await sendRequest(tokenUserA, {
         query:
           'mutation { apiTokenCreate(token: {name:"Token 1", scopes: ["streams:write", "streams:read", "users:email"]}) }'
       })
       token2 = `Bearer ${res2.body.data.apiTokenCreate}`
 
-      const res3 = await sendRequest(userB.token, {
+      const res3 = await sendRequest(tokenUserB, {
         query:
           'mutation { apiTokenCreate(token: {name:"Token 1", scopes: ["streams:write", "streams:read", "users:email"]}) }'
       })
@@ -353,7 +334,7 @@ const changeUserRole = changeUserRoleFactory({
     describe('Mutations', () => {
       describe('Users & Api tokens', () => {
         it('Should create some api tokens', async () => {
-          const res1 = await sendRequest(userA.token, {
+          const res1 = await sendRequest(tokenUserA, {
             query:
               'mutation { apiTokenCreate(token: {name:"Token 1", scopes: ["streams:read", "users:read", "tokens:read"]}) }'
           })
@@ -362,13 +343,13 @@ const changeUserRole = changeUserRoleFactory({
           expect(res1.body.data.apiTokenCreate).to.be.a('string')
 
           token1 = `Bearer ${res1.body.data.apiTokenCreate}`
-          const res2 = await sendRequest(userA.token, {
+          const res2 = await sendRequest(tokenUserA, {
             query:
               'mutation { apiTokenCreate(token: {name:"Token 1", scopes: ["streams:write", "streams:read", "users:email"]}) }'
           })
           token2 = `Bearer ${res2.body.data.apiTokenCreate}`
 
-          const res3 = await sendRequest(userB.token, {
+          const res3 = await sendRequest(tokenUserB, {
             query:
               'mutation { apiTokenCreate(token: {name:"Token 1", scopes: ["streams:write", "streams:read", "users:email"]}) }'
           })
@@ -376,7 +357,7 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it('Should revoke an api token that the user owns', async () => {
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query: `mutation{ apiTokenRevoke(token:"${token2}")}`
           })
           expect(res).to.be.json
@@ -385,7 +366,7 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it('Should fail to revoke an api token that I do not own', async () => {
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query: `mutation{ apiTokenRevoke(token:"${token3}")}`
           })
           expect(res).to.be.json
@@ -404,7 +385,7 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it('Should edit my profile', async () => {
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query: 'mutation($user:UserUpdateInput!) { userUpdate( user: $user) } ',
             variables: {
               user: {
@@ -419,16 +400,14 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it('Should delete my account', async () => {
-          const userDelete = {
+          const userDelete = await createTestUser({
             id: '',
-            token: '',
             name: 'delete',
             email: `${cryptoRandomString({ length: 10 })}@example.org`,
             password: 'wowwowwowwowwow'
-          }
-          userDelete.id = await createUser(userDelete)
+          })
 
-          userDelete.token = `Bearer ${await createPersonalAccessToken(
+          let userDeleteToken = `Bearer ${await createPersonalAccessToken(
             userDelete.id,
             'fail token user del',
             [
@@ -443,7 +422,7 @@ const changeUserRole = changeUserRoleFactory({
             ]
           )}`
 
-          const badTokenScopesBadEmail = await sendRequest(userDelete.token, {
+          const badTokenScopesBadEmail = await sendRequest(userDeleteToken, {
             query:
               'mutation($user:UserDeleteInput!) { userDelete( userConfirmation: $user) } ',
             variables: { user: { email: 'wrongEmail@email.com' } }
@@ -452,7 +431,7 @@ const changeUserRole = changeUserRoleFactory({
           expect(badTokenScopesBadEmail.body.errors[0].extensions?.code).to.equal(
             'FORBIDDEN'
           )
-          const badTokenScopesGoodEmail = await sendRequest(userDelete.token, {
+          const badTokenScopesGoodEmail = await sendRequest(userDeleteToken, {
             query:
               'mutation($user:UserDeleteInput!) { userDelete( userConfirmation: $user) } ',
             variables: { user: { email: userDelete.email } }
@@ -462,7 +441,7 @@ const changeUserRole = changeUserRoleFactory({
             'FORBIDDEN'
           )
 
-          userDelete.token = `Bearer ${await createPersonalAccessToken(
+          userDeleteToken = `Bearer ${await createPersonalAccessToken(
             userDelete.id,
             'test token user del',
             [
@@ -478,7 +457,7 @@ const changeUserRole = changeUserRoleFactory({
             ]
           )}`
 
-          const goodTokenScopesBadEmail = await sendRequest(userDelete.token, {
+          const goodTokenScopesBadEmail = await sendRequest(userDeleteToken, {
             query:
               'mutation($user:UserDeleteInput!) { userDelete( userConfirmation: $user) } ',
             variables: { user: { email: 'wrongEmail@email.com' } }
@@ -487,7 +466,7 @@ const changeUserRole = changeUserRoleFactory({
           expect(goodTokenScopesBadEmail.body.errors[0].extensions?.code).to.equal(
             'BAD_REQUEST_ERROR'
           )
-          const goodTokenScopesGoodEmail = await sendRequest(userDelete.token, {
+          const goodTokenScopesGoodEmail = await sendRequest(userDeleteToken, {
             query:
               'mutation($user:UserDeleteInput!) { userDelete( userConfirmation: $user) } ',
             variables: { user: { email: userDelete.email } }
@@ -498,20 +477,20 @@ const changeUserRole = changeUserRoleFactory({
 
       describe('User role change', () => {
         it('User role is changed', async () => {
-          let queriedUserB = await sendRequest(userA.token, {
+          let queriedUserB = await sendRequest(tokenUserA, {
             query: ` { otherUser(id:"${userB.id}") { id name role } }`
           })
           expect(queriedUserB.body.data.otherUser.role).to.equal(Roles.Server.User)
           let query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "${Roles.Server.Admin}"})}`
-          await sendRequest(userA.token, { query })
-          queriedUserB = await sendRequest(userA.token, {
+          await sendRequest(tokenUserA, { query })
+          queriedUserB = await sendRequest(tokenUserA, {
             query: ` { otherUser(id:"${userB.id}") { id name role } }`
           })
           expect(queriedUserB.body.data.otherUser.role).to.equal(Roles.Server.Admin)
           expect(queriedUserB.body.data)
           query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "${Roles.Server.User}"})}`
-          await sendRequest(userA.token, { query })
-          queriedUserB = await sendRequest(userA.token, {
+          await sendRequest(tokenUserA, { query })
+          queriedUserB = await sendRequest(tokenUserA, {
             query: ` { otherUser(id:"${userB.id}") { id name role } }`
           })
           expect(queriedUserB.body.data.otherUser.role).to.equal(Roles.Server.User)
@@ -519,8 +498,8 @@ const changeUserRole = changeUserRoleFactory({
 
         it('Only admins can change user role', async () => {
           const query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "${Roles.Server.Admin}"})}`
-          const res = await sendRequest(userB.token, { query })
-          const queriedUserB = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserB, { query })
+          const queriedUserB = await sendRequest(tokenUserA, {
             query: ` { otherUser(id:"${userB.id}") { id name role } }`
           })
           expect(res.body.errors).to.exist
@@ -531,35 +510,33 @@ const changeUserRole = changeUserRoleFactory({
 
       describe('User deletion', () => {
         it('Only admins can delete user', async () => {
-          const userDelete = {
+          const userDelete = await createTestUser({
             id: '',
             name: 'delete',
             email: `${cryptoRandomString({ length: 10 })}@example.org`,
             password: 'wowwowwowwowwow'
-          }
-          userDelete.id = await createUser(userDelete)
+          })
 
           const users = await getUsers()
           expect(users.map((u) => u.id)).to.contain(userDelete.id)
           const query = `mutation { adminDeleteUser( userConfirmation: { email: "${userDelete.email}" } ) } `
-          const res = await sendRequest(userB.token, { query })
+          const res = await sendRequest(tokenUserB, { query })
           expect(res.body.errors).to.exist
           expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
         })
 
         it('Admin can delete user', async () => {
-          const userDelete = {
+          const userDelete = await createTestUser({
             id: '',
             name: 'delete',
             email: 'd3l3t3@speckle.systems',
             password: 'wowwowwowwowwow'
-          }
-          userDelete.id = await createUser(userDelete)
+          })
 
           let users = await getUsers()
           expect(users.map((u) => u.id)).to.contain(userDelete.id)
           const query = `mutation { adminDeleteUser( userConfirmation: { email: "${userDelete.email}" } ) } `
-          const deleteResult = await sendRequest(userA.token, { query })
+          const deleteResult = await sendRequest(tokenUserA, { query })
           expect(deleteResult.body.data.adminDeleteUser).to.equal(true)
           users = await getUsers()
           expect(users.map((u) => u.id)).to.not.contain(userDelete.id)
@@ -567,7 +544,7 @@ const changeUserRole = changeUserRoleFactory({
 
         it('Cannot delete the last admin', async () => {
           const query = `mutation { adminDeleteUser( userConfirmation: { email: "${userA.email}" } ) } `
-          const res = await sendRequest(userA.token, { query })
+          const res = await sendRequest(tokenUserA, { query })
           expect(res.body.errors).to.exist
           expect(res.body.errors[0].extensions?.code).to.equal('USER_INPUT_ERROR')
           expect(res.body.errors[0].message).to.equal(
@@ -642,7 +619,7 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it('Should create some streams', async () => {
-          const resS1 = await sendRequest(userA.token, {
+          const resS1 = await sendRequest(tokenUserA, {
             query:
               'mutation { streamCreate(stream: { name: "TS1 (u A) Private", description: "Hello World", isPublic:false } ) }'
           })
@@ -653,7 +630,7 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it('Should update a stream', async () => {
-          const resS1 = await sendRequest(userA.token, {
+          const resS1 = await sendRequest(tokenUserA, {
             query: `mutation { streamUpdate(stream: {id:"${ts1}" name: "TS1 (u A) Private UPDATED", description: "Hello World, Again!", isPublic:false } ) }`
           })
 
@@ -670,7 +647,7 @@ const changeUserRole = changeUserRoleFactory({
         publicPrivateDataset.forEach(({ display, isPublic }) => {
           it(`Should not allow updating permissions if target user isnt a collaborator on a ${display} stream`, async () => {
             const streamId = isPublic ? ts2 : ts1
-            const res = await sendRequest(userA.token, {
+            const res = await sendRequest(tokenUserA, {
               query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}" role: "stream:owner"}) }`
             })
 
@@ -690,7 +667,7 @@ const changeUserRole = changeUserRoleFactory({
             Roles.Stream.Reviewer,
             userA.id
           )
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner"}) }`
           })
 
@@ -704,7 +681,7 @@ const changeUserRole = changeUserRoleFactory({
             Roles.Stream.Reviewer,
             userB.id
           )
-          const res2 = await sendRequest(userB.token, {
+          const res2 = await sendRequest(tokenUserB, {
             query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${ts5}", userId: "${userA.id}" role: "stream:owner"}) }`
           })
           expect(res2).to.be.json
@@ -716,7 +693,7 @@ const changeUserRole = changeUserRoleFactory({
             Roles.Stream.Reviewer,
             userB.id
           )
-          const res3 = await sendRequest(userB.token, {
+          const res3 = await sendRequest(tokenUserB, {
             query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${ts3}", userId: "${userC.id}" role: "stream:owner"}) }`
           })
           expect(res3).to.be.json
@@ -724,7 +701,7 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it('Should fail to grant permissions if not owner', async () => {
-          const res = await sendRequest(userB.token, {
+          const res = await sendRequest(tokenUserB, {
             query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner"}) }`
           })
           expect(res).to.be.json
@@ -735,7 +712,7 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it('Should fail to grant myself permissions', async () => {
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${ts1}", userId: "${userA.id}" role: "stream:owner"}) }`
           })
           expect(res).to.be.json
@@ -754,21 +731,21 @@ const changeUserRole = changeUserRoleFactory({
           )
 
           // first test if we can get it
-          const res = await sendRequest(userC.token, {
+          const res = await sendRequest(tokenUserC, {
             query: `query { stream(id:"${ts3}") { id name } }`
           })
           expect(res).to.be.json
           expect(res.body.errors).to.not.exist
           expect(res.body.data.stream.name).to.equal('TS3 (u B) Private')
 
-          const revokeRes = await sendRequest(userB.token, {
+          const revokeRes = await sendRequest(tokenUserB, {
             query: `mutation { streamRevokePermission( permissionParams: {streamId: "${ts3}", userId:"${userC.id}"} ) }`
           })
           expect(revokeRes).to.be.json
           expect(revokeRes.body.errors).to.not.exist
           expect(revokeRes.body.data.streamRevokePermission).to.equal(true)
 
-          const resNotAuth = await sendRequest(userC.token, {
+          const resNotAuth = await sendRequest(tokenUserC, {
             query: `query { stream(id:"${ts3}") { id name role } }`
           })
           expect(resNotAuth).to.be.json
@@ -778,7 +755,7 @@ const changeUserRole = changeUserRoleFactory({
 
         it('Should fail to edit/write on a public stream if no access is provided', async () => {
           // ts4 is a public stream from uesrB
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query: `mutation { streamUpdate(stream: {id:"${ts4}" name: "HACK", description: "Hello World, Again!", isPublic:false } ) }`
           })
           expect(res.body.errors).to.exist
@@ -786,7 +763,7 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it('Should fail editing a private stream if no access has been granted', async () => {
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query: `mutation { streamUpdate(stream: {id:"${ts3}" name: "HACK", description: "Hello World, Again!", isPublic:false } ) }`
           })
 
@@ -798,7 +775,7 @@ const changeUserRole = changeUserRoleFactory({
           // Make sure user is no longer a stream collaborator
           await removeStreamCollaborator(ts1, userB.id, userB.id)
 
-          const res = await sendRequest(userB.token, {
+          const res = await sendRequest(tokenUserB, {
             query: `mutation { streamDelete( id:"${ts1}")}`
           })
           expect(res).to.be.json
@@ -808,7 +785,7 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it('Should fail to delete streams if not admin', async () => {
-          const res = await sendRequest(userB.token, {
+          const res = await sendRequest(tokenUserB, {
             query: `mutation { streamsDelete( ids:"[${ts4}]")}`
           })
           expect(res).to.be.json
@@ -818,7 +795,7 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it('Should delete a stream', async () => {
-          const res = await sendRequest(userB.token, {
+          const res = await sendRequest(tokenUserB, {
             query: `mutation { streamDelete( id:"${ts4}")}`
           })
 
@@ -829,7 +806,7 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it('Should be forbidden to query admin streams if not admin', async () => {
-          const res = await sendRequest(userC.token, {
+          const res = await sendRequest(tokenUserC, {
             query: '{ adminStreams { totalCount items { id name } } }'
           })
           expect(res).to.be.json
@@ -839,13 +816,13 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it('Should query admin streams', async () => {
-          let streamResults = await sendRequest(userA.token, {
+          let streamResults = await sendRequest(tokenUserA, {
             query: '{ adminStreams { totalCount items { id name } } }'
           })
 
           expect(streamResults.body.data.adminStreams.totalCount).to.equal(10)
 
-          streamResults = await sendRequest(userA.token, {
+          streamResults = await sendRequest(tokenUserA, {
             query: '{ adminStreams(limit: 200) { totalCount items { id name } } }'
           })
           expect(streamResults.body.errors).to.exist
@@ -853,18 +830,18 @@ const changeUserRole = changeUserRoleFactory({
             'BAD_REQUEST_ERROR'
           )
 
-          streamResults = await sendRequest(userA.token, {
+          streamResults = await sendRequest(tokenUserA, {
             query: '{ adminStreams(limit: 2) { totalCount items { id name } } }'
           })
           expect(streamResults.body.data.adminStreams.totalCount).to.equal(10)
           expect(streamResults.body.data.adminStreams.items.length).to.equal(2)
 
-          streamResults = await sendRequest(userA.token, {
+          streamResults = await sendRequest(tokenUserA, {
             query: '{ adminStreams( query: "Admin" ) { totalCount items { id name } } }'
           })
           expect(streamResults.body.data.adminStreams.totalCount).to.equal(5)
 
-          streamResults = await sendRequest(userA.token, {
+          streamResults = await sendRequest(tokenUserA, {
             query:
               '{ adminStreams( visibility: "private" ) { totalCount items { id name isPublic } } }'
           })
@@ -873,7 +850,7 @@ const changeUserRole = changeUserRoleFactory({
               streams.every((stream) => !stream.isPublic)
           )
 
-          streamResults = await sendRequest(userA.token, {
+          streamResults = await sendRequest(tokenUserA, {
             query:
               '{ adminStreams( visibility: "public" ) { totalCount items { id name isPublic } } }'
           })
@@ -884,14 +861,14 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it('Should delete streams', async () => {
-          const streamResults = await sendRequest(userA.token, {
+          const streamResults = await sendRequest(tokenUserA, {
             query: '{ adminStreams( query: "Admin" ) { totalCount items { id name } } }'
           })
           expect(streamResults.body.data.adminStreams.totalCount).to.equal(5)
           const streamIds = streamResults.body.data.adminStreams.items.map(
             (stream: { id: string }) => stream.id
           )
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query: 'mutation ( $ids: [String!] ){ streamsDelete( ids: $ids )}',
             variables: { ids: streamIds }
           })
@@ -940,7 +917,7 @@ const changeUserRole = changeUserRoleFactory({
               })
           }
 
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query: `mutation( $objs: [JSONObject]! ) { objectCreate( objectInput: {streamId:"${ts1}", objects: $objs} ) }`,
             variables: { objs }
           })
@@ -958,7 +935,7 @@ const changeUserRole = changeUserRoleFactory({
           c1.objectId = objIds[0]
           c1.branchName = 'main'
 
-          let res = await sendRequest(userA.token, {
+          let res = await sendRequest(tokenUserA, {
             query:
               'mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }',
             variables: { myCommit: omit(c1, 'id') }
@@ -976,7 +953,7 @@ const changeUserRole = changeUserRoleFactory({
           c2.branchName = 'main'
           c2.previousCommitIds = [c1.id]
 
-          res = await sendRequest(userA.token, {
+          res = await sendRequest(tokenUserA, {
             query:
               'mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }',
             variables: { myCommit: omit(c2, 'id') }
@@ -995,7 +972,7 @@ const changeUserRole = changeUserRoleFactory({
             id: c1.id,
             message: 'first commit'
           }
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query:
               'mutation( $myCommit: CommitUpdateInput! ) { commitUpdate( commit: $myCommit ) }',
             variables: { myCommit: updatePayload }
@@ -1004,7 +981,7 @@ const changeUserRole = changeUserRoleFactory({
           expect(res.body.errors).to.not.exist
           expect(res.body.data).to.have.property('commitUpdate')
 
-          const res2 = await sendRequest(userB.token, {
+          const res2 = await sendRequest(tokenUserB, {
             query:
               'mutation( $myCommit: CommitUpdateInput! ) { commitUpdate( commit: $myCommit ) }',
             variables: { myCommit: updatePayload }
@@ -1015,7 +992,7 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it('Should create a read receipt', async () => {
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query:
               'mutation($input: CommitReceivedInput!) { commitReceive(input: $input) }',
             variables: {
@@ -1053,7 +1030,7 @@ const changeUserRole = changeUserRoleFactory({
         it('Should delete a commit', async () => {
           const payload = { streamId: ts1, id: c2.id }
 
-          const res = await sendRequest(userB.token, {
+          const res = await sendRequest(tokenUserB, {
             query:
               'mutation( $myCommit: CommitDeleteInput! ) { commitDelete( commit: $myCommit ) }',
             variables: { myCommit: payload }
@@ -1062,7 +1039,7 @@ const changeUserRole = changeUserRoleFactory({
           expect(res.body.errors).to.exist
           expect(res.body.errors[0].extensions?.code).to.equal('FORBIDDEN')
 
-          const res2 = await sendRequest(userA.token, {
+          const res2 = await sendRequest(tokenUserA, {
             query:
               'mutation( $myCommit: CommitDeleteInput! ) { commitDelete( commit: $myCommit ) }',
             variables: { myCommit: payload }
@@ -1080,7 +1057,7 @@ const changeUserRole = changeUserRoleFactory({
             description: 'dimitries development branch'
           }
 
-          const res1 = await sendRequest(userA.token, {
+          const res1 = await sendRequest(tokenUserA, {
             query:
               'mutation( $branch:BranchCreateInput! ) { branchCreate( branch:$branch ) }',
             variables: { branch: omit(b1, 'id') }
@@ -1104,7 +1081,7 @@ const changeUserRole = changeUserRoleFactory({
             Roles.Stream.Contributor,
             userA.id
           )
-          const res2 = await sendRequest(userB.token, {
+          const res2 = await sendRequest(tokenUserB, {
             query:
               'mutation( $branch:BranchCreateInput! ) { branchCreate( branch:$branch ) }',
             variables: { branch: omit(b2, 'id') }
@@ -1118,7 +1095,7 @@ const changeUserRole = changeUserRoleFactory({
             name: 'userB/dev/api',
             description: 'more branches branch'
           }
-          const res3 = await sendRequest(userB.token, {
+          const res3 = await sendRequest(tokenUserB, {
             query:
               'mutation( $branch:BranchCreateInput! ) { branchCreate( branch:$branch ) }',
             variables: { branch: omit(b3, 'id') }
@@ -1134,7 +1111,7 @@ const changeUserRole = changeUserRoleFactory({
             name: 'randomupdateablebranch',
             description: 'dimitries development branch'
           }
-          const b1Res = await sendRequest(userA.token, {
+          const b1Res = await sendRequest(tokenUserA, {
             query:
               'mutation( $branch:BranchCreateInput! ) { branchCreate( branch:$branch ) }',
             variables: { branch: omit(b1, 'id') }
@@ -1149,7 +1126,7 @@ const changeUserRole = changeUserRoleFactory({
             name: 'userb/whatever/whatever'
           }
 
-          const res1 = await sendRequest(userA.token, {
+          const res1 = await sendRequest(tokenUserA, {
             query:
               'mutation( $branch:BranchUpdateInput! ) { branchUpdate( branch:$branch ) }',
             variables: { branch: payload }
@@ -1167,7 +1144,7 @@ const changeUserRole = changeUserRoleFactory({
             name: 'randomudeletablebranch',
             description: 'dimitries development branch'
           }
-          const b1Res = await sendRequest(userA.token, {
+          const b1Res = await sendRequest(tokenUserA, {
             query:
               'mutation( $branch:BranchCreateInput! ) { branchCreate( branch:$branch ) }',
             variables: { branch: omit(b1, 'id') }
@@ -1194,7 +1171,7 @@ const changeUserRole = changeUserRoleFactory({
             id: 'APRIL FOOOLS!'
           }
 
-          const res = await sendRequest(userC.token, {
+          const res = await sendRequest(tokenUserC, {
             query:
               'mutation( $branch:BranchDeleteInput! ) { branchDelete( branch: $branch ) }',
             variables: { branch: badPayload }
@@ -1203,7 +1180,7 @@ const changeUserRole = changeUserRoleFactory({
           expect(res.body.errors).to.exist
           expect(res.body.errors[0].extensions.code).to.equal('NOT_FOUND_ERROR')
 
-          const res1 = await sendRequest(userC.token, {
+          const res1 = await sendRequest(tokenUserC, {
             query:
               'mutation( $branch:BranchDeleteInput! ) { branchDelete( branch: $branch ) }',
             variables: { branch: payload }
@@ -1212,7 +1189,7 @@ const changeUserRole = changeUserRoleFactory({
           expect(res1.body.errors).to.exist
           expect(res1.body.errors[0].extensions.code).to.equal('FORBIDDEN')
 
-          const res2 = await sendRequest(userA.token, {
+          const res2 = await sendRequest(tokenUserA, {
             query:
               'mutation( $branch:BranchDeleteInput! ) { branchDelete( branch: $branch ) }',
             variables: { branch: payload }
@@ -1221,7 +1198,7 @@ const changeUserRole = changeUserRoleFactory({
           expect(res2.body.errors).to.not.exist
 
           // revoke perms for c back (dont' wanna mess up our integration-unit tests below)
-          await sendRequest(userA.token, {
+          await sendRequest(tokenUserA, {
             query: `mutation{ streamRevokePermission( permissionParams: {streamId: "${ts1}", userId: "${userC.id}"} ) }`
           })
         })
@@ -1234,7 +1211,7 @@ const changeUserRole = changeUserRoleFactory({
             branchName: 'userB/dev/api'
           }
 
-          const res = await sendRequest(userB.token, {
+          const res = await sendRequest(tokenUserB, {
             query:
               'mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }',
             variables: { myCommit: cc }
@@ -1247,7 +1224,7 @@ const changeUserRole = changeUserRoleFactory({
 
         it('Should *not* update a branch if given the wrong stream id', async () => {
           // create stream for user C
-          const res = await sendRequest(userC.token, {
+          const res = await sendRequest(tokenUserC, {
             query:
               'mutation { streamCreate(stream: { name: "TS (u C) private", description: "sup my dudes", isPublic:false } ) }'
           })
@@ -1262,7 +1239,7 @@ const changeUserRole = changeUserRoleFactory({
             name: 'izz/secret',
             description: 'a private branch on a private stream'
           }
-          const res1 = await sendRequest(userB.token, {
+          const res1 = await sendRequest(tokenUserB, {
             query:
               'mutation( $branch:BranchCreateInput! ) { branchCreate( branch:$branch ) }',
             variables: { branch: omit(b4, 'id') }
@@ -1279,7 +1256,7 @@ const changeUserRole = changeUserRoleFactory({
             name: 'izz/not-so-secret'
           }
 
-          const res2 = await sendRequest(userC.token, {
+          const res2 = await sendRequest(tokenUserC, {
             query:
               'mutation( $branch:BranchUpdateInput! ) { branchUpdate( branch:$branch ) }',
             variables: { branch: badPayload }
@@ -1298,7 +1275,7 @@ const changeUserRole = changeUserRoleFactory({
             id: b4.id // branch user C doesn't have access to
           }
 
-          const res = await sendRequest(userC.token, {
+          const res = await sendRequest(tokenUserC, {
             query:
               'mutation( $branch:BranchDeleteInput! ) { branchDelete( branch: $branch ) }',
             variables: { branch: badPayload }
@@ -1316,7 +1293,7 @@ const changeUserRole = changeUserRoleFactory({
     describe('Queries', () => {
       describe('My Profile', () => {
         it('Should retrieve my profile', async () => {
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query: '{ user { id name email role apiTokens { id name } } }'
           })
           expect(res).to.be.json
@@ -1329,25 +1306,25 @@ const changeUserRole = changeUserRoleFactory({
 
         it('Should retrieve my streams', async () => {
           // add more streams
-          await sendRequest(userA.token, {
+          await sendRequest(tokenUserA, {
             query:
               'mutation( $myStream: StreamCreateInput! ) { streamCreate( stream: $myStream ) }',
             variables: { myStream: { name: 'o hai' } }
           })
 
-          await sendRequest(userA.token, {
+          await sendRequest(tokenUserA, {
             query:
               'mutation( $myStream: StreamCreateInput! ) { streamCreate( stream: $myStream ) }',
             variables: { myStream: { name: 'bai now' } }
           })
 
-          await sendRequest(userA.token, {
+          await sendRequest(tokenUserA, {
             query:
               'mutation( $myStream: StreamCreateInput! ) { streamCreate( stream: $myStream ) }',
             variables: { myStream: { name: 'one more for the road' } }
           })
 
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query:
               '{ user { streams( limit: 3 ) { totalCount cursor items { id name } } } }'
           })
@@ -1355,7 +1332,7 @@ const changeUserRole = changeUserRoleFactory({
           expect(res.body.errors).to.not.exist
           expect(res.body.data.user.streams.items.length).to.equal(3)
 
-          const res2 = await sendRequest(userA.token, {
+          const res2 = await sendRequest(tokenUserA, {
             query: `{ user { streams( limit: 3, cursor: "${res.body.data.user.streams.cursor}" ) { totalCount cursor items { id name } } } }`
           })
           expect(res2).to.be.json
@@ -1377,14 +1354,14 @@ const changeUserRole = changeUserRoleFactory({
               objectId: objIds[i],
               branchName: 'main'
             }
-            await sendRequest(userA.token, {
+            await sendRequest(tokenUserA, {
               query:
                 'mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }',
               variables: { myCommit: c1 }
             })
           }
 
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query:
               '{ user { commits( limit: 3 ) { totalCount cursor items { id message referencedObject } } } }'
           })
@@ -1395,7 +1372,7 @@ const changeUserRole = changeUserRoleFactory({
           expect(res.body.data.user.commits.cursor).to.exist
           expect(res.body.data.user.commits.items.length).to.equal(3)
 
-          const res2 = await sendRequest(userA.token, {
+          const res2 = await sendRequest(tokenUserA, {
             query: `{ user { commits( limit: 3, cursor: "${res.body.data.user.commits.cursor}") { totalCount cursor items { id message referencedObject } } } }`
           })
           expect(res2).to.be.json
@@ -1411,7 +1388,7 @@ const changeUserRole = changeUserRoleFactory({
          */
 
         it('Should retrieve a different profile profile', async () => {
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query: ` { user(id:"${userB.id}") { id name email } }`
           })
 
@@ -1453,7 +1430,7 @@ const changeUserRole = changeUserRoleFactory({
         it('Should search for some users', async () => {
           for (let i = 0; i < 10; i++) {
             // create 10 users: 3 bakers and 7 millers
-            await createUser({
+            await createTestUser({
               name: `Master ${i <= 2 ? 'Baker' : 'Miller'} Matteo The ${i}${
                 i === 1 ? 'st' : i === 2 ? 'nd' : i === 3 ? 'rd' : 'th'
               } of His Name`,
@@ -1476,7 +1453,7 @@ const changeUserRole = changeUserRoleFactory({
           }
         `
 
-          let res = await sendRequest(userB.token, { query })
+          let res = await sendRequest(tokenUserB, { query })
           expect(res).to.be.json
           expect(res.body.errors).to.not.exist
           expect(res.body.data.userSearch.items.length).to.equal(7)
@@ -1493,7 +1470,7 @@ const changeUserRole = changeUserRoleFactory({
           }
         `
 
-          res = await sendRequest(userB.token, { query })
+          res = await sendRequest(tokenUserB, { query })
           expect(res).to.be.json
           expect(res.body.errors).to.not.exist
           expect(res.body.data.userSearch.items.length).to.equal(3)
@@ -1501,7 +1478,7 @@ const changeUserRole = changeUserRoleFactory({
           // by email
           query =
             'query { userSearch( query: "matteo_2@tomato.com" ) { cursor items { id name } } } '
-          res = await sendRequest(userB.token, { query })
+          res = await sendRequest(tokenUserB, { query })
           expect(res).to.be.json
           expect(res.body.errors).to.not.exist
           expect(res.body.data.userSearch.items.length).to.equal(1)
@@ -1510,14 +1487,14 @@ const changeUserRole = changeUserRoleFactory({
         it('Should not search for some users if bad request', async () => {
           const queryLim =
             'query { userSearch( query: "mi" ) { cursor items { id name } } } '
-          let res = await sendRequest(userB.token, { query: queryLim })
+          let res = await sendRequest(tokenUserB, { query: queryLim })
           expect(res).to.be.json
           expect(res.body.errors).to.exist
           expect(res.body.errors[0].extensions.code).to.equal('BAD_REQUEST_ERROR')
 
           const queryPagination =
             'query { userSearch( query: "matteo", limit: 200 ) { cursor items { id name } } } '
-          res = await sendRequest(userB.token, { query: queryPagination })
+          res = await sendRequest(tokenUserB, { query: queryPagination })
           expect(res).to.be.json
           expect(res.body.errors).to.exist
           expect(res.body.errors[0].extensions.code).to.equal('BAD_REQUEST_ERROR')
@@ -1526,7 +1503,7 @@ const changeUserRole = changeUserRoleFactory({
 
       describe('Streams', () => {
         it('Should retrieve a stream', async () => {
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query: `
           query {
             stream(id:"${ts1}") {
@@ -1590,7 +1567,7 @@ const changeUserRole = changeUserRoleFactory({
           }
         `
 
-          const res = await sendRequest(userA.token, { query })
+          const res = await sendRequest(tokenUserA, { query })
           expect(res).to.be.json
           expect(res.body.errors).to.not.exist
           expect(res.body.data.stream.branches.items).to.be.ok
@@ -1598,7 +1575,7 @@ const changeUserRole = changeUserRoleFactory({
           expect(res.body.data.stream.branches.cursor).to.exist
 
           const firstBranchName = res.body.data.stream.branches.items[0].name
-          const res1 = await sendRequest(userA.token, {
+          const res1 = await sendRequest(tokenUserA, {
             query: `query { stream(id:"${ts1}") { branch( name: "${firstBranchName}" ) { name description } } } `
           })
 
@@ -1608,7 +1585,7 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it("it should retrieve a stream's default 'main' branch if no branch name is specified", async () => {
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query: `query { stream(id:"${ts1}") { branch { name description } } } `
           })
           expect(res).to.be.json
@@ -1638,7 +1615,7 @@ const changeUserRole = changeUserRoleFactory({
           }
         }
         `
-          const res = await sendRequest(userA.token, { query })
+          const res = await sendRequest(tokenUserA, { query })
           expect(res.body.data.stream.branch.commits.items.length).to.equal(5)
           expect(res.body.data.stream.branch.commits.items[0]).to.have.property('id')
           expect(res.body.data.stream.branch.commits.items[0]).to.have.property(
@@ -1670,7 +1647,7 @@ const changeUserRole = changeUserRoleFactory({
           }
         }`
 
-          const res2 = await sendRequest(userA.token, { query: query2 })
+          const res2 = await sendRequest(tokenUserA, { query: query2 })
           // console.log( res2.body.errors )
           // console.log( res2.body.data.stream.branch.commits )
 
@@ -1703,7 +1680,7 @@ const changeUserRole = changeUserRoleFactory({
           }
         }
         `
-          const res = await sendRequest(userA.token, { query })
+          const res = await sendRequest(tokenUserA, { query })
 
           expect(res).to.be.json
           expect(res.body.errors).to.not.exist
@@ -1729,7 +1706,7 @@ const changeUserRole = changeUserRoleFactory({
         }
         `
 
-          const res2 = await sendRequest(userA.token, { query: query2 })
+          const res2 = await sendRequest(tokenUserA, { query: query2 })
 
           expect(res2).to.be.json
           expect(res2.body.errors).to.not.exist
@@ -1737,7 +1714,7 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it('should retrieve a stream commit', async () => {
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query: `query { stream( id:"${ts1}" ) { commit( id: "${commitList[0].id}" ) { id message referencedObject } } }`
           })
 
@@ -1749,7 +1726,7 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it('should retrieve the latest stream commit if no id is specified', async () => {
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query: `query { stream( id:"${ts1}" ) { commit { id message referencedObject } } }`
           })
           expect(res).to.be.json
@@ -1772,7 +1749,7 @@ const changeUserRole = changeUserRoleFactory({
 
         it('should save many objects', async () => {
           const everything = [myCommit, ...myObjs]
-          const res = await sendRequest(userA.token, {
+          const res = await sendRequest(tokenUserA, {
             query: `mutation($objs:[JSONObject]!) { objectCreate(objectInput: {streamId:"${ts1}", objects: $objs}) }`,
             variables: { objs: everything }
           })
@@ -1785,7 +1762,7 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it("should get an object's sub-objects' objects", async () => {
-          const first = await sendRequest(userA.token, {
+          const first = await sendRequest(tokenUserA, {
             query: `
           query {
             stream( id:"${ts1}" ) {
@@ -1812,7 +1789,7 @@ const changeUserRole = changeUserRoleFactory({
           expect(first.body.data.stream.object).to.be.an('object')
           expect(first.body.data.stream.object.children.objects.length).to.equal(2)
 
-          const second = await sendRequest(userA.token, {
+          const second = await sendRequest(tokenUserA, {
             query: `
           query {
             stream(id:"${ts1}") {
@@ -1847,7 +1824,7 @@ const changeUserRole = changeUserRoleFactory({
         })
 
         it("should query an object's subojects", async () => {
-          const first = await sendRequest(userA.token, {
+          const first = await sendRequest(tokenUserA, {
             query: `
           query( $query: [JSONObject!], $orderBy: JSONObject ) {
             stream(id:"${ts1}") {
@@ -1946,6 +1923,29 @@ const changeUserRole = changeUserRoleFactory({
         expect(si.configuration.objectMultipartUploadSizeLimitBytes).to.be.a('number')
       })
 
+      describe(`FF_USERS_INVITE_SCOPE_IS_PUBLIC is ${
+        FF_USERS_INVITE_SCOPE_IS_PUBLIC ? 'enabled' : 'disabled'
+      }`, () => {
+        it(`serverInfo scopes ${
+          FF_USERS_INVITE_SCOPE_IS_PUBLIC ? 'include' : 'do not include'
+        } users:invite scope`, async () => {
+          const { data, errors } = await apollo.execute(
+            GetAllAvailableScopesDocument,
+            {}
+          )
+
+          if (FF_USERS_INVITE_SCOPE_IS_PUBLIC) {
+            expect(data?.serverInfo.scopes).to.be.ok
+            expect(data?.serverInfo.scopes).to.include(Scopes.Users.Invite)
+            expect(errors).not.to.be.ok
+          } else {
+            expect(data?.serverInfo.scopes).to.be.ok
+            expect(data?.serverInfo.scopes).to.not.include(Scopes.Users.Invite)
+            expect(errors).not.to.be.ok
+          }
+        })
+      })
+
       it('Should update the server info object', async () => {
         const query =
           'mutation updateSInfo($info: ServerInfoUpdateInput!) { serverInfoUpdate( info: $info ) } '
@@ -1953,7 +1953,7 @@ const changeUserRole = changeUserRoleFactory({
           info: { name: 'Super Duper Test Server Yo!', company: 'Super Systems' }
         }
 
-        const res = await sendRequest(userA.token, { query, variables })
+        const res = await sendRequest(tokenUserA, { query, variables })
         expect(res).to.be.json
         expect(res.body.errors).to.not.exist
       })
@@ -1965,7 +1965,7 @@ const changeUserRole = changeUserRoleFactory({
           info: { name: 'Super Duper Test Server Yo!', company: 'Super Systems' }
         }
 
-        const res = await sendRequest(userB.token, { query, variables })
+        const res = await sendRequest(tokenUserB, { query, variables })
         expect(res).to.be.json
         expect(res.body.errors).to.exist
         expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
@@ -1973,17 +1973,17 @@ const changeUserRole = changeUserRoleFactory({
     })
 
     describe('Archived role access validation', () => {
-      const archivedUser = {
-        id: '',
-        token: '',
-        name: 'Mark von Archival',
-        email: 'archi@speckle.systems',
-        password: 'i"ll be back, just wait'
-      }
+      let archivedUser: BasicTestUser
+      let archivedUserToken: string
       let streamId: string
       before(async () => {
-        archivedUser.id = await createUser(archivedUser)
-        archivedUser.token = `Bearer ${await createPersonalAccessToken(
+        archivedUser = await createTestUser({
+          id: '',
+          name: 'Mark von Archival',
+          email: 'archi@speckle.systems',
+          password: 'i"ll be back, just wait'
+        })
+        archivedUserToken = `Bearer ${await createPersonalAccessToken(
           archivedUser.id,
           'this will be archived',
           [
@@ -2007,7 +2007,7 @@ const changeUserRole = changeUserRoleFactory({
       })
 
       it('Should be able to read public streams', async () => {
-        const streamRes = await sendRequest(userA.token, {
+        const streamRes = await sendRequest(tokenUserA, {
           query:
             'mutation { streamCreate( stream: { name: "Share this with poor Mark", description: "💩", isPublic:true } ) }'
         })
@@ -2018,7 +2018,7 @@ const changeUserRole = changeUserRoleFactory({
           userA.id
         )
 
-        const res = await sendRequest(archivedUser.token, {
+        const res = await sendRequest(archivedUserToken, {
           query: `query { stream(id:"${streamRes.body.data.streamCreate}") { id name } }`
         })
         expect(res.body.errors).to.not.exist
@@ -2028,7 +2028,7 @@ const changeUserRole = changeUserRoleFactory({
       it('Should be forbidden to create token', async () => {
         const query =
           'mutation( $tokenInput:ApiTokenCreateInput! ) { apiTokenCreate ( token: $tokenInput ) }'
-        const res = await sendRequest(archivedUser.token, {
+        const res = await sendRequest(archivedUserToken, {
           query,
           variables: {
             tokenInput: {
@@ -2048,7 +2048,7 @@ const changeUserRole = changeUserRoleFactory({
       })
 
       it('Should be forbidden to interact (read, write, delete) private streams it had access to', async () => {
-        const streamRes = await sendRequest(userA.token, {
+        const streamRes = await sendRequest(tokenUserA, {
           query:
             'mutation { streamCreate( stream: { name: "Share this with poor Mark", description: "💩", isPublic:false } ) }'
         })
@@ -2061,7 +2061,7 @@ const changeUserRole = changeUserRoleFactory({
           userA.id
         )
 
-        let res = await sendRequest(archivedUser.token, {
+        let res = await sendRequest(archivedUserToken, {
           query: `query { stream(id:"${streamId}") { id name } }`
         })
         expect(res.body.errors).to.exist
@@ -2070,7 +2070,7 @@ const changeUserRole = changeUserRoleFactory({
           'You do not have the required server role'
         )
 
-        res = await sendRequest(archivedUser.token, {
+        res = await sendRequest(archivedUserToken, {
           query:
             '{ user { streams( limit: 30 ) { totalCount cursor items { id name } } } }'
         })
@@ -2080,7 +2080,7 @@ const changeUserRole = changeUserRoleFactory({
           'You do not have the required server role'
         )
 
-        res = await sendRequest(archivedUser.token, {
+        res = await sendRequest(archivedUserToken, {
           query: `mutation { streamDelete( id:"${streamId}")}`
         })
         expect(res.body.errors).to.exist
@@ -2089,7 +2089,7 @@ const changeUserRole = changeUserRoleFactory({
           'You do not have the required server role'
         )
 
-        res = await sendRequest(archivedUser.token, {
+        res = await sendRequest(archivedUserToken, {
           query: `mutation { streamUpdate(stream: {id:"${streamId}" name: "HACK", description: "Hello World, Again!", isPublic:false } ) }`
         })
         expect(res.body.errors).to.exist
@@ -2103,7 +2103,7 @@ const changeUserRole = changeUserRoleFactory({
         const query =
           'mutation ( $streamInput: StreamCreateInput!) { streamCreate(stream: $streamInput ) }'
 
-        let res = await sendRequest(archivedUser.token, {
+        let res = await sendRequest(archivedUserToken, {
           query,
           variables: {
             streamInput: {
@@ -2119,7 +2119,7 @@ const changeUserRole = changeUserRoleFactory({
           'You do not have the required server role'
         )
 
-        res = await sendRequest(archivedUser.token, {
+        res = await sendRequest(archivedUserToken, {
           query,
           variables: {
             streamInput: {
@@ -2149,7 +2149,7 @@ const changeUserRole = changeUserRoleFactory({
           }
         }
 
-        const res = await sendRequest(archivedUser.token, { query, variables })
+        const res = await sendRequest(archivedUserToken, { query, variables })
 
         expect(res.body.errors).to.exist
         expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
@@ -2159,7 +2159,7 @@ const changeUserRole = changeUserRoleFactory({
       })
 
       it('Should be forbidden to send email invites', async () => {
-        const res = await sendRequest(archivedUser.token, {
+        const res = await sendRequest(archivedUserToken, {
           query:
             'mutation inviteToServer($input: ServerInviteCreateInput!) { serverInviteCreate( input: $input ) }',
           variables: { input: { email: 'cabbages@speckle.systems', message: 'wow!' } }
@@ -2174,7 +2174,7 @@ const changeUserRole = changeUserRoleFactory({
       it('Should be forbidden to create object', async () => {
         const objects = generateManyObjects(10)
 
-        const res = await sendRequest(archivedUser.token, {
+        const res = await sendRequest(archivedUserToken, {
           query: `mutation( $objs: [JSONObject]! ) { objectCreate( objectInput: {streamId:"${ts1}", objects: $objs} ) }`,
           variables: { objs: objects.objs }
         })
@@ -2193,7 +2193,7 @@ const changeUserRole = changeUserRoleFactory({
           objectId: 'justARandomHash',
           branchName: 'main'
         }
-        const res = await sendRequest(archivedUser.token, {
+        const res = await sendRequest(archivedUserToken, {
           query:
             'mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }',
           variables: { myCommit: commit }
@@ -2209,7 +2209,7 @@ const changeUserRole = changeUserRoleFactory({
         const objects = generateManyObjects(2)
         const res = await request(app)
           .post(`/objects/${streamId}`)
-          .set('Authorization', archivedUser.token)
+          .set('Authorization', archivedUserToken)
           .set('Content-type', 'multipart/form-data')
           .attach('batch1', Buffer.from(JSON.stringify(objects.objs), 'utf8'))
         expect(res).to.have.status(401)
@@ -2219,12 +2219,12 @@ const changeUserRole = changeUserRoleFactory({
         // even if the object doesn't exist, so im not creating it...
         const res = await request(app)
           .get('/objects/thisIs/bogus')
-          .set('Authorization', archivedUser.token)
+          .set('Authorization', archivedUserToken)
         expect(res).to.have.status(401)
       })
 
       it('Should be able to download from public stream via rest API', async () => {
-        const streamRes = await sendRequest(userA.token, {
+        const streamRes = await sendRequest(tokenUserA, {
           query:
             'mutation { streamCreate( stream: { name: "Mark will read this", description: "🥔", isPublic:true } ) }'
         })
@@ -2239,14 +2239,14 @@ const changeUserRole = changeUserRoleFactory({
         const objects = generateManyObjects(2)
         let res = await request(app)
           .post(`/objects/${streamRes.body.data.streamCreate}`)
-          .set('Authorization', userA.token)
+          .set('Authorization', tokenUserA)
           .set('Content-type', 'multipart/form-data')
           .attach('batch1', Buffer.from(JSON.stringify(objects.objs), 'utf8'))
         expect(res).to.have.status(201)
 
         res = await request(app)
           .get(`/objects/${streamRes.body.data.streamCreate}/${objects.objs[0].id}`)
-          .set('Authorization', archivedUser.token)
+          .set('Authorization', archivedUserToken)
         expect(res).to.have.status(200)
         expect(res.body[0].id).to.equal(objects.objs[0].id)
       })

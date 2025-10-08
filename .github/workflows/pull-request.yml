@@ -8,42 +8,25 @@ concurrency:
 
 jobs:
   get-version:
-    outputs:
-      IMAGE_VERSION_TAG: ${{ steps.export-step.outputs.IMAGE_VERSION_TAG }}
     name: Get version
-    runs-on: blacksmith
-    steps:
-      - uses: actions/checkout@v4.2.2
-        with:
-          sparse-checkout: |
-            .github/workflows/scripts/get_version.sh
-            .github/workflows/scripts/common.sh
-          fetch-depth: 1
-          fetch-tags: 1
-      - run: git fetch origin 'refs/tags/*:refs/tags/*'
-      - run: chmod +x ./get_version.sh ./common.sh
-        working-directory: ./.github/workflows/scripts
-      - run: ./get_version.sh >> result
-        working-directory: ./.github/workflows/scripts
-      - run: echo "IMAGE_VERSION_TAG=$(cat result)"
-        working-directory: ./.github/workflows/scripts
-      - id: export-step
-        run: echo "IMAGE_VERSION_TAG=$(cat result)" >> "$GITHUB_OUTPUT"
-        working-directory: ./.github/workflows/scripts
+    uses: ./.github/workflows/get-version.yml
 
   tests:
-    needs: get-version
+    needs: [get-version]
     uses: ./.github/workflows/tests.yml
-    with:
-      IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
-      DOCKERHUB_USERNAME: 'speckledevops'
+    with: {}
     secrets: inherit
 
   builds:
-    needs: get-version
+    needs: [get-version]
     uses: ./.github/workflows/builds.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
-      DOCKERHUB_USERNAME: 'speckledevops'
-      PUSH_IMAGES: false
-    secrets: inherit
+      REGISTRY_DOMAIN: 'ghcr.io'
+      REGISTRY_USERNAME: ${{ github.actor }}
+      # REGISTRY_DOMAIN, REGISTRY_USERNAME, REGISTRY_TOKEN must be configured to match the below IMAGE_PREFIX
+      IMAGE_PREFIX: 'ghcr.io/specklesystems'
+      PUBLISH: false # do not publish the sourcemaps or include the version in frontend-2 builds for pull requests
+    secrets:
+      DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+      REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}

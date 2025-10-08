@@ -1,5 +1,6 @@
 import { Users } from '@/modules/core/dbSchema'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser, createTestUsers } from '@/test/authHelper'
 import { getActiveUser, getOtherUser } from '@/test/graphql/users'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { expect } from 'chai'
@@ -13,14 +14,13 @@ import {
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
-import { before } from 'mocha'
+import type { ServerAndContext } from '@/test/graphqlHelper'
 import {
   createAuthedTestContext,
   createTestContext,
-  ServerAndContext,
   testApolloServer
 } from '@/test/graphqlHelper'
-import { GetActiveUserEmailsDocument } from '@/test/graphql/generated/graphql'
+import { GetActiveUserEmailsDocument } from '@/modules/core/graph/generated/graphql'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import {
@@ -32,15 +32,8 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import {
-  countAdminUsersFactory,
-  getUserFactory,
-  storeUserAclFactory,
-  storeUserFactory
-} from '@/modules/core/repositories/users'
-import { createUserFactory } from '@/modules/core/services/users/management'
+import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -62,17 +55,6 @@ const createUserEmail = validateAndCreateUserEmailFactory({
     updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
   }),
   requestNewEmailVerification
-})
-
-const findEmail = findEmailFactory({ db })
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: createUserEmail,
-  emitEvent: getEventBus().emit
 })
 
 describe('Users (GraphQL)', () => {
@@ -162,7 +144,7 @@ describe('Users (GraphQL)', () => {
       })
 
       it('should return emails for user', async () => {
-        const userId = await createUser({
+        const { id: userId } = await createTestUser({
           name: 'emails user',
           email: createRandomEmail(),
           password: createRandomPassword(),

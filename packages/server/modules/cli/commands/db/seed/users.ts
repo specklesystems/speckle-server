@@ -2,10 +2,10 @@ import { cliLogger as logger } from '@/observability/logging'
 import { Users, ServerAcl } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { faker } from '@faker-js/faker'
-import { range } from 'lodash'
+import { range } from 'lodash-es'
 import { UniqueEnforcer } from 'enforce-unique'
-import { CommandModule } from 'yargs'
-import { UserRecord } from '@/modules/core/helpers/types'
+import type { CommandModule } from 'yargs'
+import type { UserRecord } from '@/modules/core/helpers/types'
 
 const RETRY_COUNT = 3
 const UNIQUE_MAX_TIME = 500

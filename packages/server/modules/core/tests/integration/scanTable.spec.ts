@@ -1,7 +1,6 @@
-import { describe } from 'mocha'
 import { scanTableFactory } from '@/modules/core/helpers/scanTable'
 import { db } from '@/db/knex'
-import { UserRecord } from '@/modules/core/helpers/types'
+import type { UserRecord } from '@/modules/core/helpers/types'
 import { Users } from '@/modules/core/dbSchema'
 import { expect } from 'chai'
 import crs from 'crypto-random-string'

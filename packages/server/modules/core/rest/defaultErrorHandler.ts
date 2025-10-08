@@ -1,10 +1,11 @@
 import { BaseError } from '@/modules/shared/errors'
 import { isDevEnv } from '@/modules/shared/helpers/envHelper'
 import { getCause } from '@/modules/shared/helpers/errorHelper'
-import { Optional, ensureError } from '@speckle/shared'
-import { ErrorRequestHandler } from 'express'
-import { get, isNumber } from 'lodash'
-import { VError } from 'verror'
+import type { Optional } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
+import type { ErrorRequestHandler } from 'express'
+import { get, isNumber } from 'lodash-es'
+import VError from 'verror'
 import { logger as defaultLogger } from '@/observability/logging'
 
 export const resolveStatusCode = (e: Error): number => {

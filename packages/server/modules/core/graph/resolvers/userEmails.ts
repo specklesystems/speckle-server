@@ -1,4 +1,4 @@
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   createUserEmailFactory,
   deleteUserEmailFactory,
@@ -31,6 +31,7 @@ import {
 } from '@/modules/core/services/users/emailVerification'
 import { commandFactory } from '@/modules/shared/command'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { emailVerificationTimeoutMinutes } from '@/modules/shared/helpers/envHelper'
 
 const getUser = getUserFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
@@ -44,7 +45,7 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
   sendEmail
 })
 
-export = {
+export default {
   ActiveUserMutations: {
     emailMutations: () => ({})
   },
@@ -144,7 +145,10 @@ export = {
         db,
         operationFactory: ({ db }) =>
           verifyUserEmailFactory({
-            getPendingVerificationByEmail: getPendingVerificationByEmailFactory({ db }),
+            getPendingVerificationByEmail: getPendingVerificationByEmailFactory({
+              db,
+              verificationTimeoutMinutes: emailVerificationTimeoutMinutes()
+            }),
             markUserEmailAsVerified: markUserEmailAsVerifiedFactory({
               updateUserEmail: updateUserEmailFactory({ db })
             }),

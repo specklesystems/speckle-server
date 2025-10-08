@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import { get } from 'lodash'
+import { get } from 'lodash-es'
 
 /**
  * Generates an object containing the base object and an array of objects with an id. The base object will have a closure property which references all the other objects.
@@ -109,4 +109,16 @@ export function noErrors(res: unknown) {
   const bodyErrors = get(res, 'body.errors')
   if (bodyErrors)
     throw new Error(`Failed GraphQL request: ${JSON.stringify(bodyErrors)}`)
+}
+
+/**
+ * Checks the response body to contain errors. To be used in expect assertions.
+ * Will throw an error if 'errors' do not exist.
+ * @param {*} res
+ */
+export function haveErrors(res: unknown) {
+  if (
+    !['error', 'body.errors', 'body.err', 'body.error'].some((path) => get(res, path))
+  )
+    throw new Error(`Expected errors, but got none`)
 }

@@ -1,15 +1,19 @@
-import { ProjectCreateArgs } from '@/modules/core/domain/projects/operations'
-import {
-  ProjectVisibility,
-  StreamCreateInput
-} from '@/modules/core/graph/generated/graphql'
+import type { ProjectCreateArgs } from '@/modules/core/domain/projects/operations'
+import type { StreamCreateInput } from '@/modules/core/graph/generated/graphql'
+import { ProjectVisibility } from '@/modules/core/graph/generated/graphql'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { throwUncoveredError } from '@speckle/shared'
-import { has } from 'lodash'
+import { has, get } from 'lodash-es'
 
 export const isProjectCreateInput = (
   i: StreamCreateInput | ProjectCreateArgs
-): i is ProjectCreateArgs => has(i, 'visibility')
+): i is ProjectCreateArgs => {
+  if (!has(i, 'visibility')) return false
+
+  // If its lowercase, its not actually the project create input but the project itself - common mistake in tests
+  const visibility = get(i, 'visibility') as string
+  return visibility.toUpperCase() === visibility
+}
 
 export const mapGqlToDbProjectVisibility = (
   visibility: ProjectVisibility
@@ -39,5 +43,16 @@ export const mapDbToGqlProjectVisibility = (
       return ProjectVisibility.Workspace
     default:
       throwUncoveredError(visibility)
+  }
+}
+
+export const mapGqlToDbSortDirection = (direction: 'ASC' | 'DESC'): 'asc' | 'desc' => {
+  switch (direction) {
+    case 'ASC':
+      return 'asc'
+    case 'DESC':
+      return 'desc'
+    default:
+      throwUncoveredError(direction)
   }
 }

@@ -1,25 +1,40 @@
 /* eslint-disable camelcase */
 import { getResultUrl } from '@/modules/gatekeeper/clients/getResultUrl'
-import {
+import type {
   GetRecurringPrices,
+  GetStripeClient,
   GetSubscriptionData,
-  ReconcileSubscriptionData,
-  SubscriptionData
+  ReconcileSubscriptionData
 } from '@/modules/gatekeeper/domain/billing'
-import { LogicError } from '@/modules/shared/errors'
+import { SubscriptionData } from '@/modules/gatekeeper/domain/billing'
+import { LogicError, TestOnlyLogicError } from '@/modules/shared/errors'
+import { getStripeApiKey, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { TIME_MS } from '@speckle/shared'
-import { isString } from 'lodash'
+import { isString } from 'lodash-es'
 import { Stripe } from 'stripe'
+
+let stripeClient: Stripe | undefined = undefined
+
+export const getStripeClient: GetStripeClient = () => {
+  if (!stripeClient) stripeClient = new Stripe(getStripeApiKey(), { typescript: true })
+  return stripeClient
+}
+
+export const setStripeClient = (client: Stripe | undefined) => {
+  if (!isTestEnv()) {
+    throw new TestOnlyLogicError()
+  }
+
+  stripeClient = client
+}
 
 export const createCustomerPortalUrlFactory =
   ({
-    stripe,
+    getStripeClient,
     frontendOrigin
-  }: // getWorkspacePlanPrice
-  {
-    stripe: Stripe
+  }: {
+    getStripeClient: GetStripeClient
     frontendOrigin: string
-    // getWorkspacePlanPrice: GetWorkspacePlanPrice
   }) =>
   async ({
     workspaceId,
@@ -30,7 +45,7 @@ export const createCustomerPortalUrlFactory =
     workspaceId: string
     workspaceSlug: string
   }): Promise<string> => {
-    const session = await stripe.billingPortal.sessions.create({
+    const session = await getStripeClient().billingPortal.sessions.create({
       customer: customerId,
       return_url: getResultUrl({
         frontendOrigin,
@@ -41,16 +56,12 @@ export const createCustomerPortalUrlFactory =
     return session.url
   }
 
-export const getSubscriptionDataFactory =
-  ({
-    stripe
-  }: // getWorkspacePlanPrice
-  {
-    stripe: Stripe
-    // getWorkspacePlanPrice: GetWorkspacePlanPrice
-  }): GetSubscriptionData =>
+export const getStripeSubscriptionDataFactory =
+  ({ getStripeClient }: { getStripeClient: GetStripeClient }): GetSubscriptionData =>
   async ({ subscriptionId }) => {
-    const stripeSubscription = await stripe.subscriptions.retrieve(subscriptionId)
+    const stripeSubscription = await getStripeClient().subscriptions.retrieve(
+      subscriptionId
+    )
     return parseSubscriptionData(stripeSubscription)
   }
 
@@ -92,9 +103,15 @@ export const parseSubscriptionData = (
 // this should be a reconcile subscriptions, we keep an accurate state in the DB
 // on each change, we're reconciling that state to stripe
 export const reconcileWorkspaceSubscriptionFactory =
-  ({ stripe }: { stripe: Stripe }): ReconcileSubscriptionData =>
+  ({
+    getStripeClient,
+    getStripeSubscriptionData
+  }: {
+    getStripeClient: GetStripeClient
+    getStripeSubscriptionData: GetSubscriptionData
+  }): ReconcileSubscriptionData =>
   async ({ subscriptionData, prorationBehavior }) => {
-    const existingSubscriptionState = await getSubscriptionDataFactory({ stripe })({
+    const existingSubscriptionState = await getStripeSubscriptionData({
       subscriptionId: subscriptionData.subscriptionId
     })
     const items: Stripe.SubscriptionUpdateParams.Item[] = []
@@ -124,18 +141,19 @@ export const reconcileWorkspaceSubscriptionFactory =
     for (const removedProduct of removedProducts) {
       items.push({ id: removedProduct.subscriptionItemId, deleted: true })
     }
+
     // workspaceSubscription.subscriptionData.products.
     // const item = workspaceSubscription.subscriptionData.products.find(p => p.)
-    await stripe.subscriptions.update(subscriptionData.subscriptionId, {
+    await getStripeClient().subscriptions.update(subscriptionData.subscriptionId, {
       items,
       proration_behavior: prorationBehavior
     })
   }
 
 export const getRecurringPricesFactory =
-  (deps: { stripe: Stripe }): GetRecurringPrices =>
+  (deps: { getStripeClient: GetStripeClient }): GetRecurringPrices =>
   async () => {
-    const results = await deps.stripe.prices.list({
+    const results = await deps.getStripeClient().prices.list({
       type: 'recurring',
       limit: 100,
       active: true

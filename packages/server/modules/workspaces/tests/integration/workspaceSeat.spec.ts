@@ -14,17 +14,19 @@ import {
   ensureValidWorkspaceRoleSeatFactory,
   getWorkspaceDefaultSeatTypeFactory
 } from '@/modules/workspaces/services/workspaceSeat'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   assignToWorkspace,
-  BasicTestWorkspace,
   createTestWorkspace,
   unassignFromWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser, createTestUsers } from '@/test/authHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+import { v4 } from 'uuid'
 
 describe('Workspace workspaceSeat services', () => {
   describe('assignWorkspaceSeatFactory', () => {
@@ -33,7 +35,9 @@ describe('Workspace workspaceSeat services', () => {
       name: createRandomString(),
       email: createRandomEmail(),
       role: Roles.Server.Admin,
-      verified: true
+      verified: true,
+      suuid: v4(),
+      createdAt: new Date()
     }
 
     before(async () => {
@@ -56,7 +60,9 @@ describe('Workspace workspaceSeat services', () => {
         name: createRandomString(),
         email: createRandomEmail(),
         role: Roles.Server.User,
-        verified: true
+        verified: true,
+        suuid: v4(),
+        createdAt: new Date()
       }
       await createTestUser(user)
 
@@ -84,14 +90,18 @@ describe('Workspace workspaceSeat services', () => {
       name: createRandomString(),
       email: createRandomEmail(),
       role: Roles.Server.Admin,
-      verified: true
+      verified: true,
+      suuid: v4(),
+      createdAt: new Date()
     }
     const testUser: BasicTestUser = {
       id: '',
       name: createRandomString(),
       email: createRandomEmail(),
       role: Roles.Server.User,
-      verified: true
+      verified: true,
+      suuid: v4(),
+      createdAt: new Date()
     }
     const workspace: BasicTestWorkspace = {
       ownerId: '',

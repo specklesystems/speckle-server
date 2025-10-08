@@ -1,5 +1,5 @@
-import { Logger } from '@/observability/logging'
-import {
+import type { Logger } from '@/observability/logging'
+import type {
   DeleteWorkspace,
   GetWorkspacesNonComplete
 } from '@/modules/workspaces/domain/operations'
@@ -25,6 +25,6 @@ export const deleteWorkspacesNonCompleteFactory =
     logger.info({ workspaceIds }, 'Deleting non complete workspaces')
 
     for (const workspaceId of workspaceIds) {
-      await deleteWorkspace({ workspaceId })
+      await deleteWorkspace({ workspaceId, userId: null })
     }
   }

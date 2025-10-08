@@ -1,19 +1,19 @@
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
+import { createTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
+import type { CreateModelInput } from '@/modules/core/graph/generated/graphql'
 import {
-  BasicTestWorkspace,
-  createTestWorkspace
-} from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
-import {
-  CreateModelInput,
   CreateProjectModelDocument,
   FindProjectModelByNameDocument
-} from '@/test/graphql/generated/graphql'
-import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
+} from '@/modules/core/graph/generated/graphql'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
-import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
-import { omit } from 'lodash'
-import { before, describe } from 'mocha'
+import { omit } from 'lodash-es'
 
 describe('Models', () => {
   const me: BasicTestUser = {

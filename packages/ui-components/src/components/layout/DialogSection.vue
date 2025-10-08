@@ -84,13 +84,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, unref, computed, nextTick } from 'vue'
+import { ref, computed } from 'vue'
 import type { PropType, Ref } from 'vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { FormButton } from '~~/src/lib'
 import { keyboardClick } from '~~/src/helpers/global/accessibility'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 import type { FormButtonStyle } from '~~/src/helpers/form/button'
+import { useElementSize } from '@vueuse/core'
 
 type TitleColor = 'default' | 'danger' | 'warning' | 'success' | 'secondary' | 'info'
 
@@ -125,8 +126,10 @@ const props = defineProps({
 })
 
 const content: Ref<HTMLElement | null> = ref(null)
-const contentHeight = ref(0)
-const isExpanded = ref(false)
+const { height: scrollHeight } = useElementSize(content)
+
+const contentHeight = computed(() => (scrollHeight.value || 0) + 64)
+const isExpanded = defineModel<boolean>('open', { required: false })
 
 const backgroundClass = computed(() => {
   const classes = []
@@ -155,12 +158,7 @@ const titleClasses = computed(() => {
   }
 })
 
-const toggleExpansion = async () => {
+const toggleExpansion = () => {
   isExpanded.value = !isExpanded.value
-
-  if (isExpanded.value) {
-    await nextTick()
-    contentHeight.value = (unref(content)?.scrollHeight || 0) + 64
-  }
 }
 </script>

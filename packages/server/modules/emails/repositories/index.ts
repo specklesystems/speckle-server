@@ -1,5 +1,5 @@
 import { EmailVerifications } from '@/modules/core/dbSchema'
-import {
+import type {
   DeleteOldAndInsertNewVerification,
   DeleteVerifications,
   GetPendingToken,
@@ -8,9 +8,9 @@ import {
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { hash } from 'bcrypt'
-import { EmailVerification } from '@/modules/emails/domain/types'
+import type { EmailVerification } from '@/modules/emails/domain/types'
 
 const tables = {
   emailVerifications: (db: Knex) => db<EmailVerification>(EmailVerifications.name)
@@ -90,7 +90,13 @@ export const deleteOldAndInsertNewVerificationFactory =
   }
 
 export const getPendingVerificationByEmailFactory =
-  ({ db }: { db: Knex }): GetPendingVerificationByEmail =>
+  ({
+    db,
+    verificationTimeoutMinutes
+  }: {
+    db: Knex
+    verificationTimeoutMinutes: number
+  }): GetPendingVerificationByEmail =>
   async ({ email }) => {
     return await tables
       .emailVerifications(db)
@@ -98,7 +104,7 @@ export const getPendingVerificationByEmailFactory =
       .where(
         EmailVerifications.col.createdAt,
         '>',
-        dayjs().subtract(5, 'minutes').toISOString()
+        dayjs().subtract(verificationTimeoutMinutes, 'minutes').toISOString()
       )
       .orderBy(EmailVerifications.col.createdAt, 'desc')
       .first()

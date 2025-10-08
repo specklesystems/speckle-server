@@ -1,10 +1,10 @@
 import { healthCheckLogger } from '@/observability/logging'
 import { highFrequencyMetricsCollectionPeriodMs } from '@/modules/shared/helpers/envHelper'
 import { handleLivenessFactory, handleReadinessFactory } from '@/healthchecks/health'
-import { FreeConnectionsCalculator, ReadinessHandler } from '@/healthchecks/types'
+import type { FreeConnectionsCalculator, ReadinessHandler } from '@/healthchecks/types'
 import { isRedisAlive } from '@/healthchecks/redis'
 import { areAllPostgresAlive } from '@/healthchecks/postgres'
-import { Application } from 'express'
+import type { Application } from 'express'
 import { knexFreeDbConnectionSamplerFactory } from '@/healthchecks/connectionPool'
 import { getAllRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 

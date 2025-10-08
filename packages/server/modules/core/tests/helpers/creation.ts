@@ -1,10 +1,10 @@
 import cryptoRandomString from 'crypto-random-string'
-import { Project } from '@/modules/core/domain/streams/types'
+import type { Project } from '@/modules/core/domain/streams/types'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
-import { assign } from 'lodash'
-import { BasicTestCommit } from '@/test/speckle-helpers/commitHelper'
-import { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
-import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { assign } from 'lodash-es'
+import type { BasicTestCommit } from '@/test/speckle-helpers/commitHelper'
+import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 
 export const buildTestProject = (overrides?: Partial<Project>): Project =>
   assign(
@@ -17,7 +17,7 @@ export const buildTestProject = (overrides?: Partial<Project>): Project =>
       updatedAt: new Date(),
       allowPublicComments: false,
       workspaceId: cryptoRandomString({ length: 10 }),
-      regionKey: cryptoRandomString({ length: 4 }),
+      regionKey: null,
       visibility: ProjectRecordVisibility.Private
     },
     overrides

@@ -14,8 +14,23 @@
               {{ name }}
             </span>
           </NuxtLink>
-          <span v-if="model">
+          <template v-if="model">
+            <NuxtLink
+              v-if="showLastUploadFailed"
+              v-tippy="'Last upload failed'"
+              v-keyboard-clickable
+              class="text-body-3xs text-danger hover:text-danger-lighter cursor-pointer"
+              @click.stop="actions?.showUploads()"
+            >
+              <ExclamationCircleIcon class="w-4 h-4" />
+            </NuxtLink>
+            <IntegrationsAccSyncStatusModelItem
+              v-if="accSyncItem"
+              v-tippy=""
+              :item="accSyncItem"
+            />
             <ProjectPageModelsActions
+              ref="actions"
               v-model:open="showActionsMenu"
               :model="model"
               :project="project"
@@ -28,7 +43,7 @@
               @model-updated="$emit('model-updated')"
               @upload-version="triggerVersionUpload"
             />
-          </span>
+          </template>
         </div>
         <!-- Empty model action -->
         <div
@@ -47,38 +62,35 @@
         </div>
         <!-- Spacer -->
         <div class="flex-grow"></div>
-        <ProjectCardImportFileArea
-          v-if="!isPendingFileUpload(item)"
-          ref="importArea"
-          :project="project"
-          :model-name="item.fullName"
-          :model="item.model || undefined"
-          class="hidden"
-        />
-        <div
-          v-if="
-            !isPendingFileUpload(item) &&
-            (pendingVersion || itemType === StructureItemType.EmptyModel)
-          "
-          class="flex items-center h-full"
-        >
-          <ProjectPendingFileImportStatus
-            v-if="pendingVersion"
-            :upload="pendingVersion"
-            type="subversion"
-            class="px-4 w-full"
-          />
-          <ProjectCardImportFileArea
-            v-else
-            :empty-state-variant="
-              props.gridOrList === GridListToggleValue.Grid ? 'modelGrid' : 'modelList'
+
+        <template v-if="!isPendingFileUpload(item)">
+          <div
+            v-show="
+              pendingVersion ||
+              itemType === StructureItemType.EmptyModel ||
+              isVersionUploading
             "
-            :project="project"
-            :model-name="item.fullName"
-            :model="item.model || undefined"
-            class="h-full w-full"
-          />
-        </div>
+            class="flex items-center h-full"
+          >
+            <ProjectPendingFileImportStatus
+              v-if="pendingVersion"
+              :upload="pendingVersion"
+              type="subversion"
+              class="px-4 w-full h-16"
+            />
+            <!-- Import area must exist even if hidden, so that we can trigger uploads from actions -->
+            <ProjectCardImportFileArea
+              v-show="!pendingVersion && !accSyncItem"
+              ref="importArea"
+              empty-state-variant="modelList"
+              :project="project"
+              :model-name="item.fullName"
+              :model="item.model || undefined"
+              class="h-full w-full"
+              @uploading="onVersionUploading"
+            />
+          </div>
+        </template>
         <div v-else-if="hasVersions" class="hidden sm:flex items-center gap-x-2">
           <div class="text-body-3xs text-foreground-2 text-right">
             Updated
@@ -122,12 +134,17 @@
       </div>
       <!-- Preview or icon section -->
       <div
-        v-if="!isPendingFileUpload(item) && item.model?.previewUrl && !pendingVersion"
+        v-if="
+          !isPendingFileUpload(item) &&
+          item.model?.previewUrl &&
+          !pendingVersion &&
+          !isVersionUploading
+        "
         class="w-20 h-16"
       >
         <NuxtLink
           :to="modelLink || ''"
-          class="h-full w-full block bg-foundation-page rounded-lg border border-outline-3 hover:border-outline-5"
+          class="h-full w-full block bg-foundation-page rounded-lg border border-outline-3 hover:border-outline-5 overflow-hidden"
         >
           <PreviewImage
             v-if="item.model?.previewUrl"
@@ -141,6 +158,23 @@
       v-if="hasSubmodels"
       class="border-l-2 border-primary-muted hover:border-primary transition rounded-md"
     >
+      <!-- So that we can trigger View Uploads from Last Upload Failed -->
+      <ProjectPageModelsActions
+        v-if="model"
+        ref="actions"
+        v-model:open="showActionsMenu"
+        :model="model"
+        :project="project"
+        :menu-position="
+          itemType === StructureItemType.EmptyModel
+            ? HorizontalDirection.Right
+            : HorizontalDirection.Left
+        "
+        class="hidden"
+        @click.stop.prevent
+        @model-updated="$emit('model-updated')"
+        @upload-version="triggerVersionUpload"
+      />
       <button
         class="group bg-foundation w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md cursor-pointer hover:border-outline-5 transition-all border border-outline-3 border-l-0"
         href="/test"
@@ -156,9 +190,12 @@
         </div>
         <!-- Name -->
         <FolderIcon class="w-4 h-4 text-foreground" />
-        <div class="ml-2 text-heading text-foreground flex-grow text-left">
-          {{ name }}
+        <div class="ml-2 flex-grow text-left flex items-center gap-2">
+          <div class="text-heading text-foreground">
+            {{ name }}
+          </div>
         </div>
+
         <!-- Preview -->
         <div class="flex flex-col items-end sm:flex-row sm:items-center gap-1 sm:gap-4">
           <!-- Commented out so that we need to load less data, can be added back -->
@@ -222,7 +259,7 @@
 <script lang="ts" setup>
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid'
-import { FolderIcon } from '@heroicons/vue/24/outline'
+import { ExclamationCircleIcon, FolderIcon } from '@heroicons/vue/24/outline'
 import type {
   PendingFileUploadFragment,
   ProjectPageModelsStructureItem_ProjectFragment,
@@ -236,8 +273,11 @@ import type { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsModelExpanded } from '~~/lib/projects/composables/models'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
-import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import { useCanCreateModel } from '~/lib/projects/composables/permissions'
+import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
+import dayjs from 'dayjs'
+import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
+import { getModelItemRoute } from '~/lib/projects/helpers/models'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -273,15 +313,16 @@ graphql(`
     model {
       ...ProjectPageLatestItemsModelItem
       ...ProjectCardImportFileArea_Model
+      ...ProjectPageModelsCard_Model
+      accSyncItem {
+        id
+        ...SyncStatusModelItem_AccSyncItem
+      }
     }
     hasChildren
     updatedAt
   }
 `)
-
-const isPendingFileUpload = (
-  i: SingleLevelModelTreeItemFragment | PendingFileUploadFragment
-): i is PendingFileUploadFragment => has(i, 'uploadDate')
 
 const emit = defineEmits<{
   (e: 'model-updated'): void
@@ -292,16 +333,30 @@ const props = defineProps<{
   item: SingleLevelModelTreeItemFragment | PendingFileUploadFragment
   project: ProjectPageModelsStructureItem_ProjectFragment
   isSearchResult?: boolean
-  gridOrList?: GridListToggleValue
 }>()
 
 const router = useRouter()
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
+
+const accSyncItem = computed(() =>
+  props.item.__typename === 'ModelsTreeItem' ? props.item.model?.accSyncItem : undefined
+)
+
+const isPendingFileUpload = (
+  i: SingleLevelModelTreeItemFragment | PendingFileUploadFragment
+): i is PendingFileUploadFragment => has(i, 'uploadDate')
 
 const importArea = ref(
   null as Nullable<{
     triggerPicker: () => void
   }>
 )
+const actions = ref(
+  null as Nullable<{
+    showUploads: () => void
+  }>
+)
+const isVersionUploading = ref(false)
 
 const mp = useMixpanel()
 const trackFederateModels = () =>
@@ -372,7 +427,36 @@ const model = computed(() =>
 const pendingModel = computed(() =>
   isPendingFileUpload(props.item) ? props.item : null
 )
-const pendingVersion = computed(() => model.value?.pendingImportedVersions[0])
+
+const pendingVersion = computed(() => {
+  if (!model.value) {
+    return null
+  }
+
+  const lastPendingVersion = model.value.pendingImportedVersions[0]
+  const lastVersion = model.value.lastVersion?.items[0]
+  if (!lastVersion || !lastPendingVersion) return lastPendingVersion
+
+  // If pending version is older than newest version, hide it (may be a stuck import)
+  if (dayjs(lastPendingVersion.updatedAt).isBefore(dayjs(lastVersion.createdAt))) {
+    return null
+  }
+
+  return lastPendingVersion
+})
+
+const showLastUploadFailed = computed(() => {
+  if (!model.value) return false
+  const lastUpload = model.value.lastUpload?.items[0]
+  const lastVersion = model.value.lastVersion?.items[0]
+
+  // Only show if last upload failed & there is no last version,
+  // or last version is older than last upload
+  if (lastUpload?.convertedStatus !== FileUploadConvertedStatus.Error) return false
+  if (!lastVersion) return true
+  return dayjs(lastUpload.updatedAt).isAfter(dayjs(lastVersion.createdAt))
+})
+
 const hasChildren = computed(() =>
   props.isSearchResult || isPendingFileUpload(props.item)
     ? false
@@ -391,13 +475,9 @@ const updatedAt = computed(() => {
 })
 
 const modelLink = computed(() => {
-  if (
-    isPendingFileUpload(props.item) ||
-    !props.item.model ||
-    props.item.model?.versionCount.totalCount === 0
-  )
-    return null
-  return modelRoute(props.project.id, props.item.model.id)
+  const item = isPendingFileUpload(props.item) ? props.item : props.item.model
+  if (!item) return null
+  return getModelItemRoute(item)
 })
 
 const viewAllUrl = computed(() => {
@@ -430,7 +510,12 @@ const onModelUpdated = () => {
 }
 
 const triggerVersionUpload = () => {
+  if (isVersionUploading.value) return
   importArea.value?.triggerPicker()
+}
+
+const onVersionUploading = (payload: FileAreaUploadingPayload) => {
+  isVersionUploading.value = payload.isUploading
 }
 
 const onVersionsClick = () => {

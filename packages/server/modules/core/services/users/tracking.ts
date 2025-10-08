@@ -1,19 +1,19 @@
-import { updateMailchimpMemberTags } from '@/modules/auth/services/mailchimp'
-import { GetUserAuthoredCommitCounts } from '@/modules/core/domain/commits/operations'
-import { GetImplicitUserProjectsCountFactory } from '@/modules/core/domain/streams/operations'
-import {
+import type { updateMailchimpMemberTags } from '@/modules/auth/services/mailchimp'
+import type { GetUserAuthoredCommitCounts } from '@/modules/core/domain/commits/operations'
+import type { GetImplicitUserProjectsCountFactory } from '@/modules/core/domain/streams/operations'
+import type {
   GetUser,
   SetUserOnboardingChoices,
   UpdateUserMixpanelProfile
 } from '@/modules/core/domain/users/operations'
-import {
+import type {
   getMailchimpOnboardingIds,
   getMailchimpStatus
 } from '@/modules/shared/helpers/envHelper'
-import { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
-import { GetUserWorkspaceCountFactory } from '@/modules/workspacesCore/domain/operations'
+import type { getMixpanelClient } from '@/modules/shared/utils/mixpanel'
+import type { GetUserWorkspaceCountFactory } from '@/modules/workspacesCore/domain/operations'
 import { resolveDistinctId } from '@speckle/shared'
-import { Logger } from 'pino'
+import type { Logger } from 'pino'
 
 export const updateUserMixpanelProfileFactory =
   (deps: {

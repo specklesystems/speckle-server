@@ -1,11 +1,19 @@
-import { Project } from '@/modules/core/domain/streams/types'
-import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
-import { MaybeNullOrUndefined, StreamRoles } from '@speckle/shared'
+import type {
+  Project,
+  StreamWithOptionalRole
+} from '@/modules/core/domain/streams/types'
+import type { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
+import type {
+  MaybeNullOrUndefined,
+  Nullable,
+  NullableKeysToOptional,
+  StreamRoles
+} from '@speckle/shared'
 
 export type GetProject = (args: { projectId: string }) => Promise<Project | null>
 
 export type UpdateProject = (args: {
-  projectUpdate: Pick<StreamRecord, 'id'> & Partial<StreamRecord>
+  projectUpdate: Pick<StreamRecord, 'id'> & Partial<StreamRecord> & { updatedAt: Date }
 }) => Promise<StreamRecord>
 
 export type StoreProjectRole = (args: {
@@ -14,23 +22,37 @@ export type StoreProjectRole = (args: {
   role: StreamRoles
 }) => Promise<void>
 
-export type UpsertProjectRole = (
-  args: {
+export type StoreProjectRoles = (args: {
+  roles: {
     projectId: string
     userId: string
     role: StreamRoles
-  },
-  options?: { trackProjectUpdate?: boolean }
-) => Promise<StreamRecord>
+  }[]
+}) => Promise<void>
 
-export type DeleteProjectRole = (args: {
+export type UpsertProjectRole = (args: {
   projectId: string
   userId: string
-}) => Promise<StreamRecord | undefined>
+  role: StreamRoles
+}) => Promise<StreamRecord>
+
+export type BulkUpsertProjects = (params: {
+  projects: Array<NullableKeysToOptional<StreamRecord>>
+}) => Promise<void>
+
+export type GetAllProjects = (args: {
+  limit: number
+  regionKey: string
+  cursor: Nullable<string>
+}) => Promise<{
+  items: StreamRecord[]
+  cursor: Nullable<string>
+}>
 
 export type DeleteProject = (args: { projectId: string }) => Promise<void>
+export type DeleteProjectAndCommits = (args: { projectId: string }) => Promise<void>
 
-export type GetRolesByUserId = ({
+export type GetUserProjectRoles = ({
   userId,
   workspaceId
 }: {
@@ -50,7 +72,6 @@ export type ProjectCreateArgs = {
 }
 
 export type CreateProject = (params: ProjectCreateArgs) => Promise<Project>
-
 export type StoreProject = (params: { project: Project }) => Promise<void>
 
 export type StoreModel = (params: {
@@ -59,3 +80,21 @@ export type StoreModel = (params: {
   projectId: string
   authorId: string
 }) => Promise<void>
+
+export type WaitForRegionProject = (params: {
+  projectId: string
+  regionKey: string
+  maxAttempts?: number
+}) => Promise<void>
+
+export type QueryAllProjects = (
+  args:
+    | {
+        userId: string
+        workspaceId?: string
+      }
+    | {
+        userId?: string
+        workspaceId: string
+      }
+) => AsyncGenerator<StreamWithOptionalRole[], void, unknown>

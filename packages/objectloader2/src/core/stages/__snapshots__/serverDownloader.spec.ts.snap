@@ -1,0 +1,117 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`downloader > add extra header 1`] = `
+{
+  "base": {
+    "__closure": {
+      "childIds": 1,
+    },
+    "id": "id",
+    "speckle_type": "type",
+  },
+  "baseId": "id",
+  "size": 0,
+}
+`;
+
+exports[`downloader > download batch of one 1`] = `
+[
+  {
+    "base": {
+      "id": "id",
+      "speckle_type": "type",
+    },
+    "baseId": "id",
+    "size": 33,
+  },
+]
+`;
+
+exports[`downloader > download batch of three 1`] = `
+[
+  {
+    "base": {
+      "id": "id1",
+      "speckle_type": "type",
+    },
+    "baseId": "id1",
+    "size": 34,
+  },
+  {
+    "base": {
+      "id": "id2",
+      "speckle_type": "type",
+    },
+    "baseId": "id2",
+    "size": 34,
+  },
+  {
+    "base": {
+      "id": "id3",
+      "speckle_type": "type",
+    },
+    "baseId": "id3",
+    "size": 34,
+  },
+]
+`;
+
+exports[`downloader > download batch of three with Objects.Other.RawEncoding 1`] = `
+[
+  {
+    "base": {
+      "id": "id1",
+      "speckle_type": "type",
+    },
+    "baseId": "id1",
+    "size": 34,
+  },
+  {
+    "base": undefined,
+    "baseId": "id2",
+  },
+  {
+    "base": {
+      "id": "id3",
+      "speckle_type": "type",
+    },
+    "baseId": "id3",
+    "size": 34,
+  },
+]
+`;
+
+exports[`downloader > download batch of two 1`] = `
+[
+  {
+    "base": {
+      "id": "id1",
+      "speckle_type": "type",
+    },
+    "baseId": "id1",
+    "size": 34,
+  },
+  {
+    "base": {
+      "id": "id2",
+      "speckle_type": "type",
+    },
+    "baseId": "id2",
+    "size": 34,
+  },
+]
+`;
+
+exports[`downloader > download single exists 1`] = `
+{
+  "base": {
+    "__closure": {
+      "childIds": 1,
+    },
+    "id": "id",
+    "speckle_type": "type",
+  },
+  "baseId": "id",
+  "size": 0,
+}
+`;

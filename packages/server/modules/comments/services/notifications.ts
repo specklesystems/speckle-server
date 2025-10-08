@@ -1,19 +1,20 @@
-import { CommentRecord } from '@/modules/comments/helpers/types'
+import type { CommentRecord } from '@/modules/comments/helpers/types'
 import { ensureCommentSchema } from '@/modules/comments/services/commentTextService'
 import type { JSONContent } from '@tiptap/core'
 import { iterateContentNodes } from '@/modules/core/services/richTextEditorService'
-import { difference, flatten } from 'lodash'
-import {
-  NotificationPublisher,
-  NotificationType
-} from '@/modules/notifications/helpers/types'
-import {
+import { difference, flatten } from 'lodash-es'
+import type { NotificationPublisher } from '@/modules/notifications/helpers/types'
+import { NotificationType } from '@/modules/notifications/helpers/types'
+import type {
   AddStreamCommentMentionActivity,
-  SaveActivity
+  SaveStreamActivity
 } from '@/modules/activitystream/domain/operations'
-import { EventBus } from '@/modules/shared/services/eventBus'
+import type { EventBus } from '@/modules/shared/services/eventBus'
 import { CommentEvents } from '@/modules/comments/domain/events'
-import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
+import {
+  StreamActionTypes,
+  StreamResourceTypes
+} from '@/modules/activitystream/helpers/types'
 
 function findMentionedUserIds(doc: JSONContent) {
   const mentionedUserIds = new Set<string>()
@@ -43,13 +44,17 @@ function collectMentionedUserIds(comment: CommentRecord): string[] {
  * Save "user mentioned in stream comment" activity item
  */
 const addStreamCommentMentionActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }): AddStreamCommentMentionActivity =>
+  ({
+    saveActivity
+  }: {
+    saveActivity: SaveStreamActivity
+  }): AddStreamCommentMentionActivity =>
   async ({ streamId, mentionAuthorId, mentionTargetId, commentId, threadId }) => {
     await saveActivity({
       streamId,
-      resourceType: ResourceTypes.Comment,
+      resourceType: StreamResourceTypes.Comment,
       resourceId: commentId,
-      actionType: ActionTypes.Comment.Mention,
+      actionType: StreamActionTypes.Comment.Mention,
       userId: mentionAuthorId,
       message: `User ${mentionAuthorId} mentioned user ${mentionTargetId} in comment ${commentId}`,
       info: {
@@ -122,7 +127,7 @@ export const notifyUsersOnCommentEventsFactory =
   (deps: {
     eventBus: EventBus
     publish: NotificationPublisher
-    saveActivity: SaveActivity
+    saveActivity: SaveStreamActivity
   }) =>
   async () => {
     const addStreamCommentMentionActivity = addStreamCommentMentionActivityFactory(deps)

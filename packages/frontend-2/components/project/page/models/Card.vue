@@ -12,14 +12,11 @@
     <div class="relative p-2 h-full flex flex-col">
       <NuxtLink
         v-if="!defaultLinkDisabled"
-        :to="modelRoute(projectId, model.id)"
+        :to="modelUrl"
         class="absolute z-10 inset-0"
       />
       <div class="relative z-40 flex justify-between items-center h-10">
-        <NuxtLink
-          :to="!defaultLinkDisabled ? modelRoute(projectId, model.id) : undefined"
-          class="truncate"
-        >
+        <NuxtLink :to="!defaultLinkDisabled ? modelUrl : undefined" class="truncate">
           <div class="px-1 select-none w-full">
             <div
               v-if="nameParts[0]"
@@ -36,6 +33,7 @@
         </NuxtLink>
         <ProjectPageModelsActions
           v-if="project && showActions && !isPendingModelFragment(model)"
+          ref="actions"
           v-model:open="showActionsMenu"
           :model="model"
           :project="project"
@@ -61,25 +59,26 @@
         <ProjectPendingFileImportStatus
           v-if="isPendingModelFragment(model)"
           :upload="model"
-          class="px-4 w-full h-full"
+          class="px-4 w-full h-48"
         />
         <ProjectPendingFileImportStatus
           v-else-if="pendingVersion"
           :upload="pendingVersion"
           type="subversion"
-          class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
+          class="px-4 w-full h-48 text-foreground-2 text-sm flex flex-col items-center space-y-1"
         />
-        <template v-else-if="previewUrl">
+        <template v-else-if="previewUrl && !isVersionUploading">
           <NuxtLink
-            :to="!defaultLinkDisabled ? modelRoute(projectId, model.id) : undefined"
-            class="relative z-20 bg-foundation-page w-full h-48 rounded-xl border border-outline-2"
+            :to="!defaultLinkDisabled ? modelUrl : undefined"
+            class="relative z-20 bg-foundation-page w-full rounded-xl border border-outline-2 overflow-hidden"
+            :class="smallView ? 'h-24' : 'h-48'"
           >
             <PreviewImage :preview-url="previewUrl" />
           </NuxtLink>
         </template>
         <div
           v-if="!isPendingModelFragment(model) && project"
-          v-show="!previewUrl && !pendingVersion"
+          v-show="!pendingVersion && (isVersionUploading || !previewUrl)"
           class="h-48 w-full relative z-30"
         >
           <ProjectCardImportFileArea
@@ -88,14 +87,25 @@
             :project="project"
             :model="model"
             class="w-full h-full"
+            @uploading="onVersionUploading"
           />
         </div>
       </div>
       <div class="relative z-20 flex justify-between items-center w-full h-8 pl-2">
-        <ProjectPageModelsCardUpdatedTime
-          class="text-body-3xs text-foreground-2"
-          :updated-at="updatedAtFullDate"
-        />
+        <div class="flex flex-col">
+          <ProjectPageModelsCardUpdatedTime
+            class="text-body-3xs text-foreground-2"
+            :updated-at="updatedAtFullDate"
+          />
+          <NuxtLink
+            v-if="showLastUploadFailed"
+            v-keyboard-clickable
+            class="text-body-3xs text-danger hover:text-danger-lighter cursor-pointer"
+            @click.stop="actions?.showUploads()"
+          >
+            Last upload failed
+          </NuxtLink>
+        </div>
         <div class="flex items-center gap-1">
           <div
             v-if="!isPendingModelFragment(model)"
@@ -128,10 +138,16 @@ import type {
   ProjectPageLatestItemsModelItemFragment,
   ProjectPageModelsCardProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
+import { modelVersionsRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
-import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
+import {
+  getModelItemRoute,
+  isPendingModelFragment
+} from '~~/lib/projects/helpers/models'
 import type { Nullable, Optional } from '@speckle/shared'
+import type { FileAreaUploadingPayload } from '~/lib/form/helpers/fileUpload'
+import { FileUploadConvertedStatus } from '@speckle/shared/blobs'
+import dayjs from 'dayjs'
 
 graphql(`
   fragment ProjectPageModelsCardProject on Project {
@@ -143,6 +159,29 @@ graphql(`
     permissions {
       canCreateModel {
         ...FullPermissionCheckResult
+      }
+    }
+  }
+`)
+
+graphql(`
+  fragment ProjectPageModelsCard_Model on Model {
+    id
+    homeView {
+      id
+      resourceIds
+    }
+    lastUpload: uploads(input: { limit: 1, cursor: null }) {
+      items {
+        id
+        updatedAt
+        convertedStatus
+      }
+    }
+    lastVersion: versions(limit: 1, cursor: null) {
+      items {
+        id
+        createdAt
       }
     }
   }
@@ -160,10 +199,12 @@ const props = withDefaults(
     showVersions?: boolean
     showActions?: boolean
     disableDefaultLink?: boolean
+    smallView?: boolean
   }>(),
   {
     showVersions: true,
-    showActions: true
+    showActions: true,
+    smallView: false
   }
 )
 
@@ -175,8 +216,28 @@ const importArea = ref(
     triggerPicker: () => void
   }>
 )
+
+const actions = ref(
+  null as Nullable<{
+    showUploads: () => void
+  }>
+)
+
+const isVersionUploading = ref(false)
 const showActionsMenu = ref(false)
 const hovered = ref(false)
+
+const showLastUploadFailed = computed(() => {
+  if (isPendingModelFragment(props.model)) return false
+  const lastUpload = props.model.lastUpload?.items[0]
+  const lastVersion = props.model.lastVersion?.items[0]
+
+  // Only show if last upload failed & there is no last version,
+  // or last version is older than last upload
+  if (lastUpload?.convertedStatus !== FileUploadConvertedStatus.Error) return false
+  if (!lastVersion) return true
+  return dayjs(lastUpload.updatedAt).isAfter(dayjs(lastVersion.createdAt))
+})
 
 const containerClasses = computed(() => {
   const classParts = [
@@ -199,6 +260,8 @@ const nameParts = computed(() => {
   return [splitName.join('/') + '/', displayName]
 })
 
+const modelUrl = computed(() => getModelItemRoute(props.model))
+
 const previewUrl = computed(() =>
   isPendingModelFragment(props.model) ? null : props.model.previewUrl
 )
@@ -217,9 +280,20 @@ const versionCount = computed(() => {
 })
 
 const pendingVersion = computed(() => {
-  return isPendingModelFragment(props.model)
-    ? null
-    : props.model.pendingImportedVersions[0]
+  if (isPendingModelFragment(props.model)) {
+    return null
+  }
+
+  const lastPendingVersion = props.model.pendingImportedVersions[0]
+  const lastVersion = props.model.lastVersion?.items[0]
+  if (!lastVersion || !lastPendingVersion) return lastPendingVersion
+
+  // If pending version is older than newest version, hide it (may be a stuck import)
+  if (dayjs(lastPendingVersion.updatedAt).isBefore(dayjs(lastVersion.createdAt))) {
+    return null
+  }
+
+  return lastPendingVersion
 })
 
 const onCardClick = (event: KeyboardEvent | MouseEvent) => {
@@ -231,6 +305,10 @@ const onCardClick = (event: KeyboardEvent | MouseEvent) => {
     return
   }
   emit('click', event)
+}
+
+const onVersionUploading = (payload: FileAreaUploadingPayload) => {
+  isVersionUploading.value = payload.isUploading
 }
 
 const triggerVersionUpload = () => {

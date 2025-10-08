@@ -1,20 +1,23 @@
-import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
-import { UserRecord } from '@/modules/core/helpers/types'
-import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
-import { SaveActivity } from '@/modules/activitystream/domain/operations'
-import { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
+import type { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
+import type { UserRecord } from '@/modules/core/helpers/types'
+import {
+  StreamActionTypes,
+  StreamResourceTypes
+} from '@/modules/activitystream/helpers/types'
+import type { SaveStreamActivity } from '@/modules/activitystream/domain/operations'
+import type { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
 import { UserEvents } from '@/modules/core/domain/users/events'
 
 const addUserCreatedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }) =>
+  ({ saveStreamActivity }: { saveStreamActivity: SaveStreamActivity }) =>
   async (payload: EventPayload<typeof UserEvents.Created>) => {
     const { user } = payload.payload
 
-    await saveActivity({
+    await saveStreamActivity({
       streamId: null,
-      resourceType: ResourceTypes.User,
+      resourceType: StreamResourceTypes.User,
       resourceId: user.id,
-      actionType: ActionTypes.User.Create,
+      actionType: StreamActionTypes.User.Create,
       userId: user.id,
       info: { user },
       message: 'User created'
@@ -22,7 +25,7 @@ const addUserCreatedActivityFactory =
   }
 
 const addUserUpdatedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }) =>
+  ({ saveStreamActivity }: { saveStreamActivity: SaveStreamActivity }) =>
   async (params: {
     oldUser: UserRecord
     update: UserUpdateInput
@@ -30,11 +33,11 @@ const addUserUpdatedActivityFactory =
   }) => {
     const { oldUser, update, updaterId } = params
 
-    await saveActivity({
+    await saveStreamActivity({
       streamId: null,
-      resourceType: ResourceTypes.User,
+      resourceType: StreamResourceTypes.User,
       resourceId: oldUser.id,
-      actionType: ActionTypes.User.Update,
+      actionType: StreamActionTypes.User.Update,
       userId: updaterId,
       info: { old: oldUser, new: update },
       message: 'User updated'
@@ -42,15 +45,15 @@ const addUserUpdatedActivityFactory =
   }
 
 const addUserDeletedActivityFactory =
-  (deps: { saveActivity: SaveActivity }) =>
+  (deps: { saveStreamActivity: SaveStreamActivity }) =>
   async (params: { targetUserId: string; invokerUserId: string }) => {
     const { targetUserId, invokerUserId } = params
 
-    await deps.saveActivity({
+    await deps.saveStreamActivity({
       streamId: null,
       resourceType: 'user',
       resourceId: targetUserId,
-      actionType: ActionTypes.User.Delete,
+      actionType: StreamActionTypes.User.Delete,
       userId: invokerUserId,
       info: {},
       message: 'User deleted'
@@ -58,7 +61,8 @@ const addUserDeletedActivityFactory =
   }
 
 export const reportUserActivityFactory =
-  (deps: { eventListen: EventBusListen; saveActivity: SaveActivity }) => () => {
+  (deps: { eventListen: EventBusListen; saveStreamActivity: SaveStreamActivity }) =>
+  () => {
     const addUserDeletedActivity = addUserDeletedActivityFactory(deps)
     const addUserUpdatedActivity = addUserUpdatedActivityFactory(deps)
     const addUserCreatedActivity = addUserCreatedActivityFactory(deps)

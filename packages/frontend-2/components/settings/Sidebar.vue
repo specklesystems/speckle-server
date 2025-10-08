@@ -13,8 +13,8 @@
           <IconSidebarClose v-else class="h-4 w-4 -ml-1 -mr-1" />
         </FormButton>
 
-        <NuxtLink :to="exitSettingsRoute" class="flex items-center gap-x-1 pl-0.5">
-          <ChevronLeftIcon class="h-4 w-4 text-foreground-2" />
+        <NuxtLink :to="exitSettingsRoute" class="flex items-center">
+          <FormButton :icon-left="ChevronLeftIcon" hide-text color="subtle" />
           <p class="text-body-xs font-medium text-foreground">Settings</p>
         </NuxtLink>
       </div>
@@ -128,7 +128,7 @@ import {
   settingsWorkspaceRoutes,
   workspaceRoute
 } from '~/lib/common/helpers/route'
-import { useNavigation } from '~~/lib/navigation/composables/navigation'
+import { useActiveWorkspaceSlug } from '~~/lib/user/composables/activeWorkspace'
 
 graphql(`
   fragment SettingsSidebar_Workspace on Workspace {
@@ -140,7 +140,7 @@ graphql(`
 `)
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const { activeWorkspaceSlug } = useNavigation()
+const activeWorkspaceSlug = useActiveWorkspaceSlug()
 const settingsMenuState = useSettingsMenuState()
 const { isAdmin: isServerAdmin } = useActiveUser()
 const route = useRoute()
@@ -193,6 +193,6 @@ const exitSettingsRoute = computed(() => {
 
 const showWorkspaceSettings = computed(() => {
   if (!isWorkspacesEnabled.value) return false
-  return !!activeWorkspaceSlug.value
+  return !!activeWorkspaceSlug.value && filteredWorkspaceMenuItems.value.length > 0
 })
 </script>

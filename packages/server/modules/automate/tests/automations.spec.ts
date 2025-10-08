@@ -13,23 +13,21 @@ import {
   createStoredAuthCodeFactory
 } from '@/modules/automate/services/authCode'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
-import { ProjectAutomationRevisionCreateInput } from '@/modules/core/graph/generated/graphql'
-import { BranchRecord } from '@/modules/core/helpers/types'
+import type { ProjectAutomationRevisionCreateInput } from '@/modules/core/graph/generated/graphql'
+import type { BranchRecord } from '@/modules/core/helpers/types'
 import { getLatestStreamBranchFactory } from '@/modules/core/repositories/branches'
 import { expectToThrow } from '@/test/assertionHelper'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
 import {
   AutomateValidateAuthCodeDocument,
   GetProjectAutomationDocument
-} from '@/test/graphql/generated/graphql'
-import {
-  TestApolloServer,
-  createTestContext,
-  testApolloServer
-} from '@/test/graphqlHelper'
+} from '@/modules/core/graph/generated/graphql'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
+import type { TestAutomationWithRevision } from '@/test/speckle-helpers/automationHelper'
 import {
-  TestAutomationWithRevision,
   buildAutomationCreate,
   buildAutomationRevisionCreate,
   createTestAutomation,
@@ -37,10 +35,12 @@ import {
   generateFunctionReleaseId,
   truncateAutomations
 } from '@/test/speckle-helpers/automationHelper'
-import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
-import { Automate, Roles } from '@speckle/shared'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStreams } from '@/test/speckle-helpers/streamHelper'
+import type { Automate } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
-import { times } from 'lodash'
+import { times } from 'lodash-es'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { db } from '@/db/knex'
 import {
@@ -48,7 +48,10 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import {
+  getStreamRolesFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { AutomationEvents } from '@/modules/automate/domain/events'
@@ -67,6 +70,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 

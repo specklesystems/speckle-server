@@ -1,9 +1,10 @@
 import { TIME_MS, timeoutAt } from '@speckle/shared'
-import { until } from '@vueuse/core'
+import { until, useScroll } from '@vueuse/core'
 import DOMPurify from 'dompurify'
+import type { ShallowRef } from 'vue'
 
 const purify = async (source: string) => {
-  let purify: DOMPurify.DOMPurifyI
+  let purify: typeof DOMPurify
 
   if (import.meta.server) {
     const jsdom = await import('jsdom')
@@ -54,4 +55,27 @@ export function usePurifiedHtml(
   return {
     purifiedHtml: computed(() => asyncData.data.value || '')
   }
+}
+
+/**
+ * KeepAlive loses scroll position - use this to cache and restore the position
+ * upon reactivation
+ */
+export const useKeepAliveScrollState = (el: ShallowRef<HTMLElement | null>) => {
+  const scrollTracker = useScroll(el, {
+    throttle: 100
+  })
+
+  const retainedX = ref(scrollTracker.x.value)
+  const retainedY = ref(scrollTracker.y.value)
+
+  onDeactivated(() => {
+    retainedX.value = scrollTracker.x.value
+    retainedY.value = scrollTracker.y.value
+  })
+
+  onActivated(() => {
+    scrollTracker.x.value = retainedX.value
+    scrollTracker.y.value = retainedY.value
+  })
 }

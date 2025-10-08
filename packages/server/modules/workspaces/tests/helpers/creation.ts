@@ -45,20 +45,19 @@ import {
   validateSlugFactory,
   generateValidSlugFactory
 } from '@/modules/workspaces/services/management'
-import { BasicTestUser } from '@/test/authHelper'
-import { CreateWorkspaceInviteMutationVariables } from '@/test/graphql/generated/graphql'
+import type { BasicTestUser } from '@/test/authHelper'
+import type { CreateWorkspaceInviteMutationVariables } from '@/modules/core/graph/generated/graphql'
 import cryptoRandomString from 'crypto-random-string'
-import {
+import type {
   MaybeNullOrUndefined,
-  PaidWorkspacePlans,
-  Roles,
   WorkspacePlan,
   WorkspacePlans,
-  WorkspacePlanStatuses,
   WorkspaceRoles
 } from '@speckle/shared'
+import { PaidWorkspacePlans, Roles, WorkspacePlanStatuses } from '@speckle/shared'
 import {
   getStreamFactory,
+  getStreamRolesFactory,
   grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
@@ -70,7 +69,7 @@ import {
   upsertUserSsoSessionFactory
 } from '@/modules/workspaces/repositories/sso'
 import { getEncryptor } from '@/modules/workspaces/helpers/sso'
-import { OidcProvider } from '@/modules/workspaces/domain/sso/types'
+import type { OidcProvider } from '@/modules/workspaces/domain/sso/types'
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
 import {
@@ -79,7 +78,7 @@ import {
   upsertWorkspacePlanFactory,
   upsertWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
-import { SetOptional } from 'type-fest'
+import type { SetOptional } from 'type-fest'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import {
   assignWorkspaceRegionFactory,
@@ -91,7 +90,6 @@ import {
   getDefaultRegionFactory,
   upsertRegionAssignmentFactory
 } from '@/modules/workspaces/repositories/regions'
-import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import {
   assignWorkspaceSeatFactory,
@@ -109,7 +107,7 @@ import {
   getWorkspaceSeatTypeToProjectRoleMappingFactory,
   validateWorkspaceMemberProjectRoleFactory
 } from '@/modules/workspaces/services/projects'
-import { assign, isBoolean, isString } from 'lodash'
+import { assign, isBoolean, isString } from 'lodash-es'
 import { captureCreatedInvite } from '@/test/speckle-helpers/inviteHelper'
 import {
   finalizeInvitedServerRegistrationFactory,
@@ -129,12 +127,17 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
-import {
+import type { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
+import type {
+  Workspace,
   WorkspaceSeat,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
-import { WorkspaceRole } from '@/modules/cross-server-sync/graph/generated/graphql'
+import { WorkspaceRole } from '@/modules/core/graph/generated/graphql'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { logger } from '@/observability/logging'
+import type { UpdateWorkspace } from '@/modules/workspaces/domain/operations'
+import { getAllRegisteredTestDbs } from '@/modules/multiregion/tests/helpers'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -170,7 +173,7 @@ export const createTestWorkspace = async (
     regionKey?: string
     addCreationState?: Pick<WorkspaceCreationState, 'completed' | 'state'>
   }
-) => {
+): Promise<BasicTestWorkspace> => {
   const {
     domain,
     addPlan = true,
@@ -186,45 +189,59 @@ export const createTestWorkspace = async (
     // be created as if it was not assigned to a workspace, allowing tests to still work
     // (Surely if you explicitly invoke createTestWorkspace with FFs off, you know what you're doing)
     workspace.id = undefined as unknown as string
-    return
+    workspace.slug = undefined as unknown as string
+    return workspace as BasicTestWorkspace
   }
 
   const upsertWorkspacePlan = upsertWorkspacePlanFactory({ db })
-  const createWorkspace = createWorkspaceFactory({
-    validateSlug: validateSlugFactory({
-      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
-    }),
-    generateValidSlug: generateValidSlugFactory({
-      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
-    }),
-    upsertWorkspace: upsertWorkspaceFactory({ db }),
-    emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
-    addOrUpdateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
-      getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
-      findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
-        db
-      }),
-      getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-      upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-      emitWorkspaceEvent: getEventBus().emit,
-      ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
-        createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-        getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db }),
-        getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
-          getWorkspace: getWorkspaceFactory({ db })
-        }),
-        eventEmit: getEventBus().emit
-      }),
-      assignWorkspaceSeat: assignWorkspaceSeatFactory({
-        createWorkspaceSeat: createWorkspaceSeatFactory({ db }),
-        getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
-          db
-        }),
-        eventEmit: getEventBus().emit,
-        getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db })
-      })
-    })
-  })
+  const createWorkspace: ReturnType<typeof createWorkspaceFactory> = async (...args) =>
+    asMultiregionalOperation(
+      async ({ allDbs, mainDb, emit }) => {
+        const createWorkspace = createWorkspaceFactory({
+          validateSlug: validateSlugFactory({
+            getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: mainDb })
+          }),
+          generateValidSlug: generateValidSlugFactory({
+            getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: mainDb })
+          }),
+          upsertWorkspace: replicateFactory(allDbs, upsertWorkspaceFactory),
+          emitWorkspaceEvent: emit,
+          addOrUpdateWorkspaceRole: addOrUpdateWorkspaceRoleFactory({
+            getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: mainDb }),
+            findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+              db: mainDb
+            }),
+            getWorkspaceRoles: getWorkspaceRolesFactory({ db: mainDb }),
+            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: mainDb }),
+            emitWorkspaceEvent: emit,
+            ensureValidWorkspaceRoleSeat: ensureValidWorkspaceRoleSeatFactory({
+              createWorkspaceSeat: createWorkspaceSeatFactory({ db: mainDb }),
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: mainDb }),
+              getWorkspaceDefaultSeatType: getWorkspaceDefaultSeatTypeFactory({
+                getWorkspace: getWorkspaceFactory({ db: mainDb })
+              }),
+              eventEmit: emit
+            }),
+            assignWorkspaceSeat: assignWorkspaceSeatFactory({
+              createWorkspaceSeat: createWorkspaceSeatFactory({ db: mainDb }),
+              getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                db: mainDb
+              }),
+              eventEmit: emit,
+              getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: mainDb })
+            })
+          })
+        })
+
+        return createWorkspace(...args)
+      },
+      {
+        logger,
+        name: 'create workspace spec',
+        dbs: await getAllRegisteredTestDbs()
+      }
+    )
+
   const upsertSubscription = upsertWorkspaceSubscriptionFactory({ db })
 
   const newWorkspace = await createWorkspace({
@@ -290,6 +307,7 @@ export const createTestWorkspace = async (
         currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
         billingInterval: 'monthly',
         currency: 'usd',
+        updateIntent: null,
         subscriptionData: {
           subscriptionId: cryptoRandomString({ length: 10 }),
           customerId: cryptoRandomString({ length: 10 }),
@@ -303,7 +321,6 @@ export const createTestWorkspace = async (
   }
 
   if (useRegion) {
-    const regionDb = await getDb({ regionKey })
     const assignRegion = assignWorkspaceRegionFactory({
       getAvailableRegions: getAvailableRegionsFactory({
         getRegions: getRegionsFactory({ db }),
@@ -313,8 +330,7 @@ export const createTestWorkspace = async (
       }),
       upsertRegionAssignment: upsertRegionAssignmentFactory({ db }),
       getDefaultRegion: getDefaultRegionFactory({ db }),
-      getWorkspace: getWorkspaceFactory({ db }),
-      insertRegionWorkspace: upsertWorkspaceFactory({ db: regionDb })
+      getWorkspace: getWorkspaceFactory({ db })
     })
     await assignRegion({
       workspaceId: newWorkspace.id,
@@ -333,15 +349,29 @@ export const createTestWorkspace = async (
     })
   }
 
-  const updateWorkspace = updateWorkspaceFactory({
-    validateSlug: validateSlugFactory({
-      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
-    }),
-    getWorkspace: getWorkspaceWithDomainsFactory({ db }),
-    getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderRecordFactory({ db }),
-    upsertWorkspace: upsertWorkspaceFactory({ db }),
-    emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
-  })
+  const updateWorkspace: UpdateWorkspace = async (...args) =>
+    asMultiregionalOperation(
+      ({ allDbs, mainDb, emit }) => {
+        const updateWorkspace = updateWorkspaceFactory({
+          validateSlug: validateSlugFactory({
+            getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: mainDb })
+          }),
+          getWorkspace: getWorkspaceWithDomainsFactory({ db: mainDb }),
+          getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderRecordFactory({
+            db: mainDb
+          }),
+          upsertWorkspace: replicateFactory(allDbs, upsertWorkspaceFactory),
+          emitWorkspaceEvent: emit
+        })
+
+        return updateWorkspace(...args)
+      },
+      {
+        logger,
+        name: 'updateWorkspace spec',
+        dbs: await getAllRegisteredTestDbs()
+      }
+    )
 
   if (workspace.discoverabilityEnabled || workspace.discoverabilityAutoJoinEnabled) {
     if (!domain) throw new Error('Domain is needed for discoverability')
@@ -362,6 +392,14 @@ export const createTestWorkspace = async (
       workspaceInput: { domainBasedMembershipProtectionEnabled: true }
     })
   }
+
+  return {
+    ...workspace,
+    ...newWorkspace,
+    description: workspace.description || undefined,
+    logo: workspace.logo || undefined,
+    ownerId: owner.id
+  }
 }
 
 export const buildBasicTestWorkspace = (
@@ -373,6 +411,26 @@ export const buildBasicTestWorkspace = (
       name: cryptoRandomString({ length: 10 }),
       slug: cryptoRandomString({ length: 10 }),
       ownerId: ''
+    },
+    overrides
+  )
+
+export const buildTestWorkspace = (overrides?: Partial<Workspace>): Workspace =>
+  assign(
+    {
+      id: cryptoRandomString({ length: 10 }),
+      name: cryptoRandomString({ length: 10 }),
+      slug: cryptoRandomString({ length: 10 }),
+      description: cryptoRandomString({ length: 10 }),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      logo: null,
+      domainBasedMembershipProtectionEnabled: false,
+      discoverabilityEnabled: false,
+      discoverabilityAutoJoinEnabled: false,
+      defaultSeatType: null,
+      isEmbedSpeckleBrandingHidden: false,
+      isExclusive: false
     },
     overrides
   )
@@ -593,6 +651,7 @@ export const createWorkspaceInviteDirectly = async (
             validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
             getUser: getUserFactory({ db }),
             grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+            getStreamRoles: getStreamRolesFactory({ db }),
             emitEvent: getEventBus().emit
           })
         })
@@ -664,6 +723,7 @@ export const createTestOidcProvider = async (
       id: providerId,
       createdAt: new Date(),
       updatedAt: new Date(),
+      sessionTimeoutDays: 7,
       providerType: 'oidc',
       provider: {
         providerName: 'Test Provider',

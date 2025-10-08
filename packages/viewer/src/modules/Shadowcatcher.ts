@@ -61,13 +61,13 @@ export class Shadowcatcher {
     this.displayMaterial.blendDst = DstAlphaFactor
     this.displayMaterial.blendDstAlpha = OneFactor
     this.displayMaterial.alphaTest = 0.001
+    this.displayMaterial.depthWrite = false
 
     this.planeMesh = new Mesh()
     this.planeMesh.material = this.displayMaterial
     this.planeMesh.layers.set(layer)
     this.planeMesh.name = Shadowcatcher.MESH_NAME
     this.planeMesh.frustumCulled = false
-    // this.planeMesh.renderOrder = layer
   }
 
   public update(scene: Scene) {

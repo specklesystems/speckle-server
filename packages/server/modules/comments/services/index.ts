@@ -2,14 +2,14 @@ import crs from 'crypto-random-string'
 import { ForbiddenError, ResourceMismatch } from '@/modules/shared/errors'
 import { buildCommentTextFromInput } from '@/modules/comments/services/commentTextService'
 import { isNonNullable, Roles } from '@speckle/shared'
-import {
+import type {
   ResourceIdentifier,
   CommentCreateInput,
   CommentEditInput
 } from '@/modules/core/graph/generated/graphql'
-import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
-import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
-import {
+import type { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
+import type { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
+import type {
   CheckStreamResourceAccess,
   CheckStreamResourcesAccess,
   DeleteComment,
@@ -23,11 +23,11 @@ import {
   UpdateComment,
   ValidateInputAttachments
 } from '@/modules/comments/domain/operations'
-import { ResourceType } from '@/modules/comments/domain/types'
-import { GetStream } from '@/modules/core/domain/streams/operations'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { ResourceType } from '@/modules/comments/domain/types'
+import type { GetStream } from '@/modules/core/domain/streams/operations'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { CommentEvents } from '@/modules/comments/domain/events'
-import { JSONContent } from '@tiptap/core'
+import type { JSONContent } from '@tiptap/core'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { CommentNotFoundError } from '@/modules/comments/errors'
 
@@ -62,7 +62,15 @@ export const createCommentFactory =
     emitEvent: EventBusEmit
     getViewerResourcesFromLegacyIdentifiers: GetViewerResourcesFromLegacyIdentifiers
   }) =>
-  async ({ userId, input }: { userId: string; input: CommentCreateInput }) => {
+  async (
+    { userId, input }: { userId: string; input: CommentCreateInput },
+    options?: Partial<{
+      /**
+       * Used in tests to skip text validation & formatting - text is saved in DB as is
+       */
+      skipTextValidation: boolean
+    }>
+  ) => {
     if (input.resources.length < 1)
       throw new UserInputError(
         'Must specify at least one resource as the comment target'
@@ -91,10 +99,12 @@ export const createCommentFactory =
     }
 
     await deps.validateInputAttachments(input.streamId, input.blobIds)
-    comment.text = buildCommentTextFromInput({
-      doc: input.text,
-      blobIds: input.blobIds
-    })
+    comment.text = options?.skipTextValidation
+      ? (input.text as SmartTextEditorValueSchema)
+      : buildCommentTextFromInput({
+          doc: input.text,
+          blobIds: input.blobIds
+        })
 
     const id = crs({ length: 10 })
     const [newComment] = await deps.insertComments([

@@ -9,6 +9,9 @@ const typographyPlugin = require('@tailwindcss/typography')
 /** @type {import('tailwindcss').Config} */
 const config = {
   darkMode: 'class',
+  future: {
+    hoverOnlyWhenSupported: true
+  },
   content: [
     `./components/**/*.{vue,js,ts}`,
     `./layouts/**/*.vue`,
@@ -17,7 +20,7 @@ const config = {
     `./plugins/**/*.{js,ts}`,
     './stories/**/*.{js,ts,vue,mdx}',
     './app.vue',
-    './lib/**/composables/*.{js,ts}',
+    './lib/**/composables/**/*.{js,ts}',
     ...themeEntries(),
     ...uiLibEntries()
   ],

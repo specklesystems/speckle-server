@@ -1,50 +1,52 @@
-import { MaybeNullOrUndefined, Roles, wait } from '@speckle/shared'
-import {
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { Roles, wait } from '@speckle/shared'
+import type {
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
   StreamRevokePermissionInput,
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
-import { StreamRecord } from '@/modules/core/helpers/types'
+import type { StreamRecord } from '@/modules/core/helpers/types'
 import {
   StreamInvalidAccessError,
   StreamNotFoundError,
   StreamUpdateError
 } from '@/modules/core/errors/stream'
 import { isProjectCreateInput } from '@/modules/core/helpers/project'
-import { has } from 'lodash'
+import { has } from 'lodash-es'
 import { isNewResourceAllowed } from '@/modules/core/helpers/token'
-import {
-  TokenResourceIdentifier,
-  TokenResourceIdentifierType
-} from '@/modules/core/domain/tokens/types'
-import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import type { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
+import type { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
-import {
+import type {
   AddOrUpdateStreamCollaborator,
   CreateStream,
   DeleteStream,
-  DeleteStreamRecord,
   GetStream,
   IsStreamCollaborator,
   LegacyCreateStream,
-  LegacyUpdateStream,
   PermissionUpdateInput,
   RemoveStreamCollaborator,
-  StoreStream,
+  SaveStream,
   UpdateStream,
   UpdateStreamRecord,
   UpdateStreamRole
 } from '@/modules/core/domain/streams/operations'
-import { StoreBranch } from '@/modules/core/domain/branches/operations'
-import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
+import type {
+  DeleteProjectAndCommits,
+  StoreProjectRole
+} from '@/modules/core/domain/projects/operations'
+import { generateProjectName } from '@/modules/core/domain/projects/logic'
+import cryptoRandomString from 'crypto-random-string'
 
 export const createStreamReturnRecordFactory =
   (deps: {
-    createStream: StoreStream
-    createBranch: StoreBranch
+    createStream: SaveStream
+    storeProjectRole: StoreProjectRole
     inviteUsersToProject: ReturnType<typeof inviteUsersToProjectFactory>
     emitEvent: EventBusEmit
   }): CreateStream =>
@@ -61,16 +63,28 @@ export const createStreamReturnRecordFactory =
       )
     }
 
-    const stream = await deps.createStream(params, { ownerId })
+    const name = params.name ? params.name : generateProjectName()
+    const description = params.description || ''
+    const now = new Date()
+
+    const stream = await deps.createStream({
+      ...params,
+      id: cryptoRandomString({ length: 10 }),
+      name,
+      description,
+      createdAt: now,
+      updatedAt: now,
+      allowPublicComments: false
+    })
     const streamId = stream.id
 
-    // Create a default main branch
-    await deps.createBranch({
-      name: 'main',
-      description: 'default branch',
-      streamId,
-      authorId: ownerId
-    })
+    if (ownerId) {
+      await deps.storeProjectRole({
+        userId: ownerId,
+        projectId: streamId,
+        role: Roles.Stream.Owner
+      })
+    }
 
     // Invite contributors?
     if (!isProjectCreateInput(params) && params.withContributors?.length) {
@@ -92,6 +106,17 @@ export const createStreamReturnRecordFactory =
       }
     })
 
+    await deps.emitEvent({
+      eventName: ProjectEvents.PermissionsAdded,
+      payload: {
+        project: stream,
+        activityUserId: ownerId,
+        targetUserId: ownerId,
+        role: Roles.Stream.Owner,
+        previousRole: null
+      }
+    })
+
     return stream
   }
 
@@ -110,7 +135,7 @@ export const legacyCreateStreamFactory =
  */
 export const deleteStreamAndNotifyFactory =
   (deps: {
-    deleteStream: DeleteStreamRecord
+    deleteProjectAndCommits: DeleteProjectAndCommits
     deleteAllResourceInvites: DeleteAllResourceInvites
     getStream: GetStream
     emitEvent: EventBusEmit
@@ -144,7 +169,7 @@ export const deleteStreamAndNotifyFactory =
         resourceId: streamId,
         resourceType: ProjectInviteResourceType
       }),
-      deps.deleteStream(streamId)
+      deps.deleteProjectAndCommits({ projectId: streamId })
     ])
     return true
   }
@@ -166,7 +191,10 @@ export const updateStreamAndNotifyFactory =
       })
     }
 
-    const newStream = await deps.updateStream(update)
+    const newStream = await deps.updateStream({
+      ...update,
+      updatedAt: new Date()
+    })
     if (!newStream) {
       return oldStream
     }
@@ -182,16 +210,6 @@ export const updateStreamAndNotifyFactory =
     })
 
     return newStream
-  }
-
-/**
- * @deprecated Use updateStreamAndNotifyFactory() or the repo fn directly
- */
-export const legacyUpdateStreamFactory =
-  (deps: { updateStream: UpdateStreamRecord }): LegacyUpdateStream =>
-  async (update) => {
-    const updatedStream = await deps.updateStream(update)
-    return updatedStream?.id || null
   }
 
 const isProjectUpdateRoleInput = (

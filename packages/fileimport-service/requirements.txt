@@ -1,5 +1,6 @@
-numpy-stl==3.1.1
-specklepy==2.9.1
+numpy-stl==3.1.2
+specklepy==3.0.1
 structlog==23.3.0
-numpy==1.26.3 # not directly required, pinned to avoid a vulnerability in <1.22.2
+numpy==1.26.4 # not directly required, pinned to avoid a vulnerability in <1.22.2
 python-util==1.2.1 # not directly required, peer dependency of numpy-stl
+ifcopenshell==0.8.3 # required for speckleifc

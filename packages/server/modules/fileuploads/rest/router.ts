@@ -1,9 +1,14 @@
 import { Router } from 'express'
-import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/management'
+import {
+  insertNewUploadAndNotifyFactory,
+  insertNewUploadAndNotifyFactoryV2
+} from '@/modules/fileuploads/services/management'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
-import { saveUploadFileFactory } from '@/modules/fileuploads/repositories/fileUploads'
+import {
+  saveUploadFileFactory,
+  saveUploadFileFactoryV2
+} from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
@@ -11,15 +16,37 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { createBusboy } from '@/modules/blobstorage/rest/busboy'
 import { processNewFileStreamFactory } from '@/modules/blobstorage/services/streams'
 import { UnauthorizedError } from '@/modules/shared/errors'
-import { ensureError, Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
 import { UploadRequestErrorMessage } from '@/modules/fileuploads/helpers/rest'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { getFeatureFlags } from '@speckle/shared/environment'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
+import { fileImportQueues } from '@/modules/fileuploads/queues/fileimports'
+import { pushJobToFileImporterFactory } from '@/modules/fileuploads/services/createFileImport'
+import {
+  fileImportServiceShouldUsePrivateObjectsServerUrl,
+  getPrivateObjectsServerOrigin,
+  getServerOrigin
+} from '@/modules/shared/helpers/envHelper'
+import { createAppTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory,
+  storeUserServerAppTokenFactory
+} from '@/modules/core/repositories/tokens'
+
+const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
 export const fileuploadRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
 
   const app = Router()
 
+  /**
+   * @deprecated use POST /graphql (mutation.fileUploadMutations.generateUploadUrl), then PUT (to the provided url), then POST /graphql (mutation.fileUploadMutations.startFileImport)
+   */
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
     authMiddlewareCreator(
@@ -43,12 +70,39 @@ export const fileuploadRouterFactory = (): Router => {
       })
 
       const projectDb = await getProjectDbClient({ projectId })
+      const getStreamBranchByName = getStreamBranchByNameFactory({ db: projectDb })
+      const branch = await getStreamBranchByName(projectId, branchName)
+      if (!branch) {
+        throw new BranchNotFoundError('Branch {branchName} was not found', {
+          info: { branchName }
+        })
+      }
+
       const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-        getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
         saveUploadFile: saveUploadFileFactory({ db: projectDb }),
-        publish,
         emit: getEventBus().emit
       })
+
+      const pushJobToFileImporter = pushJobToFileImporterFactory({
+        getServerOrigin: fileImportServiceShouldUsePrivateObjectsServerUrl()
+          ? getPrivateObjectsServerOrigin
+          : getServerOrigin,
+        createAppToken: createAppTokenFactory({
+          storeApiToken: storeApiTokenFactory({ db }),
+          storeTokenScopes: storeTokenScopesFactory({ db }),
+          storeTokenResourceAccessDefinitions:
+            storeTokenResourceAccessDefinitionsFactory({ db }),
+          storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+        })
+      })
+
+      const insertNewUploadAndNotifyV2 = insertNewUploadAndNotifyFactoryV2({
+        queues: fileImportQueues,
+        pushJobToFileImporter,
+        saveUploadFile: saveUploadFileFactoryV2({ db: projectDb }),
+        emit: getEventBus().emit
+      })
+
       const saveFileUploads = async ({
         uploadResults
       }: {
@@ -60,14 +114,19 @@ export const fileuploadRouterFactory = (): Router => {
       }) => {
         await Promise.all(
           uploadResults.map(async (upload) => {
-            await insertNewUploadAndNotify({
+            await (FF_NEXT_GEN_FILE_IMPORTER_ENABLED
+              ? insertNewUploadAndNotifyV2
+              : insertNewUploadAndNotify)({
               fileId: upload.blobId,
-              streamId: projectId,
-              branchName,
+              streamId: projectId, //legacy
+              projectId,
+              branchName: branch.name || branchName, //legacy
               userId,
               fileName: upload.fileName,
               fileType: upload.fileName?.split('.').pop() || '', //FIXME
-              fileSize: upload.fileSize
+              fileSize: upload.fileSize,
+              modelName: branch.name || branchName,
+              modelId: branch.id
             })
           })
         )
@@ -88,6 +147,12 @@ export const fileuploadRouterFactory = (): Router => {
             logger.error(ensureError(err), 'File importer handling error @deprecated')
             res.status(500)
           }
+
+          res.setHeader(
+            'Warning',
+            'Deprecated API; use POST /graphql (mutation.fileUploadMutations.generateUploadUrl), then PUT (to the provided url), then POST /graphql (mutation.fileUploadMutations.startFileImport)'
+          )
+
           res.status(201).send({ uploadResults })
         },
         onError: () => {

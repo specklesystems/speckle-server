@@ -1,4 +1,4 @@
-import {
+import type {
   AsyncRegionKeyStore,
   CachedRegionKeyDelete,
   CachedRegionKeyLookup,
@@ -8,18 +8,19 @@ import {
   SyncRegionKeyStore
 } from '@/modules/multiregion/domain/operations'
 import { LRUCache } from 'lru-cache'
-import Redis from 'ioredis'
-import { Knex } from 'knex'
-import { StreamRecord } from '@/modules/core/helpers/types'
+import type Redis from 'ioredis'
+import type { Knex } from 'knex'
+import type { StreamRecord } from '@/modules/core/helpers/types'
 import { TIME_MS } from '@speckle/shared'
 
 const mainDbKey = 'mainDb'
+let cache: LRUCache<string, string>
 
 export const inMemoryRegionKeyStoreFactory = (): {
   getRegionKey: SyncRegionKeyLookup
   writeRegion: SyncRegionKeyStore
 } => {
-  const cache = new LRUCache<string, string>({
+  cache ??= new LRUCache<string, string>({
     max: 2000,
     /** ttl in ms */
     ttl: 10 * TIME_MS.minute,

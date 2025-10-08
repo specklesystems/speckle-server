@@ -1,10 +1,10 @@
-import {
+import type {
   UserServerRole,
   UserStreamRole
 } from '@/modules/shared/domain/rolesAndScopes/types'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { RoleInfo } from '@speckle/shared'
-import { pick } from 'lodash'
+import { pick } from 'lodash-es'
 
 // Conventions:
 // "weight: 1000" => resource owner

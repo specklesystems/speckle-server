@@ -1,5 +1,7 @@
 declare global {
   interface Window {
+    __APOLLO_CLIENT__?: import('@apollo/client/core').ApolloClient<unknown>
+
     DD_RUM?:
       | Pick<import('@datadog/browser-rum').RumGlobal, 'onReady'>
       | import('@datadog/browser-rum').RumGlobal
@@ -12,6 +14,7 @@ declare global {
     VIEWER?: any
     VIEWER_STATE?: any
     VIEWER_SERIALIZED_STATE?: any
+    VIEWER_SERIALIZED_STATE_OBJECT?: any
     APPLY_VIEWER_STATE?: any
     APPLY_VIEWER_DD_EVENT?: any
   }

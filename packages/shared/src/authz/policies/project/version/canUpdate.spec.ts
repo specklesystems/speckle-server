@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { Roles } from '../../../../core/constants.js'
 import { parseFeatureFlags } from '../../../../environment/index.js'
-import { getProjectFake, getVersionFake } from '../../../../tests/fakes.js'
+import {
+  getProjectFake,
+  getVersionFake,
+  getWorkspaceFake
+} from '../../../../tests/fakes.js'
 import { OverridesOf } from '../../../../tests/helpers/types.js'
 import { canUpdateProjectVersionPolicy } from './canUpdate.js'
 import {
@@ -46,10 +50,7 @@ const buildWorkspaceSUT = (
       id: 'project-id',
       workspaceId: 'workspace-id'
     }),
-    getWorkspace: async () => ({
-      id: 'workspace-id',
-      slug: 'workspace-slug'
-    }),
+    getWorkspace: getWorkspaceFake({ id: 'workspace-id', slug: 'workspace-slug' }),
     getWorkspaceRole: async () => Roles.Workspace.Member,
     getWorkspaceSsoProvider: async () => ({
       providerId: 'provider-id'

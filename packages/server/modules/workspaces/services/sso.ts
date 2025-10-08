@@ -1,4 +1,4 @@
-import {
+import type {
   GetOidcProviderAttributes,
   StoreOidcProviderValidationRequest,
   StoreProviderRecord,
@@ -7,25 +7,28 @@ import {
   ListWorkspaceSsoMemberships,
   ListUserSsoSessions
 } from '@/modules/workspaces/domain/sso/operations'
-import {
+import type {
   OidcProvider,
   OidcProviderRecord,
   OidcProviderAttributes,
   OidcProfile
 } from '@/modules/workspaces/domain/sso/types'
 import cryptoRandomString from 'crypto-random-string'
-import { UserinfoResponse } from 'openid-client'
-import {
+import type { UserinfoResponse } from 'openid-client'
+import type {
   CreateUserEmail,
   FindEmail,
   FindEmailsByUserId,
   UpdateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
 import { isWorkspaceRole, toLimitedWorkspace } from '@/modules/workspaces/domain/logic'
-import { UserWithOptionalRole } from '@/modules/core/repositories/users'
-import { DeleteInvite, FindInvite } from '@/modules/serverinvites/domain/operations'
-import { AddOrUpdateWorkspaceRole } from '@/modules/workspaces/domain/operations'
-import { CreateValidatedUser } from '@/modules/core/domain/users/operations'
+import type { UserWithOptionalRole } from '@/modules/core/repositories/users'
+import type {
+  DeleteInvite,
+  FindInvite
+} from '@/modules/serverinvites/domain/operations'
+import type { AddOrUpdateWorkspaceRole } from '@/modules/workspaces/domain/operations'
+import type { CreateValidatedUser } from '@/modules/core/domain/users/operations'
 import {
   OidcProviderMissingGrantTypeError,
   SsoProviderExistsError,
@@ -33,7 +36,7 @@ import {
   SsoUserInviteRequiredError
 } from '@/modules/workspaces/errors/sso'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
-import { LimitedWorkspace } from '@/modules/workspacesCore/domain/types'
+import type { LimitedWorkspace } from '@/modules/workspacesCore/domain/types'
 import {
   getEmailFromOidcProfile,
   isValidSsoSession
@@ -113,6 +116,7 @@ export const saveSsoProviderRegistrationFactory =
       providerType: 'oidc',
       createdAt: new Date(),
       updatedAt: new Date(),
+      sessionTimeoutDays: 7,
       id: providerId
     }
     const maybeExistingSsoProvider = await getWorkspaceSsoProvider({ workspaceId })

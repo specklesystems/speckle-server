@@ -1,5 +1,5 @@
-import { noop } from 'lodash'
-import { CommandModule } from 'yargs'
+import { noop } from 'lodash-es'
+import type { CommandModule } from 'yargs'
 
 const command: CommandModule = {
   command: 'db',

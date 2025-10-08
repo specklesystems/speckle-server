@@ -11,8 +11,10 @@ import {
   getUserStreamAccessRequestFactory,
   requestProjectAccessFactory
 } from '@/modules/accessrequests/services/stream'
-import { ActionTypes } from '@/modules/activitystream/helpers/types'
+import { StreamActionTypes } from '@/modules/activitystream/helpers/types'
+import { getActivitiesFactory } from '@/modules/activitystream/repositories/index'
 import {
+  Activity,
   ServerAccessRequests,
   StreamActivity,
   Streams,
@@ -24,6 +26,7 @@ import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
   getStreamCollaboratorsFactory,
   getStreamFactory,
+  getStreamRolesFactory,
   grantStreamPermissionsFactory,
   revokeStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
@@ -37,7 +40,8 @@ import {
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import { authorizeResolver } from '@/modules/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
 import {
   CreateProjectAccessRequestDocument,
   GetActiveUserFullProjectAccessRequestDocument,
@@ -45,18 +49,19 @@ import {
   GetPendingProjectAccessRequestsDocument,
   StreamRole,
   UseProjectAccessRequestDocument
-} from '@/test/graphql/generated/graphql'
-import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
+} from '@/modules/core/graph/generated/graphql'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import { truncateTables } from '@/test/hooks'
-import { EmailSendingServiceMock } from '@/test/mocks/global'
-import {
-  buildNotificationsStateTracker,
-  NotificationsStateManager
-} from '@/test/notificationsHelper'
+import type { NotificationsStateManager } from '@/test/notificationsHelper'
+import { buildNotificationsStateTracker } from '@/test/notificationsHelper'
 import { getStreamActivities } from '@/test/speckle-helpers/activityStreamHelper'
-import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
+import type { TestEmailListener } from '@/test/speckle-helpers/email'
+import { createEmailListener } from '@/test/speckle-helpers/email'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
-import { noop } from 'lodash'
+import { noop } from 'lodash-es'
 
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -79,15 +84,17 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
-
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
+const getActivities = getActivitiesFactory({ db })
 
 const isNotCollaboratorError = (e: unknown) =>
   e instanceof StreamAccessUpdateError &&
@@ -145,6 +152,8 @@ describe('Project access requests', () => {
     id: ''
   }
 
+  let emailListener: TestEmailListener
+
   let quitters: (() => void)[] = []
 
   before(async () => {
@@ -159,15 +168,18 @@ describe('Project access requests', () => {
       authUserId: me.id
     })
     notificationsStateManager = buildNotificationsStateTracker()
+    emailListener = await createEmailListener()
   })
 
   afterEach(() => {
+    emailListener.reset()
     quitters.forEach((q) => q())
     quitters = []
   })
 
   after(async () => {
     notificationsStateManager.destroy()
+    await emailListener.destroy()
   })
 
   const createReq = async (projectId: string) =>
@@ -223,10 +235,8 @@ describe('Project access requests', () => {
           eventFired = true
         })
       )
-      const sendEmailCall = EmailSendingServiceMock.hijackFunction(
-        'sendEmail',
-        async () => true
-      )
+
+      const { getSends } = emailListener.listen({ times: 1 })
 
       const waitForAck = notificationsStateManager.waitForAck(
         (e) => e.result?.type === NotificationType.NewStreamAccessRequest
@@ -250,8 +260,9 @@ describe('Project access requests', () => {
       await waitForAck
 
       // email gets sent out
-      expect(sendEmailCall.args?.[0]?.[0]).to.be.ok
-      const emailParams = sendEmailCall.args[0][0]
+      const sentEmails = getSends()
+      expect(sentEmails.length).to.eq(1)
+      const emailParams = sentEmails[0]
 
       expect(emailParams.subject).to.contain('A user requested access to your project')
       expect(emailParams.html).to.be.ok
@@ -260,7 +271,7 @@ describe('Project access requests', () => {
 
       // activity stream item inserted
       const streamActivity = await getStreamActivities(otherGuysPrivateStream.id, {
-        actionType: ActionTypes.Stream.AccessRequestSent,
+        actionType: StreamActionTypes.Stream.AccessRequestSent,
         userId: me.id
       })
       expect(streamActivity).to.have.lengthOf(1)
@@ -406,7 +417,11 @@ describe('Project access requests', () => {
     let validReqId: string
 
     beforeEach(async () => {
-      await truncateTables([ServerAccessRequests.name, StreamActivity.name])
+      await truncateTables([
+        ServerAccessRequests.name,
+        StreamActivity.name,
+        Activity.name
+      ])
       await removeStreamCollaborator(
         myPrivateStream.id,
         otherGuy.id,
@@ -464,8 +479,8 @@ describe('Project access requests', () => {
 
         // activity stream item should be inserted
         if (accept) {
-          const streamActivity = await getStreamActivities(myPrivateStream.id, {
-            actionType: ActionTypes.Stream.PermissionsAdd,
+          const streamActivity = await getActivities({
+            projectId: myPrivateStream.id,
             userId: me.id
           })
           expect(streamActivity).to.have.lengthOf(1)
@@ -479,7 +494,7 @@ describe('Project access requests', () => {
           )
         } else {
           const streamActivity = await getStreamActivities(myPrivateStream.id, {
-            actionType: ActionTypes.Stream.AccessRequestDeclined,
+            actionType: StreamActionTypes.Stream.AccessRequestDeclined,
             userId: me.id
           })
           expect(streamActivity).to.have.lengthOf(1)

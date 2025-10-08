@@ -1,23 +1,25 @@
-import { ActionTypes } from '@/modules/activitystream/helpers/types'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import { StreamActionTypes } from '@/modules/activitystream/helpers/types'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
+import type {
+  CreateVersionInput,
+  MarkReceivedVersionInput
+} from '@/modules/core/graph/generated/graphql'
 import {
   CreateProjectVersionDocument,
-  CreateVersionInput,
-  MarkProjectVersionReceivedDocument,
-  MarkReceivedVersionInput
-} from '@/test/graphql/generated/graphql'
-import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
+  MarkProjectVersionReceivedDocument
+} from '@/modules/core/graph/generated/graphql'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { getStreamActivities } from '@/test/speckle-helpers/activityStreamHelper'
-import {
-  BasicTestBranch,
-  createTestBranches
-} from '@/test/speckle-helpers/branchHelper'
+import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestBranches } from '@/test/speckle-helpers/branchHelper'
 import { createTestObject } from '@/test/speckle-helpers/commitHelper'
-import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
-import { omit } from 'lodash'
-import { before, describe } from 'mocha'
+import { omit } from 'lodash-es'
 
 describe('Versions', () => {
   const me: BasicTestUser = {
@@ -115,7 +117,7 @@ describe('Versions', () => {
         expect(res.data?.versionMutations.markReceived).to.be.true
 
         const activities = await getStreamActivities(myPrivateStream.id, {
-          actionType: ActionTypes.Commit.Receive,
+          actionType: StreamActionTypes.Commit.Receive,
           userId: me.id
         })
         expect(activities).to.have.length(1)

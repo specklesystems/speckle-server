@@ -1,27 +1,27 @@
 import { CommentEvents } from '@/modules/comments/domain/events'
 import { commentTextToRawString } from '@/modules/comments/services/commentTextService'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
-import {
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
+import type {
   CreateCommentInput,
   CreateCommentReplyInput,
+  EditCommentInput
+} from '@/modules/core/graph/generated/graphql'
+import {
   CreateProjectCommentDocument,
   CreateProjectCommentReplyDocument,
-  EditCommentInput,
   EditProjectCommentDocument
-} from '@/test/graphql/generated/graphql'
-import {
-  ExecuteOperationOptions,
-  testApolloServer,
-  TestApolloServer
-} from '@/test/graphqlHelper'
+} from '@/modules/core/graph/generated/graphql'
+import type { ExecuteOperationOptions, TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
-import {
-  BasicTestBranch,
-  createTestBranches
-} from '@/test/speckle-helpers/branchHelper'
-import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
-import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestBranches } from '@/test/speckle-helpers/branchHelper'
+import type { BasicTestCommit } from '@/test/speckle-helpers/commitHelper'
+import { createTestCommits } from '@/test/speckle-helpers/commitHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { SpeckleViewer, TIME_MS } from '@speckle/shared'
 import { RichTextEditor } from '@speckle/shared'
 import { expect } from 'chai'

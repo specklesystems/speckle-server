@@ -1,4 +1,4 @@
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   filteredSubscribe,
   ProjectSubscriptions
@@ -39,8 +39,7 @@ import {
 import {
   getCommitStreamFactory,
   getStreamFactory,
-  getStreamsFactory,
-  markCommitStreamUpdatedFactory
+  getStreamsFactory
 } from '@/modules/core/repositories/streams'
 import { getObjectFactory } from '@/modules/core/repositories/objects'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
@@ -52,12 +51,13 @@ import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { isCreatedBeyondHistoryLimitCutoffFactory } from '@/modules/gatekeeperCore/utils/limits'
+import { SourceApps } from '@speckle/shared'
 
 const throwIfRateLimited = throwIfRateLimitedFactory({
   rateLimiterEnabled: isRateLimiterEnabled()
 })
 
-export = {
+export default {
   Project: {
     async version(parent, args, ctx) {
       const projectDB = await getProjectDbClient({ projectId: parent.id })
@@ -99,6 +99,19 @@ export = {
         })
       const path = `/preview/${stream.id}/commits/${parent.id}`
       return new URL(path, getServerOrigin()).toString()
+    },
+    sourceApplication: async (parent) => {
+      const knownSourceApp = SourceApps.find((app) =>
+        parent.sourceApplication?.toLowerCase().includes(app.searchKey)
+      )
+      // we map known source apps to their search keys (aka slug)
+      // except for search keys which begin with a "-"
+      // they are partial search key patterns.
+      // those source apps are already sent as slugs by connectors, so no need to remap
+      if (knownSourceApp && !knownSourceApp.searchKey.startsWith('-')) {
+        return knownSourceApp.searchKey
+      }
+      return parent.sourceApplication
     },
     referencedObject: async (parent, _args, ctx) => {
       const projectDB = await getProjectDbClient({ projectId: parent.streamId })
@@ -265,7 +278,6 @@ export = {
         switchCommitBranch: switchCommitBranchFactory({ db: projectDb }),
         updateCommit: updateCommitFactory({ db: projectDb }),
         emitEvent: getEventBus().emit,
-        markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb })
       })
       return await withOperationLogging(
@@ -317,7 +329,6 @@ export = {
         getBranchById: getBranchByIdFactory({ db: projectDb }),
         insertStreamCommits: insertStreamCommitsFactory({ db: projectDb }),
         insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
-        markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
         emitEvent: getEventBus().emit
       })

@@ -1,5 +1,5 @@
 import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   filteredSubscribe,
@@ -9,7 +9,7 @@ import { WorkspaceDefaultSeatType } from '@/modules/workspacesCore/domain/consta
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
-export = !FF_WORKSPACES_MODULE_ENABLED
+export default !FF_WORKSPACES_MODULE_ENABLED
   ? ({
       Query: {
         workspace: async () => {

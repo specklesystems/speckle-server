@@ -1,14 +1,18 @@
 import { emailLogger } from '@/observability/logging'
-import { SendEmail, SendEmailParams } from '@/modules/emails/domain/operations'
-import { getTransporter } from '@/modules/emails/utils/transporter'
+import type { SendEmail, SendEmailParams } from '@/modules/emails/domain/operations'
+import { getTransporter } from '@/modules/emails/clients/transportBuilder'
 import { getEmailFromAddress } from '@/modules/shared/helpers/envHelper'
-import { resolveMixpanelUserId } from '@speckle/shared'
+import { ensureError, resolveMixpanelUserId } from '@speckle/shared'
 import {
+  getRequestContext,
   getRequestLogger,
   loggerWithMaybeContext
 } from '@/observability/utils/requestContext'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { EmailsEvents } from '@/modules/emails/domain/events'
+import type { EmailOptions } from '@/modules/emails/domain/types'
+import cryptoRandomString from 'crypto-random-string'
 
-export type { SendEmailParams } from '@/modules/emails/domain/operations'
 /**
  * Send out an e-mail
  */
@@ -19,36 +23,72 @@ export const sendEmail: SendEmail = async ({
   text,
   html
 }: SendEmailParams): Promise<boolean> => {
+  const eventBus = getEventBus()
   const logger = getRequestLogger() || loggerWithMaybeContext({ logger: emailLogger })
-  const transporter = getTransporter()
-  if (!transporter) {
-    logger.warn('No email transport present. Cannot send emails. Skipping send...')
-    return false
-  }
+  const context = getRequestContext()
+
   try {
-    const emailFrom = getEmailFromAddress()
-    await transporter.sendMail({
-      from: from || `"Speckle" <${emailFrom}>`,
+    const baseOptions = {
       to,
       subject,
       text,
       html
+    }
+
+    await eventBus.emit({
+      eventName: EmailsEvents.PreparingToSend,
+      payload: { options: baseOptions }
     })
+
+    const transporter = getTransporter()
+    if (!transporter) {
+      logger.warn('No email transport present. Cannot send emails. Skipping send...')
+      return false
+    }
+
+    const emailFrom = getEmailFromAddress()
+    const options: EmailOptions = {
+      ...baseOptions,
+      from: from || `"Speckle" <${emailFrom}>`
+    }
+    if (context && 'requestId' in context) {
+      // add some random digits to avoid collisions if multiple emails are sent within the same request
+      options.speckleEmailId = `${context.requestId}_${cryptoRandomString({
+        length: 4
+      })}`
+    }
+
+    const sentEmailResponse = await transporter.sendMail(options)
+    await eventBus.emit({
+      eventName: EmailsEvents.Sent,
+      payload: {
+        options,
+        deliveryStatus: sentEmailResponse.status,
+        deliverErrorMessages: sentEmailResponse.errorMessages
+      }
+    })
+
     const emails = typeof to === 'string' ? [to] : to
     const distinctIds = await Promise.all(
       emails.map((email) => resolveMixpanelUserId(email))
     )
+
     logger.info(
       {
         subject,
-        distinctIds
+        distinctIds,
+        deliveryStatus: sentEmailResponse.status,
+        deliveryErrorMessages: sentEmailResponse.errorMessages
       },
-      'Email "{subject}" sent out to distinctIds {distinctIds}'
+      'Email "{subject}" sent out to distinctIds {distinctIds}; status: {deliveryStatus}'
     )
+
     return true
   } catch (error) {
-    logger.error(error)
+    const err = ensureError(error, 'Unknown error when sending email')
+    logger.error(err, 'Error sending email')
   }
-
   return false
 }
+
+export type { SendEmailParams } from '@/modules/emails/domain/operations'

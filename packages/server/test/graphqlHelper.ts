@@ -1,25 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DocumentNode, FormattedExecutionResult } from 'graphql'
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-import { TypedDocumentNode } from '@graphql-typed-document-node/core'
+import type { DocumentNode, FormattedExecutionResult } from 'graphql'
+import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import type { TypedDocumentNode } from '@graphql-typed-document-node/core'
 import { buildApolloServer, buildApolloSubscriptionServer } from '@/app'
 import { buildContext } from '@/modules/shared/middleware'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import {
-  AllScopes,
-  buildManualPromise,
-  ensureError,
+import type {
   MaybeAsync,
   MaybeNullOrUndefined,
   Optional,
-  ServerScope,
-  timeoutAt
+  ServerScope
 } from '@speckle/shared'
+import { AllScopes, buildManualPromise, ensureError, timeoutAt } from '@speckle/shared'
 import { expect } from 'chai'
-import { ApolloServer, GraphQLResponse } from '@apollo/server'
+import type { ApolloServer, GraphQLResponse } from '@apollo/server'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { db } from '@/db/knex'
-import { get, pick, set } from 'lodash'
+import { get, isUndefined, pick, set } from 'lodash-es'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { publish, TestSubscriptions } from '@/modules/shared/utils/subscriptions'
 import cryptoRandomString from 'crypto-random-string'
@@ -28,11 +25,12 @@ import type ws from 'ws'
 import { createAuthTokenForUser } from '@/test/authHelper'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
 import { WebSocketLink } from '@apollo/client/link/ws/ws.cjs'
-import { execute } from '@apollo/client/core/core.cjs'
-import { PingPongDocument } from '@/test/graphql/generated/graphql'
+import { execute } from '@apollo/client/core'
+import { PingPongDocument } from '@/modules/core/graph/generated/graphql'
 import { BaseError } from '@/modules/shared/errors'
 import EventEmitter from 'eventemitter2'
 import { expectToThrow } from '@/test/assertionHelper'
+import { testLogger } from '@/observability/logging'
 
 type TypedGraphqlResponse<R = Record<string, any>> = GraphQLResponse<R>
 
@@ -148,7 +146,7 @@ const buildMergedContext = async (params: {
   /**
    * If set, adjust context to be authed w/ all scopes and the actual user role for this user id.
    */
-  authUserId?: string
+  authUserId?: string | null
 }) => {
   let baseCtx: GraphQLContext = params.baseCtx || (await createTestContext())
 
@@ -162,6 +160,12 @@ const buildMergedContext = async (params: {
     baseCtx = {
       ...baseCtx,
       ...pick(userCtx, ['auth', 'userId', 'role', 'token', 'scopes'])
+    }
+  } else if (params?.authUserId === null) {
+    // Apply unauthed context to base
+    baseCtx = {
+      ...baseCtx,
+      ...pick(await createTestContext(), ['auth', 'userId', 'role', 'token', 'scopes'])
     }
   }
 
@@ -220,8 +224,9 @@ export const testApolloServer = async (params?: {
       /**
        * If set, will create an authed context w/ all scopes and the actual user role for this user id.
        * If user doesn't exist yet, will default to the User role
+       * Null means - set to anonymous
        */
-      authUserId?: string
+      authUserId?: string | null
       /**
        * Whether to add an assertion that there were no GQL errors
        */
@@ -229,7 +234,7 @@ export const testApolloServer = async (params?: {
     }>
   ): Promise<ExecuteOperationResponse<R>> => {
     const operationCtx =
-      options?.authUserId || options?.context
+      !isUndefined(options?.authUserId) || options?.context
         ? await buildMergedContext({
             baseCtx,
             authUserId: options?.authUserId,
@@ -295,7 +300,7 @@ export const testApolloSubscriptionServer = async () => {
   set(mockWsServer, 'removeListener', mockWsServer.off.bind(mockWsServer)) // backwards compat w/ subscriptions-transport-ws
 
   const mockWs = MockSocket.WebSocket as unknown as ws.WebSocket
-  const apolloSubServer = buildApolloSubscriptionServer({ server: mockWsServer })
+  const apolloSubServer = await buildApolloSubscriptionServer({ server: mockWsServer })
 
   // weakRef to ensure we dont prevent garbage collection
   const clients: WeakRef<SubscriptionClient>[] = []
@@ -338,7 +343,7 @@ export const testApolloSubscriptionServer = async () => {
     >(
       query: TypedDocumentNode<R, V>,
       variables: V,
-      handler: (res: FormattedExecutionResult<R>) => MaybeAsync<void>
+      handler?: (res: FormattedExecutionResult<R>) => MaybeAsync<void>
     ) => {
       const name = getOperationName(query)
       const buildLogMsg = (msg: string) => (name ? `[${name}] ${msg}` : msg)
@@ -357,26 +362,32 @@ export const testApolloSubscriptionServer = async () => {
         query,
         variables
       })
-      const sub = observable.subscribe(async (eventData) => {
-        const res = eventData as FormattedExecutionResult<R>
-        const asyncHandler = async () => handler(res)
+      const sub = observable.subscribe(
+        async (eventData) => {
+          const res = eventData as FormattedExecutionResult<R>
+          const asyncHandler = async () => handler?.(res)
 
-        // Invoke handler
-        try {
-          await asyncHandler()
-        } catch (e) {
-          // If we throw here, this will be an unhandled rejection, lets throw in waitForMsg instead
-          eventBus.emit('error', e)
-        }
+          // Invoke handler
+          try {
+            await asyncHandler()
+          } catch (e) {
+            // If we throw here, this will be an unhandled rejection, lets throw in waitForMsg instead
+            eventBus.emit('error', e)
+          }
 
-        // Mark msg received
-        try {
-          messages.push(res)
-          await eventBus.emitAsync('message', res)
-        } catch (e) {
-          eventBus.emit('error', e)
+          // Mark msg received
+          try {
+            messages.push(res)
+            await eventBus.emitAsync('message', res)
+          } catch (e) {
+            eventBus.emit('error', e)
+          }
+        },
+        (e) => {
+          errHandler(e)
+          testLogger.error(e, 'Test subscription subscribe error handler hit')
         }
-      })
+      )
 
       /**
        * Unsubscribe from the subscription

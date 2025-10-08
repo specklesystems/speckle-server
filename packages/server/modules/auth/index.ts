@@ -1,7 +1,7 @@
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
-import { moduleLogger } from '@/observability/logging'
+import { logger, moduleLogger } from '@/observability/logging'
 import db from '@/db/knex'
 import { initializeDefaultAppsFactory } from '@/modules/auth/services/serverApps'
 import {
@@ -25,7 +25,7 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import authRestApi from '@/modules/auth/rest/index'
 import authScopes from '@/modules/auth/scopes'
-import { AuthStrategyMetadata } from '@/modules/auth/helpers/types'
+import type { AuthStrategyMetadata } from '@/modules/auth/helpers/types'
 import azureAdStrategyBuilderFactory from '@/modules/auth/strategies/azureAd'
 import googleStrategyBuilderFactory from '@/modules/auth/strategies/google'
 import localStrategyBuilderFactory from '@/modules/auth/strategies/local'
@@ -60,42 +60,9 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
-
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo: getServerInfoFactory({ db }),
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-    db
-  }),
-  renderEmail,
-  sendEmail
-})
-
-const createUser = createUserFactory({
-  getServerInfo: getServerInfoFactory({ db }),
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
-
-const findOrCreateUser = findOrCreateUserFactory({
-  createUser,
-  findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
-})
+import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
+import type { CreateValidatedUser } from '@/modules/core/domain/users/operations'
+import { asMultiregionalOperation } from '@/modules/shared/command'
 
 const initializeDefaultApps = initializeDefaultAppsFactory({
   getAllScopes: getAllScopesFactory({ db }),
@@ -113,10 +80,65 @@ const finalizeInvitedServerRegistration = finalizeInvitedServerRegistrationFacto
 })
 const resolveAuthRedirectPath = resolveAuthRedirectPathFactory()
 
+const createUser: CreateValidatedUser = async (...input) =>
+  asMultiregionalOperation(
+    async ({ mainDb, allDbs, emit }) => {
+      const createUser = createUserFactory({
+        getServerInfo: getServerInfoFactory({ db: mainDb }),
+        findEmail: findEmailFactory({ db: mainDb }),
+        storeUser: async (...params) => {
+          const [user] = await Promise.all(
+            allDbs.map((db) => storeUserFactory({ db })(...params))
+          )
+
+          return user
+        },
+        countAdminUsers: countAdminUsersFactory({ db: mainDb }),
+        storeUserAcl: storeUserAclFactory({ db: mainDb }),
+        validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+          createUserEmail: createUserEmailFactory({ db: mainDb }),
+          ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({
+            db: mainDb
+          }),
+          findEmail: findEmailFactory({ db: mainDb }),
+          updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+            deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db: mainDb }),
+            updateAllInviteTargets: updateAllInviteTargetsFactory({ db: mainDb })
+          }),
+          requestNewEmailVerification: requestNewEmailVerificationFactory({
+            getServerInfo: getServerInfoFactory({ db }),
+            findEmail: findEmailFactory({ db: mainDb }),
+            getUser: getUserFactory({ db: mainDb }),
+            deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory(
+              {
+                db: mainDb
+              }
+            ),
+            renderEmail,
+            sendEmail
+          })
+        }),
+        emitEvent: emit
+      })
+
+      return createUser(...input)
+    },
+    {
+      dbs: await getAllRegisteredDbs(),
+      name: 'create user',
+      logger
+    }
+  )
+
 const commonBuilderDeps = {
   getServerInfo: getServerInfoFactory({ db }),
   getUserByEmail: legacyGetUserByEmailFactory({ db }),
-  findOrCreateUser,
+  buildFindOrCreateUser: async () => {
+    return findOrCreateUserFactory({
+      createUser,
+      findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
+    })
+  },
   validateServerInvite,
   finalizeInvitedServerRegistration,
   resolveAuthRedirectPath,

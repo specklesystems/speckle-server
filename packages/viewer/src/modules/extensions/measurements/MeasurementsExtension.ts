@@ -13,21 +13,21 @@ import { CameraController } from '../CameraController.js'
 import Logger from '../../utils/Logger.js'
 import { AreaMeasurement } from './AreaMeasurement.js'
 import { PointMeasurement } from './PointMeasurement.js'
+import {
+  MeasurementData,
+  MeasurementOptions,
+  MeasurementType
+} from '@speckle/shared/viewer/state'
+import { differenceBy } from 'lodash-es'
 
-export enum MeasurementType {
-  PERPENDICULAR,
-  POINTTOPOINT,
-  AREA,
-  POINT
+export enum MeasurementEvent {
+  CountChanged = 'measurement-count-changed',
+  MeasurementsChanged = 'measurements-changed'
 }
 
-export interface MeasurementOptions {
-  visible: boolean
-  type?: MeasurementType
-  vertexSnap?: boolean
-  units?: string
-  precision?: number
-  chain?: boolean
+export interface MeasurementEventPayload {
+  [MeasurementEvent.CountChanged]: number
+  [MeasurementEvent.MeasurementsChanged]: Measurement[]
 }
 
 const DefaultMeasurementsOptions = {
@@ -46,15 +46,16 @@ export class MeasurementsExtension extends Extension {
 
   protected renderer: SpeckleRenderer
 
-  protected measurements: Measurement[] = []
+  protected _measurements: Measurement[] = []
   protected _activeMeasurement: Measurement | null = null
   protected _selectedMeasurement: Measurement | null = null
-  protected raycaster: Raycaster
   protected _options: MeasurementOptions = Object.assign({}, DefaultMeasurementsOptions)
 
   private _frameLock = false
   private _paused = false
   private _sceneHit = false
+
+  protected raycaster: Raycaster
 
   private pointBuff: Vector3 = new Vector3()
   private normalBuff: Vector3 = new Vector3()
@@ -99,6 +100,19 @@ export class MeasurementsExtension extends Extension {
     return this._activeMeasurement
   }
 
+  public get measurementCount(): number {
+    return this._measurements.length
+  }
+
+  public get mesurements(): Measurement[] {
+    return this._measurements
+  }
+
+  private emitMeasurementCountChanged() {
+    this.emit(MeasurementEvent.CountChanged, this._measurements.length)
+    this.emit(MeasurementEvent.MeasurementsChanged, this._measurements)
+  }
+
   public constructor(viewer: IViewer, protected cameraProvider: CameraController) {
     super(viewer)
     this.renderer = viewer.getRenderer()
@@ -108,6 +122,13 @@ export class MeasurementsExtension extends Extension {
     this.renderer.input.on(InputEvent.PointerMove, this.onPointerMove.bind(this))
     this.renderer.input.on(InputEvent.Click, this.onPointerClick.bind(this))
     this.renderer.input.on(InputEvent.DoubleClick, this.onPointerDoubleClick.bind(this))
+  }
+
+  public on<T extends MeasurementEvent>(
+    eventType: T,
+    listener: (arg: MeasurementEventPayload[T]) => void
+  ): void {
+    super.on(eventType, listener)
   }
 
   public onLateUpdate() {
@@ -124,7 +145,7 @@ export class MeasurementsExtension extends Extension {
           this.screenBuff0,
           this.renderer.sceneBox
         )
-    this.measurements.forEach((value: Measurement) => {
+    this._measurements.forEach((value: Measurement) => {
       ;(this._enabled || value instanceof PointMeasurement) &&
         value.frameUpdate(camera, this.screenBuff0, this.renderer.sceneBox)
     })
@@ -216,6 +237,12 @@ export class MeasurementsExtension extends Extension {
         if (count === 0) this.cancelMeasurement()
       } else this.cancelMeasurement()
       return
+    }
+
+    /** This will not work for iOS < 13 (pre-2019) (allegedly) */
+    /** Because there is no hovering with touch input, we simulate a hover when tapping  */
+    if (data.event.pointerType === 'touch') {
+      this.onPointerMove(data)
     }
 
     if (!this._activeMeasurement) return
@@ -346,12 +373,7 @@ export class MeasurementsExtension extends Extension {
     if (!this._activeMeasurement) return
 
     void this._activeMeasurement.update()
-    if (this._activeMeasurement.value > 0) {
-      this.measurements.push(this._activeMeasurement)
-    } else {
-      this.renderer.scene.remove(this._activeMeasurement)
-      Logger.error('Ignoring zero value measurement!')
-    }
+    this.pushMeasurement(this._activeMeasurement)
 
     if (this._options.chain) {
       const startPoint = new Vector3()
@@ -377,23 +399,77 @@ export class MeasurementsExtension extends Extension {
     this.viewer.requestRender()
   }
 
-  public removeMeasurement() {
-    if (this._selectedMeasurement) {
-      this.measurements.splice(this.measurements.indexOf(this._selectedMeasurement), 1)
-      this.renderer.scene.remove(this._selectedMeasurement)
+  protected pushMeasurement(measurement: Measurement) {
+    if (measurement.value > 0) {
+      this._measurements.push(measurement)
+      this.emitMeasurementCountChanged()
+    } else {
+      this.renderer.scene.remove(measurement)
+      Logger.error('Ignoring zero value measurement!')
+    }
+  }
+
+  protected findMeasurementFromData(measurementData: MeasurementData) {
+    return this._measurements.find(
+      (measurement) => measurement.measurementId === measurementData.uuid
+    )
+  }
+
+  public removeMeasurement(measurementData?: MeasurementData) {
+    const targetMeasurement = measurementData
+      ? this.findMeasurementFromData(measurementData)
+      : this._selectedMeasurement
+
+    if (targetMeasurement) {
+      this._measurements.splice(this._measurements.indexOf(targetMeasurement), 1)
+      this.renderer.scene.remove(targetMeasurement)
       this._selectedMeasurement = null
+      this.emitMeasurementCountChanged()
       this.viewer.requestRender()
     } else {
       this.cancelMeasurement()
     }
   }
 
+  /**
+   * Idempotent way of setting measurements
+   */
+  public setMeasurements(measurements: MeasurementData[]) {
+    if (!measurements.length) {
+      if (this._measurements.length) {
+        this.clearMeasurements()
+      }
+      if (this._activeMeasurement) {
+        this.cancelMeasurement()
+      }
+      return
+    }
+
+    const currentMeasurements = this._measurements.map((m) => m.toMeasurementData())
+    const removableMeasurements = differenceBy(
+      currentMeasurements,
+      measurements,
+      (m) => m.uuid
+    )
+
+    for (const removableMeasurement of removableMeasurements) {
+      this.removeMeasurement(removableMeasurement)
+    }
+
+    for (const measurementData of measurements) {
+      if (!this.findMeasurementFromData(measurementData)) {
+        this.addMeasurement(measurementData)
+      }
+    }
+  }
+
   public clearMeasurements(): void {
     this.removeMeasurement()
-    this.measurements.forEach((measurement: Measurement) => {
+    this._measurements.forEach((measurement: Measurement) => {
       this.renderer.scene.remove(measurement)
     })
-    this.measurements = []
+    this._measurements = []
+    this.emitMeasurementCountChanged()
     this.viewer.requestRender()
   }
 
@@ -414,11 +490,11 @@ export class MeasurementsExtension extends Extension {
   protected pickMeasurement(data: Vector2): Measurement | null {
     if (!this.renderer.renderingCamera) return null
 
-    this.measurements.forEach((value) => {
+    this._measurements.forEach((value) => {
       value.highlight(false)
     })
     this.raycaster.setFromCamera(data, this.renderer.renderingCamera)
-    const res = this.raycaster.intersectObjects(this.measurements, false)
+    const res = this.raycaster.intersectObjects(this._measurements, false)
     return res[0]?.object as Measurement
   }
 
@@ -467,13 +543,13 @@ export class MeasurementsExtension extends Extension {
   }
 
   protected updateClippingPlanes(planes: Plane[]): void {
-    this.measurements.forEach((value) => {
+    this._measurements.forEach((value) => {
       value.updateClippingPlanes(planes)
     })
   }
 
   protected applyOptions() {
-    const all = [this._activeMeasurement, ...this.measurements]
+    const all = [this._activeMeasurement, ...this._measurements]
     const updatePromises: Promise<void>[] = []
     all.forEach((value) => {
       if (value) {
@@ -499,19 +575,26 @@ export class MeasurementsExtension extends Extension {
     })
   }
 
-  public async fromMeasurementData(startPoint: Vector3, endPoint: Vector3) {
-    /** Only point to point programatic measurements for now */
-    const cacheType = this._options.type
-    this._options.type = MeasurementType.POINTTOPOINT
-    this._activeMeasurement = this.startMeasurement()
-    this._activeMeasurement.isVisible = true
-    this._activeMeasurement.startPoint.copy(startPoint)
-    this._activeMeasurement.startNormal.copy(new Vector3(0, 0, 1))
-    await this._activeMeasurement.update()
-    this._activeMeasurement.state = MeasurementState.DANGLING_END
-    this._activeMeasurement.endPoint.copy(endPoint)
-    this._activeMeasurement.endNormal.copy(new Vector3(0, 0, 1))
-    await this._activeMeasurement.update()
-    this._options.type = cacheType
+  public addMeasurement(measurementData: MeasurementData) {
+    const cacheOptions = this._options
+    this._options.type = measurementData.type
+    this._options.chain = false
+    this._options.vertexSnap = false
+
+    const measurement = this.startMeasurement()
+    measurement.fromMeasurementData(measurementData)
+    measurement.isVisible = true
+    void measurement.update().then(() => {
+      this.viewer.requestRender()
+    })
+    this.pushMeasurement(measurement)
+
+    this._options.type = cacheOptions.type
+    this._options.chain = cacheOptions.chain
+    this._options.vertexSnap = cacheOptions.vertexSnap
+  }
+
+  public toMeasurementData(): MeasurementData[] {
+    return this._measurements.map((val) => val.toMeasurementData())
   }
 }

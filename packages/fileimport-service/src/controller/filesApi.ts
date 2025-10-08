@@ -19,38 +19,59 @@ export async function downloadFile({
   destination: string
   logger: Logger
 }) {
+  const boundLogger = logger.child({
+    fileId,
+    streamId
+  })
   try {
     fs.mkdirSync(path.dirname(destination), { recursive: true })
   } catch (e) {
     throw ensureError(e, 'Unknown error while creating directory')
   }
 
-  logger.info(
-    { destinationFile: destination },
-    'Downloading file {fileId} from {streamId} to {destinationFile}'
+  const downloadUrl = new URL(
+    `/api/stream/${streamId}/blob/${fileId}`,
+    speckleServerUrl
+  )
+
+  boundLogger.info(
+    { destinationFile: destination, downloadUrl: downloadUrl.toString() },
+    'Downloading file {fileId} (project: {streamId}) from {downloadUrl} to {destinationFile}'
   )
 
   let response
+  const tokenId = token.substring(0, 10)
   try {
-    response = await fetch(
-      `${speckleServerUrl}/api/stream/${streamId}/blob/${fileId}`,
+    response = await fetch(downloadUrl.toString(), {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+  } catch (e) {
+    throw new Error(
+      `Error while fetching file ${fileId} from ${downloadUrl.toString()} with token ID ${tokenId}. Message: ${
+        e instanceof Error ? e.message : String(e)
+      }`,
       {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        cause: e
       }
     )
-  } catch (e) {
-    throw ensureError(e, 'Unknown error while fetching file')
   }
 
   if (response === undefined || !response.ok) {
-    logger.error(
-      { status: response?.status, statusText: response?.statusText },
-      'Failed to download file {fileId}. HTTP {status}: {statusText}'
+    boundLogger.error(
+      {
+        downloadUrl: downloadUrl.toString(),
+        tokenId,
+        status: response?.status,
+        statusText: response?.statusText
+      },
+      "Failed to download file '{fileId}' from '{downloadUrl}' with token ID '{tokenId}'. HTTP {status}: {statusText}"
     )
     throw new Error(
-      `Failed to download file ${fileId}. HTTP ${response?.status}: ${response?.statusText}`
+      `Failed to download file '${fileId}' from '${downloadUrl.toString()}' with token ID '${tokenId}'. HTTP ${
+        response?.status
+      }: ${response?.statusText}`
     )
   }
   if (!response.body) {
@@ -61,13 +82,13 @@ export async function downloadFile({
 
   //handle errors
   writer.on('error', (err) => {
-    logger.error(ensureError(err), `Error writing file ${destination}`)
+    boundLogger.error(ensureError(err), `Error writing file ${destination}`)
     throw err
   })
 
   //handle completion
   writer.on('finish', () => {
-    logger.info(`File written to ${destination}`)
+    boundLogger.info(`File written to ${destination}`)
   })
 
   await pipeline(response.body, writer, { end: true })
@@ -83,13 +104,14 @@ export async function getFileInfoByName({
   streamId: string
   token: string
 }) {
-  const response = await fetch(
-    `${speckleServerUrl}/api/stream/${streamId}/blobs?fileName=${fileName}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    }
+  const fileInfoUrl = new URL(
+    `/api/stream/${streamId}/blobs?fileName=${fileName}`,
+    speckleServerUrl
   )
+  const response = await fetch(fileInfoUrl.toString(), {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
   return response.json() as Promise<{ blobs: { id: string }[] }>
 }

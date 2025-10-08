@@ -6,62 +6,11 @@ import { beforeEachContext } from '@/test/hooks'
 import { localAuthRestApi } from '@/modules/auth/tests/helpers/registration'
 import { expectToThrow } from '@/test/assertionHelper'
 import { expect } from 'chai'
-import {
-  findEmailFactory,
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory
-} from '@/modules/core/repositories/userEmails'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import {
-  getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory
-} from '@/modules/core/repositories/users'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import {
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { getEventBus } from '@/modules/shared/services/eventBus'
-import { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
+import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
+import cryptoRandomString from 'crypto-random-string'
 
 const ResetTokens = () => knex('pwdreset_tokens')
-const db = knex
-const getServerInfo = getServerInfoFactory({ db })
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 
 describe('Password reset requests @passwordresets', () => {
   let app: Awaited<ReturnType<typeof beforeEachContext>>['app']
@@ -71,13 +20,12 @@ describe('Password reset requests @passwordresets', () => {
   })
 
   it('Should carefully send a password request email', async () => {
-    const userA: BasicTestUser = {
-      name: 'd1',
-      email: 'd@speckle.systems',
-      password: 'wowwow8charsplease',
+    const userA = await createTestUser({
+      name: cryptoRandomString({ length: 10 }),
+      email: createRandomEmail(),
+      password: cryptoRandomString({ length: 8 }),
       id: ''
-    }
-    userA.id = await createUser(userA)
+    })
 
     // invalid request
     await request(app).post('/auth/pwdreset/request').expect(400)
@@ -85,8 +33,8 @@ describe('Password reset requests @passwordresets', () => {
     // non-existent user
     await request(app)
       .post('/auth/pwdreset/request')
-      .send({ email: 'doesnot@exist.here' })
-      .expect(400)
+      .send({ email: createRandomEmail() }) // does not exist
+      .expect(200) // always 200 to prevent user enumeration
 
     // good request
     await request(app)
@@ -97,21 +45,20 @@ describe('Password reset requests @passwordresets', () => {
     // already has expiration token, fall back
     await request(app)
       .post('/auth/pwdreset/request')
-      .send({ email: 'd@speckle.systems' })
+      .send({ email: userA.email })
       .expect(400)
   })
 
   it('Should reset passwords', async () => {
-    const userB: BasicTestUser = {
-      name: 'd2',
-      email: 'd2@speckle.systems',
-      password: 'w0ww0w8charsplease',
+    const userB = await createTestUser({
+      name: cryptoRandomString({ length: 10 }),
+      email: createRandomEmail(),
+      password: cryptoRandomString({ length: 8 }),
       id: ''
-    }
-    userB.id = await createUser(userB)
+    })
 
     const authRestApi = localAuthRestApi({ express: app })
-    const newPassword = '12345678'
+    const newPassword = cryptoRandomString({ length: 8 })
 
     // trigger request
     await request(app)
@@ -143,7 +90,7 @@ describe('Password reset requests @passwordresets', () => {
     // token used up, should fail
     await request(app)
       .post('/auth/pwdreset/finalize')
-      .send({ tokenId: token.id, password: 'abc12345678' })
+      .send({ tokenId: token.id, password: cryptoRandomString({ length: 8 }) })
       .expect(400)
 
     // should be able to log in with new pw

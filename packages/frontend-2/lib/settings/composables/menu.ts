@@ -33,6 +33,7 @@ graphql(`
 `)
 
 export const useSettingsMenu = () => {
+  const isAutomateEnabled = useIsAutomateModuleEnabled()
   const isMultipleEmailsEnabled = useIsMultipleEmailsEnabled().value
   const isMultiRegionEnabled = useIsMultiregionEnabled()
 
@@ -53,6 +54,22 @@ export const useSettingsMenu = () => {
       title: 'Projects',
       name: settingsWorkspaceRoutes.projects.name,
       route: (slug?: string) => settingsWorkspaceRoutes.projects.route(slug),
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
+    },
+    ...(isAutomateEnabled.value
+      ? [
+          {
+            title: 'Automation',
+            name: settingsWorkspaceRoutes.automation.name,
+            route: (slug?: string) => settingsWorkspaceRoutes.automation.route(slug),
+            permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
+          }
+        ]
+      : []),
+    {
+      title: 'Integrations',
+      name: settingsWorkspaceRoutes.integrations.name,
+      route: (slug?: string) => settingsWorkspaceRoutes.integrations.route(slug),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     {
@@ -151,7 +168,7 @@ export const useSettingsMembersActions = (params: {
   const { activeUser } = useActiveUser()
 
   const { isLastAdmin } = useWorkspaceLastAdminCheck({
-    workspaceSlug: params.workspaceSlug.value || ''
+    workspaceSlug: computed(() => params.workspaceSlug.value)
   })
 
   const { statusIsCanceled } = useWorkspacePlan(params.workspaceSlug.value || '')

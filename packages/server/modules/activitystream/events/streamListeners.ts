@@ -1,23 +1,67 @@
-import {
+import type {
   AddStreamDeletedActivity,
   AddStreamUpdatedActivity,
-  SaveActivity
+  SaveActivity,
+  SaveStreamActivity
 } from '@/modules/activitystream/domain/operations'
-import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
-import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import {
+  StreamActionTypes,
+  StreamResourceTypes
+} from '@/modules/activitystream/helpers/types'
+import { ProjectEvents } from '@/modules/core/domain/projects/events'
+import type {
   ProjectCreateInput,
   StreamCreateInput
 } from '@/modules/core/graph/generated/graphql'
-import { StreamRecord } from '@/modules/core/helpers/types'
-import { EventBusListen } from '@/modules/shared/services/eventBus'
-import { StreamRoles } from '@speckle/shared'
+import type { StreamRecord } from '@/modules/core/helpers/types'
+import type { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
+
+// Activity
+
+const addProjectPermissionsAddedActivityFactory =
+  ({ saveActivity }: { saveActivity: SaveActivity }) =>
+  async ({
+    payload: { activityUserId, project, role, targetUserId, previousRole }
+  }: EventPayload<typeof ProjectEvents.PermissionsAdded>) => {
+    await saveActivity({
+      contextResourceId: project.id,
+      contextResourceType: 'project',
+      eventType: 'project_role_updated',
+      userId: activityUserId,
+      payload: {
+        version: '1',
+        userId: targetUserId,
+        new: role,
+        old: previousRole
+      }
+    })
+  }
+
+const addProjectPermissionsRevokedActivityFactory =
+  ({ saveActivity }: { saveActivity: SaveActivity }) =>
+  async ({
+    payload: { activityUserId, project, removedUserId, role }
+  }: EventPayload<typeof ProjectEvents.PermissionsRevoked>) => {
+    await saveActivity({
+      contextResourceId: project.id,
+      contextResourceType: 'project',
+      eventType: 'project_role_deleted',
+      userId: activityUserId,
+      payload: {
+        version: '1',
+        userId: removedUserId,
+        old: role
+      }
+    })
+  }
+
+// Stream activity
 
 /**
  * Save "user created stream" activity item
  */
 const addStreamCreatedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }) =>
+  ({ saveStreamActivity }: { saveStreamActivity: SaveStreamActivity }) =>
   async (params: {
     streamId: string
     creatorId: string
@@ -26,11 +70,11 @@ const addStreamCreatedActivityFactory =
   }) => {
     const { streamId, creatorId, input } = params
 
-    await saveActivity({
+    await saveStreamActivity({
       streamId,
-      resourceType: ResourceTypes.Stream,
+      resourceType: StreamResourceTypes.Stream,
       resourceId: streamId,
-      actionType: ActionTypes.Stream.Create,
+      actionType: StreamActionTypes.Stream.Create,
       userId: creatorId,
       info: { input },
       message: `Stream ${input.name} created`
@@ -41,15 +85,19 @@ const addStreamCreatedActivityFactory =
  * Save "stream updated" activity
  */
 const addStreamUpdatedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }): AddStreamUpdatedActivity =>
+  ({
+    saveStreamActivity
+  }: {
+    saveStreamActivity: SaveStreamActivity
+  }): AddStreamUpdatedActivity =>
   async (params) => {
     const { streamId, updaterId, oldStream, update } = params
 
-    await saveActivity({
+    await saveStreamActivity({
       streamId,
-      resourceType: ResourceTypes.Stream,
+      resourceType: StreamResourceTypes.Stream,
       resourceId: streamId,
-      actionType: ActionTypes.Stream.Update,
+      actionType: StreamActionTypes.Stream.Update,
       userId: updaterId,
       info: { old: oldStream, new: update },
       message: 'Stream metadata changed'
@@ -60,15 +108,19 @@ const addStreamUpdatedActivityFactory =
  * Save "stream deleted" activity
  */
 const addStreamDeletedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }): AddStreamDeletedActivity =>
+  ({
+    saveStreamActivity
+  }: {
+    saveStreamActivity: SaveStreamActivity
+  }): AddStreamDeletedActivity =>
   async (params) => {
     const { streamId, deleterId } = params
 
-    await saveActivity({
+    await saveStreamActivity({
       streamId,
-      resourceType: ResourceTypes.Stream,
+      resourceType: StreamResourceTypes.Stream,
       resourceId: streamId,
-      actionType: ActionTypes.Stream.Delete,
+      actionType: StreamActionTypes.Stream.Delete,
       userId: deleterId,
       info: {},
       message: `Stream deleted`
@@ -79,7 +131,7 @@ const addStreamDeletedActivityFactory =
  * Save "user cloned stream X" activity item
  */
 const addStreamClonedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }) =>
+  ({ saveStreamActivity }: { saveStreamActivity: SaveStreamActivity }) =>
   async (params: {
     sourceStreamId: string
     newStream: StreamRecord
@@ -88,79 +140,42 @@ const addStreamClonedActivityFactory =
     const { sourceStreamId, newStream, clonerId } = params
     const newStreamId = newStream.id
 
-    await saveActivity({
+    await saveStreamActivity({
       streamId: newStreamId,
-      resourceType: ResourceTypes.Stream,
+      resourceType: StreamResourceTypes.Stream,
       resourceId: newStreamId,
-      actionType: ActionTypes.Stream.Clone,
+      actionType: StreamActionTypes.Stream.Clone,
       userId: clonerId,
       info: { sourceStreamId, newStreamId, clonerId },
       message: `User ${clonerId} cloned stream ${sourceStreamId} as ${newStreamId}`
     })
   }
 
-/**
- * Save "stream permissions granted to user" activity item
- */
-const addStreamPermissionsAddedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }) =>
-  async (params: {
-    streamId: string
-    activityUserId: string
-    targetUserId: string
-    role: StreamRoles
-  }) => {
-    const { streamId, activityUserId, targetUserId, role } = params
-    await saveActivity({
-      streamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: streamId,
-      actionType: ActionTypes.Stream.PermissionsAdd,
-      userId: activityUserId,
-      info: { targetUser: targetUserId, role },
-      message: `Permission granted to user ${targetUserId} (${role})`
-    })
-  }
-
-/**
- * Save "stream permissions revoked for user" activity item
- */
-const addStreamPermissionsRevokedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }) =>
-  async (params: {
-    streamId: string
-    activityUserId: string
-    removedUserId: string
-    stream: StreamRecord
-  }) => {
-    const { streamId, activityUserId, removedUserId } = params
-    const isVoluntaryLeave = activityUserId === removedUserId
-
-    await saveActivity({
-      streamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: streamId,
-      actionType: ActionTypes.Stream.PermissionsRemove,
-      userId: activityUserId,
-      info: { targetUser: removedUserId },
-      message: isVoluntaryLeave
-        ? `User ${removedUserId} left the stream`
-        : `Permission revoked for user ${removedUserId}`
-    })
-  }
-
 export const reportStreamActivityFactory =
-  (deps: { eventListen: EventBusListen; saveActivity: SaveActivity }) => () => {
+  (deps: {
+    eventListen: EventBusListen
+    saveActivity: SaveActivity
+    saveStreamActivity: SaveStreamActivity
+  }) =>
+  () => {
+    const addProjectPermissionsAddedActivity =
+      addProjectPermissionsAddedActivityFactory(deps)
+    const addProjectPermissionsRevokedActivity =
+      addProjectPermissionsRevokedActivityFactory(deps)
     const addStreamCreatedActivity = addStreamCreatedActivityFactory(deps)
     const addStreamUpdatedActivity = addStreamUpdatedActivityFactory(deps)
     const addStreamDeletedActivity = addStreamDeletedActivityFactory(deps)
     const addStreamClonedActivity = addStreamClonedActivityFactory(deps)
-    const addStreamPermissionsAddedActivity =
-      addStreamPermissionsAddedActivityFactory(deps)
-    const addStreamPermissionsRevokedActivity =
-      addStreamPermissionsRevokedActivityFactory(deps)
 
     const quitters = [
+      deps.eventListen(
+        ProjectEvents.PermissionsAdded,
+        addProjectPermissionsAddedActivity
+      ),
+      deps.eventListen(
+        ProjectEvents.PermissionsRevoked,
+        addProjectPermissionsRevokedActivity
+      ),
       deps.eventListen(ProjectEvents.Created, async ({ payload }) => {
         await addStreamCreatedActivity({
           stream: payload.project,
@@ -190,22 +205,6 @@ export const reportStreamActivityFactory =
           sourceStreamId: payload.sourceProject.id,
           newStream: payload.newProject,
           clonerId: payload.clonerId
-        })
-      }),
-      deps.eventListen(ProjectEvents.PermissionsAdded, async ({ payload }) => {
-        await addStreamPermissionsAddedActivity({
-          streamId: payload.project.id,
-          activityUserId: payload.activityUserId,
-          targetUserId: payload.targetUserId,
-          role: payload.role
-        })
-      }),
-      deps.eventListen(ProjectEvents.PermissionsRevoked, async ({ payload }) => {
-        await addStreamPermissionsRevokedActivity({
-          streamId: payload.project.id,
-          activityUserId: payload.activityUserId,
-          removedUserId: payload.removedUserId,
-          stream: payload.project
         })
       })
     ]

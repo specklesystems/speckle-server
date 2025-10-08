@@ -1,4 +1,4 @@
-import { CommandModule } from 'yargs'
+import type { CommandModule } from 'yargs'
 import express from 'express'
 import { ExpressAdapter } from '@bull-board/express'
 import { createBullBoard } from '@bull-board/api'
@@ -7,7 +7,7 @@ import {
   NOTIFICATIONS_QUEUE,
   buildNotificationsQueue
 } from '@/modules/notifications/services/queue'
-import { noop } from 'lodash'
+import { noop } from 'lodash-es'
 import { cliLogger } from '@/observability/logging'
 
 const PORT = 3032

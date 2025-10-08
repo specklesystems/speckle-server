@@ -1,12 +1,13 @@
 import { getRedisUrl, getIntFromEnv } from '@/modules/shared/helpers/envHelper'
+import type { RateLimiterAbstract } from 'rate-limiter-flexible'
 import {
   BurstyRateLimiter,
-  RateLimiterAbstract,
   RateLimiterMemory,
   RateLimiterRedis,
   RateLimiterRes
 } from 'rate-limiter-flexible'
-import { Nullable, TIME } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
+import { TIME } from '@speckle/shared'
 import { rateLimiterLogger } from '@/observability/logging'
 import { createRedisClient } from '@/modules/shared/redis/redis'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
@@ -164,6 +165,16 @@ export const LIMITS = <const>{
     burstOptions: {
       limitCount: getIntFromEnv('RATELIMIT_BURST_POST_GRAPHQL', '200'),
       duration: 1 * TIME.minute
+    }
+  },
+  'POST /auth/pwdreset/request': {
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
+      duration: 10 * TIME.minute
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '10'),
+      duration: 30 * TIME.minute
     }
   },
   '/auth/local/login': {

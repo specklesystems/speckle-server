@@ -19,7 +19,7 @@ const canViewProjectSettingsQuery = graphql(`
 /**
  * Apply this to a page to prevent unauthenticated access to settings ensuring the user is a collaborator
  */
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineParallelizedNuxtRouteMiddleware(async (to) => {
   const client = useApolloClientFromNuxt()
 
   // Fetch project role data to check if the user is a collaborator

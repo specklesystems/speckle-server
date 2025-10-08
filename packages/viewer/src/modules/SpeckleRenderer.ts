@@ -23,7 +23,12 @@ import {
   PerspectiveCamera,
   OrthographicCamera
 } from 'three'
-import { type Batch, type BatchUpdateRange, GeometryType } from './batching/Batch.js'
+import {
+  type Batch,
+  type BatchUpdateRange,
+  GeometryType,
+  isAcceleratedBatchType
+} from './batching/Batch.js'
 import Batcher from './batching/Batcher.js'
 import { Geometry } from './converter/Geometry.js'
 import Input, { InputEvent } from './input/Input.js'
@@ -67,6 +72,9 @@ import Logger from './utils/Logger.js'
 
 /* TO DO: Not sure where to best import these */
 import '../type-augmentations/three-extensions.js'
+import { TextBatch } from '../index.js'
+import { SpeckleBatchedText } from './objects/SpeckleBatchedText.js'
+import SpeckleGhostMaterial from './materials/SpeckleGhostMaterial.js'
 
 export class RenderingStats {
   private renderTimeAcc = 0
@@ -103,6 +111,22 @@ export class RenderingStats {
   }
 }
 
+export interface ObjectPickConfiguration {
+  pickedObjectsFilter: ((arg: [NodeRenderView, Material]) => boolean) | null
+}
+
+export const DefaultObjectPickConfiguration = {
+  pickedObjectsFilter: (arg: [NodeRenderView, Material]) => {
+    const material = arg[1]
+    return (
+      material && // Mateirial exists
+      material.visible && // Material is visible
+      (material.transparent ? material.opacity > 0 : true) && // Material is transparent and opacity is non zero
+      !(material instanceof SpeckleGhostMaterial) // Material is not a GhostMaterial
+    )
+  }
+}
+
 export default class SpeckleRenderer {
   protected readonly SHOW_HELPERS = false
   protected readonly IGNORE_ZERO_OPACITY_OBJECTS = true
@@ -131,6 +155,9 @@ export default class SpeckleRenderer {
   protected _clippingVolume: OBB = new OBB()
 
   protected _renderOverride: (() => void) | null = null
+
+  public objectPickConfiguration: ObjectPickConfiguration =
+    DefaultObjectPickConfiguration
 
   public viewer: Viewer // TEMPORARY
   public batcher: Batcher
@@ -161,6 +188,48 @@ export default class SpeckleRenderer {
     return bounds
   }
 
+  public get visibleSceneBox(): Box3 {
+    const bounds: Box3 = new Box3()
+    const batches = this.batcher.getBatches()
+    for (let k = 0; k < batches.length; k++) {
+      const batch = batches[k]
+      const rvs = batch.renderViews.slice()
+      rvs.sort((a, b) => {
+        return a.batchStart - b.batchStart
+      })
+      let batchObjects = null
+      if (isAcceleratedBatchType(batch)) {
+        batchObjects = batch.mesh.batchObjects.slice()
+        batchObjects.sort((a, b) => {
+          return a.renderView.batchStart - b.renderView.batchStart
+        })
+      }
+
+      const visibleRange = batch.getVisibleRange()
+      let lo = 0,
+        hi = rvs.length
+      while (lo < hi) {
+        const mid = (lo + hi) >>> 1
+        if (rvs[mid].batchStart < visibleRange.offset) lo = mid + 1
+        else hi = mid
+      }
+
+      const qStart = visibleRange.offset
+      const qEnd = visibleRange.offset + visibleRange.count
+
+      for (; lo < rvs.length; lo++) {
+        const s = rvs[lo]
+        const b = batchObjects ? batchObjects[lo] : null
+        if (s.batchStart >= qEnd) break
+        const sEnd = s.batchStart + s.batchCount
+        if (s.batchStart >= qStart && sEnd <= qEnd) {
+          bounds.union(b ? b.aabb : s.aabb)
+        }
+      }
+    }
+    return bounds
+  }
+
   public get sceneSphere(): Sphere {
     return this.sceneBox.getBoundingSphere(new Sphere())
   }
@@ -172,7 +241,7 @@ export default class SpeckleRenderer {
   public get clippingVolume(): OBB {
     return !this._clippingVolume.isEmpty() && this._renderer.localClippingEnabled
       ? this._clippingVolume
-      : new OBB().fromBox3(this.sceneBox)
+      : new OBB().fromBox3(this.visibleSceneBox)
   }
 
   public set clippingVolume(box: Box3 | OBB) {
@@ -518,13 +587,16 @@ export default class SpeckleRenderer {
   }
 
   private updateTransforms() {
-    const meshBatches: MeshBatch[] = this.batcher.getBatches(
-      undefined,
-      GeometryType.MESH
-    )
+    const meshBatches: (MeshBatch | TextBatch)[] = this.batcher.getBatches(undefined, [
+      GeometryType.MESH,
+      GeometryType.TEXT
+    ])
     for (let k = 0; k < meshBatches.length; k++) {
-      const meshBatch: SpeckleMesh | SpeckleInstancedMesh = meshBatches[k].mesh
+      const meshBatch: SpeckleMesh | SpeckleInstancedMesh | SpeckleBatchedText =
+        meshBatches[k].mesh
       meshBatch.updateTransformsUniform()
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
       meshBatch.traverse((obj: Object3D) => {
         const depthMaterial: SpeckleDepthMaterial =
           obj.customDepthMaterial as SpeckleDepthMaterial
@@ -630,9 +702,16 @@ export default class SpeckleRenderer {
     let useRTE = false
     if (
       batchRenderable instanceof SpeckleMesh ||
-      batchRenderable instanceof SpeckleInstancedMesh
+      batchRenderable instanceof SpeckleInstancedMesh ||
+      batchRenderable instanceof SpeckleBatchedText
     ) {
       if (batchRenderable.TAS.bvhHelper) parent.add(batchRenderable.TAS.bvhHelper)
+    }
+
+    if (
+      batchRenderable instanceof SpeckleMesh ||
+      batchRenderable instanceof SpeckleInstancedMesh
+    ) {
       useRTE = batchRenderable.needsRTE
     }
     if (batch.geometryType === GeometryType.MESH) {
@@ -651,6 +730,7 @@ export default class SpeckleRenderer {
         }
       })
     }
+
     this.viewer.World.expandWorld(batch.bounds)
   }
 
@@ -993,12 +1073,19 @@ export default class SpeckleRenderer {
   public queryHits(
     results: Array<ExtendedIntersection>
   ): Array<{ node: TreeNode; point: Vector3 }> | null {
-    const rvs = []
+    const rvs: Array<NodeRenderView> = []
     const points = []
     for (let k = 0; k < results.length; k++) {
-      const rv = this.renderViewFromIntersection(results[k])
-      if (rv) {
-        rvs.push(rv)
+      const rvMaterial: [NodeRenderView, Material] = this.renderViewFromIntersection(
+        results[k]
+      )
+      if (
+        rvMaterial[0] && // If the rv exists
+        this.objectPickConfiguration.pickedObjectsFilter // If there is a pick filter
+          ? this.objectPickConfiguration.pickedObjectsFilter(rvMaterial) // If the pick filter passes
+          : true
+      ) {
+        rvs.push(rvMaterial[0])
         points.push(results[k].point)
       }
     }
@@ -1053,15 +1140,14 @@ export default class SpeckleRenderer {
   // TO DO: Maybe need a better way
   public renderViewFromIntersection(
     intersection: ExtendedIntersection
-  ): NodeRenderView | null {
+  ): [NodeRenderView, Material] {
     let rv = null
+    let material = null
     if (intersection.batchObject) {
       rv = intersection.batchObject.renderView
-      const material = (intersection.object as SpeckleMesh).getBatchObjectMaterial(
+      material = (intersection.object as SpeckleMesh).getBatchObjectMaterial(
         intersection.batchObject
       )
-      if (material && material.opacity === 0 && this.IGNORE_ZERO_OPACITY_OBJECTS)
-        return null
     } else {
       const index =
         intersection.faceIndex !== undefined && intersection.faceIndex !== null
@@ -1072,17 +1158,13 @@ export default class SpeckleRenderer {
       if (index !== undefined) {
         rv = this.batcher.getRenderView(intersection.object.uuid, index)
         if (rv) {
-          const material = this.batcher.getRenderViewMaterial(
-            intersection.object.uuid,
-            index
-          )
-          if (material && material.opacity === 0 && this.IGNORE_ZERO_OPACITY_OBJECTS)
-            return null
+          material = this.batcher.getRenderViewMaterial(intersection.object.uuid, index)
         }
       }
     }
-
-    return rv
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
+    return [rv, material]
   }
 
   private onClick(e: Vector2 & { multiSelect: boolean; event: PointerEvent }) {
@@ -1175,7 +1257,7 @@ export default class SpeckleRenderer {
             rvs.push(...this.tree.getRenderTree().getRenderViewsForNode(node))
           })
       }
-    } else box = this.sceneBox
+    } else box = this.visibleSceneBox
     for (let k = 0; k < rvs.length; k++) {
       const object = this.getObject(rvs[k])
       const aabb = object ? object.aabb : rvs[k].aabb
@@ -1265,15 +1347,18 @@ export default class SpeckleRenderer {
   }
 
   public getObjects(): BatchObject[] {
-    const batches = this.batcher.getBatches(undefined, GeometryType.MESH)
-    const meshes = batches.map((batch: MeshBatch) => batch.mesh)
+    const batches = this.batcher.getBatches(undefined, [
+      GeometryType.MESH,
+      GeometryType.TEXT
+    ])
+    const meshes = batches.map((batch: MeshBatch | TextBatch) => batch.mesh)
     const objects = meshes.flatMap((mesh) => mesh.batchObjects)
     return objects
   }
 
   public getObject(rv: NodeRenderView): BatchObject | null {
-    const batch = this.batcher.getBatch(rv) as MeshBatch
-    if (!batch || batch.geometryType !== GeometryType.MESH) {
+    const batch = this.batcher.getBatch(rv)
+    if (!batch || !isAcceleratedBatchType(batch)) {
       // Logger.error('Render view is not of mesh type. No batch object found')
       return null
     }

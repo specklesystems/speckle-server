@@ -1,4 +1,4 @@
-import {
+import type {
   MarkAutomationDeleted,
   GetActiveTriggerDefinitions,
   GetAutomation,
@@ -29,11 +29,11 @@ import {
   UpsertAutomationFunctionRun,
   UpsertAutomationRun
 } from '@/modules/automate/domain/operations'
-import {
+import type {
   AutomationRunFullTrigger,
   InsertableAutomationFunctionRun
 } from '@/modules/automate/domain/types'
-import {
+import type {
   AutomationRecord,
   AutomationRevisionRecord,
   AutomationTriggerDefinitionRecord,
@@ -45,7 +45,9 @@ import {
   AutomationRunTriggerRecord,
   AutomationFunctionRunRecord,
   AutomationRevisionWithTriggersFunctions,
-  AutomationTriggerType,
+  AutomationTriggerType
+} from '@/modules/automate/helpers/types'
+import {
   VersionCreationTriggerType,
   isVersionCreatedTrigger
 } from '@/modules/automate/helpers/types'
@@ -65,11 +67,11 @@ import {
   Streams,
   knex
 } from '@/modules/core/dbSchema'
-import {
+import type {
   AutomationRunsArgs,
   ProjectAutomationsArgs
 } from '@/modules/core/graph/generated/graphql'
-import { StreamRecord } from '@/modules/core/helpers/types'
+import type { StreamRecord } from '@/modules/core/helpers/types'
 
 import {
   executeBatchedSelect,
@@ -79,12 +81,13 @@ import {
   decodeCursor,
   decodeIsoDateCursor,
   encodeIsoDateCursor
-} from '@/modules/shared/helpers/graphqlHelper'
-import { Nullable, StreamRoles, isNullOrUndefined } from '@speckle/shared'
+} from '@/modules/shared/helpers/dbHelper'
+import type { Nullable, StreamRoles } from '@speckle/shared'
+import { isNullOrUndefined } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import { Knex } from 'knex'
-import _, { clamp, groupBy, keyBy, pick } from 'lodash'
-import { SetOptional, SetRequired } from 'type-fest'
+import type { Knex } from 'knex'
+import { clamp, groupBy, keyBy, pick } from 'lodash-es'
+import type { SetOptional, SetRequired } from 'type-fest'
 
 const tables = {
   automations: (db: Knex) => db<AutomationRecord>(Automations.name),
@@ -163,7 +166,7 @@ export const upsertAutomationFunctionRunFactory =
     await tables
       .automationFunctionRuns(deps.db)
       .insert(
-        _.pick(automationFunctionRun, AutomationFunctionRuns.withoutTablePrefix.cols)
+        pick(automationFunctionRun, AutomationFunctionRuns.withoutTablePrefix.cols)
       )
       .onConflict(AutomationFunctionRuns.withoutTablePrefix.col.id)
       .merge([
@@ -185,7 +188,7 @@ export const upsertAutomationRunFactory =
   async (automationRun: InsertableAutomationRun) => {
     await tables
       .automationRuns(deps.db)
-      .insert(_.pick(automationRun, AutomationRuns.withoutTablePrefix.cols))
+      .insert(pick(automationRun, AutomationRuns.withoutTablePrefix.cols))
       .onConflict(AutomationRuns.withoutTablePrefix.col.id)
       .merge([
         AutomationRuns.withoutTablePrefix.col.status,
@@ -198,7 +201,7 @@ export const upsertAutomationRunFactory =
         .insert(
           automationRun.triggers.map((t) => ({
             automationRunId: automationRun.id,
-            ..._.pick(t, AutomationRunTriggers.withoutTablePrefix.cols)
+            ...pick(t, AutomationRunTriggers.withoutTablePrefix.cols)
           }))
         )
         .onConflict()
@@ -207,7 +210,7 @@ export const upsertAutomationRunFactory =
         .automationFunctionRuns(deps.db)
         .insert(
           automationRun.functionRuns.map((f) => ({
-            ..._.pick(f, AutomationFunctionRuns.withoutTablePrefix.cols),
+            ...pick(f, AutomationFunctionRuns.withoutTablePrefix.cols),
             runId: automationRun.id
           }))
         )
@@ -372,7 +375,7 @@ export const storeAutomationRevisionFactory =
   (deps: { db: Knex }): StoreAutomationRevision =>
   async (revision: InsertableAutomationRevision) => {
     const id = revision.id || generateRevisionId()
-    const rev = _.pick(revision, AutomationRevisions.withoutTablePrefix.cols)
+    const rev = pick(revision, AutomationRevisions.withoutTablePrefix.cols)
     const [newRev] = await tables
       .automationRevisions(deps.db)
       .insert({

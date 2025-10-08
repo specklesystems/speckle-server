@@ -34,9 +34,9 @@ import type {
 import { type Utils } from './modules/Utils.js'
 import { BatchObject } from './modules/batching/BatchObject.js'
 import {
-  type MeasurementOptions,
-  MeasurementType,
-  MeasurementsExtension
+  MeasurementsExtension,
+  MeasurementEvent,
+  MeasurementEventPayload
 } from './modules/extensions/measurements/MeasurementsExtension.js'
 import { Units } from './modules/converter/Units.js'
 import {
@@ -74,11 +74,11 @@ import { ObjLoader } from './modules/loaders/OBJ/ObjLoader.js'
 import { LegacyViewer } from './modules/LegacyViewer.js'
 import { GeometryConverter, SpeckleType } from './modules/loaders/GeometryConverter.js'
 import Input, { InputEvent, InputEventPayload } from './modules/input/Input.js'
-import { GeometryType } from './modules/batching/Batch.js'
+import { Batch, GeometryType } from './modules/batching/Batch.js'
 import { MeshBatch } from './modules/batching/MeshBatch.js'
 import SpeckleStandardMaterial from './modules/materials/SpeckleStandardMaterial.js'
 import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial.js'
-import { SpeckleText } from './modules/objects/SpeckleText.js'
+import { TextLabel } from './modules/objects/TextLabel.js'
 import { NodeRenderView } from './modules/tree/NodeRenderView.js'
 import {
   CONTAINED,
@@ -112,6 +112,8 @@ import {
   ProgressiveGPass
 } from './modules/pipeline/Passes/GPass.js'
 import {
+  PipelineOptions,
+  BasePipelineOptions,
   DefaultPipelineOptions,
   Pipeline
 } from './modules/pipeline/Pipelines/Pipeline.js'
@@ -177,7 +179,10 @@ import {
   EdgesPipeline
 } from './modules/pipeline/Pipelines/EdgesPipeline.js'
 import { Geometry } from './modules/converter/Geometry.js'
-
+import {
+  ObjectPickConfiguration,
+  DefaultObjectPickConfiguration
+} from './modules/SpeckleRenderer.js'
 export {
   Viewer,
   LegacyViewer,
@@ -185,7 +190,9 @@ export {
   SpeckleWebGLRenderer,
   DefaultViewerParams,
   ViewerEvent,
+  ObjectPickConfiguration,
   DefaultLightConfiguration,
+  DefaultObjectPickConfiguration,
   World,
   BatchObject,
   InstancedBatchObject,
@@ -197,7 +204,7 @@ export {
   PerpendicularMeasurement,
   AreaMeasurement,
   PointMeasurement,
-  MeasurementType,
+  MeasurementEvent,
   MeasurementState,
   Units,
   Extension,
@@ -224,6 +231,7 @@ export {
   InputEvent,
   ObjectLayers,
   GeometryType,
+  Batch,
   MeshBatch,
   InstancedMeshBatch,
   LineBatch,
@@ -234,7 +242,7 @@ export {
   SpeckleStandardMaterial,
   SpeckleBasicMaterial,
   SpeckleTextMaterial,
-  SpeckleText,
+  TextLabel,
   NodeRenderView,
   SpeckleGeometryConverter,
   Assets,
@@ -280,6 +288,8 @@ export {
   ArcticViewPipeline,
   TAAPipeline,
   ShadedViewPipeline,
+  PipelineOptions,
+  BasePipelineOptions,
   DefaultPipelineOptions,
   DefaultEdgesPipelineOptions,
   ViewModes,
@@ -321,7 +331,6 @@ export type {
   IntersectionQueryResult,
   Utils,
   DiffResult,
-  MeasurementOptions,
   FilteringState,
   ExtendedIntersection,
   ViewerEventPayload,
@@ -330,7 +339,8 @@ export type {
   CameraEventPayload,
   SelectionExtensionOptions,
   DefaultSelectionExtensionOptions,
-  ViewModeEventPayload
+  ViewModeEventPayload,
+  MeasurementEventPayload
 }
 
 export * as UrlHelper from './modules/UrlHelper.js'

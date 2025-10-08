@@ -1,6 +1,15 @@
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import { usePageQueryStandardFetchPolicy } from '~/lib/common/composables/graphql'
 import { useGlobalToast } from '~/lib/common/composables/toast'
+import { useEventBus } from '~/lib/core/composables/eventBus'
+
+export const useIsAccModuleEnabled = () => {
+  const {
+    public: { FF_ACC_INTEGRATION_ENABLED }
+  } = useRuntimeConfig()
+
+  return ref(FF_ACC_INTEGRATION_ENABLED)
+}
 
 export const useIsAutomateModuleEnabled = () => {
   const {
@@ -50,13 +59,6 @@ export const useIsOnboardingForced = () => {
   return ref(FF_FORCE_ONBOARDING)
 }
 
-export const useIsGendoModuleEnabled = () => {
-  const {
-    public: { FF_GENDOAI_MODULE_ENABLED }
-  } = useRuntimeConfig()
-  return ref(FF_GENDOAI_MODULE_ENABLED)
-}
-
 export const useWorkspaceNewPlansEnabled = () => {
   return ref(true)
 }
@@ -68,4 +70,33 @@ export const useIsBillingIntegrationEnabled = () => {
   return ref(FF_BILLING_INTEGRATION_ENABLED)
 }
 
-export { useGlobalToast, useActiveUser, usePageQueryStandardFetchPolicy }
+export const useIsNextGenFileImporterEnabled = () => {
+  const {
+    public: { FF_NEXT_GEN_FILE_IMPORTER_ENABLED }
+  } = useRuntimeConfig()
+  return ref(FF_NEXT_GEN_FILE_IMPORTER_ENABLED)
+}
+
+export const useIsRhinoFileImporterEnabled = () => {
+  const {
+    public: { FF_RHINO_FILE_IMPORTER_ENABLED }
+  } = useRuntimeConfig()
+  return ref(FF_RHINO_FILE_IMPORTER_ENABLED)
+}
+
+export const useIsNoPersonalEmailsEnabled = () => {
+  const {
+    public: { FF_NO_PERSONAL_EMAILS_ENABLED }
+  } = useRuntimeConfig()
+
+  return ref(FF_NO_PERSONAL_EMAILS_ENABLED)
+}
+
+export const useIsDashboardsModuleEnabled = () => {
+  const {
+    public: { FF_DASHBOARDS_MODULE_ENABLED }
+  } = useRuntimeConfig()
+  return ref(FF_DASHBOARDS_MODULE_ENABLED)
+}
+
+export { useGlobalToast, useActiveUser, usePageQueryStandardFetchPolicy, useEventBus }

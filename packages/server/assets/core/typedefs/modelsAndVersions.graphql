@@ -25,13 +25,6 @@ extend type Project {
   """
   modelChildrenTree(fullName: String!): [ModelsTreeItem!]!
   """
-  Return metadata about resources being requested in the viewer
-  """
-  viewerResources(
-    resourceIdString: String!
-    loadedVersionsOnly: Boolean = true
-  ): [ViewerResourceGroup!]!
-  """
   Returns a flat list of all project versions
   """
   versions(limit: Int! = 25, cursor: String): VersionCollection!
@@ -73,29 +66,6 @@ input ProjectModelsTreeFilter {
   contributors: [String!]
 }
 
-type ViewerResourceGroup {
-  """
-  Resource identifier used to refer to a collection of resource items
-  """
-  identifier: String!
-  """
-  Viewer resources that the identifier refers to
-  """
-  items: [ViewerResourceItem!]!
-}
-
-type ViewerResourceItem {
-  """
-  Null if resource represents an object
-  """
-  modelId: String
-  """
-  Null if resource represents an object
-  """
-  versionId: String
-  objectId: String!
-}
-
 type Model {
   id: ID!
   """
@@ -121,6 +91,7 @@ type Model {
     cursor: String
     filter: ModelVersionsFilter
   ): VersionCollection!
+  projectId: String!
 }
 
 type ModelCollection {
@@ -200,11 +171,12 @@ input MarkReceivedVersionInput {
 }
 
 type VersionMutations {
-  moveToModel(input: MoveVersionsInput!): Model!
-  delete(input: DeleteVersionsInput!): Boolean!
-  update(input: UpdateVersionInput!): Version!
-  create(input: CreateVersionInput!): Version!
+  moveToModel(input: MoveVersionsInput!): Model! @hasScope(scope: "streams:write")
+  delete(input: DeleteVersionsInput!): Boolean! @hasScope(scope: "streams:write")
+  update(input: UpdateVersionInput!): Version! @hasScope(scope: "streams:write")
+  create(input: CreateVersionInput!): Version! @hasScope(scope: "streams:write")
   markReceived(input: MarkReceivedVersionInput!): Boolean!
+    @hasScope(scope: "streams:read")
 }
 
 extend type Mutation {
@@ -212,9 +184,7 @@ extend type Mutation {
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:write")
 
-  versionMutations: VersionMutations!
-    @hasServerRole(role: SERVER_GUEST)
-    @hasScope(scope: "streams:write")
+  versionMutations: VersionMutations! @hasServerRole(role: SERVER_GUEST)
 }
 
 type ModelsTreeItem {

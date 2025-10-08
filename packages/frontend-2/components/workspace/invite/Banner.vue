@@ -5,7 +5,7 @@
       has invited you to join
       <template v-if="showWorkspaceName">
         the workspace
-        <span class="font-medium">{{ invite.workspaceName }}</span>
+        <span class="font-medium">{{ invite.workspace.name }}</span>
       </template>
       <template v-else>this workspace</template>
     </template>
@@ -25,8 +25,11 @@ graphql(`
       id
       ...LimitedUserAvatar
     }
-    workspaceId
-    workspaceName
+    workspace {
+      id
+      name
+      logo
+    }
     token
     user {
       id
@@ -63,7 +66,7 @@ const processInvite = async (shouldAccept: boolean, token: Optional<string>) => 
     mixpanel.track('Workspace Joined', {
       location: 'invite banner',
       // eslint-disable-next-line camelcase
-      workspace_id: props.invite.workspaceId
+      workspace_id: props.invite.workspace.id
     })
   } else {
     await decline()

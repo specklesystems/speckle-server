@@ -1,7 +1,7 @@
-import { WorkspacePlan } from '@speckle/shared'
+import { WorkspaceFeatureFlags, type WorkspacePlan } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import { assign } from 'lodash'
-import {
+import { assign } from 'lodash-es'
+import type {
   SubscriptionData,
   SubscriptionProduct,
   WorkspaceSubscription
@@ -16,7 +16,8 @@ export const buildTestWorkspacePlan = (
       createdAt: new Date(),
       updatedAt: new Date(),
       name: 'free',
-      status: 'valid'
+      status: 'valid',
+      featureFlags: WorkspaceFeatureFlags.none
     },
     overrides
   )
@@ -31,6 +32,7 @@ export const buildTestWorkspaceSubscription = (
       updatedAt: new Date(),
       currentBillingCycleEnd: new Date(),
       billingInterval: 'monthly',
+      updateIntent: {},
       currency: 'usd',
       subscriptionData: buildTestSubscriptionData()
     },

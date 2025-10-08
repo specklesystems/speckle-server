@@ -1,15 +1,15 @@
-import {
+import type {
   ModelsTreeItemCollection,
   ProjectModelsArgs,
   ProjectModelsTreeArgs,
   StreamBranchesArgs
 } from '@/modules/core/graph/generated/graphql'
-import { last, sum } from 'lodash'
-import { Merge } from 'type-fest'
-import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
+import { last, sum } from 'lodash-es'
+import type { Merge } from 'type-fest'
+import type { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
 import { BadRequestError } from '@/modules/shared/errors'
-import {
+import type {
   GetModelTreeItems,
   GetModelTreeItemsFiltered,
   GetModelTreeItemsFilteredTotalCount,

@@ -7,7 +7,7 @@ import type {
   OidcProviderValidationRequest,
   WorkspaceSsoProviderRecord
 } from '@/modules/workspaces/domain/sso/types'
-import { Workspace } from '@/modules/workspacesCore/domain/types'
+import type { Workspace } from '@/modules/workspacesCore/domain/types'
 
 // Workspace SSO provider management
 

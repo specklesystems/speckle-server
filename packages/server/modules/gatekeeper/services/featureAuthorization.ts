@@ -1,9 +1,15 @@
-import { GetWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
-import {
+import type { GetWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
+import type {
   CanWorkspaceAccessFeature,
   WorkspaceFeatureAccessFunction
 } from '@/modules/gatekeeper/domain/operations'
-import { throwUncoveredError, WorkspacePlanConfigs } from '@speckle/shared'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import {
+  throwUncoveredError,
+  workspacePlanHasAccessToFeature,
+  isPlanFeature,
+  isWorkspaceFeatureFlagOn
+} from '@speckle/shared'
 
 export const canWorkspaceAccessFeatureFactory =
   ({
@@ -24,8 +30,17 @@ export const canWorkspaceAccessFeatureFactory =
       default:
         throwUncoveredError(workspacePlan)
     }
-
-    return WorkspacePlanConfigs[workspacePlan.name].features.includes(workspaceFeature)
+    if (isPlanFeature(workspaceFeature))
+      return workspacePlanHasAccessToFeature({
+        plan: workspacePlan.name,
+        feature: workspaceFeature,
+        featureFlags: getFeatureFlags()
+      })
+    const isFlagOn = isWorkspaceFeatureFlagOn({
+      workspaceFeatureFlags: workspacePlan.featureFlags,
+      feature: workspaceFeature
+    })
+    return isFlagOn
   }
 
 export const canWorkspaceUseOidcSsoFactory =

@@ -1,0 +1,1103 @@
+import { Branches, buildTableHelper } from '@/modules/core/dbSchema'
+import type { Model } from '@/modules/core/domain/branches/types'
+import { LogicError } from '@/modules/shared/errors'
+import {
+  compositeCursorTools,
+  formatJsonArrayRecords
+} from '@/modules/shared/helpers/dbHelper'
+import type {
+  GetGroupSavedViewsBaseParams,
+  GetGroupSavedViewsPageItems,
+  GetGroupSavedViewsTotalCount,
+  GetProjectSavedViewsBaseParams,
+  GetProjectSavedViewGroupsBaseParams,
+  GetProjectSavedViewGroupsPageItems,
+  GetProjectSavedViewGroupsTotalCount,
+  GetSavedViewGroups,
+  GetSavedViewGroup,
+  GetStoredViewCount,
+  GetUngroupedSavedViewsGroup,
+  RecalculateGroupResourceIds,
+  StoreSavedView,
+  StoreSavedViewGroup,
+  GetSavedViews,
+  DeleteSavedViewRecord,
+  UpdateSavedViewRecord,
+  GetSavedView,
+  GetStoredViewGroupCount,
+  DeleteSavedViewGroupRecord,
+  UpdateSavedViewGroupRecord,
+  GetModelHomeSavedViews,
+  GetModelHomeSavedView,
+  SetNewHomeView,
+  GetNewViewBoundaryPosition,
+  GetNewViewSpecificPosition,
+  RebalanceViewPositions,
+  GetProjectSavedViewsTotalCount,
+  GetProjectSavedViewsPageItems
+} from '@/modules/viewer/domain/operations/savedViews'
+import {
+  SavedViewVisibility,
+  type SavedView,
+  type SavedViewGroup
+} from '@/modules/viewer/domain/types/savedViews'
+import { SavedViewPositionUpdateError } from '@/modules/viewer/errors/savedViews'
+import type { DefaultGroupMetadata } from '@/modules/viewer/helpers/savedViews'
+import {
+  buildDefaultGroupId,
+  decodeDefaultGroupId,
+  formatResourceIdsForGroup
+} from '@/modules/viewer/helpers/savedViews'
+import { logger } from '@/observability/logging'
+import {
+  isUngroupedGroup,
+  ungroupedScenesGroupTitle
+} from '@speckle/shared/saved-views'
+import { resourceBuilder } from '@speckle/shared/viewer/route'
+import cryptoRandomString from 'crypto-random-string'
+import dayjs from 'dayjs'
+import { type Knex } from 'knex'
+import { clamp, isNumber, isUndefined } from 'lodash-es'
+
+export const SavedViews = buildTableHelper('saved_views', [
+  'id',
+  'name',
+  'description',
+  'projectId',
+  'authorId',
+  'groupId',
+  'resourceIds',
+  'groupResourceIds',
+  'isHomeView',
+  'visibility',
+  'viewerState',
+  'screenshot',
+  'thumbnail',
+  'position',
+  'createdAt',
+  'updatedAt'
+])
+
+export const SavedViewGroups = buildTableHelper('saved_view_groups', [
+  'id',
+  'authorId',
+  'projectId',
+  'resourceIds',
+  'name',
+  'createdAt',
+  'updatedAt'
+])
+
+export const MINIMUM_POSITION_GAP = 0.00001
+
+const savedGroupCursorUtils = () =>
+  compositeCursorTools({
+    schema: SavedViewGroups,
+    cols: ['updatedAt', 'id']
+  })
+
+const generateId = () => cryptoRandomString({ length: 10 })
+
+const buildDefaultGroup = (params: {
+  resourceIds: string[]
+  projectId: string
+}): SavedViewGroup => {
+  const { resourceIds, projectId } = params
+
+  return {
+    id: buildDefaultGroupId({ projectId, resourceIds }),
+    authorId: null,
+    projectId,
+    resourceIds,
+    name: null,
+    createdAt: dayjs(0).toDate(),
+    updatedAt: dayjs(0).toDate()
+  }
+}
+
+const tables = {
+  savedViews: (db: Knex) => db<SavedView>(SavedViews.name),
+  savedViewGroups: (db: Knex) => db<SavedViewGroup>(SavedViewGroups.name),
+  branches: (db: Knex) => db<Model>(Branches.name)
+}
+
+export const storeSavedViewFactory =
+  (deps: { db: Knex }): StoreSavedView =>
+  async ({ view }) => {
+    const [insertedItem] = await tables.savedViews(deps.db).insert(
+      {
+        id: generateId(),
+        ...view,
+        // weird ts error:
+        ...(view.viewerState
+          ? {
+              viewerState: view.viewerState as SavedView['viewerState']
+            }
+          : {})
+      },
+      '*'
+    )
+    return insertedItem
+  }
+
+export const storeSavedViewGroupFactory =
+  (deps: { db: Knex }): StoreSavedViewGroup =>
+  async ({ group }) => {
+    const [insertedItem] = await tables.savedViewGroups(deps.db).insert(
+      {
+        id: generateId(),
+        ...group
+      },
+      '*'
+    )
+    return insertedItem
+  }
+
+export const getStoredViewCountFactory =
+  (deps: { db: Knex }): GetStoredViewCount =>
+  async ({ projectId }) => {
+    const [count] = await tables.savedViews(deps.db).where({ projectId }).count()
+    return parseInt(count.count + '')
+  }
+
+export const getStoredViewGroupCountFactory =
+  (deps: { db: Knex }): GetStoredViewGroupCount =>
+  async ({ projectId }) => {
+    const [count] = await tables.savedViewGroups(deps.db).where({ projectId }).count()
+    return parseInt(count.count + '')
+  }
+
+const getProjectSavedViewGroupsBaseQueryFactory =
+  (deps: { db: Knex }) => async (params: GetProjectSavedViewGroupsBaseParams) => {
+    const { projectId, resourceIdString, search, userId } = params
+
+    const onlyAuthored = params.onlyAuthored && userId
+    const onlyVisibility =
+      params.onlyVisibility === SavedViewVisibility.authorOnly && !userId
+        ? undefined
+        : params.onlyVisibility
+    const resourceIds = formatResourceIdsForGroup(resourceIdString)
+
+    /**
+     * When looking for default group items, the group doesn't exist, so we have to apply
+     * the same filters to the views table instead
+     */
+    const applyFilters = (query: Knex.QueryBuilder, mode: 'view' | 'group') => {
+      const isGroupQuery = mode === 'group'
+      const isViewQuery = mode === 'view'
+
+      if (isViewQuery) {
+        // empty groupId - we're looking for ungrouped views only
+        query.andWhere({
+          [SavedViews.col.groupId]: null
+        })
+      }
+
+      // group's or view's authorId
+      query.andWhere({
+        [isGroupQuery ? SavedViewGroups.col.projectId : SavedViews.col.projectId]:
+          projectId
+      })
+
+      // group's or view's resourceIds
+      if (resourceIds.length) {
+        // Col contains at least one of the resources
+        query.andWhereRaw('?? && ?', [
+          isGroupQuery
+            ? SavedViewGroups.col.resourceIds
+            : SavedViews.col.groupResourceIds,
+          resourceIds
+        ])
+      } else {
+        // Make query exit early - no resources
+        query.andWhereRaw('false')
+      }
+
+      // checking visibility/authorship but ONLY for view query - groups query should return everything still
+      if ((onlyAuthored || onlyVisibility) && isViewQuery) {
+        if (onlyAuthored || onlyVisibility === SavedViewVisibility.authorOnly) {
+          query.andWhere({ [SavedViews.col.authorId]: userId })
+        }
+
+        // filter by visibility, if needed
+        if (onlyVisibility) {
+          query.andWhere({ [SavedViews.col.visibility]: onlyVisibility })
+        }
+      } else if (isViewQuery) {
+        query.andWhere((w1) => {
+          w1.andWhere(SavedViews.col.visibility, SavedViewVisibility.public)
+          if (userId) {
+            w1.orWhere(SavedViews.col.authorId, userId)
+          }
+        })
+      }
+
+      // checking search on views and group names too
+      if (search) {
+        query.andWhere((w1) => {
+          w1.andWhere(SavedViews.col.name, 'ilike', `%${search}%`)
+
+          if (mode === 'group') {
+            w1.orWhere(SavedViewGroups.col.name, 'ilike', `%${search}%`)
+          }
+        })
+      }
+
+      if (isGroupQuery) {
+        // groups must either have views in them OR be owned by the user searching
+        query.andWhere((w1) => {
+          w1.andWhere(SavedViews.col.id, 'is not', null) // has views
+          if (userId) {
+            w1.orWhere(SavedViewGroups.col.authorId, userId) // or owned by user
+          }
+        })
+      }
+
+      return query
+    }
+
+    const q = tables
+      .savedViewGroups(deps.db)
+      .select<SavedViewGroup[]>(SavedViewGroups.cols)
+      .leftJoin(SavedViews.name, SavedViews.col.groupId, SavedViewGroups.col.id)
+
+    applyFilters(q, 'group')
+
+    // Group by groupId
+    q.groupBy(SavedViewGroups.col.id)
+
+    /**
+     * Check if default group should be shown
+     * - If searching for 'ungrouped'
+     * - If we can find ungrouped views matching the search query
+     */
+    const ungroupedViewFound = await applyFilters(
+      tables.savedViews(deps.db),
+      'view'
+    ).first()
+    const ungroupedSearchString = search
+      ? ungroupedScenesGroupTitle.toLowerCase().includes(search)
+      : null
+
+    const includeDefaultGroup = Boolean(ungroupedViewFound) || ungroupedSearchString
+
+    return { q, resourceIds, includeDefaultGroup }
+  }
+
+export const getProjectSavedViewGroupsTotalCountFactory =
+  (deps: { db: Knex }): GetProjectSavedViewGroupsTotalCount =>
+  async (params) => {
+    const { q, includeDefaultGroup } = await getProjectSavedViewGroupsBaseQueryFactory(
+      deps
+    )(params)
+    const countQ = deps.db.count<{ count: string }[]>().from(q.as('sq1'))
+    const [count] = await countQ
+
+    const numberCount = parseInt(count.count + '') + (includeDefaultGroup ? 1 : 0)
+    return numberCount
+  }
+
+export const getProjectSavedViewGroupsPageItemsFactory =
+  (deps: { db: Knex }): GetProjectSavedViewGroupsPageItems =>
+  async (params) => {
+    const { projectId } = params
+    const { q, resourceIds, includeDefaultGroup } =
+      await getProjectSavedViewGroupsBaseQueryFactory(deps)(params)
+    const { applyCursorSortAndFilter, resolveNewCursor, decode } =
+      savedGroupCursorUtils()
+
+    const limit = clamp(params.limit ?? 10, 0, 100)
+    q.limit(limit)
+
+    // Adjust cursor, in case it points to non-existant default group
+    let cursor = decode(params.cursor)
+    if (cursor?.id && isUngroupedGroup(cursor.id)) {
+      // Default appears first, so just unset the cursor to get the real first item
+      cursor = null
+    }
+
+    // Apply cursor filter and sort
+    applyCursorSortAndFilter({
+      query: q,
+      cursor
+    })
+
+    const items: SavedViewGroup[] = await q
+
+    // If first page and allowed, add the default/unsorted group
+    if (!params.cursor && includeDefaultGroup) {
+      const defaultGroup: SavedViewGroup = buildDefaultGroup({
+        resourceIds,
+        projectId
+      })
+
+      // Before we add the group, we need to potentially pop the last item
+      // if the limit was reached
+      if (items.length >= limit) {
+        items.pop()
+      }
+      items.unshift(defaultGroup)
+    }
+
+    const newCursor = resolveNewCursor(items)
+
+    return {
+      items,
+      cursor: newCursor
+    }
+  }
+
+const getGroupSavedViewsBaseQueryFactory =
+  (deps: { db: Knex }) => (params: GetGroupSavedViewsBaseParams) => {
+    const { projectId, groupResourceIdString, groupId, search, userId } = params
+
+    const onlyAuthored = params.onlyAuthored && userId
+    const onlyVisibility =
+      params.onlyVisibility === SavedViewVisibility.authorOnly && !userId
+        ? undefined
+        : params.onlyVisibility
+
+    const q = tables
+      .savedViews(deps.db)
+      .where({ [SavedViews.col.projectId]: projectId })
+
+    const groupResourceIds = formatResourceIdsForGroup(groupResourceIdString)
+
+    if (!groupResourceIds.length && !groupId) {
+      // If no resources and no groupId, exit early
+      q.whereRaw('false')
+    }
+
+    // Set group filter
+    if (!isUndefined(groupId)) {
+      q.where({ [SavedViews.col.groupId]: groupId })
+    }
+
+    // If no groupId, filter by resourceIds
+    if (groupResourceIds.length && !groupId) {
+      q.whereRaw('?? && ?', [SavedViews.col.groupResourceIds, groupResourceIds])
+    }
+
+    // checking visibility/authorship
+    if (onlyAuthored || onlyVisibility) {
+      if (onlyAuthored || onlyVisibility === SavedViewVisibility.authorOnly) {
+        q.andWhere({ [SavedViews.col.authorId]: userId })
+      }
+
+      // filter by visibility, if needed
+      if (onlyVisibility) {
+        q.andWhere({ [SavedViews.col.visibility]: onlyVisibility })
+      }
+    } else {
+      q.andWhere((w1) => {
+        w1.andWhere(SavedViews.col.visibility, SavedViewVisibility.public)
+        if (userId) {
+          w1.orWhere(SavedViews.col.authorId, userId)
+        }
+      })
+    }
+
+    if (search) {
+      q.where(SavedViews.col.name, 'ilike', `%${search}%`)
+    }
+
+    return q
+  }
+
+export const getGroupSavedViewsTotalCountFactory =
+  (deps: { db: Knex }): GetGroupSavedViewsTotalCount =>
+  async (params) => {
+    const q = getGroupSavedViewsBaseQueryFactory(deps)(params)
+    const countQ = deps.db.count<{ count: string }[]>().from(q.as('sq1'))
+    const [count] = await countQ
+    return parseInt(count.count + '')
+  }
+
+export const getGroupSavedViewsPageItemsFactory =
+  (deps: { db: Knex }): GetGroupSavedViewsPageItems =>
+  async (params) => {
+    const sortByCol = params.sortBy || 'position'
+    const sortDir = params.sortDirection || 'desc'
+
+    const q = getGroupSavedViewsBaseQueryFactory(deps)(params)
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
+      schema: SavedViews,
+      cols: [sortByCol, 'id']
+    })
+
+    const limit = clamp(params.limit ?? 10, 0, 100)
+    q.limit(limit)
+
+    // Apply cursor filter and sort
+    applyCursorSortAndFilter({ query: q, cursor: params.cursor, sort: sortDir })
+
+    const items = await q
+    const newCursor = resolveNewCursor(items)
+
+    return {
+      items,
+      cursor: newCursor
+    }
+  }
+
+export const getSavedViewGroupFactory =
+  (deps: { db: Knex }): GetSavedViewGroup =>
+  async ({ id, projectId }) => {
+    // Check if default group ID
+    const defaultGroupMetadata = decodeDefaultGroupId(id)
+    if (defaultGroupMetadata) {
+      if (projectId && defaultGroupMetadata.projectId !== projectId) {
+        return undefined
+      }
+
+      return buildDefaultGroup({
+        resourceIds: defaultGroupMetadata.resourceIds,
+        projectId: defaultGroupMetadata.projectId
+      })
+    }
+
+    const q = tables.savedViewGroups(deps.db).where({
+      [SavedViewGroups.col.id]: id
+    })
+
+    if (projectId) {
+      q.andWhere({ [SavedViewGroups.col.projectId]: projectId })
+    }
+
+    const group = await q.first()
+    return group
+  }
+
+export const getUngroupedSavedViewsGroupFactory =
+  (): GetUngroupedSavedViewsGroup =>
+  ({ projectId, resourceIdString }) =>
+    buildDefaultGroup({
+      resourceIds: resourceBuilder()
+        .addFromString(resourceIdString)
+        .map((r) => r.toString()),
+      projectId
+    })
+
+export const recalculateGroupResourceIdsFactory =
+  (deps: { db: Knex }): RecalculateGroupResourceIds =>
+  async ({ groupId }) => {
+    const RawSavedViews = SavedViews.with({ quoted: true, withCustomTablePrefix: 'v' })
+    const RawSavedViewGroups = SavedViewGroups.with({ quoted: true })
+
+    const arraySql = `
+      (
+      SELECT ARRAY(
+        SELECT DISTINCT unnest
+        FROM ${RawSavedViews.name},
+           unnest(${RawSavedViews.col.groupResourceIds}) AS unnest
+        WHERE ${RawSavedViews.col.groupId} = ${RawSavedViewGroups.col.id}
+      )
+      )
+    `
+
+    const q = tables
+      .savedViewGroups(deps.db)
+      .where({ [SavedViewGroups.col.id]: groupId })
+      // Only update if the computed array is non-empty, otherwise we risk getting a group w/o any references
+      .andWhereRaw(`array_length(${arraySql}, 1) > 0`)
+      .update(
+        {
+          // Recalculate the groups resourceIds based on the views in the group
+          [SavedViewGroups.withoutTablePrefix.col.resourceIds]: deps.db.raw(arraySql)
+        },
+        '*'
+      )
+
+    const results = await q
+    return results.at(0)
+  }
+
+/**
+ * Get saved groups by IDs. Can handle unpersisted ungrouped groups too.
+ */
+export const getSavedViewGroupsFactory =
+  (deps: { db: Knex }): GetSavedViewGroups =>
+  async ({ groupIds }) => {
+    if (!groupIds.length) {
+      return {}
+    }
+
+    const defaultGroupsMetadata: { [groupId: string]: DefaultGroupMetadata } = {}
+    const persistedGroupIds: Array<{ groupId: string; projectId: string }> = []
+    for (const { groupId, projectId } of groupIds) {
+      const defaultGroupMetadata = decodeDefaultGroupId(groupId)
+      if (defaultGroupMetadata) {
+        if (defaultGroupMetadata.projectId === projectId) {
+          defaultGroupsMetadata[groupId] = defaultGroupMetadata
+        }
+      } else {
+        persistedGroupIds.push({ groupId, projectId })
+      }
+    }
+
+    let persistedGroups: SavedViewGroup[] = []
+    if (persistedGroupIds.length) {
+      const q = tables.savedViewGroups(deps.db).whereIn(
+        [SavedViewGroups.col.id, SavedViewGroups.col.projectId],
+        persistedGroupIds.map((g) => [g.groupId, g.projectId])
+      )
+      persistedGroups = await q
+    }
+
+    const groupsMap: { [groupId: string]: SavedViewGroup | undefined } = {}
+    for (const { groupId, projectId } of groupIds) {
+      const defaultGroupMetadata = defaultGroupsMetadata[groupId]
+      if (defaultGroupMetadata) {
+        groupsMap[groupId] = buildDefaultGroup({
+          resourceIds: defaultGroupMetadata.resourceIds,
+          projectId: defaultGroupMetadata.projectId
+        })
+      } else {
+        groupsMap[groupId] =
+          persistedGroups.find((g) => g.id === groupId && g.projectId === projectId) ||
+          undefined
+      }
+    }
+    return groupsMap
+  }
+
+export const getSavedViewsFactory =
+  (deps: { db: Knex }): GetSavedViews =>
+  async ({ viewIds }) => {
+    if (!viewIds.length) {
+      return {}
+    }
+
+    const q = tables.savedViews(deps.db).whereIn(
+      [SavedViews.col.id, SavedViews.col.projectId],
+      viewIds.map((v) => [v.viewId, v.projectId])
+    )
+
+    const views = await q
+
+    const viewsMap: { [viewId: string]: SavedView | undefined } = {}
+    for (const view of views) {
+      viewsMap[view.id] = view
+    }
+    return viewsMap
+  }
+
+export const getSavedViewFactory =
+  (deps: { db: Knex }): GetSavedView =>
+  async ({ id, projectId }) => {
+    const getSavedViews = getSavedViewsFactory(deps)
+    const savedViews = await getSavedViews({ viewIds: [{ viewId: id, projectId }] })
+    return savedViews[id]
+  }
+
+export const deleteSavedViewRecordFactory =
+  (deps: { db: Knex }): DeleteSavedViewRecord =>
+  async (params) => {
+    const { savedViewId } = params
+    const q = tables.savedViews(deps.db).where({
+      [SavedViews.col.id]: savedViewId
+    })
+
+    // Delete the saved view
+    const result = await q.delete()
+
+    // If no rows were deleted, return false
+    if (result === 0) {
+      return false
+    }
+
+    // Otherwise, return true
+    return true
+  }
+
+export const updateSavedViewRecordFactory =
+  (deps: { db: Knex }): UpdateSavedViewRecord =>
+  async (params, options) => {
+    const { id, projectId, update } = params
+    const { skipUpdatingDate } = options || {}
+
+    // Update the saved view
+    const [updatedView] = await tables
+      .savedViews(deps.db)
+      .where({
+        [SavedViews.col.id]: id,
+        [SavedViews.col.projectId]: projectId
+      })
+      .update(
+        {
+          ...update,
+          ...(skipUpdatingDate ? {} : { updatedAt: new Date() }),
+          // weird ts error:
+          ...(update.viewerState
+            ? {
+                viewerState: update.viewerState as SavedView['viewerState']
+              }
+            : {})
+        },
+        '*'
+      )
+
+    return updatedView || undefined
+  }
+
+export const deleteSavedViewGroupRecordFactory =
+  (deps: { db: Knex }): DeleteSavedViewGroupRecord =>
+  async (params) => {
+    const { groupId, projectId } = params
+    const q = tables.savedViewGroups(deps.db).where({
+      [SavedViewGroups.col.id]: groupId,
+      [SavedViewGroups.col.projectId]: projectId
+    })
+
+    // Delete the saved view group
+    const result = await q.delete()
+
+    // If no rows were deleted, return false
+    if (result === 0) {
+      return false
+    }
+
+    // Otherwise, return true
+    return true
+  }
+
+export const updateSavedViewGroupRecordFactory =
+  (deps: { db: Knex }): UpdateSavedViewGroupRecord =>
+  async (params) => {
+    const { groupId, projectId, update } = params
+
+    // Update the saved view group
+    const [updatedGroup] = await tables
+      .savedViewGroups(deps.db)
+      .where({
+        [SavedViewGroups.col.id]: groupId,
+        [SavedViewGroups.col.projectId]: projectId
+      })
+      .update(
+        {
+          ...update,
+          updatedAt: new Date()
+        },
+        '*'
+      )
+
+    return updatedGroup
+  }
+
+export const getModelHomeSavedViewsFactory =
+  (deps: { db: Knex }): GetModelHomeSavedViews =>
+  async (params) => {
+    const { requests } = params
+
+    const q = tables
+      .branches(deps.db)
+      // there should really only be 1 group per 1 view, but the schema does technically
+      // allow for multiple
+      .select<Array<{ modelId: string; views: SavedView[] }>>([
+        Branches.colAs('id', 'modelId'),
+        SavedViews.groupArray('views')
+      ])
+      .whereIn(
+        [Branches.col.id, Branches.col.streamId],
+        requests.map((r) => [r.modelId, r.projectId])
+      )
+      .innerJoin(SavedViews.name, (j1) => {
+        j1.on(
+          deps.db.raw('?? && ARRAY[??]', [
+            SavedViews.col.groupResourceIds,
+            Branches.col.id
+          ])
+        )
+          .andOnVal(SavedViews.col.isHomeView, true)
+          .andOnVal(SavedViews.col.visibility, SavedViewVisibility.public) // public only
+      })
+      .groupBy('modelId')
+
+    const modelViews = (await q).map(({ modelId, views }) => {
+      const formattedViews = formatJsonArrayRecords(views)
+      return {
+        modelId,
+        view: formattedViews.at(0)
+      }
+    })
+
+    const viewsMap: { [modelId: string]: SavedView | undefined } = {}
+    for (const { modelId, view } of modelViews) {
+      viewsMap[modelId] = view
+    }
+    return viewsMap
+  }
+
+export const getModelHomeSavedViewFactory =
+  (deps: { db: Knex }): GetModelHomeSavedView =>
+  async (params) => {
+    const { modelId, projectId } = params
+    const ret = await getModelHomeSavedViewsFactory(deps)({
+      requests: [
+        {
+          modelId,
+          projectId
+        }
+      ]
+    })
+    const [view] = Object.values(ret)
+    return view
+  }
+
+export const setNewHomeViewFactory =
+  (deps: { db: Knex }): SetNewHomeView =>
+  async (params) => {
+    const { projectId, modelId, newHomeViewId } = params
+
+    const q = tables
+      .savedViews(deps.db)
+      .where({
+        [SavedViews.col.projectId]: projectId,
+        [SavedViews.col.groupResourceIds]: [modelId]
+      })
+      .update({
+        [SavedViews.short.col.isHomeView]: newHomeViewId
+          ? deps.db.raw(
+              `
+          CASE WHEN ?? = ? THEN true ELSE false END
+          `,
+              [SavedViews.col.id, newHomeViewId]
+            )
+          : false
+      })
+
+    await q
+
+    return true
+  }
+
+function applyViewPositionGroupFiltering(
+  q: Knex.QueryBuilder,
+  groupId: string | null,
+  projectId: string,
+  resourceIdString: string,
+  col = SavedViews.col
+) {
+  const groupResourceIds = formatResourceIdsForGroup(resourceIdString)
+  if (!groupId && !groupResourceIds.length) {
+    throw new LogicError(
+      'Cannot determine new view position without resources or groupId'
+    )
+  }
+
+  q.andWhere(col.projectId, projectId).andWhere(col.groupId, groupId)
+  if (!groupId) {
+    q.andWhereRaw(
+      `cardinality(ARRAY(SELECT UNNEST(??::varchar[]) INTERSECT SELECT UNNEST(?::varchar[]))) > 0`,
+      [col.groupResourceIds, groupResourceIds]
+    )
+  }
+}
+
+export const getNewViewBoundaryPositionFactory =
+  (deps: { db: Knex }): GetNewViewBoundaryPosition =>
+  async (params) => {
+    const { projectId, resourceIdString, groupId } = params
+    const asLast = params.position === 'last'
+
+    const q = tables
+      .savedViews(deps.db)
+      .select<Array<{ newPosition: number }>>(
+        deps.db.raw(
+          asLast
+            ? 'COALESCE(MAX(??), 0) + 1000 as "newPosition"'
+            : 'COALESCE(MIN(??), 0) - 1000 as "newPosition"',
+          [SavedViews.col.position]
+        )
+      )
+
+    applyViewPositionGroupFiltering(q, groupId, projectId, resourceIdString)
+
+    const [result] = await q
+    return result?.newPosition ?? 1000
+  }
+
+const getNeighborViewFactory =
+  (deps: { db: Knex }) =>
+  async (params: {
+    projectId: string
+    resourceIdString: string
+    groupId: string | null
+    direction: 'before' | 'after'
+    anchorId: string
+  }) => {
+    const { direction, anchorId, projectId, groupId, resourceIdString } = params
+
+    const SubqCols = SavedViews.with({ withCustomTablePrefix: 'sqv' })
+    const MainCols = SavedViews.with({ withCustomTablePrefix: 'mv' })
+
+    // Subquery to find the anchor view
+    const subQ = tables.savedViews(deps.db).where(SavedViews.col.id, anchorId).first()
+    applyViewPositionGroupFiltering(subQ, groupId, projectId, resourceIdString)
+
+    // Main query: find neighbor
+    const cmpOperator = direction === 'before' ? '<' : '>'
+    const sortDir = direction === 'before' ? 'desc' : 'asc'
+
+    const resultQ = deps
+      .db(MainCols.name)
+      .select<Array<SavedView>>(MainCols.cols)
+      .join(subQ.as('sqv'), (j1) => {
+        j1
+          // same projectId
+          .on(MainCols.col.projectId, '=', SubqCols.col.projectId)
+          // same groupId (including null)
+          .andOn((o1) => {
+            o1.on(MainCols.col.groupId, '=', SubqCols.col.groupId).orOn((o2) => {
+              o2.onNull(MainCols.col.groupId).andOnNull(SubqCols.col.groupId)
+            })
+          })
+          // next positions
+          .andOn(MainCols.col.position, cmpOperator, SubqCols.col.position)
+
+        if (!groupId) {
+          // Check resource intersection too, if no groupId
+          const groupResourceIds = formatResourceIdsForGroup(resourceIdString)
+          j1.andOn(
+            deps.db.raw(
+              `cardinality(ARRAY(SELECT UNNEST(??::varchar[]) INTERSECT SELECT UNNEST(?::varchar[]))) > 0`,
+              [MainCols.col.groupResourceIds, groupResourceIds]
+            )
+          )
+        }
+      })
+      .orderBy(MainCols.col.position, sortDir)
+      .limit(1)
+
+    const result = await resultQ
+    return result.length > 0 ? result[0] : null
+  }
+
+export const getNewViewSpecificPositionFactory =
+  (deps: { db: Knex }): GetNewViewSpecificPosition =>
+  async (params) => {
+    const { beforeId, afterId } = params
+    const boundaries = {
+      before: { id: beforeId, position: undefined as number | undefined },
+      after: { id: afterId, position: undefined as number | undefined }
+    }
+
+    const getNewViewBoundaryPosition = getNewViewBoundaryPositionFactory(deps)
+    const getNeighborViewId = getNeighborViewFactory(deps)
+    const getView = getSavedViewFactory(deps)
+
+    if (!boundaries.before.id && !boundaries.after.id) {
+      // end of list
+      return {
+        needsRebalancing: false,
+        newPosition: await getNewViewBoundaryPosition({ ...params, position: 'last' })
+      }
+    }
+
+    // One of the ids is undefined, try to resolve it
+    if (!boundaries.before.id || !boundaries.after.id) {
+      if (!boundaries.before.id) {
+        // only afterId - get the view before it
+        const beforeView = await getNeighborViewId({
+          ...params,
+          direction: 'before',
+          anchorId: boundaries.after.id!
+        })
+        boundaries.before.position = beforeView?.position
+        boundaries.before.id = beforeView?.id
+      } else if (!boundaries.after.id) {
+        // only beforeId - get the view after it
+        const afterView = await getNeighborViewId({
+          ...params,
+          direction: 'after',
+          anchorId: boundaries.before.id!
+        })
+        boundaries.after.position = afterView?.position
+        boundaries.after.id = afterView?.id
+      }
+    }
+
+    // If one of the ids is still undefined, it means we hit the list boundary
+    if (!boundaries.before.id || !boundaries.after.id) {
+      const hasNoBeforeView = !boundaries.before.id
+      return {
+        newPosition: await getNewViewBoundaryPosition({
+          ...params,
+          position: hasNoBeforeView ? 'first' : 'last'
+        }),
+        needsRebalancing: false
+      }
+    }
+
+    // Both ids are defined - get their positions if we don't have them yet
+    if (!boundaries.before.position || !boundaries.after.position) {
+      const [beforePosition, afterPosition] = await Promise.all([
+        isNumber(boundaries.before.position)
+          ? Promise.resolve(boundaries.before.position)
+          : getView({ id: boundaries.before.id!, projectId: params.projectId }).then(
+              (v) => v?.position
+            ),
+        isNumber(boundaries.after.position)
+          ? Promise.resolve(boundaries.after.position)
+          : getView({ id: boundaries.after.id!, projectId: params.projectId }).then(
+              (v) => v?.position
+            )
+      ])
+
+      // These will only be undefined if the view ids are actually invalid
+      // but we dont want to throw, just treat as if we hit the boundary
+      if (!isNumber(beforePosition) || !isNumber(afterPosition)) {
+        logger.warn(
+          new SavedViewPositionUpdateError(
+            'Either beforeId or afterId are invalid IDs',
+            {
+              info: {
+                beforeId,
+                afterId,
+                beforePosition,
+                afterPosition,
+                projectId: params.projectId
+              }
+            }
+          )
+        )
+
+        const hasNoBeforeView = !isNumber(beforePosition)
+        return {
+          newPosition: await getNewViewBoundaryPosition({
+            ...params,
+            position: hasNoBeforeView ? 'first' : 'last'
+          }),
+          needsRebalancing: false
+        }
+      }
+
+      boundaries.before.position = beforePosition
+      boundaries.after.position = afterPosition
+    }
+
+    // See if we need rebalancing
+    const gap = boundaries.after.position - boundaries.before.position
+    const needsRebalancing = gap < MINIMUM_POSITION_GAP
+    const newPosition = (boundaries.before.position + boundaries.after.position) / 2
+
+    return {
+      needsRebalancing,
+      newPosition
+    }
+  }
+
+/**
+ * Rebalances the view positions within a group. This needs to happen when the gap between two view positions becomes so small
+ * that inserting a new view between them becomes problematic because of floating point precision limits.
+ */
+export const rebalancingViewPositionsFactory =
+  (deps: { db: Knex }): RebalanceViewPositions =>
+  async (params) => {
+    const { projectId, resourceIdString, groupId } = params
+
+    const cteRawQuery = deps.db.with('ordered', (q2) => {
+      q2.from(SavedViews.name).select(
+        SavedViews.col.id,
+        deps.db.raw('ROW_NUMBER() OVER (ORDER BY ??) AS rn', [SavedViews.col.position])
+      )
+      applyViewPositionGroupFiltering(q2, groupId, projectId, resourceIdString)
+    })
+
+    // need to strip the final select *. sort of hacky,
+    // but i dont want to write the CTE by hand as a raw string, cause
+    // then i cant reuse the applyViewPositionGroupFiltering util
+    const cteString = cteRawQuery.toQuery().replace(/\s+select\s+\*\s*$/i, '')
+
+    // knex .with().update() support sucks, gotta make this a raw query
+    const q = deps.db.raw(`
+      ${cteString}
+      UPDATE ${SavedViews.with({ quoted: true }).name}
+      SET ${
+        SavedViews.with({ quoted: true, withoutTablePrefix: true }).col.position
+      } = ordered.rn * 1000
+      FROM ordered
+      WHERE ordered.id = ${SavedViews.with({ quoted: true }).col.id}
+    `)
+
+    const ret = (await q) as { rowCount: number }
+    return ret.rowCount
+  }
+
+const getProjectSavedViewsBaseQueryFactory =
+  (deps: { db: Knex }) => (params: GetProjectSavedViewsBaseParams) => {
+    const { projectId, resourceIdString, search, userId } = params
+
+    const onlyVisibility =
+      params.onlyVisibility === SavedViewVisibility.authorOnly && !userId
+        ? undefined
+        : params.onlyVisibility
+    const resourceIds = formatResourceIdsForGroup(resourceIdString || '')
+
+    const q = tables
+      .savedViews(deps.db)
+      .where({ [SavedViews.col.projectId]: projectId })
+
+    // If resourceIdString provided, filter by resource overlap
+    if (resourceIds.length) {
+      q.andWhereRaw('?? && ?', [SavedViews.col.groupResourceIds, resourceIds])
+    }
+
+    // checking visibility/authorship
+    if (onlyVisibility) {
+      if (onlyVisibility === SavedViewVisibility.authorOnly) {
+        q.andWhere({ [SavedViews.col.authorId]: userId })
+      }
+      q.andWhere({ [SavedViews.col.visibility]: onlyVisibility })
+    } else {
+      q.andWhere((w1) => {
+        w1.andWhere(SavedViews.col.visibility, SavedViewVisibility.public)
+        if (userId) {
+          w1.orWhere(SavedViews.col.authorId, userId)
+        }
+      })
+    }
+
+    // search filter
+    if (search) {
+      q.andWhere(SavedViews.col.name, 'ilike', `%${search}%`)
+    }
+
+    return q
+  }
+
+export const getProjectSavedViewsTotalCountFactory =
+  (deps: { db: Knex }): GetProjectSavedViewsTotalCount =>
+  async (params) => {
+    const q = getProjectSavedViewsBaseQueryFactory(deps)(params)
+    const countQ = deps.db.count<{ count: string }[]>().from(q.as('sq1'))
+    const [count] = await countQ
+    return parseInt(count.count + '')
+  }
+
+export const getProjectSavedViewsPageItemsFactory =
+  (deps: { db: Knex }): GetProjectSavedViewsPageItems =>
+  async (params) => {
+    const sortByCol = params.sortBy || 'position'
+    const sortDir = params.sortDirection || 'desc'
+
+    const q = getProjectSavedViewsBaseQueryFactory(deps)(params)
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
+      schema: SavedViews,
+      cols: [sortByCol, 'id']
+    })
+
+    const limit = clamp(params.limit ?? 10, 0, 100)
+    q.limit(limit)
+
+    // Apply cursor filter and sort
+    applyCursorSortAndFilter({ query: q, cursor: params.cursor, sort: sortDir })
+
+    const items = await q
+    const newCursor = resolveNewCursor(items)
+
+    return {
+      items,
+      cursor: newCursor
+    }
+  }

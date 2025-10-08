@@ -69,6 +69,10 @@
       "name": "📊 monitor-deployment"
     },
     {
+      "path": "packages/ifc-import-service",
+      "name": "🛖 ifc-import-service"
+    },
+    {
       "path": ".",
       "name": "🏡 root"
     }
@@ -93,7 +97,6 @@
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "files.eol": "\n",
-    "volar.vueserver.maxOldSpaceSize": 4000,
     "cSpell.words": [
       "Automations",
       "Bursty",
@@ -107,6 +110,8 @@
       "OIDC",
       "Prorotation"
     ],
+    "typescript.tsserver.maxTsServerMemory": 8192,
+    "typescript.disableAutomaticTypeAcquisition": true,
     "tailwindCSS.experimental.configFile": {
       "packages/frontend-2/tailwind.config.cjs": "packages/frontend-2/**"
     },
@@ -131,9 +136,11 @@
     "[json]": {
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
+
     "vue.complete.casing.props": "kebab",
     "vue.inlayHints.missingProps": true,
-    "circleci.persistedProjectSelection": ["gh/specklesystems/speckle-server"]
+    "circleci.persistedProjectSelection": ["gh/specklesystems/speckle-server"],
+    "vue.suggest.componentNameCasing": "alwaysPascalCase"
     // "vitest.nodeEnv": {
     //   "DISABLE_ALL_FFS": "1"
     // }

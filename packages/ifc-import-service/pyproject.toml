@@ -1,0 +1,47 @@
+[project]
+name = "ifc_importer"
+version = "0.1.0"
+description = "Speckle IFC importer worker app"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "asyncpg>=0.30.0",
+    "typed-settings>=24.5.0",
+    "pydantic>=2.11.7",
+    "python-dotenv>=1.0.0",
+    "structlog>=25.4.0",
+    "structlog-to-seq>=21.0.0",
+    "specklepy[speckleifc]>=3.0.7",
+    "colorful>=0.5.7",
+    "prometheus-client>=0.23.1",
+]
+
+[dependency-groups]
+dev = ["asyncpg-stubs>=0.30.2", "colorama>=0.4.6", "ruff>=0.12.2"]
+
+[tool.ruff]
+exclude = [".venv", "**/*.yml"]
+
+[tool.ruff.lint]
+select = [
+    "A",
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+    # PEP8 naming
+    "N",
+    "ASYNC",
+]
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"

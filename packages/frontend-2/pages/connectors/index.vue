@@ -6,8 +6,4 @@
 useHead({
   title: 'Connectors'
 })
-
-definePageMeta({
-  middleware: ['auth']
-})
 </script>

@@ -1,16 +1,34 @@
 import type { Optional } from '@speckle/shared'
 
 import { useApolloClientFromNuxt } from '~/lib/common/composables/graphql'
-import { errorsToAuthResult } from '~/lib/common/helpers/graphql'
+import {
+  convertThrowIntoFetchResult,
+  errorsToAuthResult
+} from '~/lib/common/helpers/graphql'
 import { projectAccessCheckQuery } from '~/lib/projects/graphql/queries'
 import { WorkspaceSsoErrorCodes } from '~/lib/workspaces/helpers/types'
+import { useSetActiveWorkspace } from '~/lib/user/composables/activeWorkspace'
+import { useMiddlewareQueryFetchPolicy } from '~/lib/core/composables/navigation'
 
 /**
  * Used in project page to validate that project ID refers to a valid project and redirects to 404 if not
  */
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineParallelizedNuxtRouteMiddleware(async (to, from) => {
   const projectId = to.params.id as string
+
+  // Check if embed token is present in URL
+  const embedToken = to.query.embedToken as Optional<string>
+
+  // Skip middleware validation for embed tokens - let the auth system handle them
+  if (embedToken) {
+    return
+  }
+
   const client = useApolloClientFromNuxt()
+  const { setActiveWorkspace } = useSetActiveWorkspace()
+  const { isLoggedIn } = useActiveUser()
+  const isWorkspacesEnabled = useIsWorkspacesEnabled()
+  const fetchPolicy = useMiddlewareQueryFetchPolicy()
 
   const { data, errors } = await client
     .query({
@@ -19,7 +37,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
       context: {
         skipLoggingErrors: true
       },
-      fetchPolicy: 'network-only'
+      fetchPolicy: fetchPolicy(to, from)
     })
     .catch(convertThrowIntoFetchResult)
 
@@ -61,5 +79,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
           })
         )
     }
+  }
+
+  if (
+    isLoggedIn.value &&
+    isWorkspacesEnabled.value &&
+    data?.activeUser?.activeWorkspace?.id !== data?.project.workspaceId
+  ) {
+    await setActiveWorkspace({ id: data?.project.workspaceId })
   }
 })

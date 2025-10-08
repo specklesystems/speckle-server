@@ -1,6 +1,9 @@
 <template>
   <div
-    :class="['text-editor flex flex-col', !!readonly ? 'text-editor--read-only' : '']"
+    :class="[
+      'text-editor flex flex-col relative text-foreground',
+      !!readonly ? 'text-editor--read-only' : ''
+    ]"
   >
     <EditorContent
       ref="editorContentRef"
@@ -24,7 +27,6 @@ import type {
   TiptapEditorSchemaOptions
 } from '~~/lib/common/helpers/tiptap'
 import type { Nullable } from '@speckle/shared'
-// import { userProfileRoute } from '~~/lib/common/helpers/route'
 import { onKeyDown } from '@vueuse/core'
 import { noop } from 'lodash-es'
 
@@ -81,6 +83,7 @@ const onEnter = () => {
   emit('submit', { data: getData() })
 }
 const onKeyDownHandler = (e: KeyboardEvent) => emit('keydown', e)
+
 const onEditorContentClick = (e: MouseEvent) => {
   const closestSelectorTarget = (e.target as HTMLElement).closest(
     '.editor-mention'
@@ -91,18 +94,6 @@ const onEditorContentClick = (e: MouseEvent) => {
   e.stopPropagation()
 }
 
-// TODO: No profile page to link to in FE2 yet
-// const onMentionClick = (userId: string, e: MouseEvent) => {
-//   if (!props.readonly) return
-
-//   const path = userProfileRoute(userId)
-//   const isMetaKey = e.metaKey || e.ctrlKey
-//   if (isMetaKey) {
-//     window.open(path, '_blank')
-//   } else {
-//     window.location.href = path
-//   }
-// }
 const onMentionClick = noop
 
 onKeyDown(
@@ -157,6 +148,7 @@ onBeforeUnmount(() => {
 
 .ProseMirror {
   flex: 1;
+  width: 100%;
 
   & p:last-of-type {
     margin-bottom: 0;
@@ -172,7 +164,11 @@ onBeforeUnmount(() => {
 
   & .editor-mention {
     box-decoration-break: clone;
-    @apply text-foreground text-body-2xs font-semibold;
+    @apply text-primary dark:text-blue-400 text-body-2xs;
+  }
+
+  & a {
+    @apply border-b border-outline-3;
   }
 }
 

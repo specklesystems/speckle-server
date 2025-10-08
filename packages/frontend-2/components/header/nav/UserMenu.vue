@@ -88,11 +88,20 @@
                 Log in
               </NuxtLink>
             </MenuItem>
-            <div v-if="version" class="border-t border-outline-3 py-1 mt-1">
+
+            <div
+              class="border-t border-outline-3 py-1 mt-1 text-xs text-foreground-2 px-3 gap-1 flex flex-col"
+            >
+              <MenuItem v-if="version">
+                <div>Version {{ version }}</div>
+              </MenuItem>
               <MenuItem>
-                <div class="px-3 pt-1 text-tiny text-foreground-2">
-                  Version {{ version }}
-                </div>
+                <NuxtLink
+                  class="cursor-pointer text-foreground-2 hover:text-foreground"
+                  @click="copySupportReference"
+                >
+                  Copy support reference
+                </NuxtLink>
               </MenuItem>
             </div>
           </div>
@@ -112,6 +121,7 @@ import { useTheme } from '~~/lib/core/composables/theme'
 import { settingsUserRoutes, settingsServerRoutes } from '~/lib/common/helpers/route'
 import type { RouteLocationRaw } from 'vue-router'
 import { useServerInfo } from '~/lib/core/composables/server'
+import { useGenerateErrorReference } from '~/lib/core/composables/error'
 
 defineProps<{
   loginUrl?: RouteLocationRaw
@@ -122,6 +132,7 @@ const { activeUser, isGuest } = useActiveUser()
 const { isDarkTheme, toggleTheme } = useTheme()
 const { serverInfo } = useServerInfo()
 const menuButtonId = useId()
+const { copyReference } = useGenerateErrorReference()
 
 const showInviteDialog = ref(false)
 
@@ -130,5 +141,9 @@ const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
+}
+
+const copySupportReference = async () => {
+  await copyReference()
 }
 </script>

@@ -230,6 +230,46 @@ export const setSpeckleConBannerDismissedMutation = gql`
   }
 `
 
+export const getIntelligenceCommunityStandUpBannerDismissedQuery = gql`
+  query GetIntelligenceCommunityStandUpBannerDismissed {
+    activeUser {
+      meta {
+        intelligenceCommunityStandUpBannerDismissed
+      }
+    }
+  }
+`
+
+export const setIntelligenceCommunityStandUpBannerDismissedMutation = gql`
+  mutation SetIntelligenceCommunityStandUpBannerDismissed($input: Boolean!) {
+    activeUserMutations {
+      meta {
+        setIntelligenceCommunityStandUpBannerDismissed(value: $input)
+      }
+    }
+  }
+`
+
+export const getSpeckleCon25BannerDismissedQuery = gql`
+  query GetSpeckleCon25BannerDismissed {
+    activeUser {
+      meta {
+        speckleCon25BannerDismissed
+      }
+    }
+  }
+`
+
+export const setSpeckleCon25BannerDismissedMutation = gql`
+  mutation SetSpeckleCon25BannerDismissed($input: Boolean!) {
+    activeUserMutations {
+      meta {
+        setSpeckleCon25BannerDismissed(value: $input)
+      }
+    }
+  }
+`
+
 export const getLegacyProjectsExplainerCollapsedQuery = gql`
   query GetLegacyProjectsExplainerCollapsed {
     activeUser {
@@ -246,6 +286,14 @@ export const setLegacyProjectsExplainerCollapsedMutation = gql`
       meta {
         setLegacyProjectsExplainerCollapsed(value: $input)
       }
+    }
+  }
+`
+
+export const updateEmailVerificationMutation = gql`
+  mutation AdminMutations($input: AdminUpdateEmailVerificationInput!) {
+    admin {
+      updateEmailVerification(input: $input)
     }
   }
 `

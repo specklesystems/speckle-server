@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { Project } from '@/modules/core/domain/streams/types'
+import type { Project } from '@/modules/core/domain/streams/types'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import {
   deleteProjectFactory,
@@ -7,13 +7,17 @@ import {
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
-import { getRolesByUserIdFactory } from '@/modules/core/repositories/streams'
+import { getUserProjectRolesFactory } from '@/modules/core/repositories/projects'
 import { expectToThrow } from '@/test/assertionHelper'
 import { createTestUser } from '@/test/authHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { assign } from 'lodash'
+import { assign } from 'lodash-es'
+import type { DeleteProject } from '@/modules/core/domain/projects/operations'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { logger } from '@/observability/logging'
+import { getProjectReplicationDbs } from '@/modules/multiregion/utils/dbSelector'
 
 const createTestProject = (overrides?: Partial<Project>): Project => {
   const defaults: Project = {
@@ -33,7 +37,16 @@ const createTestProject = (overrides?: Partial<Project>): Project => {
 
 const storeProject = storeProjectFactory({ db })
 const getProject = getProjectFactory({ db })
-const deleteProject = deleteProjectFactory({ db })
+const deleteProject: DeleteProject = async ({ projectId }) =>
+  asMultiregionalOperation(
+    async ({ allDbs }) =>
+      await replicateFactory(allDbs, deleteProjectFactory)({ projectId }),
+    {
+      name: 'delete spec',
+      logger,
+      dbs: await getProjectReplicationDbs({ projectId })
+    }
+  )
 const storeProjectRole = storeProjectRoleFactory({ db })
 
 describe('project repositories @core', () => {
@@ -77,9 +90,6 @@ describe('project repositories @core', () => {
     })
   })
   describe('deleteProjectFactory creates a function, that', () => {
-    it('does nothing if project does not exist', async () => {
-      await deleteProject({ projectId: cryptoRandomString({ length: 10 }) })
-    })
     it('deletes the project', async () => {
       const project = createTestProject()
       await storeProject({ project })
@@ -105,7 +115,9 @@ describe('project repositories @core', () => {
         userId: testUser.id
       }
       await storeProjectRole(role)
-      const storedRoles = await getRolesByUserIdFactory({ db })({ userId: testUser.id })
+      const storedRoles = await getUserProjectRolesFactory({ db })({
+        userId: testUser.id
+      })
       expect(storedRoles).deep.equalInAnyOrder([
         { resourceId: project.id, role: role.role, userId: role.userId }
       ])

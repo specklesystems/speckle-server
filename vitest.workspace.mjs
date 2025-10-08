@@ -1,1 +1,1 @@
-export default ['packages/*/vitest.config.{js,ts,mjs}']
+export default ['packages/*/vitest.config.{mjs,cjs,js,ts,mjs}']

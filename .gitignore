@@ -78,9 +78,14 @@ bin/
 !packages/monitor-deployment/bin
 !packages/preview-service/bin
 !packages/server/bin
+!packages/server/modules/cli/bin
 !packages/viewer/src/modules/loaders/OBJ
 
 # Server
 multiregion.json
 multiregion.test.json
 packages/*/.tshy/
+.vite-node
+
+.nuxt
+.output

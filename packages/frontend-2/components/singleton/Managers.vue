@@ -3,6 +3,7 @@
     <ClientOnly>
       <SingletonToastManager />
     </ClientOnly>
+    <SingletonFileUploadErrorDialog />
     <SingletonAppErrorStateManager />
   </div>
   <div v-else />

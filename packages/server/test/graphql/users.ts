@@ -1,4 +1,4 @@
-import {
+import type {
   GetActiveUserQuery,
   GetActiveUserQueryVariables,
   GetAdminUsersQuery,
@@ -9,8 +9,9 @@ import {
   GetPendingEmailVerificationStatusQueryVariables,
   RequestVerificationMutation,
   RequestVerificationMutationVariables
-} from '@/test/graphql/generated/graphql'
-import { executeOperation, ExecuteOperationServer } from '@/test/graphqlHelper'
+} from '@/modules/core/graph/generated/graphql'
+import type { ExecuteOperationServer } from '@/test/graphqlHelper'
+import { executeOperation } from '@/test/graphqlHelper'
 import gql from 'graphql-tag'
 
 const baseUserFieldsFragment = gql`
@@ -45,6 +46,19 @@ const getActiveUserQuery = gql`
   }
 
   ${baseUserFieldsFragment}
+`
+
+export const activeUserUpdateMutation = gql`
+  mutation activeUserUpdateMutation($user: UserUpdateInput!) {
+    activeUserMutations {
+      update(user: $user) {
+        name
+        bio
+        company
+        avatar
+      }
+    }
+  }
 `
 
 export const getActiveUserWithWorkspaceJoinRequestsQuery = gql`
@@ -131,15 +145,16 @@ export const getUserActiveResources = gql`
         id
         name
       }
-      isProjectsActive
     }
   }
 `
 
 export const setUserActiveWorkspaceMutation = gql`
-  mutation SetUserActiveWorkspace($slug: String, $isProjectsActive: Boolean) {
+  mutation SetUserActiveWorkspace($slug: String) {
     activeUserMutations {
-      setActiveWorkspace(slug: $slug, isProjectsActive: $isProjectsActive)
+      setActiveWorkspace(slug: $slug) {
+        id
+      }
     }
   }
 `

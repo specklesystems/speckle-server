@@ -3,26 +3,23 @@ import {
   ViewerEvent,
   DefaultLightConfiguration,
   LegacyViewer,
-  MeasurementType,
   FilteringExtension
 } from '@speckle/viewer'
-import {
-  type FilteringState,
-  type PropertyInfo,
-  type SunLightConfiguration,
-  type SpeckleView,
-  type MeasurementOptions,
-  type DiffResult,
-  type Viewer,
-  type WorldTree,
-  type VisualDiffMode,
-  ViewMode
+import type {
+  ViewMode,
+  FilteringState,
+  SunLightConfiguration,
+  SpeckleView,
+  DiffResult,
+  Viewer,
+  WorldTree,
+  VisualDiffMode
 } from '@speckle/viewer'
 import { inject, ref, provide } from 'vue'
 import type { ComputedRef, WritableComputedRef, Raw, Ref, ShallowRef } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
 import type { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
-import { SpeckleViewer, isNonNullable } from '@speckle/shared'
+import { isNonNullable } from '@speckle/shared'
 import { useApolloClient, useLazyQuery, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
@@ -38,7 +35,9 @@ import type {
   ViewerResourceItem,
   ViewerLoadedThreadsQueryVariables,
   ProjectCommentsFilter,
-  ViewerModelVersionCardItemFragment
+  ViewerModelVersionCardItemFragment,
+  UseViewerSavedViewSetup_SavedViewFragment,
+  ProjectViewerResourcesQuery
 } from '~~/lib/common/generated/gql/graphql'
 import type { SetNonNullable, Get } from 'type-fest'
 import {
@@ -49,14 +48,20 @@ import { nanoid } from 'nanoid'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
-import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
+import type {
+  ModelsSubView,
+  ActivePanel,
+  SpeckleObject
+} from '~/lib/viewer/helpers/sceneExplorer'
 import { Vector3 } from 'three'
 import { writableAsyncComputed } from '~~/lib/common/composables/async'
 import type { AsyncWritableComputedRef } from '~~/lib/common/composables/async'
 import { setupUiDiffState } from '~~/lib/viewer/composables/setup/diff'
 import type { DiffStateCommand } from '~~/lib/viewer/composables/setup/diff'
-import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
-import { flatten, reduce } from 'lodash-es'
+import { useDiffUtilities, useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { useCreateViewerFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
+import { flatten, isUndefined, reduce } from 'lodash-es'
 import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
 import {
   InjectableViewerStateKey,
@@ -65,17 +70,50 @@ import {
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { buildManualPromise } from '@speckle/ui-components'
 import { PassReader } from '../extensions/PassReader'
-import type { SectionBoxData } from '@speckle/shared/dist/esm/viewer/helpers/state.js'
+import type {
+  MeasurementData,
+  MeasurementOptions,
+  SectionBoxData
+} from '@speckle/shared/viewer/state'
+import {
+  createGetParamFromResources,
+  isAllModelsResource,
+  isModelFolderResource,
+  isModelResource,
+  isObjectResource,
+  parseUrlParameters,
+  resourceBuilder,
+  ViewerModelResource,
+  ViewerObjectResource,
+  type ViewerResource
+} from '@speckle/shared/viewer/route'
+import type { SavedViewUrlSettings } from '~/lib/viewer/helpers/savedViews'
+import type { FilterData } from '~/lib/viewer/helpers/filters/types'
+import {
+  useBuildSavedViewsCoreState,
+  useBuildSavedViewsUIState,
+  type SavedViewsUIState
+} from '~/lib/viewer/composables/savedViews/state'
+import type { defaultEdgeColorValue } from '~/lib/viewer/composables/setup/viewMode'
+import { useViewModesSetup } from '~/lib/viewer/composables/setup/viewMode'
+import { useMeasurementsSetup } from '~/lib/viewer/composables/setup/measurements'
+import { useFiltersSetup } from '~/lib/viewer/composables/setup/filters'
+import { useViewerPanelsSetup } from '~/lib/viewer/composables/setup/panels'
+import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
+import { HighlightExtension } from '~/lib/viewer/composables/setup/highlighting'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
 >
-
 export type LoadedThreadsMetadata = NonNullable<
   Get<ViewerLoadedThreadsQuery, 'project.commentThreads'>
 >
-
 export type LoadedCommentThread = NonNullable<Get<LoadedThreadsMetadata, 'items[0]'>>
+type LoadedSavedView = UseViewerSavedViewSetup_SavedViewFragment
+type LoadedExtendedResourceItems =
+  | Get<ProjectViewerResourcesQuery, 'project.viewerResourcesExtended'>
+  | null
+  | undefined
 
 export type InjectableViewerState = Readonly<{
   /**
@@ -87,6 +125,13 @@ export type InjectableViewerState = Readonly<{
    * This is used to ignore user activity messages from the same tab.
    */
   sessionId: ComputedRef<string>
+  /**
+   * The type of page that this state is powering. Based on this, certain features/UIs
+   * can be toggled.
+   *
+   * Default: Viewer (main viewer page), but can also be Presentation
+   */
+  pageType: ComputedRef<ViewerRenderPageType>
   /**
    * The actual Viewer instance and related objects.
    * Note: This is going to be undefined in SSR!
@@ -115,9 +160,9 @@ export type InjectableViewerState = Readonly<{
        * Based on a shallow ref
        */
       worldTree: ComputedRef<Optional<WorldTree>>
-      availableFilters: ComputedRef<Optional<PropertyInfo[]>>
       views: ComputedRef<SpeckleView[]>
       filteringState: ComputedRef<Optional<FilteringState>>
+      filteringDataStore: ReturnType<typeof useCreateViewerFilteringDataStore>
     }
     /**
      * Whether the Viewer has finished doing the initial object loading
@@ -133,10 +178,30 @@ export type InjectableViewerState = Readonly<{
      */
     request: {
       /**
+       * Saved view parameters, that affect what resources we're loading and how
+       */
+      savedView: {
+        /**
+         * The specific view to load.
+         * Null - load NO saved view, not even implicit/home views
+         * Undefined - load no specific view, but allow for implicit views (init value)
+         * Specific ID - load this specific view
+         *
+         * Note: The implication here is that response.savedView can be loaded/set, even when
+         * this value is falsy (undefined), because an implicit/home view was resolved
+         */
+        id: Ref<string | null | undefined>
+        /**
+         * By default we use latest or already loaded versions, but this allows
+         * us to load the versions originally specified when creating the view
+         */
+        loadOriginal: Ref<boolean>
+      }
+      /**
        * All currently requested identifiers. You
        * can write to this to change which resources should be loaded.
        */
-      items: AsyncWritableComputedRef<SpeckleViewer.ViewerRoute.ViewerResource[]>
+      items: AsyncWritableComputedRef<ViewerResource[]>
       /**
        * All currently requested identifiers in a comma-delimited string, the way it's
        * represented in the URL. Is writable also.
@@ -152,9 +217,6 @@ export type InjectableViewerState = Readonly<{
        * Helper for switching model to a specific version (or just latest)
        */
       switchModelToVersion: (modelId: string, versionId?: string) => Promise<void>
-      // addModelVersion: (modelId: string, versionId: string) => void
-      // removeModelVersion: (modelId: string, versionId?: string) => void
-      // setModelVersions: (newResources: ViewerResource[]) => void
     }
     /**
      * State of resolved, validated & de-duplicated resources that are loaded in the viewer. These
@@ -166,11 +228,16 @@ export type InjectableViewerState = Readonly<{
        */
       resourceItems: ComputedRef<ViewerResourceItem[]>
       /**
+       * Actually loaded resource items but in string id format
+       */
+      resourceItemsIds: ComputedRef<string[]>
+      /**
        * Variables used to load resource items identified by URL identifiers. Relevant when making cache updates
        */
       resourceItemsQueryVariables: ComputedRef<
         Optional<ProjectViewerResourcesQueryVariables>
       >
+      resourceItemsExtended: ComputedRef<LoadedExtendedResourceItems>
       /**
        * Whether or not the initial resource items load has happened (useful in SSR)
        */
@@ -218,6 +285,21 @@ export type InjectableViewerState = Readonly<{
        */
       loadMoreVersions: (modelId: string) => Promise<void>
       resourcesLoading: ComputedRef<boolean>
+      /**
+       * Loaded saved view, if any
+       */
+      savedView: ComputedRef<Optional<LoadedSavedView>>
+      /**
+       * Whether we're in a federated view - loading multiple models/objects. We judge by the actual
+       * resources being loaded not just the resourceIdString. The string could refer to multiple models,
+       * but if none of them actually exist and are loaded then I wouldn't count that as a federated view.
+       */
+      isFederatedView: ComputedRef<boolean>
+      /**
+       * We don't want to save a comment or view w/ implicit identifiers like ones that only have a model ID or a folder prefix, because
+       * those can resolve to completely different versions/objects as time goes on
+       */
+      concreteResourceIdString: ComputedRef<string>
     }
   }
   /**
@@ -248,18 +330,32 @@ export type InjectableViewerState = Readonly<{
        * For quick object ID lookups
        */
       selectedObjectIds: ComputedRef<Set<string>>
-      propertyFilter: {
-        filter: Ref<Nullable<PropertyInfo>>
-        isApplied: Ref<boolean>
-      }
+      /**
+       * Set of currently isolated object IDs for efficient lookups
+       */
+      isolatedObjectsSet: ComputedRef<Set<string> | null>
+
+      // Multi-filter system
+      propertyFilters: Ref<FilterData[]>
+      filteredObjectsCount: Ref<number>
       hasAnyFiltersApplied: ComputedRef<boolean>
+      activeColorFilterId: Ref<string | null>
     }
     camera: {
       position: Ref<Vector3>
       target: Ref<Vector3>
       isOrthoProjection: Ref<boolean>
     }
-    viewMode: Ref<ViewMode>
+    viewMode: {
+      mode: Ref<ViewMode>
+      edgesEnabled: Ref<boolean>
+      edgesWeight: Ref<number>
+      outlineOpacity: Ref<number>
+      edgesColor: Ref<typeof defaultEdgeColorValue | number>
+      finalEdgesColor: ComputedRef<number>
+      defaultEdgesColor: ComputedRef<number>
+      resetViewMode: () => void
+    }
     diff: {
       newVersion: ComputedRef<ViewerModelVersionCardItemFragment | undefined>
       oldVersion: ComputedRef<ViewerModelVersionCardItemFragment | undefined>
@@ -276,12 +372,29 @@ export type InjectableViewerState = Readonly<{
     highlightedObjectIds: Ref<string[]>
     lightConfig: Ref<SunLightConfiguration>
     explodeFactor: Ref<number>
-    viewerBusy: WritableComputedRef<boolean>
+    loading: WritableComputedRef<boolean>
     loadProgress: Ref<number>
+    /**
+     * Similar to hasDoneInitialLoad, but also updated for following loads. Useful for tracking
+     * if an entire set of models (e.g. federated view) has loaded.
+     */
+    hasLoadedQueuedUpModels: Ref<boolean>
     selection: Ref<Nullable<Vector3>>
     measurement: {
       enabled: Ref<boolean>
       options: Ref<MeasurementOptions>
+      measurements: Ref<Array<MeasurementData>>
+    }
+    /**
+     * Various saved views UI settings
+     */
+    savedViews: SavedViewsUIState
+    /**
+     * Opened viewer panel settings
+     */
+    panels: {
+      active: Ref<ActivePanel>
+      modelsSubView: Ref<ModelsSubView>
     }
   }
   /**
@@ -290,6 +403,11 @@ export type InjectableViewerState = Readonly<{
   urlHashState: {
     focusedThreadId: AsyncWritableComputedRef<Nullable<string>>
     diff: AsyncWritableComputedRef<Nullable<DiffStateCommand>>
+    /**
+     * Core source of truth is under `resources.request.savedView`, but this allows
+     * the saved view settings to be URL controlled
+     */
+    savedView: AsyncWritableComputedRef<Nullable<SavedViewUrlSettings>>
   }
 }>
 
@@ -300,9 +418,9 @@ type CachedViewerState = Pick<
   initPromise: Promise<void>
 }
 
-type InitialSetupState = Pick<
+export type InitialSetupState = Pick<
   InjectableViewerState,
-  'projectId' | 'viewer' | 'sessionId' | 'urlHashState'
+  'projectId' | 'viewer' | 'sessionId' | 'urlHashState' | 'pageType'
 >
 
 type InitialStateWithRequest = InitialSetupState & {
@@ -339,6 +457,7 @@ function createViewerDataBuilder(params: { viewerDebug: boolean }) {
       ...DefaultViewerParams,
       verbose: !!(import.meta.client && params.viewerDebug)
     })
+    viewer.createExtension(HighlightExtension)
     viewer.createExtension(PassReader)
     const initPromise = viewer.init()
 
@@ -356,29 +475,30 @@ function setupViewerMetadata(params: {
   const { viewer } = params
 
   const worldTree = shallowRef(undefined as Optional<WorldTree>)
-  const availableFilters = shallowRef(undefined as Optional<PropertyInfo[]>)
   const filteringState = shallowRef(undefined as Optional<FilteringState>)
   const views = ref([] as SpeckleView[])
 
-  const refreshWorldTreeAndFilters = async (busy: boolean) => {
-    if (busy) return
+  const filteringDataStore = useCreateViewerFilteringDataStore()
+
+  const refreshWorldTreeAndFilters = async () => {
     worldTree.value = viewer.getWorldTree()
-    availableFilters.value = await viewer.getObjectProperties()
     views.value = viewer.getViews()
   }
-  const updateFilteringState = (newState: FilteringState) => {
-    filteringState.value = newState
+  const updateFilteringState = (newState: MaybeNullOrUndefined<FilteringState>) => {
+    // treating {}, null, undefined as the same, to avoid unnecessary updates
+    filteringState.value =
+      newState && Object.keys(newState).length > 0 ? newState : undefined
   }
 
   onMounted(() => {
-    viewer.on(ViewerEvent.Busy, refreshWorldTreeAndFilters)
+    viewer.on(ViewerEvent.LoadComplete, refreshWorldTreeAndFilters)
     viewer
       .getExtension(FilteringExtension)
       .on(ViewerEvent.FilteringStateSet, updateFilteringState)
   })
 
   onBeforeUnmount(() => {
-    viewer.removeListener(ViewerEvent.Busy, refreshWorldTreeAndFilters)
+    viewer.removeListener(ViewerEvent.LoadComplete, refreshWorldTreeAndFilters)
     viewer
       .getExtension(FilteringExtension)
       .removeListener(ViewerEvent.FilteringStateSet, updateFilteringState)
@@ -386,9 +506,9 @@ function setupViewerMetadata(params: {
 
   return {
     worldTree: computed(() => worldTree.value),
-    availableFilters: computed(() => availableFilters.value),
     filteringState: computed(() => filteringState.value),
-    views: computed(() => views.value)
+    views: computed(() => views.value),
+    filteringDataStore
   }
 }
 
@@ -400,16 +520,20 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
     public: { viewerDebug }
   } = useRuntimeConfig()
 
+  const route = useRoute()
   const sessionId = computed(() => nanoid())
   const isInitialized = ref(false)
   const { instance, initPromise, container } = useScopedState(
     GlobalViewerDataKey,
-    createViewerDataBuilder({ viewerDebug })
+    createViewerDataBuilder({
+      viewerDebug: viewerDebug || route.query.viewerVerbose === '1'
+    })
   ) || { initPromise: Promise.resolve() }
   initPromise.then(() => (isInitialized.value = true))
   const hasDoneInitialLoad = ref(false)
 
   return {
+    pageType: computed(() => params.pageType),
     projectId: params.projectId,
     sessionId,
     viewer: import.meta.server
@@ -422,7 +546,6 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
           },
           metadata: {
             worldTree: computed(() => undefined),
-            availableFilters: computed(() => undefined),
             views: computed(() => []),
             filteringState: computed(() => undefined)
           },
@@ -445,34 +568,19 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
 /**
  * Setup resource requests (tied to URL resource identifier param)
  */
-function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest {
-  const route = useRoute()
-  const router = useRouter()
-  const getParam = computed(() => route.params.modelId as string)
+function setupResourceRequest(
+  state: InitialSetupState,
+  params: UseSetupViewerParams
+): InitialStateWithRequest {
+  const resourceIdString = params.resourceIdString
 
   const resources = writableAsyncComputed({
-    get: () => SpeckleViewer.ViewerRoute.parseUrlParameters(getParam.value),
+    get: () => resourceBuilder().addResources(resourceIdString.value).toResources(),
     set: async (newResources) => {
-      const modelId =
-        SpeckleViewer.ViewerRoute.createGetParamFromResources(newResources)
-      await router.push({
-        params: { modelId },
-        query: route.query,
-        hash: route.hash
-      })
+      const newIdString = createGetParamFromResources(newResources)
+      await resourceIdString.update(newIdString)
     },
     initialState: [],
-    asyncRead: false
-  })
-
-  // we could use getParam, but `createGetParamFromResources` does sorting and de-duplication AFAIK
-  const resourceIdString = writableAsyncComputed({
-    get: () => SpeckleViewer.ViewerRoute.createGetParamFromResources(resources.value),
-    set: async (newVal) => {
-      const newResources = SpeckleViewer.ViewerRoute.parseUrlParameters(newVal)
-      await resources.update(newResources)
-    },
-    initialState: '',
     asyncRead: false
   })
 
@@ -489,23 +597,19 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     const resourceArr = resources.value.slice()
 
     const resourceIdx = resourceArr.findIndex(
-      (r) => SpeckleViewer.ViewerRoute.isModelResource(r) && r.modelId === modelId
+      (r) => isModelResource(r) && r.modelId === modelId
     )
 
     if (resourceIdx !== -1) {
       // Replace
       const newResources = resources.value.slice()
-      newResources.splice(
-        resourceIdx,
-        1,
-        new SpeckleViewer.ViewerRoute.ViewerModelResource(modelId, versionId)
-      )
+      newResources.splice(resourceIdx, 1, new ViewerModelResource(modelId, versionId))
 
       await resources.update(newResources)
     } else {
       // Add new one and allow de-duplication to do its thing
       await resources.update([
-        new SpeckleViewer.ViewerRoute.ViewerModelResource(modelId, versionId),
+        new ViewerModelResource(modelId, versionId),
         ...resources.value
       ])
     }
@@ -524,6 +628,7 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     ...state,
     resources: {
       request: {
+        savedView: useBuildSavedViewsCoreState(state, params),
         items: resources,
         resourceIdString,
         threadFilters,
@@ -541,17 +646,37 @@ function setupResponseResourceItems(
   state: InitialStateWithRequest
 ): Pick<
   InjectableViewerState['resources']['response'],
-  'resourceItems' | 'resourceItemsQueryVariables' | 'resourceItemsLoaded'
+  | 'resourceItems'
+  | 'resourceItemsQueryVariables'
+  | 'resourceItemsLoaded'
+  | 'savedView'
+  | 'isFederatedView'
+  | 'resourceItemsExtended'
+  | 'resourceItemsIds'
+  | 'concreteResourceIdString'
 > {
   const globalError = useError()
   const {
     projectId,
     resources: {
-      request: { resourceIdString }
-    }
+      request: {
+        resourceIdString,
+        savedView: { id: savedViewId, loadOriginal }
+      }
+    },
+    urlHashState: { savedView: urlHashSavedView }
   } = state
 
   const initLoadDone = ref(import.meta.server ? false : true)
+
+  /**
+   * Resolves actual resources to load:
+   * - Viewer Resource Groups and items
+   * - Saved View that was used, if any
+   *
+   * Both must be loaded together to avoid race conditions. They both change
+   * what exactly ends up being loaded, so its important they're in sync.
+   */
   const {
     result: resolvedResourcesResult,
     variables: resourceItemsQueryVariables,
@@ -561,7 +686,18 @@ function setupResponseResourceItems(
     projectViewerResourcesQuery,
     () => ({
       projectId: projectId.value,
-      resourceUrlString: resourceIdString.value
+      resourceUrlString: resourceIdString.value,
+      ...(isUndefined(savedViewId.value)
+        ? {
+            // Omit entirely if undefined to allow for implicit/home views
+          }
+        : {
+            // Load specific or load NONE
+            savedViewId: savedViewId.value
+          }),
+      savedViewSettings: {
+        loadOriginal: loadOriginal.value || false
+      }
     }),
     { keepPreviousResult: true }
   )
@@ -574,12 +710,36 @@ function setupResponseResourceItems(
     initLoadDone.value = true
   })
 
-  onResult(() => {
+  onResult(async (res) => {
     initLoadDone.value = true
+
+    const data = res.data?.project?.viewerResourcesExtended
+    if (!data) return
+
+    // If saved view resolved, update resourceIdString from response
+    // cause it may have changed
+    const incomingResourceIdString = resourceBuilder().addResources(
+      data.resourceIdString
+    )
+    const existing = resourceBuilder().addResources(resourceIdString.value)
+    if (!incomingResourceIdString.isEqualTo(existing)) {
+      await resourceIdString.update(incomingResourceIdString.toString())
+    }
+
+    // Check if savedViewId refered to an invalid one
+    if (data.request?.savedViewId && data.request.savedViewId !== data.savedView?.id) {
+      // switch to "no view"
+      savedViewId.value = null
+      void urlHashSavedView.update(null)
+    }
   })
 
+  const resourceItemsExtended = computed(
+    () => resolvedResourcesResult.value?.project?.viewerResourcesExtended
+  )
+
   const resolvedResourceGroups = computed(
-    () => resolvedResourcesResult.value?.project?.viewerResources || []
+    () => resourceItemsExtended.value?.groups || []
   )
 
   /**
@@ -596,20 +756,20 @@ function setupResponseResourceItems(
     const objectItems: ViewerResourceItem[] = []
     const allModelItems: ViewerResourceItem[] = []
     for (const group of resolvedResourceGroups.value) {
-      const [resource] = SpeckleViewer.ViewerRoute.parseUrlParameters(group.identifier)
+      const [resource] = parseUrlParameters(group.identifier)
 
       for (const item of group.items) {
-        if (SpeckleViewer.ViewerRoute.isModelResource(resource)) {
+        if (isModelResource(resource)) {
           if (resource.versionId) {
             versionItems.push(item)
           } else {
             modelItems.push(item)
           }
-        } else if (SpeckleViewer.ViewerRoute.isAllModelsResource(resource)) {
+        } else if (isAllModelsResource(resource)) {
           allModelItems.push(item)
-        } else if (SpeckleViewer.ViewerRoute.isModelFolderResource(resource)) {
+        } else if (isModelFolderResource(resource)) {
           folderItems.push(item)
-        } else if (SpeckleViewer.ViewerRoute.isObjectResource(resource)) {
+        } else if (isObjectResource(resource)) {
           objectItems.push(item)
         }
       }
@@ -644,21 +804,75 @@ function setupResponseResourceItems(
     return finalItems
   })
 
+  const resourceItemsIds = computed(() =>
+    resourceItems.value.map((i) => {
+      if (i.modelId) {
+        return new ViewerModelResource(i.modelId, i.versionId || undefined).toString()
+      } else {
+        return new ViewerObjectResource(i.objectId).toString()
+      }
+    })
+  )
   const resourceItemsLoaded = computed(() => initLoadDone.value)
 
+  const savedView = computed(() => {
+    const idToLoad = savedViewId.value
+    const idLoaded =
+      resolvedResourcesResult.value?.project?.viewerResourcesExtended.savedView?.id
+    const savedViewFromRes =
+      resolvedResourcesResult.value?.project?.viewerResourcesExtended.savedView ||
+      undefined
+
+    if (idToLoad && idToLoad !== idLoaded) return undefined // stale query
+    if (!idToLoad && !idLoaded) return savedViewFromRes // could be home view
+
+    return savedViewFromRes
+  })
+
+  const isFederatedView = computed(() => resourceItems.value.length > 1)
+  const concreteResourceIdString = computed(() => {
+    const builder = resourceBuilder()
+
+    for (const resource of resourceItems.value) {
+      if (resource.modelId && resource.versionId) {
+        builder.addModel(resource.modelId, resource.versionId)
+      } else {
+        builder.addObject(resource.objectId)
+      }
+    }
+
+    const finalString = builder.toString()
+    return finalString || resourceIdString.value
+  })
+
   return {
+    resourceItemsExtended,
+    resourceItemsIds,
     resourceItems,
     resourceItemsQueryVariables: computed(() => resourceItemsQueryVariables.value),
-    resourceItemsLoaded
+    resourceItemsLoaded,
+    savedView,
+    isFederatedView,
+    concreteResourceIdString
   }
 }
 
 function setupResponseResourceData(
   state: InitialStateWithRequest,
   resourceItemsData: ReturnType<typeof setupResponseResourceItems>
-): Omit<
+): Pick<
   InjectableViewerState['resources']['response'],
-  'resourceItems' | 'resourceItemsQueryVariables' | 'resourceItemsLoaded'
+  | 'objects'
+  | 'commentThreads'
+  | 'commentThreadsMetadata'
+  | 'modelsAndVersionIds'
+  | 'availableModelsAndVersions'
+  | 'project'
+  | 'resourceQueryVariables'
+  | 'threadsQueryVariables'
+  | 'loadMoreVersions'
+  | 'resourcesLoaded'
+  | 'resourcesLoading'
 > {
   const apollo = useApolloClient().client
   const globalError = useError()
@@ -844,7 +1058,11 @@ function setupResponseResourceData(
         resourceIdString: resourceIdString.value
       }
     }),
-    { keepPreviousResult: true }
+    () => ({
+      keepPreviousResult: true,
+      // Dont need threads when in presentation mode
+      enabled: state.pageType.value !== ViewerRenderPageType.Presentation
+    })
   )
 
   const commentThreadsMetadata = computed(
@@ -914,27 +1132,17 @@ function setupInterfaceState(
   state: InitialStateWithUrlHashState
 ): InitialStateWithInterface {
   // Is viewer busy - Using writable computed so that we can always intercept these calls
-  const isViewerBusy = ref(false)
-  const viewerBusy = computed({
-    get: () => isViewerBusy.value,
-    set: (newVal) => (isViewerBusy.value = !!newVal)
+  const isLoading = ref(false)
+  const loading = computed({
+    get: () => isLoading.value,
+    set: (newVal) => (isLoading.value = !!newVal)
   })
 
   const loadProgress = ref(0)
+  const hasLoadedQueuedUpModels = ref(false)
 
-  const isolatedObjectIds = ref([] as string[])
-  const hiddenObjectIds = ref([] as string[])
-  const selectedObjects = shallowRef<Raw<SpeckleObject>[]>([])
-  const propertyFilter = ref(null as Nullable<PropertyInfo>)
-  const isPropertyFilterApplied = ref(false)
-  const hasAnyFiltersApplied = computed(() => {
-    if (isolatedObjectIds.value.length) return true
-    if (hiddenObjectIds.value.length) return true
-    if (propertyFilter.value || isPropertyFilterApplied.value) return true
-    if (explodeFactor.value !== 0) return true
-    return false
-  })
-  const viewMode = ref<ViewMode>(ViewMode.DEFAULT)
+  const { filters } = useFiltersSetup()
+  const { viewMode } = useViewModesSetup()
 
   const highlightedObjectIds = ref([] as string[])
   const spotlightUserSessionId = ref(null as Nullable<string>)
@@ -946,8 +1154,8 @@ function setupInterfaceState(
   const selectedObjectIds = computed(
     () =>
       new Set(
-        selectedObjects.value
-          .map((o) => o.id as MaybeNullOrUndefined<string>)
+        filters.selectedObjects.value
+          .map((o: SpeckleObject) => o.id as MaybeNullOrUndefined<string>)
           .filter(isNonNullable)
       )
   )
@@ -973,6 +1181,7 @@ function setupInterfaceState(
   return {
     ...state,
     ui: {
+      viewMode,
       diff: {
         ...diffState
       },
@@ -980,7 +1189,7 @@ function setupInterfaceState(
       lightConfig,
       explodeFactor,
       spotlightUserSessionId,
-      viewerBusy,
+      loading,
       loadProgress,
       threads: {
         items: commentThreads,
@@ -998,45 +1207,42 @@ function setupInterfaceState(
         target,
         isOrthoProjection
       },
-      viewMode,
       sectionBox: ref(null as Nullable<SectionBoxData>),
       sectionBoxContext: {
         visible: ref(false),
         edited: ref(false)
       },
       filters: {
-        isolatedObjectIds,
-        hiddenObjectIds,
-        selectedObjects,
-        selectedObjectIds,
-        propertyFilter: {
-          filter: propertyFilter,
-          isApplied: isPropertyFilterApplied
-        },
-        hasAnyFiltersApplied
+        ...filters,
+        selectedObjectIds
       },
       highlightedObjectIds,
-      measurement: {
-        enabled: ref(false),
-        options: ref<MeasurementOptions>({
-          visible: true,
-          type: MeasurementType.POINTTOPOINT,
-          units: 'm',
-          vertexSnap: true,
-          precision: 2
-        })
-      }
+      measurement: useMeasurementsSetup(),
+      savedViews: useBuildSavedViewsUIState(),
+      panels: useViewerPanelsSetup(),
+      hasLoadedQueuedUpModels
     }
   }
 }
 
-type UseSetupViewerParams = { projectId: AsyncWritableComputedRef<string> }
+export type UseSetupViewerParams = {
+  projectId: AsyncWritableComputedRef<string>
+  resourceIdString: AsyncWritableComputedRef<string>
+  pageType: ViewerRenderPageType
+  /**
+   * Optionally override savedView source of truth
+   */
+  savedView?: {
+    id: InjectableViewerState['resources']['request']['savedView']['id']
+    loadOriginal: InjectableViewerState['resources']['request']['savedView']['loadOriginal']
+  }
+}
 
 export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerState {
   // Initialize full state object - each subsequent state initialization depends on
   // the results of the previous ones until we have the final full object
   const initState = setupInitialState(params)
-  const initialStateWithRequest = setupResourceRequest(initState)
+  const initialStateWithRequest = setupResourceRequest(initState, params)
   const stateWithResources = setupResourceResponse(initialStateWithRequest)
   const state: InjectableViewerState = setupInterfaceState(stateWithResources)
 
@@ -1051,9 +1257,7 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
   return rawState
 }
 
-/**
- * COMPOSABLES FOR RETRIEVING (PARTS OF) INJECTABLE STATE
- */
+// COMPOSABLES FOR RETRIEVING (PARTS OF) INJECTABLE STATE
 
 export function useInjectedViewerState(): InjectableViewerState {
   // we're forcing TS to ignore the scenario where this data can't be found and returns undefined
@@ -1088,14 +1292,16 @@ export function useResetUiState() {
   } = useInjectedViewerState()
   const { resetFilters } = useFilterUtilities()
   const { endDiff } = useDiffUtilities()
+  const { reset: resetMeasurements } = useMeasurementUtilities()
 
   return () => {
     camera.isOrthoProjection.value = false
     sectionBox.value = null
     highlightedObjectIds.value = []
     lightConfig.value = { ...DefaultLightConfiguration }
-    viewMode.value = ViewMode.DEFAULT
+    viewMode.resetViewMode()
     resetFilters()
+    resetMeasurements()
     endDiff()
   }
 }

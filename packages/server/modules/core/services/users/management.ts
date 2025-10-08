@@ -1,4 +1,4 @@
-import {
+import type {
   ChangeUserPassword,
   ChangeUserRole,
   CountAdminUsers,
@@ -26,34 +26,35 @@ import {
   PasswordTooShortError,
   UserInputError
 } from '@/modules/core/errors/userinput'
-import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
+import type { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import type { UserRecord } from '@/modules/core/helpers/userHelper'
 import { sanitizeImageUrl } from '@/modules/shared/helpers/sanitization'
-import {
-  blockedDomains,
-  isNullOrUndefined,
-  NullableKeysToOptional,
-  Roles,
-  ServerRoles
-} from '@speckle/shared'
-import { pick } from 'lodash'
+import type { NullableKeysToOptional, ServerRoles } from '@speckle/shared'
+import { blockedDomains, isNullOrUndefined, Roles } from '@speckle/shared'
+import { pick } from 'lodash-es'
 import bcrypt from 'bcrypt'
 import crs from 'crypto-random-string'
-import {
+import type {
   FindEmail,
   FindPrimaryEmailForUser,
   ValidateAndCreateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
-import {
-  DeleteStreamRecord,
-  GetUserDeletableStreams
-} from '@/modules/core/domain/streams/operations'
+import type { GetUserDeletableStreams } from '@/modules/core/domain/streams/operations'
 import type { Logger } from '@/observability/logging'
-import { DeleteAllUserInvites } from '@/modules/serverinvites/domain/operations'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { DeleteAllUserInvites } from '@/modules/serverinvites/domain/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { UserEvents } from '@/modules/core/domain/users/events'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import type { GetUserWorkspaceSeatsFactory } from '@/modules/workspacesCore/domain/operations'
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
+import { ProjectEvents } from '@/modules/core/domain/projects/events'
+import type {
+  DeleteProjectAndCommits,
+  QueryAllProjects
+} from '@/modules/core/domain/projects/operations'
+import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
+import { v4 } from 'uuid'
 
 const { FF_NO_PERSONAL_EMAILS_ENABLED } = getFeatureFlags()
 
@@ -79,6 +80,11 @@ export const updateUserAndNotifyFactory =
     for (const entry of Object.entries(update)) {
       const key = entry[0] as keyof typeof update
       let val = entry[1]
+
+      if (key === 'avatar' && val === '') {
+        filteredUpdate[key] = null // avatar removal
+        continue
+      }
 
       if (key === 'avatar') {
         val = sanitizeImageUrl(val)
@@ -164,11 +170,12 @@ export const createUserFactory =
 
     const signUpCtx = user.signUpContext
 
-    let finalUser: typeof user &
-      Omit<NullableKeysToOptional<UserRecord>, 'suuid' | 'createdAt'> = {
+    let finalUser: typeof user & NullableKeysToOptional<UserRecord> = {
       ...user,
       id: crs({ length: 10 }),
-      verified: user.verified || false
+      verified: user.verified || false,
+      createdAt: new Date(),
+      suuid: v4()
     }
     delete finalUser.signUpContext
 
@@ -202,7 +209,10 @@ export const createUserFactory =
           'name',
           'company',
           'verified',
-          'avatar'
+          'avatar',
+          'verified',
+          'createdAt',
+          'suuid'
         ]) as typeof finalUser)
 
     finalUser.email = finalUser.email.toLowerCase()
@@ -283,12 +293,14 @@ export const findOrCreateUserFactory =
 
 export const deleteUserFactory =
   (deps: {
-    deleteStream: DeleteStreamRecord
+    deleteProjectAndCommits: DeleteProjectAndCommits
     logger: Logger
     isLastAdminUser: IsLastAdminUser
     getUserDeletableStreams: GetUserDeletableStreams
     deleteAllUserInvites: DeleteAllUserInvites
+    getUserWorkspaceSeats: GetUserWorkspaceSeatsFactory
     deleteUserRecord: DeleteUserRecord
+    queryAllProjects: QueryAllProjects
     emitEvent: EventBusEmit
   }): DeleteUser =>
   async (id, invokerId) => {
@@ -300,12 +312,45 @@ export const deleteUserFactory =
 
     const streamIds = await deps.getUserDeletableStreams(id)
     for (const id of streamIds) {
-      await deps.deleteStream(id)
+      await deps.deleteProjectAndCommits({ projectId: id })
     }
 
     // Delete all invites (they don't have a FK, so we need to do this manually)
     // THIS REALLY SHOULD BE A REACTION TO THE USER DELETED EVENT EMITTED HER
     await deps.deleteAllUserInvites(id)
+
+    const workspaceSeats = await deps.getUserWorkspaceSeats({ userId: id })
+    for (const seat of workspaceSeats) {
+      await deps.emitEvent({
+        eventName: WorkspaceEvents.SeatDeleted,
+        payload: {
+          updatedByUserId: id,
+          previousSeat: seat
+        }
+      })
+    }
+
+    const emitRevokeEventIfUserHasRole = async (project: StreamWithOptionalRole) => {
+      if (!project.role) return
+
+      await deps.emitEvent({
+        eventName: ProjectEvents.PermissionsRevoked,
+        payload: {
+          activityUserId: id,
+          removedUserId: id,
+          role: project.role,
+          project
+        }
+      })
+    }
+
+    for await (const projectsPage of deps.queryAllProjects({
+      userId: id
+    })) {
+      for (const project of projectsPage) {
+        await emitRevokeEventIfUserHasRole(project)
+      }
+    }
 
     const deleted = await deps.deleteUserRecord(id)
     if (deleted) {

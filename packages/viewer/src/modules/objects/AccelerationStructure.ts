@@ -68,10 +68,10 @@ to get the correct values for Vectors, Rays, Boxes, etc
 export class AccelerationStructure {
   private static readonly MatBuff: Matrix4 = new Matrix4()
   private _bvh: MeshBVH
-  public inputTransform!: Matrix4
-  public outputTransform!: Matrix4
-  public inputOriginTransform!: Matrix4
-  public outputOriginTransfom!: Matrix4
+  public inputTransform: Matrix4
+  public outputTransform: Matrix4
+  public inputOriginTransform: Matrix4
+  public outputOriginTransfom: Matrix4
 
   public get geometry() {
     return this._bvh.geometry
@@ -82,8 +82,8 @@ export class AccelerationStructure {
   }
 
   public static buildBVH(
-    indices: number[] | undefined,
-    position: number[] | undefined,
+    indices: Uint16Array | Uint32Array | undefined,
+    position: Float32Array | Float64Array | undefined,
     options: BVHOptions = DefaultBVHOptions,
     transform?: Matrix4
   ): MeshBVH {
@@ -92,7 +92,7 @@ export class AccelerationStructure {
       throw new Error('Cannot build BVH with undefined indices or position!')
     }
 
-    let bvhPositions = new Float32Array(position)
+    let bvhPositions = position
     if (transform) {
       bvhPositions = new Float32Array(position.length)
       const vecBuff = new Vector3()

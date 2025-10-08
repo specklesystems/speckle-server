@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-restricted-imports
-import '../bootstrap'
+import '../bootstrap.js'
 
 import { configureClient } from '@/knexfile'
 import {
@@ -46,9 +46,10 @@ import {
   getWorkspaceRolesFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import { retry } from '@lifeomic/attempt'
-import { Roles, StreamRoles } from '@speckle/shared'
+import type { StreamRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import knex from 'knex'
-import { omit } from 'lodash'
+import { omit } from 'lodash-es'
 
 const projectIds = [
   'edbf5f099d'

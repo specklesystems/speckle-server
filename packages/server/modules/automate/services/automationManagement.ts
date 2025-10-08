@@ -1,11 +1,11 @@
-import {
+import type {
   InsertableAutomationRevision,
   InsertableAutomationRevisionFunction,
   InsertableAutomationRevisionTrigger
 } from '@/modules/automate/repositories/automations'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
-import {
+import type {
   createAutomation as clientCreateAutomation,
   getFunctionReleaseFactory,
   getFunctionReleasesFactory
@@ -17,31 +17,30 @@ import {
   removeNullOrUndefinedKeys
 } from '@speckle/shared'
 import { AuthCodePayloadAction } from '@/modules/automate/services/authCode'
-import {
+import type {
   ProjectAutomationCreateInput,
-  ProjectAutomationRevisionCreateInput,
   ProjectAutomationUpdateInput
 } from '@/modules/core/graph/generated/graphql'
-import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
+import type { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import {
   AutomationFunctionInputEncryptionError,
   AutomationRevisionCreationError,
   AutomationUpdateError,
   JsonSchemaInputValidationError
 } from '@/modules/automate/errors/management'
+import type { AutomationRunStatus } from '@/modules/automate/helpers/types'
 import {
-  AutomationRunStatus,
   AutomationRunStatuses,
   VersionCreationTriggerType
 } from '@/modules/automate/helpers/types'
-import { keyBy, uniq } from 'lodash'
+import { keyBy, uniq } from 'lodash-es'
 import { resolveStatusFromFunctionRunStatuses } from '@/modules/automate/services/runsManagement'
-import { TriggeredAutomationsStatusGraphQLReturn } from '@/modules/automate/helpers/graphTypes'
-import { FunctionInputDecryptor } from '@/modules/automate/services/encryption'
+import type { TriggeredAutomationsStatusGraphQLReturn } from '@/modules/automate/helpers/graphTypes'
+import type { FunctionInputDecryptor } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { validateInputAgainstFunctionSchema } from '@/modules/automate/utils/inputSchemaValidator'
 import { validateAutomationName } from '@/modules/automate/utils/automationConfigurationValidator'
-import {
+import type {
   CreateAutomation,
   CreateStoredAuthCode,
   MarkAutomationDeleted,
@@ -51,13 +50,14 @@ import {
   StoreAutomation,
   StoreAutomationRevision,
   StoreAutomationToken,
-  UpdateAutomation
+  UpdateAutomation,
+  CreateAutomationRevision
 } from '@/modules/automate/domain/operations'
-import { GetBranchesByIds } from '@/modules/core/domain/branches/operations'
-import { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { GetBranchesByIds } from '@/modules/core/domain/branches/operations'
+import type { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { AutomationEvents } from '@/modules/automate/domain/events'
-import { UnformattableTriggerDefinitionSchemaError } from '@speckle/shared/dist/commonjs/automate/index.js'
+import { UnformattableTriggerDefinitionSchemaError } from '@speckle/shared/automate'
 
 export type CreateAutomationDeps = {
   createAuthCode: CreateStoredAuthCode
@@ -368,14 +368,14 @@ export type CreateAutomationRevisionDeps = {
   ValidateNewRevisionFunctionsDeps
 
 export const createAutomationRevisionFactory =
-  (deps: CreateAutomationRevisionDeps) =>
-  async (params: {
-    input: ProjectAutomationRevisionCreateInput
-    userId: string
-    userResourceAccessRules?: ContextResourceAccessRules
-    projectId?: string
+  (deps: CreateAutomationRevisionDeps): CreateAutomationRevision =>
+  async ({
+    input,
+    userId,
+    userResourceAccessRules,
+    projectId,
+    skipInputValidation
   }) => {
-    const { input, userId, userResourceAccessRules, projectId } = params
     const {
       storeAutomationRevision,
       getAutomation,
@@ -465,7 +465,9 @@ export const createAutomationRevisionFactory =
             )
           }
 
-          validateInputAgainstFunctionSchema(schema, decryptedParams)
+          if (!skipInputValidation) {
+            validateInputAgainstFunctionSchema(schema, decryptedParams)
+          }
 
           // Didn't throw, let's continue
           const fn: InsertableAutomationRevisionFunction = {

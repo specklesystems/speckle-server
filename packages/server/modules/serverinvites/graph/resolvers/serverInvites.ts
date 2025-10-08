@@ -17,13 +17,11 @@ import {
   getServerInviteForTokenFactory
 } from '@/modules/serverinvites/services/retrieval'
 import { authorizeResolver } from '@/modules/shared'
-import { chunk } from 'lodash'
-import {
-  Resolvers,
-  TokenResourceIdentifierType
-} from '@/modules/core/graph/generated/graphql'
+import { chunk } from 'lodash-es'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import db from '@/db/knex'
-import { ServerRoles } from '@speckle/shared'
+import type { ServerRoles } from '@speckle/shared'
 import {
   deleteInvitesByTargetFactory,
   findInviteFactory,
@@ -47,7 +45,7 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import {
+import type {
   PrimaryInviteResourceTarget,
   ServerInviteResourceTarget
 } from '@/modules/serverinvites/domain/types'
@@ -71,6 +69,7 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import {
   getStreamFactory,
+  getStreamRolesFactory,
   grantStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import {
@@ -91,6 +90,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 const getServerInfo = getServerInfoFactory({ db })
@@ -156,7 +156,7 @@ const buildCreateAndSendServerOrProjectInvite = () =>
     finalizeInvite: buildFinalizeProjectInvite()
   })
 
-export = {
+export default {
   Query: {
     async streamInvite(_parent, args, context) {
       const { streamId, token } = args

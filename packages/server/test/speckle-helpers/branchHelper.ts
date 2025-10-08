@@ -5,9 +5,9 @@ import {
 import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { BasicTestUser } from '@/test/authHelper'
-import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
-import { omit } from 'lodash'
+import type { BasicTestUser } from '@/test/authHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { omit } from 'lodash-es'
 
 export type BasicTestBranch = {
   name: string
@@ -54,6 +54,8 @@ export async function createTestBranch(params: {
     )
   ).id
   branch.id = id
+
+  return branch
 }
 
 export async function createTestBranches(

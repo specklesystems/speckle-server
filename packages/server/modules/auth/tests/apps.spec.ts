@@ -31,29 +31,7 @@ import {
   createAppTokenFromAccessCodeFactory,
   refreshAppTokenFactory
 } from '@/modules/auth/services/serverApps'
-import {
-  findEmailFactory,
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory
-} from '@/modules/core/repositories/userEmails'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import {
-  getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory,
-  getUserRoleFactory
-} from '@/modules/core/repositories/users'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import {
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
+import { getUserRoleFactory } from '@/modules/core/repositories/users'
 import {
   storeApiTokenFactory,
   storeTokenScopesFactory,
@@ -65,12 +43,11 @@ import {
   getTokenResourceAccessDefinitionsByIdFactory,
   updateApiTokenFactory
 } from '@/modules/core/repositories/tokens'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { getEventBus } from '@/modules/shared/services/eventBus'
-import { BasicTestUser } from '@/test/authHelper'
-import { AppScopes, ensureError } from '@speckle/shared'
-import { ValidTokenResult } from '@/modules/core/helpers/types'
-import {
+import { createTestUser, type BasicTestUser } from '@/test/authHelper'
+import type { AppScopes } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
+import type { ValidTokenResult } from '@/modules/core/helpers/types'
+import type {
   DefaultAppIds,
   DefaultAppWithUnwrappedScopes
 } from '@/modules/auth/defaultApps'
@@ -114,34 +91,6 @@ const refreshAppToken = refreshAppTokenFactory({
   createBareToken
 })
 
-const getServerInfo = getServerInfoFactory({ db })
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 const validateToken = validateTokenFactory({
   revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
   getApiTokenById: getApiTokenByIdFactory({ db }),
@@ -155,16 +104,16 @@ const validateToken = validateTokenFactory({
 })
 
 describe('Services @apps-services', () => {
-  const actor: BasicTestUser = {
-    name: 'Dimitrie Stefanescu',
-    email: 'didimitrie@example.org',
-    password: 'wtfwtfwtf',
-    id: ''
-  }
+  let actor: BasicTestUser
 
   before(async () => {
     await beforeEachContext()
-    actor.id = await createUser(actor)
+    actor = await createTestUser({
+      name: 'Dimitrie Stefanescu',
+      email: 'didimitrie@example.org',
+      password: 'wtfwtfwtf',
+      id: ''
+    })
   })
 
   it('Should register an app', async () => {
@@ -506,14 +455,12 @@ describe('Services @apps-services', () => {
       redirectUrl: 'http://127.0.0.1:1335',
       authorId: actor.id
     })
-    const secondUser: BasicTestUser = {
+    const secondUser = await createTestUser({
       name: 'Dimitrie Stefanescu',
       email: 'didimitrie.wow@example.org',
       password: 'wtfwtfwtf',
       id: ''
-    }
-
-    secondUser.id = await createUser(secondUser)
+    })
     const accessCode = await createAuthorizationCode({
       appId: myTestApp.id,
       userId: secondUser.id,

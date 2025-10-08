@@ -6,13 +6,17 @@ import {
   type AbstractLoggerHandlerParams,
   type AbstractUnhandledErrorHandler
 } from '~/lib/core/helpers/observability'
+import { useRequestId, useServerRequestId } from '~/lib/core/composables/server'
+import type dayjs from 'dayjs'
+import { nanoid } from 'nanoid'
 
 const ENTER_STATE_AT_ERRORS_PER_MIN = 100
 
 export function useAppErrorState() {
   const state = useScopedState('appErrorState', () => ({
     inErrorState: ref(false),
-    errorRpm: Observability.simpleRpmCounter()
+    errorRpm: Observability.simpleRpmCounter(),
+    isFullRedirectState: ref(false)
   }))
   const nuxtApp = useNuxtApp()
 
@@ -29,7 +33,22 @@ export function useAppErrorState() {
         )
         state.inErrorState.value = true
       }
-    }
+    },
+    /**
+     * Similar to error state, except we don't show any UI elements to the user, we just stop processing
+     * API calls etc. because we're redirecting fully away
+     */
+    isFullRedirectState: state.isFullRedirectState,
+    /**
+     * Whether to prevent HTTP API calls
+     */
+    preventHttpCalls: computed(() => state.isFullRedirectState.value),
+    /**
+     * Whether to prevent websocket messaging
+     */
+    preventWebsocketMessaging: computed(
+      () => state.isFullRedirectState.value || state.inErrorState.value
+    )
   }
 }
 
@@ -81,5 +100,66 @@ export const useLogToLoggingTransports = () => {
   return {
     transports,
     invokeTransportsWithPayload
+  }
+}
+
+type CreateErrorReferenceParams = {
+  /**
+   * Specify date to use in the error reference.
+   */
+  date?: Date | dayjs.Dayjs
+  /**
+   * Optionally add extra payload to the logger.error() call
+   */
+  extraPayload?: Record<string, unknown>
+}
+
+export const useGenerateErrorReference = () => {
+  const logger = useLogger()
+  const reqId = useRequestId({ forceFrontendValue: true })
+  const serverReqId = useServerRequestId()
+  const { copy } = useClipboard()
+  const { userId } = useActiveUser()
+  const route = useRoute()
+
+  const createErrorReference = (params?: CreateErrorReferenceParams) => {
+    const date = params?.date || new Date()
+
+    const newId = 'fe-error-' + nanoid()
+    const ref = {
+      ReqId: reqId,
+      SsrReqId: serverReqId.value,
+      Date: date.toISOString(),
+      URL: import.meta.client ? window.location.href : route.fullPath,
+      RefId: newId,
+      UserId: userId.value || 'anonymous'
+    }
+
+    const refString = `///// Speckle Support Reference /////\n${Object.entries(ref)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join('\n')}\n/////////////////////////////////////`
+
+    logger.error(
+      {
+        errorId: newId,
+        extraPayload: params?.extraPayload,
+        errorReference: ref,
+        errorReferenceString: refString
+      },
+      `Error reference logged`
+    )
+
+    return refString
+  }
+
+  const copyReference = async (params?: CreateErrorReferenceParams) => {
+    await copy(createErrorReference(params), {
+      successMessage: 'Reference copied. Please include this when contacting support.'
+    })
+  }
+
+  return {
+    createErrorReference,
+    copyReference
   }
 }

@@ -1,6 +1,6 @@
 import { authorizeResolver } from '@/modules/shared'
 import { isNonNullable, Roles } from '@speckle/shared'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   getObjectChildrenFactory,
   getObjectChildrenQueryFactory,
@@ -25,7 +25,7 @@ const getStreamObject: NonNullable<Resolvers['Stream']>['object'] =
     )
   }
 
-export = {
+export default {
   Stream: {
     object: getStreamObject
   },

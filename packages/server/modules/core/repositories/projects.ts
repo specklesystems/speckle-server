@@ -1,13 +1,20 @@
 import { StreamAcl, Streams } from '@/modules/core/dbSchema'
-import {
+import type {
+  BulkUpsertProjects,
   DeleteProject,
+  GetAllProjects,
   GetProject,
+  GetUserProjectRoles,
   StoreProject,
-  StoreProjectRole
+  StoreProjectRole,
+  StoreProjectRoles
 } from '@/modules/core/domain/projects/operations'
-import { Project } from '@/modules/core/domain/streams/types'
-import { StreamAclRecord } from '@/modules/core/helpers/types'
-import { Knex } from 'knex'
+import type { Project } from '@/modules/core/domain/streams/types'
+import type { StreamAclRecord } from '@/modules/core/helpers/types'
+import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/dbHelper'
+import { isNullOrUndefined } from '@speckle/shared'
+import type { Knex } from 'knex'
+import { clamp } from 'lodash-es'
 
 const tables = {
   projects: (db: Knex) => db<Project>(Streams.name),
@@ -35,6 +42,92 @@ export const deleteProjectFactory =
 
 export const storeProjectRoleFactory =
   ({ db }: { db: Knex }): StoreProjectRole =>
-  async ({ projectId, userId, role }) => {
-    await tables.projectAcl(db).insert({ resourceId: projectId, role, userId })
+  async (role) => {
+    await storeProjectRolesFactory({ db })({ roles: [role] })
+  }
+
+export const storeProjectRolesFactory =
+  ({ db }: { db: Knex }): StoreProjectRoles =>
+  async ({ roles }) => {
+    await tables.projectAcl(db).insert(
+      roles.map((role) => ({
+        resourceId: role.projectId,
+        userId: role.userId,
+        role: role.role
+      }))
+    )
+  }
+
+export const getUserProjectRolesFactory =
+  ({ db }: { db: Knex }): GetUserProjectRoles =>
+  async ({ userId, workspaceId }) => {
+    const query = db<StreamAclRecord>(StreamAcl.name).where({ userId })
+
+    if (workspaceId) {
+      query
+        .join(Streams.name, Streams.col.id, StreamAcl.col.resourceId)
+        .where({ workspaceId })
+    }
+
+    return await query
+  }
+
+export const getAllProjectsChecksumFactory =
+  ({
+    db
+  }: {
+    db: Knex
+  }): (({ regionKey }: { regionKey: string | null }) => Promise<string>) =>
+  async ({ regionKey }) => {
+    // Build the row-level hash expression
+    const rowConcatExpr = Streams.cols
+      .map((col) => `COALESCE(${db.raw('??', [col])}::text, '')`)
+      .join(` || '|' || `)
+
+    // filtering by regionKey
+    const rawWhereExpr = regionKey
+      ? db.raw(`"streams"."regionKey" = ?`, [regionKey])
+      : db.raw(`"streams"."regionKey" IS NULL`)
+
+    const result = await db.raw<{ rows: [{ table_checksum: string }] }>(`
+    SELECT md5(string_agg(row_hash, '')) AS table_checksum
+    FROM (
+      SELECT md5(${rowConcatExpr}) AS row_hash
+      FROM ${Streams.name}
+      WHERE ${rawWhereExpr}
+      ORDER BY ${Streams.col.id}
+    ) AS hashed_rows;
+  `)
+    return result.rows[0].table_checksum
+  }
+
+export const bulkUpsertProjectsFactory =
+  ({ db }: { db: Knex }): BulkUpsertProjects =>
+  async ({ projects }) => {
+    if (!projects.length) return
+    await tables.projects(db).insert(projects).onConflict('id').merge()
+  }
+
+export const getAllProjectsFactory =
+  ({ db }: { db: Knex }): GetAllProjects =>
+  async (args) => {
+    const cursor = args.cursor ? decodeCursor(args.cursor) : null
+    const limit = isNullOrUndefined(args.limit) ? 10 : args.limit
+
+    const q = tables
+      .projects(db)
+      .limit(clamp(limit, 1, 500))
+      .where(Streams.col.regionKey, '=', args.regionKey)
+      .orderBy(Streams.col.id, 'asc')
+
+    if (cursor?.length) {
+      q.andWhere(Streams.col.id, '>', cursor)
+    }
+
+    const res = await q
+
+    return {
+      items: res,
+      cursor: res.length ? encodeCursor(res[res.length - 1].id) : null
+    }
   }

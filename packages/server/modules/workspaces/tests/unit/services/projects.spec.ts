@@ -1,22 +1,23 @@
-import { ProjectTeamMember } from '@/modules/core/domain/projects/types'
+import type { ProjectTeamMember } from '@/modules/core/domain/projects/types'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
-import { StreamRecord } from '@/modules/core/helpers/types'
-import { WorkspaceSeat, WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import type { StreamRecord } from '@/modules/core/helpers/types'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
+import type { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
+import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { WorkspaceInvalidProjectError } from '@/modules/workspaces/errors/workspace'
-import {
-  moveProjectToWorkspaceFactory,
-  queryAllWorkspaceProjectsFactory
-} from '@/modules/workspaces/services/projects'
-import {
+import { moveProjectToWorkspaceFactory } from '@/modules/workspaces/services/projects'
+import type {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain
 } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
-import { ProjectUpdateRoleInput } from '@/test/graphql/generated/graphql'
-import { Roles, StreamRoles, WorkspaceRoles } from '@speckle/shared'
+import type { ProjectUpdateRoleInput } from '@/modules/core/graph/generated/graphql'
+import type { StreamRoles, WorkspaceRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
 
 describe('Project retrieval services', () => {
   describe('queryAllWorkspaceProjectFactory returns a generator, that', () => {
@@ -26,12 +27,11 @@ describe('Project retrieval services', () => {
       const foundProjects: StreamRecord[] = []
       const storedProjects: StreamRecord[] = [{ workspaceId } as StreamRecord]
 
-      const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
-        getStreams: async () => {
+      const queryAllWorkspaceProjectsGenerator = queryAllProjectsFactory({
+        getExplicitProjects: async () => {
           return {
-            streams: storedProjects,
-            totalCount: storedProjects.length,
-            cursorDate: null
+            items: storedProjects,
+            cursor: null
           }
         }
       })
@@ -47,17 +47,17 @@ describe('Project retrieval services', () => {
     it('returns all streams for a workspace if the query requires multiple pages of results', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
 
-      const foundProjects: StreamRecord[] = []
-      const storedProjects: StreamRecord[] = [
+      const foundProjects: StreamWithOptionalRole[] = []
+      const storedProjects: StreamWithOptionalRole[] = [
         { workspaceId } as StreamRecord,
         { workspaceId } as StreamRecord
       ]
 
-      const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
-        getStreams: async ({ cursor }) => {
+      const queryAllWorkspaceProjectsGenerator = queryAllProjectsFactory({
+        getExplicitProjects: async ({ cursor }) => {
           return cursor
-            ? { streams: [storedProjects[1]], totalCount: 1, cursorDate: null }
-            : { streams: [storedProjects[0]], totalCount: 1, cursorDate: new Date() }
+            ? { items: [storedProjects[1]], cursor: null }
+            : { items: [storedProjects[0]], cursor: new Date().toISOString() }
         }
       })
 
@@ -74,9 +74,9 @@ describe('Project retrieval services', () => {
 
       const foundProjects: StreamRecord[] = []
 
-      const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
-        getStreams: async () => {
-          return { streams: [], totalCount: 0, cursorDate: null }
+      const queryAllWorkspaceProjectsGenerator = queryAllProjectsFactory({
+        getExplicitProjects: async () => {
+          return { items: [], cursor: null }
         }
       })
 
@@ -245,6 +245,7 @@ describe('Project management services', () => {
         getProjectCollaborators: async () => {
           expect.fail()
         },
+        copyWorkspace: async () => '',
         getWorkspaceRolesAndSeats: async () => {
           expect.fail()
         },
@@ -290,6 +291,7 @@ describe('Project management services', () => {
         getProjectCollaborators: async () => {
           expect.fail()
         },
+        copyWorkspace: async () => '',
         getWorkspaceRolesAndSeats: async () => {
           expect.fail()
         },
@@ -344,6 +346,7 @@ describe('Project management services', () => {
             } as unknown as ProjectTeamMember
           ]
         },
+        copyWorkspace: async () => '',
         getWorkspaceRolesAndSeats: async () => {
           return {
             [userId]: {
@@ -413,6 +416,7 @@ describe('Project management services', () => {
             } as unknown as ProjectTeamMember
           ]
         },
+        copyWorkspace: async () => '',
         getWorkspaceRolesAndSeats: async () => {
           return {}
         },
@@ -486,6 +490,7 @@ describe('Project management services', () => {
               } as unknown as ProjectTeamMember
             ]
           },
+          copyWorkspace: async () => '',
           getWorkspaceRolesAndSeats: async () => {
             return workspaceRole && workspaceSeatType
               ? {

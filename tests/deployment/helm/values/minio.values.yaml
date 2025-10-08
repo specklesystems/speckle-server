@@ -1,0 +1,26 @@
+defaultBuckets: 'speckle-server'
+auth:
+  rootUser: minioadmin
+  rootPassword: minioadmin
+image:
+  repository: bitnamilegacy/minio
+  debug: true
+persistence:
+  enabled: true
+  existingClaim: minio-pvc
+defaultInitContainers:
+  volumePermissions:
+    image:
+      repository: bitnamilegacy/os-shell
+clientImage:
+  repository: bitnamilegacy/minio-client
+console:
+  image:
+    repository: bitnamilegacy/minio-object-browser
+volumePermissions:
+  enabled: true
+  image:
+    repository: bitnamilegacy/os-shell
+global:
+  security:
+    allowInsecureImages: true # needed for bitnamilegacy images

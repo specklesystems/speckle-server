@@ -1,0 +1,33 @@
+name: Get-version
+
+on:
+  workflow_call:
+    outputs:
+      IMAGE_VERSION_TAG:
+        description: 'The image version tag to use for the deployment test'
+        value: ${{ jobs.get-version.outputs.IMAGE_VERSION_TAG }}
+
+jobs:
+  get-version:
+    outputs:
+      IMAGE_VERSION_TAG: ${{ steps.export-step.outputs.IMAGE_VERSION_TAG }}
+    name: Get version
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          sparse-checkout: |
+            .github/workflows/scripts/get_version.sh
+            .github/workflows/scripts/common.sh
+          fetch-depth: 1
+          fetch-tags: 1
+      - run: git fetch origin 'refs/tags/*:refs/tags/*'
+      - run: chmod +x ./get_version.sh ./common.sh
+        working-directory: ./.github/workflows/scripts
+      - run: ./get_version.sh >> result
+        working-directory: ./.github/workflows/scripts
+      - run: echo "IMAGE_VERSION_TAG=$(cat result)"
+        working-directory: ./.github/workflows/scripts
+      - id: export-step
+        run: echo "IMAGE_VERSION_TAG=$(cat result)" >> "$GITHUB_OUTPUT"
+        working-directory: ./.github/workflows/scripts

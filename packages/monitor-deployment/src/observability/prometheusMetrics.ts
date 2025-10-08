@@ -5,25 +5,15 @@ import { join } from 'lodash-es'
 import { Counter, Histogram, Registry } from 'prom-client'
 import prometheusClient from 'prom-client'
 import { init as commits } from '@/observability/metrics/commits.js'
-import { init as dbMaxLogicalReplicationWorkers } from '@/observability/metrics/dbMaxLogicalReplicationWorkers.js'
-import { init as dbMaxReplicationSlots } from '@/observability/metrics/dbMaxReplicationSlots.js'
-import { init as dbMaxSyncWorkersPerSubscription } from '@/observability/metrics/dbMaxSyncWorkersPerSubscription.js'
-import { init as dbMaxWalSenders } from '@/observability/metrics/dbMaxWalSenders.js'
-import { init as dbMaxWorkerProcesses } from '@/observability/metrics/dbMaxWorkerProcesses.js'
+import { init as dbMaxPerparedTransactions } from '@/observability/metrics/dbMaxPerparedTransactions.js'
+import { init as dbPreparedTransactions } from '@/observability/metrics/dbPreparedTransactions.js'
 import { init as dbSize } from '@/observability/metrics/dbSize.js'
-import { init as dbWalLevel } from '@/observability/metrics/dbWalLevel.js'
-import { init as dbWorkers } from '@/observability/metrics/dbWorkers.js'
-import { init as dbWorkersAwaitingLocks } from '@/observability/metrics/dbWorkersAwaitingLocks.js'
 import { init as fileImports } from '@/observability/metrics/fileImports.js'
 import { init as fileSize } from '@/observability/metrics/fileSize.js'
-import { init as inactiveReplicationSlots } from '@/observability/metrics/inactiveReplicationSlots.js'
 import { init as maxConnections } from '@/observability/metrics/maxConnections.js'
 import { init as objects } from '@/observability/metrics/objects.js'
 import { init as previews } from '@/observability/metrics/previews.js'
-import { init as replicationSlotLag } from '@/observability/metrics/replicationSlotLag.js'
-import { init as replicationWorkerLag } from '@/observability/metrics/replicationWorkerLag.js'
 import { init as streams } from '@/observability/metrics/streams.js'
-import { init as subscriptionsEnabled } from '@/observability/metrics/subscriptionsEnabled.js'
 import { init as tablesize } from '@/observability/metrics/tableSize.js'
 import { init as users } from '@/observability/metrics/users.js'
 import { init as webhooks } from '@/observability/metrics/webhooks.js'
@@ -61,25 +51,15 @@ function initMonitoringMetrics(params: {
 
   const metricsToInitialize = [
     commits,
-    dbMaxLogicalReplicationWorkers,
-    dbMaxReplicationSlots,
-    dbMaxSyncWorkersPerSubscription,
-    dbMaxWalSenders,
-    dbMaxWorkerProcesses,
-    dbWalLevel,
+    dbMaxPerparedTransactions,
+    dbPreparedTransactions,
     dbSize,
-    dbWorkers,
-    dbWorkersAwaitingLocks,
     fileImports,
     fileSize,
-    inactiveReplicationSlots,
     maxConnections,
     objects,
     previews,
-    replicationSlotLag,
-    replicationWorkerLag,
     streams,
-    subscriptionsEnabled,
     tablesize,
     users,
     webhooks

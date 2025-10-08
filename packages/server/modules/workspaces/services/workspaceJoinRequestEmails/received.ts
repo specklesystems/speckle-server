@@ -1,8 +1,8 @@
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
-import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
-import { RenderEmail, SendEmail } from '@/modules/emails/domain/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import type { RenderEmail, SendEmail } from '@/modules/emails/domain/operations'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import {
+import type {
   GetWorkspaceCollaborators,
   SendWorkspaceJoinRequestReceivedEmail
 } from '@/modules/workspaces/domain/operations'
@@ -77,7 +77,7 @@ export const sendWorkspaceJoinRequestReceivedEmailFactory =
   }): SendWorkspaceJoinRequestReceivedEmail =>
   async (args) => {
     const { requester, workspace } = args
-    const [serverInfo, workspaceAdmins] = await Promise.all([
+    const [serverInfo, { items: workspaceAdmins }] = await Promise.all([
       getServerInfo(),
       getWorkspaceCollaborators({
         workspaceId: workspace.id,

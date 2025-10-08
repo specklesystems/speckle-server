@@ -1,12 +1,11 @@
-import { WorkspaceFeatureAccessFunction } from '@/modules/gatekeeper/domain/operations'
-import { GetRegions } from '@/modules/multiregion/domain/operations'
-import {
+import type { WorkspaceFeatureAccessFunction } from '@/modules/gatekeeper/domain/operations'
+import type { GetRegions } from '@/modules/multiregion/domain/operations'
+import type {
   AssignWorkspaceRegion,
   GetAvailableRegions,
   GetDefaultRegion,
   GetWorkspace,
-  UpsertRegionAssignment,
-  UpsertWorkspace
+  UpsertRegionAssignment
 } from '@/modules/workspaces/domain/operations'
 import { WorkspaceRegionAssignmentError } from '@/modules/workspaces/errors/regions'
 
@@ -31,7 +30,6 @@ export const assignWorkspaceRegionFactory =
     upsertRegionAssignment: UpsertRegionAssignment
     getDefaultRegion: GetDefaultRegion
     getWorkspace: GetWorkspace
-    insertRegionWorkspace: UpsertWorkspace
   }): AssignWorkspaceRegion =>
   async (params) => {
     const { workspaceId, regionKey } = params
@@ -65,7 +63,4 @@ export const assignWorkspaceRegionFactory =
 
     // Set up region
     await deps.upsertRegionAssignment({ workspaceId, regionKey })
-
-    // Copy workspace into region db
-    await deps.insertRegionWorkspace({ workspace })
   }

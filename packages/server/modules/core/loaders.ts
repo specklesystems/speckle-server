@@ -1,10 +1,11 @@
 import DataLoader from 'dataloader'
-import { AuthContext } from '@/modules/shared/authz'
+import type { AuthContext } from '@/modules/shared/authz'
 import { graphDataloadersBuilders } from '@/modules/index'
-import { ModularizedDataLoadersConstraint } from '@/modules/shared/helpers/graphqlHelper'
-import { Knex } from 'knex'
-import { isNonNullable, Optional } from '@speckle/shared'
-import { flatten, noop, isFunction } from 'lodash'
+import type { ModularizedDataLoadersConstraint } from '@/modules/shared/helpers/graphqlHelper'
+import type { Knex } from 'knex'
+import type { Optional } from '@speckle/shared'
+import { isNonNullable } from '@speckle/shared'
+import { flatten, noop, isFunction } from 'lodash-es'
 import { db } from '@/db/knex'
 
 /**
@@ -73,7 +74,7 @@ export async function buildRequestLoaders(
   options?: Partial<{ cleanLoadersEarly: boolean }>
 ) {
   const createLoader = buildDataLoaderCreator(options?.cleanLoadersEarly || false)
-  const modulesLoaders = graphDataloadersBuilders()
+  const modulesLoaders = await graphDataloadersBuilders()
 
   const mainDb = db
 
@@ -110,6 +111,21 @@ export async function buildRequestLoaders(
   }
 
   /**
+   * Do something for each region, including mainDb (e.g. clear loader in all regions). This only
+   * loops over initiated/cached regions, not all server registrated regions.
+   */
+  const forEachCachedRegion = (
+    predicate: (params: { db: Knex; loaders: ModularizedDataLoaders }) => void
+  ) => {
+    for (const [db, loaders] of [
+      ...regionLoaders.entries(),
+      <const>[mainDb, mainDbLoaders]
+    ]) {
+      predicate({ db, loaders })
+    }
+  }
+
+  /**
    * Clear all request loaders across all regions
    */
   const clearAll = () => {
@@ -129,7 +145,8 @@ export async function buildRequestLoaders(
   return {
     ...mainDbLoaders,
     clearAll,
-    forRegion
+    forRegion,
+    forEachCachedRegion
   }
 }
 

@@ -1,25 +1,22 @@
-import {
-  calculateSubscriptionSeats,
+import type {
   GetSubscriptionData,
   GetWorkspacePlan,
   GetWorkspacePlanProductId,
   GetWorkspaceSubscriptions,
   ReconcileSubscriptionData,
   UpsertWorkspaceSubscription,
-  WorkspaceSeatType,
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
-import { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
+import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
+import type { CountSeatsByTypeInWorkspace } from '@/modules/gatekeeper/domain/operations'
 import {
   WorkspacePlanMismatchError,
   WorkspacePlanNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
 import { mutateSubscriptionDataWithNewValidSeatNumbers } from '@/modules/gatekeeper/services/subscriptions/mutateSubscriptionDataWithNewValidSeatNumbers'
-import { GatekeeperEvents } from '@/modules/gatekeeperCore/domain/events'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import { Logger } from '@/observability/logging'
+import type { Logger } from '@/observability/logging'
 import { throwUncoveredError, WorkspacePlans } from '@speckle/shared'
-import { cloneDeep, isEqual } from 'lodash'
+import { cloneDeep, isEqual } from 'lodash-es'
 
 type DownscaleWorkspaceSubscription = (args: {
   workspaceSubscription: WorkspaceSubscription
@@ -30,14 +27,12 @@ export const downscaleWorkspaceSubscriptionFactory =
     getWorkspacePlan,
     countSeatsByTypeInWorkspace,
     getWorkspacePlanProductId,
-    reconcileSubscriptionData,
-    eventBusEmit
+    reconcileSubscriptionData
   }: {
     getWorkspacePlan: GetWorkspacePlan
     countSeatsByTypeInWorkspace: CountSeatsByTypeInWorkspace
     getWorkspacePlanProductId: GetWorkspacePlanProductId
     reconcileSubscriptionData: ReconcileSubscriptionData
-    eventBusEmit: EventBusEmit
   }): DownscaleWorkspaceSubscription =>
   async ({ workspaceSubscription }) => {
     const workspaceId = workspaceSubscription.workspaceId
@@ -69,8 +64,7 @@ export const downscaleWorkspaceSubscriptionFactory =
       type: WorkspaceSeatType.Editor
     })
 
-    const previousSubscriptionData = cloneDeep(workspaceSubscription.subscriptionData)
-    const subscriptionData = cloneDeep(previousSubscriptionData)
+    const subscriptionData = cloneDeep(workspaceSubscription.subscriptionData)
 
     mutateSubscriptionDataWithNewValidSeatNumbers({
       seatCount: editorsCount,
@@ -84,21 +78,7 @@ export const downscaleWorkspaceSubscriptionFactory =
     }
 
     await reconcileSubscriptionData({ subscriptionData, prorationBehavior: 'none' })
-    await eventBusEmit({
-      eventName: GatekeeperEvents.WorkspaceSubscriptionUpdated,
-      payload: {
-        workspacePlan,
-        subscription: {
-          totalEditorSeats: calculateSubscriptionSeats({ subscriptionData })
-        },
-        previousSubscription: {
-          totalEditorSeats: calculateSubscriptionSeats({
-            subscriptionData: previousSubscriptionData
-          })
-        }
-      }
-    })
-
+    // we do not need to emit a subscription event as stripe will emit an update
     return true
   }
 
@@ -107,12 +87,12 @@ export const manageSubscriptionDownscaleFactory =
     getWorkspaceSubscriptions,
     downscaleWorkspaceSubscription,
     updateWorkspaceSubscription,
-    getSubscriptionData
+    getStripeSubscriptionData
   }: {
     getWorkspaceSubscriptions: GetWorkspaceSubscriptions
     downscaleWorkspaceSubscription: DownscaleWorkspaceSubscription
     updateWorkspaceSubscription: UpsertWorkspaceSubscription
-    getSubscriptionData: GetSubscriptionData
+    getStripeSubscriptionData: GetSubscriptionData
   }) =>
   async (context: { logger: Logger }) => {
     const { logger } = context
@@ -131,9 +111,15 @@ export const manageSubscriptionDownscaleFactory =
           log.info('Did not need to downscale the workspace subscription')
         }
       } catch (err) {
-        log.error({ err }, 'Failed to downscale workspace subscription')
+        log.error(
+          {
+            err,
+            workspaceId: workspaceSubscription.workspaceId
+          },
+          'Failed to downscale workspace subscription'
+        )
       }
-      const subscriptionData = await getSubscriptionData(
+      const subscriptionData = await getStripeSubscriptionData(
         workspaceSubscription.subscriptionData
       )
       const updatedWorkspaceSubscription = {

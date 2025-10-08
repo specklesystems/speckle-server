@@ -20,10 +20,10 @@ import {
   Streams,
   StreamsMeta
 } from '@/modules/core/dbSchema'
-import { Branch } from '@/modules/core/domain/branches/types'
-import { Commit } from '@/modules/core/domain/commits/types'
-import { Stream } from '@/modules/core/domain/streams/types'
-import {
+import type { Branch } from '@/modules/core/domain/branches/types'
+import type { Commit } from '@/modules/core/domain/commits/types'
+import type { Stream } from '@/modules/core/domain/streams/types'
+import type {
   BranchCommitRecord,
   ObjectRecord,
   CommitRecord,
@@ -32,13 +32,14 @@ import {
   StreamRecord
 } from '@/modules/core/helpers/types'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
-import {
+import type {
   CopyProjectAutomations,
   CopyProjectBlobs,
   CopyProjectComments,
   CopyProjectModels,
   CopyProjectObjects,
   CopyProjects,
+  CopyProjectSavedViews,
   CopyProjectVersions,
   CopyProjectWebhooks,
   CopyWorkspace,
@@ -46,15 +47,16 @@ import {
   CountProjectComments,
   CountProjectModels,
   CountProjectObjects,
+  CountProjectSavedViews,
   CountProjectVersions,
   CountProjectWebhooks
 } from '@/modules/workspaces/domain/operations'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
-import { Knex } from 'knex'
-import { Workspace } from '@/modules/workspacesCore/domain/types'
+import type { Knex } from 'knex'
+import type { Workspace } from '@/modules/workspacesCore/domain/types'
 import { Workspaces } from '@/modules/workspacesCore/helpers/db'
-import { ObjectPreview } from '@/modules/previews/domain/types'
-import {
+import type { ObjectPreview } from '@/modules/previews/domain/types'
+import type {
   AutomationFunctionRunRecord,
   AutomationRecord,
   AutomationRevisionFunctionRecord,
@@ -64,18 +66,23 @@ import {
   AutomationTokenRecord,
   AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
-import {
+import type {
   CommentLinkRecord,
   CommentRecord,
   CommentViewRecord
 } from '@/modules/comments/helpers/types'
-import { Webhook, WebhookEvent } from '@/modules/webhooks/domain/types'
-import { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
+import type { Webhook, WebhookEvent } from '@/modules/webhooks/domain/types'
+import type { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
 import { BlobStorage } from '@/modules/blobstorage/repositories'
-import { BlobStorageItem } from '@/modules/blobstorage/domain/types'
+import type { BlobStorageItem } from '@/modules/blobstorage/domain/types'
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
-import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
+import type { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
+import type {
+  SavedView,
+  SavedViewGroup
+} from '@speckle/shared/dist/esm/authz/domain/savedViews/types.js'
+import { SavedViewGroups, SavedViews } from '@/modules/viewer/repositories/savedViews'
 
 const tables = {
   workspaces: (db: Knex) => db<Workspace>(Workspaces.name),
@@ -107,7 +114,9 @@ const tables = {
   webhooks: (db: Knex) => db.table<Webhook>('webhooks_config'),
   webhookEvents: (db: Knex) => db.table<WebhookEvent>('webhooks_events'),
   fileUploads: (db: Knex) => db.table<FileUploadRecord>(FileUploads.name),
-  blobStorage: (db: Knex) => db.table<BlobStorageItem>(BlobStorage.name)
+  blobStorage: (db: Knex) => db.table<BlobStorageItem>(BlobStorage.name),
+  savedViews: (db: Knex) => db.table<SavedView>(SavedViews.name),
+  savedViewGroups: (db: Knex) => db.table<SavedViewGroup>(SavedViewGroups.name)
 }
 
 const getCountObject = (projectIds: string[]) => {
@@ -660,6 +669,40 @@ export const copyProjectBlobs =
     return copiedBlobsCountByProjectId
   }
 
+export const copyProjectSavedViews =
+  (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectSavedViews =>
+  async ({ projectIds }) => {
+    const copiedSavedViews = getCountObject(projectIds)
+
+    const selectSavedViews = tables
+      .savedViews(deps.sourceDb)
+      .select('*')
+      .whereIn(SavedViews.col.projectId, projectIds)
+
+    for await (const savedViews of executeBatchedSelect(selectSavedViews)) {
+      await tables.savedViews(deps.targetDb).insert(savedViews).onConflict().ignore()
+
+      for (const savedView of savedViews) {
+        copiedSavedViews[savedView.projectId]++
+      }
+    }
+
+    const selectSavedViewGroups = tables
+      .savedViewGroups(deps.sourceDb)
+      .select('*')
+      .whereIn(SavedViewGroups.col.projectId, projectIds)
+
+    for await (const savedViewGroups of executeBatchedSelect(selectSavedViewGroups)) {
+      await tables
+        .savedViewGroups(deps.targetDb)
+        .insert(savedViewGroups)
+        .onConflict()
+        .ignore()
+    }
+
+    return copiedSavedViews
+  }
+
 export const countProjectModelsFactory =
   (deps: { db: Knex }): CountProjectModels =>
   async ({ projectId }) => {
@@ -702,5 +745,12 @@ export const countProjectWebhooksFactory =
   (deps: { db: Knex }): CountProjectWebhooks =>
   async ({ projectId }) => {
     const [res] = await tables.webhooks(deps.db).where({ streamId: projectId }).count()
+    return parseInt(res?.count?.toString() ?? '0')
+  }
+
+export const countProjectSavedViewsFactory =
+  (deps: { db: Knex }): CountProjectSavedViews =>
+  async ({ projectId }) => {
+    const [res] = await tables.savedViews(deps.db).where({ projectId }).count()
     return parseInt(res?.count?.toString() ?? '0')
   }

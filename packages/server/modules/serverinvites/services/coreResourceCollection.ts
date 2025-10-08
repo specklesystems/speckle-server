@@ -2,8 +2,8 @@ import {
   ProjectInviteResourceType,
   ServerInviteResourceType
 } from '@/modules/serverinvites/domain/constants'
-import { CollectAndValidateResourceTargets } from '@/modules/serverinvites/services/operations'
-import { ServerInviteResourceTarget } from '@/modules/serverinvites/domain/types'
+import type { CollectAndValidateResourceTargets } from '@/modules/serverinvites/services/operations'
+import type { ServerInviteResourceTarget } from '@/modules/serverinvites/domain/types'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
   isProjectResourceTarget,
@@ -11,8 +11,8 @@ import {
 } from '@/modules/serverinvites/helpers/core'
 import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
-import { flatten } from 'lodash'
-import { GetStream } from '@/modules/core/domain/streams/operations'
+import { flatten } from 'lodash-es'
+import type { GetStream } from '@/modules/core/domain/streams/operations'
 
 const collectAndValidateServerTargetFactory =
   (): CollectAndValidateResourceTargets => (params) => {

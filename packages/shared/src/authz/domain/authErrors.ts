@@ -94,6 +94,15 @@ export const WorkspaceNotEnoughPermissionsError = defineAuthError({
   message: 'You do not have enough permissions in the workspace to perform this action'
 })
 
+export const EligibleForExclusiveWorkspaceError = defineAuthError({
+  code: 'UserEligibleForExclusiveWorkspace',
+  message:
+    'Cannot create workspace: ' +
+    'You are a member or eligible to become a member of an exclusive workspace. ' +
+    'This is due to you having received an invite to the workspace ' +
+    'or having a matching verified email.'
+})
+
 export const WorkspaceReadOnlyError = defineAuthError({
   code: 'WorkspaceReadOnly',
   message: 'The workspace is in a read only mode, upgrade your plan to unlock it'
@@ -107,8 +116,8 @@ export const WorkspaceLimitsReachedError = defineAuthError<
   message: 'Workspace limits have been reached'
 })
 
-export const WorkspaceNoFeatureAccessError = defineAuthError({
-  code: 'WorkspaceNoFeatureAccess',
+export const WorkspacePlanNoFeatureAccessError = defineAuthError({
+  code: 'WorkspacePlanNoFeatureAccessError',
   message: 'Your workspace plan does not have access to this feature.'
 })
 
@@ -170,6 +179,82 @@ export const ReservedModelNotDeletableError = defineAuthError({
 export const VersionNotFoundError = defineAuthError({
   code: 'VersionNotFound',
   message: 'Version not found'
+})
+
+export const AutomateNotEnabledError = defineAuthError({
+  code: 'AutomateNotEnabled',
+  message: 'Automate is not enabled on this server'
+})
+
+export const AutomateFunctionNotFoundError = defineAuthError({
+  code: 'AutomateFunctionNotFound',
+  message: 'Function not found'
+})
+
+export const AutomateFunctionNotCreatorError = defineAuthError({
+  code: 'AutomateFunctionNotCreator',
+  message: 'You are not the function creator and cannot make changes to it.'
+})
+
+export const AccIntegrationNotEnabledError = defineAuthError({
+  code: 'AccIntegrationNotEnabled',
+  message: 'The ACC Integration is not enabled on this server or project'
+})
+
+export const SavedViewNotFoundError = defineAuthError({
+  code: 'SavedViewNotFound',
+  message: 'Saved view not found'
+})
+
+export const SavedViewNoAccessError = defineAuthError({
+  code: 'SavedViewNoAccess',
+  message: 'You do not have access to this saved view'
+})
+
+export const SavedViewInvalidUpdateError = defineAuthError({
+  code: 'SavedViewInvalidUpdate',
+  message: 'The requested update is invalid'
+})
+
+export const SavedViewGroupNotFoundError = defineAuthError({
+  code: 'SavedViewGroupNotFound',
+  message: 'Saved view group not found'
+})
+
+export const UngroupedSavedViewGroupLockError = defineAuthError({
+  code: 'UngroupedSavedViewGroupLock',
+  message: 'The default/ungrouped group cannot be modified.'
+})
+
+export const DashboardsNotEnabledError = defineAuthError({
+  code: 'DashboardsNotEnabled',
+  message: 'Dashboards are not enabled for this server or workspaces.'
+})
+
+export const DashboardNotFoundError = defineAuthError({
+  code: 'DashboardNotFound',
+  message: 'Dashboard not found'
+})
+
+export const DashboardNoProjectsError = defineAuthError({
+  code: 'DashboardNoProjects',
+  message:
+    'Dashboard has no projects added to it. You need to add at least one project before sharing.'
+})
+
+export const DashboardProjectsNotEnoughPermissionsError = defineAuthError<
+  'DashboardProjectsNotEnoughPermissions',
+  {
+    projectIds: string[]
+  }
+>({
+  code: 'DashboardProjectsNotEnoughPermissions',
+  message: 'You do not have sufficient access to some projects in this workspace.'
+})
+
+export const DashboardNotOwnerError = defineAuthError({
+  code: 'DashboardNotOwner',
+  message: 'You must be a dashboard owner to perform this action'
 })
 
 // Resolve all exported error types

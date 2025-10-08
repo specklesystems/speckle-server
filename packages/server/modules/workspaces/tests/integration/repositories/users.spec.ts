@@ -4,15 +4,17 @@ import {
   createRandomString
 } from '@/modules/core/helpers/testHelpers'
 import { getInvitableCollaboratorsByProjectIdFactory } from '@/modules/workspaces/repositories/users'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   assignToWorkspace,
-  BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
-import { pick } from 'lodash'
+import { pick } from 'lodash-es'
 
 describe('Workspace repositories', () => {
   describe('users repository', () => {
@@ -86,7 +88,7 @@ describe('Workspace repositories', () => {
       })
 
       it('should return all workspace collaborators not members of the project', async () => {
-        const invitable = await getInvitableCollaboratorsByProjectId({
+        const { items: invitable } = await getInvitableCollaboratorsByProjectId({
           filter: {
             workspaceId: testWorkspace.id,
             projectId: testProject.id
@@ -100,7 +102,7 @@ describe('Workspace repositories', () => {
         ])
       })
       it('should should filter by user name', async () => {
-        const invitable = await getInvitableCollaboratorsByProjectId({
+        const { items: invitable } = await getInvitableCollaboratorsByProjectId({
           filter: {
             workspaceId: testWorkspace.id,
             projectId: testProject.id,
@@ -114,7 +116,7 @@ describe('Workspace repositories', () => {
         ])
       })
       it('should should filter by user email', async () => {
-        const invitable = await getInvitableCollaboratorsByProjectId({
+        const { items: invitable } = await getInvitableCollaboratorsByProjectId({
           filter: {
             workspaceId: testWorkspace.id,
             projectId: testProject.id,
@@ -128,7 +130,7 @@ describe('Workspace repositories', () => {
         ])
       })
       it('should should filter by user name and email', async () => {
-        const invitable = await getInvitableCollaboratorsByProjectId({
+        const { items: invitable } = await getInvitableCollaboratorsByProjectId({
           filter: {
             workspaceId: testWorkspace.id,
             projectId: testProject.id,

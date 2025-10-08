@@ -9,6 +9,7 @@ import {
 import { changePasswordFactory } from '@/modules/core/services/users/management'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { getAllRegisteredDbs } from '@/modules/multiregion/utils/dbSelector'
 import {
   createTokenFactory,
   deleteTokensFactory,
@@ -16,16 +17,19 @@ import {
 } from '@/modules/pwdreset/repositories'
 import { finalizePasswordResetFactory } from '@/modules/pwdreset/services/finalize'
 import { requestPasswordRecoveryFactory } from '@/modules/pwdreset/services/request'
+import { asMultiregionalOperation } from '@/modules/shared/command'
 import { BadRequestError } from '@/modules/shared/errors'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 import { ensureError } from '@speckle/shared'
-import { Express } from 'express'
+import type { Express } from 'express'
+import { UserNotFoundError } from '@/modules/core/errors/user'
 
 export default function (app: Express) {
   const getUserByEmail = getUserByEmailFactory({ db })
 
   // sends a password recovery email.
   app.post('/auth/pwdreset/request', async (req, res) => {
+    const responseMessage = 'Password reset email sent.'
     try {
       const email = req.body.email
       const logger = req.log.child({ email })
@@ -44,10 +48,16 @@ export default function (app: Express) {
         operationDescription: `Requesting password recovery`
       })
 
-      return res.status(200).send('Password reset email sent.')
+      return res.status(200).send(responseMessage)
     } catch (e: unknown) {
-      req.log.info({ err: e }, 'Error while requesting password recovery.')
-      res.status(400).send(ensureError(e).message)
+      const err = ensureError(e, 'Unknown error while requesting password recovery')
+      req.log.info({ err }, 'Error while requesting password recovery.')
+      if (err instanceof UserNotFoundError) {
+        // always 200 and use same response message to avoid user enumeration
+        res.status(200).send(responseMessage)
+      } else {
+        res.status(400).send(err.message)
+      }
     }
   })
 
@@ -55,25 +65,34 @@ export default function (app: Express) {
   app.post('/auth/pwdreset/finalize', async (req, res) => {
     const logger = req.log
     try {
-      const finalizePasswordReset = finalizePasswordResetFactory({
-        getUserByEmail,
-        getPendingToken: getPendingTokenFactory({ db }),
-        deleteTokens: deleteTokensFactory({ db }),
-        updateUserPassword: changePasswordFactory({
-          getUser: getUserFactory({ db }),
-          updateUser: updateUserFactory({ db })
-        }),
-        deleteExistingAuthTokens: deleteExistingAuthTokensFactory({ db })
-      })
-
       if (!req.body.tokenId || !req.body.password)
         throw new BadRequestError('Invalid request.')
-      await withOperationLogging(
-        async () => await finalizePasswordReset(req.body.tokenId, req.body.password),
+      await asMultiregionalOperation(
+        async ({ mainDb, allDbs }) => {
+          const finalizePasswordReset = finalizePasswordResetFactory({
+            getUserByEmail,
+            getPendingToken: getPendingTokenFactory({ db: mainDb }),
+            deleteTokens: deleteTokensFactory({ db: mainDb }),
+            updateUserPassword: changePasswordFactory({
+              getUser: getUserFactory({ db: mainDb }),
+              updateUser: async (...params) => {
+                const [res] = await Promise.all(
+                  allDbs.map((db) => updateUserFactory({ db })(...params))
+                )
+
+                return res
+              }
+            }),
+            deleteExistingAuthTokens: deleteExistingAuthTokensFactory({ db: mainDb })
+          })
+
+          return await finalizePasswordReset(req.body.tokenId, req.body.password)
+        },
         {
           logger,
-          operationName: 'finalizePasswordReset',
-          operationDescription: `Finalizing password reset`
+          dbs: await getAllRegisteredDbs(),
+          name: 'finalizePasswordReset',
+          description: `Finalizing password reset`
         }
       )
 

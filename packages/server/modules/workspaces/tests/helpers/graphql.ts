@@ -17,8 +17,10 @@ export const basicPendingWorkspaceCollaboratorFragment = gql`
   fragment BasicPendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
     id
     inviteId
-    workspaceId
-    workspaceName
+    workspace {
+      id
+      name
+    }
     title
     role
     invitedBy {

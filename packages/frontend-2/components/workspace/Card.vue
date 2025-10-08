@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 const props = defineProps<{
-  logo: string
+  logo?: string
   name: string
   clickable?: boolean
   bannerText?: string | null

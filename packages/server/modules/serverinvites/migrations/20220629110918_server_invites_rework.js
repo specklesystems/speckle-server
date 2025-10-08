@@ -7,7 +7,7 @@ const NEW_IDX_2 = ['resourceTarget', 'resourceId']
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-exports.up = async function (knex) {
+const up = async function (knex) {
   // First lets delete all invites with an invalid user ID, otherwise
   // the new foreign key will fail
   await knex(TABLE_NAME)
@@ -39,7 +39,7 @@ exports.up = async function (knex) {
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-exports.down = async function (knex) {
+const down = async function (knex) {
   // Since we want to add back the unique idx on email, we need to delete rows that have duplicate emails
   await knex(TABLE_NAME)
     .whereIn(
@@ -56,3 +56,5 @@ exports.down = async function (knex) {
     table.unique('email')
   })
 }
+
+export { up, down }

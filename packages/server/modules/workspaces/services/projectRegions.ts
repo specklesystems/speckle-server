@@ -1,12 +1,12 @@
-import { GetProject } from '@/modules/core/domain/projects/operations'
-import { UpdateProjectRegionKey } from '@/modules/multiregion/services/projectRegion'
-import {
+import type { GetProject } from '@/modules/core/domain/projects/operations'
+import type {
   CopyProjectAutomations,
   CopyProjectBlobs,
   CopyProjectComments,
   CopyProjectModels,
   CopyProjectObjects,
   CopyProjects,
+  CopyProjectSavedViews,
   CopyProjectVersions,
   CopyProjectWebhooks,
   CopyWorkspace,
@@ -14,16 +14,17 @@ import {
   CountProjectComments,
   CountProjectModels,
   CountProjectObjects,
+  CountProjectSavedViews,
   CountProjectVersions,
   CountProjectWebhooks,
   GetAvailableRegions,
-  UpdateProjectRegion,
+  MoveProjectToRegion,
   ValidateProjectRegionCopy
 } from '@/modules/workspaces/domain/operations'
 import { ProjectRegionAssignmentError } from '@/modules/workspaces/errors/regions'
 import { logger } from '@/observability/logging'
 
-export const updateProjectRegionFactory =
+export const moveProjectToRegionFactory =
   (deps: {
     getProject: GetProject
     getAvailableRegions: GetAvailableRegions
@@ -36,9 +37,9 @@ export const updateProjectRegionFactory =
     copyProjectComments: CopyProjectComments
     copyProjectWebhooks: CopyProjectWebhooks
     copyProjectBlobs: CopyProjectBlobs
+    copyProjectSavedViews: CopyProjectSavedViews
     validateProjectRegionCopy: ValidateProjectRegionCopy
-    updateProjectRegionKey: UpdateProjectRegionKey
-  }): UpdateProjectRegion =>
+  }): MoveProjectToRegion =>
   async (params) => {
     const { projectId, regionKey } = params
 
@@ -92,6 +93,9 @@ export const updateProjectRegionFactory =
     // Move file blobs
     await deps.copyProjectBlobs({ projectIds })
 
+    // Move saved views
+    const copiedSavedViewsCount = await deps.copyProjectSavedViews({ projectIds })
+
     // Validate that state after move captures latest state of project
     const targetProjectResources = {
       models: copiedModelCount[projectId] ?? 0,
@@ -99,7 +103,8 @@ export const updateProjectRegionFactory =
       objects: copiedObjectCount[projectId] ?? 0,
       automations: copiedAutomationCount[projectId] ?? 0,
       comments: copiedCommentCount[projectId] ?? 0,
-      webhooks: copiedWebhookCount[projectId] ?? 0
+      webhooks: copiedWebhookCount[projectId] ?? 0,
+      savedViews: copiedSavedViewsCount[projectId] ?? 0
     }
 
     const [isValidCopy, sourceProjectResources] = await deps.validateProjectRegionCopy({
@@ -120,9 +125,6 @@ export const updateProjectRegionFactory =
         'Missing data from source project in target region copy after move.'
       )
     }
-
-    // Update project region in db and update relevant caches
-    return await deps.updateProjectRegionKey({ projectId, regionKey })
   }
 
 export const validateProjectRegionCopyFactory =
@@ -133,6 +135,7 @@ export const validateProjectRegionCopyFactory =
     countProjectAutomations: CountProjectAutomations
     countProjectComments: CountProjectComments
     countProjectWebhooks: CountProjectWebhooks
+    countProjectSavedViews: CountProjectSavedViews
   }): ValidateProjectRegionCopy =>
   async ({ projectId, copiedRowCount }) => {
     const sourceProjectModelCount = await deps.countProjectModels({ projectId })
@@ -143,6 +146,9 @@ export const validateProjectRegionCopyFactory =
     })
     const sourceProjectCommentCount = await deps.countProjectComments({ projectId })
     const sourceProjectWebhooksCount = await deps.countProjectWebhooks({ projectId })
+    const sourceProjectSavedViewsCount = await deps.countProjectSavedViews({
+      projectId
+    })
 
     const tests = [
       copiedRowCount.models === sourceProjectModelCount,
@@ -150,7 +156,8 @@ export const validateProjectRegionCopyFactory =
       copiedRowCount.objects === sourceProjectObjectCount,
       copiedRowCount.automations === sourceProjectAutomationCount,
       copiedRowCount.comments === sourceProjectCommentCount,
-      copiedRowCount.webhooks === sourceProjectWebhooksCount
+      copiedRowCount.webhooks === sourceProjectWebhooksCount,
+      copiedRowCount.savedViews === sourceProjectSavedViewsCount
     ]
 
     return [

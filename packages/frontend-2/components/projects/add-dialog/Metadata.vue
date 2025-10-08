@@ -64,7 +64,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'created'): void
+  (e: 'created', project: { id: string }): void
   (e: 'canceled'): void
   (e: 'back'): void
 }>()
@@ -90,19 +90,22 @@ const onSubmit = handleSubmit(async (values) => {
   try {
     isLoading.value = true
 
-    await createProject({
+    const newProject = await createProject({
       name: values.name,
       description: values.description,
       visibility: visibility.value,
       ...(props.workspaceId ? { workspaceId: props.workspaceId } : {})
     })
-    emit('created')
-    mp.track('Stream Action', {
-      type: 'action',
-      name: 'create',
-      // eslint-disable-next-line camelcase
-      workspace_id: props.workspaceId
-    })
+
+    if (newProject?.id) {
+      emit('created', { id: newProject.id })
+      mp.track('Stream Action', {
+        type: 'action',
+        name: 'create',
+        // eslint-disable-next-line camelcase
+        workspace_id: props.workspaceId
+      })
+    }
   } catch (error) {
     logger.error('Failed to create project:', error)
   } finally {

@@ -1,15 +1,17 @@
 /* istanbul ignore file */
 import { TIME } from '@speckle/shared'
+import type {
+  RateLimitBreached,
+  RateLimits,
+  RateLimiterMapping,
+  RateLimitAction
+} from '@/modules/core/utils/ratelimiter'
 import {
   getRateLimitResult,
   isRateLimitBreached,
   getActionForPath,
-  RateLimitBreached,
-  RateLimits,
   createConsumer,
-  RateLimiterMapping,
   allActions,
-  RateLimitAction,
   throwIfRateLimitedFactory
 } from '@/modules/core/utils/ratelimiter'
 import { expect } from 'chai'

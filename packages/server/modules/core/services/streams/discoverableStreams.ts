@@ -1,19 +1,21 @@
-import {
+import type {
   CountDiscoverableStreams,
   GetDiscoverableStreams,
   GetDiscoverableStreamsPage,
   GetDiscoverableStreamsParams
 } from '@/modules/core/domain/streams/operations'
-import {
+import type {
   DiscoverableStreamsSortingInput,
+  QueryDiscoverableStreamsArgs
+} from '@/modules/core/graph/generated/graphql'
+import {
   DiscoverableStreamsSortType,
-  QueryDiscoverableStreamsArgs,
   SortDirection
 } from '@/modules/core/graph/generated/graphql'
-import { StreamRecord } from '@/modules/core/helpers/types'
+import type { StreamRecord } from '@/modules/core/helpers/types'
 import { encodeDiscoverableStreamsCursor } from '@/modules/core/repositories/streams'
-import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
-import { clamp } from 'lodash'
+import type { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
+import { clamp } from 'lodash-es'
 
 type StreamCollection = {
   cursor: Nullable<string>

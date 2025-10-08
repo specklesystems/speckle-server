@@ -1,25 +1,23 @@
-import { Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import { BranchCommits, Branches, Commits, knex } from '@/modules/core/dbSchema'
 import { BranchNameError } from '@/modules/core/errors/branch'
-import {
+import type {
   ProjectModelsArgs,
   ProjectModelsTreeArgs
 } from '@/modules/core/graph/generated/graphql'
-import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
-import {
+import type { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
+import type {
   BranchCommitRecord,
   BranchRecord,
   CommitRecord
 } from '@/modules/core/helpers/types'
-import {
-  BatchedSelectOptions,
-  executeBatchedSelect
-} from '@/modules/shared/helpers/dbHelper'
+import type { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
+import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import crs from 'crypto-random-string'
-import { Knex } from 'knex'
-import { clamp, isUndefined, last, trim } from 'lodash'
+import type { Knex } from 'knex'
+import { clamp, isUndefined, last, trim } from 'lodash-es'
 import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
-import {
+import type {
   DeleteBranchById,
   GenerateBranchId,
   GetBatchedStreamBranches,
@@ -36,6 +34,7 @@ import {
   GetPaginatedProjectModelsItems,
   GetPaginatedProjectModelsTotalCount,
   GetPaginatedStreamBranchesPage,
+  GetProjectModelById,
   GetStreamBranchByName,
   GetStreamBranchCount,
   GetStreamBranchCounts,
@@ -47,8 +46,8 @@ import {
   StoreBranch,
   UpdateBranch
 } from '@/modules/core/domain/branches/operations'
-import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
-import { ModelTreeItem } from '@/modules/core/domain/branches/types'
+import type { BranchLatestCommit } from '@/modules/core/domain/commits/types'
+import type { ModelTreeItem } from '@/modules/core/domain/branches/types'
 
 const tables = {
   branches: (db: Knex) => db<BranchRecord>(Branches.name),
@@ -78,6 +77,12 @@ export const getBranchByIdFactory =
     const [branch] = await getBranchesByIdsFactory(deps)([branchId], options)
     return branch as Optional<BranchRecord>
   }
+
+export const getProjectModelByIdFactory = (deps: { db: Knex }): GetProjectModelById => {
+  const getBranchById = getBranchByIdFactory(deps)
+  return async (params) =>
+    await getBranchById(params.modelId, { streamId: params.projectId })
+}
 
 export const getStreamBranchesByNameFactory =
   (deps: { db: Knex }): GetStreamBranchesByName =>

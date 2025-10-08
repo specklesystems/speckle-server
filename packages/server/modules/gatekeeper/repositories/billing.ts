@@ -1,5 +1,5 @@
 import { buildTableHelper, Streams } from '@/modules/core/dbSchema'
-import {
+import type {
   CheckoutSession,
   GetCheckoutSession,
   GetWorkspacePlan,
@@ -18,23 +18,25 @@ import {
   GetWorkspaceWithPlan,
   GetWorkspacePlansByWorkspaceId
 } from '@/modules/gatekeeper/domain/billing'
-import {
+import type {
   GetWorkspacesByPlanDaysTillExpiry,
   GetWorkspacePlanByProjectId
 } from '@/modules/gatekeeper/domain/operations'
 import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
-import { Workspace } from '@/modules/workspacesCore/domain/types'
+import type { Workspace } from '@/modules/workspacesCore/domain/types'
 import { Workspaces } from '@/modules/workspacesCore/helpers/db'
-import { PaidWorkspacePlans, WorkspacePlan } from '@speckle/shared'
-import { Knex } from 'knex'
-import { omit } from 'lodash'
+import type { WorkspacePlan } from '@speckle/shared'
+import { PaidWorkspacePlans } from '@speckle/shared'
+import type { Knex } from 'knex'
+import { omit } from 'lodash-es'
 
 const WorkspacePlans = buildTableHelper('workspace_plans', [
   'workspaceId',
   'name',
   'status',
   'createdAt',
-  'updatedAt'
+  'updatedAt',
+  'featureFlags'
 ])
 const WorkspaceSubscriptions = buildTableHelper('workspace_subscriptions', [
   'workspaceId',
@@ -43,7 +45,8 @@ const WorkspaceSubscriptions = buildTableHelper('workspace_subscriptions', [
   'currentBillingCycleEnd',
   'billingInterval',
   'subscriptionData',
-  'currency'
+  'currency',
+  'updateIntent'
 ])
 
 const tables = {
@@ -80,13 +83,24 @@ export const getWorkspaceWithPlanFactory =
 
 export const getWorkspacePlanFactory =
   ({ db }: { db: Knex }): GetWorkspacePlan =>
-  async ({ workspaceId }) => {
-    const workspacePlan = await tables
+  async (params) => {
+    const q = tables
       .workspacePlans(db)
-      .select()
-      .where({ workspaceId })
+      .select<WorkspacePlan[]>(WorkspacePlans.cols)
       .first()
-    return workspacePlan ?? null
+
+    if ('workspaceId' in params) {
+      q.where({ workspaceId: params.workspaceId })
+    } else {
+      q.innerJoin(
+        Workspaces.name,
+        Workspaces.col.id,
+        WorkspacePlans.col.workspaceId
+      ).where({ [Workspaces.col.slug]: params.workspaceSlug })
+    }
+
+    const ret = await q
+    return ret ?? null
   }
 
 export const getWorkspacePlansByWorkspaceIdFactory =
@@ -105,7 +119,7 @@ export const upsertWorkspacePlanFactory =
       .workspacePlans(db)
       .insert(workspacePlan)
       .onConflict('workspaceId')
-      .merge(['name', 'status', 'updatedAt'])
+      .merge(['name', 'status', 'updatedAt', 'featureFlags'])
   }
 
 // this is a typed rebrand of the generic workspace plan upsert

@@ -44,10 +44,16 @@
             v-slot="{ open }"
             :class="buttonClasses"
           >
-            <div class="flex items-center justify-between w-full">
+            <div
+              class="flex items-center w-full"
+              :class="buttonStyle === 'simple' ? 'justify-start' : 'justify-between'"
+            >
               <div
-                class="block truncate grow text-left text-xs sm:text-[13px]"
-                :class="[hasValueSelected ? 'text-foreground' : 'text-foreground-2']"
+                class="block truncate text-left text-xs sm:text-[13px]"
+                :class="[
+                  hasValueSelected ? 'text-foreground' : 'text-foreground-2',
+                  buttonStyle === 'simple' ? '' : 'grow'
+                ]"
               >
                 <template
                   v-if="
@@ -134,7 +140,10 @@
                     />
                   </div>
                 </label>
-                <div class="overflow-auto simple-scrollbar max-h-60 xl:max-h-80">
+                <div
+                  class="overflow-auto simple-scrollbar"
+                  :class="props.menuMaxHeightClasses || 'max-h-[50vh] xl:max-h-80'"
+                >
                   <div v-if="isAsyncSearchMode && isAsyncLoading" class="px-1">
                     <CommonLoadingBar :loading="true" />
                   </div>
@@ -240,7 +249,7 @@ import {
   XMarkIcon,
   ExclamationCircleIcon
 } from '@heroicons/vue/20/solid'
-import { debounce, isArray, isObjectLike } from 'lodash'
+import { debounce, isArray, isObjectLike } from '#lodash'
 import type { CSSProperties, PropType, Ref } from 'vue'
 import { computed, onMounted, ref, unref, watch } from 'vue'
 import type { MaybeAsync, Nullable, Optional } from '@speckle/shared'
@@ -256,6 +265,8 @@ import {
 } from '@vueuse/core'
 import type { LabelPosition } from '~~/src/composables/form/input'
 import { directive as vTippy } from 'vue-tippy'
+import { useBodyMountedMenuPositioning } from '~~/src/composables/layout/menu'
+import { HorizontalDirection } from '~~/src/lib'
 
 type ButtonStyle = 'base' | 'simple' | 'tinted'
 type ValueType = SingleItem | SingleItem[] | undefined
@@ -490,6 +501,13 @@ const props = defineProps({
   menuOpenDirection: {
     type: String as PropType<'left' | 'right'>,
     default: 'left'
+  },
+  /**
+   * Custom max height classes for the dropdown menu. If not provided, defaults to 'max-h-[50vh] xl:max-h-80'
+   */
+  menuMaxHeightClasses: {
+    type: String,
+    default: undefined
   }
 })
 
@@ -525,6 +543,16 @@ useIntersectionObserver(
     }
   }
 )
+
+const { menuStyle } = useBodyMountedMenuPositioning({
+  menuOpenDirection: computed(() =>
+    props.menuOpenDirection === 'left'
+      ? HorizontalDirection.Left
+      : HorizontalDirection.Right
+  ),
+  menuWidth: computed(() => props.menuMaxWidth),
+  buttonBoundingBox: listboxButtonBounding
+})
 
 const title = computed(() => unref(props.label) || unref(props.name))
 const errorMessage = computed(() => {
@@ -739,73 +767,25 @@ const finalItems = computed(() => {
 
 const listboxOptionsClasses = computed(() => {
   const classParts = [
-    'rounded-md bg-foundation py-1 label label--light border border-outline-3 shadow-md mt-1 '
+    'rounded-md bg-foundation py-1 label label--light border border-outline-3 shadow-md'
   ]
 
   if (props.mountMenuOnBody) {
     classParts.push('fixed z-50')
   } else {
-    classParts.push('absolute top-[100%] w-full z-40')
+    classParts.push('absolute top-[100%] w-full z-40 mt-1')
   }
 
   return classParts.join(' ')
 })
 
 const listboxOptionsStyle = computed(() => {
-  const style: CSSProperties = {}
-  if (!isClient) return style
+  let style: CSSProperties = {}
+  if (!isClient || !props.mountMenuOnBody) return style
 
-  if (props.mountMenuOnBody) {
-    /**
-     * If menu width overridden (w/ menuMaxWidth) && mountMenuOnBody is true:
-     * 1.a. If menuMaxWidth is bigger than screen width, use screen width
-     * 1.b. If menumaxWidth is smaller than screen width, use menuMaxWidth
-     * 2. If 1.b. but menu is leaving screen bounds, make it open to the left, instead of right
-     */
-
-    const openToLeft = props.menuOpenDirection === 'left'
-
-    const top = listboxButtonBounding.top.value
-    const left = listboxButtonBounding.left.value
-    const width = listboxButtonBounding.width.value
-    const height = listboxButtonBounding.height.value
-
-    let finalWidth = width
-    let finalLeft = left
-
-    if (props.menuMaxWidth) {
-      const viewportWidth = window.innerWidth
-      const xMargin = 10 // how much space to leave in full-screen mode
-      const viewportWithoutMargins = viewportWidth - xMargin * 2
-
-      if (props.menuMaxWidth > viewportWithoutMargins) {
-        finalWidth = viewportWithoutMargins
-        finalLeft = xMargin
-      } else {
-        finalWidth = props.menuMaxWidth
-
-        if (openToLeft) {
-          finalLeft = left + width - props.menuMaxWidth
-          if (finalLeft < xMargin) {
-            finalLeft = xMargin
-          }
-        } else {
-          if (left + props.menuMaxWidth > viewportWithoutMargins) {
-            finalLeft = Math.max(left + width - props.menuMaxWidth, xMargin)
-          }
-        }
-      }
-    }
-
-    // if (props.menuOpenDirection === 'right') {
-    //   style.left = `${finalLeft}px`
-    // } else {
-    //   style.left = `${finalLeft}px`
-    // }
-
-    style.left = `${finalLeft}px`
-    style.width = `${finalWidth}px`
-    style.top = `${top + height}px`
+  style = {
+    ...style,
+    ...menuStyle.value
   }
 
   return style

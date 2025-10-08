@@ -1,6 +1,12 @@
 <template>
-  <div class="flex flex-col space-y-4">
-    <div v-for="project in items" :key="project.id">
+  <div class="flex flex-col space-y-4 relative">
+    <!-- Decrementing z-index to ensure later cards don't overflow over earlier card action menus -->
+    <div
+      v-for="(project, i) in items"
+      :key="project.id"
+      :style="{ 'z-index': items.length - i }"
+      class="relative"
+    >
       <ProjectsProjectDashboardCard
         :key="project.id"
         :project="project"

@@ -1,19 +1,17 @@
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
+import type { BasicTestUser } from '@/test/authHelper'
 import {
-  createTestContext,
-  testApolloServer,
-  TestApolloServer
-} from '@/test/graphqlHelper'
-import {
-  BasicTestUser,
   buildBasicTestUser,
   createAuthTokenForUser,
   createTestUser,
   createTestUsers,
   login
 } from '@/test/authHelper'
-import { Roles, wait, WorkspaceRoles } from '@speckle/shared'
+import type { WorkspaceRoles } from '@speckle/shared'
+import { Roles, wait } from '@speckle/shared'
 import {
   CreateProjectInviteDocument,
   CreateWorkspaceDocument,
@@ -35,19 +33,21 @@ import {
   UpdateEmbedOptionsDocument,
   WorkspaceEmbedOptionsDocument,
   ProjectEmbedOptionsDocument
-} from '@/test/graphql/generated/graphql'
+} from '@/modules/core/graph/generated/graphql'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   assignToWorkspace,
-  BasicTestWorkspace,
   buildBasicTestWorkspace,
   createTestWorkspace,
   createWorkspaceInviteDirectly
 } from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestCommit, createTestCommit } from '@/test/speckle-helpers/commitHelper'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
-import { shuffle } from 'lodash'
+import type { BasicTestCommit } from '@/test/speckle-helpers/commitHelper'
+import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { shuffle } from 'lodash-es'
 import knex, { db } from '@/db/knex'
 import {
   createRandomPassword,
@@ -463,6 +463,11 @@ describe('Workspaces GQL CRUD', () => {
           limit: 10,
           cursor: resA.data?.workspace.team.cursor
         })
+        const resC = await largeWorkspaceApollo.execute(GetWorkspaceTeamDocument, {
+          workspaceId: largeWorkspace.id,
+          limit: 10,
+          cursor: resB.data?.workspace.team.cursor
+        })
 
         expect(resA).to.not.haveGraphQLErrors()
         expect(resA.data?.workspace.team.items.length).to.equal(2)
@@ -475,7 +480,11 @@ describe('Workspaces GQL CRUD', () => {
 
         expect(resB).to.not.haveGraphQLErrors()
         expect(resB.data?.workspace.team.items.length).to.equal(4)
-        expect(resB.data?.workspace.team.cursor).to.be.null
+        expect(resB.data?.workspace.team.cursor).to.be.not.null
+
+        expect(resC).to.not.haveGraphQLErrors()
+        expect(resC.data?.workspace.team.items.length).to.equal(0)
+        expect(resC.data?.workspace.team.cursor).to.be.null
       })
 
       it('should return correct total count', async () => {

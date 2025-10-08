@@ -21,7 +21,7 @@
     >
       <ViewerResourcesLimitAlert limit-type="comment" :project="project" />
     </div>
-    <div class="flex items-center w-full px-3 h-8 -mt-10">
+    <div class="flex items-center w-full px-3 h-8 -mt-10 relative">
       <UserAvatarGroup
         v-if="!thread.archived"
         v-tippy="
@@ -74,6 +74,7 @@ const props = defineProps<{
 const { screenshot } = useCommentScreenshotImage(
   computed(() => props.thread.screenshot)
 )
+const { formattedRelativeDate, formattedFullDate } = useDateFormatters()
 
 const isLimited = computed(() => {
   return !props.thread.rawText

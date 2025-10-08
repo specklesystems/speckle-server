@@ -1,0 +1,33 @@
+codecov:
+  notify:
+    notify_error: true
+  require_ci_to_pass: false
+
+coverage:
+  status:
+    project: off
+    patch:
+      default:
+        target: 90% #overall project/ repo coverage
+      server:
+        target: 70% #TODO This is low and should be increased
+        flags:
+          - server
+      shared:
+        target: 100%
+        flags:
+          - shared
+comment: false
+
+github_checks:
+  annotations: false
+
+flags:
+  server:
+    paths:
+      - packages/server/coverage/lcov.info
+    carryforward: false
+  shared:
+    paths:
+      - packages/shared/coverage/coverage-final.json
+    carryforward: false

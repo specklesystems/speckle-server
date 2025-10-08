@@ -1,10 +1,13 @@
-import { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
-import {
+import type { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
+import type {
   AddStreamAccessRequestDeclinedActivity,
   AddStreamAccessRequestedActivity,
-  SaveActivity
+  SaveStreamActivity
 } from '@/modules/activitystream/domain/operations'
-import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
+import {
+  StreamActionTypes,
+  StreamResourceTypes
+} from '@/modules/activitystream/helpers/types'
 import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
 import {
   AccessRequestType,
@@ -16,18 +19,18 @@ import {
  */
 const addStreamAccessRequestedActivityFactory =
   ({
-    saveActivity
+    saveStreamActivity
   }: {
-    saveActivity: SaveActivity
+    saveStreamActivity: SaveStreamActivity
   }): AddStreamAccessRequestedActivity =>
   async (params: { streamId: string; requesterId: string }) => {
     const { streamId, requesterId } = params
-    await saveActivity({
+    await saveStreamActivity({
       streamId,
-      resourceType: ResourceTypes.Stream,
+      resourceType: StreamResourceTypes.Stream,
       resourceId: streamId,
       userId: requesterId,
-      actionType: ActionTypes.Stream.AccessRequestSent,
+      actionType: StreamActionTypes.Stream.AccessRequestSent,
       message: `User ${requesterId} has requested access to stream ${streamId}`,
       info: { requesterId }
     })
@@ -38,18 +41,18 @@ const addStreamAccessRequestedActivityFactory =
  */
 const addStreamAccessRequestDeclinedActivityFactory =
   ({
-    saveActivity
+    saveStreamActivity
   }: {
-    saveActivity: SaveActivity
+    saveStreamActivity: SaveStreamActivity
   }): AddStreamAccessRequestDeclinedActivity =>
   async (params: { streamId: string; requesterId: string; declinerId: string }) => {
     const { streamId, requesterId, declinerId } = params
-    await saveActivity({
+    await saveStreamActivity({
       streamId,
-      resourceType: ResourceTypes.Stream,
+      resourceType: StreamResourceTypes.Stream,
       resourceId: streamId,
       userId: declinerId,
-      actionType: ActionTypes.Stream.AccessRequestDeclined,
+      actionType: StreamActionTypes.Stream.AccessRequestDeclined,
       message: `User ${declinerId} declined access to stream ${streamId} for user ${requesterId}`,
       info: { requesterId, declinerId }
     })
@@ -101,7 +104,8 @@ const onServerAccessRequestFinalizedFactory =
   }
 
 export const reportAccessRequestActivityFactory =
-  (deps: { eventListen: EventBusListen; saveActivity: SaveActivity }) => () => {
+  (deps: { eventListen: EventBusListen; saveStreamActivity: SaveStreamActivity }) =>
+  () => {
     const addStreamAccessRequestedActivity =
       addStreamAccessRequestedActivityFactory(deps)
     const addStreamAccessRequestDeclinedActivity =

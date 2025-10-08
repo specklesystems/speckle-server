@@ -1,5 +1,5 @@
-import { UserEmail } from '@/modules/core/domain/userEmails/types'
-import { User } from '@/modules/core/domain/users/types'
+import type { UserEmail } from '@/modules/core/domain/userEmails/types'
+import type { User } from '@/modules/core/domain/users/types'
 import { BaseError } from '@/modules/shared/errors/base'
 export { SsoSessionMissingOrExpiredError } from '@/modules/workspacesCore/errors'
 
@@ -32,6 +32,7 @@ export class SsoProviderProfileMissingError extends BaseError {
 
 export class SsoProviderProfileMissingPropertiesError extends BaseError {
   static code = 'SSO_PROVIDER_PROFILE_MISSING_PROPERTIES_ERROR'
+  static statusCode = 400
   constructor(properties: string[]) {
     super(
       [

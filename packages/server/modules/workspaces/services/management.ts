@@ -1,10 +1,9 @@
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import {
+import type {
   DeleteWorkspace,
   EmitWorkspaceEvent,
   GetWorkspace,
   StoreWorkspaceDomain,
-  QueryAllWorkspaceProjects,
   UpsertWorkspace,
   UpsertWorkspaceRole,
   GetWorkspaceWithDomains,
@@ -15,20 +14,16 @@ import {
   EnsureValidWorkspaceRoleSeat,
   AssignWorkspaceSeat
 } from '@/modules/workspaces/domain/operations'
-import {
+import type {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
   WorkspaceWithDomains
 } from '@/modules/workspacesCore/domain/types'
-import {
-  generateSlugFromName,
-  MaybeNullOrUndefined,
-  Roles,
-  validateWorkspaceSlug
-} from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { generateSlugFromName, Roles, validateWorkspaceSlug } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import {
+import type {
   DeleteWorkspaceRole,
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles
@@ -45,31 +40,32 @@ import {
   WorkspaceInvalidUpdateError
 } from '@/modules/workspaces/errors/workspace'
 import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/helpers/roles'
-import { EventBus } from '@/modules/shared/services/eventBus'
+import type { EventBus } from '@/modules/shared/services/eventBus'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
 import { isNewResourceAllowed } from '@/modules/core/helpers/token'
-import {
-  TokenResourceIdentifier,
-  TokenResourceIdentifierType
-} from '@/modules/core/domain/tokens/types'
+import type { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { validateImageString } from '@/modules/workspaces/helpers/images'
-import {
+import type {
   FindEmailsByUserId,
   FindVerifiedEmailsByUserId
 } from '@/modules/core/domain/userEmails/operations'
-import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
+import type { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
-import { chunk, isEmpty, omit } from 'lodash'
+import { chunk, isEmpty, omit } from 'lodash-es'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
 import { workspaceRoles as workspaceRoleDefinitions } from '@/modules/workspaces/roles'
 import { blockedDomains } from '@speckle/shared'
-import { DeleteStreamRecord } from '@/modules/core/domain/streams/operations'
-import {
+import type {
   DeleteSsoProvider,
   GetWorkspaceSsoProviderRecord
 } from '@/modules/workspaces/domain/sso/operations'
+import type {
+  DeleteProjectAndCommits,
+  QueryAllProjects
+} from '@/modules/core/domain/projects/operations'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -167,23 +163,23 @@ export const createWorkspaceFactory =
       discoverabilityEnabled: false,
       discoverabilityAutoJoinEnabled: false,
       isEmbedSpeckleBrandingHidden: false,
-      defaultSeatType: null
+      defaultSeatType: null,
+      isExclusive: false
     } satisfies Workspace
     await upsertWorkspace({ workspace })
+
+    // emit a workspace created event
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.Created,
+      payload: { workspace, createdByUserId: userId }
+    })
 
     // assign the creator as workspace administrator
     await addOrUpdateWorkspaceRole({
       userId,
       workspaceId: workspace.id,
       role: Roles.Workspace.Admin,
-      updatedByUserId: userId,
-      skipEvent: true // skip RoleUpdated, cause we only want Created to come out of this
-    })
-
-    // emit a workspace created event
-    await emitWorkspaceEvent({
-      eventName: WorkspaceEvents.Created,
-      payload: { workspace, createdByUserId: userId }
+      updatedByUserId: userId
     })
 
     return { ...workspace }
@@ -287,33 +283,29 @@ export const updateWorkspaceFactory =
     return workspace
   }
 
-type WorkspaceDeleteArgs = {
-  workspaceId: string
-}
-
 export const deleteWorkspaceFactory =
   ({
     deleteWorkspace,
-    deleteProject,
-    queryAllWorkspaceProjects,
+    deleteProjectAndCommits,
+    queryAllProjects,
     deleteAllResourceInvites,
     deleteSsoProvider,
     emitWorkspaceEvent
   }: {
-    deleteWorkspace: DeleteWorkspace
-    deleteProject: DeleteStreamRecord
-    queryAllWorkspaceProjects: QueryAllWorkspaceProjects
+    deleteWorkspace: (args: { workspaceId: string }) => Promise<void>
+    deleteProjectAndCommits: DeleteProjectAndCommits
+    queryAllProjects: QueryAllProjects
     deleteAllResourceInvites: DeleteAllResourceInvites
     deleteSsoProvider: DeleteSsoProvider
     emitWorkspaceEvent: EventBus['emit']
-  }) =>
-  async ({ workspaceId }: WorkspaceDeleteArgs): Promise<void> => {
+  }): DeleteWorkspace =>
+  async ({ workspaceId, userId }): Promise<void> => {
     // Delete workspace SSO provider, if present
     await deleteSsoProvider({ workspaceId })
 
     // Cache project ids for post-workspace-delete cleanup
     const projectIds: string[] = []
-    for await (const projects of queryAllWorkspaceProjects({ workspaceId })) {
+    for await (const projects of queryAllProjects({ workspaceId })) {
       projectIds.push(...projects.map((project) => project.id))
     }
 
@@ -334,11 +326,13 @@ export const deleteWorkspaceFactory =
     // Workspace delete cascades-deletes stream table rows, but some manual cleanup is required
     // We re-use `deleteStream` (and re-delete the project) to DRY this manual cleanup
     for (const projectIdsChunk of chunk(projectIds, 25)) {
-      await Promise.all(projectIdsChunk.map((projectId) => deleteProject(projectId)))
+      await Promise.all(
+        projectIdsChunk.map((projectId) => deleteProjectAndCommits({ projectId }))
+      )
     }
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.Deleted,
-      payload: { workspaceId }
+      payload: { workspaceId, userId }
     })
   }
 
@@ -422,7 +416,6 @@ export const addOrUpdateWorkspaceRoleFactory =
     role: nextWorkspaceRole,
     preventRoleDowngrade,
     updatedByUserId,
-    skipEvent,
     seatType
   }): Promise<void> => {
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
@@ -480,32 +473,28 @@ export const addOrUpdateWorkspaceRoleFactory =
         userId,
         workspaceId,
         type: seatType,
-        assignedByUserId: updatedByUserId,
-        skipEvent: true // skip SeatUpdated, cause we only want RoleUpdated to come out of this
+        assignedByUserId: updatedByUserId
       })
     } else {
       await ensureValidWorkspaceRoleSeat({
         userId,
         workspaceId,
         role: nextWorkspaceRole,
-        updatedByUserId,
-        skipEvent
+        updatedByUserId
       })
     }
 
-    if (!skipEvent) {
-      await emitWorkspaceEvent({
-        eventName: WorkspaceEvents.RoleUpdated,
-        payload: {
-          acl: {
-            userId,
-            workspaceId,
-            role: nextWorkspaceRole
-          },
-          updatedByUserId
-        }
-      })
-    }
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.RoleUpdated,
+      payload: {
+        acl: {
+          userId,
+          workspaceId,
+          role: nextWorkspaceRole
+        },
+        updatedByUserId
+      }
+    })
   }
 
 export const addDomainToWorkspaceFactory =
@@ -541,7 +530,8 @@ export const addDomainToWorkspaceFactory =
 
     const email = userEmails.find(
       (userEmail) =>
-        userEmail.verified && userEmail.email.split('@')[1] === sanitizedDomain
+        userEmail.verified &&
+        userEmail.email.toLowerCase().split('@')[1] === sanitizedDomain
     )
 
     if (!email) {

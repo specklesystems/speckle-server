@@ -11,8 +11,8 @@ import {
   assignToWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
+import type { BasicTestUser } from '@/test/authHelper'
 import {
-  BasicTestUser,
   createAuthTokenForUser,
   createTestUser,
   createTestUsers,
@@ -22,19 +22,15 @@ import {
   GetWorkspaceDocument,
   GetWorkspacePlanUsageDocument,
   GetWorkspaceWithSubscriptionDocument
-} from '@/test/graphql/generated/graphql'
-import {
-  createTestContext,
-  testApolloServer,
-  TestApolloServer
-} from '@/test/graphqlHelper'
+} from '@/modules/core/graph/generated/graphql'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
-import {
-  BasicTestBranch,
-  createTestBranches
-} from '@/test/speckle-helpers/branchHelper'
+import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestBranches } from '@/test/speckle-helpers/branchHelper'
 import { createTestCommit, createTestObject } from '@/test/speckle-helpers/commitHelper'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { PaidWorkspacePlans, Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
@@ -137,6 +133,7 @@ describe('Workspaces Billing', () => {
               currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
               currency: 'usd',
               billingInterval: 'monthly',
+              updateIntent: null,
               subscriptionData: {
                 subscriptionId: cryptoRandomString({ length: 10 }),
                 customerId: cryptoRandomString({ length: 10 }),
@@ -187,6 +184,7 @@ describe('Workspaces Billing', () => {
               updatedAt: new Date(),
               currentBillingCycleEnd: dayjs().add(1, 'month').toDate(),
               currency: 'usd',
+              updateIntent: null,
               billingInterval: 'monthly',
               subscriptionData: {
                 subscriptionId: cryptoRandomString({ length: 10 }),

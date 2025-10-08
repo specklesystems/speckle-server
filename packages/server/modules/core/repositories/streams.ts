@@ -1,4 +1,4 @@
-import _, {
+import {
   clamp,
   groupBy,
   has,
@@ -10,8 +10,9 @@ import _, {
   omit,
   omitBy,
   reduce,
-  toNumber
-} from 'lodash'
+  toNumber,
+  keyBy
+} from 'lodash-es'
 import {
   Streams,
   StreamAcl,
@@ -20,35 +21,37 @@ import {
   Users,
   StreamCommits,
   Commits,
-  Branches,
   ServerAcl
 } from '@/modules/core/dbSchema'
 import { InvalidArgumentError, LogicError } from '@/modules/shared/errors'
-import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
-import {
-  ProjectRecordVisibility,
+import type { StreamRoles } from '@/modules/core/helpers/mainConstants'
+import { Roles } from '@/modules/core/helpers/mainConstants'
+import type {
   StreamAclRecord,
   StreamCommitRecord,
   StreamFavoriteRecord,
   StreamRecord,
   UserWithRole
 } from '@/modules/core/helpers/types'
-import {
-  DiscoverableStreamsSortType,
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import type {
   ProjectUpdateInput,
-  SortDirection,
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
-import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
+import {
+  DiscoverableStreamsSortType,
+  SortDirection
+} from '@/modules/core/graph/generated/graphql'
+import type { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
 import {
   decodeCompositeCursor,
   decodeCursor,
   encodeCompositeCursor,
   encodeCursor
-} from '@/modules/shared/helpers/graphqlHelper'
+} from '@/modules/shared/helpers/dbHelper'
 import dayjs from 'dayjs'
 import cryptoRandomString from 'crypto-random-string'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import {
   isProjectCreateInput,
   mapGqlToDbProjectVisibility
@@ -60,24 +63,20 @@ import {
 } from '@/modules/core/errors/stream'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import {
-  DeleteProjectRole,
+import type {
   UpdateProject,
-  GetRolesByUserId,
   UpsertProjectRole
 } from '@/modules/core/domain/projects/operations'
-import {
+import type {
   StreamWithCommitId,
   StreamWithOptionalRole
 } from '@/modules/core/domain/streams/types'
-import {
-  StoreStream,
+import type {
   GetCommitStream,
   GetCommitStreams,
   GetStream,
   GetStreamCollaborators,
   GetStreams,
-  DeleteStreamRecord,
   UpdateStreamRecord,
   RevokeStreamPermissions,
   GrantStreamPermissions,
@@ -101,15 +100,15 @@ import {
   UserStreamsQueryCountParams,
   GetUserStreamsPage,
   GetUserStreamsCount,
-  MarkBranchStreamUpdated,
-  MarkCommitStreamUpdated,
   MarkOnboardingBaseStream,
   GetUserDeletableStreams,
   GetStreamsCollaborators,
   GetStreamsCollaboratorCounts,
-  GetImplicitUserProjectsCountFactory
+  GetImplicitUserProjectsCountFactory,
+  GrantProjectPermissions,
+  GetExplicitProjects,
+  SaveStream
 } from '@/modules/core/domain/streams/operations'
-import { generateProjectName } from '@/modules/core/domain/projects/logic'
 import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
@@ -270,7 +269,7 @@ export const getFavoritedStreamsPageFactory =
   (deps: { db: Knex }): GetFavoritedStreamsPage =>
   async (params) => {
     const { userId, cursor, limit, streamIdWhitelist } = params
-    const finalLimit = _.clamp(limit || 25, 1, 25)
+    const finalLimit = clamp(limit || 25, 1, 25)
     const query = getFavoritedStreamsQueryBaseFactory(deps)(userId, streamIdWhitelist)
     query
       .select<
@@ -366,7 +365,7 @@ export const getBatchUserFavoriteDataFactory =
       .whereIn(StreamFavorites.col.streamId, streamIds)
 
     const rows = await query
-    return _.keyBy(rows, 'streamId')
+    return keyBy(rows, 'streamId')
   }
 
 /**
@@ -385,7 +384,7 @@ export const getBatchStreamFavoritesCountsFactory =
       .groupBy(StreamFavorites.col.streamId)
 
     const rows = await query
-    return _.mapValues(_.keyBy(rows, 'streamId'), (r) => parseInt(r?.count || '0'))
+    return mapValues(keyBy(rows, 'streamId'), (r) => parseInt(r?.count || '0'))
   }
 
 /**
@@ -443,7 +442,7 @@ export const getOwnedFavoritesCountByUserIdsFactory =
       .groupBy(StreamAcl.col.userId)
 
     const results = await query
-    return _.mapValues(_.keyBy(results, 'userId'), (r) => parseInt(r?.count || '0'))
+    return mapValues(keyBy(results, 'userId'), (r) => parseInt(r?.count || '0'))
   }
 
 /**
@@ -454,7 +453,7 @@ export const getStreamRolesFactory =
   async (userId: string, streamIds: string[]) => {
     const q = tables
       .streams(deps.db)
-      .select<{ id: string; role: Nullable<string> }[]>([
+      .select<{ id: string; role: Nullable<StreamRoles> }[]>([
         Streams.col.id,
         StreamAcl.col.role
       ])
@@ -466,8 +465,8 @@ export const getStreamRolesFactory =
       .whereIn(Streams.col.id, streamIds)
 
     const results = await q
-    return _.mapValues(
-      _.keyBy(results, (r) => r.id),
+    return mapValues(
+      keyBy(results, (r) => r.id),
       (v) => v.role
     )
   }
@@ -888,10 +887,9 @@ export const getUserStreamsCountFactory =
   }
 
 export const createStreamFactory =
-  (deps: { db: Knex }): StoreStream =>
-  async (input, options) => {
-    const { name, description } = input
-    const { ownerId, trx } = options || {}
+  (deps: { db: Knex }): SaveStream =>
+  async (input) => {
+    const { name, description, updatedAt, createdAt, allowPublicComments, id } = input
 
     let visibility: ProjectRecordVisibility
     if (isProjectCreateInput(input)) {
@@ -908,33 +906,22 @@ export const createStreamFactory =
     const workspaceId = 'workspaceId' in input ? input.workspaceId : null
     const regionKey = 'regionKey' in input ? input.regionKey || null : null
 
-    const id = generateId()
     const stream = {
       id,
-      name: name || generateProjectName(),
-      description: description || '',
+      name,
+      description,
       visibility,
-      updatedAt: knex.fn.now(),
+      updatedAt,
+      createdAt,
       workspaceId: workspaceId || null,
-      regionKey
+      regionKey,
+      allowPublicComments
     }
 
     // Create the stream & set up permissions
     const streamQuery = tables.streams(deps.db).insert(stream, '*')
-    if (trx) streamQuery.transacting(trx)
-
     const insertResults = await streamQuery
     const newStream = insertResults[0] as StreamRecord
-
-    if (ownerId) {
-      const streamAclQuery = tables.streamAcl(deps.db).insert({
-        userId: ownerId,
-        resourceId: id,
-        role: Roles.Stream.Owner
-      })
-      if (trx) streamAclQuery.transacting(trx)
-      await streamAclQuery
-    }
 
     return newStream
   }
@@ -967,24 +954,7 @@ export const getUserStreamCountsFactory =
     }
 
     const results = await q
-    return _.mapValues(_.keyBy(results, 'userId'), (r) => parseInt(r.count))
-  }
-
-export const deleteStreamFactory =
-  (deps: { db: Knex }): DeleteStreamRecord =>
-  async (streamId: string) => {
-    // Delete stream commits (not automatically cascaded)
-    await deps.db.raw(
-      `
-      DELETE FROM commits WHERE id IN (
-        SELECT sc."commitId" FROM streams s
-        INNER JOIN stream_commits sc ON s.id = sc."streamId"
-        WHERE s.id = ?
-      )
-      `,
-      [streamId]
-    )
-    return await tables.streams(deps.db).where(Streams.col.id, streamId).del()
+    return mapValues(keyBy(results, 'userId'), (r) => parseInt(r.count))
   }
 
 export const getStreamsSourceAppsFactory =
@@ -1070,13 +1040,13 @@ export const updateStreamFactory =
       .returning('*')
       .where({ id: streamId })
       .update<StreamRecord[]>({
-        ...validUpdate,
-        updatedAt: knex.fn.now()
+        ...validUpdate
       })
 
     return updatedStream
   }
 
+/** @deprecated Use `updateStreamFactory` */
 export const updateProjectFactory =
   ({ db }: { db: Knex }): UpdateProject =>
   async ({ projectUpdate }) => {
@@ -1085,8 +1055,7 @@ export const updateProjectFactory =
       .returning('*')
       .where({ id: projectUpdate.id })
       .update<StreamRecord[]>({
-        ...omit(projectUpdate, ['id']),
-        updatedAt: knex.fn.now()
+        ...omit(projectUpdate, ['id'])
       })
 
     if (!updatedStream) {
@@ -1096,63 +1065,20 @@ export const updateProjectFactory =
     return updatedStream
   }
 
-export const markBranchStreamUpdatedFactory =
-  (deps: { db: Knex }): MarkBranchStreamUpdated =>
-  async (branchId: string) => {
-    const q = tables
-      .streams(deps.db)
-      .whereIn(Streams.col.id, (w) => {
-        w.select(Branches.col.streamId)
-          .from(Branches.name)
-          .where(Branches.col.id, branchId)
-      })
-      .update(Streams.withoutTablePrefix.col.updatedAt, new Date())
-    const updates = await q
-    return updates > 0
-  }
-
-export const markCommitStreamUpdatedFactory =
-  (deps: { db: Knex }): MarkCommitStreamUpdated =>
-  async (commitId: string) => {
-    const q = tables
-      .streams(deps.db)
-      .whereIn(Streams.col.id, (w) => {
-        w.select(StreamCommits.col.streamId)
-          .from(StreamCommits.name)
-          .where(StreamCommits.col.commitId, commitId)
-      })
-      .update(Streams.withoutTablePrefix.col.updatedAt, new Date())
-    const updates = await q
-    return updates > 0
-  }
-
 export const upsertProjectRoleFactory =
   ({ db }: { db: Knex }): UpsertProjectRole =>
-  async (
-    { projectId, userId, role },
-    { trackProjectUpdate } = { trackProjectUpdate: true }
-  ) => {
-    const res = await grantStreamPermissionsFactory({ db })(
-      {
-        streamId: projectId,
-        userId,
-        role
-      },
-      { trackProjectUpdate }
-    )
+  async ({ projectId, userId, role }) => {
+    const res = await grantStreamPermissionsFactory({ db })({
+      streamId: projectId,
+      userId,
+      role
+    })
     return res! // TODO: stream theoretically can be optional, return type needs fixing
   }
 
 export const grantStreamPermissionsFactory =
   (deps: { db: Knex }): GrantStreamPermissions =>
-  async (
-    params: {
-      streamId: string
-      userId: string
-      role: StreamRoles
-    },
-    options: { trackProjectUpdate?: boolean } = { trackProjectUpdate: true }
-  ) => {
+  async (params: { streamId: string; userId: string; role: StreamRoles }) => {
     const { streamId, userId, role } = params
 
     // assert we are not removing last admin from project
@@ -1192,29 +1118,24 @@ export const grantStreamPermissionsFactory =
     await deps.db.raw(query)
 
     const streamsQuery = tables.streams(deps.db)
-    if (options.trackProjectUpdate) {
-      // update stream updated at
-      streamsQuery.update({ updatedAt: knex.fn.now() }, '*')
-    }
-
     const streams = await streamsQuery.where({ id: streamId })
     return streams[0] as StreamRecord
   }
 
-export const deleteProjectRoleFactory =
-  ({ db }: { db: Knex }): DeleteProjectRole =>
-  async ({ projectId, userId }) => {
-    return await revokeStreamPermissionsFactory({ db })({
-      streamId: projectId,
-      userId
-    })
-  }
+/**
+ * Convenience wrapper around grantStreamPermissions, renaming streams -> projects
+ */
+export const grantProjectPermissionsFactory = (
+  deps: Parameters<typeof grantStreamPermissionsFactory>[0]
+): GrantProjectPermissions => {
+  const grant = grantStreamPermissionsFactory(deps)
+  return async (params) => await grant({ ...params, streamId: params.projectId })
+}
 
 export const revokeStreamPermissionsFactory =
   (deps: { db: Knex }): RevokeStreamPermissions =>
-  async (params, options) => {
+  async (params) => {
     const { streamId, userId } = params
-    const { trackProjectUpdate = true } = options || {}
 
     const existingPermission = await tables
       .streamAcl(deps.db)
@@ -1275,10 +1196,6 @@ export const revokeStreamPermissionsFactory =
     // update stream updated at, if enabled
     const streamQ = tables.streams(deps.db).where({ id: streamId })
 
-    if (trackProjectUpdate) {
-      streamQ.update({ updatedAt: knex.fn.now() }, '*')
-    }
-
     const [stream] = await streamQ
     return stream
   }
@@ -1288,14 +1205,16 @@ export const revokeStreamPermissionsFactory =
  */
 export const markOnboardingBaseStreamFactory =
   (deps: { db: Knex }): MarkOnboardingBaseStream =>
-  async (streamId: string, version: string) => {
+  async (streamId: string, version: string, updatedAt: Date) => {
     const stream = await getStreamFactory(deps)({ streamId })
     if (!stream) {
       throw new StreamNotFoundError(`Stream ${streamId} not found`)
     }
+    //  this happens outside of the a multiregion ctx
     await updateStreamFactory(deps)({
       id: streamId,
-      name: 'Onboarding Stream Local Source - Do Not Delete'
+      name: 'Onboarding Stream Local Source - Do Not Delete',
+      updatedAt
     })
     const meta = metaHelpers(Streams, deps.db)
     await meta.set(streamId, Streams.meta.metaKey.onboardingBaseStream, version)
@@ -1316,20 +1235,6 @@ export const getOnboardingBaseStreamFactory =
       .first()
 
     return await q
-  }
-
-export const getRolesByUserIdFactory =
-  ({ db }: { db: Knex }): GetRolesByUserId =>
-  async ({ userId, workspaceId }) => {
-    const query = db<Pick<StreamAclRecord, 'role' | 'resourceId' | 'userId'>>(
-      StreamAcl.name
-    ).where({ userId })
-    if (workspaceId) {
-      query
-        .join(Streams.name, Streams.col.id, StreamAcl.col.resourceId)
-        .where({ workspaceId })
-    }
-    return await query
   }
 
 /**
@@ -1490,4 +1395,47 @@ export const getImplicitUserProjectsCountFactory =
 
     const [{ count }] = await q
     return parseInt(count)
+  }
+
+/**
+ * Batch the explicit projects givent by the workspace, the user or both
+ */
+export const getExplicitProjects =
+  (deps: { db: Knex }): GetExplicitProjects =>
+  async ({ limit, cursor, filter: { userId, workspaceId } }) => {
+    if (!userId && !workspaceId) throw new LogicError('A filter must be provided')
+
+    const cursorTarget = Streams.col.id
+    const q = tables
+      .streams(deps.db)
+      .select<StreamWithOptionalRole[]>([
+        ...Object.values(Streams.col),
+        ...(userId ? [StreamAcl.col.role] : [])
+      ])
+      .limit(limit)
+      .orderBy(cursorTarget, 'desc')
+
+    if (userId) {
+      q.join(StreamAcl.name, (j) => {
+        j.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
+          StreamAcl.col.userId,
+          userId
+        )
+      })
+    }
+
+    if (cursor) {
+      q.where(cursorTarget, '<', decodeCursor(cursor))
+    }
+
+    if (workspaceId) {
+      q.where(Streams.col.workspaceId, workspaceId)
+    }
+
+    const rows = await q
+
+    return {
+      items: rows,
+      cursor: rows.length ? encodeCursor(rows[rows.length - 1].id) : null
+    }
   }

@@ -1,13 +1,13 @@
 import { db } from '@/db/knex'
 import { StreamAcl } from '@/modules/core/dbSchema'
 import { mapDbToGqlProjectVisibility } from '@/modules/core/helpers/project'
-import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
-import { createBranchFactory } from '@/modules/core/repositories/branches'
+import type { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   createStreamFactory,
   getStreamCollaboratorsFactory,
   getStreamFactory,
+  getStreamRolesFactory,
   grantStreamPermissionsFactory,
   revokeStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
@@ -53,18 +53,23 @@ import {
 } from '@/modules/serverinvites/services/processing'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { authorizeResolver } from '@/modules/shared'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import type { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import { createWorkspaceProjectFactory } from '@/modules/workspaces/services/projects'
-import { BasicTestUser } from '@/test/authHelper'
-import { ProjectVisibility } from '@/test/graphql/generated/graphql'
+import type { BasicTestUser } from '@/test/authHelper'
+import { ProjectVisibility } from '@/modules/core/graph/generated/graphql'
 import { faker } from '@faker-js/faker'
-import { ensureError, Roles, StreamRoles } from '@speckle/shared'
-import { omit } from 'lodash'
+import type { StreamRoles } from '@speckle/shared'
+import { ensureError, Roles } from '@speckle/shared'
+import { omit } from 'lodash-es'
+import { storeProjectRoleFactory } from '@/modules/core/repositories/projects'
+import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/command'
+import { logger } from '@/observability/logging'
+import type { LegacyCreateStream } from '@/modules/core/domain/streams/operations'
+import { getReplicationDbs } from '@/modules/multiregion/utils/dbSelector'
 
 const getServerInfo = getServerInfoFactory({ db })
-const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
 
@@ -80,6 +85,7 @@ const buildFinalizeProjectInvite = () =>
         validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
         getUser,
         grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+        getStreamRoles: getStreamRolesFactory({ db }),
         emitEvent: getEventBus().emit
       })
     }),
@@ -113,34 +119,42 @@ const buildFinalizeProjectInvite = () =>
     getServerInfo
   })
 
-const createStream = legacyCreateStreamFactory({
-  createStreamReturnRecord: createStreamReturnRecordFactory({
-    inviteUsersToProject: inviteUsersToProjectFactory({
-      createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory({ db }),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-          getStream
-        }),
-        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-          getStream
-        }),
-        emitEvent: ({ eventName, payload }) =>
-          getEventBus().emit({
-            eventName,
-            payload
+const createStream: LegacyCreateStream = async (
+  stream: Parameters<LegacyCreateStream>[0] & { regionKey?: string }
+) =>
+  asMultiregionalOperation(
+    async ({ allDbs, mainDb, emit }) =>
+      legacyCreateStreamFactory({
+        createStreamReturnRecord: createStreamReturnRecordFactory({
+          inviteUsersToProject: inviteUsersToProjectFactory({
+            createAndSendInvite: createAndSendInviteFactory({
+              findUserByTarget: findUserByTargetFactory({ db: mainDb }),
+              insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db: mainDb }),
+              collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+                getStream: getStreamFactory({ db: mainDb })
+              }),
+              buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+                getStream: getStreamFactory({ db: mainDb })
+              }),
+              emitEvent: emit,
+              getUser: getUserFactory({ db: mainDb }),
+              getServerInfo: getServerInfoFactory({ db: mainDb }),
+              finalizeInvite: buildFinalizeProjectInvite()
+            }),
+            getUsers: getUsersFactory({ db: mainDb })
           }),
-        getUser,
-        getServerInfo,
-        finalizeInvite: buildFinalizeProjectInvite()
-      }),
-      getUsers
-    }),
-    createStream: createStreamFactory({ db }),
-    createBranch: createBranchFactory({ db }),
-    emitEvent: getEventBus().emit
-  })
-})
+          createStream: replicateFactory(allDbs, createStreamFactory),
+          storeProjectRole: storeProjectRoleFactory({ db: mainDb }),
+          emitEvent: emit
+        })
+      })(stream),
+    {
+      name: 'create stream spec',
+      logger,
+      description: 'Creates a new stream',
+      dbs: await getReplicationDbs({ regionKey: stream.regionKey || null })
+    }
+  )
 
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
@@ -150,6 +164,7 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 
@@ -157,11 +172,12 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 
 export type BasicTestStream = {
-  name: string
+  name?: string
   /**
    * @deprecated Use visibility instead
    */
@@ -188,10 +204,10 @@ export async function createTestStreams(
 /**
  * Create basic stream for testing and update streamObj in-place, via reference, to have a real ID
  */
-export async function createTestStream(
-  streamObj: Partial<BasicTestStream>,
+export async function createTestStream<S extends Partial<BasicTestStream>>(
+  streamObj: S,
   owner: BasicTestUser
-) {
+): Promise<BasicTestStream> {
   let id: string
 
   const visibility = streamObj.isPublic
@@ -213,6 +229,7 @@ export async function createTestStream(
       },
       ownerId: owner.id
     })
+
     id = newProject.id
   } else {
     id = await createStream({
@@ -224,7 +241,11 @@ export async function createTestStream(
 
   streamObj.id = id
   streamObj.ownerId = owner.id
-  return streamObj
+  return {
+    ...streamObj,
+    id,
+    ownerId: owner.id
+  }
 }
 
 export async function leaveStream(streamObj: BasicTestStream, user: BasicTestUser) {

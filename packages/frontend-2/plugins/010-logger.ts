@@ -1,4 +1,6 @@
-import { collectLongTrace } from '@speckle/shared'
+import { collectLongTrace, errorToString, getErrorMessage } from '@speckle/shared'
+import type { LogType } from 'consola'
+import dayjs from 'dayjs'
 import { omit } from 'lodash-es'
 import type { SetRequired } from 'type-fest'
 import { useReadUserId } from '~/lib/auth/composables/activeUser'
@@ -29,9 +31,10 @@ const simpleStripHtml = (str: string) => str.replace(/<[^>]*>?/gm, '')
  */
 
 export default defineNuxtPlugin(async (nuxtApp) => {
+  const runtimeConfig = useRuntimeConfig()
   const {
     public: {
-      logLevel,
+      logLevel: untypedLogLevel,
       logPretty,
       logClientApiToken,
       speckleServerVersion,
@@ -39,7 +42,9 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       serverName,
       logCsrEmitProps
     }
-  } = useRuntimeConfig()
+  } = runtimeConfig
+
+  const logLevel = untypedLogLevel as LogType
   const route = useRoute()
   const router = useRouter()
   const reqId = useRequestId()
@@ -48,6 +53,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   const country = useUserCountry()
   const registerErrorTransport = useCreateLoggingTransport()
   const { invokeTransportsWithPayload } = useLogToLoggingTransports()
+
+  const profilerLogger = route.query.profilerLogger === '1'
 
   const collectMainInfo = (params: { isBrowser: boolean }) => {
     const info = {
@@ -71,9 +78,13 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   const unhandledErrorHandlers: AbstractUnhandledErrorHandler[] = []
 
   if (import.meta.server) {
-    const { buildLogger, enableDynamicBindings, serializeRequest } = await import(
-      '~/server/lib/core/helpers/observability'
-    )
+    const {
+      buildLogger,
+      enableDynamicBindings,
+      serializeRequest,
+      prettifiedLoggerFactory,
+      initSsrDevLogs
+    } = await import('~/server/lib/core/helpers/observability')
     logger = enableDynamicBindings(buildLogger(logLevel, logPretty).child({}), () => ({
       ...collectMainInfo({ isBrowser: false }),
       ...(nuxtApp.ssrContext
@@ -90,6 +101,33 @@ export default defineNuxtPlugin(async (nuxtApp) => {
         'res'
       ])
     })
+
+    // Send to consola for SSR log streaming in dev mode
+    if (import.meta.dev) {
+      const ssrDevLogs = await initSsrDevLogs({ logLevel })
+      const consola = ssrDevLogs.consola
+
+      if (consola) {
+        const unhandledHandler: AbstractUnhandledErrorHandler = ({
+          error,
+          message,
+          isUnhandledRejection
+        }) => {
+          consola.error({ err: error, isUnhandledRejection }, message)
+        }
+        unhandledErrorHandlers.push(unhandledHandler)
+
+        const errorHandler: AbstractLoggerHandler = ({ args, level }) => {
+          // applying pino-like message templating, cause consola doesnt have it
+          // the arg slice is TS appeasement
+          prettifiedLoggerFactory(consola[level])(args[0], ...args.slice(1), {
+            time: dayjs().format('HH:mm:ss.SSS'),
+            separator: '═══════════════════════════════════════════►'
+          })
+        }
+        logHandlers.push(errorHandler)
+      }
+    }
   } else {
     const localTimeFormat = new Intl.DateTimeFormat('en-GB', {
       dateStyle: 'full',
@@ -127,7 +165,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     })
 
     logger = buildFakePinoLogger({
-      consoleBindings: logCsrEmitProps ? collectCoreInfo : undefined
+      consoleBindings: logCsrEmitProps ? collectCoreInfo : undefined,
+      time: profilerLogger
     })
 
     // SEQ Browser integration
@@ -259,28 +298,88 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     window.addEventListener('unhandledrejection', unhandledHandler)
   }
 
+  const getErrorStatusCode = (err: unknown): number | undefined => {
+    if (isObjectLike(err) && 'statusCode' in err) {
+      const statusCode = err.statusCode
+      if (typeof statusCode === 'number' && !Number.isNaN(statusCode)) {
+        return statusCode
+      }
+    }
+    return undefined
+  }
+
+  const isIgnorableError = (err: unknown) => {
+    // skip 404, 403, 401
+    const statusCode = getErrorStatusCode(err)
+    if (typeof statusCode === 'number') {
+      if ([404, 403, 401].includes(statusCode)) return true
+      return false
+    }
+  }
+
   // Uncaught routing error handler
   router.onError((err, to, from) => {
-    // skip 404, 403, 401
-    if (isObjectLike(err) && 'statusCode' in err) {
-      if ([404, 403, 401].includes(err.statusCode as number)) return
-    }
+    if (isIgnorableError(err)) return
 
-    logger.error(err, 'Unhandled error in routing', {
-      to: to.path,
-      from: from?.path,
-      isAppError: !!import.meta.server
-    })
+    logger.error(
+      {
+        err,
+        to: to.path,
+        from: from?.path,
+        isAppError: !!import.meta.server,
+        unhandledRoutingError: true,
+        statusCode: getErrorStatusCode(err)
+      },
+      getErrorMessage(err)
+    )
   })
 
   // More error logging hooks
   nuxtApp.vueApp.config.errorHandler = (error, _vm, info) => {
-    logger.error(error, 'Unhandled error in Vue app', info)
+    if (isIgnorableError(error)) return
+
+    logger.error(
+      {
+        err: error,
+        info,
+        vm: _vm?.$options.name,
+        errString: errorToString(error),
+        vueErrorHandler: true,
+        statusCode: getErrorStatusCode(error)
+      },
+      getErrorMessage(error)
+    )
   }
   nuxtApp.hook('app:error', (error) => {
-    logger.error(error, 'Unhandled app error', {
-      isAppError: true
-    })
+    if (isIgnorableError(error)) return
+
+    logger.error(
+      {
+        err: error,
+        isAppError: true,
+        errString: errorToString(error),
+        appErrorHook: true,
+        statusCode: getErrorStatusCode(error)
+      },
+      getErrorMessage(error)
+    )
+  })
+
+  nuxtApp.hook('vue:error', (error, _vm, info) => {
+    if (isIgnorableError(error)) return
+
+    logger.error(
+      {
+        err: error,
+        info,
+        isAppError: true,
+        vm: _vm?.$options.name,
+        errString: errorToString(error),
+        vueErrorHook: true,
+        statusCode: getErrorStatusCode(error)
+      },
+      getErrorMessage(error)
+    )
   })
 
   // Hydrate server fatal error to CSR
@@ -322,6 +421,14 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   if (!import.meta.server) {
     nuxtApp.hook('app:mounted', () => {
       logger.info('App mounted in the client', {
+        important: true,
+        speckleServerVersion,
+        runtimeConfig
+      })
+    })
+  } else {
+    nuxtApp.hook('app:rendered', () => {
+      logger.info('App SSR rendered', {
         important: true,
         speckleServerVersion
       })

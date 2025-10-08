@@ -2,9 +2,7 @@ import {
   Box3,
   Camera,
   Color,
-  DoubleSide,
   Material,
-  MathUtils,
   Matrix4,
   OrthographicCamera,
   PerspectiveCamera,
@@ -18,9 +16,9 @@ import {
 import { getConversionFactor } from '../../converter/Units.js'
 import { Measurement, MeasurementState } from './Measurement.js'
 import { ObjectLayers } from '../../../IViewer.js'
-import { SpeckleText } from '../../objects/SpeckleText.js'
-import SpeckleTextMaterial from '../../materials/SpeckleTextMaterial.js'
+import { TextLabel } from '../../objects/TextLabel.js'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
+import { MeasurementType } from '@speckle/shared/viewer/state'
 
 const _vec40 = new Vector4()
 const _vec41 = new Vector4()
@@ -31,14 +29,14 @@ const _mat41 = new Matrix4()
 
 export class PointMeasurement extends Measurement {
   protected gizmo: MeasurementPointGizmo
-  protected xLabel: SpeckleText
-  protected yLabel: SpeckleText
-  protected zLabel: SpeckleText
+  protected xLabel: TextLabel
+  protected yLabel: TextLabel
+  protected zLabel: TextLabel
   protected xLabelPosition: Vector3 = new Vector3()
   protected yLabelPosition: Vector3 = new Vector3()
   protected zLabelPosition: Vector3 = new Vector3()
   protected readonly pixelsOffX = 50 * window.devicePixelRatio
-  protected readonly pixelsOffY = 27 * window.devicePixelRatio
+  protected readonly pixelsOffY = 25 * window.devicePixelRatio
 
   public set isVisible(value: boolean) {
     this.gizmo.visible = value
@@ -47,70 +45,64 @@ export class PointMeasurement extends Measurement {
     this.zLabel.visible = value
   }
 
+  public get measurementType(): MeasurementType {
+    return MeasurementType.POINT
+  }
+
   public constructor() {
     super()
     this.type = 'PointMeasurement'
     this.gizmo = new MeasurementPointGizmo()
     this.add(this.gizmo)
-    this.xLabel = new SpeckleText(MathUtils.generateUUID(), ObjectLayers.MEASUREMENTS)
-    const xLabelMaterial = new SpeckleTextMaterial(
-      {
-        color: 0xffffff,
-        opacity: 1,
-        side: DoubleSide
-      },
-      ['USE_RTE', 'BILLBOARD_FIXED']
-    )
-    xLabelMaterial.toneMapped = false
-    xLabelMaterial.color.convertSRGBToLinear()
-    xLabelMaterial.opacity = 1
-    xLabelMaterial.transparent = false
-    xLabelMaterial.depthTest = false
-    xLabelMaterial.billboardPixelHeight = 17 * window.devicePixelRatio
-    xLabelMaterial.userData.billboardPos.value.copy(this.position)
 
-    this.xLabel.textMesh.material = xLabelMaterial.getDerivedMaterial()
+    this.xLabel = new TextLabel({
+      text: 'sample',
+      textColor: new Color(0xffffff),
+      fontSize: 11,
+      billboard: 'screen',
+      anchorX: 'left',
+      anchorY: 'middle',
+      backgroundColor: new Color(0xfb0404),
+      backgroundMargins: new Vector2(30, 10),
+      backgroundCornerRadius: 0.3,
+      objectLayer: ObjectLayers.MEASUREMENTS
+    })
+    this.xLabel.name = 'XLabel'
+    this.xLabel.material.depthTest = false
     this.add(this.xLabel)
 
-    this.yLabel = new SpeckleText(MathUtils.generateUUID(), ObjectLayers.MEASUREMENTS)
-    const yLabelMaterial = new SpeckleTextMaterial(
-      {
-        color: 0xffffff,
-        opacity: 1,
-        side: DoubleSide
-      },
-      ['USE_RTE', 'BILLBOARD_FIXED']
-    )
-    yLabelMaterial.toneMapped = false
-    yLabelMaterial.color.convertSRGBToLinear()
-    yLabelMaterial.opacity = 1
-    yLabelMaterial.transparent = false
-    yLabelMaterial.depthTest = false
-    yLabelMaterial.billboardPixelHeight = 17 * window.devicePixelRatio
-    yLabelMaterial.userData.billboardPos.value.copy(this.position)
-
-    this.yLabel.textMesh.material = yLabelMaterial.getDerivedMaterial()
+    this.yLabel = new TextLabel({
+      text: 'sample',
+      textColor: new Color(0xffffff),
+      fontSize: 11,
+      anchorX: 'left',
+      anchorY: 'middle',
+      billboard: 'screen',
+      backgroundColor: new Color(0x03c903),
+      backgroundMargins: new Vector2(30, 10),
+      backgroundCornerRadius: 0.3,
+      objectLayer: ObjectLayers.MEASUREMENTS
+    })
+    this.yLabel.name = 'YLabel'
+    this.yLabel.material.depthTest = false
     this.add(this.yLabel)
 
-    this.zLabel = new SpeckleText(MathUtils.generateUUID(), ObjectLayers.MEASUREMENTS)
-    const zLabelMaterial = new SpeckleTextMaterial(
-      {
-        color: 0xffffff,
-        opacity: 1,
-        side: DoubleSide
-      },
-      ['USE_RTE', 'BILLBOARD_FIXED']
-    )
-    zLabelMaterial.toneMapped = false
-    zLabelMaterial.color.convertSRGBToLinear()
-    zLabelMaterial.opacity = 1
-    zLabelMaterial.transparent = false
-    zLabelMaterial.depthTest = false
-    zLabelMaterial.billboardPixelHeight = 17 * window.devicePixelRatio
-    zLabelMaterial.userData.billboardPos.value.copy(this.position)
-
-    this.zLabel.textMesh.material = zLabelMaterial.getDerivedMaterial()
+    this.zLabel = new TextLabel({
+      text: 'sample',
+      textColor: new Color(0xffffff),
+      fontSize: 11,
+      billboard: 'screen',
+      anchorX: 'left',
+      anchorY: 'middle',
+      backgroundColor: new Color(0x047efb),
+      backgroundMargins: new Vector2(30, 10),
+      backgroundCornerRadius: 0.3,
+      objectLayer: ObjectLayers.MEASUREMENTS
+    })
+    this.zLabel.name = 'ZLabel'
+    this.zLabel.material.depthTest = false
     this.add(this.zLabel)
+
     this.layers.set(ObjectLayers.MEASUREMENTS)
   }
 
@@ -118,9 +110,9 @@ export class PointMeasurement extends Measurement {
     super.frameUpdate(camera, size, bounds)
 
     this.updateLabelPositions()
-    this.xLabel.setTransform(this.xLabelPosition)
-    this.yLabel.setTransform(this.yLabelPosition)
-    this.zLabel.setTransform(this.zLabelPosition)
+    this.xLabel.position.copy(this.xLabelPosition)
+    this.yLabel.position.copy(this.yLabelPosition)
+    this.zLabel.position.copy(this.zLabelPosition)
     this.gizmo.frameUpdate(camera, size)
   }
 
@@ -171,64 +163,26 @@ export class PointMeasurement extends Measurement {
   }
 
   public async update(): Promise<void> {
-    const xP = this.xLabel
-      .update({
-        textValue: `x : ${(
-          this.startPoint.x * getConversionFactor('m', this.units)
-        ).toFixed(this.precision)} ${this.units}`,
-        height: 1,
-        anchorX: '0%',
-        anchorY: '50%'
-      })
-      .then(() => {
-        this.xLabel.style = {
-          backgroundColor: new Color(0xfb0404),
-          billboard: true,
-          backgroundPixelHeight: 20
-        }
-        this.xLabel.setTransform(this.xLabelPosition)
-        if (this.xLabel.backgroundMesh) this.xLabel.backgroundMesh.renderOrder = 3
-        this.xLabel.textMesh.renderOrder = 4
-      })
-    const yP = this.yLabel
-      .update({
-        textValue: `y : ${(
-          this.startPoint.y * getConversionFactor('m', this.units)
-        ).toFixed(this.precision)} ${this.units}`,
-        height: 1,
-        anchorX: '0%',
-        anchorY: '50%'
-      })
-      .then(() => {
-        this.yLabel.style = {
-          backgroundColor: new Color(0x03c903),
-          billboard: true,
-          backgroundPixelHeight: 20
-        }
-        this.yLabel.setTransform(this.yLabelPosition)
-        if (this.yLabel.backgroundMesh) this.yLabel.backgroundMesh.renderOrder = 3
-        this.yLabel.textMesh.renderOrder = 4
-      })
+    this.xLabel.position.copy(this.xLabelPosition)
+    this.yLabel.position.copy(this.yLabelPosition)
+    this.zLabel.position.copy(this.zLabelPosition)
+    const xP = this.xLabel.updateParams({
+      text: `X : ${(this.startPoint.x * getConversionFactor('m', this.units)).toFixed(
+        this.precision
+      )} ${this.units}`
+    })
 
-    const zP = this.zLabel
-      .update({
-        textValue: `z : ${(
-          this.startPoint.z * getConversionFactor('m', this.units)
-        ).toFixed(this.precision)} ${this.units}`,
-        height: 1,
-        anchorX: '0%',
-        anchorY: '50%'
-      })
-      .then(() => {
-        this.zLabel.style = {
-          backgroundColor: new Color(0x047efb),
-          billboard: true,
-          backgroundPixelHeight: 20
-        }
-        this.zLabel.setTransform(this.zLabelPosition)
-        if (this.zLabel.backgroundMesh) this.zLabel.backgroundMesh.renderOrder = 3
-        this.zLabel.textMesh.renderOrder = 4
-      })
+    const yP = this.yLabel.updateParams({
+      text: `Y : ${(this.startPoint.y * getConversionFactor('m', this.units)).toFixed(
+        this.precision
+      )} ${this.units}`
+    })
+
+    const zP = this.zLabel.updateParams({
+      text: `Z : ${(this.startPoint.z * getConversionFactor('m', this.units)).toFixed(
+        this.precision
+      )} ${this.units}`
+    })
 
     this.gizmo.updateNormalIndicator(this.startPoint, this.startNormal)
     this.gizmo.updatePoint(this.startPoint)

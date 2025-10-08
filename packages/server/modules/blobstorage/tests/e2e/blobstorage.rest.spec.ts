@@ -1,0 +1,226 @@
+import { Buffer } from 'node:buffer'
+import request from 'supertest'
+import { expect } from 'chai'
+import { beforeEachContext, getMainTestRegionKeyIfMultiRegion } from '@/test/hooks'
+import { Scopes } from '@/modules/core/helpers/mainConstants'
+import { db } from '@/db/knex'
+import { createTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory
+} from '@/modules/core/repositories/tokens'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { waitForRegionUser } from '@/test/speckle-helpers/regions'
+import { createTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
+import { faker } from '@faker-js/faker'
+import { createTestUser, type BasicTestUser } from '@/test/authHelper'
+import cryptoRandomString from 'crypto-random-string'
+import type { BlobStorageItem } from '@/modules/blobstorage/domain/types'
+import { fileURLToPath } from 'url'
+
+const createRandomUser = async (): Promise<BasicTestUser> => {
+  const userDetails = {
+    name: cryptoRandomString({ length: 10 }),
+    email: `${cryptoRandomString({ length: 10, type: 'url-safe' })}@example.org`,
+    password: cryptoRandomString({ length: 12 })
+  }
+  return createTestUser(userDetails)
+}
+const createToken = createTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  })
+})
+
+describe('Blobs integration @blobstorage', () => {
+  let app: Express.Application
+  let token: string
+  let user: BasicTestUser
+  const workspace = {
+    name: 'Anutha Blob Test Workspace #1',
+    ownerId: '',
+    id: '',
+    slug: ''
+  }
+
+  const createStreamForTest = async (
+    streamOwner: BasicTestUser,
+    isPublic: boolean = false
+  ) => {
+    const stream: Partial<BasicTestStream> = {
+      name: faker.company.name(),
+      isPublic,
+      workspaceId: workspace.id
+    }
+    await createTestStream(stream, streamOwner)
+    return stream.id
+  }
+
+  before(async () => {
+    ;({ app } = await beforeEachContext())
+    user = await createRandomUser()
+    await waitForRegionUser(user.id)
+    await createTestWorkspace(workspace, user, {
+      regionKey: getMainTestRegionKeyIfMultiRegion()
+    })
+    ;({ token } = await createToken({
+      userId: user.id,
+      name: 'test token',
+      scopes: [Scopes.Streams.Write, Scopes.Streams.Read]
+    }))
+  })
+  it('Uploads from multipart upload', async () => {
+    const streamId = await createStreamForTest(user)
+    const response = await request(app)
+      .post(`/api/stream/${streamId}/blob`)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('blob1', fileURLToPath(import.meta.resolve('@/readme.md')))
+      .attach('blob2', fileURLToPath(import.meta.resolve('@/package.json')))
+    expect(response.status).to.equal(201)
+    expect(response.body.uploadResults).to.exist
+    const uploadResults = response.body.uploadResults
+    expect(uploadResults).to.have.lengthOf(2)
+    expect(uploadResults.map((r: BlobStorageItem) => r.uploadStatus)).to.have.members([
+      1, 1
+    ])
+  })
+
+  it('Errors for too big files, file is deleted', async () => {
+    const streamId = await createStreamForTest(user)
+    const response = await request(app)
+      .post(`/api/stream/${streamId}/blob`)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('blob1', Buffer.alloc(114_857_601, 'asdf'), 'dummy.blob')
+    expect(response.body.uploadResults).to.have.lengthOf(1)
+    const [uploadResult] = response.body.uploadResults
+    expect(uploadResult.uploadStatus).to.equal(2)
+    expect(uploadResult.uploadError).to.equal('File size limit reached')
+    const blob = await request(app)
+      .get(`/api/stream/${streamId}/blob/${uploadResult.blobId}`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(blob.status).to.equal(404)
+  })
+
+  it('Gets blob metadata', async () => {
+    const streamId = await createStreamForTest(user)
+    const response = await request(app)
+      .post(`/api/stream/${streamId}/blob`)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('blob1', Buffer.alloc(100, 'asdf'), 'dummy.blob')
+    expect(response.status).to.equal(201)
+    expect(response.body.uploadResults).to.have.lengthOf(1)
+    const [uploadResult] = response.body.uploadResults
+
+    const metadataResult = await request(app)
+      .get(`/api/stream/${streamId}/blobs`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(metadataResult.status).to.equal(200)
+    expect(metadataResult.body.blobs).to.have.lengthOf(1)
+    expect(metadataResult.body.blobs[0].id).to.equal(uploadResult.blobId)
+  })
+
+  it('Deletes blob and object metadata', async () => {
+    const streamId = await createStreamForTest(user)
+    const response = await request(app)
+      .post(`/api/stream/${streamId}/blob`)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('blob1', Buffer.alloc(100, 'asdf'), 'dummy.blob')
+    expect(response.status).to.equal(201)
+    expect(response.body.uploadResults).to.have.lengthOf(1)
+    const [uploadResult] = response.body.uploadResults
+
+    const deleteResult = await request(app)
+      .delete(`/api/stream/${streamId}/blob/${uploadResult.blobId}`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(deleteResult.status).to.equal(204)
+    const blob = await request(app)
+      .get(`/api/stream/${streamId}/blob/${uploadResult.blobId}`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(blob.status).to.equal(404)
+
+    const metadataResult = await request(app)
+      .get(`/api/stream/${streamId}/blobs`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(metadataResult.status).to.equal(200)
+    expect(metadataResult.body).to.deep.equal({ blobs: [], cursor: null })
+  })
+
+  it('Gets uploaded blob data', async () => {
+    const streamId = await createStreamForTest(user)
+    const response = await request(app)
+      .post(`/api/stream/${streamId}/blob`)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('blob1', Buffer.alloc(10, 'a'), 'dummy.blob')
+    expect(response.body.uploadResults).to.have.lengthOf(1)
+    const [uploadResult] = response.body.uploadResults
+
+    const blob = await request(app)
+      .get(`/api/stream/${streamId}/blob/${uploadResult.blobId}`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(blob.status).to.equal(200)
+    expect(blob.headers['content-disposition']).to.equal(
+      'attachment; filename="dummy.blob"'
+    )
+    expect(blob.body.toString()).to.equal('a'.repeat(10))
+  })
+
+  it('cannot get uploaded blob data to a non-public project without valid token', async () => {
+    const streamId = await createStreamForTest(user)
+    const response = await request(app)
+      .post(`/api/stream/${streamId}/blob`)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('blob1', Buffer.alloc(10, 'a'), 'dummy.blob')
+    expect(response.body.uploadResults).to.have.lengthOf(1)
+    const [uploadResult] = response.body.uploadResults
+
+    const blob = await request(app)
+      .get(`/api/stream/${streamId}/blob/${uploadResult.blobId}`)
+      .set('Authorization', `Bearer ${cryptoRandomString({ length: 10 })}`)
+    expect(blob.status).to.equal(403)
+  })
+
+  it('anonymously gets uploaded blob data for a public project', async () => {
+    const streamId = await createStreamForTest(user, true)
+    const response = await request(app)
+      .post(`/api/stream/${streamId}/blob`)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('blob1', Buffer.alloc(10, 'a'), 'dummy.blob')
+    expect(response.body.uploadResults).to.have.lengthOf(1)
+    const [uploadResult] = response.body.uploadResults
+
+    const blob = await request(app).get(
+      `/api/stream/${streamId}/blob/${uploadResult.blobId}`
+    )
+    expect(blob.status).to.equal(200)
+    expect(blob.headers['content-disposition']).to.equal(
+      'attachment; filename="dummy.blob"'
+    )
+    expect(blob.body.toString()).to.equal('a'.repeat(10))
+  })
+
+  it('Returns 400 for bad form data', async () => {
+    const streamId = await createStreamForTest(user)
+    const response = await request(app)
+      .post(`/api/stream/${streamId}/blob`)
+      .set('Authorization', `Bearer ${token}`)
+      .set('Content-type', 'multipart/form-data; boundary=XXX')
+      // sending an unfinished part
+      .send('--XXX\r\nCon')
+
+    expect(response.status).to.equal(400)
+  })
+
+  it('Returns 400 for missing content-type', async () => {
+    const streamId = await createStreamForTest(user)
+    const response = await request(app)
+      .post(`/api/stream/${streamId}/blob`)
+      .set('Authorization', `Bearer ${token}`)
+    // .set('Content-type', 'multipart/form-data; boundary=XXX') // purposefully missing content-type header
+
+    expect(response.status).to.equal(400)
+  })
+})

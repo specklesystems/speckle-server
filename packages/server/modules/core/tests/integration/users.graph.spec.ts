@@ -1,25 +1,21 @@
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   assignToWorkspaces,
-  BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
-import {
-  UsersRetrievalDocument,
-  UsersRetrievalInput
-} from '@/test/graphql/generated/graphql'
-import {
-  ExecuteOperationOptions,
-  testApolloServer,
-  TestApolloServer
-} from '@/test/graphqlHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser, createTestUsers } from '@/test/authHelper'
+import type { UsersRetrievalInput } from '@/modules/core/graph/generated/graphql'
+import { UsersRetrievalDocument } from '@/modules/core/graph/generated/graphql'
+import type { ExecuteOperationOptions, TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext, getMainTestRegionKeyIfMultiRegion } from '@/test/hooks'
 import { waitForRegionUsers } from '@/test/speckle-helpers/regions'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import {
   addAllToStream,
-  BasicTestStream,
   createTestStream,
   createTestStreams
 } from '@/test/speckle-helpers/streamHelper'

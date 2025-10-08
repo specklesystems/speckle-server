@@ -1,11 +1,9 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    class="w-full hover:bg-blue-500/5 rounded pl-1 py-0.5 border-l-2 text-body-3xs"
+    class="w-full rounded pl-1 py-0.5 text-body-3xs border-l-2"
     :class="[
-      expandable
-        ? 'border-primary bg-foundation-page'
-        : 'border-transparent bg-foundation',
+      expandable ? 'border-foreground' : 'border-transparent',
       expanded ? 'border-neutral-500 border-opacity-30' : ''
     ]"
   >
@@ -61,7 +59,8 @@
 import { ChevronRightIcon, ArrowUpRightIcon, FunnelIcon } from '@heroicons/vue/20/solid'
 import { modelRoute } from '~/lib/common/helpers/route'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
-import { useFilterUtilities } from '~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
+import { useCameraUtilities } from '~/lib/viewer/composables/ui'
 const props = defineProps<{
   prop: {
     key: string
@@ -72,13 +71,11 @@ const props = defineProps<{
 
 const {
   projectId,
-  viewer: {
-    instance,
-    metadata: { filteringState }
-  }
+  ui: { filters }
 } = useInjectedViewerState()
 
 const { isolateObjects, resetFilters } = useFilterUtilities()
+const { zoom } = useCameraUtilities()
 
 const expanded = ref(false)
 
@@ -113,9 +110,9 @@ const selectionLink = computed(() => {
 
 const handleHighlight = () => {
   if (!isDetached.value) return
-  const isIsolated = filteringState.value?.isolatedObjects?.includes(isDetached.value)
+  const isIsolated = filters.isolatedObjectsSet.value?.has(isDetached.value)
   if (isIsolated) return resetFilters()
-  instance.zoom([isDetached.value])
+  zoom([isDetached.value])
   resetFilters()
   isolateObjects([isDetached.value])
 }

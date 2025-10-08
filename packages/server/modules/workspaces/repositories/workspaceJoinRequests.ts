@@ -1,10 +1,11 @@
 import { UserEmails } from '@/modules/core/dbSchema'
-import {
+import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
+import type {
   CreateWorkspaceJoinRequest,
   GetWorkspaceJoinRequest,
   UpdateWorkspaceJoinRequestStatus
 } from '@/modules/workspaces/domain/operations'
-import {
+import type {
   WorkspaceJoinRequest,
   WorkspaceJoinRequestStatus
 } from '@/modules/workspacesCore/domain/types'
@@ -13,8 +14,8 @@ import {
   WorkspaceJoinRequests
 } from '@/modules/workspacesCore/helpers/db'
 import { Roles } from '@speckle/shared'
-import { Knex } from 'knex'
-import { SetRequired } from 'type-fest'
+import type { Knex } from 'knex'
+import type { SetRequired } from 'type-fest'
 
 const tables = {
   workspaceJoinRequests: (db: Knex) =>
@@ -96,18 +97,30 @@ export const getAdminWorkspaceJoinRequestsFactory =
     cursor?: string
     limit: number
   }) => {
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
+      schema: WorkspaceJoinRequests,
+      cols: ['createdAt', 'userId']
+    })
     const query = adminWorkspaceJoinRequestsBaseQueryFactory(db)(filter)
+    applyCursorSortAndFilter({
+      query,
+      cursor
+    })
 
-    if (cursor) {
-      query.andWhere(WorkspaceJoinRequests.col.createdAt, '<', cursor)
-    }
-    return await query
+    query
       .select<WorkspaceJoinRequest[]>([
         ...WorkspaceJoinRequests.cols,
         UserEmails.col.email
       ])
-      .orderBy(WorkspaceJoinRequests.col.createdAt, 'desc')
       .limit(limit)
+
+    const items = await query
+    const newCursor = resolveNewCursor(items)
+
+    return {
+      items,
+      cursor: newCursor
+    }
   }
 
 export const countAdminWorkspaceJoinRequestsFactory =
@@ -138,7 +151,7 @@ const workspaceJoinRequestsBaseQueryFactory =
 
 export const getWorkspaceJoinRequestsFactory =
   ({ db }: { db: Knex }) =>
-  ({
+  async ({
     filter,
     cursor,
     limit
@@ -148,14 +161,24 @@ export const getWorkspaceJoinRequestsFactory =
     limit: number
   }) => {
     const query = workspaceJoinRequestsBaseQueryFactory(db)(filter)
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
+      schema: WorkspaceJoinRequests,
+      cols: ['createdAt', 'userId']
+    })
+    applyCursorSortAndFilter({
+      query,
+      cursor
+    })
 
-    if (cursor) {
-      query.andWhere(WorkspaceJoinRequests.col.createdAt, '<', cursor)
+    query.select<WorkspaceJoinRequest[]>(WorkspaceJoinRequests.cols).limit(limit)
+
+    const items = await query
+    const newCursor = resolveNewCursor(items)
+
+    return {
+      items,
+      cursor: newCursor
     }
-    return query
-      .select<WorkspaceJoinRequest[]>(WorkspaceJoinRequests.cols)
-      .orderBy(WorkspaceJoinRequests.col.createdAt, 'desc')
-      .limit(limit)
   }
 
 export const countWorkspaceJoinRequestsFactory =

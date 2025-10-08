@@ -1,40 +1,41 @@
 import { Scopes, Roles } from '@/modules/core/helpers/mainConstants'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 
+import type { BaseError } from '@/modules/shared/errors'
 import {
-  BaseError,
   ForbiddenError,
   UnauthorizedError,
   ContextError,
   DatabaseError,
   NotFoundError
 } from '@/modules/shared/errors'
-import {
-  Authz,
+import type {
   AvailableRoles,
   MaybeNullOrUndefined,
   ServerRoles,
   StreamRoles
 } from '@speckle/shared'
+import { Authz } from '@speckle/shared'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
-import { UserRoleData } from '@/modules/shared/domain/rolesAndScopes/types'
+import type { UserRoleData } from '@/modules/shared/domain/rolesAndScopes/types'
 import db from '@/db/knex'
-import {
+import type {
   AuthContext,
   AuthParams,
   AuthResult,
   AuthData
 } from '@/modules/shared/domain/authz/types'
-import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
-import {
+import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
+import type {
   ValidateServerRoleBuilder,
   ValidateStreamRoleBuilder
 } from '@/modules/shared/domain/authz/operations'
-import { GetRoles } from '@/modules/shared/domain/rolesAndScopes/operations'
-import { ValidateUserServerRole } from '@/modules/shared/domain/operations'
+import type { GetRoles } from '@/modules/shared/domain/rolesAndScopes/operations'
+import type { ValidateUserServerRole } from '@/modules/shared/domain/operations'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { moduleAuthLoaders } from '@/modules/index'
-export { AuthContext, AuthParams }
+
+export type { AuthContext, AuthParams }
 
 export interface AuthFailedResult extends AuthResult {
   authorized: false
@@ -160,7 +161,7 @@ export const validateResourceAccess: AuthPipelineFunction = async ({
   if (authHasFailed(authResult)) return { context, authResult }
   if (!resourceAccessRules?.length) return authSuccess(context)
 
-  const streamId = context.stream?.id || params?.streamId
+  const streamId = context.stream?.id || params?.streamId || params?.projectId
   if (!streamId) {
     return authSuccess(context)
   }
@@ -224,8 +225,9 @@ export const validateRequiredStreamFactory =
   // IoC baby...
   async ({ context, authResult, params }) => {
     const { getStream } = deps
+    const streamId = params?.streamId || params?.projectId
 
-    if (!params?.streamId)
+    if (!streamId)
       return authFailed(
         context,
         new ContextError("The context doesn't have a streamId")
@@ -239,7 +241,7 @@ export const validateRequiredStreamFactory =
     // keep the pipeline rolling
     try {
       const stream = await getStream({
-        streamId: params.streamId,
+        streamId,
         userId: context?.userId
       })
 
@@ -249,12 +251,13 @@ export const validateRequiredStreamFactory =
           new NotFoundError(
             'Project ID is malformed and cannot be found, or the project does not exist',
             {
-              info: { projectId: params.streamId }
+              info: { projectId: streamId }
             }
           ),
           true
         )
       context.stream = stream
+      context.project = stream
       return { context, authResult }
     } catch (err) {
       // this prob needs some more detailing to not leak internal errors
@@ -327,8 +330,9 @@ const validateStreamPolicyAccessFactory =
     const { context, params, authResult } = authData
 
     if (authHasFailed(authResult)) return { context, authResult }
+    const streamId = params?.streamId || params?.projectId
 
-    if (!params?.streamId)
+    if (!streamId)
       return authFailed(
         context,
         new ContextError("The context doesn't have a streamId")
@@ -347,7 +351,7 @@ const validateStreamPolicyAccessFactory =
         new NotFoundError(
           'Project ID is malformed and cannot be found, or the project does not exist',
           {
-            info: { projectId: params.streamId }
+            info: { projectId: streamId }
           }
         ),
         true
@@ -368,7 +372,7 @@ export const streamWritePermissionsPipelineFactory = (deps: {
     policyInvoker: async ({ authData, policies }) =>
       policies.project.version.canCreate({
         userId: authData.context.userId,
-        projectId: authData.params!.streamId!
+        projectId: authData.params!.streamId! || authData.params!.projectId!
       })
   })
 ]
@@ -384,7 +388,7 @@ export const streamCommentsWritePermissionsPipelineFactory = (deps: {
     policyInvoker: async ({ authData, policies }) =>
       policies.project.comment.canCreate({
         userId: authData.context.userId,
-        projectId: authData.params!.streamId!
+        projectId: authData.params!.streamId! || authData.params!.projectId!
       })
   })
 ]
@@ -400,7 +404,7 @@ export const streamReadPermissionsPipelineFactory = (deps: {
     policyInvoker: async ({ authData, policies }) =>
       policies.project.canRead({
         userId: authData.context.userId,
-        projectId: authData.params!.streamId!
+        projectId: authData.params!.streamId! || authData.params!.projectId!
       })
   })
 ]

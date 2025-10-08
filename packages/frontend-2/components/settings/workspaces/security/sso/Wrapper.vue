@@ -16,11 +16,11 @@
         <div v-if="workspace.hasAccessToSSO">
           <FormSwitch
             v-if="isWorkspaceAdmin"
-            v-model="isFormVisible"
+            v-model="isSsoEnabled"
             name="sso-configuration"
             :show-label="false"
-            :disabled="loading || !!provider"
-            @update:model-value="handleConfigurationToggle"
+            :disabled="loading"
+            @update:model-value="handleSsoToggle"
           />
 
           <div v-else v-tippy="`You must be a workspace admin`">
@@ -45,7 +45,7 @@
 
     <template v-else>
       <!-- Existing Provider Configuration -->
-      <div v-if="provider" class="p-4 border border-outline-3 rounded-lg">
+      <div v-if="provider" class="p-4 border border-outline-3 rounded-lg mt-3">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <h3 class="text-body-xs font-medium text-foreground">
@@ -186,6 +186,23 @@ const scopesAndClaims = ref({
 
 const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
 
+// Shows as enabled if there's a provider OR if user is actively configuring (form is visible)
+const isSsoEnabled = computed({
+  get: () => !!provider.value || isFormVisible.value,
+  set: (value: boolean) => {
+    if (value) {
+      isFormVisible.value = true
+    } else {
+      if (provider.value) {
+        isDeleteDialogOpen.value = true
+      } else {
+        isFormVisible.value = false
+        errorProviderInfo.value = undefined
+      }
+    }
+  }
+})
+
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
     {
@@ -211,10 +228,17 @@ const onButtonClick = () => {
   showActionsMenu.value = !showActionsMenu.value
 }
 
-const handleConfigurationToggle = (enabled: boolean) => {
-  isFormVisible.value = enabled
-  if (!enabled) {
+const handleSsoToggle = (enabled: boolean) => {
+  if (enabled) {
+    isFormVisible.value = true
     errorProviderInfo.value = undefined
+  } else {
+    if (provider.value) {
+      isDeleteDialogOpen.value = true
+    } else {
+      isFormVisible.value = false
+      errorProviderInfo.value = undefined
+    }
   }
 }
 

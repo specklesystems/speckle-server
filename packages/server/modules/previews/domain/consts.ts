@@ -10,3 +10,6 @@ export const PreviewPriority = {
   MEDIUM: 100,
   HIGH: 200
 } as const
+
+export const DelayBetweenPreviewRetriesMinutes = 2
+export const NumberOfPreviewRetries = 2

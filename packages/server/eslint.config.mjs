@@ -13,24 +13,24 @@ const configs = [
   ...baseConfigs,
   {
     languageOptions: {
-      sourceType: 'commonjs',
+      sourceType: 'module',
       globals: {
         ...globals.node
       }
     }
   },
   {
-    files: ['**/*.mjs'],
+    files: ['**/*.cjs', '**/*.cts'],
     languageOptions: {
-      sourceType: 'module'
+      sourceType: 'commonjs'
     }
   },
   ...tseslint.configs.recommendedTypeChecked.map((c) => ({
     ...c,
-    files: [...(c.files || []), '**/*.ts', '**/*.d.ts']
+    files: [...(c.files || []), '**/*.ts', '**/*.d.ts', '**/*.cts']
   })),
   {
-    files: ['**/*.ts', '**/*.d.ts'],
+    files: ['**/*.ts', '**/*.d.ts', '**/*.cts'],
     languageOptions: {
       parserOptions: {
         tsconfigRootDir: getESMDirname(import.meta.url),
@@ -44,6 +44,8 @@ const configs = [
           patterns: ['.*']
         }
       ],
+      '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/consistent-type-exports': 'error',
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unsafe-return': 'error',
       '@typescript-eslint/no-floating-promises': 'error',
@@ -107,7 +109,8 @@ const configs = [
   {
     files: ['**/*.spec.ts', '**/tests/**/*.{js,ts}', 'test/**/*.{js,ts}'],
     rules: {
-      '@typescript-eslint/no-unused-expressions': 'off'
+      '@typescript-eslint/no-unused-expressions': 'off',
+      '@typescript-eslint/no-non-null-asserted-optional-chain': 'off'
     }
   },
   prettierConfig

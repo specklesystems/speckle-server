@@ -1,5 +1,6 @@
-import { Roles, WorkspaceRoles } from '@speckle/shared'
-import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import type { WorkspaceRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
+import type { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceRole } from '@/modules/core/graph/generated/graphql'
 
 export const isUserLastWorkspaceAdmin = (

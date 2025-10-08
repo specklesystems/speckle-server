@@ -36,6 +36,7 @@ import type { BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { useWorkspacePlan } from '~/lib/workspaces/composables/plan'
 import { useWorkspaceUsage } from '~/lib/workspaces/composables/usage'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { useFeatureFlags } from '~/lib/common/composables/env'
 
 type AddonIncludedSelect = 'yes' | 'no'
 
@@ -59,8 +60,9 @@ const { hasUnlimitedAddon, plan, subscription, statusIsCanceled, seats } =
   useWorkspacePlan(props.slug)
 const mixpanel = useMixpanel()
 const { projectCount, modelCount } = useWorkspaceUsage(props.slug)
+const featureFlags = useFeatureFlags()
 
-const showAddonSelect = ref<boolean>(true)
+const showAddonSelect = ref<boolean>(false)
 const isLoading = ref<boolean>(false)
 
 const title = computed(() => {
@@ -78,7 +80,7 @@ const title = computed(() => {
 })
 
 const usageExceedsNewPlanLimit = computed(() => {
-  const limits = WorkspacePlanConfigs[props.plan].limits
+  const limits = WorkspacePlanConfigs({ featureFlags })[props.plan].limits
   const modelLimit = limits.modelCount
   const projectLimit = limits.projectCount
 
@@ -194,7 +196,12 @@ watch(
   () => isOpen.value,
   (newVal) => {
     if (newVal) {
-      showAddonSelect.value = props.isChangingPlan && !isSamePlanWithAddon.value
+      // Only show addon select for Business (Pro) plans
+      const isBusinessPlan =
+        props.plan === PaidWorkspacePlans.Pro ||
+        props.plan === PaidWorkspacePlans.ProUnlimited
+      showAddonSelect.value =
+        props.isChangingPlan && !isSamePlanWithAddon.value && isBusinessPlan
       // If the add-on is required or already included, set it to yes
       if (usageExceedsNewPlanLimit.value && props.isChangingPlan) {
         includeUnlimitedAddon.value = 'yes'
@@ -202,6 +209,7 @@ watch(
         includeUnlimitedAddon.value = undefined
       }
     }
-  }
+  },
+  { immediate: true }
 )
 </script>

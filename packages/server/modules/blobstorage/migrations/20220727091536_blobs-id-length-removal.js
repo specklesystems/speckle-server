@@ -2,7 +2,7 @@
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-exports.up = async (knex) => {
+const up = async (knex) => {
   await knex.raw(
     'ALTER TABLE "blob_storage" ALTER COLUMN "id" SET DATA TYPE varchar(255);'
   )
@@ -12,8 +12,10 @@ exports.up = async (knex) => {
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-exports.down = async (knex) => {
+const down = async (knex) => {
   await knex.raw(
     'ALTER TABLE "blob_storage" ALTER COLUMN "id" SET DATA TYPE varchar(10);'
   )
 }
+
+export { up, down }

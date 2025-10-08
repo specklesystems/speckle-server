@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   checkIfPubliclyReadableProjectFragment,
+  ensureCanUseProjectWorkspacePlanFeatureFragment,
   ensureImplicitProjectMemberWithReadAccessFragment,
   ensureImplicitProjectMemberWithWriteAccessFragment,
   ensureMinimumProjectRoleFragment,
@@ -16,12 +17,23 @@ import {
   ServerNoSessionError,
   ServerNotEnoughPermissionsError,
   WorkspaceNoAccessError,
+  WorkspacePlanNoFeatureAccessError,
   WorkspaceSsoSessionNoAccessError
 } from '../domain/authErrors.js'
 import { OverridesOf } from '../../tests/helpers/types.js'
-import { getProjectFake } from '../../tests/fakes.js'
+import {
+  getEnvFake,
+  getProjectFake,
+  getWorkspaceFake,
+  getWorkspacePlanFake
+} from '../../tests/fakes.js'
 import { TIME_MS } from '../../core/index.js'
 import { ProjectVisibility } from '../domain/projects/types.js'
+import {
+  PaidWorkspacePlans,
+  PaidWorkspacePlanStatuses,
+  WorkspacePlanFeatures
+} from '../../workspaces/index.js'
 
 describe('ensureMinimumProjectRoleFragment', () => {
   const buildSUT = (overrides?: OverridesOf<typeof ensureMinimumProjectRoleFragment>) =>
@@ -38,7 +50,8 @@ describe('ensureMinimumProjectRoleFragment', () => {
       getProjectRole: async () => Roles.Stream.Contributor,
       getEnv: async () =>
         parseFeatureFlags({
-          FF_WORKSPACES_MODULE_ENABLED: 'true'
+          FF_WORKSPACES_MODULE_ENABLED: 'true',
+          FF_SAVED_VIEWS_ENABLED: 'true'
         }),
       ...overrides
     })
@@ -52,7 +65,7 @@ describe('ensureMinimumProjectRoleFragment', () => {
         workspaceId: 'workspaceId',
         visibility: ProjectVisibility.Workspace
       }),
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspaceId',
         slug: 'workspaceSlug'
       }),
@@ -210,7 +223,8 @@ describe('checkIfPubliclyReadableProjectFragment', () => {
       }),
       getEnv: async () =>
         parseFeatureFlags({
-          FF_WORKSPACES_MODULE_ENABLED: 'true'
+          FF_WORKSPACES_MODULE_ENABLED: 'true',
+          FF_SAVED_VIEWS_ENABLED: 'true'
         }),
       ...overrides
     })
@@ -274,7 +288,11 @@ describe('ensureProjectWorkspaceAccessFragment', () => {
         id: 'projectId',
         workspaceId: null
       }),
-      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true',
+          FF_SAVED_VIEWS_ENABLED: 'true'
+        }),
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
@@ -290,7 +308,7 @@ describe('ensureProjectWorkspaceAccessFragment', () => {
         id: 'projectId',
         workspaceId: 'workspaceId'
       }),
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspaceId',
         slug: 'workspaceSlug'
       }),
@@ -431,7 +449,8 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
       getProjectRole: async () => Roles.Stream.Contributor,
       getEnv: async () =>
         parseFeatureFlags({
-          FF_WORKSPACES_MODULE_ENABLED: 'true'
+          FF_WORKSPACES_MODULE_ENABLED: 'true',
+          FF_SAVED_VIEWS_ENABLED: 'true'
         }),
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
@@ -450,7 +469,7 @@ describe('ensureImplicitProjectMemberWithReadAccessFragment', async () => {
         visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspaceId',
         slug: 'workspaceSlug'
       }),
@@ -670,7 +689,11 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
       }),
       getServerRole: async () => Roles.Server.User,
       getProjectRole: async () => Roles.Stream.Contributor,
-      getEnv: async () => parseFeatureFlags({ FF_WORKSPACES_MODULE_ENABLED: 'true' }),
+      getEnv: async () =>
+        parseFeatureFlags({
+          FF_WORKSPACES_MODULE_ENABLED: 'true',
+          FF_SAVED_VIEWS_ENABLED: 'true'
+        }),
       getWorkspace: async () => null,
       getWorkspaceSsoProvider: async () => null,
       getWorkspaceSsoSession: async () => null,
@@ -688,7 +711,7 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
         visibility: ProjectVisibility.Workspace
       }),
       getProjectRole: async () => null,
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspaceId',
         slug: 'workspaceSlug'
       }),
@@ -924,6 +947,108 @@ describe('ensureImplicitProjectMemberWithWriteAccessFragment', () => {
       expect(result).toBeAuthErrorResult({
         code: WorkspaceSsoSessionNoAccessError.code
       })
+    })
+  })
+})
+
+describe('ensureCanUseProjectWorkspacePlanFeatureFragment', () => {
+  const buildSUT = (
+    overrides?: OverridesOf<typeof ensureCanUseProjectWorkspacePlanFeatureFragment>
+  ) =>
+    ensureCanUseProjectWorkspacePlanFeatureFragment({
+      getProject: getProjectFake({
+        id: 'project-id',
+        workspaceId: 'workspace-id'
+      }),
+      getWorkspacePlan: getWorkspacePlanFake({
+        workspaceId: 'workspace-id',
+        name: PaidWorkspacePlans.Pro,
+        status: PaidWorkspacePlanStatuses.Valid
+      }),
+      getEnv: getEnvFake({
+        FF_WORKSPACES_MODULE_ENABLED: true,
+        FF_SAVED_VIEWS_ENABLED: true
+      }),
+      ...overrides
+    })
+
+  it('succeeds if project has workspace and feature is enabled', async () => {
+    const sut = buildSUT()
+
+    const result = await sut({
+      projectId: 'project-id',
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
+    })
+
+    expect(result).toBeAuthOKResult()
+  })
+
+  it('fails if project not found', async () => {
+    const sut = buildSUT({
+      getProject: async () => null
+    })
+
+    const result = await sut({
+      projectId: 'project-id',
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
+    })
+
+    expect(result).toBeAuthErrorResult({
+      code: ProjectNotFoundError.code
+    })
+  })
+
+  it('fails if project w/o a workspace', async () => {
+    const sut = buildSUT({
+      getProject: getProjectFake({
+        id: 'project-id',
+        workspaceId: null
+      })
+    })
+
+    const result = await sut({
+      projectId: 'project-id',
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
+    })
+
+    expect(result).toBeAuthErrorResult({
+      code: WorkspaceNoAccessError.code
+    })
+  })
+
+  it('succeeds if project w/o a workspace, but allowUnworkspaced === true', async () => {
+    const sut = buildSUT({
+      getProject: getProjectFake({
+        id: 'project-id',
+        workspaceId: null
+      })
+    })
+
+    const result = await sut({
+      projectId: 'project-id',
+      feature: WorkspacePlanFeatures.HideSpeckleBranding,
+      allowUnworkspaced: true
+    })
+
+    expect(result).toBeAuthOKResult()
+  })
+
+  it('fails if projects plan does not have access to feature', async () => {
+    const sut = buildSUT({
+      getWorkspacePlan: getWorkspacePlanFake({
+        workspaceId: 'workspace-id',
+        name: PaidWorkspacePlans.Team,
+        status: PaidWorkspacePlanStatuses.Valid
+      })
+    })
+
+    const result = await sut({
+      projectId: 'project-id',
+      feature: WorkspacePlanFeatures.HideSpeckleBranding
+    })
+
+    expect(result).toBeAuthErrorResult({
+      code: WorkspacePlanNoFeatureAccessError.code
     })
   })
 })

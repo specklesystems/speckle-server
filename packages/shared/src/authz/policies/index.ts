@@ -28,10 +28,40 @@ import { canDeleteProjectPolicy } from './project/canDelete.js'
 import { canDeleteAutomationPolicy } from './project/automation/canDelete.js'
 import { canPublishPolicy } from './project/canPublish.js'
 import { canLoadPolicy } from './project/canLoad.js'
-import { canUpdateEmbedOptionsPolicy } from './workspace/canUpdateEmbedOptions.js'
 import { canReadMemberEmailPolicy } from './workspace/canReadMemberEmail.js'
+import { canCreateWorkspacePolicy } from './workspace/canCreateWorkspace.js'
+import { canUseWorkspacePlanFeature } from './workspace/canUseWorkspacePlanFeature.js'
+import { canEditFunctionPolicy } from './automate/function/canEditFunction.js'
+import { canUpdateEmbedTokensPolicy } from './project/canUpdateEmbedTokens.js'
+import { canReadAccIntegrationSettingsPolicy } from './project/canReadAccIntegrationSettings.js'
+import { canCreateSavedViewPolicy } from './project/savedViews/canCreate.js'
+import { canUpdateSavedViewPolicy } from './project/savedViews/canUpdate.js'
+import { canUpdateSavedViewGroupPolicy } from './project/savedViews/canUpdateGroup.js'
+import { canReadSavedViewPolicy } from './project/savedViews/canRead.js'
+import { canListDashboardsPolicy } from './workspace/canListDashboards.js'
+import { canDeleteDashboardPolicy } from './dashboard/canDelete.js'
+import { canCreateDashboardsPolicy } from './workspace/canCreateDashboards.js'
+import { canCreateDashboardTokenPolicy } from './dashboard/canCreateToken.js'
+import { canEditDashboardPolicy } from './dashboard/canEdit.js'
+import { canReadDashboardPolicy } from './dashboard/canRead.js'
+import { canMoveSavedViewPolicy } from './project/savedViews/canMove.js'
+import { canEditSavedViewTitlePolicy } from './project/savedViews/canEditTitle.js'
+import { canEditSavedViewDescriptionPolicy } from './project/savedViews/canEditDescription.js'
+import { canCreateSavedViewGroupTokenPolicy } from './project/savedViews/canCreateSavedViewGroupToken.js'
+import { canSetSavedViewAsHomeViewPolicy } from './project/savedViews/canSetAsHomeView.js'
 
 export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
+  automate: {
+    function: {
+      canRegenerateToken: canEditFunctionPolicy(loaders)
+    }
+  },
+  dashboard: {
+    canCreateToken: canCreateDashboardTokenPolicy(loaders),
+    canDelete: canDeleteDashboardPolicy(loaders),
+    canEdit: canEditDashboardPolicy(loaders),
+    canRead: canReadDashboardPolicy(loaders)
+  },
   project: {
     automation: {
       canCreate: canCreateAutomationPolicy(loaders),
@@ -55,6 +85,17 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
       canReceive: canLoadPolicy(loaders),
       canRequestRender: canRequestProjectVersionRenderPolicy(loaders)
     },
+    savedViews: {
+      canCreate: canCreateSavedViewPolicy(loaders),
+      canUpdate: canUpdateSavedViewPolicy(loaders),
+      canUpdateGroup: canUpdateSavedViewGroupPolicy(loaders),
+      canCreateToken: canCreateSavedViewGroupTokenPolicy(loaders),
+      canRead: canReadSavedViewPolicy(loaders),
+      canMove: canMoveSavedViewPolicy(loaders),
+      canEditTitle: canEditSavedViewTitlePolicy(loaders),
+      canEditDescription: canEditSavedViewDescriptionPolicy(loaders),
+      canSetAsHomeView: canSetSavedViewAsHomeViewPolicy(loaders)
+    },
     canBroadcastActivity: canBroadcastProjectActivityPolicy(loaders),
     canRead: canReadProjectPolicy(loaders),
     canMoveToWorkspace: canMoveToWorkspacePolicy(loaders),
@@ -67,15 +108,22 @@ export const authPoliciesFactory = (loaders: AllAuthCheckContextLoaders) => ({
     canLeave: canLeaveProjectPolicy(loaders),
     canInvite: canInviteToProjectPolicy(loaders),
     canPublish: canPublishPolicy(loaders),
-    canLoad: canLoadPolicy(loaders)
+    canLoad: canLoadPolicy(loaders),
+    canReadEmbedTokens: canUpdateEmbedTokensPolicy(loaders),
+    canUpdateEmbedTokens: canUpdateEmbedTokensPolicy(loaders),
+    canReadAccIntegrationSettings: canReadAccIntegrationSettingsPolicy(loaders),
+    canUpdateAccIntegrationSettings: canReadAccIntegrationSettingsPolicy(loaders)
   },
   workspace: {
     canCreateProject: canCreateWorkspaceProjectPolicy(loaders),
     canInvite: canInviteToWorkspacePolicy(loaders),
     canReceiveProjectsUpdatedMessage:
       canReceiveWorkspaceProjectsUpdatedMessagePolicy(loaders),
-    canUpdateEmbedOptions: canUpdateEmbedOptionsPolicy(loaders),
-    canReadMemberEmail: canReadMemberEmailPolicy(loaders)
+    canUseWorkspacePlanFeature: canUseWorkspacePlanFeature(loaders),
+    canReadMemberEmail: canReadMemberEmailPolicy(loaders),
+    canCreateWorkspace: canCreateWorkspacePolicy(loaders),
+    canCreateDashboards: canCreateDashboardsPolicy(loaders),
+    canListDashboards: canListDashboardsPolicy(loaders)
   }
 })
 

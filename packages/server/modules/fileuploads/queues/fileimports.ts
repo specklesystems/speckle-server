@@ -1,71 +1,89 @@
-import { UninitializedResourceAccessError } from '@/modules/shared/errors'
+import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import type { Logger } from '@/observability/logging'
+import type { JobPayloadV1 } from '@speckle/shared/workers/fileimport'
+import type { FileImportQueue } from '@/modules/fileuploads/domain/types'
 import {
-  getFileimportServiceRedisUrl,
-  getFileUploadTimeLimitMinutes,
-  getRedisUrl,
-  isProdEnv,
-  isTestEnv
-} from '@/modules/shared/helpers/envHelper'
-import { logger } from '@/observability/logging'
-import { Optional, TIME_MS } from '@speckle/shared'
-import Bull from 'bull'
-import cryptoRandomString from 'crypto-random-string'
-import { initializeQueue as setupQueue } from '@speckle/shared/dist/commonjs/queue/index.js'
-import { JobPayload } from '@speckle/shared/workers/fileimport'
-import { ScheduleFileimportJob } from '@/modules/fileuploads/domain/operations'
+  NumberOfFileImportRetries,
+  BackgroundJobType,
+  BackgroundJobPayloadVersion,
+  singleAttemptMaximumProcessingTimeSeconds
+} from '@/modules/fileuploads/domain/consts'
+import type { Knex } from 'knex'
+import { migrateDbToLatest } from '@/db/migrations'
+import { createBackgroundJobFactory } from '@/modules/backgroundjobs/services/create'
+import {
+  getBackgroundJobCountFactory,
+  storeBackgroundJobFactory
+} from '@/modules/backgroundjobs/repositories/backgroundjobs'
+import { BackgroundJobStatus } from '@/modules/backgroundjobs/domain/types'
 
-const FILE_IMPORT_SERVICE_QUEUE_NAME = isTestEnv()
-  ? `test:fileimport-service-jobs:${cryptoRandomString({ length: 5 })}`
-  : 'fileimport-service-jobs'
+export const fileImportQueues: FileImportQueue[] = []
 
-let queue: Optional<Bull.Queue<JobPayload>>
+export const initializePostgresQueue = async ({
+  label,
+  supportedFileTypes,
+  db
+}: {
+  label: string
+  db: Knex
+  supportedFileTypes: string[]
+}): Promise<FileImportQueue> => {
+  // migrating the DB up, the queue DB might be added based on a config
+  await migrateDbToLatest({ db, region: `Queue DB for ${label}` })
 
-if (isTestEnv()) {
-  logger.info(`Fileimport service test queue ID: ${FILE_IMPORT_SERVICE_QUEUE_NAME}`)
-  logger.info(
-    `Monitor using: 'yarn cli bull monitor ${FILE_IMPORT_SERVICE_QUEUE_NAME}'`
-  )
-}
-
-const limiter = {
-  max: 10,
-  duration: TIME_MS.second
-}
-
-const defaultJobOptions = {
-  attempts: 5,
-  timeout: getFileUploadTimeLimitMinutes() * TIME_MS.minute,
-  backoff: {
-    type: 'fixed',
-    delay: 5 * TIME_MS.minute
-  },
-  removeOnComplete: isProdEnv(),
-  removeOnFail: false
-}
-
-export const initializeQueue = async () => {
-  queue = await setupQueue({
-    queueName: FILE_IMPORT_SERVICE_QUEUE_NAME,
-    redisUrl: getFileimportServiceRedisUrl() ?? getRedisUrl(),
-    options: {
-      ...(!isTestEnv() ? { limiter } : {}),
-      defaultJobOptions
-    }
+  const createBackgroundJob = createBackgroundJobFactory({
+    jobConfig: {
+      maxAttempt: NumberOfFileImportRetries,
+      remainingComputeBudgetSeconds: 2 * singleAttemptMaximumProcessingTimeSeconds()
+    },
+    storeBackgroundJob: storeBackgroundJobFactory({
+      db,
+      originServerUrl: getServerOrigin()
+    })
   })
-  return queue
-}
+  const getBackgroundJobCount = getBackgroundJobCountFactory({ db })
 
-export const shutdownQueue = async () => {
-  if (!queue) return
-  await queue.close()
-}
-
-export const scheduleJob: ScheduleFileimportJob = async (jobData) => {
-  if (!queue) {
-    throw new UninitializedResourceAccessError(
-      'Attempting to use uninitialized Bull queue'
-    )
+  const fileImportQueue = {
+    label,
+    supportedFileTypes: supportedFileTypes.map(
+      (type) => type.toLocaleLowerCase() // Normalize file types to lowercase (this is a safeguard to prevent stupid typos in the future)
+    ),
+    shutdown: async () => {},
+    scheduleJob: async (jobData: JobPayloadV1) => {
+      await createBackgroundJob({
+        jobPayload: {
+          jobType: BackgroundJobType.FileImport,
+          payloadVersion: BackgroundJobPayloadVersion.v1,
+          ...jobData
+        }
+      })
+    },
+    metrics: {
+      getPendingJobCount: () =>
+        getBackgroundJobCount({
+          status: BackgroundJobStatus.Queued,
+          jobType: BackgroundJobType.FileImport
+        }),
+      getWaitingJobCount: () =>
+        getBackgroundJobCount({
+          status: BackgroundJobStatus.Queued,
+          jobType: BackgroundJobType.FileImport,
+          minAttempts: 1
+        }),
+      getActiveJobCount: () =>
+        getBackgroundJobCount({
+          status: BackgroundJobStatus.Processing,
+          jobType: BackgroundJobType.FileImport
+        })
+    }
   }
+  fileImportQueues.push(fileImportQueue)
+  return fileImportQueue
+}
 
-  await queue.add(jobData, { removeOnComplete: true, attempts: 3 })
+export const shutdownQueues = async (params: { logger: Logger }) => {
+  for (const queue of fileImportQueues) {
+    await queue.shutdown()
+    params.logger.info(`📄 FileUploads, shutdown queue for ${queue.label} parser`)
+  }
 }

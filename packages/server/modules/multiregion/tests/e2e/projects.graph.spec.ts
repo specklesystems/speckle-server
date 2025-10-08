@@ -1,22 +1,24 @@
 import { db } from '@/db/knex'
-import { AutomationRecord, AutomationRunRecord } from '@/modules/automate/helpers/types'
+import type {
+  AutomationRecord,
+  AutomationRunRecord
+} from '@/modules/automate/helpers/types'
 import { markAutomationDeletedFactory } from '@/modules/automate/repositories/automations'
 import { deleteAutomationFactory } from '@/modules/automate/services/automationManagement'
-import { CommentRecord } from '@/modules/comments/helpers/types'
+import type { CommentRecord } from '@/modules/comments/helpers/types'
 import { updateCommentFactory } from '@/modules/comments/repositories/comments'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
-import { StreamRecord } from '@/modules/core/helpers/types'
+import type { StreamRecord } from '@/modules/core/helpers/types'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   createWebhookConfigFactory,
   createWebhookEventFactory
 } from '@/modules/webhooks/repositories/webhooks'
-import {
-  BasicTestWorkspace,
-  createTestWorkspace
-} from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
+import { createTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser } from '@/test/authHelper'
 import {
   UpdateProjectRegionDocument,
   GetProjectDocument,
@@ -26,31 +28,36 @@ import {
   GetRegionalProjectAutomationDocument,
   GetRegionalProjectCommentDocument,
   GetRegionalProjectWebhookDocument,
-  GetRegionalProjectBlobDocument
-} from '@/test/graphql/generated/graphql'
-import { TestApolloServer, testApolloServer } from '@/test/graphqlHelper'
+  GetRegionalProjectBlobDocument,
+  GetProjectSavedViewDocument
+} from '@/modules/core/graph/generated/graphql'
+import type { TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import {
   createTestAutomation,
   createTestAutomationRun
 } from '@/test/speckle-helpers/automationHelper'
 import { createTestBlob } from '@/test/speckle-helpers/blobHelper'
-import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import type { BasicTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { createTestComment } from '@/test/speckle-helpers/commentHelper'
-import {
-  BasicTestCommit,
-  createTestObject,
-  createTestCommit
-} from '@/test/speckle-helpers/commitHelper'
+import type { BasicTestCommit } from '@/test/speckle-helpers/commitHelper'
+import { createTestObject, createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import {
   isMultiRegionTestMode,
   waitForRegionUser
 } from '@/test/speckle-helpers/regions'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
-import { retry, Roles } from '@speckle/shared'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import {
+  createTestStream,
+  getUserStreamRole
+} from '@/test/speckle-helpers/streamHelper'
+import { retry, Roles, wait } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import { Knex } from 'knex'
-import { SetOptional } from 'type-fest'
+import type { Knex } from 'knex'
+import type { SetOptional } from 'type-fest'
+import { buildTestSavedView } from '@/modules/viewer/tests/helpers/savedViews'
 
 const tables = {
   projects: (db: Knex) => db.table<StreamRecord>('streams')
@@ -129,6 +136,7 @@ isMultiRegionTestMode()
       let testComment: CommentRecord
       let testWebhookId: string
       let testBlobId: string
+      let testSavedViewId: string
 
       let apollo: TestApolloServer
       let sourceRegionDb: Knex
@@ -241,16 +249,73 @@ isMultiRegionTestMode()
         })
         testBlobId = testBlob.blobId
 
+        testSavedViewId = cryptoRandomString({ length: 10 })
+        await sourceRegionDb('saved_views').insert(
+          buildTestSavedView({
+            id: testSavedViewId,
+            projectId: testProject.id,
+            authorId: adminUser.id
+          })
+        )
+
         await assertProjectRegion(testProject.id, regionKey1)
       })
 
-      it('moves projects with no resources of a given type', async () => {
+      it('moves project with no resources of a given type', async () => {
         const resA = await apollo.execute(UpdateProjectRegionDocument, {
           projectId: emptyProject.id,
           regionKey: regionKey2
         })
         expect(resA).to.not.haveGraphQLErrors()
         await ensureProjectRegion(emptyProject.id, regionKey2)
+      })
+
+      it('moves project to region without breaking the target region', async () => {
+        // Move a workspace project to region2
+        const resA = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: emptyProject.id,
+          regionKey: regionKey2
+        })
+        expect(resA).to.not.haveGraphQLErrors()
+        await ensureProjectRegion(emptyProject.id, regionKey2)
+
+        // Create a new project in region2
+        const testRegion2Workspace: BasicTestWorkspace = {
+          id: '',
+          ownerId: '',
+          name: 'My Region 2 Workspace',
+          slug: 'region-2-workspace'
+        }
+        await createTestWorkspace(testRegion2Workspace, adminUser, {
+          regionKey: regionKey2,
+          addPlan: {
+            name: 'unlimited',
+            status: 'valid'
+          }
+        })
+
+        const testRegion2Project: BasicTestStream = {
+          id: '',
+          ownerId: '',
+          name: 'My Region 2 Project',
+          workspaceId: testRegion2Workspace.id
+        }
+        await createTestStream(testRegion2Project, adminUser)
+        await ensureProjectRegion(testRegion2Project.id, regionKey2)
+      })
+
+      it('moves project to region and preserves project roles', async () => {
+        const resA = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: emptyProject.id,
+          regionKey: regionKey2
+        })
+        expect(resA).to.not.haveGraphQLErrors()
+        // TODO: Change region move order of events to avoid wait
+        await wait(500)
+        const role = await getUserStreamRole(adminUser.id, emptyProject.id)
+        if (!role || role !== Roles.Stream.Owner) {
+          expect.fail('Did not preserve roles on project after region move.')
+        }
       })
 
       it('moves project record to target regional db', async () => {
@@ -405,6 +470,24 @@ isMultiRegionTestMode()
         expect(resB).to.not.haveGraphQLErrors()
 
         expect(resB.data?.project.blob).to.not.be.undefined
+      })
+
+      it('moves project files associated with saved views', async () => {
+        const resA = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+        expect(resA).to.not.haveGraphQLErrors()
+
+        await ensureProjectRegion(testProject.id, regionKey2)
+
+        const resB = await apollo.execute(GetProjectSavedViewDocument, {
+          projectId: testProject.id,
+          viewId: testSavedViewId
+        })
+        expect(resB).to.not.haveGraphQLErrors()
+
+        expect(resB.data?.project.savedView).not.to.be.undefined
       })
     })
   : void 0

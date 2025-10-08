@@ -1,18 +1,20 @@
-import { intersection, isObjectLike } from '#lodash'
+import { has, intersection, isNumber, isObjectLike } from '#lodash'
 import type { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityTypes.js'
 import type { PartialDeep } from 'type-fest'
 import { UnformattableSerializedViewerStateError } from '../errors/index.js'
 import { coerceUndefinedValuesToNull } from '../../core/index.js'
 
+export const defaultViewModeEdgeColorValue = 'DEFAULT_EDGE_COLOR'
+
 /** Redefining these is unfortunate. Especially since they are not part of viewer-core */
-enum MeasurementType {
+export enum MeasurementType {
   PERPENDICULAR = 0,
   POINTTOPOINT = 1,
   AREA = 2,
   POINT = 3
 }
 
-interface MeasurementOptions {
+export interface MeasurementOptions {
   visible: boolean
   type?: MeasurementType
   vertexSnap?: boolean
@@ -20,6 +22,27 @@ interface MeasurementOptions {
   precision?: number
   chain?: boolean
 }
+
+export interface MeasurementData {
+  type: MeasurementType
+  startPoint: readonly [number, number, number] // vec3
+  endPoint: readonly [number, number, number] // vec3
+  startNormal: readonly [number, number, number] // vec3
+  endNormal: readonly [number, number, number] // vec3
+  value: number
+  innerPoints?: (readonly [number, number, number])[] // array of vec3
+  units?: string
+  precision?: number
+  uuid: string
+}
+
+export const defaultMeasurementOptions: Readonly<MeasurementOptions> = Object.freeze({
+  visible: true,
+  type: MeasurementType.POINTTOPOINT,
+  vertexSnap: false,
+  units: 'm',
+  precision: 2
+})
 
 export interface SectionBoxData {
   min: number[]
@@ -35,8 +58,21 @@ export interface SectionBoxData {
  * - ui.diff added
  * v1.2 -> v1.3
  * - ui.filters.selectedObjectIds removed in favor of ui.filters.selectedObjectApplicationIds
+ * v1.3 -> 1.4
+ * - ui.viewMode -> ui.viewMode.mode
+ * - ui.viewMode has new keys: edgesEnabled, edgesWeight, outlineOpacity, edgesColor
+ * v1.4 -> 1.5
+ * - ui.measurement.measurements added
+ * v1.5 -> 1.6
+ * - ui.filters.propertyFilter -> propertyFilters
+ * - activeColorFilterId added
+ * v1.6 -> 1.7
+ * - ui.filters.filterLogic added
+ * - ui.filters.propertyFilters.condition updated
+ * v1.7 -> 1.8
+ * - ui.filters.propertyFilters.numericRange added
  */
-export const SERIALIZED_VIEWER_STATE_VERSION = 1.3
+export const SERIALIZED_VIEWER_STATE_VERSION = 1.8
 
 export type SerializedViewerState = {
   projectId: string
@@ -77,10 +113,16 @@ export type SerializedViewerState = {
       hiddenObjectIds: string[]
       /** Map of object id => application id or null, if no application id */
       selectedObjectApplicationIds: Record<string, string | null>
-      propertyFilter: {
+      propertyFilters: Array<{
         key: Nullable<string>
         isApplied: boolean
-      }
+        selectedValues: string[]
+        id: string
+        condition: string
+        numericRange?: { min: number; max: number }
+      }>
+      activeColorFilterId: Nullable<string>
+      filterLogic: string
     }
     camera: {
       position: number[]
@@ -88,7 +130,13 @@ export type SerializedViewerState = {
       isOrthoProjection: boolean
       zoom: number
     }
-    viewMode: number
+    viewMode: {
+      mode: number
+      edgesEnabled: boolean
+      edgesWeight: number
+      outlineOpacity: number
+      edgesColor: typeof defaultViewModeEdgeColorValue | number
+    }
     sectionBox: Nullable<SectionBoxData>
     lightConfig: {
       intensity?: number
@@ -101,8 +149,14 @@ export type SerializedViewerState = {
     measurement: {
       enabled: boolean
       options: Nullable<MeasurementOptions>
+      measurements: Array<MeasurementData>
     }
   }
+}
+
+export type VersionedSerializedViewerState = {
+  version: number
+  state: SerializedViewerState
 }
 
 type UnformattedState = PartialDeep<
@@ -111,6 +165,11 @@ type UnformattedState = PartialDeep<
     ui: {
       filters: {
         selectedObjectIds: string[]
+        // Legacy single propertyFilter for migration
+        propertyFilter: {
+          key: Nullable<string>
+          isApplied: boolean
+        }
       }
     }
   }
@@ -144,14 +203,6 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
     )
   }
 
-  const defaultMeasurementOptions: MeasurementOptions = {
-    visible: false,
-    type: MeasurementType.POINTTOPOINT,
-    vertexSnap: false,
-    units: 'm',
-    precision: 2
-  }
-
   const measurementOptions = {
     ...defaultMeasurementOptions,
     ...state.ui?.measurement?.options
@@ -168,6 +219,12 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
       state.ui?.filters?.selectedObjectApplicationIds || {}
     )
   }
+
+  const viewModeType = isNumber(state.ui?.viewMode)
+    ? state.ui.viewMode
+    : state.ui?.viewMode?.mode
+
+  const viewModeSettings = isNumber(state.ui?.viewMode) ? {} : state.ui?.viewMode
 
   return {
     projectId: state.projectId || throwInvalidError('projectId'),
@@ -213,17 +270,61 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
         mode: state.ui?.diff?.mode || 1
       },
       spotlightUserSessionId: state.ui?.spotlightUserSessionId || null,
-      filters: {
-        ...(state.ui?.filters || {}),
-        isolatedObjectIds: state.ui?.filters?.isolatedObjectIds || [],
-        hiddenObjectIds: state.ui?.filters?.hiddenObjectIds || [],
-        selectedObjectApplicationIds,
-        propertyFilter: {
-          ...(state.ui?.filters?.propertyFilter || {}),
-          key: state.ui?.filters?.propertyFilter?.key || null,
-          isApplied: state.ui?.filters?.propertyFilter?.isApplied || false
+      filters: (() => {
+        const baseFilters = {
+          ...(state.ui?.filters || {}),
+          isolatedObjectIds: state.ui?.filters?.isolatedObjectIds || [],
+          hiddenObjectIds: state.ui?.filters?.hiddenObjectIds || [],
+          selectedObjectApplicationIds,
+          activeColorFilterId: state.ui?.filters?.activeColorFilterId || null
         }
-      },
+
+        // Migration logic: handle legacy propertyFilter and new propertyFilters
+        let propertyFilters: Array<{
+          key: Nullable<string>
+          isApplied: boolean
+          selectedValues: string[]
+          id: string
+          condition: string
+          numericRange?: { min: number; max: number }
+        }> = []
+
+        // If new propertyFilters exist and are not empty, use them
+        if (
+          state.ui?.filters?.propertyFilters &&
+          Array.isArray(state.ui.filters.propertyFilters) &&
+          state.ui.filters.propertyFilters.length > 0
+        ) {
+          // Map legacy condition values to new format
+          propertyFilters = state.ui.filters.propertyFilters.map((filter) => ({
+            ...filter,
+            condition:
+              filter.condition === 'AND'
+                ? 'is'
+                : filter.condition === 'OR'
+                ? 'is'
+                : filter.condition
+          }))
+        }
+        // If legacy propertyFilter exists but no propertyFilters (or empty propertyFilters), migrate it
+        else if (state.ui?.filters?.propertyFilter?.key) {
+          propertyFilters = [
+            {
+              key: state.ui.filters.propertyFilter.key,
+              isApplied: state.ui.filters.propertyFilter.isApplied || false,
+              selectedValues: [], // Legacy didn't have selectedValues
+              id: 'legacy-filter', // Generate a consistent ID for legacy filter
+              condition: 'is'
+            }
+          ]
+        }
+
+        return {
+          ...baseFilters,
+          propertyFilters,
+          filterLogic: state.ui?.filters?.filterLogic || 'all'
+        }
+      })(),
       camera: {
         ...(state.ui?.camera || {}),
         position: state.ui?.camera?.position || throwInvalidError('ui.camera.position'),
@@ -231,7 +332,13 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
         isOrthoProjection: state.ui?.camera?.isOrthoProjection || false,
         zoom: state.ui?.camera?.zoom || 1
       },
-      viewMode: state.ui?.viewMode || 0,
+      viewMode: {
+        mode: viewModeType ?? 0,
+        edgesEnabled: viewModeSettings?.edgesEnabled ?? true,
+        edgesWeight: viewModeSettings?.edgesWeight ?? 1,
+        outlineOpacity: viewModeSettings?.outlineOpacity ?? 0.75,
+        edgesColor: viewModeSettings?.edgesColor ?? defaultViewModeEdgeColorValue
+      },
       sectionBox:
         state.ui?.sectionBox?.min?.length && state.ui?.sectionBox.max?.length
           ? // Complains otherwise
@@ -248,7 +355,8 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
       selection: state.ui?.selection || null,
       measurement: {
         enabled: state.ui?.measurement?.enabled ?? false,
-        options: measurementOptions
+        options: measurementOptions,
+        measurements: state.ui?.measurement?.measurements || []
       }
     }
   }
@@ -263,4 +371,27 @@ export const formatSerializedViewerState = (
 ): SerializedViewerState => {
   const finalState = initializeMissingData(state)
   return finalState
+}
+
+export const inputToVersionedState = (
+  inputSerializedViewerState: unknown
+): Nullable<VersionedSerializedViewerState> => {
+  const state = isSerializedViewerState(inputSerializedViewerState)
+    ? formatSerializedViewerState(inputSerializedViewerState)
+    : null
+  if (!state) return null
+
+  return {
+    version: SERIALIZED_VIEWER_STATE_VERSION,
+    state
+  }
+}
+
+export const isVersionedSerializedViewerState = (
+  data: unknown
+): data is VersionedSerializedViewerState => {
+  if (!data || !isObjectLike(data)) return false
+  if (!has(data, 'version')) return false
+  const stateRaw = (data as Record<string, unknown>).state
+  return isSerializedViewerState(stateRaw)
 }

@@ -2,36 +2,40 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="lg"
-    :buttons="isPrivate ? nonDiscoverableButtons : discoverableButtons"
+    :buttons="buttons"
+    title="Embed model"
   >
-    <template v-if="isPrivate" #header>Change access permissions</template>
-    <template v-else #header>Embed model</template>
-
-    <div v-if="isPrivate">
-      <CommonAlert color="info">
-        <template #title>
-          Model embedding does not work when the project visibility is set to
-          "Private"{{ project.workspaceId ? ' or "Workspace"' : '' }}.
-        </template>
-      </CommonAlert>
-
-      <ProjectPageTeamDialogManagePermissions
-        :project="project"
-        @changed-visibility="handleChangeVisibility"
-      />
-    </div>
-    <div v-else>
-      <CommonAlert v-if="multipleVersionedResources" class="mb-4 sm:-mt-4" color="info">
+    <template v-if="canGenerateEmbed">
+      <CommonAlert
+        v-if="multipleVersionedResources"
+        class="mb-4"
+        color="info"
+        size="xs"
+      >
         <template #title>You are embedding a specific version</template>
         <template #description>
           <p>
-            This means that any changes you made after this version will not be included
-            in the embedded model.
+            Anyone with this embed link can view your model data. Be careful where you
+            share it!
           </p>
+        </template>
+      </CommonAlert>
+
+      <CommonAlert
+        v-if="!isPublicProject && canCreateEmbedTokens"
+        class="mb-4"
+        color="info"
+        size="2xs"
+      >
+        <template #title>
+          You are embedding a
+          <span class="lowercase">{{ projectVisibility }}</span>
+          project
+        </template>
+        <template #description>
           <p>
-            <strong>Tip:</strong>
-            If you want to share the latest version of your model, go back to the
-            project dashboard and start the embedding process from there.
+            Anyone with this embed link can view your model, be careful where you share
+            it.
           </p>
         </template>
       </CommonAlert>
@@ -45,13 +49,37 @@
           </p>
           <h4 class="text-heading-sm text-foreground-2 mb-1 ml-0.5">Embed URL</h4>
           <FormClipboardInput class="mb-4" :value="updatedUrl" />
-          <LayoutDialogSection border-b border-t title="Options">
+          <LayoutDialogSection
+            v-model:open="areOptionsExpanded"
+            border-b
+            border-t
+            title="Options"
+          >
             <div class="flex flex-col gap-1.5 sm:gap-2 text-body-xs cursor-default">
+              <div v-if="areSavedViewsEnabled" class="flex flex-col gap-1">
+                <label for="option-saved-view" :class="optionLabelClasses">
+                  <FormCheckbox
+                    id="option-saved-view"
+                    v-model="shouldEmbedSavedView"
+                    name="Embed a saved view"
+                    hide-label
+                    class="cursor-pointer"
+                  />
+                  <span>Embed a saved view</span>
+                </label>
+                <FormSelectSavedView
+                  v-if="shouldEmbedSavedView"
+                  v-model="embeddedSavedView"
+                  :project-id="props.project.id"
+                  :resource-id-string="routeModelId"
+                  :only-visibility="SavedViewVisibility.Public"
+                  :show-label="false"
+                  mount-menu-on-body
+                  class="max-w-sm"
+                />
+              </div>
               <div v-for="option in embedDialogOptions" :key="option.id">
-                <label
-                  :for="`option-${option.id}`"
-                  class="flex items-center gap-1 cursor-pointer max-w-max"
-                >
+                <label :for="`option-${option.id}`" :class="optionLabelClasses">
                   <FormCheckbox
                     :id="`option-${option.id}`"
                     :model-value="option.value.value"
@@ -66,10 +94,7 @@
                 </label>
               </div>
               <div v-if="isWorkspacesEnabled">
-                <label
-                  :for="`option-hide-logo`"
-                  class="flex items-center gap-1 cursor-pointer max-w-max"
-                >
+                <label :for="`option-hide-logo`" :class="optionLabelClasses">
                   <FormCheckbox
                     id="option-hide-logo"
                     v-model="hideSpeckleBranding"
@@ -91,12 +116,14 @@
                     <span
                       v-if="
                         !canEditEmbedOptions?.authorized &&
-                        canEditEmbedOptions?.code === 'WorkspaceNoFeatureAccess'
+                        canEditEmbedOptions?.code ===
+                          'WorkspacePlanNoFeatureAccessError'
                       "
                       class="text-body-2xs text-foreground-2"
                     >
                       This feature is only available on the business plan
                       <NuxtLink
+                        v-if="isAdmin"
                         :to="settingsWorkspaceRoutes.billing.route(workspaceSlug)"
                         class="underline"
                       >
@@ -109,8 +136,9 @@
                     >
                       Tip: You can also hide the logo for all embeds in
                       <NuxtLink
-                        :to="settingsWorkspaceRoutes.billing.route(workspaceSlug)"
+                        :to="settingsWorkspaceRoutes.general.route(workspaceSlug)"
                         class="underline"
+                        target="_blank"
                       >
                         workspace settings.
                       </NuxtLink>
@@ -137,31 +165,56 @@
           </LayoutDialogSection>
         </div>
       </div>
-    </div>
+    </template>
+    <template v-else>
+      <CommonAlert color="info" size="xs">
+        <template #title>
+          Cannot embed
+          <span class="lowercase">'{{ project.visibility }}'</span>
+          project
+        </template>
+        <template #description>
+          <p>
+            {{ cantGenerateDialogDescription }}
+          </p>
+        </template>
+      </CommonAlert>
+    </template>
   </LayoutDialog>
 </template>
 
 <script setup lang="ts">
-import type { ProjectsModelPageEmbed_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  SavedViewVisibility,
+  type FormSelectSavedView_SavedViewFragment,
+  type ProjectsModelPageEmbed_ProjectFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { useClipboard } from '~~/composables/browser'
-import { SpeckleViewer } from '@speckle/shared'
+import { SpeckleViewer, Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import { useUpdateProject } from '~/lib/projects/composables/projectManagement'
-import { useMixpanel } from '~/lib/core/composables/mp'
-import {
-  castToSupportedVisibility,
-  SupportedProjectVisibility
-} from '~/lib/projects/helpers/visibility'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
+import { useCreateEmbedToken } from '~~/lib/projects/composables/tokenManagement'
+import {
+  SupportedProjectVisibility,
+  castToSupportedVisibility
+} from '~/lib/projects/helpers/visibility'
+import { useMixpanel } from '~/lib/core/composables/mp'
+import { useAreSavedViewsEnabled } from '~/lib/viewer/composables/savedViews/general'
 
 graphql(`
   fragment ProjectsModelPageEmbed_Project on Project {
     id
-    ...ProjectsPageTeamDialogManagePermissions_Project
+    visibility
+    permissions {
+      canCreateEmbedTokens {
+        ...FullPermissionCheckResult
+      }
+    }
     workspace {
       id
       slug
+      role
       embedOptions {
         hideSpeckleBranding
       }
@@ -181,18 +234,19 @@ const props = defineProps<{
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
+const areOptionsExpanded = ref(false)
 
+const mixpanel = useMixpanel()
 const route = useRoute()
-const logger = useLogger()
 const { copy } = useClipboard()
 const {
   public: { baseUrl }
 } = useRuntimeConfig()
+const createEmbedToken = useCreateEmbedToken()
 
+const areSavedViewsEnabled = useAreSavedViewsEnabled()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
-const updateProject = useUpdateProject()
-const mp = useMixpanel()
 
 const transparentBackground = ref(false)
 const hideViewerControls = ref(false)
@@ -200,8 +254,18 @@ const hideSelectionInfo = ref(false)
 const disableModelLink = ref(false)
 const preventScrolling = ref(false)
 const manuallyLoadModel = ref(false)
-const projectVisibility = ref(props.project.visibility)
 const hideSpeckleBranding = ref(false)
+const embedToken = ref<string | null>(null)
+const shouldEmbedSavedView = ref(false)
+
+const embeddedSavedView = defineModel<FormSelectSavedView_SavedViewFragment>('view', {
+  required: false
+})
+
+const optionLabelClasses = computed(
+  () => 'flex items-center gap-1 cursor-pointer max-w-max'
+)
+const isAdmin = computed(() => props.project.workspace?.role === Roles.Workspace.Admin)
 
 const routeModelId = computed(() => route.params.modelId as string)
 
@@ -236,8 +300,13 @@ const updatedUrl = computed(() => {
     url.pathname += routeModelId.value
   }
 
+  // Add token parameter if embed token exists
+  if (embedToken.value) {
+    url.searchParams.set('embedToken', embedToken.value)
+  }
+
   // Construct the embed options as a hash fragment
-  const embedOptions: Record<string, boolean> = { isEnabled: true }
+  const embedOptions: Record<string, unknown> = { isEnabled: true }
   embedDialogOptions.forEach((option) => {
     if (option.value.value) {
       embedOptions[option.id] = true
@@ -256,6 +325,17 @@ const updatedUrl = computed(() => {
   const hashFragment = encodeURIComponent(JSON.stringify(embedOptions))
   url.hash = `embed=${hashFragment}`
 
+  // Embed view?
+  const savedViewSettings: Record<string, unknown> = {}
+  if (shouldEmbedSavedView.value && embeddedSavedView.value) {
+    savedViewSettings['id'] = embeddedSavedView.value.id
+  }
+
+  if (Object.keys(savedViewSettings).length > 0) {
+    const savedViewFragment = encodeURIComponent(JSON.stringify(savedViewSettings))
+    url.hash += `&savedView=${savedViewFragment}`
+  }
+
   return url.toString()
 })
 
@@ -263,14 +343,7 @@ const iframeCode = computed(() => {
   return `<iframe title="Speckle" src="${updatedUrl.value}" width="600" height="400" frameborder="0"></iframe>`
 })
 
-const isPrivate = computed(() => {
-  return (
-    castToSupportedVisibility(props.project.visibility) !==
-    SupportedProjectVisibility.Public
-  )
-})
-
-const discoverableButtons = computed((): LayoutDialogButton[] => [
+const buttons = computed((): LayoutDialogButton[] => [
   {
     text: 'Close',
     props: { color: 'outline' },
@@ -278,30 +351,17 @@ const discoverableButtons = computed((): LayoutDialogButton[] => [
       isOpen.value = false
     }
   },
-  {
-    text: 'Copy embed code',
-    props: {},
-    onClick: () => {
-      handleEmbedCodeCopy(iframeCode.value)
-    }
-  }
-])
-
-const nonDiscoverableButtons = computed((): LayoutDialogButton[] => [
-  {
-    text: 'Close',
-    props: { color: 'outline' },
-    onClick: () => {
-      isOpen.value = false
-    }
-  },
-  {
-    text: 'Save',
-    props: {
-      disabled: projectVisibility.value === props.project.visibility
-    },
-    onClick: saveProjectVisibility
-  }
+  ...(isPublicProject.value || (!isPublicProject.value && canCreateEmbedTokens.value)
+    ? [
+        {
+          text: 'Copy embed code',
+          props: {},
+          onClick: () => {
+            handleEmbedCodeCopy(iframeCode.value)
+          }
+        }
+      ]
+    : [])
 ])
 
 const workspaceSlug = computed(() => {
@@ -310,17 +370,36 @@ const workspaceSlug = computed(() => {
 const canEditEmbedOptions = computed(() => {
   return props.project.workspace?.permissions?.canEditEmbedOptions
 })
+const canCreateEmbedTokens = computed(() => {
+  return props.project.permissions?.canCreateEmbedTokens?.authorized
+})
+const projectVisibility = computed(() =>
+  castToSupportedVisibility(props.project.visibility)
+)
+const isPublicProject = computed(
+  () => projectVisibility.value === SupportedProjectVisibility.Public
+)
 const workspaceHideSpeckleBrandingEnabled = computed(() => {
   if (!isWorkspacesEnabled.value) return false
   return props.project.workspace?.embedOptions?.hideSpeckleBranding
 })
-
 const hideSpeckleBrandingTooltip = computed(() => {
   if (!isWorkspacesEnabled.value) return ''
   if (workspaceHideSpeckleBrandingEnabled.value) {
     return 'Speckle branding is disabled for all embeds in this workspace'
   }
   return ''
+})
+const canGenerateEmbed = computed(() => {
+  return isPublicProject.value || (!isPublicProject.value && canCreateEmbedTokens.value)
+})
+const cantGenerateDialogDescription = computed(() => {
+  if (
+    props.project.permissions?.canCreateEmbedTokens?.code === 'WorkspaceNoFeatureAccess'
+  ) {
+    return `Embedding ${props.project.visibility.toLowerCase()} projects is not available on your plan. Upgrade your workspace to get access to this feature.`
+  }
+  return `The visibility of this project is set to '${props.project.visibility.toLowerCase()}'. Please contact the project owner to change the visibility or generate an embed link.`
 })
 
 const handleEmbedCodeCopy = async (value: string) => {
@@ -332,27 +411,6 @@ const handleEmbedCodeCopy = async (value: string) => {
 
 const updateOption = (optionRef: Ref<boolean>, newValue: unknown) => {
   optionRef.value = newValue === undefined ? false : !!newValue
-}
-
-const handleChangeVisibility = (newVisibility: SupportedProjectVisibility) => {
-  projectVisibility.value = newVisibility
-}
-
-const saveProjectVisibility = async () => {
-  try {
-    await updateProject({
-      visibility: projectVisibility.value,
-      id: props.project.id
-    })
-    mp.track('Stream Action', {
-      type: 'action',
-      name: 'update',
-      action: 'project-access',
-      to: projectVisibility.value
-    })
-  } catch (e) {
-    logger.error(e)
-  }
 }
 
 const embedDialogOptions = [
@@ -398,4 +456,43 @@ watch(
   },
   { immediate: true }
 )
+
+watch(
+  isOpen,
+  async (newValue) => {
+    if (newValue) {
+      mixpanel.track('Embed Dialog Opened', {
+        projectId: props.project.id,
+        visibility: projectVisibility.value
+      })
+
+      if (canCreateEmbedTokens.value) {
+        mixpanel.track('Embed Token Created', {
+          projectId: props.project.id,
+          visibility: projectVisibility.value
+        })
+
+        const token = await createEmbedToken({
+          projectId: props.project.id,
+          resourceIdString: routeModelId.value
+        })
+
+        if (token) {
+          embedToken.value = token
+        }
+      }
+    }
+  },
+  { immediate: true }
+)
+
+watch(embeddedSavedView, (newVal, oldVal) => {
+  if (newVal) {
+    shouldEmbedSavedView.value = true
+
+    if (!oldVal || newVal.id !== oldVal.id) {
+      areOptionsExpanded.value = true
+    }
+  }
+})
 </script>

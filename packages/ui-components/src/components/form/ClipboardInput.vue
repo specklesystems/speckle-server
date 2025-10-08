@@ -16,11 +16,11 @@
       name="contentInput"
       readonly
       :model-value="value"
-      class="relative z-10 text-body-2xs text-foreground font-mono select-all"
+      class="relative z-10 !text-body-2xs sm:!text-body-xs text-foreground font-mono select-all truncate"
     />
     <div class="absolute top-3 right-2 flex justify-end items-center">
       <FormButton
-        color="outline"
+        :color="ctaColor"
         size="sm"
         :icon-left="
           isIconButton
@@ -32,7 +32,7 @@
         :hide-text="isIconButton"
         @click="handleCopy"
       >
-        {{ copied ? 'Copied' : 'Copy' }}
+        {{ copied ? 'Copied' : ctaText }}
       </FormButton>
     </div>
   </div>
@@ -47,16 +47,21 @@ import {
 import { FormTextInput, FormButton } from '~~/src/lib'
 import { ref } from 'vue'
 import { keyboardClick } from '~~/src/helpers/global/accessibility'
+import type { FormButtonStyle } from '~~/src/helpers/form/button'
 
 type Props = {
   value: string
   isMultiline?: boolean
   isIconButton?: boolean
   rows?: number
+  ctaColor?: FormButtonStyle
+  ctaText?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  isMultiline: false
+  isMultiline: false,
+  ctaColor: 'outline',
+  ctaText: 'Copy'
 })
 
 const emit = defineEmits<{ (e: 'copy', val: string): void }>()

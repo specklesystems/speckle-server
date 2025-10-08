@@ -9,8 +9,8 @@ ARG TINI_VERSION=v0.19.0
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
-     ca-certificates=20230311 \
-     curl=7.88.1-10+deb12u12 \
+     ca-certificates=20230311+deb12u1 \
+     curl=7.88.1-10+deb12u14 \
     && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /usr/bin/tini \
     && chmod +x /usr/bin/tini \
     && apt-get remove -y curl \
@@ -61,7 +61,7 @@ ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus --production
 
-FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:afdea027580f7afcaf1f316b2b3806690c297cb3ce6ddc5cf6a15804dc1c790f AS production-stage
+FROM gcr.io/distroless/nodejs22-debian12@sha256:8d8b9363b0c9d1153f845824f9b754fdb050ada4fa190583eca2da13fdd3138c AS production-stage
 
 COPY --link --from=build-stage /usr/bin/tini /usr/bin/tini
 
@@ -73,6 +73,8 @@ COPY --link --from=dependency-stage /speckle-server/node_modules ./node_modules
 
 WORKDIR /speckle-server/packages/server
 COPY --link --from=build-stage /speckle-server/packages/server/package.json ./package.json
+COPY --link --from=build-stage /speckle-server/packages/server/esmLoader.js ./esmLoader.js
+COPY --link --from=build-stage /speckle-server/packages/server/root.js ./root.js
 COPY --link --from=build-stage /speckle-server/packages/server/dist ./dist
 COPY --link --from=build-stage /speckle-server/packages/server/assets ./assets
 COPY --link --from=build-stage /speckle-server/packages/server/bin ./bin
@@ -86,4 +88,4 @@ ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV} \
   SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
 
-ENTRYPOINT [ "tini", "--", "/nodejs/bin/node", "./bin/www" ]
+ENTRYPOINT [ "tini", "--", "/nodejs/bin/node", "--import=./esmLoader.js", "./bin/www" ]

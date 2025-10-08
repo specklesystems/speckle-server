@@ -1,5 +1,5 @@
 import { OverrideProperties } from 'type-fest'
-import { MaybeAsync } from '../../core/index.js'
+import { MaybeAsync, StringEnum, StringEnumValues } from '../../core/index.js'
 import type { GetServerRole } from './core/operations.js'
 import type {
   GetProject,
@@ -10,6 +10,7 @@ import type {
 import type {
   GetAdminOverrideEnabled,
   GetEnv,
+  GetUserWorkspaces,
   GetWorkspace,
   GetWorkspaceLimits,
   GetWorkspaceModelCount,
@@ -23,6 +24,9 @@ import type {
 import { GetComment } from './comments/operations.js'
 import { GetModel } from './models/operations.js'
 import { GetVersion } from './versions/operations.js'
+import { GetAutomateFunction } from './automate/operations.js'
+import { GetSavedView, GetSavedViewGroup } from './savedViews/operations.js'
+import { GetDashboard } from './dashboards/operations.js'
 
 // utility type that ensures all properties functions that return promises
 type PromiseAll<T> = {
@@ -52,42 +56,52 @@ type AuthContextLoaderMappingDefinition<
  */
 
 /* v8 ignore start  */
-export const AuthCheckContextLoaderKeys = <const>{
-  getEnv: 'getEnv',
-  getProject: 'getProject',
-  getProjectRoleCounts: 'getProjectRoleCounts',
-  getProjectRole: 'getProjectRole',
-  getProjectModelCount: 'getProjectModelCount',
-  getServerRole: 'getServerRole',
-  getWorkspace: 'getWorkspace',
-  getWorkspaceRole: 'getWorkspaceRole',
-  getWorkspaceSeat: 'getWorkspaceSeat',
-  getWorkspaceModelCount: 'getWorkspaceModelCount',
-  getWorkspaceProjectCount: 'getWorkspaceProjectCount',
-  getWorkspacePlan: 'getWorkspacePlan',
-  getWorkspaceLimits: 'getWorkspaceLimits',
-  getWorkspaceSsoProvider: 'getWorkspaceSsoProvider',
-  getWorkspaceSsoSession: 'getWorkspaceSsoSession',
-  getAdminOverrideEnabled: 'getAdminOverrideEnabled',
-  getComment: 'getComment',
-  getModel: 'getModel',
-  getVersion: 'getVersion'
-}
+export const AuthCheckContextLoaderKeys = StringEnum([
+  'getEnv',
+  'getAutomateFunction',
+  'getDashboard',
+  'getProject',
+  'getProjectRoleCounts',
+  'getProjectRole',
+  'getProjectModelCount',
+  'getServerRole',
+  'getWorkspace',
+  'getUsersCurrentAndEligibleToBecomeAMemberWorkspaces',
+  'getWorkspaceRole',
+  'getWorkspaceSeat',
+  'getWorkspaceModelCount',
+  'getWorkspaceProjectCount',
+  'getWorkspacePlan',
+  'getWorkspaceLimits',
+  'getWorkspaceSsoProvider',
+  'getWorkspaceSsoSession',
+  'getAdminOverrideEnabled',
+  'getComment',
+  'getModel',
+  'getVersion',
+  'getSavedView',
+  'getSavedViewGroup'
+])
+
 export const Loaders = AuthCheckContextLoaderKeys // shorter alias
 /* v8 ignore end  */
 
-export type AuthCheckContextLoaderKeys =
-  (typeof AuthCheckContextLoaderKeys)[keyof typeof AuthCheckContextLoaderKeys]
+export type AuthCheckContextLoaderKeys = StringEnumValues<
+  typeof AuthCheckContextLoaderKeys
+>
 
 export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getEnv: GetEnv
   getAdminOverrideEnabled: GetAdminOverrideEnabled
+  getAutomateFunction: GetAutomateFunction
+  getDashboard: GetDashboard
   getProject: GetProject
   getProjectRole: GetProjectRole
   getProjectRoleCounts: GetProjectRoleCounts
   getProjectModelCount: GetProjectModelCount
   getServerRole: GetServerRole
   getWorkspace: GetWorkspace
+  getUsersCurrentAndEligibleToBecomeAMemberWorkspaces: GetUserWorkspaces
   getWorkspaceRole: GetWorkspaceRole
   getWorkspaceLimits: GetWorkspaceLimits
   getWorkspacePlan: GetWorkspacePlan
@@ -99,6 +113,8 @@ export type AllAuthCheckContextLoaders = AuthContextLoaderMappingDefinition<{
   getComment: GetComment
   getModel: GetModel
   getVersion: GetVersion
+  getSavedView: GetSavedView
+  getSavedViewGroup: GetSavedViewGroup
 }>
 
 export type AuthCheckContextLoaders<

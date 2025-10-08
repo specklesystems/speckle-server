@@ -6,28 +6,29 @@ import {
   Users,
   knex
 } from '@/modules/core/dbSchema'
-import {
-  ProjectRecordVisibility,
+import type {
   ServerAclRecord,
   StreamAclRecord,
   StreamRecord,
   UserRecord,
   UserWithRole
 } from '@/modules/core/helpers/types'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { clamp, isArray, omit } from 'lodash'
+import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import type { Nullable } from '@/modules/shared/helpers/typeHelper'
+import { clamp, isArray, omit } from 'lodash-es'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { UserValidationError } from '@/modules/core/errors/user'
-import { Knex } from 'knex'
-import { Roles, ServerRoles } from '@speckle/shared'
-import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
-import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
-import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
-import {
+import type { Knex } from 'knex'
+import type { ServerRoles } from '@speckle/shared'
+import { isNullOrUndefined, Roles } from '@speckle/shared'
+import type { UserWithOptionalRole } from '@/modules/core/domain/users/types'
+import type {
   BulkLookupUsers,
+  BulkUpsertUsers,
   CountAdminUsers,
   CountUsers,
   DeleteUserRecord,
+  GetAllUsers,
   GetFirstAdmin,
   GetUser,
   GetUserByEmail,
@@ -47,10 +48,12 @@ import {
   StoreUser,
   StoreUserAcl,
   UpdateUser,
+  UpdateUserEmailVerification,
   UpdateUserServerRole
 } from '@/modules/core/domain/users/operations'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
+import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/dbHelper'
 export type { UserWithOptionalRole, GetUserParams }
 
 const tables = {
@@ -217,21 +220,23 @@ export const getUserByEmailFactory =
  */
 export const markUserAsVerifiedFactory =
   (deps: { db: Knex }): MarkUserAsVerified =>
-  async (email: string) => {
+  async (email: string) =>
+    updateUserEmailVerificationFactory(deps)({ email, verified: true })
+
+export const updateUserEmailVerificationFactory =
+  (deps: { db: Knex }): UpdateUserEmailVerification =>
+  async (args) => {
+    const { email, verified } = args
     const UserCols = Users.with({ withoutTablePrefix: true }).col
 
     const usersUpdate = await tables
       .users(deps.db)
       .whereRaw('lower(email) = lower(?)', [email])
       .update({
-        [UserCols.verified]: true
+        [UserCols.verified]: verified
       })
 
-    const userEmailsUpdate = await markUserEmailAsVerifiedFactory({
-      updateUserEmail: updateUserEmailFactory({ db: deps.db })
-    })({ email: email.toLowerCase().trim() })
-
-    return !!(usersUpdate || userEmailsUpdate)
+    return !!usersUpdate
   }
 
 export const markOnboardingCompleteFactory =
@@ -283,13 +288,6 @@ export const updateUserFactory =
       .users(deps.db)
       .where(Users.col.id, userId)
       .update(update, '*')
-
-    if (update.email) {
-      await updateUserEmailFactory(deps)({
-        query: { userId, primary: true },
-        update: { email: update.email }
-      })
-    }
 
     return newUser as Nullable<UserRecord>
   }
@@ -619,5 +617,50 @@ export const searchUsersFactory =
     return {
       users: res.users.map(removePrivateFields),
       cursor: res.cursor
+    }
+  }
+
+export const bulkUpsertUsersFactory =
+  ({ db }: { db: Knex }): BulkUpsertUsers =>
+  async ({ users }) => {
+    if (!users.length) return
+    await tables.users(db).insert(users).onConflict('id').merge()
+  }
+
+export const getAllUsersChecksumFactory =
+  ({ db }: { db: Knex }): (() => Promise<string>) =>
+  async () => {
+    const rowConcatExpr = Users.cols
+      .map((col) => `COALESCE(${db.raw('??', [col])}::text, '')`)
+      .join(` || '|' || `)
+
+    const result = await db.raw<{ rows: [{ table_checksum: string }] }>(`
+    SELECT md5(string_agg(row_hash, '')) AS table_checksum
+    FROM (
+      SELECT md5(${rowConcatExpr}) AS row_hash
+      FROM ${Users.name}
+      ORDER BY ${Users.col.id}
+    ) AS hashed_rows;
+  `)
+    return result.rows[0].table_checksum
+  }
+
+export const getAllUsersFactory =
+  ({ db }: { db: Knex }): GetAllUsers =>
+  async (args) => {
+    const cursor = args.cursor ? decodeCursor(args.cursor) : null
+    const limit = isNullOrUndefined(args.limit) ? 10 : args.limit
+
+    const q = tables.users(db).limit(clamp(limit, 1, 500)).orderBy(Users.col.id, 'asc')
+
+    if (cursor?.length) {
+      q.andWhere(Users.col.id, '>', cursor)
+    }
+
+    const res = await q
+
+    return {
+      items: res,
+      cursor: res.length ? encodeCursor(res[res.length - 1].id) : null
     }
   }

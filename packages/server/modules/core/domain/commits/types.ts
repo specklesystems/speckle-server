@@ -1,5 +1,5 @@
-import { Branch } from '@/modules/core/domain/branches/types'
-import {
+import type { Branch } from '@/modules/core/domain/branches/types'
+import type {
   BranchRecord,
   CommitRecord,
   StreamCommitRecord,

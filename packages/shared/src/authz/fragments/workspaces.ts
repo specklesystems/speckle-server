@@ -7,10 +7,14 @@ import {
 import {
   PersonalProjectsLimitedError,
   ProjectNotFoundError,
+  ServerNoAccessError,
+  ServerNoSessionError,
+  ServerNotEnoughPermissionsError,
   WorkspaceLimitsReachedError,
   WorkspaceNoAccessError,
   WorkspaceNoEditorSeatError,
   WorkspaceNotEnoughPermissionsError,
+  WorkspacePlanNoFeatureAccessError,
   WorkspaceReadOnlyError,
   WorkspacesNotEnabledError,
   WorkspaceSsoSessionNoAccessError
@@ -25,6 +29,11 @@ import {
 } from '../domain/context.js'
 import { isWorkspacePlanStatusReadOnly } from '../../workspaces/helpers/plans.js'
 import { hasEditorSeat } from '../checks/workspaceSeat.js'
+import { ensureMinimumServerRoleFragment } from './server.js'
+import {
+  WorkspacePlanFeatures,
+  workspacePlanHasAccessToFeature
+} from '../../workspaces/helpers/features.js'
 
 /**
  * Ensure user has a workspace role, and a valid SSO session (if SSO is configured)
@@ -302,4 +311,79 @@ export const ensureModelCanBeCreatedFragment: AuthPolicyEnsureFragment<
 
       return ok()
     }
+  }
+
+export const ensureUserIsWorkspaceAdminFragment: AuthPolicyEnsureFragment<
+  | typeof Loaders.getEnv
+  | typeof Loaders.getServerRole
+  | typeof Loaders.getWorkspace
+  | typeof Loaders.getWorkspaceRole
+  | typeof Loaders.getWorkspaceSsoProvider
+  | typeof Loaders.getWorkspaceSsoSession
+  | typeof Loaders.getWorkspacePlan,
+  WorkspaceContext & MaybeUserContext,
+  InstanceType<
+    | typeof WorkspaceNoAccessError
+    | typeof WorkspaceSsoSessionNoAccessError
+    | typeof WorkspacesNotEnabledError
+    | typeof ServerNoSessionError
+    | typeof ServerNoAccessError
+    | typeof ServerNotEnoughPermissionsError
+    | typeof WorkspaceNotEnoughPermissionsError
+  >
+> =
+  (loaders) =>
+  async ({ userId, workspaceId }) => {
+    const ensuredWorkspacesEnabled = await ensureWorkspacesEnabledFragment(loaders)({})
+    if (ensuredWorkspacesEnabled.isErr) return err(ensuredWorkspacesEnabled.error)
+
+    const ensuredServerRole = await ensureMinimumServerRoleFragment(loaders)({
+      userId,
+      role: Roles.Server.User
+    })
+
+    if (ensuredServerRole.isErr) return err(ensuredServerRole.error)
+
+    const ensuredWorkspaceAccess = await ensureWorkspaceRoleAndSessionFragment(loaders)(
+      {
+        userId: userId!,
+        workspaceId,
+        role: Roles.Workspace.Admin
+      }
+    )
+    if (ensuredWorkspaceAccess.isErr) return err(ensuredWorkspaceAccess.error)
+    return ok()
+  }
+
+/**
+ * Check if workspace has access to a specific feature
+ */
+export const ensureCanUseWorkspacePlanFeatureFragment: AuthPolicyEnsureFragment<
+  typeof Loaders.getWorkspacePlan | typeof Loaders.getEnv,
+  WorkspaceContext & { feature: WorkspacePlanFeatures },
+  | InstanceType<typeof WorkspaceNoAccessError>
+  | InstanceType<typeof WorkspaceReadOnlyError>
+  | InstanceType<typeof WorkspacePlanNoFeatureAccessError>
+  | InstanceType<typeof WorkspacesNotEnabledError>
+> =
+  (loaders) =>
+  async ({ workspaceId, feature }) => {
+    const ensuredWorkspacesEnabled = await ensureWorkspacesEnabledFragment(loaders)({})
+    if (ensuredWorkspacesEnabled.isErr) return err(ensuredWorkspacesEnabled.error)
+
+    const ensuredNotReadOnly = await ensureWorkspaceNotReadOnlyFragment(loaders)({
+      workspaceId
+    })
+    if (ensuredNotReadOnly.isErr) return err(ensuredNotReadOnly.error)
+
+    const workspacePlan = await loaders.getWorkspacePlan({ workspaceId })
+    if (!workspacePlan) return err(new WorkspaceNoAccessError())
+
+    const featureFlags = await loaders.getEnv()
+    const canUseFeature = workspacePlanHasAccessToFeature({
+      plan: workspacePlan.name,
+      feature,
+      featureFlags
+    })
+    return canUseFeature ? ok() : err(new WorkspacePlanNoFeatureAccessError())
   }

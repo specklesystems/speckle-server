@@ -13,6 +13,7 @@ import {
 } from '../../domain/authErrors.js'
 import { TIME_MS } from '../../../core/index.js'
 import { ProjectVisibility } from '../../domain/projects/types.js'
+import { getWorkspaceFake } from '../../../tests/fakes.js'
 
 const buildCanPublishPolicy = (
   overrides?: Partial<Parameters<typeof canPublishPolicy>[0]>
@@ -122,7 +123,7 @@ describe('canPublish', () => {
         visibility: ProjectVisibility.Workspace,
         allowPublicComments: false
       }),
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspace-id',
         slug: 'workspace-slug'
       }),

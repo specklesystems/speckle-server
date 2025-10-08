@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Factory } from '@/modules/shared/helpers/factory'
+import type { Factory } from '@/modules/shared/helpers/factory'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { getRequestLogger } from '@/observability/utils/requestContext'
 import { cacheLogger } from '@/observability/logging'
 import TTLCache from '@isaacs/ttlcache'
-import { MaybeAsync, TIME_MS } from '@speckle/shared'
-import Redis from 'ioredis'
-import { isNumber } from 'lodash'
+import type { MaybeAsync } from '@speckle/shared'
+import { TIME_MS } from '@speckle/shared'
+import type Redis from 'ioredis'
+import { isNumber } from 'lodash-es'
 
 export interface CacheProvider<Data = unknown> {
   get: (key: string) => Promise<Data | undefined>

@@ -1,39 +1,35 @@
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
-import {
+import type {
   CreateProject,
   DeleteProject,
-  GetProject,
-  StoreModel,
+  DeleteProjectAndCommits,
+  QueryAllProjects,
   StoreProject,
   StoreProjectRole
 } from '@/modules/core/domain/projects/operations'
-import { Project } from '@/modules/core/domain/streams/types'
-import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
-import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import type {
+  Project,
+  StreamWithOptionalRole
+} from '@/modules/core/domain/streams/types'
+import { ProjectQueryError } from '@/modules/core/errors/projects'
 import { ProjectVisibility } from '@/modules/core/graph/generated/graphql'
 import { mapGqlToDbProjectVisibility } from '@/modules/core/helpers/project'
-import { isTestEnv } from '@/modules/shared/helpers/envHelper'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import { retry } from '@lifeomic/attempt'
-import { Roles, TIME_MS } from '@speckle/shared'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { Roles } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
+import type { GetExplicitProjects } from '@/modules/core/domain/streams/operations'
+import type { DeleteProjectCommits } from '@/modules/core/domain/commits/operations'
 
 export const createNewProjectFactory =
   ({
     storeProject,
-    getProject,
-    deleteProject,
     storeProjectRole,
-    storeModel,
     emitEvent
   }: {
     storeProject: StoreProject
-    getProject: GetProject
-    deleteProject: DeleteProject
     storeProjectRole: StoreProjectRole
     emitEvent: EventBusEmit
-    storeModel: StoreModel
   }): CreateProject =>
   async ({ description, name, regionKey, visibility, workspaceId, ownerId }) => {
     visibility =
@@ -55,35 +51,9 @@ export const createNewProjectFactory =
 
     await storeProject({ project })
     const projectId = project.id
-    // if regionKey, we need to make sure it is actually written and synced
-    if (regionKey) {
-      try {
-        await retry(
-          async () => {
-            const replicatedProject = await getProject({ projectId })
-            if (!replicatedProject) throw new StreamNotFoundError()
-          },
-          { maxAttempts: 10, delay: isTestEnv() ? TIME_MS.second : undefined }
-        )
-      } catch (err) {
-        if (err instanceof StreamNotFoundError) {
-          // delete from region
-          await deleteProject({ projectId })
-          throw new RegionalProjectCreationError(undefined, {
-            info: { projectId, regionKey }
-          })
-        }
-        // else throw as is
-        throw err
-      }
-    }
+
     await storeProjectRole({ projectId, userId: ownerId, role: Roles.Stream.Owner })
-    await storeModel({
-      name: 'main',
-      description: 'default model',
-      projectId,
-      authorId: ownerId
-    })
+
     await emitEvent({
       eventName: ProjectEvents.Created,
       payload: {
@@ -96,5 +66,60 @@ export const createNewProjectFactory =
         }
       }
     })
+
+    await emitEvent({
+      eventName: ProjectEvents.PermissionsAdded,
+      payload: {
+        project,
+        activityUserId: ownerId,
+        targetUserId: ownerId,
+        role: Roles.Stream.Owner,
+        previousRole: null
+      }
+    })
     return project
+  }
+
+export const queryAllProjectsFactory = ({
+  getExplicitProjects
+}: {
+  getExplicitProjects: GetExplicitProjects
+}): QueryAllProjects =>
+  async function* queryAllWorkspaceProjects({
+    userId,
+    workspaceId
+  }): AsyncGenerator<StreamWithOptionalRole[], void, unknown> {
+    let currentCursor: string | null = null
+    let iterationCount = 0
+
+    if (!userId && !workspaceId)
+      throw new ProjectQueryError('No user or workspace ID provided')
+
+    do {
+      if (iterationCount > 500) throw new ProjectQueryError('Too many iterations')
+
+      const { items, cursor } = await getExplicitProjects({
+        cursor: currentCursor,
+        limit: 100,
+        filter: {
+          workspaceId,
+          userId
+        }
+      })
+
+      yield items
+
+      currentCursor = cursor
+      iterationCount++
+    } while (!!currentCursor)
+  }
+
+export const deleteProjectAndCommitsFactory =
+  (deps: {
+    deleteProject: DeleteProject
+    deleteProjectCommits: DeleteProjectCommits
+  }): DeleteProjectAndCommits =>
+  async (project) => {
+    await deps.deleteProjectCommits(project)
+    await deps.deleteProject(project)
   }

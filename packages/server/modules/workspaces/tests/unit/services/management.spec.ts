@@ -1,10 +1,10 @@
-import {
+import type {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
-  WorkspaceSeatType,
   WorkspaceWithDomains
 } from '@/modules/workspacesCore/domain/types'
+import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 import {
   addDomainToWorkspaceFactory,
   createWorkspaceFactory,
@@ -17,11 +17,9 @@ import {
 import { Roles, validateWorkspaceSlug } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-import {
-  WorkspaceEvents,
-  WorkspaceEventsPayloads
-} from '@/modules/workspacesCore/domain/events'
-import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
+import type { WorkspaceEventsPayloads } from '@/modules/workspacesCore/domain/events'
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
+import type { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { expectToThrow } from '@/test/assertionHelper'
 import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 import {
@@ -34,13 +32,13 @@ import {
   WorkspaceSlugTakenError,
   WorkspaceUnverifiedDomainError
 } from '@/modules/workspaces/errors/workspace'
-import { UserEmail } from '@/modules/core/domain/userEmails/types'
-import { merge, omit } from 'lodash'
-import {
+import type { UserEmail } from '@/modules/core/domain/userEmails/types'
+import { merge, omit } from 'lodash-es'
+import type {
   GetWorkspaceWithDomains,
   UpsertWorkspaceArgs
 } from '@/modules/workspaces/domain/operations'
-import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import type { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 
 type WorkspaceTestContext = {
   storedWorkspaces: UpsertWorkspaceArgs['workspace'][]
@@ -258,6 +256,7 @@ describe('Workspace services', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         logo: null,
+        isExclusive: false,
         discoverabilityEnabled: false,
         discoverabilityAutoJoinEnabled: false,
         domainBasedMembershipProtectionEnabled: false,
@@ -504,11 +503,15 @@ type WorkspaceRoleTestContext = {
   workspaceRoles: WorkspaceAcl[]
   workspaceProjects: StreamRecord[]
   workspaceProjectRoles: StreamAclRecord[]
-  eventData: {
-    isCalled: boolean
-    eventName: string
-    payload: unknown
-  }
+  eventData: Partial<
+    Record<
+      WorkspaceEvents,
+      {
+        isCalled: boolean
+        payload: unknown
+      }
+    >
+  >
   workspace: Partial<Workspace & { domains: Partial<WorkspaceDomain[]> }>
 }
 
@@ -519,11 +522,7 @@ const getDefaultWorkspaceRoleTestContext = (): WorkspaceRoleTestContext => {
     workspaceRoles: [],
     workspaceProjects: [],
     workspaceProjectRoles: [],
-    eventData: {
-      isCalled: false,
-      eventName: '',
-      payload: {}
-    },
+    eventData: {},
     workspace: {
       id: workspaceId,
       domains: []
@@ -560,9 +559,10 @@ const buildDeleteWorkspaceRoleAndTestContext = (
       return deletedRole
     },
     emitWorkspaceEvent: async ({ eventName, payload }) => {
-      context.eventData.isCalled = true
-      context.eventData.eventName = eventName
-      context.eventData.payload = payload
+      context.eventData[eventName] = {
+        isCalled: true,
+        payload
+      }
 
       switch (eventName) {
         case WorkspaceEvents.RoleDeleted: {
@@ -609,9 +609,10 @@ const buildUpdateWorkspaceRoleAndTestContext = (
       context.workspaceRoles.push(role)
     },
     emitWorkspaceEvent: async ({ eventName, payload }) => {
-      context.eventData.isCalled = true
-      context.eventData.eventName = eventName
-      context.eventData.payload = payload
+      context.eventData[eventName] = {
+        isCalled: true,
+        payload
+      }
 
       switch (eventName) {
         case WorkspaceEvents.RoleDeleted: {
@@ -730,9 +731,8 @@ describe('Workspace role services', () => {
         deletedByUserId
       })
 
-      expect(context.eventData.isCalled).to.be.true
-      expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleDeleted)
-      expect(context.eventData.payload).to.deep.equal({
+      expect(context.eventData[WorkspaceEvents.RoleDeleted]?.isCalled).to.be.true
+      expect(context.eventData[WorkspaceEvents.RoleDeleted]?.payload).to.deep.equal({
         acl: role,
         updatedByUserId: deletedByUserId
       })
@@ -832,12 +832,11 @@ describe('Workspace role services', () => {
       await updateWorkspaceRole({ ...role, updatedByUserId: workspaceOwnerId })
 
       const payload = {
-        ...(context.eventData
-          .payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleUpdated])
+        ...(context.eventData[WorkspaceEvents.RoleUpdated]
+          ?.payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleUpdated])
       }
 
-      expect(context.eventData.isCalled).to.be.true
-      expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleUpdated)
+      expect(context.eventData[WorkspaceEvents.RoleUpdated]?.isCalled).to.be.true
       expect(payload).to.deep.equal({
         acl: role,
         updatedByUserId: workspaceOwnerId
@@ -1147,6 +1146,7 @@ describe('Workspace role services', () => {
                   name: cryptoRandomString({ length: 10 }),
                   slug: cryptoRandomString({ length: 10 }),
                   logo: null,
+                  isExclusive: false,
                   createdAt: new Date(),
                   updatedAt: new Date(),
                   description: null,
@@ -1191,6 +1191,7 @@ describe('Workspace role services', () => {
           logo: null,
           createdAt: new Date(),
           updatedAt: new Date(),
+          isExclusive: false,
           description: null,
           discoverabilityEnabled: false,
           discoverabilityAutoJoinEnabled: false,

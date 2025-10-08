@@ -1,9 +1,9 @@
-import {
+import type {
   SubscriptionData,
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
 import cryptoRandomString from 'crypto-random-string'
-import { assign } from 'lodash'
+import { assign } from 'lodash-es'
 
 export const createTestSubscriptionData = (
   overrides: Partial<SubscriptionData> = {}
@@ -37,6 +37,7 @@ export const createTestWorkspaceSubscription = (
     updatedAt: new Date(),
     currentBillingCycleEnd: new Date(),
     subscriptionData: createTestSubscriptionData(),
+    updateIntent: null,
     currency: 'usd',
     workspaceId: cryptoRandomString({ length: 10 })
   }

@@ -4,12 +4,12 @@ import { SubscriptionClient } from 'subscriptions-transport-ws'
 import type { ApolloConfigResolver } from '~~/lib/core/nuxt-modules/apollo/module'
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs'
 import { WebSocketLink } from '@apollo/client/link/ws'
-import { getMainDefinition } from '@apollo/client/utilities'
+import { getMainDefinition, Observable } from '@apollo/client/utilities'
 import { Kind } from 'graphql'
 import type { GraphQLError, OperationDefinitionNode } from 'graphql'
 import type { CookieRef, NuxtApp } from '#app'
-import type { Optional } from '@speckle/shared'
-import { useAuthCookie, useAuthManager } from '~~/lib/auth/composables/auth'
+import { errorToString, type Optional } from '@speckle/shared'
+import { useAuthManager } from '~~/lib/auth/composables/auth'
 import {
   buildAbstractCollectionMergeFunction,
   buildArrayMergeFunction,
@@ -101,10 +101,6 @@ function createCache(): InMemoryCache {
           },
           admin: {
             merge: mergeAsObjectsFunction
-          },
-          automateFunctions: {
-            keyArgs: ['filter', 'limit'],
-            merge: buildAbstractCollectionMergeFunction('AutomateFunctionCollection')
           }
         }
       },
@@ -193,8 +189,15 @@ function createCache(): InMemoryCache {
             keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('AutomationCollection')
           },
+          embedTokens: {
+            keyArgs: ['limit'],
+            merge: buildAbstractCollectionMergeFunction('EmbedTokenCollection')
+          },
           viewerResources: {
             merge: (_existing, incoming) => [...incoming]
+          },
+          viewerResourcesExtended: {
+            merge: true
           },
           model: {
             read(original, { args, toReference }) {
@@ -216,6 +219,24 @@ function createCache(): InMemoryCache {
           },
           permissions: {
             merge: mergeAsObjectsFunction
+          },
+          savedViewGroups: {
+            keyArgs: ['input', ['limit', 'search', 'onlyAuthored', 'resourceIdString']],
+            merge: buildAbstractCollectionMergeFunction('SavedViewGroupCollection')
+          }
+        }
+      },
+      SavedViewGroup: {
+        fields: {
+          views: {
+            keyArgs: [
+              'input',
+              ['limit', 'search', 'sortBy', 'sortDirection', 'onlyAuthored']
+            ],
+            merge: buildAbstractCollectionMergeFunction('SavedViewCollection')
+          },
+          permissions: {
+            merge: mergeAsObjectsFunction
           }
         }
       },
@@ -230,6 +251,10 @@ function createCache(): InMemoryCache {
           },
           permissions: {
             merge: mergeAsObjectsFunction
+          },
+          uploads: {
+            keyArgs: ['input', ['limit']],
+            merge: buildAbstractCollectionMergeFunction('FileUploadCollection')
           }
         }
       },
@@ -292,7 +317,25 @@ function createCache(): InMemoryCache {
       ServerInfo: {
         merge: true
       },
+      ServerConfiguration: {
+        merge: true
+      },
+      WorkspaceSubscription: {
+        merge: true
+      },
       CommentThreadActivityMessage: {
+        merge: true
+      },
+      SavedViewPermissionChecks: {
+        merge: true
+      },
+      ProjectPermissionChecks: {
+        merge: true
+      },
+      ExtendedViewerResources: {
+        merge: true
+      },
+      DashboardPermissionChecks: {
         merge: true
       },
       AutomateFunction: {
@@ -316,13 +359,19 @@ function createCache(): InMemoryCache {
       Workspace: {
         fields: {
           invitedTeam: {
-            merge: (_existing, incoming) => incoming
+            merge: incomingOverwritesExistingMergeFunction
           },
           team: {
-            merge: (_existing, incoming) => incoming
+            keyArgs: ['limit', 'filter', ['roles', 'search', 'seatType']],
+            merge: buildAbstractCollectionMergeFunction(
+              'WorkspaceCollaboratorCollection'
+            )
           },
           plan: {
-            merge: incomingOverwritesExistingMergeFunction
+            merge: mergeAsObjectsFunction
+          },
+          planPrices: {
+            merge: mergeAsObjectsFunction
           },
           projects: {
             keyArgs: ['filter', 'limit'],
@@ -393,7 +442,23 @@ function createLink(params: {
   logout: ReturnType<typeof useAuthManager>['logout']
 }): ApolloLink {
   const { httpEndpoint, wsClient, authToken, nuxtApp, reqId, logout } = params
-  const { registerError, isErrorState } = useAppErrorState()
+  const {
+    registerError,
+    preventHttpCalls,
+    preventWebsocketMessaging,
+    isFullRedirectState
+  } = useAppErrorState()
+
+  const stopLink = new ApolloLink((operation, forward) => {
+    if (preventHttpCalls.value) {
+      // swallow the req, we're blocking them all
+      return new Observable(() => {
+        return () => {}
+      })
+    }
+
+    return forward(operation)
+  })
 
   const errorLink = onError((res) => {
     const logger = nuxtApp.$logger
@@ -425,6 +490,7 @@ function createLink(params: {
       )
       const logContext = {
         ...omit(res, ['forward', 'response']),
+        networkError: res.networkError ? errorToString(res.networkError) : undefined,
         networkErrorMessage: res.networkError?.message,
         gqlErrorMessages: gqlErrors.map((e) => e.message),
         errorMessage: errMsg,
@@ -439,7 +505,7 @@ function createLink(params: {
     }
 
     const { networkError } = res
-    if (networkError && isInvalidAuth(networkError)) {
+    if (networkError && isInvalidAuth(networkError) && !isFullRedirectState.value) {
       // Reset auth
       // since this may happen mid-routing, a standard router.push call may not work - do full reload
       void logout({ skipToast: true, forceFullReload: true })
@@ -448,10 +514,50 @@ function createLink(params: {
     registerError()
   })
 
+  // TODO: Do we even need upload client?
   // Prepare links
-  const httpLink = createUploadLink({
-    uri: httpEndpoint
-  })
+  // Decide between upload link and batch link based on whether variables contain File/Blob/FileList
+  // const hasUpload = (val: unknown): boolean => {
+  //   if (!val) return false
+  //   // Guard for SSR where File/Blob/FileList may be undefined
+  //   const isFile =
+  //     typeof File !== 'undefined' && typeof val === 'object' && val instanceof File
+  //   const isBlob =
+  //     typeof Blob !== 'undefined' && typeof val === 'object' && val instanceof Blob
+  //   const isFileList =
+  //     typeof FileList !== 'undefined' &&
+  //     typeof val === 'object' &&
+  //     val instanceof FileList
+  //   if (isFile || isBlob) return true
+  //   if (isFileList) return Array.from(val as FileList).some((v) => hasUpload(v))
+  //   if (Array.isArray(val)) return val.some((v) => hasUpload(v))
+  //   if (typeof val === 'object') {
+  //     for (const k in val as Record<string, unknown>) {
+  //       if (hasUpload((val as Record<string, unknown>)[k])) return true
+  //     }
+  //   }
+  //   return false
+  // }
+
+  const uploadHttpLink = createUploadLink({ uri: httpEndpoint })
+  // const batchHttpLink = new BatchHttpLink({
+  //   uri: httpEndpoint,
+  //   batchMax: 10,
+  //   batchInterval: 20,
+  //   // Keep batches “compatible” (avoid mixing ops with different auth/headers)
+  //   batchKey: (op) =>
+  //     JSON.stringify({
+  //       uri: op.getContext().uri,
+  //       headers: op.getContext().headers,
+  //       credentials: op.getContext().credentials
+  //     })
+  // })
+  // const httpLink = split(
+  //   (operation) => hasUpload(operation.variables),
+  //   // If there's an upload in variables -> use upload link, else batch
+  //   uploadHttpLink,
+  //   batchHttpLink
+  // )
 
   const authLink = setContext((_, ctx) => {
     const { headers } = ctx
@@ -467,7 +573,7 @@ function createLink(params: {
     }
   })
 
-  let link = authLink.concat(httpLink)
+  let link = authLink.concat(uploadHttpLink)
 
   if (wsClient) {
     const wsLink = new WebSocketLink(wsClient)
@@ -486,7 +592,7 @@ function createLink(params: {
     wsClient.use([
       {
         applyMiddleware: (_opt, next) => {
-          if (isErrorState.value) {
+          if (preventWebsocketMessaging.value) {
             return // never invokes next() - essentially stuck
           }
 
@@ -523,7 +629,7 @@ function createLink(params: {
     })
   })
 
-  return from([...(import.meta.server ? [loggerLink] : []), errorLink, link])
+  return from([stopLink, ...(import.meta.server ? [loggerLink] : []), errorLink, link])
 }
 
 const defaultConfigResolver: ApolloConfigResolver = () => {
@@ -533,8 +639,7 @@ const defaultConfigResolver: ApolloConfigResolver = () => {
   const apiOrigin = useApiOrigin()
   const nuxtApp = useNuxtApp()
   const reqId = useRequestId()
-  const authToken = useAuthCookie()
-  const { logout } = useAuthManager({
+  const { effectiveAuthToken, logout } = useAuthManager({
     deferredApollo: () => nuxtApp.$apollo?.default
   })
 
@@ -542,9 +647,16 @@ const defaultConfigResolver: ApolloConfigResolver = () => {
   const wsEndpoint = httpEndpoint.replace('http', 'ws')
 
   const wsClient = import.meta.client
-    ? createWsClient({ wsEndpoint, authToken, reqId })
+    ? createWsClient({ wsEndpoint, authToken: effectiveAuthToken, reqId })
     : undefined
-  const link = createLink({ httpEndpoint, wsClient, authToken, nuxtApp, reqId, logout })
+  const link = createLink({
+    httpEndpoint,
+    wsClient,
+    authToken: effectiveAuthToken,
+    nuxtApp,
+    reqId,
+    logout
+  })
 
   return {
     // If we don't markRaw the cache, sometimes we get cryptic internal Apollo Client errors that essentially

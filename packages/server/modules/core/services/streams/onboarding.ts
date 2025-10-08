@@ -1,18 +1,18 @@
-import { Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import {
   StreamCloneError,
   StreamInvalidAccessError
 } from '@/modules/core/errors/stream'
-import { StreamRecord } from '@/modules/core/helpers/types'
+import type { StreamRecord } from '@/modules/core/helpers/types'
 import { isNewResourceAllowed } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
-import {
+import type {
   CloneStream,
   CreateOnboardingStream,
   CreateStream,
   UpdateStreamRecord
 } from '@/modules/core/domain/streams/operations'
-import { GetOnboardingBaseProject } from '@/modules/cross-server-sync/domain/operations'
+import type { GetOnboardingBaseProject } from '@/modules/cross-server-sync/domain/operations'
 import type { GetUser } from '@/modules/core/domain/users/operations'
 
 export const createOnboardingStreamFactory =
@@ -67,7 +67,8 @@ export const createOnboardingStreamFactory =
     await deps.updateStream({
       id: newStream.id,
       name: `${name}'s First Project`,
-      description: `Welcome to Speckle! This is your sample project, designed by Beijia Gu - feel free to do whatever you want with it!`
+      description: `Welcome to Speckle! This is your sample project, designed by Beijia Gu - feel free to do whatever you want with it!`,
+      updatedAt: new Date()
     })
     logger.info('Done updating onboarding stream title')
     return newStream

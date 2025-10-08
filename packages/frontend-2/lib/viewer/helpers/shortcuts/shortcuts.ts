@@ -9,12 +9,12 @@ export const PanelShortcuts = {
     key: 'M',
     action: 'ToggleModels'
   },
-  ToggleExplorer: {
-    name: 'Scene explorer',
-    description: 'Toggle scene explorer panel',
+  ToggleFilters: {
+    name: 'Filters',
+    description: 'Toggle filters panel',
     modifiers: [ModifierKeys.Shift],
-    key: 'E',
-    action: 'ToggleExplorer'
+    key: 'F',
+    action: 'ToggleFilters'
   },
   ToggleDiscussions: {
     name: 'Discussions',
@@ -22,6 +22,27 @@ export const PanelShortcuts = {
     modifiers: [ModifierKeys.Shift],
     key: 'D',
     action: 'ToggleDiscussions'
+  },
+  ToggleDevMode: {
+    name: 'Dev Mode',
+    description: 'Toggle dev mode',
+    modifiers: [ModifierKeys.Shift],
+    key: 'X',
+    action: 'ToggleDevMode'
+  },
+  ToggleSavedViews: {
+    name: 'Saved views',
+    description: 'Toggle saved views panel',
+    modifiers: [ModifierKeys.Shift],
+    key: 'S',
+    action: 'ToggleSavedViews'
+  },
+  ToggleViewModes: {
+    name: 'View modes',
+    description: 'Toggle view modes panel',
+    modifiers: [ModifierKeys.Shift],
+    key: 'V',
+    action: 'ToggleViewModes'
   }
 } as const
 
@@ -47,12 +68,26 @@ export const ToolShortcuts = {
     key: 'B',
     action: 'ToggleSectionBox'
   },
+  ToggleExplode: {
+    name: 'Explode',
+    description: 'Toggle explode mode',
+    modifiers: [ModifierKeys.Shift],
+    key: 'E',
+    action: 'ToggleExplode'
+  },
   ZoomExtentsOrSelection: {
     name: 'Fit',
     description: 'Zoom to fit selection or entire model',
     modifiers: [ModifierKeys.Shift],
     key: 'space',
     action: 'ZoomExtentsOrSelection'
+  },
+  ToggleLightControls: {
+    name: 'Light controls',
+    description: 'Toggle light controls panel',
+    modifiers: [ModifierKeys.Shift],
+    key: 'L',
+    action: 'ToggleLightControls'
   }
 } as const
 

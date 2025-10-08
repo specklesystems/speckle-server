@@ -1,5 +1,5 @@
-import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import {
+import type { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
+import type {
   LimitedWorkspace,
   Workspace,
   WorkspaceAcl,
@@ -10,8 +10,8 @@ import {
   WorkspaceWithDomains,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
-import { EventBusPayloads } from '@/modules/shared/services/eventBus'
-import {
+import type { EventBusPayloads } from '@/modules/shared/services/eventBus'
+import type {
   MaybeNullOrUndefined,
   Nullable,
   NullableKeysToOptional,
@@ -20,14 +20,17 @@ import {
   StreamRoles,
   WorkspaceRoles
 } from '@speckle/shared'
-import { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
-import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
-import { Stream, StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
-import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
-import { ServerRegion } from '@/modules/multiregion/domain/types'
-import { SetOptional } from 'type-fest'
-import { WorkspaceSeat, WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
-import { UserRecord } from '@/modules/core/helpers/userHelper'
+import type { WorkspaceCreationState } from '@/modules/workspaces/domain/types'
+import type { WorkspaceTeam } from '@/modules/workspaces/domain/types'
+import type { Stream } from '@/modules/core/domain/streams/types'
+import type { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import type { ServerRegion } from '@/modules/multiregion/domain/types'
+import type { SetOptional } from 'type-fest'
+import type {
+  WorkspaceSeat,
+  WorkspaceSeatType
+} from '@/modules/gatekeeper/domain/billing'
+import type { UserRecord } from '@/modules/core/helpers/userHelper'
 
 /** Workspace */
 
@@ -42,11 +45,24 @@ export type UpsertWorkspaceArgs = {
 }
 
 export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>
+export type BulkUpsertWorkspaces = ({
+  workspaces
+}: {
+  workspaces: Array<NullableKeysToOptional<Workspace>>
+}) => Promise<void>
 
 export type GetUserDiscoverableWorkspaces = (args: {
   domains: string[]
   userId: string
 }) => Promise<LimitedWorkspace[]>
+
+// adding optional role to each workspace
+export type EligibleWorkspace = LimitedWorkspace & { role?: WorkspaceRoles }[]
+
+export type GetUsersCurrentAndEligibleToBecomeAMemberWorkspaces = (args: {
+  domains: string[]
+  userId: string
+}) => Promise<EligibleWorkspace[]>
 
 export type GetWorkspace = (args: {
   workspaceId: string
@@ -97,6 +113,7 @@ export type GetWorkspaceDomains = (args: {
 
 type DeleteWorkspaceArgs = {
   workspaceId: string
+  userId: Nullable<string>
 }
 
 export type CountDomainsByWorkspaceId = (args: {
@@ -120,7 +137,9 @@ export type QueryWorkspacesArgs = CountWorkspacesArgs & {
   limit: number
   cursor?: string
 }
-export type QueryWorkspaces = (args: QueryWorkspacesArgs) => Promise<Workspace[]>
+export type QueryWorkspaces = (
+  args: QueryWorkspacesArgs
+) => Promise<{ items: Workspace[]; cursor: string | null }>
 export type CountWorkspaces = (args: CountWorkspacesArgs) => Promise<number>
 export type GetProjectWorkspace = (args: {
   projectId: string
@@ -128,10 +147,8 @@ export type GetProjectWorkspace = (args: {
 
 /** Workspace Roles */
 
-export type GetWorkspaceCollaboratorsArgs = {
+export type GetWorkspaceCollaboratorsBaseArgs = {
   workspaceId: string
-  limit: number
-  cursor?: string
   filter?: {
     /**
      * Optionally filter by workspace role(s)
@@ -150,16 +167,17 @@ export type GetWorkspaceCollaboratorsArgs = {
   hasAccessToEmail?: boolean
 }
 
-export type GetWorkspaceCollaborators = (
-  args: GetWorkspaceCollaboratorsArgs
-) => Promise<WorkspaceTeam>
-
-type GetWorkspaceCollaboratorsTotalCountArgs = {
-  workspaceId: string
+export type GetWorkspaceCollaboratorsArgs = GetWorkspaceCollaboratorsBaseArgs & {
+  limit: number
+  cursor?: string
 }
 
+export type GetWorkspaceCollaborators = (
+  args: GetWorkspaceCollaboratorsArgs
+) => Promise<{ items: WorkspaceTeam; cursor: string | null }>
+
 export type GetWorkspaceCollaboratorsTotalCount = (
-  args: GetWorkspaceCollaboratorsTotalCountArgs
+  args: GetWorkspaceCollaboratorsBaseArgs
 ) => Promise<number>
 
 type DeleteWorkspaceRoleArgs = {
@@ -276,18 +294,6 @@ export type ValidateWorkspaceMemberProjectRole = (params: {
 }) => Promise<void>
 
 /** Workspace Projects */
-
-type QueryAllWorkspaceProjectsArgs = {
-  workspaceId: string
-  /**
-   * Optionally get project roles for a specific user
-   */
-  userId?: string
-}
-
-export type QueryAllWorkspaceProjects = (
-  args: QueryAllWorkspaceProjectsArgs
-) => AsyncGenerator<StreamWithOptionalRole[], void, unknown>
 
 export type GetWorkspacesProjectsCounts = (params: {
   workspaceIds: string[]
@@ -488,10 +494,10 @@ export type DenyWorkspaceJoinRequest = (
 /**
  * Updates project region and moves all regional data to target regional db
  */
-export type UpdateProjectRegion = (params: {
+export type MoveProjectToRegion = (params: {
   projectId: string
   regionKey: string
-}) => Promise<Stream>
+}) => Promise<void>
 
 /**
  * Given a count of objects successfully copied to another region, confirm that these counts
@@ -506,6 +512,7 @@ export type ValidateProjectRegionCopy = (params: {
     automations: number
     comments: number
     webhooks: number
+    savedViews: number
   }
 }) => Promise<[boolean, Record<string, number>]>
 
@@ -530,6 +537,7 @@ export type CountProjectObjects = (params: { projectId: string }) => Promise<num
 export type CountProjectAutomations = (params: { projectId: string }) => Promise<number>
 export type CountProjectComments = (params: { projectId: string }) => Promise<number>
 export type CountProjectWebhooks = (params: { projectId: string }) => Promise<number>
+export type CountProjectSavedViews = (params: { projectId: string }) => Promise<number>
 
 export type AssignWorkspaceSeat = (
   params: Pick<WorkspaceSeat, 'userId' | 'workspaceId'> & {
@@ -554,6 +562,9 @@ export type CopyProjectWebhooks = (params: {
   projectIds: string[]
 }) => Promise<Record<string, number>>
 export type CopyProjectBlobs = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectSavedViews = (params: {
   projectIds: string[]
 }) => Promise<Record<string, number>>
 

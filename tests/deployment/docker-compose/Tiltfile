@@ -1,0 +1,45 @@
+print('🚀 Deploying Speckle Server into Docker via Tilt...')
+
+symbols = None
+IS_LOAD_DOCKER = os.getenv('LOAD_DOCKER', "false") == "true"
+if IS_LOAD_DOCKER:
+  symbols = load_dynamic('./../load-images.tiltfile')
+else:
+  symbols = load_dynamic('./../build-images.tiltfile')
+
+IMAGE_PREFIX = os.getenv('IMAGE_PREFIX', 'speckle')
+
+# Prepare the Speckle images
+# (loads the images from tgz file if CI, otherwise builds them or pulls them from remote as a fallback on non-amd64 machines)
+speckle_image = symbols['speckle_image']
+speckle_image('fileimport-service', None, IMAGE_PREFIX)
+speckle_image('frontend-2', None, IMAGE_PREFIX)
+speckle_image('ifc-import-service', None, IMAGE_PREFIX)
+speckle_image('docker-compose-ingress', None, IMAGE_PREFIX)
+# speckle_image('monitor-deployment', None, IMAGE_PREFIX)
+speckle_image('preview-service', None, IMAGE_PREFIX)
+speckle_image('server', None, IMAGE_PREFIX)
+speckle_image('test-deployment', None, IMAGE_PREFIX)
+speckle_image('webhook-service', None, IMAGE_PREFIX)
+
+# Prepare the dependencies
+docker_compose('../../docker-compose-deps.yml')
+dc_resource('postgres', labels=['dependencies'])
+dc_resource('redis', labels=['dependencies'])
+dc_resource('minio', labels=['dependencies'])
+dc_resource('maildev', labels=['dependencies'])
+dc_resource('postgres', labels=['dependencies'])
+
+# Prepare the Speckle resources
+docker_compose(['../../../docker-compose-speckle.yml', './docker-compose-speckle.override.yml'], wait=True)
+dc_resource('speckle-server', resource_deps=['postgres', 'redis', 'minio', 'maildev'], labels=['speckle'])
+dc_resource('speckle-frontend-2', resource_deps=[], labels=['speckle'])
+dc_resource('speckle-ingress', resource_deps=[], labels=['speckle'])
+dc_resource('preview-service', resource_deps=['postgres'], labels=['speckle'])
+dc_resource('fileimport-service', resource_deps=[], labels=['speckle'])
+dc_resource('ifc-import-service', resource_deps=[], labels=['speckle'])
+dc_resource('webhook-service', resource_deps=['postgres'], labels=['speckle'])
+
+# Test the Speckle resources
+docker_compose(['../../../docker-compose-test.yml', './docker-compose-test.override.yml'], wait=True)
+dc_resource('test', resource_deps=['speckle-server', 'speckle-frontend-2'], labels=['test']) # --exit-code-from test

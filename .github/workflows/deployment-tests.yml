@@ -1,0 +1,83 @@
+name: Run deployment test
+
+on:
+  workflow_call:
+    inputs:
+      IMAGE_VERSION_TAG:
+        required: true
+        type: string
+      REGISTRY_DOMAIN:
+        required: true
+        type: string
+      REGISTRY_USERNAME:
+        required: true
+        type: string
+      IMAGE_PREFIX:
+        required: true
+        type: string
+    secrets:
+      REGISTRY_TOKEN:
+        required: true
+jobs:
+  deployment-test-helm-chart:
+    runs-on: blacksmith-8vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      # create the nix folder with permissive write permissions
+      - run: |
+          sudo mkdir /nix
+          sudo chmod 777 /nix
+      - name: Install the nix package manager
+        uses: cachix/install-nix-action@v31
+        with:
+          nix_path: nixpkgs=https://github.com/NixOS/nixpkgs/archive/63dacb46bf939521bdc93981b4cbb7ecb58427a0.tar.gz
+      - name: Initialize nix shell
+        run: |
+          nix-shell \
+          --run "echo Here, a nix shell for you" \
+          ./tests/deployment/helm/helm-chart-shell.nix
+      - run: export KUBECONFIG=$(pwd)/.kube/config
+      - run: echo "${KUBECONFIG}"
+      - name: Template Speckle Server Helm Chart
+        run: |
+          nix-shell \
+          --run "helm template speckle-server ./utils/helm/speckle-server" \
+          ./tests/deployment/helm/helm-chart-shell.nix
+      - name: Add 127.0.0.1 domains to /etc/hosts
+        run: |
+          sudo tee -a /etc/hosts \<<<'127.0.0.1 speckle.internal'
+          cat /etc/hosts
+      - name: Change directory permissions to allow kind to create directories
+        run: |
+          mkdir -p "./minio-data"
+          if [ "$(stat -f "%A" "./minio-data")" != "775" ]; then
+            echo "🔐 We need 'sudo' to set permissions on minio-data directory to 775"
+            sudo chmod 775 "./minio-data"
+          fi
+          mkdir -p "./postgres-data"
+          if [ "$(stat -f "%A" "./postgres-data")" != "775" ]; then
+            echo "🔐 We need 'sudo' to set permissions on postgres-data directory to 775"
+            sudo chmod 775 "./postgres-data"
+          fi
+      - name: Deploy Kubernetes (kind) cluster
+        run: |
+          nix-shell \
+          --run "ctlptl apply --filename ./tests/deployment/helm/cluster-config.yaml" \
+          ./tests/deployment/helm/helm-chart-shell.nix
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ inputs.REGISTRY_DOMAIN }}
+          username: ${{ inputs.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+      - name: Deploy Kubernetes resources to cluster
+        run: |
+          nix-shell \
+          --run "IMAGE_PREFIX=${{ inputs.IMAGE_PREFIX }} LOAD_DOCKER='true' tilt ci --file ./tests/deployment/helm/Tiltfile --context kind-speckle-server --timeout 10m" \
+          ./tests/deployment/helm/helm-chart-shell.nix
+        env:
+          IMAGE_PREFIX: ${{ inputs.IMAGE_PREFIX }}
+          IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
+          LOAD_DOCKER: 'true'

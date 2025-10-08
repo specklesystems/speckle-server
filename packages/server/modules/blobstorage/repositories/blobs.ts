@@ -1,5 +1,5 @@
-import { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
-import {
+import type { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
+import type {
   DeleteObject,
   EnsureStorageAccess,
   GetObjectAttributes,
@@ -11,18 +11,18 @@ import {
   EnvironmentResourceError,
   NotFoundError
 } from '@/modules/shared/errors'
+import type { ServiceOutputTypes } from '@aws-sdk/client-s3'
 import {
   CreateBucketCommand,
   DeleteObjectCommand,
   GetObjectCommand,
   HeadBucketCommand,
-  S3ServiceException,
-  ServiceOutputTypes
+  S3ServiceException
 } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 import type { Command } from '@aws-sdk/smithy-client'
 import { ensureError } from '@speckle/shared'
-import { get } from 'lodash'
+import { get } from 'lodash-es'
 import type stream from 'stream'
 
 const sendCommand = async <CommandOutput extends ServiceOutputTypes>(

@@ -4,7 +4,7 @@ import {
   filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
 import { authorizeResolver } from '@/modules/shared'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 
 import {
   getPaginatedBranchCommitsFactory,
@@ -55,8 +55,7 @@ import { db } from '@/db/knex'
 import {
   getStreamFactory,
   getStreamsFactory,
-  getCommitStreamFactory,
-  markCommitStreamUpdatedFactory
+  getCommitStreamFactory
 } from '@/modules/core/repositories/streams'
 import {
   markCommitBranchUpdatedFactory,
@@ -66,20 +65,21 @@ import {
 } from '@/modules/core/repositories/branches'
 import { getObjectFactory } from '@/modules/core/repositories/objects'
 import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { CommitGraphQLReturn } from '@/modules/core/helpers/graphTypes'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { CommitGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import {
   getProjectDbClient,
   getRegisteredDbClients
 } from '@/modules/multiregion/utils/dbSelector'
-import { LegacyUserCommit } from '@/modules/core/domain/commits/types'
+import type { LegacyUserCommit } from '@/modules/core/domain/commits/types'
 import coreModule from '@/modules/core'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
-import { isNonNullable, MaybeNullOrUndefined, Roles } from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { isNonNullable, Roles } from '@speckle/shared'
 import { getProjectLimitDateFactory } from '@/modules/gatekeeperCore/utils/limits'
 
 const getStreams = getStreamsFactory({ db })
@@ -125,7 +125,7 @@ const throwIfRateLimited = throwIfRateLimitedFactory({
   rateLimiterEnabled: isRateLimiterEnabled()
 })
 
-export = {
+export default {
   Query: {},
   Commit: {
     async stream(parent, _args, ctx) {
@@ -396,7 +396,6 @@ export = {
         getBranchById: getBranchByIdFactory({ db: projectDb }),
         insertStreamCommits: insertStreamCommitsFactory({ db: projectDb }),
         insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
-        markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
         emitEvent: getEventBus().emit
       })
@@ -456,7 +455,6 @@ export = {
         switchCommitBranch: switchCommitBranchFactory({ db: projectDb }),
         updateCommit: updateCommitFactory({ db: projectDb }),
         emitEvent: getEventBus().emit,
-        markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb })
       })
       await withOperationLogging(
@@ -538,7 +536,6 @@ export = {
       const projectDb = await getProjectDbClient({ projectId })
       const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
         getCommit: getCommitFactory({ db: projectDb }),
-        markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
         deleteCommit: deleteCommitFactory({ db: projectDb }),
         emitEvent: getEventBus().emit

@@ -1,13 +1,13 @@
-import { CommandModule } from 'yargs'
+import type { CommandModule } from 'yargs'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import { cliLogger as logger } from '@/observability/logging'
 import {
   getStreamCollaboratorsFactory,
-  getStreamFactory,
-  markCommitStreamUpdatedFactory
+  getStreamFactory
 } from '@/modules/core/repositories/streams'
 import {
   getBranchByIdFactory,
+  getBranchesByIdsFactory,
   getBranchLatestCommitsFactory,
   getStreamBranchByNameFactory,
   getStreamBranchesByNameFactory,
@@ -23,8 +23,6 @@ import {
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
 import {
-  getViewerResourceGroupsFactory,
-  getViewerResourceItemsUngroupedFactory,
   getViewerResourcesForCommentFactory,
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
@@ -53,6 +51,14 @@ import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { db } from '@/db/knex'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import {
+  getViewerResourceGroupsFactory,
+  getViewerResourceItemsUngroupedFactory
+} from '@/modules/viewer/services/viewerResources'
+import {
+  getModelHomeSavedViewFactory,
+  getSavedViewFactory
+} from '@/modules/viewer/repositories/savedViews'
 
 const command: CommandModule<
   unknown,
@@ -97,7 +103,6 @@ const command: CommandModule<
     // everything should happen in the project db right?
     const projectDb = await getProjectDbClient({ projectId })
 
-    const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db: projectDb })
     const getStream = getStreamFactory({ db: projectDb })
     const getObject = getObjectFactory({ db: projectDb })
     const getStreamObjects = getStreamObjectsFactory({ db: projectDb })
@@ -114,7 +119,10 @@ const command: CommandModule<
         getBranchLatestCommits,
         getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDb }),
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
-        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb })
+        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb }),
+        getBranchesByIds: getBranchesByIdsFactory({ db: projectDb }),
+        getSavedView: getSavedViewFactory({ db: projectDb }),
+        getModelHomeSavedView: getModelHomeSavedViewFactory({ db: projectDb })
       })
     })
     const getViewerResourcesFromLegacyIdentifiers =
@@ -157,7 +165,6 @@ const command: CommandModule<
       getBranchById: getBranchByIdFactory({ db: projectDb }),
       insertStreamCommits: insertStreamCommitsFactory({ db: projectDb }),
       insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
-      markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
       emitEvent: getEventBus().emit
     })

@@ -1,5 +1,6 @@
-import {
+import type {
   GetActiveUserStreams,
+  GetActivities,
   GetActivityCountByResourceId,
   GetActivityCountByStreamId,
   GetActivityCountByUserId,
@@ -8,25 +9,32 @@ import {
   GetTimelineCount,
   GetUserActivity,
   GetUserTimeline,
-  SaveActivity
+  SaveActivity,
+  SaveStreamActivity
 } from '@/modules/activitystream/domain/operations'
-import {
+import type {
   StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
-import { StreamAcl, StreamActivity } from '@/modules/core/dbSchema'
+import {
+  Activity as ActivityModel,
+  StreamAcl,
+  StreamActivity
+} from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { StreamAclRecord } from '@/modules/core/helpers/types'
+import type { StreamAclRecord } from '@/modules/core/helpers/types'
 import {
   createWebhookEventFactory,
   getStreamWebhooksFactory
 } from '@/modules/webhooks/repositories/webhooks'
 import { dispatchStreamEventFactory } from '@/modules/webhooks/services/webhooks'
-import { Knex } from 'knex'
+import type { Knex } from 'knex'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import cryptoRandomString from 'crypto-random-string'
+import type { Activity } from '@/modules/activitystream/domain/types'
 
 const tables = {
   streamActivity: <T extends object = StreamActivityRecord>(db: Knex) =>
@@ -34,7 +42,7 @@ const tables = {
   streamAcl: (db: Knex) => db<StreamAclRecord>(StreamAcl.name)
 }
 
-export const getActivityFactory =
+export const geUserStreamActivityFactory =
   ({ db }: { db: Knex }) =>
   async (
     streamId: string,
@@ -224,8 +232,8 @@ export const getUserActivityFactory =
   }
 
 // TODO: this function should be a service
-export const saveActivityFactory =
-  ({ db }: { db: Knex }): SaveActivity =>
+export const saveStreamActivityFactory =
+  ({ db }: { db: Knex }): SaveStreamActivity =>
   async ({ streamId, resourceType, resourceId, actionType, userId, info, message }) => {
     const dbObject = {
       streamId, // abc
@@ -234,7 +242,7 @@ export const saveActivityFactory =
       actionType, // "commit_receive"
       userId, // populated by the api
       info: JSON.stringify(info), // can be anything with conventions! (TBD)
-      message // something human understandable for frontend purposes mostly
+      message: message?.slice(0, 255) ?? message // something human understandable for frontend purposes mostly
     }
 
     await tables
@@ -269,4 +277,49 @@ export const saveActivityFactory =
         eventPayload: webhooksPayload
       })
     }
+  }
+
+export const saveActivityFactory =
+  ({ db }: { db: Knex }): SaveActivity =>
+  async (activity) => {
+    const id = cryptoRandomString({ length: 10 })
+    const createdAt = new Date()
+
+    const [result] = await db<typeof activity & { id: string; createdAt: Date }>(
+      ActivityModel.name
+    ).insert({ ...activity, id, createdAt }, '*')
+
+    return result
+  }
+
+export const getActivitiesFactory =
+  ({ db }: { db: Knex }): GetActivities =>
+  async (filters = {}): Promise<Activity[]> => {
+    const { workspaceId, projectId, eventType, userId } = filters
+
+    const q = db<Activity>(ActivityModel.name).select('*')
+
+    if (projectId) {
+      q.where(ActivityModel.col.contextResourceId, projectId).andWhere(
+        ActivityModel.col.contextResourceType,
+        'project'
+      )
+    }
+
+    if (workspaceId) {
+      q.where(ActivityModel.col.contextResourceId, workspaceId).andWhere(
+        ActivityModel.col.contextResourceType,
+        'workspace'
+      )
+    }
+
+    if (eventType) {
+      q.andWhere(ActivityModel.col.eventType, eventType)
+    }
+
+    if (userId) {
+      q.andWhere(ActivityModel.col.userId, userId)
+    }
+
+    return await q
   }

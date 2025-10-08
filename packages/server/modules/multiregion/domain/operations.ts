@@ -1,14 +1,14 @@
-import {
+import type {
   ProjectRegion,
   DataRegionsConfig,
   RegionKey,
   ServerRegion
 } from '@/modules/multiregion/domain/types'
-import { UpdateServerRegionInput } from '@/modules/core/graph/generated/graphql'
-import { InsertableRegionRecord } from '@/modules/multiregion/helpers/types'
-import { Optional } from '@speckle/shared'
-import { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
-import { Stream } from '@/modules/core/domain/streams/types'
+import type { UpdateServerRegionInput } from '@/modules/core/graph/generated/graphql'
+import type { InsertableRegionRecord } from '@/modules/multiregion/helpers/types'
+import type { Optional } from '@speckle/shared'
+import type { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
+import type { Stream } from '@/modules/core/domain/streams/types'
 
 export type GetRegions = () => Promise<ServerRegion[]>
 export type GetRegion = (params: { key: string }) => Promise<Optional<ServerRegion>>
@@ -64,8 +64,8 @@ export type UpdateAndValidateRegion = (params: {
 
 export type GetProjectObjectStorage = (args: {
   projectId: string
-}) => Promise<ObjectStorage>
+}) => Promise<{ private: ObjectStorage; public: ObjectStorage }>
 
 export type GetRegionObjectStorage = (args: {
   regionKey: string
-}) => Promise<ObjectStorage>
+}) => Promise<{ private: ObjectStorage; public: ObjectStorage }>

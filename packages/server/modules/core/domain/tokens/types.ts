@@ -1,10 +1,11 @@
-import {
+import type {
+  EmbedApiTokenRecord,
   PersonalApiTokenRecord,
   TokenScopeRecord,
   UserServerAppTokenRecord
 } from '@/modules/auth/helpers/types'
-import { ApiTokenRecord } from '@/modules/auth/repositories'
-import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
+import type { ApiTokenRecord } from '@/modules/auth/repositories'
+import type { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
 
 export const TokenResourceIdentifierType = {
   Project: 'project',
@@ -26,3 +27,7 @@ export type TokenResourceAccessDefinition = TokenResourceAccessRecord
 export type UserServerAppToken = UserServerAppTokenRecord
 
 export type PersonalApiToken = PersonalApiTokenRecord
+
+export type EmbedApiToken = EmbedApiTokenRecord
+export type EmbedApiTokenWithMetadata = EmbedApiToken &
+  Pick<ApiToken, 'createdAt' | 'lastUsed' | 'lifespan'>

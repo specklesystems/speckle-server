@@ -1,11 +1,13 @@
-import type { RequestObjectPreview } from '@/modules/previews/domain/operations'
+import type {
+  BuildUpdateObjectPreview,
+  GetNumberOfJobsInRequestQueue,
+  RequestObjectPreview
+} from '@/modules/previews/domain/operations'
 import type { Logger } from '@/observability/logging'
 import type { Queue, Job } from 'bull'
-import type { EventEmitter } from 'stream'
-import { upsertObjectPreviewFactory } from '@/modules/previews/repository/previews'
-import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { PreviewStatus } from '@/modules/previews/domain/consts'
-import { JobPayload } from '@speckle/shared/workers/previews'
+import type { JobPayload } from '@speckle/shared/workers/previews'
+import { fromJobId } from '@speckle/shared/workers/previews'
 
 export const requestObjectPreviewFactory =
   ({
@@ -20,42 +22,52 @@ export const requestObjectPreviewFactory =
     await queue.add(payload, { removeOnComplete: true, attempts: 3 })
   }
 
-interface QueueEventEmitter extends EventEmitter {}
-
-export const addRequestQueueListeners = (params: {
-  logger: Logger
-  previewRequestQueue: QueueEventEmitter
-}) => {
-  const { logger, previewRequestQueue } = params
-
-  const requestErrorHandler = (err: Error) => {
-    logger.error({ err }, 'Preview generation failed')
+export const requestErrorHandlerFactory =
+  (deps: { logger: Logger }) => (err: Error) => {
+    deps.logger.error(
+      { err },
+      'Preview generation resulted in an error due to the Redis backend.'
+    )
   }
-  previewRequestQueue.removeListener('error', requestErrorHandler)
-  previewRequestQueue.on('error', requestErrorHandler)
 
-  const requestFailedHandler = async (job: Job, err: Error) => {
+export const requestActiveHandlerFactory = (deps: { logger: Logger }) => (job: Job) => {
+  const jobId = 'jobId' in job.data ? job.data.jobId : undefined
+  deps.logger.info({ jobId }, 'Preview job {jobId} processing started.')
+}
+
+export const requestFailedHandlerFactory =
+  (deps: { logger: Logger; buildUpdateObjectPreview: BuildUpdateObjectPreview }) =>
+  async (job: Job, err: Error) => {
+    const { logger, buildUpdateObjectPreview } = deps
     const jobId = 'jobId' in job.data ? job.data.jobId : undefined
     logger.error({ err, jobId }, 'Preview job {jobId} failed.')
     if (!jobId) return
-    const [projectId, objectId] = jobId.split('.')
-    const projectDb = await getProjectDbClient({ projectId })
-    await upsertObjectPreviewFactory({ db: projectDb })({
+    const { projectId, objectId } = fromJobId(jobId)
+    const updateObjectPreview = await buildUpdateObjectPreview({ projectId })
+    const updatedRecords = await updateObjectPreview({
       objectPreview: {
         streamId: projectId,
         objectId,
-        previewStatus: PreviewStatus.ERROR,
-        lastUpdate: new Date()
+        previewStatus: PreviewStatus.ERROR
       }
     })
+    if (updatedRecords.length < 1) {
+      logger.warn(
+        { projectId, objectId },
+        'No object preview was updated for {projectId}.{objectId} after a failed preview job. This may indicate that the object preview does not exist or that the project does not exist, or has moved regions.'
+      )
+    }
+    if (updatedRecords.length > 1) {
+      logger.warn(
+        { projectId, objectId, updatedRecords },
+        'Multiple object previews were updated for {projectId}.{objectId} after a failed preview job. This may indicate a data integrity issue.'
+      )
+    }
   }
-  previewRequestQueue.removeListener('failed', requestFailedHandler)
-  previewRequestQueue.on('failed', requestFailedHandler)
 
-  const requestActiveHandler = (job: Job) => {
-    const jobId = 'jobId' in job.data ? job.data.jobId : undefined
-    logger.info({ jobId }, 'Preview job {jobId} processing started.')
+export const getNumberOfJobsInQueueFactory =
+  (deps: { queue: Queue<JobPayload> }): GetNumberOfJobsInRequestQueue =>
+  async () => {
+    const counts = await deps.queue.getJobCounts()
+    return counts.waiting + counts.active + counts.delayed
   }
-  previewRequestQueue.removeListener('active', requestActiveHandler)
-  previewRequestQueue.on('active', requestActiveHandler)
-}

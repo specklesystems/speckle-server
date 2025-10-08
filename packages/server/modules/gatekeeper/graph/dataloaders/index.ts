@@ -1,4 +1,4 @@
-import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
+import type { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
 import { getWorkspacePlansByWorkspaceIdFactory } from '@/modules/gatekeeper/repositories/billing'
 import {
   getProjectsUsersSeatsFactory,
@@ -6,12 +6,8 @@ import {
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { defineRequestDataloaders } from '@/modules/shared/helpers/graphqlHelper'
-import {
-  WorkspaceLimits,
-  WorkspacePaidPlanConfigs,
-  WorkspacePlan,
-  WorkspaceUnpaidPlanConfigs
-} from '@speckle/shared'
+import type { WorkspaceLimits, WorkspacePlan } from '@speckle/shared'
+import { WorkspacePaidPlanConfigs, WorkspaceUnpaidPlanConfigs } from '@speckle/shared'
 
 const { FF_GATEKEEPER_MODULE_ENABLED } = getFeatureFlags()
 
@@ -85,14 +81,15 @@ const dataLoadersDefinition = defineRequestDataloaders(
             const workspacePlans = await getWorkspacePlansByWorkspaceId({
               workspaceIds: workspaceIds.slice()
             })
+            const featureFlags = getFeatureFlags()
 
             return workspaceIds.map((workspaceId) => {
               const plan = workspacePlans[workspaceId]
               if (!plan) return null
 
               const config = {
-                ...WorkspacePaidPlanConfigs,
-                ...WorkspaceUnpaidPlanConfigs
+                ...WorkspacePaidPlanConfigs({ featureFlags }),
+                ...WorkspaceUnpaidPlanConfigs({ featureFlags })
               }
               return config[plan.name]?.limits || null
             })

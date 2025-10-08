@@ -1,21 +1,21 @@
-import {
+import type {
   GetStreamBranchByName,
   StoreBranch
 } from '@/modules/core/domain/branches/operations'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
-import {
+import type {
   DeleteCommits,
   GetCommits,
   MoveCommitsToBranch,
   ValidateAndBatchDeleteCommits,
   ValidateAndBatchMoveCommits
 } from '@/modules/core/domain/commits/operations'
-import { GetStreams } from '@/modules/core/domain/streams/operations'
+import type { GetStreams } from '@/modules/core/domain/streams/operations'
 import {
   CommitInvalidAccessError,
   CommitBatchUpdateError
 } from '@/modules/core/errors/commit'
-import {
+import type {
   CommitsDeleteInput,
   CommitsMoveInput,
   DeleteVersionsInput,
@@ -23,8 +23,8 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import { difference, groupBy, has, keyBy } from 'lodash'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { difference, groupBy, has, keyBy } from 'lodash-es'
 
 type OldBatchInput = CommitsMoveInput | CommitsDeleteInput
 type CommitBatchInput = OldBatchInput | MoveVersionsInput | DeleteVersionsInput

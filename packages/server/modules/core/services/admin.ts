@@ -1,21 +1,25 @@
-import {
+import type {
   AdminGetProjectList,
   LegacyGetStreams
 } from '@/modules/core/domain/streams/operations'
-import {
+import type {
   AdminGetInviteList,
+  AdminUpdateEmailVerification,
   AdminUserList,
   CountUsers,
-  ListPaginatedUsersPage
+  ListPaginatedUsersPage,
+  UpdateUserEmailVerification
 } from '@/modules/core/domain/users/operations'
-import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
-import {
+import type { ProjectRecordVisibility } from '@/modules/core/helpers/types'
+import type { DeleteVerifications } from '@/modules/emails/domain/operations'
+import type {
   CountServerInvites,
   QueryServerInvites
 } from '@/modules/serverinvites/domain/operations'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import type { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { BaseError } from '@/modules/shared/errors/base'
-import { Nullable } from '@speckle/shared'
+import { type Nullable } from '@speckle/shared'
+import type { UpdateUserEmail } from '@/modules/core/domain/userEmails/operations'
 
 class CursorParsingError extends BaseError {
   static defaultMessage = 'Invalid cursor provided'
@@ -102,4 +106,37 @@ export const adminProjectListFactory =
       items: streams,
       totalCount
     }
+  }
+
+export const adminUpdateEmailVerificationFactory =
+  (deps: {
+    deleteVerifications: DeleteVerifications
+    updateUserVerification: UpdateUserEmailVerification
+    updateEmail: UpdateUserEmail
+  }): AdminUpdateEmailVerification =>
+  async (args) => {
+    const { email } = args
+    let { verified } = args
+    if (verified === undefined || verified === null) {
+      verified = true
+    }
+
+    if (verified) {
+      await deps.deleteVerifications(email)
+    }
+
+    const result = await Promise.all([
+      // this updates the 'users' table
+      deps.updateUserVerification({
+        email,
+        verified
+      }),
+      // this updates the 'user_emails' table
+      deps.updateEmail({
+        query: { email },
+        update: { verified }
+      })
+    ])
+
+    return result[0] && !!result[1]?.verified
   }

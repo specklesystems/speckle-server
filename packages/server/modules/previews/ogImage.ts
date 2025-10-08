@@ -1,6 +1,7 @@
 import sharp from 'sharp'
 import xmlescape from 'xml-escape'
 import pixelWidth from 'string-pixel-width'
+import { fileURLToPath } from 'url'
 
 type SharpInput =
   | Buffer
@@ -37,7 +38,9 @@ export async function makeOgImage(
   }
 
   const logo = await sharp(
-    require.resolve('#/assets/previews/images/speckle_logo_and_text.png')
+    fileURLToPath(
+      import.meta.resolve('#/assets/previews/images/speckle_logo_and_text.png')
+    )
   )
     .resize({ height: panelHeight })
     .toBuffer()

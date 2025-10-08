@@ -1,9 +1,12 @@
-import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
-import { Workspace, WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
-import {
+import type { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
+import type {
+  Workspace,
+  WorkspaceSeatType
+} from '@/modules/workspacesCore/domain/types'
+import type {
   Optional,
   WorkspacePlan,
-  WorkspacePlanFeatures,
+  WorkspaceFeatures,
   WorkspacePlans,
   WorkspacePlanStatuses,
   WorkspaceRoles
@@ -11,7 +14,7 @@ import {
 
 export type CanWorkspaceAccessFeature = (args: {
   workspaceId: string
-  workspaceFeature: WorkspacePlanFeatures
+  workspaceFeature: WorkspaceFeatures
 }) => Promise<boolean>
 
 export type WorkspaceFeatureAccessFunction = (args: {

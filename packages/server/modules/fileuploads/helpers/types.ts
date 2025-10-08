@@ -1,4 +1,4 @@
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 
 export enum FileUploadConvertedStatus {
   Queued = 0,
@@ -9,6 +9,12 @@ export enum FileUploadConvertedStatus {
 
 export type FileUploadRecordMetadata = {
   description?: string
+}
+
+type FileUploadPerformanceData = {
+  durationSeconds: number
+  downloadDurationSeconds: number
+  parseDurationSeconds: number
 }
 
 export type FileUploadRecord = {
@@ -27,6 +33,7 @@ export type FileUploadRecord = {
   convertedMessage: Nullable<string>
   convertedCommitId: Nullable<string>
   metadata: Nullable<FileUploadRecordMetadata>
+  performanceData: Nullable<FileUploadPerformanceData>
 }
 
 export type FileUploadRecordV2 = {
@@ -44,6 +51,7 @@ export type FileUploadRecordV2 = {
   convertedMessage: Nullable<string>
   convertedCommitId: Nullable<string>
   metadata: Nullable<FileUploadRecordMetadata>
+  performanceData: Nullable<FileUploadPerformanceData>
 }
 
-export type FileUploadGraphQLReturn = FileUploadRecord
+export type FileUploadGraphQLReturn = FileUploadRecord | FileUploadRecordV2

@@ -3,7 +3,7 @@
     <h1 class="text-heading-xl text-center">Join workspace</h1>
     <div class="p-4 border border-outline-2 rounded text-body-xs">
       You're accepting an invitation to join
-      <span class="font-medium">{{ invite.workspaceName }}</span>
+      <span class="font-medium">{{ invite.workspace.name }}</span>
       <!-- prettier-ignore -->
       <template v-if="invite.user">
         as
@@ -27,7 +27,10 @@ import type { AuthWorkspaceInviteHeader_PendingWorkspaceCollaboratorFragment } f
 graphql(`
   fragment AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
     id
-    workspaceName
+    workspace {
+      id
+      name
+    }
     email
     user {
       id

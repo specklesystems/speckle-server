@@ -1,4 +1,4 @@
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   createBranchAndNotifyFactory,
   deleteBranchAndNotifyFactory,
@@ -8,10 +8,8 @@ import {
   getPaginatedProjectModelsFactory,
   getProjectTopLevelModelsTreeFactory
 } from '@/modules/core/services/branch/retrieval'
-import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
-import { last } from 'lodash'
-
-import { getViewerResourceGroupsFactory } from '@/modules/core/services/commit/viewerResources'
+import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { last } from 'lodash-es'
 import {
   getPaginatedBranchCommitsFactory,
   legacyGetPaginatedStreamCommitsFactory
@@ -24,7 +22,6 @@ import {
   createBranchFactory,
   deleteBranchByIdFactory,
   getBranchByIdFactory,
-  getBranchLatestCommitsFactory,
   getModelTreeItemsFactory,
   getModelTreeItemsFilteredFactory,
   getModelTreeItemsFilteredTotalCountFactory,
@@ -32,14 +29,11 @@ import {
   getPaginatedProjectModelsItemsFactory,
   getPaginatedProjectModelsTotalCountFactory,
   getStreamBranchByNameFactory,
-  getStreamBranchesByNameFactory,
   updateBranchFactory
 } from '@/modules/core/repositories/branches'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
-import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import {
-  getAllBranchCommitsFactory,
   getBranchCommitsTotalCountFactory,
   getPaginatedBranchCommitsItemsFactory,
   getSpecificBranchCommitsFactory,
@@ -47,10 +41,7 @@ import {
   legacyGetPaginatedStreamCommitsPageFactory
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
-import {
-  getStreamFactory,
-  markBranchStreamUpdatedFactory
-} from '@/modules/core/repositories/streams'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 import {
   getProjectDbClient,
   getRegisteredRegionClients
@@ -60,8 +51,9 @@ import { throwIfAuthNotOk } from '@/modules/shared/helpers/errorHelper'
 import { throwIfResourceAccessNotAllowed } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { getThumbnailUrl } from '@/modules/viewer/helpers/savedViews'
 
-export = {
+export default {
   User: {
     async versions(parent, args, ctx) {
       const authoredOnly = args.authoredOnly
@@ -164,22 +156,6 @@ export = {
         }
       )
     },
-    async viewerResources(parent, { resourceIdString, loadedVersionsOnly }) {
-      const projectDB = await getProjectDbClient({ projectId: parent.id })
-      const getStreamObjects = getStreamObjectsFactory({ db: projectDB })
-      const getViewerResourceGroups = getViewerResourceGroupsFactory({
-        getStreamObjects,
-        getBranchLatestCommits: getBranchLatestCommitsFactory({ db: projectDB }),
-        getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDB }),
-        getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDB }),
-        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDB })
-      })
-      return await getViewerResourceGroups({
-        projectId: parent.id,
-        resourceIdString,
-        loadedVersionsOnly
-      })
-    },
     async versions(parent, args, ctx) {
       const projectDB = await getProjectDbClient({ projectId: parent.id })
       // If limit=0, short-cut full execution and use data loader
@@ -205,12 +181,32 @@ export = {
     }
   },
   Model: {
+    async projectId(parent) {
+      return parent.streamId
+    },
     async author(parent, _args, ctx) {
       if (!parent.authorId) return null
       return await ctx.loaders.users.getUser.load(parent.authorId)
     },
     async previewUrl(parent, _args, ctx) {
       const projectDB = await getProjectDbClient({ projectId: parent.streamId })
+
+      if (getFeatureFlags().FF_SAVED_VIEWS_ENABLED) {
+        const homeView = await ctx.loaders
+          .forRegion({ db: projectDB })
+          .savedViews.getModelHomeSavedView.load({
+            modelId: parent.id,
+            projectId: parent.streamId
+          })
+
+        if (homeView) {
+          return getThumbnailUrl({
+            projectId: parent.streamId,
+            viewId: homeView.id
+          })
+        }
+      }
+
       const latestCommit = await ctx.loaders
         .forRegion({ db: projectDB })
         .branches.getLatestCommit.load(parent.id)
@@ -403,13 +399,12 @@ export = {
       throwIfAuthNotOk(canDelete)
 
       const projectDB = await getProjectDbClient({ projectId })
-      const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db: projectDB })
+
       const getStream = getStreamFactory({ db })
       const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
         getStream,
         getBranchById: getBranchByIdFactory({ db: projectDB }),
         emitEvent: getEventBus().emit,
-        markBranchStreamUpdated,
         deleteBranchById: deleteBranchByIdFactory({ db: projectDB })
       })
       return await withOperationLogging(

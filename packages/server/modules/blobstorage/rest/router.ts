@@ -6,7 +6,7 @@ import {
   streamReadPermissionsPipelineFactory
 } from '@/modules/shared/authz'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
-import { isArray } from 'lodash'
+import { isArray } from 'lodash-es'
 import { UnauthorizedError } from '@/modules/shared/errors'
 import {
   getAllStreamBlobIdsFactory,
@@ -30,6 +30,9 @@ import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { processNewFileStreamFactory } from '@/modules/blobstorage/services/streams'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { createBusboy } from '@/modules/blobstorage/rest/busboy'
+import contentDisposition from 'content-disposition'
+import { allowCrossOriginResourceAccessMiddelware } from '@/modules/shared/middleware/security'
+import cors from 'cors'
 
 export const blobStorageRouterFactory = (): Router => {
   const processNewFileStream = processNewFileStreamFactory()
@@ -104,6 +107,8 @@ export const blobStorageRouterFactory = (): Router => {
 
   app.get(
     '/api/stream/:streamId/blob/:blobId',
+    cors(),
+    allowCrossOriginResourceAccessMiddelware(),
     async (req, res, next) => {
       await authMiddlewareCreator([
         ...streamReadPermissionsPipelineFactory({
@@ -123,7 +128,9 @@ export const blobStorageRouterFactory = (): Router => {
 
       const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
       const getFileStream = getFileStreamFactory({ getBlobMetadata })
-      const getObjectStream = getObjectStreamFactory({ storage: projectStorage })
+      const getObjectStream = getObjectStreamFactory({
+        storage: projectStorage.private
+      })
 
       const { fileName } = await getBlobMetadata({
         streamId: req.params.streamId,
@@ -136,7 +143,7 @@ export const blobStorageRouterFactory = (): Router => {
       })
       res.writeHead(200, {
         'Content-Type': 'application/octet-stream',
-        'Content-Disposition': `attachment; filename="${fileName}"`
+        'Content-Disposition': contentDisposition(fileName)
       })
       fileStream.pipe(res)
     }
@@ -159,7 +166,7 @@ export const blobStorageRouterFactory = (): Router => {
       ])
 
       const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
-      const deleteObject = deleteObjectFactory({ storage: projectStorage })
+      const deleteObject = deleteObjectFactory({ storage: projectStorage.private })
       const deleteBlob = fullyDeleteBlobFactory({
         getBlobMetadata,
         deleteBlob: deleteBlobFactory({ db: projectDb }),

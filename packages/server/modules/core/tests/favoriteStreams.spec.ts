@@ -6,175 +6,16 @@ import { StreamFavorites, Streams, Users } from '@/modules/core/dbSchema'
 import { truncateTables } from '@/test/hooks'
 import gql from 'graphql-tag'
 import { sleep } from '@/test/helpers'
+import type { ServerAndContext } from '@/test/graphqlHelper'
 import {
   createAuthedTestContext,
   createTestContext,
-  executeOperation,
-  ServerAndContext
+  executeOperation
 } from '@/test/graphqlHelper'
-import {
-  getStreamFactory,
-  createStreamFactory,
-  grantStreamPermissionsFactory
-} from '@/modules/core/repositories/streams'
-import { db } from '@/db/knex'
-import {
-  legacyCreateStreamFactory,
-  createStreamReturnRecordFactory
-} from '@/modules/core/services/streams/management'
-import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
-import {
-  findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory,
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory,
-  findInviteFactory,
-  deleteInvitesByTargetFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
-import { getEventBus } from '@/modules/shared/services/eventBus'
-import { createBranchFactory } from '@/modules/core/repositories/branches'
-import {
-  getUsersFactory,
-  getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory
-} from '@/modules/core/repositories/users'
-import {
-  findEmailFactory,
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory
-} from '@/modules/core/repositories/userEmails'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import {
-  finalizeInvitedServerRegistrationFactory,
-  finalizeResourceInviteFactory
-} from '@/modules/serverinvites/services/processing'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import {
-  processFinalizedProjectInviteFactory,
-  validateProjectInviteBeforeFinalizationFactory
-} from '@/modules/serverinvites/services/coreFinalization'
-import {
-  addOrUpdateStreamCollaboratorFactory,
-  validateStreamAccessFactory
-} from '@/modules/core/services/streams/access'
-import { authorizeResolver } from '@/modules/shared'
-
-const getServerInfo = getServerInfoFactory({ db })
-const getUser = getUserFactory({ db })
-const getUsers = getUsersFactory({ db })
-const getStream = getStreamFactory({ db })
-
-const buildFinalizeProjectInvite = () =>
-  finalizeResourceInviteFactory({
-    findInvite: findInviteFactory({ db }),
-    validateInvite: validateProjectInviteBeforeFinalizationFactory({
-      getProject: getStream
-    }),
-    processInvite: processFinalizedProjectInviteFactory({
-      getProject: getStream,
-      addProjectRole: addOrUpdateStreamCollaboratorFactory({
-        validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
-        getUser,
-        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-        emitEvent: getEventBus().emit
-      })
-    }),
-    deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-    emitEvent: (...args) => getEventBus().emit(...args),
-    findEmail: findEmailFactory({ db }),
-    validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-      createUserEmail: createUserEmailFactory({ db }),
-      ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-      findEmail: findEmailFactory({ db }),
-      updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-        deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-        updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-      }),
-      requestNewEmailVerification: requestNewEmailVerificationFactory({
-        findEmail: findEmailFactory({ db }),
-        getUser,
-        getServerInfo,
-        deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
-          db
-        }),
-        renderEmail,
-        sendEmail
-      })
-    }),
-    collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-      getStream
-    }),
-    getUser,
-    getServerInfo
-  })
-
-const createStream = legacyCreateStreamFactory({
-  createStreamReturnRecord: createStreamReturnRecordFactory({
-    inviteUsersToProject: inviteUsersToProjectFactory({
-      createAndSendInvite: createAndSendInviteFactory({
-        findUserByTarget: findUserByTargetFactory({ db }),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-          getStream
-        }),
-        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-          getStream
-        }),
-        emitEvent: ({ eventName, payload }) =>
-          getEventBus().emit({
-            eventName,
-            payload
-          }),
-        getUser,
-        getServerInfo,
-        finalizeInvite: buildFinalizeProjectInvite()
-      }),
-      getUsers
-    }),
-    createStream: createStreamFactory({ db }),
-    createBranch: createBranchFactory({ db }),
-    emitEvent: getEventBus().emit
-  })
-})
-
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
+import { createTestUser, type BasicTestUser } from '@/test/authHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { buildBasicTestProject } from '@/modules/core/tests/helpers/creation'
 
 /**
  * Cleaning up relevant tables
@@ -250,60 +91,57 @@ const totalOwnedStreamsFavoritesNew = gql`
 `
 
 describe('Favorite streams', () => {
-  const myPubStream = {
-    name: 'My Stream 1',
-    isPublic: false,
-    id: ''
-  }
-  const myStream = {
-    name: 'My Stream 2',
-    isPublic: true,
-    id: ''
-  }
-  const notMyStream = {
-    name: 'Not My Stream 1',
-    isPublic: false,
-    id: ''
-  }
-  const notMyPubStream = {
-    name: 'Not My Stream 2',
-    isPublic: true,
-    id: ''
-  }
-  const me = {
-    name: 'Itsa Me',
-    email: 'me@example.org',
-    password: 'sn3aky-1337-b1m',
-    id: ''
-  }
-  const otherGuy = {
-    name: 'Some Other DUde',
-    email: 'otherguy@example.org',
-    password: 'sn3aky-1337-b1m',
-    id: ''
-  }
+  let myPubStream: BasicTestStream
+  let myStream: BasicTestStream
+  let notMyStream: BasicTestStream
+  let notMyPubStream: BasicTestStream
+  let me: BasicTestUser
+  let otherGuy: BasicTestUser
 
   before(async function () {
     await cleanup()
 
-    // Seeding
-    await Promise.all([
-      createUser(me).then((id) => (me.id = id)),
-      createUser(otherGuy).then((id) => (otherGuy.id = id))
-    ])
+    me = await createTestUser({
+      name: 'Itsa Me',
+      email: 'me@example.org',
+      password: 'sn3aky-1337-b1m',
+      id: ''
+    })
+    otherGuy = await createTestUser({
+      name: 'Some Other DUde',
+      email: 'otherguy@example.org',
+      password: 'sn3aky-1337-b1m',
+      id: ''
+    })
 
-    await Promise.all([
-      createStream({ ...myPubStream, ownerId: me.id }).then(
-        (id) => (myPubStream.id = id)
-      ),
-      createStream({ ...myStream, ownerId: me.id }).then((id) => (myStream.id = id)),
-      createStream({ ...notMyStream, ownerId: otherGuy.id }).then(
-        (id) => (notMyStream.id = id)
-      ),
-      createStream({ ...notMyPubStream, ownerId: otherGuy.id }).then(
-        (id) => (notMyPubStream.id = id)
-      )
-    ])
+    myPubStream = await createTestStream(
+      buildBasicTestProject({
+        name: 'My Stream 1',
+        isPublic: false
+      }),
+      me
+    )
+    myStream = await createTestStream(
+      buildBasicTestProject({
+        name: 'My Stream 2',
+        isPublic: true
+      }),
+      me
+    )
+    notMyStream = await createTestStream(
+      buildBasicTestProject({
+        name: 'Not My Stream 1',
+        isPublic: false
+      }),
+      otherGuy
+    )
+    notMyPubStream = await createTestStream(
+      buildBasicTestProject({
+        name: 'Not My Stream 2',
+        isPublic: true
+      }),
+      otherGuy
+    )
   })
 
   after(async () => {
@@ -361,16 +199,19 @@ describe('Favorite streams', () => {
     })
 
     describe('and favorited', () => {
-      const favoritedStream = {
-        name: 'Favorited Stream',
-        isPublic: true,
-        id: ''
-      }
+      let favoritedStream: BasicTestStream
 
       let favoritingResults: { favoritedDate: Date; favoritesCount: number; id: string }
 
       before(async () => {
-        favoritedStream.id = await createStream({ ...favoritedStream, ownerId: me.id })
+        favoritedStream = await createTestStream(
+          buildBasicTestProject({
+            name: 'Favorited Stream',
+            isPublic: true,
+            id: ''
+          }),
+          me
+        )
       })
 
       beforeEach(async () => {
@@ -415,7 +256,7 @@ describe('Favorite streams', () => {
         // Create new ones
         await Promise.all(
           favoritableStreams.map((s) =>
-            createStream({ ...s, ownerId: me.id }).then((id) => (s.id = id))
+            createTestStream(buildBasicTestProject(s), me).then(({ id }) => (s.id = id))
           )
         )
 

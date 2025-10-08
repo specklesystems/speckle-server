@@ -4,37 +4,46 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 
 import {
   UserInputError,
-  UnverifiedEmailSSOLoginError
+  UnverifiedEmailSSOLoginError,
+  BlockedEmailDomainError
 } from '@/modules/core/errors/userinput'
 
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
-import { AuthStrategyMetadata, AuthStrategyBuilder } from '@/modules/auth/helpers/types'
+import type {
+  AuthStrategyMetadata,
+  AuthStrategyBuilder
+} from '@/modules/auth/helpers/types'
 import {
+  getFeatureFlags,
   getGoogleClientId,
   getGoogleClientSecret
 } from '@/modules/shared/helpers/envHelper'
-import { ensureError, Optional } from '@speckle/shared'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
-import {
+import type { Optional } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
+import type { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import type {
   FinalizeInvitedServerRegistration,
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
-import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
-import {
+import type { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
+import type {
   FindOrCreateValidatedUser,
   LegacyGetUserByEmail
 } from '@/modules/core/domain/users/operations'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 import { ExpectedAuthFailure } from '@/modules/auth/domain/const'
+import { ServerNoAccessError } from '@speckle/shared/authz'
+
+const { FF_NO_PERSONAL_EMAILS_ENABLED } = getFeatureFlags()
 
 const googleStrategyBuilderFactory =
   (deps: {
     getServerInfo: GetServerInfo
     getUserByEmail: LegacyGetUserByEmail
-    findOrCreateUser: FindOrCreateValidatedUser
+    buildFindOrCreateUser: () => Promise<FindOrCreateValidatedUser>
     validateServerInvite: ValidateServerInvite
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
@@ -70,8 +79,28 @@ const googleStrategyBuilderFactory =
           profileId: profile.id,
           serverVersion: serverInfo.version
         })
+        const findOrCreateUser = await deps.buildFindOrCreateUser()
 
         try {
+          // seems very weird that the Google strategy is not parsing 'error' query params
+          // and generating a thrown error for us, but here we are.
+          if ('error' in req.query) {
+            switch (req.query.error) {
+              case 'access_denied':
+                logger.info('User was denied access by Google')
+                return done(null, false, {
+                  message: 'Access to Google account denied by Google',
+                  failureType: ExpectedAuthFailure.UserInputError
+                })
+              default:
+                const errMessage = `Unexpected error from Google strategy: ${req.query.error}`
+                logger.error(errMessage)
+                return done(new ServerNoAccessError(errMessage), false, {
+                  message: errMessage
+                })
+            }
+          }
+
           const email = profile.emails?.[0].value
           if (!email) {
             throw new EnvironmentResourceError('No email provided by Google')
@@ -82,6 +111,15 @@ const googleStrategyBuilderFactory =
 
           const existingUser = await deps.getUserByEmail({ email: user.email })
 
+          if (
+            FF_NO_PERSONAL_EMAILS_ENABLED &&
+            !existingUser &&
+            // we do not want to break invites, just individual signups
+            !req.session.token &&
+            email.toLowerCase().trim().endsWith('@gmail.com')
+          ) {
+            throw new BlockedEmailDomainError()
+          }
           if (existingUser && !existingUser.verified) {
             throw new UnverifiedEmailSSOLoginError(undefined, {
               info: {
@@ -93,14 +131,14 @@ const googleStrategyBuilderFactory =
           // if there is an existing user, go ahead and log them in (regardless of
           // whether the server is invite only or not).
           if (existingUser) {
-            const myUser = await deps.findOrCreateUser({ user })
+            const myUser = await findOrCreateUser({ user })
             return done(null, myUser)
           }
 
           // if the server is invite only and we have no invite id, throw.
           if (serverInfo.inviteOnly && !req.session.token) {
             throw new UserInputError(
-              'This server is invite only. Please authenticate yourself through a valid invite link.'
+              'This server is invite only. The invite link may have expired or the invite may have been revoked. Please authenticate yourself through a valid invite link.'
             )
           }
 
@@ -111,7 +149,7 @@ const googleStrategyBuilderFactory =
           }
 
           // create the user
-          const myUser = await deps.findOrCreateUser({
+          const myUser = await findOrCreateUser({
             user: {
               ...user,
               role: invite
@@ -145,6 +183,7 @@ const googleStrategyBuilderFactory =
           switch (e.constructor.name) {
             case ExpectedAuthFailure.UserInputError:
             case ExpectedAuthFailure.InviteNotFoundError:
+            case ExpectedAuthFailure.BlockedEmailDomainError:
               logger.info({ err: e }, 'Auth error for Google strategy')
               // note; passportjs suggests err should be null for user input errors.
               // We also need to pass the error type in the info parameter
@@ -164,25 +203,6 @@ const googleStrategyBuilderFactory =
                 email: (e as UnverifiedEmailSSOLoginError).info().email
               })
             default:
-              // handle other common errors thrown by the underlying client libraries
-              if (
-                e.name === 'TokenError' &&
-                'code' in e &&
-                e.code === 'invalid_grant'
-              ) {
-                req.log.warn(
-                  { err: e },
-                  "Authentication error for strategy 'google' encountered an Invalid Grant error"
-                )
-                // This is a common error from Google and a number of reasons
-                // can cause it. Many user-related issues, so we will treat it as user-related.
-                // https://blog.timekit.io/google-oauth-invalid-grant-nightmare-and-how-to-fix-it-9f4efaf1da35
-                return done(null, false, {
-                  message: e.message,
-                  failureType: ExpectedAuthFailure.InvalidGrantError
-                })
-              }
-
               logger.error({ err: e }, 'Auth error for Google strategy')
               return done(e, false, { message: e.message })
           }
@@ -211,4 +231,4 @@ const googleStrategyBuilderFactory =
     return strategy
   }
 
-export = googleStrategyBuilderFactory
+export default googleStrategyBuilderFactory

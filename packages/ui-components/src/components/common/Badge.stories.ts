@@ -20,6 +20,10 @@ export default {
     clickIcon: {
       action: 'click',
       type: 'function'
+    },
+    color: {
+      options: ['primary', 'secondary'],
+      control: { type: 'select' }
     }
   }
 } as Meta

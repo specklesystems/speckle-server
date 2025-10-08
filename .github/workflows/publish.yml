@@ -1,34 +1,49 @@
 on:
   workflow_call:
     inputs:
+      IMAGE_PREFIX:
+        required: true
+        type: string
       IMAGE_VERSION_TAG:
         required: true
         type: string
       CLOUDFLARE_ACCOUNT_ID:
         required: true
         type: string
-      DOCKERHUB_USERNAME:
+      OCI_REGISTRY_DOMAIN:
+        required: false
+        type: string
+      OCI_REGISTRY_USERNAME:
         required: true
         type: string
+      OCI_REGISTRY_PATH:
+        required: true
+        type: string
+      CHART_NAME:
+        required: false
+        type: string
+        default: 'speckle-server-chart'
     secrets:
       DATADOG_API_KEY:
         required: true
       CLOUDFLARE_API_TOKEN:
         required: true
-      DOCKERHUB_TOKEN:
-        required: true
-      GH_DEVOPS_PAT:
+      OCI_REGISTRY_PASSWORD:
         required: true
 jobs:
   helm-chart-oci:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Helm chart oci
     container:
       image: speckle/pre-commit-runner:latest
     env:
+      IMAGE_PREFIX: ${{ inputs.IMAGE_PREFIX }}
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
-      DOCKER_REG_USER: ${{ inputs.DOCKERHUB_USERNAME }}
-      DOCKER_REG_PASS: ${{ secrets.DOCKERHUB_TOKEN }}
+      REGISTRY_USERNAME: ${{ inputs.OCI_REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.OCI_REGISTRY_PASSWORD }}
+      HELM_REGISTRY_DOMAIN: ${{ inputs.OCI_REGISTRY_DOMAIN }}
+      HELM_REPOSITORY_PATH: ${{ inputs.OCI_REGISTRY_PATH }}
+      CHART_NAME: ${{ inputs.CHART_NAME }}
     steps:
       - uses: actions/checkout@v4.2.2
         with:
@@ -37,35 +52,8 @@ jobs:
       - name: Publish Helm Chart
         run: ./.github/workflows/scripts/publish_helm_chart_oci.sh
 
-  helm-chart-commit:
-    runs-on: blacksmith
-    name: Helm chart commit
-    container:
-      image: bitnami/python:3.12.0
-    env:
-      IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
-    steps:
-      - run: apt-get update -y
-      - run: apt-get install -y wget
-      - run: wget -qO /usr/local/bin/yq github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-      - run: chmod a+x /usr/local/bin/yq
-      - uses: actions/checkout@v4.2.2
-        with:
-          fetch-depth: 0
-          path: speckle
-      - uses: actions/checkout@v4.2.2
-        with:
-          repository: specklesystems/helm
-          path: helm
-          token: ${{ secrets.GH_DEVOPS_PAT }}
-      - run: chmod +x ./.github/workflows/scripts/publish_helm_chart_commit.sh
-        working-directory: speckle
-      - name: Commit Helm Chart
-        run: ./.github/workflows/scripts/publish_helm_chart_commit.sh
-        working-directory: speckle
-
   viewer-sandbox-cloudflare-pages:
-    runs-on: blacksmith
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Viewer sandbox cloudflare pages
     env:
       CLOUDFLARE_ACCOUNT_ID: ${{ inputs.CLOUDFLARE_ACCOUNT_ID }}

@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { ActionTypes } from '@/modules/activitystream/helpers/types'
+import { StreamActionTypes } from '@/modules/activitystream/helpers/types'
 import {
   getActivityCountByResourceIdFactory,
   getActivityCountByStreamIdFactory,
@@ -10,9 +10,9 @@ import {
   getUserActivityFactory,
   getUserTimelineFactory
 } from '@/modules/activitystream/repositories'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { InvalidActionTypeError } from '@/modules/activitystream/errors/activityStream'
-import { StreamActionType } from '@/modules/activitystream/domain/types'
+import type { StreamActionType } from '@/modules/activitystream/domain/types'
 import { md5 } from '@/modules/shared/helpers/cryptoHelper'
 
 type ActivityPaginatedArgs = {
@@ -65,7 +65,7 @@ const userTimelineQueryCore = async (
   return { items, cursor, totalCount }
 }
 
-export = {
+export default {
   LimitedUser: {
     async activity(parent, args) {
       return await userActivityQueryCore(parent, args)
@@ -88,7 +88,9 @@ export = {
     async activity(parent, args) {
       if (
         args.actionType &&
-        !Object.values(ActionTypes.Stream).includes(args.actionType as StreamActionType)
+        !Object.values(StreamActionTypes.Stream).includes(
+          args.actionType as StreamActionType
+        )
       ) {
         throw new InvalidActionTypeError()
       }

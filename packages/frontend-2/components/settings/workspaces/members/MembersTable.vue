@@ -31,7 +31,7 @@
         }
       ]"
       :items="members"
-      :loading="loading"
+      :loading="isVeryFirstLoading"
       :empty-message="
         search.length || seatTypeFilter || roleFilter
           ? 'No results'
@@ -78,8 +78,8 @@
       </template>
       <template #email="{ item }">
         <div class="flex">
-          <span class="text-foreground-2 truncate">
-            {{ canReadMemberEmail ? item.email : '-' }}
+          <span class="text-foreground truncate">
+            {{ item.email }}
           </span>
         </div>
       </template>
@@ -90,7 +90,7 @@
         />
       </template>
       <template #joined="{ item }">
-        <span class="text-foreground-2">{{ formattedFullDate(item.joinDate) }}</span>
+        <span class="text-foreground">{{ formattedFullDate(item.joinDate) }}</span>
       </template>
       <template #actions="{ item }">
         <SettingsWorkspacesMembersActionsMenu
@@ -146,6 +146,7 @@ const { activeUser } = useActiveUser()
 const { result } = useQuery(settingsWorkspacesMembersTableQuery, () => ({
   slug: props.workspaceSlug
 }))
+const { formattedFullDate } = useDateFormatters()
 
 const selectedAction = ref<Record<string, WorkspaceUserActionTypes>>({})
 const search = ref('')
@@ -156,26 +157,29 @@ const targetUser = ref<SettingsWorkspacesMembersActionsMenu_UserFragment | undef
   undefined
 )
 
+const defaultRoles = shallowRef([Roles.Workspace.Admin, Roles.Workspace.Member])
+
 const {
   identifier,
   onInfiniteLoad,
-  query: { result: membersResult, loading }
+  query: { result: membersResult },
+  isVeryFirstLoading
 } = usePaginatedQuery({
   query: settingsWorkspacesMembersSearchQuery,
   baseVariables: computed(() => ({
-    query: search.value?.length ? search.value : null,
     limit: 10,
     slug: props.workspaceSlug,
     filter: {
       search: search.value,
-      roles: roleFilter.value
-        ? [roleFilter.value]
-        : [Roles.Workspace.Admin, Roles.Workspace.Member],
+      roles: roleFilter.value ? [roleFilter.value] : defaultRoles.value,
       seatType: seatTypeFilter.value
     },
     cursor: null as Nullable<string>
   })),
-  resolveKey: (vars) => [vars.query || ''],
+  resolveKey: (vars) => ({
+    slug: vars.slug,
+    filter: vars.filter
+  }),
   resolveCurrentResult: (res) => res?.workspaceBySlug.team,
   resolveNextPageVariables: (baseVars, cursor) => ({
     ...baseVars,
@@ -185,8 +189,5 @@ const {
 })
 
 const workspace = computed(() => result.value?.workspaceBySlug)
-const canReadMemberEmail = computed(
-  () => workspace.value?.permissions.canReadMemberEmail.authorized
-)
 const members = computed(() => membersResult.value?.workspaceBySlug.team.items)
 </script>

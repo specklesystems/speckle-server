@@ -10,37 +10,41 @@ import {
 
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
-import { AuthStrategyBuilder, AuthStrategyMetadata } from '@/modules/auth/helpers/types'
+import type {
+  AuthStrategyBuilder,
+  AuthStrategyMetadata
+} from '@/modules/auth/helpers/types'
 import {
   getGithubClientId,
   getGithubClientSecret,
   getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
 import type { Request } from 'express'
-import { get } from 'lodash'
-import { ensureError, Optional } from '@speckle/shared'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
-import {
+import { get } from 'lodash-es'
+import type { Optional } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
+import type { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import type {
   FinalizeInvitedServerRegistration,
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
-import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
-import {
+import type { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
+import type {
   FindOrCreateValidatedUser,
   LegacyGetUserByEmail
 } from '@/modules/core/domain/users/operations'
 import crs from 'crypto-random-string'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 import { InviteNotFoundError } from '@/modules/serverinvites/errors'
-import { ExpectedAuthFailure } from '@/modules/auth/domain/const'
+import type { ExpectedAuthFailure } from '@/modules/auth/domain/const'
 
 const githubStrategyBuilderFactory =
   (deps: {
     getServerInfo: GetServerInfo
     getUserByEmail: LegacyGetUserByEmail
-    findOrCreateUser: FindOrCreateValidatedUser
+    buildFindOrCreateUser: () => Promise<FindOrCreateValidatedUser>
     validateServerInvite: ValidateServerInvite
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
@@ -87,6 +91,8 @@ const githubStrategyBuilderFactory =
           serverVersion: serverInfo.version
         })
 
+        const findOrCreateUser = await deps.buildFindOrCreateUser()
+
         try {
           const email = profile.emails?.[0].value
           if (!email) {
@@ -111,7 +117,7 @@ const githubStrategyBuilderFactory =
           // if there is an existing user, go ahead and log them in (regardless of
           // whether the server is invite only or not).
           if (existingUser) {
-            const myUser = await deps.findOrCreateUser({ user })
+            const myUser = await findOrCreateUser({ user })
             return done(null, myUser)
           }
 
@@ -129,7 +135,7 @@ const githubStrategyBuilderFactory =
           }
 
           // create the user
-          const myUser = await deps.findOrCreateUser({
+          const myUser = await findOrCreateUser({
             user: {
               ...user,
               role: invite
@@ -200,4 +206,4 @@ const githubStrategyBuilderFactory =
     return strategy
   }
 
-export = githubStrategyBuilderFactory
+export default githubStrategyBuilderFactory

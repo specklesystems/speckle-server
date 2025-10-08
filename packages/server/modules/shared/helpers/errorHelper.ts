@@ -1,14 +1,13 @@
+import { AccModuleDisabledError } from '@/modules/acc/errors/acc'
+import { AutomateModuleDisabledError } from '@/modules/core/errors/automate'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
-import {
-  BadRequestError,
-  BaseError,
-  ForbiddenError,
-  NotFoundError
-} from '@/modules/shared/errors'
+import { DashboardsModuleDisabledError } from '@/modules/dashboards/errors/dashboards'
+import type { BaseError } from '@/modules/shared/errors'
+import { BadRequestError, ForbiddenError, NotFoundError } from '@/modules/shared/errors'
 import { SsoSessionMissingOrExpiredError } from '@/modules/workspacesCore/errors'
 import { Authz, ensureError, throwUncoveredError } from '@speckle/shared'
-import { VError } from 'verror'
+import VError from 'verror'
 
 /**
  * Resolve cause correctly depending on whether its a VError or basic Error
@@ -41,7 +40,12 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
     case Authz.WorkspaceProjectMoveInvalidError.code:
     case Authz.CommentNoAccessError.code:
     case Authz.ProjectNotEnoughPermissionsError.code:
-    case Authz.WorkspaceNoFeatureAccessError.code:
+    case Authz.WorkspacePlanNoFeatureAccessError.code:
+    case Authz.EligibleForExclusiveWorkspaceError.code:
+    case Authz.AutomateFunctionNotCreatorError.code:
+    case Authz.SavedViewNoAccessError.code:
+    case Authz.DashboardNotOwnerError.code:
+    case Authz.DashboardProjectsNotEnoughPermissionsError.code:
       return new ForbiddenError(e.message)
     case Authz.WorkspaceSsoSessionNoAccessError.code:
       throw new SsoSessionMissingOrExpiredError(e.message, {
@@ -55,14 +59,27 @@ export const mapAuthToServerError = (e: Authz.AllAuthErrors): BaseError => {
       return new ForbiddenError(e.message)
     case Authz.WorkspacesNotEnabledError.code:
       return new WorkspacesModuleDisabledError()
+    case Authz.AutomateNotEnabledError.code:
+      return new AutomateModuleDisabledError()
+    case Authz.AccIntegrationNotEnabledError.code:
+      return new AccModuleDisabledError()
+    case Authz.DashboardsNotEnabledError.code:
+      return new DashboardsModuleDisabledError()
     case Authz.ProjectLastOwnerError.code:
     case Authz.ReservedModelNotDeletableError.code:
       return new BadRequestError(e.message)
     case Authz.CommentNotFoundError.code:
     case Authz.ModelNotFoundError.code:
     case Authz.VersionNotFoundError.code:
+    case Authz.AutomateFunctionNotFoundError.code:
+    case Authz.SavedViewNotFoundError.code:
+    case Authz.SavedViewGroupNotFoundError.code:
+    case Authz.DashboardNotFoundError.code:
       return new NotFoundError(e.message)
     case Authz.PersonalProjectsLimitedError.code:
+    case Authz.UngroupedSavedViewGroupLockError.code:
+    case Authz.DashboardNoProjectsError.code:
+    case Authz.SavedViewInvalidUpdateError.code:
       return new BadRequestError(e.message)
     default:
       throwUncoveredError(e)

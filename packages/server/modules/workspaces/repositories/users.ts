@@ -5,17 +5,18 @@ import {
   UserEmails,
   Users
 } from '@/modules/core/dbSchema'
-import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import type { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { metaHelpers } from '@/modules/core/helpers/meta'
-import { StreamAclRecord, UserRecord } from '@/modules/core/helpers/types'
+import type { StreamAclRecord, UserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
-import { SetUserActiveWorkspace } from '@/modules/workspaces/domain/operations'
-import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
-import { WorkspaceAcl as WorkspaceAclRecord } from '@/modules/workspacesCore/domain/types'
+import { compositeCursorTools } from '@/modules/shared/helpers/dbHelper'
+import type { SetUserActiveWorkspace } from '@/modules/workspaces/domain/operations'
+import type { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
+import type { WorkspaceAcl as WorkspaceAclRecord } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceAcl } from '@/modules/workspacesCore/helpers/db'
-import { ServerRoles } from '@speckle/shared'
-import { Knex } from 'knex'
+import type { ServerRoles } from '@speckle/shared'
+import type { Knex } from 'knex'
 
 const tables = {
   users: (db: Knex) => db<UserRecord>(Users.name),
@@ -45,6 +46,12 @@ const buildInvitableCollaboratorsByProjectIdQueryFactory =
   }) => {
     const query = tables
       .users(db)
+      .select([
+        ...Users.cols,
+        WorkspaceAcl.groupArray('workspaceAcl'),
+        ServerAcl.groupArray('serverAcl'),
+        UserEmails.groupArray('emails')
+      ])
       .join(WorkspaceAcl.name, WorkspaceAcl.col.userId, Users.col.id)
       .join(Streams.name, Streams.col.workspaceId, WorkspaceAcl.col.workspaceId)
       .join(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
@@ -81,25 +88,27 @@ export const getInvitableCollaboratorsByProjectIdFactory =
     }
     cursor?: string
     limit: number
-  }): Promise<WorkspaceTeamMember[]> => {
+  }): Promise<{ items: WorkspaceTeamMember[]; cursor: string | null }> => {
     const { workspaceId, projectId, search } = filter
     const query = buildInvitableCollaboratorsByProjectIdQueryFactory({ db })({
       workspaceId,
       projectId,
       search
     })
-    if (cursor) {
-      query.andWhere(Users.col.createdAt, '<', cursor)
-    }
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
+      schema: Users,
+      cols: ['createdAt', 'id']
+    })
+
+    applyCursorSortAndFilter({
+      query,
+      cursor
+    })
+
+    query.limit(limit)
+
     const res = await query
-      .orderBy(Users.col.createdAt, 'desc')
-      .limit(limit)
-      .select([
-        ...Users.cols,
-        WorkspaceAcl.groupArray('workspaceAcl'),
-        ServerAcl.groupArray('serverAcl'),
-        UserEmails.groupArray('emails')
-      ])
+    const nextCursor = resolveNewCursor(res)
 
     const formattedRes = res.map((row) => {
       const workspaceAcl = formatJsonArrayRecords(
@@ -119,7 +128,7 @@ export const getInvitableCollaboratorsByProjectIdFactory =
       }
     })
 
-    return formattedRes
+    return { items: formattedRes, cursor: nextCursor }
   }
 
 export const countInvitableCollaboratorsByProjectIdFactory =
@@ -134,11 +143,16 @@ export const countInvitableCollaboratorsByProjectIdFactory =
     }
   }) => {
     const { workspaceId, projectId, search } = filter
-    const query = buildInvitableCollaboratorsByProjectIdQueryFactory({ db })({
-      workspaceId,
-      projectId,
-      search
-    })
-    const [res] = await query.count()
+    const query = db
+      .from(
+        buildInvitableCollaboratorsByProjectIdQueryFactory({ db })({
+          workspaceId,
+          projectId,
+          search
+        }).as('sq1')
+      )
+      .count()
+
+    const [res] = await query
     return parseInt(res?.count?.toString() ?? '0')
   }

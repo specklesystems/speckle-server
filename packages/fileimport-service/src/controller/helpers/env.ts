@@ -10,11 +10,11 @@ export const isTestEnv = () => {
   return process.env.NODE_ENV === 'test'
 }
 
-export const isDevOrTestEnv = () => isDevEnv() || isTestEnv()
-
-export const useLegacyIfcImporter = () => {
-  return ['true', '1'].includes(process.env.USE_LEGACY_IFC_IMPORTER || 'false')
+export function isProdEnv() {
+  return process.env.NODE_ENV === 'production'
 }
+
+export const isDevOrTestEnv = () => isDevEnv() || isTestEnv()
 
 export const getPackageRootDirPath = () => {
   const __filename = url.fileURLToPath(import.meta.url)

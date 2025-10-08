@@ -1,15 +1,17 @@
-import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
-import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
-import { BaseError } from '@/modules/shared/errors'
-import { Nullable, ServerRoles } from '@speckle/shared'
+import type { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import type { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
+import type { BaseError } from '@/modules/shared/errors'
+import type { Nullable, ServerRoles } from '@speckle/shared'
 
 export interface AuthContext {
   auth: boolean
   userId?: string
   role?: ServerRoles
+  tokenId?: string
   token?: string
   scopes?: string[]
   stream?: StreamWithOptionalRole
+  project?: StreamWithOptionalRole
   err?: Error | BaseError
   /**
    * Set if authenticated with an app token
@@ -27,6 +29,8 @@ export interface AuthResult {
 
 export interface AuthParams {
   streamId?: string
+  projectId?: string
+  viewId?: string
 }
 
 export interface AuthData {

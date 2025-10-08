@@ -1,5 +1,6 @@
 import type { Optional } from '@speckle/shared'
 import type { FieldMergeFunction } from '@apollo/client/core'
+import { get, has } from 'lodash-es'
 
 interface AbstractCollection<T extends string> {
   __typename: T
@@ -67,37 +68,59 @@ export function buildAbstractCollectionMergeFunction<T extends string>(
   settings?: Partial<MergeSettings>
 ): FieldMergeFunction<Optional<AbstractCollection<T>>, AbstractCollection<T>> {
   const { checkIdentity, identityProp } = prepareMergeSettings(settings)
-  return (
-    existing: Optional<AbstractCollection<T>>,
-    incoming: AbstractCollection<T>
-  ) => {
-    const existingItems = existing?.items || []
-    const incomingItems = incoming?.items || []
 
-    let finalItems: Record<string, unknown>[]
-    if (checkIdentity) {
-      finalItems = [...existingItems]
-      for (const newItem of incomingItems) {
-        if (
-          finalItems.findIndex(
-            (item) => item[identityProp] === newItem[identityProp]
-          ) === -1
-        ) {
-          finalItems.push(newItem)
+  const resolveCursor = (
+    args: Record<string, unknown> | null
+  ): string | null | undefined => {
+    if (!args) return undefined
+    if (has(args, 'cursor')) return get(args, 'cursor') as string | null
+    if (has(args, 'input.cursor')) return get(args, 'input.cursor') as string | null
+    if (has(args, 'filter.cursor')) return get(args, 'filter.cursor') as string | null
+    return undefined
+  }
+
+  const merge: FieldMergeFunction<
+    Optional<AbstractCollection<T>>,
+    AbstractCollection<T>
+  > = (existing, incoming, options) => {
+    // If incoming data was requested w/ cursor: null, its the very first page and should replace whatever existed before
+    const cursor = resolveCursor(options.args)
+    const shouldReplace = cursor === null
+
+    let finalItems: Record<string, unknown>[] | undefined = undefined
+    if (existing?.items || incoming?.items) {
+      const existingItems = existing?.items || []
+      const incomingItems = incoming?.items || []
+
+      if (shouldReplace) {
+        finalItems = [...incomingItems]
+      } else {
+        if (checkIdentity) {
+          finalItems = [...existingItems]
+          for (const newItem of incomingItems) {
+            if (
+              finalItems.findIndex(
+                (item) => item[identityProp] === newItem[identityProp]
+              ) === -1
+            ) {
+              finalItems.push(newItem)
+            }
+          }
+        } else {
+          finalItems = [...existingItems, ...incomingItems]
         }
       }
-    } else {
-      finalItems = [...existingItems, ...incomingItems]
     }
 
     return {
+      ...(existing || {}),
       ...(incoming || {}),
-      __typename: incoming?.__typename || existing?.__typename || typeName,
-      totalCount: incoming.totalCount || 0,
-      cursor: incoming.cursor || null,
-      items: finalItems
+      ...(finalItems ? { items: finalItems } : {}),
+      __typename: incoming?.__typename || existing?.__typename || typeName
     }
   }
+
+  return merge
 }
 
 /**
@@ -110,7 +133,8 @@ export const incomingOverwritesExistingMergeFunction: FieldMergeFunction = (
   incoming: unknown
 ) => incoming
 
-export const mergeAsObjectsFunction: FieldMergeFunction = (existing, incoming) => ({
-  ...existing,
-  ...incoming
-})
+export const mergeAsObjectsFunction: FieldMergeFunction = (
+  existing,
+  incoming,
+  { mergeObjects }
+) => mergeObjects(existing, incoming) // built in apollo logic is more foolproof

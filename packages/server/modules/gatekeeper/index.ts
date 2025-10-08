@@ -1,6 +1,6 @@
-import cron from 'node-cron'
+import type cron from 'node-cron'
 import { moduleLogger } from '@/observability/logging'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'
 import { getBillingRouter } from '@/modules/gatekeeper/rest/billing'
@@ -9,10 +9,9 @@ import { db } from '@/db/knex'
 import { gatekeeperScopes } from '@/modules/gatekeeper/scopes'
 import { initializeEventListenersFactory } from '@/modules/gatekeeper/events/eventListener'
 import {
-  getStripeClient,
   getWorkspacePlanProductAndPriceIds,
   getWorkspacePlanProductId
-} from '@/modules/gatekeeper/stripe'
+} from '@/modules/gatekeeper/helpers/prices'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
   acquireTaskLockFactory,
@@ -25,10 +24,11 @@ import {
   upsertWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import {
-  getSubscriptionDataFactory,
+  getStripeClient,
+  getStripeSubscriptionDataFactory,
   reconcileWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/clients/stripe'
-import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
+import type { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import coreModule from '@/modules/core/index'
 import { isProjectReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
 import { WorkspaceReadOnlyError } from '@/modules/gatekeeper/errors/billing'
@@ -38,7 +38,6 @@ import {
   manageSubscriptionDownscaleFactory
 } from '@/modules/gatekeeper/services/subscriptions/manageSubscriptionDownscale'
 import { countSeatsByTypeInWorkspaceFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -53,19 +52,23 @@ const scheduleWorkspaceSubscriptionDownscale = ({
 }: {
   scheduleExecution: ScheduleExecution
 }) => {
-  const stripe = getStripeClient()
+  const getStripeSubscriptionData = getStripeSubscriptionDataFactory({
+    getStripeClient
+  })
   const manageSubscriptionDownscale = manageSubscriptionDownscaleFactory({
     downscaleWorkspaceSubscription: downscaleWorkspaceSubscriptionFactory({
       countSeatsByTypeInWorkspace: countSeatsByTypeInWorkspaceFactory({ db }),
       getWorkspacePlan: getWorkspacePlanFactory({ db }),
-      reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({ stripe }),
-      getWorkspacePlanProductId,
-      eventBusEmit: getEventBus().emit
+      reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
+        getStripeClient,
+        getStripeSubscriptionData
+      }),
+      getWorkspacePlanProductId
     }),
     getWorkspaceSubscriptions: getWorkspaceSubscriptionsPastBillingCycleEndFactory({
       db
     }),
-    getSubscriptionData: getSubscriptionDataFactory({ stripe }),
+    getStripeSubscriptionData,
     updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
   })
 
@@ -115,7 +118,7 @@ const gatekeeperModule: SpeckleModule = {
 
         quitListeners = initializeEventListenersFactory({
           db,
-          stripe: getStripeClient()
+          getStripeClient
         })()
 
         const isLicenseValid = await validateModuleLicense({
@@ -150,4 +153,4 @@ async function isProjectReadOnly({ projectId }: { projectId: string }) {
   if (readOnly) throw new WorkspaceReadOnlyError()
 }
 
-export = gatekeeperModule
+export default gatekeeperModule

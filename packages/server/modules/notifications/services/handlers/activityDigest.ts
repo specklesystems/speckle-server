@@ -1,16 +1,17 @@
-import {
+import type {
   ActivityDigestMessage,
   NotificationHandler
 } from '@/modules/notifications/helpers/types'
-import {
-  ActionTypes,
+import type {
   StreamActivityRecord,
-  AllActivityTypes,
+  AllStreamActivityTypes,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
-import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
-import { sendEmail, SendEmailParams } from '@/modules/emails/services/sending'
-import { groupBy } from 'lodash'
+import { StreamActionTypes } from '@/modules/activitystream/helpers/types'
+import type { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
+import type { SendEmailParams } from '@/modules/emails/services/sending'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { groupBy } from 'lodash-es'
 import { packageRoot } from '@/bootstrap'
 import path from 'path'
 import * as ejs from 'ejs'
@@ -18,19 +19,19 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { getUserNotificationPreferencesFactory } from '@/modules/notifications/services/notificationPreferences'
 import { getSavedUserNotificationPreferencesFactory } from '@/modules/notifications/repositories'
 import { db } from '@/db/knex'
-import { GetUserNotificationPreferences } from '@/modules/notifications/domain/operations'
-import { CreateActivitySummary } from '@/modules/activitystream/domain/operations'
-import {
+import type { GetUserNotificationPreferences } from '@/modules/notifications/domain/operations'
+import type { CreateActivitySummary } from '@/modules/activitystream/domain/operations'
+import type {
   ActivitySummary,
   StreamActivitySummary
 } from '@/modules/activitystream/domain/types'
 import { createActivitySummaryFactory } from '@/modules/activitystream/services/summary'
-import { getActivityFactory } from '@/modules/activitystream/repositories'
+import { geUserStreamActivityFactory } from '@/modules/activitystream/repositories'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { EmailBody, EmailInput } from '@/modules/emails/domain/operations'
+import type { EmailBody, EmailInput } from '@/modules/emails/domain/operations'
 
 const digestNotificationEmailHandlerFactory =
   (
@@ -132,15 +133,15 @@ export const digestMostActiveStream: TopicDigesterFunction = (
 
   const commitCount = countByActivityType(
     mostActive.activity,
-    ActionTypes.Commit.Create
+    StreamActionTypes.Commit.Create
   )
 
   const commentCount =
-    countByActivityType(mostActive.activity, ActionTypes.Comment.Create) +
-    countByActivityType(mostActive.activity, ActionTypes.Comment.Reply)
+    countByActivityType(mostActive.activity, StreamActionTypes.Comment.Create) +
+    countByActivityType(mostActive.activity, StreamActionTypes.Comment.Reply)
 
   const receives = mostActive.activity.filter(
-    (a) => a.actionType === ActionTypes.Commit.Receive
+    (a) => a.actionType === StreamActionTypes.Commit.Receive
   )
   const numReceiveUsers = new Set(receives.map((a) => a.userId)).size
 
@@ -182,7 +183,7 @@ export const mostActiveComment: TopicDigesterFunction = (
 ) => {
   const activities = flattenActivities(activitySummary.streamActivities)
   const replyActions = activities.filter(
-    (a) => a.actionType === ActionTypes.Comment.Reply
+    (a) => a.actionType === StreamActionTypes.Comment.Reply
   )
   if (!replyActions.length) return null
 
@@ -227,7 +228,7 @@ export const mostActiveComment: TopicDigesterFunction = (
 export const commentMentionSummary: TopicDigesterFunction = (activitySummary) => {
   const activities = flattenActivities(activitySummary.streamActivities)
   const mentionActions = activities.filter(
-    (a) => a.actionType === ActionTypes.Comment.Mention
+    (a) => a.actionType === StreamActionTypes.Comment.Mention
   )
   const mentionFact = mentionActions.length
     ? `You have been mentioned in ${mentionActions.length} comments. Make sure to follow up on them.`
@@ -267,13 +268,16 @@ export const digestActiveStreams: TopicDigesterFunction = (
     //The stream was deleted
     if (!a.stream) return
 
-    const commitCount = countByActivityType(a.activity, ActionTypes.Commit.Create)
+    const commitCount = countByActivityType(a.activity, StreamActionTypes.Commit.Create)
 
     const commentCount =
-      countByActivityType(a.activity, ActionTypes.Comment.Create) +
-      countByActivityType(a.activity, ActionTypes.Comment.Reply)
+      countByActivityType(a.activity, StreamActionTypes.Comment.Create) +
+      countByActivityType(a.activity, StreamActionTypes.Comment.Reply)
 
-    const receiveCount = countByActivityType(a.activity, ActionTypes.Commit.Receive)
+    const receiveCount = countByActivityType(
+      a.activity,
+      StreamActionTypes.Commit.Receive
+    )
 
     const streamUrl = `${serverInfo.canonicalUrl}/streams/${a.stream.id}`
 
@@ -306,17 +310,17 @@ export const digestActiveStreams: TopicDigesterFunction = (
 export const closingOverview: TopicDigesterFunction = (activitySummary) => {
   const activities = flattenActivities(activitySummary.streamActivities)
   const commitCount = activities.filter(
-    (a) => a.actionType === ActionTypes.Commit.Create
+    (a) => a.actionType === StreamActionTypes.Commit.Create
   ).length
   const commentCount = activities.filter((a) => {
-    const actions: AllActivityTypes[] = [
-      ActionTypes.Comment.Create,
-      ActionTypes.Comment.Reply
+    const actions: AllStreamActivityTypes[] = [
+      StreamActionTypes.Comment.Create,
+      StreamActionTypes.Comment.Reply
     ]
     return a.actionType && actions.includes(a.actionType)
   }).length
   const receiveCount = activities.filter(
-    (a) => a.actionType === ActionTypes.Commit.Receive
+    (a) => a.actionType === StreamActionTypes.Commit.Receive
   ).length
 
   const factCount = [commitCount, commentCount, receiveCount].filter((f) => f > 0)
@@ -353,7 +357,7 @@ export const closingOverview: TopicDigesterFunction = (activitySummary) => {
 
 const countByActivityType = (
   activities: StreamScopeActivity[],
-  actionType: AllActivityTypes
+  actionType: AllStreamActivityTypes
 ): number => activities.filter((a) => a.actionType === actionType).length
 
 const sortedByActivityCount = (
@@ -436,7 +440,7 @@ const digestNotificationEmailHandler = digestNotificationEmailHandlerFactory({
   }),
   createActivitySummary: createActivitySummaryFactory({
     getStream: getStreamFactory({ db }),
-    getActivity: getActivityFactory({ db }),
+    getActivity: geUserStreamActivityFactory({ db }),
     getUser: getUserFactory({ db })
   }),
   getServerInfo: getServerInfoFactory({ db }),

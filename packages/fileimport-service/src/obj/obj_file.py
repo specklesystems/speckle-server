@@ -1,3 +1,4 @@
+from typing import Dict, List, Any, Optional, Tuple
 from mtl_file_collection import MtlFileCollection
 import os
 
@@ -14,12 +15,12 @@ class ObjFile(object):
         self.crt_object = ""
         self.crt_mtl = ""
 
-        self.vertices = []
-        self.vertex_colors = []
-        self.faces = []
+        self.vertices: List[Tuple[float, float, float]] = []
+        self.vertex_colors: List[Optional[Tuple[float, float, float]]] = []
+        self.faces: List[Dict[str, Any]] = []
 
         # Constructed in the post-process phase
-        self.objects = {}
+        self.objects: Dict[str, List[Dict[str, Any]]] = {}
 
         with open(file_path, "r") as f:
             while True:
@@ -86,7 +87,7 @@ class ObjFile(object):
 
     def post_process(self):
         # Step 1: group into object_id/material_id/[faces_with_global_indices]
-        objects = {}
+        objects: Dict[str, Any] = {}
         for face in self.faces:
             if face["object"] not in objects:
                 objects[face["object"]] = {}

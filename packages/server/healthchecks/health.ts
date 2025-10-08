@@ -1,7 +1,7 @@
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
-import { join, merge } from 'lodash'
-import { MultiError } from 'verror'
-import {
+import { join, merge } from 'lodash-es'
+import VError from 'verror'
+import type {
   FreeConnectionsCalculators,
   MultiDBCheck,
   ReadinessHandler,
@@ -30,7 +30,7 @@ export const handleLivenessFactory =
           ', '
         )} is not available.`,
         {
-          cause: new MultiError(
+          cause: new VError.MultiError(
             Object.entries(allPostgresResults).map((kv) =>
               ensureErrorOrWrapAsCause(
                 //HACK: kv[1] is not typed correctly as the filter does not narrow the type

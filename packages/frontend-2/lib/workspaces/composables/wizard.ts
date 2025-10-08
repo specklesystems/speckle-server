@@ -19,7 +19,6 @@ import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
 import { mapServerRoleToGqlServerRole } from '~/lib/common/helpers/roles'
 import { Roles, TIME_MS, WorkspacePlans } from '@speckle/shared'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { useNavigation } from '~/lib/navigation/composables/navigation'
 
 const emptyState: WorkspaceWizardState = {
   name: '',
@@ -65,7 +64,6 @@ export const useWorkspacesWizard = () => {
   const { mutate: updateWorkspaceCreationState } = useMutation(
     updateWorkspaceCreationStateMutation
   )
-  const { mutateActiveWorkspaceSlug } = useNavigation()
   const { $intercom } = useNuxtApp()
 
   const isLoading = computed({
@@ -94,15 +92,9 @@ export const useWorkspacesWizard = () => {
     let shouldComplete = false
 
     if (wizardState.value.currentStep === WizardSteps.Pricing) {
-      if (state.value.plan === WorkspacePlans.Free) {
-        shouldComplete = true
-      }
-    }
-
-    if (wizardState.value.currentStep === WizardSteps.AddOns) {
       if (
-        state.value.plan === WorkspacePlans.Team ||
-        state.value.plan === WorkspacePlans.TeamUnlimited
+        state.value.plan === WorkspacePlans.Free ||
+        state.value.plan === WorkspacePlans.Team
       ) {
         shouldComplete = true
       }
@@ -203,7 +195,6 @@ export const useWorkspacesWizard = () => {
     } else {
       // Keep loading state for a second
       await new Promise((resolve) => setTimeout(resolve, TIME_MS.second))
-      mutateActiveWorkspaceSlug(wizardState.value.state.slug)
       await router.push(workspaceRoute(wizardState.value.state.slug))
       await new Promise((resolve) => setTimeout(resolve, TIME_MS.second))
       isLoading.value = false

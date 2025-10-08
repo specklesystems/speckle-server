@@ -1,0 +1,18 @@
+{{- if .Values.ifc_import_service.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ printf "%s-metrics" (include "ifc_import_service.name" $) }}
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "ifc_import_service.labels" . | indent 4 }}
+spec:
+  selector:
+    app: {{ include "ifc_import_service.name" $ }}
+    project: speckle-server
+  ports:
+    - protocol: TCP
+      name: web
+      port: 9093
+      targetPort: metrics
+{{- end }}

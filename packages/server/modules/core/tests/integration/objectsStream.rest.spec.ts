@@ -6,31 +6,10 @@ import {
   createRandomEmail,
   createRandomPassword
 } from '@/modules/core/helpers/testHelpers'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import {
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory,
-  findEmailFactory
-} from '@/modules/core/repositories/userEmails'
-import {
-  countAdminUsersFactory,
-  legacyGetUserFactory,
-  storeUserAclFactory,
-  storeUserFactory
-} from '@/modules/core/repositories/users'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import {
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { legacyGetUserFactory } from '@/modules/core/repositories/users'
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
-import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import {
   storeApiTokenFactory,
@@ -39,49 +18,19 @@ import {
   storeTokenScopesFactory
 } from '@/modules/core/repositories/tokens'
 import { Scopes } from '@speckle/shared'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import { generateManyObjects } from '@/test/helpers'
-import { RawSpeckleObject } from '@/modules/core/domain/objects/types'
+import type { RawSpeckleObject } from '@/modules/core/domain/objects/types'
 import { storeObjectsIfNotFoundFactory } from '@/modules/core/repositories/objects'
 import { expect } from 'chai'
-import { parse, Parser } from 'csv-parse'
+import type { Parser } from 'csv-parse'
+import { parse } from 'csv-parse'
 import { createReadStream } from 'fs'
 import { createObjectsBatchedAndNoClosuresFactory } from '@/modules/core/services/objects/management'
+import { createTestUser } from '@/test/authHelper'
 
 const IS_NODE_22_OR_ABOVE = process.versions.node.split('.').map(Number)[0] >= 22
 
-const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail: findEmailFactory({ db }),
-  getUser,
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-
-const createUserEmail = validateAndCreateUserEmailFactory({
-  createUserEmail: createUserEmailFactory({ db }),
-  ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-  findEmail: findEmailFactory({ db }),
-  updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-    deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-    updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-  }),
-  requestNewEmailVerification
-})
-
-const findEmail = findEmailFactory({ db })
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: createUserEmail,
-  emitEvent: getEventBus().emit
-})
 
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -104,7 +53,7 @@ describe('Objects streaming REST @core', () => {
   ;(IS_NODE_22_OR_ABOVE ? it : it.skip)(
     'should close database connections if client connection is prematurely closed',
     async () => {
-      const userId = await createUser({
+      const { id: userId } = await createTestUser({
         name: 'emails user',
         email: createRandomEmail(),
         password: createRandomPassword()
@@ -158,7 +107,7 @@ describe('Objects streaming REST @core', () => {
   ;(IS_NODE_22_OR_ABOVE ? it : it.skip)(
     'should stream model with some failing feature',
     async () => {
-      const userId = await createUser({
+      const { id: userId } = await createTestUser({
         name: 'emails user',
         email: createRandomEmail(),
         password: createRandomPassword()

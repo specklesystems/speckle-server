@@ -1,4 +1,4 @@
-import { CommandModule } from 'yargs'
+import type { CommandModule } from 'yargs'
 import { cliLogger as logger } from '@/observability/logging'
 import {
   getWorkspaceBySlugOrIdFactory,
@@ -7,10 +7,12 @@ import {
 import { db } from '@/db/knex'
 import {
   getWorkspacePlanFactory,
+  getWorkspaceSubscriptionFactory,
   upsertWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
-import { WorkspacePlans, WorkspacePlanStatuses } from '@speckle/shared'
+import type { WorkspacePlanStatuses } from '@speckle/shared'
+import { WorkspacePlans } from '@speckle/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
 
@@ -58,9 +60,11 @@ const command: CommandModule<
       getWorkspace: getWorkspaceFactory({ db }),
       upsertWorkspacePlan: upsertWorkspacePlanFactory({ db }),
       getWorkspacePlan: getWorkspacePlanFactory({ db }),
+      getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
       emitEvent: getEventBus().emit
     })
     await updateWorkspacePlan({
+      userId: null,
       workspaceId: workspace.id,
       name: args.plan,
       status: args.status

@@ -1,24 +1,24 @@
-import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
-import {
+import type { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import type {
   PendingWorkspaceCollaboratorsFilter,
-  TokenResourceIdentifierType,
   WorkspaceInviteCreateInput
 } from '@/modules/core/graph/generated/graphql'
+import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { mapServerRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { getWorkspaceRoute } from '@/modules/core/helpers/routeHelper'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
-import { UserRecord } from '@/modules/core/helpers/types'
+import type { UserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   ProjectInviteResourceType,
   ServerInviteResourceType
 } from '@/modules/serverinvites/domain/constants'
-import {
+import type {
   FindInvite,
   QueryAllResourceInvites,
   QueryAllUserResourceInvites
 } from '@/modules/serverinvites/domain/operations'
-import {
+import type {
   ExtendedInvite,
   InviteResourceTarget,
   PrimaryInviteResourceTarget,
@@ -36,46 +36,43 @@ import {
   resolveInviteTargetTitle,
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
-import {
-  buildCoreInviteEmailContentsFactory,
-  BuildInviteContentsFactoryDeps
-} from '@/modules/serverinvites/services/coreEmailContents'
-import {
-  collectAndValidateCoreTargetsFactory,
-  CollectAndValidateCoreTargetsFactoryDeps
-} from '@/modules/serverinvites/services/coreResourceCollection'
-import {
+import type { BuildInviteContentsFactoryDeps } from '@/modules/serverinvites/services/coreEmailContents'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import type { CollectAndValidateCoreTargetsFactoryDeps } from '@/modules/serverinvites/services/coreResourceCollection'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import type {
   BuildInviteEmailContents,
   CollectAndValidateResourceTargets,
   CreateAndSendInvite,
   GetInvitationTargetUsers,
-  InviteFinalizationAction,
   ProcessFinalizedResourceInvite,
   ValidateResourceInviteBeforeFinalization
 } from '@/modules/serverinvites/services/operations'
+import { InviteFinalizationAction } from '@/modules/serverinvites/services/operations'
 import { authorizeResolver } from '@/modules/shared'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
-import {
+import type {
   GetWorkspace,
   GetWorkspaceBySlug,
   GetWorkspaceDomains,
   ValidateWorkspaceMemberProjectRole
 } from '@/modules/workspaces/domain/operations'
-import { WorkspaceInviteResourceTarget } from '@/modules/workspaces/domain/types'
+import type { WorkspaceInviteResourceTarget } from '@/modules/workspaces/domain/types'
 import { mapGqlWorkspaceRoleToMainRole } from '@/modules/workspaces/helpers/roles'
-import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
-import { PendingWorkspaceCollaboratorGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
-import { MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
+import type { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
+import type { PendingWorkspaceCollaboratorGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
+import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
-import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import type { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import {
   anyEmailCompliantWithWorkspaceDomains,
   userEmailsCompliantWithWorkspaceDomains
 } from '@/modules/workspaces/domain/logic'
-import { GetStream } from '@/modules/core/domain/streams/operations'
-import { GetUser } from '@/modules/core/domain/users/operations'
-import { GetWorkspaceRoleAndSeat } from '@/modules/workspacesCore/domain/operations'
+import type { GetStream } from '@/modules/core/domain/streams/operations'
+import type { GetUser } from '@/modules/core/domain/users/operations'
+import type { GetWorkspaceRoleAndSeat } from '@/modules/workspacesCore/domain/operations'
 import { LogicError } from '@/modules/shared/errors'
 import { WorkspaceSeatType } from '@/modules/workspacesCore/domain/types'
 

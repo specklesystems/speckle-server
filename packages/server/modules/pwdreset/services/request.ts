@@ -1,12 +1,13 @@
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
-import { GetUserByEmail } from '@/modules/core/domain/users/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { GetUserByEmail } from '@/modules/core/domain/users/operations'
+import { UserNotFoundError } from '@/modules/core/errors/user'
 import { getPasswordResetFinalizationRoute } from '@/modules/core/helpers/routeHelper'
-import { EmailTemplateParams } from '@/modules/emails/domain/operations'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { CreateToken, GetPendingToken } from '@/modules/pwdreset/domain/operations'
+import type { EmailTemplateParams } from '@/modules/emails/domain/operations'
+import type { renderEmail } from '@/modules/emails/services/emailRendering'
+import type { sendEmail } from '@/modules/emails/services/sending'
+import type { CreateToken, GetPendingToken } from '@/modules/pwdreset/domain/operations'
 import { InvalidPasswordRecoveryRequestError } from '@/modules/pwdreset/errors'
-import { PasswordResetTokenRecord } from '@/modules/pwdreset/repositories'
+import type { PasswordResetTokenRecord } from '@/modules/pwdreset/repositories'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 
 const EMAIL_SUBJECT = 'Speckle Account Password Reset'
@@ -31,9 +32,7 @@ const initializeNewTokenFactory =
     ])
 
     if (!user) {
-      throw new InvalidPasswordRecoveryRequestError(
-        'No user with that e-mail address found'
-      )
+      throw new UserNotFoundError('No user with that e-mail address found')
     }
 
     if (tokenAlreadyExists) {

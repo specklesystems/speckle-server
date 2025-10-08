@@ -5,19 +5,8 @@ export const activeUserMetaQuery = graphql(`
   query ActiveUserMeta {
     activeUser {
       meta {
-        newWorkspaceExplainerDismissed
         legacyProjectsExplainerCollapsed
-        speckleConBannerDismissed
-      }
-    }
-  }
-`)
-
-export const updateWorkspaceExplainerMutation = graphql(`
-  mutation UpdateWorkspaceExplainer($value: Boolean!) {
-    activeUserMutations {
-      meta {
-        setNewWorkspaceExplainerDismissed(value: $value)
+        speckleCon25BannerDismissed
       }
     }
   }
@@ -33,11 +22,11 @@ export const updateLegacyProjectsExplainerMutation = graphql(`
   }
 `)
 
-export const updateSpeckleConBannerDismissedMutation = graphql(`
-  mutation UpdateSpeckleConBannerDismissed($value: Boolean!) {
+export const updateSpeckleCon25BannerDismissedMutation = graphql(`
+  mutation UpdateSpeckleCon25BannerDismissed($value: Boolean!) {
     activeUserMutations {
       meta {
-        setSpeckleConBannerDismissed(value: $value)
+        setSpeckleCon25BannerDismissed(value: $value)
       }
     }
   }
@@ -45,14 +34,11 @@ export const updateSpeckleConBannerDismissedMutation = graphql(`
 
 export function useActiveUserMeta() {
   const { result } = useQuery(activeUserMetaQuery)
-  const { mutate: updateWorkspaceExplainer } = useMutation(
-    updateWorkspaceExplainerMutation
-  )
   const { mutate: updateLegacyProjectsExplainer } = useMutation(
     updateLegacyProjectsExplainerMutation
   )
-  const { mutate: updateSpeckleConBanner } = useMutation(
-    updateSpeckleConBannerDismissedMutation
+  const { mutate: updateSpeckleCon25Banner } = useMutation(
+    updateSpeckleCon25BannerDismissedMutation
   )
   const apollo = useApolloClient().client
   const cache = apollo.cache
@@ -61,31 +47,13 @@ export function useActiveUserMeta() {
   const activeUserId = computed(() => activeUser.value?.id ?? '')
   const meta = computed(() => result.value?.activeUser?.meta)
 
-  const hasDismissedNewWorkspaceExplainer = computed(
-    () => meta.value?.newWorkspaceExplainerDismissed ?? true
-  )
-
   const hasCollapsedLegacyProjectsExplainer = computed(
     () => meta.value?.legacyProjectsExplainerCollapsed
   )
 
-  const hasDismissedSpeckleConBanner = computed(
-    () => meta.value?.speckleConBannerDismissed ?? false
+  const hasDismissedSpeckleCon25Banner = computed(
+    () => meta.value?.speckleCon25BannerDismissed
   )
-
-  const updateNewWorkspaceExplainerDismissed = async (value: boolean) => {
-    await updateWorkspaceExplainer({ value })
-
-    modifyObjectField(
-      cache,
-      getCacheId('User', activeUserId.value),
-      'meta',
-      ({ helpers: { createUpdatedValue } }) =>
-        createUpdatedValue(({ update }) => {
-          update('newWorkspaceExplainerDismissed', () => value)
-        })
-    )
-  }
 
   const updateLegacyProjectsExplainerCollapsed = async (value: boolean) => {
     await updateLegacyProjectsExplainer({ value })
@@ -101,8 +69,8 @@ export function useActiveUserMeta() {
     )
   }
 
-  const updateSpeckleConBannerDismissed = async (value: boolean) => {
-    await updateSpeckleConBanner({ value })
+  const updateSpeckleCon25BannerDismissed = async (value: boolean) => {
+    await updateSpeckleCon25Banner({ value })
 
     modifyObjectField(
       cache,
@@ -110,17 +78,15 @@ export function useActiveUserMeta() {
       'meta',
       ({ helpers: { createUpdatedValue } }) =>
         createUpdatedValue(({ update }) => {
-          update('speckleConBannerDismissed', () => value)
+          update('speckleCon25BannerDismissed', () => value)
         })
     )
   }
 
   return {
-    hasDismissedNewWorkspaceExplainer,
     hasCollapsedLegacyProjectsExplainer,
-    hasDismissedSpeckleConBanner,
-    updateNewWorkspaceExplainerDismissed,
     updateLegacyProjectsExplainerCollapsed,
-    updateSpeckleConBannerDismissed
+    hasDismissedSpeckleCon25Banner,
+    updateSpeckleCon25BannerDismissed
   }
 }

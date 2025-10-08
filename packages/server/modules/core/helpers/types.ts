@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
-import { BaseMetaRecord } from '@/modules/core/helpers/meta'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { ServerRoles } from '@speckle/shared'
+import type { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
+import type { BaseMetaRecord } from '@/modules/core/helpers/meta'
+import type { Nullable } from '@/modules/shared/helpers/typeHelper'
+import type { ServerRoles } from '@speckle/shared'
 
 export type UserRecord = {
   id: string
@@ -101,6 +101,7 @@ export type ServerInfo = ServerConfigRecord & {
     objectSizeLimitBytes: number
     objectMultipartUploadSizeLimitBytes: number
     isEmailEnabled: boolean
+    emailVerificationTimeoutMinutes: number
   }
 }
 
@@ -147,12 +148,22 @@ export type ObjectRecord = {
 
 export type InvalidTokenResult = {
   valid: false
+  /**
+   * The ID of the token used for validation.
+   * This is the first 10 characters of the token string.
+   */
+  tokenId: string
 }
 
 export type ValidTokenResult = {
   valid: true
   scopes: string[]
   userId: string
+  /**
+   * The ID of the token used for validation.
+   * This is the first 10 characters of the token string.
+   */
+  tokenId: string
   role: ServerRoles
   /**
    * Set, if the token is an app token

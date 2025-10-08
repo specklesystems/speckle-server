@@ -1,90 +1,107 @@
 <template>
-  <ViewerCommentsPortalOrDiv v-if="shouldRenderSidebar" to="bottomPanel">
-    <ViewerSidebar :open="sidebarOpen" @close="onClose">
-      <template #title>Selection info</template>
-      <template #actions>
-        <div class="flex flex-col divide-y divide-outline-3">
-          <div class="flex py-1.5 pl-3 pr-1.5 gap-x-1.5 items-center">
-            <FormButton
-              size="sm"
-              color="outline"
-              :icon-left="isHidden ? EyeSlashIcon : EyeIcon"
-              @click.stop="hideOrShowSelection"
-            >
-              {{ isHidden ? 'Hidden' : 'Hide' }}
-            </FormButton>
-            <FormButton
-              size="sm"
-              color="outline"
-              :icon-left="isIsolated ? FunnelIcon : FunnelIconOutline"
-              @click.stop="isolateOrUnisolateSelection"
-            >
-              {{ isIsolated ? 'Isolated' : 'Isolate' }}
-            </FormButton>
-            <div class="flex justify-end w-full">
-              <div v-tippy="`Open selection in new window`" class="max-w-max">
-                <FormButton
-                  size="sm"
-                  color="subtle"
-                  :to="selectionLink"
-                  target="_blank"
-                >
-                  <span class="sr-only">Open selection in new window</span>
-                  <ArrowTopRightOnSquareIcon class="w-4" />
-                </FormButton>
-              </div>
-            </div>
-          </div>
-          <div class="text-foreground-2 text-body-3xs py-1.5 px-3">
-            Hold "shift" to select multiple objects
-          </div>
+  <ViewerCommentsPortalOrDiv class="relative" to="bottomPanel">
+    <ViewerControlsRight
+      v-if="isGreaterThanSm && showControls"
+      :sidebar-open="sidebarOpen && shouldRenderSidebar"
+      :sidebar-width="sidebarWidth"
+    />
+    <ViewerSidebar
+      v-if="shouldRenderSidebar"
+      :open="sidebarOpen"
+      @close="onClose"
+      @width-change="sidebarWidth = $event"
+    >
+      <template #title>
+        <div class="flex items-center gap-x-2">
+          <span>Selected</span>
+          <CommonBadge v-if="objects.length > 1" rounded>
+            {{ objects.length }}
+          </CommonBadge>
         </div>
       </template>
-      <div class="p-1 mb-2 sm:mb-0 sm:py-2">
-        <div class="space-y-2">
-          <ViewerSelectionObject
-            v-for="object in objectsLimited"
-            :key="(object.id as string)"
-            :object="object"
-            :root="true"
-            :unfold="objectsLimited.length === 1 && !isSmallerOrEqualSm"
+      <template #actions>
+        <div class="flex gap-x-0.5 items-center">
+          <ViewerVisibilityButton
+            :is-hidden="isHidden"
+            :force-visible="showSubMenu"
+            @click="hideOrShowSelection"
           />
+          <ViewerIsolateButton
+            :is-isolated="isIsolated"
+            :force-visible="showSubMenu"
+            @click="isolateOrUnisolateSelection"
+          />
+          <LayoutMenu
+            v-model:open="showSubMenu"
+            :menu-id="menuId"
+            :items="actionsItems"
+            :custom-menu-items-classes="['!w-42']"
+            @click.stop.prevent
+            @chosen="onActionChosen"
+          >
+            <FormButton
+              hide-text
+              color="subtle"
+              size="sm"
+              :icon-left="Ellipsis"
+              :class="{
+                '!bg-highlight-3': showSubMenu
+              }"
+              @click="showSubMenu = !showSubMenu"
+            />
+          </LayoutMenu>
         </div>
-        <div v-if="itemCount <= objects.length" class="mb-2">
-          <FormButton size="sm" text full-width @click="itemCount += 10">
-            View more ({{ objects.length - itemCount }})
-          </FormButton>
-        </div>
+      </template>
+
+      <div class="space-y-1">
+        <ViewerSelectionObject
+          v-for="(object, index) in objectsLimited"
+          :key="(object.id as string)"
+          :object="object"
+          :root="true"
+          :unfold="index === 0 && !isSmallerOrEqualSm"
+        />
       </div>
+      <div v-if="itemCount <= objects.length" class="mb-2">
+        <FormButton size="sm" text full-width @click="itemCount += 10">
+          View more ({{ objects.length - itemCount }})
+        </FormButton>
+      </div>
+
+      <template #footer>
+        <p class="text-foreground-2 text-body-3xs">
+          Hold "shift" to select multiple objects
+        </p>
+      </template>
     </ViewerSidebar>
   </ViewerCommentsPortalOrDiv>
-  <div v-else />
 </template>
 <script setup lang="ts">
-import {
-  EyeSlashIcon,
-  EyeIcon,
-  FunnelIcon,
-  ArrowTopRightOnSquareIcon
-} from '@heroicons/vue/24/solid'
-import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
-
-import { onKeyStroke } from '@vueuse/core'
+import { onKeyStroke, useBreakpoints } from '@vueuse/core'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { containsAll } from '~~/lib/common/helpers/utils'
-import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { uniqWith } from 'lodash-es'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 import { modelRoute } from '~/lib/common/helpers/route'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+import { Ellipsis } from 'lucide-vue-next'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+
+enum ActionTypes {
+  OpenInNewTab = 'open-in-new-tab'
+}
 
 const {
   projectId,
   viewer: {
     metadata: { filteringState }
   },
-  ui: { diff, measurement, threads },
+  ui: { diff, measurement, threads, filters },
   urlHashState: { focusedThreadId }
 } = useInjectedViewerState()
 const { objects, clearSelection } = useSelectionUtilities()
@@ -92,9 +109,16 @@ const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isGreaterThanSm = breakpoints.greater('sm')
+const menuId = useId()
+const mp = useMixpanel()
+const { showControls } = useEmbed()
 
 const itemCount = ref(20)
 const sidebarOpen = ref(false)
+const sidebarWidth = ref(280)
+const showSubMenu = ref(false)
 
 const objectsUniqueByAppId = computed(() => {
   if (!diff.enabled.value) return objects.value
@@ -112,7 +136,8 @@ const objectsLimited = computed(() => {
 })
 
 const hiddenObjects = computed(() => filteringState.value?.hiddenObjects)
-const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
+// Use singleton isolatedObjectsSet from viewer state
+const { isolatedObjectsSet } = filters
 
 const allTargetIds = computed(() => {
   const ids = []
@@ -129,15 +154,35 @@ const isHidden = computed(() => {
 })
 
 const isIsolated = computed(() => {
-  if (!isolatedObjects.value) return false
-  return containsAll(allTargetIds.value, isolatedObjects.value)
+  if (!isolatedObjectsSet.value) return false
+  return containsAll(allTargetIds.value, isolatedObjectsSet.value)
 })
 
-const mp = useMixpanel()
+const actionsItems = computed<LayoutMenuItem[][]>(() => [
+  [
+    {
+      title:
+        allTargetIds.value.length > 1
+          ? 'Open objects in new tab'
+          : 'Open object in new tab',
+      id: ActionTypes.OpenInNewTab
+    }
+  ]
+])
 
 const selectionLink = computed(() => {
   return modelRoute(projectId.value, allTargetIds.value.join(','))
 })
+
+const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
+  const { item } = params
+
+  switch (item.id) {
+    case ActionTypes.OpenInNewTab:
+      window.open(selectionLink.value, '_blank')
+      break
+  }
+}
 
 const hideOrShowSelection = () => {
   if (!isHidden.value) {
@@ -191,6 +236,10 @@ const onClose = () => {
   trackAndClearSelection()
 }
 
+const forceClose = () => {
+  sidebarOpen.value = false
+}
+
 onKeyStroke('Escape', () => {
   // Cleareance of any vis/iso state coming from here should happen in clearSelection()
   // Note: we're not using the trackAndClearSelection method beacuse
@@ -205,37 +254,35 @@ onKeyStroke('Escape', () => {
 })
 
 watch(
-  () => objects.value.length,
-  (newLength) => {
-    // Dont open sidebar if a comment is open
-    if (newLength !== 0 && !focusedThreadId.value) {
+  [
+    () => objects.value.length,
+    () => focusedThreadId.value,
+    () => threads.openThread.newThreadEditor.value,
+    () => isSmallerOrEqualSm.value
+  ],
+  ([objLen, threadId, isNewThreadEditorOpen, isSmSm]) => {
+    // Close sidebar if a thread is focused
+    if (threadId) {
+      sidebarOpen.value = false
+      return
+    }
+
+    // Close sidebar if new thread editor is open and screen is small
+    if (isNewThreadEditorOpen && isSmSm) {
+      sidebarOpen.value = false
+      return
+    }
+
+    // Open sidebar if objects are selected and no thread is focused
+    if (objLen !== 0 && !threadId) {
       sidebarOpen.value = true
-    } else if (newLength === 0) {
+    } else if (objLen === 0) {
       sidebarOpen.value = false
     }
   }
 )
 
-// Close sidebar when a new thread is being added and screen is smaller than md breakpoint
-watch(
-  () => threads.openThread.newThreadEditor.value,
-  (isNewThreadEditorOpen) => {
-    if (isNewThreadEditorOpen && isSmallerOrEqualSm.value) {
-      sidebarOpen.value = false
-    }
-  }
-)
-
-watch(
-  () => focusedThreadId.value,
-  (newThreadId) => {
-    if (newThreadId) {
-      // If a thread is focused, close the sidebar
-      sidebarOpen.value = false
-    } else if (objects.value.length > 0) {
-      // If no thread is focused and we have objects selected, open the sidebar
-      sidebarOpen.value = true
-    }
-  }
-)
+defineExpose({
+  forceClose
+})
 </script>

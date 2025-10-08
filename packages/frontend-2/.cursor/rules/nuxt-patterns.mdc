@@ -1,0 +1,99 @@
+---
+description: Nuxt 3 specific patterns and conventions for frontend-2
+globs:
+  [
+    '**/*.vue',
+    '**/*.ts',
+    '**/*.js',
+    '**/pages/**/*',
+    '**/layouts/**/*',
+    '**/middleware/**/*',
+    '**/plugins/**/*',
+    '**/composables/**/*'
+  ]
+alwaysApply: false
+---
+
+# Nuxt 3 Application Patterns
+
+## File Structure
+
+```
+packages/frontend-2/
+├── components/       # Vue components by feature
+├── composables/      # Vue composables
+├── lib/              # Feature-specific logic
+├── pages/            # Nuxt pages
+├── layouts/          # Nuxt layouts
+├── middleware/       # Nuxt middleware
+└── plugins/          # Nuxt plugins
+```
+
+## Path Resolution
+
+- **Use `~/` prefix** for all internal imports
+- **Auto-imports**: Nuxt auto-imports composables, components, and utilities
+- **No relative paths** - always use `~/` for absolute imports
+
+```typescript
+// Good: Use ~/
+import { useProjectData } from '~/lib/projects/composables'
+import { SomeUtility } from '~/lib/common/helpers'
+
+// Bad: Relative paths
+import { useProjectData } from '../../../lib/projects/composables'
+```
+
+## Nuxt Composables
+
+### Server-Side Rendering
+
+- **useLazyFetch** for data fetching that doesn't block navigation
+- **$fetch** for programmatic requests
+- **useNuxtData** to access cached fetch data
+
+### Navigation
+
+- **navigateTo** for programmatic navigation
+- **NuxtLink** for declarative links
+- **useRoute** for current route info
+- **useRouter** for navigation methods
+
+### State Management
+
+- **useState** for cross-component reactive state
+- **useNuxtApp** for app context
+- **useCookie** for reactive cookies
+
+## Plugin Patterns
+
+```typescript
+// plugins/example.client.ts (client-only)
+export default defineNuxtPlugin(() => {
+  // Client-side initialization
+})
+
+// plugins/example.server.ts (server-only)
+export default defineNuxtPlugin(() => {
+  // Server-side initialization
+})
+
+// plugins/example.ts (universal)
+export default defineNuxtPlugin(() => {
+  // Runs on both client and server
+})
+```
+
+## Middleware
+
+```typescript
+// middleware/auth.ts (route middleware)
+export default defineParallelizedNuxtRouteMiddleware((to, from) => {
+  // Route protection logic
+})
+
+// middleware/global.global.ts (global middleware)
+export default defineParallelizedNuxtRouteMiddleware((to, from) => {
+  // Runs on every route change
+})
+```

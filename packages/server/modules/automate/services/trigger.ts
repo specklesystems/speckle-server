@@ -1,34 +1,34 @@
-import { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
-import {
+import type { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
+import type {
   AutomationWithRevision,
   AutomationTriggerDefinitionRecord,
   AutomationRevisionWithTriggersFunctions,
   VersionCreatedTriggerManifest,
-  VersionCreationTriggerType,
   BaseTriggerManifest,
+  LiveAutomation
+} from '@/modules/automate/helpers/types'
+import {
+  VersionCreationTriggerType,
   isVersionCreatedTriggerManifest,
-  LiveAutomation,
   RunTriggerSource
 } from '@/modules/automate/helpers/types'
 import { Roles, Scopes } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { DefaultAppIds } from '@/modules/auth/defaultApps'
-import { Merge } from 'type-fest'
+import type { Merge } from 'type-fest'
 import {
   AutomateInvalidTriggerError,
   AutomationFunctionInputEncryptionError
 } from '@/modules/automate/errors/management'
-import {
-  triggerAutomationRun,
-  type TriggeredAutomationFunctionRun
-} from '@/modules/automate/clients/executionEngine'
+import type { triggerAutomationRun } from '@/modules/automate/clients/executionEngine'
+import { type TriggeredAutomationFunctionRun } from '@/modules/automate/clients/executionEngine'
 import { TriggerAutomationError } from '@/modules/automate/errors/runs'
-import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
+import type { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { automateLogger } from '@/observability/logging'
-import { FunctionInputDecryptor } from '@/modules/automate/services/encryption'
+import type { FunctionInputDecryptor } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
-import {
+import type {
   GetActiveTriggerDefinitions,
   GetAutomation,
   GetAutomationRevision,
@@ -40,11 +40,11 @@ import {
   TriggerAutomationRevisionRun,
   UpsertAutomationRun
 } from '@/modules/automate/domain/operations'
-import { GetBranchLatestCommits } from '@/modules/core/domain/branches/operations'
-import { GetCommit } from '@/modules/core/domain/commits/operations'
-import { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
-import { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { GetBranchLatestCommits } from '@/modules/core/domain/branches/operations'
+import type { GetCommit } from '@/modules/core/domain/commits/operations'
+import type { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
+import type { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { AutomationRunEvents } from '@/modules/automate/domain/events'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { getRequestLogger } from '@/observability/utils/requestContext'

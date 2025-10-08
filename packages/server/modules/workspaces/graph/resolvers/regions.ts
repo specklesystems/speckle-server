@@ -1,18 +1,14 @@
 import { db } from '@/db/knex'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 import { canWorkspaceUseRegionsFactory } from '@/modules/gatekeeper/services/featureAuthorization'
-import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { getRegionsFactory } from '@/modules/multiregion/repositories'
 import { authorizeResolver } from '@/modules/shared'
 import {
   getDefaultRegionFactory,
   upsertRegionAssignmentFactory
 } from '@/modules/workspaces/repositories/regions'
-import {
-  getWorkspaceFactory,
-  upsertWorkspaceFactory
-} from '@/modules/workspaces/repositories/workspaces'
+import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import {
   assignWorkspaceRegionFactory,
   getAvailableRegionsFactory
@@ -20,10 +16,10 @@ import {
 import { Roles } from '@speckle/shared'
 import { WorkspacesNotYetImplementedError } from '@/modules/workspaces/errors/workspace'
 import { scheduleJob } from '@/modules/multiregion/services/queue'
-import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
-import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { getExplicitProjects } from '@/modules/core/repositories/streams'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { queryAllProjectsFactory } from '@/modules/core/services/projects'
 
 const { FF_MOVE_PROJECT_REGION_ENABLED } = getFeatureFlags()
 
@@ -51,8 +47,6 @@ export default {
         regionKey
       })
 
-      const regionDb = await getDb({ regionKey })
-
       const assignRegion = assignWorkspaceRegionFactory({
         getAvailableRegions: getAvailableRegionsFactory({
           getRegions: getRegionsFactory({ db }),
@@ -62,8 +56,7 @@ export default {
         }),
         upsertRegionAssignment: upsertRegionAssignmentFactory({ db }),
         getDefaultRegion: getDefaultRegionFactory({ db }),
-        getWorkspace: getWorkspaceFactory({ db }),
-        insertRegionWorkspace: upsertWorkspaceFactory({ db: regionDb })
+        getWorkspace: getWorkspaceFactory({ db })
       })
       await withOperationLogging(
         async () => await assignRegion({ workspaceId, regionKey }),
@@ -76,22 +69,22 @@ export default {
 
       // Move existing workspace projects to new target region
       if (FF_MOVE_PROJECT_REGION_ENABLED) {
-        const queryAllWorkspaceProjects = queryAllWorkspaceProjectsFactory({
-          getStreams: legacyGetStreamsFactory({ db })
+        const queryAllProjects = queryAllProjectsFactory({
+          getExplicitProjects: getExplicitProjects({ db })
         })
-        for await (const projects of queryAllWorkspaceProjects({
+        for await (const projects of queryAllProjects({
           workspaceId
         })) {
           await Promise.all(
-            projects.map((project) =>
-              scheduleJob({
+            projects.map(async (project) => {
+              await scheduleJob({
                 type: 'move-project-region',
                 payload: {
                   projectId: project.id,
                   regionKey
                 }
               })
-            )
+            })
           )
         }
       }
@@ -122,14 +115,15 @@ export default {
       })
 
       return await withOperationLogging(
-        async () =>
-          await scheduleJob({
+        async () => {
+          return await scheduleJob({
             type: 'move-project-region',
             payload: {
               projectId,
               regionKey
             }
-          }),
+          })
+        },
         {
           logger,
           operationName: 'workspaceProjectMoveToRegion',

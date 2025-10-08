@@ -1,22 +1,25 @@
-import {
+import type {
+  EmbedApiTokenRecord,
   PersonalApiTokenRecord,
   TokenScopeRecord,
   UserServerAppTokenRecord
 } from '@/modules/auth/helpers/types'
-import { ApiTokenRecord } from '@/modules/auth/repositories'
+import type { ApiTokenRecord } from '@/modules/auth/repositories'
 import {
   ApiTokens,
+  EmbedApiTokens,
   PersonalApiTokens,
   TokenResourceAccess,
   TokenScopes,
   UserServerAppTokens
 } from '@/modules/core/dbSchema'
-import {
+import type {
   GetApiTokenById,
   GetTokenResourceAccessDefinitionsById,
   GetTokenScopesById,
   GetUserPersonalAccessTokens,
   RevokeTokenById,
+  RevokeTokenResourceAccess,
   RevokeUserTokenById,
   StoreApiToken,
   StorePersonalApiToken,
@@ -26,9 +29,9 @@ import {
   UpdateApiToken
 } from '@/modules/core/domain/tokens/operations'
 import { UserInputError } from '@/modules/core/errors/userinput'
-import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
-import { ServerScope } from '@speckle/shared'
-import { Knex } from 'knex'
+import type { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
+import type { ServerScope } from '@speckle/shared'
+import type { Knex } from 'knex'
 import { TokenRevokationError } from '@/modules/core/errors/tokens'
 
 const tables = {
@@ -38,7 +41,8 @@ const tables = {
     db<TokenResourceAccessRecord>(TokenResourceAccess.name),
   userServerAppTokens: (db: Knex) =>
     db<UserServerAppTokenRecord>(UserServerAppTokens.name),
-  personalApiTokens: (db: Knex) => db<PersonalApiTokenRecord>(PersonalApiTokens.name)
+  personalApiTokens: (db: Knex) => db<PersonalApiTokenRecord>(PersonalApiTokens.name),
+  embedApiTokens: (db: Knex) => db<EmbedApiTokenRecord>(EmbedApiTokens.name)
 }
 
 export const storeApiTokenFactory =
@@ -58,6 +62,12 @@ export const storeTokenResourceAccessDefinitionsFactory =
   (deps: { db: Knex }): StoreTokenResourceAccessDefinitions =>
   async (defs) => {
     await tables.tokenResourceAccess(deps.db).insert(defs)
+  }
+
+export const revokeTokenResourceAccessDefinitonsFactory =
+  (deps: { db: Knex }): RevokeTokenResourceAccess =>
+  async (definition) => {
+    await tables.tokenResourceAccess(deps.db).where(definition).delete()
   }
 
 export const storeUserServerAppTokenFactory =

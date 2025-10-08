@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Nullable } from '@speckle/shared'
-import { SchemaConfig, MetaSchemaConfig } from '@/modules/core/dbSchema'
-import { camelCase, isString } from 'lodash'
-import { Knex } from 'knex'
+import type { Nullable } from '@speckle/shared'
+import type { SchemaConfig, MetaSchemaConfig } from '@/modules/core/dbSchema'
+import { camelCase, isString } from 'lodash-es'
+import type { Knex } from 'knex'
 
 /**
  * All meta records must follow this interface

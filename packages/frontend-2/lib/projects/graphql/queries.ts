@@ -9,6 +9,13 @@ export const projectAccessCheckQuery = graphql(`
           ...FullPermissionCheckResult
         }
       }
+      workspaceId
+    }
+    activeUser {
+      id
+      activeWorkspace {
+        id
+      }
     }
   }
 `)
@@ -66,10 +73,11 @@ export const latestModelsPaginationQuery = graphql(`
     $projectId: String!
     $filter: ProjectModelsFilter
     $cursor: String = null
+    $limit: Int = 16
   ) {
     project(id: $projectId) {
       id
-      models(cursor: $cursor, limit: 16, filter: $filter) {
+      models(cursor: $cursor, limit: $limit, filter: $filter) {
         totalCount
         cursor
         items {
@@ -343,6 +351,31 @@ export const projectWebhooksQuery = graphql(`
         }
         totalCount
       }
+    }
+  }
+`)
+
+export const projectIntegrationsQuery = graphql(`
+  query ProjectIntegrations($projectId: String!) {
+    project(id: $projectId) {
+      id
+      name
+      ...ProjectPageSettingsIntegrations_Project
+      accSyncItems {
+        items {
+          id
+        }
+        totalCount
+      }
+    }
+  }
+`)
+
+export const projectEmbedTokensQuery = graphql(`
+  query ProjectEmbedTokens($projectId: String!, $cursor: String = null) {
+    project(id: $projectId) {
+      id
+      ...ProjectPageSettingsTokens_Project
     }
   }
 `)

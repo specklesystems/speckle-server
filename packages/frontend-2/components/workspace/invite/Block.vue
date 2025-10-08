@@ -3,7 +3,7 @@
     <h1 class="text-heading-xl text-center">Join workspace</h1>
     <div class="p-4 border border-outline-2 rounded text-body-xs">
       You're accepting an invitation to join
-      <span class="font-medium">{{ invite.workspaceName }}</span>
+      <span class="font-medium">{{ invite.workspace.name }}</span>
       <template v-if="isCurrentUserTarget">.</template>
       <template v-else>
         <template v-if="targetUser">
@@ -102,8 +102,11 @@ import { useWorkspacePublicSsoCheck } from '~/lib/workspaces/composables/sso'
 graphql(`
   fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
     id
-    workspaceId
-    workspaceName
+    workspace {
+      id
+      name
+      logo
+    }
     token
     user {
       id
@@ -133,7 +136,7 @@ const { loading, accept, decline, token, isCurrentUserTarget, targetUser } =
     invite: computed(() => props.invite)
   })
 
-const workspaceSlug = computed(() => props.invite.workspaceSlug ?? '')
+const workspaceSlug = computed(() => props.invite.workspace.slug ?? '')
 const { hasSsoEnabled } = useWorkspacePublicSsoCheck(workspaceSlug)
 
 const buildPostAuthRedirectUrl = (params: {
@@ -175,7 +178,7 @@ const signOutGoToLogin = async (params?: { addNewEmail?: boolean }) => {
  */
 const signOutGoToRegister = async () => {
   try {
-    if (!props.invite.workspaceSlug) {
+    if (!props.invite.workspace.slug) {
       logger.warn(
         'No workspace slug found in invite, falling back to regular registration'
       )
@@ -193,7 +196,7 @@ const signOutGoToRegister = async () => {
 
     if (hasSsoEnabled.value) {
       router.push({
-        path: `/workspaces/${props.invite.workspaceSlug}/sso/register`,
+        path: `/workspaces/${props.invite.workspace.slug}/sso/register`,
         query: {
           token: token.value,
           register: 'true'

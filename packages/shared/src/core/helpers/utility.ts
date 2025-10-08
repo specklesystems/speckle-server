@@ -167,3 +167,34 @@ export const waitForever = (): Promise<never> => new Promise<never>(noop)
  * Returns true if only one of the arguments is truthy
  */
 export const xor = (a: unknown, b: unknown) => !!((a || b) && !(a && b))
+
+/**
+ * Shortcut for creating string key & value enums. Native TS Enums are problematic in many ways
+ * (transform code, instead of just adding types; you cant put a string literal matching the enum value
+ * in a variable typed as the enum, etc.)
+ */
+export const StringEnum = <T extends string>(args: T[]) => {
+  const enumObj = Object.fromEntries(args.map((arg) => [arg, arg])) as {
+    [K in T]: K
+  }
+  return Object.freeze(enumObj)
+}
+
+/**
+ * Shortcut for (typeof StringEnum)[keyof typeof StringEnum]
+ */
+export type StringEnumValues<T extends Record<string, string>> = {
+  [K in keyof T]: T[K] extends string ? T[K] : never
+}[keyof T]
+
+/**
+ * Get first non-undefined/null value, or undefined if none found
+ */
+export const firstDefinedValue = <T>(
+  ...args: (T | undefined | null)[]
+): T | undefined => {
+  for (const arg of args) {
+    if (!isNullOrUndefined(arg)) return arg
+  }
+  return undefined
+}

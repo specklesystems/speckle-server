@@ -1,4 +1,4 @@
-import { difference, intersection } from 'lodash'
+import { difference, intersection } from '#lodash'
 import { md5 } from '@speckle/shared'
 import type { Nullable } from '@speckle/shared'
 import { BaseError } from '~~/src/helpers/common/error'
@@ -59,7 +59,10 @@ export function validateFileType(
  * Resolve file extension (with leading dot)
  */
 export function resolveFileExtension(fileName: string): Nullable<FileTypeSpecifier> {
-  const ext = fileName.split('.').pop() || null
+  const fileNameParts = fileName.split('.')
+  if (fileNameParts.length < 2) return null
+
+  const ext = fileNameParts.pop() || null
   return ext ? `.${ext}` : null
 }
 

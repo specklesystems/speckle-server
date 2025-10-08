@@ -1,23 +1,25 @@
 import { db } from '@/db/knex'
-import { StreamAcl } from '@/modules/core/dbSchema'
+import { StreamAcl, Streams } from '@/modules/core/dbSchema'
+import type { StreamRecord } from '@/modules/core/helpers/types'
 import { ProjectRecordVisibility } from '@/modules/core/helpers/types'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { WorkspaceSeatType } from '@/modules/gatekeeper/domain/billing'
 import { getWorkspaceUserSeatsFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { getRegionDb } from '@/modules/multiregion/utils/dbSelector'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
+import type { BasicTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
 import {
   assignToWorkspace,
   assignToWorkspaces,
-  BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
 import { describeEach, itEach } from '@/test/assertionHelper'
-import {
-  BasicTestUser,
-  createTestUser,
-  createTestUsers,
-  login
-} from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUser, createTestUsers, login } from '@/test/authHelper'
+import type {
+  GetWorkspaceProjectsQuery,
+  ProjectUpdateRoleInput
+} from '@/modules/core/graph/generated/graphql'
 import {
   ActiveUserProjectsDocument,
   ActiveUserProjectsWorkspaceDocument,
@@ -25,31 +27,27 @@ import {
   GetProjectDocument,
   GetWorkspaceDocument,
   GetWorkspaceProjectsDocument,
-  GetWorkspaceProjectsQuery,
   GetWorkspaceTeamDocument,
   MoveProjectToWorkspaceDocument,
-  ProjectUpdateRoleInput,
   ProjectVisibility,
+  UpdateProjectDocument,
   UpdateProjectRoleDocument,
   UpdateWorkspaceProjectRoleDocument
-} from '@/test/graphql/generated/graphql'
-import {
-  ExecuteOperationResponse,
-  testApolloServer,
-  TestApolloServer
-} from '@/test/graphqlHelper'
+} from '@/modules/core/graph/generated/graphql'
+import type { ExecuteOperationResponse, TestApolloServer } from '@/test/graphqlHelper'
+import { testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { mockAdminOverride } from '@/test/mocks/global'
+import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import {
   addToStream,
-  BasicTestStream,
   createTestStream,
   getUserStreamRole
 } from '@/test/speckle-helpers/streamHelper'
+import type { Nullable, Optional } from '@speckle/shared'
 import {
   isNonNullable,
-  Nullable,
-  Optional,
   PaidWorkspacePlans,
   Roles,
   WorkspacePlans
@@ -57,10 +55,15 @@ import {
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
-import { times } from 'lodash'
+import type { Knex } from 'knex'
+import { times } from 'lodash-es'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 const adminOverrideMock = mockAdminOverride()
+
+const tables = {
+  streams: (db: Knex) => db.table<StreamRecord>(Streams.name)
+}
 
 describe('Workspace project GQL CRUD', () => {
   let apollo: TestApolloServer
@@ -450,7 +453,7 @@ describe('Workspace project GQL CRUD', () => {
 
         // validate sorting
         const projects = collection?.items || []
-        let lastUpdatedAt: Optional<string> = undefined
+        let lastUpdatedAt: Optional<Date> = undefined
         for (const project of projects) {
           const date = project.updatedAt
           if (!lastUpdatedAt) {
@@ -982,6 +985,61 @@ describe('Workspace project GQL CRUD', () => {
       expect(resB).to.not.haveGraphQLErrors()
       expect(adminWorkspaceRole?.role).to.equal(Roles.Workspace.Admin)
     })
+
+    isMultiRegionTestMode()
+      ? describe('when the default server db region is not the main db @multiregion', () => {
+          let regionalProject: BasicTestStream
+
+          before(async () => {
+            // Simulate non-main default db region
+            regionalProject = await createTestStream(
+              {
+                name: 'My Special Project',
+                description: null,
+                clonedFrom: null,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                allowPublicComments: false,
+                workspaceId: null,
+                regionKey: 'region1',
+                visibility: ProjectRecordVisibility.Public
+              },
+              serverAdminUser
+            )
+          })
+
+          it('should be located in the correct region', async () => {
+            const regionDb = await getRegionDb({ regionKey: 'region1' })
+
+            const [res] = await tables
+              .streams(regionDb)
+              .where({ id: regionalProject.id })
+
+            expect(res).to.exist
+          })
+
+          it('should update project without removing workspace association @multiregion', async () => {
+            const resA = await apollo.execute(MoveProjectToWorkspaceDocument, {
+              projectId: regionalProject.id,
+              workspaceId: targetWorkspace.id
+            })
+            const resB = await apollo.execute(UpdateProjectDocument, {
+              input: {
+                id: regionalProject.id,
+                name: 'Foo'
+              }
+            })
+            const resC = await apollo.execute(GetProjectDocument, {
+              id: regionalProject.id
+            })
+
+            expect(resA).to.not.haveGraphQLErrors()
+            expect(resB).to.not.haveGraphQLErrors()
+            expect(resC).to.not.haveGraphQLErrors()
+            expect(resC.data?.project?.workspaceId).to.equal(targetWorkspace.id)
+          })
+        })
+      : null
   })
 
   // moved over Alessandro's tests from core to here, since they are all related to workspaces

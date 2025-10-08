@@ -1,4 +1,4 @@
-import { CommentRecord } from '@/modules/comments/helpers/types'
+import type { CommentRecord } from '@/modules/comments/helpers/types'
 
 /**
  * The types of objects we return in resolvers often don't have the exact type as the object in the schema.

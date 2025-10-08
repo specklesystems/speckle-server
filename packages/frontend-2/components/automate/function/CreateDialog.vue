@@ -108,7 +108,8 @@ const onDetailsSubmit = handleDetailsSubmit(async (values) => {
       template: selectedTemplate.value.id,
       logo: values.image,
       name: values.name,
-      description: values.description
+      description: values.description,
+      org: values.org
     }
   })
 

@@ -1,38 +1,28 @@
-/* istanbul ignore file */
+import dotenv from 'dotenv'
+import {
+  isTestEnv,
+  isDevEnv,
+  isApolloMonitoringEnabled,
+  getApolloServerVersion,
+  getServerVersion
+} from '@/modules/shared/helpers/envHelper'
+import { logger } from '@/observability/logging'
+import { initOpenTelemetry } from '@/observability/otel'
+import { patchKnex } from '@/modules/core/patches/knex'
+import { appRoot, packageRoot, isTsMode } from '#/root.js'
+import inspector from 'node:inspector'
+
 /**
  * Bootstrap module that should be imported at the very top of each entry point module
  */
 
-// Conditionally change appRoot and packageRoot according to whether we're running from /dist/ or not (ts-node)
-const path = require('path')
-const isTsNode = !!process[Symbol.for('ts-node.register.instance')]
-const appRoot = __dirname
-const packageRoot = isTsNode ? appRoot : path.resolve(__dirname, '../')
-
-// Initializing module aliases for absolute import paths
-const moduleAlias = require('module-alias')
-moduleAlias.addAliases({
-  '@': appRoot,
-  '#': packageRoot
-})
-
 // Initializing env vars
-const dotenv = require('dotenv')
-const {
-  isTestEnv,
-  isApolloMonitoringEnabled,
-  getApolloServerVersion,
-  getServerVersion,
-  isDevEnv
-} = require('@/modules/shared/helpers/envHelper')
-const { logger } = require('@/observability/logging')
-
 if (isApolloMonitoringEnabled() && !getApolloServerVersion()) {
   process.env.APOLLO_SERVER_USER_VERSION = getServerVersion()
 }
 
 // If running in test env, load .env.test first
-// (appRoot necessary, cause env files aren't loaded through require() calls)
+// (appRoot necessary, cause env files aren't loaded through require()/import() calls)
 if (isTestEnv()) {
   const { error } = dotenv.config({ path: `${packageRoot}/.env.test` })
   if (error) {
@@ -48,23 +38,17 @@ if (isTestEnv()) {
 // (e.g. due to various child processes capturing the --inspect flag)
 const startDebugger = process.env.START_DEBUGGER
 if ((isTestEnv() || isDevEnv()) && startDebugger) {
-  const inspector = require('node:inspector')
   if (!inspector.url()) {
     console.log('Debugger starting on process ' + process.pid)
     inspector.open(0, undefined, true)
   }
 }
 
+// Load dotenv
 dotenv.config({ path: `${packageRoot}/.env` })
 
 // knex is a singleton controlled by module so can't wait til app init
-const { initOpenTelemetry } = require('@/observability/otel')
 initOpenTelemetry()
-
-const { patchKnex } = require('@/modules/core/patches/knex')
 patchKnex()
 
-module.exports = {
-  appRoot,
-  packageRoot
-}
+export { appRoot, packageRoot, isTsMode }

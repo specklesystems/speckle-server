@@ -1,9 +1,11 @@
 <template>
   <div>
     <nav class="fixed z-40 top-0 h-12 bg-foundation border-b border-outline-2">
-      <div class="flex gap-4 items-center justify-between h-full w-screen py-4 px-3">
-        <div class="hidden lg:block">
-          <HeaderWorkspaceSwitcher v-if="showWorkspaceSwitcher" />
+      <div
+        class="flex gap-4 items-center justify-between h-full w-screen px-2 lg:pl-1.5"
+      >
+        <div class="hidden lg:flex lg:w-52">
+          <HeaderWorkspaceSwitcher v-if="isWorkspacesEnabled && isLoggedIn" />
           <HeaderLogoBlock
             v-else
             :active="false"
@@ -19,13 +21,13 @@
             <PortalTarget name="navigation"></PortalTarget>
           </ClientOnly>
         </div>
-        <div class="flex items-center justify-end gap-2.5 sm:gap-2 lg:min-w-40">
+        <div class="flex items-center justify-end gap-2.5 sm:gap-2 lg:w-52">
           <ClientOnly>
             <PortalTarget name="secondary-actions"></PortalTarget>
             <PortalTarget name="primary-actions"></PortalTarget>
           </ClientOnly>
           <HeaderNavNotifications v-if="isLoggedIn" />
-          <div class="flex justify-end gap-x-2">
+          <div v-if="!hideUserNav" class="flex justify-end items-center gap-x-2">
             <FormButton
               v-if="!activeUser"
               :to="loginUrl.fullPath"
@@ -48,6 +50,10 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { loginRoute } from '~~/lib/common/helpers/route'
 import type { Optional } from '@speckle/shared'
 
+defineProps<{
+  hideUserNav?: boolean
+}>()
+
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { activeUser, isLoggedIn } = useActiveUser()
 const route = useRoute()
@@ -62,9 +68,5 @@ const loginUrl = computed(() =>
       token: token.value || undefined
     }
   })
-)
-
-const showWorkspaceSwitcher = computed(
-  () => isWorkspacesEnabled.value && activeUser.value
 )
 </script>

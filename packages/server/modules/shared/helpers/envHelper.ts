@@ -1,19 +1,22 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { has, trimEnd } from 'lodash'
+import { has, trimEnd } from 'lodash-es'
 import * as Environment from '@speckle/shared/environment'
-import { ensureError, Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
 
 export function getStringFromEnv(
   envVarKey: string,
   options?: Partial<{
+    default?: string
     /**
      * If set to true, wont throw if the env var is not set
      */
-    unsafe: boolean
+    unsafe?: boolean
   }>
 ): string {
   const envVar = process.env[envVarKey]
   if (!envVar) {
+    if (options?.default !== undefined) return options.default
     if (options?.unsafe) return ''
     throw new MisconfiguredEnvironmentError(`${envVarKey} env var not configured`)
   }
@@ -100,12 +103,9 @@ export function getFileSizeLimitMB() {
   return getIntFromEnv('FILE_SIZE_LIMIT_MB', '100')
 }
 
+// This is the time limit for file import jobs to parse the files, not the upload time limit; see FILE_UPLOAD_URL_EXPIRY_MINUTES
 export function getFileImportTimeLimitMinutes() {
-  return getIntFromEnv('FILE_IMPORT_TIME_LIMIT_MIN', '10')
-}
-
-export function getFileUploadTimeLimitMinutes() {
-  return getIntFromEnv('FILE_UPLOAD_TIME_LIMIT_MIN', '10')
+  return getIntFromEnv('FILE_IMPORT_TIME_LIMIT_MIN', '30')
 }
 
 export function getMaximumRequestBodySizeMB() {
@@ -128,8 +128,8 @@ export const previewServiceShouldUsePrivateObjectsServerUrl = (): boolean => {
   return getBooleanFromEnv('PREVIEW_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL')
 }
 
-export const getFileimportServiceRedisUrl = (): string | undefined => {
-  return process.env['FILEIMPORT_SERVICE_REDIS_URL']
+export const fileImportServiceShouldUsePrivateObjectsServerUrl = (): boolean => {
+  return getBooleanFromEnv('FILEIMPORT_SERVICE_USE_PRIVATE_OBJECTS_SERVER_URL')
 }
 
 export const getPreviewServiceRedisUrl = (): string | undefined => {
@@ -336,10 +336,6 @@ export function getOnboardingStreamCacheBustNumber() {
   return parseInt(val) || 1
 }
 
-export function getEmailFromAddress() {
-  return getStringFromEnv('EMAIL_FROM')
-}
-
 export function getMaximumProjectModelsPerPage() {
   return getIntFromEnv('MAX_PROJECT_MODELS_PER_PAGE', '500')
 }
@@ -374,6 +370,37 @@ export function getLicenseToken(): string | undefined {
 export function isEmailEnabled() {
   return getBooleanFromEnv('EMAIL')
 }
+
+export function getEmailFromAddress() {
+  return getStringFromEnv('EMAIL_FROM')
+}
+
+export function getEmailHost() {
+  return getStringFromEnv('EMAIL_HOST', { default: '127.0.0.1' })
+}
+
+export function getEmailPort() {
+  return getIntFromEnv('EMAIL_PORT', '587')
+}
+
+export function isSSLEmailEnabled() {
+  return getBooleanFromEnv('EMAIL_SECURE', false) // see EMAIL_REQUIRE_TLS
+}
+
+export function isTLSEmailRequired() {
+  return getBooleanFromEnv('EMAIL_REQUIRE_TLS', true) // default to true
+}
+
+export function getEmailUsername() {
+  return getStringFromEnv('EMAIL_USERNAME', { unsafe: true }) // can be empty
+}
+
+export function getEmailPassword() {
+  return getStringFromEnv('EMAIL_PASSWORD', { unsafe: true }) // can be empty
+}
+
+export const getFileImporterQueuePostgresUrl = () =>
+  process.env['FILEIMPORT_QUEUE_POSTGRES_URL'] ?? null
 
 export function postgresMaxConnections() {
   return getIntFromEnv('POSTGRES_MAX_CONNECTIONS_SERVER', '8')
@@ -412,6 +439,10 @@ export function getS3SecretKey() {
 
 export function getS3Endpoint() {
   return getStringFromEnv('S3_ENDPOINT')
+}
+
+export function getS3PublicEndpoint() {
+  return getStringFromEnv('S3_PUBLIC_ENDPOINT', { unsafe: true })
 }
 
 export function getS3Region(aDefault: string = 'us-east-1') {
@@ -478,3 +509,52 @@ export function disablePreviews() {
 export const isRateLimiterEnabled = (): boolean => {
   return getBooleanFromEnv('RATELIMITER_ENABLED', true)
 }
+
+export const getFileUploadUrlExpiryMinutes = (): number => {
+  return getIntFromEnv('FILE_UPLOAD_URL_EXPIRY_MINUTES', '1440')
+}
+
+export const getPreviewServiceTimeoutMilliseconds = (): number => {
+  return getIntFromEnv('PREVIEW_SERVICE_TIMEOUT_MILLISECONDS', '3600000') // 1 hour
+}
+
+export const getPreviewServiceRetryPeriodMinutes = (): number => {
+  const value = getIntFromEnv('PREVIEW_SERVICE_RETRY_PERIOD_MINUTES', '1')
+  if (value < 1 || value > 60)
+    throw new MisconfiguredEnvironmentError(
+      `PREVIEW_SERVICE_RETRY_PERIOD_MINUTES must be an integer between 1 and 60, got ${value}`
+    )
+  return value
+}
+
+export const getPreviewServiceMaxQueueBackpressure = (): number => {
+  const value = getIntFromEnv('PREVIEW_SERVICE_MAX_QUEUE_BACKPRESSURE', '1')
+  if (value < 1)
+    throw new MisconfiguredEnvironmentError(
+      `PREVIEW_SERVICE_MAX_QUEUE_BACKPRESSURE must be an integer greater than 0, got ${value}`
+    )
+  return value
+}
+
+export const emailVerificationTimeoutMinutes = (): number => {
+  return getIntFromEnv('EMAIL_VERIFICATION_TIMEOUT_MINUTES', '5')
+}
+
+export function getAutodeskIntegrationClientId() {
+  return getStringFromEnv('AUTODESK_INTEGRATION_CLIENT_ID')
+}
+
+export function getAutodeskIntegrationClientSecret() {
+  return getStringFromEnv('AUTODESK_INTEGRATION_CLIENT_SECRET')
+}
+
+export function getOdaUserId() {
+  return getStringFromEnv('ODA_USER_ID')
+}
+
+export function getOdaUserSecret() {
+  return getStringFromEnv('ODA_USER_SECRET')
+}
+
+export const areSavedViewsEnabled = (): boolean =>
+  getFeatureFlags().FF_SAVED_VIEWS_ENABLED

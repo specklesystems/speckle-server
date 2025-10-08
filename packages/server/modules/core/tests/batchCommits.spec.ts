@@ -4,7 +4,10 @@ import { Commits, Streams, Users } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import { getCommitsFactory } from '@/modules/core/repositories/commits'
-import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import {
+  getStreamRolesFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import {
   addOrUpdateStreamCollaboratorFactory,
@@ -12,19 +15,18 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import type { BasicTestUser } from '@/test/authHelper'
+import { createTestUsers } from '@/test/authHelper'
 import { deleteCommits, moveCommits } from '@/test/graphql/commits'
-import {
-  createAuthedTestContext,
-  createTestContext,
-  ServerAndContext
-} from '@/test/graphqlHelper'
+import type { ServerAndContext } from '@/test/graphqlHelper'
+import { createAuthedTestContext, createTestContext } from '@/test/graphqlHelper'
 import { truncateTables } from '@/test/hooks'
-import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
-import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
+import type { BasicTestCommit } from '@/test/speckle-helpers/commitHelper'
+import { createTestCommits } from '@/test/speckle-helpers/commitHelper'
+import type { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+import { createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { expect } from 'chai'
-import { times } from 'lodash'
-import { describe } from 'mocha'
+import { times } from 'lodash-es'
 
 enum BatchActionType {
   Move,
@@ -39,6 +41,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  getStreamRoles: getStreamRolesFactory({ db }),
   emitEvent: getEventBus().emit
 })
 

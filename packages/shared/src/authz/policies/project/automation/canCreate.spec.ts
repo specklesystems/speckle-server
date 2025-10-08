@@ -14,6 +14,7 @@ import {
 } from '../../../domain/authErrors.js'
 import { TIME_MS } from '../../../../core/index.js'
 import { ProjectVisibility } from '../../../domain/projects/types.js'
+import { getWorkspaceFake } from '../../../../tests/fakes.js'
 
 const buildCanCreatePolicy = (
   overrides?: Partial<Parameters<typeof canCreateAutomationPolicy>[0]>
@@ -134,7 +135,7 @@ describe('canCreateAutomation', () => {
         visibility: ProjectVisibility.Private,
         allowPublicComments: false
       }),
-      getWorkspace: async () => ({
+      getWorkspace: getWorkspaceFake({
         id: 'workspace-id',
         slug: 'workspace-slug'
       }),

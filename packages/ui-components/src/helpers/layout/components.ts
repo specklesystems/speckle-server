@@ -3,6 +3,7 @@ import type { FormButton } from '~~/src/lib'
 
 type FormButtonProps = InstanceType<typeof FormButton>['$props']
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 export enum GridListToggleValue {
   Grid = 'grid',
@@ -28,9 +29,10 @@ export type LayoutMenuItem<I extends string = string> = {
   icon?: ConcreteComponent
   title: string
   id: I
-  disabled?: boolean
-  disabledTooltip?: string
+  disabled?: MaybeNullOrUndefined<boolean>
+  disabledTooltip?: MaybeNullOrUndefined<string>
   color?: 'danger' | 'info'
+  active?: boolean
 }
 
 export type LayoutDialogButton = {
@@ -46,6 +48,12 @@ export type LayoutDialogButton = {
    * ensure proper form functionality.
    */
   id?: string
+}
+
+export type LayoutHeaderButton = {
+  label: string
+  props: Record<string, unknown> & FormButtonProps
+  onClick?: (e: MouseEvent) => void
 }
 
 export type LayoutTableColours = 'primary' | 'outline' | 'subtle' | 'danger'

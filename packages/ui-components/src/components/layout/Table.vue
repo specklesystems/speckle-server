@@ -1,86 +1,80 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div class="text-foreground">
-    <div
-      class="w-full text-sm overflow-x-auto overflow-y-visible simple-scrollbar border border-outline-3 rounded-lg"
-    >
-      <div :class="headerRowClasses" :style="{ paddingRight: paddingRightStyle }">
-        <div
-          v-for="(column, colIndex) in columns"
-          :key="column.id"
-          :class="getHeaderClasses(column.id, colIndex)"
-        >
-          {{ column.header }}
-        </div>
-      </div>
+  <div :class="tableClasses">
+    <div :class="headerRowClasses" :style="{ paddingRight: paddingRightStyle }">
       <div
-        class="divide-y divide-outline-3 h-full overflow-visible"
-        :class="{ 'pb-32': overflowCells }"
+        v-for="(column, colIndex) in columns"
+        :key="column.id"
+        :class="getHeaderClasses(column.id, colIndex)"
       >
+        {{ column.header }}
+      </div>
+    </div>
+    <div :class="resultContainerClasses">
+      <div
+        v-if="loading || !items"
+        class="flex items-center justify-center py-3"
+        tabindex="0"
+      >
+        <CommonLoadingIcon />
+      </div>
+      <template v-else-if="items?.length">
         <div
-          v-if="loading || !items"
-          class="flex items-center justify-center py-3"
-          tabindex="0"
-        >
-          <CommonLoadingIcon />
-        </div>
-        <template v-else-if="items?.length">
-          <div
-            v-for="item in items"
-            :key="item.id"
-            :style="{ paddingRight: paddingRightStyle }"
-            :class="rowsWrapperClasses"
-            tabindex="0"
-            @click="handleRowClick(item)"
-            @keypress="handleRowClick(item)"
-          >
-            <template v-for="(column, colIndex) in columns" :key="column.id">
-              <div :class="getClasses(column.id, colIndex)" tabindex="0">
-                <slot :name="column.id" :item="item">
-                  <div class="text-gray-900 font-medium order-1">Placeholder</div>
-                </slot>
-              </div>
-            </template>
-            <div
-              v-if="buttons"
-              class="absolute right-1.5 space-x-1 flex items-center p-0 h-full"
-            >
-              <div v-for="button in buttons" :key="button.label">
-                <FormButton
-                  v-tippy="button.tooltip"
-                  :icon-left="button.icon"
-                  size="sm"
-                  color="outline"
-                  hide-text
-                  :disabled="button.disabled"
-                  :class="button.class"
-                  :to="isString(button.action) ? button.action : undefined"
-                  @click.stop="!isString(button.action) ? button.action(item) : noop"
-                />
-              </div>
-            </div>
-          </div>
-        </template>
-        <div
-          v-else
-          tabindex="0"
+          v-for="item in items"
+          :key="item.id"
           :style="{ paddingRight: paddingRightStyle }"
           :class="rowsWrapperClasses"
+          tabindex="0"
+          @click="handleRowClick(item)"
+          @keypress="handleRowClick(item)"
         >
-          <div :class="getClasses(undefined, 0)" tabindex="0">
-            <slot name="empty">
-              <div class="w-full text-center label-light text-foreground-2 italic">
-                {{ emptyMessage }}
-              </div>
-            </slot>
+          <template v-for="(column, colIndex) in columns" :key="column.id">
+            <div :class="getClasses(column.id, colIndex)" tabindex="0">
+              <slot :name="column.id" :item="item">
+                <div class="text-foreground-2 font-medium order-1">Placeholder</div>
+              </slot>
+            </div>
+          </template>
+          <div
+            v-if="buttons"
+            class="absolute right-1.5 space-x-1 flex items-center p-0 h-full"
+          >
+            <div v-for="button in buttons" :key="button.label">
+              <FormButton
+                v-tippy="button.tooltip"
+                :icon-left="button.icon"
+                size="sm"
+                color="outline"
+                hide-text
+                :disabled="button.disabled"
+                :class="button.class"
+                :to="isString(button.action) ? button.action : undefined"
+                @click.stop="!isString(button.action) ? button.action(item) : noop"
+              />
+            </div>
           </div>
         </div>
+      </template>
+      <div
+        v-else
+        tabindex="0"
+        :style="{ paddingRight: paddingRightStyle }"
+        :class="rowsWrapperClasses"
+      >
+        <div :class="getClasses(undefined, 0)" tabindex="0">
+          <slot name="empty">
+            <div class="w-full text-center label-light text-foreground-2 italic">
+              {{ emptyMessage }}
+            </div>
+          </slot>
+        </div>
       </div>
+      <slot name="loader" />
     </div>
   </div>
 </template>
 <script setup lang="ts" generic="T extends {id: string}, C extends string">
-import { noop, isString } from 'lodash'
+import { noop, isString } from '#lodash'
 import { computed } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 import { CommonLoadingIcon, FormButton } from '~~/src/lib'
@@ -114,6 +108,33 @@ const props = withDefaults(
   }>(),
   { rowItemsAlign: 'center', emptyMessage: 'No data found' }
 )
+
+const tableClasses = computed(() => {
+  const classParts = [
+    'w-full text-foreground text-sm border border-outline-3 rounded-lg',
+    'overflow-x-auto simple-scrollbar',
+    'h-full flex flex-col'
+  ]
+  return classParts.join(' ')
+})
+
+const sharedContainerClasses = computed(() => {
+  const classParts = ['w-full min-w-[750px]']
+  return classParts.join(' ')
+})
+
+const resultContainerClasses = computed(() => {
+  const classParts = [
+    'divide-y divide-outline-3 overflow-y-auto overflow-x-hidden simple-scrollbar',
+    sharedContainerClasses.value
+  ]
+
+  if (props.overflowCells) {
+    classParts.push('pb-32')
+  }
+
+  return classParts.join(' ')
+})
 
 const buttonCount = computed(() => {
   return (props.buttons || []).length
@@ -194,10 +215,11 @@ const handleRowClick = (item: T) => {
 
 const headerRowClasses = computed(() => [
   'z-10 grid grid-cols-12 items-center',
-  'w-full min-w-[750px] space-x-6',
+  'space-x-6',
   'px-4 py-3',
   'bg-foundation-2 rounded-t-lg',
   'font-medium text-body-2xs text-foreground-2',
-  'border-b border-outline-3'
+  'border-b border-outline-3',
+  sharedContainerClasses.value
 ])
 </script>

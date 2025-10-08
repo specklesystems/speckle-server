@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from '@/db/knex'
-import { ResolverFn, Resolvers } from '@/modules/core/graph/generated/graphql'
-import { IMockStore, IMocks, isRef, Ref } from '@graphql-tools/mock'
-import { GraphQLResolveInfo } from 'graphql'
-import { get, has, isArray, isObjectLike, random } from 'lodash'
+import type { ResolverFn, Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { IMockStore, IMocks, Ref } from '@graphql-tools/mock'
+import { isRef } from '@graphql-tools/mock'
+import type { GraphQLResolveInfo } from 'graphql'
+import { get, has, isArray, isObjectLike, random } from 'lodash-es'
 
 export type SpeckleModuleMocksConfig = {
   resolvers?: (params: {
@@ -24,7 +25,7 @@ export const mockStoreHelpers = (store: IMockStore) => {
    * for the existence of a field in the mock store.
    */
   const hasField = (type: string, key: string, field: string) => {
-    const internalStore = get(store, 'store') as {
+    const internalStore = get(store, 'store') as unknown as {
       [type: string]: {
         [key: string]: {
           [field: string]: unknown

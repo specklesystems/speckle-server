@@ -35,7 +35,7 @@ export function useFileUploadProgressCore(params: {
   const progressBarStyle = computed((): CSSProperties => {
     const item = unref(params.item)
     return {
-      width: `${item ? item.progress : 0}%`
+      width: `${Math.max(item ? item.progress : 0, 1)}%`
     }
   })
 

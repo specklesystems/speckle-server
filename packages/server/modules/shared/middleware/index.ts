@@ -1,25 +1,20 @@
-import {
+import type {
   AuthContext,
-  authPipelineCreator,
   AuthPipelineFunction,
-  AuthParams,
-  authHasFailed
+  AuthParams
 } from '@/modules/shared/authz'
-import {
-  Request,
-  RequestHandler,
-  raw as expressRawBodyParser,
-  json as expressJsonBodyParser
-} from 'express'
+import { authPipelineCreator, authHasFailed } from '@/modules/shared/authz'
+import type { Request, RequestHandler } from 'express'
+import { raw as expressRawBodyParser, json as expressJsonBodyParser } from 'express'
 import {
   ForbiddenError,
   NotFoundError,
   UnauthorizedError
 } from '@/modules/shared/errors'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
-import { TokenValidationResult } from '@/modules/core/helpers/types'
+import type { TokenValidationResult } from '@/modules/core/helpers/types'
 import { buildRequestLoaders } from '@/modules/core/loaders'
-import {
+import type {
   GraphQLContext,
   MaybeNullOrUndefined,
   Nullable
@@ -81,6 +76,9 @@ export const getTokenFromRequest = (req: Request | null | undefined): string | n
   const fromCookie = (req?.cookies?.authn as Nullable<string>) || null
   if (fromCookie?.length) return removeBearerPrefix(fromCookie)
 
+  const fromQuery = (req?.query?.embedToken as Nullable<string>) || null
+  if (fromQuery?.length) return fromQuery
+
   return null
 }
 
@@ -106,13 +104,15 @@ export async function createAuthContextFromToken(
     if (!tokenValidationResult.valid)
       return { auth: false, err: new ForbiddenError('Your token is not valid.') }
 
-    const { scopes, userId, role, appId, resourceAccessRules } = tokenValidationResult
+    const { scopes, userId, tokenId, role, appId, resourceAccessRules } =
+      tokenValidationResult
 
     return {
       auth: true,
       userId,
       role,
       token,
+      tokenId,
       scopes,
       appId,
       resourceAccessRules: resourceAccessRules

@@ -21,37 +21,13 @@ import {
 import { db } from '@/db/knex'
 import { createAppTokenFromAccessCodeFactory } from '@/modules/auth/services/serverApps'
 import {
-  findEmailFactory,
-  createUserEmailFactory,
-  ensureNoPrimaryEmailForUserFactory
-} from '@/modules/core/repositories/userEmails'
-import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import {
-  getUserFactory,
-  storeUserFactory,
-  countAdminUsersFactory,
-  storeUserAclFactory
-} from '@/modules/core/repositories/users'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
-import { renderEmail } from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { createUserFactory } from '@/modules/core/services/users/management'
-import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import {
-  deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import {
   storeApiTokenFactory,
   storeTokenScopesFactory,
   storeTokenResourceAccessDefinitionsFactory,
   storeUserServerAppTokenFactory,
   storePersonalApiTokenFactory
 } from '@/modules/core/repositories/tokens'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { getEventBus } from '@/modules/shared/services/eventBus'
-import { BasicTestUser } from '@/test/authHelper'
+import { createTestUser, type BasicTestUser } from '@/test/authHelper'
 
 let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 
@@ -73,34 +49,6 @@ const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
   createBareToken
 })
 
-const getServerInfo = getServerInfoFactory({ db })
-const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo,
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
-const createUser = createUserFactory({
-  getServerInfo,
-  findEmail,
-  storeUser: storeUserFactory({ db }),
-  countAdminUsers: countAdminUsersFactory({ db }),
-  storeUserAcl: storeUserAclFactory({ db }),
-  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
-    createUserEmail: createUserEmailFactory({ db }),
-    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
-    findEmail,
-    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
-      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
-      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
-    }),
-    requestNewEmailVerification
-  }),
-  emitEvent: getEventBus().emit
-})
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
   storeTokenScopes: storeTokenScopesFactory({ db }),
@@ -119,28 +67,25 @@ describe('GraphQL @apps-api', () => {
   before(async () => {
     const ctx = await beforeEachContext()
     ;({ sendRequest } = await initializeTestServer(ctx))
-    testUser = {
+
+    testUser = await createTestUser({
       name: 'Dimitrie Stefanescu',
       email: 'didimitrie@example.org',
       password: 'wtfwtfwtf',
       id: ''
-    }
-
-    testUser.id = await createUser(testUser)
+    })
     testToken = `Bearer ${await createPersonalAccessToken(testUser.id, 'test token', [
       Scopes.Profile.Read,
       Scopes.Apps.Read,
       Scopes.Apps.Write
     ])}`
 
-    testUser2 = {
+    testUser2 = await createTestUser({
       name: 'Mr. Mac',
       email: 'steve@jobs.com',
       password: 'wtfwtfwtf',
       id: ''
-    }
-
-    testUser2.id = await createUser(testUser2)
+    })
     testToken2 = `Bearer ${await createPersonalAccessToken(testUser2.id, 'test token', [
       Scopes.Profile.Read,
       Scopes.Apps.Read,

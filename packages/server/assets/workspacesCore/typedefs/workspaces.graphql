@@ -66,6 +66,7 @@ input WorkspaceUpdateInput {
   discoverabilityEnabled: Boolean
   discoverabilityAutoJoinEnabled: Boolean
   defaultSeatType: WorkspaceSeatType
+  isExclusive: Boolean
 }
 
 input WorkspaceRoleUpdateInput {
@@ -259,6 +260,11 @@ input PendingWorkspaceCollaboratorsFilter {
   search: String
 }
 
+input WorkspaceIdentifier @oneOf {
+  id: String
+  slug: String
+}
+
 type Workspace {
   id: ID!
   name: String!
@@ -331,6 +337,10 @@ type Workspace {
   Workspace-level configuration for models in embedded viewer
   """
   embedOptions: WorkspaceEmbedOptions!
+  """
+  Exclusive workspaces do not allow their workspace members to create or join other workspaces as members.
+  """
+  isExclusive: Boolean!
 }
 
 type WorkspaceEmbedOptions {
@@ -392,6 +402,10 @@ type LimitedWorkspace {
   Workspace description
   """
   description: String
+  """
+  Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
+  """
+  role: String
   """
   Optional base64 encoded workspace logo image
   """
@@ -479,9 +493,7 @@ type PendingWorkspaceCollaborator {
   id: ID!
   updatedAt: DateTime!
   inviteId: String!
-  workspaceId: String!
-  workspaceName: String!
-  workspaceSlug: String!
+  workspace: LimitedWorkspace!
   """
   E-mail address if target is unregistered or primary e-mail of target registered user
   if token was specified to retrieve this invite
@@ -547,15 +559,18 @@ extend type User {
   """
   The last-visited workspace for the given user
   """
-  activeWorkspace: Workspace
-  """
-  Returns `true` if last visited project was "legacy" "personal project" outside of a workspace
-  """
-  isProjectsActive: Boolean
+  activeWorkspace: LimitedWorkspace @isOwner
 }
 
 extend type Project {
-  workspace: Workspace
+  """
+  Full workspace information for the project.
+  """
+  workspace: Workspace @hasScope(scope: "workspace:read")
+  """
+  Limited workspace records that exposes public data projects workspaces.
+  """
+  limitedWorkspace: LimitedWorkspace
   """
   Public project-level configuration for embedded viewer
   """
@@ -671,20 +686,36 @@ extend type Subscription {
     @hasScope(scope: "workspace:read")
 }
 
-extend type Mutation {
-  admin: AdminMutations! @hasServerRole(role: SERVER_ADMIN)
-}
-
 input AdminUpdateWorkspacePlanInput {
   workspaceId: ID!
   plan: WorkspacePlans!
   status: WorkspacePlanStatuses!
 }
 
-type AdminMutations {
+enum WorkspaceFeatureFlagName {
+  dashboards
+  accIntegration
+  presentations
+}
+
+"""
+Either the ID or slug must be set
+"""
+input AdminAccessToWorkspaceFeatureInput {
+  workspaceId: ID
+  workspaceSlug: String
+  featureFlagName: WorkspaceFeatureFlagName!
+}
+
+extend type AdminMutations {
   updateWorkspacePlan(input: AdminUpdateWorkspacePlanInput!): Boolean!
+  giveAccessToWorkspaceFeature(input: AdminAccessToWorkspaceFeatureInput!): Boolean!
+  removeAccessToWorkspaceFeature(input: AdminAccessToWorkspaceFeatureInput!): Boolean!
 }
 
 extend type ActiveUserMutations {
-  setActiveWorkspace(slug: String, isProjectsActive: Boolean): Boolean!
+  """
+  Either workspace slug or id is accepted. If neither are provided, the active workspace will be unset.
+  """
+  setActiveWorkspace(slug: String, id: String): LimitedWorkspace
 }

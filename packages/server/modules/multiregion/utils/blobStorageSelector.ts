@@ -1,10 +1,11 @@
+import type { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
 import {
   getMainObjectStorage,
   getObjectStorage,
-  ObjectStorage
+  getPublicMainObjectStorage
 } from '@/modules/blobstorage/clients/objectStorage'
 import { ensureStorageAccessFactory } from '@/modules/blobstorage/repositories/blobs'
-import {
+import type {
   GetProjectObjectStorage,
   GetRegionObjectStorage
 } from '@/modules/multiregion/domain/operations'
@@ -16,11 +17,11 @@ import {
 } from '@/modules/multiregion/utils/regionSelector'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-import { Optional } from '@speckle/shared'
-import { BlobStorageConfig } from '@speckle/shared/environment/multiRegionConfig'
+import type { Optional } from '@speckle/shared'
+import type { BlobStorageConfig } from '@speckle/shared/environment/db'
 
 type RegionStorageClients = {
-  [regionKey: string]: ObjectStorage
+  [regionKey: string]: { private: ObjectStorage; public: ObjectStorage }
 }
 
 let initializedClients: Optional<RegionStorageClients> = undefined
@@ -36,7 +37,8 @@ export const initializeRegion = async (params: {
    */
   config?: BlobStorageConfig
 }) => {
-  if (!isMultiRegionBlobStorageEnabled()) return getMainObjectStorage()
+  if (!isMultiRegionBlobStorageEnabled())
+    return { private: getMainObjectStorage(), public: getPublicMainObjectStorage() }
 
   const { regionKey } = params
   let config = params.config
@@ -66,10 +68,33 @@ export const initializeRegion = async (params: {
 
   // Only add, if clients already initialized
   if (initializedClients) {
-    initializedClients[regionKey] = storage
+    initializedClients[regionKey] = { private: storage, public: storage }
   }
 
-  return storage
+  if (config.publicEndpoint) {
+    const publicStorage = getObjectStorage({
+      credentials: {
+        accessKeyId: config.accessKey,
+        secretAccessKey: config.secretKey
+      },
+      endpoint: config.publicEndpoint,
+      region: config.s3Region,
+      bucket: config.bucket
+    })
+
+    // ensure it works
+    const ensure = ensureStorageAccessFactory({ storage: publicStorage })
+    await ensure({ createBucketIfNotExists: config.createBucketIfNotExists })
+
+    // Only add, if clients already initialized
+    if (initializedClients) {
+      initializedClients[regionKey] = { private: storage, public: publicStorage }
+    }
+
+    return { private: storage, public: publicStorage }
+  }
+
+  return { private: storage, public: storage }
 }
 
 /**
@@ -99,7 +124,8 @@ export const getRegisteredRegionClients = async (): Promise<RegionStorageClients
 }
 
 export const getRegionObjectStorage: GetRegionObjectStorage = async ({ regionKey }) => {
-  if (!isMultiRegionBlobStorageEnabled()) return getMainObjectStorage()
+  if (!isMultiRegionBlobStorageEnabled())
+    return { private: getMainObjectStorage(), public: getPublicMainObjectStorage() }
 
   const clients = await getRegisteredRegionClients()
   let storage = clients[regionKey]
@@ -123,5 +149,7 @@ export const getProjectObjectStorage: GetProjectObjectStorage = async ({
   projectId
 }) => {
   const regionKey = await getProjectRegionKey({ projectId })
-  return regionKey ? getRegionObjectStorage({ regionKey }) : getMainObjectStorage()
+  return regionKey
+    ? getRegionObjectStorage({ regionKey })
+    : { private: getMainObjectStorage(), public: getPublicMainObjectStorage() }
 }

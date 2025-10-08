@@ -1,10 +1,10 @@
-import {
+import type {
   GetBranchById,
   GetStreamBranchByName,
   MarkCommitBranchUpdated
 } from '@/modules/core/domain/branches/operations'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
-import {
+import type {
   CreateCommitByBranchId,
   CreateCommitByBranchName,
   DeleteCommit,
@@ -18,11 +18,10 @@ import {
   UpdateCommit,
   UpdateCommitAndNotify
 } from '@/modules/core/domain/commits/operations'
-import { GetObject } from '@/modules/core/domain/objects/operations'
-import {
+import type { GetObject } from '@/modules/core/domain/objects/operations'
+import type {
   GetCommitStream,
-  GetStream,
-  MarkCommitStreamUpdated
+  GetStream
 } from '@/modules/core/domain/streams/operations'
 import {
   CommitCreateError,
@@ -31,16 +30,16 @@ import {
   CommitReceiveError,
   CommitUpdateError
 } from '@/modules/core/errors/commit'
-import {
+import type {
   CommitReceivedInput,
   CommitUpdateInput,
   MarkReceivedVersionInput,
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
-import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ensureError, Roles } from '@speckle/shared'
-import { has } from 'lodash'
+import { has } from 'lodash-es'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 
 export const markCommitReceivedAndNotifyFactory =
@@ -89,7 +88,6 @@ export const createCommitByBranchIdFactory =
     getBranchById: GetBranchById
     insertStreamCommits: InsertStreamCommits
     insertBranchCommits: InsertBranchCommits
-    markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
     emitEvent: EventBusEmit
   }): CreateCommitByBranchId =>
@@ -146,7 +144,6 @@ export const createCommitByBranchIdFactory =
       branchName: branch.name
     }
     await Promise.all([
-      deps.markCommitStreamUpdated(id),
       deps.markCommitBranchUpdated(id),
       deps.emitEvent({
         eventName: VersionEvents.Created,
@@ -223,7 +220,6 @@ export const updateCommitAndNotifyFactory =
     getCommitBranch: GetCommitBranch
     switchCommitBranch: SwitchCommitBranch
     updateCommit: UpdateCommit
-    markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
     emitEvent: EventBusEmit
   }): UpdateCommitAndNotify =>
@@ -303,7 +299,6 @@ export const updateCommitAndNotifyFactory =
     if (commit) {
       const [updatedBranch] = await Promise.all([
         deps.markCommitBranchUpdated(commit.id),
-        deps.markCommitStreamUpdated(commit.id),
         deps.emitEvent({
           eventName: VersionEvents.Updated,
           payload: {
@@ -326,7 +321,6 @@ export const updateCommitAndNotifyFactory =
 export const deleteCommitAndNotifyFactory =
   (deps: {
     getCommit: GetCommit
-    markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
     deleteCommit: DeleteCommit
     emitEvent: EventBusEmit
@@ -345,11 +339,7 @@ export const deleteCommitAndNotifyFactory =
       })
     }
 
-    const [, updatedBranch] = await Promise.all([
-      deps.markCommitStreamUpdated(commit.id),
-      deps.markCommitBranchUpdated(commit.id)
-    ])
-
+    const updatedBranch = await deps.markCommitBranchUpdated(commit.id)
     const isDeleted = await deps.deleteCommit(commitId)
     if (isDeleted) {
       await deps.emitEvent({

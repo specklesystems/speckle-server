@@ -1,7 +1,7 @@
-import { Optional } from '@/modules/shared/helpers/typeHelper'
-import { ExecuteOperationResponse } from '@/test/graphqlHelper'
+import type { Optional } from '@/modules/shared/helpers/typeHelper'
+import type { ExecuteOperationResponse } from '@/test/graphqlHelper'
 import { AssertionError } from 'chai'
-import { isString } from 'lodash'
+import { isString } from 'lodash-es'
 
 type ChaiPluginThis<O = Record<string, unknown>> = {
   __flags: {

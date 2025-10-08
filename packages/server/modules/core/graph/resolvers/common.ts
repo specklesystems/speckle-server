@@ -1,12 +1,12 @@
 import { mainDb } from '@/db/knex'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { NotImplementedError } from '@/modules/shared/errors'
 import { isNonNullable } from '@speckle/shared'
-import { keyBy } from 'lodash'
+import { keyBy } from 'lodash-es'
 
-export = {
+export default {
   SmartTextEditorValue: {
     async attachments(parent) {
       const { blobIds, projectId } = parent

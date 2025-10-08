@@ -4,7 +4,7 @@ import {
   shutdownResultListener
 } from '@/modules/core/utils/dbNotificationListener'
 import * as mp from '@/modules/shared/utils/mixpanel'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import type { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 import staticRest from '@/modules/core/rest/static'
 import uploadRest from '@/modules/core/rest/upload'
@@ -18,7 +18,7 @@ import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scop
 import db from '@/db/knex'
 import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
-import { HooksConfig, Hook, ExecuteHooks } from '@/modules/core/hooks'
+import type { HooksConfig, Hook, ExecuteHooks } from '@/modules/core/hooks'
 import { reportSubscriptionEventsFactory } from '@/modules/core/events/subscriptionListeners'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
@@ -44,6 +44,8 @@ import {
 } from '@/modules/stats/repositories'
 import { getServerTotalModelCountFactory } from '@/modules/core/services/branch/retrieval'
 import { getServerTotalVersionCountFactory } from '@/modules/core/services/commit/retrieval'
+import { bullMonitoringRouterFactory } from '@/modules/core/rest/monitoring'
+import { projectListenersFactory } from '@/modules/core/events/projectListeners'
 
 let stopTestSubs: (() => void) | undefined = undefined
 
@@ -90,15 +92,14 @@ const coreModule: SpeckleModule<{
 
     if (isInitial) {
       // Setup global pg notification listener
-      setupResultListener()
+      await setupResultListener()
 
       // Init mp
       mp.initialize()
 
       // Setup test subs
       if (isTestEnv()) {
-        const { startEmittingTestSubs } =
-          require('@/test/graphqlHelper') as typeof import('@/test/graphqlHelper')
+        const { startEmittingTestSubs } = await import('@/test/graphqlHelper')
         stopTestSubs = await startEmittingTestSubs()
       }
 
@@ -121,9 +122,14 @@ const coreModule: SpeckleModule<{
           logger: coreLogger
         })
       })()
+
+      projectListenersFactory({
+        eventBus: getEventBus(),
+        logger: coreLogger
+      })()
     }
   },
-  async finalize() {
+  async finalize({ app }) {
     // Update server profile in mp
     await updateServerMixpanelProfileFactory({
       getServerInfo: getCachedServerInfoFactory({ db }),
@@ -135,6 +141,9 @@ const coreModule: SpeckleModule<{
       getServerTotalVersionCount: getServerTotalVersionCountFactory(),
       logger: coreLogger
     })()
+
+    // Run BullMQ monitor once the app is fully ready
+    app.use(bullMonitoringRouterFactory())
   },
   async shutdown() {
     await shutdownResultListener()
@@ -143,4 +152,4 @@ const coreModule: SpeckleModule<{
   }
 }
 
-export = coreModule
+export default coreModule

@@ -3,20 +3,24 @@ import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
-import { AuthStrategyMetadata, AuthStrategyBuilder } from '@/modules/auth/helpers/types'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
-import { ensureError, Optional } from '@speckle/shared'
-import {
+import type {
+  AuthStrategyMetadata,
+  AuthStrategyBuilder
+} from '@/modules/auth/helpers/types'
+import type { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import type { Optional } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
+import type {
   FinalizeInvitedServerRegistration,
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
-import {
+import type {
   CreateValidatedUser,
   LegacyGetUserByEmail,
   ValidateUserPassword
 } from '@/modules/core/domain/users/operations'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { UserValidationError } from '@/modules/core/errors/user'
 import {
   resolveErrorInfo,
@@ -69,7 +73,7 @@ const localStrategyBuilderFactory =
 
           return next()
         } catch (err) {
-          const e = ensureError(err, 'Unexpected issue occured while logging in')
+          const e = ensureError(err, 'Unexpected issue occurred while logging in')
           switch (e.constructor) {
             case UserInputError:
             case UserValidationError:
@@ -152,7 +156,7 @@ const localStrategyBuilderFactory =
 
           return next()
         } catch (err) {
-          const e = ensureError(err, 'Unexpected issue occured while registering')
+          const e = ensureError(err, 'Unexpected issue occurred while registering')
           return res.status(resolveStatusCode(e)).json({ error: resolveErrorInfo(e) })
         }
       },
@@ -162,4 +166,4 @@ const localStrategyBuilderFactory =
     return strategy
   }
 
-export = localStrategyBuilderFactory
+export default localStrategyBuilderFactory

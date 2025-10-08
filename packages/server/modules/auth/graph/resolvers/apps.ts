@@ -11,7 +11,7 @@ import {
   revokeExistingAppCredentialsForUserFactory
 } from '@/modules/auth/repositories/apps'
 import { db } from '@/db/knex'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
 
 const getApp = getAppFactory({ db })
@@ -25,7 +25,7 @@ const revokeExistingAppCredentialsForUser = revokeExistingAppCredentialsForUserF
   db
 })
 
-export = {
+export default {
   Query: {
     async app(_parent, args) {
       const app = await getApp({ id: args.id })

@@ -15,21 +15,22 @@ import {
 import { getNameFromUserInfo } from '@/modules/auth/helpers/oidc'
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
-import { AuthStrategyBuilder } from '@/modules/auth/helpers/types'
-import { get } from 'lodash'
-import { ensureError, Optional } from '@speckle/shared'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
-import {
+import type { AuthStrategyBuilder } from '@/modules/auth/helpers/types'
+import { get } from 'lodash-es'
+import type { Optional } from '@speckle/shared'
+import { ensureError } from '@speckle/shared'
+import type { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import type {
   FinalizeInvitedServerRegistration,
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
-import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
-import {
+import type { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
+import type {
   FindOrCreateValidatedUser,
   LegacyGetUserByEmail
 } from '@/modules/core/domain/users/operations'
-import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 import { InviteNotFoundError } from '@/modules/serverinvites/errors'
 
@@ -37,7 +38,7 @@ const oidcStrategyBuilderFactory =
   (deps: {
     getServerInfo: GetServerInfo
     getUserByEmail: LegacyGetUserByEmail
-    findOrCreateUser: FindOrCreateValidatedUser
+    buildFindOrCreateUser: () => Promise<FindOrCreateValidatedUser>
     validateServerInvite: ValidateServerInvite
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
@@ -77,6 +78,8 @@ const oidcStrategyBuilderFactory =
             serverVersion: serverInfo.version
           })
 
+          const findOrCreateUser = await deps.buildFindOrCreateUser()
+
           // TODO: req.session.inviteId doesn't appear to exist, but i'm not removing it to not break things
           const token: Optional<string> =
             get(req.session, 'inviteId') || req.session.token
@@ -106,7 +109,7 @@ const oidcStrategyBuilderFactory =
             // if there is an existing user, go ahead and log them in (regardless of
             // whether the server is invite only or not).
             if (existingUser) {
-              const myUser = await deps.findOrCreateUser({
+              const myUser = await findOrCreateUser({
                 user
               })
 
@@ -127,7 +130,7 @@ const oidcStrategyBuilderFactory =
             }
 
             // create the user
-            const myUser = await deps.findOrCreateUser({
+            const myUser = await findOrCreateUser({
               user: {
                 ...user,
                 role: invite
@@ -203,4 +206,4 @@ const oidcStrategyBuilderFactory =
     }
   }
 
-export = oidcStrategyBuilderFactory
+export default oidcStrategyBuilderFactory

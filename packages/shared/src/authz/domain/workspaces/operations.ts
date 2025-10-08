@@ -1,11 +1,13 @@
 import { WorkspaceRoles, WorkspaceSeatType } from '../../../core/constants.js'
-import { FeatureFlags } from '../../../environment/index.js'
+import { FeatureFlags } from '../../../environment/featureFlags.js'
 import { WorkspaceLimits } from '../../../workspaces/helpers/limits.js'
 import { WorkspacePlan } from '../../../workspaces/index.js'
 import { UserContext, WorkspaceContext } from '../context.js'
 import { Workspace, WorkspaceSsoProvider, WorkspaceSsoSession } from './types.js'
 
 export type GetWorkspace = (args: WorkspaceContext) => Promise<Workspace | null>
+
+export type GetUserWorkspaces = (args: UserContext) => Promise<Workspace[]>
 
 export type GetWorkspaceRole = (
   args: UserContext & WorkspaceContext

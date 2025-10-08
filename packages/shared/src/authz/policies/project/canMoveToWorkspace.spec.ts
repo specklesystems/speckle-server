@@ -12,7 +12,11 @@ import {
   WorkspaceProjectMoveInvalidError,
   WorkspacesNotEnabledError
 } from '../../domain/authErrors.js'
-import { getProjectFake, getWorkspaceFake } from '../../../tests/fakes.js'
+import {
+  getProjectFake,
+  getWorkspaceFake,
+  getWorkspacePlanFake
+} from '../../../tests/fakes.js'
 
 const buildCanMoveToWorkspace = (
   overrides?: Partial<Parameters<typeof canMoveToWorkspacePolicy>[0]>
@@ -42,15 +46,7 @@ const buildCanMoveToWorkspace = (
     getWorkspaceSsoSession: async () => {
       assert.fail()
     },
-    getWorkspacePlan: async () => {
-      return {
-        status: 'valid',
-        workspaceId: 'workspace-id',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        name: 'team'
-      }
-    },
+    getWorkspacePlan: getWorkspacePlanFake({ workspaceId: 'workspace-id' }),
     getWorkspaceLimits: async () => {
       return {
         modelCount: 5,

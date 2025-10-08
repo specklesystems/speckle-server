@@ -1,4 +1,4 @@
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Authz } from '@speckle/shared'
 
 export default {
@@ -19,6 +19,9 @@ export default {
   },
   User: {
     permissions: () => ({})
+  },
+  PermissionCheckResult: {
+    errorMessage: (parent) => (parent.authorized ? undefined : parent.message)
   },
   ProjectPermissionChecks: {
     canCreateModel: async (parent, _args, ctx) => {
@@ -113,6 +116,27 @@ export default {
         userId: ctx.userId
       })
       return Authz.toGraphqlResult(canInvite)
+    },
+    canReadEmbedTokens: async (parent, _args, ctx) => {
+      const canReadEmbedTokens = await ctx.authPolicies.project.canReadEmbedTokens({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canReadEmbedTokens)
+    },
+    canCreateEmbedTokens: async (parent, _args, ctx) => {
+      const canCreateEmbedTokens = await ctx.authPolicies.project.canUpdateEmbedTokens({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canCreateEmbedTokens)
+    },
+    canRevokeEmbedTokens: async (parent, _args, ctx) => {
+      const canUpdateEmbedTokens = await ctx.authPolicies.project.canUpdateEmbedTokens({
+        projectId: parent.projectId,
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(canUpdateEmbedTokens)
     }
   },
   ModelPermissionChecks: {
@@ -164,6 +188,12 @@ export default {
         }
       )
       return Authz.toGraphqlResult(canCreatePersonalProject)
+    },
+    canCreateWorkspace: async (_parent, _args, ctx) => {
+      const policyResult = await ctx.authPolicies.workspace.canCreateWorkspace({
+        userId: ctx.userId
+      })
+      return Authz.toGraphqlResult(policyResult)
     }
   }
 } as Resolvers

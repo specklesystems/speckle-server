@@ -1,10 +1,10 @@
-import {
+import type {
   CommentCreatedActivityInput,
   ReplyCreatedActivityInput
 } from '@/modules/activitystream/domain/types'
-import { ViewerResourceItem } from '@/modules/comments/domain/types'
-import { CommentRecord } from '@/modules/comments/helpers/types'
-import { MutationCommentArchiveArgs } from '@/modules/core/graph/generated/graphql'
+import type { ViewerResourceItem } from '@/modules/viewer/domain/types/resources'
+import type { CommentRecord } from '@/modules/comments/helpers/types'
+import type { MutationCommentArchiveArgs } from '@/modules/core/graph/generated/graphql'
 
 export const commentEventsNamespace = 'comments' as const
 

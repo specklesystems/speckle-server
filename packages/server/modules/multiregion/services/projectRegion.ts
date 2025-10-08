@@ -1,7 +1,7 @@
-import { Stream } from '@/modules/core/domain/streams/types'
+import type { Stream } from '@/modules/core/domain/streams/types'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import {
+import type {
   AsyncRegionKeyStore,
   CachedRegionKeyDelete,
   CachedRegionKeyLookup,
@@ -11,8 +11,8 @@ import {
   SyncRegionKeyLookup,
   SyncRegionKeyStore
 } from '@/modules/multiregion/domain/operations'
-import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import { Knex } from 'knex'
+import type { EventBusEmit } from '@/modules/shared/services/eventBus'
+import type { Knex } from 'knex'
 
 export type GetProjectRegionKey = (args: {
   projectId: string
@@ -61,6 +61,7 @@ export const updateProjectRegionKeyFactory =
   (deps: {
     upsertProjectRegionKey: StorageRegionKeyUpdate
     cacheDeleteRegionKey: CachedRegionKeyDelete
+    writeRegionToMemory: SyncRegionKeyStore
     emitEvent: EventBusEmit
   }): UpdateProjectRegionKey =>
   async ({ projectId, regionKey }) => {
@@ -75,6 +76,7 @@ export const updateProjectRegionKeyFactory =
 
     // TODO: Immediately set to new region?
     await deps.cacheDeleteRegionKey({ projectId })
+    deps.writeRegionToMemory({ projectId, regionKey })
 
     await deps.emitEvent({
       eventName: 'multiregion.project-region-updated',
@@ -88,21 +90,21 @@ export const updateProjectRegionKeyFactory =
   }
 
 export type GetRegionDb = (args: { regionKey: string }) => Promise<Knex>
-type GetDefaultDb = () => Knex
-
-export type GetProjectDb = (args: { projectId: string }) => Promise<Knex>
+export type GetProjectDb<T extends Knex | undefined = Knex> = (args: {
+  projectId: string
+}) => T | Promise<T>
 export const getProjectDbClientFactory =
-  ({
+  <T extends Knex | undefined>({
     getProjectRegionKey,
     getDefaultDb,
     getRegionDb
   }: {
     getProjectRegionKey: GetProjectRegionKey
-    getDefaultDb: GetDefaultDb
+    getDefaultDb: () => T
     getRegionDb: GetRegionDb
-  }): GetProjectDb =>
+  }): GetProjectDb<T> =>
   async ({ projectId }) => {
     const regionKey = await getProjectRegionKey({ projectId })
     if (!regionKey) return getDefaultDb()
-    return getRegionDb({ regionKey })
+    return getRegionDb({ regionKey }) as Promise<T>
   }

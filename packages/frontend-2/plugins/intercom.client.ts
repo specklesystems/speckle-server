@@ -1,28 +1,39 @@
 import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
-import { useIsWorkspacesEnabled } from '~/composables/globals'
-import { useNavigation } from '~/lib/navigation/composables/navigation'
-import { watch, computed, ref } from 'vue'
 import Intercom, {
   shutdown,
   show,
   hide,
   update,
-  trackEvent
+  trackEvent,
+  onShow
 } from '@intercom/messenger-js-sdk'
-import { useApolloClient } from '@vue/apollo-composable'
-import { intercomActiveWorkspaceQuery } from '~~/lib/intercom/graphql/queries'
-
-const disabledRoutes = ['/auth', '/models/']
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { useIntercomEnabled } from '~/lib/intercom/composables/enabled'
+import { useActiveWorkspaceSlug } from '~/lib/user/composables/activeWorkspace'
+import { intercomActiveWorkspaceQuery } from '~/lib/intercom/graphql/queries'
+import { useApolloClientFromNuxt } from '~/lib/common/composables/graphql'
 
 export const useIntercom = () => {
-  const isWorkspacesEnabled = useIsWorkspacesEnabled()
-  const { activeWorkspaceSlug } = useNavigation()
-  const route = useRoute()
-  const { activeUser: user } = useActiveUser()
-  const apollo = useApolloClient().client
   const {
     public: { intercomAppId }
   } = useRuntimeConfig()
+
+  if (!intercomAppId) {
+    // Return empty functions if Intercom is not configured
+    return {
+      show: () => {},
+      hide: () => {},
+      shutdown: () => {},
+      track: () => {},
+      updateCompany: () => {}
+    }
+  }
+
+  const { activeUser: user } = useActiveUser()
+  const { isIntercomEnabled, isRouteBlacklisted } = useIntercomEnabled()
+  const route = useRoute()
+  const activeWorkspaceSlug = useActiveWorkspaceSlug()
+  const apolloClient = useApolloClientFromNuxt()
 
   const isInitialized = ref(false)
 
@@ -37,35 +48,58 @@ export const useIntercom = () => {
     { immediate: true }
   )
 
-  const isRouteBlacklisted = computed(() => {
-    return disabledRoutes.some((disabledRoute) => route.path.includes(disabledRoute))
-  })
-
-  const shouldEnableIntercom = computed(
-    () => isWorkspacesEnabled.value && !isRouteBlacklisted.value
-  )
-
   const bootIntercom = () => {
     if (
-      !shouldEnableIntercom.value ||
+      !isIntercomEnabled.value ||
+      isRouteBlacklisted.value ||
       !user.value ||
-      isInitialized.value ||
-      !intercomAppId
+      isInitialized.value
     )
       return
     isInitialized.value = true
+
+    // Hide default launcher on viewer routes (/models/)
+    const isViewerRoute = route.path.includes('/models/')
+    const isPresentationRoute = route.path.includes('/presentations/')
+    const isDashboardRoute = route.path.includes('/dashboards/')
 
     Intercom({
       /* eslint-disable camelcase */
       app_id: intercomAppId,
       user_id: user.value.id || '',
       created_at: Math.floor(new Date(user.value.createdAt || '').getTime() / 1000),
+      hide_default_launcher: isViewerRoute || isPresentationRoute || isDashboardRoute,
       /* eslint-enable camelcase */
       name: user.value.name || '',
       email: user.value.email || ''
     })
 
-    updateCompany()
+    onShow(async () => {
+      try {
+        const result = await apolloClient.query({
+          query: intercomActiveWorkspaceQuery,
+          variables: {
+            slug: activeWorkspaceSlug.value || ''
+          }
+        })
+
+        if (result.data) {
+          const editorSeatCount =
+            result.data.workspaceBySlug.seats?.editors.assigned ||
+            0 + (result.data.workspaceBySlug.seats?.editors.available || 0)
+          updateCompany({
+            id: result.data.workspaceBySlug.id,
+            /* eslint-disable camelcase */
+            plan_name: result.data.workspaceBySlug.plan?.name,
+            plan_status: result.data.workspaceBySlug.plan?.status,
+            editor_seat_count: editorSeatCount
+            /* eslint-enable camelcase */
+          })
+        }
+      } catch {
+        // Silently fail - we don't want Intercom initialization to break
+      }
+    })
   }
 
   const showIntercom = () => {
@@ -89,55 +123,43 @@ export const useIntercom = () => {
     trackEvent(event, metadata)
   }
 
-  // Fetch active workspace and add to the user as a company
-  const updateCompany = async () => {
-    if (!activeWorkspaceSlug.value || !isInitialized.value) return
-
-    const workspace = await apollo.query({
-      query: intercomActiveWorkspaceQuery,
-      variables: {
-        slug: activeWorkspaceSlug.value
-      }
-    })
-
-    if (!workspace.data?.workspaceBySlug) return
-
+  // Update the 'company' (workspace) in Intercom with additional data
+  const updateCompany = async (
+    data: { id: string } & Record<string, MaybeNullOrUndefined<string | number>> = {
+      id: ''
+    }
+  ) => {
     update({
       company: {
-        id: workspace.data?.workspaceBySlug.id,
-        name: workspace.data?.workspaceBySlug.name,
-        /* eslint-disable camelcase */
-        project_count: workspace.data?.workspaceBySlug.projects?.totalCount,
-        team_count: workspace.data?.workspaceBySlug.team?.totalCount,
-        plan_name: workspace.data?.workspaceBySlug.plan?.name,
-        plan_status: workspace.data?.workspaceBySlug.plan?.status,
-        subscription_created_at:
-          workspace.data?.workspaceBySlug.subscription?.createdAt,
-        subscription_updated_at:
-          workspace.data?.workspaceBySlug.subscription?.updatedAt,
-        subscription_current_billing_cycle_end:
-          workspace.data?.workspaceBySlug.subscription?.currentBillingCycleEnd
-        /* eslint-enable camelcase */
+        ...data
       }
     })
   }
 
-  // On route change, check if we need to shutodwn or boot Intercom
+  // Update launcher visibility based on current route
+  const updateLauncherVisibility = () => {
+    if (!isInitialized.value) return
+
+    const isViewerRoute = route.path.includes('/models/')
+    const isPresentationRoute = route.path.includes('/presentations/')
+    const isDashboardRoute = route.path.includes('/dashboards/')
+
+    update({
+      /* eslint-disable camelcase */
+      hide_default_launcher: isViewerRoute || isPresentationRoute || isDashboardRoute
+      /* eslint-enable camelcase */
+    })
+  }
+
+  // On route change, check if we need to shutdown or boot Intercom
   watch(route, () => {
     if (isRouteBlacklisted.value) {
       shutdownIntercom()
     } else {
       bootIntercom()
+      updateLauncherVisibility()
     }
   })
-
-  watch(
-    () => activeWorkspaceSlug.value,
-    async () => {
-      if (!isInitialized.value) return
-      updateCompany()
-    }
-  )
 
   return {
     show: showIntercom,

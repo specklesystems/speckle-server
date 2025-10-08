@@ -1,10 +1,10 @@
 import { crossServerSyncLogger } from '@/observability/logging'
-import {
+import type {
   GetOnboardingBaseStream,
   MarkOnboardingBaseStream
 } from '@/modules/core/domain/streams/operations'
-import { GetFirstAdmin } from '@/modules/core/domain/users/operations'
-import {
+import type { GetFirstAdmin } from '@/modules/core/domain/users/operations'
+import type {
   DownloadProject,
   EnsureOnboardingProject,
   GetOnboardingBaseProject
@@ -78,7 +78,8 @@ export const ensureOnboardingProjectFactory =
     )
 
     logger.info('Marking stream as onboarding base...')
-    await deps.markOnboardingBaseStream(res.projectId, metadata.version)
+    // outside of multiregion context
+    await deps.markOnboardingBaseStream(res.projectId, metadata.version, new Date())
 
     logger.info('Onboarding base stream created successfully!')
 

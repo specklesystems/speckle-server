@@ -67,24 +67,29 @@ export class TopLevelAccelerationStructure {
   }
 
   private buildBVH() {
-    const indices = []
-    const vertices: number[] = new Array<number>(
+    const indices: Uint16Array = new Uint16Array(
+      TopLevelAccelerationStructure.cubeIndices.length * this.batchObjects.length
+    )
+    const vertices: Float32Array = new Float32Array(
       TopLevelAccelerationStructure.CUBE_VERTS * 3 * this.batchObjects.length
     )
     let vertOffset = 0
+    let indexOffset = 0
     for (let k = 0; k < this.batchObjects.length; k++) {
       const boxBounds: Box3 = this.batchObjects[k].accelerationStructure.getBoundingBox(
         new Box3()
       )
       this.updateVertArray(boxBounds, vertOffset, vertices)
-      indices.push(
-        ...TopLevelAccelerationStructure.cubeIndices.map((val) => val + vertOffset / 3)
+      indices.set(
+        TopLevelAccelerationStructure.cubeIndices.map((val) => val + vertOffset / 3),
+        indexOffset
       )
       this.batchObjects[k].tasVertIndexStart = vertOffset / 3
       this.batchObjects[k].tasVertIndexEnd =
         vertOffset / 3 + TopLevelAccelerationStructure.CUBE_VERTS
 
       vertOffset += TopLevelAccelerationStructure.CUBE_VERTS * 3
+      indexOffset += TopLevelAccelerationStructure.cubeIndices.length
     }
     this.accelerationStructure = new AccelerationStructure(
       AccelerationStructure.buildBVH(indices, vertices)
@@ -105,7 +110,7 @@ export class TopLevelAccelerationStructure {
     }
   }
 
-  private updateVertArray(box: Box3, offset: number, outPositions: number[]) {
+  private updateVertArray(box: Box3, offset: number, outPositions: Float32Array) {
     outPositions[offset] = box.min.x
     outPositions[offset + 1] = box.min.y
     outPositions[offset + 2] = box.max.z
@@ -141,7 +146,7 @@ export class TopLevelAccelerationStructure {
 
   public refit() {
     const positions = this.accelerationStructure.geometry.attributes.position
-      .array as number[]
+      .array as Float32Array
     // const boxBuffer: Box3 = new Box3()
     for (let k = 0; k < this.batchObjects.length; k++) {
       const start = this.batchObjects[k].tasVertIndexStart

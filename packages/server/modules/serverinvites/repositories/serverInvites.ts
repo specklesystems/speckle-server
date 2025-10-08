@@ -1,18 +1,18 @@
 import { knex, ServerInvites, Streams, Users } from '@/modules/core/dbSchema'
+import type { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
   getUserByEmailFactory,
-  getUserFactory,
-  UserWithOptionalRole
+  getUserFactory
 } from '@/modules/core/repositories/users'
 import { resolveTarget, buildUserTarget } from '@/modules/serverinvites/helpers/core'
-import { isObjectLike, uniq } from 'lodash'
-import {
+import { isObjectLike, uniq } from 'lodash-es'
+import type {
   ExtendedInvite,
   InviteResourceTarget,
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
-import { Knex } from 'knex'
-import {
+import type { Knex } from 'knex'
+import type {
   CountServerInvites,
   DeleteAllResourceInvites,
   DeleteAllUserInvites,
@@ -35,12 +35,13 @@ import {
   ProjectInviteResourceType,
   ServerInviteResourceType
 } from '@/modules/serverinvites/domain/constants'
-import { isNonNullable, Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
+import { isNonNullable } from '@speckle/shared'
 import { LogicError } from '@/modules/shared/errors'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import { WorkspaceAcl, Workspaces } from '@/modules/workspacesCore/helpers/db'
-import { Project } from '@/modules/core/domain/streams/types'
-import { Workspace } from '@/modules/workspacesCore/domain/types'
+import type { Project } from '@/modules/core/domain/streams/types'
+import type { Workspace } from '@/modules/workspacesCore/domain/types'
 import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
 
 export type ServerInviteResourceFilter<

@@ -2,8 +2,8 @@ import { cliLogger } from '@/observability/logging'
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import { initializeConsumption } from '@/modules/notifications/index'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
-import { get, noop } from 'lodash'
-import { CommandModule } from 'yargs'
+import { get, noop } from 'lodash-es'
+import type { CommandModule } from 'yargs'
 
 const command: CommandModule = {
   command: 'test-consume',

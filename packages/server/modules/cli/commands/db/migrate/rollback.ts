@@ -1,7 +1,7 @@
 import { cliLogger as logger } from '@/observability/logging'
-import { CommonDbArgs, getTargettedDbClients } from '@/modules/cli/commands/db/helpers'
-import { resetPubSubFactory } from '@/test/hooks'
-import { CommandModule } from 'yargs'
+import type { CommonDbArgs } from '@/modules/cli/commands/db/helpers'
+import { getTargettedDbClients } from '@/modules/cli/commands/db/helpers'
+import type { CommandModule } from 'yargs'
 
 const command: CommandModule<unknown, CommonDbArgs> = {
   command: 'rollback',
@@ -14,8 +14,6 @@ const command: CommandModule<unknown, CommonDbArgs> = {
     const dbs = await getTargettedDbClients({ regionKey })
     for (const db of dbs) {
       logger.info(`Rolling back DB ${db.regionKey}...`)
-      const resetPubSub = resetPubSubFactory({ db: db.client })
-      await resetPubSub()
       await db.client.migrate.rollback(undefined, true)
     }
 

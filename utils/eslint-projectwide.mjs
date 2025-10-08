@@ -24,9 +24,12 @@ const getFileNames = () => {
 }
 
 const resolvePackageContexts = async (absoluteFileNames) => {
+  const ignoredPackageNames = ['ifc-import-service']
   const allPackages = [
     ...(await fs.readdir(path.join(rootDir, './packages'), { withFileTypes: true }))
-      .filter((d) => d.isDirectory())
+      .filter((d) => {
+        return d.isDirectory() && !ignoredPackageNames.includes(d.name)
+      })
       .map((d) => ({
         absolutePath: path.join(rootDir, './packages', d.name)
       })),
