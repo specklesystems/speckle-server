@@ -19,6 +19,7 @@ import {
 } from '@/modules/multiregion/services/management'
 import { initializeRegion as initializeBlobStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { scheduleJob } from '@/modules/multiregion/services/queue'
 
 export default {
   ServerMultiRegionConfiguration: {
@@ -53,7 +54,8 @@ export default {
         initializeRegion: initializeRegionClients({
           initializeDb,
           initializeBlobStorage
-        })
+        }),
+        scheduleJob
       })
       return await withOperationLogging(
         async () => await createAndValidateNewRegion({ region: args.input }),

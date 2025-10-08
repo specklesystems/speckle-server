@@ -3,6 +3,7 @@ import type {
   GetFreeRegionKeys,
   GetRegion,
   InitializeRegion,
+  ScheduleMultiregionJob,
   StoreRegion,
   UpdateAndValidateRegion,
   UpdateRegion
@@ -19,12 +20,14 @@ export const createAndValidateNewRegionFactory =
     getFreeRegionKeys,
     getRegion,
     initializeRegion,
-    storeRegion
+    storeRegion,
+    scheduleJob
   }: {
     getFreeRegionKeys: GetFreeRegionKeys
     getRegion: GetRegion
     storeRegion: StoreRegion
     initializeRegion: InitializeRegion
+    scheduleJob: ScheduleMultiregionJob
   }): CreateAndValidateNewRegion =>
   async ({ region }) => {
     const [existingRegion, freeKeys] = await Promise.all([
@@ -45,7 +48,16 @@ export const createAndValidateNewRegionFactory =
 
     await initializeRegion({ regionKey: region.key })
 
-    return await storeRegion({ region })
+    const record = await storeRegion({ region })
+
+    await scheduleJob({
+      type: 'initialize-region-data',
+      payload: {
+        regionKey: region.key
+      }
+    })
+
+    return record
   }
 
 export const updateAndValidateRegionFactory =

@@ -9,6 +9,7 @@ import type { InsertableRegionRecord } from '@/modules/multiregion/helpers/types
 import type { Optional } from '@speckle/shared'
 import type { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
 import type { Stream } from '@/modules/core/domain/streams/types'
+import type { MultiregionJob } from '@/modules/multiregion/services/queue'
 
 export type GetRegions = () => Promise<ServerRegion[]>
 export type GetRegion = (params: { key: string }) => Promise<Optional<ServerRegion>>
@@ -69,3 +70,5 @@ export type GetProjectObjectStorage = (args: {
 export type GetRegionObjectStorage = (args: {
   regionKey: string
 }) => Promise<{ private: ObjectStorage; public: ObjectStorage }>
+
+export type ScheduleMultiregionJob = (args: MultiregionJob) => Promise<string>

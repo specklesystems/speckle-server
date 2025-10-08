@@ -121,7 +121,9 @@ const setupDatabases = async () => {
     }),
     getRegion: getRegionFactory({ db }),
     storeRegion: storeRegionFactory({ db }),
-    initializeRegion
+    initializeRegion,
+    // As db starts from scratch, no need to sync regions
+    scheduleJob: () => Promise.resolve('')
   })
   for (const regionKey of regionKeys) {
     await createRegion({
