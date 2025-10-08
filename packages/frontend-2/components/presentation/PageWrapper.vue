@@ -19,10 +19,11 @@
       <PresentationSlideIndicator
         v-if="!isViewerLoading"
         :show-slide-list="!isLeftSidebarOpen"
+        :is-info-sidebar-open="isInfoSidebarOpen"
         class="absolute top-1/2 z-20"
         :class="[
           isInfoSidebarOpen
-            ? 'translate-y-[calc(-50%+25px-6rem)] lg:translate-y-[-50%]'
+            ? 'translate-y-[calc(-50%-5.5rem)] lg:translate-y-[calc(-50%-25px)]'
             : 'translate-y-[-50%]',
           isLeftSidebarOpen ? 'lg:left-60 hidden md:block' : 'left-0'
         ]"
@@ -106,7 +107,7 @@ const viewerState = shallowRef<InjectableViewerState>()
 
 const mixpanel = useMixpanel()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
-const isMobile = breakpoints.smaller('sm')
+const isLgOrLarger = breakpoints.greaterOrEqual('lg')
 const isXlOrLarger = breakpoints.greaterOrEqual('xl')
 const { $intercom } = useNuxtApp()
 
@@ -154,7 +155,7 @@ onMounted(() => {
   })
 
   isLeftSidebarOpen.value = isXlOrLarger.value
-  isInfoSidebarOpen.value = !isMobile.value
+  isInfoSidebarOpen.value = isLgOrLarger.value
 })
 
 watch(

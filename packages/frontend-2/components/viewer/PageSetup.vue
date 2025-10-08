@@ -98,7 +98,7 @@
       </ClientOnly>
     </div>
     <ViewerEmbedFooter
-      :name="modelName || 'Loading...'"
+      :name="embedName"
       :date="lastUpdate"
       :url="route.path"
       :hide-speckle-branding="hideSpeckleLogo"
@@ -125,6 +125,13 @@ import { ViewerLimitsDialogType } from '~/lib/projects/helpers/limits'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useBreakpoints } from '@vueuse/core'
 import { useAnnotationsEnabledState } from '~/lib/annotations'
+
+graphql(`
+  fragment ViewerPageSetup_SavedView on SavedView {
+    id
+    name
+  }
+`)
 
 graphql(`
   fragment ModelPageProject on Project {
@@ -172,7 +179,7 @@ const mp = useMixpanel()
 
 const {
   resources: {
-    response: { project, modelsAndVersionIds }
+    response: { project, modelsAndVersionIds, savedView }
   }
 } = state
 
@@ -230,6 +237,18 @@ const modelName = computed(() => {
   } else {
     return project.value?.name
   }
+})
+
+const embedName = computed(() => {
+  if (!modelName.value) return 'Loading...'
+
+  let ret = ''
+  if (savedView.value) {
+    ret += `${savedView.value.name} | `
+  }
+
+  ret += modelName.value
+  return ret
 })
 
 const lastUpdate = computed(() => {

@@ -1,5 +1,5 @@
 <template>
-  <li class="w-full" :class="{ 'pb-0': hideTitle }">
+  <li class="w-full flex flex-col gap-1" :class="{ 'pb-0': hideTitle }">
     <button
       class="bg-foundation-page rounded-md overflow-hidden border transition-all duration-200 w-full"
       :class="[
@@ -14,8 +14,11 @@
       />
     </button>
 
-    <p v-if="!hideTitle" class="text-body-3xs font-medium text-foreground mb-2">
-      <span class="font-semibold mr-1">{{ slideIndex }}.</span>
+    <p
+      v-if="!hideTitle"
+      class="text-body-3xs font-medium text-foreground mb-2 h-6 flex items-center"
+    >
+      <span class="text-foreground-3 mr-1">{{ slideIndex }} –</span>
       {{ slide.name }}
     </p>
   </li>

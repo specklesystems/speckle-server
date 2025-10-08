@@ -14,6 +14,7 @@ import type {
   GetProjectSavedViewGroupsQueryVariables,
   GetProjectSavedViewIfExistsQueryVariables,
   GetProjectSavedViewQueryVariables,
+  GetProjectSavedViewsQueryVariables,
   GetProjectUngroupedViewGroupQueryVariables,
   UpdateSavedViewGroupMutationVariables,
   UpdateSavedViewInput,
@@ -31,6 +32,7 @@ import {
   GetProjectSavedViewGroupDocument,
   GetProjectSavedViewGroupsDocument,
   GetProjectSavedViewIfExistsDocument,
+  GetProjectSavedViewsDocument,
   GetProjectUngroupedViewGroupDocument,
   OnProjectSavedViewGroupsUpdatedDocument,
   OnProjectSavedViewsUpdatedDocument,
@@ -3354,6 +3356,333 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
           const createdAt = data!.items.map((v) => dayjs(v.createdAt))
           const sortedCreatedAt = [...createdAt].sort((a, b) => (b.isAfter(a) ? 1 : -1))
           expect(createdAt).to.deep.equal(sortedCreatedAt)
+        })
+
+        describe('directly through Project.savedViews', () => {
+          const getProjectViews = (
+            input: GetProjectSavedViewsQueryVariables,
+            options?: ExecuteOperationOptions
+          ) => apollo.execute(GetProjectSavedViewsDocument, input, options)
+
+          it('should successfully read all project views with pagination', async () => {
+            let cursor: string | null = null
+            let pagesLoaded = 0
+            let viewsFound = 0
+
+            // First, get the actual total count from the endpoint
+            const initialRes = await getProjectViews(
+              {
+                projectId: readTestProject.id,
+                input: {
+                  limit: 1,
+                  resourceIdString: getAllReadModelResourceIds().toString()
+                }
+              },
+              { assertNoErrors: true }
+            )
+
+            const TOTAL_EXPECTED_VIEWS =
+              initialRes.data?.project.savedViews.totalCount || 0
+            const PAGE_SIZE = Math.ceil(TOTAL_EXPECTED_VIEWS / 3) // Use 3 pages
+
+            const loadPage = async () => {
+              const res = await getProjectViews(
+                {
+                  projectId: readTestProject.id,
+                  input: {
+                    limit: PAGE_SIZE,
+                    cursor,
+                    resourceIdString: getAllReadModelResourceIds().toString()
+                  }
+                },
+                { assertNoErrors: true }
+              )
+
+              const data = res.data?.project.savedViews
+              expect(data).to.be.ok
+              expect(data!.totalCount).to.equal(TOTAL_EXPECTED_VIEWS)
+
+              if (data?.cursor) {
+                expect(data!.items.length).to.be.lessThanOrEqual(PAGE_SIZE)
+              } else {
+                expect(data!.items.length).to.eq(0)
+              }
+
+              for (const view of data!.items) {
+                expect(view.projectId).to.equal(readTestProject.id)
+                expect(view.resourceIds.length).to.be.greaterThan(0)
+                viewsFound++
+              }
+
+              cursor = data?.cursor || null
+              pagesLoaded++
+            }
+
+            do {
+              if (pagesLoaded > 5) {
+                // Increase max pages
+                throw new Error(
+                  'Too many pages loaded, something is wrong with pagination logic'
+                )
+              }
+
+              await loadPage()
+            } while (cursor)
+
+            expect(pagesLoaded).to.equal(4) // 3 pages + 1 empty page
+            expect(viewsFound).to.equal(TOTAL_EXPECTED_VIEWS)
+          })
+
+          it('should respect search filter across all views', async () => {
+            const res = await getProjectViews(
+              {
+                projectId: readTestProject.id,
+                input: {
+                  limit: 100, // all in 1 page
+                  resourceIdString: getAllReadModelResourceIds().toString(),
+                  search: SEARCH_STRING
+                }
+              },
+              { assertNoErrors: true }
+            )
+
+            const data = res.data?.project.savedViews
+            expect(data).to.be.ok
+            expect(data!.totalCount).to.be.greaterThan(0) // Should find some matching views
+            expect(data!.items.length).to.equal(data!.totalCount)
+
+            for (const view of data!.items) {
+              expect(view.name.includes(SEARCH_STRING)).to.be.true
+            }
+          })
+
+          it('should respect onlyAuthored flag across all views', async () => {
+            const res = await getProjectViews(
+              {
+                projectId: readTestProject.id,
+                input: {
+                  limit: 100, // all in 1 page
+                  resourceIdString: getAllReadModelResourceIds().toString()
+                }
+              },
+              {
+                assertNoErrors: true,
+                authUserId: otherReader.id
+              }
+            )
+
+            const data = res.data?.project.savedViews
+            expect(data).to.be.ok
+
+            // Should see all public views visible to otherReader
+            expect(data!.totalCount).to.be.greaterThan(0)
+            expect(data!.items.length).to.equal(data!.totalCount)
+
+            // Should not see any private views from other authors
+            const privateViewsFromOthers = data!.items.filter(
+              (v) =>
+                v.author?.id !== otherReader.id &&
+                v.visibility === SavedViewVisibility.authorOnly
+            )
+            expect(privateViewsFromOthers.length).to.equal(0)
+          })
+
+          it('should allow sorting by name asc across all views', async () => {
+            const res = await getProjectViews(
+              {
+                projectId: readTestProject.id,
+                input: {
+                  limit: 100, // all in 1 page
+                  resourceIdString: getAllReadModelResourceIds().toString(),
+                  sortBy: 'name',
+                  sortDirection: 'ASC'
+                }
+              },
+              { assertNoErrors: true }
+            )
+
+            const data = res.data?.project.savedViews
+            expect(data).to.be.ok
+            expect(data!.items.length).to.be.greaterThan(0)
+            expect(data!.items.length).to.equal(data!.totalCount)
+
+            const names = data!.items.map((v) => v.name as string)
+            const sortedNames = [...names].sort()
+            expect(names).to.deep.equal(sortedNames)
+          })
+
+          it('should allow sorting by createdAt desc across all views', async () => {
+            const res = await getProjectViews(
+              {
+                projectId: readTestProject.id,
+                input: {
+                  limit: 100, // all in 1 page
+                  resourceIdString: getAllReadModelResourceIds().toString(),
+                  sortBy: 'createdAt',
+                  sortDirection: 'DESC'
+                }
+              },
+              { assertNoErrors: true }
+            )
+
+            const data = res.data?.project.savedViews
+            expect(data).to.be.ok
+            expect(data!.items.length).to.be.greaterThan(0)
+            expect(data!.items.length).to.equal(data!.totalCount)
+
+            const createdAt = data!.items.map((v) => dayjs(v.createdAt))
+            const sortedCreatedAt = [...createdAt].sort((a, b) =>
+              b.isAfter(a) ? 1 : -1
+            )
+            expect(createdAt).to.deep.equal(sortedCreatedAt)
+          })
+
+          it('should handle empty results for non-existent resource', async () => {
+            const res = await getProjectViews(
+              {
+                projectId: readTestProject.id,
+                input: {
+                  limit: 100,
+                  resourceIdString: 'non-existent-resource-id'
+                }
+              },
+              { assertNoErrors: true }
+            )
+
+            const data = res.data?.project.savedViews
+            expect(data).to.be.ok
+            expect(data!.totalCount).to.equal(0)
+            expect(data!.items.length).to.equal(0)
+            expect(data!.cursor).to.be.null
+          })
+
+          it('should handle mixed visibility filtering correctly', async () => {
+            const res = await getProjectViews(
+              {
+                projectId: readTestProject.id,
+                input: {
+                  limit: 100,
+                  resourceIdString: getAllReadModelResourceIds().toString(),
+                  onlyVisibility: SavedViewVisibility.public
+                }
+              },
+              {
+                assertNoErrors: true,
+                authUserId: otherReader.id
+              }
+            )
+
+            const data = res.data?.project.savedViews
+            expect(data).to.be.ok
+
+            // Should only see public views
+            expect(
+              data!.items.every((v) => v.visibility === SavedViewVisibility.public)
+            ).to.be.true
+
+            // Should not see any private views
+            const privateViews = data!.items.filter(
+              (v) => v.visibility === SavedViewVisibility.authorOnly
+            )
+            expect(privateViews.length).to.equal(0)
+          })
+
+          it('should respect both search and visibility filters combined', async () => {
+            const res = await getProjectViews(
+              {
+                projectId: readTestProject.id,
+                input: {
+                  limit: 100,
+                  resourceIdString: getAllReadModelResourceIds().toString(),
+                  search: SEARCH_STRING,
+                  onlyVisibility: SavedViewVisibility.public
+                }
+              },
+              { assertNoErrors: true }
+            )
+
+            const data = res.data?.project.savedViews
+            expect(data).to.be.ok
+
+            // Should find views that match both search string AND are public
+            for (const view of data!.items) {
+              expect(view.name.includes(SEARCH_STRING)).to.be.true
+              expect(view.visibility).to.equal(SavedViewVisibility.public)
+            }
+
+            // Get search-only results to compare
+            const searchOnlyRes = await getProjectViews(
+              {
+                projectId: readTestProject.id,
+                input: {
+                  limit: 100,
+                  resourceIdString: getAllReadModelResourceIds().toString(),
+                  search: SEARCH_STRING
+                }
+              },
+              { assertNoErrors: true }
+            )
+
+            // Should be fewer or equal results than search alone
+            expect(data!.totalCount).to.be.lessThanOrEqual(
+              searchOnlyRes.data?.project.savedViews.totalCount || 0
+            )
+          })
+
+          it('should handle cursor pagination with search filters', async () => {
+            const PAGE_SIZE = 2
+            let cursor: string | null = null
+            let totalFound = 0
+
+            // First page
+            const res1 = await getProjectViews(
+              {
+                projectId: readTestProject.id,
+                input: {
+                  limit: PAGE_SIZE,
+                  resourceIdString: getAllReadModelResourceIds().toString(),
+                  search: SEARCH_STRING
+                }
+              },
+              { assertNoErrors: true }
+            )
+
+            const data1 = res1.data?.project.savedViews
+            expect(data1).to.be.ok
+            expect(data1!.items.length).to.be.lessThanOrEqual(PAGE_SIZE)
+            totalFound += data1!.items.length
+            cursor = data1!.cursor || null
+
+            if (cursor) {
+              // Second page
+              const res2 = await getProjectViews(
+                {
+                  projectId: readTestProject.id,
+                  input: {
+                    limit: PAGE_SIZE,
+                    cursor,
+                    resourceIdString: getAllReadModelResourceIds().toString(),
+                    search: SEARCH_STRING
+                  }
+                },
+                { assertNoErrors: true }
+              )
+
+              const data2 = res2.data?.project.savedViews
+              expect(data2).to.be.ok
+              totalFound += data2!.items.length
+
+              // Verify no duplicate views across pages
+              const ids1 = data1!.items.map((v) => v.id as string)
+              const ids2 = data2!.items.map((v) => v.id as string)
+              const ids1Set = new Set(ids1)
+              const duplicateCount = ids2.filter((id) => ids1Set.has(id)).length
+              expect(duplicateCount).to.equal(0)
+            }
+
+            // Total should match expected searchable count
+            expect(totalFound).to.be.lessThanOrEqual(SEARCHABLE_VIEW_COUNT)
+          })
         })
       })
     })

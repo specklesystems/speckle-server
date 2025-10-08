@@ -124,7 +124,9 @@
       :class="showFollowerMessage ? 'top-24' : 'top-14'"
     >
       <ViewerGlobalFilterReset v-if="hasAnyFiltersApplied" />
-      <ViewerGlobalIsolationReset v-else-if="hasAnyIsolationsApplied" />
+      <ViewerGlobalIsolationHiddenReset
+        v-else-if="hasAnyIsolationsApplied || hasAnyHiddenApplied"
+      />
     </div>
   </div>
 </template>
@@ -163,7 +165,8 @@ const { users } = useViewerUserActivityTracking({ anchoredPointsParentEl: parent
 const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
 const {
   filters: { hasAnyFiltersApplied },
-  hasAnyIsolationsApplied
+  hasAnyIsolationsApplied,
+  hasAnyHiddenApplied
 } = useFilterUtilities({ state: viewerState })
 const canPostComment = useCheckViewerCommentingAccess()
 const breakpoints = useBreakpoints(TailwindBreakpoints)

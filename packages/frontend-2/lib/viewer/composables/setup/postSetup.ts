@@ -169,6 +169,7 @@ function useViewerObjectAutoLoading() {
   const getUniqueObjectIds = (resourceItems: ViewerResourceItem[]) =>
     uniq(resourceItems.map((i) => i.objectId))
 
+  const activeLoads = new Set<Promise<void>>()
   watch(
     () => <const>[resourceItems.value, isInitialized.value, hasDoneInitialLoad.value],
     async ([newResources, newIsInitialized, newHasDoneInitialLoad], oldData) => {
@@ -176,8 +177,6 @@ function useViewerObjectAutoLoading() {
       if (!newIsInitialized) return
 
       const [oldResources] = oldData || [[], false]
-
-      hasLoadedQueuedUpModels.value = false
 
       // we dont want to zoom to object, if we're loading specific coords because of a thread,
       // or spotlight mode or a saved view etc.
@@ -191,33 +190,60 @@ function useViewerObjectAutoLoading() {
       // Viewer initialized - load in all resources
       if (!newHasDoneInitialLoad) {
         const allObjectIds = getUniqueObjectIds(newResources)
+        if (allObjectIds.length) {
+          // only mark, if anything to load
+          hasLoadedQueuedUpModels.value = false
+        }
 
         /** Load sequentially */
         const res = []
-        for (const i of allObjectIds) {
-          res.push(await loadObject(i, false, { zoomToObject }))
+        const loadAll = async () => {
+          for (const i of allObjectIds) {
+            res.push(await loadObject(i, false, { zoomToObject }))
+          }
         }
+
+        // Register for accurate 'is anything loading' reporting
+        const promise = loadAll().then(() => {
+          activeLoads.delete(promise)
+        })
+        activeLoads.add(promise)
+        await promise
 
         if (res.length) {
           hasDoneInitialLoad.value = true
-          hasLoadedQueuedUpModels.value = true
+          if (!activeLoads.size) hasLoadedQueuedUpModels.value = true
         }
 
         return
       }
 
       // Resources changed?
-      const newObjectIds = getUniqueObjectIds(newResources)
-      const oldObjectIds = getUniqueObjectIds(oldResources)
-      const removableObjectIds = difference(oldObjectIds, newObjectIds)
-      const addableObjectIds = difference(newObjectIds, oldObjectIds)
+      const loadAndUnloadChanged = async () => {
+        const newObjectIds = getUniqueObjectIds(newResources)
+        const oldObjectIds = getUniqueObjectIds(oldResources)
+        const removableObjectIds = difference(oldObjectIds, newObjectIds)
+        const addableObjectIds = difference(newObjectIds, oldObjectIds)
 
-      await Promise.all(removableObjectIds.map((i) => loadObject(i, true)))
-      await Promise.all(
-        addableObjectIds.map((i) => loadObject(i, false, { zoomToObject: false }))
-      )
+        if (addableObjectIds.length) {
+          // only mark, if anything to load
+          hasLoadedQueuedUpModels.value = false
+        }
 
-      hasLoadedQueuedUpModels.value = true
+        await Promise.all(removableObjectIds.map((i) => loadObject(i, true)))
+        await Promise.all(
+          addableObjectIds.map((i) => loadObject(i, false, { zoomToObject: false }))
+        )
+      }
+
+      // Register for accurate 'is anything loading' reporting
+      const promise = loadAndUnloadChanged().then(() => {
+        activeLoads.delete(promise)
+      })
+      activeLoads.add(promise)
+      await promise
+
+      if (!activeLoads.size) hasLoadedQueuedUpModels.value = true
     },
     { deep: true, immediate: true }
   )
@@ -444,21 +470,18 @@ function useViewerCameraIntegration() {
 
   const loadCameraDataFromViewer = () => {
     const extension: CameraController = instance.getExtension(CameraController)
-    let cameraManuallyChanged = false
 
     const viewerPos = new Vector3().copy(extension.getPosition())
     const viewerTarget = new Vector3().copy(extension.getTarget())
 
-    if (!areVectorsLooselyEqual(position.value, viewerPos)) {
-      if (hasInitialLoadFired.value) position.value = viewerPos.clone()
-      cameraManuallyChanged = true
+    if (hasInitialLoadFired.value) {
+      if (!areVectorsLooselyEqual(position.value, viewerPos)) {
+        position.value = viewerPos.clone()
+      }
+      if (!areVectorsLooselyEqual(target.value, viewerTarget)) {
+        target.value = viewerTarget.clone()
+      }
     }
-    if (!areVectorsLooselyEqual(target.value, viewerTarget)) {
-      if (hasInitialLoadFired.value) target.value = viewerTarget.clone()
-      cameraManuallyChanged = true
-    }
-
-    return cameraManuallyChanged
   }
 
   // viewer -> state
@@ -810,6 +833,7 @@ graphql(`
   fragment UseViewerSavedViewSetup_SavedView on SavedView {
     id
     viewerState
+    ...ViewerPageSetup_SavedView
   }
 `)
 

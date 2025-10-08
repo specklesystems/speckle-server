@@ -9,6 +9,7 @@ import type {
   GetGroupSavedViewsBaseParams,
   GetGroupSavedViewsPageItems,
   GetGroupSavedViewsTotalCount,
+  GetProjectSavedViewsBaseParams,
   GetProjectSavedViewGroupsBaseParams,
   GetProjectSavedViewGroupsPageItems,
   GetProjectSavedViewGroupsTotalCount,
@@ -31,7 +32,9 @@ import type {
   SetNewHomeView,
   GetNewViewBoundaryPosition,
   GetNewViewSpecificPosition,
-  RebalanceViewPositions
+  RebalanceViewPositions,
+  GetProjectSavedViewsTotalCount,
+  GetProjectSavedViewsPageItems
 } from '@/modules/viewer/domain/operations/savedViews'
 import {
   SavedViewVisibility,
@@ -1019,4 +1022,82 @@ export const rebalancingViewPositionsFactory =
 
     const ret = (await q) as { rowCount: number }
     return ret.rowCount
+  }
+
+const getProjectSavedViewsBaseQueryFactory =
+  (deps: { db: Knex }) => (params: GetProjectSavedViewsBaseParams) => {
+    const { projectId, resourceIdString, search, userId } = params
+
+    const onlyVisibility =
+      params.onlyVisibility === SavedViewVisibility.authorOnly && !userId
+        ? undefined
+        : params.onlyVisibility
+    const resourceIds = formatResourceIdsForGroup(resourceIdString || '')
+
+    const q = tables
+      .savedViews(deps.db)
+      .where({ [SavedViews.col.projectId]: projectId })
+
+    // If resourceIdString provided, filter by resource overlap
+    if (resourceIds.length) {
+      q.andWhereRaw('?? && ?', [SavedViews.col.groupResourceIds, resourceIds])
+    }
+
+    // checking visibility/authorship
+    if (onlyVisibility) {
+      if (onlyVisibility === SavedViewVisibility.authorOnly) {
+        q.andWhere({ [SavedViews.col.authorId]: userId })
+      }
+      q.andWhere({ [SavedViews.col.visibility]: onlyVisibility })
+    } else {
+      q.andWhere((w1) => {
+        w1.andWhere(SavedViews.col.visibility, SavedViewVisibility.public)
+        if (userId) {
+          w1.orWhere(SavedViews.col.authorId, userId)
+        }
+      })
+    }
+
+    // search filter
+    if (search) {
+      q.andWhere(SavedViews.col.name, 'ilike', `%${search}%`)
+    }
+
+    return q
+  }
+
+export const getProjectSavedViewsTotalCountFactory =
+  (deps: { db: Knex }): GetProjectSavedViewsTotalCount =>
+  async (params) => {
+    const q = getProjectSavedViewsBaseQueryFactory(deps)(params)
+    const countQ = deps.db.count<{ count: string }[]>().from(q.as('sq1'))
+    const [count] = await countQ
+    return parseInt(count.count + '')
+  }
+
+export const getProjectSavedViewsPageItemsFactory =
+  (deps: { db: Knex }): GetProjectSavedViewsPageItems =>
+  async (params) => {
+    const sortByCol = params.sortBy || 'position'
+    const sortDir = params.sortDirection || 'desc'
+
+    const q = getProjectSavedViewsBaseQueryFactory(deps)(params)
+    const { applyCursorSortAndFilter, resolveNewCursor } = compositeCursorTools({
+      schema: SavedViews,
+      cols: [sortByCol, 'id']
+    })
+
+    const limit = clamp(params.limit ?? 10, 0, 100)
+    q.limit(limit)
+
+    // Apply cursor filter and sort
+    applyCursorSortAndFilter({ query: q, cursor: params.cursor, sort: sortDir })
+
+    const items = await q
+    const newCursor = resolveNewCursor(items)
+
+    return {
+      items,
+      cursor: newCursor
+    }
   }

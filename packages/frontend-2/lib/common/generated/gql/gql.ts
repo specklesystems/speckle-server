@@ -52,6 +52,8 @@ type Documents = {
     "\n  mutation DashboardsShareDisableToken($input: DashboardShareInput!) {\n    dashboardMutations {\n      disableShare(input: $input) {\n        id\n        revoked\n        content\n      }\n    }\n  }\n": typeof types.DashboardsShareDisableTokenDocument,
     "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n": typeof types.FormSelectModels_ModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": typeof types.FormSelectProjects_ProjectFragmentDoc,
+    "\n  fragment FormSelectSavedView_SavedView on SavedView {\n    id\n    name\n    thumbnailUrl\n  }\n": typeof types.FormSelectSavedView_SavedViewFragmentDoc,
+    "\n  query FormSelectSavedView_SavedViews(\n    $projectId: String!\n    $input: ProjectSavedViewsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      savedViews(input: $input) {\n        items {\n          id\n          ...FormSelectSavedView_SavedView\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n": typeof types.FormSelectSavedView_SavedViewsDocument,
     "\n  fragment FormSelectSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    title\n    isUngroupedViewsGroup\n  }\n": typeof types.FormSelectSavedViewGroup_SavedViewGroupFragmentDoc,
     "\n  query FormSelectSavedViewGroup_SavedViewGroups(\n    $projectId: String!\n    $input: SavedViewGroupsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      savedViewGroups(input: $input) {\n        items {\n          id\n          ...FormSelectSavedViewGroup_SavedViewGroup\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n": typeof types.FormSelectSavedViewGroup_SavedViewGroupsDocument,
     "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n": typeof types.FormUsersSelectItemFragmentDoc,
@@ -183,6 +185,7 @@ type Documents = {
     "\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_Workspace on Workspace {\n    id\n    domains {\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n  }\n": typeof types.SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesSecurityWorkspaceCreation_Workspace on Workspace {\n    id\n    slug\n    role\n    isExclusive\n    hasAccessToExclusiveMembership: hasAccessToFeature(featureName: exclusiveMembership)\n    permissions {\n      canMakeWorkspaceExclusive {\n        authorized\n        message\n      }\n    }\n  }\n": typeof types.SettingsWorkspacesSecurityWorkspaceCreation_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesSecuritySsoWrapper_Workspace on Workspace {\n    id\n    role\n    slug\n    sso {\n      provider {\n        id\n        name\n        clientId\n        issuerUrl\n      }\n    }\n    hasAccessToSSO: hasAccessToFeature(featureName: oidcSso)\n  }\n": typeof types.SettingsWorkspacesSecuritySsoWrapper_WorkspaceFragmentDoc,
+    "\n  fragment ViewerPageSetup_SavedView on SavedView {\n    id\n    name\n  }\n": typeof types.ViewerPageSetup_SavedViewFragmentDoc,
     "\n  fragment ModelPageProject on Project {\n    id\n    createdAt\n    name\n    visibility\n    limitedWorkspace {\n      id\n      slug\n      name\n    }\n    embedOptions {\n      hideSpeckleBranding\n    }\n    hasAccessToFeature(featureName: hideSpeckleBranding)\n    ...ViewerLimitsDialog_Project\n  }\n": typeof types.ModelPageProjectFragmentDoc,
     "\n  fragment ViewerCommentThreadData on Comment {\n    id\n    permissions {\n      canArchive {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.ViewerCommentThreadDataFragmentDoc,
     "\n  fragment ThreadCommentAttachment on Comment {\n    text {\n      attachments {\n        id\n        fileName\n        fileType\n        fileSize\n      }\n    }\n  }\n": typeof types.ThreadCommentAttachmentFragmentDoc,
@@ -468,7 +471,7 @@ type Documents = {
     "\n  fragment UseDraggableViewTargetView_SavedView on SavedView {\n    id\n    name\n    position\n    group {\n      id\n    }\n  }\n": typeof types.UseDraggableViewTargetView_SavedViewFragmentDoc,
     "\n  fragment UseDraggableViewTargetGroup_SavedViewGroup on SavedViewGroup {\n    id\n    title\n  }\n": typeof types.UseDraggableViewTargetGroup_SavedViewGroupFragmentDoc,
     "\n  fragment UseSavedViewValidationHelpers_SavedView on SavedView {\n    id\n    isHomeView\n    visibility\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n      canMove {\n        ...FullPermissionCheckResult\n      }\n      canEditTitle {\n        ...FullPermissionCheckResult\n      }\n      canEditDescription {\n        ...FullPermissionCheckResult\n      }\n      canSetAsHomeView {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": typeof types.UseSavedViewValidationHelpers_SavedViewFragmentDoc,
-    "\n  fragment UseViewerSavedViewSetup_SavedView on SavedView {\n    id\n    viewerState\n  }\n": typeof types.UseViewerSavedViewSetup_SavedViewFragmentDoc,
+    "\n  fragment UseViewerSavedViewSetup_SavedView on SavedView {\n    id\n    viewerState\n    ...ViewerPageSetup_SavedView\n  }\n": typeof types.UseViewerSavedViewSetup_SavedViewFragmentDoc,
     "\n  fragment ViewerCommentThread on Comment {\n    ...ViewerCommentsListItem\n    ...ViewerCommentBubblesData\n    ...ViewerCommentsReplyItem\n    ...ViewerCommentThreadData\n  }\n": typeof types.ViewerCommentThreadFragmentDoc,
     "\n  fragment ViewerCommentsReplyItem on Comment {\n    id\n    archived\n    rawText\n    text {\n      doc\n    }\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    ...ThreadCommentAttachment\n  }\n": typeof types.ViewerCommentsReplyItemFragmentDoc,
     "\n  mutation BroadcastViewerUserActivity(\n    $projectId: String!\n    $resourceIdString: String!\n    $message: ViewerUserActivityMessageInput!\n  ) {\n    broadcastViewerUserActivity(\n      projectId: $projectId\n      resourceIdString: $resourceIdString\n      message: $message\n    )\n  }\n": typeof types.BroadcastViewerUserActivityDocument,
@@ -605,6 +608,8 @@ const documents: Documents = {
     "\n  mutation DashboardsShareDisableToken($input: DashboardShareInput!) {\n    dashboardMutations {\n      disableShare(input: $input) {\n        id\n        revoked\n        content\n      }\n    }\n  }\n": types.DashboardsShareDisableTokenDocument,
     "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n": types.FormSelectModels_ModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": types.FormSelectProjects_ProjectFragmentDoc,
+    "\n  fragment FormSelectSavedView_SavedView on SavedView {\n    id\n    name\n    thumbnailUrl\n  }\n": types.FormSelectSavedView_SavedViewFragmentDoc,
+    "\n  query FormSelectSavedView_SavedViews(\n    $projectId: String!\n    $input: ProjectSavedViewsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      savedViews(input: $input) {\n        items {\n          id\n          ...FormSelectSavedView_SavedView\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n": types.FormSelectSavedView_SavedViewsDocument,
     "\n  fragment FormSelectSavedViewGroup_SavedViewGroup on SavedViewGroup {\n    id\n    title\n    isUngroupedViewsGroup\n  }\n": types.FormSelectSavedViewGroup_SavedViewGroupFragmentDoc,
     "\n  query FormSelectSavedViewGroup_SavedViewGroups(\n    $projectId: String!\n    $input: SavedViewGroupsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      savedViewGroups(input: $input) {\n        items {\n          id\n          ...FormSelectSavedViewGroup_SavedViewGroup\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n": types.FormSelectSavedViewGroup_SavedViewGroupsDocument,
     "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.FormUsersSelectItemFragmentDoc,
@@ -736,6 +741,7 @@ const documents: Documents = {
     "\n  fragment SettingsWorkspacesSecurityDomainRemoveDialog_Workspace on Workspace {\n    id\n    domains {\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n  }\n": types.SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesSecurityWorkspaceCreation_Workspace on Workspace {\n    id\n    slug\n    role\n    isExclusive\n    hasAccessToExclusiveMembership: hasAccessToFeature(featureName: exclusiveMembership)\n    permissions {\n      canMakeWorkspaceExclusive {\n        authorized\n        message\n      }\n    }\n  }\n": types.SettingsWorkspacesSecurityWorkspaceCreation_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesSecuritySsoWrapper_Workspace on Workspace {\n    id\n    role\n    slug\n    sso {\n      provider {\n        id\n        name\n        clientId\n        issuerUrl\n      }\n    }\n    hasAccessToSSO: hasAccessToFeature(featureName: oidcSso)\n  }\n": types.SettingsWorkspacesSecuritySsoWrapper_WorkspaceFragmentDoc,
+    "\n  fragment ViewerPageSetup_SavedView on SavedView {\n    id\n    name\n  }\n": types.ViewerPageSetup_SavedViewFragmentDoc,
     "\n  fragment ModelPageProject on Project {\n    id\n    createdAt\n    name\n    visibility\n    limitedWorkspace {\n      id\n      slug\n      name\n    }\n    embedOptions {\n      hideSpeckleBranding\n    }\n    hasAccessToFeature(featureName: hideSpeckleBranding)\n    ...ViewerLimitsDialog_Project\n  }\n": types.ModelPageProjectFragmentDoc,
     "\n  fragment ViewerCommentThreadData on Comment {\n    id\n    permissions {\n      canArchive {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.ViewerCommentThreadDataFragmentDoc,
     "\n  fragment ThreadCommentAttachment on Comment {\n    text {\n      attachments {\n        id\n        fileName\n        fileType\n        fileSize\n      }\n    }\n  }\n": types.ThreadCommentAttachmentFragmentDoc,
@@ -1021,7 +1027,7 @@ const documents: Documents = {
     "\n  fragment UseDraggableViewTargetView_SavedView on SavedView {\n    id\n    name\n    position\n    group {\n      id\n    }\n  }\n": types.UseDraggableViewTargetView_SavedViewFragmentDoc,
     "\n  fragment UseDraggableViewTargetGroup_SavedViewGroup on SavedViewGroup {\n    id\n    title\n  }\n": types.UseDraggableViewTargetGroup_SavedViewGroupFragmentDoc,
     "\n  fragment UseSavedViewValidationHelpers_SavedView on SavedView {\n    id\n    isHomeView\n    visibility\n    permissions {\n      canUpdate {\n        ...FullPermissionCheckResult\n      }\n      canMove {\n        ...FullPermissionCheckResult\n      }\n      canEditTitle {\n        ...FullPermissionCheckResult\n      }\n      canEditDescription {\n        ...FullPermissionCheckResult\n      }\n      canSetAsHomeView {\n        ...FullPermissionCheckResult\n      }\n    }\n  }\n": types.UseSavedViewValidationHelpers_SavedViewFragmentDoc,
-    "\n  fragment UseViewerSavedViewSetup_SavedView on SavedView {\n    id\n    viewerState\n  }\n": types.UseViewerSavedViewSetup_SavedViewFragmentDoc,
+    "\n  fragment UseViewerSavedViewSetup_SavedView on SavedView {\n    id\n    viewerState\n    ...ViewerPageSetup_SavedView\n  }\n": types.UseViewerSavedViewSetup_SavedViewFragmentDoc,
     "\n  fragment ViewerCommentThread on Comment {\n    ...ViewerCommentsListItem\n    ...ViewerCommentBubblesData\n    ...ViewerCommentsReplyItem\n    ...ViewerCommentThreadData\n  }\n": types.ViewerCommentThreadFragmentDoc,
     "\n  fragment ViewerCommentsReplyItem on Comment {\n    id\n    archived\n    rawText\n    text {\n      doc\n    }\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    ...ThreadCommentAttachment\n  }\n": types.ViewerCommentsReplyItemFragmentDoc,
     "\n  mutation BroadcastViewerUserActivity(\n    $projectId: String!\n    $resourceIdString: String!\n    $message: ViewerUserActivityMessageInput!\n  ) {\n    broadcastViewerUserActivity(\n      projectId: $projectId\n      resourceIdString: $resourceIdString\n      message: $message\n    )\n  }\n": types.BroadcastViewerUserActivityDocument,
@@ -1286,6 +1292,14 @@ export function graphql(source: "\n  fragment FormSelectModels_Model on Model {\
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n"): (typeof documents)["\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment FormSelectSavedView_SavedView on SavedView {\n    id\n    name\n    thumbnailUrl\n  }\n"): (typeof documents)["\n  fragment FormSelectSavedView_SavedView on SavedView {\n    id\n    name\n    thumbnailUrl\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query FormSelectSavedView_SavedViews(\n    $projectId: String!\n    $input: ProjectSavedViewsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      savedViews(input: $input) {\n        items {\n          id\n          ...FormSelectSavedView_SavedView\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n"): (typeof documents)["\n  query FormSelectSavedView_SavedViews(\n    $projectId: String!\n    $input: ProjectSavedViewsInput!\n  ) {\n    project(id: $projectId) {\n      id\n      savedViews(input: $input) {\n        items {\n          id\n          ...FormSelectSavedView_SavedView\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1810,6 +1824,10 @@ export function graphql(source: "\n  fragment SettingsWorkspacesSecurityWorkspac
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment SettingsWorkspacesSecuritySsoWrapper_Workspace on Workspace {\n    id\n    role\n    slug\n    sso {\n      provider {\n        id\n        name\n        clientId\n        issuerUrl\n      }\n    }\n    hasAccessToSSO: hasAccessToFeature(featureName: oidcSso)\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesSecuritySsoWrapper_Workspace on Workspace {\n    id\n    role\n    slug\n    sso {\n      provider {\n        id\n        name\n        clientId\n        issuerUrl\n      }\n    }\n    hasAccessToSSO: hasAccessToFeature(featureName: oidcSso)\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ViewerPageSetup_SavedView on SavedView {\n    id\n    name\n  }\n"): (typeof documents)["\n  fragment ViewerPageSetup_SavedView on SavedView {\n    id\n    name\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -2953,7 +2971,7 @@ export function graphql(source: "\n  fragment UseSavedViewValidationHelpers_Save
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment UseViewerSavedViewSetup_SavedView on SavedView {\n    id\n    viewerState\n  }\n"): (typeof documents)["\n  fragment UseViewerSavedViewSetup_SavedView on SavedView {\n    id\n    viewerState\n  }\n"];
+export function graphql(source: "\n  fragment UseViewerSavedViewSetup_SavedView on SavedView {\n    id\n    viewerState\n    ...ViewerPageSetup_SavedView\n  }\n"): (typeof documents)["\n  fragment UseViewerSavedViewSetup_SavedView on SavedView {\n    id\n    viewerState\n    ...ViewerPageSetup_SavedView\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

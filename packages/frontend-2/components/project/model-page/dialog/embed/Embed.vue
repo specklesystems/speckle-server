@@ -49,13 +49,37 @@
           </p>
           <h4 class="text-heading-sm text-foreground-2 mb-1 ml-0.5">Embed URL</h4>
           <FormClipboardInput class="mb-4" :value="updatedUrl" />
-          <LayoutDialogSection border-b border-t title="Options">
+          <LayoutDialogSection
+            v-model:open="areOptionsExpanded"
+            border-b
+            border-t
+            title="Options"
+          >
             <div class="flex flex-col gap-1.5 sm:gap-2 text-body-xs cursor-default">
+              <div v-if="areSavedViewsEnabled" class="flex flex-col gap-1">
+                <label for="option-saved-view" :class="optionLabelClasses">
+                  <FormCheckbox
+                    id="option-saved-view"
+                    v-model="shouldEmbedSavedView"
+                    name="Embed a saved view"
+                    hide-label
+                    class="cursor-pointer"
+                  />
+                  <span>Embed a saved view</span>
+                </label>
+                <FormSelectSavedView
+                  v-if="shouldEmbedSavedView"
+                  v-model="embeddedSavedView"
+                  :project-id="props.project.id"
+                  :resource-id-string="routeModelId"
+                  :only-visibility="SavedViewVisibility.Public"
+                  :show-label="false"
+                  mount-menu-on-body
+                  class="max-w-sm"
+                />
+              </div>
               <div v-for="option in embedDialogOptions" :key="option.id">
-                <label
-                  :for="`option-${option.id}`"
-                  class="flex items-center gap-1 cursor-pointer max-w-max"
-                >
+                <label :for="`option-${option.id}`" :class="optionLabelClasses">
                   <FormCheckbox
                     :id="`option-${option.id}`"
                     :model-value="option.value.value"
@@ -70,10 +94,7 @@
                 </label>
               </div>
               <div v-if="isWorkspacesEnabled">
-                <label
-                  :for="`option-hide-logo`"
-                  class="flex items-center gap-1 cursor-pointer max-w-max"
-                >
+                <label :for="`option-hide-logo`" :class="optionLabelClasses">
                   <FormCheckbox
                     id="option-hide-logo"
                     v-model="hideSpeckleBranding"
@@ -163,7 +184,11 @@
 </template>
 
 <script setup lang="ts">
-import type { ProjectsModelPageEmbed_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  SavedViewVisibility,
+  type FormSelectSavedView_SavedViewFragment,
+  type ProjectsModelPageEmbed_ProjectFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { useClipboard } from '~~/composables/browser'
 import { SpeckleViewer, Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
@@ -175,6 +200,7 @@ import {
   castToSupportedVisibility
 } from '~/lib/projects/helpers/visibility'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { useAreSavedViewsEnabled } from '~/lib/viewer/composables/savedViews/general'
 
 graphql(`
   fragment ProjectsModelPageEmbed_Project on Project {
@@ -208,6 +234,7 @@ const props = defineProps<{
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
+const areOptionsExpanded = ref(false)
 
 const mixpanel = useMixpanel()
 const route = useRoute()
@@ -217,6 +244,7 @@ const {
 } = useRuntimeConfig()
 const createEmbedToken = useCreateEmbedToken()
 
+const areSavedViewsEnabled = useAreSavedViewsEnabled()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
@@ -228,7 +256,15 @@ const preventScrolling = ref(false)
 const manuallyLoadModel = ref(false)
 const hideSpeckleBranding = ref(false)
 const embedToken = ref<string | null>(null)
+const shouldEmbedSavedView = ref(false)
 
+const embeddedSavedView = defineModel<FormSelectSavedView_SavedViewFragment>('view', {
+  required: false
+})
+
+const optionLabelClasses = computed(
+  () => 'flex items-center gap-1 cursor-pointer max-w-max'
+)
 const isAdmin = computed(() => props.project.workspace?.role === Roles.Workspace.Admin)
 
 const routeModelId = computed(() => route.params.modelId as string)
@@ -270,7 +306,7 @@ const updatedUrl = computed(() => {
   }
 
   // Construct the embed options as a hash fragment
-  const embedOptions: Record<string, boolean> = { isEnabled: true }
+  const embedOptions: Record<string, unknown> = { isEnabled: true }
   embedDialogOptions.forEach((option) => {
     if (option.value.value) {
       embedOptions[option.id] = true
@@ -288,6 +324,17 @@ const updatedUrl = computed(() => {
   // Serialize the embedOptions into a hash fragment
   const hashFragment = encodeURIComponent(JSON.stringify(embedOptions))
   url.hash = `embed=${hashFragment}`
+
+  // Embed view?
+  const savedViewSettings: Record<string, unknown> = {}
+  if (shouldEmbedSavedView.value && embeddedSavedView.value) {
+    savedViewSettings['id'] = embeddedSavedView.value.id
+  }
+
+  if (Object.keys(savedViewSettings).length > 0) {
+    const savedViewFragment = encodeURIComponent(JSON.stringify(savedViewSettings))
+    url.hash += `&savedView=${savedViewFragment}`
+  }
 
   return url.toString()
 })
@@ -438,4 +485,14 @@ watch(
   },
   { immediate: true }
 )
+
+watch(embeddedSavedView, (newVal, oldVal) => {
+  if (newVal) {
+    shouldEmbedSavedView.value = true
+
+    if (!oldVal || newVal.id !== oldVal.id) {
+      areOptionsExpanded.value = true
+    }
+  }
+})
 </script>

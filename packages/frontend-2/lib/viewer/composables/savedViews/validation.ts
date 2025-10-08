@@ -56,6 +56,28 @@ export const useSavedViewValidationHelpers = (params: {
   const canEditTitle = computed(() => permissions.value?.canEditTitle)
   const canEditDescription = computed(() => permissions.value?.canEditDescription)
 
+  const canEmbed = computed((): FullPermissionCheckResultFragment | undefined => {
+    if (isLoading.value) {
+      return {
+        authorized: false,
+        errorMessage: undefined,
+        code: 'LOADING',
+        message: ''
+      }
+    }
+
+    if (params.view.value?.visibility !== SavedViewVisibility.Public) {
+      return {
+        authorized: false,
+        errorMessage: 'Only shared views can be embedded',
+        code: 'FORBIDDEN',
+        message: 'Only shared views can be embedded'
+      }
+    }
+
+    return { authorized: true, code: 'OK', message: '' }
+  })
+
   const canOpenEditDialog = computed(
     (): FullPermissionCheckResultFragment | undefined => {
       if (isLoading.value) {
@@ -163,6 +185,7 @@ export const useSavedViewValidationHelpers = (params: {
     canMove,
     canEditTitle,
     canEditDescription,
-    canOpenEditDialog
+    canOpenEditDialog,
+    canEmbed
   }
 }
