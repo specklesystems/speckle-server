@@ -1,0 +1,81 @@
+---
+description: Vue 3 composition API patterns and conventions
+applyTo: 'packages/frontend-2/**/*.vue,packages/ui-components/**/*.vue'
+---
+
+# Vue.js Patterns & Conventions
+
+## Component Structure
+
+```vue
+<template>
+  <!-- Template content -->
+</template>
+<script setup lang="ts">
+// Script content with composition API
+</script>
+<style>
+/* Component styles */
+</style>
+```
+
+## Script Setup Organization
+
+Organize `<script setup>` blocks in this order:
+
+1. **Type definitions, enums, constants** (e.g., GraphQL operations)
+2. **defineEmits & defineProps**
+3. **Invoked composables** (useGlobalToast, useForm, etc.)
+4. **ref declarations**
+5. **computed values**
+6. **Function definitions**
+7. **watch calls**
+8. **Lifecycle hooks** (onMounted, etc.)
+
+## Component Naming
+
+- **PascalCase** for component names
+- **Multi-word** component names preferred
+- **Descriptive** names that indicate purpose
+
+## Props & Emits
+
+- **TypeScript interfaces** for props definition
+- **defineProps<Interface>()** syntax
+- **defineEmits<Interface>()** for type-safe events
+- **Default values** using withDefaults() when needed
+
+## Composables
+
+- **Use prefix** for composables (useFeatureName)
+- **Only invoke in setup scope** - Never in async handlers or outside Vue context
+- **Return reactive refs** and computed values
+- **Co-locate** related logic in composables
+- **Extract** reusable logic into composables
+
+## State Management
+
+- **No global store** - use composables and provide/inject
+- **All data must be reactive** - Use ref/computed, not plain constants
+- **Reactive refs** for component state
+- **Computed** for derived state
+- **Watch** for side effects
+
+## Template Rules
+
+- **Single root node** - Always ensure one root element exists
+- **No array indices as keys** - Use unique identifiers instead
+- **Conditional root elements** must have v-else fallback
+
+```vue
+<!-- Bad: If !someCondition, there's no root node -->
+<template>
+  <div v-if="someCondition" />
+</template>
+
+<!-- Good: There's always a root node no matter what -->
+<template>
+  <div v-if="someCondition" />
+  <div v-else />
+</template>
+```
