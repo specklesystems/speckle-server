@@ -2,9 +2,7 @@
   <div ref="broccoli" class="relative min-h-screen flex flex-col z-20">
     <div class="relative flex-grow overflow-hidden">
       <CanvasInfinite :paper-id="'broccoli'" />
-      <div class="fixed bottom-28">
-        <CanvasToolbar :id="'broccoli'" @screenshot-clicked="console.log('')" />
-      </div>
+      <CanvasToolbar :id="'broccoli'" />
     </div>
   </div>
 </template>
