@@ -18,10 +18,36 @@ export const dashboardQuery = graphql(`
 `)
 
 export const workspaceDashboardsQuery = graphql(`
-  query WorkspaceDashboards($workspaceSlug: String!, $cursor: String) {
+  query WorkspaceDashboards(
+    $workspaceSlug: String!
+    $cursor: String
+    $filter: WorkspaceDashboardsFilter
+  ) {
     workspaceBySlug(slug: $workspaceSlug) {
       id
-      dashboards(cursor: $cursor) {
+      dashboards(cursor: $cursor, filter: $filter) {
+        cursor
+        items {
+          id
+          ...DashboardsCard_Dashboard
+        }
+      }
+    }
+  }
+`)
+
+export const projectDashboardsQuery = graphql(`
+  query ProjectDashboards(
+    $projectId: String!
+    $cursor: String
+    $filter: ProjectDashboardsFilter
+  ) {
+    project(id: $projectId) {
+      id
+      workspace {
+        slug
+      }
+      dashboards(cursor: $cursor, filter: $filter) {
         cursor
         items {
           id

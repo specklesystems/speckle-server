@@ -117,6 +117,7 @@ graphql(`
     ...WorkspaceMoveProjectManager_ProjectBase
     ...ProjectPageSettingsTab_Project
     ...WorkspaceMoveProject_Project
+    hasAccessToDashboards: hasAccessToFeature(featureName: dashboards)
   }
 `)
 
@@ -266,6 +267,13 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
     })
   }
 
+  if (project.value?.hasAccessToDashboards) {
+    items.push({
+      title: 'Dashboards',
+      id: 'dashboards'
+    })
+  }
+
   return items
 })
 
@@ -286,6 +294,7 @@ const activePageTab = computed({
     if (/\/discussions\/?$/i.test(path)) return findTabById('discussions')
     if (/\/automations\/?.*$/i.test(path)) return findTabById('automations')
     if (/\/acc\/?.*$/i.test(path)) return findTabById('acc')
+    if (/\/dashboards\/?/i.test(path)) return findTabById('dashboards')
     if (/\/collaborators\/?/i.test(path) && canReadSettings.value?.authorized)
       return findTabById('collaborators')
     if (/\/settings\/?/i.test(path) && canReadSettings.value?.authorized)
@@ -310,6 +319,11 @@ const activePageTab = computed({
       case 'collaborators':
         if (canReadSettings.value?.authorized) {
           router.push({ path: projectRoute(projectId.value, 'collaborators') })
+        }
+        break
+      case 'dashboards':
+        if (project.value?.hasAccessToDashboards) {
+          router.push({ path: projectRoute(projectId.value, 'dashboards') })
         }
         break
       case 'settings':
