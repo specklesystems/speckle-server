@@ -91,15 +91,14 @@ const resolvers: Resolvers = {
   },
   Project: {
     dashboards: async (parent, args, context) => {
-      const authResult = await context.authPolicies.workspace.canListDashboards({
-        userId: context.userId,
-        workspaceId: parent.id
-      })
-      throwIfAuthNotOk(authResult)
-
       if (!parent.workspaceId) {
         throw new WorkspaceNotFoundError()
       }
+      const authResult = await context.authPolicies.workspace.canListDashboards({
+        userId: context.userId,
+        workspaceId: parent.workspaceId
+      })
+      throwIfAuthNotOk(authResult)
 
       return await getPaginatedDashboardsFactory({
         listDashboards: listDashboardsFactory({ db }),
