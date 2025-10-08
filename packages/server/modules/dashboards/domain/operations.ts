@@ -14,9 +14,17 @@ export type UpsertDashboardRecord = <T extends Exact<Dashboard, T>>(
 export type ListDashboardRecords = (args: {
   workspaceId: string
   filter?: {
+    projectIds: string[] | null
+    search: string | null
     updatedBefore: string | null
     limit: number | null
   }
 }) => Promise<Dashboard[]>
 
-export type CountDashboardRecords = (args: { workspaceId: string }) => Promise<number>
+export type CountDashboardRecords = (args: {
+  workspaceId: string
+  filter?: {
+    projectIds: string[] | null
+    search: string | null
+  }
+}) => Promise<number>

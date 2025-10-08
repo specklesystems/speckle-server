@@ -19,6 +19,7 @@ import type {
   StoreTokenResourceAccessDefinitions
 } from '@/modules/core/domain/tokens/operations'
 import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
+import { clamp } from 'lodash-es'
 
 export type CreateDashboard = (params: {
   name: string
@@ -150,6 +151,8 @@ export type GetPaginatedDashboards = (params: {
   filter?: {
     limit: number | null
     cursor: string | null
+    projectIds: string[] | null
+    search: string | null
   }
 }) => Promise<Collection<Dashboard>>
 
@@ -160,16 +163,26 @@ export const getPaginatedDashboardsFactory =
   }): GetPaginatedDashboards =>
   async ({ workspaceId, filter }) => {
     const cursor = filter?.cursor ? decodeIsoDateCursor(filter.cursor) : null
+    const projectIds = filter?.projectIds ?? []
+    const search = filter?.search ?? null
 
     const [items, totalCount] = await Promise.all([
       deps.listDashboards({
         workspaceId,
         filter: {
           updatedBefore: cursor,
-          limit: filter?.limit ?? null
+          limit: clamp(filter?.limit ?? 50, 1, 200),
+          projectIds,
+          search
         }
       }),
-      deps.countDashboards({ workspaceId })
+      deps.countDashboards({
+        workspaceId,
+        filter: {
+          projectIds,
+          search
+        }
+      })
     ])
 
     const lastItem = items.at(-1)

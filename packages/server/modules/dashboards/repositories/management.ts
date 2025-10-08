@@ -61,15 +61,33 @@ export const listDashboardsFactory =
       q.andWhere(Dashboards.col.updatedAt, '<', filter.updatedBefore)
     }
 
+    if (filter?.projectIds?.length) {
+      q.andWhereRaw('?? && ?', [Dashboards.col.projectIds, filter.projectIds])
+    }
+
+    if (filter?.search) {
+      q.andWhereILike(Dashboards.col.name, filter.search)
+    }
+
     return await q
   }
 
 export const countDashboardsFactory =
   (deps: { db: Knex }): CountDashboardRecords =>
-  async ({ workspaceId }) => {
-    const [{ count }] = await tables
-      .dashboards(deps.db)
-      .where(Dashboards.col.workspaceId, workspaceId)
-      .count()
+  async ({ workspaceId, filter = {} }) => {
+    const { projectIds, search } = filter
+
+    const q = tables.dashboards(deps.db).where(Dashboards.col.workspaceId, workspaceId)
+
+    if (projectIds?.length) {
+      q.andWhereRaw('?? && ?', [Dashboards.col.projectIds, projectIds])
+    }
+
+    if (search) {
+      q.andWhereILike(Dashboards.col.name, search)
+    }
+
+    const [{ count }] = await q.count()
+
     return Number.parseInt(count as string)
   }
