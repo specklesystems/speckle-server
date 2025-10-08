@@ -576,6 +576,10 @@ describe('Viewer Resources Collection Service', () => {
         })
       })
     }
+
+    describe('with preload resources', () => {
+      // TODO:
+    })
   })
 
   describe('isResourceItemEqual', () => {

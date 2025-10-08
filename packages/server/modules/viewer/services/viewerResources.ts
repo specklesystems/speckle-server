@@ -8,11 +8,7 @@ import type {
   GetSpecificBranchCommits
 } from '@/modules/core/domain/commits/operations'
 import type { GetStreamObjects } from '@/modules/core/domain/objects/operations'
-import type {
-  SavedViewsLoadSettings,
-  ViewerResourceGroup,
-  ViewerResourceItem
-} from '@/modules/core/graph/generated/graphql'
+import type { SavedViewsLoadSettings } from '@/modules/core/graph/generated/graphql'
 import type { CommitRecord } from '@/modules/core/helpers/types'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import type { DependenciesOf } from '@/modules/shared/helpers/factory'
@@ -24,6 +20,10 @@ import type {
   GetModelHomeSavedView,
   GetSavedView
 } from '@/modules/viewer/domain/operations/savedViews'
+import type {
+  ViewerResourceGroup,
+  ViewerResourceItem
+} from '@/modules/viewer/domain/types/resources'
 import type { SavedView } from '@/modules/viewer/domain/types/savedViews'
 import type { ExtendedViewerResourcesGraphQLReturn } from '@/modules/viewer/helpers/graphTypes'
 import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
@@ -166,7 +166,8 @@ const getVersionResourceGroupsIncludingAllVersionsFactory =
 
       results.push({
         identifier: modelResource.resource.toString(),
-        items
+        items,
+        isPreloadOnly: modelResource.isPreloadOnly
       })
     }
 
@@ -310,7 +311,7 @@ type GetAllModelsResourceGroupDeps = {
 
 const getAllModelsResourceGroupFactory =
   (deps: GetAllModelsResourceGroupDeps) =>
-  async (projectId: string): Promise<ViewerResourceGroup> => {
+  async (projectId: string, isPreloadOnly: boolean): Promise<ViewerResourceGroup> => {
     const allBranchCommits = await deps.getBranchLatestCommits(undefined, projectId)
     return {
       identifier: 'all',
@@ -320,7 +321,8 @@ const getAllModelsResourceGroupFactory =
           versionId: c.id,
           objectId: c.referencedObject
         })
-      )
+      ),
+      isPreloadOnly
     }
   }
 
@@ -350,7 +352,10 @@ const getVersionResourceGroupsFactory =
     } & VersionResourceGroupsInputs
   ) => {
     const allModelsGroup = params.allModelsResource
-      ? await getAllModelsResourceGroupFactory(deps)(projectId)
+      ? await getAllModelsResourceGroupFactory(deps)(
+          projectId,
+          params.allModelsResource.isPreloadOnly
+        )
       : null
 
     const groups = params.loadedVersionsOnly

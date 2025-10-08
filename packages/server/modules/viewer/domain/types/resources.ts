@@ -13,4 +13,6 @@ export type ViewerResourceGroup = {
   identifier: string
   /** Viewer resources that the identifier refers to */
   items: Array<ViewerResourceItem>
+  /** Indicates if the resource group is only for preloading, not actually rendering */
+  isPreloadOnly: boolean
 }
