@@ -24,3 +24,8 @@ export const useFeatureFlags = (): FeatureFlags => {
   const { public: featureFlags } = useRuntimeConfig()
   return featureFlags
 }
+
+export const useAdminSupportUIEnabled = (): boolean => {
+  const { FF_ADMIN_SUPPORT_UI } = useFeatureFlags()
+  return FF_ADMIN_SUPPORT_UI
+}

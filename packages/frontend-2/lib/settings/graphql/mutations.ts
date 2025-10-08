@@ -156,3 +156,11 @@ export const settingsBillingCancelCheckoutSessionMutation = graphql(`
     }
   }
 `)
+
+export const settingsSyncVersionMutation = graphql(`
+  mutation SettingsSyncVersion($input: AdminUpdateEmailVerificationInput!) {
+    admin {
+      updateEmailVerification(input: $input) {
+    }
+  }
+`)

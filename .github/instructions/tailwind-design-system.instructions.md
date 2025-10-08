@@ -1,0 +1,37 @@
+---
+description: Tailwind design system and @speckle/tailwind-theme usage
+applyTo: 'packages/frontend-2/**/*.vue,packages/frontend-2/**/*.tsx,packages/frontend-2/**/*.jsx,packages/ui-components/**/*.vue,packages/ui-components/**/*.tsx,packages/ui-components/**/*.jsx'
+---
+
+# Design System & Styling
+
+## Tailwind Theme (@speckle/tailwind-theme)
+
+- **Custom design system** with predefined colors, typography, and components
+- **CSS variables** for theme colors that support light/dark mode
+- **Import plugin** from `@speckle/tailwind-theme` in your Tailwind config
+- **Use semantic color classes** instead of arbitrary values
+
+## Dynamic Configuration Reference
+
+**For up-to-date class names and configuration, reference these files:**
+
+- **Color system & CSS variables**: `packages/tailwind-theme/src/plugin.ts`
+
+  - Contains `lightThemeVariables` and `darkThemeVariables` with all available color tokens
+  - Shows exact CSS variable names and their values
+  - Defines custom utility classes like `.text-fancy-gradient`, `.simple-scrollbar`, `.grow-textarea`
+
+- **Tailwind preset configuration**: `packages/tailwind-theme/src/preset.ts`
+  - Contains the complete Tailwind color mappings (foundation, foreground, primary, etc.)
+  - Defines typography settings and font configurations
+  - Shows available color variants and theme structure
+
+## Usage Guidelines
+
+- **Use semantic colors** instead of hardcoded hex values
+- **Reference the actual config files** above for current available classes
+- **Check plugin.ts** for custom utility classes and components
+
+@packages/tailwind-theme/src/plugin.ts
+@packages/tailwind-theme/src/preset.ts

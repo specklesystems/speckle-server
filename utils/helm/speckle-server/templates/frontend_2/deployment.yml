@@ -141,6 +141,8 @@ spec:
             value: {{ .Values.featureFlags.forceOnboarding | quote }}
           - name: NUXT_PUBLIC_FF_SAVED_VIEWS_ENABLED
             value: {{ .Values.featureFlags.savedViewsEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_ADMIN_SUPPORT_UI
+            value: {{ .Values.featureFlags.adminSupportUI | quote }}
           - name: NUXT_PUBLIC_FF_WORKSPACES_NEW_PLANS_ENABLED
             value: {{ .Values.featureFlags.workspacesNewPlanEnabled | quote }}
           - name: NUXT_PUBLIC_FF_NEXT_GEN_FILE_IMPORTER_ENABLED

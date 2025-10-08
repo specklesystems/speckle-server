@@ -1,6 +1,7 @@
 import {
   settingsUpdateWorkspaceMutation,
-  settingsAddWorkspaceDomainMutation
+  settingsAddWorkspaceDomainMutation,
+  settingsSyncVersionMutation
 } from '~/lib/settings/graphql/mutations'
 import { useMutation, useApolloClient } from '@vue/apollo-composable'
 import {
@@ -14,6 +15,7 @@ import type {
   AddDomainToWorkspaceInput
 } from '~~/lib/common/generated/gql/graphql'
 import type { Workspace } from '~/lib/common/generated/gql/graphql'
+import type { Nullable } from '@speckle/shared'
 
 export function useUpdateWorkspace() {
   const { mutate, loading } = useMutation(settingsUpdateWorkspaceMutation)
@@ -93,5 +95,21 @@ export function useAddWorkspaceDomain() {
         })
       }
     }
+  }
+}
+
+export function useSyncVersion() {
+  const { mutate, loading } = useMutation(settingsSyncVersionMutation)
+
+  return {
+    mutate: async (input: {
+      versionUrl: string
+      projectId: string
+      modelId?: Nullable<string>
+    }) => {
+      const result = await mutate({ input }).catch(convertThrowIntoFetchResult)
+      return result
+    },
+    loading
   }
 }
