@@ -145,6 +145,7 @@ function useViewerObjectAutoLoading() {
   ) => {
     const objectUrl = getObjectUrl(projectId.value, objectId)
 
+    // TODO: work will be here
     if (unload) {
       // viewer.unloadObject(objectUrl)
       renderer().enableRenderTree(objectUrl, false)

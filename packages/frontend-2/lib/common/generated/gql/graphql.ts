@@ -2629,6 +2629,7 @@ export type Project = {
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime']['output'];
   dashboardTokens: DashboardTokenCollection;
+  dashboards: DashboardCollection;
   description?: Maybe<Scalars['String']['output']>;
   /** Public project-level configuration for embedded viewer */
   embedOptions: ProjectEmbedOptions;
@@ -2744,6 +2745,13 @@ export type ProjectCommentThreadsArgs = {
 export type ProjectDashboardTokensArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type ProjectDashboardsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<ProjectDashboardsFilter>;
+  limit?: Scalars['Int']['input'];
 };
 
 
@@ -3062,6 +3070,10 @@ export type ProjectCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   visibility?: InputMaybe<ProjectVisibility>;
+};
+
+export type ProjectDashboardsFilter = {
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ProjectEmbedOptions = {
@@ -5652,6 +5664,7 @@ export type WorkspaceAutomateFunctionsArgs = {
 
 export type WorkspaceDashboardsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<WorkspaceDashboardsFilter>;
   limit?: Scalars['Int']['input'];
 };
 
@@ -5748,6 +5761,11 @@ export type WorkspaceCreationStateInput = {
   completed: Scalars['Boolean']['input'];
   state: Scalars['JSONObject']['input'];
   workspaceId: Scalars['ID']['input'];
+};
+
+export type WorkspaceDashboardsFilter = {
+  projectIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type WorkspaceDismissInput = {
@@ -10469,6 +10487,7 @@ export type ProjectFieldArgs = {
   commentThreads: ProjectCommentThreadsArgs,
   createdAt: {},
   dashboardTokens: ProjectDashboardTokensArgs,
+  dashboards: ProjectDashboardsArgs,
   description: {},
   embedOptions: {},
   embedTokens: ProjectEmbedTokensArgs,
