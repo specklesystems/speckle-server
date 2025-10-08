@@ -42,7 +42,7 @@ import type {
 } from '@/modules/core/domain/projects/operations'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
 import cryptoRandomString from 'crypto-random-string'
-import sanitizeHtml from 'sanitize-html'
+import { sanitizeString } from '@/modules/core/utils/sanitization'
 
 export const createStreamReturnRecordFactory =
   (deps: {
@@ -67,8 +67,8 @@ export const createStreamReturnRecordFactory =
     // we don't want the ownerId to be sanitized
     const projectInput = {
       ...params,
-      name: params.name ? sanitizeHtml(params.name) : null,
-      description: params.description ? sanitizeHtml(params.description) : null
+      name: sanitizeString(params.name),
+      description: sanitizeString(params.description)
     }
     const name = projectInput.name ? projectInput.name : generateProjectName()
     const description = projectInput.description || ''
@@ -200,8 +200,8 @@ export const updateStreamAndNotifyFactory =
 
     const sanitizedUserInput = {
       ...update,
-      name: update.name ? sanitizeHtml(update.name) : null,
-      description: update.description ? sanitizeHtml(update.description) : null
+      name: sanitizeString(update.name),
+      description: sanitizeString(update.description)
     }
 
     const newStream = await deps.updateStream({

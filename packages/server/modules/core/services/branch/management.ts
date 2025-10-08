@@ -28,7 +28,7 @@ import type {
 import type { GetStream } from '@/modules/core/domain/streams/operations'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ModelEvents } from '@/modules/core/domain/branches/events'
-import sanitizeHtml from 'sanitize-html'
+import { sanitizeString } from '@/modules/core/utils/sanitization'
 
 const isBranchCreateInput = (
   i: BranchCreateInput | CreateModelInput
@@ -43,8 +43,8 @@ export const createBranchAndNotifyFactory =
   async (dirtyInput: BranchCreateInput | CreateModelInput, creatorId: string) => {
     const input = {
       ...dirtyInput,
-      description: dirtyInput.description ? sanitizeHtml(dirtyInput.description) : null,
-      name: sanitizeHtml(dirtyInput.name)
+      description: sanitizeString(dirtyInput.description) || null,
+      name: sanitizeString(dirtyInput.name)
     }
     const streamId = isBranchCreateInput(input) ? input.streamId : input.projectId
     const existingBranch = await deps.getStreamBranchByName(streamId, input.name)
@@ -76,8 +76,8 @@ export const updateBranchAndNotifyFactory =
   async (dirtyInput: BranchUpdateInput | UpdateModelInput, userId: string) => {
     const input = {
       ...dirtyInput,
-      description: dirtyInput.description ? sanitizeHtml(dirtyInput.description) : null,
-      name: dirtyInput.name ? sanitizeHtml(dirtyInput.name) : null
+      description: sanitizeString(dirtyInput.description),
+      name: sanitizeString(dirtyInput.name)
     }
     const streamId = isBranchUpdateInput(input) ? input.streamId : input.projectId
     const existingBranch = await deps.getBranchById(input.id)

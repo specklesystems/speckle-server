@@ -61,7 +61,7 @@ import { isUngroupedGroup } from '@speckle/shared/saved-views'
 import { NotFoundError } from '@/modules/shared/errors'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { SavedViewsEvents } from '@/modules/viewer/domain/events/savedViews'
-import sanitizeHtml from 'sanitize-html'
+import { sanitizeString } from '@/modules/core/utils/sanitization'
 
 const formatIncomingScreenshotFactory =
   (deps: { downscaleScreenshotForThumbnail: DownscaleScreenshotForThumbnail }) =>
@@ -315,10 +315,9 @@ export const createSavedViewFactory =
     const { resourceIdString, projectId, position: positionInput } = dirtyInput
 
     const visibility = dirtyInput.visibility || SavedViewVisibility.public // default to public
-    let name = dirtyInput.name?.trim() ? sanitizeHtml(dirtyInput.name.trim()) : null
-    const description = dirtyInput.description?.trim()
-      ? sanitizeHtml(dirtyInput.description.trim())
-      : null
+    let name = sanitizeString(dirtyInput.name?.trim())
+    const description = sanitizeString(dirtyInput.description?.trim())
+
     const isHomeView = dirtyInput.isHomeView || false
 
     const input = { ...dirtyInput, name, description }
@@ -479,9 +478,7 @@ export const createSavedViewGroupFactory =
   }): CreateSavedViewGroup =>
   async ({ input: dirtyInput, authorId }) => {
     const { projectId, resourceIdString } = dirtyInput
-    let groupName = dirtyInput.groupName?.trim()
-      ? sanitizeHtml(dirtyInput.groupName.trim())
-      : undefined
+    let groupName = sanitizeString(dirtyInput.groupName?.trim())
     const input = { ...dirtyInput, groupName }
     if (!groupName) {
       const groupCount = await deps.getStoredViewGroupCount({ projectId })
@@ -651,10 +648,8 @@ export const updateSavedViewFactory =
 
     const input = {
       ...dirtyInput,
-      name: dirtyInput.name?.trim() ? sanitizeHtml(dirtyInput.name.trim()) : undefined,
-      description: dirtyInput.description?.trim()
-        ? sanitizeHtml(dirtyInput.description.trim())
-        : undefined
+      name: sanitizeString(dirtyInput.name?.trim()),
+      description: sanitizeString(dirtyInput.description?.trim())
     }
 
     // Check if view even exists
@@ -992,7 +987,7 @@ export const updateSavedViewGroupFactory =
 
     const input = {
       ...dirtyInput,
-      name: dirtyInput.name?.trim() ? sanitizeHtml(dirtyInput.name.trim()) : null
+      name: sanitizeString(dirtyInput.name?.trim())
     }
 
     if (isUngroupedGroup(groupId)) {
