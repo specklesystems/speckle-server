@@ -136,6 +136,8 @@ function useViewerObjectAutoLoading() {
 
   const consolidateProgressThorttled = useThrottleFn(consolidateProgressInternal, 250)
 
+  const renderer = () => viewer.getRenderer()
+
   const loadObject = async (
     objectId: string,
     unload?: boolean,
@@ -144,7 +146,13 @@ function useViewerObjectAutoLoading() {
     const objectUrl = getObjectUrl(projectId.value, objectId)
 
     if (unload) {
-      return viewer.unloadObject(objectUrl)
+      // viewer.unloadObject(objectUrl)
+      renderer().enableRenderTree(objectUrl, false)
+      return
+    }
+
+    if (renderer().isRenderTreeAvailable(objectUrl)) {
+      renderer().enableRenderTree(objectUrl, true)
     } else {
       const loader = new SpeckleLoader(
         viewer.getWorldTree(),
@@ -162,7 +170,7 @@ function useViewerObjectAutoLoading() {
         consolidateProgressInternal({ id, progress: 1 })
       })
 
-      return viewer.loadObject(loader, options?.zoomToObject)
+      viewer.loadObject(loader, options?.zoomToObject)
     }
   }
 

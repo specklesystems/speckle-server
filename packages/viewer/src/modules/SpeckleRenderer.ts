@@ -755,11 +755,19 @@ export default class SpeckleRenderer {
       this.rootGroup.add(renderTreeRoot)
     }
     this.needsRender = true
+    this.updateShadowCatcher(true)
     return true
   }
 
   public isRenderTreeEnabled(subtreeId: string): boolean {
     return this.rootGroup.getObjectByName(subtreeId) !== undefined
+  }
+
+  public isRenderTreeAvailable(subtreeId: string): boolean {
+    return (
+      this.rootGroup.getObjectByName(subtreeId) !== undefined ||
+      this.disabledRootGroup.getObjectByName(subtreeId) !== undefined
+    )
   }
 
   public removeRenderTree(subtreeId: string) {
