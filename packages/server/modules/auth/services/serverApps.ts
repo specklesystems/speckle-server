@@ -39,31 +39,29 @@ export const initializeDefaultAppsFactory =
   }): InitializeDefaultApps =>
   async () => {
     allScopes = await deps.getAllScopes()
+    const defaultApps = getDefaultApps()
+    for (const app of defaultApps) {
+      const scopes =
+        app?.scopes === 'all'
+          ? allScopes.map((s) => s.name)
+          : (app.scopes as ServerScope[])
 
-    await Promise.all(
-      getDefaultApps().map(async (app) => {
-        const scopes =
-          app?.scopes === 'all'
-            ? allScopes.map((s) => s.name)
-            : (app.scopes as ServerScope[])
-
-        const existingApp = await deps.getApp({ id: app.id })
-        if (existingApp) {
-          await deps.updateDefaultApp(
-            {
-              ...app,
-              scopes
-            },
-            existingApp
-          )
-        } else {
-          await deps.registerDefaultApp({
+      const existingApp = await deps.getApp({ id: app.id })
+      if (existingApp) {
+        await deps.updateDefaultApp(
+          {
             ...app,
             scopes
-          })
-        }
-      })
-    )
+          },
+          existingApp
+        )
+      } else {
+        await deps.registerDefaultApp({
+          ...app,
+          scopes
+        })
+      }
+    }
   }
 
 export const createAppTokenFromAccessCodeFactory =

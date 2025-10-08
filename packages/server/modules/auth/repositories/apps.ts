@@ -46,7 +46,7 @@ import {
 import type { ServerAppRecord, UserRecord } from '@/modules/core/helpers/types'
 import cryptoRandomString from 'crypto-random-string'
 import type { Knex } from 'knex'
-import { difference, omit } from 'lodash-es'
+import { chunk, difference, flatMap, omit } from 'lodash-es'
 import { AppCreateError } from '@/modules/auth/errors'
 import { UserInputError } from '@/modules/core/errors/userinput'
 
@@ -206,14 +206,12 @@ export const updateDefaultAppFactory =
   (deps: { db: Knex }): UpdateDefaultApp =>
   async (app, existingApp) => {
     const { db: knex } = deps
-
     const existingAppScopes = existingApp.scopes.map((s) => s.name)
 
     const newScopes = difference(app.scopes, existingAppScopes)
     const removedScopes = difference(existingAppScopes, app.scopes)
 
     let affectedTokenIds: string[] = []
-
     if (newScopes.length || removedScopes.length) {
       moduleLogger.info(`🔑 Updating default app ${app.name}`)
       affectedTokenIds = await tables
@@ -227,46 +225,44 @@ export const updateDefaultAppFactory =
       // add new scopes to the app
       if (newScopes.length)
         await tables
-          .serverAppsScopes(knex)
+          .serverAppsScopes(trx)
           .insert(newScopes.map((s) => ({ appId: app.id, scopeName: s })))
-          .transacting(trx)
 
       // remove scopes from the app
       if (removedScopes.length)
         await tables
-          .serverAppsScopes(knex)
+          .serverAppsScopes(trx)
           .where({ appId: app.id })
           .whereIn('scopeName', removedScopes)
           .delete()
-          .transacting(trx)
 
       //update user tokens with scope changes
-      if (affectedTokenIds.length)
-        await Promise.all(
-          affectedTokenIds.map(async (tokenId) => {
-            if (newScopes.length)
-              await tables
-                .tokenScopes(knex)
-                .insert(newScopes.map((s) => ({ tokenId, scopeName: s })))
-                .transacting(trx)
+      if (affectedTokenIds.length) {
+        const batches = chunk(affectedTokenIds, 5_000)
+        for (const batch of batches) {
+          if (newScopes.length) {
+            const insert = flatMap(batch, (tokenId) =>
+              newScopes.map((s) => ({ tokenId, scopeName: s }))
+            )
 
-            if (removedScopes.length)
-              await tables
-                .tokenScopes(knex)
-                .where({ tokenId })
-                .whereIn('scopeName', removedScopes)
-                .delete()
-                .transacting(trx)
-          })
-        )
+            await tables.tokenScopes(trx).insert(insert)
+          }
+
+          if (removedScopes.length)
+            await tables
+              .tokenScopes(trx)
+              .whereIn('tokenId', batch)
+              .whereIn('scopeName', removedScopes)
+              .delete()
+        }
+      }
 
       // not writing the redirect url to the DB anymore
       // it will be patched on an application level from the default app definitions
       await tables
-        .serverApps(knex)
+        .serverApps(trx)
         .where({ id: app.id })
         .update(omit(app, ['scopes', 'redirectUrl']))
-        .transacting(trx)
     })
   }
 
