@@ -48,7 +48,7 @@
               class="shrink-0 flex items-center gap-1"
             >
               <span>
-                {{ loadedVersion.sourceApplication }}
+                {{ formatSourceApplication(loadedVersion.sourceApplication) }}
               </span>
               <span class="shrink-0">·</span>
             </div>
@@ -214,6 +214,11 @@ const versions = computed(() => [
 const loadedVersion = computed(() =>
   versions.value.find((v) => v.id === props.versionId)
 )
+
+function formatSourceApplication(app?: string | null) {
+  if (!app) return ''
+  return app.charAt(0).toUpperCase() + app.slice(1)
+}
 
 const createdAt = computed(() => loadedVersion.value?.createdAt)
 const createdAtFormatted = computed(() => {

@@ -6,7 +6,7 @@
     />
     <div class="flex flex-col overflow-hidden text-xs select-none">
       <div class="inline-block rounded-full font-medium truncate">
-        {{ version.sourceApplication }}
+        {{ formatSourceApplication(version.sourceApplication) }}
       </div>
       <div class="truncate text-foreground opacity-80">
         {{ version.message || 'no message' }}
@@ -41,4 +41,9 @@ const createdAt = computed(() => {
     relative: formattedRelativeDate(props.version.createdAt, { capitalize: true })
   }
 })
+
+function formatSourceApplication(app?: string | null) {
+  if (!app) return ''
+  return app.charAt(0).toUpperCase() + app.slice(1)
+}
 </script>
