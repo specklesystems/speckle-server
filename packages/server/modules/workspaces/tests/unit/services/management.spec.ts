@@ -542,8 +542,8 @@ describe('Workspace services', () => {
 
       const workspaceInput = {
         name: '<script>alert("xss")</script>Safe workspace name',
-        description: '<script>alert("xss")</script>Safe workspace description',
-        logo: '<script>alert("xss")</script>data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII'
+        description: '<script>alert("xss")</script>Safe workspace description'
+        //logo is validated and has to be a base64 image, so does not require sanitisation
       }
 
       await updateWorkspaceFactory({
@@ -560,9 +560,6 @@ describe('Workspace services', () => {
       })
       expect(updatedWorkspace!.name).to.be.equal('Safe workspace name')
       expect(updatedWorkspace!.description).to.be.equal('Safe workspace description')
-      expect(updatedWorkspace!.logo).to.be.equal(
-        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII'
-      )
     })
   })
 })
