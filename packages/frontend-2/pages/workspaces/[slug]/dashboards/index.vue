@@ -9,7 +9,7 @@
     </Portal>
 
     <div>
-      <DashboardsList />
+      <DashboardsList :workspace-slug="activeWorkspaceSlug" />
     </div>
 
     <DashboardsCreateDialog
