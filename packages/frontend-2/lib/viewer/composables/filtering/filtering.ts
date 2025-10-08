@@ -86,6 +86,13 @@ export function useFilterUtilities(
     filters.isolatedObjectIds.value = []
   }
 
+  const resetHiddenAndIsolations = () => {
+    clearHighlightedObjects()
+    clearSelection()
+    filters.isolatedObjectIds.value = []
+    filters.hiddenObjectIds.value = []
+  }
+
   const hasAnyIsolationsApplied = computed(() => {
     return filters.isolatedObjectIds.value.length > 0
   })
@@ -110,6 +117,16 @@ export function useFilterUtilities(
     clearSelection()
     filters.hiddenObjectIds.value = difference(filters.hiddenObjectIds.value, objectIds)
   }
+
+  const resetHidden = () => {
+    clearHighlightedObjects()
+    clearSelection()
+    filters.hiddenObjectIds.value = []
+  }
+
+  const hasAnyHiddenApplied = computed(() => {
+    return filters.hiddenObjectIds.value.length > 0
+  })
 
   /**
    * Gets ALL values for a property using pre-computed data (used for filtering logic)
@@ -928,9 +945,12 @@ export function useFilterUtilities(
     isolateObjects,
     unIsolateObjects,
     resetIsolations,
+    resetHiddenAndIsolations,
     hideObjects,
     showObjects,
+    resetHidden,
     hasAnyIsolationsApplied,
+    hasAnyHiddenApplied,
     filters,
     addActiveFilter,
     updateFilterProperty,
