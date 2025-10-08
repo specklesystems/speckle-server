@@ -7,7 +7,8 @@ import {
   getFeatureFlag,
   ObjectLoader2Flags,
   ObjectLoader2,
-  ObjectLoader2Factory
+  ObjectLoader2Factory,
+  ObjectAttributeMask
 } from '@speckle/objectloader2'
 import { TIME_MS } from '@speckle/shared'
 
@@ -33,7 +34,8 @@ export class SpeckleLoader extends Loader {
     authToken?: string,
     enableCaching?: boolean,
     resourceData?: unknown,
-    logger?: (message?: string, ...args: unknown[]) => void
+    logger?: (message?: string, ...args: unknown[]) => void,
+    attributeMask?: ObjectAttributeMask
   ) {
     super(resource, resourceData)
     this.tree = targetTree
@@ -43,7 +45,8 @@ export class SpeckleLoader extends Loader {
         resource,
         authToken,
         enableCaching,
-        resourceData
+        resourceData,
+        attributeMask
       )
     } catch (e) {
       Logger.error(e)
@@ -57,7 +60,8 @@ export class SpeckleLoader extends Loader {
     resource: string,
     authToken?: string,
     _enableCaching?: boolean,
-    resourceData?: unknown
+    resourceData?: unknown,
+    attributeMask?: ObjectAttributeMask
   ): ObjectLoader2 {
     resourceData
     let token = undefined
@@ -92,7 +96,8 @@ export class SpeckleLoader extends Loader {
       serverUrl,
       streamId,
       objectId,
-      token
+      token,
+      attributeMask
     })
   }
 
