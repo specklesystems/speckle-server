@@ -220,7 +220,7 @@ const getVersionResourceGroupsLoadedVersionsOnlyFactory =
     const modelLatestVersions = keyBy(latestVersions, 'branchId')
 
     for (const folderResource of folderResources) {
-      const prefix = folderResource.resource.folderName
+      const prefix = folderResource.resource.folderName.toLowerCase() // case insensitive model names
       const isPreloadOnly = folderResource.isPreloadOnly
 
       const folderModels = foldersModels.filter((m) =>

@@ -578,7 +578,385 @@ describe('Viewer Resources Collection Service', () => {
     }
 
     describe('with preload resources', () => {
-      // TODO:
+      it('adds preload resources with isPreloadOnly=true for model resources', async () => {
+        const sut = buildSUT()
+
+        // Use first model as main resource, second model as preload
+        const mainModel = myModels[0]
+        const preloadModel = myModels[1]
+
+        const resourceIds = resourceBuilder().addModel(mainModel.id)
+        const preloadResourceIds = resourceBuilder().addModel(preloadModel.id)
+
+        const { groups } = await sut({
+          projectId: myProject.id,
+          resourceIdString: resourceIds.toString(),
+          preloadResourceIdString: preloadResourceIds.toString(),
+          loadedVersionsOnly: true
+        })
+
+        expect(groups).to.have.length(2)
+
+        // Main resource should have isPreloadOnly=false
+        const mainGroup = groups.find((g) => g.identifier.includes(mainModel.id))
+        expect(mainGroup).to.be.ok
+        expect(mainGroup!.isPreloadOnly).to.be.false
+        expect(mainGroup!.items).to.have.length(1)
+        expect(mainGroup!.items[0].modelId).to.equal(mainModel.id)
+
+        // Preload resource should have isPreloadOnly=true
+        const preloadGroup = groups.find((g) => g.identifier.includes(preloadModel.id))
+        expect(preloadGroup).to.be.ok
+        expect(preloadGroup!.isPreloadOnly).to.be.true
+        expect(preloadGroup!.items).to.have.length(1)
+        expect(preloadGroup!.items[0].modelId).to.equal(preloadModel.id)
+      })
+
+      it('adds preload resources with isPreloadOnly=true for object resources', async () => {
+        const sut = buildSUT()
+
+        const mainVersion = getModelVersions(myModels[0].id)[0]
+        const preloadVersion = getModelVersions(myModels[1].id)[0]
+
+        const resourceIds = resourceBuilder().addObject(mainVersion.objectId)
+        const preloadResourceIds = resourceBuilder().addObject(preloadVersion.objectId)
+
+        const { groups } = await sut({
+          projectId: myProject.id,
+          resourceIdString: resourceIds.toString(),
+          preloadResourceIdString: preloadResourceIds.toString()
+        })
+
+        expect(groups).to.have.length(2)
+
+        // Main resource should have isPreloadOnly=false
+        const mainGroup = groups.find((g) => g.identifier === mainVersion.objectId)
+        expect(mainGroup).to.be.ok
+        expect(mainGroup!.isPreloadOnly).to.be.false
+        expect(mainGroup!.items).to.have.length(1)
+        expect(mainGroup!.items[0].objectId).to.equal(mainVersion.objectId)
+
+        // Preload resource should have isPreloadOnly=true
+        const preloadGroup = groups.find(
+          (g) => g.identifier === preloadVersion.objectId
+        )
+        expect(preloadGroup).to.be.ok
+        expect(preloadGroup!.isPreloadOnly).to.be.true
+        expect(preloadGroup!.items).to.have.length(1)
+        expect(preloadGroup!.items[0].objectId).to.equal(preloadVersion.objectId)
+      })
+
+      it('skips duplicate resources from preload when they exist in main resourceIdString', async () => {
+        const sut = buildSUT()
+
+        const model = myModels[0]
+        const otherModel = myModels[1]
+
+        const resourceIds = resourceBuilder().addModel(model.id)
+        const preloadResourceIds = resourceBuilder()
+          .addModel(model.id) // duplicate
+          .addModel(otherModel.id) // unique
+
+        const { groups } = await sut({
+          projectId: myProject.id,
+          resourceIdString: resourceIds.toString(),
+          preloadResourceIdString: preloadResourceIds.toString(),
+          loadedVersionsOnly: true
+        })
+
+        expect(groups).to.have.length(2)
+
+        // The duplicate model should only appear once with isPreloadOnly=false
+        const mainGroup = groups.find((g) => g.identifier.includes(model.id))
+        expect(mainGroup).to.be.ok
+        expect(mainGroup!.isPreloadOnly).to.be.false
+
+        // The unique preload model should have isPreloadOnly=true
+        const preloadGroup = groups.find((g) => g.identifier.includes(otherModel.id))
+        expect(preloadGroup).to.be.ok
+        expect(preloadGroup!.isPreloadOnly).to.be.true
+      })
+
+      it('handles mixed resource types in preload', async () => {
+        const sut = buildSUT()
+
+        const mainModel = myModels[0]
+        const preloadModel = myModels[1]
+        const preloadVersion = getModelVersions(myModels[2].id)[0]
+
+        const resourceIds = resourceBuilder().addModel(mainModel.id)
+        const preloadResourceIds = resourceBuilder()
+          .addModel(preloadModel.id)
+          .addObject(preloadVersion.objectId)
+
+        const { groups } = await sut({
+          projectId: myProject.id,
+          resourceIdString: resourceIds.toString(),
+          preloadResourceIdString: preloadResourceIds.toString(),
+          loadedVersionsOnly: true
+        })
+
+        expect(groups).to.have.length(3)
+
+        // Main model resource
+        const mainGroup = groups.find((g) => g.identifier.includes(mainModel.id))
+        expect(mainGroup).to.be.ok
+        expect(mainGroup!.isPreloadOnly).to.be.false
+
+        // Preload model resource
+        const preloadModelGroup = groups.find((g) =>
+          g.identifier.includes(preloadModel.id)
+        )
+        expect(preloadModelGroup).to.be.ok
+        expect(preloadModelGroup!.isPreloadOnly).to.be.true
+
+        // Preload object resource
+        const preloadObjectGroup = groups.find(
+          (g) => g.identifier === preloadVersion.objectId
+        )
+        expect(preloadObjectGroup).to.be.ok
+        expect(preloadObjectGroup!.isPreloadOnly).to.be.true
+        expect(preloadObjectGroup!.items[0].objectId).to.equal(preloadVersion.objectId)
+      })
+
+      it('works with all models resource in preload', async () => {
+        const sut = buildSUT()
+
+        const mainModel = myModels[0]
+
+        const resourceIds = resourceBuilder().addModel(mainModel.id)
+        const preloadResourceIds = resourceBuilder().addAllModels()
+
+        const { groups } = await sut({
+          projectId: myProject.id,
+          resourceIdString: resourceIds.toString(),
+          preloadResourceIdString: preloadResourceIds.toString(),
+          loadedVersionsOnly: true
+        })
+
+        // Should have one group for main model + one for "all" preload
+        expect(groups).to.have.length(2)
+
+        // Main model should have isPreloadOnly=false
+        const mainGroup = groups.find((g) => g.identifier.includes(mainModel.id))
+        expect(mainGroup).to.be.ok
+        expect(mainGroup!.isPreloadOnly).to.be.false
+
+        // All models group should have isPreloadOnly=true
+        const allGroup = groups.find((g) => g.identifier === 'all')
+        expect(allGroup).to.be.ok
+        expect(allGroup!.isPreloadOnly).to.be.true
+        expect(allGroup!.items).to.have.length(myModels.length) // All models
+      })
+
+      it('handles empty preloadResourceIdString gracefully', async () => {
+        const sut = buildSUT()
+
+        const model = myModels[0]
+        const resourceIds = resourceBuilder().addModel(model.id)
+
+        const { groups } = await sut({
+          projectId: myProject.id,
+          resourceIdString: resourceIds.toString(),
+          preloadResourceIdString: '',
+          loadedVersionsOnly: true
+        })
+
+        expect(groups).to.have.length(1)
+        const group = groups[0]
+        expect(group.isPreloadOnly).to.be.false
+        expect(group.identifier).to.include(model.id)
+      })
+
+      it('handles undefined preloadResourceIdString gracefully', async () => {
+        const sut = buildSUT()
+
+        const model = myModels[0]
+        const resourceIds = resourceBuilder().addModel(model.id)
+
+        const { groups } = await sut({
+          projectId: myProject.id,
+          resourceIdString: resourceIds.toString(),
+          preloadResourceIdString: undefined,
+          loadedVersionsOnly: true
+        })
+
+        expect(groups).to.have.length(1)
+        const group = groups[0]
+        expect(group.isPreloadOnly).to.be.false
+        expect(group.identifier).to.include(model.id)
+      })
+
+      it('works with specific version IDs in preload resources', async () => {
+        const sut = buildSUT()
+
+        const mainModel = myModels[0]
+        const preloadModel = myModels[1]
+        const preloadVersion = getModelVersions(preloadModel.id)[1] // specific version
+
+        const resourceIds = resourceBuilder().addModel(mainModel.id)
+        const preloadResourceIds = resourceBuilder().addModel(
+          preloadModel.id,
+          preloadVersion.id
+        )
+
+        const { groups } = await sut({
+          projectId: myProject.id,
+          resourceIdString: resourceIds.toString(),
+          preloadResourceIdString: preloadResourceIds.toString(),
+          loadedVersionsOnly: true
+        })
+
+        expect(groups).to.have.length(2)
+
+        // Preload group should contain the specific version
+        const preloadGroup = groups.find((g) => g.identifier.includes(preloadModel.id))
+        expect(preloadGroup).to.be.ok
+        expect(preloadGroup!.isPreloadOnly).to.be.true
+        expect(preloadGroup!.items).to.have.length(1)
+        expect(preloadGroup!.items[0].versionId).to.equal(preloadVersion.id)
+        expect(preloadGroup!.items[0].objectId).to.equal(preloadVersion.objectId)
+      })
+
+      it('handles complex duplicate scenarios with overlapping model/object references', async () => {
+        const sut = buildSUT()
+
+        const model = myModels[0]
+        const version = getModelVersions(model.id)[0]
+
+        // Main: model resource, Preload: same model + object from same model
+        const resourceIds = resourceBuilder().addModel(model.id)
+        const preloadResourceIds = resourceBuilder()
+          .addModel(model.id) // duplicate with main
+          .addObject(version.objectId) // object from same model
+
+        const { groups } = await sut({
+          projectId: myProject.id,
+          resourceIdString: resourceIds.toString(),
+          preloadResourceIdString: preloadResourceIds.toString(),
+          loadedVersionsOnly: true
+        })
+
+        // Should have groups for: model (non-preload) + object (preload)
+        expect(groups).to.have.length(2)
+
+        // Model group should not be preload-only (came from main resourceIdString)
+        const modelGroup = groups.find((g) => g.identifier.includes(model.id))
+        expect(modelGroup).to.be.ok
+        expect(modelGroup!.isPreloadOnly).to.be.false
+
+        // Object group should be preload-only
+        const objectGroup = groups.find((g) => g.identifier === version.objectId)
+        expect(objectGroup).to.be.ok
+        expect(objectGroup!.isPreloadOnly).to.be.true
+        expect(objectGroup!.items[0].objectId).to.equal(version.objectId)
+      })
+
+      it('works with folder resources in preload', async () => {
+        const sut = buildSUT()
+
+        const mainModel = myModels[0]
+
+        const resourceIds = resourceBuilder().addModel(mainModel.id)
+        const preloadResourceIds = resourceBuilder().addModelFolder('Model')
+
+        const { groups } = await sut({
+          projectId: myProject.id,
+          resourceIdString: resourceIds.toString(),
+          preloadResourceIdString: preloadResourceIds.toString(),
+          loadedVersionsOnly: true
+        })
+
+        // Should have main model + preload folder (which contains multiple models)
+        expect(groups).to.have.length.greaterThan(1)
+
+        // Main model should not be preload-only
+        const mainGroup = groups.find((g) => g.identifier.includes(mainModel.id))
+        expect(mainGroup).to.be.ok
+        expect(mainGroup!.isPreloadOnly).to.be.false
+
+        // Folder resource should be preload-only
+        const folderGroup = groups.find((g) => g.identifier.includes('Model'))
+        expect(folderGroup).to.be.ok
+        expect(folderGroup!.isPreloadOnly).to.be.true
+      })
+
+      it('handles case where all preload resources are duplicates', async () => {
+        const sut = buildSUT()
+
+        const model1 = myModels[0]
+        const model2 = myModels[1]
+
+        const resourceIds = resourceBuilder().addModel(model1.id).addModel(model2.id)
+        const preloadResourceIds = resourceBuilder()
+          .addModel(model1.id) // duplicate
+          .addModel(model2.id) // duplicate
+
+        const { groups } = await sut({
+          projectId: myProject.id,
+          resourceIdString: resourceIds.toString(),
+          preloadResourceIdString: preloadResourceIds.toString(),
+          loadedVersionsOnly: true
+        })
+
+        // Should only have 2 groups (both main resources, no preload-only ones)
+        expect(groups).to.have.length(2)
+
+        // Both should be non-preload
+        for (const group of groups) {
+          expect(group.isPreloadOnly).to.be.false
+        }
+      })
+
+      it('preserves isPreloadOnly flag through different loadedVersionsOnly settings', async () => {
+        const sut = buildSUT()
+
+        const mainModel = myModels[0]
+        const preloadModel = myModels[1]
+
+        const resourceIds = resourceBuilder().addModel(mainModel.id)
+        const preloadResourceIds = resourceBuilder().addModel(preloadModel.id)
+
+        // Test with loadedVersionsOnly=false
+        const { groups: groupsAllVersions } = await sut({
+          projectId: myProject.id,
+          resourceIdString: resourceIds.toString(),
+          preloadResourceIdString: preloadResourceIds.toString(),
+          loadedVersionsOnly: false
+        })
+
+        expect(groupsAllVersions).to.have.length(2)
+
+        const mainGroupAllVersions = groupsAllVersions.find((g) =>
+          g.identifier.includes(mainModel.id)
+        )
+        const preloadGroupAllVersions = groupsAllVersions.find((g) =>
+          g.identifier.includes(preloadModel.id)
+        )
+
+        expect(mainGroupAllVersions!.isPreloadOnly).to.be.false
+        expect(preloadGroupAllVersions!.isPreloadOnly).to.be.true
+
+        // Test with loadedVersionsOnly=true
+        const { groups: groupsLoadedOnly } = await sut({
+          projectId: myProject.id,
+          resourceIdString: resourceIds.toString(),
+          preloadResourceIdString: preloadResourceIds.toString(),
+          loadedVersionsOnly: true
+        })
+
+        expect(groupsLoadedOnly).to.have.length(2)
+
+        const mainGroupLoadedOnly = groupsLoadedOnly.find((g) =>
+          g.identifier.includes(mainModel.id)
+        )
+        const preloadGroupLoadedOnly = groupsLoadedOnly.find((g) =>
+          g.identifier.includes(preloadModel.id)
+        )
+
+        expect(mainGroupLoadedOnly!.isPreloadOnly).to.be.false
+        expect(preloadGroupLoadedOnly!.isPreloadOnly).to.be.true
+      })
     })
   })
 
