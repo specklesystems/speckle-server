@@ -46,6 +46,12 @@
       v-model:open="showGroupDeleteDialog"
       :group="groupBeingDeleted"
     />
+    <ProjectModelPageDialogEmbed
+      v-if="mainProject"
+      v-model:open="showViewEmbedDialog"
+      :view="viewBeingEmbedded"
+      :project="mainProject"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -53,6 +59,7 @@ import { omit } from 'lodash-es'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
+  FormSelectSavedView_SavedViewFragment,
   UseUpdateSavedViewGroup_SavedViewGroupFragment,
   ViewerSavedViewsPanelViewDeleteDialog_SavedViewFragment,
   ViewerSavedViewsPanelViewEditDialog_SavedViewFragment,
@@ -99,7 +106,8 @@ const props = defineProps<{
 const {
   projectId,
   resources: {
-    request: { resourceIdString }
+    request: { resourceIdString },
+    response: { project: mainProject }
   },
   ui: {
     savedViews: { openedGroupState }
@@ -113,6 +121,7 @@ const viewBeingDeleted = ref<ViewerSavedViewsPanelViewDeleteDialog_SavedViewFrag
 const groupBeingDeleted =
   ref<ViewerSavedViewsPanelViewsGroupDeleteDialog_SavedViewGroupFragment>()
 const groupBeingRenamed = ref<UseUpdateSavedViewGroup_SavedViewGroupFragment>()
+const viewBeingEmbedded = ref<FormSelectSavedView_SavedViewFragment>()
 
 const {
   identifier,
@@ -190,6 +199,15 @@ const showGroupDeleteDialog = computed({
   }
 })
 
+const showViewEmbedDialog = computed({
+  get: () => !!viewBeingEmbedded.value,
+  set: (value) => {
+    if (!value) {
+      viewBeingEmbedded.value = undefined
+    }
+  }
+})
+
 const isGroupInRenameMode = (
   group: ViewerSavedViewsPanelViewsGroup_SavedViewGroupFragment
 ) => {
@@ -235,6 +253,10 @@ eventBus.on(ViewerEventBusKeys.MarkSavedViewForEdit, ({ type, view }) => {
   } else if (type === 'delete') {
     viewBeingDeleted.value = view
   }
+})
+
+eventBus.on(ViewerEventBusKeys.MarkSavedViewForEmbed, ({ view }) => {
+  viewBeingEmbedded.value = view
 })
 
 const onMoveSuccess = (groupId: string) => {

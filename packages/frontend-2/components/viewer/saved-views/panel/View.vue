@@ -138,7 +138,8 @@ const MenuItems = StringEnum([
   'ChangeVisibility',
   'ReplaceView',
   'MoveToGroup',
-  'SetAsHomeView'
+  'SetAsHomeView',
+  'Embed'
 ])
 type MenuItems = StringEnumValues<typeof MenuItems>
 
@@ -193,7 +194,8 @@ const {
   isHomeView,
   canToggleVisibility,
   canMove,
-  canOpenEditDialog
+  canOpenEditDialog,
+  canEmbed
 } = useSavedViewValidationHelpers({
   view: computed(() => props.view)
 })
@@ -265,6 +267,12 @@ const menuItems = computed((): LayoutMenuItem<MenuItems>[][] => [
       title: isOnlyVisibleToMe.value ? 'Make view shared' : 'Make view private',
       disabled: !canToggleVisibility.value.authorized,
       disabledTooltip: canToggleVisibility.value.message
+    },
+    {
+      id: MenuItems.Embed,
+      title: 'Embed view',
+      disabled: !canEmbed.value?.authorized,
+      disabledTooltip: canEmbed.value?.errorMessage
     }
   ],
   [
@@ -358,6 +366,11 @@ const onActionChosen = async (item: LayoutMenuItem<MenuItems>) => {
           projectId: props.view.projectId,
           isHomeView: !isHomeView.value
         }
+      })
+      break
+    case MenuItems.Embed:
+      eventBus.emit(ViewerEventBusKeys.MarkSavedViewForEmbed, {
+        view: props.view
       })
       break
     default:

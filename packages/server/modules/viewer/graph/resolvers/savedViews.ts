@@ -28,6 +28,8 @@ import {
   getNewViewSpecificPositionFactory,
   getProjectSavedViewGroupsPageItemsFactory,
   getProjectSavedViewGroupsTotalCountFactory,
+  getProjectSavedViewsPageItemsFactory,
+  getProjectSavedViewsTotalCountFactory,
   getStoredViewCountFactory,
   getStoredViewGroupCountFactory,
   getUngroupedSavedViewsGroupFactory,
@@ -46,6 +48,7 @@ import {
   deleteSavedViewGroupFactory,
   getGroupSavedViewsFactory,
   getProjectSavedViewGroupsFactory,
+  getProjectSavedViewsFactory,
   updateSavedViewFactory,
   updateSavedViewGroupFactory
 } from '@/modules/viewer/services/savedViewsManagement'
@@ -89,6 +92,42 @@ const buildGetViewerResourceGroups = (params: {
 
 const resolvers: Resolvers = {
   Project: {
+    async savedViews(parent, args, ctx) {
+      const { input } = args
+
+      const projectDb = await getProjectDbClient({ projectId: parent.id })
+      const getProjectSavedViews = getProjectSavedViewsFactory({
+        getProjectSavedViewsPageItems: getProjectSavedViewsPageItemsFactory({
+          db: projectDb
+        }),
+        getProjectSavedViewsTotalCount: getProjectSavedViewsTotalCountFactory({
+          db: projectDb
+        }),
+        getViewerResourceGroups: buildGetViewerResourceGroups({
+          projectDb,
+          loaders: ctx.loaders
+        })
+      })
+
+      const allowedSortBy = <const>['createdAt', 'name', 'updatedAt']
+      const sortBy = input.sortBy
+        ? allowedSortBy.find((s) => s === input.sortBy)
+        : undefined
+
+      return await getProjectSavedViews({
+        projectId: parent.id,
+        userId: ctx.userId,
+        resourceIdString: input.resourceIdString,
+        onlyVisibility: input.onlyVisibility,
+        search: input.search,
+        limit: input.limit,
+        cursor: input.cursor,
+        sortDirection: input.sortDirection
+          ? mapGqlToDbSortDirection(input.sortDirection)
+          : undefined,
+        sortBy
+      })
+    },
     async savedViewGroups(parent, args, ctx) {
       const { input } = args
 
