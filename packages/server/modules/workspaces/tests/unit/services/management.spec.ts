@@ -251,7 +251,7 @@ describe('Workspace services', () => {
           ...workspaceInput,
           name: '<script>alert("xss")</script>Safe workspace name',
           description: '<script>alert("xss")</script>Safe description',
-          logo: '<script>alert("xss")</script>Safe logo'
+          logo: '<script>alert("xss")</script>data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII'
         },
         userResourceAccessLimits: null
       })
@@ -261,7 +261,9 @@ describe('Workspace services', () => {
       expect(workspace.description).to.equal('Safe description')
       expect(context.storedWorkspaces[0].description).to.equal('Safe description')
       expect(workspace.logo).to.equal('Safe logo')
-      expect(context.storedWorkspaces[0].logo).to.equal('Safe logo')
+      expect(context.storedWorkspaces[0].logo).to.equal(
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII'
+      )
     })
   })
   describe('updateWorkspaceFactory creates a function, that', () => {
@@ -539,7 +541,7 @@ describe('Workspace services', () => {
       const workspaceInput = {
         name: '<script>alert("xss")</script>Safe workspace name',
         description: '<script>alert("xss")</script>Safe workspace description',
-        logo: '<script>alert("xss")</script>Safe workspace logo'
+        logo: '<script>alert("xss")</script>data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII'
       }
 
       await updateWorkspaceFactory({
@@ -556,7 +558,9 @@ describe('Workspace services', () => {
       })
       expect(updatedWorkspace!.name).to.be.equal('Safe workspace name')
       expect(updatedWorkspace!.description).to.be.equal('Safe workspace description')
-      expect(updatedWorkspace!.logo).to.be.equal('Safe workspace logo')
+      expect(updatedWorkspace!.logo).to.be.equal(
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII'
+      )
     })
   })
 })
