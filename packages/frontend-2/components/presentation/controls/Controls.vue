@@ -35,21 +35,47 @@ defineProps<{
   hideUi?: boolean
 }>()
 
+const route = useRoute()
 const {
   ui: { slideIdx: currentVisibleIndex, slideCount },
   viewer: { hasViewChanged }
 } = useInjectedPresentationState()
 const { resetView } = useResetViewUtils()
 
-const disablePrevious = computed(() => currentVisibleIndex.value === 0)
-const disableNext = computed(() =>
-  slideCount.value ? currentVisibleIndex.value === slideCount.value - 1 : false
-)
+const isLoopEnabled = computed(() => route.query.loop === 'true')
+
+const disablePrevious = computed(() => {
+  if (isLoopEnabled.value) return false
+  return currentVisibleIndex.value === 0
+})
+
+const disableNext = computed(() => {
+  if (isLoopEnabled.value) return false
+  return slideCount.value ? currentVisibleIndex.value === slideCount.value - 1 : false
+})
+
 const onPrevious = () => {
-  currentVisibleIndex.value = clamp(currentVisibleIndex.value - 1, 0, slideCount.value)
+  if (isLoopEnabled.value && currentVisibleIndex.value === 0) {
+    currentVisibleIndex.value = slideCount.value - 1
+  } else {
+    currentVisibleIndex.value = clamp(
+      currentVisibleIndex.value - 1,
+      0,
+      slideCount.value
+    )
+  }
 }
+
 const onNext = () => {
-  currentVisibleIndex.value = clamp(currentVisibleIndex.value + 1, 0, slideCount.value)
+  if (isLoopEnabled.value && currentVisibleIndex.value === slideCount.value - 1) {
+    currentVisibleIndex.value = 0
+  } else {
+    currentVisibleIndex.value = clamp(
+      currentVisibleIndex.value + 1,
+      0,
+      slideCount.value
+    )
+  }
 }
 
 // Prevent viewer from moving when using arrow keys
