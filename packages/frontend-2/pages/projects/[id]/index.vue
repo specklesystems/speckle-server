@@ -99,6 +99,11 @@ graphql(`
     }
     workspace {
       id
+      permissions {
+        canListDashboards {
+          ...FullPermissionCheckResult
+        }
+      }
     }
     permissions {
       canReadSettings {
@@ -178,7 +183,9 @@ const projectName = computed(() =>
 )
 const modelCount = computed(() => project.value?.modelCount.totalCount)
 const commentCount = computed(() => project.value?.commentThreadCount.totalCount)
-
+const canListDashboards = computed(
+  () => project.value?.workspace?.permissions.canListDashboards.authorized
+)
 const canReadSettings = computed(() => project.value?.permissions.canReadSettings)
 
 const canUpdate = computed(() => project.value?.permissions.canUpdate)
@@ -267,7 +274,7 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
     })
   }
 
-  if (project.value?.hasAccessToDashboards) {
+  if (project.value?.hasAccessToDashboards && canListDashboards.value) {
     items.push({
       title: 'Dashboards',
       id: 'dashboards'
