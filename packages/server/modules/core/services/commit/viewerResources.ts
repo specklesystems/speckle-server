@@ -61,7 +61,10 @@ export const getViewerResourcesFromLegacyIdentifiersFactory =
 
     const [objectResourceGroups, commitsWithBranchIds, commentResources] =
       await Promise.all([
-        getObjectResourceGroupsFactory(deps)(projectId, objectResources),
+        getObjectResourceGroupsFactory(deps)(
+          projectId,
+          objectResources.map((r) => ({ resource: r, isPreloadOnly: false }))
+        ),
         deps.getCommitsAndTheirBranchIds(commitIds),
         deps.getViewerResourcesForComments(projectId, commentIds) // recursively getting parent comment resources
       ])

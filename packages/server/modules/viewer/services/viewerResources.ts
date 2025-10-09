@@ -334,6 +334,10 @@ type VersionResourceGroupsInputs = SpecificVersionResourceGroupsInputs & {
   allModelsResource?: ResourceWithMetadata<ViewerAllModelsResource>
 }
 
+type FullResourceGroupsInputs = VersionResourceGroupsInputs & {
+  objectResources: ResourceWithMetadata<ViewerObjectResource>[]
+}
+
 /**
  * Version resources can be resolved 2 ways:
  * * Default - Specific version IDs referenced in identifiers are ignored and the identifiers always
@@ -532,6 +536,67 @@ const adjustResourceIdStringWithSavedViewSettingsFactory =
     }
   }
 
+const resolveFullResourceGroupsInputsFactory =
+  () =>
+  (params: {
+    resourceIdString: string
+    preloadResourceIdString?: MaybeNullOrUndefined<string>
+  }): FullResourceGroupsInputs => {
+    const preloadResources = resourceBuilder().addResources(
+      params.preloadResourceIdString || ''
+    )
+    const resources = resourceBuilder().addResources(params.resourceIdString)
+    const uniquePreloadResources = resources.difference(preloadResources)
+
+    const buildExtendedResources = (
+      resources: ViewerResource[],
+      isPreloadOnly: boolean
+    ) => {
+      const allModelsResource = resources.find(isAllModelsResource)
+      const objectResources = resources.filter(isObjectResource)
+      const modelResources = resources.filter(isModelResource)
+      const folderResources = resources.filter(isModelFolderResource)
+
+      return {
+        allModelsResource: allModelsResource
+          ? {
+              resource: allModelsResource,
+              isPreloadOnly
+            }
+          : undefined,
+        objectResources: objectResources.map((r) => ({ resource: r, isPreloadOnly })),
+        modelResources: modelResources.map((r) => ({ resource: r, isPreloadOnly })),
+        folderResources: folderResources.map((r) => ({ resource: r, isPreloadOnly }))
+      }
+    }
+
+    // Build extended versions & merge
+    const typedResources = buildExtendedResources(resources.toResources(), false)
+    const typedPreloadResources = buildExtendedResources(uniquePreloadResources, true)
+
+    const allModelsResource =
+      typedResources.allModelsResource || typedPreloadResources.allModelsResource
+    const objectResources = [
+      ...typedResources.objectResources,
+      ...typedPreloadResources.objectResources
+    ]
+    const modelResources = [
+      ...typedResources.modelResources,
+      ...typedPreloadResources.modelResources
+    ]
+    const folderResources = [
+      ...typedResources.folderResources,
+      ...typedPreloadResources.folderResources
+    ]
+
+    return {
+      allModelsResource,
+      objectResources,
+      modelResources,
+      folderResources
+    }
+  }
+
 /**
  * Validate requested resource identifiers and build viewer resource groups & items with
  * the metadata that the viewer needs to work with these
@@ -578,61 +643,16 @@ export const getViewerResourceGroupsFactory =
     // If empty resource ids, return empty result
     if (!resourceIdString?.trim().length) return ret
 
-    // Combine w/ preloadables (TODO: extrat to fn)
-    const preloadResources = resourceBuilder().addResources(
-      params.preloadResourceIdString || ''
-    )
-    const resources = resourceBuilder().addResources(resourceIdString)
-    const uniquePreloadResources = resources.difference(preloadResources)
-
-    const buildExtendedResources = (
-      resources: ViewerResource[],
-      isPreloadOnly: boolean
-    ) => {
-      const allModelsResource = resources.find(isAllModelsResource)
-      const objectResources = resources.filter(isObjectResource)
-      const modelResources = resources.filter(isModelResource)
-      const folderResources = resources.filter(isModelFolderResource)
-
-      return {
-        allModelsResource: allModelsResource
-          ? {
-              resource: allModelsResource,
-              isPreloadOnly
-            }
-          : undefined,
-        objectResources: objectResources.map((r) => ({ resource: r, isPreloadOnly })),
-        modelResources: modelResources.map((r) => ({ resource: r, isPreloadOnly })),
-        folderResources: folderResources.map((r) => ({ resource: r, isPreloadOnly }))
-      }
-    }
-
-    // Build extended versions & merge
-    const typedResources = buildExtendedResources(resources.toResources(), false)
-    const typedPreloadResources = buildExtendedResources(uniquePreloadResources, true)
-
-    const allModelsResource =
-      typedResources.allModelsResource || typedPreloadResources.allModelsResource
-    const objectResources = [
-      ...typedResources.objectResources,
-      ...typedPreloadResources.objectResources
-    ]
-    const modelResources = [
-      ...typedResources.modelResources,
-      ...typedPreloadResources.modelResources
-    ]
-    const folderResources = [
-      ...typedResources.folderResources,
-      ...typedPreloadResources.folderResources
-    ]
+    const inputs = resolveFullResourceGroupsInputsFactory()({
+      resourceIdString,
+      preloadResourceIdString: params.preloadResourceIdString
+    })
 
     const results: ViewerResourceGroup[] = flatten(
       await Promise.all([
-        getObjectResourceGroupsFactory(deps)(projectId, objectResources),
+        getObjectResourceGroupsFactory(deps)(projectId, inputs.objectResources),
         getVersionResourceGroupsFactory(deps)(projectId, {
-          modelResources,
-          folderResources,
-          allModelsResource,
+          ...inputs,
           loadedVersionsOnly: loadedVersionsOnly || false,
           allowEmptyModels
         })
@@ -641,7 +661,7 @@ export const getViewerResourceGroupsFactory =
 
     // Update return w/ new data
     ret.groups = results
-    ret.resourceIdString = resourceBuilder().addResources(resources).toString() // de-duplicated and ordered
+    ret.resourceIdString = resourceBuilder().addResources(resourceIdString).toString() // de-duplicated and ordered
 
     return ret
   }

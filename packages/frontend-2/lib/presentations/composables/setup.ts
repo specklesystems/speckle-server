@@ -129,7 +129,7 @@ const setupStateViewer = (initState: ResponseState & UiState): ViewerState => {
     const builder = resourceBuilder()
 
     for (const slide of slides) {
-      builder.addResources(slide.groupResourceIds || [])
+      builder.addNew(slide.groupResourceIds || [])
     }
 
     return builder.toString()

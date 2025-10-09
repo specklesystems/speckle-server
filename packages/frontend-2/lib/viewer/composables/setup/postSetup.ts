@@ -117,7 +117,7 @@ function useViewerObjectAutoLoading() {
       request: {
         savedView: { id: savedViewId }
       },
-      response: { savedView, resourceItemsWithPreloads, resourceItems }
+      response: { savedView, resourceItemsWithPreloads }
     },
     ui: { loadProgress, loading, spotlightUserSessionId, hasLoadedQueuedUpModels },
     urlHashState: { focusedThreadId }
@@ -207,8 +207,7 @@ function useViewerObjectAutoLoading() {
       <const>[
         resourceItemsWithPreloads.value,
         isInitialized.value,
-        hasDoneInitialLoad.value,
-        resourceItems.value // only for watching, we dont actually use it
+        hasDoneInitialLoad.value
       ],
     async ([newResources, newIsInitialized, newHasDoneInitialLoad], oldData) => {
       // Wait till viewer loaded in
