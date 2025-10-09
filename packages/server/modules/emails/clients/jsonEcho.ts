@@ -13,7 +13,8 @@ const createJsonEchoTransporter = () => {
 
       return {
         messageId: response.messageId,
-        status: mapJsonResponseToSentEmailDeliveryStatus(response)
+        status: mapJsonResponseToSentEmailDeliveryStatus(response),
+        errorMessages: []
       }
     }
   }

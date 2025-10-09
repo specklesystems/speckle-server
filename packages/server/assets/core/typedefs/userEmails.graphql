@@ -37,7 +37,7 @@ type UserEmailMutations {
   setPrimary(input: SetPrimaryUserEmailInput!): User!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "profile:email")
-  requestNewEmailVerification(input: EmailVerificationRequestInput!): Boolean
+  requestNewEmailVerification(input: EmailVerificationRequestInput!): SentEmailInfo!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "profile:email")
   verify(input: VerifyUserEmailInput!): Boolean

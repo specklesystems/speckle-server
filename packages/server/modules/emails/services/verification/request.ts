@@ -137,7 +137,7 @@ const sendVerificationEmailFactory =
       // im deliberately setting this to null, so that the email will not show the unsubscribe bit
       null
     )
-    await deps.sendEmail({
+    return await deps.sendEmail({
       to: state.email.email,
       subject: EMAIL_SUBJECT,
       text,
@@ -154,7 +154,7 @@ export const requestEmailVerificationFactory =
   ): RequestEmailVerification =>
   async (userId) => {
     const newVerificationState = await createNewVerificationFactory(deps)(userId)
-    await sendVerificationEmailFactory(deps)(newVerificationState)
+    return await sendVerificationEmailFactory(deps)(newVerificationState)
   }
 
 type RequestNewEmailVerificationDeps = CreateNewEmailVerificationFactoryDeps
@@ -170,5 +170,5 @@ export const requestNewEmailVerificationFactory =
     const createNewEmailVerification = createNewEmailVerificationFactory(deps)
     const newVerificationState = await createNewEmailVerification(emailId)
 
-    await sendVerificationEmailFactory(deps)(newVerificationState)
+    return await sendVerificationEmailFactory(deps)(newVerificationState)
   }

@@ -32,6 +32,7 @@ import { getUserFactory } from '@/modules/core/repositories/users'
 import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import type { EmailBody, EmailInput } from '@/modules/emails/domain/operations'
+import type { SentEmailInfo } from '@/modules/emails/domain/types'
 
 const digestNotificationEmailHandlerFactory =
   (
@@ -46,8 +47,8 @@ const digestNotificationEmailHandlerFactory =
     streamIds: string[],
     start: Date,
     end: Date,
-    emailSender: (params: SendEmailParams) => Promise<boolean>
-  ): Promise<boolean | null> => {
+    emailSender: (params: SendEmailParams) => Promise<SentEmailInfo>
+  ): Promise<SentEmailInfo | null> => {
     const wantDigests =
       (await deps.getUserNotificationPreferences(userId)).activityDigest?.email !==
       false

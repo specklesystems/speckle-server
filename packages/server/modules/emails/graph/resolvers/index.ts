@@ -14,6 +14,7 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { requestEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { convertEmailStatusToEnum } from '@/modules/emails/graph/utils'
 
 const getUser = getUserFactory({ db })
 const requestEmailVerification = requestEmailVerificationFactory({
@@ -39,7 +40,7 @@ export default {
   Mutation: {
     async requestVerification(_parent, _args, ctx) {
       const { userId } = ctx
-      await withOperationLogging(
+      const response = await withOperationLogging(
         async () => await requestEmailVerification(userId || ''),
         {
           logger: ctx.log,
@@ -47,18 +48,25 @@ export default {
           operationDescription: 'Request email verification'
         }
       )
-      return true
+      return { ...response, status: convertEmailStatusToEnum(response.status) }
     },
     async requestVerificationByEmail(_parent, args, ctx) {
       const { email } = args
       const user = await getUserByEmail(email)
-      if (!user?.email || user.verified) return false
-      await withOperationLogging(async () => await requestEmailVerification(user.id), {
-        logger: ctx.log,
-        operationName: 'requestEmailVerificationFromEmail',
-        operationDescription: `Request verification by email`
-      })
-      return true
+      if (!user?.email || user.verified)
+        return {
+          status: 'FAILED',
+          errorMessages: ['No unverified user with that email found']
+        }
+      const response = await withOperationLogging(
+        async () => await requestEmailVerification(user.id),
+        {
+          logger: ctx.log,
+          operationName: 'requestEmailVerificationFromEmail',
+          operationDescription: `Request verification by email`
+        }
+      )
+      return { ...response, status: convertEmailStatusToEnum(response.status) }
     }
   }
 } as Resolvers

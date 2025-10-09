@@ -52,7 +52,8 @@ const initSmtpTransporter = async (params: SMTPConfig & { logger: Logger }) => {
       return {
         messageId: response.messageId,
         status: mapSMTPResponseToSentEmailDeliveryStatus(response),
-        errorMessages: response.rejectedErrors?.map((e) => `${e.code}: ${e.message}`)
+        errorMessages:
+          response.rejectedErrors?.map((e) => `${e.code}: ${e.message}`) || []
       }
     }
   }

@@ -5,10 +5,32 @@ extend type User {
   hasPendingVerification: Boolean @isOwner
 }
 
+enum SentEmailDeliveryStatus {
+  QUEUED
+  PENDING
+  SENT
+  FAILED
+}
+
+type SentEmailInfo {
+  """
+  The ID of the sent message (if available)
+  """
+  messageId: String!
+  """
+  The status of the delivery attempt
+  """
+  status: SentEmailDeliveryStatus!
+  """
+  Any error messages encountered during sending (if any)
+  """
+  errorMessages: [String!]!
+}
+
 extend type Mutation {
   """
   (Re-)send the account verification e-mail
   """
-  requestVerification: Boolean! @hasServerRole(role: SERVER_GUEST)
-  requestVerificationByEmail(email: String!): Boolean!
+  requestVerification: SentEmailInfo! @hasServerRole(role: SERVER_GUEST)
+  requestVerificationByEmail(email: String!): SentEmailInfo!
 }

@@ -24,7 +24,7 @@ export type SentEmailInfo = {
    * The error messages should be checked for more granular details.
    */
   status: SentEmailDeliveryStatus
-  errorMessages?: string[]
+  errorMessages: string[]
 }
 
 export type EmailTransport = {
