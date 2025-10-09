@@ -46,6 +46,12 @@ import {
   getMainRegionConfig
 } from '@/modules/multiregion/regionConfig'
 import { getStringFromEnv } from '@/modules/shared/helpers/envHelper'
+import {
+  SavedViewGroups,
+  SavedViews,
+  storeSavedViewFactory,
+  storeSavedViewGroupFactory
+} from '@/modules/viewer/repositories/savedViews.js'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import {
   getWorkspaceFactory,
@@ -308,41 +314,71 @@ const main = async () => {
           })
       }
 
-      // blobs
-
-      const projectBlobs = (
-        await getBlobsFactory({ db: sourceDb })({ projectIds })
-      ).filter((b) => b.userId === null || b.userId in userIdMapping)
-
-      const remappedProjectBlobs = projectBlobs.map((b) => {
+      // helper functions to remap userIds
+      const userInMapping = <T extends { userId: string | null }>(b: T) =>
+        b.userId === null || b.userId in userIdMapping
+      const remapUserId = <T extends { userId: string | null }>(b: T) => {
         if (!b.userId) return b
 
         return {
           ...b,
           userId: userIdMapping[b.userId]
         }
-      })
+      }
 
-      for (const b of remappedProjectBlobs) {
-        if (!b.objectKey) continue
+      // blobs
+
+      const projectBlobs = (
+        await getBlobsFactory({ db: sourceDb })({ streamId: sourceProject.id })
+      )
+        .filter(userInMapping)
+        .map(remapUserId)
+
+      for (const blob of projectBlobs) {
+        if (!blob.objectKey) continue
 
         const readable = await getObjectStreamFactory({ storage: sourceStorage })({
-          objectKey: b.objectKey
+          objectKey: blob.objectKey
         })
 
         const { fileHash } = await storeFileStreamFactory({ storage: regionStorage })({
-          objectKey: b.objectKey,
+          objectKey: blob.objectKey,
           fileStream: readable
         })
 
-        await upsertBlobFactory({ db: regionTrx })({ ...b, fileHash })
+        await upsertBlobFactory({ db: regionTrx })({ ...blob, fileHash })
       }
 
       // Saved views
 
+      const savedViews = (
+        await sourceDb(SavedViews.name)
+          .select('*')
+          .where(SavedViews.col.projectId, sourceProject.id)
+      )
+        .filter(userInMapping)
+        .map(remapUserId)
+
+      for (const savedView of savedViews) {
+        await storeSavedViewFactory({ db: regionTrx })(savedView)
+      }
+
+      const savedViewGroups = (
+        await sourceDb(SavedViewGroups.name)
+          .select('*')
+          .where(SavedViewGroups.col.projectId, sourceProject.id)
+      )
+        .filter(userInMapping)
+        .map(remapUserId)
+
+      for (const savedViewGroup of savedViewGroups) {
+        await storeSavedViewGroupFactory({ db: regionTrx })(savedViewGroup)
+      }
+
       // throw new Error('not ready to commit to this just yet')
       await mainTrx.commit()
       await regionTrx.commit()
+      console.log(`Done: ${sourceProject.id}`)
     } catch (err) {
       await regionTrx.rollback()
       await mainTrx.commit()
