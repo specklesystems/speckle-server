@@ -1,4 +1,4 @@
-import { difference, differenceBy, flatten, isEqual, uniqBy } from 'lodash-es'
+import { difference, flatten, isEqual, uniqBy } from 'lodash-es'
 import {
   useThrottleFn,
   watchTriggerable,
@@ -117,7 +117,7 @@ function useViewerObjectAutoLoading() {
       request: {
         savedView: { id: savedViewId }
       },
-      response: { savedView, resourceItemsWithPreloads }
+      response: { savedView, resourceItemsWithPreloads, resourceItems }
     },
     ui: { loadProgress, loading, spotlightUserSessionId, hasLoadedQueuedUpModels },
     urlHashState: { focusedThreadId }
@@ -207,7 +207,8 @@ function useViewerObjectAutoLoading() {
       <const>[
         resourceItemsWithPreloads.value,
         isInitialized.value,
-        hasDoneInitialLoad.value
+        hasDoneInitialLoad.value,
+        resourceItems.value // only for watching, we dont actually use it
       ],
     async ([newResources, newIsInitialized, newHasDoneInitialLoad], oldData) => {
       // Wait till viewer loaded in
@@ -259,16 +260,43 @@ function useViewerObjectAutoLoading() {
       const loadAndUnloadChanged = async () => {
         const deduplicatedNew = getUniqueObjectResources(newResources)
         const deduplicatedOld = getUniqueObjectResources(oldResources)
-        const removableResources = differenceBy(
-          deduplicatedOld,
-          deduplicatedNew,
-          (r) => r.resource.objectId
+
+        // Create a map for efficient lookup of old resources by objectId
+        const oldResourceMap = new Map(
+          deduplicatedOld.map((r) => [r.resource.objectId, r])
         )
-        const addableResources = differenceBy(
-          deduplicatedNew,
-          deduplicatedOld,
-          (r) => r.resource.objectId
+        const newResourceMap = new Map(
+          deduplicatedNew.map((r) => [r.resource.objectId, r])
         )
+
+        const removableResources: PreloadableResource<ViewerResourceItem>[] = []
+        const addableResources: PreloadableResource<ViewerResourceItem>[] = []
+
+        // Check for resources that are completely removed
+        for (const oldResource of deduplicatedOld) {
+          if (!newResourceMap.has(oldResource.resource.objectId)) {
+            removableResources.push(oldResource)
+          }
+        }
+
+        // Check for resources that are completely new OR changed preload status
+        for (const newResource of deduplicatedNew) {
+          const oldResource = oldResourceMap.get(newResource.resource.objectId)
+
+          if (!oldResource) {
+            // Completely new resource
+            addableResources.push(newResource)
+          } else if (oldResource.isPreloadOnly !== newResource.isPreloadOnly) {
+            // Same objectId but preload status changed
+            if (oldResource.isPreloadOnly && !newResource.isPreloadOnly) {
+              // switched from preload-only to non-preload: treat as "added"
+              addableResources.push(newResource)
+            } else if (!oldResource.isPreloadOnly && newResource.isPreloadOnly) {
+              // switched from non-preload to preload-only: treat as "removed"
+              removableResources.push(oldResource)
+            }
+          }
+        }
 
         if (addableResources.length) {
           // only mark, if anything to load

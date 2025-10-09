@@ -5,25 +5,30 @@
     <div class="flex items-center justify-between space-x-1 p-1">
       <FormButton v-if="isLoggedIn" @click="showShareDialog = true">Share</FormButton>
 
-      <PresentationFloatingPanelButton
-        v-if="isMdOrLarger"
-        v-tippy="getTooltipProps(isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen')"
-        class="touch:hidden"
-        @click="toggleFullscreen"
-      >
-        <LucideMinimize
-          v-if="isFullscreen"
-          :size="16"
-          :stroke-width="1.5"
-          :absolute-stroke-width="true"
-        />
-        <LucideMaximize
-          v-else
-          :size="16"
-          :stroke-width="1.5"
-          :absolute-stroke-width="true"
-        />
-      </PresentationFloatingPanelButton>
+      <ClientOnly>
+        <!-- Avoid hydration mismatch -->
+        <PresentationFloatingPanelButton
+          v-if="isMdOrLarger"
+          v-tippy="
+            getTooltipProps(isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen')
+          "
+          class="touch:hidden"
+          @click="toggleFullscreen"
+        >
+          <LucideMinimize
+            v-if="isFullscreen"
+            :size="16"
+            :stroke-width="1.5"
+            :absolute-stroke-width="true"
+          />
+          <LucideMaximize
+            v-else
+            :size="16"
+            :stroke-width="1.5"
+            :absolute-stroke-width="true"
+          />
+        </PresentationFloatingPanelButton>
+      </ClientOnly>
 
       <PresentationFloatingPanelButton
         v-tippy="getTooltipProps(isSidebarOpen ? 'Hide slide info' : 'Show slide info')"
