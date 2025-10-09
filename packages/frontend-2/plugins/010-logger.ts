@@ -423,7 +423,9 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       logger.info('App mounted in the client', {
         important: true,
         speckleServerVersion,
-        runtimeConfig
+        runtimeConfig: {
+          public: { ...runtimeConfig.public }
+        }
       })
     })
   } else {
