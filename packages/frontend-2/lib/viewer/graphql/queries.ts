@@ -6,6 +6,7 @@ export const projectViewerResourcesQuery = graphql(`
     $resourceUrlString: String!
     $savedViewId: ID
     $savedViewSettings: SavedViewsLoadSettings
+    $preloadResourceIdString: String
   ) {
     project(id: $projectId) {
       id
@@ -13,6 +14,7 @@ export const projectViewerResourcesQuery = graphql(`
         resourceIdString: $resourceUrlString
         savedViewId: $savedViewId
         savedViewSettings: $savedViewSettings
+        preloadResourceIdString: $preloadResourceIdString
       ) {
         groups {
           identifier

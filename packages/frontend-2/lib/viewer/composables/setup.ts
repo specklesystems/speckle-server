@@ -677,6 +677,7 @@ function setupResponseResourceItems(
     resources: {
       request: {
         resourceIdString,
+        preloadResourceIdString,
         savedView: { id: savedViewId, loadOriginal }
       }
     },
@@ -703,6 +704,7 @@ function setupResponseResourceItems(
     () => ({
       projectId: projectId.value,
       resourceUrlString: resourceIdString.value,
+      preloadResourceIdString: preloadResourceIdString.value,
       ...(isUndefined(savedViewId.value)
         ? {
             // Omit entirely if undefined to allow for implicit/home views

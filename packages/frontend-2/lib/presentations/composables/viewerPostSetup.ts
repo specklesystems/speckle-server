@@ -1,4 +1,5 @@
 import { useInjectedPresentationState } from '~/lib/presentations/composables/setup'
+import { useDebugPresentationStateIntegration } from '~/lib/presentations/composables/setup/dev'
 import { useViewerUserActivityTracking } from '~/lib/viewer/composables/activity'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 
@@ -41,4 +42,5 @@ export const usePresentationViewerPostSetup = () => {
   if (import.meta.server) return
   useActivityTrackingIntegration()
   useResetTrackingIntegration()
+  useDebugPresentationStateIntegration()
 }

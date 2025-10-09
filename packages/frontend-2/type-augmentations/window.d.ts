@@ -17,6 +17,7 @@ declare global {
     VIEWER_SERIALIZED_STATE_OBJECT?: any
     APPLY_VIEWER_STATE?: any
     APPLY_VIEWER_DD_EVENT?: any
+    PRESENTATION_STATE?: any
   }
 }
 
