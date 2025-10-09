@@ -66,6 +66,7 @@ import type {
   DeleteProjectAndCommits,
   QueryAllProjects
 } from '@/modules/core/domain/projects/operations'
+import { sanitizeString } from '@/modules/core/utils/sanitization'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -154,7 +155,9 @@ export const createWorkspaceFactory =
       slug = await generateValidSlug(workspaceInput)
     }
     const workspace = {
-      ...workspaceInput,
+      name: sanitizeString(workspaceInput.name),
+      description: sanitizeString(workspaceInput.description),
+      logo: sanitizeString(workspaceInput.logo),
       slug,
       id: cryptoRandomString({ length: 10 }),
       createdAt: new Date(),
@@ -228,7 +231,14 @@ const sanitizeInput = (input: Partial<Workspace>) => {
     delete sanitizedInput.name
   }
 
-  return removeNullOrUndefinedKeys(sanitizedInput)
+  const cleanedInput = removeNullOrUndefinedKeys(sanitizedInput)
+  if (cleanedInput.name) {
+    cleanedInput.name = sanitizeString(cleanedInput.name)
+  }
+  if (cleanedInput.description) {
+    cleanedInput.description = sanitizeString(cleanedInput.description)
+  }
+  return cleanedInput
 }
 
 export const updateWorkspaceFactory =

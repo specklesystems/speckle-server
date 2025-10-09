@@ -28,6 +28,7 @@ import type {
 import type { GetStream } from '@/modules/core/domain/streams/operations'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ModelEvents } from '@/modules/core/domain/branches/events'
+import { sanitizeString } from '@/modules/core/utils/sanitization'
 
 const isBranchCreateInput = (
   i: BranchCreateInput | CreateModelInput
@@ -39,7 +40,12 @@ export const createBranchAndNotifyFactory =
     createBranch: StoreBranch
     eventEmit: EventBusEmit
   }): CreateBranchAndNotify =>
-  async (input: BranchCreateInput | CreateModelInput, creatorId: string) => {
+  async (dirtyInput: BranchCreateInput | CreateModelInput, creatorId: string) => {
+    const input = {
+      ...dirtyInput,
+      description: sanitizeString(dirtyInput.description) || null,
+      name: sanitizeString(dirtyInput.name)
+    }
     const streamId = isBranchCreateInput(input) ? input.streamId : input.projectId
     const existingBranch = await deps.getStreamBranchByName(streamId, input.name)
     if (existingBranch) {
@@ -48,8 +54,8 @@ export const createBranchAndNotifyFactory =
 
     const branch = await deps.createBranch({
       name: input.name,
-      description: input.description ?? null,
-      streamId: isBranchCreateInput(input) ? input.streamId : input.projectId,
+      description: input.description,
+      streamId,
       authorId: creatorId
     })
 
@@ -67,7 +73,12 @@ export const updateBranchAndNotifyFactory =
     updateBranch: UpdateBranch
     eventEmit: EventBusEmit
   }): UpdateBranchAndNotify =>
-  async (input: BranchUpdateInput | UpdateModelInput, userId: string) => {
+  async (dirtyInput: BranchUpdateInput | UpdateModelInput, userId: string) => {
+    const input = {
+      ...dirtyInput,
+      description: sanitizeString(dirtyInput.description),
+      name: sanitizeString(dirtyInput.name)
+    }
     const streamId = isBranchUpdateInput(input) ? input.streamId : input.projectId
     const existingBranch = await deps.getBranchById(input.id)
     if (!existingBranch) {

@@ -4,8 +4,8 @@ import {
   getStreamRoute
 } from '@/modules/core/helpers/routeHelper'
 import type { StreamRecord } from '@/modules/core/helpers/types'
+import { sanitizeString } from '@/modules/core/utils/sanitization'
 import type { EmailTemplateParams } from '@/modules/emails/domain/operations'
-import { sanitizeMessage } from '@/modules/emails/services/emailRendering'
 import type {
   PrimaryInviteResourceTarget,
   ProjectInviteResourceTarget
@@ -51,7 +51,11 @@ ${inviter.name} has just sent you this invitation to join the ${
     serverInfo.name
   } Speckle Server!
 
-${message ? inviter.name + ' said: "' + sanitizeMessage(message, true) + '"' : ''}`
+${
+  message
+    ? inviter.name + ' said: "' + sanitizeString(message, { stripAll: true }) + '"'
+    : ''
+}`
 
   return {
     bodyStart,
@@ -133,7 +137,11 @@ ${inviter.name} has just sent you this invitation to become a collaborator on th
     project.name
   }" project!
 
-${message ? inviter.name + ' said: "' + sanitizeMessage(message, true) + '"' : ''}`
+${
+  message
+    ? inviter.name + ' said: "' + sanitizeString(message, { stripAll: true }) + '"'
+    : ''
+}`
 
   return {
     bodyStart,

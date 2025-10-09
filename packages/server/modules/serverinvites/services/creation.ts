@@ -1,6 +1,5 @@
 import crs from 'crypto-random-string'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
-import sanitizeHtml from 'sanitize-html'
 import type { ResolvedTargetData } from '@/modules/serverinvites/helpers/core'
 import { resolveTarget, buildUserTarget } from '@/modules/serverinvites/helpers/core'
 import type { UserWithOptionalRole } from '@/modules/core/repositories/users'
@@ -30,6 +29,7 @@ import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import type { GetUser } from '@/modules/core/domain/users/operations'
 import type { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { sanitizeString } from '@/modules/core/utils/sanitization'
 
 const getFinalTargetData = (
   target: string,
@@ -37,15 +37,6 @@ const getFinalTargetData = (
 ) => {
   if (targetUser) target = buildUserTarget(targetUser.id)!
   return resolveTarget(target)
-}
-
-/**
- * Sanitize message that potentially has HTML in it
- */
-function sanitizeMessage(message: string, stripAll: boolean = false) {
-  return sanitizeHtml(message, {
-    allowedTags: stripAll ? [] : ['b', 'i', 'em', 'strong']
-  })
 }
 
 const sendInviteEmailFactory =
@@ -147,7 +138,7 @@ export const createAndSendInviteFactory =
     // Sanitize msg
     // TODO: Can we use TipTap here?
     if (message) {
-      message = sanitizeMessage(message)
+      message = sanitizeString(message)
     }
 
     // write to DB

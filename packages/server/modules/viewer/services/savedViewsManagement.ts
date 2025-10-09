@@ -64,6 +64,7 @@ import { isUngroupedGroup } from '@speckle/shared/saved-views'
 import { NotFoundError } from '@/modules/shared/errors'
 import type { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { SavedViewsEvents } from '@/modules/viewer/domain/events/savedViews'
+import { sanitizeString } from '@/modules/core/utils/sanitization'
 
 const formatIncomingScreenshotFactory =
   (deps: { downscaleScreenshotForThumbnail: DownscaleScreenshotForThumbnail }) =>
@@ -321,11 +322,16 @@ export const createSavedViewFactory =
     downscaleScreenshotForThumbnail: DownscaleScreenshotForThumbnail
     emit: EventBusEmit
   }): CreateSavedView =>
-  async ({ input, authorId }) => {
-    const { resourceIdString, projectId, position: positionInput } = input
-    const visibility = input.visibility || SavedViewVisibility.public // default to public
-    const description = input.description?.trim() || null
-    const isHomeView = input.isHomeView || false
+  async ({ input: dirtyInput, authorId }) => {
+    const { resourceIdString, projectId, position: positionInput } = dirtyInput
+
+    const visibility = dirtyInput.visibility || SavedViewVisibility.public // default to public
+    let name = sanitizeString(dirtyInput.name?.trim())
+    const description = sanitizeString(dirtyInput.description?.trim())
+
+    const isHomeView = dirtyInput.isHomeView || false
+
+    const input = { ...dirtyInput, name, description }
 
     // Validate resourceIdString - it should only point to valid resources belonging to the project
     const resourceIds = await validateAndFormatProjectResourceIdStringFactory(deps)({
@@ -365,7 +371,6 @@ export const createSavedViewFactory =
       })) || null
 
     // Auto-generate name, if one not set
-    let name = input.name?.trim()
     if (!name?.length) {
       const viewCount = await deps.getStoredViewCount({ projectId })
       name = `View - ${String(viewCount + 1).padStart(3, '0')}`
@@ -482,9 +487,10 @@ export const createSavedViewGroupFactory =
     getStoredViewGroupCount: GetStoredViewGroupCount
     emit: EventBusEmit
   }): CreateSavedViewGroup =>
-  async ({ input, authorId }) => {
-    const { projectId, resourceIdString } = input
-    let groupName = input.groupName?.trim()
+  async ({ input: dirtyInput, authorId }) => {
+    const { projectId, resourceIdString } = dirtyInput
+    let groupName = sanitizeString(dirtyInput.groupName?.trim())
+    const input = { ...dirtyInput, groupName }
     if (!groupName) {
       const groupCount = await deps.getStoredViewGroupCount({ projectId })
       groupName = `Group - ${String(groupCount + 1).padStart(3, '0')}`
@@ -648,12 +654,18 @@ export const updateSavedViewFactory =
     } & DependenciesOf<typeof validateAndFormatProjectResourceIdStringFactory>
   ): UpdateSavedView =>
   async (params) => {
-    const { input, userId } = params
-    const { projectId, id } = input
+    const { input: dirtyInput, userId } = params
+    const { projectId, id } = dirtyInput
+
+    const input = {
+      ...dirtyInput,
+      name: sanitizeString(dirtyInput.name?.trim()),
+      description: sanitizeString(dirtyInput.description?.trim())
+    }
 
     // Check if view even exists
     const view = await deps.getSavedView({
-      id: input.id,
+      id,
       projectId
     })
     if (!view) {
@@ -981,8 +993,13 @@ export const updateSavedViewGroupFactory =
     getSavedViewGroup: GetSavedViewGroup
     emit: EventBusEmit
   }): UpdateSavedViewGroup =>
-  async ({ input, userId }) => {
-    const { groupId, projectId } = input
+  async ({ input: dirtyInput, userId }) => {
+    const { groupId, projectId } = dirtyInput
+
+    const input = {
+      ...dirtyInput,
+      name: sanitizeString(dirtyInput.name?.trim())
+    }
 
     if (isUngroupedGroup(groupId)) {
       throw new SavedViewGroupUpdateValidationError(

@@ -42,6 +42,7 @@ import type {
 } from '@/modules/core/domain/projects/operations'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
 import cryptoRandomString from 'crypto-random-string'
+import { sanitizeString } from '@/modules/core/utils/sanitization'
 
 export const createStreamReturnRecordFactory =
   (deps: {
@@ -63,12 +64,18 @@ export const createStreamReturnRecordFactory =
       )
     }
 
-    const name = params.name ? params.name : generateProjectName()
-    const description = params.description || ''
+    // we don't want the ownerId to be sanitized
+    const projectInput = {
+      ...params,
+      name: sanitizeString(params.name),
+      description: sanitizeString(params.description)
+    }
+    const name = projectInput.name ? projectInput.name : generateProjectName()
+    const description = projectInput.description || ''
     const now = new Date()
 
     const stream = await deps.createStream({
-      ...params,
+      ...projectInput,
       id: cryptoRandomString({ length: 10 }),
       name,
       description,
@@ -87,12 +94,12 @@ export const createStreamReturnRecordFactory =
     }
 
     // Invite contributors?
-    if (!isProjectCreateInput(params) && params.withContributors?.length) {
+    if (!isProjectCreateInput(projectInput) && projectInput.withContributors?.length) {
       // TODO: should be injected in the resolver
       await deps.inviteUsersToProject(
         ownerId,
         streamId,
-        params.withContributors,
+        projectInput.withContributors,
         ownerResourceAccessRules
       )
     }
@@ -102,7 +109,7 @@ export const createStreamReturnRecordFactory =
       payload: {
         project: stream,
         ownerId,
-        input: params
+        input: projectInput
       }
     })
 
@@ -191,8 +198,14 @@ export const updateStreamAndNotifyFactory =
       })
     }
 
-    const newStream = await deps.updateStream({
+    const sanitizedUserInput = {
       ...update,
+      name: sanitizeString(update.name),
+      description: sanitizeString(update.description)
+    }
+
+    const newStream = await deps.updateStream({
+      ...sanitizedUserInput,
       updatedAt: new Date()
     })
     if (!newStream) {
@@ -205,7 +218,7 @@ export const updateStreamAndNotifyFactory =
         newProject: newStream,
         oldProject: oldStream,
         updaterId,
-        update
+        update: sanitizedUserInput
       }
     })
 
