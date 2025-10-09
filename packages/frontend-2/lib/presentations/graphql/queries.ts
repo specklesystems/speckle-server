@@ -42,6 +42,7 @@ export const projectPresentationPageQuery = graphql(`
             projectId
             visibility
             ...PresentationInfoSidebar_SavedView
+            ...UseSetupPresentationState_SavedView
             group {
               id
             }

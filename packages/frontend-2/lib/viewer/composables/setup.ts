@@ -99,7 +99,10 @@ import { useViewModesSetup } from '~/lib/viewer/composables/setup/viewMode'
 import { useMeasurementsSetup } from '~/lib/viewer/composables/setup/measurements'
 import { useFiltersSetup } from '~/lib/viewer/composables/setup/filters'
 import { useViewerPanelsSetup } from '~/lib/viewer/composables/setup/panels'
-import { ViewerRenderPageType } from '~/lib/viewer/helpers/state'
+import {
+  ViewerRenderPageType,
+  type PreloadableResource
+} from '~/lib/viewer/helpers/state'
 import { HighlightExtension } from '~/lib/viewer/composables/setup/highlighting'
 
 export type LoadedModel = NonNullable<
@@ -207,6 +210,11 @@ export type InjectableViewerState = Readonly<{
        * represented in the URL. Is writable also.
        */
       resourceIdString: AsyncWritableComputedRef<string>
+      /**
+       * Optionally preload extra data into the viewer, without actually showing it.
+       * Null means - no preloading
+       */
+      preloadResourceIdString: ComputedRef<string | null>
 
       /**
        * Writable computed for reading/writing current thread filters
@@ -227,6 +235,10 @@ export type InjectableViewerState = Readonly<{
        * Metadata about loaded items
        */
       resourceItems: ComputedRef<ViewerResourceItem[]>
+      /**
+       * Metadata about loaded items + preloaded items (models that are preloaded but not shown)
+       */
+      resourceItemsWithPreloads: ComputedRef<PreloadableResource<ViewerResourceItem>[]>
       /**
        * Actually loaded resource items but in string id format
        */
@@ -573,6 +585,8 @@ function setupResourceRequest(
   params: UseSetupViewerParams
 ): InitialStateWithRequest {
   const resourceIdString = params.resourceIdString
+  const preloadResourceIdString =
+    params.preloadResourceIdString || computed(() => null as string | null)
 
   const resources = writableAsyncComputed({
     get: () => resourceBuilder().addResources(resourceIdString.value).toResources(),
@@ -631,6 +645,7 @@ function setupResourceRequest(
         savedView: useBuildSavedViewsCoreState(state, params),
         items: resources,
         resourceIdString,
+        preloadResourceIdString,
         threadFilters,
         switchModelToVersion
       }
@@ -647,6 +662,7 @@ function setupResponseResourceItems(
 ): Pick<
   InjectableViewerState['resources']['response'],
   | 'resourceItems'
+  | 'resourceItemsWithPreloads'
   | 'resourceItemsQueryVariables'
   | 'resourceItemsLoaded'
   | 'savedView'
@@ -743,34 +759,39 @@ function setupResponseResourceItems(
   )
 
   /**
-   * Validated & de-duplicated resources that should be loaded in the viewer
+   * Parameterizable resourceItems computed factory that allows reusing the same logic for both 'all items' and 'only requested (no preloads) items'
    */
-  const resourceItems = computed(() => {
+  const resourceItemsFactory = (params: { type: 'requested' | 'all' }) => () => {
+    const returnRequestedOnly = params.type === 'requested' // no preloads
+
     /**
      * Flatten results into an array of items that are properly ordered according to resource identifier priority.
      * Loading priority: Model w/ version > Model > Folder name > Object ID
      */
-    const versionItems: ViewerResourceItem[] = []
-    const modelItems: ViewerResourceItem[] = []
-    const folderItems: ViewerResourceItem[] = []
-    const objectItems: ViewerResourceItem[] = []
-    const allModelItems: ViewerResourceItem[] = []
+    const versionItems: PreloadableResource<ViewerResourceItem>[] = []
+    const modelItems: PreloadableResource<ViewerResourceItem>[] = []
+    const folderItems: PreloadableResource<ViewerResourceItem>[] = []
+    const objectItems: PreloadableResource<ViewerResourceItem>[] = []
+    const allModelItems: PreloadableResource<ViewerResourceItem>[] = []
     for (const group of resolvedResourceGroups.value) {
+      const isPreloadGroup = !!group.isPreloadOnly
+      if (returnRequestedOnly && isPreloadGroup) continue
+
       const [resource] = parseUrlParameters(group.identifier)
 
       for (const item of group.items) {
         if (isModelResource(resource)) {
           if (resource.versionId) {
-            versionItems.push(item)
+            versionItems.push({ resource: item, isPreloadOnly: isPreloadGroup })
           } else {
-            modelItems.push(item)
+            modelItems.push({ resource: item, isPreloadOnly: isPreloadGroup })
           }
         } else if (isAllModelsResource(resource)) {
-          allModelItems.push(item)
+          allModelItems.push({ resource: item, isPreloadOnly: isPreloadGroup })
         } else if (isModelFolderResource(resource)) {
-          folderItems.push(item)
+          folderItems.push({ resource: item, isPreloadOnly: isPreloadGroup })
         } else if (isObjectResource(resource)) {
-          objectItems.push(item)
+          objectItems.push({ resource: item, isPreloadOnly: isPreloadGroup })
         }
       }
     }
@@ -786,13 +807,11 @@ function setupResponseResourceItems(
     // Get rid of duplicates - only 1 resource per objectId
     const encounteredModels = new Set<string>()
     const encounteredObjects = new Set<string>()
-    const finalItems: ViewerResourceItem[] = []
+    const finalItems: PreloadableResource<ViewerResourceItem>[] = []
     for (const item of orderedItems) {
-      const modelId = item.modelId
-      const objectId = item.objectId
+      const modelId = item.resource.modelId
+      const objectId = item.resource.objectId
 
-      // Uncommenting the following line resolved model duplication issues in the Model Panel
-      // without affecting diffing functionality. If future diffing problems arise, revisit this.
       if (modelId && encounteredModels.has(modelId)) continue
       if (encounteredObjects.has(objectId)) continue
 
@@ -802,7 +821,19 @@ function setupResponseResourceItems(
     }
 
     return finalItems
+  }
+
+  /**
+   * Validated & de-duplicated resources that should be loaded in the viewer
+   */
+  const resourceItems = computed(() => {
+    return resourceItemsFactory({ type: 'requested' })().map((r) => r.resource)
   })
+
+  /**
+   * Same as above but includes preloaded items too (for preloading models, even when dont show them)
+   */
+  const resourceItemsWithPreloads = computed(resourceItemsFactory({ type: 'all' }))
 
   const resourceItemsIds = computed(() =>
     resourceItems.value.map((i) => {
@@ -849,6 +880,7 @@ function setupResponseResourceItems(
     resourceItemsExtended,
     resourceItemsIds,
     resourceItems,
+    resourceItemsWithPreloads,
     resourceItemsQueryVariables: computed(() => resourceItemsQueryVariables.value),
     resourceItemsLoaded,
     savedView,
@@ -1228,6 +1260,7 @@ function setupInterfaceState(
 export type UseSetupViewerParams = {
   projectId: AsyncWritableComputedRef<string>
   resourceIdString: AsyncWritableComputedRef<string>
+  preloadResourceIdString?: ComputedRef<string | null>
   pageType: ViewerRenderPageType
   /**
    * Optionally override savedView source of truth

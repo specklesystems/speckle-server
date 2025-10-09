@@ -39,7 +39,7 @@ const emit = defineEmits<{
 
 const {
   projectId,
-  viewer: { resourceIdString: coreResourceIdString },
+  viewer: { resourceIdString: coreResourceIdString, fullResourceIdString },
   ui: { slide }
 } = useInjectedPresentationState()
 const route = useRoute()
@@ -79,6 +79,7 @@ const initParams = computed(
   (): UseSetupViewerParams => ({
     projectId,
     resourceIdString,
+    preloadResourceIdString: fullResourceIdString,
     pageType: ViewerRenderPageType.Presentation,
     savedView: {
       id: savedViewId,

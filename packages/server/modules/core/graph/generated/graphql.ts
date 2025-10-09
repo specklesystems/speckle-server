@@ -2895,6 +2895,7 @@ export type ProjectViewerResourcesArgs = {
 
 export type ProjectViewerResourcesExtendedArgs = {
   loadedVersionsOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  preloadResourceIdString?: InputMaybe<Scalars['String']['input']>;
   resourceIdString: Scalars['String']['input'];
   savedViewId?: InputMaybe<Scalars['ID']['input']>;
   savedViewSettings?: InputMaybe<SavedViewsLoadSettings>;

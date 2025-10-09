@@ -3,12 +3,21 @@ import { resourceBuilder } from '@speckle/shared/viewer/route'
 import type { AsyncWritableComputedRef } from '@speckle/ui-components'
 import { useQuery } from '@vue/apollo-composable'
 import type { Get } from 'type-fest'
+import { graphql } from '~/lib/common/generated/gql'
 import {
   type ProjectPresentationPageQuery,
-  SavedViewVisibility
+  SavedViewVisibility,
+  type UseSetupPresentationState_SavedViewFragment
 } from '~/lib/common/generated/gql/graphql'
 import { projectPresentationPageQuery } from '~/lib/presentations/graphql/queries'
 import { useProjectSavedViewsUpdateTracking } from '~/lib/viewer/composables/savedViews/subscriptions'
+
+graphql(`
+  fragment UseSetupPresentationState_SavedView on SavedView {
+    id
+    groupResourceIds
+  }
+`)
 
 type ResponseProject = Optional<Get<ProjectPresentationPageQuery, 'project'>>
 type ResponseWorkspace = Get<ProjectPresentationPageQuery, 'project.limitedWorkspace'>
@@ -38,10 +47,14 @@ export type InjectablePresentationState = Readonly<{
   }
   viewer: {
     /**
-     * The actual resource id string to load in the viewer - built from presentation metadata,
+     * The actual resource id string for the active slide - built from presentation metadata,
      * active slide etc.
      */
     resourceIdString: ComputedRef<string>
+    /**
+     * Full resourceIdString built out of all slide resource strings. Used for preloading purposes.
+     */
+    fullResourceIdString: ComputedRef<string>
     /**
      * Whether the current view has been changed from the saved view state
      */
@@ -97,17 +110,35 @@ const setupStateViewer = (initState: ResponseState & UiState): ViewerState => {
 
   const hasViewChanged = ref(false)
 
+  const getSlideResourceIdString = (
+    slide: UseSetupPresentationState_SavedViewFragment | undefined
+  ) => {
+    // Load latest versions only (so - skip version ids at all)
+    return resourceBuilder()
+      .addResources(slide?.groupResourceIds || [])
+      .toString()
+  }
+
   const resourceIdString = computed(() => {
     const slides = presentation.value?.views.items || []
+    return getSlideResourceIdString(slides.at(slideIdx.value))
+  })
 
-    return resourceBuilder()
-      .addResources(slides.at(slideIdx.value)?.resourceIdString || '')
-      .toString()
+  const fullResourceIdString = computed(() => {
+    const slides = presentation.value?.views.items || []
+    const builder = resourceBuilder()
+
+    for (const slide of slides) {
+      builder.addResources(slide.groupResourceIds || [])
+    }
+
+    return builder.toString()
   })
 
   return {
     viewer: {
       resourceIdString,
+      fullResourceIdString,
       hasViewChanged
     }
   }

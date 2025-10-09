@@ -1,4 +1,4 @@
-import { difference, flatten, isEqual, uniq } from 'lodash-es'
+import { difference, differenceBy, flatten, isEqual, uniqBy } from 'lodash-es'
 import {
   useThrottleFn,
   watchTriggerable,
@@ -75,6 +75,10 @@ import {
   HighlightExtension
 } from '~/lib/viewer/composables/setup/highlighting'
 import { useProjectSavedViewsUpdateTracking } from '~/lib/viewer/composables/savedViews/subscriptions'
+import {
+  ViewerRenderPageType,
+  type PreloadableResource
+} from '~/lib/viewer/helpers/state'
 
 function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
@@ -103,6 +107,7 @@ function useViewerObjectAutoLoading() {
   const getObjectUrl = useGetObjectUrl()
   const {
     projectId,
+    pageType,
     viewer: {
       instance: viewer,
       init: { ref: isInitialized },
@@ -112,11 +117,15 @@ function useViewerObjectAutoLoading() {
       request: {
         savedView: { id: savedViewId }
       },
-      response: { resourceItems, savedView }
+      response: { savedView, resourceItemsWithPreloads }
     },
     ui: { loadProgress, loading, spotlightUserSessionId, hasLoadedQueuedUpModels },
     urlHashState: { focusedThreadId }
   } = useInjectedViewerState()
+
+  const isPresentationMode = computed(
+    () => pageType.value === ViewerRenderPageType.Presentation
+  )
 
   const loadingProgressMap: { [id: string]: number } = {}
 
@@ -138,17 +147,29 @@ function useViewerObjectAutoLoading() {
 
   const renderer = () => viewer.getRenderer()
 
-  const loadObject = async (
-    objectId: string,
-    unload?: boolean,
-    options?: Partial<{ zoomToObject: boolean }>
+  const getUniqueObjectResources = (
+    resources: PreloadableResource<ViewerResourceItem>[]
   ) => {
+    // Do we need to preserve order?
+    return uniqBy(resources, (r) => r.resource.objectId)
+  }
+
+  const loadObject = async (params: {
+    resource: PreloadableResource<ViewerResourceItem>
+    unload?: boolean
+    zoomToObject?: boolean
+  }) => {
+    const { unload, zoomToObject, resource } = params
+    const objectId = resource.resource.objectId
     const objectUrl = getObjectUrl(projectId.value, objectId)
 
-    // TODO: work will be here
     if (unload) {
-      // viewer.unloadObject(objectUrl)
-      renderer().enableRenderTree(objectUrl, false)
+      // currently we prevent full unload only in presentation mode
+      if (isPresentationMode.value || resource.isPreloadOnly) {
+        renderer().enableRenderTree(objectUrl, false)
+      } else {
+        viewer.unloadObject(objectUrl)
+      }
       return
     }
 
@@ -171,16 +192,23 @@ function useViewerObjectAutoLoading() {
         consolidateProgressInternal({ id, progress: 1 })
       })
 
-      viewer.loadObject(loader, options?.zoomToObject)
+      await viewer.loadObject(loader, zoomToObject).finally(() => {
+        // Disable render tree, if preloadable
+        if (resource.isPreloadOnly) {
+          renderer().enableRenderTree(objectUrl, false)
+        }
+      })
     }
   }
 
-  const getUniqueObjectIds = (resourceItems: ViewerResourceItem[]) =>
-    uniq(resourceItems.map((i) => i.objectId))
-
   const activeLoads = new Set<Promise<void>>()
   watch(
-    () => <const>[resourceItems.value, isInitialized.value, hasDoneInitialLoad.value],
+    () =>
+      <const>[
+        resourceItemsWithPreloads.value,
+        isInitialized.value,
+        hasDoneInitialLoad.value
+      ],
     async ([newResources, newIsInitialized, newHasDoneInitialLoad], oldData) => {
       // Wait till viewer loaded in
       if (!newIsInitialized) return
@@ -198,8 +226,8 @@ function useViewerObjectAutoLoading() {
 
       // Viewer initialized - load in all resources
       if (!newHasDoneInitialLoad) {
-        const allObjectIds = getUniqueObjectIds(newResources)
-        if (allObjectIds.length) {
+        const deduplicatedResources = getUniqueObjectResources(newResources)
+        if (deduplicatedResources.length) {
           // only mark, if anything to load
           hasLoadedQueuedUpModels.value = false
         }
@@ -207,8 +235,8 @@ function useViewerObjectAutoLoading() {
         /** Load sequentially */
         const res = []
         const loadAll = async () => {
-          for (const i of allObjectIds) {
-            res.push(await loadObject(i, false, { zoomToObject }))
+          for (const resource of deduplicatedResources) {
+            res.push(await loadObject({ resource, zoomToObject }))
           }
         }
 
@@ -229,19 +257,29 @@ function useViewerObjectAutoLoading() {
 
       // Resources changed?
       const loadAndUnloadChanged = async () => {
-        const newObjectIds = getUniqueObjectIds(newResources)
-        const oldObjectIds = getUniqueObjectIds(oldResources)
-        const removableObjectIds = difference(oldObjectIds, newObjectIds)
-        const addableObjectIds = difference(newObjectIds, oldObjectIds)
+        const deduplicatedNew = getUniqueObjectResources(newResources)
+        const deduplicatedOld = getUniqueObjectResources(oldResources)
+        const removableResources = differenceBy(
+          deduplicatedOld,
+          deduplicatedNew,
+          (r) => r.resource.objectId
+        )
+        const addableResources = differenceBy(
+          deduplicatedNew,
+          deduplicatedOld,
+          (r) => r.resource.objectId
+        )
 
-        if (addableObjectIds.length) {
+        if (addableResources.length) {
           // only mark, if anything to load
           hasLoadedQueuedUpModels.value = false
         }
 
-        await Promise.all(removableObjectIds.map((i) => loadObject(i, true)))
         await Promise.all(
-          addableObjectIds.map((i) => loadObject(i, false, { zoomToObject: false }))
+          removableResources.map((resource) => loadObject({ resource, unload: true }))
+        )
+        await Promise.all(
+          addableResources.map((resource) => loadObject({ resource, zoomToObject }))
         )
       }
 

@@ -86,6 +86,11 @@ extend type Project {
   viewerResourcesExtended(
     resourceIdString: String!
     """
+    Optionally resolve extra resources not in the resourceIdString. The returned resources
+    will specify if they are preload-only.
+    """
+    preloadResourceIdString: String
+    """
     If a saved view ID is specified, the returned resources will be adjusted to return the view's resources instead.
     Even if no saved view ID is specified - if the resourceIdString refers to a model w/ a home view, that home
     saved view will be implicitly applied.

@@ -30,7 +30,12 @@ const extendedViewerResourcesResolver = async (
   const projectId = parent.id
   const projectDB = await getProjectDbClient({ projectId })
 
-  const { resourceIdString, loadedVersionsOnly, savedViewSettings } = args
+  const {
+    resourceIdString,
+    loadedVersionsOnly,
+    savedViewSettings,
+    preloadResourceIdString
+  } = args
   let savedViewId = args.savedViewId
 
   // If savedViewId set, check for access
@@ -66,6 +71,7 @@ const extendedViewerResourcesResolver = async (
     ...(await getViewerResourceGroups({
       projectId: parent.id,
       resourceIdString,
+      preloadResourceIdString,
       loadedVersionsOnly,
       savedViewId,
       savedViewSettings,

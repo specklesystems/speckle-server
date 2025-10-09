@@ -21,6 +21,7 @@ export const projectViewerResourcesQuery = graphql(`
             versionId
             objectId
           }
+          isPreloadOnly
         }
         savedView {
           id
