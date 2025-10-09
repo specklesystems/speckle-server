@@ -22,7 +22,7 @@ import {
   moveProjectToRegionFactory,
   validateProjectRegionCopyFactory
 } from '@/modules/workspaces/services/projectRegions'
-import { db } from '@/db/knex'
+import { db, mainDb } from '@/db/knex'
 import {
   deleteProjectFactory,
   getProjectFactory
@@ -64,6 +64,19 @@ import { asMultiregionalOperation, replicateFactory } from '@/modules/shared/com
 import { deleteProjectAndCommitsFactory } from '@/modules/core/services/projects'
 import { deleteProjectCommitsFactory } from '@/modules/core/repositories/commits'
 import { getProjectRegionKey } from '@/modules/multiregion/utils/regionSelector'
+import {
+  copyAllUsersAcrossRegionsFactory,
+  copyAllWorkspacesAcrossRegionsFactory
+} from '@/modules/multiregion/tasks/regionSync'
+import {
+  bulkUpsertUsersFactory,
+  getAllUsersFactory
+} from '@/modules/core/repositories/users'
+import {
+  bulkUpsertWorkspacesFactory,
+  getAllWorkspacesFactory
+} from '@/modules/workspaces/repositories/workspaces'
+import type { ScheduleMultiregionJob } from '@/modules/multiregion/domain/operations'
 
 const MULTIREGION_QUEUE_NAME = isTestEnv()
   ? `test:multiregion:${cryptoRandomString({ length: 5 })}`
@@ -74,7 +87,7 @@ if (isTestEnv()) {
   logger.info(`Monitor using: 'yarn cli bull monitor ${MULTIREGION_QUEUE_NAME}'`)
 }
 
-type MultiregionJob =
+export type MultiregionJob =
   | {
       type: 'move-project-region'
       payload: {
@@ -86,6 +99,12 @@ type MultiregionJob =
       type: 'delete-project-region-data'
       payload: {
         projectId: string
+        regionKey: string
+      }
+    }
+  | {
+      type: 'initialize-region-data'
+      payload: {
         regionKey: string
       }
     }
@@ -132,7 +151,7 @@ export const initializeQueue = async () => {
 /**
  * Add a job to the multiregion job queue.
  */
-export const scheduleJob = async (jobData: MultiregionJob): Promise<string> => {
+export const scheduleJob: ScheduleMultiregionJob = async (jobData) => {
   const queue = getQueue()
   const job = await queue.add(jobData)
   return job.id.toString()
@@ -141,7 +160,8 @@ export const scheduleJob = async (jobData: MultiregionJob): Promise<string> => {
 const isMultiregionJob = (job: Bull.Job): job is Bull.Job<MultiregionJob> => {
   const jobTypes: MultiregionJob['type'][] = [
     'move-project-region',
-    'delete-project-region-data'
+    'delete-project-region-data',
+    'initialize-region-data'
   ]
   return !!job.data.type && jobTypes.includes(job.data.type)
 }
@@ -151,6 +171,7 @@ const isMultiregionJob = (job: Bull.Job): job is Bull.Job<MultiregionJob> => {
  */
 export const startQueue = async () => {
   const queue = getQueue()
+
   void queue.process(async (job) => {
     if (!isMultiregionJob(job)) {
       throw new MultiRegionInvalidJobError()
@@ -167,6 +188,48 @@ export const startQueue = async () => {
     )
 
     switch (job.data.type) {
+      case 'initialize-region-data':
+        const regionDb = await getRegionDb({ regionKey: job.data.payload.regionKey })
+
+        if (!regionDb)
+          throw new MultiRegionInvalidJobError('New target region not found')
+
+        logger.info(
+          {
+            jobId: job.id,
+            jobQueue: MULTIREGION_QUEUE_NAME,
+            payload: job.data.payload,
+            type: job.data.type,
+            regionKey: job.data.payload.regionKey
+          },
+          'Copying user data to new region'
+        )
+
+        await copyAllUsersAcrossRegionsFactory({
+          getAllUsers: getAllUsersFactory({ db: mainDb }),
+          bulkUpsertUsers: bulkUpsertUsersFactory({ db: regionDb })
+        })({
+          logger
+        })
+
+        logger.info(
+          {
+            jobId: job.id,
+            jobQueue: MULTIREGION_QUEUE_NAME,
+            payload: job.data.payload,
+            type: job.data.type,
+            regionKey: job.data.payload.regionKey
+          },
+          'Copying workspace data to new region'
+        )
+
+        await copyAllWorkspacesAcrossRegionsFactory({
+          getAllWorkspaces: getAllWorkspacesFactory({ db: mainDb }),
+          bulkUpsertWorkspaces: bulkUpsertWorkspacesFactory({ db: regionDb })
+        })({
+          logger
+        })
+        break
       case 'move-project-region': {
         const { projectId, regionKey: targetRegionKey } = job.data.payload
 
@@ -317,18 +380,20 @@ export const startQueue = async () => {
         throw new MultiRegionNotYetImplementedError()
     }
   })
+
   void queue.on('completed', (job) => {
-    const { projectId, regionKey } = job.data.payload
+    const { regionKey } = job.data.payload
     logger.info(
       {
         jobId: job.id,
         jobQueue: MULTIREGION_QUEUE_NAME,
-        projectId,
+        payload: job.data.payload,
         regionKey
       },
       'Completed multiregion job {jobId}'
     )
   })
+
   void queue.on('failed', (job, err) => {
     logger.error(
       {
@@ -340,6 +405,7 @@ export const startQueue = async () => {
       'Failed to process multiregion job {jobId}'
     )
   })
+
   void queue.on('error', (err) => {
     logger.error(
       {
