@@ -2,14 +2,21 @@
 import '../bootstrap.js'
 
 import { configureClient } from '@/knexfile'
+import { getObjectStorage } from '@/modules/blobstorage/clients/objectStorage.js'
+import {
+  getObjectStreamFactory,
+  storeFileStreamFactory
+} from '@/modules/blobstorage/repositories/blobs.js'
+import {
+  getBlobsFactory,
+  upsertBlobFactory
+} from '@/modules/blobstorage/repositories/index.js'
 import {
   getBatchedStreamCommentsFactory,
   getCommentLinksFactory,
   insertCommentLinksFactory,
   insertCommentsFactory
 } from '@/modules/comments/repositories/comments'
-import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
-import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import {
   getBatchedStreamBranchesFactory,
   insertBranchesFactory
@@ -26,7 +33,6 @@ import {
 } from '@/modules/core/repositories/objects'
 import {
   deleteProjectFactory,
-  getProjectFactory,
   storeProjectFactory
 } from '@/modules/core/repositories/projects'
 import {
@@ -45,114 +51,127 @@ import {
   getWorkspaceFactory,
   getWorkspaceRolesFactory
 } from '@/modules/workspaces/repositories/workspaces'
-import { retry } from '@lifeomic/attempt'
+import { sleep } from '@/test/helpers.js'
 import type { StreamRoles } from '@speckle/shared'
 import { Roles } from '@speckle/shared'
 import knex from 'knex'
 import { omit } from 'lodash-es'
 
-const projectIds = [
-  'edbf5f099d'
-  // '0d2bab6b1b',
-  // '2d0431175f',
-  // '0d8ebc5d94',
-  // 'b171b7dea4',
-  // '10492ba7fe',
-  // 'e758c11540',
-  // '5b25d3c558',
-  // 'd1c23f9206',
-  // '83f005bbc8',
-  // 'f92268dfac',
-  // '97e8715da4'
-]
+// SOURCE
+const projectIds = ['edbf5f099d']
 
-// real
-// const userIdMapping: Record<string, string> = {
-//   '52fb7b2818': 'ee07689e6c', // Aida Ramirez Marrujo
-//   a8bbe5fd68: '63147c73f9', // Xintong Chen
-//   a736ff389b: 'e31189c187', // Felipe Curado
-//   '230687c24c': 'aa5235d45d', // Julian Höll
-//   '02d31038bc': '0b567b1cc9' // DT
-// }
-
+// { 'sourceId' : 'targetId' }
 const userIdMapping: Record<string, string> = {
-  '52fb7b2818': 'ee07689e6c', // Aida Ramirez Marrujo
-  a8bbe5fd68: 'ee07689e6c', // Xintong Chen
-  a736ff389b: 'ee07689e6c', // Felipe Curado
-  '230687c24c': 'ee07689e6c', // Julian Höll
-  '02d31038bc': 'ee07689e6c' // DT
+  '52fb7b2818': 'ee07689e6c'
 }
+const userIds = Object.keys(userIdMapping)
 
-// real
-// const workspaceId = 'a1f85661a9'
-const workspaceId = '760fd72e88'
+// TARGET
+const workspaceId = ''
 
+const sourceStorage = getObjectStorage({
+  credentials: {
+    accessKeyId: getStringFromEnv('SOURCE_S3_ACCESS_KEY'),
+    secretAccessKey: getStringFromEnv('SOURCE_S3_SECRET_KEY')
+  },
+  endpoint: getStringFromEnv('SOURCE_S3_ENDPOINT'),
+  region: getStringFromEnv('SOURCE_S3_REGION'),
+  bucket: getStringFromEnv('SOURCE_S3_BUCKET')
+})
 const sourceDbConnection = getStringFromEnv('SOURCE_DB_CONNECTION')
 const sourceDb = knex(sourceDbConnection)
 
 const main = async () => {
   const targetMainDbConfig = await getMainRegionConfig()
-  // get mainDb
+
+  // get mainDb and storage
   const mainDb = configureClient(targetMainDbConfig).public
+  const mainStorage = getObjectStorage({
+    credentials: {
+      accessKeyId: targetMainDbConfig.blobStorage.accessKey,
+      secretAccessKey: targetMainDbConfig.blobStorage.secretKey
+    },
+    endpoint: targetMainDbConfig.blobStorage.endpoint,
+    region: targetMainDbConfig.blobStorage.s3Region,
+    bucket: targetMainDbConfig.blobStorage.bucket
+  })
+
   const workspace = await getWorkspaceFactory({ db: mainDb })({ workspaceId })
   if (!workspace) throw Error('Target workspace not found')
+
   let regionDb = mainDb
+  let regionStorage = mainStorage
   const workspaceRegion = await getDefaultRegionFactory({ db: mainDb })({
     workspaceId
   })
+
+  // in case of multiregion, we override the default targets
   if (workspaceRegion) {
     const targetWorkspaceRegionConfig = (await getAvailableRegionConfig())[
       workspaceRegion.key
     ]
     regionDb = configureClient(targetWorkspaceRegionConfig).public
+    regionStorage = getObjectStorage({
+      credentials: {
+        accessKeyId: targetWorkspaceRegionConfig.blobStorage.accessKey,
+        secretAccessKey: targetWorkspaceRegionConfig.blobStorage.secretKey
+      },
+      endpoint: targetWorkspaceRegionConfig.blobStorage.endpoint,
+      region: targetWorkspaceRegionConfig.blobStorage.s3Region,
+      bucket: targetWorkspaceRegionConfig.blobStorage.bucket
+    })
   }
 
   // getting users here, to make sure they all exist
-  const sourceUsers = await getUsersFactory({ db: sourceDb })(
-    Object.keys(userIdMapping)
-  )
+  const sourceUsers = await getUsersFactory({ db: sourceDb })(userIds)
   const sourceProjects = await getStreamsFactory({ db: sourceDb })(projectIds)
-  const workspaceAcls = await getWorkspaceRolesFactory({ db: mainDb })({
-    workspaceId
+  const workspaceAcls = await getWorkspaceRolesFactory({ db: mainDb })({ workspaceId })
+
+  console.log('Start with config', {
+    totalProjects: sourceProjects.length,
+    from: {
+      db: sourceDbConnection,
+      storage: sourceStorage.bucket
+    },
+    to: {
+      main: mainDb.client.connection.host,
+      region: regionDb.client.connection.host,
+      storage: regionStorage.bucket
+    }
   })
+  await sleep(5000)
 
   for (const sourceProject of sourceProjects) {
-    // starting first trx here
-    let regionTrx = await regionDb.transaction()
-    const mainTrx = await mainDb.transaction()
+    const project = {
+      ...sourceProject,
+      regionKey: workspaceRegion?.key || null,
+      workspaceId
+    }
 
-    const grantStreamPermissions = grantStreamPermissionsFactory({ db: mainTrx })
-    await storeProjectFactory({ db: regionTrx })({
-      project: {
-        ...sourceProject,
-        regionKey: workspaceRegion?.key || null,
-        workspaceId
-      }
-    })
+    // as we do not have replication
+    // projects must be written to mainDb only in case of multiregion
 
-    // need to wait for project replication somewhere
-    // so first transaction gets committed here
-    await regionTrx.commit()
+    const createProject = async () => {
+      await storeProjectFactory({ db: regionDb })({ project })
+      if (workspaceRegion) await storeProjectFactory({ db: mainDb })({ project })
+    }
 
-    try {
-      await retry(
-        async () => {
-          await getProjectFactory({ db: mainDb })({ projectId: sourceProject.id })
-        },
-        { maxAttempts: 100 }
-      )
-    } catch (err) {
-      if (err instanceof StreamNotFoundError) {
-        // delete from region
-        await deleteProjectFactory({ db: regionDb })({ projectId: sourceProject.id })
-        throw new RegionalProjectCreationError()
-      }
-      // else throw as is
-      throw err
+    const deleteProject = async () => {
+      await deleteProjectFactory({ db: regionDb })({ projectId: sourceProject.id })
+      if (workspaceRegion)
+        await deleteProjectFactory({ db: mainDb })({ projectId: sourceProject.id })
     }
 
     try {
-      regionTrx = await regionDb.transaction()
+      await createProject()
+    } catch (error) {
+      await deleteProject()
+      throw error
+    }
+
+    const regionTrx = await regionDb.transaction()
+    const mainTrx = await mainDb.transaction()
+    try {
       // stream meta not needed, currently it only holds info about the onboarding project
       // stream favorites is ignored
 
@@ -247,9 +266,8 @@ const main = async () => {
         await insertCommentLinksFactory({ db: regionTrx })(commentLinks)
       }
 
-      // skipping file uploads and blobs, there is none of that in the current source
       // file uploads
-      // blobs
+      // skipping file uploads is none of that in the current source
 
       // skipping webhooks, there is not of that in the current source
       // webhooks_config
@@ -283,8 +301,44 @@ const main = async () => {
 
         // guest can be ignored, they get roles from the original project role
         if (role)
-          await grantStreamPermissions({ userId, streamId: sourceProject.id, role })
+          await grantStreamPermissionsFactory({ db: mainTrx })({
+            userId,
+            streamId: sourceProject.id,
+            role
+          })
       }
+
+      // blobs
+
+      const projectBlobs = (
+        await getBlobsFactory({ db: sourceDb })({ projectIds })
+      ).filter((b) => b.userId === null || b.userId in userIdMapping)
+
+      const remappedProjectBlobs = projectBlobs.map((b) => {
+        if (!b.userId) return b
+
+        return {
+          ...b,
+          userId: userIdMapping[b.userId]
+        }
+      })
+
+      for (const b of remappedProjectBlobs) {
+        if (!b.objectKey) continue
+
+        const readable = await getObjectStreamFactory({ storage: sourceStorage })({
+          objectKey: b.objectKey
+        })
+
+        const { fileHash } = await storeFileStreamFactory({ storage: regionStorage })({
+          objectKey: b.objectKey,
+          fileStream: readable
+        })
+
+        await upsertBlobFactory({ db: regionTrx })({ ...b, fileHash })
+      }
+
+      // Saved views
 
       // throw new Error('not ready to commit to this just yet')
       await mainTrx.commit()
@@ -293,7 +347,7 @@ const main = async () => {
       await regionTrx.rollback()
       await mainTrx.commit()
       // cleanup the project from the DB
-      await deleteProjectFactory({ db: regionDb })({ projectId: sourceProject.id })
+      await deleteProject()
       throw err
     }
   }

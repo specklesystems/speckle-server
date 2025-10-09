@@ -15,6 +15,8 @@ export type GetBlob = (params: {
 export type GetBlobs = (params: {
   streamId?: MaybeNullOrUndefined<string>
   blobIds?: string[]
+  userIds?: string[]
+  projectIds?: string[]
 }) => Promise<BlobStorageItem[]>
 
 export type UpsertBlob = (item: BlobStorageItemInput) => Promise<BlobStorageItem>

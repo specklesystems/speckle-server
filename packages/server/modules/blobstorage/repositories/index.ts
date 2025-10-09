@@ -47,16 +47,26 @@ const tables = {
 export const getBlobsFactory =
   (deps: { db: Knex }): GetBlobs =>
   async (params) => {
-    const { streamId, blobIds } = params
+    const { streamId, blobIds, userIds, projectIds } = params
 
-    // TODO: not commit this
+    if (!streamId && !blobIds && !userIds && !projectIds)
+      throw new BadRequestError('No parameters provided')
+
     const q = tables.blobStorage(deps.db)
     if (blobIds) {
-      q.whereIn('id', blobIds)
+      q.whereIn(BlobStorage.col.id, blobIds)
+    }
+
+    if (userIds) {
+      q.whereIn(BlobStorage.col.userId, userIds)
     }
 
     if (streamId) {
-      q.andWhere('streamId', streamId)
+      q.andWhere(BlobStorage.col.streamId, streamId)
+    }
+
+    if (projectIds) {
+      q.whereIn(BlobStorage.col.streamId, projectIds)
     }
 
     return await q
