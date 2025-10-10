@@ -80,11 +80,23 @@ The aim is to speed up random access while still getting items from the cache in
 
 ## Loader options
 
+### Query string parameters
+
 These can be use via a query string parameter. For example: `https://app.speckle.systems/projects/57bbfabd80/models/81b8d76ef1` can have debug logging enabled with: `https://app.speckle.systems/projects/57bbfabd80/models/81b8d76ef1?debug=true`
 
 Current parameters:
 
-| Parameter  | Default | Type    |
-| ---------- | ------- | ------- |
-| `debug`    | `false` | boolean |
-| `useCache` | `true`  | boolean |
+| Parameter  | Default | Type    | Description                                                                         |
+| ---------- | ------- | ------- | ----------------------------------------------------------------------------------- |
+| `debug`    | `false` | boolean | Enables debug logging                                                               |
+| `useCache` | `true`  | boolean | Uses a memory backed cache instead of Indexed DB. This can result in high RAM usage |
+
+### Factory parameters
+
+Current parameters:
+
+| Parameter      | Default | Type    | Description                                                                                                                                                            |
+| -------------- | ------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `debug`        | `false` | boolean | Enables debug logging                                                                                                                                                  |
+| `useCache`     | `true`  | boolean | Uses a memory backed cache instead of Indexed DB. This can result in high RAM usage                                                                                    |
+| `useGetObject` | `true`  | boolean | Disabling this disables caching and deferment all together. If the only usage is the getObject loop, then this saves memory by not having to randomly access the model |
