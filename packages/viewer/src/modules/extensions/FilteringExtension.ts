@@ -171,9 +171,9 @@ export class FilteringExtension extends Extension {
       this.WTI.walk((node: TreeNode) => {
         if (!node.model.atomic || this.WTI.isRoot(node)) return true
         const rvNodes = this.WTI.getRenderTree().getRenderViewNodesForNode(node)
-        if (!this.VisibilityState.ids[node.model.raw.id]) {
+        if (!this.VisibilityState.ids[node.model.id]) {
           rvNodes.forEach((rvNode: TreeNode) => {
-            if (!this.VisibilityState.ids[rvNode.model.raw.id])
+            if (!this.VisibilityState.ids[rvNode.model.id])
               rvMap[rvNode.model.id] = rvNode.model.renderView
           })
         } else {
