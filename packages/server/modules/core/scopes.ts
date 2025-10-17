@@ -19,6 +19,11 @@ export default [
     public: true
   },
   {
+    name: Scopes.Profile.Write,
+    description: 'Make actions on your profile.',
+    public: true
+  },
+  {
     name: Scopes.Profile.Email,
     description: 'Read the email address you registered with.',
     public: true

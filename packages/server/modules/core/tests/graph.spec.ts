@@ -132,6 +132,7 @@ const changeUserRole = changeUserRoleFactory({
         'test token user A',
         [
           Scopes.Server.Setup,
+          Scopes.Server.Stats,
           Scopes.Streams.Read,
           Scopes.Streams.Write,
           Scopes.Users.Read,
@@ -139,7 +140,9 @@ const changeUserRole = changeUserRoleFactory({
           Scopes.Tokens.Write,
           Scopes.Tokens.Read,
           Scopes.Profile.Read,
-          Scopes.Profile.Email
+          Scopes.Profile.Email,
+          Scopes.Profile.Write,
+          Scopes.Profile.Delete
         ]
       )}`
 
@@ -161,7 +164,8 @@ const changeUserRole = changeUserRoleFactory({
           Scopes.Tokens.Write,
           Scopes.Tokens.Read,
           Scopes.Profile.Read,
-          Scopes.Profile.Email
+          Scopes.Profile.Write,
+          Scopes.Profile.Delete
         ]
       )}`
       userC = await createTestUser({
@@ -181,7 +185,8 @@ const changeUserRole = changeUserRoleFactory({
           Scopes.Tokens.Write,
           Scopes.Tokens.Read,
           Scopes.Profile.Read,
-          Scopes.Profile.Email
+          Scopes.Profile.Email,
+          Scopes.Profile.Delete
         ]
       )}`
 
@@ -336,7 +341,7 @@ const changeUserRole = changeUserRoleFactory({
         it('Should create some api tokens', async () => {
           const res1 = await sendRequest(tokenUserA, {
             query:
-              'mutation { apiTokenCreate(token: {name:"Token 1", scopes: ["streams:read", "users:read", "tokens:read"]}) }'
+              'mutation { apiTokenCreate(token: {name:"Token 1", scopes: ["streams:read", "users:read", "tokens:read", "profile:read"]}) }'
           })
           expect(res1).to.be.json
           expect(res1.body.errors).to.not.exist
@@ -509,7 +514,7 @@ const changeUserRole = changeUserRoleFactory({
       })
 
       describe('User deletion', () => {
-        it('Only admins can delete user', async () => {
+        it('does not allow the endpoint to be used by non-admins', async () => {
           const userDelete = await createTestUser({
             id: '',
             name: 'delete',
@@ -1024,7 +1029,7 @@ const changeUserRole = changeUserRoleFactory({
 
           expect(res3).to.be.json
           expect(res3.body.errors).to.exist
-          expect(res3.body.errors[0].extensions.code).to.equal('FORBIDDEN')
+          expect(res3.body.errors[0].extensions.code).to.equal('UNAUTHORIZED')
         })
 
         it('Should delete a commit', async () => {
@@ -1995,6 +2000,7 @@ const changeUserRole = changeUserRoleFactory({
             Scopes.Tokens.Read,
             Scopes.Profile.Read,
             Scopes.Profile.Email,
+            Scopes.Profile.Delete,
             Scopes.Apps.Read,
             Scopes.Apps.Write,
             Scopes.Users.Invite

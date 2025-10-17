@@ -129,7 +129,7 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
       })
 
     describe('Receive results from file import service', async () => {
-      it('should 403 if no auth token is provided', async () => {
+      it('should 401 if no auth token is provided', async () => {
         const sucessPayload = {
           projectId: projectOneId,
           jobId: jobOneId,
@@ -147,8 +147,8 @@ const { FF_NEXT_GEN_FILE_IMPORTER_ENABLED } = getFeatureFlags()
 
         expect(haveErrors(gqlResponse))
         expect(gqlResponse.body).to.nested.include({
-          'errors[0].extensions.code': 'FORBIDDEN',
-          'errors[0].extensions.statusCode': 403
+          'errors[0].extensions.code': 'UNAUTHORIZED',
+          'errors[0].extensions.statusCode': 401
         })
       })
 

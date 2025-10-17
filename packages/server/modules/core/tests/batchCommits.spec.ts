@@ -323,9 +323,7 @@ describe('Batch commits', () => {
           myCommits.map((c) => c.id)
         )
 
-        expect(result).to.haveGraphQLErrors(
-          'Your auth token does not have the required scope'
-        )
+        expect(result).to.haveGraphQLErrors('Must provide an auth token')
       })
     })
   })

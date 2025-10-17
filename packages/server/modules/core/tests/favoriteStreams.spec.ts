@@ -195,7 +195,9 @@ describe('Favorite streams', () => {
 
       expect(result.data!.streamFavorite).to.not.be.ok
       expect(result.errors).to.have.lengthOf(1)
-      expect(result.errors!.at(0)!.message).to.contain("doesn't have access")
+      expect(result.errors!.at(0)!.message).to.contain(
+        "User doesn't have access to the specified stream"
+      )
     })
 
     describe('and favorited', () => {

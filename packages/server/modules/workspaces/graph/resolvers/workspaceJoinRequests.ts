@@ -12,6 +12,7 @@ import {
   createWorkspaceSeatFactory,
   getWorkspaceUserSeatFactory
 } from '@/modules/gatekeeper/repositories/workspaceSeat'
+import { authorizeResolver } from '@/modules/shared'
 import { commandFactory } from '@/modules/shared/command'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -50,6 +51,7 @@ import {
 import type { WorkspaceJoinRequestStatus } from '@/modules/workspacesCore/domain/types'
 import type { WorkspaceJoinRequestGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 import { withOperationLogging } from '@/observability/domain/businessLogging'
+import { Roles } from '@speckle/shared'
 
 const eventBus = getEventBus()
 
@@ -155,6 +157,13 @@ export default FF_WORKSPACES_MODULE_ENABLED
             targetUserId
           })
 
+          await authorizeResolver(
+            ctx.userId,
+            workspaceId,
+            Roles.Workspace.Admin,
+            ctx.resourceAccessRules
+          )
+
           const approveWorkspaceJoinRequest =
             commandFactory<ApproveWorkspaceJoinRequest>({
               db,
@@ -229,6 +238,14 @@ export default FF_WORKSPACES_MODULE_ENABLED
             workspaceId,
             targetUserId
           })
+
+          await authorizeResolver(
+            ctx.userId,
+            workspaceId,
+            Roles.Workspace.Admin,
+            ctx.resourceAccessRules
+          )
+
           const denyWorkspaceJoinRequest = commandFactory<DenyWorkspaceJoinRequest>({
             db,
             operationFactory: ({ db }) => {

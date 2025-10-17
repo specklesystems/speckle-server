@@ -4,6 +4,7 @@ extend type Query {
   """
   streamAccessRequest(streamId: String!): StreamAccessRequest
     @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:read")
     @deprecated(
       reason: "Part of the old API surface and will be removed in the future. Use User.projectAccessRequest instead."
     )

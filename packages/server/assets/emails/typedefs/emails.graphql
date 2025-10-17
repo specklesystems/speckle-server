@@ -9,6 +9,8 @@ extend type Mutation {
   """
   (Re-)send the account verification e-mail
   """
-  requestVerification: Boolean! @hasServerRole(role: SERVER_GUEST)
+  requestVerification: Boolean!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:write")
   requestVerificationByEmail(email: String!): Boolean!
 }

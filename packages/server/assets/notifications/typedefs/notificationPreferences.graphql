@@ -5,4 +5,5 @@ extend type User {
 extend type Mutation {
   userNotificationPreferencesUpdate(preferences: JSONObject!): Boolean
     @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:update")
 }

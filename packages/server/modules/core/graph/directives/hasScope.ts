@@ -13,7 +13,8 @@ export const hasScope: GraphqlDirectiveBuilder = () => {
   return {
     typeDefs: `
         """
-        Ensure that the active user's access token has the specified scope allowed for it
+        Ensure that if there is a token, the token  has the specified scope allowed for it
+        It does not ensure that the token exists, for that, use @hasServerRole
         """
         directive @${directiveName}(scope: String!) on FIELD_DEFINITION
       `,
@@ -27,8 +28,9 @@ export const hasScope: GraphqlDirectiveBuilder = () => {
           const { resolve = defaultFieldResolver } = fieldConfig
           fieldConfig.resolve = async function (...args) {
             const context = args[2]
+            const token = context.token
             const currentScopes = context.scopes
-            await validateScopes(currentScopes, requiredScope)
+            if (token) await validateScopes(currentScopes, requiredScope)
 
             const data = await resolve.apply(this, args)
             return data
@@ -48,7 +50,8 @@ export const hasScopes: GraphqlDirectiveBuilder = () => {
   return {
     typeDefs: `
         """
-        Ensure that the user's access token has all of the specified scopes allowed for it
+        Ensure that if there is a token, the token has all of the specified scopes allowed for it
+        It does not ensure that the token exists, for that, use @hasServerRole
         """
         directive @${directiveName}(scopes: [String]!) on FIELD_DEFINITION
       `,
@@ -63,13 +66,15 @@ export const hasScopes: GraphqlDirectiveBuilder = () => {
 
           fieldConfig.resolve = async function (...args) {
             const context = args[2]
+            const token = context.token
             const currentScopes = context.scopes
 
-            await Promise.all(
-              requiredScopes.map((requiredScope: string) =>
-                validateScopes(currentScopes, requiredScope)
+            if (token)
+              await Promise.all(
+                requiredScopes.map((requiredScope: string) =>
+                  validateScopes(currentScopes, requiredScope)
+                )
               )
-            )
 
             const data = await resolve.apply(this, args)
             return data

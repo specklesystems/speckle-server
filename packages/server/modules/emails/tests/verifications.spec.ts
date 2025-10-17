@@ -195,7 +195,7 @@ describe('Email verifications @emails', () => {
     it('cant request an account verification', async () => {
       const result = await requestVerification(apollo)
 
-      expect(result).to.haveGraphQLErrors('must provide an auth token')
+      expect(result).to.haveGraphQLErrors('Must provide an auth token')
       expect(result.data?.requestVerification).to.not.be.ok
     })
 
