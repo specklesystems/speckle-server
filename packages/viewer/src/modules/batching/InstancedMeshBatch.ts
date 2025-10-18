@@ -380,13 +380,9 @@ export class InstancedMeshBatch implements Batch {
   }
 
   private shuffleDrawGroups(): void {
-    const groups = this.groups
-      .sort((a, b) => {
-        return a.start - b.start
-      })
-      .slice()
+    const groups = this.groups.slice()
 
-    this.groups.sort((a, b) => {
+    groups.sort((a, b) => {
       const materialA: Material = this.materials[a.materialIndex]
       const materialB: Material = this.materials[b.materialIndex]
       const visibleOrder =
