@@ -29,7 +29,7 @@ import type { AuthStrategyMetadata } from '@/modules/auth/helpers/types'
 import azureAdStrategyBuilderFactory from '@/modules/auth/strategies/azureAd'
 import googleStrategyBuilderFactory from '@/modules/auth/strategies/google'
 import localStrategyBuilderFactory from '@/modules/auth/strategies/local'
-import oidcStrategyBuilderFactory from '@/modules/auth/strategies/oidc'
+// import oidcStrategyBuilderFactory from '@/modules/auth/strategies/oidc'
 import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import { passportAuthenticateHandlerBuilderFactory } from '@/modules/auth/services/passportService'
 import {
@@ -162,7 +162,7 @@ const setupStrategies = setupStrategiesFactory({
       rateLimiterEnabled: isRateLimiterEnabled()
     })
   }),
-  oidcStrategyBuilder: oidcStrategyBuilderFactory({ ...commonBuilderDeps }),
+  // oidcStrategyBuilder: oidcStrategyBuilderFactory({ ...commonBuilderDeps }),
   createAuthorizationCode: createAuthorizationCodeFactory({ db }),
   getUser: legacyGetUserFactory({ db }),
   emitEvent: getEventBus().emit
