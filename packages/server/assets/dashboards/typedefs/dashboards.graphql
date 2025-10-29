@@ -1,9 +1,11 @@
 extend type Query {
-  dashboard(id: String!): Dashboard!
+  dashboard(id: String!): Dashboard! @hasScope(scope: "workspace:read")
 }
 
 extend type Mutation {
-  dashboardMutations: DashboardMutations! @hasServerRole(role: SERVER_GUEST)
+  dashboardMutations: DashboardMutations!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "workspace:update")
 }
 
 type DashboardMutations {

@@ -501,7 +501,7 @@ export const resolveGenericStatusCode = (
   if (errors.some((e) => e.extensions?.code === 'FORBIDDEN')) return 403
   if (
     errors.some((e) =>
-      ['UNAUTHENTICATED', 'UNAUTHORIZED_ACCESS_ERROR'].includes(
+      ['UNAUTHENTICATED', 'UNAUTHORIZED', 'UNAUTHORIZED_ACCESS_ERROR'].includes(
         (e.extensions?.code || '') as string
       )
     )

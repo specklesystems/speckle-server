@@ -46,7 +46,7 @@ extend type Mutation {
     projectId: String!
     resourceIdString: String!
     message: ViewerUserActivityMessageInput!
-  ): Boolean! @hasServerRole(role: SERVER_GUEST)
+  ): Boolean! @hasServerRole(role: SERVER_GUEST) @hasScope(scope: "streams:read")
 }
 
 extend type Subscription {

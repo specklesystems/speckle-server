@@ -39,6 +39,7 @@ extend type Mutation {
   """
   streamInviteUse(accept: Boolean!, streamId: String!, token: String!): Boolean!
     @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:write")
     @deprecated(
       reason: "Part of the old API surface and will be removed in the future. Use ProjectInviteMutations.use instead."
     )
@@ -77,6 +78,7 @@ extend type Query {
   isn't specified, the server will look for any valid invite.
   """
   streamInvite(streamId: String!, token: String): PendingStreamCollaborator
+    @hasScope(scope: "profile:read")
     @deprecated(
       reason: "Part of the old API surface and will be removed in the future. Use Query.projectInvite instead."
     )
@@ -86,6 +88,7 @@ extend type Query {
   isn't specified, the server will look for any valid invite.
   """
   projectInvite(projectId: String!, token: String): PendingStreamCollaborator
+    @hasScope(scope: "profile:read")
 
   """
   Get all invitations to streams that the active user has

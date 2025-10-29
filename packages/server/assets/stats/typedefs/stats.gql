@@ -1,5 +1,8 @@
 extend type Query {
-  serverStats: ServerStats! @deprecated(reason: "use admin.serverStatistics instead")
+  serverStats: ServerStats!
+    @deprecated(reason: "use admin.serverStatistics instead")
+    @hasScope(scope: "server:stats")
+    @hasServerRole(role: SERVER_ADMIN)
 }
 
 type ServerStats {

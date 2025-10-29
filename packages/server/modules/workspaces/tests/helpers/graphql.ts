@@ -335,6 +335,22 @@ export const requestToJoinWorkspaceMutation = gql`
   }
 `
 
+export const approveJoinRequestMutation = gql`
+  mutation approveJoinRequest($input: ApproveWorkspaceJoinRequestInput!) {
+    workspaceJoinRequestMutations {
+      approve(input: $input)
+    }
+  }
+`
+
+export const denyJoinRequestMutation = gql`
+  mutation denyJoinRequest($input: DenyWorkspaceJoinRequestInput!) {
+    workspaceJoinRequestMutations {
+      deny(input: $input)
+    }
+  }
+`
+
 export const getWorkspaceWithJoinRequestsQuery = gql`
   query GetWorkspaceWithJoinRequests(
     $workspaceId: String!

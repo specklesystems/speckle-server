@@ -3,7 +3,7 @@ extend type Query {
   Find a specific project. Will throw an authorization error if active user isn't authorized
   to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
   """
-  project(id: String!): Project!
+  project(id: String!): Project! @hasScope(scope: "streams:read")
 }
 
 enum ProjectVisibility {
@@ -188,11 +188,13 @@ type Project {
   role: String
   createdAt: DateTime!
   updatedAt: DateTime!
-  team: [ProjectCollaborator!]!
+  team: [ProjectCollaborator!]! @hasScope(scope: "users:read")
   """
   Collaborators who have been invited, but not yet accepted.
   """
-  invitedTeam: [PendingStreamCollaborator!] @hasStreamRole(role: STREAM_CONTRIBUTOR)
+  invitedTeam: [PendingStreamCollaborator!]
+    @hasStreamRole(role: STREAM_CONTRIBUTOR)
+    @hasScope(scope: "users:read")
   """
   Source apps used in any models of this project
   """

@@ -46,13 +46,15 @@ type AdminQueries {
     cursor: String = null
     query: String = null
     role: ServerRole = null
-  ): AdminUserList! @hasScope(scope: "users:read")
+  ): AdminUserList! @hasServerRole(role: SERVER_ADMIN) @hasScope(scope: "users:read")
 
   inviteList(
     limit: Int! = 25
     cursor: String = null
     query: String = null
-  ): AdminInviteList! @hasScope(scope: "users:invite")
+  ): AdminInviteList!
+    @hasServerRole(role: SERVER_ADMIN)
+    @hasScope(scope: "users:invite")
 
   projectList(
     query: String
@@ -60,9 +62,11 @@ type AdminQueries {
     visibility: String
     limit: Int! = 25
     cursor: String = null
-  ): ProjectCollection!
+  ): ProjectCollection! @hasServerRole(role: SERVER_ADMIN)
 
-  serverStatistics: ServerStatistics! @hasScope(scope: "server:stats")
+  serverStatistics: ServerStatistics!
+    @hasServerRole(role: SERVER_ADMIN)
+    @hasScope(scope: "server:stats")
 }
 
 type AdminMutations {
@@ -72,10 +76,14 @@ type AdminMutations {
   with the user before performing this action.
   """
   updateEmailVerification(input: AdminUpdateEmailVerificationInput!): Boolean!
+    @hasServerRole(role: SERVER_ADMIN)
+    @hasScope(scope: "users:email")
 }
 
 extend type Query {
-  admin: AdminQueries! @hasServerRole(role: SERVER_ADMIN)
+  admin: AdminQueries!
+    @hasServerRole(role: SERVER_ADMIN)
+    @hasScope(scope: "server:stats")
 }
 
 extend type Mutation {

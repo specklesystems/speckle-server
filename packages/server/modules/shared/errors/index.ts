@@ -31,7 +31,7 @@ export class LogicError extends BaseError {
  * Aka NonAuthorizedError or NotAuthorizedError
  */
 export class UnauthorizedError extends BaseError {
-  static code = 'UNAUTHORIZED_ACCESS_ERROR'
+  static code = 'UNAUTHORIZED'
   static defaultMessage = 'Attempted unauthorized access to data'
   static statusCode = 401
 }

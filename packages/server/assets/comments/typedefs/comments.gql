@@ -1,5 +1,6 @@
 extend type Query {
   comment(id: String!, streamId: String!): Comment
+    @hasScope(scope: "streams:read")
     @deprecated(
       reason: "Part of the old API surface and will be removed in the future. Use Project.comment instead."
     )
@@ -16,6 +17,7 @@ extend type Query {
     cursor: String
     archived: Boolean! = false
   ): CommentCollection
+    @hasScope(scope: "streams:read")
     @deprecated(reason: "Use Project/Version/Model 'commentThreads' fields instead")
 }
 
@@ -356,7 +358,9 @@ type CommentMutations {
 }
 
 extend type Mutation {
-  commentMutations: CommentMutations! @hasServerRole(role: SERVER_GUEST)
+  commentMutations: CommentMutations!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:write")
 
   """
   Used for broadcasting real time chat head bubbles and status. Does not persist any info.
@@ -367,6 +371,7 @@ extend type Mutation {
     data: JSONObject
   ): Boolean!
     @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:write")
     @deprecated(reason: "Use broadcastViewerUserActivity")
 
   """
@@ -378,6 +383,7 @@ extend type Mutation {
     data: JSONObject
   ): Boolean!
     @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:write")
     @deprecated(reason: "Use broadcastViewerUserActivity")
 
   """

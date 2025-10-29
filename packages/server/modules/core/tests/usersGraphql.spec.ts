@@ -100,9 +100,7 @@ describe('Users (GraphQL)', () => {
       const results = await getOtherUser(apollo, { id: otherGuy.id })
 
       expect(results.data?.otherUser).to.be.null
-      expect(results).to.haveGraphQLErrors(
-        'Your auth token does not have the required scope'
-      )
+      expect(results).to.haveGraphQLErrors('Must provide an auth token')
     })
   })
 

@@ -171,6 +171,7 @@ type FileUploadMutations {
   After uploading the file, call mutation startFileImport to register the completed upload.
   """
   generateUploadUrl(input: GenerateFileUploadUrlInput!): GenerateFileUploadUrlOutput!
+    @hasServerRole(role: SERVER_GUEST)
 
   """
   Before calling this mutation, call generateUploadUrl to get the
@@ -179,6 +180,7 @@ type FileUploadMutations {
   called to register the completed upload and create the blob metadata.
   """
   startFileImport(input: StartFileImportInput!): FileUpload!
+    @hasServerRole(role: SERVER_GUEST)
 
   """
   Marks the file import flow as completed for that specific job
@@ -186,11 +188,12 @@ type FileUploadMutations {
   Mostly for internal service usage.
   """
   finishFileImport(input: FinishFileImportInput!): Boolean!
-    @hasScope(scope: "streams:write")
 }
 
 extend type Mutation {
   fileUploadMutations: FileUploadMutations!
+    @hasScope(scope: "streams:write")
+    @hasServerRole(role: SERVER_GUEST)
 }
 
 enum ProjectPendingModelsUpdatedMessageType {

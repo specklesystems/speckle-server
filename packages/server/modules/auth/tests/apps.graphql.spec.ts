@@ -133,7 +133,7 @@ describe('GraphQL @apps-api', () => {
     const res = await sendRequest(null, { query, variables })
     expect(res).to.be.json
     expect(res.body.errors).to.exist
-    expect(res.body.errors[0].extensions?.code).to.equal('FORBIDDEN')
+    expect(res.body.errors[0].extensions?.code).to.equal('UNAUTHORIZED')
   })
 
   it('Should get app info', async () => {
@@ -217,7 +217,7 @@ describe('GraphQL @apps-api', () => {
     const query = `mutation del { appDelete( appId: "${testAppId}" ) }`
     const res = await sendRequest(null, { query })
     expect(res.body.errors).to.exist
-    expect(res.body.errors[0].extensions?.code).to.equal('FORBIDDEN')
+    expect(res.body.errors[0].extensions?.code).to.equal('UNAUTHORIZED')
 
     const res2 = await sendRequest(testToken2, { query })
     expect(res2.body.errors).to.exist

@@ -330,16 +330,11 @@ extend type ProjectMutations {
 
 type AutomateMutations {
   createFunction(input: CreateAutomateFunctionInput!): AutomateFunction!
-    @hasScope(scope: "automate-functions:write")
   createFunctionWithoutVersion(
     input: CreateAutomateFunctionWithoutVersionInput!
-  ): AutomateFunctionToken!
-    @hasScope(scope: "automate-functions:write")
-    @hasServerRole(role: SERVER_ADMIN)
+  ): AutomateFunctionToken! @hasServerRole(role: SERVER_ADMIN)
   updateFunction(input: UpdateAutomateFunctionInput!): AutomateFunction!
-    @hasScope(scope: "automate-functions:write")
   regenerateFunctionToken(functionId: String!): String!
-    @hasScope(scope: "automate-functions:write")
 }
 
 extend type Project {
@@ -369,6 +364,7 @@ extend type Query {
   Get a single automate function by id. Error will be thrown if function is not found or inaccessible.
   """
   automateFunction(id: ID!): AutomateFunction!
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "automate-functions:read")
   """
   Part of the automation/function creation handshake mechanism
@@ -385,7 +381,9 @@ extend type Mutation {
   ): Boolean!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "automate:report-results")
-  automateMutations: AutomateMutations! @hasServerRole(role: SERVER_GUEST)
+  automateMutations: AutomateMutations!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "automate-functions:write")
 }
 
 enum ProjectTriggeredAutomationsStatusUpdatedMessageType {

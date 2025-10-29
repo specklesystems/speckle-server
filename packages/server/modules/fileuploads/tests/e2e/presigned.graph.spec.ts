@@ -20,7 +20,7 @@ const testForbiddenResponse = (
   expect(result.errors, 'This should have failed').to.exist
   expect(result.errors!.length).to.be.above(0)
   expect(result.errors![0].extensions!.code, JSON.stringify(result.errors)).to.match(
-    /(STREAM_INVALID_ACCESS_ERROR|FORBIDDEN|UNAUTHORIZED_ACCESS_ERROR)/
+    /(STREAM_INVALID_ACCESS_ERROR|FORBIDDEN|UNAUTHORIZED)/
   )
 }
 

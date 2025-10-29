@@ -2,7 +2,9 @@ extend type Query {
   """
   If user is authenticated using an app token, this will describe the app
   """
-  authenticatedAsApp: ServerAppListItem @hasServerRole(role: SERVER_USER)
+  authenticatedAsApp: ServerAppListItem
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "apps:read")
 }
 
 extend type User {
@@ -111,10 +113,14 @@ extend type Mutation {
 
 extend type ProjectMutations {
   createEmbedToken(token: EmbedTokenCreateInput!): CreateEmbedTokenReturn!
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "tokens:write")
   revokeEmbedToken(token: String!, projectId: String!): Boolean!
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "tokens:write")
-  revokeEmbedTokens(projectId: String!): Boolean! @hasScope(scope: "tokens:write")
+  revokeEmbedTokens(projectId: String!): Boolean!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "tokens:write")
 }
 
 type EmbedTokenCollection {

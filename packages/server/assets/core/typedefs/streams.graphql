@@ -4,6 +4,7 @@ extend type Query {
   to see it, for example, if a stream isn't public and the user doesn't have the appropriate rights.
   """
   stream(id: String!): Stream
+    @hasScope(scope: "streams:read")
     @deprecated(
       reason: "Part of the old API surface and will be removed in the future. Use Query.project instead."
     )
@@ -30,6 +31,7 @@ extend type Query {
     limit: Int = 25
   ): StreamCollection
     @hasServerRole(role: SERVER_ADMIN)
+    @hasScope(scope: "server:stats")
     @deprecated(reason: "use admin.projectList instead")
 
   """
@@ -43,6 +45,7 @@ extend type Query {
     """
     sort: DiscoverableStreamsSortingInput
   ): StreamCollection
+    @hasScope(scope: "streams:read")
     @deprecated(
       reason: "Part of the old API surface and will be removed in the future."
     )
@@ -213,6 +216,7 @@ extend type Mutation {
 
   streamsDelete(ids: [String!]): Boolean!
     @hasServerRole(role: SERVER_ADMIN)
+    @hasScope(scope: "streams:write")
     @deprecated(
       reason: "Part of the old API surface and will be removed in the future. Use ProjectMutations.batchDelete instead."
     )
@@ -240,6 +244,7 @@ extend type Mutation {
   # Favorite/unfavorite the given stream
   streamFavorite(streamId: String!, favorited: Boolean!): Stream
     @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:write")
     @deprecated(
       reason: "Part of the old API surface and will be removed in the future."
     )
@@ -249,6 +254,7 @@ extend type Mutation {
   """
   streamLeave(streamId: String!): Boolean!
     @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:write")
     @deprecated(
       reason: "Part of the old API surface and will be removed in the future. Use ProjectMutations.leave instead."
     )

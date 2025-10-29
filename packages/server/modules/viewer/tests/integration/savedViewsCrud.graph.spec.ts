@@ -45,7 +45,12 @@ import {
   buildBasicTestModel,
   buildBasicTestProject
 } from '@/modules/core/tests/helpers/creation'
-import { BadRequestError, ForbiddenError, NotFoundError } from '@/modules/shared/errors'
+import {
+  BadRequestError,
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError
+} from '@/modules/shared/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import type { FactoryResultOf } from '@/modules/shared/helpers/factory'
 import { SavedViewVisibility } from '@/modules/viewer/domain/types/savedViews'
@@ -356,12 +361,12 @@ const fakeViewerState = (overrides?: PartialDeep<ViewerState.SerializedViewerSta
   if (FF_WORKSPACES_MODULE_ENABLED) {
     describe('creation', () => {
       describe('auth policy checks', () => {
-        it('should fail with ForbiddenError if user is not logged in', async () => {
+        it('should fail with Unauthorized if user is not logged in', async () => {
           const res = await createSavedView(
             buildCreateInput({ projectId: myProject.id, resourceIdString: 'abc' }),
             { authUserId: null }
           )
-          expect(res).to.haveGraphQLErrors({ code: ForbiddenError.code })
+          expect(res).to.haveGraphQLErrors({ code: UnauthorizedError.code })
           expect(res.data?.projectMutations.savedViewMutations.createView).to.not.be.ok
         })
 

@@ -11,6 +11,8 @@ extend type WorkspaceMutations {
   Set the default region where project data will be stored. Only available to admins.
   """
   setDefaultRegion(workspaceId: String!, regionKey: String!): Workspace!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "workspace:update")
 }
 
 extend type WorkspaceProjectMutations {
@@ -23,4 +25,5 @@ extend type WorkspaceProjectMutations {
   moveToRegion(projectId: String!, regionKey: String!): String!
     @hasServerRole(role: SERVER_ADMIN)
     @hasStreamRole(role: STREAM_OWNER)
+    @hasScope(scope: "streams:write")
 }

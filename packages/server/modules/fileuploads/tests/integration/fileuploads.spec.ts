@@ -66,7 +66,7 @@ describe('FileUploads @fileuploads integration', () => {
     ;({ token: userOneToken } = await createToken({
       userId: userOne.id,
       name: 'test token',
-      scopes: [Scopes.Streams.Write]
+      scopes: [Scopes.Streams.Write, Scopes.Streams.Read]
     }))
   })
 

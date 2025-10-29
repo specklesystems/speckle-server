@@ -11,6 +11,7 @@ extend type Query {
   Find workspaces a given user email can use SSO to sign with
   """
   workspaceSsoByEmail(email: String!): [LimitedWorkspace!]!
+    @hasScope(scope: "workspace:read")
 
   """
   Look for an invitation to a workspace, for the current user (authed or not).
@@ -23,7 +24,8 @@ extend type Query {
     workspaceId: String
     token: String
     options: WorkspaceInviteLookupOptions
-  ): PendingWorkspaceCollaborator
+  ): PendingWorkspaceCollaborator @hasScope(scope: "profile:read")
+
   """
   Validates the slug, to make sure it contains only valid characters and its not taken.
   """
@@ -149,21 +151,30 @@ type WorkspaceMutations {
   updateRole(input: WorkspaceRoleUpdateInput!): Workspace!
     @hasScope(scope: "workspace:update")
     @hasServerRole(role: SERVER_USER)
-  leave(id: ID!): Boolean! @hasServerRole(role: SERVER_GUEST)
+  leave(id: ID!): Boolean!
+    @hasScope(scope: "profile:write")
+    @hasServerRole(role: SERVER_GUEST)
   addDomain(input: AddDomainToWorkspaceInput!): Workspace!
     @hasScope(scope: "workspace:update")
   deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
     @hasScope(scope: "workspace:update")
-  deleteSsoProvider(workspaceId: String!): Boolean!
-  invites: WorkspaceInviteMutations!
-  projects: WorkspaceProjectMutations! @hasServerRole(role: SERVER_USER)
+  deleteSsoProvider(workspaceId: String!): Boolean! @hasScope(scope: "workspace:update")
+  invites: WorkspaceInviteMutations! @hasScope(scope: "users:invite")
+  projects: WorkspaceProjectMutations!
+    @hasScope(scope: "streams:write")
+    @hasServerRole(role: SERVER_USER)
   updateCreationState(input: WorkspaceCreationStateInput!): Boolean!
+    @hasScope(scope: "workspace:update")
   updateEmbedOptions(input: WorkspaceUpdateEmbedOptionsInput!): WorkspaceEmbedOptions!
+    @hasScope(scope: "workspace:update")
   """
   Dismiss a workspace from the discoverable list, behind the scene a join request is created with the status "dismissed"
   """
-  dismiss(input: WorkspaceDismissInput!): Boolean! @hasServerRole(role: SERVER_USER)
+  dismiss(input: WorkspaceDismissInput!): Boolean!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "workspace:update")
   requestToJoin(input: WorkspaceRequestToJoinInput!): Boolean!
+    @hasScope(scope: "profile:write")
     @hasServerRole(role: SERVER_USER)
 }
 
@@ -246,13 +257,10 @@ input WorkspaceInviteResendInput {
 
 type WorkspaceInviteMutations {
   create(workspaceId: String!, input: WorkspaceInviteCreateInput!): Workspace!
-    @hasScope(scope: "users:invite")
   batchCreate(workspaceId: String!, input: [WorkspaceInviteCreateInput!]!): Workspace!
-    @hasScope(scope: "users:invite")
   use(input: WorkspaceInviteUseInput!): Boolean!
-  resend(input: WorkspaceInviteResendInput!): Boolean! @hasScope(scope: "users:invite")
+  resend(input: WorkspaceInviteResendInput!): Boolean!
   cancel(workspaceId: String!, inviteId: String!): Workspace!
-    @hasScope(scope: "users:invite")
     @hasServerRole(role: SERVER_USER)
 }
 
@@ -293,14 +301,16 @@ type Workspace {
     limit: Int! = 25
     cursor: String
     filter: WorkspaceTeamFilter
-  ): WorkspaceCollaboratorCollection!
-  teamByRole: WorkspaceTeamByRole!
+  ): WorkspaceCollaboratorCollection! @hasScope(scope: "users:read")
+  teamByRole: WorkspaceTeamByRole! @hasScope(scope: "users:read")
   """
   Only available to workspace owners/members
   """
   invitedTeam(
     filter: PendingWorkspaceCollaboratorsFilter
-  ): [PendingWorkspaceCollaborator!] @hasWorkspaceRole(role: MEMBER)
+  ): [PendingWorkspaceCollaborator!]
+    @hasWorkspaceRole(role: MEMBER)
+    @hasScope(scope: "users:read")
   projects(
     limit: Int! = 25
     cursor: String
@@ -709,8 +719,11 @@ input AdminAccessToWorkspaceFeatureInput {
 
 extend type AdminMutations {
   updateWorkspacePlan(input: AdminUpdateWorkspacePlanInput!): Boolean!
+    @hasScope(scope: "workspace:update")
   giveAccessToWorkspaceFeature(input: AdminAccessToWorkspaceFeatureInput!): Boolean!
+    @hasScope(scope: "workspace:update")
   removeAccessToWorkspaceFeature(input: AdminAccessToWorkspaceFeatureInput!): Boolean!
+    @hasScope(scope: "workspace:update")
 }
 
 extend type ActiveUserMutations {

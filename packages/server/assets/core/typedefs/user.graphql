@@ -2,7 +2,7 @@ extend type Query {
   """
   Gets the profile of the authenticated user or null if not authenticated
   """
-  activeUser: User
+  activeUser: User @hasScope(scope: "profile:read")
 
   """
   Get the (limited) profile information of another server user
@@ -15,6 +15,7 @@ extend type Query {
   Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
   """
   user(id: String): User
+    @hasScope(scope: "profile:read")
     @deprecated(
       reason: "To be removed in the near future! Use 'activeUser' to get info about the active user or 'otherUser' to get info about another user."
     )
@@ -42,7 +43,9 @@ extend type Query {
     cursor: String
     archived: Boolean = false
     emailOnly: Boolean = false
-  ): UserSearchResultCollection! @deprecated(reason: "Use users() instead.")
+  ): UserSearchResultCollection!
+    @hasScope(scope: "users:read")
+    @deprecated(reason: "Use users() instead.")
 
   """
   Look up server users
@@ -197,6 +200,7 @@ extend type Mutation {
   """
   userUpdate(user: UserUpdateInput!): Boolean!
     @deprecated(reason: "Use activeUserMutations version")
+    @hasScope(scope: "profile:write")
 
   """
   Delete a user's account.
@@ -207,14 +211,18 @@ extend type Mutation {
 
   adminDeleteUser(userConfirmation: UserDeleteInput!): Boolean!
     @hasServerRole(role: SERVER_ADMIN)
+    @hasScope(scope: "profile:delete")
 
   userRoleChange(userRoleInput: UserRoleInput!): Boolean!
     @hasServerRole(role: SERVER_ADMIN)
+    @hasScope(scope: "profile:write")
 
   """
   Various Active User oriented mutations
   """
-  activeUserMutations: ActiveUserMutations! @hasServerRole(role: SERVER_GUEST)
+  activeUserMutations: ActiveUserMutations!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:write")
 }
 
 input UserRoleInput {

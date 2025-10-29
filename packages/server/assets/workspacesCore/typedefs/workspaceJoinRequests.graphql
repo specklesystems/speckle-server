@@ -17,11 +17,9 @@ type WorkspaceJoinRequestMutations {
   approve(input: ApproveWorkspaceJoinRequestInput!): Boolean!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "workspace:update")
-    @hasWorkspaceRole(role: ADMIN)
   deny(input: DenyWorkspaceJoinRequestInput!): Boolean!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "workspace:update")
-    @hasWorkspaceRole(role: ADMIN)
 }
 
 type LimitedWorkspaceJoinRequest {

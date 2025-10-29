@@ -112,6 +112,7 @@ export const Scopes = Object.freeze(<const>{
   },
   Profile: {
     Read: 'profile:read',
+    Write: 'profile:write',
     Email: 'profile:email',
     Delete: 'profile:delete'
   },
