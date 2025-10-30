@@ -23,6 +23,7 @@ export class ObjectLoader2 {
   #cacheWriter: CacheWriter
 
   #deferments: Deferment
+  #useGetObject: boolean
 
   #gathered: AsyncGeneratorQueue<Item>
 
@@ -31,6 +32,7 @@ export class ObjectLoader2 {
 
   constructor(options: ObjectLoader2Options) {
     this.#rootId = options.rootId
+    this.#useGetObject = options.useGetObject ?? true
     this.#logger = options.logger || ((): void => {})
     this.#logger('ObjectLoader2 initialized with rootId:', this.#rootId)
 
@@ -89,6 +91,9 @@ export class ObjectLoader2 {
   }
 
   async getObject(params: { id: string }): Promise<Base> {
+    if (!this.#useGetObject) {
+      throw new Error('getObject is disabled')
+    }
     return await this.#cacheReader.getObject({ id: params.id })
   }
 
