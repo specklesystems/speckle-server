@@ -36,8 +36,11 @@
       </div>
     </div>
     <div class="flex flex-col h-full justify-center select-none group/panel">
+      <div v-if="!isLoaded" class="flex justify-center items-center h-full">
+        <CommonLoadingIcon />
+      </div>
       <div
-        v-if="propertyFilters.length > 0"
+        v-else-if="propertyFilters.length > 0"
         ref="filtersContainerRef"
         class="flex-1 overflow-y-auto simple-scrollbar"
       >
@@ -65,7 +68,11 @@
         </div>
       </div>
 
-      <ViewerFiltersFilterEmptyState v-else @add-filter="addNewEmptyFilter" />
+      <ViewerFiltersFilterEmptyState
+        v-else
+        @add-filter="addNewEmptyFilter"
+        @add-popular-filter="addPopularFilter"
+      />
     </div>
 
     <Portal v-if="showPropertySelection" to="panel-extension">
@@ -94,11 +101,11 @@ import type {
 import { FilterType } from '~/lib/viewer/helpers/filters/types'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { X, Plus } from 'lucide-vue-next'
-import { FormButton } from '@speckle/ui-components'
 import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 import { onKeyStroke, onClickOutside } from '@vueuse/core'
 import { useFilteredObjectsCount } from '~/lib/viewer/composables/filtering/counts'
 import type { Nullable } from '@speckle/shared'
+import { useOnViewerLoadComplete } from '~/lib/viewer/composables/viewer'
 
 const {
   filters: { propertyFilters },
@@ -120,6 +127,7 @@ const propertySelectionRef = ref<HTMLElement>()
 const swappingFilterId = ref<Nullable<string>>(null)
 const filtersContainerRef = ref<HTMLElement>()
 const shouldScrollToNewFilter = ref(false)
+const isLoaded = ref(false)
 
 const showLargePropertyWarning = ref(false)
 const pendingProperty =
@@ -204,6 +212,36 @@ const addNewEmptyFilter = () => {
     type: 'action',
     name: 'filters',
     action: 'open-property-selection'
+  })
+}
+
+const addPopularFilter = async (propertyKey: string) => {
+  const relevantFilters = getPropertyOptionsFromDataStore()
+  const property = relevantFilters.find((p) => p.key === propertyKey)
+
+  if (!property) {
+    return
+  }
+
+  // Check if this property has too many unique values
+  const { isLarge, count } = isLargeProperty(property.key)
+
+  if (isLarge) {
+    // Store the pending property and show warning
+    pendingProperty.value = { property, count }
+    showLargePropertyWarning.value = true
+    return
+  }
+
+  // Set flag to scroll when new filter is added
+  shouldScrollToNewFilter.value = true
+  addActiveFilter(property)
+
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'filters',
+    action: 'add-popular-filter',
+    value: propertyKey
   })
 }
 
@@ -322,5 +360,12 @@ watch(
       })
     }
   }
+)
+
+useOnViewerLoadComplete(
+  () => {
+    isLoaded.value = true
+  },
+  { initialOnly: true, waitForLoadingOver: true }
 )
 </script>
