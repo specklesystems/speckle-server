@@ -98,7 +98,7 @@ export default class LineBatch implements Batch {
   }
 
   public getCount(): number {
-    return this.geometry.attributes.position.array.length / 6
+    return this.geometry.attributes.instanceStart.array.length / 6
   }
 
   public setBatchMaterial(material: SpeckleLineMaterial) {
