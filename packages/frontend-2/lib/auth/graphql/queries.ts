@@ -3,6 +3,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 export const authLoginPanelQuery = graphql(`
   query AuthLoginPanel {
     serverInfo {
+      inviteOnly
       authStrategies {
         id
       }
