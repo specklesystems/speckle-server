@@ -417,12 +417,15 @@ jobs:
           fail_ci_if_error: true
           files: packages/server/coverage/lcov.info
       - name: Introspect GQL schema for subsequent checks
+        if: ${{ github.repository != 'specklesystems/speckle-server' }}
         run: 'IGNORE_MISSING_MIGRATIONS=true yarn cli graphql introspect'
         working-directory: 'packages/server'
       - name: Checking for GQL schema breakages against app.speckle.systems
+        if: ${{ github.repository != 'specklesystems/speckle-server' }}
         run: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
         working-directory: 'packages/server'
       - name: Checking for GQL schema breakages against latest.speckle.systems
+        if: ${{ github.repository != 'specklesystems/speckle-server' }}
         run: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
         working-directory: 'packages/server'
       - name: Show failure build logs
