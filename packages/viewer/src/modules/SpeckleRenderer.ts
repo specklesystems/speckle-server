@@ -1081,9 +1081,9 @@ export default class SpeckleRenderer {
       )
       if (
         rvMaterial[0] && // If the rv exists
-        this.objectPickConfiguration.pickedObjectsFilter // If there is a pick filter
+        (this.objectPickConfiguration.pickedObjectsFilter // If there is a pick filter
           ? this.objectPickConfiguration.pickedObjectsFilter(rvMaterial) // If the pick filter passes
-          : true
+          : true)
       ) {
         rvs.push(rvMaterial[0])
         points.push(results[k].point)
