@@ -1,7 +1,14 @@
 import BatchingQueue from '../../queues/batchingQueue.js'
 import Queue from '../../queues/queue.js'
 import { ObjectLoaderRuntimeError } from '../../types/errors.js'
-import { CustomLogger, Fetcher, indexOf, isBase, take } from '../../types/functions.js'
+import {
+  CustomLogger,
+  Fetcher,
+  indexOf,
+  isBase,
+  take,
+  totalIndexTime
+} from '../../types/functions.js'
 import { Item, ObjectAttributeMask } from '../../types/types.js'
 import { Downloader } from '../interfaces.js'
 
@@ -107,6 +114,7 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
   }
 
   async disposeAsync(): Promise<void> {
+    console.log('Total time -<> ', totalIndexTime)
     await this.#downloadQueue?.disposeAsync()
   }
 

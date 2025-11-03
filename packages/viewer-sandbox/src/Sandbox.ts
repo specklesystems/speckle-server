@@ -1293,7 +1293,9 @@ export default class Sandbox {
         objUrl,
         authToken,
         true,
-        undefined
+        undefined,
+        undefined,
+        { exclude: ['encodedValue'] }
       )
       let dataProgress = 0
       let renderedCount = 0
@@ -1393,10 +1395,8 @@ export default class Sandbox {
     })
     let count = 0
 
-    for await (const {} of loader.getObjectIterator()) {
-      if (count % 1000 === 0) {
-        console.log('Got ' + count + ' ' + (performance.now() - t0) / 1000)
-      }
+    for await (const res of loader.getObjectIterator()) {
+      console.log(res)
       count++
     }
     await loader.disposeAsync()
