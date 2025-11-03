@@ -82,7 +82,6 @@ export function getFeatureFlag(
   return params.get(paramName) ?? (useDefault ? defaultValues[paramName] : undefined)
 }
 
-export let totalIndexTime = 0
 /**
  * Finds the first index of a "needle" Uint8Array within a "haystack" Uint8Array.
  * @param haystack The larger array to search within.
@@ -98,8 +97,6 @@ export function indexOf(
   if (needle.length === 0) {
     return 0
   }
-  const _start = performance.now()
-
   // The last possible starting position for a match
   const limit = haystack.length - needle.length
 
@@ -112,12 +109,8 @@ export function indexOf(
       }
     }
     if (foundMatch) {
-      totalIndexTime += performance.now() - _start
-      // console.log(' Found match. Time -> ', totalIndexTime)
       return i // Found a full match at index i
     }
   }
-  totalIndexTime += performance.now() - _start
-  // console.log(' Did not find match. Time -> ', totalIndexTime)
   return -1 // No match found
 }

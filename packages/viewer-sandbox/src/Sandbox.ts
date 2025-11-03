@@ -1295,7 +1295,8 @@ export default class Sandbox {
         true,
         undefined,
         undefined,
-        { exclude: ['encodedValue'] }
+        { exclude: ['encodedValue'] },
+        ['Objects.Other.RawEncoding']
       )
       let dataProgress = 0
       let renderedCount = 0
@@ -1391,7 +1392,9 @@ export default class Sandbox {
       serverUrl,
       streamId,
       objectId,
-      token
+      token,
+      attributeMask: { exclude: ['encodedValue'] },
+      objectTypeMask: ['Objects.Other.RawEncoding']
     })
     let count = 0
 

@@ -35,7 +35,8 @@ export class SpeckleLoader extends Loader {
     enableCaching?: boolean,
     resourceData?: unknown,
     logger?: (message?: string, ...args: unknown[]) => void,
-    attributeMask?: ObjectAttributeMask
+    attributeMask?: ObjectAttributeMask,
+    objectTypeMask?: string[]
   ) {
     super(resource, resourceData)
     this.tree = targetTree
@@ -46,7 +47,8 @@ export class SpeckleLoader extends Loader {
         authToken,
         enableCaching,
         resourceData,
-        attributeMask
+        attributeMask,
+        objectTypeMask
       )
     } catch (e) {
       Logger.error(e)
@@ -61,7 +63,8 @@ export class SpeckleLoader extends Loader {
     authToken?: string,
     _enableCaching?: boolean,
     resourceData?: unknown,
-    attributeMask?: ObjectAttributeMask
+    attributeMask?: ObjectAttributeMask,
+    objectTypeMask?: string[]
   ): ObjectLoader2 {
     resourceData
     let token = undefined
@@ -97,7 +100,8 @@ export class SpeckleLoader extends Loader {
       streamId,
       objectId,
       token,
-      attributeMask
+      attributeMask,
+      objectTypeMask
     })
   }
 
