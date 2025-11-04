@@ -9,6 +9,7 @@ export interface ObjectLoader2Options {
   downloader: Downloader
   database: Database
   logger?: CustomLogger
+  useGetObject?: boolean //defaults to true
 }
 
 export interface CacheOptions {
