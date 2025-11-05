@@ -97,7 +97,6 @@ export function indexOf(
   if (needle.length === 0) {
     return 0
   }
-
   // The last possible starting position for a match
   const limit = haystack.length - needle.length
 
@@ -113,6 +112,5 @@ export function indexOf(
       return i // Found a full match at index i
     }
   }
-
   return -1 // No match found
 }

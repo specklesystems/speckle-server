@@ -14,6 +14,7 @@ export interface ServerDownloaderOptions {
   logger: CustomLogger
   fetch?: Fetcher
   attributeMask?: ObjectAttributeMask
+  objectTypeMask?: string[] // Temporary until server filters are elevated and ready
 }
 
 const MAX_SAFARI_DECODE_BYTES = 2 * 1024 * 1024 * 1024 - 1024 * 1024 // 2GB minus a margin
@@ -32,8 +33,8 @@ export default class ServerDownloader implements Downloader {
   #decoder = new TextDecoder('utf-8', { fatal: true })
   #decodedBytesCount = 0
 
-  #rawString: string = 'Objects.Other.RawEncoding'
-  #rawEncoding: Uint8Array
+  #rawStrings: Array<string> = []
+  #rawEncodings: Array<Uint8Array> = []
 
   constructor(options: ServerDownloaderOptions) {
     this.#options = options
@@ -61,7 +62,12 @@ export default class ServerDownloader implements Downloader {
     }/${this.#options.objectId}/single`
 
     const encoder = new TextEncoder()
-    this.#rawEncoding = encoder.encode(this.#rawString)
+    if (options.objectTypeMask) {
+      this.#rawStrings.push(...options.objectTypeMask)
+      this.#rawEncodings.push(
+        ...options.objectTypeMask.map((val) => encoder.encode(val))
+      )
+    }
   }
 
   initialize(params: {
@@ -220,18 +226,21 @@ Chrome's behavior: Chrome generally handles larger data sizes without this speci
       throw new ObjectLoaderRuntimeError(`${baseId} is not a base`)
     }
   }
+
   #isValidString(json: string): boolean {
-    if (!json.includes(this.#rawString)) {
-      return true
-    }
-    return false
+    for (const rawString of this.#rawStrings)
+      if (json.includes(rawString)) {
+        return false
+      }
+    return true
   }
 
   #isValidBytes(json: Uint8Array): boolean {
-    if (indexOf(json, this.#rawEncoding) === -1) {
-      return true
-    }
-    return false
+    for (const rawEncoding of this.#rawEncodings)
+      if (indexOf(json, rawEncoding) !== -1) {
+        return false
+      }
+    return true
   }
 
   #concatUint8Arrays(a: Uint8Array, b: Uint8Array): Uint8Array {

@@ -52,6 +52,7 @@ export class ObjectLoader2Factory {
     headers?: Headers
     options?: ObjectLoader2FactoryOptions
     attributeMask?: ObjectAttributeMask
+    objectTypeMask?: string[]
   }): ObjectLoader2 {
     const log = ObjectLoader2Factory.getLogger(params.options?.logger)
     let database
@@ -90,6 +91,7 @@ export class ObjectLoader2Factory {
         headers: params.headers,
         fetch: params.options?.fetch,
         attributeMask: params.attributeMask,
+        objectTypeMask: params.objectTypeMask,
         logger
       }),
       database,
