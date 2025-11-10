@@ -29,8 +29,6 @@ export enum GeometryAttributes {
   INDEX = 'INDEX'
 }
 
-type AttributeValue = ChunkArray
-
 // Required keys
 type RequiredKeys = GeometryAttributes.POSITION | GeometryAttributes.INDEX
 
@@ -39,9 +37,9 @@ type OptionalKeys = Exclude<GeometryAttributes, RequiredKeys>
 
 // Final shape: required + optional keys
 type GeometryAttributesShape = {
-  [K in RequiredKeys]: AttributeValue
+  [K in RequiredKeys]: ChunkArray
 } & {
-  [K in OptionalKeys]?: AttributeValue
+  [K in OptionalKeys]?: ChunkArray
 }
 
 export interface GeometryData {
@@ -94,7 +92,7 @@ export class Geometry {
   }
 
   static mergeGeometryAttribute(
-    attributes: AttributeValue[],
+    attributes: ChunkArray[],
     target: Float32Array | Float64Array
   ): ArrayLike<number> {
     let offset = 0
@@ -110,8 +108,8 @@ export class Geometry {
   }
 
   static mergeIndexAttribute(
-    indexAttributes: AttributeValue[],
-    positionAttributes: AttributeValue[]
+    indexAttributes: ChunkArray[],
+    positionAttributes: ChunkArray[]
   ): number[] {
     let indexOffset = 0
     const mergedIndex = []

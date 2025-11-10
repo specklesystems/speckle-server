@@ -183,6 +183,7 @@ import {
   ObjectPickConfiguration,
   DefaultObjectPickConfiguration
 } from './modules/SpeckleRenderer.js'
+import { ChunkArray, VirtualArray } from './modules/converter/VirtualArray.js'
 export {
   Viewer,
   LegacyViewer,
@@ -305,7 +306,9 @@ export {
   SpeckleMesh,
   SpeckleInstancedMesh,
   CameraControllerOptions,
-  NearPlaneCalculation
+  NearPlaneCalculation,
+  ChunkArray,
+  VirtualArray
 }
 
 export type {

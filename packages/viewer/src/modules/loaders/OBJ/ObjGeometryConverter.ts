@@ -1,5 +1,5 @@
-import { Matrix4 } from 'three'
-import { type NodeData } from '../../../index.js'
+import { MathUtils, Matrix4 } from 'three'
+import { ChunkArray, type NodeData } from '../../../index.js'
 import { type GeometryData } from '../../converter/Geometry.js'
 import { GeometryConverter, SpeckleType } from '../GeometryConverter.js'
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
@@ -64,13 +64,30 @@ export class ObjGeometryConverter extends GeometryConverter {
     if (!node.raw.geometry.index || node.raw.geometry.index.array.length === 0) {
       node.raw.geometry = mergeVertices(node.raw.geometry)
     }
-
     return {
       attributes: {
-        POSITION: Array.from(node.raw.geometry.attributes.position.array),
-        INDEX: Array.from(node.raw.geometry.index.array),
+        POSITION: new ChunkArray([
+          {
+            data: node.raw.geometry.attributes.position.array,
+            id: MathUtils.generateUUID(),
+            references: 1
+          }
+        ]),
+        INDEX: new ChunkArray([
+          {
+            data: node.raw.geometry.index.array,
+            id: MathUtils.generateUUID(),
+            references: 1
+          }
+        ]),
         ...(node.raw.geometry.attributes.color && {
-          COLOR: Array.from(node.raw.geometry.attributes.color.array)
+          COLOR: new ChunkArray([
+            {
+              data: node.raw.geometry.attributes.color.array,
+              id: MathUtils.generateUUID(),
+              references: 1
+            }
+          ])
         })
       },
       bakeTransform: new Matrix4().makeScale(
@@ -79,6 +96,6 @@ export class ObjGeometryConverter extends GeometryConverter {
         conversionFactor
       ),
       transform: null
-    } as GeometryData
+    } satisfies GeometryData
   }
 }
