@@ -11,7 +11,11 @@ import {
 import { StreamAcl } from '@/modules/core/dbSchema'
 import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { ProjectRecordVisibility, StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
+import {
+  ProjectRecordVisibility,
+  StreamAclRecord,
+  StreamRecord
+} from '@/modules/core/helpers/types'
 import { UserRecord } from '@/modules/core/helpers/userHelper'
 import {
   getBatchedStreamBranchesFactory,
@@ -83,7 +87,11 @@ import {
 } from '@/modules/workspaces/repositories/workspaces'
 import { getPendingWorkspaceCollaboratorsFactory } from '@/modules/workspaces/services/invites'
 import { addOrUpdateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
-import { assignWorkspaceSeatFactory, ensureValidWorkspaceRoleSeatFactory, getWorkspaceDefaultSeatTypeFactory } from '@/modules/workspaces/services/workspaceSeat'
+import {
+  assignWorkspaceSeatFactory,
+  ensureValidWorkspaceRoleSeatFactory,
+  getWorkspaceDefaultSeatTypeFactory
+} from '@/modules/workspaces/services/workspaceSeat'
 import { retry } from '@lifeomic/attempt'
 import { Roles, wait } from '@speckle/shared'
 import knex, { Knex } from 'knex'
@@ -260,7 +268,9 @@ const main = async () => {
 
           await addOrUpdateWorkspaceRoleFactory({
             getWorkspaceRoles: getWorkspaceRolesFactory({ db: targetMainDb }),
-            getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: targetMainDb }),
+            getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({
+              db: targetMainDb
+            }),
             findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
               db: targetMainDb
             }),
@@ -276,7 +286,9 @@ const main = async () => {
             }),
             assignWorkspaceSeat: assignWorkspaceSeatFactory({
               createWorkspaceSeat: createWorkspaceSeatFactory({ db: targetMainDb }),
-              getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db: targetMainDb }),
+              getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({
+                db: targetMainDb
+              }),
               eventEmit: getEventBus().emit,
               getWorkspaceUserSeat: getWorkspaceUserSeatFactory({ db: targetMainDb })
             })
@@ -290,7 +302,6 @@ const main = async () => {
         } catch {
           continue
         }
-
       }
     }
   }
@@ -323,9 +334,9 @@ const main = async () => {
       currentProjectIndex++
       const logKey = `(${currentProjectIndex
         .toString()
-        .padStart(4, '0')}/${sourceServerProjectCount
-          .toString()
-          .padStart(4, '0')}) ${sourceProject.id} `
+        .padStart(4, '0')}/${sourceServerProjectCount.toString().padStart(4, '0')}) ${
+        sourceProject.id
+      } `
 
       // Move project and await replication
       console.log(`${logKey} Moving ${sourceProject.name}`)
@@ -345,10 +356,13 @@ const main = async () => {
         continue
       }
 
-      const projectVisibilityMap: Record<ProjectRecordVisibility, ProjectRecordVisibility> = {
-        'private': 'private',
-        'workspace': 'workspace',
-        'public': 'workspace'
+      const projectVisibilityMap: Record<
+        ProjectRecordVisibility,
+        ProjectRecordVisibility
+      > = {
+        private: 'private',
+        workspace: 'workspace',
+        public: 'workspace'
       }
 
       // TODO: Why is initial write wrapped in a transaction?
@@ -415,8 +429,8 @@ const main = async () => {
             `${logKey} ${movedObjectsCount
               .toString()
               .padStart(6, '0')}/${sourceProjectObjectCount
-                .toString()
-                .padStart(6, '0')} objects moved`
+              .toString()
+              .padStart(6, '0')} objects moved`
           )
         }
 
@@ -554,19 +568,31 @@ const main = async () => {
 
           if (!workspaceAcls.find((acl) => acl.userId === targetServerUserId)) {
             // Project member user exists on server but not in workspace
-            console.log(`User ${user.name} (${user.id}) not in workspace. Removing from project.`)
+            console.log(
+              `User ${user.name} (${user.id}) not in workspace. Removing from project.`
+            )
             continue
           }
 
           // Will throw if user does not have valid seat for role
-          await mainTrx.table<StreamAclRecord>('stream_acl').insert({
+          await mainTrx
+            .table<StreamAclRecord>('stream_acl')
+            .insert({
+              userId: targetServerUserId,
+              resourceId: sourceProject.id,
+              role: user.streamRole
+            })
+            .onConflict([
+              StreamAcl.withoutTablePrefix.col.userId,
+              StreamAcl.withoutTablePrefix.col.resourceId
+            ])
+            .merge(['role'])
+          await assignWorkspaceSeat({
             userId: targetServerUserId,
-            resourceId: sourceProject.id,
-            role: user.streamRole
-          }).onConflict([StreamAcl.withoutTablePrefix.col.userId, StreamAcl.withoutTablePrefix.col.resourceId]).merge([
-            'role'
-          ])
-          await assignWorkspaceSeat({ userId: targetServerUserId, workspaceId: TARGET_WORKSPACE_ID, type: 'editor', assignedByUserId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID })
+            workspaceId: TARGET_WORKSPACE_ID,
+            type: 'editor',
+            assignedByUserId: TARGET_WORKSPACE_ROOT_ADMIN_USER_ID
+          })
         }
 
         // // Try to assign roles
