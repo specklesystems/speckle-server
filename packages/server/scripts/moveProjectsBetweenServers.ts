@@ -334,9 +334,8 @@ const main = async () => {
       currentProjectIndex++
       const logKey = `(${currentProjectIndex
         .toString()
-        .padStart(4, '0')}/${sourceServerProjectCount.toString().padStart(4, '0')}) ${
-        sourceProject.id
-      } `
+        .padStart(4, '0')}/${sourceServerProjectCount.toString().padStart(4, '0')}) ${sourceProject.id
+        } `
 
       // Move project and await replication
       console.log(`${logKey} Moving ${sourceProject.name}`)
@@ -375,6 +374,15 @@ const main = async () => {
         }
       })
 
+      await storeProjectFactory({ db: targetMainDb })({
+        project: {
+          ...sourceProject,
+          regionKey: targetWorkspaceRegionKey,
+          workspaceId: TARGET_WORKSPACE_ID,
+          visibility: projectVisibilityMap[sourceProject.visibility]
+        }
+      })
+
       try {
         await retry(
           async () => {
@@ -395,8 +403,6 @@ const main = async () => {
         // else throw as is
         throw err
       }
-
-      await wait(5000)
 
       const mainTrx = await targetMainDb.transaction()
       const grantStreamPermissions = grantStreamPermissionsFactory({ db: mainTrx })
@@ -429,8 +435,8 @@ const main = async () => {
             `${logKey} ${movedObjectsCount
               .toString()
               .padStart(6, '0')}/${sourceProjectObjectCount
-              .toString()
-              .padStart(6, '0')} objects moved`
+                .toString()
+                .padStart(6, '0')} objects moved`
           )
         }
 
