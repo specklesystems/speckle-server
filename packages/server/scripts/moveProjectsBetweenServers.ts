@@ -185,6 +185,16 @@ const main = async () => {
 
       userIdMapping[user.id] = userEmail?.userId ?? null
 
+      if (userEmail?.userId) {
+        const serverUserId = userEmail?.userId
+
+        const serverUser = await targetMainDb.table<UserRecord>('users').select('*').where({ id: serverUserId }).first()
+
+        if (serverUser) {
+          await targetRegionDb.table<UserRecord>('users').insert(serverUser).onConflict('id').ignore()
+        }
+      }
+
       // Optionally, provision users from source server on target server
       // TODO: This is only possible if the target workspace has SSO enabled
       if (ENABLE_USER_PROVISIONING) {
