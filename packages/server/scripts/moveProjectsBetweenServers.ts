@@ -521,32 +521,41 @@ const main = async () => {
         for await (const commentBatch of getBatchedStreamCommentsFactory({
           db: sourceDb
         })(sourceProject.id)) {
-          const commentsRemapped = commentBatch
-            .map((c) => {
-              if (c.text)
-                return {
-                  ...c,
-                  authorId:
-                    userIdMapping?.[c.authorId] ?? TARGET_WORKSPACE_ROOT_ADMIN_USER_ID
-                }
-            })
-            .filter((c) => c !== undefined)
-          // TODO: this borks the createdAt date !!!!!
-          // TODO: why is the text null in the return object?
-          if (commentsRemapped.length) {
-            // @ts-expect-error comments are always text
-            await insertCommentsFactory({ db: regionTrx })(commentsRemapped)
-            commentIds.push(...commentsRemapped.map((comment) => comment.id))
+          try {
+            const commentsRemapped = commentBatch
+              .map((c) => {
+                if (c.text)
+                  return {
+                    ...c,
+                    authorId:
+                      userIdMapping?.[c.authorId] ?? TARGET_WORKSPACE_ROOT_ADMIN_USER_ID
+                  }
+              })
+              .filter((c) => c !== undefined)
+            // TODO: this borks the createdAt date !!!!!
+            // TODO: why is the text null in the return object?
+            if (commentsRemapped.length) {
+              // @ts-expect-error comments are always text
+              await insertCommentsFactory({ db: regionTrx })(commentsRemapped)
+              commentIds.push(...commentsRemapped.map((comment) => comment.id))
+            }
+            console.log(`${logKey} ${commentIds.length} comments moved`)
+          } catch {
+            console.log(`${logKey} Skipped comments`)
           }
-          console.log(`${logKey} ${commentIds.length} comments moved`)
+
         }
 
         // comment links
         if (commentIds.length) {
-          const commentLinks = await getCommentLinksFactory({ db: sourceDb })(
-            commentIds
-          )
-          await insertCommentLinksFactory({ db: regionTrx })(commentLinks)
+          try {
+            const commentLinks = await getCommentLinksFactory({ db: sourceDb })(
+              commentIds
+            )
+            await insertCommentLinksFactory({ db: regionTrx })(commentLinks)
+          } catch {
+
+          }
         }
 
         // skipping file uploads and blobs, there is none of that in the current source
