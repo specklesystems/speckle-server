@@ -338,7 +338,7 @@ const main = async () => {
   )
 
   for await (const sourceProjects of executeBatchedSelect(
-    sourceDb.table<StreamRecord>('streams').select('*')
+    sourceDb.table<StreamRecord>('streams').select('*').orderBy("updatedAt", "desc")
   )) {
     for (const sourceProject of sourceProjects) {
       currentProjectIndex++
