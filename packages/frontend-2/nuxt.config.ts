@@ -60,6 +60,7 @@ export default defineNuxtConfig({
     '@speckle/ui-components-nuxt',
     '@artmizu/nuxt-prometheus'
   ],
+  plugins: ['~/plugins/vue-konva.client.ts'],
   runtimeConfig: {
     redisUrl: '',
     public: {
