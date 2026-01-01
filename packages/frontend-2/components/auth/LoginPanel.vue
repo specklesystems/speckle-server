@@ -40,7 +40,7 @@
           :workspace-invite="workspaceInvite || undefined"
         />
         <div
-          v-if="!forcedInviteEmail"
+          v-if="!forcedInviteEmail && !(isInviteOnly && !inviteToken)"
           class="text-center text-body-xs text-foreground-3 mt-2 select-none"
         >
           Don't have an account?
@@ -116,4 +116,6 @@ const hasLocalStrategy = computed(() =>
 const hasThirdPartyStrategies = computed(() =>
   serverInfo.value?.authStrategies.some((s) => s.id !== AuthStrategy.Local)
 )
+
+const isInviteOnly = computed(() => !!serverInfo.value?.inviteOnly)
 </script>
