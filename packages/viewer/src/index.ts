@@ -184,6 +184,8 @@ import {
   DefaultObjectPickConfiguration
 } from './modules/SpeckleRenderer.js'
 import { ChunkArray, VirtualArray } from './modules/converter/VirtualArray.js'
+import SpeckleLineMaterial from './modules/materials/SpeckleLineMaterial.js'
+import SpecklePointMaterial from './modules/materials/SpecklePointMaterial.js'
 export {
   Viewer,
   LegacyViewer,
@@ -243,6 +245,8 @@ export {
   SpeckleStandardMaterial,
   SpeckleBasicMaterial,
   SpeckleTextMaterial,
+  SpeckleLineMaterial,
+  SpecklePointMaterial,
   TextLabel,
   NodeRenderView,
   SpeckleGeometryConverter,
