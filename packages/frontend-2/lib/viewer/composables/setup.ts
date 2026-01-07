@@ -2,8 +2,16 @@ import {
   DefaultViewerParams,
   ViewerEvent,
   DefaultLightConfiguration,
-  LegacyViewer,
-  FilteringExtension
+  FilteringExtension,
+  Viewer,
+  SelectionExtension,
+  MeasurementsExtension,
+  SectionTool,
+  SectionOutlines,
+  HybridCameraController,
+  ExplodeExtension,
+  DiffExtension,
+  ViewModes
 } from '@speckle/viewer'
 import type {
   ViewMode,
@@ -11,7 +19,6 @@ import type {
   SunLightConfiguration,
   SpeckleView,
   DiffResult,
-  Viewer,
   WorldTree,
   VisualDiffMode
 } from '@speckle/viewer'
@@ -140,7 +147,7 @@ export type InjectableViewerState = Readonly<{
     /**
      * The actual viewer instance
      */
-    instance: LegacyViewer
+    instance: Viewer
     /**
      * Container onto which the Viewer instance is attached
      */
@@ -453,12 +460,29 @@ function createViewerDataBuilder(params: { viewerDebug: boolean }) {
     container.style.width = '100%'
     container.style.height = '100%'
 
-    const viewer = new LegacyViewer(container, {
+    const viewer = new Viewer(container, {
       ...DefaultViewerParams,
       verbose: !!(import.meta.client && params.viewerDebug)
     })
+    viewer.createExtension(HybridCameraController)
+    viewer.createExtension(SelectionExtension)
+    viewer.createExtension(SectionTool)
+    viewer.createExtension(SectionOutlines)
+    viewer.createExtension(MeasurementsExtension)
+    viewer.createExtension(FilteringExtension)
+    viewer.createExtension(ExplodeExtension)
+    viewer.createExtension(DiffExtension)
     viewer.createExtension(HighlightExtension)
+    viewer.createExtension(ViewModes)
     viewer.createExtension(PassReader)
+
+    /** Workaround so that the frontend comments get section outlines when comment that has sections needs to show at startup */
+    viewer.on(ViewerEvent.LoadComplete, () => {
+      const sections = viewer.getExtension(SectionTool)
+      const sectionOutlines = viewer.getExtension(SectionOutlines)
+      if (sections?.enabled && sectionOutlines) sectionOutlines.requestUpdate(true)
+    })
+
     const initPromise = viewer.init()
 
     return {
