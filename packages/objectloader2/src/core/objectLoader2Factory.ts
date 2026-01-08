@@ -21,6 +21,11 @@ export interface ObjectLoader2FactoryOptions {
   useCache?: boolean
   debug?: boolean
   logger?: CustomLogger
+  /**
+   * Chunk size for IndexedDB batch operations to avoid memory pressure.
+   * Defaults to 500. Lower values use less memory but may be slower.
+   */
+  idbChunkSize?: number
 }
 
 export class ObjectLoader2Factory {
@@ -69,7 +74,8 @@ export class ObjectLoader2Factory {
     if (useCache && flagAllowsCache) {
       database = new IndexedDatabase({
         indexedDB: params.options?.indexedDB,
-        keyRange: params.options?.keyRange
+        keyRange: params.options?.keyRange,
+        chunkSize: params.options?.idbChunkSize
       })
     } else {
       database = new MemoryDatabase({
