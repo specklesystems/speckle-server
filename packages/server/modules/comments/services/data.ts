@@ -135,6 +135,7 @@ export const convertLegacyDataToStateFactory =
           selectedObjectApplicationIds: {},
           propertyFilters: [
             {
+              type: 'string' as const,
               key: data.filters?.propertyInfoKey || null,
               isApplied: true,
               id: 'legacy-filter',
