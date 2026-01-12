@@ -336,6 +336,13 @@ export default class TextBatch implements Batch {
           alignmentV: number
           screenOriented: boolean
         }
+
+        /** Skip texts with no text */
+        if (this.renderViews[k].renderData.geometry.metaData?.value === '') {
+          textSynced--
+          continue
+        }
+
         const text = new Text()
         this.renderViews[k].renderData.geometry.transform?.decompose(
           text.position,
