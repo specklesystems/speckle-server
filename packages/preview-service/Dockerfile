@@ -61,7 +61,7 @@ RUN apt-get update && \
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     # --no-install-recommends # This is causing issues with the google-chrome-stable install as not all gpg components are installed if recommended installs are disabled
-    gnupg=2.2.40-1.1+deb12u1 && \
+    gnupg=2.2.40-1.1+deb12u2 && \
     # Clean up
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
