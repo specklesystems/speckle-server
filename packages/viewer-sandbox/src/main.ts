@@ -659,6 +659,19 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/f3a42bdf24/models/0e23cfdea3@664e8d20e6'
 
     // 'https://app.speckle.systems/projects/1b96a34aae/models/9bf8e1a49d@2e917b2dc7'
+
+    // Missing definition ids
+    // 'https://app.speckle.systems/projects/a99d91de94/models/6b79b015e7@67e2742a10'
+
+    // Sum old views
+    // 'https://app.speckle.systems/projects/4590178ad4/models/8ba52c7365'
+    // 'https://app.speckle.systems/projects/4590178ad4/models/a7a27eed0c@6642fe2050'
+
+    // Ellipses and lots of lines
+    // 'https://app.speckle.systems/projects/db4e403ff8/models/367864bc0e'
+
+    // Texts and empty texts
+    // 'https://app.speckle.systems/projects/8b466869c0/models/d1eabb3c74'
   )
 }
 
