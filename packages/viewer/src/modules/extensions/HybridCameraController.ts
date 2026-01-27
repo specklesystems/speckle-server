@@ -1,6 +1,7 @@
 import { PerspectiveCamera } from 'three'
 import { IViewer } from '../../IViewer.js'
 import { CameraController } from './CameraController.js'
+import { InputEvent } from '../input/Input.js'
 type MoveType = 'forward' | 'back' | 'left' | 'right' | 'up' | 'down'
 
 export class HybridCameraController extends CameraController {
@@ -17,9 +18,9 @@ export class HybridCameraController extends CameraController {
 
   public constructor(viewer: IViewer) {
     super(viewer)
-    document.addEventListener('keydown', this.onKeyDown.bind(this))
-    document.addEventListener('keyup', this.onKeyUp.bind(this))
-    document.addEventListener('contextmenu', this.onContextMenu.bind(this))
+    viewer.getRenderer().input.on(InputEvent.KeyUp, this.onKeyUp.bind(this))
+    viewer.getRenderer().input.on(InputEvent.KeyDown, this.onKeyDown.bind(this))
+    viewer.getRenderer().input.on(InputEvent.ContextMenu, this.onContextMenu.bind(this))
   }
 
   public onEarlyUpdate(_delta?: number): void {

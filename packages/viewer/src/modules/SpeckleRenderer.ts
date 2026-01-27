@@ -436,7 +436,10 @@ export default class SpeckleRenderer {
 
     this._pipeline = new DefaultPipeline(this)
 
-    this.input = new Input(this._renderer.domElement)
+    this.input = new Input(
+      this._renderer.domElement,
+      this.viewer.params.restrictInputToCanvas
+    )
     this.input.on(InputEvent.Click, this.onClick.bind(this))
     this.input.on(InputEvent.DoubleClick, this.onDoubleClick.bind(this))
 

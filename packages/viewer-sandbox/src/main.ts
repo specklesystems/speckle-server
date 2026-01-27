@@ -39,6 +39,7 @@ const createViewer = async (containerName: string, _stream: string) => {
   const params = DefaultViewerParams
   params.showStats = true
   params.verbose = true
+  // params.restrictInputToCanvas = true
 
   const multiSelectList: SelectionEvent[] = []
   const viewer: Viewer = new Viewer(container, params)
