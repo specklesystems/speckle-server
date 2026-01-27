@@ -13,6 +13,7 @@ import { SpeckleControls } from './SpeckleControls.js'
 import { World } from '../../World.js'
 import { AngleDamper } from '../../utils/AngleDamper.js'
 import { TIME_MS } from '@speckle/shared'
+import Input, { InputEvent } from '../../input/Input.js'
 
 const _vectorBuff0 = new Vector3()
 
@@ -33,9 +34,9 @@ export interface FlyControlsOptions {
 }
 
 class FlyControls extends SpeckleControls {
+  protected input: Input
   protected _options: Required<FlyControlsOptions>
   protected _targetCamera: PerspectiveCamera | OrthographicCamera
-  protected container: HTMLElement
   protected velocity = new Vector3()
   protected euler = new Euler(0, 0, 0, 'YXZ')
   protected position = new Vector3()
@@ -109,14 +110,14 @@ class FlyControls extends SpeckleControls {
 
   constructor(
     camera: PerspectiveCamera | OrthographicCamera,
-    container: HTMLElement,
+    input: Input,
     world: World,
     options: Required<FlyControlsOptions>
   ) {
     super()
 
     this._targetCamera = camera
-    this.container = container
+    this.input = input
     this.world = world
     this._options = Object.assign({}, options)
 
@@ -324,20 +325,20 @@ class FlyControls extends SpeckleControls {
 
   protected connect() {
     if (this._enabled) return
-
-    this.container.addEventListener('pointermove', this.onMouseMove)
-    document.addEventListener('keydown', this.onKeyDown)
-    document.addEventListener('keyup', this.onKeyUp)
-    document.addEventListener('contextmenu', this.onContextMenu)
+    this.input.on(InputEvent.KeyUp, this.onKeyUp)
+    this.input.on(InputEvent.KeyDown, this.onKeyDown)
+    this.input.on(InputEvent.PointerMove, this.onMouseMove)
+    this.input.on(InputEvent.ContextMenu, this.onContextMenu)
   }
 
   protected disconnect() {
     if (!this._enabled) return
 
-    this.container.removeEventListener('pointermove', this.onMouseMove)
-    document.removeEventListener('keydown', this.onKeyDown)
-    document.removeEventListener('keyup', this.onKeyUp)
-    document.removeEventListener('contextmenu', this.onContextMenu)
+    this.input.removeListener(InputEvent.KeyUp, this.onKeyUp)
+    this.input.removeListener(InputEvent.KeyDown, this.onKeyDown)
+    this.input.removeListener(InputEvent.PointerMove, this.onMouseMove)
+    this.input.removeListener(InputEvent.ContextMenu, this.onContextMenu)
+
     for (const k in this.keyMap) this.keyMap[k as MoveType] = false
   }
 
@@ -355,11 +356,11 @@ class FlyControls extends SpeckleControls {
   }
 
   // event listeners
-  protected onMouseMove = (event: PointerEvent) => {
-    if (event.buttons !== 1 || !this._enabled) return
+  protected onMouseMove = (arg: Vector2 & { event: PointerEvent }) => {
+    if (arg.event.buttons !== 1 || !this._enabled) return
 
-    const movementX = event.movementX || 0
-    const movementY = event.movementY || 0
+    const movementX = arg.event.movementX || 0
+    const movementY = arg.event.movementY || 0
     const amount = new Vector2()
     amount.y = movementX * 0.005 * this._options.lookSpeed
     amount.x = movementY * 0.005 * this._options.lookSpeed

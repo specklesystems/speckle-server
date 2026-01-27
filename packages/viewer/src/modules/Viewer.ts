@@ -75,6 +75,10 @@ export class Viewer extends EventEmitter implements IViewer {
     return this.speckleRenderer.input
   }
 
+  public get params(): ViewerParams {
+    return this.startupParams
+  }
+
   private getConstructorChain(obj: object) {
     const cs = []
     let pt = obj
@@ -164,6 +168,10 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public getContainer() {
     return this.container
+  }
+
+  public getCanvas() {
+    return this.speckleRenderer.renderer.domElement
   }
 
   public getRenderer() {

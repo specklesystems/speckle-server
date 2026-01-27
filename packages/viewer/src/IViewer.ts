@@ -39,7 +39,9 @@ export interface ViewerParams {
   showStats: boolean
   environmentSrc: Asset
   verbose: boolean
+  restrictInputToCanvas: boolean
 }
+
 export enum AssetType {
   TEXTURE_8BPP = 'png', // For now
   TEXTURE_HDR = 'hdr',
@@ -71,7 +73,8 @@ export const DefaultViewerParams: ViewerParams = {
     id: 'defaultHDRI',
     src: defaultHdri,
     type: AssetType.TEXTURE_EXR
-  }
+  },
+  restrictInputToCanvas: false
 }
 
 export enum ViewerEvent {
@@ -205,6 +208,7 @@ export interface IViewer {
 
   getRenderer(): SpeckleRenderer
   getContainer(): HTMLElement
+  getCanvas(): HTMLCanvasElement
 
   createExtension<T extends Extension>(type: Constructor<T>): T
   getExtension<T extends Extension>(type: Constructor<T>): T

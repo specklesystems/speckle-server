@@ -9,7 +9,9 @@ export enum InputEvent {
   Wheel = 'wheel',
   Click = 'click',
   DoubleClick = 'double-click',
-  KeyUp = 'key-up'
+  KeyUp = 'key-up',
+  KeyDown = 'key-down',
+  ContextMenu = 'context-menu'
 }
 
 export interface InputEventPayload {
@@ -21,6 +23,8 @@ export interface InputEventPayload {
   [InputEvent.Click]: Vector2 & { event: PointerEvent; multiSelect: boolean }
   [InputEvent.DoubleClick]: Vector2 & { event: PointerEvent; multiSelect: boolean }
   [InputEvent.KeyUp]: KeyboardEvent
+  [InputEvent.KeyDown]: KeyboardEvent
+  [InputEvent.ContextMenu]: PointerEvent
 }
 
 //TO DO: Define proper interface for InputEvent data
@@ -33,14 +37,20 @@ export default class Input extends EventEmitter {
   private touchLocation: Touch | undefined
   private container
 
-  constructor(container: HTMLElement) {
+  constructor(container: HTMLElement, restrictKeyInput: boolean = false) {
     super()
     this.container = container
-
+    if (restrictKeyInput) {
+      // Make canvas focusable for scoped keyboard events
+      this.container.tabIndex = -1
+      // Remove default focus outline
+      this.container.style.outline = 'none'
+    }
     // Handle mouseclicks
     let mdTime: number
     this.container.addEventListener('pointerdown', (e) => {
       e.preventDefault()
+      this.container.focus() // preventDefault blocks default focus
       const loc = this._getNormalisedClickPosition(e)
       ;(loc as unknown as Record<string, unknown>).event = e
       mdTime = new Date().getTime()
@@ -106,11 +116,15 @@ export default class Input extends EventEmitter {
       this.emit(InputEvent.PointerMove, data)
     })
 
-    document.addEventListener('keyup', (e) => {
+    const keySource = restrictKeyInput ? this.container : document
+    keySource.addEventListener('keyup', (e) => {
       this.emit(InputEvent.KeyUp, e)
     })
+    keySource.addEventListener('keydown', (e) => {
+      this.emit(InputEvent.KeyDown, e)
+    })
 
-    document.addEventListener('wheel', (e) => {
+    this.container.addEventListener('wheel', (e) => {
       this.emit(InputEvent.Wheel, e)
     })
 
@@ -120,6 +134,10 @@ export default class Input extends EventEmitter {
 
       this.emit(InputEvent.PointerUp, loc)
       this.emit(InputEvent.PointerCancel, loc)
+    })
+
+    this.container.addEventListener('contextmenu', (e) => {
+      this.emit(InputEvent.ContextMenu, e)
     })
   }
 

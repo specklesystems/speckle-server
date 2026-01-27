@@ -182,7 +182,7 @@ export class CameraController extends Extension implements SpeckleCamera {
 
     this._flyControls = new FlyControls(
       this._renderingCamera,
-      this.viewer.getContainer(),
+      this.viewer.getRenderer().input,
       this.viewer.World,
       this._options
     )

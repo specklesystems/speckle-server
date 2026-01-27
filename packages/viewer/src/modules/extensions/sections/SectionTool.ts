@@ -618,9 +618,8 @@ export class SectionTool extends Extension {
       }
     }
 
-    /** Event listeners */
-    document.addEventListener('keydown', this.keydownHandler)
-    document.addEventListener('keyup', this.keyupHandler)
+    this.viewer.getRenderer().input.on(InputEvent.KeyDown, this.keydownHandler)
+    this.viewer.getRenderer().input.on(InputEvent.KeyUp, this.keyupHandler)
   }
 
   /**
@@ -1135,10 +1134,14 @@ export class SectionTool extends Extension {
    */
   public dispose() {
     if (this.keydownHandler) {
-      document.removeEventListener('keydown', this.keydownHandler)
+      this.viewer
+        .getRenderer()
+        .input.removeListener(InputEvent.KeyDown, this.keydownHandler)
     }
     if (this.keyupHandler) {
-      document.removeEventListener('keyup', this.keyupHandler)
+      this.viewer
+        .getRenderer()
+        .input.removeListener(InputEvent.KeyUp, this.keyupHandler)
     }
   }
 }
