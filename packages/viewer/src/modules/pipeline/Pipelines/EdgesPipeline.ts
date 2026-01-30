@@ -61,6 +61,7 @@ export class EdgesPipeline extends ProgressivePipeline {
         visibilityRanges[k] = NoneBatchUpdateRange
         continue
       }
+
       /** Look for a transparent group */
       const transparentGroup = batch.groups.find((value) => {
         if (value.materialIndex === undefined) return false
@@ -83,6 +84,9 @@ export class EdgesPipeline extends ProgressivePipeline {
           count:
             hiddenGroup !== undefined
               ? hiddenGroup.start - transparentGroup.start
+              : // When a fully transparent batch has it's first group non-ghosted and the rest ghosted we need to report the first group count
+              transparentGroup.start === 0
+              ? transparentGroup.count
               : batch.getCount() - transparentGroup.start
         }
         continue
