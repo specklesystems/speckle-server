@@ -18,6 +18,7 @@ export enum DefaultAppIds {
   DesktopManager = 'sdm',
   Connector = 'sca',
   SpeckleDesktopAuthService = 'sdas',
+  SpeckleConnectorsDUI = 'sdui',
   Excel = 'spklexcel',
   PowerBI = 'spklpwerbi',
   Automate = 'spklautoma'
@@ -55,6 +56,25 @@ const SpeckleDesktopApp = {
   trustByDefault: true,
   public: true,
   redirectUrl: 'speckle://account',
+  scopes: [
+    Scopes.Streams.Read,
+    Scopes.Streams.Write,
+    Scopes.Profile.Read,
+    Scopes.Profile.Email,
+    Scopes.Users.Read,
+    Scopes.Users.Invite,
+    ...workspaceScopes
+  ]
+}
+
+const SpeckleConnectorsDUI = {
+  id: DefaultAppIds.SpeckleConnectorsDUI,
+  secret: DefaultAppIds.SpeckleConnectorsDUI,
+  name: 'DUI',
+  description: 'Speckle desktop user interface for connectors.',
+  trustByDefault: false, // NOTE: we do not wanna automatically authenticate in DUI because it uses cached account before which we wanna switch account. trustByDefault: true skips this step
+  public: true,
+  redirectUrl: 'https://dui.speckle.systems/authn/callback',
   scopes: [
     Scopes.Streams.Read,
     Scopes.Streams.Write,
@@ -168,6 +188,7 @@ const defaultApps = [
   SpeckleWebApp,
   SpeckleApiExplorer,
   SpeckleDesktopApp,
+  SpeckleConnectorsDUI,
   SpeckleConnectorApp,
   SpeckleDesktopAuthService,
   SpeckleExcel,
