@@ -1,0 +1,44 @@
+{{- if (and .Values.gatewayAPI.enabled .Values.gatewayAPI.gateway.enabled) }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ .Values.gatewayAPI.gateway.name }}
+  namespace: {{ default .Values.namespace .Values.gatewayAPI.gateway.namespace }}
+  labels:
+{{ include "speckle.labels" . | indent 4 }}
+  annotations:
+    {{- if (and .Values.gatewayAPI.gateway.tls.enabled .Values.cert_manager_issuer) }}
+    cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer }}
+    {{- end }}
+spec:
+  gatewayClassName: {{ .Values.gatewayAPI.gateway.gatewayClassName }}
+  listeners:
+  - name: {{ .Values.gatewayAPI.gateway.defaultListenerName }}
+    {{- if .Values.gatewayAPI.gateway.tls.enabled }}
+    protocol: HTTPS
+    port: 443
+    {{- else }}
+    protocol: HTTP
+    port: 80
+    {{- end }}
+    hostname: {{ .Values.domain | quote }}
+    allowedRoutes:
+      namespaces:
+        # The Gateway and the HTTPRoutes live in the same namespace. Using 'Same' keeps routing isolated and prevents other applications from using this entry point.
+        from: Same
+    {{- if .Values.gatewayAPI.gateway.tls.enabled }}
+    tls:
+      mode: Terminate
+      {{- if .Values.gatewayAPI.gateway.tls.certificateRefs }}
+      certificateRefs:
+{{ .Values.gatewayAPI.gateway.tls.certificateRefs | toYaml | indent 8 }}
+      {{- end }}
+      {{- if .Values.gatewayAPI.gateway.tls.options }}
+      options:
+{{ .Values.gatewayAPI.gateway.tls.options | toYaml | indent 8 }}
+      {{- end }}
+    {{- end }}
+{{- if .Values.gatewayAPI.gateway.additionalListeners }}
+{{ toYaml .Values.gatewayAPI.gateway.additionalListeners | indent 2 }}
+{{- end }}
+{{- end }}

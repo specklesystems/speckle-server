@@ -192,7 +192,7 @@
       "properties": {
         "enabled": {
           "type": "boolean",
-          "description": "If enabled, the ingress resources will be deployed",
+          "description": "If enabled, the ingress resources will be deployed. Ingress or Gateway can be used, but not both.",
           "default": true
         },
         "namespace": {
@@ -209,6 +209,73 @@
           "type": "number",
           "description": "This maximum size of the body of any request (except file uploads) that can be sent to Speckle. For file uploads, the maximum size is defined by the `.file_size_limit_mb` parameter.",
           "default": 10
+        }
+      }
+    },
+    "gatewayAPI": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, the Gateway resources will be deployed. Ingress or Gateway can be used, but probably not both.",
+          "default": false
+        },
+        "gateway": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, the Gateway resource templated within this helm chart will be deployed. If deploying your own Gateway resource separately - for example, a shared gateway - please disable, but update the 'name' and 'namespace' parameters to match.",
+              "default": true
+            },
+            "gatewayClassName": {
+              "type": "string",
+              "description": "The name of the GatewayClass to use for the Gateway resource",
+              "default": "cilium"
+            },
+            "name": {
+              "type": "string",
+              "description": "The name of the Gateway resource to deploy. If you have deployed your own gateway resource, please update this value to match the name of your Gateway resource.",
+              "default": "speckle-server"
+            },
+            "namespace": {
+              "type": "string",
+              "description": "The namespace in which the Gateway resource is deployed. If you have deployed your own gateway resource, please update this value to match the namespace of your Gateway resource. If not provided, defaults to the same namespace as this Helm Chart is deployed to.",
+              "default": ""
+            },
+            "defaultListenerName": {
+              "type": "string",
+              "description": "The name of the listener to use for the Gateway resource. If you have deployed your own gateway resource, please update this value to match the name of the listener in your Gateway resource.",
+              "default": "speckle-server-gateway-https"
+            },
+            "tls": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "If enabled, TLS configuration will be added to the Gateway resource. cert_manager_issuer must also be set.",
+                  "default": true
+                },
+                "certificateRefs": {
+                  "type": "array",
+                  "description": "The certificateRefs to use for TLS configuration in the Gateway resource.",
+                  "default": [],
+                  "items": {}
+                },
+                "options": {
+                  "type": "object",
+                  "description": "(Optional) Additional options to provide for TLS configuration in the Gateway resource.",
+                  "default": {}
+                }
+              }
+            },
+            "additionalListeners": {
+              "type": "array",
+              "description": "(Optional) Additional listeners to add to the Gateway resource. This allows for more complex Gateway configurations, e.g. an additional http listener may be required for cert-manager http-01 challenge if cert-manager is being used for TLS certificate management.",
+              "default": [],
+              "items": {}
+            }
+          }
         }
       }
     },
