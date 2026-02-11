@@ -32,9 +32,9 @@ if [ ! -d "${README_GENERATOR_DIR}" ]; then
 fi
 
 pushd "${README_GENERATOR_DIR}"
-  echo "✨ Updating to the latest version of readme-generator-for-helm"
-  git switch main
-  git pull origin main
+  echo "✨ Checking out tag 2.7.2 of readme-generator-for-helm"
+  git fetch origin tag 2.7.2
+  git checkout 2.7.2
   npm install
 popd
 
