@@ -1,0 +1,27 @@
+{{- if .Values.gatewayAPI.enabled }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: speckle-frontend
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "speckle.labels" . | indent 4 }}
+spec:
+  parentRefs:
+    - name: {{ .Values.gatewayAPI.gateway.name }}
+      {{- if .Values.gatewayAPI.gateway.namespace }}
+      namespace: {{ .Values.gatewayAPI.gateway.namespace }}
+      {{- end }}
+      sectionName: {{ .Values.gatewayAPI.gateway.defaultListenerName }}
+  hostnames:
+    - {{ .Values.domain | quote}}
+  rules:
+  - matches:
+      - path:
+          type: PathPrefix
+          value: /
+    backendRefs:
+      - name: speckle-frontend-2
+        kind: Service
+        port: 8080
+{{- end }}
