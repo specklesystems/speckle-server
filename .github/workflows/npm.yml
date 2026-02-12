@@ -18,12 +18,15 @@ on:
         type: string
     secrets:
       NPM_TOKEN:
-        required: true
+        required: false
 
 jobs:
   publish:
     name: Publish to npm
     runs-on: blacksmith-4vcpu-ubuntu-2404
+    permissions:
+      contents: read
+      id-token: write # For publishing to NPM with OIDC
     env:
       GITHUB_REGISTRY_URL: ${{ inputs.GITHUB_REGISTRY_URL }}
       GITHUB_ORG: ${{ inputs.GITHUB_ORG }}
@@ -39,12 +42,16 @@ jobs:
         with:
           node-version: 22
           cache: yarn
+          # For publishing to npm with OIDC, we need to set the registry url
+          registry-url: ${{ inputs.NPM_REGISTRY_URL }}
       - name: Install hardened (no HARD flag)
         run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Auth to npm
         run: |
           echo "npmRegistryServer: ${NPM_REGISTRY_URL}" >> .yarnrc.yml
-          echo "npmAuthToken: ${NPM_TOKEN}" >> .yarnrc.yml
+          if [ -z "${NPM_TOKEN}" ]; then
+            echo "npmAuthToken: ${NPM_TOKEN}" >> .yarnrc.yml
+          fi
           echo "npmPublishAccess: ${NPM_PUBLISH_ACCESS}" >> .yarnrc.yml
       - name: Try login to npm
         run: yarn npm whoami
