@@ -72,12 +72,12 @@ import type {
   PropertySelectionListItem
 } from '~/lib/viewer/helpers/filters/types'
 import {
-  FILTERS_POPULAR_PROPERTIES,
   PROPERTY_SELECTION_ITEM_HEIGHT,
   PROPERTY_SELECTION_MAX_HEIGHT,
   PROPERTY_SELECTION_OVERSCAN
 } from '~/lib/viewer/helpers/filters/constants'
 import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataStore'
+import { useFilterUtilities } from '~/lib/viewer/composables/filtering/filtering'
 
 const props = defineProps<{
   options: PropertyOption[]
@@ -89,6 +89,7 @@ const emit = defineEmits<{
 }>()
 
 const dataStore = useFilteringDataStore()
+const { getAvailablePopularFilters } = useFilterUtilities()
 
 const searchQuery = ref('')
 const listContainer = ref<HTMLElement>()
@@ -145,18 +146,13 @@ const listItems = computed((): PropertySelectionListItem[] => {
     return searchResults
   }
 
-  const optionsMap = new Map(filteredOptions.value.map((opt) => [opt.value, opt]))
-  const availablePopular = FILTERS_POPULAR_PROPERTIES.map((filterKey) =>
-    optionsMap.get(filterKey)
-  )
-    .filter(Boolean)
-    .slice(0, 6) // Show max 6 popular filters
+  const availablePopular = getAvailablePopularFilters()
 
   if (availablePopular.length > 0) {
     items.push({ type: 'header', title: 'Popular properties' })
     const popularItems = availablePopular.map((property) => ({
       type: 'property' as const,
-      property: property!
+      property
     }))
     items.push(...popularItems)
   }
