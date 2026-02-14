@@ -1,0 +1,37 @@
+@import '@speckle/ui-components/style.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+html,
+body,
+div#__nuxt {
+  height: 100%;
+}
+
+/* Prevent touch scrolling on canvas containers */
+.canvas-container,
+.konvajs-content {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent pull-to-refresh and overscroll */
+body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+input[type='text'] {
+  @apply bg-foundation rounded-md h-8 border border-outline-2;
+}
+
+.bg-foundation-transparent {
+  background-color: rgba(var(--foundation-2), 0.5);
+}

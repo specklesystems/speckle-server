@@ -68,8 +68,10 @@ import { onKeyStroke, useBreakpoints } from '@vueuse/core'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { Ruler, Scissors, Sun, Layers2, Glasses } from 'lucide-vue-next'
+import { Ruler, Scissors, Sun, Layers2, Glasses, LineSquiggle } from 'lucide-vue-next'
 import { useOnViewerLoadComplete } from '~/lib/viewer/composables/viewer'
+import { useAnnotationsEnabledState } from '~/lib/annotations'
+import { useCanvasStore } from '@speckle/draw'
 
 enum ActivePanel {
   none = 'none',
@@ -77,7 +79,8 @@ enum ActivePanel {
   sectionBox = 'sectionBox',
   explode = 'explode',
   viewModes = 'viewModes',
-  lightControls = 'lightControls'
+  lightControls = 'lightControls',
+  annotations = 'annotations'
 }
 
 const emit = defineEmits<{
@@ -102,6 +105,7 @@ const {
   ui: { explodeFactor }
 } = useInjectedViewerState()
 const { getTooltipProps } = useSmartTooltipDelay()
+const annotationsEnabled = useAnnotationsEnabledState()
 
 const hasExplode = computed(() => explodeFactor.value > 0)
 const hasNonDefaultViewMode = computed(() => currentViewMode.value !== ViewMode.DEFAULT)
@@ -112,8 +116,19 @@ const mixpanel = useMixpanel()
 
 const activePanel = ref<ActivePanel>(ActivePanel.none)
 const viewerLoaded = ref(false)
+const width = ref(264)
+const height = ref(600)
 
 const panels = shallowRef({
+  [ActivePanel.annotations]: {
+    id: ActivePanel.annotations,
+    name: 'Annotations',
+    icon: LineSquiggle,
+    tooltip: getShortcutDisplayText(shortcuts.ToggleAnnotations, {
+      format: 'separate'
+    }),
+    extraClasses: ''
+  },
   [ActivePanel.measurements]: {
     id: ActivePanel.measurements,
     name: 'Measure',
@@ -172,6 +187,8 @@ const shouldShowDot = (panelId: ActivePanel) => {
       return hasExplode.value
     case ActivePanel.viewModes:
       return hasNonDefaultViewMode.value
+    case ActivePanel.annotations:
+      return annotationsEnabled.value
     default:
       return false
   }
@@ -190,6 +207,10 @@ const toggleActivePanel = (panel: ActivePanel) => {
 
   if (panel === ActivePanel.measurements) {
     enableMeasurements(true)
+  }
+
+  if (panel === ActivePanel.annotations) {
+    handleAnnotationsToggle()
   }
 }
 
@@ -241,6 +262,11 @@ const onActivePanelClose = () => {
   if (activePanel.value === ActivePanel.measurements) {
     enableMeasurements(false)
   }
+  if (activePanel.value === ActivePanel.annotations) {
+    const canvasStore = useCanvasStore()
+    canvasStore.deletePaper('broccoli')
+    annotationsEnabled.value = false
+  }
   activePanel.value = ActivePanel.none
 }
 
@@ -262,6 +288,22 @@ const handleViewModeChange = (mode: ViewMode) => {
   setViewMode(mode)
 }
 
+const handleAnnotationsToggle = () => {
+  const canvasStore = useCanvasStore()
+  const isEnabling = activePanel.value === ActivePanel.annotations
+
+  if (isEnabling) {
+    const w = width.value || 264
+    const h = height.value || 600
+    canvasStore.createPaper('broccoli', 'adaptive', w, h)
+    canvasStore.createViewerContainer('broccoli', 0, 0, w, h)
+    annotationsEnabled.value = true
+  } else {
+    canvasStore.deletePaper('broccoli')
+    annotationsEnabled.value = false
+  }
+}
+
 registerShortcuts({
   ToggleMeasurements: () => toggleMeasurements(),
   ToggleExplode: () => toggleExplode(),
@@ -272,7 +314,8 @@ registerShortcuts({
   SetViewModeSolid: () => handleViewModeChange(ViewMode.SOLID),
   SetViewModePen: () => handleViewModeChange(ViewMode.PEN),
   SetViewModeArctic: () => handleViewModeChange(ViewMode.ARCTIC),
-  SetViewModeShaded: () => handleViewModeChange(ViewMode.SHADED)
+  SetViewModeShaded: () => handleViewModeChange(ViewMode.SHADED),
+  ToggleAnnotations: () => handleAnnotationsToggle()
 })
 
 onKeyStroke('Escape', () => {

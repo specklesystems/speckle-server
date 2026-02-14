@@ -25,6 +25,10 @@
       "name": "🖼️ preview-frontend"
     },
     {
+      "path": "packages/draw",
+      "name": "✏️ draw"
+    },
+    {
       "path": "packages/viewer",
       "name": "🔎 viewer"
     },
