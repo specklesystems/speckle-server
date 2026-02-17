@@ -18,6 +18,7 @@ export interface CacheOptions {
   maxCacheBatchWriteWait: number
   maxCacheBatchReadWait: number
   maxWriteQueueSize: number
+  idbChunkSize: number
 }
 
 export interface MemoryDatabaseOptions {
