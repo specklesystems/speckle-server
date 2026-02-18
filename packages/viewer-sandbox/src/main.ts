@@ -134,9 +134,11 @@ const createViewer = async (containerName: string, _stream: string) => {
 const getStream = () => {
   return (
     // prettier-ignore
-    'https://app.speckle.systems/projects/1b96a34aae/models/a8698c0c67'
+    // 'https://app.speckle.systems/projects/1b96a34aae/models/a8698c0c67'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    'https://app.speckle.systems/projects/9638b98615/models/2d8e1ef75b@241c9de8d5'
+
+    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8' :'(
     // 'https://app.speckle.systems/streams/da9e320dad/objects/ee5d160d84090822813bc74188da34a7'
 
     //large tower
@@ -673,6 +675,8 @@ const getStream = () => {
 
     // Texts and empty texts
     // 'https://app.speckle.systems/projects/8b466869c0/models/d1eabb3c74'
+
+    // 'https://app.speckle.systems/projects/d7d987146d/models/1556042389'
   )
 }
 
