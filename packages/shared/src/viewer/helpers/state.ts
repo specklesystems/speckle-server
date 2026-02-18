@@ -3,6 +3,7 @@ import type { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityT
 import type { PartialDeep } from 'type-fest'
 import { UnformattableSerializedViewerStateError } from '../errors/index.js'
 import { coerceUndefinedValuesToNull } from '../../core/index.js'
+import type { SerializedFilterData } from './filters.js'
 
 export const defaultViewModeEdgeColorValue = 'DEFAULT_EDGE_COLOR'
 
@@ -71,6 +72,8 @@ export interface SectionBoxData {
  * - ui.filters.propertyFilters.condition updated
  * v1.7 -> 1.8
  * - ui.filters.propertyFilters.numericRange added
+ * v1.8 -> 1.9
+ * - ui.filters.propertyFilters.type added
  */
 export const SERIALIZED_VIEWER_STATE_VERSION = 1.8
 
@@ -113,14 +116,7 @@ export type SerializedViewerState = {
       hiddenObjectIds: string[]
       /** Map of object id => application id or null, if no application id */
       selectedObjectApplicationIds: Record<string, string | null>
-      propertyFilters: Array<{
-        key: Nullable<string>
-        isApplied: boolean
-        selectedValues: string[]
-        id: string
-        condition: string
-        numericRange?: { min: number; max: number }
-      }>
+      propertyFilters: SerializedFilterData[]
       activeColorFilterId: Nullable<string>
       filterLogic: string
     }
@@ -170,6 +166,16 @@ type UnformattedState = PartialDeep<
           key: Nullable<string>
           isApplied: boolean
         }
+        // Allow legacy propertyFilters without type field
+        propertyFilters: Array<{
+          key: Nullable<string>
+          isApplied: boolean
+          selectedValues: string[]
+          id: string
+          condition: string
+          numericRange?: { min: number; max: number }
+          type?: 'numeric' | 'string' | 'boolean'
+        }>
       }
     }
   }
@@ -280,14 +286,7 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
         }
 
         // Migration logic: handle legacy propertyFilter and new propertyFilters
-        let propertyFilters: Array<{
-          key: Nullable<string>
-          isApplied: boolean
-          selectedValues: string[]
-          id: string
-          condition: string
-          numericRange?: { min: number; max: number }
-        }> = []
+        let propertyFilters: SerializedFilterData[] = []
 
         // If new propertyFilters exist and are not empty, use them
         if (
@@ -295,16 +294,99 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
           Array.isArray(state.ui.filters.propertyFilters) &&
           state.ui.filters.propertyFilters.length > 0
         ) {
-          // Map legacy condition values to new format
-          propertyFilters = state.ui.filters.propertyFilters.map((filter) => ({
-            ...filter,
-            condition:
-              filter.condition === 'AND'
-                ? 'is'
-                : filter.condition === 'OR'
-                ? 'is'
-                : filter.condition
-          }))
+          // Map legacy condition values to new format and ensure type field exists
+          propertyFilters = state.ui.filters.propertyFilters.map(
+            (filter): SerializedFilterData => {
+              // Handle legacy 'AND'/'OR' condition values (not part of FilterCondition union)
+              // Cast to string to handle legacy values that aren't in FilterCondition union
+              const rawCondition: string = filter.condition ?? 'is'
+              const hasNumericRange =
+                'numericRange' in filter && filter.numericRange !== undefined
+
+              const baseFilter = {
+                key: filter.key ?? null,
+                isApplied: filter.isApplied ?? false,
+                selectedValues: filter.selectedValues ?? [],
+                id: filter.id ?? 'migrated-filter'
+              }
+
+              // Use explicit type if provided, otherwise infer from structure
+              const filterType = filter.type
+              if (filterType === 'numeric' || hasNumericRange) {
+                // Numeric filters - map to valid numeric conditions
+                let condition:
+                  | 'is_between'
+                  | 'is_equal_to'
+                  | 'is_not_equal_to'
+                  | 'is_greater_than'
+                  | 'is_less_than'
+                  | 'is_set'
+                  | 'is_not_set'
+                if (rawCondition === 'is_set' || rawCondition === 'is_not_set') {
+                  condition = rawCondition
+                } else if (
+                  rawCondition === 'AND' ||
+                  rawCondition === 'OR' ||
+                  rawCondition === 'is' ||
+                  rawCondition === 'is_not' ||
+                  rawCondition === 'is_true' ||
+                  rawCondition === 'is_false'
+                ) {
+                  condition = 'is_equal_to'
+                } else {
+                  condition = rawCondition as typeof condition
+                }
+
+                return {
+                  ...baseFilter,
+                  type: 'numeric',
+                  condition,
+                  numericRange: (hasNumericRange
+                    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+                      (filter as any).numericRange
+                    : { min: 0, max: 1 }) as { min: number; max: number }
+                }
+              } else if (
+                filterType === 'boolean' ||
+                rawCondition === 'is_true' ||
+                rawCondition === 'is_false'
+              ) {
+                // Boolean filters - map to valid boolean conditions
+                let condition: 'is_true' | 'is_false' | 'is_set' | 'is_not_set'
+                if (rawCondition === 'is_set' || rawCondition === 'is_not_set') {
+                  condition = rawCondition
+                } else if (rawCondition === 'is_true' || rawCondition === 'is_false') {
+                  condition = rawCondition
+                } else {
+                  condition = 'is_true'
+                }
+
+                return {
+                  ...baseFilter,
+                  type: 'boolean',
+                  condition
+                }
+              } else {
+                // String filters - map to valid string conditions
+                let condition: 'is' | 'is_not' | 'is_set' | 'is_not_set'
+                if (rawCondition === 'is_set' || rawCondition === 'is_not_set') {
+                  condition = rawCondition
+                } else if (rawCondition === 'AND' || rawCondition === 'OR') {
+                  condition = 'is'
+                } else if (rawCondition === 'is' || rawCondition === 'is_not') {
+                  condition = rawCondition
+                } else {
+                  condition = 'is'
+                }
+
+                return {
+                  ...baseFilter,
+                  type: 'string',
+                  condition
+                }
+              }
+            }
+          )
         }
         // If legacy propertyFilter exists but no propertyFilters (or empty propertyFilters), migrate it
         else if (state.ui?.filters?.propertyFilter?.key) {
@@ -314,7 +396,8 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
               isApplied: state.ui.filters.propertyFilter.isApplied || false,
               selectedValues: [], // Legacy didn't have selectedValues
               id: 'legacy-filter', // Generate a consistent ID for legacy filter
-              condition: 'is'
+              condition: 'is',
+              type: 'string' // Assume string type for legacy filters
             }
           ]
         }
