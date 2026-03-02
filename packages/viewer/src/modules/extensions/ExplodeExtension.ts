@@ -23,6 +23,7 @@ export class ExplodeExtension extends Extension {
   /** Similar to SpeckleRenderer's visibleSceneBox, but with static boxes from render views */
   public get visibleWorld(): Box3 {
     const bounds: Box3 = new Box3()
+    const scratchBox = new Box3()
     const batches = this.viewer.getRenderer().batcher.getBatches()
     for (let k = 0; k < batches.length; k++) {
       const batch = batches[k]
@@ -48,7 +49,14 @@ export class ExplodeExtension extends Extension {
         if (s.batchStart >= qEnd) break
         const sEnd = s.batchStart + s.batchCount
         if (s.batchStart >= qStart && sEnd <= qEnd) {
-          bounds.union(s.aabb)
+          /** Alex 18.02.2026: There is an issue with using the render view's aabb.
+           *  Instanced render views will always provide incorrect bounds unless transformed
+           *  Which is what we are doing here */
+          scratchBox.copy(s.aabb)
+          s.renderData.geometry.transform &&
+            s.renderData.geometry.instanced &&
+            scratchBox.applyMatrix4(s.renderData.geometry.transform)
+          bounds.union(scratchBox)
         }
       }
     }
