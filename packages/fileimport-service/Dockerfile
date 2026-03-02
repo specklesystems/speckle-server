@@ -19,7 +19,7 @@ RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
      ca-certificates=20240203 \
-     curl=8.5.0-2ubuntu10.6 \
+     curl=8.5.0-2ubuntu10.7 \
      gosu=1.17-1ubuntu0.24.04.3 \
     && curl -L -o speckleifc.tar.gz https://github.com/specklesystems/speckleifc/archive/refs/tags/v${SPECKLE_IFC_VERSION}.tar.gz \
     && mkdir speckleifc \
