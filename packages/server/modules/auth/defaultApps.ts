@@ -87,7 +87,7 @@ const SpeckleConnectorsDUI = {
   ]
 }
 
-const ConnectorsV3 = {
+const SpeckleConnectorsV3 = {
   id: DefaultAppIds.ConnectorsV3,
   secret: DefaultAppIds.ConnectorsV3,
   name: 'Desktop Connectors',
@@ -105,7 +105,6 @@ const ConnectorsV3 = {
     ...workspaceScopes
   ]
 }
-
 
 const SpeckleConnectorApp = {
   id: DefaultAppIds.Connector,
@@ -214,7 +213,8 @@ const defaultApps = [
   SpeckleDesktopAuthService,
   SpeckleExcel,
   SpecklePowerBi,
-  SpeckleAutomate
+  SpeckleAutomate,
+  SpeckleConnectorsV3
 ]
 
 export function getDefaultApps() {
