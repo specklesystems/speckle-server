@@ -21,7 +21,8 @@ export enum DefaultAppIds {
   SpeckleConnectorsDUI = 'sdui',
   Excel = 'spklexcel',
   PowerBI = 'spklpwerbi',
-  Automate = 'spklautoma'
+  Automate = 'spklautoma',
+  ConnectorsV3 = 'connectrV3'
 }
 
 const SpeckleWebApp = {
@@ -85,6 +86,26 @@ const SpeckleConnectorsDUI = {
     ...workspaceScopes
   ]
 }
+
+const ConnectorsV3 = {
+  id: DefaultAppIds.ConnectorsV3,
+  secret: DefaultAppIds.ConnectorsV3,
+  name: 'Desktop Connectors',
+  description: 'Speckle V3 connectors..',
+  trustByDefault: false, // NOTE: we do not wanna automatically authenticate in DUI because it uses cached account before which we wanna switch account. trustByDefault: true skips this step
+  public: true,
+  redirectUrl: 'http://localhost:29355',
+  scopes: [
+    Scopes.Streams.Read,
+    Scopes.Streams.Write,
+    Scopes.Profile.Read,
+    Scopes.Profile.Email,
+    Scopes.Users.Read,
+    Scopes.Users.Invite,
+    ...workspaceScopes
+  ]
+}
+
 
 const SpeckleConnectorApp = {
   id: DefaultAppIds.Connector,
