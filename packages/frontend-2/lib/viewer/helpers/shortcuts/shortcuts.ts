@@ -37,6 +37,13 @@ export const PanelShortcuts = {
     key: 'S',
     action: 'ToggleSavedViews'
   },
+  ToggleAnnotations: {
+    name: 'Annotations',
+    description: 'Toggle annotations',
+    modifiers: [ModifierKeys.Shift],
+    key: 'A',
+    action: 'ToggleAnnotations'
+  },
   ToggleViewModes: {
     name: 'View modes',
     description: 'Toggle view modes panel',
