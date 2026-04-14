@@ -1,3 +1,9 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: '50m'
+    max-file: '3'
+
 services:
   speckle-ingress:
     build:
@@ -6,6 +12,7 @@ services:
     platform: linux/amd64
     image: speckle/speckle-docker-compose-ingress:local
     restart: always
+    logging: *default-logging
     ports:
       - '0.0.0.0:80:8080'
       - '0.0.0.0:443:8443'
@@ -31,6 +38,7 @@ services:
     platform: linux/amd64
     image: speckle/speckle-frontend-2:local
     restart: always
+    logging: *default-logging
     environment:
       NUXT_PUBLIC_SERVER_NAME: 'local'
       # This is the URL of the server as accessed by users.
@@ -59,6 +67,7 @@ services:
     platform: linux/amd64
     image: speckle/speckle-server:local
     restart: always
+    logging: *default-logging
     healthcheck:
       test:
         - CMD
@@ -147,6 +156,7 @@ services:
     platform: linux/amd64
     image: speckle/speckle-preview-service:local
     restart: always
+    logging: *default-logging
     mem_limit: '3000m'
     memswap_limit: '3000m'
     environment:
@@ -166,6 +176,7 @@ services:
     platform: linux/amd64
     image: speckle/speckle-webhook-service:local
     restart: always
+    logging: *default-logging
     environment:
       LOG_LEVEL: 'info'
       LOG_PRETTY: 'true'
@@ -181,6 +192,7 @@ services:
     platform: linux/amd64
     image: speckle/ifc-import-service:local
     restart: always
+    logging: *default-logging
     environment:
       LOG_LEVEL: 'info'
       LOG_PRETTY: 'true'
@@ -191,6 +203,7 @@ services:
 
   certbot:
     image: certbot/certbot:latest
+    logging: *default-logging
     volumes:
       - certbot-certs:/etc/letsencrypt
       - certbot-webroot:/var/www/certbot
