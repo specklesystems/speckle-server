@@ -78,7 +78,7 @@ The suggested IDE for working in this repo is VSCode, because the repo has speci
 
 This repository relies on [VSCode multi-root workspaces](https://code.visualstudio.com/docs/editor/multi-root-workspaces), so for the best DX and proper formatting/linting make sure you open the project using the `workspace.code-workspace` file instead of just opening the folder in VSCode.
 
-### Proper TypeScript support
+### Proper TypeScript Support
 
 To get proper TS support in standard TS files as well as Vue files, we rely on the **Volar** VSCode extension - not **Vetur**! When you open the workspace for the very first time, VSCode should already prompt you to install this extension.
 The default Volar setup can be quite resource intensive, however, because there end up being standard TS Language Server instances running as well as Vue TS Language server instances. To resolve this issue we rely on Volar's [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471).
