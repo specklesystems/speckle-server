@@ -22,11 +22,11 @@ jobs:
     uses: ./.github/workflows/builds.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
-      REGISTRY_DOMAIN: 'ghcr.io'
-      REGISTRY_USERNAME: ${{ github.actor }}
+      REGISTRY_DOMAIN: ${{ vars.IMAGE_REGISTRY_DOMAIN }}
+      REGISTRY_USERNAME: ${{ vars.IMAGE_REGISTRY_USERNAME }}
       # REGISTRY_DOMAIN, REGISTRY_USERNAME, REGISTRY_TOKEN must be configured to match the below IMAGE_PREFIX
-      IMAGE_PREFIX: 'ghcr.io/specklesystems'
+      IMAGE_PREFIX: ${{ vars.IMAGE_REGISTRY_PREFIX}}
       PUBLISH: false # do not publish the sourcemaps or include the version in frontend-2 builds for pull requests
     secrets:
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
-      REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REGISTRY_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
