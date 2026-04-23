@@ -19,7 +19,7 @@ RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
      ca-certificates=20240203 \
-     curl=8.5.0-2ubuntu10.7 \
+     curl=8.5.0-2ubuntu10.8 \
      gosu=1.17-1ubuntu0.24.04.3 \
     && curl -L -o speckleifc.tar.gz https://github.com/specklesystems/speckleifc/archive/refs/tags/v${SPECKLE_IFC_VERSION}.tar.gz \
     && mkdir speckleifc \
@@ -58,7 +58,7 @@ RUN yarn workspaces foreach -W run build
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
-     python3.12=3.12.3-1ubuntu0.11 \
+     python3.12=3.12.3-1ubuntu0.12 \
      python3-pip=24.0+dfsg-1ubuntu1.3 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
