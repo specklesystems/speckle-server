@@ -45,7 +45,7 @@ jobs:
         run: |
           if [ -z "${NPM_TOKEN}" ]; then echo "NPM_TOKEN is empty"; exit 1; fi
           cat <<EOF >> .yarnrc.yml
-          npmRegistryServer: "${NPM_REGISTRY_URL}"
+          npmRegistryServer: "${NPM_REGISTRY_URL%/}"
           npmPublishAccess: "${NPM_PUBLISH_ACCESS}"
           npmRegistries:
             "${NPM_REGISTRY_URL%/}":
