@@ -43,11 +43,22 @@ jobs:
         run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
       - name: Auth to npm
         run: |
-          echo "npmRegistryServer: '${NPM_REGISTRY_URL}'" >> .yarnrc.yml
-          echo "npmAuthToken: '${NPM_TOKEN}'" >> .yarnrc.yml
-          echo "npmPublishAccess: '${NPM_PUBLISH_ACCESS}'" >> .yarnrc.yml
+          if [ -z "${NPM_TOKEN}" ]; then echo "NPM_TOKEN is empty"; exit 1; fi
+          cat <<EOF >> .yarnrc.yml
+          npmRegistryServer: "${NPM_REGISTRY_URL}"
+          npmPublishAccess: "${NPM_PUBLISH_ACCESS}"
+          npmRegistries:
+            "${NPM_REGISTRY_URL%/}":
+              npmAuthToken: "${NPM_TOKEN}"
+              npmAlwaysAuth: true
+          EOF
       - name: Try login to npm
-        run: yarn npm whoami
+        run: |
+          echo "---- Output contents of .yarnrc.yml ----"
+          sed 's/npmAuthToken:.*/npmAuthToken: ***REDACTED***/' .yarnrc.yml
+          echo "NPM_TOKEN length: ${#NPM_TOKEN}"
+          echo "Login test:"
+          yarn npm whoami --publish
       - name: Amend package name & git repository to match
         # required as per https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#publishing-a-package-using-a-local-npmrc-file
         run: |
