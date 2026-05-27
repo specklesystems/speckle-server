@@ -26,17 +26,21 @@ export const FILTER_CONDITION_CONFIG: Record<FilterCondition, { label: string }>
 export const FILTERS_POPULAR_PROPERTIES = [
   'name',
   'category',
-  'family',
-  'type',
   'level',
+  'type',
+  'id',
+  'family',
+  'ifcType',
+  'area',
+  'objects',
+  'elements',
+  'applicationId',
+  'units',
+  'length',
+  'layer',
   'material',
   'phaseCreated',
-  'phaseDemolished',
-  'area',
-  'length',
-  'phaseCreated',
-  'ifcType',
-  'layer'
+  'phaseDemolished'
 ]
 
 // UI Constants
