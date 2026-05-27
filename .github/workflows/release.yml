@@ -14,14 +14,20 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/heads/testing') }} # deployments on testing* will cancel each other, prod and tags no
 
+permissions: {} # purposefully empty by default at workflow level, explicitly overridden for specific jobs below
+
 jobs:
   get-version:
     name: Get version
     uses: ./.github/workflows/get-version.yml
+    permissions:
+      contents: read
 
   get-chart-name:
     name: Get Chart Name
     uses: ./.github/workflows/get-chart-name.yml
+    permissions:
+      contents: read
 
   tests:
     needs: [get-version]
@@ -30,6 +36,8 @@ jobs:
       CONTINUE_ON_ERROR: ${{ startsWith(github.ref, 'refs/heads/testing') }} # allows releasing on testing even if test fail
       DISABLE_SKIPPING: ${{ startsWith(github.ref, 'refs/heads/main') }} # disable test skip on main
     secrets: inherit
+    permissions:
+      contents: read
 
   builds:
     needs: [get-version]
@@ -45,6 +53,8 @@ jobs:
     secrets:
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
       REGISTRY_TOKEN: ${{ (github.repository == 'specklesystems/speckle-server') && secrets.DOCKERHUB_TOKEN || secrets.GITHUB_TOKEN }}
+    permissions:
+      contents: read
 
   test-deployments:
     needs: [get-version, builds]
@@ -56,6 +66,8 @@ jobs:
       IMAGE_PREFIX: ${{ vars.IMAGE_REGISTRY_PREFIX }}
     secrets:
       REGISTRY_TOKEN: ${{ secrets.DOCKERHUB_TOKEN || github.token}}
+    permissions:
+      contents: read
 
   deploy:
     needs: [get-version, tests, builds, test-deployments, get-chart-name]
@@ -73,6 +85,7 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       OCI_REGISTRY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN || github.token }}
 
+
   npm:
     needs: [get-version, tests, builds]
     uses: ./.github/workflows/npm.yml
@@ -82,10 +95,14 @@ jobs:
       GITHUB_REGISTRY_URL: ${{ format('%s%s.git', 'https://github.com/', github.repository) }}
       GITHUB_ORG: ${{ github.repository_owner }}
       NPM_REGISTRY_URL: ${{ github.repository == 'specklesystems/speckle-server' && 'https://registry.npmjs.org/' || 'https://npm.pkg.github.com/' }}
+      NPM_REGISTRY_OIDC_CONNECT: ${{ github.repository == 'specklesystems/speckle-server' && 'true' || 'false' }} # only connect OIDC for npmjs registry, not needed for GitHub Packages
       NPM_PUBLISH_ACCESS: ${{ github.repository == 'specklesystems/speckle-server' && 'public' || 'restricted' }}
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
     secrets:
-      NPM_TOKEN: ${{ github.repository == 'specklesystems/speckle-server' && secrets.NPM_TOKEN || github.token}}
+      NPM_TOKEN: ${{ github.repository == 'specklesystems/speckle-server' && '' || secrets.GITHUB_TOKEN }}
+    permissions:
+      contents: read
+      id-token: write # Required for publishing to npm registries
 
   snyk:
     needs: [tests]
