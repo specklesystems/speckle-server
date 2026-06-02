@@ -85,7 +85,6 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       OCI_REGISTRY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN || github.token }}
 
-
   npm:
     needs: [get-version, tests, builds]
     uses: ./.github/workflows/npm.yml
