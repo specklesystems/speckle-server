@@ -16,9 +16,14 @@ on:
       IMAGE_VERSION_TAG:
         required: true
         type: string
+      NPM_REGISTRY_OIDC_CONNECT:
+        default: false
+        type: boolean
     secrets:
       NPM_TOKEN:
-        required: true
+        required: false
+
+permissions: {} # set default permissions to none, and only allow what's needed in each job
 
 jobs:
   publish:
@@ -29,8 +34,12 @@ jobs:
       GITHUB_ORG: ${{ inputs.GITHUB_ORG }}
       NPM_REGISTRY_URL: ${{ inputs.NPM_REGISTRY_URL }}
       NPM_PUBLISH_ACCESS: ${{ inputs.NPM_PUBLISH_ACCESS }}
+      NPM_REGISTRY_OIDC_CONNECT: ${{ inputs.NPM_REGISTRY_OIDC_CONNECT }}
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    permissions:
+      contents: read
+      id-token: write # Required for publishing to npmjs.com registry
     steps:
       - uses: actions/checkout@v4.2.2
         with:
@@ -41,9 +50,22 @@ jobs:
           cache: yarn
       - name: Install hardened (no HARD flag)
         run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
-      - name: Auth to npm
+      - name: Auth to npm (OIDC mode)
+        if: ${{ inputs.NPM_REGISTRY_OIDC_CONNECT }}
+        run: |
+          cat <<EOF >> .yarnrc.yml
+          npmRegistryServer: "${NPM_REGISTRY_URL%/}"
+          npmPublishAccess: "${NPM_PUBLISH_ACCESS}"
+          npmRegistries:
+            "${NPM_REGISTRY_URL%/}":
+              npmAlwaysAuth: true
+          EOF
+
+      - name: Auth to npm (token mode)
+        if: ${{ !inputs.NPM_REGISTRY_OIDC_CONNECT }}
         run: |
           if [ -z "${NPM_TOKEN}" ]; then echo "NPM_TOKEN is empty"; exit 1; fi
+
           cat <<EOF >> .yarnrc.yml
           npmRegistryServer: "${NPM_REGISTRY_URL%/}"
           npmPublishAccess: "${NPM_PUBLISH_ACCESS}"
@@ -52,13 +74,17 @@ jobs:
               npmAuthToken: "${NPM_TOKEN}"
               npmAlwaysAuth: true
           EOF
-      - name: Try login to npm
+      - name: Login test (token mode)
+        if: ${{ !inputs.NPM_REGISTRY_OIDC_CONNECT }}
         run: |
           echo "---- Output contents of .yarnrc.yml ----"
           sed 's/npmAuthToken:.*/npmAuthToken: ***REDACTED***/' .yarnrc.yml
-          echo "NPM_TOKEN length: ${#NPM_TOKEN}"
-          echo "Login test:"
           yarn npm whoami --publish
+
+      - name: OIDC info
+        if: ${{ inputs.NPM_REGISTRY_OIDC_CONNECT }}
+        run: |
+          echo "OIDC trusted publishing enabled; skipping whoami pre-check"
       - name: Amend package name & git repository to match
         # required as per https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#publishing-a-package-using-a-local-npmrc-file
         run: |
