@@ -95,7 +95,7 @@ jobs:
       GITHUB_REGISTRY_URL: ${{ format('%s%s.git', 'https://github.com/', github.repository) }}
       GITHUB_ORG: ${{ github.repository_owner }}
       NPM_REGISTRY_URL: ${{ github.repository == 'specklesystems/speckle-server' && 'https://registry.npmjs.org/' || 'https://npm.pkg.github.com/' }}
-      NPM_REGISTRY_OIDC_CONNECT: ${{ github.repository == 'specklesystems/speckle-server' && 'true' || 'false' }} # only connect OIDC for npmjs registry, not needed for GitHub Packages
+      NPM_REGISTRY_OIDC_CONNECT: ${{ github.repository == 'specklesystems/speckle-server' }} # only connect OIDC for npmjs registry, not needed for GitHub Packages
       NPM_PUBLISH_ACCESS: ${{ github.repository == 'specklesystems/speckle-server' && 'public' || 'restricted' }}
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
     secrets:
