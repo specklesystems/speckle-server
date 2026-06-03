@@ -81,10 +81,23 @@ jobs:
           sed 's/npmAuthToken:.*/npmAuthToken: ***REDACTED***/' .yarnrc.yml
           yarn npm whoami --publish
 
-      - name: OIDC info
+      - name: OIDC info & npm upgrade
         if: ${{ inputs.NPM_REGISTRY_OIDC_CONNECT }}
+        # npm >=11.5.1 is required for OIDC trusted publishing; yarn berry does not implement the OIDC token exchange itself.
+        # Pinned to npm 11.16.0 by tarball SHA-1; verify via https://registry.npmjs.org/npm/11.16.0 (dist.shasum field).
+        env:
+          NPM_PINNED_VERSION: 11.16.0
+          NPM_PINNED_SHA1: 954286fbc25d74f3c91f402ca8b1e66c8038e861
         run: |
+          set -euo pipefail
           echo "OIDC trusted publishing enabled; skipping whoami pre-check"
+          echo "Installing npm"
+          curl -fsSL -o "npm-${NPM_PINNED_VERSION}.tgz" \
+            "https://registry.npmjs.org/npm/-/npm-${NPM_PINNED_VERSION}.tgz"
+          echo "${NPM_PINNED_SHA1}  npm-${NPM_PINNED_VERSION}.tgz" | sha1sum -c -
+          npm install -g "./npm-${NPM_PINNED_VERSION}.tgz"
+          rm -f "npm-${NPM_PINNED_VERSION}.tgz"
+          npm --version
       - name: Amend package name & git repository to match
         # required as per https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#publishing-a-package-using-a-local-npmrc-file
         run: |
@@ -95,5 +108,10 @@ jobs:
         run: yarn workspaces foreach -ptvW --no-private run build
       - name: Bump all versions
         run: yarn workspaces foreach -tvW version ${IMAGE_VERSION_TAG}
-      - name: publish to npm
+      - name: publish to npm (token mode)
+        if: ${{ !inputs.NPM_REGISTRY_OIDC_CONNECT }}
         run: 'yarn workspaces foreach -pvW --no-private npm publish --access ${NPM_PUBLISH_ACCESS}'
+      - name: publish to npm (OIDC mode)
+        if: ${{ inputs.NPM_REGISTRY_OIDC_CONNECT }}
+        # Use npm CLI directly so its trusted-publishing OIDC token exchange runs; yarn berry doesn't implement it.
+        run: 'yarn workspaces foreach -vW --no-private exec "npm publish --provenance --access ${NPM_PUBLISH_ACCESS}"'
