@@ -2,6 +2,7 @@ name: PR Pipeline
 
 on: pull_request
 
+permissions: {} # we will set permissions for each job separately, so that they can run with least privileges
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true # other running workflows get cancelled on the same branch
@@ -10,12 +11,17 @@ jobs:
   get-version:
     name: Get version
     uses: ./.github/workflows/get-version.yml
+    permissions:
+      contents: read
 
   tests:
     needs: [get-version]
     uses: ./.github/workflows/tests.yml
     with: {}
     secrets: inherit
+    permissions:
+      contents: read
+      packages: read # for pulling speckle-ubuntu-chromium from GHCR
 
   builds:
     needs: [get-version]
@@ -30,3 +36,5 @@ jobs:
     secrets:
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
       REGISTRY_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+    permissions:
+      contents: read

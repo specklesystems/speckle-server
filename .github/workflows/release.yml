@@ -38,6 +38,7 @@ jobs:
     secrets: inherit
     permissions:
       contents: read
+      packages: read # for pulling speckle-ubuntu-chromium from GHCR
 
   builds:
     needs: [get-version]
@@ -109,3 +110,5 @@ jobs:
     # skip snyk on testing branches
     if: startsWith(github.ref , 'refs/heads/testing') == false
     secrets: inherit
+    permissions:
+      contents: read
