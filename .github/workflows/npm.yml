@@ -114,4 +114,8 @@ jobs:
       - name: publish to npm (OIDC mode)
         if: ${{ inputs.NPM_REGISTRY_OIDC_CONNECT }}
         # Use npm CLI directly so its trusted-publishing OIDC token exchange runs; yarn berry doesn't implement it.
+        # Provenance is disabled because Blacksmith runners are reported as "self-hosted" in OIDC claims,
+        # which sigstore rejects (only "github-hosted" runners are accepted for provenance).
+        env:
+          NPM_CONFIG_PROVENANCE: 'false'
         run: 'yarn workspaces foreach -vW --no-private exec "npm publish --access ${NPM_PUBLISH_ACCESS}"'
