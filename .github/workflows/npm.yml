@@ -114,4 +114,4 @@ jobs:
       - name: publish to npm (OIDC mode)
         if: ${{ inputs.NPM_REGISTRY_OIDC_CONNECT }}
         # Use npm CLI directly so its trusted-publishing OIDC token exchange runs; yarn berry doesn't implement it.
-        run: 'yarn workspaces foreach -vW --no-private exec "npm publish --provenance --access ${NPM_PUBLISH_ACCESS}"'
+        run: 'yarn workspaces foreach -vW --no-private exec "npm publish --access ${NPM_PUBLISH_ACCESS}"'
