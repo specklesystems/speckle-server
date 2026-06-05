@@ -2,6 +2,7 @@ name: PR Pipeline
 
 on: pull_request
 
+permissions: {} # we will set permissions for each job separately, so that they can run with least privileges
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true # other running workflows get cancelled on the same branch
@@ -10,23 +11,30 @@ jobs:
   get-version:
     name: Get version
     uses: ./.github/workflows/get-version.yml
+    permissions:
+      contents: read
 
   tests:
     needs: [get-version]
     uses: ./.github/workflows/tests.yml
     with: {}
     secrets: inherit
+    permissions:
+      contents: read
+      packages: read # for pulling speckle-ubuntu-chromium from GHCR
 
   builds:
     needs: [get-version]
     uses: ./.github/workflows/builds.yml
     with:
       IMAGE_VERSION_TAG: ${{ needs.get-version.outputs.IMAGE_VERSION_TAG }}
-      REGISTRY_DOMAIN: 'ghcr.io'
-      REGISTRY_USERNAME: ${{ github.actor }}
+      REGISTRY_DOMAIN: ${{ vars.IMAGE_REGISTRY_DOMAIN }}
+      REGISTRY_USERNAME: ${{ vars.IMAGE_REGISTRY_USERNAME }}
       # REGISTRY_DOMAIN, REGISTRY_USERNAME, REGISTRY_TOKEN must be configured to match the below IMAGE_PREFIX
-      IMAGE_PREFIX: 'ghcr.io/specklesystems'
+      IMAGE_PREFIX: ${{ vars.IMAGE_REGISTRY_PREFIX}}
       PUBLISH: false # do not publish the sourcemaps or include the version in frontend-2 builds for pull requests
     secrets:
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
-      REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REGISTRY_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+    permissions:
+      contents: read

@@ -25,6 +25,8 @@ on:
       CODECOV_TOKEN:
         required: true
 
+permissions: {} # we will set permissions for each job separately, so that they can run with least privileges
+
 jobs:
   changes:
     name: Get modified files
@@ -37,6 +39,8 @@ jobs:
       ui-components: ${{ steps.changes.outputs.ui-components }}
       objectsender: ${{ steps.changes.outputs.objectsender }}
       shared: ${{ steps.changes.outputs.shared }}
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4.2.2
         with:
@@ -79,6 +83,8 @@ jobs:
     name: Lint and prettier
     runs-on: blacksmith-4vcpu-ubuntu-2404
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -102,6 +108,8 @@ jobs:
     name: Precommit check
     runs-on: blacksmith-4vcpu-ubuntu-2404
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
+    permissions:
+      contents: read
     container:
       image: speckle/pre-commit-runner:latest
     steps:
@@ -123,6 +131,8 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.frontend-2 == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -146,6 +156,8 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.viewer == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -178,6 +190,8 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.shared == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -220,6 +234,8 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.objectsender == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -249,6 +265,8 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.ui-components == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: useblacksmith/setup-node@v5
@@ -281,6 +299,9 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.preview-service == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
+    permissions:
+      contents: read
+      packages: read # for pulling speckle-ubuntu-chromium from GHCR
     container:
       image: ghcr.io/specklesystems/speckle-ubuntu-chromium:latest
     services:
@@ -335,6 +356,8 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.server == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
+    permissions:
+      contents: read
     services:
       redis:
         image: redis:7.2.4
@@ -438,6 +461,8 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.server == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
+    permissions:
+      contents: read
     services:
       redis:
         image: redis:7.2.4
@@ -527,6 +552,8 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.server == 'true' || inputs.DISABLE_SKIPPING }}
     continue-on-error: ${{ inputs.CONTINUE_ON_ERROR }}
+    permissions:
+      contents: read
     runs-on: blacksmith-4vcpu-ubuntu-2404
     services:
       redis:
