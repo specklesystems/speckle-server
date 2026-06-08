@@ -20,7 +20,7 @@ const setupStrategiesFactory =
     azureAdStrategyBuilder: AuthStrategyBuilder
     googleStrategyBuilder: AuthStrategyBuilder
     localStrategyBuilder: AuthStrategyBuilder
-    oidcStrategyBuilder: AuthStrategyBuilder
+    // oidcStrategyBuilder: AuthStrategyBuilder
     createAuthorizationCode: CreateAuthorizationCode
     getUser: LegacyGetUser
     emitEvent: EventBusEmit
@@ -55,9 +55,9 @@ const setupStrategiesFactory =
       enabledBuilders.push(deps.azureAdStrategyBuilder)
     }
 
-    if (process.env.STRATEGY_OIDC === 'true') {
-      enabledBuilders.push(deps.oidcStrategyBuilder)
-    }
+    // if (process.env.STRATEGY_OIDC === 'true') {
+    //   enabledBuilders.push(deps.oidcStrategyBuilder)
+    // }
 
     // Note: always leave the local strategy init for last so as to be able to
     // force enable it in case no others are present.
