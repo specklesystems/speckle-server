@@ -31,7 +31,7 @@ COPY packages/preview-frontend ./packages/preview-frontend/
 COPY packages/preview-service ./packages/preview-service/
 
 # This way the foreach only builds the frontend and its deps
-RUN yarn workspaces foreach -W run build
+RUN yarn workspaces foreach -Wt run build
 
 # google-chrome-stable is only available for amd64 so we have to fix the platform
 # hadolint ignore=DL3029
