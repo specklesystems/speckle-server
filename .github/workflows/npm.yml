@@ -1,57 +1,54 @@
+name: Publish npm packages (OIDC trusted publishing)
 on:
   workflow_call:
     inputs:
-      GITHUB_REGISTRY_URL:
-        required: true
-        type: string
-      GITHUB_ORG:
-        required: true
-        type: string
       NPM_REGISTRY_URL:
-        required: true
+        required: false
         type: string
+        default: 'https://registry.npmjs.org/'
       NPM_PUBLISH_ACCESS:
         required: true
         type: string
       IMAGE_VERSION_TAG:
         required: true
         type: string
-      NPM_REGISTRY_OIDC_CONNECT:
-        default: false
-        type: boolean
-    secrets:
-      NPM_TOKEN:
-        required: false
 
-permissions: {} # set default permissions to none, and only allow what's needed in each job
+concurrency:
+  group: ${{ github.workflow }}-npm-oidc-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {} # purposefully empty by default at workflow level, explicitly overridden for specific jobs below
 
 jobs:
   publish:
-    name: Publish to npm
+    name: Publish to npm (OIDC)
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    env:
-      GITHUB_REGISTRY_URL: ${{ inputs.GITHUB_REGISTRY_URL }}
-      GITHUB_ORG: ${{ inputs.GITHUB_ORG }}
-      NPM_REGISTRY_URL: ${{ inputs.NPM_REGISTRY_URL }}
-      NPM_PUBLISH_ACCESS: ${{ inputs.NPM_PUBLISH_ACCESS }}
-      NPM_REGISTRY_OIDC_CONNECT: ${{ inputs.NPM_REGISTRY_OIDC_CONNECT }}
-      IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     permissions:
       contents: read
-      id-token: write # Required for publishing to npmjs.com registry
+      id-token: write # yarn exchanges the GitHub Actions OIDC token for a short-lived npm publish token
+    env:
+      NPM_REGISTRY_URL: ${{ inputs.NPM_REGISTRY_URL }}
+      NPM_PUBLISH_ACCESS: ${{ inputs.NPM_PUBLISH_ACCESS }}
+      IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
-      - uses: useblacksmith/setup-node@v5
+          persist-credentials: false
+      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
           node-version: 22
           cache: yarn
       - name: Install hardened (no HARD flag)
         run: PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn --immutable
-      - name: Auth to npm (OIDC mode)
-        if: ${{ inputs.NPM_REGISTRY_OIDC_CONNECT }}
+      - name: Configure publish registry
+        # Publishing is done with yarn itself: yarn >=4.10 implements the npm trusted
+        # publishing (OIDC) token exchange natively, so no auth token and no separate
+        # npm CLI are needed. Publishing through yarn keeps the regular `yarn pack`
+        # lifecycle: prepack builds run and `workspace:` ranges are resolved to real
+        # versions at pack time.
+        # No whoami pre-check: with trusted publishing there is no token until the
+        # exchange happens during publish itself.
         run: |
           cat <<EOF >> .yarnrc.yml
           npmRegistryServer: "${NPM_REGISTRY_URL%/}"
@@ -60,62 +57,13 @@ jobs:
             "${NPM_REGISTRY_URL%/}":
               npmAlwaysAuth: true
           EOF
-
-      - name: Auth to npm (token mode)
-        if: ${{ !inputs.NPM_REGISTRY_OIDC_CONNECT }}
+      - name: Ensure packages are published to correct registry
+        # not strictly necessary given the yarnrc configuration changes above, but adds an extra layer of safety to prevent accidentally publishing to the wrong registry
         run: |
-          if [ -z "${NPM_TOKEN}" ]; then echo "NPM_TOKEN is empty"; exit 1; fi
-
-          cat <<EOF >> .yarnrc.yml
-          npmRegistryServer: "${NPM_REGISTRY_URL%/}"
-          npmPublishAccess: "${NPM_PUBLISH_ACCESS}"
-          npmRegistries:
-            "${NPM_REGISTRY_URL%/}":
-              npmAuthToken: "${NPM_TOKEN}"
-              npmAlwaysAuth: true
-          EOF
-      - name: Login test (token mode)
-        if: ${{ !inputs.NPM_REGISTRY_OIDC_CONNECT }}
-        run: |
-          echo "---- Output contents of .yarnrc.yml ----"
-          sed 's/npmAuthToken:.*/npmAuthToken: ***REDACTED***/' .yarnrc.yml
-          yarn npm whoami --publish
-
-      - name: OIDC info & npm upgrade
-        if: ${{ inputs.NPM_REGISTRY_OIDC_CONNECT }}
-        # npm >=11.5.1 is required for OIDC trusted publishing; yarn berry does not implement the OIDC token exchange itself.
-        # Pinned to npm 11.16.0 by tarball SHA-1; verify via https://registry.npmjs.org/npm/11.16.0 (dist.shasum field).
-        env:
-          NPM_PINNED_VERSION: 11.16.0
-          NPM_PINNED_SHA1: 954286fbc25d74f3c91f402ca8b1e66c8038e861
-        run: |
-          set -euo pipefail
-          echo "OIDC trusted publishing enabled; skipping whoami pre-check"
-          echo "Installing npm"
-          curl -fsSL -o "npm-${NPM_PINNED_VERSION}.tgz" \
-            "https://registry.npmjs.org/npm/-/npm-${NPM_PINNED_VERSION}.tgz"
-          echo "${NPM_PINNED_SHA1}  npm-${NPM_PINNED_VERSION}.tgz" | sha1sum -c -
-          npm install -g "./npm-${NPM_PINNED_VERSION}.tgz"
-          rm -f "npm-${NPM_PINNED_VERSION}.tgz"
-          npm --version
-      - name: Amend package name & git repository to match
-        # required as per https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry#publishing-a-package-using-a-local-npmrc-file
-        run: |
-          if [ "${NPM_REGISTRY_URL}" != "https://registry.npmjs.org/" ]; then
-            yarn workspaces foreach -tvW --no-private exec "jq '.name |= sub(\"@speckle\"; \"${GITHUB_ORG}\"), .repository.url = \"${GITHUB_REGISTRY_URL}\"' package.json > tmp.json && mv tmp.json package.json"
-          fi
+          yarn workspaces foreach -tvW --no-private exec "jq '.publishConfig.registry = env.NPM_REGISTRY_URL' package.json > tmp.json && mv tmp.json package.json"
       - name: Build public packages
         run: yarn workspaces foreach -ptvW --no-private run build
       - name: Bump all versions
-        run: yarn workspaces foreach -tvW version ${IMAGE_VERSION_TAG}
-      - name: publish to npm (token mode)
-        if: ${{ !inputs.NPM_REGISTRY_OIDC_CONNECT }}
-        run: 'yarn workspaces foreach -pvW --no-private npm publish --access ${NPM_PUBLISH_ACCESS}'
-      - name: publish to npm (OIDC mode)
-        if: ${{ inputs.NPM_REGISTRY_OIDC_CONNECT }}
-        # Use npm CLI directly so its trusted-publishing OIDC token exchange runs; yarn berry doesn't implement it.
-        # Provenance is disabled because Blacksmith runners are reported as "self-hosted" in OIDC claims,
-        # which sigstore rejects (only "github-hosted" runners are accepted for provenance).
-        env:
-          NPM_CONFIG_PROVENANCE: 'false'
-        run: 'yarn workspaces foreach -vW --no-private exec "npm publish --access ${NPM_PUBLISH_ACCESS}"'
+        run: yarn workspaces foreach -tvW --no-private version ${IMAGE_VERSION_TAG}
+      - name: Publish to npm
+        run: 'yarn workspaces foreach -pvW --no-private npm publish --provenance --access ${NPM_PUBLISH_ACCESS}'
