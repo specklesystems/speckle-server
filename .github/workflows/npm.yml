@@ -66,4 +66,4 @@ jobs:
       - name: Bump all versions
         run: yarn workspaces foreach -tvW --no-private version ${IMAGE_VERSION_TAG}
       - name: Publish to npm
-        run: 'yarn workspaces foreach -pvW --no-private npm publish --provenance --access ${NPM_PUBLISH_ACCESS}'
+        run: 'yarn workspaces foreach -pvW --no-private npm publish --access ${NPM_PUBLISH_ACCESS}'
