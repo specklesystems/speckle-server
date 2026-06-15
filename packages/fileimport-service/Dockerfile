@@ -52,7 +52,7 @@ RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspa
 # build shared libraries
 COPY packages/shared packages/shared/
 COPY packages/fileimport-service packages/fileimport-service/
-RUN yarn workspaces foreach -W run build
+RUN yarn workspaces foreach -Wt run build
 
 # Install python virtual env and python dependencies
 RUN apt-get update -y \

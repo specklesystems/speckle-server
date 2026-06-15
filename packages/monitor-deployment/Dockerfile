@@ -39,7 +39,7 @@ RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspa
 COPY packages/shared ./packages/shared/
 COPY packages/monitor-deployment ./packages/monitor-deployment/
 
-RUN yarn workspaces foreach -W run build
+RUN yarn workspaces foreach -Wt run build
 
 WORKDIR /speckle-server/packages/monitor-deployment
 RUN PUPPETEER_SKIP_DOWNLOAD=true PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn workspaces focus --production
