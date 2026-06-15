@@ -31,7 +31,7 @@ jobs:
       NPM_PUBLISH_ACCESS: ${{ inputs.NPM_PUBLISH_ACCESS }}
       IMAGE_VERSION_TAG: ${{ inputs.IMAGE_VERSION_TAG }}
     steps:
-      - uses: useblacksmith/checkout@41cdeedae8edb2e684ba22896a5fd2a3cb85db6b # v1.0.0-beta
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -66,7 +66,4 @@ jobs:
       - name: Bump all versions
         run: yarn workspaces foreach -tvW --no-private version ${IMAGE_VERSION_TAG}
       - name: Publish to npm
-        # Provenance stays disabled (yarn default) because Blacksmith runners are reported
-        # as "self-hosted" in OIDC claims, which sigstore rejects (only "github-hosted"
-        # runners are accepted for provenance).
-        run: 'yarn workspaces foreach -pvW --no-private npm publish --access ${NPM_PUBLISH_ACCESS}'
+        run: 'yarn workspaces foreach -pvW --no-private npm publish --provenance --access ${NPM_PUBLISH_ACCESS}'
