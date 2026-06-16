@@ -1,0 +1,82 @@
+{
+  "name": "@speckle/draw",
+  "version": "0.0.1",
+  "private": true,
+  "main": "lib.ts",
+  "module": "lib.ts",
+  "types": "lib.ts",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "exports": {
+    ".": {
+      "import": "./lib.ts"
+    }
+  },
+  "peerDependencies": {
+    "konva": "^9.3.0",
+    "pinia": "^3.0.0",
+    "vue": "^3.5.0",
+    "vue-konva": "^3.2.0",
+    "vue-router": "^4.5.0"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.7.14",
+    "@mdi/js": "^7.4.47",
+    "@nuxt/eslint": "^1.5.2",
+    "@nuxt/icon": "^1.15.0",
+    "@pinia/nuxt": "^0.11.2",
+    "@speckle/shared": "workspace:^",
+    "@speckle/tailwind-theme": "workspace:^",
+    "@speckle/ui-components": "workspace:^",
+    "@speckle/ui-components-nuxt": "workspace:^",
+    "@speckle/viewer": "workspace:^",
+    "@tailwindcss/typography": "^0.5.16",
+    "@vue/apollo-composable": "^4.0.0-beta.5",
+    "@vueuse/core": "^13.5.0",
+    "@vueuse/nuxt": "^13.5.0",
+    "apollo-upload-client": "^17.0.0",
+    "dayjs": "^1.11.13",
+    "dotenv": "^17.2.1",
+    "eslint": "^9.31.0",
+    "html2canvas": "^1.4.1",
+    "js-cookie": "^3.0.5",
+    "konva": "^9.3.22",
+    "lodash-es": "^4.17.21",
+    "lucide-vue-next": "^0.536.0",
+    "mdi-vue": "^3.0.13",
+    "nuxt": "^4.0.1",
+    "perfect-freehand": "^1.2.2",
+    "pinia": "^3.0.3",
+    "subscriptions-transport-ws": "^0.11.0",
+    "uuid": "^11.1.0",
+    "vee-validate": "^4.7.0",
+    "vite": "^4.5.2",
+    "vue": "^3.5.18",
+    "vue-konva": "^3.2.2",
+    "vue-router": "^4.5.1",
+    "vue-tippy": "^6.7.1"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^5.0.5",
+    "@graphql-codegen/client-preset": "^4.3.0",
+    "@nuxtjs/color-mode": "^3.5.2",
+    "@tailwindcss/container-queries": "^0.1.1",
+    "@tailwindcss/forms": "^0.5.10",
+    "@types/apollo-upload-client": "^17.0.1",
+    "@types/js-cookie": "^3.0.6",
+    "@types/three": "^0.179.0",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^7.5.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
+    "vite-plugin-dts": "^4.5.4"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}

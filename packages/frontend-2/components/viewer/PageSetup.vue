@@ -4,9 +4,9 @@
       <!-- Nav -->
       <Portal to="navigation">
         <ViewerScope :state="state">
-          <template v-if="project?.workspace && isWorkspacesEnabled">
+          <template v-if="project?.limitedWorkspace && isWorkspacesEnabled">
             <HeaderNavLink
-              :to="workspaceRoute(project?.workspace.slug)"
+              :to="workspaceRoute(project?.limitedWorkspace.slug)"
               name="Projects"
               :separator="false"
             />
@@ -57,6 +57,10 @@
             @force-close-panels="() => closeAllPanels('bottom')"
           />
           <ViewerControlsRight v-if="isMobile" />
+        </template>
+
+        <template v-if="annotationsEnabled">
+          <DrawWrapper />
         </template>
 
         <ViewerLimitsDialog
@@ -120,6 +124,7 @@ import { parseUrlParameters, resourceBuilder } from '@speckle/shared/viewer/rout
 import { ViewerLimitsDialogType } from '~/lib/projects/helpers/limits'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useBreakpoints } from '@vueuse/core'
+import { useAnnotationsEnabledState } from '~/lib/annotations'
 
 graphql(`
   fragment ViewerPageSetup_SavedView on SavedView {
@@ -151,6 +156,8 @@ const route = useRoute()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('sm')
+
+const annotationsEnabled = useAnnotationsEnabledState()
 
 const leftControls = ref()
 const bottomControls = ref()
@@ -257,6 +264,7 @@ const canEditEmbedOptions = computed(() => {
 })
 
 const hideSpeckleLogo = computed(() => {
+  if (!project.value?.limitedWorkspace) return true
   if (!canEditEmbedOptions.value) return false
   if (project.value?.embedOptions?.hideSpeckleBranding) return true
   else return hideSpeckleBranding.value
