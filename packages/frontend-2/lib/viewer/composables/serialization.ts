@@ -3,6 +3,7 @@ import {
   useResetUiState
 } from '~~/lib/viewer/composables/setup'
 import { isUndefinedOrVoid, SpeckleViewer } from '@speckle/shared'
+import { parseSerializedFilters } from '@speckle/shared/viewer/filters'
 import { get } from 'lodash-es'
 import { Vector3 } from 'three'
 import {
@@ -15,7 +16,10 @@ import { useFilteringDataStore } from '~/lib/viewer/composables/filtering/dataSt
 import { CameraController, SectionTool, VisualDiffMode } from '@speckle/viewer'
 import type {
   FilterLogic,
-  SerializedFilterData
+  NumericFilterCondition,
+  StringFilterCondition,
+  BooleanFilterCondition,
+  ExistenceFilterCondition
 } from '~/lib/viewer/helpers/filters/types'
 import type { Merge, PartialDeep } from 'type-fest'
 import {
@@ -94,16 +98,43 @@ export function useStateSerialization() {
         },
         spotlightUserSessionId: state.ui.spotlightUserSessionId.value,
         filters: (() => {
-          // Convert current FilterData to serializable format
-          const propertyFilters = filters.propertyFilters.value.map((filterData) => ({
-            key: filterData.filter?.key || null,
-            isApplied: filterData.isApplied,
-            selectedValues: filterData.selectedValues,
-            id: filterData.id,
-            condition: filterData.condition,
-            numericRange:
-              filterData.type === 'numeric' ? filterData.numericRange : undefined
-          }))
+          // Convert current FilterData to serializable format (discriminated union)
+          const propertyFilters = filters.propertyFilters.value.map((filterData) => {
+            const base = {
+              key: filterData.filter?.key || null,
+              isApplied: filterData.isApplied,
+              selectedValues: filterData.selectedValues,
+              id: filterData.id
+            }
+
+            // Add type field and cast condition for discriminated union
+            if (filterData.type === 'numeric') {
+              return {
+                ...base,
+                type: 'numeric' as const,
+                condition: filterData.condition as
+                  | NumericFilterCondition
+                  | ExistenceFilterCondition,
+                numericRange: filterData.numericRange
+              }
+            } else if (filterData.type === 'boolean') {
+              return {
+                ...base,
+                type: 'boolean' as const,
+                condition: filterData.condition as
+                  | BooleanFilterCondition
+                  | ExistenceFilterCondition
+              }
+            } else {
+              return {
+                ...base,
+                type: 'string' as const,
+                condition: filterData.condition as
+                  | StringFilterCondition
+                  | ExistenceFilterCondition
+              }
+            }
+          })
 
           return {
             isolatedObjectIds: state.ui.filters.isolatedObjectIds.value,
@@ -188,6 +219,7 @@ export function useApplySerializedState() {
   const { diffModelVersions, deserializeDiffCommand, endDiff } = useDiffUtilities()
   const { setSelectionFromObjectIds } = useSelectionUtilities()
   const { update } = useViewerRealtimeActivityTracker()
+  const logger = useLogger()
 
   return async <Mode extends StateApplyMode>(
     state: PartialDeep<SerializedViewerState>,
@@ -306,11 +338,23 @@ export function useApplySerializedState() {
     }
 
     if (filters.propertyFilters?.length) {
-      restoreFilters(
-        filters.propertyFilters as SerializedFilterData[],
-        filters.activeColorFilterId,
-        filters.filterLogic as FilterLogic
-      )
+      // Validate filter data using Zod schema from shared package
+      const validationResult = parseSerializedFilters(filters.propertyFilters)
+
+      if (validationResult.success) {
+        restoreFilters(
+          validationResult.data,
+          filters.activeColorFilterId,
+          filters.filterLogic as FilterLogic
+        )
+      } else {
+        logger.error(
+          'Invalid filter data from saved view:',
+          validationResult.error.format()
+        )
+        // Fallback: reset filters instead of crashing
+        resetFilters()
+      }
     } else {
       resetFilters()
     }

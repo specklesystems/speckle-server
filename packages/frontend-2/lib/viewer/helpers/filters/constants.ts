@@ -4,7 +4,11 @@ import {
   StringFilterCondition,
   ExistenceFilterCondition,
   BooleanFilterCondition,
-  FilterType
+  FilterType,
+  NumericFilterConditionValues,
+  StringFilterConditionValues,
+  ExistenceFilterConditionValues,
+  BooleanFilterConditionValues
 } from '~/lib/viewer/helpers/filters/types'
 
 // Filter Configuration
@@ -48,18 +52,18 @@ export const PROPERTY_SELECTION_OVERSCAN = 5
 export const getConditionsForType = (filterType: FilterType): FilterCondition[] => {
   if (filterType === FilterType.Numeric) {
     return [
-      ...Object.values(NumericFilterCondition),
-      ...Object.values(ExistenceFilterCondition)
+      ...Object.values(NumericFilterConditionValues),
+      ...Object.values(ExistenceFilterConditionValues)
     ]
   } else if (filterType === FilterType.Boolean) {
     return [
-      ...Object.values(BooleanFilterCondition),
-      ...Object.values(ExistenceFilterCondition)
+      ...Object.values(BooleanFilterConditionValues),
+      ...Object.values(ExistenceFilterConditionValues)
     ]
   } else {
     return [
-      ...Object.values(StringFilterCondition),
-      ...Object.values(ExistenceFilterCondition)
+      ...Object.values(StringFilterConditionValues),
+      ...Object.values(ExistenceFilterConditionValues)
     ]
   }
 }

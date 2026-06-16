@@ -104,6 +104,7 @@
       "./viewer": "./src/viewer/index.ts",
       "./viewer/route": "./src/viewer/helpers/route.ts",
       "./viewer/state": "./src/viewer/helpers/state.ts",
+      "./viewer/filters": "./src/viewer/helpers/filters.ts",
       "./automate": "./src/automate/index.ts",
       "./acc": "./src/acc/index.ts",
       "./dist/*": "./dist/*",
@@ -312,6 +313,16 @@
       "require": {
         "types": "./dist/commonjs/viewer/helpers/state.d.ts",
         "default": "./dist/commonjs/viewer/helpers/state.js"
+      }
+    },
+    "./viewer/filters": {
+      "import": {
+        "types": "./dist/esm/viewer/helpers/filters.d.ts",
+        "default": "./dist/esm/viewer/helpers/filters.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/viewer/helpers/filters.d.ts",
+        "default": "./dist/commonjs/viewer/helpers/filters.js"
       }
     },
     "./automate": {

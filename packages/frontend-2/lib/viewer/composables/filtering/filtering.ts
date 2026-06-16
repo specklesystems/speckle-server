@@ -787,7 +787,7 @@ export function useFilterUtilities(
             updateActiveFilterValues(filterId, serializedFilter.selectedValues)
           }
 
-          if (serializedFilter.numericRange) {
+          if (serializedFilter.type === 'numeric' && serializedFilter.numericRange) {
             setNumericRange(
               filterId,
               serializedFilter.numericRange.min,
