@@ -1,4 +1,4 @@
-FROM postgres:16.4-alpine3.20@sha256:d898b0b78a2627cb4ee63464a14efc9d296884f1b28c841b0ab7d7c42f1fffdf AS builder
+FROM postgres:16.4-alpine3.20@sha256:5660c2cbfea50c7a9127d17dc4e48543eedd3d7a41a595a2dfa572471e37e64c AS builder
 
 RUN apk add --no-cache 'git=2.45.4-r0' \
   'build-base=0.5-r3' \
@@ -14,7 +14,7 @@ RUN git init \
   && make \
   && make install
 
-FROM postgres:16.4-alpine3.20@sha256:d898b0b78a2627cb4ee63464a14efc9d296884f1b28c841b0ab7d7c42f1fffdf AS runner
+FROM postgres:16.4-alpine3.20@sha256:5660c2cbfea50c7a9127d17dc4e48543eedd3d7a41a595a2dfa572471e37e64c AS runner
 
 COPY --link --from=builder /aiven-extras/aiven_extras.control /usr/local/share/postgresql/extension/aiven_extras.control
 COPY --link --from=builder /aiven-extras/sql/aiven_extras.sql /usr/local/share/postgresql/extension/aiven_extras--1.1.14.sql
